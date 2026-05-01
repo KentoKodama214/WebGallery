@@ -31,14 +31,14 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: 単体テスト実行
-        run: ./gradlew test
+        run: ./backend/gradlew -p backend test
 
       - name: テスト結果アップロード
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results
-          path: build/reports/tests/test/
+          path: backend/build/reports/tests/test/
 
   integration-test:
     name: 結合テスト
@@ -101,11 +101,11 @@ jobs:
           done
 
       - name: 結合テスト実行
-        run: ./gradlew integrationTest
+        run: ./backend/gradlew -p backend integrationTest
 
       - name: テスト結果アップロード
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: integration-test-results
-          path: build/reports/tests/integrationTest/
+          path: backend/build/reports/tests/integrationTest/
