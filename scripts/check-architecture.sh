@@ -15,7 +15,8 @@
 
 set -euo pipefail
 
-BASE_DIR="src/main/java/com/web/gallary"
+BACKEND_DIR="${1:-backend}"
+BASE_DIR="${BACKEND_DIR}/src/main/java/com/web/gallary"
 CONTROLLER_DIR="${BASE_DIR}/controller"
 SERVICE_IMPL_DIR="${BASE_DIR}/service/impl"
 REPOSITORY_IMPL_DIR="${BASE_DIR}/repository/impl"

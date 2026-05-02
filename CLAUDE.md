@@ -24,19 +24,19 @@ WebGallary is a photo gallery web application built with Spring Boot. Users can 
 
 ```bash
 # Build the project
-./gradlew build
+./backend/gradlew -p backend build
 
 # Run tests only
-./gradlew test
+./backend/gradlew -p backend test
 
 # Run the application
-./gradlew bootRun
+./backend/gradlew -p backend bootRun
 
 # Build WAR file
-./gradlew war
+./backend/gradlew -p backend war
 
 # Clean build
-./gradlew clean build
+./backend/gradlew -p backend clean build
 
 # Start PostgreSQL database (required before running app)
 docker-compose up -d
@@ -46,59 +46,68 @@ docker-compose up -d
 
 ```
 WebGallary/
-├── build.gradle                    # Gradle build config
 ├── docker-compose.yml              # PostgreSQL container setup
 ├── docker/db/                      # Dockerfile for DB image
 ├── db/                             # Database initialization scripts
 │   ├── init/init-db.sh             # DB init entrypoint
 │   ├── common/                     # Common schema SQL (account, kbn_mst, location_mst)
 │   └── photo/                      # Photo schema SQL (photo_mst, photo_tag_mst, photo_favorite)
-└── src/
-    ├── main/
-    │   ├── java/com/web/gallary/
-    │   │   ├── WebGallaryApplication.java   # Boot main class
-    │   │   ├── ServletInitializer.java      # WAR deployment initializer
-    │   │   ├── AccountPrincipal.java        # Spring Security UserDetails
-    │   │   ├── config/                      # Configuration classes
-    │   │   ├── constant/                    # Constants (ApiRoutes, Consts, MessageConst)
-    │   │   ├── controller/                  # MVC + REST controllers
-    │   │   │   ├── request/                 # Request DTOs
-    │   │   │   └── response/                # Response DTOs
-    │   │   ├── entity/                      # Database entities
-    │   │   ├── enumuration/                 # Enums (note: package typo is intentional)
-    │   │   ├── exception/                   # Custom exception classes
-    │   │   ├── helper/                      # Helper utilities (Session, Kbn)
-    │   │   ├── mapper/                      # MyBatis mapper interfaces
-    │   │   ├── model/                       # Transfer/business model objects
-    │   │   ├── repository/                  # Repository interfaces
-    │   │   │   └── impl/                    # Repository implementations
-    │   │   ├── service/                     # Service interfaces
-    │   │   │   └── impl/                    # Service implementations
-    │   │   ├── type_handler/                # MyBatis enum type handlers
-    │   │   └── util/                        # URL utility classes
-    │   └── resources/
-    │       ├── application.yml              # App configuration
-    │       ├── messages.properties          # Message strings
-    │       └── com/web/gallary/mapper/      # MyBatis XML mapper files
-    └── test/
-        ├── java/com/web/gallary/            # Test classes (mirrors main structure)
-        │   ├── controller/
-        │   │   └── integration/             # Controller integration tests
-        │   ├── mapper/                      # Mapper unit tests
-        │   ├── repository/impl/
-        │   │   └── integration/             # Repository integration tests
-        │   ├── service/impl/
-        │   │   └── integration/             # Service integration tests
-        │   ├── helper/                      # Helper unit tests
-        │   └── util/                        # Utility unit tests
-        └── resources/
-            ├── application-test.yml         # Test configuration
-            └── sql/                         # Test SQL fixtures
-                ├── common/                  # Shared test data
-                ├── controller/              # Controller test data
-                ├── mapper/                  # Mapper test data
-                ├── repository/              # Repository test data
-                └── service/                 # Service test data
+├── scripts/                        # CI/CD scripts
+│   └── check-architecture.sh       # Architecture violation checker
+├── frontend/                       # Next.js frontend (React)
+├── backend/                        # Spring Boot backend
+│   ├── build.gradle                # Gradle build config
+│   ├── settings.gradle             # Gradle settings
+│   ├── gradlew / gradlew.bat      # Gradle wrapper scripts
+│   ├── gradle/                     # Gradle wrapper JAR
+│   ├── config/checkstyle/          # Checkstyle config
+│   ├── set-env.sh                  # Environment variable setup script
+│   └── src/
+│       ├── main/
+│       │   ├── java/com/web/gallary/
+│       │   │   ├── WebGallaryApplication.java   # Boot main class
+│       │   │   ├── ServletInitializer.java      # WAR deployment initializer
+│       │   │   ├── AccountPrincipal.java        # Spring Security UserDetails
+│       │   │   ├── config/                      # Configuration classes
+│       │   │   ├── constant/                    # Constants (ApiRoutes, Consts, MessageConst)
+│       │   │   ├── controller/                  # MVC + REST controllers
+│       │   │   │   ├── request/                 # Request DTOs
+│       │   │   │   └── response/                # Response DTOs
+│       │   │   ├── entity/                      # Database entities
+│       │   │   ├── enumuration/                 # Enums (note: package typo is intentional)
+│       │   │   ├── exception/                   # Custom exception classes
+│       │   │   ├── helper/                      # Helper utilities (Session, Kbn)
+│       │   │   ├── mapper/                      # MyBatis mapper interfaces
+│       │   │   ├── model/                       # Transfer/business model objects
+│       │   │   ├── repository/                  # Repository interfaces
+│       │   │   │   └── impl/                    # Repository implementations
+│       │   │   ├── service/                     # Service interfaces
+│       │   │   │   └── impl/                    # Service implementations
+│       │   │   ├── type_handler/                # MyBatis enum type handlers
+│       │   │   └── util/                        # URL utility classes
+│       │   └── resources/
+│       │       ├── application.yml              # App configuration
+│       │       ├── messages.properties          # Message strings
+│       │       └── com/web/gallary/mapper/      # MyBatis XML mapper files
+│       └── test/
+│           ├── java/com/web/gallary/            # Test classes (mirrors main structure)
+│           │   ├── controller/
+│           │   │   └── integration/             # Controller integration tests
+│           │   ├── mapper/                      # Mapper unit tests
+│           │   ├── repository/impl/
+│           │   │   └── integration/             # Repository integration tests
+│           │   ├── service/impl/
+│           │   │   └── integration/             # Service integration tests
+│           │   ├── helper/                      # Helper unit tests
+│           │   └── util/                        # Utility unit tests
+│           └── resources/
+│               ├── application-test.yml         # Test configuration
+│               └── sql/                         # Test SQL fixtures
+│                   ├── common/                  # Shared test data
+│                   ├── controller/              # Controller test data
+│                   ├── mapper/                  # Mapper test data
+│                   ├── repository/              # Repository test data
+│                   └── service/                 # Service test data
 ```
 
 ## Architecture
@@ -182,17 +191,17 @@ Initialization scripts in `db/` directory, orchestrated by `db/init/init-db.sh`.
 ### Test Database
 
 - Separate database: `web_gallary_test` (configured in `application-test.yml`)
-- Test SQL fixtures organized by layer in `src/test/resources/sql/`
+- Test SQL fixtures organized by layer in `backend/src/test/resources/sql/`
 - Docker PostgreSQL must be running for integration tests
 
 ### Running Tests
 
 ```bash
 # Run all tests
-./gradlew test
+./backend/gradlew -p backend test
 
 # Run a specific test class
-./gradlew test --tests "com.web.gallary.service.impl.PhotoServiceImplTest"
+./backend/gradlew -p backend test --tests "com.web.gallary.service.impl.PhotoServiceImplTest"
 ```
 
 ## Development Setup
@@ -204,7 +213,7 @@ Initialization scripts in `db/` directory, orchestrated by `db/init/init-db.sh`.
 2. The database initializes automatically using scripts in `db/`
 3. Run the application:
    ```bash
-   ./gradlew bootRun
+   ./backend/gradlew -p backend bootRun
    ```
 4. Access at `http://localhost:8080`
 
@@ -236,12 +245,12 @@ Initialization scripts in `db/` directory, orchestrated by `db/init/init-db.sh`.
 7. Create service interface + implementation in `service/` and `service/impl/`
 8. Create controller in `controller/`
 9. Add unit tests and integration tests following existing patterns
-10. Add test SQL fixtures in `src/test/resources/sql/`
+10. Add test SQL fixtures in `backend/src/test/resources/sql/`
 
 ### Important Notes
 
 - The package name `enumuration` (not `enumeration`) is an intentional project convention - do not rename it
 - File upload limit is 5MB per file (6MB at servlet level)
-- Photo output path is configurable via `app.photo.outputPath` in `application.yml`
+- Photo output path is configurable via `app.photo.outputPath` in `backend/src/main/resources/application.yml`
 - The project uses WAR packaging for Tomcat deployment (not executable JAR)
-- `build.gradle` group is `com.official`, base package is `com.web.gallary`
+- `backend/build.gradle` group is `com.official`, base package is `com.web.gallary`
