@@ -41,6 +41,8 @@
 
 ## 技術スタック
 
+### バックエンド
+
 | コンポーネント | 技術 |
 |----------------|------|
 | 言語 | Java 21 |
@@ -55,10 +57,29 @@
 | テスト | JUnit Jupiter 5.11.1 / Mockito 5.14 |
 | パッケージング | WAR（Tomcatデプロイ） |
 
+### フロントエンド
+
+| コンポーネント | 技術 |
+|----------------|------|
+| 言語 | TypeScript |
+| フレームワーク | Next.js 16 (App Router) |
+| UIライブラリ | React 19 |
+| スタイリング | Tailwind CSS 4 |
+| パッケージマネージャー | pnpm（Corepack経由） |
+| Node.jsバージョン管理 | mise |
+| タスクランナー | just |
+
 ## 前提条件
 
 - Java 21
 - Docker / Docker Compose
+- [mise](https://mise.jdx.dev/)（Node.jsバージョン管理）
+- [just](https://github.com/casey/just)（タスクランナー）
+
+```bash
+# mise / just のインストール（macOS）
+brew install mise just
+```
 
 ## セットアップ
 
@@ -78,13 +99,28 @@ docker-compose up -d
 
 デフォルト値でもアプリケーションの起動は可能ですが、必要に応じて環境変数を設定してください。
 
-### 3. アプリケーションの起動
+### 3. フロントエンドのセットアップ
 
 ```bash
-./backend/gradlew -p backend bootRun
+just setup
 ```
 
-起動後、`http://localhost:8080` でアクセスできます。
+このコマンドで以下が実行されます:
+1. miseによるNode.js（`.mise.toml`で定義されたバージョン）のインストール
+2. Corepack経由でのpnpmの有効化
+3. `frontend/` の依存パッケージインストール
+
+### 4. アプリケーションの起動
+
+```bash
+# バックエンド
+./backend/gradlew -p backend bootRun
+
+# フロントエンド
+just dev
+```
+
+バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000` でアクセスできます。
 
 ## ビルド・テスト
 
@@ -128,6 +164,8 @@ REST APIの詳細は [`doc/api/`](doc/api/) を参照してください。
 
 ```
 WebGallary/
+├── .mise.toml                     # Node.jsバージョン定義（mise）
+├── justfile                       # タスクランナー定義（just）
 ├── .github
 │   ├── ISSUE_TEMPLATE
 │   │   ├── テストissue.md          # テスト用Issueのテンプレート
