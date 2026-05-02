@@ -81,6 +81,18 @@
 brew install mise just
 ```
 
+miseのインストール後、シェルにmiseを有効化する設定を追加してください。
+
+```bash
+# bashの場合
+echo 'eval "$(mise activate bash)"' >> ~/.bashrc
+
+# zshの場合
+echo 'eval "$(mise activate zsh)"' >> ~/.zshrc
+```
+
+設定後、シェルを再起動するか `source ~/.bashrc`（または `source ~/.zshrc`）を実行してください。
+
 ## セットアップ
 
 ### 1. データベースの起動

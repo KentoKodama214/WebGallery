@@ -1,17 +1,18 @@
 # 初期セットアップ（mise + corepack + pnpm install）
 setup:
     mise install
-    corepack enable pnpm
-    cd frontend && pnpm install
+    mise exec -- corepack enable pnpm
+    mise reshim
+    cd frontend && mise exec -- pnpm install
 
 # 開発サーバー起動
 dev:
-    cd frontend && pnpm dev
+    cd frontend && mise exec -- pnpm dev
 
 # ビルド
 build:
-    cd frontend && pnpm build
+    cd frontend && mise exec -- pnpm build
 
 # lint
 lint:
-    cd frontend && pnpm lint
+    cd frontend && mise exec -- pnpm lint
