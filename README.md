@@ -73,7 +73,7 @@ docker-compose up -d
 ### 2. 環境変数の設定
 
 ```bash
-./set-env.sh
+./backend/set-env.sh
 ```
 
 デフォルト値でもアプリケーションの起動は可能ですが、必要に応じて環境変数を設定してください。
@@ -81,7 +81,7 @@ docker-compose up -d
 ### 3. アプリケーションの起動
 
 ```bash
-./gradlew bootRun
+./backend/gradlew -p backend bootRun
 ```
 
 起動後、`http://localhost:8080` でアクセスできます。
@@ -90,22 +90,22 @@ docker-compose up -d
 
 ```bash
 # ビルド
-./gradlew build
+./backend/gradlew -p backend build
 
 # 単体テストの実行
-./gradlew test
+./backend/gradlew -p backend test
 
 # 統合テストの実行（要Docker）
-./gradlew integrationTest
+./backend/gradlew -p backend integrationTest
 
 # 全テストの実行（要Docker）
-./gradlew allTest
+./backend/gradlew -p backend allTest
 
 # WARファイルの生成
-./gradlew war
+./backend/gradlew -p backend war
 
 # クリーンビルド
-./gradlew clean build
+./backend/gradlew -p backend clean build
 ```
 
 ## アーキテクチャ
@@ -136,10 +136,6 @@ WebGallary/
 │       ├── architecture-check.yml  # アーキテクチャチェックのGithub Action
 │       ├── checkstyle.yml          # CheckstyleによるJavadocチェックのGithub Action
 │       └── test.yml                # テスト実行のGithub Action
-├── build.gradle
-├── config/
-│   └── checkstyle/
-│       └── checkstyle.xml          # Checkstyle設定ファイル
 ├── docker-compose.yml
 ├── docker/db/                      # DBイメージ用Dockerfile
 ├── db/                             # DB初期化スクリプト
@@ -153,34 +149,44 @@ WebGallary/
 │   └── view/                       # 画面設計書
 ├── scripts/
 │   └── check-architecture.sh       # アーキテクチャチェックスクリプト
-└── src/
-    ├── main/
-    │   ├── java/com/web/gallary/
-    │   │   ├── config/             # 設定クラス
-    │   │   ├── constant/           # 定数（APIルート・メッセージ）
-    │   │   ├── controller/         # コントローラ
-    │   │   │   ├── request/        # リクエストDTO
-    │   │   │   └── response/       # レスポンスDTO
-    │   │   ├── entity/             # エンティティ
-    │   │   ├── enumuration/        # 列挙型
-    │   │   ├── exception/          # カスタム例外
-    │   │   ├── helper/             # ヘルパーユーティリティ
-    │   │   ├── mapper/             # MyBatisマッパー
-    │   │   ├── model/              # モデルオブジェクト
-    │   │   ├── repository/         # リポジトリ
-    │   │   │   └── impl/
-    │   │   ├── service/            # サービス
-    │   │   │   └── impl/
-    │   │   ├── type_handler/       # MyBatis型ハンドラ
-    │   │   └── util/               # ユーティリティ
-    │   └── resources/
-    │       ├── application.yml
-    │       ├── messages.properties
-    │       └── com/web/gallary/mapper/  # MyBatis XMLマッパー
-    └── test/
-        ├── java/com/web/gallary/   # テストクラス
-        └── resources/
-            ├── application-test.yml
-            |── json/controller     # テスト用リクエストjson
-            └── sql/                # テスト用SQL
+├── frontend/                       # フロントエンド（Next.js）
+├── backend/                        # バックエンド（Spring Boot）
+│   ├── build.gradle
+│   ├── settings.gradle
+│   ├── gradlew / gradlew.bat      # Gradleラッパー
+│   ├── gradle/                     # Gradleラッパー JAR
+│   ├── config/
+│   │   └── checkstyle/
+│   │       └── checkstyle.xml      # Checkstyle設定ファイル
+│   ├── set-env.sh                  # 環境変数設定スクリプト
+│   └── src/
+│       ├── main/
+│       │   ├── java/com/web/gallary/
+│       │   │   ├── config/             # 設定クラス
+│       │   │   ├── constant/           # 定数（APIルート・メッセージ）
+│       │   │   ├── controller/         # コントローラ
+│       │   │   │   ├── request/        # リクエストDTO
+│       │   │   │   └── response/       # レスポンスDTO
+│       │   │   ├── entity/             # エンティティ
+│       │   │   ├── enumuration/        # 列挙型
+│       │   │   ├── exception/          # カスタム例外
+│       │   │   ├── helper/             # ヘルパーユーティリティ
+│       │   │   ├── mapper/             # MyBatisマッパー
+│       │   │   ├── model/              # モデルオブジェクト
+│       │   │   ├── repository/         # リポジトリ
+│       │   │   │   └── impl/
+│       │   │   ├── service/            # サービス
+│       │   │   │   └── impl/
+│       │   │   ├── type_handler/       # MyBatis型ハンドラ
+│       │   │   └── util/               # ユーティリティ
+│       │   └── resources/
+│       │       ├── application.yml
+│       │       ├── messages.properties
+│       │       └── com/web/gallary/mapper/  # MyBatis XMLマッパー
+│       └── test/
+│           ├── java/com/web/gallary/   # テストクラス
+│           └── resources/
+│               ├── application-test.yml
+│               ├── json/controller     # テスト用リクエストjson
+│               └── sql/                # テスト用SQL
 ```
