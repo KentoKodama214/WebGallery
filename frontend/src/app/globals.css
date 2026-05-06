@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+/* PhotoSwipe カスタムスタイル */
+button.pswp__button--add-favorite-button {
+  background: url(/image/heart_off.png) !important;
+  background-size: 30px 30px !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+button.pswp__button--cancel-favorite-button {
+  background: url(/image/heart_on.png) !important;
+  background-size: 30px 30px !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+.pswp__custom-caption {
+  background: rgba(100, 100, 100, 0.6);
+  width: 70%;
+  padding: 2px 8px;
+  border-radius: 4px;
+  position: absolute;
+  left: 50%;
+  bottom: 15px;
+  transform: translateX(-50%);
+}
+
+.pswp__custom-caption .caption_content {
+  font-size: 16px;
+  color: #fff;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+.pswp__custom-caption .show_detail {
+  font-size: 14px;
+  color: lightblue;
+  text-align: right;
+  padding-right: 10px;
+  text-decoration: underline;
+}
+
+.pswp__custom-caption .show_detail a {
+  color: lightblue;
+  text-decoration: underline;
+}
