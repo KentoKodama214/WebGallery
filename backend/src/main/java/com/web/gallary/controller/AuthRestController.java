@@ -179,6 +179,7 @@ public class AuthRestController {
 
 	/**
 	 * エラーレスポンス用の内部クラス
+	 * @param message エラーメッセージ
 	 */
 	private record ErrorResponse(String message) {}
 }
