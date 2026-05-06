@@ -1,0 +1,442 @@
+/**
+ * バックエンドAPIとの通信を管理するクライアントモジュール
+ */
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+
+/** メモリ上にアクセストークンを保持 */
+let accessToken: string | null = null;
+
+/**
+ * アクセストークンを取得する
+ */
+export function getAccessToken(): string | null {
+  return accessToken;
+}
+
+/**
+ * アクセストークンを設定する
+ */
+export function setAccessToken(token: string | null): void {
+  accessToken = token;
+}
+
+/**
+ * ログインAPIを呼び出す
+ */
+export async function login(
+  accountId: string,
+  password: string
+): Promise<{ accessToken: string; expiresIn: number }> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ accountId, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: "ログインに失敗しました" }));
+    throw new Error(error.message || "ログインに失敗しました");
+  }
+
+  const data = await response.json();
+  accessToken = data.accessToken;
+  return data;
+}
+
+/**
+ * リフレッシュトークンを使ってアクセストークンを更新する
+ */
+export async function refresh(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      accessToken = null;
+      return false;
+    }
+
+    const data = await response.json();
+    accessToken = data.accessToken;
+    return true;
+  } catch {
+    accessToken = null;
+    return false;
+  }
+}
+
+/**
+ * ログアウトAPIを呼び出す
+ */
+export async function logout(): Promise<void> {
+  await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+  accessToken = null;
+}
+
+/**
+ * 認証付きfetchを行う（401時に自動リフレッシュ+リトライ）
+ */
+export async function fetchWithAuth(
+  url: string,
+  options: RequestInit = {}
+): Promise<Response> {
+  const headers = new Headers(options.headers);
+  if (!accessToken) {
+    await refresh();
+  }
+  if (accessToken) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
+  }
+
+  let response = await fetch(`${API_BASE_URL}${url}`, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
+
+  if (response.status === 401) {
+    const refreshed = await refresh();
+    if (refreshed) {
+      headers.set("Authorization", `Bearer ${accessToken}`);
+      response = await fetch(`${API_BASE_URL}${url}`, {
+        ...options,
+        headers,
+        credentials: "include",
+      });
+    }
+  }
+
+  return response;
+}
+
+/**
+ * アカウント一覧を取得する
+ */
+export async function getAccountList(): Promise<AccountListItem[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/accounts`);
+  if (!response.ok) {
+    throw new Error("アカウント一覧の取得に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * アカウント詳細情報を取得する
+ */
+export async function getAccount(accountId: string): Promise<AccountDetail> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${accountId}`);
+  if (!response.ok) {
+    throw new Error("アカウント情報の取得に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * アカウント情報を更新する
+ */
+export async function updateAccount(
+  accountId: string,
+  data: AccountUpdateData
+): Promise<AccountUpdateResult> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${accountId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error("アカウント情報の更新に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * 都道府県一覧を取得する
+ */
+export async function getPrefectures(): Promise<PrefectureGroup[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/prefectures`);
+  if (!response.ok) {
+    throw new Error("都道府県一覧の取得に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * アカウントを新規登録する
+ */
+export async function registerAccount(
+  data: AccountRegistData
+): Promise<AccountRegistResult> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/accounts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error("アカウントの登録に失敗しました");
+  }
+  return response.json();
+}
+
+/** アカウント一覧アイテム */
+export interface AccountListItem {
+  accountId: string;
+  accountName: string;
+}
+
+/** アカウント登録リクエスト */
+export interface AccountRegistData {
+  accountId: string;
+  accountName: string;
+  password: string;
+  birthdate: string | null;
+  sexKbn: string;
+  birthplacePrefectureKbnCode: string;
+  residentPrefectureKbnCode: string;
+  freeMemo: string;
+}
+
+/** アカウント登録結果 */
+export interface AccountRegistResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+}
+
+/** アカウント詳細情報 */
+export interface AccountDetail {
+  accountId: string;
+  accountName: string;
+  birthdate: string | null;
+  sexKbn: string;
+  birthplacePrefectureKbnCode: string;
+  residentPrefectureKbnCode: string;
+  freeMemo: string;
+}
+
+/** アカウント更新リクエスト */
+export interface AccountUpdateData {
+  accountId: string;
+  accountName: string;
+  newPassword: string;
+  birthdate: string | null;
+  sexKbn: string;
+  birthplacePrefectureKbnCode: string;
+  residentPrefectureKbnCode: string;
+  freeMemo: string;
+}
+
+/** アカウント更新結果 */
+export interface AccountUpdateResult {
+  httpStatus: number;
+  isDuplicateAccountId: boolean;
+  isAccountIdChanged: boolean;
+  isPasswordChanged: boolean;
+  message: string;
+}
+
+/** 都道府県グループ */
+export interface PrefectureGroup {
+  groupName: string;
+  prefectures: Prefecture[];
+}
+
+/** 都道府県 */
+export interface Prefecture {
+  kbnCode: string;
+  kbnJapaneseName: string;
+}
+
+/** 写真タグアイテム */
+export interface PhotoTagItem {
+  accountNo: number;
+  photoNo: number;
+  tagNo: number;
+  tagJapaneseName: string;
+  tagEnglishName: string;
+}
+
+/** 写真詳細レスポンス */
+export interface PhotoDetailResponse {
+  accountNo: number;
+  photoNo: number;
+  isFavorite: boolean;
+  photoAt: string | null;
+  locationNo: number | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  locationName: string | null;
+  imageFilePath: string;
+  photoJapaneseTitle: string | null;
+  photoEnglishTitle: string | null;
+  caption: string | null;
+  directionKbn: string | null;
+  focalLength: number | null;
+  fValue: number | null;
+  shutterSpeed: number | null;
+  iso: number | null;
+  photoTagList: PhotoTagItem[];
+}
+
+/** 写真編集結果レスポンス */
+export interface PhotoEditResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+}
+
+/** お気に入り操作結果レスポンス */
+export interface PhotoFavoriteResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+}
+
+/** 写真一覧アイテム */
+export interface PhotoListItem {
+  accountNo: number;
+  photoNo: number;
+  isFavorite: boolean;
+  imageFilePath: string;
+  caption: string;
+  directionKbn: string;
+}
+
+/** 写真一覧レスポンス */
+export interface PhotoListResponse {
+  isLast: boolean;
+  photoList: PhotoListItem[];
+}
+
+/** 写真一覧取得パラメータ */
+export interface PhotoListParams {
+  directionKbn?: string;
+  isFavorite?: string;
+  tagList?: string;
+  sortBy?: string;
+  pageNo?: number;
+}
+
+/**
+ * 写真一覧を取得する
+ */
+export async function getPhotoList(
+  photoAccountId: string,
+  params: PhotoListParams = {}
+): Promise<PhotoListResponse> {
+  const searchParams = new URLSearchParams();
+  if (params.directionKbn) searchParams.set("directionKbn", params.directionKbn);
+  if (params.isFavorite) searchParams.set("isFavorite", params.isFavorite);
+  if (params.tagList) searchParams.set("tagList", params.tagList);
+  if (params.sortBy) searchParams.set("sortBy", params.sortBy);
+  if (params.pageNo !== undefined) searchParams.set("pageNo", String(params.pageNo));
+
+  const query = searchParams.toString();
+  const url = `/api/v1/accounts/${photoAccountId}/photos${query ? `?${query}` : ""}`;
+  const response = await fetchWithAuth(url);
+  if (!response.ok) {
+    throw new Error("写真一覧の取得に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * 写真詳細を取得する
+ */
+export async function getPhotoDetail(
+  photoAccountId: string,
+  accountNo: number,
+  photoNo: number
+): Promise<PhotoDetailResponse> {
+  const url = `/api/v1/accounts/${photoAccountId}/photos/${photoNo}?accountNo=${accountNo}`;
+  const response = await fetchWithAuth(url);
+  if (!response.ok) {
+    throw new Error("写真詳細の取得に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * 写真を削除する
+ */
+export async function deletePhoto(
+  photoAccountId: string,
+  data: { accountNo: number; photoNo: number; imageFilePath: string }
+): Promise<PhotoEditResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${photoAccountId}/photos`,
+    {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
+  if (!response.ok) {
+    throw new Error("写真の削除に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * お気に入りを登録する
+ */
+export async function addFavorite(
+  favoritePhotoAccountNo: number,
+  favoritePhotoNo: number
+): Promise<PhotoFavoriteResult> {
+  const response = await fetchWithAuth("/api/v1/photos/favorites", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ favoritePhotoAccountNo, favoritePhotoNo }),
+  });
+  if (!response.ok) {
+    throw new Error("お気に入りの登録に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * お気に入りを解除する
+ */
+export async function deleteFavorite(
+  favoritePhotoAccountNo: number,
+  favoritePhotoNo: number
+): Promise<PhotoFavoriteResult> {
+  const response = await fetchWithAuth("/api/v1/photos/favorites", {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ favoritePhotoAccountNo, favoritePhotoNo }),
+  });
+  if (!response.ok) {
+    throw new Error("お気に入りの解除に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * 写真を保存する（新規登録・更新）
+ */
+export async function savePhoto(
+  photoAccountId: string,
+  formData: FormData,
+  isUpdate: boolean
+): Promise<PhotoEditResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${photoAccountId}/photos`,
+    {
+      method: isUpdate ? "PUT" : "POST",
+      body: formData,
+    }
+  );
+  if (!response.ok) {
+    throw new Error("写真の保存に失敗しました");
+  }
+  return response.json();
+}

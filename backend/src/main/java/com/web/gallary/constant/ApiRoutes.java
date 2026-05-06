@@ -32,6 +32,14 @@ public final class ApiRoutes {
 	/** アカウント一覧ページ */
 	public static final String ACCOUNT_LIST = "/account_list";
 
+	// REST API - 認証関連
+	/** 認証ログインAPI */
+	public static final String API_AUTH_LOGIN = API_PREFIX + "/auth/login";
+	/** 認証リフレッシュAPI */
+	public static final String API_AUTH_REFRESH = API_PREFIX + "/auth/refresh";
+	/** 認証ログアウトAPI */
+	public static final String API_AUTH_LOGOUT = API_PREFIX + "/auth/logout";
+
 	// REST API - アカウント関連
 	/** アカウントAPI（POST=登録） */
 	public static final String API_ACCOUNTS = API_PREFIX + "/accounts";
@@ -50,9 +58,17 @@ public final class ApiRoutes {
 	/** 写真登録・編集ページ */
 	public static final String PHOTO_SETTING = PHOTO + "/" + PHOTO_ACCOUNT_ID + "/photo_setting";
 
+	// REST API - 都道府県関連
+	/** 都道府県一覧API */
+	public static final String API_PREFECTURES = API_PREFIX + "/prefectures";
+
 	// REST API - 写真関連
 	/** 写真API（GET=一覧取得, POST=新規登録, PUT=更新, DELETE=削除） */
 	public static final String API_PHOTOS = API_PREFIX + "/accounts/" + PHOTO_ACCOUNT_ID + "/photos";
+	/** 写真番号 */
+	public static final String PHOTO_NO = "{photoNo}";
+	/** 写真詳細API（GET=詳細取得） */
+	public static final String API_PHOTO_DETAIL = API_PHOTOS + "/" + PHOTO_NO;
 
 	// REST API - お気に入り関連
 	/** お気に入りAPI（POST=登録, DELETE=解除） */

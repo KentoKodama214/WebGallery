@@ -15,6 +15,7 @@ import com.web.gallary.exception.BadRequestException;
 import com.web.gallary.exception.FileDuplicateException;
 import com.web.gallary.exception.ForbiddenAccountException;
 import com.web.gallary.exception.PhotoNotAdditableException;
+import com.web.gallary.exception.PhotoNotFoundException;
 import com.web.gallary.exception.RegistFailureException;
 import com.web.gallary.exception.UpdateFailureException;
 import com.web.gallary.helper.SessionHelper;
@@ -30,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 */
 @RestControllerAdvice(assignableTypes = {
 		AccountRestController.class,
+		KbnMstRestController.class,
 		PhotoFavoriteController.class,
 		PhotoRestController.class
 })
@@ -124,6 +126,23 @@ public class CommonRestControllerAdvice {
 		return new ResponseEntity<ErrorRequest>(errorResponse, HttpStatus.CONFLICT);
 	}
 	
+	/**
+	 * 写真が存在しないときに制御するExceptionHandler
+	 *
+	 * @param	exception	{@link PhotoNotFoundException}
+	 * @return				{@link ErrorRequest}
+	 */
+	@ExceptionHandler(PhotoNotFoundException.class)
+	public ResponseEntity<ErrorRequest> handlePhotoNotFoundException(PhotoNotFoundException exception) {
+		ErrorRequest errorResponse = ErrorRequest.builder()
+				.httpStatus(HttpStatus.NOT_FOUND.value())
+				.errorCode(exception.getErrorCode())
+				.errorMessage(exception.getMessage())
+				.goBackPageUrl(getGoBackPageUrl()).build();
+
+		return new ResponseEntity<ErrorRequest>(errorResponse, HttpStatus.NOT_FOUND);
+	}
+
 	/**
 	 * データの更新に失敗したときに制御するExceptionHandler
 	 * 

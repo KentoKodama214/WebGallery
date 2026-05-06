@@ -1,0 +1,190 @@
+@import url(https://fonts.googleapis.com/css?family=Vollkorn|Roboto);
+
+/* ハンバーガーボタン */
+.buttonContainer {
+  position: fixed;
+  top: 2%;
+  right: 2%;
+  height: 27px;
+  width: 35px;
+  cursor: pointer;
+  z-index: 10000;
+  transition: opacity 0.25s ease;
+}
+
+.buttonContainer:hover {
+  opacity: 0.7;
+}
+
+.buttonContainer span {
+  background: darkgray;
+  border: none;
+  height: 5px;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  transition: all 0.35s ease;
+  cursor: pointer;
+}
+
+/* ハンバーガーボタン active状態 (X形) */
+.active span:nth-of-type(1) {
+  transform: translateY(10px) translateX(0) rotate(45deg);
+  background: #fff;
+}
+
+.active span:nth-of-type(2) {
+  opacity: 0;
+  background: #fff;
+}
+
+.active span:nth-of-type(3) {
+  transform: translateY(-10px) translateX(0) rotate(-45deg);
+  background: #fff;
+}
+
+/* オーバーレイ */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  visibility: hidden;
+  transition: opacity 0.35s, visibility 0.35s, width 0.35s;
+  z-index: 9999;
+}
+
+.overlay::before {
+  content: "";
+  background: lightgray;
+  left: -55%;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  position: absolute;
+  transition: left 0.35s ease;
+}
+
+.overlay::after {
+  content: "";
+  background: lightgray;
+  right: -55%;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  position: absolute;
+  transition: all 0.35s ease;
+}
+
+/* オーバーレイ open状態 */
+.open {
+  opacity: 0.9;
+  visibility: visible;
+  height: 100%;
+}
+
+.open::before {
+  left: 0;
+}
+
+.open::after {
+  right: 0;
+}
+
+/* ナビゲーション */
+.nav {
+  position: relative;
+  height: 70%;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 50px;
+  font-family: "Vollkorn", serif;
+  font-weight: 400;
+  text-align: center;
+  z-index: 9999;
+}
+
+/* メニューリスト */
+.menu {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  display: inline-block;
+  position: relative;
+  height: 100%;
+}
+
+/* メニューアイテム */
+.menuItem {
+  display: block;
+  height: 25%;
+  min-height: 50px;
+  position: relative;
+  opacity: 0;
+}
+
+/* open時のメニューアイテムアニメーション */
+.open .menuItem {
+  animation: fadeInRight 0.5s ease forwards;
+  animation-delay: 0.35s;
+}
+
+.open .menuItem:nth-of-type(2) {
+  animation-delay: 0.45s;
+}
+
+.open .menuItem:nth-of-type(3) {
+  animation-delay: 0.55s;
+}
+
+.open .menuItem:nth-of-type(4) {
+  animation-delay: 0.65s;
+}
+
+/* メニューリンク */
+.menuLink {
+  display: block;
+  position: relative;
+  color: #fff;
+  text-decoration: none;
+  overflow: hidden;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  padding: 0;
+}
+
+.menuLink::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0%;
+  transform: translateX(-50%);
+  height: 3px;
+  background: #fff;
+  transition: 0.35s;
+}
+
+.menuLink:hover::after,
+.menuLink:focus::after,
+.menuLink:active::after {
+  width: 100%;
+}
+
+@keyframes fadeInRight {
+  0% {
+    opacity: 0;
+    left: 20%;
+  }
+
+  100% {
+    opacity: 1;
+    left: 0;
+  }
+}

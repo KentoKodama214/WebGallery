@@ -1,0 +1,46 @@
+package com.web.gallary.repository.impl;
+
+import org.springframework.stereotype.Repository;
+
+import com.web.gallary.entity.RefreshToken;
+import com.web.gallary.mapper.RefreshTokenMapper;
+import com.web.gallary.repository.RefreshTokenRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * リフレッシュトークンデータを永続化するRepositoryの実装クラス
+ * @author	Kento Kodama
+ * @version	1.0.0
+ * @since	1.0.0
+ */
+@Repository
+@RequiredArgsConstructor
+public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
+	private final RefreshTokenMapper refreshTokenMapper;
+
+	@Override
+	public void save(RefreshToken refreshToken) {
+		refreshTokenMapper.insert(refreshToken);
+	}
+
+	@Override
+	public RefreshToken findByTokenHash(String tokenHash) {
+		return refreshTokenMapper.selectByTokenHash(tokenHash);
+	}
+
+	@Override
+	public void revokeAllByAccountNo(Integer accountNo) {
+		refreshTokenMapper.revokeAllByAccountNo(accountNo);
+	}
+
+	@Override
+	public void revokeByTokenHash(String tokenHash) {
+		refreshTokenMapper.revokeByTokenHash(tokenHash);
+	}
+
+	@Override
+	public void deleteExpired() {
+		refreshTokenMapper.deleteExpired();
+	}
+}

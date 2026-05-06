@@ -8,6 +8,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,10 +20,14 @@ import com.web.gallary.constant.Consts;
 import com.web.gallary.controller.request.AccountRegistRequest;
 import com.web.gallary.controller.request.AccountUpdateRequest;
 import com.web.gallary.controller.request.ErrorRequest;
+import com.web.gallary.controller.response.AccountDetailResponse;
+import com.web.gallary.controller.response.AccountListItemResponse;
 import com.web.gallary.controller.response.AccountRegistResponse;
 import com.web.gallary.controller.response.AccountUpdateResponse;
+import com.web.gallary.entity.Account;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.exception.BadRequestException;
+import com.web.gallary.exception.ForbiddenAccountException;
 import com.web.gallary.exception.RegistFailureException;
 import com.web.gallary.exception.UpdateFailureException;
 import com.web.gallary.helper.SessionHelper;
@@ -46,8 +51,55 @@ public class AccountRestController {
 	private final SessionHelper sessionHelper;
 	
 	/**
+	 * アカウント一覧取得
+	 *
+	 * @return	{@link AccountListItemResponse}のリスト
+	 */
+	@GetMapping(ApiRoutes.API_ACCOUNTS)
+	public ResponseEntity<List<AccountListItemResponse>> getAccountList() {
+		List<AccountListItemResponse> responseList = accountServiceImpl.getAccountList().stream()
+				.map(accountModel -> AccountListItemResponse.builder()
+						.accountId(accountModel.getAccountId())
+						.accountName(accountModel.getAccountName())
+						.build())
+				.toList();
+
+		return ResponseEntity.ok(responseList);
+	}
+
+	/**
+	 * アカウント詳細取得
+	 *
+	 * @param	accountId	アカウントID
+	 * @return				{@link AccountDetailResponse}
+	 * @throws	ForbiddenAccountException	認証ユーザーと異なるアカウントIDの場合
+	 */
+	@GetMapping(ApiRoutes.API_ACCOUNT)
+	public ResponseEntity<AccountDetailResponse> getAccount(
+			@PathVariable String accountId) throws ForbiddenAccountException {
+
+		if (!accountId.equals(sessionHelper.getAccountId())) {
+			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT);
+		}
+
+		Account account = accountServiceImpl.getAccountById(accountId);
+
+		AccountDetailResponse response = AccountDetailResponse.builder()
+				.accountId(account.getAccountId())
+				.accountName(account.getAccountName())
+				.birthdate(Consts.MIN_LOCAL_DATE.equals(account.getBirthdate()) ? null : account.getBirthdate())
+				.sexKbn(account.getSexKbn())
+				.birthplacePrefectureKbnCode(account.getBirthplacePrefectureKbnCode())
+				.residentPrefectureKbnCode(account.getResidentPrefectureKbnCode())
+				.freeMemo(account.getFreeMemo())
+				.build();
+
+		return ResponseEntity.ok(response);
+	}
+
+	/**
 	 * アカウント登録
-	 * 
+	 *
 	 * @param	accuontRegistRequest	{@link AccountRegistRequest}
 	 * @param	result					AccountRegistRequestのバインディング結果
 	 * @return							{@link AccountRegistResponse}

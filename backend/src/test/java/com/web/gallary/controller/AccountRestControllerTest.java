@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +35,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.web.gallary.constant.Consts;
 import com.web.gallary.controller.request.ErrorRequest;
+import com.web.gallary.entity.Account;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.enumuration.SexEnum;
 import com.web.gallary.exception.RegistFailureException;
@@ -78,6 +82,120 @@ public class AccountRestControllerTest {
 
 	@Nested
 	@Order(1)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class getAccountList {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント一覧を取得できること")
+		void getAccountList_success() throws Exception {
+			List<AccountModel> accountModels = List.of(
+					AccountModel.builder().accountId("aaaaaaaa").accountName("AAAAAAAA").build(),
+					AccountModel.builder().accountId("bbbbbbbb").accountName("BBBBBBBB").build()
+			);
+
+			doReturn(accountModels).when(accountServiceImpl).getAccountList();
+
+			mockMvc.perform(get("/api/v1/accounts"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].accountId").value("aaaaaaaa"))
+				.andExpect(jsonPath("$[0].accountName").value("AAAAAAAA"))
+				.andExpect(jsonPath("$[1].accountId").value("bbbbbbbb"))
+				.andExpect(jsonPath("$[1].accountName").value("BBBBBBBB"));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：アカウントが0件の場合は空リストを返すこと")
+		void getAccountList_empty() throws Exception {
+			doReturn(Collections.emptyList()).when(accountServiceImpl).getAccountList();
+
+			mockMvc.perform(get("/api/v1/accounts"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$").isArray())
+				.andExpect(jsonPath("$").isEmpty());
+		}
+	}
+
+	@Nested
+	@Order(2)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class getAccount {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント情報を取得できること")
+		void getAccount_success() throws Exception {
+			String accountId = "aaaaaaaa";
+
+			doReturn(accountId).when(sessionHelper).getAccountId();
+
+			Account account = Account.builder()
+					.accountNo(1)
+					.accountId(accountId)
+					.accountName("AAAAAAAA")
+					.birthdate(LocalDate.of(2000, 1, 1))
+					.sexKbn(SexEnum.WOMAN)
+					.birthplacePrefectureKbnCode("Hokkaido")
+					.residentPrefectureKbnCode("Okinawa")
+					.freeMemo("フリーメモ")
+					.build();
+
+			doReturn(account).when(accountServiceImpl).getAccountById(accountId);
+
+			mockMvc.perform(get("/api/v1/accounts/" + accountId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.accountId").value(accountId))
+				.andExpect(jsonPath("$.accountName").value("AAAAAAAA"))
+				.andExpect(jsonPath("$.birthdate").value("2000-01-01"))
+				.andExpect(jsonPath("$.sexKbn").value("woman"))
+				.andExpect(jsonPath("$.birthplacePrefectureKbnCode").value("Hokkaido"))
+				.andExpect(jsonPath("$.residentPrefectureKbnCode").value("Okinawa"))
+				.andExpect(jsonPath("$.freeMemo").value("フリーメモ"));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：生年月日がMIN_LOCAL_DATEの場合はnullで返ること")
+		void getAccount_birthdate_min() throws Exception {
+			String accountId = "aaaaaaaa";
+
+			doReturn(accountId).when(sessionHelper).getAccountId();
+
+			Account account = Account.builder()
+					.accountNo(1)
+					.accountId(accountId)
+					.accountName("AAAAAAAA")
+					.birthdate(Consts.MIN_LOCAL_DATE)
+					.sexKbn(SexEnum.NONE)
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
+					.build();
+
+			doReturn(account).when(accountServiceImpl).getAccountById(accountId);
+
+			mockMvc.perform(get("/api/v1/accounts/" + accountId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.accountId").value(accountId))
+				.andExpect(jsonPath("$.accountName").value("AAAAAAAA"))
+				.andExpect(jsonPath("$.birthdate").isEmpty())
+				.andExpect(jsonPath("$.sexKbn").value("none"));
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("異常系：認証ユーザーと異なるアカウントIDの場合は403を返すこと")
+		void getAccount_forbidden() throws Exception {
+			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
+
+			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa"))
+				.andExpect(status().isForbidden());
+
+			verify(accountServiceImpl, times(0)).getAccountById(anyString());
+		}
+	}
+
+	@Nested
+	@Order(3)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class register {
 		@Test
@@ -182,7 +300,7 @@ public class AccountRestControllerTest {
 	}
 
 	@Nested
-	@Order(2)
+	@Order(4)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class update {
 		@Test
@@ -400,7 +518,7 @@ public class AccountRestControllerTest {
 	}
 
 	@Nested
-	@Order(3)
+	@Order(5)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class handleInsertFailedException {
 		@Test
