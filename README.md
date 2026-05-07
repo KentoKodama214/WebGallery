@@ -200,6 +200,38 @@ WebGallary/
 ├── scripts/
 │   └── check-architecture.sh       # アーキテクチャチェックスクリプト
 ├── frontend/                       # フロントエンド（Next.js）
+│   ├── package.json
+│   ├── pnpm-lock.yaml
+│   ├── next.config.ts              # Next.js設定（APIプロキシ等）
+│   ├── tsconfig.json
+│   ├── eslint.config.mjs
+│   ├── postcss.config.mjs
+│   ├── jest.config.js              # Jestテスト設定
+│   ├── playwright.config.ts        # E2Eテスト設定
+│   ├── e2e/                        # Playwright E2Eテスト
+│   ├── public/
+│   │   └── image/                  # 静的画像（アイコン等）
+│   └── src/
+│       ├── app/
+│       │   ├── globals.css              # グローバルCSS
+│       │   ├── layout.tsx               # ルートレイアウト
+│       │   ├── page.tsx                 # トップページ
+│       │   ├── login/                   # ログインページ
+│       │   ├── register/               # アカウント登録ページ
+│       │   ├── account_list/           # アカウント一覧ページ
+│       │   ├── [accountId]/
+│       │   │   └── account_setting/    # アカウント設定ページ
+│       │   └── photo/[photoAccountId]/
+│       │       ├── photo_list/         # 写真一覧ページ（PhotoSwipe統合）
+│       │       ├── photo_detail/       # 写真詳細ページ
+│       │       └── photo_setting/      # 写真設定ページ
+│       ├── components/
+│       │   └── layout/                  # 共通レイアウト（Header / Footer / Navigation）
+│       └── lib/
+│           ├── api/
+│           │   └── client.ts            # APIクライアント
+│           └── auth/
+│               └── AuthProvider.tsx      # 認証プロバイダー
 ├── backend/                        # バックエンド（Spring Boot）
 │   ├── build.gradle
 │   ├── settings.gradle
