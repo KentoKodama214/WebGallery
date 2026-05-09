@@ -388,7 +388,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         {!isLoading && !error && photos.length > 0 && (
           <div
             ref={galleryRef}
-            style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "10px" }}
+            style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", gap: "10px", margin: "0 auto" }}
           >
             {photos.map((photo) => (
               <div

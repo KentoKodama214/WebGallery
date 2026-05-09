@@ -139,6 +139,13 @@ export function RegisterForm() {
               type="text"
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
+              onBlur={() => {
+                if (!accountId || !/^[a-zA-Z0-9]{8,16}$/.test(accountId)) {
+                  setErrors((prev) => ({ ...prev, accountId: "半角英数字で8〜16文字で入力してください" }));
+                } else {
+                  setErrors((prev) => { const { accountId: _, ...rest } = prev; return rest; });
+                }
+              }}
               placeholder="半角英数字で8〜16文字"
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
@@ -151,6 +158,13 @@ export function RegisterForm() {
               type="text"
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
+              onBlur={() => {
+                if (!accountName.trim()) {
+                  setErrors((prev) => ({ ...prev, accountName: "アカウント名を入力してください" }));
+                } else {
+                  setErrors((prev) => { const { accountName: _, ...rest } = prev; return rest; });
+                }
+              }}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.accountName && (
@@ -162,6 +176,13 @@ export function RegisterForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => {
+                if (!password || !/^[a-zA-Z0-9]{8,}$/.test(password)) {
+                  setErrors((prev) => ({ ...prev, password: "半角英数字で8文字以上で入力してください" }));
+                } else {
+                  setErrors((prev) => { const { password: _, ...rest } = prev; return rest; });
+                }
+              }}
               placeholder="半角英数字で8文字以上"
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
@@ -258,7 +279,7 @@ export function RegisterForm() {
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]">
           <div className="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]">
             <p className="text-[#444] text-center">
-              アカウントを登録しました。ログインページへ移動します。
+              アカウントを登録しました。<br />ログインページへ移動します。
             </p>
           </div>
         </div>
