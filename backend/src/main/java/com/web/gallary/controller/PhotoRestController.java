@@ -316,9 +316,10 @@ public class PhotoRestController {
 	/**
 	 * ページ番号から写真のリストを絞り込み、写真一覧のレスポンスのクラスへ詰め替えをする
 	 * 
-	 * @param	photoList	{@link PhotoModel}
-	 * @param	pageNo		ページ番号
-	 * @return				{@link PhotoListGetResponse}
+	 * @param	photoList				{@link PhotoModel}
+	 * @param	pageNo					ページ番号
+	 * @param	isReachedUpperLimit		上限枚数に到達しているかどうか
+	 * @return							{@link PhotoListGetResponse}
 	 */
 	private PhotoListGetResponse createPhotoListGetResponse(List<PhotoModel> photoList, Integer pageNo, Boolean isReachedUpperLimit) {
 		Integer photoCountPerPage = photoConfig.getPhotoCountPerPage();
