@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
@@ -31,7 +31,10 @@ export function PhotoSettingForm({
 }: PhotoSettingFormProps) {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
-  const isEditMode = accountNo !== undefined && photoNo !== undefined;
+  const [savedPhotoNo, setSavedPhotoNo] = useState<number | undefined>(photoNo);
+  const isEditMode = savedPhotoNo !== undefined;
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // フォーム状態
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -199,8 +202,8 @@ export function PhotoSettingForm({
       formData.append("accountNo", String(user!.accountNo));
       formData.append("directionKbn", directionKbn);
 
-      if (isEditMode && photoNo) {
-        formData.append("photoNo", String(photoNo));
+      if (isEditMode && savedPhotoNo) {
+        formData.append("photoNo", String(savedPhotoNo));
       }
       if (imageFile) {
         formData.append("imageFile", imageFile);
@@ -238,10 +241,10 @@ export function PhotoSettingForm({
           `photoTagRegistRequestList[${index}].accountNo`,
           String(user!.accountNo)
         );
-        if (isEditMode && photoNo) {
+        if (isEditMode && savedPhotoNo) {
           formData.append(
             `photoTagRegistRequestList[${index}].photoNo`,
-            String(photoNo)
+            String(savedPhotoNo)
           );
         }
         formData.append(
@@ -258,7 +261,9 @@ export function PhotoSettingForm({
         );
       });
 
-      await savePhoto(photoAccountId, formData, isEditMode);
+      const result = await savePhoto(photoAccountId, formData, isEditMode);
+      setSavedPhotoNo(result.photoNo);
+      setExistingImageFilePath(result.imageFilePath);
       setShowSuccessModal(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");
@@ -289,6 +294,14 @@ export function PhotoSettingForm({
 
   return (
     <div className="min-h-screen bg-black text-white pb-10">
+      <header>
+        <a
+          href={`/photo/${photoAccountId}/photo_list`}
+          className="fixed top-[5px] left-[10px] text-xl text-gray-400 z-[1000] no-underline"
+        >
+          &larr; back
+        </a>
+      </header>
       <div className="max-w-2xl mx-auto px-4 pt-8">
         <h1 className="text-xl font-bold mb-6 text-center">
           {isEditMode ? "写真編集" : "写真登録"}
@@ -318,14 +331,18 @@ export function PhotoSettingForm({
               画像ファイル{!isEditMode && " *"}
             </label>
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              className="w-full text-white"
+              className="hidden"
               data-testid="image-input"
             />
-            {imagePreview && (
-              <div className="mt-2 flex justify-center">
+            {imagePreview ? (
+              <div
+                className="mt-2 flex flex-col items-center cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 <img
                   src={imagePreview}
                   alt="プレビュー"
@@ -333,7 +350,18 @@ export function PhotoSettingForm({
                   style={{ objectFit: "contain" }}
                   data-testid="image-preview"
                 />
+                {imageFile && (
+                  <p className="text-sm text-gray-400 mt-1">{imageFile.name}</p>
+                )}
               </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-gray-700 text-white px-4 py-2 border border-gray-600 cursor-pointer hover:bg-gray-600"
+              >
+                ファイルを選択
+              </button>
             )}
           </div>
 
@@ -459,17 +487,7 @@ export function PhotoSettingForm({
 
           {/* タグ */}
           <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-sm text-gray-400">タグ</label>
-              <button
-                type="button"
-                onClick={handleAddTag}
-                className="bg-transparent border border-gray-500 text-gray-300 px-3 py-1 text-sm cursor-pointer hover:bg-gray-800"
-                data-testid="add-tag-button"
-              >
-                + タグ追加
-              </button>
-            </div>
+            <label className="text-sm text-gray-400 block mb-2">タグ</label>
             {tags.map((tag) => (
               <div
                 key={tag.tagNo}
@@ -506,6 +524,16 @@ export function PhotoSettingForm({
                 </button>
               </div>
             ))}
+            <div className="flex justify-center mt-2">
+              <button
+                type="button"
+                onClick={handleAddTag}
+                className="bg-transparent border border-gray-500 text-gray-300 px-3 py-1 text-sm cursor-pointer hover:bg-gray-800"
+                data-testid="add-tag-button"
+              >
+                + タグを追加
+              </button>
+            </div>
           </div>
 
           {/* 送信ボタン */}
@@ -537,16 +565,14 @@ export function PhotoSettingForm({
           className="fixed inset-0 bg-black/70 flex justify-center items-center z-50"
           data-testid="success-modal"
         >
-          <div className="bg-gray-900 border border-gray-700 p-6 max-w-sm w-full mx-4 text-center">
-            <p className="text-white mb-4">写真を保存しました</p>
+          <div className="bg-gray-900 border border-gray-700 p-6 max-w-sm w-full mx-4 text-center relative">
             <button
-              onClick={() =>
-                router.push(`/photo/${photoAccountId}/photo_list`)
-              }
-              className="bg-blue-600 text-white px-6 py-2 border-none cursor-pointer hover:bg-blue-700"
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-2 right-3 text-xl text-gray-400 bg-transparent border-none cursor-pointer"
             >
-              写真一覧へ
+              &times;
             </button>
+            <p className="text-white">写真を保存しました</p>
           </div>
         </div>
       )}

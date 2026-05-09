@@ -136,14 +136,14 @@ export function PhotoDetail({
   return (
     <div style={{ backgroundColor: "#000", color: "#fff", minHeight: "100vh" }}>
       {/* 戻るリンク */}
-      <div style={{ paddingTop: "16px", paddingLeft: "16px" }}>
+      <header>
         <Link
           href={`/photo/${photoAccountId}/photo_list`}
-          style={{ color: "#9ca3af", textDecoration: "none" }}
+          className="fixed top-[5px] left-[10px] text-xl text-gray-400 z-[1000] no-underline"
         >
           &larr; back
         </Link>
-      </div>
+      </header>
 
       {/* 右上アイコン群 */}
       <div>

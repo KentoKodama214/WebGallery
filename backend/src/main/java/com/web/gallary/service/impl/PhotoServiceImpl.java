@@ -111,13 +111,14 @@ public class PhotoServiceImpl implements PhotoService {
 	 */
 	@Override
 	@Transactional
-	public void savePhotos(String accountId, List<PhotoDetailModel> photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException {
-		if(Objects.isNull(photoDetailModelList)) return;
-		if(photoDetailModelList.isEmpty()) return;
-		
+	public Integer savePhotos(String accountId, List<PhotoDetailModel> photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		if(Objects.isNull(photoDetailModelList)) return null;
+		if(photoDetailModelList.isEmpty()) return null;
+
 		Integer photoNo = photoMstRepository.getNewPhotoNo(photoDetailModelList.getFirst().getAccountNo());
+		Integer savedPhotoNo = photoNo;
 		String filePath = photoConfig.getOutputPath() + accountId + "/";
-		
+
 		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
 			if(Objects.isNull(photoDetailModel.getPhotoNo())) {
 				String filename = photoDetailModel.getImageFile().getOriginalFilename();
@@ -125,16 +126,18 @@ public class PhotoServiceImpl implements PhotoService {
 					log.warn("Duplicate image file (filename: {}}", filename);
 					throw new FileDuplicateException(ErrorEnum.DUPLICATE_PHOTO_FILE);
 				}
-				
+
 				photoMstRepository.regist(photoDetailModel, filePath + filename, photoNo);
 				registPhotoTags(photoDetailModel.getPhotoTagModelList(), photoNo++);
 				uploadFile(filePath + filename, photoDetailModel.getImageFile());
 			} else {
+				savedPhotoNo = photoDetailModel.getPhotoNo();
 				photoMstRepository.update(photoDetailModel);
 				deletePhotoTags(photoDetailModel.getAccountNo(), photoDetailModel.getPhotoNo());
 				registPhotoTags(photoDetailModel.getPhotoTagModelList(), null);
 			}
 		}
+		return savedPhotoNo;
 	}
 	
 	/**

@@ -24,6 +24,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   const { isAuthenticated, user } = useAuth();
   const [photos, setPhotos] = useState<PhotoListItem[]>([]);
   const [isLast, setIsLast] = useState(true);
+  const [isReachedUpperLimit, setIsReachedUpperLimit] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +60,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       const data = await getPhotoList(photoAccountId, { pageNo: 1 });
       setPhotos(data.photoList);
       setIsLast(data.isLast);
+      setIsReachedUpperLimit(data.isReachedUpperLimit);
     } catch (err) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
@@ -165,6 +167,15 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
           appendTo: "root",
           html: "Caption text",
           onInit: (el) => {
+            el.style.cursor = "pointer";
+            el.addEventListener("click", (e) => {
+              // 既存のリンククリックはそのまま動作させる
+              if ((e.target as HTMLElement).closest("a")) return;
+              const detailLink = el.querySelector(".show_detail a") as HTMLAnchorElement | null;
+              if (detailLink) {
+                detailLink.click();
+              }
+            });
             lightbox!.pswp!.on("change", () => {
               const currSlideElement = lightbox!.pswp!.currSlide!.data.element;
               let captionHTML = "";
@@ -454,8 +465,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         </div>
       )}
 
-      {/* 写真追加ボタン（オーナーのみ） */}
-      {isOwner && (
+      {/* 写真追加ボタン（オーナーのみ、上限未達の場合） */}
+      {isOwner && !isReachedUpperLimit && (
         <Link
           href={`/photo/${photoAccountId}/photo_setting`}
           className={styles.photoSettingButton}

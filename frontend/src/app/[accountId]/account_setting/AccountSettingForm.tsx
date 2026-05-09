@@ -195,6 +195,13 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              onBlur={() => {
+                if (newPassword && !/^[a-zA-Z0-9]{8,}$/.test(newPassword)) {
+                  setErrors((prev) => ({ ...prev, newPassword: "半角英数字で8文字以上で入力してください" }));
+                } else {
+                  setErrors((prev) => { const { newPassword: _, ...rest } = prev; return rest; });
+                }
+              }}
               placeholder="半角英数字で8文字以上"
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />

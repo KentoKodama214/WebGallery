@@ -97,7 +97,11 @@ public class PhotoRestController {
 					.sortBy(photoListRequest.getSortBy())
 					.build()
 			);
-		return ResponseEntity.ok(createPhotoListGetResponse(photoList, photoListRequest.getPageNo()));
+		Boolean isReachedUpperLimit = false;
+		if (photoAccountId.equals(sessionHelper.getAccountId())) {
+			isReachedUpperLimit = photoService.isReachedUpperLimit(sessionHelper.getAccountNo());
+		}
+		return ResponseEntity.ok(createPhotoListGetResponse(photoList, photoListRequest.getPageNo(), isReachedUpperLimit));
 	}
 
 	/**
@@ -233,7 +237,7 @@ public class PhotoRestController {
 				.longitude(photoSaveRequest.getLongitude())
 				.locationName(photoSaveRequest.getLocationName())
 				.imageFile(photoSaveRequest.getImageFile())
-				.imageFilePath(photoSaveRequest.getImageFilePath())
+				.imageFilePath(Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse(""))
 				.photoJapaneseTitle(photoSaveRequest.getPhotoJapaneseTitle())
 				.photoEnglishTitle(photoSaveRequest.getPhotoEnglishTitle())
 				.caption(photoSaveRequest.getCaption())
@@ -246,12 +250,21 @@ public class PhotoRestController {
 				.build()
 		);
 		
-		photoService.savePhotos(photoAccountId, photoDetailModelList);
-		
+		Integer savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
+
+		String savedImageFilePath;
+		if (Objects.isNull(photoSaveRequest.getPhotoNo()) && !Objects.isNull(photoSaveRequest.getImageFile())) {
+			savedImageFilePath = photoConfig.getOutputPath() + photoAccountId + "/" + photoSaveRequest.getImageFile().getOriginalFilename();
+		} else {
+			savedImageFilePath = Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse("");
+		}
+
 		return ResponseEntity.ok(PhotoEditResponse.builder()
 				.httpStatus(HttpStatus.OK.value())
 				.isSuccess(true)
 				.message(MessageConst.REGIST_PHOTO)
+				.photoNo(savedPhotoNo)
+				.imageFilePath(savedImageFilePath)
 				.build());
 	}
 	
@@ -307,7 +320,7 @@ public class PhotoRestController {
 	 * @param	pageNo		ページ番号
 	 * @return				{@link PhotoListGetResponse}
 	 */
-	private PhotoListGetResponse createPhotoListGetResponse(List<PhotoModel> photoList, Integer pageNo) {
+	private PhotoListGetResponse createPhotoListGetResponse(List<PhotoModel> photoList, Integer pageNo, Boolean isReachedUpperLimit) {
 		Integer photoCountPerPage = photoConfig.getPhotoCountPerPage();
 		List<PhotoListResponse> photoListResponseList = new ArrayList<PhotoListResponse>();
 		
@@ -326,6 +339,7 @@ public class PhotoRestController {
 		
 		return PhotoListGetResponse.builder()
 				.isLast(pageNo * photoCountPerPage >= photoList.size())
+				.isReachedUpperLimit(isReachedUpperLimit)
 				.photoList(photoListResponseList)
 				.build();
 	}

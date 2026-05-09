@@ -88,6 +88,7 @@ export async function fetchWithAuth(
   options: RequestInit = {}
 ): Promise<Response> {
   const headers = new Headers(options.headers);
+  headers.set("Accept", "application/json");
   if (!accessToken) {
     await refresh();
   }
@@ -290,6 +291,8 @@ export interface PhotoEditResult {
   httpStatus: number;
   isSuccess: boolean;
   message: string;
+  photoNo: number;
+  imageFilePath: string;
 }
 
 /** お気に入り操作結果レスポンス */
@@ -312,6 +315,7 @@ export interface PhotoListItem {
 /** 写真一覧レスポンス */
 export interface PhotoListResponse {
   isLast: boolean;
+  isReachedUpperLimit: boolean;
   photoList: PhotoListItem[];
 }
 
@@ -436,7 +440,14 @@ export async function savePhoto(
     }
   );
   if (!response.ok) {
-    throw new Error("写真の保存に失敗しました");
+    let errorMessage = "写真の保存に失敗しました";
+    try {
+      const errorBody = await response.json();
+      errorMessage = errorBody.errorMessage || errorBody.message || errorMessage;
+    } catch {
+      // レスポンスボディのパースに失敗した場合はデフォルトメッセージを使用
+    }
+    throw new Error(errorMessage);
   }
   return response.json();
 }

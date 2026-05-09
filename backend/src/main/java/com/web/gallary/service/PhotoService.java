@@ -41,8 +41,9 @@ public interface PhotoService {
 	 * @throws	FileDuplicateException 	同じファイル名のファイルが既に保存済みの場合
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @return							登録・更新した写真番号
 	 */
-	void savePhotos(String accountId, List<PhotoDetailModel> photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException;
+	Integer savePhotos(String accountId, List<PhotoDetailModel> photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException;
 	
 	/**
 	 * 写真を削除する
