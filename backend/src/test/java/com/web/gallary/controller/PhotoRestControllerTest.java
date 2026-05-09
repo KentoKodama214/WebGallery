@@ -334,7 +334,7 @@ public class PhotoRestControllerTest {
 
 			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
-			doNothing().when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+			doReturn(1).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
@@ -393,7 +393,7 @@ public class PhotoRestControllerTest {
 
 			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
-			doNothing().when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+			doReturn(1).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
@@ -901,10 +901,10 @@ public class PhotoRestControllerTest {
 
 			doReturn(3).when(photoConfig).getPhotoCountPerPage();
 
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
+			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class, Boolean.class);
 			createPhotoListGetResponse.setAccessible(true);
 
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
+			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo, false);
 			assertEquals(1, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().getFirst().getAccountNo());
 			assertEquals(1, actual.getPhotoList().getFirst().getPhotoNo());
@@ -924,10 +924,10 @@ public class PhotoRestControllerTest {
 
 			doReturn(3).when(photoConfig).getPhotoCountPerPage();
 
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
+			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class, Boolean.class);
 			createPhotoListGetResponse.setAccessible(true);
 
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
+			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo, false);
 			assertEquals(3, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
 			assertEquals(1, actual.getPhotoList().get(0).getPhotoNo());
@@ -959,10 +959,10 @@ public class PhotoRestControllerTest {
 
 			doReturn(3).when(photoConfig).getPhotoCountPerPage();
 
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
+			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class, Boolean.class);
 			createPhotoListGetResponse.setAccessible(true);
 
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
+			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo, false);
 			assertEquals(1, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
 			assertEquals(4, actual.getPhotoList().get(0).getPhotoNo());
@@ -982,10 +982,10 @@ public class PhotoRestControllerTest {
 
 			doReturn(3).when(photoConfig).getPhotoCountPerPage();
 
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
+			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class, Boolean.class);
 			createPhotoListGetResponse.setAccessible(true);
 
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
+			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo, false);
 			assertEquals(3, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
 			assertEquals(4, actual.getPhotoList().get(0).getPhotoNo());
