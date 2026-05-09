@@ -1,9 +1,0 @@
-@charset "UTF-8";
-
-#error_contents {
-	position: relative;
-	z-index: 10;
-	overflow: auto;
-	width: 90%;
-	margin: 60px auto 20px auto;
-}

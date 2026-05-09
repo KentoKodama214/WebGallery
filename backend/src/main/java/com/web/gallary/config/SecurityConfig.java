@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,15 +12,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.web.gallary.constant.ApiRoutes;
-import com.web.gallary.util.AccountUrlUtil;
 
 import lombok.RequiredArgsConstructor;
 
@@ -81,7 +77,6 @@ public class SecurityConfig {
 	 * @throws Exception
 	 */
 	@Bean
-	@Order(1)
 	SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
 		http.securityMatcher("/api/**")
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -102,45 +97,4 @@ public class SecurityConfig {
 		return http.build();
 	}
 
-	/**
-	 * MVC用のSecurityFilterChainを生成します（フォームログイン、セッション管理）
-	 * @param http	HTTPセキュリティオブジェクト
-	 * @return		SecurityFilterChainオブジェクト
-	 * @throws Exception
-	 */
-	@Bean
-	@Order(2)
-	SecurityFilterChain mvcSecurityFilterChain(HttpSecurity http) throws Exception {
-		http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-			.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-				.requestMatchers("/css/**").permitAll()
-				.requestMatchers("/js/**").permitAll()
-				.requestMatchers("/image/**").permitAll()
-				.requestMatchers("/").permitAll()
-				.requestMatchers(ApiRoutes.HEADER).permitAll()
-				.requestMatchers(ApiRoutes.FOOTER).permitAll()
-				.requestMatchers(ApiRoutes.ERROR_PAGE).permitAll()
-				.requestMatchers(ApiRoutes.LOGIN).permitAll()
-				.requestMatchers(ApiRoutes.REGISTER).permitAll()
-				.requestMatchers(ApiRoutes.ACCOUNT_LIST).permitAll()
-				.requestMatchers(ApiRoutes.PHOTO + "/**").permitAll()
-				.requestMatchers(AccountUrlUtil.getAccountSettingUrl("{name}"))
-					.access(new WebExpressionAuthorizationManager("#name == authentication.name"))
-				.anyRequest().authenticated())
-			.formLogin(formLogin -> formLogin
-				.loginPage(ApiRoutes.LOGIN)
-				.defaultSuccessUrl("/")
-				.failureUrl(ApiRoutes.LOGIN)
-				.permitAll())
-			.sessionManagement(session -> session
-				.invalidSessionUrl(ApiRoutes.LOGIN)
-				.maximumSessions(1))
-			.logout(logout -> logout
-				.logoutRequestMatcher(new AntPathRequestMatcher(ApiRoutes.LOGOUT))
-				.logoutSuccessUrl(ApiRoutes.LOGIN))
-			.headers(headers -> headers
-				.frameOptions(frameOptions -> frameOptions.sameOrigin()));
-
-		return http.build();
-	}
 }

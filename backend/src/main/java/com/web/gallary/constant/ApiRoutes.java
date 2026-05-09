@@ -11,26 +11,12 @@ public final class ApiRoutes {
 	// 共通
 	/** ログインページ */
 	public static final String LOGIN = "/login";
-	/** ログアウト */
-	public static final String LOGOUT = "/logout";
-	/** ヘッダー */
-	public static final String HEADER = "/header";
-	/** フッター */
-	public static final String FOOTER = "/footer";
-	/** エラー */
-	public static final String ERROR = "/error";
-	/** エラーページ */
-	public static final String ERROR_PAGE = "/error_page";
 
 	// アカウント関連
 	/** アカウントID */
 	public static final String ACCOUNT_ID = "{accountId}";
 	/** アカウント登録ページ */
 	public static final String REGISTER = "/register";
-	/** アカウント設定ページ */
-	public static final String ACCOUNT_SETTING = "/" + ACCOUNT_ID + "/account_setting";
-	/** アカウント一覧ページ */
-	public static final String ACCOUNT_LIST = "/account_list";
 
 	// REST API - 認証関連
 	/** 認証ログインAPI */
@@ -47,16 +33,14 @@ public final class ApiRoutes {
 	public static final String API_ACCOUNT = API_ACCOUNTS + "/" + ACCOUNT_ID;
 
 	// 写真関連（ページ）
-	/** 写真 */
-	public static final String PHOTO = "/photo";
 	/** 写真アカウントID */
 	public static final String PHOTO_ACCOUNT_ID = "{photoAccountId}";
 	/** 写真一覧ページ */
-	public static final String PHOTO_LIST = PHOTO + "/" + PHOTO_ACCOUNT_ID + "/photo_list";
+	public static final String PHOTO_LIST = "/photo/" + PHOTO_ACCOUNT_ID + "/photo_list";
 	/** 写真詳細ページ */
-	public static final String PHOTO_DETAIL = PHOTO + "/" + PHOTO_ACCOUNT_ID + "/photo_detail";
+	public static final String PHOTO_DETAIL = "/photo/" + PHOTO_ACCOUNT_ID + "/photo_detail";
 	/** 写真登録・編集ページ */
-	public static final String PHOTO_SETTING = PHOTO + "/" + PHOTO_ACCOUNT_ID + "/photo_setting";
+	public static final String PHOTO_SETTING = "/photo/" + PHOTO_ACCOUNT_ID + "/photo_setting";
 
 	// REST API - 都道府県関連
 	/** 都道府県一覧API */
