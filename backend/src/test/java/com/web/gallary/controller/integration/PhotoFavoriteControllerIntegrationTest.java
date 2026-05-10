@@ -68,10 +68,12 @@ public class PhotoFavoriteControllerIntegrationTest {
 					.accountName("AAAAAAAA")
 					.password("$2a$10$password1")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.isDeleted(false)
+					.loginFailureCount(0)
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					post("/api/v1/photos/favorites")
@@ -112,10 +114,12 @@ public class PhotoFavoriteControllerIntegrationTest {
 					.accountName("AAAAAAAA")
 					.password("$2a$10$password1")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.isDeleted(false)
+					.loginFailureCount(0)
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					post("/api/v1/photos/favorites")
@@ -141,10 +145,12 @@ public class PhotoFavoriteControllerIntegrationTest {
 					.accountName("AAAAAAAA")
 					.password("$2a$10$password1")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.isDeleted(false)
+					.loginFailureCount(0)
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					post("/api/v1/photos/favorites")
@@ -178,10 +184,12 @@ public class PhotoFavoriteControllerIntegrationTest {
 					.accountName("AAAAAAAA")
 					.password("$2a$10$password1")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.isDeleted(false)
+					.loginFailureCount(0)
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/photos/favorites")
@@ -239,10 +247,12 @@ public class PhotoFavoriteControllerIntegrationTest {
 					.accountName("AAAAAAAA")
 					.password("$2a$10$password1")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.isDeleted(false)
+					.loginFailureCount(0)
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/photos/favorites")
@@ -268,10 +278,12 @@ public class PhotoFavoriteControllerIntegrationTest {
 					.accountName("AAAAAAAA")
 					.password("$2a$10$password1")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.isDeleted(false)
+					.loginFailureCount(0)
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/photos/favorites")
