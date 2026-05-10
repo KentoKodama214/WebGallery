@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -78,19 +79,19 @@ public class SecurityConfig {
 	 */
 	@Bean
 	SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
-		http.securityMatcher("/api/**")
+		http.securityMatcher(new AntPathRequestMatcher("/api/**"))
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 			.csrf(csrf -> csrf.disable())
 			.sessionManagement(session -> session
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-				.requestMatchers(ApiRoutes.API_AUTH_LOGIN).permitAll()
-				.requestMatchers(ApiRoutes.API_AUTH_REFRESH).permitAll()
-				.requestMatchers(ApiRoutes.API_AUTH_LOGOUT).permitAll()
-				.requestMatchers(ApiRoutes.API_ACCOUNTS).permitAll()
-				.requestMatchers(ApiRoutes.API_ACCOUNTS + "/**").permitAll()
-				.requestMatchers(ApiRoutes.API_PREFECTURES).permitAll()
-				.requestMatchers(ApiRoutes.API_FAVORITES).authenticated()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_LOGIN)).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_REFRESH)).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_LOGOUT)).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_ACCOUNTS)).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_ACCOUNTS + "/**")).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_PREFECTURES)).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_FAVORITES)).authenticated()
 				.anyRequest().authenticated())
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
