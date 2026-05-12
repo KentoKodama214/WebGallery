@@ -48,12 +48,12 @@
 | 言語 | Java 21 |
 | ビルドツール | Gradle 8.7 |
 | フレームワーク | Spring Boot 3.3.3 |
-| セキュリティ | Spring Security 3.3.3（BCrypt） |
-| テンプレートエンジン | Thymeleaf 3.3.3 |
+| セキュリティ | Spring Security 3.3.3（BCrypt + JWT） |
 | ORM | MyBatis 3.0.3 |
-| データベース | PostgreSQL |
+| データベース | PostgreSQL（ドライバ 42.7.4） |
 | コード生成 | Lombok 1.18.34 |
 | オブジェクトマッピング | ModelMapper 3.2.1 |
+| JWT | jjwt 0.12.6 |
 | テスト | JUnit Jupiter 5.11.1 / Mockito 5.14 |
 | パッケージング | WAR（Tomcatデプロイ） |
 
