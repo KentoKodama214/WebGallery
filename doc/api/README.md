@@ -21,6 +21,8 @@ WebGallaryのREST APIは、認証・アカウント管理・写真管理・お�
 
 ### アカウント管理API（Account）
 
+- [アカウント詳細取得](./Account/get-account-detail.md)
+- [アカウント一覧取得](./Account/get-account-list.md)
 - [アカウント登録](./Account/regist-account.md)
 - [アカウント更新](./Account/update-account.md)
 
