@@ -54,16 +54,18 @@ WebGallaryのREST APIは、認証・アカウント管理・写真管理・お�
 | 1 | AuthRestController | POST | [`/api/v1/auth/login`](./Auth/login.md) | ログイン | 不要 |
 | 2 | AuthRestController | POST | [`/api/v1/auth/refresh`](./Auth/refresh.md) | トークンリフレッシュ | 不要（リフレッシュトークンcookie必要） |
 | 3 | AuthRestController | POST | [`/api/v1/auth/logout`](./Auth/logout.md) | ログアウト | 不要 |
-| 4 | AccountRestController | POST | [`/api/v1/accounts`](./Account/regist-account.md) | アカウント登録 | 不要 |
-| 5 | AccountRestController | PUT | [`/api/v1/accounts/{accountId}`](./Account/update-account.md) | アカウント更新 | 必要 |
-| 6 | KbnMstRestController | GET | [`/api/v1/prefectures`](./Prefecture/get-prefectures.md) | 都道府県一覧取得 | 不要 |
-| 7 | PhotoRestController | GET | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/get-photo-list.md) | 写真一覧取得 | 不要 |
-| 8 | PhotoRestController | GET | [`/api/v1/accounts/{photoAccountId}/photos/{photoNo}`](./Photo/get-photo-detail.md) | 写真詳細取得 | 不要 |
-| 9 | PhotoRestController | POST | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/regist-photo.md) | 写真登録 | 必要 |
-| 10 | PhotoRestController | PUT | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/update-photo.md) | 写真更新 | 必要 |
-| 11 | PhotoRestController | DELETE | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/delete-photo.md) | 写真削除 | 必要 |
-| 12 | PhotoFavoriteController | POST | [`/api/v1/photos/favorites`](./PhotoFavorite/regist-favorite.md) | お気に入り登録 | 必要 |
-| 13 | PhotoFavoriteController | DELETE | [`/api/v1/photos/favorites`](./PhotoFavorite/delete-favorite.md) | お気に入り解除 | 必要 |
+| 4 | AccountRestController | GET | [`/api/v1/accounts`](./Account/get-account-list.md) | アカウント一覧取得 | 不要 |
+| 5 | AccountRestController | GET | [`/api/v1/accounts/{accountId}`](./Account/get-account-detail.md) | アカウント詳細取得 | 必要 |
+| 6 | AccountRestController | POST | [`/api/v1/accounts`](./Account/regist-account.md) | アカウント登録 | 不要 |
+| 7 | AccountRestController | PUT | [`/api/v1/accounts/{accountId}`](./Account/update-account.md) | アカウント更新 | 必要 |
+| 8 | KbnMstRestController | GET | [`/api/v1/prefectures`](./Prefecture/get-prefectures.md) | 都道府県一覧取得 | 不要 |
+| 9 | PhotoRestController | GET | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/get-photo-list.md) | 写真一覧取得 | 不要 |
+| 10 | PhotoRestController | GET | [`/api/v1/accounts/{photoAccountId}/photos/{photoNo}`](./Photo/get-photo-detail.md) | 写真詳細取得 | 不要 |
+| 11 | PhotoRestController | POST | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/regist-photo.md) | 写真登録 | 必要 |
+| 12 | PhotoRestController | PUT | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/update-photo.md) | 写真更新 | 必要 |
+| 13 | PhotoRestController | DELETE | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/delete-photo.md) | 写真削除 | 必要 |
+| 14 | PhotoFavoriteController | POST | [`/api/v1/photos/favorites`](./PhotoFavorite/regist-favorite.md) | お気に入り登録 | 必要 |
+| 15 | PhotoFavoriteController | DELETE | [`/api/v1/photos/favorites`](./PhotoFavorite/delete-favorite.md) | お気に入り解除 | 必要 |
 
 ## 認証・認可
 
@@ -78,6 +80,7 @@ WebGallaryのREST APIは、認証・アカウント管理・写真管理・お�
 
 | 操作 | ルール |
 |------|--------|
+| アカウント詳細取得 | 自分自身のアカウントのみ取得可能 |
 | アカウント更新 | 自分自身のアカウントのみ更新可能 |
 | 写真登録・更新・削除 | 自分自身の写真のみ操作可能 |
 | お気に入り登録・解除 | 認証済みユーザーは任意の写真に対して操作可能 |
