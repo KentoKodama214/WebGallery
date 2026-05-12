@@ -60,12 +60,16 @@
 | httpStatus | Integer | HTTPステータスコード |
 | isSuccess | Boolean | 処理成功フラグ |
 | message | String | メッセージ |
+| photoNo | Integer | 更新された写真番号 |
+| imageFilePath | String | 画像ファイルパス |
 
 ```json
 {
   "httpStatus": 200,
   "isSuccess": true,
-  "message": "写真更新が完了しました。"
+  "message": "写真登録が完了しました。",
+  "photoNo": 1,
+  "imageFilePath": "/image/testuser01/photo01.jpg"
 }
 ```
 

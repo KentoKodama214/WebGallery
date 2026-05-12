@@ -37,6 +37,7 @@ GET /api/v1/accounts/testuser01/photos?directionKbn=horizontal&sortBy=favorite&p
 | フィールド | 型 | 説明 |
 |-----------|-----|------|
 | isLast | Boolean | 最終ページかどうか |
+| isReachedUpperLimit | Boolean | 写真の登録枚数が上限に達しているか（ページ所有者本人の場合のみtrue/false、それ以外はfalse） |
 | photoList | Array | 写真情報の配列 |
 
 ### photoListの各要素
@@ -53,6 +54,7 @@ GET /api/v1/accounts/testuser01/photos?directionKbn=horizontal&sortBy=favorite&p
 ```json
 {
   "isLast": false,
+  "isReachedUpperLimit": false,
   "photoList": [
     {
       "accountNo": 1,
