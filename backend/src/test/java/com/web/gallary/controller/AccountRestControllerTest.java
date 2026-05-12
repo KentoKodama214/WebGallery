@@ -178,7 +178,10 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.accountId").value(accountId))
 				.andExpect(jsonPath("$.accountName").value("AAAAAAAA"))
 				.andExpect(jsonPath("$.birthdate").isEmpty())
-				.andExpect(jsonPath("$.sexKbn").value("none"));
+				.andExpect(jsonPath("$.sexKbn").value("none"))
+				.andExpect(jsonPath("$.birthplacePrefectureKbnCode").value("none"))
+				.andExpect(jsonPath("$.residentPrefectureKbnCode").value("none"))
+				.andExpect(jsonPath("$.freeMemo").isEmpty());
 		}
 
 		@Test
