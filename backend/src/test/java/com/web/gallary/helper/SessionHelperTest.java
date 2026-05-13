@@ -1,4 +1,4 @@
-package com.web.gallary.hepler;
+package com.web.gallary.helper;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -19,7 +19,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallary.AccountPrincipal;
-import com.web.gallary.helper.SessionHelper;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
