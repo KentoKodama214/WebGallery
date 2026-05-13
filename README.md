@@ -202,7 +202,9 @@ WebGallary/
 ├── frontend/                       # フロントエンド（Next.js）
 │   ├── package.json
 │   ├── pnpm-lock.yaml
+│   ├── pnpm-workspace.yaml
 │   ├── next.config.ts              # Next.js設定（APIプロキシ等）
+│   ├── next-env.d.ts               # Next.js TypeScript型定義
 │   ├── tsconfig.json
 │   ├── eslint.config.mjs
 │   ├── postcss.config.mjs
@@ -212,7 +214,9 @@ WebGallary/
 │   ├── public/
 │   │   └── image/                  # 静的画像（アイコン等）
 │   └── src/
+│       ├── proxy.ts                     # APIプロキシ設定
 │       ├── app/
+│       │   ├── favicon.ico              # ファビコン
 │       │   ├── globals.css              # グローバルCSS
 │       │   ├── layout.tsx               # ルートレイアウト
 │       │   ├── page.tsx                 # トップページ
@@ -221,12 +225,17 @@ WebGallary/
 │       │   ├── account_list/           # アカウント一覧ページ
 │       │   ├── [accountId]/
 │       │   │   └── account_setting/    # アカウント設定ページ
-│       │   └── photo/[photoAccountId]/
-│       │       ├── photo_list/         # 写真一覧ページ（PhotoSwipe統合）
-│       │       ├── photo_detail/       # 写真詳細ページ
-│       │       └── photo_setting/      # 写真設定ページ
+│       │   ├── photo/[photoAccountId]/
+│       │   │   ├── photo_list/         # 写真一覧ページ（PhotoSwipe統合）
+│       │   │   ├── photo_detail/       # 写真詳細ページ
+│       │   │   └── photo_setting/      # 写真設定ページ
+│       │   └── api/v1/                  # Next.js APIルート（プロキシ）
 │       ├── components/
-│       │   └── layout/                  # 共通レイアウト（Header / Footer / Navigation）
+│       │   └── layout/                  # 共通レイアウト
+│       │       ├── Header.tsx
+│       │       ├── Header.module.css
+│       │       ├── Footer.tsx
+│       │       └── Navigation.tsx
 │       └── lib/
 │           ├── api/
 │           │   └── client.ts            # APIクライアント
