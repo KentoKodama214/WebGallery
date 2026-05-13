@@ -30,6 +30,7 @@ WebGallaryのREST APIは、認証・アカウント管理・写真管理・お�
 
 - [写真一覧取得](./Photo/get-photo-list.md)
 - [写真詳細取得](./Photo/get-photo-detail.md)
+- [写真登録上限チェック](./Photo/get-photo-upper-limit.md)
 - [写真登録](./Photo/regist-photo.md)
 - [写真更新](./Photo/update-photo.md)
 - [写真削除](./Photo/delete-photo.md)
@@ -61,11 +62,12 @@ WebGallaryのREST APIは、認証・アカウント管理・写真管理・お�
 | 8 | KbnMstRestController | GET | [`/api/v1/prefectures`](./Prefecture/get-prefectures.md) | 都道府県一覧取得 | 不要 |
 | 9 | PhotoRestController | GET | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/get-photo-list.md) | 写真一覧取得 | 不要 |
 | 10 | PhotoRestController | GET | [`/api/v1/accounts/{photoAccountId}/photos/{photoNo}`](./Photo/get-photo-detail.md) | 写真詳細取得 | 不要 |
-| 11 | PhotoRestController | POST | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/regist-photo.md) | 写真登録 | 必要 |
-| 12 | PhotoRestController | PUT | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/update-photo.md) | 写真更新 | 必要 |
-| 13 | PhotoRestController | DELETE | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/delete-photo.md) | 写真削除 | 必要 |
-| 14 | PhotoFavoriteController | POST | [`/api/v1/photos/favorites`](./PhotoFavorite/regist-favorite.md) | お気に入り登録 | 必要 |
-| 15 | PhotoFavoriteController | DELETE | [`/api/v1/photos/favorites`](./PhotoFavorite/delete-favorite.md) | お気に入り解除 | 必要 |
+| 11 | PhotoRestController | GET | [`/api/v1/accounts/{photoAccountId}/photos/upper-limit`](./Photo/get-photo-upper-limit.md) | 写真登録上限チェック | 不要 |
+| 12 | PhotoRestController | POST | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/regist-photo.md) | 写真登録 | 必要 |
+| 13 | PhotoRestController | PUT | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/update-photo.md) | 写真更新 | 必要 |
+| 14 | PhotoRestController | DELETE | [`/api/v1/accounts/{photoAccountId}/photos`](./Photo/delete-photo.md) | 写真削除 | 必要 |
+| 15 | PhotoFavoriteController | POST | [`/api/v1/photos/favorites`](./PhotoFavorite/regist-favorite.md) | お気に入り登録 | 必要 |
+| 16 | PhotoFavoriteController | DELETE | [`/api/v1/photos/favorites`](./PhotoFavorite/delete-favorite.md) | お気に入り解除 | 必要 |
 
 ## 認証・認可
 

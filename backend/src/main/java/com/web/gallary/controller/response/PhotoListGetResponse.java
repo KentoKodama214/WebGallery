@@ -14,9 +14,6 @@ public class PhotoListGetResponse {
 	/** 最後まで写真を取得できたか */
 	private Boolean isLast;
 
-	/** 写真の登録枚数が上限に達しているか */
-	private Boolean isReachedUpperLimit;
-
 	/** 写真リスト */
 	private List<PhotoListResponse> photoList;
 }

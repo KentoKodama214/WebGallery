@@ -315,8 +315,12 @@ export interface PhotoListItem {
 /** 写真一覧レスポンス */
 export interface PhotoListResponse {
   isLast: boolean;
-  isReachedUpperLimit: boolean;
   photoList: PhotoListItem[];
+}
+
+/** 写真登録上限チェックレスポンス */
+export interface PhotoUpperLimitResponse {
+  isReachedUpperLimit: boolean;
 }
 
 /** 写真一覧取得パラメータ */
@@ -347,6 +351,20 @@ export async function getPhotoList(
   const response = await fetchWithAuth(url);
   if (!response.ok) {
     throw new Error("写真一覧の取得に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * 写真登録上限チェック
+ */
+export async function getPhotoUpperLimit(
+  photoAccountId: string
+): Promise<PhotoUpperLimitResponse> {
+  const url = `/api/v1/accounts/${photoAccountId}/photos/upper-limit`;
+  const response = await fetchWithAuth(url);
+  if (!response.ok) {
+    throw new Error("写真登録上限の取得に失敗しました");
   }
   return response.json();
 }

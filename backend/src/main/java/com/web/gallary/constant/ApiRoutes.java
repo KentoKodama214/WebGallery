@@ -53,6 +53,8 @@ public final class ApiRoutes {
 	public static final String PHOTO_NO = "{photoNo}";
 	/** 写真詳細API（GET=詳細取得） */
 	public static final String API_PHOTO_DETAIL = API_PHOTOS + "/" + PHOTO_NO;
+	/** 写真登録上限チェックAPI（GET=上限到達チェック） */
+	public static final String API_PHOTO_UPPER_LIMIT = API_PHOTOS + "/upper-limit";
 
 	// REST API - お気に入り関連
 	/** お気に入りAPI（POST=登録, DELETE=解除） */

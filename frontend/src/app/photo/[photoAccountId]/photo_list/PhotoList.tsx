@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
   getPhotoList,
+  getPhotoUpperLimit,
   addFavorite,
   deleteFavorite,
   type PhotoListItem,
@@ -60,7 +61,6 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       const data = await getPhotoList(photoAccountId, { pageNo: 1 });
       setPhotos(data.photoList);
       setIsLast(data.isLast);
-      setIsReachedUpperLimit(data.isReachedUpperLimit);
     } catch (err) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
@@ -71,6 +71,13 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   useEffect(() => {
     fetchPhotos();
   }, [fetchPhotos]);
+
+  useEffect(() => {
+    if (!isOwner) return;
+    getPhotoUpperLimit(photoAccountId)
+      .then((data) => setIsReachedUpperLimit(data.isReachedUpperLimit))
+      .catch(() => setIsReachedUpperLimit(false));
+  }, [isOwner, photoAccountId]);
 
   // PhotoSwipe初期化（photos変更時に再初期化）
   useEffect(() => {

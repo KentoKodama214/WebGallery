@@ -901,10 +901,10 @@ public class PhotoRestControllerTest {
 
 			doReturn(3).when(photoConfig).getPhotoCountPerPage();
 
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class, Boolean.class);
+			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
 			createPhotoListGetResponse.setAccessible(true);
 
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo, false);
+			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
 			assertEquals(1, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().getFirst().getAccountNo());
 			assertEquals(1, actual.getPhotoList().getFirst().getPhotoNo());
@@ -924,10 +924,10 @@ public class PhotoRestControllerTest {
 
 			doReturn(3).when(photoConfig).getPhotoCountPerPage();
 
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class, Boolean.class);
+			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
 			createPhotoListGetResponse.setAccessible(true);
 
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo, false);
+			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
 			assertEquals(3, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
 			assertEquals(1, actual.getPhotoList().get(0).getPhotoNo());
@@ -959,10 +959,10 @@ public class PhotoRestControllerTest {
 
 			doReturn(3).when(photoConfig).getPhotoCountPerPage();
 
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class, Boolean.class);
+			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
 			createPhotoListGetResponse.setAccessible(true);
 
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo, false);
+			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
 			assertEquals(1, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
 			assertEquals(4, actual.getPhotoList().get(0).getPhotoNo());
@@ -982,10 +982,10 @@ public class PhotoRestControllerTest {
 
 			doReturn(3).when(photoConfig).getPhotoCountPerPage();
 
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class, Boolean.class);
+			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
 			createPhotoListGetResponse.setAccessible(true);
 
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo, false);
+			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
 			assertEquals(3, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
 			assertEquals(4, actual.getPhotoList().get(0).getPhotoNo());
@@ -1006,6 +1006,50 @@ public class PhotoRestControllerTest {
 			assertEquals("キャプション6", actual.getPhotoList().get(2).getCaption());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(2).getDirectionKbn());
 			assertFalse(actual.getIsLast());
+		}
+	}
+
+	@Nested
+	@Order(5)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class getPhotoUpperLimit {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：自分のアカウントで上限未到達の場合")
+		void getPhotoUpperLimit_not_reached() throws Exception {
+			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1);
+
+			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/upper-limit"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.isReachedUpperLimit").value(false));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：自分のアカウントで上限到達の場合")
+		void getPhotoUpperLimit_reached() throws Exception {
+			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(true).when(photoServiceImpl).isReachedUpperLimit(1);
+
+			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/upper-limit"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.isReachedUpperLimit").value(true));
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("正常系：他人のアカウントの場合はfalse")
+		void getPhotoUpperLimit_other_account() throws Exception {
+			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
+
+			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/upper-limit"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.isReachedUpperLimit").value(false));
+
+			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Integer.class));
 		}
 	}
 }

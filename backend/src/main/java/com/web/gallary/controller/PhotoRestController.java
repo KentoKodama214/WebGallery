@@ -34,6 +34,7 @@ import com.web.gallary.controller.response.PhotoEditResponse;
 import com.web.gallary.controller.response.PhotoListGetResponse;
 import com.web.gallary.controller.response.PhotoListResponse;
 import com.web.gallary.controller.response.PhotoTagResponse;
+import com.web.gallary.controller.response.PhotoUpperLimitResponse;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.exception.BadRequestException;
 import com.web.gallary.exception.FileDuplicateException;
@@ -97,11 +98,26 @@ public class PhotoRestController {
 					.sortBy(photoListRequest.getSortBy())
 					.build()
 			);
+		return ResponseEntity.ok(createPhotoListGetResponse(photoList, photoListRequest.getPageNo()));
+	}
+
+	/**
+	 * 写真登録上限チェック<p>
+	 * 指定のアカウントが写真の登録枚数の上限に達しているかをチェックする
+	 *
+	 * @param	photoAccountId		ページ所有者のアカウントID
+	 * @return						{@link PhotoUpperLimitResponse}
+	 */
+	@GetMapping(ApiRoutes.API_PHOTO_UPPER_LIMIT)
+	public ResponseEntity<PhotoUpperLimitResponse> getPhotoUpperLimit(
+			@PathVariable String photoAccountId) {
 		Boolean isReachedUpperLimit = false;
 		if (photoAccountId.equals(sessionHelper.getAccountId())) {
 			isReachedUpperLimit = photoService.isReachedUpperLimit(sessionHelper.getAccountNo());
 		}
-		return ResponseEntity.ok(createPhotoListGetResponse(photoList, photoListRequest.getPageNo(), isReachedUpperLimit));
+		return ResponseEntity.ok(PhotoUpperLimitResponse.builder()
+				.isReachedUpperLimit(isReachedUpperLimit)
+				.build());
 	}
 
 	/**
@@ -315,13 +331,12 @@ public class PhotoRestController {
 	
 	/**
 	 * ページ番号から写真のリストを絞り込み、写真一覧のレスポンスのクラスへ詰め替えをする
-	 * 
+	 *
 	 * @param	photoList				{@link PhotoModel}
 	 * @param	pageNo					ページ番号
-	 * @param	isReachedUpperLimit		上限枚数に到達しているかどうか
 	 * @return							{@link PhotoListGetResponse}
 	 */
-	private PhotoListGetResponse createPhotoListGetResponse(List<PhotoModel> photoList, Integer pageNo, Boolean isReachedUpperLimit) {
+	private PhotoListGetResponse createPhotoListGetResponse(List<PhotoModel> photoList, Integer pageNo) {
 		Integer photoCountPerPage = photoConfig.getPhotoCountPerPage();
 		List<PhotoListResponse> photoListResponseList = new ArrayList<PhotoListResponse>();
 		
@@ -340,7 +355,6 @@ public class PhotoRestController {
 		
 		return PhotoListGetResponse.builder()
 				.isLast(pageNo * photoCountPerPage >= photoList.size())
-				.isReachedUpperLimit(isReachedUpperLimit)
 				.photoList(photoListResponseList)
 				.build();
 	}
