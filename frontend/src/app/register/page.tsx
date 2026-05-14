@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * アカウント登録ページ（SSR）
+ * アカウント登録ページ
  */
 export default function RegisterPage() {
   return (

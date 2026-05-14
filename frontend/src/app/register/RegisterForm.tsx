@@ -10,7 +10,6 @@ import type { PrefectureGroup } from "@/lib/api/client";
 
 /**
  * アカウント登録フォームコンポーネント
- * AccountSettingFormをベースに登録用に変更
  */
 export function RegisterForm() {
   const router = useRouter();
@@ -41,6 +40,9 @@ export function RegisterForm() {
       .finally(() => setIsLoading(false));
   }, []);
 
+  /**
+   * バリデーション
+   */
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -69,6 +71,9 @@ export function RegisterForm() {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * 登録する
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError("");
