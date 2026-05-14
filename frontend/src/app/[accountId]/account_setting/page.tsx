@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * アカウント設定ページ（SSR）
+ * アカウント設定ページ
  */
 export default async function AccountSettingPage({
   params,

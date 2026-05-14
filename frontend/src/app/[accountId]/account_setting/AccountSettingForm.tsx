@@ -19,7 +19,6 @@ interface AccountSettingFormProps {
 
 /**
  * アカウント設定フォームコンポーネント
- * 既存のThymeleafデザインをTailwind CSSで再現
  */
 export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   const router = useRouter();
@@ -42,6 +41,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState("");
 
+  /*
+   * 初期表示
+   */
   const loadData = useCallback(async () => {
     try {
       const [accountData, prefectureData] = await Promise.all([
@@ -68,6 +70,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     loadData();
   }, [loadData]);
 
+  /**
+   * バリデーション
+   */
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -92,6 +97,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     return Object.keys(newErrors).length === 0;
   };
 
+  /**
+   * 登録する
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setDuplicateError("");
