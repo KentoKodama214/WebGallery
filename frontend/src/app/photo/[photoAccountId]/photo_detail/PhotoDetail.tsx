@@ -37,6 +37,9 @@ export function PhotoDetail({
 
   const isOwner = user?.accountId === photoAccountId;
 
+  /**
+   * 写真詳細取得
+   */
   const fetchPhoto = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -54,6 +57,9 @@ export function PhotoDetail({
     fetchPhoto();
   }, [fetchPhoto]);
 
+  /**
+   * お気に入り登録／解除
+   */
   const handleFavoriteToggle = async () => {
     if (!photo || isFavoriteProcessing) return;
     setIsFavoriteProcessing(true);
@@ -71,6 +77,9 @@ export function PhotoDetail({
     }
   };
 
+  /**
+   * 写真削除
+   */
   const handleDelete = async () => {
     if (!photo || isDeleting) return;
     setIsDeleting(true);
@@ -123,7 +132,9 @@ export function PhotoDetail({
     );
   }
 
-  // EXIF設定テキスト生成
+  /**
+   * EXIF設定テキスト生成
+   */
   const buildSettingText = (): string => {
     const parts: string[] = [];
     if (photo.focalLength != null) parts.push(`${photo.focalLength}mm`);

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * 写真詳細ページ（SSR）
+ * 写真詳細ページ
  */
 export default async function PhotoDetailPage({
   params,
