@@ -59,6 +59,9 @@ export function PhotoSettingForm({
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  /**
+   * 初期表示
+   */
   const loadPhotoData = useCallback(async () => {
     if (!isEditMode || !accountNo || !photoNo) return;
     setIsDataLoading(true);
@@ -118,6 +121,9 @@ export function PhotoSettingForm({
     }
   }, [authLoading, isAuthenticated, loadPhotoData]);
 
+  /**
+   * 画像選択
+   */
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -128,6 +134,9 @@ export function PhotoSettingForm({
     }
   };
 
+  /**
+   * タグ追加
+   */
   const handleAddTag = () => {
     setTags([
       ...tags,
@@ -136,10 +145,16 @@ export function PhotoSettingForm({
     setNextTagNo(nextTagNo + 1);
   };
 
+  /**
+   * タグ削除
+   */
   const handleRemoveTag = (tagNo: number) => {
     setTags(tags.filter((t) => t.tagNo !== tagNo));
   };
 
+  /**
+   * タグ変更
+   */
   const handleTagChange = (
     tagNo: number,
     field: "tagJapaneseName" | "tagEnglishName",
@@ -150,6 +165,9 @@ export function PhotoSettingForm({
     );
   };
 
+  /**
+   * バリデーション
+   */
   const validate = (): string[] => {
     const errors: string[] = [];
     if (!isEditMode && !imageFile) {
@@ -186,6 +204,9 @@ export function PhotoSettingForm({
     return errors;
   };
 
+  /**
+   * 登録する
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors = validate();
@@ -536,7 +557,7 @@ export function PhotoSettingForm({
             </div>
           </div>
 
-          {/* 送信ボタン */}
+          {/* 保存・キャンセルボタン */}
           <div className="flex justify-center gap-4">
             <button
               type="button"
