@@ -53,6 +53,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     pageNo: page,
   });
 
+  /**
+   * 写真一覧取得
+   */
   const fetchPhotos = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -217,6 +220,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photos.length, isAuthenticated]);
 
+  /**
+   * +もっと見る
+   */
   const handleLoadMore = async () => {
     const nextPage = pageNo + 1;
     setIsLoadingMore(true);
@@ -232,6 +238,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     }
   };
 
+  /**
+   * 絞り込み
+   */
   const handleFilter = async () => {
     setIsFilterOpen(false);
     setIsLoading(true);
@@ -248,6 +257,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     }
   };
 
+  /**
+   * お気に入り登録／解除
+   */
   const handleToggleFavorite = async (e: React.MouseEvent, photo: PhotoListItem) => {
     e.preventDefault();
     e.stopPropagation();
