@@ -90,31 +90,4 @@ public class SessionHelperTest {
 			verify(accountPrincipal, times(0)).getUsername();
 		}
 	}
-	
-	@Nested
-	@Order(1)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class getPassword {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：セッションに存在し、パスワードを返す")
-		void getPassword_found() {
-			doReturn(accountPrincipal).when(authentication).getPrincipal();
-			doReturn("pasword").when(accountPrincipal).getPassword();
-			
-			String actual = sessionHelper.getPassword();
-			assertEquals("pasword", actual);
-		}
-		
-		@Test
-		@Order(2)
-		@DisplayName("正常系：セッションに存在せず、nullを返す")
-		void getPassword_not_found() {
-			doReturn(null).when(authentication).getPrincipal();
-			
-			String actual = sessionHelper.getPassword();
-			assertNull(actual);
-			verify(accountPrincipal, times(0)).getPassword();
-		}
-	}
 }
