@@ -68,11 +68,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 		filterChain.doFilter(request, response);
 	}
-
-	@Override
-	protected boolean shouldNotFilter(HttpServletRequest request) {
-		String path = request.getRequestURI();
-		// API以外のパス（Thymeleafページ）はこのフィルターを適用しない
-		return !path.startsWith("/api/");
-	}
 }
