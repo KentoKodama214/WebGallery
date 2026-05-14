@@ -32,7 +32,6 @@ describe("LoginForm", () => {
     expect(screen.getByPlaceholderText("User ID")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Password")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Log in" })).toBeInTheDocument();
-    expect(screen.getByText("Forgot your password?")).toBeInTheDocument();
     expect(screen.getByText("Create an account")).toBeInTheDocument();
   });
 

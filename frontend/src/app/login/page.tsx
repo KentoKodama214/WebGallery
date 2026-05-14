@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * ログインページ（SSR）
+ * ログインページ
  */
 export default function LoginPage() {
   return (

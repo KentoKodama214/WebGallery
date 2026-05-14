@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 
 /**
  * ログインフォームコンポーネント
- * 既存のThymeleafデザインをTailwind CSSで再現
  */
 export function LoginForm() {
   const [accountId, setAccountId] = useState("");
@@ -16,6 +15,9 @@ export function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
 
+  /**
+   * ログイン
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -79,10 +81,6 @@ export function LoginForm() {
             </p>
           )}
 
-          <a href="/contact" className="text-[0.8em] text-[#2196F3] no-underline">
-            Forgot your password?
-          </a>
-          <br />
           <a href="/register" className="text-[0.8em] text-[#2196F3] no-underline">
             Create an account
           </a>
