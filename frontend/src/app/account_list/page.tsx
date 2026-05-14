@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * アカウント一覧ページ（SSR）
+ * アカウント一覧ページ
  */
 export default function AccountListPage() {
   return (
