@@ -43,14 +43,12 @@
 | httpStatus | Integer | HTTPステータスコード |
 | errorCode | String | エラーコード |
 | errorMessage | String | エラーメッセージ |
-| goBackPageUrl | String | 戻り先ページのURL |
 
 ```json
 {
   "httpStatus": 409,
   "errorCode": "E-P-0001",
-  "errorMessage": "写真の登録に失敗しました。",
-  "goBackPageUrl": "/photo/testuser01/photo_list"
+  "errorMessage": "写真の登録に失敗しました。"
 }
 ```
 

@@ -163,8 +163,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(409))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_REGIST_FAVORITE.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_REGIST_FAVORITE.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/aaaaaaaa/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_REGIST_FAVORITE.getErrorMessage()));
 		}
 	}
 
@@ -296,8 +295,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(409))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_CANCEL_FAVORITE.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_CANCEL_FAVORITE.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/aaaaaaaa/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_CANCEL_FAVORITE.getErrorMessage()));
 		}
 	}
 }

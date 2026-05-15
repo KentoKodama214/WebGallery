@@ -49,7 +49,7 @@ public class PhotoFavoriteControllerTest {
 	@BeforeEach
 	void setUp() {
 		mockMvc = MockMvcBuilders.standaloneSetup(photoFavoriteController)
-				.setControllerAdvice(new CommonRestControllerAdvice(sessionHelper))
+				.setControllerAdvice(new CommonRestControllerAdvice())
 				.build();
 	}
 

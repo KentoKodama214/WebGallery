@@ -112,8 +112,7 @@ WebGallary/
 │       │   │   │   └── impl/                    # Repository implementations
 │       │   │   ├── service/                     # Service interfaces
 │       │   │   │   └── impl/                    # Service implementations
-│       │   │   ├── type_handler/                # MyBatis enum type handlers
-│       │   │   └── util/                        # URL utility classes
+│       │   │   └── type_handler/                # MyBatis enum type handlers
 │       │   └── resources/
 │       │       ├── application.yml              # App configuration
 │       │       ├── application-*.yml            # Profile-specific config (local, development, prod)
@@ -128,8 +127,7 @@ WebGallary/
 │           │   │   └── integration/             # Repository integration tests
 │           │   ├── service/impl/
 │           │   │   └── integration/             # Service integration tests
-│           │   ├── helper/                      # Helper unit tests
-│           │   └── util/                        # Utility unit tests
+│           │   └── helper/                      # Helper unit tests
 │           └── resources/
 │               ├── application-test.yml         # Test configuration
 │               ├── json/                        # Test JSON fixtures

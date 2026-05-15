@@ -70,7 +70,7 @@ public class AccountRestControllerTest {
 
 		mockMvc = MockMvcBuilders.standaloneSetup(accountRestController)
 				.setMessageConverters(converter)
-				.setControllerAdvice(new CommonRestControllerAdvice(sessionHelper))
+				.setControllerAdvice(new CommonRestControllerAdvice())
 				.build();
 	}
 
@@ -283,8 +283,7 @@ public class AccountRestControllerTest {
 			mockMvc.perform(post("/api/v1/accounts")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(readJsonFile("regist_success.json")))
-				.andExpect(status().isConflict())
-				.andExpect(jsonPath("$.goBackPageUrl").value("/register"));
+				.andExpect(status().isConflict());
 
 			AccountModel accountModel = accountModelCaptor.getValue();
 			assertNull(accountModel.getAccountNo());
@@ -536,7 +535,6 @@ public class AccountRestControllerTest {
 			assertEquals(HttpStatus.CONFLICT, actual.getStatusCode());
 			assertEquals(HttpStatus.CONFLICT.value(), actual.getBody().getHttpStatus());
 			assertEquals(ErrorEnum.INVALID_INPUT.getErrorMessage(), actual.getBody().getErrorMessage());
-			assertEquals("/register", actual.getBody().getGoBackPageUrl());
 		}
 	}
 }

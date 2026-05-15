@@ -578,10 +578,9 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.FORBIDDEN.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/aaaaaaaa/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorMessage()));
 		}
-		
+
 		@Test
 		@Order(5)
 		@DisplayName("異常系：登録上限に達している。PhotoNotAdditableExceptionをthrowする")
@@ -617,8 +616,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.REACHED_REGISTRATION_LIMIT.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.REACHED_REGISTRATION_LIMIT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/aaaaaaaa/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.REACHED_REGISTRATION_LIMIT.getErrorMessage()));
 		}
 		
 		@Test
@@ -761,8 +759,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.DUPLICATE_PHOTO_FILE.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.DUPLICATE_PHOTO_FILE.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/bbbbbbbb/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.DUPLICATE_PHOTO_FILE.getErrorMessage()));
 		}
 		
 		@Test
@@ -799,8 +796,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_UPDATE_PHOTO.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_UPDATE_PHOTO.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/bbbbbbbb/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_UPDATE_PHOTO.getErrorMessage()));
 		}
 	}
 	
@@ -922,8 +918,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.FORBIDDEN.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/" + loginAccountId + "/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorMessage()));
 			
 		}
 		
@@ -987,8 +982,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_DELETE_PHOTO.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_DELETE_PHOTO.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/" + loginAccountId + "/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_DELETE_PHOTO.getErrorMessage()));
 		}
 	}
 

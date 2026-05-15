@@ -68,7 +68,7 @@ public class PhotoRestControllerTest {
 	@BeforeEach
 	void setUp() {
 		mockMvc = MockMvcBuilders.standaloneSetup(photoRestController)
-				.setControllerAdvice(new CommonRestControllerAdvice(sessionHelper))
+				.setControllerAdvice(new CommonRestControllerAdvice())
 				.build();
 	}
 

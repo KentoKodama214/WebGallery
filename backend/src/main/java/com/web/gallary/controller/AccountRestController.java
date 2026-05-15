@@ -207,8 +207,7 @@ public class AccountRestController {
 		ErrorRequest errorResponse = ErrorRequest.builder()
 				.httpStatus(HttpStatus.CONFLICT.value())
 				.errorCode(exception.getErrorCode())
-				.errorMessage(exception.getMessage())
-				.goBackPageUrl(ApiRoutes.REGISTER).build();
+				.errorMessage(exception.getMessage()).build();
 		
 		return new ResponseEntity<ErrorRequest>(errorResponse, HttpStatus.CONFLICT);
 	}
