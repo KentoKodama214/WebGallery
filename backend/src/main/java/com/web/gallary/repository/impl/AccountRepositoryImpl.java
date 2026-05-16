@@ -37,12 +37,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public AccountModel getByAccountNo(Integer accountNo) {
-		Account account = Account.builder()
-				.accountNo(accountNo)
-				.build();
-
-		List<Account> accountList = accountMapper.select(account);
-
+		List<Account> accountList = accountMapper.select(Account.conditionByAccountNo(accountNo));
 		return accountList.isEmpty() ? null : AccountModel.from(accountList.getFirst());
 	}
 
@@ -55,12 +50,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public AccountModel getByAccountId(String accountId) {
-		Account account = Account.builder()
-				.accountId(accountId)
-				.build();
-
-		List<Account> accountList = accountMapper.select(account);
-
+		List<Account> accountList = accountMapper.select(Account.conditionByAccountId(accountId));
 		return accountList.isEmpty() ? null : AccountModel.from(accountList.getFirst());
 	}
 
@@ -91,7 +81,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public void update(AccountModel accountModel) throws UpdateFailureException {
-		Account cndAccount = Account.builder().accountNo(accountModel.getAccountNo()).build();
+		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo());
 		Account targetAccount = Account.fromForUpdate(accountModel, passwordEncoder);
 
 		if (accountMapper.update(cndAccount, targetAccount) < 1) {
@@ -108,7 +98,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public void updateLoginFailureCount(AccountModel accountModel) throws UpdateFailureException {
-		Account cndAccount = Account.builder().accountNo(accountModel.getAccountNo()).build();
+		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo());
 		Account targetAccount = Account.fromForUpdateLoginFailure(accountModel);
 
 		if (accountMapper.update(cndAccount, targetAccount) < 1) {
@@ -126,8 +116,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public Boolean isExistAccount(Integer accountNo, String accountId) {
-		Account account =  Account.builder().accountNo(accountNo).accountId(accountId).build();
-		return accountMapper.isExistAccount(account);
+		return accountMapper.isExistAccount(Account.conditionForExistCheck(accountNo, accountId));
 	}
 	
 	/**
@@ -137,10 +126,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public List<AccountModel> getAccountList() {
-		Account account = Account.builder().isDeleted(false).build();
-
-		List<Account> accountList = accountMapper.select(account);
-
+		List<Account> accountList = accountMapper.select(Account.conditionForList());
 		return accountList.stream().map(AccountModel::from).toList();
 	}
 }

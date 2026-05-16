@@ -156,4 +156,53 @@ public class Account {
 				.loginFailureCount(Optional.ofNullable(model.getLoginFailureCount()).orElse(0))
 				.build();
 	}
+
+	/**
+	 * アカウント番号で検索するための条件用Accountエンティティを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link Account}
+	 */
+	public static Account conditionByAccountNo(Integer accountNo) {
+		return Account.builder()
+				.accountNo(accountNo)
+				.build();
+	}
+
+	/**
+	 * アカウントIDで検索するための条件用Accountエンティティを生成する
+	 *
+	 * @param	accountId	アカウントID
+	 * @return				{@link Account}
+	 */
+	public static Account conditionByAccountId(String accountId) {
+		return Account.builder()
+				.accountId(accountId)
+				.build();
+	}
+
+	/**
+	 * アカウント存在チェック用の条件Accountエンティティを生成する
+	 *
+	 * @param	accountNo	検索対象外のアカウント番号
+	 * @param	accountId	アカウントID
+	 * @return				{@link Account}
+	 */
+	public static Account conditionForExistCheck(Integer accountNo, String accountId) {
+		return Account.builder()
+				.accountNo(accountNo)
+				.accountId(accountId)
+				.build();
+	}
+
+	/**
+	 * アカウント一覧取得用の条件Accountエンティティを生成する
+	 *
+	 * @return	{@link Account}
+	 */
+	public static Account conditionForList() {
+		return Account.builder()
+				.isDeleted(false)
+				.build();
+	}
 }
