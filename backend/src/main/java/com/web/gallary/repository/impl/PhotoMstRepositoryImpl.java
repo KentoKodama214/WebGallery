@@ -1,14 +1,11 @@
 package com.web.gallary.repository.impl;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
-import com.web.gallary.constant.Consts;
 import com.web.gallary.entity.PhotoMst;
-import com.web.gallary.enumuration.DirectionEnum;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.exception.RegistFailureException;
 import com.web.gallary.exception.UpdateFailureException;
@@ -40,33 +37,7 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 */
 	@Override
 	public void regist(PhotoDetailModel photoDetailModel, String filePath, Integer newPhotoNo) throws RegistFailureException {
-		PhotoMst photoMst = PhotoMst.builder()
-				.accountNo(photoDetailModel.getAccountNo())
-				.photoNo(newPhotoNo)
-				.createdBy(photoDetailModel.getAccountNo())
-				.updatedBy(photoDetailModel.getAccountNo())
-				.photoAt(
-					Optional.ofNullable(photoDetailModel.getPhotoAt()).orElse(Consts.MIN_OFFSET_DATE_TIME))
-				.locationNo(
-					Optional.ofNullable(photoDetailModel.getLocationNo()).orElse(0))
-				.imageFilePath(filePath)
-				.photoJapaneseTitle(
-					Optional.ofNullable(photoDetailModel.getPhotoJapaneseTitle()).orElse(Consts.STRING_EMPTY))
-				.photoEnglishTitle(
-					Optional.ofNullable(photoDetailModel.getPhotoEnglishTitle()).orElse(Consts.STRING_EMPTY))
-				.caption(
-					Optional.ofNullable(photoDetailModel.getCaption()).orElse(Consts.STRING_EMPTY))
-				.directionKbn(
-					Optional.ofNullable(photoDetailModel.getDirectionKbn()).orElse(DirectionEnum.NONE))
-				.focalLength(
-					Optional.ofNullable(photoDetailModel.getFocalLength()).orElse(0))
-				.fValue(
-					Optional.ofNullable(photoDetailModel.getFValue()).orElse(BigDecimal.ZERO))
-				.shutterSpeed(
-					Optional.ofNullable(photoDetailModel.getShutterSpeed()).orElse(BigDecimal.ZERO))
-				.iso(
-					Optional.ofNullable(photoDetailModel.getIso()).orElse(0))
-				.build();
+		PhotoMst photoMst = PhotoMst.fromForRegist(photoDetailModel, filePath, newPhotoNo);
 		
 		try {
 			photoMstMapper.insert(photoMst);
@@ -85,36 +56,8 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 */
 	@Override
 	public void update(PhotoDetailModel photoDetailModel) throws UpdateFailureException {
-		PhotoMst cndPhotoMst = PhotoMst.builder()
-				.accountNo(photoDetailModel.getAccountNo())
-				.photoNo(photoDetailModel.getPhotoNo())
-				.build();
-		
-		PhotoMst targetPhotoMst = PhotoMst.builder()
-				.updatedBy(photoDetailModel.getAccountNo())
-				.isDeleted(false)
-				.photoAt(
-					Optional.ofNullable(photoDetailModel.getPhotoAt()).orElse(Consts.MIN_OFFSET_DATE_TIME))
-				.locationNo(
-					Optional.ofNullable(photoDetailModel.getLocationNo()).orElse(0))
-				.imageFilePath(photoDetailModel.getImageFilePath())
-				.photoJapaneseTitle(
-					Optional.ofNullable(photoDetailModel.getPhotoJapaneseTitle()).orElse(Consts.STRING_EMPTY))
-				.photoEnglishTitle(
-					Optional.ofNullable(photoDetailModel.getPhotoEnglishTitle()).orElse(Consts.STRING_EMPTY))
-				.caption(
-					Optional.ofNullable(photoDetailModel.getCaption()).orElse(Consts.STRING_EMPTY))
-				.directionKbn(
-					Optional.ofNullable(photoDetailModel.getDirectionKbn()).orElse(DirectionEnum.NONE))
-				.focalLength(
-					Optional.ofNullable(photoDetailModel.getFocalLength()).orElse(0))
-				.fValue(
-					Optional.ofNullable(photoDetailModel.getFValue()).orElse(BigDecimal.ZERO))
-				.shutterSpeed(
-					Optional.ofNullable(photoDetailModel.getShutterSpeed()).orElse(BigDecimal.ZERO))
-				.iso(
-					Optional.ofNullable(photoDetailModel.getIso()).orElse(0))
-				.build();
+		PhotoMst cndPhotoMst = PhotoMst.condition(photoDetailModel.getAccountNo(), photoDetailModel.getPhotoNo());
+		PhotoMst targetPhotoMst = PhotoMst.targetForUpdate(photoDetailModel);
 		
 		if (photoMstMapper.update(cndPhotoMst, targetPhotoMst) < 1) {
 			log.warn("PhotoMst: Update Failed (AccountNo: {}, PhotoNo: {})", cndPhotoMst.getAccountNo(), cndPhotoMst.getPhotoNo());
@@ -130,11 +73,7 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 */
 	@Override
 	public void delete(PhotoDeleteModel photoDeleteModel) throws UpdateFailureException {
-		PhotoMst cndPhotoMst = PhotoMst.builder()
-				.accountNo(photoDeleteModel.getAccountNo())
-				.photoNo(photoDeleteModel.getPhotoNo())
-				.build();
-		
+		PhotoMst cndPhotoMst = PhotoMst.condition(photoDeleteModel.getAccountNo(), photoDeleteModel.getPhotoNo());
 		PhotoMst targetPhotoMst = PhotoMst.builder()
 				.updatedBy(photoDeleteModel.getAccountNo())
 				.isDeleted(true)

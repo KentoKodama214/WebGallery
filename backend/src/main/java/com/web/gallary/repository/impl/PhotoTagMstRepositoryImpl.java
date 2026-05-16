@@ -32,14 +32,7 @@ public class PhotoTagMstRepositoryImpl implements PhotoTagMstRepository {
 	 */
 	@Override
 	public void regist(PhotoTagModel photoTagModel) throws RegistFailureException {
-		PhotoTagMst photoTagMst = PhotoTagMst.builder()
-				.accountNo(photoTagModel.getAccountNo())
-				.photoNo(photoTagModel.getPhotoNo())
-				.tagNo(photoTagModel.getTagNo())
-				.createdBy(photoTagModel.getAccountNo())
-				.tagJapaneseName(photoTagModel.getTagJapaneseName())
-				.tagEnglishName(photoTagModel.getTagEnglishName())
-				.build();
+		PhotoTagMst photoTagMst = PhotoTagMst.from(photoTagModel);
 		
 		try {
 			photoTagMstMapper.insert(photoTagMst);

@@ -1,6 +1,5 @@
 package com.web.gallary.repository.impl;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -8,7 +7,6 @@ import java.util.Objects;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Repository;
 
-import com.web.gallary.constant.Consts;
 import com.web.gallary.dto.PhotoDetailDto;
 import com.web.gallary.dto.PhotoDetailGetDto;
 import com.web.gallary.dto.PhotoDto;
@@ -55,37 +53,18 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 				.accountNo(photoGetModel.getPhotoAccountNo())
 				.build();
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(photoTagMst);
-		
-		List<PhotoTagModel> photoTagModelList
-			= photoTagMstList.stream().map(photoTagModel -> PhotoTagModel.builder()
-					.accountNo(photoTagModel.getAccountNo())
-					.photoNo(photoTagModel.getPhotoNo())
-					.tagNo(photoTagModel.getTagNo())
-					.tagJapaneseName(photoTagModel.getTagJapaneseName())
-					.tagEnglishName(photoTagModel.getTagEnglishName())
-					.build()
-				).toList();
-		
+
+		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
+
 		List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
 		photoDtoList.stream().forEach(photoDto -> {
-			PhotoModel photoModel = PhotoModel.builder()
-					.accountNo(photoDto.getAccountNo())
-					.photoNo(photoDto.getPhotoNo())
-					.favoriteCount(photoDto.getFavoriteCount())
-					.isFavorite(photoDto.getIsFavorite())
-					.photoAt(photoDto.getPhotoAt().plusHours(9))
-					.imageFilePath(photoDto.getImageFilePath())
-					.caption(photoDto.getCaption())
-					.directionKbn(photoDto.getDirectionKbn())
-					.photoTagModelList(
-							photoTagModelList.stream().filter(photoTagModel -> 
-								photoTagModel.getAccountNo() == photoDto.getAccountNo() &&
-								photoTagModel.getPhotoNo()   == photoDto.getPhotoNo()
-						).toList())
-					.build();
-			photoModelList.add(photoModel);
+			List<PhotoTagModel> tagList = photoTagModelList.stream().filter(photoTagModel ->
+					photoTagModel.getAccountNo() == photoDto.getAccountNo() &&
+					photoTagModel.getPhotoNo()   == photoDto.getPhotoNo()
+				).toList();
+			photoModelList.add(PhotoModel.from(photoDto, tagList));
 		});
-		
+
 		return photoModelList;
 	}
 	
@@ -113,40 +92,8 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 				.build();
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(photoTagMst);
 
-		List<PhotoTagModel> photoTagModelList
-			= photoTagMstList.stream().map(photoTagModel -> PhotoTagModel.builder()
-					.accountNo(photoTagModel.getAccountNo())
-					.photoNo(photoTagModel.getPhotoNo())
-					.tagNo(photoTagModel.getTagNo())
-					.tagJapaneseName(photoTagModel.getTagJapaneseName())
-					.tagEnglishName(photoTagModel.getTagEnglishName())
-					.build()
-				).toList();
-		
-		PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-				.accountNo(photoDetailDto.getAccountNo())
-				.photoNo(photoDetailDto.getPhotoNo())
-				.isFavorite(photoDetailDto.getIsFavorite())
-				.photoAt(
-					photoDetailDto.getPhotoAt()
-						.isEqual(Consts.MIN_OFFSET_DATE_TIME) ? null : photoDetailDto.getPhotoAt().plusHours(9))
-				.locationNo(photoDetailDto.getLocationNo())
-				.address(photoDetailDto.getAddress())
-				.latitude(photoDetailDto.getLatitude())
-				.longitude(photoDetailDto.getLongitude())
-				.locationName(photoDetailDto.getLocationName())
-				.imageFilePath(photoDetailDto.getImageFilePath())
-				.photoJapaneseTitle(photoDetailDto.getPhotoJapaneseTitle())
-				.photoEnglishTitle(photoDetailDto.getPhotoEnglishTitle())
-				.caption(photoDetailDto.getCaption())
-				.directionKbn(photoDetailDto.getDirectionKbn())
-				.focalLength(photoDetailDto.getFocalLength() != 0 ? photoDetailDto.getFocalLength() : null)
-				.fValue(photoDetailDto.getFValue().compareTo(BigDecimal.ZERO) == 1 ? photoDetailDto.getFValue(): null)
-				.shutterSpeed(photoDetailDto.getShutterSpeed().compareTo(BigDecimal.ZERO) == 1 ? photoDetailDto.getShutterSpeed() : null)
-				.iso(photoDetailDto.getIso() != 0 ? photoDetailDto.getIso() : null)
-				.photoTagModelList(photoTagModelList)
-				.build();
-		
-		return photoDetailModel;
+		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
+
+		return PhotoDetailModel.from(photoDetailDto, photoTagModelList);
 	}
 }

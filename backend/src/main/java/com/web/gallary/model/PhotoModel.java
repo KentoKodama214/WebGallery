@@ -3,6 +3,7 @@ package com.web.gallary.model;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import com.web.gallary.dto.PhotoDto;
 import com.web.gallary.enumuration.DirectionEnum;
 
 import lombok.Builder;
@@ -54,4 +55,25 @@ public class PhotoModel {
 	/** 写真タグリスト */
 	@NonNull
 	private List<PhotoTagModel> photoTagModelList;
+
+	/**
+	 * PhotoDtoとタグリストからPhotoModelを生成する
+	 *
+	 * @param	dto		{@link PhotoDto}
+	 * @param	tagList	該当写真のタグリスト
+	 * @return			{@link PhotoModel}
+	 */
+	public static PhotoModel from(PhotoDto dto, List<PhotoTagModel> tagList) {
+		return PhotoModel.builder()
+				.accountNo(dto.getAccountNo())
+				.photoNo(dto.getPhotoNo())
+				.favoriteCount(dto.getFavoriteCount())
+				.isFavorite(dto.getIsFavorite())
+				.photoAt(dto.getPhotoAt().plusHours(9))
+				.imageFilePath(dto.getImageFilePath())
+				.caption(dto.getCaption())
+				.directionKbn(dto.getDirectionKbn())
+				.photoTagModelList(tagList)
+				.build();
+	}
 }

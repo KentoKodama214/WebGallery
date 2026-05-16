@@ -2,9 +2,15 @@ package com.web.gallary.entity;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Objects;
+import java.util.Optional;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import com.web.gallary.constant.Consts;
 import com.web.gallary.enumuration.AuthorityEnum;
 import com.web.gallary.enumuration.SexEnum;
+import com.web.gallary.model.AccountModel;
 
 import lombok.Builder;
 import lombok.Data;
@@ -73,4 +79,81 @@ public class Account {
 	
 	/** ログイン失敗回数 */
 	private Integer loginFailureCount;
+
+	/**
+	 * アカウント登録用のAccountModelからAccountエンティティを生成する
+	 *
+	 * @param	model			{@link AccountModel}
+	 * @param	passwordEncoder	{@link PasswordEncoder}
+	 * @return					{@link Account}
+	 */
+	public static Account from(AccountModel model, PasswordEncoder passwordEncoder) {
+		return Account.builder()
+				.createdBy(0)
+				.updatedBy(0)
+				.accountId(model.getAccountId())
+				.accountName(model.getAccountName())
+				.password(passwordEncoder.encode(model.getPassword()))
+				.birthdate(
+					Optional.ofNullable(model.getBirthdate()).orElse(Consts.MIN_LOCAL_DATE))
+				.sexKbn(
+					Optional.ofNullable(model.getSexKbn()).orElse(SexEnum.NONE))
+				.birthplacePrefectureKbnCode(
+					Optional.ofNullable(model.getBirthplacePrefectureKbnCode()).orElse(Consts.STRING_NONE))
+				.residentPrefectureKbnCode(
+					Optional.ofNullable(model.getResidentPrefectureKbnCode()).orElse(Consts.STRING_NONE))
+				.freeMemo(
+					Optional.ofNullable(model.getFreeMemo()).orElse(Consts.STRING_EMPTY))
+				.authorityKbn(AuthorityEnum.MINI)
+				.lastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME)
+				.loginFailureCount(0)
+				.build();
+	}
+
+	/**
+	 * アカウント更新用のAccountModelからAccountエンティティを生成する
+	 *
+	 * @param	model			{@link AccountModel}
+	 * @param	passwordEncoder	{@link PasswordEncoder}
+	 * @return					{@link Account}
+	 */
+	public static Account fromForUpdate(AccountModel model, PasswordEncoder passwordEncoder) {
+		Account account = Account.builder()
+				.accountId(model.getAccountId())
+				.accountName(model.getAccountName())
+				.birthdate(
+					Optional.ofNullable(model.getBirthdate()).orElse(Consts.MIN_LOCAL_DATE))
+				.sexKbn(
+					Optional.ofNullable(model.getSexKbn()).orElse(SexEnum.NONE))
+				.birthplacePrefectureKbnCode(
+					Optional.ofNullable(model.getBirthplacePrefectureKbnCode()).orElse(Consts.STRING_NONE))
+				.residentPrefectureKbnCode(
+					Optional.ofNullable(model.getResidentPrefectureKbnCode()).orElse(Consts.STRING_NONE))
+				.freeMemo(
+					Optional.ofNullable(model.getFreeMemo()).orElse(Consts.STRING_EMPTY))
+				.lastLoginDatetime(
+					Optional.ofNullable(model.getLastLoginDatetime()).orElse(Consts.MIN_OFFSET_DATE_TIME))
+				.loginFailureCount(
+					Optional.ofNullable(model.getLoginFailureCount()).orElse(0))
+				.build();
+
+		if (!Objects.isNull(model.getPassword())) {
+			account.setPassword(passwordEncoder.encode(model.getPassword()));
+		}
+
+		return account;
+	}
+
+	/**
+	 * ログイン失敗回数更新用のAccountModelからAccountエンティティを生成する
+	 *
+	 * @param	model	{@link AccountModel}
+	 * @return			{@link Account}
+	 */
+	public static Account fromForUpdateLoginFailure(AccountModel model) {
+		return Account.builder()
+				.lastLoginDatetime(model.getLastLoginDatetime())
+				.loginFailureCount(Optional.ofNullable(model.getLoginFailureCount()).orElse(0))
+				.build();
+	}
 }

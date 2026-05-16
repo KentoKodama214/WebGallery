@@ -2,6 +2,8 @@ package com.web.gallary.entity;
 
 import java.time.OffsetDateTime;
 
+import com.web.gallary.model.PhotoTagModel;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -34,4 +36,21 @@ public class PhotoTagMst {
 
 	/** タグ英語名 */
 	private String tagEnglishName;
+
+	/**
+	 * PhotoTagModelからPhotoTagMstエンティティを生成する
+	 *
+	 * @param	model	{@link PhotoTagModel}
+	 * @return			{@link PhotoTagMst}
+	 */
+	public static PhotoTagMst from(PhotoTagModel model) {
+		return PhotoTagMst.builder()
+				.accountNo(model.getAccountNo())
+				.photoNo(model.getPhotoNo())
+				.tagNo(model.getTagNo())
+				.createdBy(model.getAccountNo())
+				.tagJapaneseName(model.getTagJapaneseName())
+				.tagEnglishName(model.getTagEnglishName())
+				.build();
+	}
 }

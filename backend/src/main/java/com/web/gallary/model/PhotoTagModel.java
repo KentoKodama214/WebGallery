@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.web.gallary.constant.Consts;
 import com.web.gallary.controller.request.PhotoTagSaveRequest;
+import com.web.gallary.entity.PhotoTagMst;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -32,6 +33,22 @@ public class PhotoTagModel {
 	/** タグ英語名 */
 	@NonNull
 	private String tagEnglishName;
+
+	/**
+	 * PhotoTagMstエンティティからPhotoTagModelを生成する
+	 *
+	 * @param	entity	{@link PhotoTagMst}
+	 * @return			{@link PhotoTagModel}
+	 */
+	public static PhotoTagModel from(PhotoTagMst entity) {
+		return PhotoTagModel.builder()
+				.accountNo(entity.getAccountNo())
+				.photoNo(entity.getPhotoNo())
+				.tagNo(entity.getTagNo())
+				.tagJapaneseName(entity.getTagJapaneseName())
+				.tagEnglishName(entity.getTagEnglishName())
+				.build();
+	}
 
 	/**
 	 * 写真タグ保存リクエストからPhotoTagModelを生成する
