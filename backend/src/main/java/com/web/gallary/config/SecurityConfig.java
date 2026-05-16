@@ -85,13 +85,19 @@ public class SecurityConfig {
 			.sessionManagement(session -> session
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(authorizeRequests -> authorizeRequests
+				// 認証API
 				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_LOGIN)).permitAll()
 				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_REFRESH)).permitAll()
 				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_LOGOUT)).permitAll()
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_ACCOUNTS)).permitAll()
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_ACCOUNTS + "/**")).permitAll()
+				// アカウント登録（POST）とアカウント一覧（GET）は公開
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_ACCOUNTS, "GET")).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_ACCOUNTS, "POST")).permitAll()
+				// 写真一覧・詳細の閲覧（GET）は公開
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_PHOTOS, "GET")).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_PHOTO_DETAIL, "GET")).permitAll()
+				// 都道府県一覧は公開
 				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_PREFECTURES)).permitAll()
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_FAVORITES)).authenticated()
+				// それ以外は認証必須
 				.anyRequest().authenticated())
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
