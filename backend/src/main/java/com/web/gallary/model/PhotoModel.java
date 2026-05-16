@@ -2,6 +2,7 @@ package com.web.gallary.model;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import com.web.gallary.dto.PhotoDto;
 import com.web.gallary.entity.PhotoTagMst;
@@ -61,11 +62,16 @@ public class PhotoModel {
 	 * PhotoDtoとタグエンティティリストからPhotoModelを生成する
 	 *
 	 * @param	dto				{@link PhotoDto}
-	 * @param	photoTagMstList	該当写真のタグエンティティリスト
+	 * @param	photoTagMstList	全タグエンティティリスト（内部で該当写真のタグをフィルタリングする）
 	 * @return					{@link PhotoModel}
 	 */
 	public static PhotoModel from(PhotoDto dto, List<PhotoTagMst> photoTagMstList) {
-		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
+		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream()
+				.filter(tag ->
+					tag.getAccountNo().equals(dto.getAccountNo()) &&
+					Objects.equals(tag.getPhotoNo(), dto.getPhotoNo()))
+				.map(PhotoTagModel::from)
+				.toList();
 		return PhotoModel.builder()
 				.accountNo(dto.getAccountNo())
 				.photoNo(dto.getPhotoNo())

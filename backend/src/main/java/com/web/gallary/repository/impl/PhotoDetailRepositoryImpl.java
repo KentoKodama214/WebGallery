@@ -50,13 +50,9 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
 				PhotoTagMst.condition(photoGetModel));
 
-		return photoDtoList.stream().map(photoDto -> {
-			List<PhotoTagMst> tagMstList = photoTagMstList.stream().filter(tag ->
-					tag.getAccountNo().equals(photoDto.getAccountNo()) &&
-					Objects.equals(tag.getPhotoNo(), photoDto.getPhotoNo())
-				).toList();
-			return PhotoModel.from(photoDto, tagMstList);
-		}).toList();
+		return photoDtoList.stream()
+				.map(photoDto -> PhotoModel.from(photoDto, photoTagMstList))
+				.toList();
 	}
 	
 	/**
