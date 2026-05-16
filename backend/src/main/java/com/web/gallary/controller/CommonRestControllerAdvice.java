@@ -39,13 +39,7 @@ public class CommonRestControllerAdvice {
 	 */
 	@ExceptionHandler(BadRequestException.class)
 	public ResponseEntity<BadRequestResponse> handleBadRequestException(BadRequestException exception) {
-		BadRequestResponse response = BadRequestResponse.builder()
-				.httpStatus(HttpStatus.BAD_REQUEST.value())
-				.isSuccess(false)
-				.message(exception.getMessage())
-				.build();
-
-		return new ResponseEntity<BadRequestResponse>(response, HttpStatus.BAD_REQUEST);
+		return new ResponseEntity<BadRequestResponse>(BadRequestResponse.of(exception), HttpStatus.BAD_REQUEST);
 	}
 
 	/**

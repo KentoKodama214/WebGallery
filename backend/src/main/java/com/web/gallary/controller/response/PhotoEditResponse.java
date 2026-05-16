@@ -1,5 +1,7 @@
 package com.web.gallary.controller.response;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -23,4 +25,22 @@ public class PhotoEditResponse {
 
 	/** 画像ファイルパス */
 	private String imageFilePath;
+
+	/**
+	 * 成功レスポンスを生成する
+	 *
+	 * @param	message			メッセージ
+	 * @param	photoNo			写真番号
+	 * @param	imageFilePath	画像ファイルパス
+	 * @return					{@link PhotoEditResponse}
+	 */
+	public static PhotoEditResponse of(String message, Integer photoNo, String imageFilePath) {
+		return PhotoEditResponse.builder()
+				.httpStatus(HttpStatus.OK.value())
+				.isSuccess(true)
+				.message(message)
+				.photoNo(photoNo)
+				.imageFilePath(imageFilePath)
+				.build();
+	}
 }

@@ -260,7 +260,9 @@ PostgreSQLの2つのスキーマ：
 - Lombokアノテーションでボイラープレートを削減（`@Builder`、`@Getter`、`@Setter`を優先）
 - Entityクラスには `@Data` と `@Builder` のみを使用する（`@NoArgsConstructor` や `@AllArgsConstructor` は使用しない）
 - サービスとリポジトリはインターフェースベース設計
-- Responseクラスには `static from()` ファクトリメソッドを定義し、Model/Entity→Responseの変換ロジックをResponseクラス側に集約する。Controllerでは `from()` を呼び出すだけにする
+- Responseクラスにはファクトリメソッドを定義し、レスポンス生成ロジックをResponseクラス側に集約する。Controllerではファクトリメソッドを呼び出すだけにする
+  - `static from(Model)`: Model/Entity→Responseの変換に使用する
+  - `static of(...)`: 固定値や少数のパラメータから直接生成する場合に使用する
 - 明示的なリンティング・フォーマットツールは未設定。既存のコードスタイルに従うこと
 
 ### 新機能追加の手順
