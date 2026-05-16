@@ -243,7 +243,7 @@ PostgreSQLの2つのスキーマ：
    ```bash
    ./backend/gradlew -p backend bootRun
    ```
-4. `http://localhost:8080`でアクセス
+4. バックエンドは`http://localhost:8080`、フロントエンドは`http://localhost:3000`でアクセス
 
 ## 遵守すべき規約
 
