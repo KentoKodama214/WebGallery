@@ -1,7 +1,9 @@
 package com.web.gallary.model;
 
 import java.util.List;
+import java.util.Optional;
 
+import com.web.gallary.controller.request.PhotoListRequest;
 import com.web.gallary.enumuration.DirectionEnum;
 import com.web.gallary.enumuration.SortPhotoEnum;
 
@@ -38,11 +40,31 @@ public class PhotoListGetModel {
 	@NonNull
 	private List<String> tagList;
 	
-	/** 
+	/**
 	 * 並び順
 	 * <p>
 	 * {@link SortPhotoEnum}
 	 */
 	@NonNull
 	private SortPhotoEnum sortBy;
+
+	/**
+	 * 写真一覧リクエストからPhotoListGetModelを生成する
+	 *
+	 * @param	request			{@link PhotoListRequest}
+	 * @param	accountNo		ログイン中のアカウントNo
+	 * @param	photoAccountId	写真のアカウントID
+	 * @param	tagList			タグワードリスト
+	 * @return					{@link PhotoListGetModel}
+	 */
+	public static PhotoListGetModel from(PhotoListRequest request, Integer accountNo, String photoAccountId, List<String> tagList) {
+		return PhotoListGetModel.builder()
+				.accountNo(accountNo)
+				.photoAccountId(photoAccountId)
+				.directionKbn(request.getDirectionKbn())
+				.isFavoriteOnly(Optional.ofNullable(request.getIsFavorite()).orElse(Boolean.FALSE))
+				.tagList(tagList)
+				.sortBy(request.getSortBy())
+				.build();
+	}
 }

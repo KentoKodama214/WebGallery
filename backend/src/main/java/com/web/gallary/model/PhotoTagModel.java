@@ -1,5 +1,10 @@
 package com.web.gallary.model;
 
+import java.util.Optional;
+
+import com.web.gallary.constant.Consts;
+import com.web.gallary.controller.request.PhotoTagSaveRequest;
+
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -27,4 +32,20 @@ public class PhotoTagModel {
 	/** タグ英語名 */
 	@NonNull
 	private String tagEnglishName;
+
+	/**
+	 * 写真タグ保存リクエストからPhotoTagModelを生成する
+	 *
+	 * @param	request	{@link PhotoTagSaveRequest}
+	 * @return			{@link PhotoTagModel}
+	 */
+	public static PhotoTagModel from(PhotoTagSaveRequest request) {
+		return PhotoTagModel.builder()
+				.accountNo(request.getAccountNo())
+				.photoNo(request.getPhotoNo())
+				.tagNo(request.getTagNo())
+				.tagJapaneseName(Optional.ofNullable(request.getTagJapaneseName()).orElse(Consts.STRING_EMPTY))
+				.tagEnglishName(Optional.ofNullable(request.getTagEnglishName()).orElse(Consts.STRING_EMPTY))
+				.build();
+	}
 }

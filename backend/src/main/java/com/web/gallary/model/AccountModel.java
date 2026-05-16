@@ -3,6 +3,8 @@ package com.web.gallary.model;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
+import com.web.gallary.controller.request.AccountRegistRequest;
+import com.web.gallary.controller.request.AccountUpdateRequest;
 import com.web.gallary.enumuration.AuthorityEnum;
 import com.web.gallary.enumuration.SexEnum;
 
@@ -58,4 +60,45 @@ public class AccountModel {
 	
 	/** ログイン失敗回数 */
 	private Integer loginFailureCount;
+
+	/**
+	 * アカウント登録リクエストからAccountModelを生成する
+	 *
+	 * @param	request	{@link AccountRegistRequest}
+	 * @return			{@link AccountModel}
+	 */
+	public static AccountModel from(AccountRegistRequest request) {
+		return AccountModel.builder()
+				.accountId(request.getAccountId())
+				.accountName(request.getAccountName())
+				.password(request.getPassword())
+				.birthdate(request.getBirthdate())
+				.sexKbn(request.getSexKbn())
+				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode())
+				.residentPrefectureKbnCode(request.getResidentPrefectureKbnCode())
+				.freeMemo(request.getFreeMemo())
+				.loginFailureCount(0)
+				.build();
+	}
+
+	/**
+	 * アカウント更新リクエストからAccountModelを生成する
+	 *
+	 * @param	request		{@link AccountUpdateRequest}
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link AccountModel}
+	 */
+	public static AccountModel from(AccountUpdateRequest request, Integer accountNo) {
+		return AccountModel.builder()
+				.accountNo(accountNo)
+				.accountId(request.getAccountId())
+				.accountName(request.getAccountName())
+				.password(request.getNewPassword().isEmpty() ? null : request.getNewPassword())
+				.birthdate(request.getBirthdate())
+				.sexKbn(request.getSexKbn())
+				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode())
+				.residentPrefectureKbnCode(request.getResidentPrefectureKbnCode())
+				.freeMemo(request.getFreeMemo())
+				.build();
+	}
 }

@@ -1,5 +1,7 @@
 package com.web.gallary.model;
 
+import com.web.gallary.controller.request.PhotoDeleteRequest;
+
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -21,4 +23,18 @@ public class PhotoDeleteModel {
 	/** 画像ファイルパス */
 	@NonNull
 	private String imageFilePath;
+
+	/**
+	 * 写真削除リクエストからPhotoDeleteModelを生成する
+	 *
+	 * @param	request	{@link PhotoDeleteRequest}
+	 * @return			{@link PhotoDeleteModel}
+	 */
+	public static PhotoDeleteModel from(PhotoDeleteRequest request) {
+		return PhotoDeleteModel.builder()
+				.accountNo(request.getAccountNo())
+				.photoNo(request.getPhotoNo())
+				.imageFilePath(request.getImageFilePath())
+				.build();
+	}
 }

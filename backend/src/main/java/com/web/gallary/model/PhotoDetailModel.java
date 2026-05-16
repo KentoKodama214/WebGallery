@@ -3,9 +3,12 @@ package com.web.gallary.model;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.web.gallary.constant.Consts;
+import com.web.gallary.controller.request.PhotoSaveRequest;
 import com.web.gallary.enumuration.DirectionEnum;
 
 import lombok.Builder;
@@ -83,4 +86,37 @@ public class PhotoDetailModel {
 	
 	/** 写真タグリスト */
 	private List<PhotoTagModel> photoTagModelList;
+
+	/**
+	 * 写真保存リクエストからPhotoDetailModelを生成する
+	 *
+	 * @param	request				{@link PhotoSaveRequest}
+	 * @param	photoTagModelList	写真タグリスト
+	 * @return						{@link PhotoDetailModel}
+	 */
+	public static PhotoDetailModel from(PhotoSaveRequest request, List<PhotoTagModel> photoTagModelList) {
+		return PhotoDetailModel.builder()
+				.accountNo(request.getAccountNo())
+				.photoNo(request.getPhotoNo())
+				.isFavorite(request.getIsFavorite())
+				.photoAt(Optional.ofNullable(request.getPhotoAt())
+						.map(photoAt -> photoAt.atOffset(Consts.JST)).orElse(null))
+				.locationNo(request.getLocationNo())
+				.address(request.getAddress())
+				.latitude(request.getLatitude())
+				.longitude(request.getLongitude())
+				.locationName(request.getLocationName())
+				.imageFile(request.getImageFile())
+				.imageFilePath(Optional.ofNullable(request.getImageFilePath()).orElse(""))
+				.photoJapaneseTitle(request.getPhotoJapaneseTitle())
+				.photoEnglishTitle(request.getPhotoEnglishTitle())
+				.caption(request.getCaption())
+				.directionKbn(request.getDirectionKbn())
+				.focalLength(request.getFocalLength())
+				.fValue(request.getFValue())
+				.shutterSpeed(request.getShutterSpeed())
+				.iso(request.getIso())
+				.photoTagModelList(photoTagModelList)
+				.build();
+	}
 }

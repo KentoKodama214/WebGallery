@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -86,15 +87,7 @@ public class PhotoRestController {
 		
 		// 抽出条件に該当する写真の一覧を、指定の並び順で取得する
 		List<PhotoModel> photoList = photoService.getPhotoList(
-				PhotoListGetModel.builder()
-					.accountNo(sessionHelper.getAccountNo())
-					.photoAccountId(photoAccountId)
-					.directionKbn(photoListRequest.getDirectionKbn())
-					.isFavoriteOnly(Optional.ofNullable(photoListRequest.getIsFavorite()).orElse(Boolean.FALSE))
-					.tagList(tagList)
-					.sortBy(photoListRequest.getSortBy())
-					.build()
-			);
+				PhotoListGetModel.from(photoListRequest, sessionHelper.getAccountNo(), photoAccountId, tagList));
 		return ResponseEntity.ok(PhotoListGetResponse.from(photoList, photoListRequest.getPageNo(), photoConfig.getPhotoCountPerPage()));
 	}
 
@@ -130,13 +123,8 @@ public class PhotoRestController {
 			@PathVariable Integer photoNo,
 			Integer accountNo) throws PhotoNotFoundException {
 
-		PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-				.accountNo(sessionHelper.getAccountNo())
-				.photoAccountNo(accountNo)
-				.photoNo(photoNo)
-				.build();
-
-		PhotoDetailModel photoDetailModel = photoService.getPhotoDetail(photoDetailGetModel);
+		PhotoDetailModel photoDetailModel = photoService.getPhotoDetail(
+				PhotoDetailGetModel.of(sessionHelper.getAccountNo(), accountNo, photoNo));
 
 		return ResponseEntity.ok(PhotoDetailGetResponse.from(photoDetailModel));
 	}
@@ -182,49 +170,14 @@ public class PhotoRestController {
 			}
 		};
 		
-		List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
-		
-		if(!Objects.isNull(photoSaveRequest.getPhotoTagRegistRequestList())) {
-			photoSaveRequest.getPhotoTagRegistRequestList().stream().forEach(photoTag -> {
-				photoTagModelList.add(
-					PhotoTagModel.builder()
-						.accountNo(photoTag.getAccountNo())
-						.photoNo(photoTag.getPhotoNo())
-						.tagNo(photoTag.getTagNo())
-						.tagJapaneseName(Optional.ofNullable(photoTag.getTagJapaneseName()).orElse(Consts.STRING_EMPTY))
-						.tagEnglishName(Optional.ofNullable(photoTag.getTagEnglishName()).orElse(Consts.STRING_EMPTY))
-						.build()
-				);
-			});
-		}
-		
+		List<PhotoTagModel> photoTagModelList = Objects.isNull(photoSaveRequest.getPhotoTagRegistRequestList())
+				? new ArrayList<PhotoTagModel>()
+				: photoSaveRequest.getPhotoTagRegistRequestList().stream()
+						.map(PhotoTagModel::from)
+						.collect(Collectors.toList());
+
 		List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-		photoDetailModelList.add(
-			PhotoDetailModel.builder()
-				.accountNo(photoSaveRequest.getAccountNo())
-				.photoNo(photoSaveRequest.getPhotoNo())
-				.isFavorite(photoSaveRequest.getIsFavorite())
-				.photoAt(
-					Optional.ofNullable(photoSaveRequest.getPhotoAt())
-						.map(photoAt -> photoAt.atOffset(Consts.JST)).orElse(null))
-				.locationNo(photoSaveRequest.getLocationNo())
-				.address(photoSaveRequest.getAddress())
-				.latitude(photoSaveRequest.getLatitude())
-				.longitude(photoSaveRequest.getLongitude())
-				.locationName(photoSaveRequest.getLocationName())
-				.imageFile(photoSaveRequest.getImageFile())
-				.imageFilePath(Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse(""))
-				.photoJapaneseTitle(photoSaveRequest.getPhotoJapaneseTitle())
-				.photoEnglishTitle(photoSaveRequest.getPhotoEnglishTitle())
-				.caption(photoSaveRequest.getCaption())
-				.directionKbn(photoSaveRequest.getDirectionKbn())
-				.focalLength(photoSaveRequest.getFocalLength())
-				.fValue(photoSaveRequest.getFValue())
-				.shutterSpeed(photoSaveRequest.getShutterSpeed())
-				.iso(photoSaveRequest.getIso())
-				.photoTagModelList(photoTagModelList)
-				.build()
-		);
+		photoDetailModelList.add(PhotoDetailModel.from(photoSaveRequest, photoTagModelList));
 		
 		Integer savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
 
@@ -266,13 +219,7 @@ public class PhotoRestController {
 		}
 		
 		List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
-		photoDeleteModelList.add(
-			PhotoDeleteModel.builder()
-				.accountNo(photoDeleteRequest.getAccountNo())
-				.photoNo(photoDeleteRequest.getPhotoNo())
-				.imageFilePath(photoDeleteRequest.getImageFilePath())
-				.build()
-		);
+		photoDeleteModelList.add(PhotoDeleteModel.from(photoDeleteRequest));
 		
 		photoService.deletePhotos(photoAccountId, photoDeleteModelList);
 		

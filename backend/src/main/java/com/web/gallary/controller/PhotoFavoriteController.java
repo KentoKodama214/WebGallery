@@ -58,12 +58,7 @@ public class PhotoFavoriteController {
 			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
 		}
 		
-		PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-				.accountNo(sessionHelper.getAccountNo())
-				.favoritePhotoAccountNo(photoFavoriteRegistRequest.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(photoFavoriteRegistRequest.getFavoritePhotoNo())
-				.build();
-		photoFavoriteService.addFavorite(photoFavoriteModel);
+		photoFavoriteService.addFavorite(PhotoFavoriteModel.from(photoFavoriteRegistRequest, sessionHelper.getAccountNo()));
 		
 		return ResponseEntity.ok(PhotoFavoriteResponse.of(MessageConst.REGIST_FAVORITE));
 	}
@@ -88,12 +83,7 @@ public class PhotoFavoriteController {
 			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
 		}
 		
-		PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-				.accountNo(sessionHelper.getAccountNo())
-				.favoritePhotoAccountNo(photoFavoriteDeleteRequest.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(photoFavoriteDeleteRequest.getFavoritePhotoNo())
-				.build();
-		photoFavoriteService.deleteFavorite(photoFavoriteModel);
+		photoFavoriteService.deleteFavorite(PhotoFavoriteModel.from(photoFavoriteDeleteRequest, sessionHelper.getAccountNo()));
 		
 		return ResponseEntity.ok(PhotoFavoriteResponse.of(MessageConst.CANCEL_FAVORITE));
 	}
