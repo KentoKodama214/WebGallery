@@ -5,6 +5,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
 
+import com.web.gallary.constant.Consts;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -145,7 +146,7 @@ public class AuthServiceImpl implements AuthService {
 	 */
 	private String hashToken(String token) {
 		try {
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			MessageDigest digest = MessageDigest.getInstance(Consts.SHA_256);
 			byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
 			StringBuilder hexString = new StringBuilder();
 			for (byte b : hash) {

@@ -17,8 +17,8 @@ public class AccountPrincipal implements UserDetails {
 	private static final String ROLE_ADMIN = "ROLE_ADMIN";
 	private static final String ROLE_USER = "ROLE_USER";
 
-	private Account account;
-	private int maxFailCount;
+	private final Account account;
+	private final int maxFailCount;
 
 	public AccountPrincipal(Account account, int failCount) {
 		this.account = account;

@@ -8,15 +8,9 @@ public final class ApiRoutes {
 	/** APIバージョンプレフィックス */
 	public static final String API_PREFIX = "/api/v1";
 
-	// 共通
-	/** ログインページ */
-	public static final String LOGIN = "/login";
-
 	// アカウント関連
 	/** アカウントID */
 	public static final String ACCOUNT_ID = "{accountId}";
-	/** アカウント登録ページ */
-	public static final String REGISTER = "/register";
 
 	// 認証関連
 	/** 認証ログインAPI */
