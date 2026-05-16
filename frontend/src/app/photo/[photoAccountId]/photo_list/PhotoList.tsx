@@ -269,7 +269,6 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       }
       lightboxRef.current = null;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photos.length, isAuthenticated]);
 
   /**
