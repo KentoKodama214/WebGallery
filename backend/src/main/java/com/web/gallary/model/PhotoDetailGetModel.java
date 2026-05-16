@@ -20,4 +20,20 @@ public class PhotoDetailGetModel {
 	/** 写真番号 */
 	@NonNull
 	private Integer photoNo;
+
+	/**
+	 * パラメータからPhotoDetailGetModelを生成する
+	 *
+	 * @param	accountNo		ログイン中のアカウントNo
+	 * @param	photoAccountNo	写真のアカウントNo
+	 * @param	photoNo			写真番号
+	 * @return					{@link PhotoDetailGetModel}
+	 */
+	public static PhotoDetailGetModel of(Integer accountNo, Integer photoAccountNo, Integer photoNo) {
+		return PhotoDetailGetModel.builder()
+				.accountNo(accountNo)
+				.photoAccountNo(photoAccountNo)
+				.photoNo(photoNo)
+				.build();
+	}
 }

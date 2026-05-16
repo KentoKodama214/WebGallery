@@ -88,7 +88,7 @@ public class AccountRestController {
 	/**
 	 * アカウント登録
 	 *
-	 * @param	accuontRegistRequest	{@link AccountRegistRequest}
+	 * @param	accountRegistRequest	{@link AccountRegistRequest}
 	 * @param	result					AccountRegistRequestのバインディング結果
 	 * @return							{@link AccountRegistResponse}
 	 * @throws	BadRequestException 	リクエストパラメータが不正の場合
@@ -96,7 +96,7 @@ public class AccountRestController {
 	 */
 	@PostMapping(ApiRoutes.API_ACCOUNTS)
 	public ResponseEntity<AccountRegistResponse> register(
-			@RequestBody @Validated AccountRegistRequest accuontRegistRequest, 
+			@RequestBody @Validated AccountRegistRequest accountRegistRequest,
 			BindingResult result) throws BadRequestException, RegistFailureException {
 		
 		if(result.hasErrors()) {
@@ -107,17 +107,7 @@ public class AccountRestController {
 			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
 		}
 		
-		AccountModel accountModel = AccountModel.builder()
-				.accountId(accuontRegistRequest.getAccountId())
-				.accountName(accuontRegistRequest.getAccountName())
-				.password(accuontRegistRequest.getPassword())
-				.birthdate(accuontRegistRequest.getBirthdate())
-				.sexKbn(accuontRegistRequest.getSexKbn())
-				.birthplacePrefectureKbnCode(accuontRegistRequest.getBirthplacePrefectureKbnCode())
-				.residentPrefectureKbnCode(accuontRegistRequest.getResidentPrefectureKbnCode())
-				.freeMemo(accuontRegistRequest.getFreeMemo())
-				.loginFailureCount(0)
-				.build();
+		AccountModel accountModel = AccountModel.from(accountRegistRequest);
 		
 		Boolean isSuccess = accountServiceImpl.registAccount(accountModel);
 		return ResponseEntity.ok(AccountRegistResponse.of(isSuccess, Consts.STRING_EMPTY));
@@ -157,17 +147,7 @@ public class AccountRestController {
 			}
 		}
 		
-		AccountModel accountModel = AccountModel.builder()
-				.accountNo(sessionHelper.getAccountNo())
-				.accountId(accountUpdateRequest.getAccountId())
-				.accountName(accountUpdateRequest.getAccountName())
-				.password(accountUpdateRequest.getNewPassword().isEmpty() ? null : accountUpdateRequest.getNewPassword())
-				.birthdate(accountUpdateRequest.getBirthdate())
-				.sexKbn(accountUpdateRequest.getSexKbn())
-				.birthplacePrefectureKbnCode(accountUpdateRequest.getBirthplacePrefectureKbnCode())
-				.residentPrefectureKbnCode(accountUpdateRequest.getResidentPrefectureKbnCode())
-				.freeMemo(accountUpdateRequest.getFreeMemo())
-				.build();
+		AccountModel accountModel = AccountModel.from(accountUpdateRequest, sessionHelper.getAccountNo());
 		
 		Boolean isDuplicateAccountId = accountServiceImpl.updateAccount(accountModel);
 		

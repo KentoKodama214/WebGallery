@@ -1,7 +1,6 @@
 package com.web.gallary.controller;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -14,8 +13,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -46,7 +43,6 @@ import com.web.gallary.model.PhotoDetailGetModel;
 import com.web.gallary.model.PhotoDetailModel;
 import com.web.gallary.model.PhotoListGetModel;
 import com.web.gallary.model.PhotoModel;
-import com.web.gallary.model.PhotoTagModel;
 import com.web.gallary.service.PhotoService;
 
 import lombok.RequiredArgsConstructor;
@@ -79,22 +75,9 @@ public class PhotoRestController {
 	public ResponseEntity<PhotoListGetResponse> getPhotoList(
 			@PathVariable String photoAccountId,
 			@ModelAttribute @Validated PhotoListRequest photoListRequest) {
-		Optional<String> tagsOpt = Optional.ofNullable(photoListRequest.getTagList());
-		photoListRequest.setTagList(tagsOpt.map(tag -> tag.replace(Consts.HALF_SPACE, Consts.FULL_SPACE)).orElse(Consts.STRING_EMPTY));
-		List<String> tagList = tagsOpt.map(tag -> 
-			new ArrayList<String>(Arrays.asList(tag.replace(Consts.FULL_SPACE, Consts.HALF_SPACE).split(Consts.HALF_SPACE)))).orElse(new ArrayList<String>());
-		
 		// 抽出条件に該当する写真の一覧を、指定の並び順で取得する
 		List<PhotoModel> photoList = photoService.getPhotoList(
-				PhotoListGetModel.builder()
-					.accountNo(sessionHelper.getAccountNo())
-					.photoAccountId(photoAccountId)
-					.directionKbn(photoListRequest.getDirectionKbn())
-					.isFavoriteOnly(Optional.ofNullable(photoListRequest.getIsFavorite()).orElse(Boolean.FALSE))
-					.tagList(tagList)
-					.sortBy(photoListRequest.getSortBy())
-					.build()
-			);
+				PhotoListGetModel.from(photoListRequest, sessionHelper.getAccountNo(), photoAccountId));
 		return ResponseEntity.ok(PhotoListGetResponse.from(photoList, photoListRequest.getPageNo(), photoConfig.getPhotoCountPerPage()));
 	}
 
@@ -130,13 +113,8 @@ public class PhotoRestController {
 			@PathVariable Integer photoNo,
 			Integer accountNo) throws PhotoNotFoundException {
 
-		PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-				.accountNo(sessionHelper.getAccountNo())
-				.photoAccountNo(accountNo)
-				.photoNo(photoNo)
-				.build();
-
-		PhotoDetailModel photoDetailModel = photoService.getPhotoDetail(photoDetailGetModel);
+		PhotoDetailModel photoDetailModel = photoService.getPhotoDetail(
+				PhotoDetailGetModel.of(sessionHelper.getAccountNo(), accountNo, photoNo));
 
 		return ResponseEntity.ok(PhotoDetailGetResponse.from(photoDetailModel));
 	}
@@ -182,50 +160,8 @@ public class PhotoRestController {
 			}
 		};
 		
-		List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
-		
-		if(!Objects.isNull(photoSaveRequest.getPhotoTagRegistRequestList())) {
-			photoSaveRequest.getPhotoTagRegistRequestList().stream().forEach(photoTag -> {
-				photoTagModelList.add(
-					PhotoTagModel.builder()
-						.accountNo(photoTag.getAccountNo())
-						.photoNo(photoTag.getPhotoNo())
-						.tagNo(photoTag.getTagNo())
-						.tagJapaneseName(Optional.ofNullable(photoTag.getTagJapaneseName()).orElse(Consts.STRING_EMPTY))
-						.tagEnglishName(Optional.ofNullable(photoTag.getTagEnglishName()).orElse(Consts.STRING_EMPTY))
-						.build()
-				);
-			});
-		}
-		
-		List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-		photoDetailModelList.add(
-			PhotoDetailModel.builder()
-				.accountNo(photoSaveRequest.getAccountNo())
-				.photoNo(photoSaveRequest.getPhotoNo())
-				.isFavorite(photoSaveRequest.getIsFavorite())
-				.photoAt(
-					Optional.ofNullable(photoSaveRequest.getPhotoAt())
-						.map(photoAt -> photoAt.atOffset(Consts.JST)).orElse(null))
-				.locationNo(photoSaveRequest.getLocationNo())
-				.address(photoSaveRequest.getAddress())
-				.latitude(photoSaveRequest.getLatitude())
-				.longitude(photoSaveRequest.getLongitude())
-				.locationName(photoSaveRequest.getLocationName())
-				.imageFile(photoSaveRequest.getImageFile())
-				.imageFilePath(Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse(""))
-				.photoJapaneseTitle(photoSaveRequest.getPhotoJapaneseTitle())
-				.photoEnglishTitle(photoSaveRequest.getPhotoEnglishTitle())
-				.caption(photoSaveRequest.getCaption())
-				.directionKbn(photoSaveRequest.getDirectionKbn())
-				.focalLength(photoSaveRequest.getFocalLength())
-				.fValue(photoSaveRequest.getFValue())
-				.shutterSpeed(photoSaveRequest.getShutterSpeed())
-				.iso(photoSaveRequest.getIso())
-				.photoTagModelList(photoTagModelList)
-				.build()
-		);
-		
+		List<PhotoDetailModel> photoDetailModelList = List.of(PhotoDetailModel.from(photoSaveRequest));
+
 		Integer savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
 
 		String savedImageFilePath;
@@ -265,15 +201,8 @@ public class PhotoRestController {
 			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
 		}
 		
-		List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
-		photoDeleteModelList.add(
-			PhotoDeleteModel.builder()
-				.accountNo(photoDeleteRequest.getAccountNo())
-				.photoNo(photoDeleteRequest.getPhotoNo())
-				.imageFilePath(photoDeleteRequest.getImageFilePath())
-				.build()
-		);
-		
+		List<PhotoDeleteModel> photoDeleteModelList = List.of(PhotoDeleteModel.from(photoDeleteRequest));
+
 		photoService.deletePhotos(photoAccountId, photoDeleteModelList);
 		
 		return ResponseEntity.ok(PhotoEditResponse.of(MessageConst.DELETE_PHOTO, null, null));

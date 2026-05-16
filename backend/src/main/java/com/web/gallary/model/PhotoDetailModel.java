@@ -2,10 +2,16 @@ package com.web.gallary.model;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.web.gallary.constant.Consts;
+import com.web.gallary.controller.request.PhotoSaveRequest;
 import com.web.gallary.enumuration.DirectionEnum;
 
 import lombok.Builder;
@@ -83,4 +89,41 @@ public class PhotoDetailModel {
 	
 	/** 写真タグリスト */
 	private List<PhotoTagModel> photoTagModelList;
+
+	/**
+	 * 写真保存リクエストからPhotoDetailModelを生成する
+	 *
+	 * @param	request	{@link PhotoSaveRequest}
+	 * @return			{@link PhotoDetailModel}
+	 */
+	public static PhotoDetailModel from(PhotoSaveRequest request) {
+		List<PhotoTagModel> photoTagModelList = Objects.isNull(request.getPhotoTagRegistRequestList())
+				? new ArrayList<PhotoTagModel>()
+				: request.getPhotoTagRegistRequestList().stream()
+						.map(PhotoTagModel::from)
+						.collect(Collectors.toList());
+		return PhotoDetailModel.builder()
+				.accountNo(request.getAccountNo())
+				.photoNo(request.getPhotoNo())
+				.isFavorite(request.getIsFavorite())
+				.photoAt(Optional.ofNullable(request.getPhotoAt())
+						.map(photoAt -> photoAt.atOffset(Consts.JST)).orElse(null))
+				.locationNo(request.getLocationNo())
+				.address(request.getAddress())
+				.latitude(request.getLatitude())
+				.longitude(request.getLongitude())
+				.locationName(request.getLocationName())
+				.imageFile(request.getImageFile())
+				.imageFilePath(Optional.ofNullable(request.getImageFilePath()).orElse(Consts.STRING_EMPTY))
+				.photoJapaneseTitle(request.getPhotoJapaneseTitle())
+				.photoEnglishTitle(request.getPhotoEnglishTitle())
+				.caption(request.getCaption())
+				.directionKbn(request.getDirectionKbn())
+				.focalLength(request.getFocalLength())
+				.fValue(request.getFValue())
+				.shutterSpeed(request.getShutterSpeed())
+				.iso(request.getIso())
+				.photoTagModelList(photoTagModelList)
+				.build();
+	}
 }
