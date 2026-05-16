@@ -79,7 +79,6 @@ public class PhotoRestControllerIntegrationTest {
 
 			MvcResult result = mockMvc.perform(
 					get("/api/v1/accounts/" + photoAccountId + "/photos")
-					.with(csrf())
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -136,7 +135,6 @@ public class PhotoRestControllerIntegrationTest {
 			MvcResult result = mockMvc.perform(
 					get("/api/v1/accounts/" + photoAccountId + "/photos")
 					.param("tagList", "太陽 青空")
-					.with(csrf())
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -165,7 +163,6 @@ public class PhotoRestControllerIntegrationTest {
 			MvcResult result = mockMvc.perform(
 					get("/api/v1/accounts/" + photoAccountId + "/photos")
 					.param("tagList", "太陽　青空")
-					.with(csrf())
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -194,7 +191,6 @@ public class PhotoRestControllerIntegrationTest {
 			MvcResult result = mockMvc.perform(
 					get("/api/v1/accounts/" + photoAccountId + "/photos")
 					.param("tagList", "太陽　海")
-					.with(csrf())
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -234,7 +230,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -330,7 +326,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -443,7 +439,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -563,7 +559,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -601,7 +597,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -634,7 +630,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -665,7 +661,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -702,7 +698,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -740,7 +736,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -777,7 +773,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -822,7 +818,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -905,7 +901,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -938,7 +934,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -970,7 +966,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -1007,7 +1003,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					get("/api/v1/accounts/" + photoAccountId + "/photos/upper-limit")
@@ -1034,7 +1030,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					get("/api/v1/accounts/" + photoAccountId + "/photos/upper-limit")
@@ -1059,7 +1055,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					get("/api/v1/accounts/aaaaaaaa/photos/upper-limit")

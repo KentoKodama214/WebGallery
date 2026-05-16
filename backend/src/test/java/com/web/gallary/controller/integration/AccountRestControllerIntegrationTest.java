@@ -67,7 +67,6 @@ public class AccountRestControllerIntegrationTest {
 		void getAccountList_success() throws Exception {
 			mockMvc.perform(
 					get("/api/v1/accounts")
-					.with(csrf())
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -87,7 +86,6 @@ public class AccountRestControllerIntegrationTest {
 		void getAccountList_empty() throws Exception {
 			mockMvc.perform(
 					get("/api/v1/accounts")
-					.with(csrf())
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -116,7 +114,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					get("/api/v1/accounts/" + accountId)
@@ -149,7 +147,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					get("/api/v1/accounts/" + accountId)
@@ -180,7 +178,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					get("/api/v1/accounts/bbbbbbbb")
@@ -355,7 +353,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/" + accountId)
@@ -408,7 +406,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
@@ -461,7 +459,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/" + accountId)
@@ -514,7 +512,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
@@ -566,7 +564,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
@@ -599,7 +597,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
@@ -626,7 +624,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
@@ -654,7 +652,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/" + accountId)
@@ -682,7 +680,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/" + accountId)
