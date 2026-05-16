@@ -1,7 +1,6 @@
 package com.web.gallary.controller;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -80,14 +79,9 @@ public class PhotoRestController {
 	public ResponseEntity<PhotoListGetResponse> getPhotoList(
 			@PathVariable String photoAccountId,
 			@ModelAttribute @Validated PhotoListRequest photoListRequest) {
-		Optional<String> tagsOpt = Optional.ofNullable(photoListRequest.getTagList());
-		photoListRequest.setTagList(tagsOpt.map(tag -> tag.replace(Consts.HALF_SPACE, Consts.FULL_SPACE)).orElse(Consts.STRING_EMPTY));
-		List<String> tagList = tagsOpt.map(tag -> 
-			new ArrayList<String>(Arrays.asList(tag.replace(Consts.FULL_SPACE, Consts.HALF_SPACE).split(Consts.HALF_SPACE)))).orElse(new ArrayList<String>());
-		
 		// 抽出条件に該当する写真の一覧を、指定の並び順で取得する
 		List<PhotoModel> photoList = photoService.getPhotoList(
-				PhotoListGetModel.from(photoListRequest, sessionHelper.getAccountNo(), photoAccountId, tagList));
+				PhotoListGetModel.from(photoListRequest, sessionHelper.getAccountNo(), photoAccountId));
 		return ResponseEntity.ok(PhotoListGetResponse.from(photoList, photoListRequest.getPageNo(), photoConfig.getPhotoCountPerPage()));
 	}
 
