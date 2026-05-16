@@ -106,7 +106,7 @@ public class AuthServiceImpl implements AuthService {
 		RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 
 		if (storedToken == null || storedToken.getIsRevoked()) {
-			throw new IllegalArgumentException("無効なリフレッ���ュトークンです");
+			throw new IllegalArgumentException("無効なリフレッシュトークンです");
 		}
 
 		if (storedToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
