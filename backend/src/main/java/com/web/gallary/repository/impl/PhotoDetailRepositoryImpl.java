@@ -50,7 +50,7 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 		List<PhotoDto> photoDtoList = photoDetailMapper.getPhotoList(photoListGetDto);
 		
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
-				PhotoTagMst.condition(photoGetModel.getPhotoAccountNo(), null));
+				PhotoTagMst.condition(photoGetModel));
 
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
 
