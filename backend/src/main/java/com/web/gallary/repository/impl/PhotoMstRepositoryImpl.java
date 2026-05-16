@@ -74,10 +74,7 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	@Override
 	public void delete(PhotoDeleteModel photoDeleteModel) throws UpdateFailureException {
 		PhotoMst cndPhotoMst = PhotoMst.condition(photoDeleteModel.getAccountNo(), photoDeleteModel.getPhotoNo());
-		PhotoMst targetPhotoMst = PhotoMst.builder()
-				.updatedBy(photoDeleteModel.getAccountNo())
-				.isDeleted(true)
-				.build();
+		PhotoMst targetPhotoMst = PhotoMst.targetForDelete(photoDeleteModel);
 		
 		if (photoMstMapper.update(cndPhotoMst, targetPhotoMst) < 1) {
 			log.warn("PhotoMst: Delete Failed (AccountNo: {}, PhotoNo: {})", cndPhotoMst.getAccountNo(), cndPhotoMst.getPhotoNo());
@@ -105,11 +102,7 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 */
 	@Override
 	public Boolean isExistPhoto(PhotoDetailModel photoDetailModel) {
-		PhotoMst photoMst = PhotoMst.builder()
-				.accountNo(photoDetailModel.getAccountNo())
-				.imageFilePath(photoDetailModel.getImageFile().getOriginalFilename())
-				.build();
-		return photoMstMapper.isExistPhoto(photoMst);
+		return photoMstMapper.isExistPhoto(PhotoMst.conditionForExistCheck(photoDetailModel));
 	}
 	
 	/**
@@ -120,7 +113,6 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 */
 	@Override
 	public Integer count(Integer accountNo) {
-		PhotoMst photoMst = PhotoMst.builder().accountNo(accountNo).isDeleted(false).build();
-		return photoMstMapper.count(photoMst);
+		return photoMstMapper.count(PhotoMst.conditionForCount(accountNo));
 	}
 }

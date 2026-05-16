@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import com.web.gallary.constant.Consts;
 import com.web.gallary.enumuration.DirectionEnum;
+import com.web.gallary.model.PhotoDeleteModel;
 import com.web.gallary.model.PhotoDetailModel;
 
 import lombok.Builder;
@@ -161,6 +162,45 @@ public class PhotoMst {
 		return PhotoMst.builder()
 				.accountNo(accountNo)
 				.photoNo(photoNo)
+				.build();
+	}
+
+	/**
+	 * 写真削除用のPhotoDeleteModelからターゲットPhotoMstエンティティを生成する
+	 *
+	 * @param	model	{@link PhotoDeleteModel}
+	 * @return			{@link PhotoMst}
+	 */
+	public static PhotoMst targetForDelete(PhotoDeleteModel model) {
+		return PhotoMst.builder()
+				.updatedBy(model.getAccountNo())
+				.isDeleted(true)
+				.build();
+	}
+
+	/**
+	 * 写真存在チェック用のPhotoDetailModelからPhotoMstエンティティを生成する
+	 *
+	 * @param	model	{@link PhotoDetailModel}
+	 * @return			{@link PhotoMst}
+	 */
+	public static PhotoMst conditionForExistCheck(PhotoDetailModel model) {
+		return PhotoMst.builder()
+				.accountNo(model.getAccountNo())
+				.imageFilePath(model.getImageFile().getOriginalFilename())
+				.build();
+	}
+
+	/**
+	 * 写真件数取得用の条件PhotoMstエンティティを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link PhotoMst}
+	 */
+	public static PhotoMst conditionForCount(Integer accountNo) {
+		return PhotoMst.builder()
+				.accountNo(accountNo)
+				.isDeleted(false)
 				.build();
 	}
 }
