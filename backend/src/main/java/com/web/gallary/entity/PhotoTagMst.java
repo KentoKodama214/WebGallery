@@ -61,7 +61,7 @@ public class PhotoTagMst {
 	 * @param	model	{@link PhotoTagDeleteModel}
 	 * @return			{@link PhotoTagMst}
 	 */
-	public static PhotoTagMst fromForDelete(PhotoTagDeleteModel model) {
+	public static PhotoTagMst from(PhotoTagDeleteModel model) {
 		return PhotoTagMst.builder()
 				.accountNo(model.getAccountNo())
 				.photoNo(model.getPhotoNo())
