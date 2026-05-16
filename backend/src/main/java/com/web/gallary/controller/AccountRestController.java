@@ -24,7 +24,6 @@ import com.web.gallary.controller.response.AccountDetailResponse;
 import com.web.gallary.controller.response.AccountListItemResponse;
 import com.web.gallary.controller.response.AccountRegistResponse;
 import com.web.gallary.controller.response.AccountUpdateResponse;
-import com.web.gallary.entity.Account;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.exception.BadRequestException;
 import com.web.gallary.exception.ForbiddenAccountException;
@@ -58,10 +57,7 @@ public class AccountRestController {
 	@GetMapping(ApiRoutes.API_ACCOUNTS)
 	public ResponseEntity<List<AccountListItemResponse>> getAccountList() {
 		List<AccountListItemResponse> responseList = accountServiceImpl.getAccountList().stream()
-				.map(accountModel -> AccountListItemResponse.builder()
-						.accountId(accountModel.getAccountId())
-						.accountName(accountModel.getAccountName())
-						.build())
+				.map(AccountListItemResponse::from)
 				.toList();
 
 		return ResponseEntity.ok(responseList);
@@ -82,17 +78,9 @@ public class AccountRestController {
 			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT);
 		}
 
-		Account account = accountServiceImpl.getAccountById(accountId);
+		AccountModel accountModel = accountServiceImpl.getAccountById(accountId);
 
-		AccountDetailResponse response = AccountDetailResponse.builder()
-				.accountId(account.getAccountId())
-				.accountName(account.getAccountName())
-				.birthdate(Consts.MIN_LOCAL_DATE.equals(account.getBirthdate()) ? null : account.getBirthdate())
-				.sexKbn(account.getSexKbn())
-				.birthplacePrefectureKbnCode(account.getBirthplacePrefectureKbnCode())
-				.residentPrefectureKbnCode(account.getResidentPrefectureKbnCode())
-				.freeMemo(account.getFreeMemo())
-				.build();
+		AccountDetailResponse response = AccountDetailResponse.from(accountModel);
 
 		return ResponseEntity.ok(response);
 	}

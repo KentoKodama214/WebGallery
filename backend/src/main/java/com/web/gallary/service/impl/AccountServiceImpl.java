@@ -87,13 +87,30 @@ public class AccountServiceImpl implements UserDetailsService {
 	
 	/**
 	 * アカウントIDからアカウント情報を取得する
-	 * 
+	 *
 	 * @param	accountId	アカウントID
-	 * @return				{@link Account}
+	 * @return				{@link AccountModel}
 	 */
 	@Transactional(readOnly = true)
-	public Account getAccountById(String accountId) {
-		return accountRepository.getByAccountId(accountId);
+	public AccountModel getAccountById(String accountId) {
+		Account account = accountRepository.getByAccountId(accountId);
+		if (Objects.isNull(account)) {
+			return null;
+		}
+		return AccountModel.builder()
+				.accountNo(account.getAccountNo())
+				.accountId(account.getAccountId())
+				.accountName(account.getAccountName())
+				.password(account.getPassword())
+				.birthdate(account.getBirthdate())
+				.sexKbn(account.getSexKbn())
+				.birthplacePrefectureKbnCode(account.getBirthplacePrefectureKbnCode())
+				.residentPrefectureKbnCode(account.getResidentPrefectureKbnCode())
+				.freeMemo(account.getFreeMemo())
+				.authorityKbn(account.getAuthorityKbn())
+				.lastLoginDatetime(account.getLastLoginDatetime())
+				.loginFailureCount(account.getLoginFailureCount())
+				.build();
 	}
 	
 	/**

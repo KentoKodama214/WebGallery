@@ -2,7 +2,9 @@ package com.web.gallary.controller.response;
 
 import java.time.LocalDate;
 
+import com.web.gallary.constant.Consts;
 import com.web.gallary.enumuration.SexEnum;
+import com.web.gallary.model.AccountModel;
 
 import lombok.Builder;
 import lombok.Data;
@@ -33,4 +35,22 @@ public class AccountDetailResponse {
 
 	/** フリーメモ */
 	private String freeMemo;
+
+	/**
+	 * AccountModelからAccountDetailResponseを生成する
+	 *
+	 * @param	model	{@link AccountModel}
+	 * @return			{@link AccountDetailResponse}
+	 */
+	public static AccountDetailResponse from(AccountModel model) {
+		return AccountDetailResponse.builder()
+				.accountId(model.getAccountId())
+				.accountName(model.getAccountName())
+				.birthdate(Consts.MIN_LOCAL_DATE.equals(model.getBirthdate()) ? null : model.getBirthdate())
+				.sexKbn(model.getSexKbn())
+				.birthplacePrefectureKbnCode(model.getBirthplacePrefectureKbnCode())
+				.residentPrefectureKbnCode(model.getResidentPrefectureKbnCode())
+				.freeMemo(model.getFreeMemo())
+				.build();
+	}
 }

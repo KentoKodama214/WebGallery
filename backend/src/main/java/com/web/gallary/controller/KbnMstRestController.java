@@ -1,6 +1,5 @@
 package com.web.gallary.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.web.gallary.constant.ApiRoutes;
 import com.web.gallary.controller.response.PrefectureGroupResponse;
-import com.web.gallary.controller.response.PrefectureResponse;
 import com.web.gallary.helper.KbnHelper;
 import com.web.gallary.model.KbnMstModel;
 import com.web.gallary.service.KbnMstService;
@@ -41,20 +39,9 @@ public class KbnMstRestController {
 		List<KbnMstModel> prefectureList = kbnMstService.getPrefectureList();
 		Map<String, List<KbnMstModel>> groupedMap = kbnHelper.convertToLinkedHashMap(prefectureList);
 
-		List<PrefectureGroupResponse> response = new ArrayList<>();
-		for (Map.Entry<String, List<KbnMstModel>> entry : groupedMap.entrySet()) {
-			List<PrefectureResponse> prefectures = entry.getValue().stream()
-					.map(kbn -> PrefectureResponse.builder()
-							.kbnCode(kbn.getKbnCode())
-							.kbnJapaneseName(kbn.getKbnJapaneseName())
-							.build())
-					.toList();
-
-			response.add(PrefectureGroupResponse.builder()
-					.groupName(entry.getKey())
-					.prefectures(prefectures)
-					.build());
-		}
+		List<PrefectureGroupResponse> response = groupedMap.entrySet().stream()
+				.map(entry -> PrefectureGroupResponse.from(entry.getKey(), entry.getValue()))
+				.toList();
 
 		return ResponseEntity.ok(response);
 	}

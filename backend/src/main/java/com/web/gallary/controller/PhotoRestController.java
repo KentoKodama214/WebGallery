@@ -32,8 +32,6 @@ import com.web.gallary.controller.request.PhotoSaveRequest;
 import com.web.gallary.controller.response.PhotoDetailGetResponse;
 import com.web.gallary.controller.response.PhotoEditResponse;
 import com.web.gallary.controller.response.PhotoListGetResponse;
-import com.web.gallary.controller.response.PhotoListResponse;
-import com.web.gallary.controller.response.PhotoTagResponse;
 import com.web.gallary.controller.response.PhotoUpperLimitResponse;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.exception.BadRequestException;
@@ -98,7 +96,7 @@ public class PhotoRestController {
 					.sortBy(photoListRequest.getSortBy())
 					.build()
 			);
-		return ResponseEntity.ok(createPhotoListGetResponse(photoList, photoListRequest.getPageNo()));
+		return ResponseEntity.ok(PhotoListGetResponse.from(photoList, photoListRequest.getPageNo(), photoConfig.getPhotoCountPerPage()));
 	}
 
 	/**
@@ -143,42 +141,7 @@ public class PhotoRestController {
 
 		PhotoDetailModel photoDetailModel = photoService.getPhotoDetail(photoDetailGetModel);
 
-		List<PhotoTagResponse> photoTagResponseList = new ArrayList<PhotoTagResponse>();
-		if(!Objects.isNull(photoDetailModel.getPhotoTagModelList())) {
-			photoDetailModel.getPhotoTagModelList().forEach(tag -> {
-				photoTagResponseList.add(PhotoTagResponse.builder()
-						.accountNo(tag.getAccountNo())
-						.photoNo(tag.getPhotoNo())
-						.tagNo(tag.getTagNo())
-						.tagJapaneseName(tag.getTagJapaneseName())
-						.tagEnglishName(tag.getTagEnglishName())
-						.build());
-			});
-		}
-
-		PhotoDetailGetResponse response = PhotoDetailGetResponse.builder()
-				.accountNo(photoDetailModel.getAccountNo())
-				.photoNo(photoDetailModel.getPhotoNo())
-				.isFavorite(photoDetailModel.getIsFavorite())
-				.photoAt(photoDetailModel.getPhotoAt())
-				.locationNo(photoDetailModel.getLocationNo())
-				.address(photoDetailModel.getAddress())
-				.latitude(photoDetailModel.getLatitude())
-				.longitude(photoDetailModel.getLongitude())
-				.locationName(photoDetailModel.getLocationName())
-				.imageFilePath(photoDetailModel.getImageFilePath())
-				.photoJapaneseTitle(photoDetailModel.getPhotoJapaneseTitle())
-				.photoEnglishTitle(photoDetailModel.getPhotoEnglishTitle())
-				.caption(photoDetailModel.getCaption())
-				.directionKbn(photoDetailModel.getDirectionKbn())
-				.focalLength(photoDetailModel.getFocalLength())
-				.fValue(photoDetailModel.getFValue())
-				.shutterSpeed(photoDetailModel.getShutterSpeed())
-				.iso(photoDetailModel.getIso())
-				.photoTagList(photoTagResponseList)
-				.build();
-
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(PhotoDetailGetResponse.from(photoDetailModel));
 	}
 
 	/**
@@ -329,33 +292,4 @@ public class PhotoRestController {
 				.build());
 	}
 	
-	/**
-	 * ページ番号から写真のリストを絞り込み、写真一覧のレスポンスのクラスへ詰め替えをする
-	 *
-	 * @param	photoList				{@link PhotoModel}
-	 * @param	pageNo					ページ番号
-	 * @return							{@link PhotoListGetResponse}
-	 */
-	private PhotoListGetResponse createPhotoListGetResponse(List<PhotoModel> photoList, Integer pageNo) {
-		Integer photoCountPerPage = photoConfig.getPhotoCountPerPage();
-		List<PhotoListResponse> photoListResponseList = new ArrayList<PhotoListResponse>();
-		
-		photoList.subList(
-			(pageNo - 1) * photoCountPerPage, 
-			Math.min(pageNo * photoCountPerPage, photoList.size())).forEach(photo -> {
-				photoListResponseList.add(PhotoListResponse.builder()
-						.accountNo(photo.getAccountNo())
-						.photoNo(photo.getPhotoNo())
-						.isFavorite(photo.getIsFavorite())
-						.imageFilePath(photo.getImageFilePath())
-						.caption(photo.getCaption())
-						.directionKbn(photo.getDirectionKbn())
-						.build());
-			});
-		
-		return PhotoListGetResponse.builder()
-				.isLast(pageNo * photoCountPerPage >= photoList.size())
-				.photoList(photoListResponseList)
-				.build();
-	}
 }

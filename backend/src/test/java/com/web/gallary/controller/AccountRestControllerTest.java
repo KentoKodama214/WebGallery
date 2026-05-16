@@ -35,7 +35,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tools.jackson.databind.json.JsonMapper;
 import com.web.gallary.constant.Consts;
 import com.web.gallary.controller.request.ErrorRequest;
-import com.web.gallary.entity.Account;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.enumuration.SexEnum;
 import com.web.gallary.exception.RegistFailureException;
@@ -124,7 +123,7 @@ public class AccountRestControllerTest {
 
 			doReturn(accountId).when(sessionHelper).getAccountId();
 
-			Account account = Account.builder()
+			AccountModel accountModel = AccountModel.builder()
 					.accountNo(1)
 					.accountId(accountId)
 					.accountName("AAAAAAAA")
@@ -135,7 +134,7 @@ public class AccountRestControllerTest {
 					.freeMemo("フリーメモ")
 					.build();
 
-			doReturn(account).when(accountServiceImpl).getAccountById(accountId);
+			doReturn(accountModel).when(accountServiceImpl).getAccountById(accountId);
 
 			mockMvc.perform(get("/api/v1/accounts/" + accountId))
 				.andExpect(status().isOk())
@@ -156,7 +155,7 @@ public class AccountRestControllerTest {
 
 			doReturn(accountId).when(sessionHelper).getAccountId();
 
-			Account account = Account.builder()
+			AccountModel accountModel = AccountModel.builder()
 					.accountNo(1)
 					.accountId(accountId)
 					.accountName("AAAAAAAA")
@@ -167,7 +166,7 @@ public class AccountRestControllerTest {
 					.freeMemo("")
 					.build();
 
-			doReturn(account).when(accountServiceImpl).getAccountById(accountId);
+			doReturn(accountModel).when(accountServiceImpl).getAccountById(accountId);
 
 			mockMvc.perform(get("/api/v1/accounts/" + accountId))
 				.andExpect(status().isOk())

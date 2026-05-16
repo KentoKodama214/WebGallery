@@ -1,5 +1,7 @@
 package com.web.gallary.controller.response;
 
+import com.web.gallary.model.PhotoTagModel;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -23,4 +25,20 @@ public class PhotoTagResponse {
 
 	/** タグ英語名 */
 	private String tagEnglishName;
+
+	/**
+	 * PhotoTagModelからPhotoTagResponseを生成する
+	 *
+	 * @param	model	{@link PhotoTagModel}
+	 * @return			{@link PhotoTagResponse}
+	 */
+	public static PhotoTagResponse from(PhotoTagModel model) {
+		return PhotoTagResponse.builder()
+				.accountNo(model.getAccountNo())
+				.photoNo(model.getPhotoNo())
+				.tagNo(model.getTagNo())
+				.tagJapaneseName(model.getTagJapaneseName())
+				.tagEnglishName(model.getTagEnglishName())
+				.build();
+	}
 }
