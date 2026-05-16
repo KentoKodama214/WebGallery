@@ -160,9 +160,8 @@ public class PhotoRestController {
 			}
 		};
 		
-		List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-		photoDetailModelList.add(PhotoDetailModel.from(photoSaveRequest));
-		
+		List<PhotoDetailModel> photoDetailModelList = List.of(PhotoDetailModel.from(photoSaveRequest));
+
 		Integer savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
 
 		String savedImageFilePath;

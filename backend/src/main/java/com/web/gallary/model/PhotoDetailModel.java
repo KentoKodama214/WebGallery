@@ -114,7 +114,7 @@ public class PhotoDetailModel {
 				.longitude(request.getLongitude())
 				.locationName(request.getLocationName())
 				.imageFile(request.getImageFile())
-				.imageFilePath(Optional.ofNullable(request.getImageFilePath()).orElse(""))
+				.imageFilePath(Optional.ofNullable(request.getImageFilePath()).orElse(Consts.STRING_EMPTY))
 				.photoJapaneseTitle(request.getPhotoJapaneseTitle())
 				.photoEnglishTitle(request.getPhotoEnglishTitle())
 				.caption(request.getCaption())
