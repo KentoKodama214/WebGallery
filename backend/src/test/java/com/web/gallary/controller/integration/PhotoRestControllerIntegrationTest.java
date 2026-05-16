@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
@@ -36,9 +36,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.web.gallary.AccountPrincipal;
 import com.web.gallary.entity.Account;
 import com.web.gallary.entity.PhotoFavorite;
@@ -74,7 +74,7 @@ public class PhotoRestControllerIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：Nullのパラメータがある場合")
-		void getPhotoList_with_null_parameter() throws JsonProcessingException, Exception {
+		void getPhotoList_with_null_parameter() throws JacksonException, Exception {
 			String photoAccountId = "aaaaaaaa";
 
 			MvcResult result = mockMvc.perform(
@@ -129,7 +129,7 @@ public class PhotoRestControllerIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：タグに半角スペースが含まれている場合")
-		void getPhotoList_with_halfspace_tag() throws JsonProcessingException, Exception {
+		void getPhotoList_with_halfspace_tag() throws JacksonException, Exception {
 			String photoAccountId = "aaaaaaaa";
 
 			MvcResult result = mockMvc.perform(
@@ -157,7 +157,7 @@ public class PhotoRestControllerIntegrationTest {
 		@Test
 		@Order(3)
 		@DisplayName("正常系：タグに全角スペースが含まれている場合")
-		void getPhotoList_with_fullspace_tag() throws JsonProcessingException, Exception {
+		void getPhotoList_with_fullspace_tag() throws JacksonException, Exception {
 			String photoAccountId = "aaaaaaaa";
 
 			MvcResult result = mockMvc.perform(
@@ -185,7 +185,7 @@ public class PhotoRestControllerIntegrationTest {
 		@Test
 		@Order(4)
 		@DisplayName("正常系：写真が0件の場合")
-		void getPhotoList_not_found_photo() throws JsonProcessingException, Exception {
+		void getPhotoList_not_found_photo() throws JacksonException, Exception {
 			String photoAccountId = "aaaaaaaa";
 
 			MvcResult result = mockMvc.perform(
@@ -213,7 +213,7 @@ public class PhotoRestControllerIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：新規登録。写真タグなし、撮影日時なし。Nullパラメータあり")
-		void savePhoto_addPhoto_not_photoTag_and_photoAt() throws JsonProcessingException, Exception {
+		void savePhoto_addPhoto_not_photoTag_and_photoAt() throws JacksonException, Exception {
 			String photoAccountId = "bbbbbbbb";
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
