@@ -61,6 +61,9 @@ public class AccountModel {
 	/** ログイン失敗回数 */
 	private Integer loginFailureCount;
 
+	/** 削除フラグ */
+	private Boolean isDeleted;
+
 	/**
 	 * アカウント登録リクエストからAccountModelを生成する
 	 *

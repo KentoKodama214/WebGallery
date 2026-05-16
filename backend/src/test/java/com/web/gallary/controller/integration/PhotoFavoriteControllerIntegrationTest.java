@@ -30,10 +30,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallary.AccountPrincipal;
-import com.web.gallary.entity.Account;
 import com.web.gallary.entity.PhotoFavorite;
 import com.web.gallary.enumuration.AuthorityEnum;
 import com.web.gallary.enumuration.ErrorEnum;
+import com.web.gallary.model.AccountModel;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -53,7 +53,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 	}
 
 	private Authentication createAuthentication() {
-		Account sessionAccount = Account.builder()
+		AccountModel sessionAccount = AccountModel.builder()
 				.accountNo(1)
 				.accountId("aaaaaaaa")
 				.accountName("AAAAAAAA")

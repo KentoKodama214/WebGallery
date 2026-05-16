@@ -49,13 +49,9 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが取得できた場合")
 		void getByAccountNo_found() {
-			Account actual = accountRepositoryImpl.getByAccountNo(1);
-			
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(1);
+
 			assertEquals(1, actual.getAccountNo());
-			assertEquals(1, actual.getCreatedBy());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getCreatedAt());
-			assertEquals(1, actual.getUpdatedBy());
-			assertEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getUpdatedAt());
 			assertFalse(actual.getIsDeleted());
 			assertEquals("aaaaaaaa", actual.getAccountId());
 			assertEquals("AAAAAAAA", actual.getAccountName());
@@ -69,12 +65,12 @@ public class AccountRepositoryImplIntegrationTest {
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getLastLoginDatetime());
 			assertEquals(0, actual.getLoginFailureCount());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが取得できなかった場合")
 		void getByAccountNo_not_found() {
-			Account actual = accountRepositoryImpl.getByAccountNo(99);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(99);
 			assertNull(actual);
 		}
 	}
@@ -89,13 +85,9 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが取得できた場合")
 		void getByAccountId_found() {
-			Account actual = accountRepositoryImpl.getByAccountId("aaaaaaaa");
-			
+			AccountModel actual = accountRepositoryImpl.getByAccountId("aaaaaaaa");
+
 			assertEquals(1, actual.getAccountNo());
-			assertEquals(1, actual.getCreatedBy());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getCreatedAt());
-			assertEquals(1, actual.getUpdatedBy());
-			assertEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getUpdatedAt());
 			assertFalse(actual.getIsDeleted());
 			assertEquals("aaaaaaaa", actual.getAccountId());
 			assertEquals("AAAAAAAA", actual.getAccountName());
@@ -109,12 +101,12 @@ public class AccountRepositoryImplIntegrationTest {
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getLastLoginDatetime());
 			assertEquals(0, actual.getLoginFailureCount());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが取得できなかった場合")
 		void getByAccountId_not_found() {
-			Account actual = accountRepositoryImpl.getByAccountId("zzzzzzzz");
+			AccountModel actual = accountRepositoryImpl.getByAccountId("zzzzzzzz");
 			assertNull(actual);
 		}
 	}

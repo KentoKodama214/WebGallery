@@ -35,38 +35,38 @@ public class AccountRepositoryImpl implements AccountRepository {
 	
 	/**
 	 * Accountテーブルで該当するレコードを取得する
-	 * 
-	 * @param	accountNo	アカウント番号
-	 * @return	Account		{@link Account}<p>
-	 * 						取得できない場合はnullを返す
+	 *
+	 * @param	accountNo		アカウント番号
+	 * @return	AccountModel	{@link AccountModel}<p>
+	 * 							取得できない場合はnullを返す
 	 */
 	@Override
-	public Account getByAccountNo(Integer accountNo) {
+	public AccountModel getByAccountNo(Integer accountNo) {
 		Account account = Account.builder()
 				.accountNo(accountNo)
 				.build();
-		
+
 		List<Account> accountList = accountMapper.select(account);
-		
-		return accountList.isEmpty() ? null : accountList.getFirst();
+
+		return accountList.isEmpty() ? null : toAccountModel(accountList.getFirst());
 	}
-	
+
 	/**
 	 * Accountテーブルで該当するレコードを取得する
-	 * 
-	 * @param	accountId	アカウントId
-	 * @return	Account		{@link Account}<p>
-	 * 						取得できない場合はnullを返す
+	 *
+	 * @param	accountId		アカウントId
+	 * @return	AccountModel	{@link AccountModel}<p>
+	 * 							取得できない場合はnullを返す
 	 */
 	@Override
-	public Account getByAccountId(String accountId) {
+	public AccountModel getByAccountId(String accountId) {
 		Account account = Account.builder()
 				.accountId(accountId)
 				.build();
-		
+
 		List<Account> accountList = accountMapper.select(account);
-		
-		return accountList.isEmpty() ? null : accountList.getFirst();
+
+		return accountList.isEmpty() ? null : toAccountModel(accountList.getFirst());
 	}
 
 	/**
@@ -182,31 +182,39 @@ public class AccountRepositoryImpl implements AccountRepository {
 	
 	/**
 	 * アカウントの一覧を取得する
-	 * 
+	 *
 	 * @return	{@link AccountModel}
 	 */
 	@Override
 	public List<AccountModel> getAccountList() {
 		Account account = Account.builder().isDeleted(false).build();
-		
+
 		List<Account> accountList = accountMapper.select(account);
-		
-		List<AccountModel> accountModelList
-			= accountList.stream().map(accountData -> AccountModel.builder()
-					.accountNo(accountData.getAccountNo())
-					.accountId(accountData.getAccountId())
-					.accountName(accountData.getAccountName())
-					.password(accountData.getPassword())
-					.birthdate(accountData.getBirthdate())
-					.sexKbn(accountData.getSexKbn())
-					.birthplacePrefectureKbnCode(accountData.getBirthplacePrefectureKbnCode())
-					.residentPrefectureKbnCode(accountData.getResidentPrefectureKbnCode())
-					.freeMemo(accountData.getFreeMemo())
-					.authorityKbn(accountData.getAuthorityKbn())
-					.lastLoginDatetime(accountData.getLastLoginDatetime())
-					.loginFailureCount(accountData.getLoginFailureCount())
-					.build()).toList();
-		
-		return accountModelList;
+
+		return accountList.stream().map(this::toAccountModel).toList();
+	}
+
+	/**
+	 * AccountエンティティからAccountModelに変換する
+	 *
+	 * @param	account	{@link Account}
+	 * @return			{@link AccountModel}
+	 */
+	private AccountModel toAccountModel(Account account) {
+		return AccountModel.builder()
+				.accountNo(account.getAccountNo())
+				.accountId(account.getAccountId())
+				.accountName(account.getAccountName())
+				.password(account.getPassword())
+				.birthdate(account.getBirthdate())
+				.sexKbn(account.getSexKbn())
+				.birthplacePrefectureKbnCode(account.getBirthplacePrefectureKbnCode())
+				.residentPrefectureKbnCode(account.getResidentPrefectureKbnCode())
+				.freeMemo(account.getFreeMemo())
+				.authorityKbn(account.getAuthorityKbn())
+				.lastLoginDatetime(account.getLastLoginDatetime())
+				.loginFailureCount(account.getLoginFailureCount())
+				.isDeleted(account.getIsDeleted())
+				.build();
 	}
 }

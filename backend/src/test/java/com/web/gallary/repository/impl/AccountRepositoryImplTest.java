@@ -80,14 +80,25 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(accountList).when(accountMapper).select(accountCaptor.capture());
 			
-			Account actual = accountRepositoryImpl.getByAccountNo(1);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(1);
 
 			verify(accountMapper).select(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
 			assertEquals(1, accountCapture.getAccountNo());
 
 			assertNotNull(actual);
-			assertEquals(accountList.getFirst(), actual);
+			assertEquals(account.getAccountNo(), actual.getAccountNo());
+			assertEquals(account.getAccountId(), actual.getAccountId());
+			assertEquals(account.getAccountName(), actual.getAccountName());
+			assertEquals(account.getPassword(), actual.getPassword());
+			assertEquals(account.getBirthdate(), actual.getBirthdate());
+			assertEquals(account.getSexKbn(), actual.getSexKbn());
+			assertEquals(account.getBirthplacePrefectureKbnCode(), actual.getBirthplacePrefectureKbnCode());
+			assertEquals(account.getResidentPrefectureKbnCode(), actual.getResidentPrefectureKbnCode());
+			assertEquals(account.getFreeMemo(), actual.getFreeMemo());
+			assertEquals(account.getAuthorityKbn(), actual.getAuthorityKbn());
+			assertEquals(account.getLastLoginDatetime(), actual.getLastLoginDatetime());
+			assertEquals(account.getLoginFailureCount(), actual.getLoginFailureCount());
 		}
 		
 		@Test
@@ -97,7 +108,7 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(new ArrayList<Account>()).when(accountMapper).select(accountCaptor.capture());
 			
-			Account actual = accountRepositoryImpl.getByAccountNo(1);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(1);
 			
 			verify(accountMapper).select(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
@@ -141,14 +152,25 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(accountList).when(accountMapper).select(accountCaptor.capture());
 			
-			Account actual = accountRepositoryImpl.getByAccountId("aaaaaaaa");
+			AccountModel actual = accountRepositoryImpl.getByAccountId("aaaaaaaa");
 
 			verify(accountMapper).select(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
 			assertEquals("aaaaaaaa", accountCapture.getAccountId());
 
 			assertNotNull(actual);
-			assertEquals(accountList.getFirst(), actual);
+			assertEquals(account.getAccountNo(), actual.getAccountNo());
+			assertEquals(account.getAccountId(), actual.getAccountId());
+			assertEquals(account.getAccountName(), actual.getAccountName());
+			assertEquals(account.getPassword(), actual.getPassword());
+			assertEquals(account.getBirthdate(), actual.getBirthdate());
+			assertEquals(account.getSexKbn(), actual.getSexKbn());
+			assertEquals(account.getBirthplacePrefectureKbnCode(), actual.getBirthplacePrefectureKbnCode());
+			assertEquals(account.getResidentPrefectureKbnCode(), actual.getResidentPrefectureKbnCode());
+			assertEquals(account.getFreeMemo(), actual.getFreeMemo());
+			assertEquals(account.getAuthorityKbn(), actual.getAuthorityKbn());
+			assertEquals(account.getLastLoginDatetime(), actual.getLastLoginDatetime());
+			assertEquals(account.getLoginFailureCount(), actual.getLoginFailureCount());
 		}
 		
 		@Test
@@ -158,7 +180,7 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(new ArrayList<Account>()).when(accountMapper).select(accountCaptor.capture());
 			
-			Account actual = accountRepositoryImpl.getByAccountId("aaaaaaaa");
+			AccountModel actual = accountRepositoryImpl.getByAccountId("aaaaaaaa");
 			
 			verify(accountMapper).select(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();

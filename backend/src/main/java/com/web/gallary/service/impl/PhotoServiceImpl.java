@@ -15,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.web.gallary.config.PhotoConfig;
 import com.web.gallary.constant.Consts;
-import com.web.gallary.entity.Account;
 import com.web.gallary.enumuration.DirectionEnum;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.enumuration.SortPhotoEnum;
@@ -29,6 +28,7 @@ import com.web.gallary.model.PhotoDetailGetModel;
 import com.web.gallary.model.PhotoDetailModel;
 import com.web.gallary.model.PhotoFavoriteDeleteModel;
 import com.web.gallary.model.PhotoGetModel;
+import com.web.gallary.model.AccountModel;
 import com.web.gallary.model.PhotoListGetModel;
 import com.web.gallary.model.PhotoModel;
 import com.web.gallary.model.PhotoTagDeleteModel;
@@ -69,12 +69,12 @@ public class PhotoServiceImpl implements PhotoService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<PhotoModel> getPhotoList(PhotoListGetModel photoListGetModel) {
-		Account account = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId());
-		
+		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId());
+
 		List<PhotoModel> photoModelList
 			= photoDetailRepository.getPhotoList(PhotoGetModel.builder()
 					.accountNo(photoListGetModel.getAccountNo())
-					.photoAccountNo(account.getAccountNo())
+					.photoAccountNo(accountModel.getAccountNo())
 					.build());
 		
 		return photoModelList.stream()
@@ -179,10 +179,10 @@ public class PhotoServiceImpl implements PhotoService {
 	public Boolean isReachedUpperLimit(Integer accountNo) {
 		if(Objects.isNull(accountNo)) return true;
 		
-		Account account = accountRepository.getByAccountNo(accountNo);
+		AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
 		Integer count = photoMstRepository.count(accountNo);
-		
-		switch(account.getAuthorityKbn()) {
+
+		switch(accountModel.getAuthorityKbn()) {
 			case MINI:
 				return count > (photoConfig.getMiniUserUpperLimit() - 1);
 			case NORMAL:

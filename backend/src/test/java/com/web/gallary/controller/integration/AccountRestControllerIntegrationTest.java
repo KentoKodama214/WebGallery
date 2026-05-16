@@ -37,6 +37,7 @@ import com.web.gallary.entity.Account;
 import com.web.gallary.enumuration.AuthorityEnum;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.enumuration.SexEnum;
+import com.web.gallary.model.AccountModel;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -105,7 +106,7 @@ public class AccountRestControllerIntegrationTest {
 		void getAccount_success() throws Exception {
 			String accountId = "aaaaaaaa";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId(accountId)
 					.accountName("AAAAAAAA")
@@ -138,7 +139,7 @@ public class AccountRestControllerIntegrationTest {
 		void getAccount_birthdate_min_date() throws Exception {
 			String accountId = "bbbbbbbb";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId(accountId)
 					.accountName("BBBBBBBB")
@@ -169,7 +170,7 @@ public class AccountRestControllerIntegrationTest {
 		@Order(3)
 		@DisplayName("異常系：他人のアカウントIDを指定した場合はForbidden")
 		void getAccount_forbidden() throws Exception {
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
@@ -344,7 +345,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "aaaaaaaa";
 			String accountName = "AAAAAAAA";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId(accountId)
 					.accountName(accountName)
@@ -397,7 +398,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "aaaaaaaab";
 			String accountName = "AAAAAAAA";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
@@ -450,7 +451,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "aaaaaaaa";
 			String accountName = "AAAAAAAA";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId(accountId)
 					.accountName(accountName)
@@ -503,7 +504,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "aaaaaaaab";
 			String accountName = "AAAAAAAA";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
@@ -555,7 +556,7 @@ public class AccountRestControllerIntegrationTest {
 		void update_duplicate_accountId() throws Exception {
 			String accountName = "AAAAAAAA";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
@@ -588,7 +589,7 @@ public class AccountRestControllerIntegrationTest {
 		void update_BadRequestException_account_id() throws Exception {
 			String accountName = "AAAAAAAA";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
@@ -615,7 +616,7 @@ public class AccountRestControllerIntegrationTest {
 		void update_BadRequestException_account_id_with_change_password() throws Exception {
 			String accountName = "AAAAAAAA";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
@@ -643,7 +644,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "aaaaaaaa";
 			String accountName = "AAAAAAAA";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
@@ -671,7 +672,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "zzzzzzzz";
 			String accountName = "AAAAAAAA";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(9)
 					.accountId(accountId)
 					.accountName(accountName)

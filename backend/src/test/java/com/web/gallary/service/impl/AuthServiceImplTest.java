@@ -24,10 +24,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.web.gallary.AccountPrincipal;
 import com.web.gallary.config.JwtConfig;
-import com.web.gallary.entity.Account;
-import com.web.gallary.entity.RefreshToken;
 import com.web.gallary.helper.JwtTokenProvider;
+import com.web.gallary.model.AccountModel;
 import com.web.gallary.model.AuthTokenModel;
+import com.web.gallary.model.RefreshTokenModel;
 import com.web.gallary.repository.AccountRepository;
 import com.web.gallary.repository.RefreshTokenRepository;
 
@@ -86,7 +86,7 @@ class AuthServiceImplTest {
 			assertEquals(900L, result.getExpiresIn());
 
 			verify(refreshTokenRepository).revokeAllByAccountNo(1);
-			verify(refreshTokenRepository).save(any(RefreshToken.class));
+			verify(refreshTokenRepository).save(any(RefreshTokenModel.class));
 		}
 
 		@Test
@@ -120,8 +120,7 @@ class AuthServiceImplTest {
 		@DisplayName("正常系: リフレッシュトークンが有効な場合、新しいアクセストークンが返されること")
 		void refresh_success() {
 			String refreshToken = "valid-refresh-token";
-			RefreshToken storedToken = RefreshToken.builder()
-					.tokenId(1)
+			RefreshTokenModel storedToken = RefreshTokenModel.builder()
 					.accountNo(1)
 					.tokenHash("hashed-token")
 					.expiresAt(OffsetDateTime.now().plusDays(7))
@@ -130,7 +129,7 @@ class AuthServiceImplTest {
 
 			when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(storedToken);
 
-			Account account = Account.builder()
+			AccountModel account = AccountModel.builder()
 					.accountNo(1)
 					.accountId("testuser1")
 					.build();
@@ -151,8 +150,7 @@ class AuthServiceImplTest {
 		@Test
 		@DisplayName("異常系: リフレッシュトークンが無効化されている場合は例外がスローされること")
 		void refresh_revokedToken() {
-			RefreshToken storedToken = RefreshToken.builder()
-					.tokenId(1)
+			RefreshTokenModel storedToken = RefreshTokenModel.builder()
 					.accountNo(1)
 					.tokenHash("hashed-token")
 					.expiresAt(OffsetDateTime.now().plusDays(7))
@@ -169,8 +167,7 @@ class AuthServiceImplTest {
 		@Test
 		@DisplayName("異常系: リフレッシュトークンの有効期限が切れている場合は例外がスローされること")
 		void refresh_expiredToken() {
-			RefreshToken storedToken = RefreshToken.builder()
-					.tokenId(1)
+			RefreshTokenModel storedToken = RefreshTokenModel.builder()
 					.accountNo(1)
 					.tokenHash("hashed-token")
 					.expiresAt(OffsetDateTime.now().minusDays(1))

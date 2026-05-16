@@ -23,8 +23,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.web.gallary.entity.RefreshToken;
 import com.web.gallary.model.AuthTokenModel;
+import com.web.gallary.model.RefreshTokenModel;
 import com.web.gallary.repository.RefreshTokenRepository;
 import com.web.gallary.service.impl.AuthServiceImpl;
 
@@ -106,7 +106,7 @@ public class AuthServiceImplIntegrationTest {
 
 			// リフレッシュトークンがDBに保存されていることを検証
 			String tokenHash = hashToken(result.getRefreshToken());
-			RefreshToken storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
+			RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 			assertNotNull(storedToken);
 			assertEquals(1, storedToken.getAccountNo());
 			assertFalse(storedToken.getIsRevoked());
@@ -126,12 +126,12 @@ public class AuthServiceImplIntegrationTest {
 			String secondTokenHash = hashToken(secondResult.getRefreshToken());
 
 			// 1回目のトークンが無効化されていることを検証
-			RefreshToken firstToken = refreshTokenRepository.findByTokenHash(firstTokenHash);
+			RefreshTokenModel firstToken = refreshTokenRepository.findByTokenHash(firstTokenHash);
 			assertNotNull(firstToken);
 			assertTrue(firstToken.getIsRevoked());
 
 			// 2回目のトークンが有効であることを検証
-			RefreshToken secondToken = refreshTokenRepository.findByTokenHash(secondTokenHash);
+			RefreshTokenModel secondToken = refreshTokenRepository.findByTokenHash(secondTokenHash);
 			assertNotNull(secondToken);
 			assertFalse(secondToken.getIsRevoked());
 		}
@@ -255,7 +255,7 @@ public class AuthServiceImplIntegrationTest {
 			String tokenHash = hashToken(refreshToken);
 
 			// ログアウト前はトークンが有効
-			RefreshToken beforeLogout = refreshTokenRepository.findByTokenHash(tokenHash);
+			RefreshTokenModel beforeLogout = refreshTokenRepository.findByTokenHash(tokenHash);
 			assertNotNull(beforeLogout);
 			assertFalse(beforeLogout.getIsRevoked());
 
@@ -263,7 +263,7 @@ public class AuthServiceImplIntegrationTest {
 			authServiceImpl.logout(refreshToken);
 
 			// ログアウト後はトークンが無効化されている
-			RefreshToken afterLogout = refreshTokenRepository.findByTokenHash(tokenHash);
+			RefreshTokenModel afterLogout = refreshTokenRepository.findByTokenHash(tokenHash);
 			assertNotNull(afterLogout);
 			assertTrue(afterLogout.getIsRevoked());
 		}

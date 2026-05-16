@@ -31,7 +31,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallary.AccountPrincipal;
 import com.web.gallary.config.LoginConfig;
-import com.web.gallary.entity.Account;
 import com.web.gallary.exception.RegistFailureException;
 import com.web.gallary.exception.UpdateFailureException;
 import com.web.gallary.model.AccountModel;
@@ -62,7 +61,7 @@ public class AccountServiceImplTest {
 		void loadUserByUsername_success() {
 			String accountId = "aaaaaaaa";
 			String password = "AAAAAAAA";
-			Account account = Account.builder()
+			AccountModel account = AccountModel.builder()
 					.accountNo(1)
 					.accountId(accountId)
 					.loginFailureCount(0)
@@ -164,7 +163,7 @@ public class AccountServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが存在する場合")
 		void getAccountById_found() {
-			Account account = Account.builder()
+			AccountModel account = AccountModel.builder()
 					.accountNo(1)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
@@ -253,7 +252,7 @@ public class AccountServiceImplTest {
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
 			AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
 			
-			Account account = Account.builder().accountNo(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -289,7 +288,7 @@ public class AccountServiceImplTest {
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
 			AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
 			
-			Account account = Account.builder().accountNo(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -333,7 +332,7 @@ public class AccountServiceImplTest {
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
-			Account account = Account.builder().accountNo(1).loginFailureCount(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1).loginFailureCount(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -394,7 +393,7 @@ public class AccountServiceImplTest {
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
-			Account account = Account.builder().accountNo(1).loginFailureCount(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1).loginFailureCount(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
