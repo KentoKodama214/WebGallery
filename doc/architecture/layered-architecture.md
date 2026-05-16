@@ -4,10 +4,9 @@
 
 ```mermaid
 graph TB
-    Client["クライアント<br>（ブラウザ）"]
+    Client["クライアント<br>（Next.js フロントエンド）"]
 
     subgraph Controller["Controller層"]
-        MVC["MVCコントローラ<br>Thymeleafビュー返却"]
         REST["RESTコントローラ<br>JSON API"]
     end
 
@@ -31,9 +30,7 @@ graph TB
 
     DB[("PostgreSQL<br>commonスキーマ<br>photoスキーマ")]
 
-    Client -- "HTTPリクエスト" --> MVC
     Client -- "APIリクエスト" --> REST
-    MVC -- "Request/Response DTO" --> SI
     REST -- "Request/Response DTO" --> SI
     SImpl -- "Modelオブジェクト" --> RI
     RImpl --> MI
@@ -44,7 +41,7 @@ graph TB
 
 | レイヤー | 役割 | 主なパッケージ |
 |----------|------|----------------|
-| Controller | MVCコントローラ（Thymeleafビュー）/ RESTコントローラ（JSON API） | `controller/` |
+| Controller | RESTコントローラ（JSON API） | `controller/` |
 | Service | ビジネスロジック・バリデーション | `service/`, `service/impl/` |
 | Repository | データアクセスの抽象化 | `repository/`, `repository/impl/` |
 | Mapper | MyBatisによるSQL実行 | `mapper/`, `resources/com/web/gallary/mapper/` |
