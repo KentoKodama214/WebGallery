@@ -210,9 +210,8 @@ public class PhotoRestController {
 			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
 		}
 		
-		List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
-		photoDeleteModelList.add(PhotoDeleteModel.from(photoDeleteRequest));
-		
+		List<PhotoDeleteModel> photoDeleteModelList = List.of(PhotoDeleteModel.from(photoDeleteRequest));
+
 		photoService.deletePhotos(photoAccountId, photoDeleteModelList);
 		
 		return ResponseEntity.ok(PhotoEditResponse.of(MessageConst.DELETE_PHOTO, null, null));
