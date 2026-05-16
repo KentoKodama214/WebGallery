@@ -1,5 +1,7 @@
 package com.web.gallary.controller.response;
 
+import com.web.gallary.model.AuthTokenModel;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,4 +19,17 @@ public class AuthLoginResponse {
 
 	/** アクセストークン有効期限（秒） */
 	private Long expiresIn;
+
+	/**
+	 * AuthTokenModelからAuthLoginResponseを生成する
+	 *
+	 * @param	model	{@link AuthTokenModel}
+	 * @return			{@link AuthLoginResponse}
+	 */
+	public static AuthLoginResponse from(AuthTokenModel model) {
+		return AuthLoginResponse.builder()
+				.accessToken(model.getAccessToken())
+				.expiresIn(model.getExpiresIn())
+				.build();
+	}
 }

@@ -58,10 +58,7 @@ public class AccountRestController {
 	@GetMapping(ApiRoutes.API_ACCOUNTS)
 	public ResponseEntity<List<AccountListItemResponse>> getAccountList() {
 		List<AccountListItemResponse> responseList = accountServiceImpl.getAccountList().stream()
-				.map(accountModel -> AccountListItemResponse.builder()
-						.accountId(accountModel.getAccountId())
-						.accountName(accountModel.getAccountName())
-						.build())
+				.map(AccountListItemResponse::from)
 				.toList();
 
 		return ResponseEntity.ok(responseList);
@@ -84,15 +81,7 @@ public class AccountRestController {
 
 		Account account = accountServiceImpl.getAccountById(accountId);
 
-		AccountDetailResponse response = AccountDetailResponse.builder()
-				.accountId(account.getAccountId())
-				.accountName(account.getAccountName())
-				.birthdate(Consts.MIN_LOCAL_DATE.equals(account.getBirthdate()) ? null : account.getBirthdate())
-				.sexKbn(account.getSexKbn())
-				.birthplacePrefectureKbnCode(account.getBirthplacePrefectureKbnCode())
-				.residentPrefectureKbnCode(account.getResidentPrefectureKbnCode())
-				.freeMemo(account.getFreeMemo())
-				.build();
+		AccountDetailResponse response = AccountDetailResponse.from(account);
 
 		return ResponseEntity.ok(response);
 	}

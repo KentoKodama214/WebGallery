@@ -1,5 +1,7 @@
 package com.web.gallary.controller.response;
 
+import com.web.gallary.model.KbnMstModel;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -14,4 +16,17 @@ public class PrefectureResponse {
 
 	/** 区分日本語名 */
 	private String kbnJapaneseName;
+
+	/**
+	 * KbnMstModelからPrefectureResponseを生成する
+	 *
+	 * @param	model	{@link KbnMstModel}
+	 * @return			{@link PrefectureResponse}
+	 */
+	public static PrefectureResponse from(KbnMstModel model) {
+		return PrefectureResponse.builder()
+				.kbnCode(model.getKbnCode())
+				.kbnJapaneseName(model.getKbnJapaneseName())
+				.build();
+	}
 }

@@ -6,8 +6,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -895,16 +893,12 @@ public class PhotoRestControllerTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：ページ番号が1で、2ページに到達しない")
-		void createPhotoListGetResponse_pageNo_1_lastPage() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
+		void createPhotoListGetResponse_pageNo_1_lastPage() {
 			Integer pageNo = 1;
+			Integer photoCountPerPage = 3;
 			List<PhotoModel> photoList = createPhotoList().subList(0, 1);
 
-			doReturn(3).when(photoConfig).getPhotoCountPerPage();
-
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
-			createPhotoListGetResponse.setAccessible(true);
-
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
+			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(1, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().getFirst().getAccountNo());
 			assertEquals(1, actual.getPhotoList().getFirst().getPhotoNo());
@@ -918,16 +912,12 @@ public class PhotoRestControllerTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：ページ番号が1で、2ページに到達する")
-		void createPhotoListGetResponse_pageNo_1() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
+		void createPhotoListGetResponse_pageNo_1() {
 			Integer pageNo = 1;
+			Integer photoCountPerPage = 3;
 			List<PhotoModel> photoList = createPhotoList().subList(0, 4);
 
-			doReturn(3).when(photoConfig).getPhotoCountPerPage();
-
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
-			createPhotoListGetResponse.setAccessible(true);
-
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
+			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(3, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
 			assertEquals(1, actual.getPhotoList().get(0).getPhotoNo());
@@ -953,16 +943,12 @@ public class PhotoRestControllerTest {
 		@Test
 		@Order(3)
 		@DisplayName("正常系：ページ番号が2で、3ページに到達しない")
-		void createPhotoListGetResponse_pageNo_2_lastPage() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
+		void createPhotoListGetResponse_pageNo_2_lastPage() {
 			Integer pageNo = 2;
+			Integer photoCountPerPage = 3;
 			List<PhotoModel> photoList = createPhotoList().subList(0, 4);
 
-			doReturn(3).when(photoConfig).getPhotoCountPerPage();
-
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
-			createPhotoListGetResponse.setAccessible(true);
-
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
+			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(1, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
 			assertEquals(4, actual.getPhotoList().get(0).getPhotoNo());
@@ -976,16 +962,12 @@ public class PhotoRestControllerTest {
 		@Test
 		@Order(4)
 		@DisplayName("正常系：ページ番号が2で、3ページに到達する")
-		void createPhotoListGetResponse_pageNo_2() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
+		void createPhotoListGetResponse_pageNo_2() {
 			Integer pageNo = 2;
+			Integer photoCountPerPage = 3;
 			List<PhotoModel> photoList = createPhotoList();
 
-			doReturn(3).when(photoConfig).getPhotoCountPerPage();
-
-			Method createPhotoListGetResponse = PhotoRestController.class.getDeclaredMethod("createPhotoListGetResponse", List.class, Integer.class);
-			createPhotoListGetResponse.setAccessible(true);
-
-			PhotoListGetResponse actual = (PhotoListGetResponse) createPhotoListGetResponse.invoke(photoRestController, photoList, pageNo);
+			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(3, actual.getPhotoList().size());
 			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
 			assertEquals(4, actual.getPhotoList().get(0).getPhotoNo());

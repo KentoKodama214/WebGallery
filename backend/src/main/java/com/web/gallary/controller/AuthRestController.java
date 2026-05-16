@@ -65,10 +65,7 @@ public class AuthRestController {
 				tokenModel.getRefreshToken(),
 				jwtConfig.getRefreshTokenExpirationDays() * 24 * 60 * 60L);
 
-		AuthLoginResponse response = AuthLoginResponse.builder()
-				.accessToken(tokenModel.getAccessToken())
-				.expiresIn(tokenModel.getExpiresIn())
-				.build();
+		AuthLoginResponse response = AuthLoginResponse.from(tokenModel);
 
 		return ResponseEntity.ok()
 				.header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
@@ -91,10 +88,7 @@ public class AuthRestController {
 
 		AuthTokenModel tokenModel = authService.refresh(refreshToken);
 
-		AuthLoginResponse response = AuthLoginResponse.builder()
-				.accessToken(tokenModel.getAccessToken())
-				.expiresIn(tokenModel.getExpiresIn())
-				.build();
+		AuthLoginResponse response = AuthLoginResponse.from(tokenModel);
 
 		return ResponseEntity.ok(response);
 	}

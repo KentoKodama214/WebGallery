@@ -2,6 +2,8 @@ package com.web.gallary.controller.response;
 
 import java.time.LocalDate;
 
+import com.web.gallary.constant.Consts;
+import com.web.gallary.entity.Account;
 import com.web.gallary.enumuration.SexEnum;
 
 import lombok.Builder;
@@ -33,4 +35,22 @@ public class AccountDetailResponse {
 
 	/** フリーメモ */
 	private String freeMemo;
+
+	/**
+	 * AccountエンティティからAccountDetailResponseを生成する
+	 *
+	 * @param	account	{@link Account}
+	 * @return			{@link AccountDetailResponse}
+	 */
+	public static AccountDetailResponse from(Account account) {
+		return AccountDetailResponse.builder()
+				.accountId(account.getAccountId())
+				.accountName(account.getAccountName())
+				.birthdate(Consts.MIN_LOCAL_DATE.equals(account.getBirthdate()) ? null : account.getBirthdate())
+				.sexKbn(account.getSexKbn())
+				.birthplacePrefectureKbnCode(account.getBirthplacePrefectureKbnCode())
+				.residentPrefectureKbnCode(account.getResidentPrefectureKbnCode())
+				.freeMemo(account.getFreeMemo())
+				.build();
+	}
 }
