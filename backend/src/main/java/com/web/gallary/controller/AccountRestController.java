@@ -24,7 +24,6 @@ import com.web.gallary.controller.response.AccountDetailResponse;
 import com.web.gallary.controller.response.AccountListItemResponse;
 import com.web.gallary.controller.response.AccountRegistResponse;
 import com.web.gallary.controller.response.AccountUpdateResponse;
-import com.web.gallary.entity.Account;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.exception.BadRequestException;
 import com.web.gallary.exception.ForbiddenAccountException;
@@ -79,9 +78,9 @@ public class AccountRestController {
 			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT);
 		}
 
-		Account account = accountServiceImpl.getAccountById(accountId);
+		AccountModel accountModel = accountServiceImpl.getAccountById(accountId);
 
-		AccountDetailResponse response = AccountDetailResponse.from(account);
+		AccountDetailResponse response = AccountDetailResponse.from(accountModel);
 
 		return ResponseEntity.ok(response);
 	}

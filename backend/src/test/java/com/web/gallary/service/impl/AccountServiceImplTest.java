@@ -164,11 +164,34 @@ public class AccountServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが存在する場合")
 		void getAccountById_found() {
-			Account expected = Account.builder().build();
-			doReturn(expected).when(accountRepositoryImpl).getByAccountId("aaaaaaaa");
-			assertEquals(expected, accountServiceImpl.getAccountById("aaaaaaaa"));
+			Account account = Account.builder()
+					.accountNo(1)
+					.accountId("aaaaaaaa")
+					.accountName("AAAAAAAA")
+					.password("password")
+					.birthdate(null)
+					.sexKbn(null)
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
+					.authorityKbn(null)
+					.lastLoginDatetime(null)
+					.loginFailureCount(0)
+					.build();
+			doReturn(account).when(accountRepositoryImpl).getByAccountId("aaaaaaaa");
+
+			AccountModel actual = accountServiceImpl.getAccountById("aaaaaaaa");
+
+			assertEquals(1, actual.getAccountNo());
+			assertEquals("aaaaaaaa", actual.getAccountId());
+			assertEquals("AAAAAAAA", actual.getAccountName());
+			assertEquals("password", actual.getPassword());
+			assertEquals("none", actual.getBirthplacePrefectureKbnCode());
+			assertEquals("none", actual.getResidentPrefectureKbnCode());
+			assertEquals("", actual.getFreeMemo());
+			assertEquals(0, actual.getLoginFailureCount());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合、nullを返す")

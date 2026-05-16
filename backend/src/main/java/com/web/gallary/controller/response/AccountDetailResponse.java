@@ -3,8 +3,8 @@ package com.web.gallary.controller.response;
 import java.time.LocalDate;
 
 import com.web.gallary.constant.Consts;
-import com.web.gallary.entity.Account;
 import com.web.gallary.enumuration.SexEnum;
+import com.web.gallary.model.AccountModel;
 
 import lombok.Builder;
 import lombok.Data;
@@ -37,20 +37,20 @@ public class AccountDetailResponse {
 	private String freeMemo;
 
 	/**
-	 * AccountエンティティからAccountDetailResponseを生成する
+	 * AccountModelからAccountDetailResponseを生成する
 	 *
-	 * @param	account	{@link Account}
+	 * @param	model	{@link AccountModel}
 	 * @return			{@link AccountDetailResponse}
 	 */
-	public static AccountDetailResponse from(Account account) {
+	public static AccountDetailResponse from(AccountModel model) {
 		return AccountDetailResponse.builder()
-				.accountId(account.getAccountId())
-				.accountName(account.getAccountName())
-				.birthdate(Consts.MIN_LOCAL_DATE.equals(account.getBirthdate()) ? null : account.getBirthdate())
-				.sexKbn(account.getSexKbn())
-				.birthplacePrefectureKbnCode(account.getBirthplacePrefectureKbnCode())
-				.residentPrefectureKbnCode(account.getResidentPrefectureKbnCode())
-				.freeMemo(account.getFreeMemo())
+				.accountId(model.getAccountId())
+				.accountName(model.getAccountName())
+				.birthdate(Consts.MIN_LOCAL_DATE.equals(model.getBirthdate()) ? null : model.getBirthdate())
+				.sexKbn(model.getSexKbn())
+				.birthplacePrefectureKbnCode(model.getBirthplacePrefectureKbnCode())
+				.residentPrefectureKbnCode(model.getResidentPrefectureKbnCode())
+				.freeMemo(model.getFreeMemo())
 				.build();
 	}
 }

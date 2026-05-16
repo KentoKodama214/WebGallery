@@ -262,12 +262,9 @@ public class AccountServiceImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが存在する場合")
 		void getAccountById_found() {
-			Account actual = accountServiceImpl.getAccountById("aaaaaaaa");
-			
+			AccountModel actual = accountServiceImpl.getAccountById("aaaaaaaa");
+
 			assertEquals(1, actual.getAccountNo());
-			assertEquals(1, actual.getCreatedBy());
-			assertEquals(1, actual.getUpdatedBy());
-			assertFalse(actual.getIsDeleted());
 			assertEquals("aaaaaaaa", actual.getAccountId());
 			assertEquals("AAAAAAAA", actual.getAccountName());
 			assertEquals("$2a$10$password1", actual.getPassword());
@@ -280,7 +277,7 @@ public class AccountServiceImplIntegrationTest {
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getLastLoginDatetime().plusHours(9));
 			assertEquals(0, actual.getLoginFailureCount());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合、nullを返す")
