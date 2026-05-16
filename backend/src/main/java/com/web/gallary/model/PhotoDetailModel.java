@@ -2,8 +2,11 @@ package com.web.gallary.model;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -90,11 +93,15 @@ public class PhotoDetailModel {
 	/**
 	 * 写真保存リクエストからPhotoDetailModelを生成する
 	 *
-	 * @param	request				{@link PhotoSaveRequest}
-	 * @param	photoTagModelList	写真タグリスト
-	 * @return						{@link PhotoDetailModel}
+	 * @param	request	{@link PhotoSaveRequest}
+	 * @return			{@link PhotoDetailModel}
 	 */
-	public static PhotoDetailModel from(PhotoSaveRequest request, List<PhotoTagModel> photoTagModelList) {
+	public static PhotoDetailModel from(PhotoSaveRequest request) {
+		List<PhotoTagModel> photoTagModelList = Objects.isNull(request.getPhotoTagRegistRequestList())
+				? new ArrayList<PhotoTagModel>()
+				: request.getPhotoTagRegistRequestList().stream()
+						.map(PhotoTagModel::from)
+						.collect(Collectors.toList());
 		return PhotoDetailModel.builder()
 				.accountNo(request.getAccountNo())
 				.photoNo(request.getPhotoNo())

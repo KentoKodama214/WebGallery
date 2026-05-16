@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -44,7 +43,6 @@ import com.web.gallary.model.PhotoDetailGetModel;
 import com.web.gallary.model.PhotoDetailModel;
 import com.web.gallary.model.PhotoListGetModel;
 import com.web.gallary.model.PhotoModel;
-import com.web.gallary.model.PhotoTagModel;
 import com.web.gallary.service.PhotoService;
 
 import lombok.RequiredArgsConstructor;
@@ -162,14 +160,8 @@ public class PhotoRestController {
 			}
 		};
 		
-		List<PhotoTagModel> photoTagModelList = Objects.isNull(photoSaveRequest.getPhotoTagRegistRequestList())
-				? new ArrayList<PhotoTagModel>()
-				: photoSaveRequest.getPhotoTagRegistRequestList().stream()
-						.map(PhotoTagModel::from)
-						.collect(Collectors.toList());
-
 		List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-		photoDetailModelList.add(PhotoDetailModel.from(photoSaveRequest, photoTagModelList));
+		photoDetailModelList.add(PhotoDetailModel.from(photoSaveRequest));
 		
 		Integer savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
 
