@@ -14,15 +14,18 @@
   - [3. common.location\_mst - ロケーションマスタ](#3-commonlocation_mst---ロケーションマスタ)
     - [カラム一覧](#カラム一覧-2)
     - [制約](#制約-2)
-  - [4. photo.photo\_mst - 写真マスタ](#4-photophoto_mst---写真マスタ)
+  - [4. common.refresh\_token - リフレッシュトークン](#4-commonrefresh_token---リフレッシュトークン)
     - [カラム一覧](#カラム一覧-3)
     - [制約](#制約-3)
-  - [5. photo.photo\_tag\_mst - 写真タグマスタ](#5-photophoto_tag_mst---写真タグマスタ)
+  - [5. photo.photo\_mst - 写真マスタ](#5-photophoto_mst---写真マスタ)
     - [カラム一覧](#カラム一覧-4)
     - [制約](#制約-4)
-  - [6. photo.photo\_favorite - 写真お気に入り](#6-photophoto_favorite---写真お気に入り)
+  - [6. photo.photo\_tag\_mst - 写真タグマスタ](#6-photophoto_tag_mst---写真タグマスタ)
     - [カラム一覧](#カラム一覧-5)
     - [制約](#制約-5)
+  - [7. photo.photo\_favorite - 写真お気に入り](#7-photophoto_favorite---写真お気に入り)
+    - [カラム一覧](#カラム一覧-6)
+    - [制約](#制約-6)
 
 ---
 
@@ -138,7 +141,38 @@
 
 ---
 
-## 4. photo.photo_mst - 写真マスタ
+## 4. common.refresh_token - リフレッシュトークン
+
+JWT認証のリフレッシュトークンを管理するテーブル。
+
+### カラム一覧
+
+| No | カラム名 | データ型 | NOT NULL | デフォルト値 | 説明 |
+|----|----------|----------|----------|-------------|------|
+| 1 | token_id | serial | YES | (自動採番) | トークンID |
+| 2 | account_no | int | YES | - | アカウント番号 |
+| 3 | token_hash | varchar(256) | YES | - | トークンハッシュ（SHA-256） |
+| 4 | expires_at | timestamp with time zone | YES | - | 有効期限 |
+| 5 | created_at | timestamp with time zone | YES | NOW() | 作成日時 |
+| 6 | is_revoked | boolean | YES | false | 無効化フラグ |
+
+### 制約
+
+| 制約種別 | 制約名 | 対象カラム |
+|----------|--------|------------|
+| PRIMARY KEY | refresh_token_pkey | token_id |
+| FOREIGN KEY | refresh_token_fkey | account_no → common.account(account_no) ON DELETE CASCADE |
+
+### インデックス
+
+| インデックス名 | 対象カラム |
+|----------------|------------|
+| idx_refresh_token_account | account_no |
+| idx_refresh_token_hash | token_hash |
+
+---
+
+## 5. photo.photo_mst - 写真マスタ
 
 写真のメタデータおよびEXIF情報を管理するテーブル。
 
@@ -176,7 +210,7 @@
 
 ---
 
-## 5. photo.photo_tag_mst - 写真タグマスタ
+## 6. photo.photo_tag_mst - 写真タグマスタ
 
 写真に付与されたタグを管理するテーブル。
 
@@ -203,7 +237,7 @@
 
 ---
 
-## 6. photo.photo_favorite - 写真お気に入り
+## 7. photo.photo_favorite - 写真お気に入り
 
 ユーザーが写真をお気に入りに登録する情報を管理するテーブル。
 

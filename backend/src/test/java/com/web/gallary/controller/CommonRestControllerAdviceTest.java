@@ -1,12 +1,7 @@
 package com.web.gallary.controller;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,16 +26,12 @@ import com.web.gallary.exception.ForbiddenAccountException;
 import com.web.gallary.exception.PhotoNotAdditableException;
 import com.web.gallary.exception.RegistFailureException;
 import com.web.gallary.exception.UpdateFailureException;
-import com.web.gallary.helper.SessionHelper;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 public class CommonRestControllerAdviceTest {
 	@InjectMocks
 	private CommonRestControllerAdvice commonRestControllerAdvice;
-
-	@Mock
-	private SessionHelper sessionHelper;
 
 	private MockMvc mockMvc;
 
@@ -111,29 +101,12 @@ public class CommonRestControllerAdviceTest {
 	class handleFileForbiddenAccountException {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：非ログインユーザーの場合")
-		void handleFileForbiddenAccountException_not_login_user() throws Exception {
-			doReturn(null).when(sessionHelper).getAccountId();
-
+		@DisplayName("正常系")
+		void handleFileForbiddenAccountException_success() throws Exception {
 			mockMvc.perform(get("/test/forbidden"))
 				.andExpect(status().isForbidden())
 				.andExpect(jsonPath("$.httpStatus").value(403))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/login"));
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：ログインユーザーの場合")
-		void handleFileForbiddenAccountException_login_user() throws Exception {
-			String accountId = "aaaaaaaa";
-			doReturn(accountId).when(sessionHelper).getAccountId();
-
-			mockMvc.perform(get("/test/forbidden"))
-				.andExpect(status().isForbidden())
-				.andExpect(jsonPath("$.httpStatus").value(403))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/" + accountId + "/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
 		}
 	}
 
@@ -143,29 +116,12 @@ public class CommonRestControllerAdviceTest {
 	class handleFileDuplicateException {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：非ログインユーザーの場合")
-		void handleFileDuplicateException_not_login_user() throws Exception {
-			doReturn(null).when(sessionHelper).getAccountId();
-
+		@DisplayName("正常系")
+		void handleFileDuplicateException_success() throws Exception {
 			mockMvc.perform(get("/test/file_duplicate"))
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.httpStatus").value(409))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/login"));
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：ログインユーザーの場合")
-		void handleFileDuplicateException_login_user() throws Exception {
-			String accountId = "aaaaaaaa";
-			doReturn(accountId).when(sessionHelper).getAccountId();
-
-			mockMvc.perform(get("/test/file_duplicate"))
-				.andExpect(status().isConflict())
-				.andExpect(jsonPath("$.httpStatus").value(409))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/" + accountId + "/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
 		}
 	}
 
@@ -175,29 +131,12 @@ public class CommonRestControllerAdviceTest {
 	class handlePhotoNotAdditableException {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：非ログインユーザーの場合")
-		void handlePhotoNotAdditableException_not_login_user() throws Exception {
-			doReturn(null).when(sessionHelper).getAccountId();
-
+		@DisplayName("正常系")
+		void handlePhotoNotAdditableException_success() throws Exception {
 			mockMvc.perform(get("/test/photo_not_additable"))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.httpStatus").value(400))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/login"));
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：ログインユーザーの場合")
-		void handlePhotoNotAdditableException_login_user() throws Exception {
-			String accountId = "aaaaaaaa";
-			doReturn(accountId).when(sessionHelper).getAccountId();
-
-			mockMvc.perform(get("/test/photo_not_additable"))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.httpStatus").value(400))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/" + accountId + "/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
 		}
 	}
 
@@ -207,29 +146,12 @@ public class CommonRestControllerAdviceTest {
 	class handleInsertFailedException {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：非ログインユーザーの場合")
-		void handleInsertFailedException_not_login_user() throws Exception {
-			doReturn(null).when(sessionHelper).getAccountId();
-
+		@DisplayName("正常系")
+		void handleInsertFailedException_success() throws Exception {
 			mockMvc.perform(get("/test/regist_failure"))
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.httpStatus").value(409))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/login"));
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：ログインユーザーの場合")
-		void handleInsertFailedException_login_user() throws Exception {
-			String accountId = "aaaaaaaa";
-			doReturn(accountId).when(sessionHelper).getAccountId();
-
-			mockMvc.perform(get("/test/regist_failure"))
-				.andExpect(status().isConflict())
-				.andExpect(jsonPath("$.httpStatus").value(409))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/" + accountId + "/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
 		}
 	}
 
@@ -239,54 +161,12 @@ public class CommonRestControllerAdviceTest {
 	class handleUpdateFailureException {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：非ログインユーザーの場合")
-		void handleUpdateFailureException_not_login_user() throws Exception {
-			doReturn(null).when(sessionHelper).getAccountId();
-
+		@DisplayName("正常系")
+		void handleUpdateFailureException_success() throws Exception {
 			mockMvc.perform(get("/test/update_failure"))
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.httpStatus").value(409))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/login"));
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：ログインユーザーの場合")
-		void handleUpdateFailureException_login_user() throws Exception {
-			String accountId = "aaaaaaaa";
-			doReturn(accountId).when(sessionHelper).getAccountId();
-
-			mockMvc.perform(get("/test/update_failure"))
-				.andExpect(status().isConflict())
-				.andExpect(jsonPath("$.httpStatus").value(409))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/" + accountId + "/photo_list"));
-		}
-	}
-
-	@Nested
-	@Order(7)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class getGoBackPageUrl {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：非ログインユーザーの場合")
-		void getGoBackPageUrl_not_login_user() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method goBackPageUrl = CommonRestControllerAdvice.class.getDeclaredMethod("getGoBackPageUrl");
-			goBackPageUrl.setAccessible(true);
-			doReturn(null).when(sessionHelper).getAccountId();
-			assertEquals("/login", (String) goBackPageUrl.invoke(commonRestControllerAdvice));
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：ログインユーザーの場合")
-		void getGoBackPageUrl_login_user() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method goBackPageUrl = CommonRestControllerAdvice.class.getDeclaredMethod("getGoBackPageUrl");
-			goBackPageUrl.setAccessible(true);
-			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-			assertEquals("/photo/aaaaaaaa/photo_list", (String) goBackPageUrl.invoke(commonRestControllerAdvice));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
 		}
 	}
 }

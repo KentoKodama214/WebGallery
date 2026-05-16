@@ -38,6 +38,10 @@ NORMAL_USER_UPPER_LIMIT=${NORMAL_USER_UPPER_LIMIT:-1000}
 read -p "OUTPUT_PATH [https://localhost:8080/image/]: " OUTPUT_PATH
 OUTPUT_PATH=${OUTPUT_PATH:-https://localhost:8080/image/}
 
+# JWT設定
+read -p "JWT_SECRET [default-dev-secret-must-be-at-least-256-bits-long-for-hs256]: " JWT_SECRET
+JWT_SECRET=${JWT_SECRET:-default-dev-secret-must-be-at-least-256-bits-long-for-hs256}
+
 # rcファイルに書き込み
 {
   echo ""
@@ -48,6 +52,7 @@ OUTPUT_PATH=${OUTPUT_PATH:-https://localhost:8080/image/}
   echo "export MINI_USER_UPPER_LIMIT=\"$MINI_USER_UPPER_LIMIT\""
   echo "export NORMAL_USER_UPPER_LIMIT=\"$NORMAL_USER_UPPER_LIMIT\""
   echo "export OUTPUT_PATH=\"$OUTPUT_PATH\""
+  echo "export JWT_SECRET=\"$JWT_SECRET\""
 } >> "$RC_FILE"
 
 echo

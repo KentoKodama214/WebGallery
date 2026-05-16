@@ -13,7 +13,7 @@ import lombok.Data;
 public class PhotoListGetResponse {
 	/** 最後まで写真を取得できたか */
 	private Boolean isLast;
-	
+
 	/** 写真リスト */
 	private List<PhotoListResponse> photoList;
 }

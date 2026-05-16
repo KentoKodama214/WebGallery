@@ -14,7 +14,13 @@ public class PhotoEditResponse {
 
 	/** 登録成功 */
 	private Boolean isSuccess;
-	
+
 	/** メッセージ */
 	private String message;
+
+	/** 写真番号 */
+	private Integer photoNo;
+
+	/** 画像ファイルパス */
+	private String imageFilePath;
 }

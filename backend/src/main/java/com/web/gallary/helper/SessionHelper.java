@@ -50,24 +50,4 @@ public class SessionHelper {
 		
 		return accountId;
 	}
-	
-	/**
-	 * セッション情報からパスワードを取得する
-	 * 
-	 * @return	パスワード
-	 */
-	public String getPassword() {
-		String password = null;
-		
-		Authentication authentication =
-				SecurityContextHolder.getContext().getAuthentication();
-		
-		if (authentication.getPrincipal() instanceof AccountPrincipal) {
-			AccountPrincipal accountPrincipal =
-					AccountPrincipal.class.cast(authentication.getPrincipal());
-			password = accountPrincipal.getPassword();
-		}
-		
-		return password;
-	}
 }

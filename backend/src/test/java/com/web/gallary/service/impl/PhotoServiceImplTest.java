@@ -533,7 +533,8 @@ public class PhotoServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系：photoDetailModelListがnullの場合、終了")
 		void savePhotos_photoDetailModelList_is_null() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
-			photoServiceImpl.savePhotos("aaaaaaaa", null);
+			Integer actual = photoServiceImpl.savePhotos("aaaaaaaa", null);
+			assertNull(actual);
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(Integer.class));
 			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
 			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(String.class), any(Integer.class));
@@ -545,7 +546,8 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系：photoDetailModelListがemptyの場合、終了")
 		void savePhotos_photoDetailModelList_is_empty() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			photoServiceImpl.savePhotos("aaaaaaaa", photoDetailModelList);
+			Integer actual = photoServiceImpl.savePhotos("aaaaaaaa", photoDetailModelList);
+			assertNull(actual);
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(Integer.class));
 			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
 			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(String.class), any(Integer.class));
@@ -581,15 +583,16 @@ public class PhotoServiceImplTest {
 			doReturn(false).when(photoMstRepositoryImpl).isExistPhoto(photoDetailModel2);
 			doNothing().when(photoMstRepositoryImpl).regist(photoDetailModel2, filePath + accountId + "/DSC222.jpg", 6);
 			
-			photoServiceImpl.savePhotos(accountId, photoDetailModelList);
-			
+			Integer actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+
+			assertEquals(5, actual);
 			verify(photoMstRepositoryImpl, times(2)).isExistPhoto(any(PhotoDetailModel.class));
 			verify(photoMstRepositoryImpl, times(2)).regist(any(PhotoDetailModel.class), any(String.class), any(Integer.class));
 			verify(photoMstRepositoryImpl, times(0)).update(any(PhotoDetailModel.class));
 			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
 			verify(photoTagMstRepositoryImpl, times(0)).clear(any(PhotoTagDeleteModel.class));
 			verify(fileRepositoryImpl, times(2)).save(any(FileModel.class));
-			
+
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
 			assertEquals(1, photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(5, photoTagModelCaptureList.get(0).getPhotoNo());
@@ -601,7 +604,7 @@ public class PhotoServiceImplTest {
 			assertEquals(2, photoTagModelCaptureList.get(1).getTagNo());
 			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName());
 			assertEquals("sea", photoTagModelCaptureList.get(1).getTagEnglishName());
-			
+
 			List<FileModel> fileModelCapture = fileModelCaptor.getAllValues();
 			assertEquals(filePath + accountId + "/DSC111.jpg", fileModelCapture.get(0).getFilePath());
 			assertEquals(photoDetailModel1.getImageFile(), fileModelCapture.get(0).getImageFile());
@@ -636,15 +639,16 @@ public class PhotoServiceImplTest {
 			photoDetailModelList.add(photoDetailModel2);
 			doNothing().when(photoMstRepositoryImpl).update(photoDetailModel2);
 			
-			photoServiceImpl.savePhotos(accountId, photoDetailModelList);
-			
+			Integer actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+
+			assertEquals(3, actual);
 			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
 			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(String.class), any(Integer.class));
 			verify(photoMstRepositoryImpl, times(2)).update(any(PhotoDetailModel.class));
 			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
 			verify(photoTagMstRepositoryImpl, times(2)).clear(any(PhotoTagDeleteModel.class));
 			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-			
+
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
 			assertEquals(1, photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(2, photoTagModelCaptureList.get(0).getPhotoNo());
@@ -689,15 +693,16 @@ public class PhotoServiceImplTest {
 			photoDetailModelList.add(photoDetailModel2);
 			doNothing().when(photoMstRepositoryImpl).update(photoDetailModel2);
 			
-			photoServiceImpl.savePhotos(accountId, photoDetailModelList);
-			
+			Integer actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+
+			assertEquals(3, actual);
 			verify(photoMstRepositoryImpl, times(1)).isExistPhoto(any(PhotoDetailModel.class));
 			verify(photoMstRepositoryImpl, times(1)).regist(any(PhotoDetailModel.class), any(String.class), any(Integer.class));
 			verify(photoMstRepositoryImpl, times(1)).update(any(PhotoDetailModel.class));
 			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
 			verify(photoTagMstRepositoryImpl, times(1)).clear(any(PhotoTagDeleteModel.class));
 			verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
-			
+
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
 			assertEquals(1, photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(5, photoTagModelCaptureList.get(0).getPhotoNo());

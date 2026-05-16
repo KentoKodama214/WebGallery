@@ -1,26 +1,20 @@
 package com.web.gallary.controller;
 
-import java.util.Objects;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.web.gallary.constant.ApiRoutes;
 import com.web.gallary.controller.request.ErrorRequest;
 import com.web.gallary.controller.response.BadRequestResponse;
 import com.web.gallary.exception.BadRequestException;
 import com.web.gallary.exception.FileDuplicateException;
 import com.web.gallary.exception.ForbiddenAccountException;
 import com.web.gallary.exception.PhotoNotAdditableException;
+import com.web.gallary.exception.PhotoNotFoundException;
 import com.web.gallary.exception.RegistFailureException;
 import com.web.gallary.exception.UpdateFailureException;
-import com.web.gallary.helper.SessionHelper;
-import com.web.gallary.util.PhotoUrlUtil;
-
-import lombok.RequiredArgsConstructor;
 
 /**
  * システム共通のExceptionHandlerを扱うRestControllerAdviceクラス
@@ -30,18 +24,16 @@ import lombok.RequiredArgsConstructor;
 */
 @RestControllerAdvice(assignableTypes = {
 		AccountRestController.class,
+		KbnMstRestController.class,
 		PhotoFavoriteController.class,
 		PhotoRestController.class
 })
 @Component
-@RequiredArgsConstructor
 public class CommonRestControllerAdvice {
 
-	private final SessionHelper sessionHelper;
-	
 	/**
 	 * リクエストパラメータが不正のときに制御するExceptionHandler
-	 * 
+	 *
 	 * @param	exception	{@link BadRequestException}
 	 * @return				{@link BadRequestResponse}
 	 */
@@ -52,13 +44,13 @@ public class CommonRestControllerAdvice {
 				.isSuccess(false)
 				.message(exception.getMessage())
 				.build();
-		
+
 		return new ResponseEntity<BadRequestResponse>(response, HttpStatus.BAD_REQUEST);
 	}
-	
+
 	/**
 	 * 権限のないアカウントからの不正アクセスがあったときに制御するExceptionHandler
-	 * 
+	 *
 	 * @param	exception	{@link ForbiddenAccountException}
 	 * @return				{@link ErrorRequest}
 	 */
@@ -67,15 +59,14 @@ public class CommonRestControllerAdvice {
 		ErrorRequest errorResponse = ErrorRequest.builder()
 				.httpStatus(HttpStatus.FORBIDDEN.value())
 				.errorCode(exception.getErrorCode())
-				.errorMessage(exception.getMessage())
-				.goBackPageUrl(getGoBackPageUrl()).build();
-		
+				.errorMessage(exception.getMessage()).build();
+
 		return new ResponseEntity<ErrorRequest>(errorResponse, HttpStatus.FORBIDDEN);
 	}
-	
+
 	/**
 	 * 保存するファイルが重複した時に制御するExceptionHandler
-	 * 
+	 *
 	 * @param	exception	{@link FileDuplicateException}
 	 * @return				{@link ErrorRequest}
 	 */
@@ -84,15 +75,14 @@ public class CommonRestControllerAdvice {
 		ErrorRequest errorResponse = ErrorRequest.builder()
 				.httpStatus(HttpStatus.CONFLICT.value())
 				.errorCode(exception.getErrorCode())
-				.errorMessage(exception.getMessage())
-				.goBackPageUrl(getGoBackPageUrl()).build();
-		
+				.errorMessage(exception.getMessage()).build();
+
 		return new ResponseEntity<ErrorRequest>(errorResponse, HttpStatus.CONFLICT);
 	}
-	
+
 	/**
 	 * 写真の登録枚数の上限に達した状態での登録を制御するExceptionHandler
-	 * 
+	 *
 	 * @param	exception	{@link PhotoNotAdditableException}
 	 * @return				{@link ErrorRequest}
 	 */
@@ -101,15 +91,14 @@ public class CommonRestControllerAdvice {
 		ErrorRequest errorResponse = ErrorRequest.builder()
 				.httpStatus(HttpStatus.BAD_REQUEST.value())
 				.errorCode(exception.getErrorCode())
-				.errorMessage(exception.getMessage())
-				.goBackPageUrl(getGoBackPageUrl()).build();
-		
+				.errorMessage(exception.getMessage()).build();
+
 		return new ResponseEntity<ErrorRequest>(errorResponse, HttpStatus.BAD_REQUEST);
 	}
-	
+
 	/**
 	 * データの登録に失敗したときに制御するExceptionHandler
-	 * 
+	 *
 	 * @param	exception	{@link RegistFailureException}
 	 * @return				{@link ErrorRequest}
 	 */
@@ -118,15 +107,30 @@ public class CommonRestControllerAdvice {
 		ErrorRequest errorResponse = ErrorRequest.builder()
 				.httpStatus(HttpStatus.CONFLICT.value())
 				.errorCode(exception.getErrorCode())
-				.errorMessage(exception.getMessage())
-				.goBackPageUrl(getGoBackPageUrl()).build();
-		
+				.errorMessage(exception.getMessage()).build();
+
 		return new ResponseEntity<ErrorRequest>(errorResponse, HttpStatus.CONFLICT);
 	}
-	
+
+	/**
+	 * 写真が存在しないときに制御するExceptionHandler
+	 *
+	 * @param	exception	{@link PhotoNotFoundException}
+	 * @return				{@link ErrorRequest}
+	 */
+	@ExceptionHandler(PhotoNotFoundException.class)
+	public ResponseEntity<ErrorRequest> handlePhotoNotFoundException(PhotoNotFoundException exception) {
+		ErrorRequest errorResponse = ErrorRequest.builder()
+				.httpStatus(HttpStatus.NOT_FOUND.value())
+				.errorCode(exception.getErrorCode())
+				.errorMessage(exception.getMessage()).build();
+
+		return new ResponseEntity<ErrorRequest>(errorResponse, HttpStatus.NOT_FOUND);
+	}
+
 	/**
 	 * データの更新に失敗したときに制御するExceptionHandler
-	 * 
+	 *
 	 * @param	exception	{@link UpdateFailureException}
 	 * @return				{@link ErrorRequest}
 	 */
@@ -135,19 +139,8 @@ public class CommonRestControllerAdvice {
 		ErrorRequest errorResponse = ErrorRequest.builder()
 				.httpStatus(HttpStatus.CONFLICT.value())
 				.errorCode(exception.getErrorCode())
-				.errorMessage(exception.getMessage())
-				.goBackPageUrl(getGoBackPageUrl()).build();
-		
+				.errorMessage(exception.getMessage()).build();
+
 		return new ResponseEntity<ErrorRequest>(errorResponse, HttpStatus.CONFLICT);
-	}
-	
-	/**
-	 * エラーページから戻るページのURLを生成する<p>
-	 * 未ログイン者の場合はログインページ、ログイン者は自身の写真一覧ページへ戻る
-	 * 
-	 * @return	遷移先ページのURL
-	 */
-	private String getGoBackPageUrl() {
-		return Objects.isNull(sessionHelper.getAccountId()) ? ApiRoutes.LOGIN : PhotoUrlUtil.getPhotoListUrl(sessionHelper.getAccountId());
 	}
 }

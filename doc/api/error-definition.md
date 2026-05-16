@@ -20,7 +20,21 @@
 }
 ```
 
-### 業務エラー（403 Forbidden / 409 Conflict）
+### 認証エラー（401 Unauthorized / 423 Locked）
+
+認証に失敗した場合に返却されます。`AuthRestController` のみで使用されます。
+
+| フィールド | 型 | 説明 |
+|-----------|-----|------|
+| message | String | エラーメッセージ |
+
+```json
+{
+  "message": "アカウントIDまたはパスワードが間違っています。"
+}
+```
+
+### 業務エラー（403 Forbidden / 404 Not Found / 409 Conflict）
 
 権限エラーやデータ競合が発生した場合に返却されます。
 
@@ -29,14 +43,12 @@
 | httpStatus | Integer | HTTPステータスコード |
 | errorCode | String | エラーコード |
 | errorMessage | String | エラーメッセージ |
-| goBackPageUrl | String | 戻り先ページのURL |
 
 ```json
 {
   "httpStatus": 409,
   "errorCode": "E-P-0001",
-  "errorMessage": "写真の登録に失敗しました。",
-  "goBackPageUrl": "/photo/testuser01/photo_list"
+  "errorMessage": "写真の登録に失敗しました。"
 }
 ```
 
@@ -48,10 +60,14 @@
 |-----------|---------------|------|
 | BadRequestException | 400 Bad Request | 入力パラメータが不正 |
 | PhotoNotAdditableException | 400 Bad Request | 写真登録上限に達している |
+| BadCredentialsException | 401 Unauthorized | アカウントIDまたはパスワードが不正 |
+| IllegalArgumentException | 401 Unauthorized | リフレッシュトークンが無効 |
 | ForbiddenAccountException | 403 Forbidden | リソースへのアクセス権限がない |
+| PhotoNotFoundException | 404 Not Found | 写真が存在しない |
 | RegistFailureException | 409 Conflict | データ登録に失敗 |
 | UpdateFailureException | 409 Conflict | データ更新に失敗 |
 | FileDuplicateException | 409 Conflict | ファイル名が重複している |
+| LockedException | 423 Locked | アカウントがロックされている |
 
 ---
 

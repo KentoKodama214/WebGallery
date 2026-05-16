@@ -17,7 +17,4 @@ public class ErrorRequest {
 	
 	/** エラーメッセージ */
 	private String errorMessage;
-	
-	/** エラー後に戻るページのURL */
-	private String goBackPageUrl;
 }

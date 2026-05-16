@@ -559,7 +559,8 @@ public class PhotoServiceImplIntegrationTest {
 		void savePhotos_photoDetailModelList_is_null() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
 			String accountId = "aaaaaaaa";
 			List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
-			photoServiceImpl.savePhotos(accountId, null);
+			Integer actual = photoServiceImpl.savePhotos(accountId, null);
+			assertNull(actual);
 			List<PhotoMst> afterData = getPhotoMstData(accountId);
 			assertEquals(beforeSaveData.size(), afterData.size());
 		}
@@ -571,7 +572,8 @@ public class PhotoServiceImplIntegrationTest {
 			String accountId = "aaaaaaaa";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 			List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
-			photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+			Integer actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+			assertNull(actual);
 			List<PhotoMst> afterData = getPhotoMstData(accountId);
 			assertEquals(beforeSaveData.size(), afterData.size());
 		}
@@ -590,11 +592,12 @@ public class PhotoServiceImplIntegrationTest {
 			PhotoDetailModel photoDetailModel2 = createNewPhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			photoServiceImpl.savePhotos(accountId, photoDetailModelList);
-			
+			Integer actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+
+			assertEquals(11, actual);
 			List<PhotoMst> actualData = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo() > 10).toList();
 			assertEquals(2, actualData.size());
-			
+
 			assertEquals(1, actualData.get(0).getAccountNo());
 			assertEquals(11, actualData.get(0).getPhotoNo());
 			assertFalse(actualData.get(0).getIsDeleted());
@@ -608,7 +611,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData.get(0).getFValue()));
 			assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData.get(0).getShutterSpeed()));
 			assertEquals(100, actualData.get(0).getIso());
-			
+
 			assertEquals(1, actualData.get(1).getAccountNo());
 			assertEquals(12, actualData.get(1).getPhotoNo());
 			assertFalse(actualData.get(1).getIsDeleted());
@@ -654,8 +657,9 @@ public class PhotoServiceImplIntegrationTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			photoServiceImpl.savePhotos(accountId, photoDetailModelList);
-			
+			Integer actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+
+			assertEquals(3, actual);
 			List<PhotoMst> actualData1 = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo()==2).toList();
 			assertEquals(1, actualData1.size());
 			assertEquals(1, actualData1.getFirst().getAccountNo());
@@ -719,11 +723,12 @@ public class PhotoServiceImplIntegrationTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			photoServiceImpl.savePhotos(accountId, photoDetailModelList);
-			
+			Integer actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+
+			assertEquals(3, actual);
 			List<PhotoMst> actualData = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo() > 10).toList();
 			assertEquals(1, actualData.size());
-			
+
 			assertEquals(1, actualData.get(0).getAccountNo());
 			assertEquals(11, actualData.get(0).getPhotoNo());
 			assertFalse(actualData.get(0).getIsDeleted());

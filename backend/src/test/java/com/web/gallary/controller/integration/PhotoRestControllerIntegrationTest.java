@@ -79,7 +79,6 @@ public class PhotoRestControllerIntegrationTest {
 
 			MvcResult result = mockMvc.perform(
 					get("/api/v1/accounts/" + photoAccountId + "/photos")
-					.with(csrf())
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -136,7 +135,6 @@ public class PhotoRestControllerIntegrationTest {
 			MvcResult result = mockMvc.perform(
 					get("/api/v1/accounts/" + photoAccountId + "/photos")
 					.param("tagList", "太陽 青空")
-					.with(csrf())
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -165,7 +163,6 @@ public class PhotoRestControllerIntegrationTest {
 			MvcResult result = mockMvc.perform(
 					get("/api/v1/accounts/" + photoAccountId + "/photos")
 					.param("tagList", "太陽　青空")
-					.with(csrf())
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -194,7 +191,6 @@ public class PhotoRestControllerIntegrationTest {
 			MvcResult result = mockMvc.perform(
 					get("/api/v1/accounts/" + photoAccountId + "/photos")
 					.param("tagList", "太陽　海")
-					.with(csrf())
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -234,7 +230,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -330,7 +326,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -443,7 +439,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -563,7 +559,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -578,10 +574,9 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.FORBIDDEN.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/aaaaaaaa/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorMessage()));
 		}
-		
+
 		@Test
 		@Order(5)
 		@DisplayName("異常系：登録上限に達している。PhotoNotAdditableExceptionをthrowする")
@@ -602,7 +597,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -617,8 +612,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.REACHED_REGISTRATION_LIMIT.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.REACHED_REGISTRATION_LIMIT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/aaaaaaaa/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.REACHED_REGISTRATION_LIMIT.getErrorMessage()));
 		}
 		
 		@Test
@@ -636,7 +630,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -667,7 +661,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -704,7 +698,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -742,7 +736,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -761,8 +755,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.DUPLICATE_PHOTO_FILE.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.DUPLICATE_PHOTO_FILE.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/bbbbbbbb/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.DUPLICATE_PHOTO_FILE.getErrorMessage()));
 		}
 		
 		@Test
@@ -780,7 +773,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 			
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -799,8 +792,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_UPDATE_PHOTO.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_UPDATE_PHOTO.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/bbbbbbbb/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_UPDATE_PHOTO.getErrorMessage()));
 		}
 	}
 	
@@ -826,7 +818,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -909,7 +901,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -922,8 +914,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.FORBIDDEN.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/" + loginAccountId + "/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorMessage()));
 			
 		}
 		
@@ -943,7 +934,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -975,7 +966,7 @@ public class PhotoRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + photoAccountId + "/photos")
@@ -987,8 +978,93 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_DELETE_PHOTO.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_DELETE_PHOTO.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/" + loginAccountId + "/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_DELETE_PHOTO.getErrorMessage()));
+		}
+	}
+
+	@Nested
+	@Order(4)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/controller/PhotoRestControllerIntegrationTest.sql")
+	class getPhotoUpperLimit {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：自分のアカウントで上限未到達の場合")
+		void getPhotoUpperLimit_not_reached() throws Exception {
+			String photoAccountId = "bbbbbbbb";
+
+			Account sessionAccount = Account.builder()
+					.accountNo(2)
+					.accountId(photoAccountId)
+					.accountName("BBBBBBBB")
+					.password("$2a$10$password2")
+					.authorityKbn(AuthorityEnum.MINI)
+					.build();
+
+			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+
+			mockMvc.perform(
+					get("/api/v1/accounts/" + photoAccountId + "/photos/upper-limit")
+					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+					.with(csrf())
+				)
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.isReachedUpperLimit").value(false));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：自分のアカウントで上限到達の場合")
+		void getPhotoUpperLimit_reached() throws Exception {
+			String photoAccountId = "aaaaaaaa";
+
+			Account sessionAccount = Account.builder()
+					.accountNo(1)
+					.accountId(photoAccountId)
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.authorityKbn(AuthorityEnum.MINI)
+					.build();
+
+			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+
+			mockMvc.perform(
+					get("/api/v1/accounts/" + photoAccountId + "/photos/upper-limit")
+					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+					.with(csrf())
+				)
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.isReachedUpperLimit").value(true));
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("正常系：他人のアカウントの場合はfalse")
+		void getPhotoUpperLimit_other_account() throws Exception {
+			Account sessionAccount = Account.builder()
+					.accountNo(2)
+					.accountId("bbbbbbbb")
+					.accountName("BBBBBBBB")
+					.password("$2a$10$password2")
+					.authorityKbn(AuthorityEnum.MINI)
+					.build();
+
+			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+
+			mockMvc.perform(
+					get("/api/v1/accounts/aaaaaaaa/photos/upper-limit")
+					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+					.with(csrf())
+				)
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.isReachedUpperLimit").value(false));
 		}
 	}
 }

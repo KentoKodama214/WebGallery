@@ -29,18 +29,23 @@ import com.web.gallary.constant.MessageConst;
 import com.web.gallary.controller.request.PhotoDeleteRequest;
 import com.web.gallary.controller.request.PhotoListRequest;
 import com.web.gallary.controller.request.PhotoSaveRequest;
+import com.web.gallary.controller.response.PhotoDetailGetResponse;
 import com.web.gallary.controller.response.PhotoEditResponse;
 import com.web.gallary.controller.response.PhotoListGetResponse;
 import com.web.gallary.controller.response.PhotoListResponse;
+import com.web.gallary.controller.response.PhotoTagResponse;
+import com.web.gallary.controller.response.PhotoUpperLimitResponse;
 import com.web.gallary.enumuration.ErrorEnum;
 import com.web.gallary.exception.BadRequestException;
 import com.web.gallary.exception.FileDuplicateException;
 import com.web.gallary.exception.ForbiddenAccountException;
 import com.web.gallary.exception.PhotoNotAdditableException;
+import com.web.gallary.exception.PhotoNotFoundException;
 import com.web.gallary.exception.RegistFailureException;
 import com.web.gallary.exception.UpdateFailureException;
 import com.web.gallary.helper.SessionHelper;
 import com.web.gallary.model.PhotoDeleteModel;
+import com.web.gallary.model.PhotoDetailGetModel;
 import com.web.gallary.model.PhotoDetailModel;
 import com.web.gallary.model.PhotoListGetModel;
 import com.web.gallary.model.PhotoModel;
@@ -95,7 +100,87 @@ public class PhotoRestController {
 			);
 		return ResponseEntity.ok(createPhotoListGetResponse(photoList, photoListRequest.getPageNo()));
 	}
-	
+
+	/**
+	 * 写真登録上限チェック<p>
+	 * 指定のアカウントが写真の登録枚数の上限に達しているかをチェックする
+	 *
+	 * @param	photoAccountId		ページ所有者のアカウントID
+	 * @return						{@link PhotoUpperLimitResponse}
+	 */
+	@GetMapping(ApiRoutes.API_PHOTO_UPPER_LIMIT)
+	public ResponseEntity<PhotoUpperLimitResponse> getPhotoUpperLimit(
+			@PathVariable String photoAccountId) {
+		Boolean isReachedUpperLimit = false;
+		if (photoAccountId.equals(sessionHelper.getAccountId())) {
+			isReachedUpperLimit = photoService.isReachedUpperLimit(sessionHelper.getAccountNo());
+		}
+		return ResponseEntity.ok(PhotoUpperLimitResponse.builder()
+				.isReachedUpperLimit(isReachedUpperLimit)
+				.build());
+	}
+
+	/**
+	 * 写真詳細取得
+	 *
+	 * @param	photoAccountId		ページ所有者のアカウントID
+	 * @param	photoNo				写真番号
+	 * @param	accountNo			写真所有者のアカウント番号
+	 * @return						{@link PhotoDetailGetResponse}
+	 * @throws	PhotoNotFoundException	写真が存在しない場合
+	 */
+	@GetMapping(ApiRoutes.API_PHOTO_DETAIL)
+	public ResponseEntity<PhotoDetailGetResponse> getPhotoDetail(
+			@PathVariable String photoAccountId,
+			@PathVariable Integer photoNo,
+			Integer accountNo) throws PhotoNotFoundException {
+
+		PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+				.accountNo(sessionHelper.getAccountNo())
+				.photoAccountNo(accountNo)
+				.photoNo(photoNo)
+				.build();
+
+		PhotoDetailModel photoDetailModel = photoService.getPhotoDetail(photoDetailGetModel);
+
+		List<PhotoTagResponse> photoTagResponseList = new ArrayList<PhotoTagResponse>();
+		if(!Objects.isNull(photoDetailModel.getPhotoTagModelList())) {
+			photoDetailModel.getPhotoTagModelList().forEach(tag -> {
+				photoTagResponseList.add(PhotoTagResponse.builder()
+						.accountNo(tag.getAccountNo())
+						.photoNo(tag.getPhotoNo())
+						.tagNo(tag.getTagNo())
+						.tagJapaneseName(tag.getTagJapaneseName())
+						.tagEnglishName(tag.getTagEnglishName())
+						.build());
+			});
+		}
+
+		PhotoDetailGetResponse response = PhotoDetailGetResponse.builder()
+				.accountNo(photoDetailModel.getAccountNo())
+				.photoNo(photoDetailModel.getPhotoNo())
+				.isFavorite(photoDetailModel.getIsFavorite())
+				.photoAt(photoDetailModel.getPhotoAt())
+				.locationNo(photoDetailModel.getLocationNo())
+				.address(photoDetailModel.getAddress())
+				.latitude(photoDetailModel.getLatitude())
+				.longitude(photoDetailModel.getLongitude())
+				.locationName(photoDetailModel.getLocationName())
+				.imageFilePath(photoDetailModel.getImageFilePath())
+				.photoJapaneseTitle(photoDetailModel.getPhotoJapaneseTitle())
+				.photoEnglishTitle(photoDetailModel.getPhotoEnglishTitle())
+				.caption(photoDetailModel.getCaption())
+				.directionKbn(photoDetailModel.getDirectionKbn())
+				.focalLength(photoDetailModel.getFocalLength())
+				.fValue(photoDetailModel.getFValue())
+				.shutterSpeed(photoDetailModel.getShutterSpeed())
+				.iso(photoDetailModel.getIso())
+				.photoTagList(photoTagResponseList)
+				.build();
+
+		return ResponseEntity.ok(response);
+	}
+
 	/**
 	 * 写真保存
 	 * 
@@ -119,7 +204,7 @@ public class PhotoRestController {
 		if(!photoAccountId.equals(sessionHelper.getAccountId())) {
 			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO);
 		}
-		
+
 		if(Objects.isNull(photoSaveRequest.getPhotoNo()) && photoService.isReachedUpperLimit(sessionHelper.getAccountNo())) {
 			throw new PhotoNotAdditableException(ErrorEnum.REACHED_REGISTRATION_LIMIT);
 		}
@@ -168,7 +253,7 @@ public class PhotoRestController {
 				.longitude(photoSaveRequest.getLongitude())
 				.locationName(photoSaveRequest.getLocationName())
 				.imageFile(photoSaveRequest.getImageFile())
-				.imageFilePath(photoSaveRequest.getImageFilePath())
+				.imageFilePath(Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse(""))
 				.photoJapaneseTitle(photoSaveRequest.getPhotoJapaneseTitle())
 				.photoEnglishTitle(photoSaveRequest.getPhotoEnglishTitle())
 				.caption(photoSaveRequest.getCaption())
@@ -181,12 +266,21 @@ public class PhotoRestController {
 				.build()
 		);
 		
-		photoService.savePhotos(photoAccountId, photoDetailModelList);
-		
+		Integer savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
+
+		String savedImageFilePath;
+		if (Objects.isNull(photoSaveRequest.getPhotoNo()) && !Objects.isNull(photoSaveRequest.getImageFile())) {
+			savedImageFilePath = photoConfig.getOutputPath() + photoAccountId + "/" + photoSaveRequest.getImageFile().getOriginalFilename();
+		} else {
+			savedImageFilePath = Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse("");
+		}
+
 		return ResponseEntity.ok(PhotoEditResponse.builder()
 				.httpStatus(HttpStatus.OK.value())
 				.isSuccess(true)
 				.message(MessageConst.REGIST_PHOTO)
+				.photoNo(savedPhotoNo)
+				.imageFilePath(savedImageFilePath)
 				.build());
 	}
 	
@@ -237,10 +331,10 @@ public class PhotoRestController {
 	
 	/**
 	 * ページ番号から写真のリストを絞り込み、写真一覧のレスポンスのクラスへ詰め替えをする
-	 * 
-	 * @param	photoList	{@link PhotoModel}
-	 * @param	pageNo		ページ番号
-	 * @return				{@link PhotoListGetResponse}
+	 *
+	 * @param	photoList				{@link PhotoModel}
+	 * @param	pageNo					ページ番号
+	 * @return							{@link PhotoListGetResponse}
 	 */
 	private PhotoListGetResponse createPhotoListGetResponse(List<PhotoModel> photoList, Integer pageNo) {
 		Integer photoCountPerPage = photoConfig.getPhotoCountPerPage();

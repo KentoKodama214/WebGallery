@@ -68,7 +68,7 @@ public class PhotoRestControllerTest {
 	@BeforeEach
 	void setUp() {
 		mockMvc = MockMvcBuilders.standaloneSetup(photoRestController)
-				.setControllerAdvice(new CommonRestControllerAdvice(sessionHelper))
+				.setControllerAdvice(new CommonRestControllerAdvice())
 				.build();
 	}
 
@@ -334,7 +334,7 @@ public class PhotoRestControllerTest {
 
 			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
-			doNothing().when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+			doReturn(1).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
@@ -393,7 +393,7 @@ public class PhotoRestControllerTest {
 
 			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
-			doNothing().when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+			doReturn(1).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
@@ -1006,6 +1006,50 @@ public class PhotoRestControllerTest {
 			assertEquals("キャプション6", actual.getPhotoList().get(2).getCaption());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(2).getDirectionKbn());
 			assertFalse(actual.getIsLast());
+		}
+	}
+
+	@Nested
+	@Order(5)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class getPhotoUpperLimit {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：自分のアカウントで上限未到達の場合")
+		void getPhotoUpperLimit_not_reached() throws Exception {
+			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1);
+
+			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/upper-limit"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.isReachedUpperLimit").value(false));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：自分のアカウントで上限到達の場合")
+		void getPhotoUpperLimit_reached() throws Exception {
+			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(true).when(photoServiceImpl).isReachedUpperLimit(1);
+
+			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/upper-limit"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.isReachedUpperLimit").value(true));
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("正常系：他人のアカウントの場合はfalse")
+		void getPhotoUpperLimit_other_account() throws Exception {
+			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
+
+			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/upper-limit"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.isReachedUpperLimit").value(false));
+
+			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Integer.class));
 		}
 	}
 }

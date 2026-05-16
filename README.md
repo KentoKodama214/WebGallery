@@ -9,11 +9,14 @@
   - [主な機能](#主な機能)
     - [ユーザー権限](#ユーザー権限)
   - [技術スタック](#技術スタック)
+    - [バックエンド](#バックエンド)
+    - [フロントエンド](#フロントエンド)
   - [前提条件](#前提条件)
   - [セットアップ](#セットアップ)
     - [1. データベースの起動](#1-データベースの起動)
     - [2. 環境変数の設定](#2-環境変数の設定)
-    - [3. アプリケーションの起動](#3-アプリケーションの起動)
+    - [3. フロントエンドのセットアップ](#3-フロントエンドのセットアップ)
+    - [4. アプリケーションの起動](#4-アプリケーションの起動)
   - [ビルド・テスト](#ビルドテスト)
   - [アーキテクチャ](#アーキテクチャ)
   - [データベース構成](#データベース構成)
@@ -48,12 +51,12 @@
 | 言語 | Java 21 |
 | ビルドツール | Gradle 8.7 |
 | フレームワーク | Spring Boot 3.3.3 |
-| セキュリティ | Spring Security 3.3.3（BCrypt） |
-| テンプレートエンジン | Thymeleaf 3.3.3 |
+| セキュリティ | Spring Security 3.3.3（BCrypt + JWT） |
 | ORM | MyBatis 3.0.3 |
-| データベース | PostgreSQL |
+| データベース | PostgreSQL（ドライバ 42.7.4） |
 | コード生成 | Lombok 1.18.34 |
 | オブジェクトマッピング | ModelMapper 3.2.1 |
+| JWT | jjwt 0.12.6 |
 | テスト | JUnit Jupiter 5.11.1 / Mockito 5.14 |
 | パッケージング | WAR（Tomcatデプロイ） |
 
@@ -200,6 +203,47 @@ WebGallary/
 ├── scripts/
 │   └── check-architecture.sh       # アーキテクチャチェックスクリプト
 ├── frontend/                       # フロントエンド（Next.js）
+│   ├── package.json
+│   ├── pnpm-lock.yaml
+│   ├── pnpm-workspace.yaml
+│   ├── next.config.ts              # Next.js設定（APIプロキシ等）
+│   ├── next-env.d.ts               # Next.js TypeScript型定義
+│   ├── tsconfig.json
+│   ├── eslint.config.mjs
+│   ├── postcss.config.mjs
+│   ├── jest.config.js              # Jestテスト設定
+│   ├── playwright.config.ts        # E2Eテスト設定
+│   ├── e2e/                        # Playwright E2Eテスト
+│   ├── public/
+│   │   └── image/                  # 静的画像（アイコン等）
+│   └── src/
+│       ├── proxy.ts                     # APIプロキシ設定
+│       ├── app/
+│       │   ├── favicon.ico              # ファビコン
+│       │   ├── globals.css              # グローバルCSS
+│       │   ├── layout.tsx               # ルートレイアウト
+│       │   ├── page.tsx                 # トップページ
+│       │   ├── login/                   # ログインページ
+│       │   ├── register/               # アカウント登録ページ
+│       │   ├── account_list/           # アカウント一覧ページ
+│       │   ├── [accountId]/
+│       │   │   └── account_setting/    # アカウント設定ページ
+│       │   ├── photo/[photoAccountId]/
+│       │   │   ├── photo_list/         # 写真一覧ページ（PhotoSwipe統合）
+│       │   │   ├── photo_detail/       # 写真詳細ページ
+│       │   │   └── photo_setting/      # 写真設定ページ
+│       │   └── api/v1/                  # Next.js APIルート（プロキシ）
+│       ├── components/
+│       │   └── layout/                  # 共通レイアウト
+│       │       ├── Header.tsx
+│       │       ├── Header.module.css
+│       │       ├── Footer.tsx
+│       │       └── Navigation.tsx
+│       └── lib/
+│           ├── api/
+│           │   └── client.ts            # APIクライアント
+│           └── auth/
+│               └── AuthProvider.tsx      # 認証プロバイダー
 ├── backend/                        # バックエンド（Spring Boot）
 │   ├── build.gradle
 │   ├── settings.gradle
@@ -227,8 +271,7 @@ WebGallary/
 │       │   │   │   └── impl/
 │       │   │   ├── service/            # サービス
 │       │   │   │   └── impl/
-│       │   │   ├── type_handler/       # MyBatis型ハンドラ
-│       │   │   └── util/               # ユーティリティ
+│       │   │   └── type_handler/       # MyBatis型ハンドラ
 │       │   └── resources/
 │       │       ├── application.yml
 │       │       ├── messages.properties

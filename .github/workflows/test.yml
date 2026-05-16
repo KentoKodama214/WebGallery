@@ -89,6 +89,7 @@ jobs:
           SQL_FILES=(
             "db/common/common.type.sql"
             "db/common/account.sql"
+            "db/common/refresh_token.sql"
             "db/common/kbn_mst.sql"
             "db/common/location_mst.sql"
             "db/photo/photo.type.sql"

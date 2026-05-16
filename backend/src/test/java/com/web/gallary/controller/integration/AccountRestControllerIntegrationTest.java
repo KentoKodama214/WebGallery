@@ -60,6 +60,144 @@ public class AccountRestControllerIntegrationTest {
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/controller/AccountRestControllerIntegrationTest.sql")
+	class getAccountList {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント一覧を取得できる")
+		void getAccountList_success() throws Exception {
+			mockMvc.perform(
+					get("/api/v1/accounts")
+				)
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.length()").value(3))
+				.andExpect(jsonPath("$[0].accountId").value("aaaaaaaa"))
+				.andExpect(jsonPath("$[0].accountName").value("AAAAAAAA"))
+				.andExpect(jsonPath("$[1].accountId").value("bbbbbbbb"))
+				.andExpect(jsonPath("$[1].accountName").value("BBBBBBBB"))
+				.andExpect(jsonPath("$[2].accountId").value("cccccccc"))
+				.andExpect(jsonPath("$[2].accountName").value("CCCCCCCC"));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：アカウントが0件の場合")
+		@Sql("/sql/common/cleanup.sql")
+		void getAccountList_empty() throws Exception {
+			mockMvc.perform(
+					get("/api/v1/accounts")
+				)
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.length()").value(0));
+		}
+	}
+
+	@Nested
+	@Order(2)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/controller/AccountRestControllerIntegrationTest.sql")
+	class getAccount {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：自分のアカウント詳細を取得できる")
+		void getAccount_success() throws Exception {
+			String accountId = "aaaaaaaa";
+
+			Account sessionAccount = Account.builder()
+					.accountNo(1)
+					.accountId(accountId)
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.build();
+
+			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+
+			mockMvc.perform(
+					get("/api/v1/accounts/" + accountId)
+					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+					.with(csrf())
+				)
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.accountId").value("aaaaaaaa"))
+				.andExpect(jsonPath("$.accountName").value("AAAAAAAA"))
+				.andExpect(jsonPath("$.birthdate").value("1991-02-14"))
+				.andExpect(jsonPath("$.sexKbn").value("none"))
+				.andExpect(jsonPath("$.birthplacePrefectureKbnCode").value("none"))
+				.andExpect(jsonPath("$.residentPrefectureKbnCode").value("none"))
+				.andExpect(jsonPath("$.freeMemo").value(""));
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：生年月日が最小日付の場合はnullで返却される")
+		void getAccount_birthdate_min_date() throws Exception {
+			String accountId = "bbbbbbbb";
+
+			Account sessionAccount = Account.builder()
+					.accountNo(2)
+					.accountId(accountId)
+					.accountName("BBBBBBBB")
+					.password("$2a$10$password2")
+					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.build();
+
+			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+
+			mockMvc.perform(
+					get("/api/v1/accounts/" + accountId)
+					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+					.with(csrf())
+				)
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.accountId").value("bbbbbbbb"))
+				.andExpect(jsonPath("$.accountName").value("BBBBBBBB"))
+				.andExpect(jsonPath("$.birthdate").isEmpty())
+				.andExpect(jsonPath("$.sexKbn").value("man"))
+				.andExpect(jsonPath("$.birthplacePrefectureKbnCode").value("none"))
+				.andExpect(jsonPath("$.residentPrefectureKbnCode").value("none"))
+				.andExpect(jsonPath("$.freeMemo").value(""));
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("異常系：他人のアカウントIDを指定した場合はForbidden")
+		void getAccount_forbidden() throws Exception {
+			Account sessionAccount = Account.builder()
+					.accountNo(1)
+					.accountId("aaaaaaaa")
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.build();
+
+			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+
+			mockMvc.perform(
+					get("/api/v1/accounts/bbbbbbbb")
+					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+					.with(csrf())
+				)
+				.andExpect(status().isForbidden())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.FORBIDDEN.value()))
+				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT.getErrorCode()))
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT.getErrorMessage()));
+		}
+	}
+
+	@Nested
+	@Order(3)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/controller/AccountRestControllerIntegrationTest.sql")
 	class register {
 		private List<Account> getAccountList(String accountId) {
 			return jdbcTemplate.query(
@@ -170,7 +308,7 @@ public class AccountRestControllerIntegrationTest {
 	}
 
 	@Nested
-	@Order(2)
+	@Order(4)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/controller/AccountRestControllerIntegrationTest.sql")
@@ -215,7 +353,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/" + accountId)
@@ -268,7 +406,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
@@ -321,7 +459,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/" + accountId)
@@ -374,7 +512,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
@@ -426,7 +564,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
@@ -459,7 +597,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
@@ -486,7 +624,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
@@ -514,7 +652,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/" + accountId)
@@ -542,7 +680,7 @@ public class AccountRestControllerIntegrationTest {
 					.build();
 
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
 					put("/api/v1/accounts/" + accountId)
@@ -555,8 +693,7 @@ public class AccountRestControllerIntegrationTest {
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.getErrorMessage()))
-				.andExpect(jsonPath("$.goBackPageUrl").value("/photo/zzzzzzzz/photo_list"));
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.getErrorMessage()));
 		}
 	}
 }

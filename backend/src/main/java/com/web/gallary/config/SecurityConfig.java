@@ -1,17 +1,26 @@
 package com.web.gallary.config;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.web.gallary.constant.ApiRoutes;
-import com.web.gallary.util.AccountUrlUtil;
+
+import lombok.RequiredArgsConstructor;
 
 /**
  * Spring Securityで必要なオブジェクトを生成するConfigクラス
@@ -21,8 +30,11 @@ import com.web.gallary.util.AccountUrlUtil;
  */
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
-	
+
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
 	/**
 	 * bcryptアルゴリズムでハッシュ化を行うエンコーダのオブジェクトを生成します
 	 * @return PasswordEncoderオブジェクト
@@ -33,46 +45,63 @@ public class SecurityConfig {
 	}
 
 	/**
-	 * SecurityFilterChainのオブジェクトを生成します
-	 * @param http	HTTPセキュリティオブジェクト
-	 * @return		SecurityFilterChainオブジェクト
+	 * AuthenticationManagerのBeanを公開します
+	 * @param	authenticationConfiguration	認証設定
+	 * @return		AuthenticationManagerオブジェクト
 	 * @throws Exception
 	 */
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-				.requestMatchers("/css/**").permitAll()
-				.requestMatchers("/js/**").permitAll()
-				.requestMatchers("/image/**").permitAll()
-				.requestMatchers("/").permitAll()
-				.requestMatchers(ApiRoutes.HEADER).permitAll()
-				.requestMatchers(ApiRoutes.FOOTER).permitAll()
-				.requestMatchers(ApiRoutes.ERROR_PAGE).permitAll()
-				.requestMatchers(ApiRoutes.LOGIN).permitAll()
-				.requestMatchers(ApiRoutes.REGISTER).permitAll()
-				.requestMatchers(ApiRoutes.API_ACCOUNTS).permitAll()
-				.requestMatchers(ApiRoutes.API_ACCOUNTS + "/**").permitAll()
-				.requestMatchers(ApiRoutes.ACCOUNT_LIST).permitAll()
-				.requestMatchers(ApiRoutes.PHOTO + "/**").permitAll()
-				.requestMatchers(ApiRoutes.API_PREFIX + "/**").permitAll()
-				.requestMatchers(AccountUrlUtil.getAccountSettingUrl("{name}"))
-					.access(new WebExpressionAuthorizationManager("#name == authentication.name"))
-				.anyRequest().authenticated())
-			.formLogin(formLogin -> formLogin
-				.loginPage(ApiRoutes.LOGIN)
-				.defaultSuccessUrl("/")
-				.failureUrl(ApiRoutes.LOGIN)
-				.permitAll())
+	AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+		return authenticationConfiguration.getAuthenticationManager();
+	}
+
+	/**
+	 * CORS設定を定義します
+	 * @return	CorsConfigurationSourceオブジェクト
+	 */
+	@Bean
+	CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration config = new CorsConfiguration();
+		config.setAllowedOrigins(List.of("http://localhost:3000"));
+		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		config.setAllowedHeaders(List.of("*"));
+		config.setAllowCredentials(true);
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", config);
+		return source;
+	}
+
+	/**
+	 * API用のSecurityFilterChainを生成します（JWT認証、ステートレス）
+	 * @param	http	HTTPセキュリティオブジェクト
+	 * @return			SecurityFilterChainオブジェクト
+	 * @throws Exception
+	 */
+	@Bean
+	SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+		http.securityMatcher(new AntPathRequestMatcher("/api/**"))
+			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			.csrf(csrf -> csrf.disable())
 			.sessionManagement(session -> session
-				.invalidSessionUrl(ApiRoutes.LOGIN)
-				.maximumSessions(1))
-			.logout(logout -> logout
-				.logoutRequestMatcher(new AntPathRequestMatcher(ApiRoutes.LOGOUT))
-				.logoutSuccessUrl(ApiRoutes.LOGIN))
-			.headers(headers -> headers
-				// 外部サイトへの<iframe>の埋め込みは禁止し、自サイト内のみ許可する
-				.frameOptions(frameOptions -> frameOptions.sameOrigin()));
+				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.authorizeHttpRequests(authorizeRequests -> authorizeRequests
+				// 認証API
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_LOGIN)).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_REFRESH)).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_LOGOUT)).permitAll()
+				// アカウント登録（POST）とアカウント一覧（GET）は公開
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_ACCOUNTS, "GET")).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_ACCOUNTS, "POST")).permitAll()
+				// 写真一覧・詳細の閲覧（GET）は公開
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_PHOTOS, "GET")).permitAll()
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_PHOTO_DETAIL, "GET")).permitAll()
+				// 都道府県一覧は公開
+				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_PREFECTURES)).permitAll()
+				// それ以外は認証必須
+				.anyRequest().authenticated())
+			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
 	}
+
 }

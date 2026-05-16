@@ -37,9 +37,10 @@ WebGallaryはPostgreSQLを使用し、以下の2つのスキーマで構成さ�
 | 1 | common | account | アカウント |
 | 2 | common | kbn_mst | 区分マスタ |
 | 3 | common | location_mst | ロケーションマスタ |
-| 4 | photo | photo_mst | 写真マスタ |
-| 5 | photo | photo_tag_mst | 写真タグマスタ |
-| 6 | photo | photo_favorite | 写真お気に入り |
+| 4 | common | refresh_token | リフレッシュトークン |
+| 5 | photo | photo_mst | 写真マスタ |
+| 6 | photo | photo_tag_mst | 写真タグマスタ |
+| 7 | photo | photo_favorite | 写真お気に入り |
 
 ## DB初期化
 
@@ -49,7 +50,8 @@ WebGallaryはPostgreSQLを使用し、以下の2つのスキーマで構成さ�
 2. `common/account.sql` - アカウントテーブル
 3. `common/kbn_mst.sql` - 区分マスタテーブル
 4. `common/location_mst.sql` - ロケーションマスタテーブル
-5. `photo/type.sql` - カスタム型定義
-6. `photo/photo_mst.sql` - 写真マスタテーブル
-7. `photo/photo_tag_mst.sql` - 写真タグマスタテーブル
-8. `photo/photo_favorite.sql` - 写真お気に入りテーブル
+5. `common/refresh_token.sql` - リフレッシュトークンテーブル
+6. `photo/type.sql` - カスタム型定義
+7. `photo/photo_mst.sql` - 写真マスタテーブル
+8. `photo/photo_tag_mst.sql` - 写真タグマスタテーブル
+9. `photo/photo_favorite.sql` - 写真お気に入りテーブル

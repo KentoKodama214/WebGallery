@@ -57,6 +57,15 @@ erDiagram
         decimal longitude "経度"
     }
 
+    refresh_token {
+        serial token_id PK "トークンID"
+        int account_no FK "アカウント番号"
+        varchar token_hash "トークンハッシュ"
+        timestamptz expires_at "有効期限"
+        timestamptz created_at "作成日時"
+        boolean is_revoked "無効化フラグ"
+    }
+
     %% ========== photo スキーマ ==========
 
     photo_mst {
@@ -104,6 +113,7 @@ erDiagram
     %% ========== リレーションシップ ==========
 
     account ||--o{ location_mst : "所有する"
+    account ||--o{ refresh_token : "トークンを持つ"
     account ||--o{ photo_mst : "投稿する"
     account ||--o{ photo_favorite : "お気に入りする"
     photo_mst ||--o{ photo_tag_mst : "タグ付けされる"
@@ -167,7 +177,17 @@ erDiagram
         decimal longitude "経度"
     }
 
+    refresh_token {
+        serial token_id PK "トークンID"
+        int account_no FK "アカウント番号"
+        varchar token_hash "トークンハッシュ"
+        timestamptz expires_at "有効期限"
+        timestamptz created_at "作成日時"
+        boolean is_revoked "無効化フラグ"
+    }
+
     account ||--o{ location_mst : "所有する"
+    account ||--o{ refresh_token : "トークンを持つ"
 ```
 
 ### photo スキーマ
@@ -233,7 +253,8 @@ erDiagram
 | No | 親テーブル | 子テーブル | 外部キー | 関係 | 説明 |
 |----|-----------|-----------|----------|------|------|
 | 1 | common.account | common.location_mst | account_no → account_no | 1:N | アカウントが複数のロケーションを所有 |
-| 2 | common.account | photo.photo_mst | account_no → account_no | 1:N | アカウントが複数の写真を投稿 |
-| 3 | common.account | photo.photo_favorite | account_no → account_no | 1:N | アカウントが複数の写真をお気に入り |
-| 4 | photo.photo_mst | photo.photo_tag_mst | (account_no, photo_no) → (account_no, photo_no) | 1:N | 写真に複数のタグを付与 |
-| 5 | photo.photo_mst | photo.photo_favorite | (account_no, photo_no) → (favorite_photo_account_no, favorite_photo_no) | 1:N | 写真が複数のユーザーにお気に入りされる |
+| 2 | common.account | common.refresh_token | account_no → account_no | 1:N | アカウントが複数のリフレッシュトークンを持つ |
+| 3 | common.account | photo.photo_mst | account_no → account_no | 1:N | アカウントが複数の写真を投稿 |
+| 4 | common.account | photo.photo_favorite | account_no → account_no | 1:N | アカウントが複数の写真をお気に入り |
+| 5 | photo.photo_mst | photo.photo_tag_mst | (account_no, photo_no) → (account_no, photo_no) | 1:N | 写真に複数のタグを付与 |
+| 6 | photo.photo_mst | photo.photo_favorite | (account_no, photo_no) → (favorite_photo_account_no, favorite_photo_no) | 1:N | 写真が複数のユーザーにお気に入りされる |

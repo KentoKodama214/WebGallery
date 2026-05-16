@@ -1,0 +1,225 @@
+/* フィルターオーバーレイ */
+.filterOverlay {
+  position: fixed;
+  display: block;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  visibility: hidden;
+  z-index: 9999;
+}
+
+.filterOverlay::before {
+  content: "";
+  background: lightgray;
+  left: -55%;
+  top: 0;
+  width: 300px;
+  height: 100%;
+  position: absolute;
+  transition: left 0.35s ease;
+}
+
+.filterOverlay::after {
+  content: "";
+  background: lightgray;
+  right: -55%;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  position: absolute;
+  transition: all 0.35s ease;
+}
+
+/* フィルターオーバーレイ open状態 */
+.filterOpen {
+  opacity: 1;
+  visibility: visible;
+  height: 100%;
+}
+
+.filterOpen::before {
+  left: 0;
+}
+
+/* 閉じるボタン（X形） */
+.filterCloseButton {
+  position: relative;
+  top: 2%;
+  left: 240px;
+  height: 27px;
+  width: 35px;
+  z-index: 9999;
+  cursor: pointer;
+}
+
+.filterCloseButton span {
+  background: darkgray;
+  border: none;
+  height: 5px;
+  width: 100%;
+  position: absolute;
+  left: 0;
+  cursor: pointer;
+}
+
+.filterCloseButton span:nth-of-type(1) {
+  top: 0;
+  transform: translateY(10px) translateX(0) rotate(45deg);
+  background: #fff;
+}
+
+.filterCloseButton span:nth-of-type(2) {
+  top: 10px;
+  opacity: 0;
+  background: #fff;
+}
+
+.filterCloseButton span:nth-of-type(3) {
+  top: 20px;
+  transform: translateY(-10px) translateX(0) rotate(-45deg);
+  background: #fff;
+}
+
+/* フィルターフォームコンテナ */
+.filterForm {
+  position: relative;
+  width: 260px;
+  margin: 30px 20px;
+  z-index: 10000;
+}
+
+.filterForm select,
+.filterForm input {
+  display: block;
+  margin: 20px 0;
+  padding: 10px;
+  width: 235px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  background-color: #fff;
+  color: #000;
+}
+
+/* 絞り込みボタン */
+.filterSubmitButton {
+  width: 235px;
+  height: 40px;
+  background: #2196f3;
+  color: #fff;
+  border: none;
+  border-radius: 0 0 2px 2px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.filterSubmitButton:hover {
+  box-shadow: 0px 1px 3px #2196f3;
+}
+
+/* フィルタートリガー（アイコン+テキスト） */
+.filterTrigger {
+  display: flex;
+  padding-top: 60px;
+  margin: 0 auto 20px auto;
+  cursor: pointer;
+}
+
+.filterIconImg {
+  position: relative;
+  margin: 5px;
+  z-index: 10000;
+  width: 25px;
+  height: 25px;
+}
+
+.filterText {
+  height: 25px;
+  margin: 5px auto 5px 5px;
+  color: white;
+}
+
+/* 写真コンテナ */
+.photosContainer {
+  position: relative;
+  z-index: 10;
+  overflow: auto;
+  width: 90%;
+  margin: 0 auto;
+  padding-top: 20px;
+}
+
+/* もっと見る */
+.showMore {
+  display: flex;
+  margin: 20px auto 60px auto;
+  width: 90%;
+  color: white;
+  font-size: 15px;
+  justify-content: center;
+}
+
+.showMoreText {
+  cursor: pointer;
+}
+
+/* 写真追加ボタン */
+.photoSettingButton {
+  position: fixed;
+  text-align: center;
+  z-index: 100;
+  right: 30px;
+  bottom: 50px;
+  color: white;
+  text-decoration: none;
+  font-size: 13px;
+  background-color: dimgray;
+  opacity: 0.75;
+  border-radius: 50%;
+  line-height: 75px;
+  width: 75px;
+  height: 75px;
+  padding: 0;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+  display: block;
+}
+
+.photoSettingButton:hover {
+  color: dimgray;
+  background: white;
+  opacity: 1;
+}
+
+/* 写真アイテム */
+.photo {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  border: 0.5px solid dimgray;
+  background-color: black;
+  padding: 10px;
+}
+
+.photo :global(.pswp-gallery__item) {
+  width: 100%;
+  height: 100%;
+}
+
+.photo :global(.pswp-gallery__item) a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* 写真画像 */
+.picture {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}

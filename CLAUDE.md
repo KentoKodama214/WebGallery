@@ -11,12 +11,13 @@ WebGallary is a photo gallery web application built with Spring Boot. Users can 
 | Language        | Java 21                           |
 | Build Tool      | Gradle 8.7 (wrapper included)     |
 | Framework       | Spring Boot 3.3.3                 |
-| Security        | Spring Security 3.3.3 (BCrypt)    |
-| Template Engine | Thymeleaf 3.3.3                   |
+| Security        | Spring Security 3.3.3 (BCrypt + JWT) |
+| Frontend        | Next.js (React, TypeScript)       |
 | ORM             | MyBatis 3.0.3                     |
 | Database        | PostgreSQL (driver 42.7.4)        |
 | Code Generation | Lombok 1.18.34                    |
 | Object Mapping  | ModelMapper 3.2.1                 |
+| JWT             | jjwt 0.12.6                       |
 | Testing         | JUnit Jupiter 5.11.1, Mockito 5.14|
 | Packaging       | WAR (Tomcat deployment)           |
 
@@ -55,7 +56,34 @@ WebGallary/
 ├── scripts/                        # CI/CD scripts
 │   └── check-architecture.sh       # Architecture violation checker
 ├── frontend/                       # Next.js frontend (React)
-├── backend/                        # Spring Boot backend
+│   ├── package.json                # Dependencies and scripts
+│   ├── next.config.ts              # Next.js configuration
+│   ├── tsconfig.json               # TypeScript configuration
+│   ├── eslint.config.mjs           # ESLint configuration
+│   ├── jest.config.js              # Jest test configuration
+│   ├── playwright.config.ts        # Playwright E2E test configuration
+│   ├── public/image/               # Static image assets
+│   ├── e2e/                        # Playwright E2E tests
+│   └── src/
+│       ├── app/                    # Next.js App Router pages
+│       │   ├── layout.tsx          # Root layout
+│       │   ├── page.tsx            # Home page
+│       │   ├── globals.css         # Global styles
+│       │   ├── login/              # Login page
+│       │   ├── register/           # Account registration page
+│       │   ├── account_list/       # Account list page
+│       │   ├── [accountId]/
+│       │   │   └── account_setting/  # Account settings page
+│       │   ├── photo/[photoAccountId]/
+│       │   │   ├── photo_list/     # Photo gallery page
+│       │   │   ├── photo_detail/   # Photo detail page
+│       │   │   └── photo_setting/  # Photo upload/edit page
+│       │   └── api/v1/             # Next.js API routes (proxy)
+│       ├── components/layout/      # Shared layout components (Header, Footer, Navigation)
+│       └── lib/
+│           ├── api/client.ts       # Backend API client
+│           └── auth/AuthProvider.tsx  # Authentication context provider
+├── backend/                        # Spring Boot backend (REST API)
 │   ├── build.gradle                # Gradle build config
 │   ├── settings.gradle             # Gradle settings
 │   ├── gradlew / gradlew.bat      # Gradle wrapper scripts
@@ -68,40 +96,42 @@ WebGallary/
 │       │   │   ├── WebGallaryApplication.java   # Boot main class
 │       │   │   ├── ServletInitializer.java      # WAR deployment initializer
 │       │   │   ├── AccountPrincipal.java        # Spring Security UserDetails
-│       │   │   ├── config/                      # Configuration classes
+│       │   │   ├── config/                      # Configuration classes (Security, JWT, CORS, etc.)
 │       │   │   ├── constant/                    # Constants (ApiRoutes, Consts, MessageConst)
-│       │   │   ├── controller/                  # MVC + REST controllers
+│       │   │   ├── controller/                  # REST controllers (JSON API only)
 │       │   │   │   ├── request/                 # Request DTOs
 │       │   │   │   └── response/                # Response DTOs
+│       │   │   ├── dto/                         # Data Transfer Objects (mapper layer)
 │       │   │   ├── entity/                      # Database entities
 │       │   │   ├── enumuration/                 # Enums (note: package typo is intentional)
 │       │   │   ├── exception/                   # Custom exception classes
-│       │   │   ├── helper/                      # Helper utilities (Session, Kbn)
+│       │   │   ├── helper/                      # Helper utilities (Session, Kbn, JwtTokenProvider)
 │       │   │   ├── mapper/                      # MyBatis mapper interfaces
 │       │   │   ├── model/                       # Transfer/business model objects
 │       │   │   ├── repository/                  # Repository interfaces
 │       │   │   │   └── impl/                    # Repository implementations
 │       │   │   ├── service/                     # Service interfaces
 │       │   │   │   └── impl/                    # Service implementations
-│       │   │   ├── type_handler/                # MyBatis enum type handlers
-│       │   │   └── util/                        # URL utility classes
+│       │   │   └── type_handler/                # MyBatis enum type handlers
 │       │   └── resources/
 │       │       ├── application.yml              # App configuration
+│       │       ├── application-*.yml            # Profile-specific config (local, development, prod)
 │       │       ├── messages.properties          # Message strings
 │       │       └── com/web/gallary/mapper/      # MyBatis XML mapper files
 │       └── test/
 │           ├── java/com/web/gallary/            # Test classes (mirrors main structure)
-│           │   ├── controller/
-│           │   │   └── integration/             # Controller integration tests
+│           │   ├── controller/                  # REST controller unit tests
+│           │   │   └── integration/             # REST controller integration tests
 │           │   ├── mapper/                      # Mapper unit tests
 │           │   ├── repository/impl/
 │           │   │   └── integration/             # Repository integration tests
 │           │   ├── service/impl/
 │           │   │   └── integration/             # Service integration tests
-│           │   ├── helper/                      # Helper unit tests
-│           │   └── util/                        # Utility unit tests
+│           │   └── helper/                      # Helper unit tests
 │           └── resources/
 │               ├── application-test.yml         # Test configuration
+│               ├── json/                        # Test JSON fixtures
+│               │   └── controller/              # Controller test request bodies
 │               └── sql/                         # Test SQL fixtures
 │                   ├── common/                  # Shared test data
 │                   ├── controller/              # Controller test data
@@ -115,9 +145,8 @@ WebGallary/
 ### Layered Architecture (Controller -> Service -> Repository -> Mapper)
 
 1. **Controller Layer** (`controller/`)
-   - MVC controllers return Thymeleaf view names
-   - REST controllers (suffix `RestController`) return JSON responses
-   - Exception handling via `CommonControllerAdvice` (MVC) and `CommonRestControllerAdvice` (REST)
+   - REST controllers return JSON responses (REST API only, no server-side rendering)
+   - Exception handling via `CommonRestControllerAdvice`
    - Request validation uses `@Valid` with request DTOs in `controller/request/`
    - All API routes defined centrally in `constant/ApiRoutes.java`
 
@@ -148,12 +177,11 @@ WebGallary/
 
 ### Security Model
 
-- Spring Security with form-based login
+- Spring Security with JWT authentication (stateless)
 - BCrypt password encoding
-- Account settings pages restricted to the owning user via SpEL expression
-- Max 1 concurrent session per user
-- Static resources (`/css/**`, `/js/**`, `/image/**`) are publicly accessible
-- Photo browsing is publicly accessible; editing requires authentication
+- `JwtAuthenticationFilter` validates Bearer tokens and sets SecurityContext
+- API endpoints under `/api/**` are protected; authentication/account/prefecture endpoints are public
+- Photo browsing is publicly accessible; editing and favorites require authentication
 
 ### User Authority Levels
 
