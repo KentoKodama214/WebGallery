@@ -49,15 +49,15 @@
 | コンポーネント | 技術 |
 |----------------|------|
 | 言語 | Java 21 |
-| ビルドツール | Gradle 8.7 |
-| フレームワーク | Spring Boot 3.3.3 |
-| セキュリティ | Spring Security 3.3.3（BCrypt + JWT） |
-| ORM | MyBatis 3.0.3 |
-| データベース | PostgreSQL（ドライバ 42.7.4） |
-| コード生成 | Lombok 1.18.34 |
-| オブジェクトマッピング | ModelMapper 3.2.1 |
-| JWT | jjwt 0.12.6 |
-| テスト | JUnit Jupiter 5.11.1 / Mockito 5.14 |
+| ビルドツール | Gradle 8.14 |
+| フレームワーク | Spring Boot 4.0.6 |
+| セキュリティ | Spring Security 7.0.5（BCrypt + JWT） |
+| ORM | MyBatis 4.0.1 |
+| データベース | PostgreSQL（ドライバ 42.7.11） |
+| コード生成 | Lombok 1.18.42 |
+| オブジェクトマッピング | ModelMapper 3.2.6 |
+| JWT | jjwt 0.13.0 |
+| テスト | JUnit Jupiter 6.0.3 / Mockito 5.20.0 |
 | パッケージング | WAR（Tomcatデプロイ） |
 
 ### フロントエンド
