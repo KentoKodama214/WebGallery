@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -13,7 +14,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -79,24 +79,24 @@ public class SecurityConfig {
 	 */
 	@Bean
 	SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
-		http.securityMatcher(new AntPathRequestMatcher("/api/**"))
+		http.securityMatcher("/api/**")
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 			.csrf(csrf -> csrf.disable())
 			.sessionManagement(session -> session
 				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(authorizeRequests -> authorizeRequests
 				// 認証API
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_LOGIN)).permitAll()
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_REFRESH)).permitAll()
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_AUTH_LOGOUT)).permitAll()
+				.requestMatchers(ApiRoutes.API_AUTH_LOGIN).permitAll()
+				.requestMatchers(ApiRoutes.API_AUTH_REFRESH).permitAll()
+				.requestMatchers(ApiRoutes.API_AUTH_LOGOUT).permitAll()
 				// アカウント登録（POST）とアカウント一覧（GET）は公開
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_ACCOUNTS, "GET")).permitAll()
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_ACCOUNTS, "POST")).permitAll()
+				.requestMatchers(HttpMethod.GET, ApiRoutes.API_ACCOUNTS).permitAll()
+				.requestMatchers(HttpMethod.POST, ApiRoutes.API_ACCOUNTS).permitAll()
 				// 写真一覧・詳細の閲覧（GET）は公開
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_PHOTOS, "GET")).permitAll()
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_PHOTO_DETAIL, "GET")).permitAll()
+				.requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTOS).permitAll()
+				.requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTO_DETAIL).permitAll()
 				// 都道府県一覧は公開
-				.requestMatchers(new AntPathRequestMatcher(ApiRoutes.API_PREFECTURES)).permitAll()
+				.requestMatchers(ApiRoutes.API_PREFECTURES).permitAll()
 				// それ以外は認証必須
 				.anyRequest().authenticated())
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
