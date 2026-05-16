@@ -49,10 +49,8 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 		PhotoListGetDto photoListGetDto = modelMapper.map(photoGetModel, PhotoListGetDto.class);
 		List<PhotoDto> photoDtoList = photoDetailMapper.getPhotoList(photoListGetDto);
 		
-		PhotoTagMst photoTagMst = PhotoTagMst.builder()
-				.accountNo(photoGetModel.getPhotoAccountNo())
-				.build();
-		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(photoTagMst);
+		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
+				PhotoTagMst.condition(photoGetModel.getPhotoAccountNo(), null));
 
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
 
@@ -86,11 +84,8 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 			throw new PhotoNotFoundException(ErrorEnum.PHOTO_NOT_FOUND);
 		}
 		
-		PhotoTagMst photoTagMst = PhotoTagMst.builder()
-				.accountNo(photoDetailGetModel.getPhotoAccountNo())
-				.photoNo(photoDetailGetModel.getPhotoNo())
-				.build();
-		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(photoTagMst);
+		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
+				PhotoTagMst.condition(photoDetailGetModel.getPhotoAccountNo(), photoDetailGetModel.getPhotoNo()));
 
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
 
