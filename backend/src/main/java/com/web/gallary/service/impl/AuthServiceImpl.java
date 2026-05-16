@@ -59,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
 	 * ログイン認証を行い、トークンを発行する
 	 *
 	 * @param	accountId	アカウントID
-	 * @param	password	��スワード
+	 * @param	password	パスワード
 	 * @return				{@link AuthTokenModel}
 	 */
 	@Override
@@ -93,7 +93,7 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	/**
-	 * リフレッシュトークンを検証し、新しいアクセストークンを発行す��
+	 * リフレッシュトークンを検証し、新しいアクセストークンを発行する
 	 *
 	 * @param	refreshToken	リフレッシュトークン
 	 * @return					{@link AuthTokenModel}
@@ -130,7 +130,7 @@ public class AuthServiceImpl implements AuthService {
 	/**
 	 * ログアウトし、リフレッシュトークンを無効化する
 	 *
-	 * @param	refreshToken	リフレッ��ュトークン
+	 * @param	refreshToken	リフレッシュトークン
 	 */
 	@Override
 	@Transactional
