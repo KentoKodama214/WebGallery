@@ -1,6 +1,5 @@
 package com.web.gallary.repository.impl;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
@@ -29,31 +28,8 @@ public class KbnMstRepositoryImpl implements KbnMstRepository {
 	 */
 	@Override
 	public List<KbnMstModel> get(String kbnClassCode) {
-		KbnMst kbnMst = KbnMst.builder()
-				.kbnClassCode(kbnClassCode)
-				.build();
-		List<KbnMst> KbnMstList = kbnMstMapper.select(kbnMst);
-		
-		List<KbnMstModel> kbnMstModelList = new ArrayList<KbnMstModel>();
-		
-		KbnMstList.stream().forEach(kbnMstData -> {
-			kbnMstModelList.add(
-					KbnMstModel.builder()
-						.kbnClassCode(kbnMstData.getKbnClassCode())
-						.kbnCode(kbnMstData.getKbnCode())
-						.sortOrder(kbnMstData.getSortOrder())
-						.kbnGroupCode(kbnMstData.getKbnGroupCode())
-						.kbnClassJapaneseName(kbnMstData.getKbnClassJapaneseName())
-						.kbnGroupJapaneseName(kbnMstData.getKbnGroupJapaneseName())
-						.kbnJapaneseName(kbnMstData.getKbnJapaneseName())
-						.kbnClassEnglishName(kbnMstData.getKbnClassEnglishName())
-						.kbnGroupEnglishName(kbnMstData.getKbnGroupEnglishName())
-						.kbnEnglishName(kbnMstData.getKbnEnglishName())
-						.explanation(kbnMstData.getExplanation())
-						.build()
-				);
-		});
-		
-		return kbnMstModelList;
+		List<KbnMst> kbnMstList = kbnMstMapper.select(KbnMst.condition(kbnClassCode));
+
+		return kbnMstList.stream().map(KbnMstModel::from).toList();
 	}
 }

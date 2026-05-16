@@ -2,6 +2,8 @@ package com.web.gallary.entity;
 
 import java.time.OffsetDateTime;
 
+import com.web.gallary.model.RefreshTokenModel;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -31,4 +33,18 @@ public class RefreshToken {
 
 	/** 無効化フラグ */
 	private Boolean isRevoked;
+
+	/**
+	 * RefreshTokenModelからRefreshTokenエンティティを生成する
+	 *
+	 * @param	model	{@link RefreshTokenModel}
+	 * @return			{@link RefreshToken}
+	 */
+	public static RefreshToken from(RefreshTokenModel model) {
+		return RefreshToken.builder()
+				.accountNo(model.getAccountNo())
+				.tokenHash(model.getTokenHash())
+				.expiresAt(model.getExpiresAt())
+				.build();
+	}
 }

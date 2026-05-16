@@ -1,5 +1,7 @@
 package com.web.gallary.model;
 
+import com.web.gallary.entity.KbnMst;
+
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -53,4 +55,26 @@ public class KbnMstModel {
 	/** 説明 */
 	@NonNull
 	private String explanation;
+
+	/**
+	 * KbnMstエンティティからKbnMstModelを生成する
+	 *
+	 * @param	entity	{@link KbnMst}
+	 * @return			{@link KbnMstModel}
+	 */
+	public static KbnMstModel from(KbnMst entity) {
+		return KbnMstModel.builder()
+				.kbnClassCode(entity.getKbnClassCode())
+				.kbnCode(entity.getKbnCode())
+				.sortOrder(entity.getSortOrder())
+				.kbnGroupCode(entity.getKbnGroupCode())
+				.kbnClassJapaneseName(entity.getKbnClassJapaneseName())
+				.kbnGroupJapaneseName(entity.getKbnGroupJapaneseName())
+				.kbnJapaneseName(entity.getKbnJapaneseName())
+				.kbnClassEnglishName(entity.getKbnClassEnglishName())
+				.kbnGroupEnglishName(entity.getKbnGroupEnglishName())
+				.kbnEnglishName(entity.getKbnEnglishName())
+				.explanation(entity.getExplanation())
+				.build();
+	}
 }

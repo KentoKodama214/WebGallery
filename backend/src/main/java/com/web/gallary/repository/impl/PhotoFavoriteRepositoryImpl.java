@@ -33,12 +33,7 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	 */
 	@Override
 	public void regist(PhotoFavoriteModel favoriteModel) throws RegistFailureException {
-		PhotoFavorite photoFavorite = PhotoFavorite.builder()
-				.accountNo(favoriteModel.getAccountNo())
-				.favoritePhotoAccountNo(favoriteModel.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(favoriteModel.getFavoritePhotoNo())
-				.createdBy(favoriteModel.getAccountNo())
-				.build();
+		PhotoFavorite photoFavorite = PhotoFavorite.from(favoriteModel);
 		
 		try {
 			photoFavoriteMapper.insert(photoFavorite);
@@ -58,11 +53,7 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	 */
 	@Override
 	public void delete(PhotoFavoriteDeleteModel favoriteDeleteModel) throws UpdateFailureException {
-		PhotoFavorite photoFavorite = PhotoFavorite.builder()
-				.accountNo(favoriteDeleteModel.getAccountNo())
-				.favoritePhotoAccountNo(favoriteDeleteModel.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(favoriteDeleteModel.getFavoritePhotoNo())
-				.build();
+		PhotoFavorite photoFavorite = PhotoFavorite.from(favoriteDeleteModel);
 		
 		if (photoFavoriteMapper.delete(photoFavorite) < 1) {
 			log.warn("PhotoFavorite: Delete Failed (AccountNo: {}, FavoritePhotoAccountNo: {}, FavoritePhotoNo: {})",
@@ -78,11 +69,7 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	 */
 	@Override
 	public void clear(PhotoFavoriteDeleteModel favoriteDeleteModel) {
-		PhotoFavorite photoFavorite = PhotoFavorite.builder()
-				.favoritePhotoAccountNo(favoriteDeleteModel.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(favoriteDeleteModel.getFavoritePhotoNo())
-				.build();
-		
+		PhotoFavorite photoFavorite = PhotoFavorite.fromForClear(favoriteDeleteModel);
 		photoFavoriteMapper.delete(photoFavorite);
 	}
 }

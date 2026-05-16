@@ -22,11 +22,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
 
 	@Override
 	public void save(RefreshTokenModel refreshTokenModel) {
-		RefreshToken refreshToken = RefreshToken.builder()
-				.accountNo(refreshTokenModel.getAccountNo())
-				.tokenHash(refreshTokenModel.getTokenHash())
-				.expiresAt(refreshTokenModel.getExpiresAt())
-				.build();
+		RefreshToken refreshToken = RefreshToken.from(refreshTokenModel);
 		refreshTokenMapper.insert(refreshToken);
 	}
 
@@ -36,12 +32,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
 		if (refreshToken == null) {
 			return null;
 		}
-		return RefreshTokenModel.builder()
-				.accountNo(refreshToken.getAccountNo())
-				.tokenHash(refreshToken.getTokenHash())
-				.expiresAt(refreshToken.getExpiresAt())
-				.isRevoked(refreshToken.getIsRevoked())
-				.build();
+		return RefreshTokenModel.from(refreshToken);
 	}
 
 	@Override

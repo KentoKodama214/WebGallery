@@ -49,4 +49,16 @@ public class KbnMst {
 
 	/** 説明 */
 	private String explanation;
+
+	/**
+	 * 条件用のKbnMstエンティティを生成する
+	 *
+	 * @param	kbnClassCode	区分分類コード
+	 * @return					{@link KbnMst}
+	 */
+	public static KbnMst condition(String kbnClassCode) {
+		return KbnMst.builder()
+				.kbnClassCode(kbnClassCode)
+				.build();
+	}
 }

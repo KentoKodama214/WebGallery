@@ -1,18 +1,13 @@
 package com.web.gallary.repository.impl;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
-import com.web.gallary.constant.Consts;
 import com.web.gallary.entity.Account;
-import com.web.gallary.enumuration.AuthorityEnum;
 import com.web.gallary.enumuration.ErrorEnum;
-import com.web.gallary.enumuration.SexEnum;
 import com.web.gallary.exception.RegistFailureException;
 import com.web.gallary.exception.UpdateFailureException;
 import com.web.gallary.mapper.AccountMapper;
@@ -42,13 +37,8 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public AccountModel getByAccountNo(Integer accountNo) {
-		Account account = Account.builder()
-				.accountNo(accountNo)
-				.build();
-
-		List<Account> accountList = accountMapper.select(account);
-
-		return accountList.isEmpty() ? null : toAccountModel(accountList.getFirst());
+		List<Account> accountList = accountMapper.select(Account.conditionByAccountNo(accountNo));
+		return accountList.isEmpty() ? null : AccountModel.from(accountList.getFirst());
 	}
 
 	/**
@@ -60,13 +50,8 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public AccountModel getByAccountId(String accountId) {
-		Account account = Account.builder()
-				.accountId(accountId)
-				.build();
-
-		List<Account> accountList = accountMapper.select(account);
-
-		return accountList.isEmpty() ? null : toAccountModel(accountList.getFirst());
+		List<Account> accountList = accountMapper.select(Account.conditionByAccountId(accountId));
+		return accountList.isEmpty() ? null : AccountModel.from(accountList.getFirst());
 	}
 
 	/**
@@ -77,26 +62,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public void regist(AccountModel accountModel) throws RegistFailureException {
-		Account account = Account.builder()
-			.createdBy(0)
-			.updatedBy(0)
-			.accountId(accountModel.getAccountId())
-			.accountName(accountModel.getAccountName())
-			.password(passwordEncoder.encode(accountModel.getPassword()))
-			.birthdate(
-				Optional.ofNullable(accountModel.getBirthdate()).orElse(Consts.MIN_LOCAL_DATE))
-			.sexKbn(
-				Optional.ofNullable(accountModel.getSexKbn()).orElse(SexEnum.NONE))
-			.birthplacePrefectureKbnCode(
-				Optional.ofNullable(accountModel.getBirthplacePrefectureKbnCode()).orElse(Consts.STRING_NONE))
-			.residentPrefectureKbnCode(
-				Optional.ofNullable(accountModel.getResidentPrefectureKbnCode()).orElse(Consts.STRING_NONE))
-			.freeMemo(
-				Optional.ofNullable(accountModel.getFreeMemo()).orElse(Consts.STRING_EMPTY))
-			.authorityKbn(AuthorityEnum.MINI)
-			.lastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME)
-			.loginFailureCount(0)
-			.build();
+		Account account = Account.from(accountModel, passwordEncoder);
 		
 		try {
 			accountMapper.insert(account);
@@ -115,31 +81,9 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public void update(AccountModel accountModel) throws UpdateFailureException {
-		Account cndAccount = Account.builder().accountNo(accountModel.getAccountNo()).build();
-		
-		Account targetAccount = Account.builder()
-				.accountId(accountModel.getAccountId())
-				.accountName(accountModel.getAccountName())
-				.birthdate(
-					Optional.ofNullable(accountModel.getBirthdate()).orElse(Consts.MIN_LOCAL_DATE))
-				.sexKbn(
-					Optional.ofNullable(accountModel.getSexKbn()).orElse(SexEnum.NONE))
-				.birthplacePrefectureKbnCode(
-					Optional.ofNullable(accountModel.getBirthplacePrefectureKbnCode()).orElse(Consts.STRING_NONE))
-				.residentPrefectureKbnCode(
-					Optional.ofNullable(accountModel.getResidentPrefectureKbnCode()).orElse(Consts.STRING_NONE))
-				.freeMemo(
-					Optional.ofNullable(accountModel.getFreeMemo()).orElse(Consts.STRING_EMPTY))
-				.lastLoginDatetime(
-					Optional.ofNullable(accountModel.getLastLoginDatetime()).orElse(Consts.MIN_OFFSET_DATE_TIME))
-				.loginFailureCount(
-					Optional.ofNullable(accountModel.getLoginFailureCount()).orElse(0))
-				.build();
-		
-		if(!Objects.isNull(accountModel.getPassword())) {
-			targetAccount.setPassword(passwordEncoder.encode(accountModel.getPassword()));
-		}
-		
+		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo());
+		Account targetAccount = Account.fromForUpdate(accountModel, passwordEncoder);
+
 		if (accountMapper.update(cndAccount, targetAccount) < 1) {
 			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT);
@@ -154,13 +98,9 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public void updateLoginFailureCount(AccountModel accountModel) throws UpdateFailureException {
-		Account cndAccount = Account.builder().accountNo(accountModel.getAccountNo()).build();
-		
-		Account targetAccount = Account.builder()
-				.lastLoginDatetime(accountModel.getLastLoginDatetime())
-				.loginFailureCount(Optional.ofNullable(accountModel.getLoginFailureCount()).orElse(0))
-				.build();
-		
+		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo());
+		Account targetAccount = Account.fromForUpdateLoginFailure(accountModel);
+
 		if (accountMapper.update(cndAccount, targetAccount) < 1) {
 			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT);
@@ -176,8 +116,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public Boolean isExistAccount(Integer accountNo, String accountId) {
-		Account account =  Account.builder().accountNo(accountNo).accountId(accountId).build();
-		return accountMapper.isExistAccount(account);
+		return accountMapper.isExistAccount(Account.conditionForExistCheck(accountNo, accountId));
 	}
 	
 	/**
@@ -187,34 +126,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public List<AccountModel> getAccountList() {
-		Account account = Account.builder().isDeleted(false).build();
-
-		List<Account> accountList = accountMapper.select(account);
-
-		return accountList.stream().map(this::toAccountModel).toList();
-	}
-
-	/**
-	 * AccountエンティティからAccountModelに変換する
-	 *
-	 * @param	account	{@link Account}
-	 * @return			{@link AccountModel}
-	 */
-	private AccountModel toAccountModel(Account account) {
-		return AccountModel.builder()
-				.accountNo(account.getAccountNo())
-				.accountId(account.getAccountId())
-				.accountName(account.getAccountName())
-				.password(account.getPassword())
-				.birthdate(account.getBirthdate())
-				.sexKbn(account.getSexKbn())
-				.birthplacePrefectureKbnCode(account.getBirthplacePrefectureKbnCode())
-				.residentPrefectureKbnCode(account.getResidentPrefectureKbnCode())
-				.freeMemo(account.getFreeMemo())
-				.authorityKbn(account.getAuthorityKbn())
-				.lastLoginDatetime(account.getLastLoginDatetime())
-				.loginFailureCount(account.getLoginFailureCount())
-				.isDeleted(account.getIsDeleted())
-				.build();
+		List<Account> accountList = accountMapper.select(Account.conditionForList());
+		return accountList.stream().map(AccountModel::from).toList();
 	}
 }

@@ -12,6 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.web.gallary.constant.Consts;
 import com.web.gallary.controller.request.PhotoSaveRequest;
+import com.web.gallary.dto.PhotoDetailDto;
+import com.web.gallary.entity.PhotoTagMst;
 import com.web.gallary.enumuration.DirectionEnum;
 
 import lombok.Builder;
@@ -89,6 +91,39 @@ public class PhotoDetailModel {
 	
 	/** 写真タグリスト */
 	private List<PhotoTagModel> photoTagModelList;
+
+	/**
+	 * PhotoDetailDtoとタグエンティティリストからPhotoDetailModelを生成する
+	 *
+	 * @param	dto				{@link PhotoDetailDto}
+	 * @param	photoTagMstList	該当写真のタグエンティティリスト
+	 * @return					{@link PhotoDetailModel}
+	 */
+	public static PhotoDetailModel from(PhotoDetailDto dto, List<PhotoTagMst> photoTagMstList) {
+		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
+		return PhotoDetailModel.builder()
+				.accountNo(dto.getAccountNo())
+				.photoNo(dto.getPhotoNo())
+				.isFavorite(dto.getIsFavorite())
+				.photoAt(
+					dto.getPhotoAt().isEqual(Consts.MIN_OFFSET_DATE_TIME) ? null : dto.getPhotoAt().plusHours(9))
+				.locationNo(dto.getLocationNo())
+				.address(dto.getAddress())
+				.latitude(dto.getLatitude())
+				.longitude(dto.getLongitude())
+				.locationName(dto.getLocationName())
+				.imageFilePath(dto.getImageFilePath())
+				.photoJapaneseTitle(dto.getPhotoJapaneseTitle())
+				.photoEnglishTitle(dto.getPhotoEnglishTitle())
+				.caption(dto.getCaption())
+				.directionKbn(dto.getDirectionKbn())
+				.focalLength(dto.getFocalLength() != 0 ? dto.getFocalLength() : null)
+				.fValue(dto.getFValue().compareTo(BigDecimal.ZERO) == 1 ? dto.getFValue() : null)
+				.shutterSpeed(dto.getShutterSpeed().compareTo(BigDecimal.ZERO) == 1 ? dto.getShutterSpeed() : null)
+				.iso(dto.getIso() != 0 ? dto.getIso() : null)
+				.photoTagModelList(photoTagModelList)
+				.build();
+	}
 
 	/**
 	 * 写真保存リクエストからPhotoDetailModelを生成する

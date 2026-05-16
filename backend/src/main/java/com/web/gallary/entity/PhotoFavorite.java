@@ -2,6 +2,9 @@ package com.web.gallary.entity;
 
 import java.time.OffsetDateTime;
 
+import com.web.gallary.model.PhotoFavoriteDeleteModel;
+import com.web.gallary.model.PhotoFavoriteModel;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -28,4 +31,46 @@ public class PhotoFavorite {
 
 	/** 作成日時 */
 	private OffsetDateTime createdAt;
+
+	/**
+	 * PhotoFavoriteModelからPhotoFavoriteエンティティを生成する
+	 *
+	 * @param	model	{@link PhotoFavoriteModel}
+	 * @return			{@link PhotoFavorite}
+	 */
+	public static PhotoFavorite from(PhotoFavoriteModel model) {
+		return PhotoFavorite.builder()
+				.accountNo(model.getAccountNo())
+				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
+				.favoritePhotoNo(model.getFavoritePhotoNo())
+				.createdBy(model.getAccountNo())
+				.build();
+	}
+
+	/**
+	 * PhotoFavoriteDeleteModelからPhotoFavoriteエンティティを生成する
+	 *
+	 * @param	model	{@link PhotoFavoriteDeleteModel}
+	 * @return			{@link PhotoFavorite}
+	 */
+	public static PhotoFavorite from(PhotoFavoriteDeleteModel model) {
+		return PhotoFavorite.builder()
+				.accountNo(model.getAccountNo())
+				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
+				.favoritePhotoNo(model.getFavoritePhotoNo())
+				.build();
+	}
+
+	/**
+	 * 写真お気に入り全件削除用のPhotoFavoriteDeleteModelからPhotoFavoriteエンティティを生成する
+	 *
+	 * @param	model	{@link PhotoFavoriteDeleteModel}
+	 * @return			{@link PhotoFavorite}
+	 */
+	public static PhotoFavorite fromForClear(PhotoFavoriteDeleteModel model) {
+		return PhotoFavorite.builder()
+				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
+				.favoritePhotoNo(model.getFavoritePhotoNo())
+				.build();
+	}
 }

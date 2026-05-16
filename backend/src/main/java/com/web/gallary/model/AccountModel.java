@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 
 import com.web.gallary.controller.request.AccountRegistRequest;
 import com.web.gallary.controller.request.AccountUpdateRequest;
+import com.web.gallary.entity.Account;
 import com.web.gallary.enumuration.AuthorityEnum;
 import com.web.gallary.enumuration.SexEnum;
 
@@ -63,6 +64,30 @@ public class AccountModel {
 
 	/** 削除フラグ */
 	private Boolean isDeleted;
+
+	/**
+	 * AccountエンティティからAccountModelを生成する
+	 *
+	 * @param	entity	{@link Account}
+	 * @return			{@link AccountModel}
+	 */
+	public static AccountModel from(Account entity) {
+		return AccountModel.builder()
+				.accountNo(entity.getAccountNo())
+				.accountId(entity.getAccountId())
+				.accountName(entity.getAccountName())
+				.password(entity.getPassword())
+				.birthdate(entity.getBirthdate())
+				.sexKbn(entity.getSexKbn())
+				.birthplacePrefectureKbnCode(entity.getBirthplacePrefectureKbnCode())
+				.residentPrefectureKbnCode(entity.getResidentPrefectureKbnCode())
+				.freeMemo(entity.getFreeMemo())
+				.authorityKbn(entity.getAuthorityKbn())
+				.lastLoginDatetime(entity.getLastLoginDatetime())
+				.loginFailureCount(entity.getLoginFailureCount())
+				.isDeleted(entity.getIsDeleted())
+				.build();
+	}
 
 	/**
 	 * アカウント登録リクエストからAccountModelを生成する
