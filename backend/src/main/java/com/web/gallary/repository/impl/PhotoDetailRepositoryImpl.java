@@ -87,8 +87,6 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
 				PhotoTagMst.condition(photoDetailGetModel));
 
-		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
-
-		return PhotoDetailModel.from(photoDetailDto, photoTagModelList);
+		return PhotoDetailModel.from(photoDetailDto, photoTagMstList);
 	}
 }
