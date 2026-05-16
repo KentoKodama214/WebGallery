@@ -52,6 +52,21 @@ public class PhotoFavoriteControllerIntegrationTest {
 				StandardCharsets.UTF_8);
 	}
 
+	private Authentication createAuthentication() {
+		Account sessionAccount = Account.builder()
+				.accountNo(1)
+				.accountId("aaaaaaaa")
+				.accountName("AAAAAAAA")
+				.password("$2a$10$password1")
+				.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+				.isDeleted(false)
+				.loginFailureCount(0)
+				.build();
+		AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+		return new UsernamePasswordAuthenticationToken(
+				accountPrincipal, null, accountPrincipal.getAuthorities());
+	}
+
 	@Nested
 	@Order(1)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -62,18 +77,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void addFavorite_success() throws Exception {
-			Account sessionAccount = Account.builder()
-					.accountNo(1)
-					.accountId("aaaaaaaa")
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
-					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.isDeleted(false)
-					.loginFailureCount(0)
-					.build();
-
-			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+			Authentication authentication = createAuthentication();
 
 			mockMvc.perform(
 					post("/api/v1/photos/favorites")
@@ -108,18 +112,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 		@Order(2)
 		@DisplayName("異常系：BadRequestExceptionをthrowする")
 		void addFavorite_BadRequestException() throws Exception {
-			Account sessionAccount = Account.builder()
-					.accountNo(1)
-					.accountId("aaaaaaaa")
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
-					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.isDeleted(false)
-					.loginFailureCount(0)
-					.build();
-
-			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+			Authentication authentication = createAuthentication();
 
 			mockMvc.perform(
 					post("/api/v1/photos/favorites")
@@ -139,18 +132,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 		@Order(3)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void addFavorite_RegistFailureException() throws Exception {
-			Account sessionAccount = Account.builder()
-					.accountNo(1)
-					.accountId("aaaaaaaa")
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
-					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.isDeleted(false)
-					.loginFailureCount(0)
-					.build();
-
-			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+			Authentication authentication = createAuthentication();
 
 			mockMvc.perform(
 					post("/api/v1/photos/favorites")
@@ -177,18 +159,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void deleteFavorite_success() throws Exception {
-			Account sessionAccount = Account.builder()
-					.accountNo(1)
-					.accountId("aaaaaaaa")
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
-					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.isDeleted(false)
-					.loginFailureCount(0)
-					.build();
-
-			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+			Authentication authentication = createAuthentication();
 
 			mockMvc.perform(
 					delete("/api/v1/photos/favorites")
@@ -240,18 +211,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 		@Order(2)
 		@DisplayName("異常系：BadRequestExceptionをthrowする")
 		void deleteFavorite_BadRequestException() throws Exception {
-			Account sessionAccount = Account.builder()
-					.accountNo(1)
-					.accountId("aaaaaaaa")
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
-					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.isDeleted(false)
-					.loginFailureCount(0)
-					.build();
-
-			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+			Authentication authentication = createAuthentication();
 
 			mockMvc.perform(
 					delete("/api/v1/photos/favorites")
@@ -271,18 +231,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void deleteFavorite_UpdateFailureException() throws Exception {
-			Account sessionAccount = Account.builder()
-					.accountNo(1)
-					.accountId("aaaaaaaa")
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
-					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.isDeleted(false)
-					.loginFailureCount(0)
-					.build();
-
-			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
+			Authentication authentication = createAuthentication();
 
 			mockMvc.perform(
 					delete("/api/v1/photos/favorites")
