@@ -28,10 +28,7 @@ public class KbnMstRepositoryImpl implements KbnMstRepository {
 	 */
 	@Override
 	public List<KbnMstModel> get(String kbnClassCode) {
-		KbnMst kbnMst = KbnMst.builder()
-				.kbnClassCode(kbnClassCode)
-				.build();
-		List<KbnMst> kbnMstList = kbnMstMapper.select(kbnMst);
+		List<KbnMst> kbnMstList = kbnMstMapper.select(KbnMst.condition(kbnClassCode));
 
 		return kbnMstList.stream().map(KbnMstModel::from).toList();
 	}
