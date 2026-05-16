@@ -57,8 +57,8 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 		List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
 		photoDtoList.stream().forEach(photoDto -> {
 			List<PhotoTagModel> tagList = photoTagModelList.stream().filter(photoTagModel ->
-					photoTagModel.getAccountNo() == photoDto.getAccountNo() &&
-					photoTagModel.getPhotoNo()   == photoDto.getPhotoNo()
+                    photoTagModel.getAccountNo().equals(photoDto.getAccountNo()) &&
+                            Objects.equals(photoTagModel.getPhotoNo(), photoDto.getPhotoNo())
 				).toList();
 			photoModelList.add(PhotoModel.from(photoDto, tagList));
 		});
@@ -85,7 +85,7 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 		}
 		
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
-				PhotoTagMst.condition(photoDetailGetModel.getPhotoAccountNo(), photoDetailGetModel.getPhotoNo()));
+				PhotoTagMst.condition(photoDetailGetModel));
 
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
 

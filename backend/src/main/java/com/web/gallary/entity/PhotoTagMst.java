@@ -2,6 +2,7 @@ package com.web.gallary.entity;
 
 import java.time.OffsetDateTime;
 
+import com.web.gallary.model.PhotoDetailGetModel;
 import com.web.gallary.model.PhotoTagDeleteModel;
 import com.web.gallary.model.PhotoTagModel;
 
@@ -79,6 +80,19 @@ public class PhotoTagMst {
 		return PhotoTagMst.builder()
 				.accountNo(accountNo)
 				.photoNo(photoNo)
+				.build();
+	}
+
+	/**
+	 * PhotoDetailGetModelから条件用のPhotoTagMstエンティティを生成する
+	 *
+	 * @param	model	{@link PhotoDetailGetModel}
+	 * @return			{@link PhotoTagMst}
+	 */
+	public static PhotoTagMst condition(PhotoDetailGetModel model) {
+		return PhotoTagMst.builder()
+				.accountNo(model.getPhotoAccountNo())
+				.photoNo(model.getPhotoNo())
 				.build();
 	}
 }
