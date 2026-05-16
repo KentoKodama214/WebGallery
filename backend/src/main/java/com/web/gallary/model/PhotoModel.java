@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 import com.web.gallary.dto.PhotoDto;
+import com.web.gallary.entity.PhotoTagMst;
 import com.web.gallary.enumuration.DirectionEnum;
 
 import lombok.Builder;
@@ -57,13 +58,14 @@ public class PhotoModel {
 	private List<PhotoTagModel> photoTagModelList;
 
 	/**
-	 * PhotoDtoとタグリストからPhotoModelを生成する
+	 * PhotoDtoとタグエンティティリストからPhotoModelを生成する
 	 *
-	 * @param	dto		{@link PhotoDto}
-	 * @param	tagList	該当写真のタグリスト
-	 * @return			{@link PhotoModel}
+	 * @param	dto				{@link PhotoDto}
+	 * @param	photoTagMstList	該当写真のタグエンティティリスト
+	 * @return					{@link PhotoModel}
 	 */
-	public static PhotoModel from(PhotoDto dto, List<PhotoTagModel> tagList) {
+	public static PhotoModel from(PhotoDto dto, List<PhotoTagMst> photoTagMstList) {
+		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
 		return PhotoModel.builder()
 				.accountNo(dto.getAccountNo())
 				.photoNo(dto.getPhotoNo())
@@ -73,7 +75,7 @@ public class PhotoModel {
 				.imageFilePath(dto.getImageFilePath())
 				.caption(dto.getCaption())
 				.directionKbn(dto.getDirectionKbn())
-				.photoTagModelList(tagList)
+				.photoTagModelList(photoTagModelList)
 				.build();
 	}
 }

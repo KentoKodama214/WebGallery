@@ -1,6 +1,5 @@
 package com.web.gallary.repository.impl;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,7 +19,6 @@ import com.web.gallary.model.PhotoDetailGetModel;
 import com.web.gallary.model.PhotoDetailModel;
 import com.web.gallary.model.PhotoGetModel;
 import com.web.gallary.model.PhotoModel;
-import com.web.gallary.model.PhotoTagModel;
 import com.web.gallary.repository.PhotoDetailRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -52,18 +50,13 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
 				PhotoTagMst.condition(photoGetModel));
 
-		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
-
-		List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
-		photoDtoList.stream().forEach(photoDto -> {
-			List<PhotoTagModel> tagList = photoTagModelList.stream().filter(photoTagModel ->
-                    photoTagModel.getAccountNo().equals(photoDto.getAccountNo()) &&
-                            Objects.equals(photoTagModel.getPhotoNo(), photoDto.getPhotoNo())
+		return photoDtoList.stream().map(photoDto -> {
+			List<PhotoTagMst> tagMstList = photoTagMstList.stream().filter(tag ->
+					tag.getAccountNo().equals(photoDto.getAccountNo()) &&
+					Objects.equals(tag.getPhotoNo(), photoDto.getPhotoNo())
 				).toList();
-			photoModelList.add(PhotoModel.from(photoDto, tagList));
-		});
-
-		return photoModelList;
+			return PhotoModel.from(photoDto, tagMstList);
+		}).toList();
 	}
 	
 	/**
