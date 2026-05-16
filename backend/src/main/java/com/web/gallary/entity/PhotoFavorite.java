@@ -60,4 +60,17 @@ public class PhotoFavorite {
 				.favoritePhotoNo(model.getFavoritePhotoNo())
 				.build();
 	}
+
+	/**
+	 * 写真お気に入り全件削除用のPhotoFavoriteDeleteModelからPhotoFavoriteエンティティを生成する
+	 *
+	 * @param	model	{@link PhotoFavoriteDeleteModel}
+	 * @return			{@link PhotoFavorite}
+	 */
+	public static PhotoFavorite fromForClear(PhotoFavoriteDeleteModel model) {
+		return PhotoFavorite.builder()
+				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
+				.favoritePhotoNo(model.getFavoritePhotoNo())
+				.build();
+	}
 }

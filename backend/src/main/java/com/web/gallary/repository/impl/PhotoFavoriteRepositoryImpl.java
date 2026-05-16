@@ -69,11 +69,7 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	 */
 	@Override
 	public void clear(PhotoFavoriteDeleteModel favoriteDeleteModel) {
-		PhotoFavorite photoFavorite = PhotoFavorite.builder()
-				.favoritePhotoAccountNo(favoriteDeleteModel.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(favoriteDeleteModel.getFavoritePhotoNo())
-				.build();
-		
+		PhotoFavorite photoFavorite = PhotoFavorite.fromForClear(favoriteDeleteModel);
 		photoFavoriteMapper.delete(photoFavorite);
 	}
 }
