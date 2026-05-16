@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallary.entity.RefreshToken;
 import com.web.gallary.mapper.RefreshTokenMapper;
+import com.web.gallary.model.RefreshTokenModel;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -38,17 +39,17 @@ public class RefreshTokenRepositoryImplTest {
 		@Order(1)
 		@DisplayName("正常系：リフレッシュトークンを保存する")
 		void save_success() {
-			RefreshToken refreshToken = RefreshToken.builder()
+			RefreshTokenModel refreshTokenModel = RefreshTokenModel.builder()
 					.accountNo(1)
 					.tokenHash("abc123hash")
 					.expiresAt(OffsetDateTime.now().plusDays(7))
 					.build();
 
-			doReturn(1).when(refreshTokenMapper).insert(refreshToken);
+			doReturn(1).when(refreshTokenMapper).insert(any(RefreshToken.class));
 
-			refreshTokenRepositoryImpl.save(refreshToken);
+			refreshTokenRepositoryImpl.save(refreshTokenModel);
 
-			verify(refreshTokenMapper, times(1)).insert(refreshToken);
+			verify(refreshTokenMapper, times(1)).insert(any(RefreshToken.class));
 		}
 	}
 
@@ -60,19 +61,24 @@ public class RefreshTokenRepositoryImplTest {
 		@Order(1)
 		@DisplayName("正常系：トークンハッシュに該当するリフレッシュトークンを取得する")
 		void findByTokenHash_success() {
-			RefreshToken expected = RefreshToken.builder()
+			OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7);
+			RefreshToken mapperResult = RefreshToken.builder()
 					.tokenId(1)
 					.accountNo(1)
 					.tokenHash("abc123hash")
-					.expiresAt(OffsetDateTime.now().plusDays(7))
+					.expiresAt(expiresAt)
 					.isRevoked(false)
 					.build();
 
-			doReturn(expected).when(refreshTokenMapper).selectByTokenHash("abc123hash");
+			doReturn(mapperResult).when(refreshTokenMapper).selectByTokenHash("abc123hash");
 
-			RefreshToken actual = refreshTokenRepositoryImpl.findByTokenHash("abc123hash");
+			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash("abc123hash");
 
-			assertEquals(expected, actual);
+			assertNotNull(actual);
+			assertEquals(1, actual.getAccountNo());
+			assertEquals("abc123hash", actual.getTokenHash());
+			assertEquals(expiresAt, actual.getExpiresAt());
+			assertFalse(actual.getIsRevoked());
 			verify(refreshTokenMapper, times(1)).selectByTokenHash("abc123hash");
 		}
 
@@ -82,7 +88,7 @@ public class RefreshTokenRepositoryImplTest {
 		void findByTokenHash_not_found() {
 			doReturn(null).when(refreshTokenMapper).selectByTokenHash("nonexistent");
 
-			RefreshToken actual = refreshTokenRepositoryImpl.findByTokenHash("nonexistent");
+			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash("nonexistent");
 
 			assertNull(actual);
 			verify(refreshTokenMapper, times(1)).selectByTokenHash("nonexistent");

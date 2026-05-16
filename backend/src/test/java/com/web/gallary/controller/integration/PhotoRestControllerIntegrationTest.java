@@ -40,8 +40,8 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import com.web.gallary.AccountPrincipal;
-import com.web.gallary.entity.Account;
 import com.web.gallary.entity.PhotoFavorite;
+import com.web.gallary.model.AccountModel;
 import com.web.gallary.entity.PhotoMst;
 import com.web.gallary.entity.PhotoTagMst;
 import com.web.gallary.enumuration.AuthorityEnum;
@@ -221,7 +221,7 @@ public class PhotoRestControllerIntegrationTest {
 					MediaType.MULTIPART_FORM_DATA_VALUE,
 					"sample image".getBytes());
 			
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId("bbbbbbbb")
 					.accountName("BBBBBBBB")
@@ -317,7 +317,7 @@ public class PhotoRestControllerIntegrationTest {
 					MediaType.MULTIPART_FORM_DATA_VALUE,
 					"sample image".getBytes());
 			
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId("bbbbbbbb")
 					.accountName("BBBBBBBB")
@@ -430,7 +430,7 @@ public class PhotoRestControllerIntegrationTest {
 		void savePhoto_updatePhoto_with_photoTag_and_photoAt() throws Exception {
 			String photoAccountId = "bbbbbbbb";
 			
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId("bbbbbbbb")
 					.accountName("BBBBBBBB")
@@ -550,7 +550,7 @@ public class PhotoRestControllerIntegrationTest {
 					MediaType.MULTIPART_FORM_DATA_VALUE,
 					"sample image".getBytes());
 			
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
@@ -588,7 +588,7 @@ public class PhotoRestControllerIntegrationTest {
 					MediaType.MULTIPART_FORM_DATA_VALUE,
 					"sample image".getBytes());
 			
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
@@ -621,7 +621,7 @@ public class PhotoRestControllerIntegrationTest {
 		void savePhoto_BadRequestException_file_and_filepath_is_null() throws Exception {
 			String photoAccountId = "bbbbbbbb";
 			
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId("bbbbbbbb")
 					.accountName("BBBBBBBB")
@@ -652,7 +652,7 @@ public class PhotoRestControllerIntegrationTest {
 		void savePhoto_BadRequestException_file_and_filepath_is_blank() throws Exception {
 			String photoAccountId = "bbbbbbbb";
 			
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId("bbbbbbbb")
 					.accountName("BBBBBBBB")
@@ -689,7 +689,7 @@ public class PhotoRestControllerIntegrationTest {
 					MediaType.MULTIPART_FORM_DATA_VALUE,
 					"sample image".getBytes());
 			
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId("bbbbbbbb")
 					.accountName("BBBBBBBB")
@@ -727,7 +727,7 @@ public class PhotoRestControllerIntegrationTest {
 					MediaType.MULTIPART_FORM_DATA_VALUE,
 					"sample image".getBytes());
 			
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId("bbbbbbbb")
 					.accountName("BBBBBBBB")
@@ -764,7 +764,7 @@ public class PhotoRestControllerIntegrationTest {
 		void savePhoto_UpdateFailureException() throws Exception {
 			String photoAccountId = "bbbbbbbb";
 			
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId("bbbbbbbb")
 					.accountName("BBBBBBBB")
@@ -809,7 +809,7 @@ public class PhotoRestControllerIntegrationTest {
 			String photoAccountId = "aaaaaaaa";
 			String loginAccountId = "aaaaaaaa";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId(loginAccountId)
 					.accountName("AAAAAAAA")
@@ -892,7 +892,7 @@ public class PhotoRestControllerIntegrationTest {
 			String photoAccountId = "aaaaaaaa";
 			String loginAccountId = "eeeeeeee";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId(loginAccountId)
 					.accountName("EEEEEEEE")
@@ -925,7 +925,7 @@ public class PhotoRestControllerIntegrationTest {
 			String photoAccountId = "aaaaaaaa";
 			String loginAccountId = "aaaaaaaa";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId(loginAccountId)
 					.accountName("AAAAAAAA")
@@ -957,7 +957,7 @@ public class PhotoRestControllerIntegrationTest {
 			String photoAccountId = "aaaaaaaa";
 			String loginAccountId = "aaaaaaaa";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId(loginAccountId)
 					.accountName("AAAAAAAA")
@@ -994,7 +994,7 @@ public class PhotoRestControllerIntegrationTest {
 		void getPhotoUpperLimit_not_reached() throws Exception {
 			String photoAccountId = "bbbbbbbb";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId(photoAccountId)
 					.accountName("BBBBBBBB")
@@ -1021,7 +1021,7 @@ public class PhotoRestControllerIntegrationTest {
 		void getPhotoUpperLimit_reached() throws Exception {
 			String photoAccountId = "aaaaaaaa";
 
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(1)
 					.accountId(photoAccountId)
 					.accountName("AAAAAAAA")
@@ -1046,7 +1046,7 @@ public class PhotoRestControllerIntegrationTest {
 		@Order(3)
 		@DisplayName("正常系：他人のアカウントの場合はfalse")
 		void getPhotoUpperLimit_other_account() throws Exception {
-			Account sessionAccount = Account.builder()
+			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(2)
 					.accountId("bbbbbbbb")
 					.accountName("BBBBBBBB")

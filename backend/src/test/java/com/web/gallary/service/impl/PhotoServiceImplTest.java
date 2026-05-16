@@ -30,7 +30,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.web.gallary.config.PhotoConfig;
-import com.web.gallary.entity.Account;
+import com.web.gallary.model.AccountModel;
 import com.web.gallary.enumuration.AuthorityEnum;
 import com.web.gallary.enumuration.DirectionEnum;
 import com.web.gallary.enumuration.ErrorEnum;
@@ -239,7 +239,7 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			List<String> tags = new ArrayList<String>();
 			
-			Account account = Account.builder().accountNo(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
 			
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
@@ -271,7 +271,7 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
 			
-			Account account = Account.builder().accountNo(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
 			
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
@@ -307,7 +307,7 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
 			
-			Account account = Account.builder().accountNo(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
 			
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
@@ -343,7 +343,7 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
 			
-			Account account = Account.builder().accountNo(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
 			
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
@@ -1021,7 +1021,7 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系：mini-userで、上限まで登録済みの場合")
 		void isReachedUpperLimit_mini_user_reached() {
 			Integer accountNo = 1;
-			Account account = Account.builder().authorityKbn(AuthorityEnum.MINI).build();
+			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.MINI).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
 			doReturn(10).when(photoMstRepositoryImpl).count(accountNo);
 			doReturn(10).when(photoConfig).getMiniUserUpperLimit();
@@ -1033,7 +1033,7 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系：mini-userで、上限まで未登録の場合")
 		void isReachedUpperLimit_mini_user_not_reached() {
 			Integer accountNo = 1;
-			Account account = Account.builder().authorityKbn(AuthorityEnum.MINI).build();
+			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.MINI).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
 			doReturn(9).when(photoMstRepositoryImpl).count(accountNo);
 			doReturn(10).when(photoConfig).getMiniUserUpperLimit();
@@ -1045,7 +1045,7 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系：normal-userで、上限まで登録済みの場合")
 		void isReachedUpperLimit_normal_user_reached() {
 			Integer accountNo = 1;
-			Account account = Account.builder().authorityKbn(AuthorityEnum.NORMAL).build();
+			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.NORMAL).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
 			doReturn(1000).when(photoMstRepositoryImpl).count(accountNo);
 			doReturn(1000).when(photoConfig).getNormalUserUpperLimit();
@@ -1057,7 +1057,7 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系：normal-userで、上限まで未登録の場合")
 		void isReachedUpperLimit_normal_user_not_reached() {
 			Integer accountNo = 1;
-			Account account = Account.builder().authorityKbn(AuthorityEnum.NORMAL).build();
+			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.NORMAL).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
 			doReturn(999).when(photoMstRepositoryImpl).count(accountNo);
 			doReturn(1000).when(photoConfig).getNormalUserUpperLimit();
@@ -1069,7 +1069,7 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系：special-userの場合")
 		void isReachedUpperLimit_special_user() {
 			Integer accountNo = 1;
-			Account account = Account.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
+			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
 			doReturn(1000).when(photoMstRepositoryImpl).count(accountNo);
 			assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
@@ -1080,7 +1080,7 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系：administratorの場合")
 		void isReachedUpperLimit_administrator() {
 			Integer accountNo = 1;
-			Account account = Account.builder().authorityKbn(AuthorityEnum.ADMINISTRATOR).build();
+			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.ADMINISTRATOR).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
 			doReturn(1000).when(photoMstRepositoryImpl).count(accountNo);
 			assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));

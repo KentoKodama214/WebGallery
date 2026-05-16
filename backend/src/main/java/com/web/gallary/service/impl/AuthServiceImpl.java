@@ -16,10 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallary.AccountPrincipal;
 import com.web.gallary.config.JwtConfig;
-import com.web.gallary.entity.Account;
-import com.web.gallary.entity.RefreshToken;
 import com.web.gallary.helper.JwtTokenProvider;
+import com.web.gallary.model.AccountModel;
 import com.web.gallary.model.AuthTokenModel;
+import com.web.gallary.model.RefreshTokenModel;
 import com.web.gallary.repository.AccountRepository;
 import com.web.gallary.repository.RefreshTokenRepository;
 import com.web.gallary.service.AuthService;
@@ -59,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
 	 * ログイン認証を行い、トークンを発行する
 	 *
 	 * @param	accountId	アカウントID
-	 * @param	password	パスワード
+	 * @param	password	��スワード
 	 * @return				{@link AuthTokenModel}
 	 */
 	@Override
@@ -78,12 +78,12 @@ public class AuthServiceImpl implements AuthService {
 		String refreshToken = jwtTokenProvider.generateRefreshToken();
 
 		// リフレッシュトークンをDB保存（ハッシュ化して保存）
-		RefreshToken tokenEntity = RefreshToken.builder()
+		RefreshTokenModel refreshTokenModel = RefreshTokenModel.builder()
 				.accountNo(principal.getAccountNo())
 				.tokenHash(hashToken(refreshToken))
 				.expiresAt(OffsetDateTime.now().plusDays(jwtConfig.getRefreshTokenExpirationDays()))
 				.build();
-		refreshTokenRepository.save(tokenEntity);
+		refreshTokenRepository.save(refreshTokenModel);
 
 		return AuthTokenModel.builder()
 				.accessToken(accessToken)
@@ -93,7 +93,7 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	/**
-	 * リフレッシュトークンを検証し、新しいアクセストークンを発行する
+	 * リフレッシュトークンを検証し、新しいアクセストークンを発行す��
 	 *
 	 * @param	refreshToken	リフレッシュトークン
 	 * @return					{@link AuthTokenModel}
@@ -103,10 +103,10 @@ public class AuthServiceImpl implements AuthService {
 	@Transactional(readOnly = true)
 	public AuthTokenModel refresh(String refreshToken) {
 		String tokenHash = hashToken(refreshToken);
-		RefreshToken storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
+		RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 
 		if (storedToken == null || storedToken.getIsRevoked()) {
-			throw new IllegalArgumentException("無効なリフレッシュトークンです");
+			throw new IllegalArgumentException("無効なリフレッ���ュトークンです");
 		}
 
 		if (storedToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
@@ -114,8 +114,8 @@ public class AuthServiceImpl implements AuthService {
 		}
 
 		// アカウント番号からアカウント情報を取得し、新しいアクセストークンを発行
-		Account account = accountRepository.getByAccountNo(storedToken.getAccountNo());
-		UserDetails userDetails = accountServiceImpl.loadUserByUsername(account.getAccountId());
+		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo());
+		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId());
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
 
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);
@@ -130,7 +130,7 @@ public class AuthServiceImpl implements AuthService {
 	/**
 	 * ログアウトし、リフレッシュトークンを無効化する
 	 *
-	 * @param	refreshToken	リフレッシュトークン
+	 * @param	refreshToken	リフレッ��ュトークン
 	 */
 	@Override
 	@Transactional

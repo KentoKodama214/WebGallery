@@ -1,6 +1,6 @@
 package com.web.gallary.repository;
 
-import com.web.gallary.entity.RefreshToken;
+import com.web.gallary.model.RefreshTokenModel;
 
 /**
  * リフレッシュトークンデータを永続化するRepositoryクラス
@@ -12,17 +12,17 @@ public interface RefreshTokenRepository {
 	/**
 	 * リフレッシュトークンを保存する
 	 *
-	 * @param	refreshToken	{@link RefreshToken}
+	 * @param	refreshTokenModel	{@link RefreshTokenModel}
 	 */
-	void save(RefreshToken refreshToken);
+	void save(RefreshTokenModel refreshTokenModel);
 
 	/**
 	 * トークンハッシュに該当するリフレッシュトークンを取得する
 	 *
 	 * @param	tokenHash	トークンハッシュ
-	 * @return				{@link RefreshToken}、取得できない場合はnull
+	 * @return				{@link RefreshTokenModel}、取得できない場合はnull
 	 */
-	RefreshToken findByTokenHash(String tokenHash);
+	RefreshTokenModel findByTokenHash(String tokenHash);
 
 	/**
 	 * アカウント番号に該当するリフレッシュトークンをすべて無効化する

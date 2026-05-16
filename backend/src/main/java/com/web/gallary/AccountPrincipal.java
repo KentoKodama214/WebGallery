@@ -7,7 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.web.gallary.entity.Account;
+import com.web.gallary.model.AccountModel;
 
 /**
  * Spring SecurityのUserDetailsクラスの実装クラス
@@ -17,11 +17,11 @@ public class AccountPrincipal implements UserDetails {
 	private static final String ROLE_ADMIN = "ROLE_ADMIN";
 	private static final String ROLE_USER = "ROLE_USER";
 
-	private final Account account;
+	private final AccountModel accountModel;
 	private final int maxFailCount;
 
-	public AccountPrincipal(Account account, int failCount) {
-		this.account = account;
+	public AccountPrincipal(AccountModel accountModel, int failCount) {
+		this.accountModel = accountModel;
 		this.maxFailCount = failCount;
 	}
 
@@ -30,55 +30,55 @@ public class AccountPrincipal implements UserDetails {
 	 */
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		switch(account.getAuthorityKbn()) {
+		switch(accountModel.getAuthorityKbn()) {
 			case ADMINISTRATOR:
 				return Collections.singleton(new SimpleGrantedAuthority(ROLE_ADMIN));
 			default:
 				return Collections.singleton(new SimpleGrantedAuthority(ROLE_USER));
 		}
 	}
-	
+
 	/**
 	 * アカウント番号を取得する
-	 * 
+	 *
 	 * @return	アカウント番号
 	 */
 	public Integer getAccountNo() {
-		return account.getAccountNo();
+		return accountModel.getAccountNo();
 	}
-	
+
 	/**
 	 * アカウント名を取得する
-	 * 
+	 *
 	 * @return	アカウント名
 	 */
 	public String getAccountName() {
-		return account.getAccountName();
+		return accountModel.getAccountName();
 	}
-	
+
 	/**
 	 * パスワードを取得する
-	 * 
+	 *
 	 * @return	パスワード
 	 */
 	@Override
 	public String getPassword() {
-		return account.getPassword();
+		return accountModel.getPassword();
 	}
-	
+
 	/**
 	 * アカウントIDを取得する
-	 * 
+	 *
 	 * @return	アカウントID
 	 */
 	@Override
 	public String getUsername() {
-		return account.getAccountId();
+		return accountModel.getAccountId();
 	}
 
 	/***
 	 * アカウントが有効期限切れかどうかを返す
-	 * 
+	 *
 	 * @return 有効期限は設定しないため、常にtrueを返す
 	 */
 	@Override
@@ -88,17 +88,17 @@ public class AccountPrincipal implements UserDetails {
 
 	/***
 	 * アカウントがロックされていないかどうかを返す
-	 * 
+	 *
 	 * @return ログイン失敗回数が一定数を超えていなければtrueを返す
 	 */
 	@Override
 	public boolean isAccountNonLocked() {
-		return account.getLoginFailureCount() < maxFailCount;
+		return accountModel.getLoginFailureCount() < maxFailCount;
 	}
 
 	/***
 	 * 資格情報（ここではパスワード）が有効期限切れかどうかを返す
-	 * 
+	 *
 	 * @return 有効期限は設定しないため、常にtrueを返す
 	 */
 	@Override
@@ -108,11 +108,11 @@ public class AccountPrincipal implements UserDetails {
 
 	/***
 	 * アカウントの有効／無効を返す
-	 * 
+	 *
 	 * @return 有効な場合、trueを返す
 	 */
 	@Override
 	public boolean isEnabled() {
-		return !account.getIsDeleted();
+		return !accountModel.getIsDeleted();
 	}
 }
