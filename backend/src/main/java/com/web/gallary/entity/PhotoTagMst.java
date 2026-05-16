@@ -71,20 +71,6 @@ public class PhotoTagMst {
 	}
 
 	/**
-	 * 条件用のPhotoTagMstエンティティを生成する
-	 *
-	 * @param	accountNo	アカウント番号
-	 * @param	photoNo		写真番号（nullの場合はアカウント番号のみで検索）
-	 * @return				{@link PhotoTagMst}
-	 */
-	public static PhotoTagMst condition(Integer accountNo, Integer photoNo) {
-		return PhotoTagMst.builder()
-				.accountNo(accountNo)
-				.photoNo(photoNo)
-				.build();
-	}
-
-	/**
 	 * PhotoDetailGetModelから条件用のPhotoTagMstエンティティを生成する
 	 *
 	 * @param	model	{@link PhotoDetailGetModel}
