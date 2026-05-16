@@ -2,6 +2,7 @@ package com.web.gallary.entity;
 
 import java.time.OffsetDateTime;
 
+import com.web.gallary.model.PhotoTagDeleteModel;
 import com.web.gallary.model.PhotoTagModel;
 
 import lombok.Builder;
@@ -51,6 +52,19 @@ public class PhotoTagMst {
 				.createdBy(model.getAccountNo())
 				.tagJapaneseName(model.getTagJapaneseName())
 				.tagEnglishName(model.getTagEnglishName())
+				.build();
+	}
+
+	/**
+	 * 写真タグ削除用のPhotoTagDeleteModelからPhotoTagMstエンティティを生成する
+	 *
+	 * @param	model	{@link PhotoTagDeleteModel}
+	 * @return			{@link PhotoTagMst}
+	 */
+	public static PhotoTagMst fromForDelete(PhotoTagDeleteModel model) {
+		return PhotoTagMst.builder()
+				.accountNo(model.getAccountNo())
+				.photoNo(model.getPhotoNo())
 				.build();
 	}
 }

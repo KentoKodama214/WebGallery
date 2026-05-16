@@ -51,11 +51,7 @@ public class PhotoTagMstRepositoryImpl implements PhotoTagMstRepository {
 	 */
 	@Override
 	public void clear(PhotoTagDeleteModel photoTagDeleteModel) {
-		PhotoTagMst photoTagMst = PhotoTagMst.builder()
-				.accountNo(photoTagDeleteModel.getAccountNo())
-				.photoNo(photoTagDeleteModel.getPhotoNo())
-				.build();
-		
+		PhotoTagMst photoTagMst = PhotoTagMst.fromForDelete(photoTagDeleteModel);
 		photoTagMstMapper.delete(photoTagMst);
 	}
 }
