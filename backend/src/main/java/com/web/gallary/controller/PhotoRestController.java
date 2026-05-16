@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -113,9 +112,7 @@ public class PhotoRestController {
 		if (photoAccountId.equals(sessionHelper.getAccountId())) {
 			isReachedUpperLimit = photoService.isReachedUpperLimit(sessionHelper.getAccountNo());
 		}
-		return ResponseEntity.ok(PhotoUpperLimitResponse.builder()
-				.isReachedUpperLimit(isReachedUpperLimit)
-				.build());
+		return ResponseEntity.ok(PhotoUpperLimitResponse.of(isReachedUpperLimit));
 	}
 
 	/**
@@ -238,13 +235,7 @@ public class PhotoRestController {
 			savedImageFilePath = Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse("");
 		}
 
-		return ResponseEntity.ok(PhotoEditResponse.builder()
-				.httpStatus(HttpStatus.OK.value())
-				.isSuccess(true)
-				.message(MessageConst.REGIST_PHOTO)
-				.photoNo(savedPhotoNo)
-				.imageFilePath(savedImageFilePath)
-				.build());
+		return ResponseEntity.ok(PhotoEditResponse.of(MessageConst.REGIST_PHOTO, savedPhotoNo, savedImageFilePath));
 	}
 	
 	/**
@@ -285,11 +276,7 @@ public class PhotoRestController {
 		
 		photoService.deletePhotos(photoAccountId, photoDeleteModelList);
 		
-		return ResponseEntity.ok(PhotoEditResponse.builder()
-				.httpStatus(HttpStatus.OK.value())
-				.isSuccess(true)
-				.message(MessageConst.DELETE_PHOTO)
-				.build());
+		return ResponseEntity.ok(PhotoEditResponse.of(MessageConst.DELETE_PHOTO, null, null));
 	}
 	
 }

@@ -1,6 +1,5 @@
 package com.web.gallary.controller;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -66,13 +65,9 @@ public class PhotoFavoriteController {
 				.build();
 		photoFavoriteService.addFavorite(photoFavoriteModel);
 		
-		return ResponseEntity.ok(PhotoFavoriteResponse.builder()
-				.httpStatus(HttpStatus.OK.value())
-				.isSuccess(true)
-				.message(MessageConst.REGIST_FAVORITE)
-				.build());
+		return ResponseEntity.ok(PhotoFavoriteResponse.of(MessageConst.REGIST_FAVORITE));
 	}
-	
+
 	/**
 	 * お気に入り解除
 	 * 
@@ -100,10 +95,6 @@ public class PhotoFavoriteController {
 				.build();
 		photoFavoriteService.deleteFavorite(photoFavoriteModel);
 		
-		return ResponseEntity.ok(PhotoFavoriteResponse.builder()
-				.httpStatus(HttpStatus.OK.value())
-				.isSuccess(true)
-				.message(MessageConst.CANCEL_FAVORITE)
-				.build());
+		return ResponseEntity.ok(PhotoFavoriteResponse.of(MessageConst.CANCEL_FAVORITE));
 	}
 }

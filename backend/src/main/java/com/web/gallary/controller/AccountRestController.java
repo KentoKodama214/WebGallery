@@ -120,11 +120,7 @@ public class AccountRestController {
 				.build();
 		
 		Boolean isSuccess = accountServiceImpl.registAccount(accountModel);
-		return ResponseEntity.ok(AccountRegistResponse.builder()
-					.httpStatus(HttpStatus.OK.value())
-					.isSuccess(isSuccess)
-					.message(Consts.STRING_EMPTY)
-					.build());
+		return ResponseEntity.ok(AccountRegistResponse.of(isSuccess, Consts.STRING_EMPTY));
 	}
 	
 	/**
@@ -175,13 +171,11 @@ public class AccountRestController {
 		
 		Boolean isDuplicateAccountId = accountServiceImpl.updateAccount(accountModel);
 		
-		return ResponseEntity.ok(AccountUpdateResponse.builder()
-					.httpStatus(HttpStatus.OK.value())
-					.isDuplicateAccountId(isDuplicateAccountId)
-					.isAccountIdChanged(!accountUpdateRequest.getAccountId().equals(sessionHelper.getAccountId()))
-					.isPasswordChanged(!accountUpdateRequest.getNewPassword().isEmpty())
-					.message(Consts.STRING_EMPTY)
-					.build());
+		return ResponseEntity.ok(AccountUpdateResponse.of(
+					isDuplicateAccountId,
+					!accountUpdateRequest.getAccountId().equals(sessionHelper.getAccountId()),
+					!accountUpdateRequest.getNewPassword().isEmpty(),
+					Consts.STRING_EMPTY));
 	}
 	
 	/**
