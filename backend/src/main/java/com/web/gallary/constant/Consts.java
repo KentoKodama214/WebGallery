@@ -25,6 +25,8 @@ public final class Consts {
 	public static final String AUTHORITY_SPECIAL = "special-user";
 	/** administrator */
 	public static final String ADMINISTRATOR = "administrator";
+	/** prefecture */
+	public static final String PREFECTURE = "prefecture";
 	
 	// ZoneOffset
 	public static final ZoneOffset JST = ZoneOffset.ofHours(9);
@@ -36,4 +38,7 @@ public final class Consts {
 	// OffsetDateTime
 	/** 1900-01-01 00:00:00 (+9:00) */
 	public static final OffsetDateTime MIN_OFFSET_DATE_TIME = OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, JST);
+
+	// Hash Algorithm
+	public static final String SHA_256 = "SHA-256";
 }

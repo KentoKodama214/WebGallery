@@ -2,6 +2,7 @@ package com.web.gallary.service.impl;
 
 import java.util.List;
 
+import com.web.gallary.constant.Consts;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,6 @@ public class KbnMstServiceImpl implements KbnMstService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<KbnMstModel> getPrefectureList() {
-		return kbnMstRepository.get("prefecture");
+		return kbnMstRepository.get(Consts.PREFECTURE);
 	}
 }

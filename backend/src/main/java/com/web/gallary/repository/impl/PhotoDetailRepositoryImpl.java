@@ -38,7 +38,7 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 
 	private final PhotoTagMstMapper photoTagMstMapper;
 	private final PhotoDetailMapper photoDetailMapper;
-	private ModelMapper modelMapper = new ModelMapper();
+	private final ModelMapper modelMapper = new ModelMapper();
 	
 	/**
 	 * 該当アカウントの写真の一覧を取得する

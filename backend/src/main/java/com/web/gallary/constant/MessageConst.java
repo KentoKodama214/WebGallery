@@ -14,7 +14,6 @@ public final class MessageConst {
 	public static final String USER_NOT_FOUND = "ユーザーが見つかりません。";
 	
 	// Error
-	public static final String ERR_EXCEPTION = "エラーが発生しました。システム管理者に問い合わせてください。";
 	public static final String ERR_INVALID_INPUT = "入力内容に誤りがあります。再度入力してください。";
 	public static final String ERR_FAIL_TO_REGIST_ACCOUNT = "アカウント登録でエラーが発生しました。登録をやり直してください。";
 	public static final String ERR_FAIL_TO_UPDATE_ACCOUNT = "アカウント更新でエラーが発生しました。更新をやり直してください。";

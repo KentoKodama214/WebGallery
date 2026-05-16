@@ -168,7 +168,7 @@ public class PhotoRestController {
 		if (Objects.isNull(photoSaveRequest.getPhotoNo()) && !Objects.isNull(photoSaveRequest.getImageFile())) {
 			savedImageFilePath = photoConfig.getOutputPath() + photoAccountId + "/" + photoSaveRequest.getImageFile().getOriginalFilename();
 		} else {
-			savedImageFilePath = Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse("");
+			savedImageFilePath = Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse(Consts.STRING_EMPTY);
 		}
 
 		return ResponseEntity.ok(PhotoEditResponse.of(MessageConst.REGIST_PHOTO, savedPhotoNo, savedImageFilePath));

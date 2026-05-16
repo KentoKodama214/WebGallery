@@ -1,5 +1,6 @@
 package com.web.gallary.controller;
 
+import com.web.gallary.constant.Consts;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -108,7 +109,7 @@ public class AuthRestController {
 		}
 
 		// リフレッシュトークンcookieを削除
-		ResponseCookie clearCookie = createRefreshTokenCookie("", 0);
+		ResponseCookie clearCookie = createRefreshTokenCookie(Consts.STRING_EMPTY, 0);
 
 		return ResponseEntity.noContent()
 				.header(HttpHeaders.SET_COOKIE, clearCookie.toString())
