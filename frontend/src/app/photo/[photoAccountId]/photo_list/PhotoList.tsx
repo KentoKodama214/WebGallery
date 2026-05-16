@@ -11,7 +11,18 @@ import {
   type PhotoListItem,
   type PhotoListParams,
 } from "@/lib/api/client";
+import { getCookie, setCookie } from "@/lib/cookie";
 import styles from "./PhotoList.module.css";
+
+const COOKIE_NAME = "photoListFilter";
+const COOKIE_MAX_AGE = 1800; // 30分
+
+interface PhotoListFilter {
+  directionKbn: string;
+  isFavoriteFilter: string;
+  tagList: string;
+  sortBy: string;
+}
 
 interface PhotoListProps {
   photoAccountId: string;
@@ -54,26 +65,67 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   });
 
   /**
-   * 写真一覧取得
+   * フィルター条件をCookieに保存する
    */
-  const fetchPhotos = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    setPageNo(1);
-    try {
-      const data = await getPhotoList(photoAccountId, { pageNo: 1 });
-      setPhotos(data.photoList);
-      setIsLast(data.isLast);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [photoAccountId]);
+  const saveFilterToCookie = useCallback((filter: PhotoListFilter) => {
+    setCookie(COOKIE_NAME, JSON.stringify(filter), COOKIE_MAX_AGE);
+  }, []);
 
+  /**
+   * 写真一覧取得（初期化時）
+   * Cookieからフィルター条件を復元し、その条件でAPIを呼び出す
+   */
   useEffect(() => {
-    fetchPhotos();
-  }, [fetchPhotos]);
+    const init = async () => {
+      setIsLoading(true);
+      setError(null);
+      setPageNo(1);
+
+      // Cookieからフィルター条件を復元
+      let filter: PhotoListFilter = {
+        directionKbn: "",
+        isFavoriteFilter: "",
+        tagList: "",
+        sortBy: "photoAt",
+      };
+      const cookieValue = getCookie(COOKIE_NAME);
+      if (cookieValue) {
+        try {
+          filter = JSON.parse(cookieValue);
+        } catch {
+          // パース失敗時はデフォルト値を使用
+        }
+      }
+
+      // stateに反映
+      setDirectionKbn(filter.directionKbn);
+      setIsFavoriteFilter(filter.isFavoriteFilter);
+      setTagList(filter.tagList);
+      setSortBy(filter.sortBy);
+
+      // Cookieを更新（有効期限リセット）
+      saveFilterToCookie(filter);
+
+      // フィルター条件でAPI呼び出し
+      const params: PhotoListParams = {
+        directionKbn: filter.directionKbn || undefined,
+        isFavorite: filter.isFavoriteFilter || undefined,
+        tagList: filter.tagList || undefined,
+        sortBy: filter.sortBy || undefined,
+        pageNo: 1,
+      };
+      try {
+        const data = await getPhotoList(photoAccountId, params);
+        setPhotos(data.photoList);
+        setIsLast(data.isLast);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "エラーが発生しました");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    init();
+  }, [photoAccountId, saveFilterToCookie]);
 
   useEffect(() => {
     if (!isOwner) return;
@@ -217,7 +269,6 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       }
       lightboxRef.current = null;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photos.length, isAuthenticated]);
 
   /**
@@ -246,6 +297,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     setIsLoading(true);
     setError(null);
     setPageNo(1);
+
+    // フィルター条件をCookieに保存
+    saveFilterToCookie({ directionKbn, isFavoriteFilter, tagList, sortBy });
+
     try {
       const data = await getPhotoList(photoAccountId, buildParams(1));
       setPhotos(data.photoList);
