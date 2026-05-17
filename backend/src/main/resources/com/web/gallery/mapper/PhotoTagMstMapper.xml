@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.mapper.PhotoTagMstMapper">
+	<select id="select" parameterType="com.web.gallery.entity.PhotoTagMst" resultType="com.web.gallery.entity.PhotoTagMst">
+		SELECT
+			id,
+			account_no AS accountNo,
+			photo_no AS photoNo,
+			tag_no AS tagNo,
+			created_by AS createdBy,
+			created_at AS createdAt,
+			tag_japanese_name AS tagJapaneseName,
+			tag_english_name AS tagEnglishName
+		FROM
+			photo.photo_tag_mst
+		<where>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
+			<if test="tagNo != null"> AND tag_no = #{tagNo}</if>
+			<if test="tagJapaneseName != null"> AND tag_japanese_name = #{tagJapaneseName}</if>
+			<if test="tagEnglishName != null"> AND tag_english_name = #{tagEnglishName}</if>
+		</where>
+	</select>
+	
+	<insert id="insert" parameterType="com.web.gallery.entity.PhotoTagMst">
+		INSERT INTO
+			photo.photo_tag_mst (
+				account_no,
+				photo_no,
+				tag_no,
+				created_by,
+				created_at,
+				tag_japanese_name,
+				tag_english_name 
+			)
+		VALUES
+			(
+				#{accountNo},
+				#{photoNo},
+				#{tagNo},
+				#{createdBy},
+				NOW(),
+				#{tagJapaneseName},
+				#{tagEnglishName}
+			)
+	</insert>
+	
+	<delete id="delete" parameterType="com.web.gallery.entity.PhotoTagMst">
+		DELETE FROM
+			photo.photo_tag_mst
+		<where>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
+			<if test="tagNo != null"> AND tag_no = #{tagNo}</if>
+			<if test="tagJapaneseName != null"> AND tag_japanese_name = #{tagJapaneseName}</if>
+			<if test="tagEnglishName != null"> AND tag_english_name = #{tagEnglishName}</if>
+		</where>
+	</delete>
+</mapper>

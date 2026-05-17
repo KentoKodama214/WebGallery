@@ -1,8 +1,8 @@
-# WebGallary データベース定義書
+# WebGallery データベース定義書
 
 ## 概要
 
-WebGallaryはPostgreSQLを使用し、以下の2つのスキーマで構成されています。
+WebGalleryはPostgreSQLを使用し、以下の2つのスキーマで構成されています。
 
 | スキーマ | 用途 |
 |----------|------|

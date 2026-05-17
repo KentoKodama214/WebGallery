@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-  title: "アカウント設定 - WebGallary",
+  title: "アカウント設定 - WebGallery",
 };
 
 /**

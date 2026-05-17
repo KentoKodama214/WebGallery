@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.mapper.PhotoMstMapper">
+	<resultMap id="PhotoMstMap" type="com.web.gallery.entity.PhotoMst">
+		<result property="directionKbn" column="direction_kbn" typeHandler="com.web.gallery.type_handler.DirectionEnumTypeHandler"/>
+	</resultMap>
+	
+	<select id="count" parameterType="com.web.gallery.entity.PhotoMst" resultType="Integer">
+		SELECT
+			COUNT(*)
+		FROM
+			photo.photo_mst
+		<where>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
+			<if test="isDeleted != null"> AND is_deleted = #{isDeleted}</if>
+			<if test="photoAt != null"> AND photo_at = #{photoAt}</if>
+			<if test="locationNo != null"> AND location_no = #{locationNo}</if>
+			<if test="imageFilePath != null"> AND image_file_path = #{imageFilePath}</if>
+			<if test="photoJapaneseTitle != null"> AND photo_japanese_title = #{photoJapaneseTitle}</if>
+			<if test="photoEnglishTitle != null"> AND photo_english_title = #{photoEnglishTitle}</if>
+			<if test="caption != null"> AND caption = #{caption}</if>
+			<if test="directionKbn != null"> AND direction_kbn = #{directionKbn}::photo.direction_enum</if>
+			<if test="focalLength != null"> AND focal_length = #{focalLength}</if>
+			<if test="fValue != null"> AND f_value = #{fValue}</if>
+			<if test="shutterSpeed != null"> AND shutter_speed = #{shutterSpeed}</if>
+			<if test="iso != null"> AND iso = #{iso}</if>
+		</where>
+	</select>
+	
+	<insert id="insert" parameterType="com.web.gallery.entity.PhotoMst">
+		INSERT INTO
+			photo.photo_mst (
+				account_no,
+				photo_no,
+				created_by,
+				created_at,
+				updated_by,
+				updated_at,
+				is_deleted,
+				photo_at,
+				location_no,
+				image_file_path,
+				photo_japanese_title,
+				photo_english_title,
+				caption,
+				direction_kbn,
+				focal_length,
+				f_value,
+				shutter_speed,
+				iso
+			)
+		VALUES
+			(
+				#{accountNo},
+				#{photoNo},
+				#{createdBy},
+				NOW(),
+				#{updatedBy},
+				NOW(),
+				false,
+				#{photoAt},
+				#{locationNo},
+				#{imageFilePath},
+				#{photoJapaneseTitle},
+				#{photoEnglishTitle},
+				#{caption},
+				#{directionKbn}::photo.direction_enum,
+				#{focalLength},
+				#{fValue},
+				#{shutterSpeed},
+				#{iso}
+			)
+	</insert>
+	
+	<update id="update" parameterType="com.web.gallery.entity.PhotoMst">
+		UPDATE 
+			photo.photo_mst
+		<set>
+			updated_at = NOW()
+			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy}</if>
+			<if test="target.isDeleted != null"> , is_deleted = #{target.isDeleted}</if>
+			<if test="target.photoAt != null"> , photo_at = #{target.photoAt}</if>
+			<if test="target.locationNo != null"> , location_no = #{target.locationNo}</if>
+			<if test="target.imageFilePath != null"> , image_file_path = #{target.imageFilePath}</if>
+			<if test="target.photoJapaneseTitle != null"> , photo_japanese_title = #{target.photoJapaneseTitle}</if>
+			<if test="target.photoEnglishTitle != null"> , photo_english_title = #{target.photoEnglishTitle}</if>
+			<if test="target.caption != null"> , caption = #{target.caption}</if>
+			<if test="target.directionKbn != null"> , direction_kbn = #{target.directionKbn}::photo.direction_enum</if>
+			<if test="target.focalLength != null"> , focal_length = #{target.focalLength}</if>
+			<if test="target.fValue != null"> , f_value = #{target.fValue}</if>
+			<if test="target.shutterSpeed != null"> , shutter_speed = #{target.shutterSpeed}</if>
+			<if test="target.iso != null"> , iso = #{target.iso}</if>
+		</set>
+		<where>
+			<if test="condition.accountNo != null"> AND account_no = #{condition.accountNo}</if>
+			<if test="condition.photoNo != null"> AND photo_no = #{condition.photoNo}</if>
+			<if test="condition.isDeleted != null"> AND is_deleted = #{condition.isDeleted}</if>
+			<if test="condition.photoAt != null"> AND photo_at = #{condition.photoAt}</if>
+			<if test="condition.locationNo != null"> AND location_no = #{condition.locationNo}</if>
+			<if test="condition.imageFilePath != null"> AND image_file_path = #{condition.imageFilePath}</if>
+			<if test="condition.photoJapaneseTitle != null"> AND photo_japanese_title = #{condition.photoJapaneseTitle}</if>
+			<if test="condition.photoEnglishTitle != null"> AND photo_english_title = #{condition.photoEnglishTitle}</if>
+			<if test="condition.caption != null"> AND caption = #{condition.caption}</if>
+			<if test="condition.directionKbn != null"> AND direction_kbn = #{condition.directionKbn}::photo.direction_enum</if>
+			<if test="condition.focalLength != null"> AND focal_length = #{condition.focalLength}</if>
+			<if test="condition.fValue != null"> AND f_value = #{condition.fValue}</if>
+			<if test="condition.shutterSpeed != null"> AND shutter_speed = #{condition.shutterSpeed}</if>
+			<if test="condition.iso != null"> AND iso = #{condition.iso}</if>
+		</where>
+	</update>
+	
+	<select id="getMaxPhotoNo" parameterType="Integer" resultType="Integer">
+		SELECT
+			MAX(photo_no) AS photoNo
+		FROM
+			photo.photo_mst
+		WHERE
+			account_no = #{accountNo}
+	</select>
+	
+	<select id="isExistPhoto" parameterType="com.web.gallery.entity.PhotoMst" resultType="Boolean">
+		SELECT
+			CASE WHEN COUNT(*)>0 THEN true ELSE false END
+		FROM
+			photo.photo_mst
+		WHERE
+			account_no = #{accountNo}
+		AND image_file_path LIKE CONCAT('%', #{imageFilePath})
+		AND is_deleted = false
+	</select>
+</mapper>

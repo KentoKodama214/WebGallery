@@ -5,7 +5,7 @@ import { PhotoList } from "./PhotoList";
 import "./photo-list-page.css";
 
 export const metadata: Metadata = {
-  title: "写真一覧 - WebGallary",
+  title: "写真一覧 - WebGallery",
 };
 
 /**

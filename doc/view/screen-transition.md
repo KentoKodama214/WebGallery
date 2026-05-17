@@ -65,7 +65,7 @@ graph LR
 
     MENU -->|"Sign In<br/>（未認証時）"| LOGIN["ログイン<br/>/login"]
     MENU -->|"Photographers"| ACCOUNT_LIST["アカウント一覧<br/>/account_list"]
-    MENU -->|"My Gallary<br/>（認証済み時）"| PHOTO_LIST["写真一覧<br/>/photo/{id}/photo_list"]
+    MENU -->|"My Gallery<br/>（認証済み時）"| PHOTO_LIST["写真一覧<br/>/photo/{id}/photo_list"]
     MENU -->|"Account Setting<br/>（認証済み時）"| ACCOUNT_SETTING["アカウント設定<br/>/{id}/account_setting"]
     MENU -->|"Sign Out<br/>（認証済み時）"| LOGOUT["ログアウト → /login"]
 ```
@@ -232,7 +232,7 @@ sequenceDiagram
 |------|--------|------|
 | 「ギャラリー」ボタン | `/photo/{accountId}/photo_list` | リンク |
 | メニュー「Sign In」 | `/login` | リンク（未認証時） |
-| メニュー「My Gallary」 | `/photo/{accountId}/photo_list` | リンク（認証済み時） |
+| メニュー「My Gallery」 | `/photo/{accountId}/photo_list` | リンク（認証済み時） |
 | メニュー「Sign Out」 | `/login` | ログアウト |
 
 ### アカウント設定 (`/{accountId}/account_setting`)
@@ -255,7 +255,7 @@ sequenceDiagram
 | 「もっと見る」ボタン | 同画面（追加読み込み） | AJAX |
 | 絞り込みフィルター | 同画面（再読み込み） | AJAX |
 | メニュー「Photographers」 | `/account_list` | リンク |
-| メニュー「My Gallary」 | `/photo/{accountId}/photo_list` | リンク |
+| メニュー「My Gallery」 | `/photo/{accountId}/photo_list` | リンク |
 | メニュー「Account Setting」 | `/{accountId}/account_setting` | リンク |
 | メニュー「Sign Out」 | `/login` | ログアウト |
 
@@ -269,7 +269,7 @@ sequenceDiagram
 | お気に入りアイコン | 同画面（状態切替） | AJAX（認証済み時のみ） |
 | 「← back」リンク | `/photo/{photoAccountId}/photo_list` | リンク |
 | メニュー「Photographers」 | `/account_list` | リンク |
-| メニュー「My Gallary」 | `/photo/{accountId}/photo_list` | リンク |
+| メニュー「My Gallery」 | `/photo/{accountId}/photo_list` | リンク |
 | メニュー「Account Setting」 | `/{accountId}/account_setting` | リンク |
 | メニュー「Sign Out」 | `/login` | ログアウト |
 

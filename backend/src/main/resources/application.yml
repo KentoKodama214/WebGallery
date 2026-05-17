@@ -1,6 +1,6 @@
 spring:
   application:
-    name: WebGallary
+    name: WebGallery
   servlet:
     multipart:
       max-file-size: 6MB
@@ -13,7 +13,7 @@ server:
       protocol-header: "x-forwarded-proto"
 
 mybatis:
-  type-handlers-package: com.web.gallary.type_handler
+  type-handlers-package: com.web.gallery.type_handler
 
 management:
   add-application-context-header: false

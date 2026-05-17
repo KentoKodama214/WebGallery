@@ -56,7 +56,7 @@ export function Header() {
                   className={styles.menuLink}
                   onClick={closeMenu}
                 >
-                  My Gallary
+                  My Gallery
                 </Link>
               </li>
               <li className={styles.menuItem}>

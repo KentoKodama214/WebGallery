@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PhotoSettingForm } from "./PhotoSettingForm";
 
 export const metadata: Metadata = {
-  title: "写真設定 - WebGallary",
+  title: "写真設定 - WebGallery",
 };
 
 /**

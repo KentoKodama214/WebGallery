@@ -1,8 +1,8 @@
-# CLAUDE.md - WebGallary AIアシスタントガイド
+# CLAUDE.md - WebGallery AIアシスタントガイド
 
 ## プロジェクト概要
 
-WebGallaryは、Spring Bootで構築されたフォトギャラリーWebアプリケーションです。ユーザーはアカウント登録、メタデータ/EXIFデータ付きの写真アップロード、フォトギャラリーの閲覧、写真のタグ付け、お気に入り管理が可能です。コードベースおよびすべてのドキュメント・コメントは日本語で記述されています。
+WebGalleryは、Spring Bootで構築されたフォトギャラリーWebアプリケーションです。ユーザーはアカウント登録、メタデータ/EXIFデータ付きの写真アップロード、フォトギャラリーの閲覧、写真のタグ付け、お気に入り管理が可能です。コードベースおよびすべてのドキュメント・コメントは日本語で記述されています。
 
 ## 技術スタック
 
@@ -46,7 +46,7 @@ docker-compose up -d
 ## プロジェクト構造
 
 ```
-WebGallary/
+WebGallery/
 ├── docker-compose.yml              # PostgreSQLコンテナ設定
 ├── docker/db/                      # DB用Dockerfile
 ├── db/                             # データベース初期化スクリプト
@@ -92,8 +92,8 @@ WebGallary/
 │   ├── set-env.sh                  # 環境変数設定スクリプト
 │   └── src/
 │       ├── main/
-│       │   ├── java/com/web/gallary/
-│       │   │   ├── WebGallaryApplication.java   # Bootメインクラス
+│       │   ├── java/com/web/gallery/
+│       │   │   ├── WebGalleryApplication.java   # Bootメインクラス
 │       │   │   ├── ServletInitializer.java      # WARデプロイ初期化クラス
 │       │   │   ├── AccountPrincipal.java        # Spring Security UserDetails
 │       │   │   ├── config/                      # 設定クラス (Security, JWT, CORS等)
@@ -117,9 +117,9 @@ WebGallary/
 │       │       ├── application.yml              # アプリケーション設定
 │       │       ├── application-*.yml            # プロファイル別設定 (local, development, prod)
 │       │       ├── messages.properties          # メッセージ文字列
-│       │       └── com/web/gallary/mapper/      # MyBatis XMLマッパーファイル
+│       │       └── com/web/gallery/mapper/      # MyBatis XMLマッパーファイル
 │       └── test/
-│           ├── java/com/web/gallary/            # テストクラス（main構造のミラー）
+│           ├── java/com/web/gallery/            # テストクラス（main構造のミラー）
 │           │   ├── controller/                  # RESTコントローラーユニットテスト
 │           │   │   └── integration/             # RESTコントローラー統合テスト
 │           │   ├── mapper/                      # マッパーユニットテスト
@@ -163,7 +163,7 @@ WebGallary/
 
 4. **MyBatis Mapper層** (`mapper/`)
    - Javaインターフェースでメソッドシグネチャを定義
-   - SQLは`resources/com/web/gallary/mapper/*.xml`のXMLファイルで定義
+   - SQLは`resources/com/web/gallery/mapper/*.xml`のXMLファイルで定義
    - `type_handler/`の列挙型からDB変換用カスタムタイプハンドラー
 
 ### 主要パターン
@@ -218,7 +218,7 @@ PostgreSQLの2つのスキーマ：
 
 ### テストデータベース
 
-- 専用データベース：`web_gallary_test`（`application-test.yml`で設定）
+- 専用データベース：`web_gallery_test`（`application-test.yml`で設定）
 - テスト用SQLフィクスチャは`backend/src/test/resources/sql/`にレイヤー別に整理
 - 統合テストの実行にはDocker PostgreSQLの起動が必要
 
@@ -229,7 +229,7 @@ PostgreSQLの2つのスキーマ：
 ./backend/gradlew -p backend test
 
 # 特定のテストクラスを実行
-./backend/gradlew -p backend test --tests "com.web.gallary.service.impl.PhotoServiceImplTest"
+./backend/gradlew -p backend test --tests "com.web.gallery.service.impl.PhotoServiceImplTest"
 ```
 
 ## 開発環境セットアップ
@@ -271,7 +271,7 @@ PostgreSQLの2つのスキーマ：
 2. `controller/request/`と`controller/response/`にリクエスト/レスポンスDTOを作成
 3. 新しいテーブルが必要な場合は`entity/`にエンティティを作成
 4. レイヤー間転送用のモデルオブジェクトを`model/`に作成
-5. `mapper/`にMyBatisマッパーインターフェース、`resources/com/web/gallary/mapper/`にXMLを作成
+5. `mapper/`にMyBatisマッパーインターフェース、`resources/com/web/gallery/mapper/`にXMLを作成
 6. `repository/`と`repository/impl/`にリポジトリインターフェースと実装を作成
 7. `service/`と`service/impl/`にサービスインターフェースと実装を作成
 8. `controller/`にコントローラーを作成
@@ -284,4 +284,4 @@ PostgreSQLの2つのスキーマ：
 - ファイルアップロード上限は1ファイルあたり5MB（サーブレットレベルでは6MB）
 - 写真の出力パスは`backend/src/main/resources/application.yml`の`app.photo.outputPath`で設定可能
 - プロジェクトはTomcatデプロイ用のWARパッケージング（実行可能JARではない）
-- `backend/build.gradle`のgroupは`com.official`、ベースパッケージは`com.web.gallary`
+- `backend/build.gradle`のgroupは`com.official`、ベースパッケージは`com.web.gallery`

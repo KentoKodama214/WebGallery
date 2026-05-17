@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # データベース、ユーザー、パスワードを指定
-DATABASE=${POSTGRES_DB:-"web_gallary"}
+DATABASE=${POSTGRES_DB:-"web_gallery"}
 USER=${POSTGRES_USER:-"postgres"}
 PW=${POSTGRES_PASSWORD:-"postgres"}
 

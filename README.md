@@ -1,10 +1,10 @@
-# WebGallary
+# WebGallery
 
 写真ギャラリーWebアプリケーションです。ユーザー登録・写真のアップロード・EXIF情報の管理・タグ付け・お気に入り機能などを備えています。
 
 ## 目次
 
-- [WebGallary](#webgallary)
+- [WebGallery](#webgallery)
   - [目次](#目次)
   - [主な機能](#主な機能)
     - [ユーザー権限](#ユーザー権限)
@@ -104,7 +104,7 @@ echo 'eval "$(mise activate zsh)"' >> ~/.zshrc
 docker-compose up -d
 ```
 
-開発用データベース（`web_gallary`、ポート5432）とテスト用データベース（`web_gallary_test`、ポート5433）が起動します。データベースの初期化は `db/` 配下のSQLスクリプトにより自動的に行われます。
+開発用データベース（`web_gallery`、ポート5432）とテスト用データベース（`web_gallery_test`、ポート5433）が起動します。データベースの初期化は `db/` 配下のSQLスクリプトにより自動的に行われます。
 
 ### 2. 環境変数の設定
 
@@ -178,7 +178,7 @@ REST APIの詳細は [`doc/api/`](doc/api/) を参照してください。
 ## プロジェクト構成
 
 ```
-WebGallary/
+WebGallery/
 ├── .mise.toml                     # Node.jsバージョン定義（mise）
 ├── justfile                       # タスクランナー定義（just）
 ├── .github
@@ -255,7 +255,7 @@ WebGallary/
 │   ├── set-env.sh                  # 環境変数設定スクリプト
 │   └── src/
 │       ├── main/
-│       │   ├── java/com/web/gallary/
+│       │   ├── java/com/web/gallery/
 │       │   │   ├── config/             # 設定クラス
 │       │   │   ├── constant/           # 定数（APIルート・メッセージ）
 │       │   │   ├── controller/         # コントローラ
@@ -275,9 +275,9 @@ WebGallary/
 │       │   └── resources/
 │       │       ├── application.yml
 │       │       ├── messages.properties
-│       │       └── com/web/gallary/mapper/  # MyBatis XMLマッパー
+│       │       └── com/web/gallery/mapper/  # MyBatis XMLマッパー
 │       └── test/
-│           ├── java/com/web/gallary/   # テストクラス
+│           ├── java/com/web/gallery/   # テストクラス
 │           └── resources/
 │               ├── application-test.yml
 │               ├── json/controller     # テスト用リクエストjson
