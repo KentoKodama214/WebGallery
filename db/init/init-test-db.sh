@@ -25,6 +25,7 @@ SQL_FILES=(
   "common/account.sql"
   "common/kbn_mst.sql"
   "common/location_mst.sql"
+  "common/refresh_token.sql"
   # photoスキーマ: 型定義 → テーブル定義（外部キー依存順）
   "photo/photo.type.sql"
   "photo/photo_mst.sql"
