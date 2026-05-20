@@ -3,7 +3,7 @@ import { LoginForm } from "./LoginForm";
 import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-  title: "ログイン - WebGallary",
+  title: "ログイン - WebGallery",
 };
 
 /**

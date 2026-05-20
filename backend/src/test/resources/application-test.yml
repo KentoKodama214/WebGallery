@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/web_gallary_test
+    url: jdbc:postgresql://localhost:5433/web_gallery_test
     username: postgres
     password: postgres
   sql:

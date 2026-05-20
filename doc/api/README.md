@@ -1,8 +1,8 @@
-# WebGallary API設計書
+# WebGallery API設計書
 
 ## 概要
 
-WebGallaryのREST APIは、認証・アカウント管理・写真管理・お気に入り管理・都道府県取得の機能を提供します。
+WebGalleryのREST APIは、認証・アカウント管理・写真管理・お気に入り管理・都道府県取得の機能を提供します。
 
 | 項目 | 内容 |
 |------|------|

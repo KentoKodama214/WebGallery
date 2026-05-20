@@ -1,8 +1,8 @@
-# WebGallary アーキテクチャ設計書
+# WebGallery アーキテクチャ設計書
 
 ## 概要
 
-WebGallaryは、Spring Bootベースのレイヤード・アーキテクチャを採用しています。
+WebGalleryは、Spring Bootベースのレイヤード・アーキテクチャを採用しています。
 
 ## ドキュメント一覧
 

@@ -3,7 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 
 export const metadata: Metadata = {
-  title: "WebGallary",
+  title: "WebGallery",
 };
 
 export default function RootLayout({

@@ -5,9 +5,9 @@ services:
     build:
       context: docker/db
       dockerfile: Dockerfile
-    container_name: web-gallary-db
+    container_name: web-gallery-db
     environment:
-      POSTGRES_DB: web_gallary
+      POSTGRES_DB: web_gallery
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -22,9 +22,9 @@ services:
     build:
       context: docker/db
       dockerfile: Dockerfile
-    container_name: web-gallary-test-db
+    container_name: web-gallery-test-db
     environment:
-      POSTGRES_DB: web_gallary_test
+      POSTGRES_DB: web_gallery_test
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:

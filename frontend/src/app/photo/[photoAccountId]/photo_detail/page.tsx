@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PhotoDetail } from "./PhotoDetail";
 
 export const metadata: Metadata = {
-  title: "写真詳細 - WebGallary",
+  title: "写真詳細 - WebGallery",
 };
 
 /**

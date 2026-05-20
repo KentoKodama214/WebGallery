@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.mapper.PhotoDetailMapper">
+	<select id="getPhotoList" parameterType="com.web.gallery.dto.PhotoListGetDto" resultType="com.web.gallery.dto.PhotoDto">
+		WITH isFavorite AS (
+			SELECT 
+				favorite_photo_account_no,
+				favorite_photo_no
+			FROM
+				photo.photo_favorite
+			WHERE
+				account_no = #{accountNo}
+		),
+		countOfFavorite AS (
+			SELECT
+				favorite_photo_account_no,
+				favorite_photo_no,
+				count(*) as favoriteCount
+			FROM
+				photo.photo_favorite
+			WHERE 
+				favorite_photo_account_no = #{photoAccountNo}
+			GROUP BY
+				favorite_photo_account_no,
+				favorite_photo_no
+		)
+		
+		SELECT 
+			photo_mst.account_no AS accountNo,
+			photo_mst.photo_no AS photoNo,
+			CASE WHEN
+				countOfFavorite.favoriteCount > 0 THEN countOfFavorite.favoriteCount
+				ELSE 0
+			END AS favoriteCount,
+			CASE WHEN 
+				isFavorite.favorite_photo_account_no IS NOT NULL THEN true 
+				ELSE false
+			END AS isFavorite,
+			photo_mst.photo_at AS photoAt,
+			photo_mst.image_file_path AS imageFilePath,
+			photo_mst.caption AS caption,
+			photo_mst.direction_kbn AS directionKbn
+		FROM 
+			photo.photo_mst photo_mst
+		LEFT JOIN isFavorite ON
+			photo_mst.account_no = isFavorite.favorite_photo_account_no AND 
+ 			photo_mst.photo_no = isFavorite.favorite_photo_no
+		LEFT JOIN countOfFavorite ON
+			photo_mst.account_no = countOfFavorite.favorite_photo_account_no AND
+			photo_mst.photo_no = countOfFavorite.favorite_photo_no
+		WHERE
+			photo_mst.account_no = #{photoAccountNo} AND
+			photo_mst.is_deleted = false
+	</select>
+	
+	<select id="getPhotoDetail" parameterType="com.web.gallery.dto.PhotoDetailGetDto" resultType="com.web.gallery.dto.PhotoDetailDto">
+		SELECT 
+			photo_mst.account_no AS accountNo,
+			photo_mst.photo_no AS photoNo,
+			CASE WHEN (
+				SELECT
+					true
+				FROM
+					photo.photo_favorite
+				WHERE
+					account_no = #{accountNo} AND
+					favorite_photo_account_no = #{photoAccountNo} AND
+					favorite_photo_no = #{photoNo}
+			) THEN true ELSE false END AS isFavorite,
+			photo_mst.photo_at AS photoAt,
+			location_mst.location_no AS locationNo,
+			location_mst.address AS address,
+			location_mst.latitude AS latitude,
+			location_mst.longitude AS longitude,
+			location_mst.location_name AS locationName,
+			photo_mst.image_file_path AS imageFilePath,
+			photo_mst.photo_japanese_title AS photoJapaneseTitle,
+			photo_mst.photo_english_title AS photoEnglishTitle,
+			photo_mst.caption AS caption,
+			photo_mst.direction_kbn AS directionKbn,
+			photo_mst.focal_length AS focalLength,
+			photo_mst.f_value AS fValue,
+			photo_mst.shutter_speed AS shutterSpeed,
+			photo_mst.iso AS iso
+		FROM 
+			photo.photo_mst photo_mst
+		LEFT JOIN common.location_mst location_mst ON
+			photo_mst.account_no = location_mst.account_no AND
+			photo_mst.location_no = location_mst.location_no AND
+			location_mst.is_deleted = false
+		WHERE
+			photo_mst.account_no = #{photoAccountNo} AND
+			photo_mst.photo_no = #{photoNo} AND
+			photo_mst.is_deleted = false
+	</select>
+</mapper>

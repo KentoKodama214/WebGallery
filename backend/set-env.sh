@@ -18,8 +18,8 @@ echo "環境変数を $RC_FILE に書き込みます"
 echo
 
 # データベース接続情報
-read -p "DB_URL [jdbc:postgresql://localhost:5432/web_gallary]: " DB_URL
-DB_URL=${DB_URL:-jdbc:postgresql://localhost:5432/web_gallary}
+read -p "DB_URL [jdbc:postgresql://localhost:5432/web_gallery]: " DB_URL
+DB_URL=${DB_URL:-jdbc:postgresql://localhost:5432/web_gallery}
 
 read -p "DB_USERNAME [postgres]: " DB_USERNAME
 DB_USERNAME=${DB_USERNAME:-postgres}
@@ -45,7 +45,7 @@ JWT_SECRET=${JWT_SECRET:-default-dev-secret-must-be-at-least-256-bits-long-for-h
 # rcファイルに書き込み
 {
   echo ""
-  echo "# WebGallary ローカル開発用環境変数"
+  echo "# WebGallery ローカル開発用環境変数"
   echo "export DB_URL=\"$DB_URL\""
   echo "export DB_USERNAME=\"$DB_USERNAME\""
   echo "export DB_PASSWORD=\"$DB_PASSWORD\""

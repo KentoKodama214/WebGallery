@@ -49,7 +49,7 @@ jobs:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_DB: web_gallary_test
+          POSTGRES_DB: web_gallery_test
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:
@@ -84,8 +84,8 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: |
-          psql -h localhost -p 5433 -U postgres -d web_gallary_test -c "CREATE SCHEMA IF NOT EXISTS common;"
-          psql -h localhost -p 5433 -U postgres -d web_gallary_test -c "CREATE SCHEMA IF NOT EXISTS photo;"
+          psql -h localhost -p 5433 -U postgres -d web_gallery_test -c "CREATE SCHEMA IF NOT EXISTS common;"
+          psql -h localhost -p 5433 -U postgres -d web_gallery_test -c "CREATE SCHEMA IF NOT EXISTS photo;"
           SQL_FILES=(
             "db/common/common.type.sql"
             "db/common/account.sql"
@@ -98,7 +98,7 @@ jobs:
             "db/photo/photo_favorite.sql"
           )
           for file in "${SQL_FILES[@]}"; do
-            psql -h localhost -p 5433 -U postgres -d web_gallary_test -f "$file"
+            psql -h localhost -p 5433 -U postgres -d web_gallery_test -f "$file"
           done
 
       - name: 結合テスト実行

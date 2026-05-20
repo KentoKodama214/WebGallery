@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.mapper.KbnMstMapper">
+	<select id="select" parameterType="com.web.gallery.entity.KbnMst" resultType="com.web.gallery.entity.KbnMst">
+		SELECT
+			kbn_class_code AS kbnClassCode,
+			kbn_code AS kbnCode,
+			created_by AS createdBy,
+			created_at AS createdAt,
+			sort_order AS sortOrder,
+			kbn_group_code AS kbnGroupCode,
+			kbn_class_japanese_name AS kbnClassJapaneseName,
+			kbn_group_japanese_name AS kbnGroupJapaneseName,
+			kbn_japanese_name AS kbnJapaneseName,
+			kbn_class_english_name AS kbnClassEnglishName,
+			kbn_group_english_name AS kbnGroupEnglishName,
+			kbn_english_name AS kbnEnglishName,
+			explanation
+		FROM
+			common.kbn_mst
+		<where>
+			<if test="kbnClassCode != null"> AND kbn_class_code = #{kbnClassCode}</if>
+			<if test="kbnCode != null"> AND kbn_code = #{kbnCode}</if>
+			<if test="sortOrder != null"> AND sort_order = #{sortOrder}</if>
+			<if test="kbnGroupCode != null">AND kbn_group_code = #{kbnGroupCode}</if>
+			<if test="kbnClassJapaneseName != null"> AND kbn_class_japanese_name = #{kbnClassJapaneseName}</if>
+			<if test="kbnGroupJapaneseName != null">AND kbn_group_japanese_name = #{kbnGroupJapaneseName}</if>
+			<if test="kbnJapaneseName != null"> AND kbn_japanese_name = #{kbnJapaneseName}</if>
+			<if test="kbnClassEnglishName != null"> AND kbn_class_english_name = #{kbnClassEnglishName}</if>
+			<if test="kbnGroupEnglishName != null">AND kbn_group_english_name = #{kbnGroupEnglishName}</if>
+			<if test="kbnEnglishName != null"> AND kbn_english_name = #{kbnEnglishName}</if>
+			<if test="explanation != null"> AND explanation = #{explanation}</if>
+		</where>
+	</select>
+</mapper>

@@ -44,7 +44,7 @@ graph TB
 | Controller | RESTコントローラ（JSON API） | `controller/` |
 | Service | ビジネスロジック・バリデーション | `service/`, `service/impl/` |
 | Repository | データアクセスの抽象化 | `repository/`, `repository/impl/` |
-| Mapper | MyBatisによるSQL実行 | `mapper/`, `resources/com/web/gallary/mapper/` |
+| Mapper | MyBatisによるSQL実行 | `mapper/`, `resources/com/web/gallery/mapper/` |
 
 ## 設計方針
 
