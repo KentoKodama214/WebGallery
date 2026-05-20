@@ -13,6 +13,7 @@
     - [フロントエンド](#フロントエンド)
   - [前提条件](#前提条件)
   - [セットアップ](#セットアップ)
+    - [0. miseの信頼](#0-miseの信頼)
     - [1. データベースの起動](#1-データベースの起動)
     - [2. 環境変数の設定](#2-環境変数の設定)
     - [3. フロントエンドのセットアップ](#3-フロントエンドのセットアップ)
@@ -97,6 +98,20 @@ echo 'eval "$(mise activate zsh)"' >> ~/.zshrc
 設定後、シェルを再起動するか `source ~/.bashrc`（または `source ~/.zshrc`）を実行してください。
 
 ## セットアップ
+
+### 0. miseの信頼
+クローン後、以下のようなメッセージが表示される。
+```bash
+mise ERROR error parsing config file: ~/MainDevelopment/WebGallery/.mise.toml
+mise ERROR Config files in ~/MainDevelopment/WebGallery/.mise.toml are not trusted.
+Trust them with `mise trust`. See https://mise.en.dev/cli/trust.html for more information.
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+```
+その解消のため、プロジェクトルートで以下のコマンドを実行してください。
+```bash
+mise trust
+```
+
 
 ### 1. データベースの起動
 
