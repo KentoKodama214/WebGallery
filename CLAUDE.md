@@ -103,10 +103,6 @@ docker-compose up -d
 ./backend/gradlew -p backend test --tests "com.web.gallery.service.impl.PhotoServiceImplTest"
 ```
 
-## 開発環境セットアップ
-
-詳しくは、[README.md](README.md)を参照。
-
 ## 遵守すべき規約
 
 ### 命名規則
