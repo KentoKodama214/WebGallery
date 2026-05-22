@@ -177,34 +177,15 @@ WebGallery/
 
 ### セキュリティモデル
 
-- Spring SecurityによるJWT認証（ステートレス）
-- BCryptパスワードエンコーディング
-- `JwtAuthenticationFilter`がBearerトークンを検証しSecurityContextを設定
-- `/api/**`配下のAPIエンドポイントは保護対象。認証・アカウント・都道府県エンドポイントは公開
-- 写真の閲覧は公開アクセス可能。編集とお気に入りは認証が必要
+詳しくは、[セキュリティ](doc/architecture/security.md)を参照。
 
-### ユーザー権限レベル
+### ユーザー権限レベル・エラーコード
 
-| レベル         | 説明                                | 写真アップロード上限 |
-|---------------|--------------------------------------|---------------------|
-| MINI          | 基本ユーザー                          | 10枚               |
-| NORMAL        | 標準ユーザー                          | 1,000枚            |
-| SPECIAL       | プレミアムユーザー                     | 無制限              |
-| ADMINISTRATOR | サイト管理者                          | 無制限              |
-
-### エラーコード規約
-
-- `E-C-xxxx` - 共通・アカウントエラー（例：`E-C-0001` = アカウント登録失敗）
-- `E-P-xxxx` - 写真関連エラー（例：`E-P-0001` = 写真登録失敗）
-- すべてのエラーコードは`enumuration/ErrorEnum.java`で定義し、メッセージは`MessageConst`に記載
+詳しくは、[API設計書](doc/api/README.md)および[エラー定義](doc/api/error-definition.md)を参照。
 
 ### データベーススキーマ
 
-PostgreSQLの2つのスキーマ：
-- **`common`スキーマ**: `account`、`kbn_mst`（区分マスタ）、`location_mst`
-- **`photo`スキーマ**: `photo_mst`（写真メタデータ + EXIF）、`photo_tag_mst`、`photo_favorite`
-
-初期化スクリプトは`db/`ディレクトリに配置し、`db/init/init-db.sh`で実行される。
+詳しくは、[データベース定義書](doc/database/README.md)を参照。
 
 ## テスト規約
 
