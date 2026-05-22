@@ -4,22 +4,9 @@
 
 WebGalleryは、Spring Bootで構築されたフォトギャラリーWebアプリケーションです。ユーザーはアカウント登録、メタデータ/EXIFデータ付きの写真アップロード、フォトギャラリーの閲覧、写真のタグ付け、お気に入り管理が可能です。コードベースおよびすべてのドキュメント・コメントは日本語で記述されています。
 
-## 技術スタック
+## 技術スタック・プロジェクト構造
 
-| コンポーネント   | 技術                              |
-|-----------------|-----------------------------------|
-| 言語            | Java 21                           |
-| ビルドツール     | Gradle 8.14（wrapper同梱）         |
-| フレームワーク   | Spring Boot 4.0.6                 |
-| セキュリティ     | Spring Security 7.0.5 (BCrypt + JWT) |
-| フロントエンド   | Next.js (React, TypeScript)       |
-| ORM             | MyBatis 4.0.1                     |
-| データベース     | PostgreSQL (driver 42.7.11)       |
-| コード生成      | Lombok 1.18.42                    |
-| オブジェクトマッピング | ModelMapper 3.2.6            |
-| JWT             | jjwt 0.13.0                       |
-| テスト          | JUnit Jupiter 6.0.3, Mockito 5.20.0|
-| パッケージング   | WAR (Tomcatデプロイ)              |
+詳しくは、[README.md](README.md)を参照。
 
 ## ビルド・実行コマンド
 
@@ -41,103 +28,6 @@ WebGalleryは、Spring Bootで構築されたフォトギャラリーWebアプ�
 
 # PostgreSQLデータベースの起動（アプリ実行前に必要）
 docker-compose up -d
-```
-
-## プロジェクト構造
-
-```
-WebGallery/
-├── docker-compose.yml              # PostgreSQLコンテナ設定
-├── docker/db/                      # DB用Dockerfile
-├── db/                             # データベース初期化スクリプト
-│   ├── init/init-db.sh             # DB初期化エントリーポイント
-│   ├── common/                     # 共通スキーマSQL (account, kbn_mst, location_mst)
-│   └── photo/                      # 写真スキーマSQL (photo_mst, photo_tag_mst, photo_favorite)
-├── scripts/                        # CI/CDスクリプト
-│   └── check-architecture.sh       # アーキテクチャ違反チェッカー
-├── frontend/                       # Next.jsフロントエンド (React)
-│   ├── package.json                # 依存関係とスクリプト
-│   ├── next.config.ts              # Next.js設定
-│   ├── tsconfig.json               # TypeScript設定
-│   ├── eslint.config.mjs           # ESLint設定
-│   ├── jest.config.js              # Jestテスト設定
-│   ├── playwright.config.ts        # Playwright E2Eテスト設定
-│   ├── public/image/               # 静的画像アセット
-│   ├── e2e/                        # Playwright E2Eテスト
-│   └── src/
-│       ├── app/                    # Next.js App Routerページ
-│       │   ├── layout.tsx          # ルートレイアウト
-│       │   ├── page.tsx            # ホームページ
-│       │   ├── globals.css         # グローバルスタイル
-│       │   ├── login/              # ログインページ
-│       │   ├── register/           # アカウント登録ページ
-│       │   ├── account_list/       # アカウント一覧ページ
-│       │   ├── [accountId]/
-│       │   │   └── account_setting/  # アカウント設定ページ
-│       │   ├── photo/[photoAccountId]/
-│       │   │   ├── photo_list/     # フォトギャラリーページ
-│       │   │   ├── photo_detail/   # 写真詳細ページ
-│       │   │   └── photo_setting/  # 写真アップロード・編集ページ
-│       │   └── api/v1/             # Next.js APIルート（プロキシ）
-│       ├── components/layout/      # 共有レイアウトコンポーネント (Header, Footer, Navigation)
-│       └── lib/
-│           ├── api/client.ts       # バックエンドAPIクライアント
-│           └── auth/AuthProvider.tsx  # 認証コンテキストプロバイダー
-├── backend/                        # Spring Bootバックエンド (REST API)
-│   ├── build.gradle                # Gradleビルド設定
-│   ├── settings.gradle             # Gradle設定
-│   ├── gradlew / gradlew.bat      # Gradleラッパースクリプト
-│   ├── gradle/                     # GradleラッパーJAR
-│   ├── config/checkstyle/          # Checkstyle設定
-│   ├── set-env.sh                  # 環境変数設定スクリプト
-│   └── src/
-│       ├── main/
-│       │   ├── java/com/web/gallery/
-│       │   │   ├── WebGalleryApplication.java   # Bootメインクラス
-│       │   │   ├── ServletInitializer.java      # WARデプロイ初期化クラス
-│       │   │   ├── AccountPrincipal.java        # Spring Security UserDetails
-│       │   │   ├── config/                      # 設定クラス (Security, JWT, CORS等)
-│       │   │   ├── constant/                    # 定数 (ApiRoutes, Consts, MessageConst)
-│       │   │   ├── controller/                  # RESTコントローラー (JSON APIのみ)
-│       │   │   │   ├── request/                 # リクエストDTO
-│       │   │   │   └── response/                # レスポンスDTO
-│       │   │   ├── dto/                         # データ転送オブジェクト (マッパー層)
-│       │   │   ├── entity/                      # データベースエンティティ
-│       │   │   ├── enumuration/                 # 列挙型 (パッケージ名のtypoは意図的)
-│       │   │   ├── exception/                   # カスタム例外クラス
-│       │   │   ├── helper/                      # ヘルパーユーティリティ (Session, Kbn, JwtTokenProvider)
-│       │   │   ├── mapper/                      # MyBatisマッパーインターフェース
-│       │   │   ├── model/                       # 転送・ビジネスモデルオブジェクト
-│       │   │   ├── repository/                  # リポジトリインターフェース
-│       │   │   │   └── impl/                    # リポジトリ実装
-│       │   │   ├── service/                     # サービスインターフェース
-│       │   │   │   └── impl/                    # サービス実装
-│       │   │   └── type_handler/                # MyBatis列挙型タイプハンドラー
-│       │   └── resources/
-│       │       ├── application.yml              # アプリケーション設定
-│       │       ├── application-*.yml            # プロファイル別設定 (local, development, prod)
-│       │       ├── messages.properties          # メッセージ文字列
-│       │       └── com/web/gallery/mapper/      # MyBatis XMLマッパーファイル
-│       └── test/
-│           ├── java/com/web/gallery/            # テストクラス（main構造のミラー）
-│           │   ├── controller/                  # RESTコントローラーユニットテスト
-│           │   │   └── integration/             # RESTコントローラー統合テスト
-│           │   ├── mapper/                      # マッパーユニットテスト
-│           │   ├── repository/impl/
-│           │   │   └── integration/             # リポジトリ統合テスト
-│           │   ├── service/impl/
-│           │   │   └── integration/             # サービス統合テスト
-│           │   └── helper/                      # ヘルパーユニットテスト
-│           └── resources/
-│               ├── application-test.yml         # テスト設定
-│               ├── json/                        # テスト用JSONフィクスチャ
-│               │   └── controller/              # コントローラーテスト用リクエストボディ
-│               └── sql/                         # テスト用SQLフィクスチャ
-│                   ├── common/                  # 共有テストデータ
-│                   ├── controller/              # コントローラーテストデータ
-│                   ├── mapper/                  # マッパーテストデータ
-│                   ├── repository/              # リポジトリテストデータ
-│                   └── service/                 # サービステストデータ
 ```
 
 ## アーキテクチャ
@@ -215,16 +105,7 @@ WebGallery/
 
 ## 開発環境セットアップ
 
-1. DockerでPostgreSQLを起動：
-   ```bash
-   docker-compose up -d
-   ```
-2. `db/`のスクリプトによりデータベースが自動初期化される
-3. アプリケーションを実行：
-   ```bash
-   ./backend/gradlew -p backend bootRun
-   ```
-4. バックエンドは`http://localhost:8080`、フロントエンドは`http://localhost:3000`でアクセス
+詳しくは、[README.md](README.md)を参照。
 
 ## 遵守すべき規約
 
