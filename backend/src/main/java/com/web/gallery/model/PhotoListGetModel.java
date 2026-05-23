@@ -21,7 +21,7 @@ import lombok.Value;
 @Builder
 public class PhotoListGetModel {
 	/** ログイン中のアカウントNo */
-	private Integer accountNo;
+	private Long accountNo;
 	
 	/** 写真のアカウントID */
 	@NonNull
@@ -59,7 +59,7 @@ public class PhotoListGetModel {
 	 * @param	photoAccountId	写真のアカウントID
 	 * @return					{@link PhotoListGetModel}
 	 */
-	public static PhotoListGetModel from(PhotoListRequest request, Integer accountNo, String photoAccountId) {
+	public static PhotoListGetModel from(PhotoListRequest request, Long accountNo, String photoAccountId) {
 		Optional<String> tagsOpt = Optional.ofNullable(request.getTagList());
 		List<String> tagList = tagsOpt.map(tag ->
 				new ArrayList<String>(Arrays.asList(tag.replace(Consts.FULL_SPACE, Consts.HALF_SPACE).split(Consts.HALF_SPACE))))

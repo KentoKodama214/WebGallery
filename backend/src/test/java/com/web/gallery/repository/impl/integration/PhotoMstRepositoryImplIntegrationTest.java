@@ -54,25 +54,25 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC14.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1)
-					.photoNo(4)
+					.accountNo(1L)
+					.photoNo(4L)
 					.imageFilePath(imageFilePath)
 					.build();
 			
-			photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 4);
+			photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 4L);
 			
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=4", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getInt("account_no"))
-							.photoNo(rs.getInt("photo_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
-							.locationNo(rs.getInt("location_no"))
+							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
 							.photoJapaneseTitle(rs.getString("photo_japanese_title"))
 							.photoEnglishTitle(rs.getString("photo_english_title"))
@@ -85,13 +85,13 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(4, actualData.getFirst().getPhotoNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(4L, actualData.getFirst().getPhotoNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
-			assertEquals(0, actualData.getFirst().getLocationNo());
+			assertEquals(0L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC14.jpg", actualData.getFirst().getImageFilePath());
 			assertEquals("", actualData.getFirst().getPhotoJapaneseTitle());
 			assertEquals("", actualData.getFirst().getPhotoEnglishTitle());
@@ -110,10 +110,10 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC14.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1)
-					.photoNo(4)
+					.accountNo(1L)
+					.photoNo(4L)
 					.photoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.locationNo(1)
+					.locationNo(1L)
 					.imageFilePath(imageFilePath)
 					.photoJapaneseTitle("タイトル14")
 					.photoEnglishTitle("title14")
@@ -125,20 +125,20 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.iso(100)
 					.build();
 			
-			photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 4);
+			photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 4L);
 			
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=4", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getInt("account_no"))
-							.photoNo(rs.getInt("photo_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
-							.locationNo(rs.getInt("location_no"))
+							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
 							.photoJapaneseTitle(rs.getString("photo_japanese_title"))
 							.photoEnglishTitle(rs.getString("photo_english_title"))
@@ -151,13 +151,13 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(4, actualData.getFirst().getPhotoNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(4L, actualData.getFirst().getPhotoNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
-			assertEquals(1, actualData.getFirst().getLocationNo());
+			assertEquals(1L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC14.jpg", actualData.getFirst().getImageFilePath());
 			assertEquals("タイトル14", actualData.getFirst().getPhotoJapaneseTitle());
 			assertEquals("title14", actualData.getFirst().getPhotoEnglishTitle());
@@ -176,12 +176,12 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC11.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1)
-					.photoNo(1)
+					.accountNo(1L)
+					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
 			
-			assertThrows(RegistFailureException.class , () -> photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 1));
+			assertThrows(RegistFailureException.class , () -> photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 1L));
 		}
 	}
 	
@@ -198,8 +198,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1)
-					.photoNo(1)
+					.accountNo(1L)
+					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
 			
@@ -208,15 +208,15 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getInt("account_no"))
-							.photoNo(rs.getInt("photo_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
-							.locationNo(rs.getInt("location_no"))
+							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
 							.photoJapaneseTitle(rs.getString("photo_japanese_title"))
 							.photoEnglishTitle(rs.getString("photo_english_title"))
@@ -229,13 +229,13 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getPhotoNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getPhotoNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
-			assertEquals(0, actualData.getFirst().getLocationNo());
+			assertEquals(0L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.getFirst().getImageFilePath());
 			assertEquals("", actualData.getFirst().getPhotoJapaneseTitle());
 			assertEquals("", actualData.getFirst().getPhotoEnglishTitle());
@@ -254,10 +254,10 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1)
-					.photoNo(1)
+					.accountNo(1L)
+					.photoNo(1L)
 					.photoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.locationNo(1)
+					.locationNo(1L)
 					.imageFilePath(imageFilePath)
 					.photoJapaneseTitle("タイトル111")
 					.photoEnglishTitle("title111")
@@ -274,15 +274,15 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getInt("account_no"))
-							.photoNo(rs.getInt("photo_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
-							.locationNo(rs.getInt("location_no"))
+							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
 							.photoJapaneseTitle(rs.getString("photo_japanese_title"))
 							.photoEnglishTitle(rs.getString("photo_english_title"))
@@ -295,13 +295,13 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getPhotoNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getPhotoNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
-			assertEquals(1, actualData.getFirst().getLocationNo());
+			assertEquals(1L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.getFirst().getImageFilePath());
 			assertEquals("タイトル111", actualData.getFirst().getPhotoJapaneseTitle());
 			assertEquals("title111", actualData.getFirst().getPhotoEnglishTitle());
@@ -320,8 +320,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC999.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1)
-					.photoNo(9)
+					.accountNo(1L)
+					.photoNo(9L)
 					.imageFilePath(imageFilePath)
 					.build();
 			
@@ -342,8 +342,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC11.jpg";
 			
 			PhotoDeleteModel photoDeleteModel = PhotoDeleteModel.builder()
-					.accountNo(1)
-					.photoNo(1)
+					.accountNo(1L)
+					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
 			
@@ -352,15 +352,15 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getInt("account_no"))
-							.photoNo(rs.getInt("photo_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
-							.locationNo(rs.getInt("location_no"))
+							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
 							.photoJapaneseTitle(rs.getString("photo_japanese_title"))
 							.photoEnglishTitle(rs.getString("photo_english_title"))
@@ -374,13 +374,13 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			
 			assertEquals(1, actualData.size());
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getPhotoNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getPhotoNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertTrue(actualData.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
-			assertEquals(1, actualData.getFirst().getLocationNo());
+			assertEquals(1L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC11.jpg", actualData.getFirst().getImageFilePath());
 			assertEquals("タイトル11", actualData.getFirst().getPhotoJapaneseTitle());
 			assertEquals("title11", actualData.getFirst().getPhotoEnglishTitle());
@@ -399,8 +399,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC11.jpg";
 			
 			PhotoDeleteModel photoDeleteModel = PhotoDeleteModel.builder()
-					.accountNo(1)
-					.photoNo(9)
+					.accountNo(1L)
+					.photoNo(9L)
 					.imageFilePath(imageFilePath)
 					.build();
 			
@@ -418,14 +418,14 @@ public class PhotoMstRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：getMaxPhotoNoがある場合")
 		void getNewPhotoNo_getMaxPhotoNo_found() {
-			assertEquals(4, photoMstRepositoryImpl.getNewPhotoNo(1));
+			assertEquals(4L, photoMstRepositoryImpl.getNewPhotoNo(1L));
 		}
 		
 		@Test
 		@Order(2)
 		@DisplayName("正常系：getMaxPhotoNoがない場合")
 		void getNewPhotoNo_getMaxPhotoNo_not_found() {
-			assertEquals(1, photoMstRepositoryImpl.getNewPhotoNo(9));
+			assertEquals(1L, photoMstRepositoryImpl.getNewPhotoNo(9L));
 		}
 	}
 	
@@ -447,7 +447,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			);
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();
@@ -467,7 +467,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			);
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(2)
+					.accountNo(2L)
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();
@@ -487,7 +487,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			);
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();
@@ -507,7 +507,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			);
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();
@@ -527,7 +527,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void count_success() {
-			assertEquals(2, photoMstRepositoryImpl.count(1));
+			assertEquals(2, photoMstRepositoryImpl.count(1L));
 		}
 	}
 }

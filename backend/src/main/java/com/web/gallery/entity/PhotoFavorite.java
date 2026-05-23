@@ -15,19 +15,19 @@ import lombok.Data;
 @Builder
 public class PhotoFavorite {
 	/** ID */
-	private Integer id;
+	private Long id;
 
 	/** アカウント番号 */
-	private Integer accountNo;
+	private Long accountNo;
 
 	/** お気に入り写真アカウント番号 */
-	private Integer favoritePhotoAccountNo;
+	private Long favoritePhotoAccountNo;
 
 	/** お気に入り写真番号 */
-	private Integer favoritePhotoNo;
+	private Long favoritePhotoNo;
 
 	/** 作成者 */
-	private Integer createdBy;
+	private Long createdBy;
 
 	/** 作成日時 */
 	private OffsetDateTime createdAt;

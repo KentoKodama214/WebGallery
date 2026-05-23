@@ -107,7 +107,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "aaaaaaaa";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId(accountId)
 					.accountName("AAAAAAAA")
 					.password("$2a$10$password1")
@@ -140,7 +140,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "bbbbbbbb";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2)
+					.accountNo(2L)
 					.accountId(accountId)
 					.accountName("BBBBBBBB")
 					.password("$2a$10$password2")
@@ -171,7 +171,7 @@ public class AccountRestControllerIntegrationTest {
 		@DisplayName("異常系：他人のアカウントIDを指定した場合はForbidden")
 		void getAccount_forbidden() throws Exception {
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
 					.password("$2a$10$password1")
@@ -204,10 +204,10 @@ public class AccountRestControllerIntegrationTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='" + accountId + "'", (rs, rowNum) ->
 					Account.builder()
-						.accountNo(rs.getInt("account_no"))
-						.createdBy(rs.getInt("created_by"))
+						.accountNo(rs.getLong("account_no"))
+						.createdBy(rs.getLong("created_by"))
 						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-						.updatedBy(rs.getInt("updated_by"))
+						.updatedBy(rs.getLong("updated_by"))
 						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 						.isDeleted(rs.getBoolean("is_deleted"))
 						.accountId(rs.getString("account_id"))
@@ -250,9 +250,9 @@ public class AccountRestControllerIntegrationTest {
 			List<Account> actualData = getAccountList(accountId);
 
 			assertEquals(1, actualData.size());
-			assertEquals(4, actualData.getFirst().getAccountNo());
-			assertEquals(0, actualData.getFirst().getCreatedBy());
-			assertEquals(0, actualData.getFirst().getUpdatedBy());
+			assertEquals(4L, actualData.getFirst().getAccountNo());
+			assertEquals(0L, actualData.getFirst().getCreatedBy());
+			assertEquals(0L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals(accountId, actualData.getFirst().getAccountId());
 			assertEquals(accountName, actualData.getFirst().getAccountName());
@@ -318,10 +318,10 @@ public class AccountRestControllerIntegrationTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='" + accountId + "'", (rs, rowNum) ->
 					Account.builder()
-						.accountNo(rs.getInt("account_no"))
-						.createdBy(rs.getInt("created_by"))
+						.accountNo(rs.getLong("account_no"))
+						.createdBy(rs.getLong("created_by"))
 						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-						.updatedBy(rs.getInt("updated_by"))
+						.updatedBy(rs.getLong("updated_by"))
 						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 						.isDeleted(rs.getBoolean("is_deleted"))
 						.accountId(rs.getString("account_id"))
@@ -346,7 +346,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId(accountId)
 					.accountName(accountName)
 					.password("$2a$10$password1")
@@ -373,10 +373,10 @@ public class AccountRestControllerIntegrationTest {
 
 			List<Account> actual = getAccountList(accountId);
 			assertEquals(1, actual.size());
-			assertEquals(1, actual.getFirst().getAccountNo());
-			assertEquals(1, actual.getFirst().getCreatedBy());
+			assertEquals(1L, actual.getFirst().getAccountNo());
+			assertEquals(1L, actual.getFirst().getCreatedBy());
 			assertNotEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getCreatedAt());
-			assertEquals(1, actual.getFirst().getUpdatedBy());
+			assertEquals(1L, actual.getFirst().getUpdatedBy());
 			assertFalse(actual.getFirst().getIsDeleted());
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
@@ -399,7 +399,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
 					.password("$2a$10$password1")
@@ -426,10 +426,10 @@ public class AccountRestControllerIntegrationTest {
 
 			List<Account> actual = getAccountList(accountId);
 			assertEquals(1, actual.size());
-			assertEquals(1, actual.getFirst().getAccountNo());
-			assertEquals(1, actual.getFirst().getCreatedBy());
+			assertEquals(1L, actual.getFirst().getAccountNo());
+			assertEquals(1L, actual.getFirst().getCreatedBy());
 			assertNotEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getCreatedAt());
-			assertEquals(1, actual.getFirst().getUpdatedBy());
+			assertEquals(1L, actual.getFirst().getUpdatedBy());
 			assertFalse(actual.getFirst().getIsDeleted());
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
@@ -452,7 +452,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId(accountId)
 					.accountName(accountName)
 					.password("$2a$10$password1")
@@ -479,10 +479,10 @@ public class AccountRestControllerIntegrationTest {
 
 			List<Account> actual = getAccountList(accountId);
 			assertEquals(1, actual.size());
-			assertEquals(1, actual.getFirst().getAccountNo());
-			assertEquals(1, actual.getFirst().getCreatedBy());
+			assertEquals(1L, actual.getFirst().getAccountNo());
+			assertEquals(1L, actual.getFirst().getCreatedBy());
 			assertNotEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getCreatedAt());
-			assertEquals(1, actual.getFirst().getUpdatedBy());
+			assertEquals(1L, actual.getFirst().getUpdatedBy());
 			assertFalse(actual.getFirst().getIsDeleted());
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
@@ -505,7 +505,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
 					.password("$2a$10$password1")
@@ -532,10 +532,10 @@ public class AccountRestControllerIntegrationTest {
 
 			List<Account> actual = getAccountList(accountId);
 			assertEquals(1, actual.size());
-			assertEquals(1, actual.getFirst().getAccountNo());
-			assertEquals(1, actual.getFirst().getCreatedBy());
+			assertEquals(1L, actual.getFirst().getAccountNo());
+			assertEquals(1L, actual.getFirst().getCreatedBy());
 			assertNotEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getCreatedAt());
-			assertEquals(1, actual.getFirst().getUpdatedBy());
+			assertEquals(1L, actual.getFirst().getUpdatedBy());
 			assertFalse(actual.getFirst().getIsDeleted());
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
@@ -557,7 +557,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
 					.password("$2a$10$password1")
@@ -590,7 +590,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
 					.password("$2a$10$password1")
@@ -617,7 +617,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
 					.password("$2a$10$password1")
@@ -645,7 +645,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName(accountName)
 					.password("$2a$10$password1")
@@ -673,7 +673,7 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(9)
+					.accountNo(9L)
 					.accountId(accountId)
 					.accountName(accountName)
 					.password("$2a$10$password1")

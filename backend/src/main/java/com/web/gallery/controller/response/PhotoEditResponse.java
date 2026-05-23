@@ -21,7 +21,7 @@ public class PhotoEditResponse {
 	private String message;
 
 	/** 写真番号 */
-	private Integer photoNo;
+	private Long photoNo;
 
 	/** 画像ファイルパス */
 	private String imageFilePath;
@@ -34,7 +34,7 @@ public class PhotoEditResponse {
 	 * @param	imageFilePath	画像ファイルパス
 	 * @return					{@link PhotoEditResponse}
 	 */
-	public static PhotoEditResponse of(String message, Integer photoNo, String imageFilePath) {
+	public static PhotoEditResponse of(String message, Long photoNo, String imageFilePath) {
 		return PhotoEditResponse.builder()
 				.httpStatus(HttpStatus.OK.value())
 				.isSuccess(true)

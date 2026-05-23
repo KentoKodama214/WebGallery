@@ -40,9 +40,9 @@ public class PhotoFavoriteServiceImplTest {
 		@DisplayName("正常系")
 		void addFavorite_success() throws RegistFailureException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(1)
-					.favoritePhotoAccountNo(1)
-					.favoritePhotoNo(1)
+					.accountNo(1L)
+					.favoritePhotoAccountNo(1L)
+					.favoritePhotoNo(1L)
 					.build();
 			doNothing().when(photoFavoriteRepositoryImpl).regist(photoFavoriteModel);
 			photoFavoriteServiceImpl.addFavorite(photoFavoriteModel);
@@ -53,9 +53,9 @@ public class PhotoFavoriteServiceImplTest {
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void addFavorite_RegistFailureException() throws RegistFailureException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(1)
-					.favoritePhotoAccountNo(1)
-					.favoritePhotoNo(1)
+					.accountNo(1L)
+					.favoritePhotoAccountNo(1L)
+					.favoritePhotoNo(1L)
 					.build();
 			doThrow(RegistFailureException.class).when(photoFavoriteRepositoryImpl).regist(photoFavoriteModel);
 			assertThrows(RegistFailureException.class, () -> photoFavoriteServiceImpl.addFavorite(photoFavoriteModel));
@@ -71,9 +71,9 @@ public class PhotoFavoriteServiceImplTest {
 		@DisplayName("正常系")
 		void deleteFavorite_success() throws UpdateFailureException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(1)
-					.favoritePhotoAccountNo(1)
-					.favoritePhotoNo(1)
+					.accountNo(1L)
+					.favoritePhotoAccountNo(1L)
+					.favoritePhotoNo(1L)
 					.build();
 			ArgumentCaptor<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteDeleteModel.class);
 			doNothing().when(photoFavoriteRepositoryImpl).delete(photoFavoriteDeleteModelCaptor.capture());
@@ -81,9 +81,9 @@ public class PhotoFavoriteServiceImplTest {
 			photoFavoriteServiceImpl.deleteFavorite(photoFavoriteModel);
 			
 			PhotoFavoriteDeleteModel photoFavoriteDeleteModel = photoFavoriteDeleteModelCaptor.getValue();
-			assertEquals(1, photoFavoriteDeleteModel.getAccountNo());
-			assertEquals(1, photoFavoriteDeleteModel.getFavoritePhotoAccountNo());
-			assertEquals(1, photoFavoriteDeleteModel.getFavoritePhotoNo());
+			assertEquals(1L, photoFavoriteDeleteModel.getAccountNo());
+			assertEquals(1L, photoFavoriteDeleteModel.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavoriteDeleteModel.getFavoritePhotoNo());
 		}
 		
 		@Test
@@ -91,9 +91,9 @@ public class PhotoFavoriteServiceImplTest {
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void deleteFavorite_UpdateFailureException() throws UpdateFailureException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(1)
-					.favoritePhotoAccountNo(1)
-					.favoritePhotoNo(1)
+					.accountNo(1L)
+					.favoritePhotoAccountNo(1L)
+					.favoritePhotoNo(1L)
 					.build();
 			ArgumentCaptor<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteDeleteModel.class);
 			doThrow(UpdateFailureException.class).when(photoFavoriteRepositoryImpl).delete(photoFavoriteDeleteModelCaptor.capture());
@@ -101,9 +101,9 @@ public class PhotoFavoriteServiceImplTest {
 			assertThrows(UpdateFailureException.class, () ->photoFavoriteServiceImpl.deleteFavorite(photoFavoriteModel));
 			
 			PhotoFavoriteDeleteModel photoFavoriteDeleteModel = photoFavoriteDeleteModelCaptor.getValue();
-			assertEquals(1, photoFavoriteDeleteModel.getAccountNo());
-			assertEquals(1, photoFavoriteDeleteModel.getFavoritePhotoAccountNo());
-			assertEquals(1, photoFavoriteDeleteModel.getFavoritePhotoNo());
+			assertEquals(1L, photoFavoriteDeleteModel.getAccountNo());
+			assertEquals(1L, photoFavoriteDeleteModel.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavoriteDeleteModel.getFavoritePhotoNo());
 		}
 	}
 }

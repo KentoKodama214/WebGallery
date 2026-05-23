@@ -11,9 +11,9 @@ import lombok.Value;
 @Builder
 public class PhotoGetModel {
 	/** ログイン中のアカウントNo */
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** 写真のアカウントNo */
 	@NonNull
-	private Integer photoAccountNo;
+	private Long photoAccountNo;
 }

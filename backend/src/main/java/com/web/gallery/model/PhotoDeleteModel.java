@@ -14,11 +14,11 @@ import lombok.Value;
 public class PhotoDeleteModel {
 	/** アカウント番号 */
 	@NonNull
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** 写真番号 */
 	@NonNull
-	private Integer photoNo;
+	private Long photoNo;
 	
 	/** 画像ファイルパス */
 	@NonNull

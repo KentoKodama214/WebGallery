@@ -34,7 +34,7 @@
 			token_hash = #{tokenHash}
 	</select>
 
-	<update id="revokeAllByAccountNo" parameterType="Integer">
+	<update id="revokeAllByAccountNo" parameterType="Long">
 		UPDATE common.refresh_token
 		SET is_revoked = TRUE
 		WHERE account_no = #{accountNo}

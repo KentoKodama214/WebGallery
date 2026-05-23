@@ -22,16 +22,16 @@ import lombok.Data;
 @Builder
 public class Account {
 	/** アカウント番号 */
-	private Integer accountNo;
+	private Long accountNo;
 
 	/** 作成者 */
-	private Integer createdBy;
+	private Long createdBy;
 
 	/** 作成日時 */
 	private OffsetDateTime createdAt;
 
 	/** 更新者 */
-	private Integer updatedBy;
+	private Long updatedBy;
 
 	/** 更新日時 */
 	private OffsetDateTime updatedAt;
@@ -89,8 +89,8 @@ public class Account {
 	 */
 	public static Account from(AccountModel model, PasswordEncoder passwordEncoder) {
 		return Account.builder()
-				.createdBy(0)
-				.updatedBy(0)
+				.createdBy(0L)
+				.updatedBy(0L)
 				.accountId(model.getAccountId())
 				.accountName(model.getAccountName())
 				.password(passwordEncoder.encode(model.getPassword()))
@@ -163,7 +163,7 @@ public class Account {
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link Account}
 	 */
-	public static Account conditionByAccountNo(Integer accountNo) {
+	public static Account conditionByAccountNo(Long accountNo) {
 		return Account.builder()
 				.accountNo(accountNo)
 				.build();
@@ -188,7 +188,7 @@ public class Account {
 	 * @param	accountId	アカウントID
 	 * @return				{@link Account}
 	 */
-	public static Account conditionForExistCheck(Integer accountNo, String accountId) {
+	public static Account conditionForExistCheck(Long accountNo, String accountId) {
 		return Account.builder()
 				.accountNo(accountNo)
 				.accountId(accountId)

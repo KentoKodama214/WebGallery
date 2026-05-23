@@ -17,7 +17,7 @@ import lombok.Value;
 @Builder
 public class RefreshTokenModel {
 	/** アカウント番号 */
-	private Integer accountNo;
+	private Long accountNo;
 
 	/** トークンハッシュ */
 	private String tokenHash;

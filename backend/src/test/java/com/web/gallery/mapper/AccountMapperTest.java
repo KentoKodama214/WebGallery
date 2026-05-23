@@ -45,14 +45,14 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのselectで1件の場合")
 		void select_by_accountNo() {
-			Account account = Account.builder().accountNo(1).build();
+			Account account = Account.builder().accountNo(1L).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(1)
-					.createdBy(1)
+					.accountNo(1L)
+					.createdBy(1L)
 					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(1)
+					.updatedBy(1L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("aaaaaaaa")
@@ -83,10 +83,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 		
 			Account expectedAccount = Account.builder()
-					.accountNo(9)
-					.createdBy(9)
+					.accountNo(9L)
+					.createdBy(9L)
 					.createdAt(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(9)
+					.updatedBy(9L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(true)
 					.accountId("iiiiiiii")
@@ -117,10 +117,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(1)
-					.createdBy(1)
+					.accountNo(1L)
+					.createdBy(1L)
 					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(1)
+					.updatedBy(1L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("aaaaaaaa")
@@ -151,10 +151,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(1)
-					.createdBy(1)
+					.accountNo(1L)
+					.createdBy(1L)
 					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(1)
+					.updatedBy(1L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("aaaaaaaa")
@@ -185,10 +185,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(1)
-					.createdBy(1)
+					.accountNo(1L)
+					.createdBy(1L)
 					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(1)
+					.updatedBy(1L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("aaaaaaaa")
@@ -219,10 +219,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(1)
-					.createdBy(1)
+					.accountNo(1L)
+					.createdBy(1L)
 					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(1)
+					.updatedBy(1L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("aaaaaaaa")
@@ -253,10 +253,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(2)
-					.createdBy(2)
+					.accountNo(2L)
+					.createdBy(2L)
 					.createdAt(OffsetDateTime.of(2000, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(2)
+					.updatedBy(2L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("bbbbbbbb")
@@ -287,10 +287,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(3)
-					.createdBy(3)
+					.accountNo(3L)
+					.createdBy(3L)
 					.createdAt(OffsetDateTime.of(2000, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(3)
+					.updatedBy(3L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("cccccccc")
@@ -321,10 +321,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(4)
-					.createdBy(4)
+					.accountNo(4L)
+					.createdBy(4L)
 					.createdAt(OffsetDateTime.of(2000, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(4)
+					.updatedBy(4L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("dddddddd")
@@ -355,10 +355,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(5)
-					.createdBy(5)
+					.accountNo(5L)
+					.createdBy(5L)
 					.createdAt(OffsetDateTime.of(2000, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(5)
+					.updatedBy(5L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("eeeeeeee")
@@ -389,10 +389,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(6)
-					.createdBy(6)
+					.accountNo(6L)
+					.createdBy(6L)
 					.createdAt(OffsetDateTime.of(2000, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(6)
+					.updatedBy(6L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("ffffffff")
@@ -423,10 +423,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(7)
-					.createdBy(7)
+					.accountNo(7L)
+					.createdBy(7L)
 					.createdAt(OffsetDateTime.of(2000, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(7)
+					.updatedBy(7L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("gggggggg")
@@ -457,10 +457,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(8)
-					.createdBy(8)
+					.accountNo(8L)
+					.createdBy(8L)
 					.createdAt(OffsetDateTime.of(2000, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(8)
+					.updatedBy(8L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("hhhhhhhh")
@@ -487,7 +487,7 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：selectで0件の場合")
 		void select_not_found() {
-			Account account = Account.builder().accountNo(99).build();
+			Account account = Account.builder().accountNo(99L).build();
 			List<Account> actual = accountMapper.select(account);
 			List<Account> expected = new ArrayList<Account>();
 			
@@ -503,10 +503,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount1 = Account.builder()
-					.accountNo(9)
-					.createdBy(9)
+					.accountNo(9L)
+					.createdBy(9L)
 					.createdAt(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(9)
+					.updatedBy(9L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(true)
 					.accountId("iiiiiiii")
@@ -523,10 +523,10 @@ public class AccountMapperTest {
 					.build();
 			
 			Account expectedAccount2 = Account.builder()
-					.accountNo(10)
-					.createdBy(10)
+					.accountNo(10L)
+					.createdBy(10L)
 					.createdAt(OffsetDateTime.of(2000, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(10)
+					.updatedBy(10L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("jjjjjjjj")
@@ -564,10 +564,10 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount1 = Account.builder()
-					.accountNo(12)
-					.createdBy(12)
+					.accountNo(12L)
+					.createdBy(12L)
 					.createdAt(OffsetDateTime.of(2000, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(12)
+					.updatedBy(12L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("llllllll")
@@ -601,7 +601,7 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのcount")
 		void count_by_accountNo() {
-			Account account = Account.builder().accountNo(1).build();
+			Account account = Account.builder().accountNo(1L).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -720,7 +720,7 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：countで0件の場合")
 		void count_not_found() {
-			Account account = Account.builder().accountNo(99).build();
+			Account account = Account.builder().accountNo(99L).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(0, actual);
 		}
@@ -761,10 +761,10 @@ public class AccountMapperTest {
 		@DisplayName("正常系：登録成功")
 		void insert_success() {
 			Account insertAccount = Account.builder()
-					.accountNo(1)
-					.createdBy(1)
+					.accountNo(1L)
+					.createdBy(1L)
 					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
-					.updatedBy(1)
+					.updatedBy(1L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
 					.isDeleted(false)
 					.accountId("aaaaaaaa")
@@ -786,10 +786,10 @@ public class AccountMapperTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -806,9 +806,9 @@ public class AccountMapperTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -834,10 +834,10 @@ public class AccountMapperTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM common.account WHERE " + condition, (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -858,17 +858,17 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのupdate")
 		void update_by_accountNo() {
-			Account conditionAccount = Account.builder().accountNo(1).build();
+			Account conditionAccount = Account.builder().accountNo(1L).build();
 			Account targetAccount = Account.builder().loginFailureCount(1).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
 			List<Account> actualData = getAccountList("account_no=1");
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -894,10 +894,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("is_deleted=true");
 			assertEquals(1, actualData.size());
-			assertEquals(9, actualData.getFirst().getAccountNo());
-			assertEquals(9, actualData.getFirst().getCreatedBy());
+			assertEquals(9L, actualData.getFirst().getAccountNo());
+			assertEquals(9L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(9, actualData.getFirst().getUpdatedBy());
+			assertEquals(9L, actualData.getFirst().getUpdatedBy());
 			assertTrue(actualData.getFirst().getIsDeleted());
 			assertEquals("iiiiiiii", actualData.getFirst().getAccountId());
 			assertEquals("IIIIIIII", actualData.getFirst().getAccountName());
@@ -923,10 +923,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("account_id='aaaaaaaa'");
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -952,10 +952,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("account_name='AAAAAAAA'");
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -981,10 +981,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("password='$2a$10$password1'");
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -1010,10 +1010,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("birthdate='1991-02-14'");
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -1039,10 +1039,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("sex_kbn='man'");
 			assertEquals(1, actualData.size());
-			assertEquals(2, actualData.getFirst().getAccountNo());
-			assertEquals(2, actualData.getFirst().getCreatedBy());
+			assertEquals(2L, actualData.getFirst().getAccountNo());
+			assertEquals(2L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(2, actualData.getFirst().getUpdatedBy());
+			assertEquals(2L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("bbbbbbbb", actualData.getFirst().getAccountId());
 			assertEquals("BBBBBBBB", actualData.getFirst().getAccountName());
@@ -1068,10 +1068,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("birthplace_prefecture_kbn_code='Hokkaido'");
 			assertEquals(1, actualData.size());
-			assertEquals(3, actualData.getFirst().getAccountNo());
-			assertEquals(3, actualData.getFirst().getCreatedBy());
+			assertEquals(3L, actualData.getFirst().getAccountNo());
+			assertEquals(3L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(3, actualData.getFirst().getUpdatedBy());
+			assertEquals(3L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("cccccccc", actualData.getFirst().getAccountId());
 			assertEquals("CCCCCCCC", actualData.getFirst().getAccountName());
@@ -1097,10 +1097,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("resident_prefecture_kbn_code='Okinawa'");
 			assertEquals(1, actualData.size());
-			assertEquals(4, actualData.getFirst().getAccountNo());
-			assertEquals(4, actualData.getFirst().getCreatedBy());
+			assertEquals(4L, actualData.getFirst().getAccountNo());
+			assertEquals(4L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(4, actualData.getFirst().getUpdatedBy());
+			assertEquals(4L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("dddddddd", actualData.getFirst().getAccountId());
 			assertEquals("DDDDDDDD", actualData.getFirst().getAccountName());
@@ -1126,10 +1126,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("free_memo='フリーメモ'");
 			assertEquals(1, actualData.size());
-			assertEquals(5, actualData.getFirst().getAccountNo());
-			assertEquals(5, actualData.getFirst().getCreatedBy());
+			assertEquals(5L, actualData.getFirst().getAccountNo());
+			assertEquals(5L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(5, actualData.getFirst().getUpdatedBy());
+			assertEquals(5L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("eeeeeeee", actualData.getFirst().getAccountId());
 			assertEquals("EEEEEEEE", actualData.getFirst().getAccountName());
@@ -1155,10 +1155,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("authority_kbn='mini-user'");
 			assertEquals(1, actualData.size());
-			assertEquals(6, actualData.getFirst().getAccountNo());
-			assertEquals(6, actualData.getFirst().getCreatedBy());
+			assertEquals(6L, actualData.getFirst().getAccountNo());
+			assertEquals(6L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(6, actualData.getFirst().getUpdatedBy());
+			assertEquals(6L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("ffffffff", actualData.getFirst().getAccountId());
 			assertEquals("FFFFFFFF", actualData.getFirst().getAccountName());
@@ -1186,10 +1186,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("last_login_datetime='2024-01-01 00:00:00.000 +0000'");
 			assertEquals(1, actualData.size());
-			assertEquals(7, actualData.getFirst().getAccountNo());
-			assertEquals(7, actualData.getFirst().getCreatedBy());
+			assertEquals(7L, actualData.getFirst().getAccountNo());
+			assertEquals(7L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(7, actualData.getFirst().getUpdatedBy());
+			assertEquals(7L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("gggggggg", actualData.getFirst().getAccountId());
 			assertEquals("GGGGGGGG", actualData.getFirst().getAccountName());
@@ -1215,10 +1215,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("account_no=8");
 			assertEquals(1, actualData.size());
-			assertEquals(8, actualData.getFirst().getAccountNo());
-			assertEquals(8, actualData.getFirst().getCreatedBy());
+			assertEquals(8L, actualData.getFirst().getAccountNo());
+			assertEquals(8L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(8, actualData.getFirst().getUpdatedBy());
+			assertEquals(8L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("hhhhhhhh", actualData.getFirst().getAccountId());
 			assertEquals("HHHHHHHH", actualData.getFirst().getAccountName());
@@ -1237,7 +1237,7 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：更新対象のレコードなし")
 		void update_not_found() {
-			Account conditionAccount = Account.builder().accountNo(99).build();
+			Account conditionAccount = Account.builder().accountNo(99L).build();
 			Account targetAccount = Account.builder().loginFailureCount(0).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(0, actual);
@@ -1257,10 +1257,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("authority_kbn='special-user' order by account_no");
 			assertEquals(2, actualData.size());
-			assertEquals(9, actualData.get(0).getAccountNo());
-			assertEquals(9, actualData.get(0).getCreatedBy());
+			assertEquals(9L, actualData.get(0).getAccountNo());
+			assertEquals(9L, actualData.get(0).getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt());
-			assertEquals(9, actualData.get(0).getUpdatedBy());
+			assertEquals(9L, actualData.get(0).getUpdatedBy());
 			assertTrue(actualData.get(0).getIsDeleted());
 			assertEquals("iiiiiiii", actualData.get(0).getAccountId());
 			assertEquals("IIIIIIII", actualData.get(0).getAccountName());
@@ -1274,10 +1274,10 @@ public class AccountMapperTest {
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getLastLoginDatetime());
 			assertEquals(1, actualData.get(0).getLoginFailureCount());
 			
-			assertEquals(10, actualData.get(1).getAccountNo());
-			assertEquals(10, actualData.get(1).getCreatedBy());
+			assertEquals(10L, actualData.get(1).getAccountNo());
+			assertEquals(10L, actualData.get(1).getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(1).getCreatedAt());
-			assertEquals(10, actualData.get(1).getUpdatedBy());
+			assertEquals(10L, actualData.get(1).getUpdatedBy());
 			assertFalse(actualData.get(1).getIsDeleted());
 			assertEquals("jjjjjjjj", actualData.get(1).getAccountId());
 			assertEquals("JJJJJJJJ", actualData.get(1).getAccountName());
@@ -1309,10 +1309,10 @@ public class AccountMapperTest {
 			
 			List<Account> actualData = getAccountList("account_id='llllllll'");
 			assertEquals(1, actualData.size());
-			assertEquals(12, actualData.getFirst().getAccountNo());
-			assertEquals(12, actualData.getFirst().getCreatedBy());
+			assertEquals(12L, actualData.getFirst().getAccountNo());
+			assertEquals(12L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
-			assertEquals(12, actualData.getFirst().getUpdatedBy());
+			assertEquals(12L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("llllllll", actualData.getFirst().getAccountId());
 			assertEquals("LLLLLLLL", actualData.getFirst().getAccountName());
@@ -1338,10 +1338,10 @@ public class AccountMapperTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM common.account WHERE " + condition, (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -1362,7 +1362,7 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのdelete")
 		void delete_by_accountNo() {
-			Account deleteAccount = Account.builder().accountNo(1).build();
+			Account deleteAccount = Account.builder().accountNo(1L).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1559,7 +1559,7 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：削除対象のレコードなし")
 		void delete_not_found() {
-			Account deleteAccount = Account.builder().accountNo(99).build();
+			Account deleteAccount = Account.builder().accountNo(99L).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(0, actual);
 			
@@ -1646,7 +1646,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：アカウント番号以外で、アカウントIDが一致するアカウントが存在しない")
 		void isExistAccount_by_accountId_and_accountNo_exists() {
 			Account account = Account.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.build();
 			Boolean isExist = accountMapper.isExistAccount(account);
@@ -1657,7 +1657,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：アカウント番号以外で、アカウントIDが一致するアカウントが存在する")
 		void isExistAccount_by_accountId_and_accountNo_not_exist() {
 			Account account = Account.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("bbbbbbbb")
 					.build();
 			Boolean isExist = accountMapper.isExistAccount(account);

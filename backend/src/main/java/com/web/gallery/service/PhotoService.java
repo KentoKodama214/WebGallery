@@ -43,7 +43,7 @@ public interface PhotoService {
 	 * @throws	UpdateFailureException	更新に失敗した場合
 	 * @return							登録・更新した写真番号
 	 */
-	Integer savePhotos(String accountId, List<PhotoDetailModel> photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException;
+	Long savePhotos(String accountId, List<PhotoDetailModel> photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException;
 	
 	/**
 	 * 写真を削除する
@@ -60,5 +60,5 @@ public interface PhotoService {
 	 * @param	accountNo	アカウント番号
 	 * @return				上限に達している場合、true
 	 */
-	Boolean isReachedUpperLimit(Integer accountNo);
+	Boolean isReachedUpperLimit(Long accountNo);
 }

@@ -67,7 +67,7 @@ public class PhotoFavoriteControllerTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void addFavorite_success() throws Exception {
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoFavoriteModel> photoFavoriteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteModel.class);
 			doNothing().when(photoFavoriteServiceImpl).addFavorite(photoFavoriteModelCaptor.capture());
@@ -81,9 +81,9 @@ public class PhotoFavoriteControllerTest {
 				.andExpect(jsonPath("$.message").value("お気に入りに追加しました。"));
 
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
-			assertEquals(1, photoFavoriteModel.getAccountNo());
-			assertEquals(2, photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(1L, photoFavoriteModel.getAccountNo());
+			assertEquals(2L, photoFavoriteModel.getFavoritePhotoAccountNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
 		}
 
 		@Test
@@ -103,7 +103,7 @@ public class PhotoFavoriteControllerTest {
 		@Order(3)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void addFavorite_RegistFailureException() throws Exception {
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoFavoriteModel> photoFavoriteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteModel.class);
 			doThrow(RegistFailureException.class).when(photoFavoriteServiceImpl).addFavorite(photoFavoriteModelCaptor.capture());
@@ -114,9 +114,9 @@ public class PhotoFavoriteControllerTest {
 				.andExpect(status().isConflict());
 
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
-			assertEquals(1, photoFavoriteModel.getAccountNo());
-			assertEquals(2, photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(1L, photoFavoriteModel.getAccountNo());
+			assertEquals(2L, photoFavoriteModel.getFavoritePhotoAccountNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
 		}
 	}
 
@@ -128,7 +128,7 @@ public class PhotoFavoriteControllerTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void deleteFavorite_success() throws Exception {
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoFavoriteModel> photoFavoriteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteModel.class);
 			doNothing().when(photoFavoriteServiceImpl).deleteFavorite(photoFavoriteModelCaptor.capture());
@@ -142,9 +142,9 @@ public class PhotoFavoriteControllerTest {
 				.andExpect(jsonPath("$.message").value("お気に入りを解除しました。"));
 
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
-			assertEquals(1, photoFavoriteModel.getAccountNo());
-			assertEquals(2, photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(1L, photoFavoriteModel.getAccountNo());
+			assertEquals(2L, photoFavoriteModel.getFavoritePhotoAccountNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
 		}
 
 		@Test
@@ -164,7 +164,7 @@ public class PhotoFavoriteControllerTest {
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void deleteFavorite_UpdateFailureException() throws Exception {
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoFavoriteModel> photoFavoriteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteModel.class);
 			doThrow(UpdateFailureException.class).when(photoFavoriteServiceImpl).deleteFavorite(photoFavoriteModelCaptor.capture());
@@ -175,9 +175,9 @@ public class PhotoFavoriteControllerTest {
 				.andExpect(status().isConflict());
 
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
-			assertEquals(1, photoFavoriteModel.getAccountNo());
-			assertEquals(2, photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(1L, photoFavoriteModel.getAccountNo());
+			assertEquals(2L, photoFavoriteModel.getFavoritePhotoAccountNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
 		}
 	}
 }

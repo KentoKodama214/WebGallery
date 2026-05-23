@@ -37,8 +37,8 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		return jdbcTemplate.query(
 			"SELECT * FROM common.refresh_token WHERE token_hash = ?",
 			(rs, rowNum) -> RefreshToken.builder()
-				.tokenId(rs.getInt("token_id"))
-				.accountNo(rs.getInt("account_no"))
+				.tokenId(rs.getLong("token_id"))
+				.accountNo(rs.getLong("account_no"))
 				.tokenHash(rs.getString("token_hash"))
 				.expiresAt(rs.getObject("expires_at", OffsetDateTime.class))
 				.createdAt(rs.getObject("created_at", OffsetDateTime.class))
@@ -48,12 +48,12 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		);
 	}
 
-	private List<RefreshToken> getRefreshTokensByAccountNo(Integer accountNo) {
+	private List<RefreshToken> getRefreshTokensByAccountNo(Long accountNo) {
 		return jdbcTemplate.query(
 			"SELECT * FROM common.refresh_token WHERE account_no = ?",
 			(rs, rowNum) -> RefreshToken.builder()
-				.tokenId(rs.getInt("token_id"))
-				.accountNo(rs.getInt("account_no"))
+				.tokenId(rs.getLong("token_id"))
+				.accountNo(rs.getLong("account_no"))
 				.tokenHash(rs.getString("token_hash"))
 				.expiresAt(rs.getObject("expires_at", OffsetDateTime.class))
 				.createdAt(rs.getObject("created_at", OffsetDateTime.class))
@@ -78,7 +78,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@DisplayName("正常系：リフレッシュトークンを保存する")
 		void save_success() {
 			RefreshTokenModel refreshToken = RefreshTokenModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.tokenHash("new_token_hash")
 					.expiresAt(OffsetDateTime.now().plusDays(7))
 					.build();
@@ -87,7 +87,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 
 			List<RefreshToken> actualData = getRefreshTokenData("new_token_hash");
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
 			assertEquals("new_token_hash", actualData.getFirst().getTokenHash());
 			assertFalse(actualData.getFirst().getIsRevoked());
 			assertNotNull(actualData.getFirst().getCreatedAt());
@@ -108,7 +108,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash("valid_token_hash_1");
 
 			assertNotNull(actual);
-			assertEquals(1, actual.getAccountNo());
+			assertEquals(1L, actual.getAccountNo());
 			assertEquals("valid_token_hash_1", actual.getTokenHash());
 			assertFalse(actual.getIsRevoked());
 		}
@@ -144,9 +144,9 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@DisplayName("正常系：アカウント番号に該当する有効なリフレッシュトークンをすべて無効化する")
 		void revokeAllByAccountNo_success() {
 			// アカウント1の有効なトークンが2件（token_id=1,5）、無効化済み1件（token_id=2）、期限切れ1件（token_id=3）
-			refreshTokenRepositoryImpl.revokeAllByAccountNo(1);
+			refreshTokenRepositoryImpl.revokeAllByAccountNo(1L);
 
-			List<RefreshToken> account1Tokens = getRefreshTokensByAccountNo(1);
+			List<RefreshToken> account1Tokens = getRefreshTokensByAccountNo(1L);
 			// アカウント1のトークンはすべて無効化されている
 			for (RefreshToken token : account1Tokens) {
 				assertTrue(token.getIsRevoked());
@@ -162,7 +162,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：該当するトークンが存在しない場合もエラーにならない")
 		void revokeAllByAccountNo_no_tokens() {
-			assertDoesNotThrow(() -> refreshTokenRepositoryImpl.revokeAllByAccountNo(999));
+			assertDoesNotThrow(() -> refreshTokenRepositoryImpl.revokeAllByAccountNo(999L));
 		}
 	}
 

@@ -12,15 +12,15 @@ import lombok.Data;
 public class PhotoTagSaveRequest {
 	/** アカウント番号 */
 	@Positive(message = "{validation.common.positive}")
-	private Integer accountNo;
+	private Long accountNo;
 
 	/** 写真番号 */
 	@Positive(message = "{validation.common.positive}")
-	private Integer photoNo;
+	private Long photoNo;
 
 	/** タグ番号 */
 	@Positive(message = "{validation.common.positive}")
-	private Integer tagNo;
+	private Long tagNo;
 
 	/** タグ日本語名 */
 	@NotBlank(message = "{validation.common.notBlank}")

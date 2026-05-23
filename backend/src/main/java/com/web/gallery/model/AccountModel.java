@@ -19,7 +19,7 @@ import lombok.Value;
 @Builder
 public class AccountModel {
 	/** アカウント番号 */
-	private Integer accountNo;
+	private Long accountNo;
 	
 	/** アカウントID */
 	private String accountId;
@@ -116,7 +116,7 @@ public class AccountModel {
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link AccountModel}
 	 */
-	public static AccountModel from(AccountUpdateRequest request, Integer accountNo) {
+	public static AccountModel from(AccountUpdateRequest request, Long accountNo) {
 		return AccountModel.builder()
 				.accountNo(accountNo)
 				.accountId(request.getAccountId())

@@ -6,17 +6,17 @@ DROP TABLE IF EXISTS photo.photo_mst;
 CREATE TABLE photo.photo_mst
 (
 	-- ID
-	id serial NOT NULL,
+	id bigserial NOT NULL,
 	-- アカウント番号
-	account_no int NOT NULL,
+	account_no bigint NOT NULL,
 	-- 写真番号
-	photo_no int NOT NULL,
+	photo_no bigint NOT NULL,
 	-- 作成者
-	created_by int NOT NULL,
+	created_by bigint NOT NULL,
 	-- 作成日時
 	created_at timestamp with time zone NOT NULL,
 	-- 更新者
-	updated_by int NOT NULL,
+	updated_by bigint NOT NULL,
 	-- 更新日時
 	updated_at timestamp with time zone NOT NULL,
 	-- 削除フラグ
@@ -24,7 +24,7 @@ CREATE TABLE photo.photo_mst
 	-- 撮影日時
 	photo_at timestamp with time zone NOT NULL,
 	-- ロケーション番号
-	location_no int NOT NULL,
+	location_no bigint NOT NULL,
 	-- 画像ファイルパス: 空文字不可
 	image_file_path text NOT NULL,
 	-- 写真タイトル日本語名: 空文字不可

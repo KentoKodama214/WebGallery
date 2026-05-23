@@ -45,14 +45,14 @@ public class PhotoDetailMapperTest {
 		@DisplayName("正常系：selectで1件以上の場合")
 		void getPhotoList_some_photos() {
 			PhotoListGetDto photoSelectDto = new PhotoListGetDto();
-			photoSelectDto.setAccountNo(1);
-			photoSelectDto.setPhotoAccountNo(1);
+			photoSelectDto.setAccountNo(1L);
+			photoSelectDto.setPhotoAccountNo(1L);
 			
 			List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
 			
 			PhotoDto actualPhotoDto1 = actual.stream().sorted(Comparator.comparing(PhotoDto::getPhotoNo)).toList().getFirst();
-			assertEquals(1, actualPhotoDto1.getAccountNo());
-			assertEquals(1, actualPhotoDto1.getPhotoNo());
+			assertEquals(1L, actualPhotoDto1.getAccountNo());
+			assertEquals(1L, actualPhotoDto1.getPhotoNo());
 			assertEquals(2, actualPhotoDto1.getFavoriteCount());
 			assertEquals(true, actualPhotoDto1.getIsFavorite());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoDto1.getPhotoAt());
@@ -61,8 +61,8 @@ public class PhotoDetailMapperTest {
 			assertEquals(DirectionEnum.VERTICAL, actualPhotoDto1.getDirectionKbn());
 			
 			PhotoDto actualPhotoDto2 = actual.stream().sorted(Comparator.comparing(PhotoDto::getPhotoNo)).toList().getLast();
-			assertEquals(1, actualPhotoDto2.getAccountNo());
-			assertEquals(2, actualPhotoDto2.getPhotoNo());
+			assertEquals(1L, actualPhotoDto2.getAccountNo());
+			assertEquals(2L, actualPhotoDto2.getPhotoNo());
 			assertEquals(1, actualPhotoDto2.getFavoriteCount());
 			assertEquals(false, actualPhotoDto2.getIsFavorite());
 			assertEquals(OffsetDateTime.of(2021, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoDto2.getPhotoAt());
@@ -76,8 +76,8 @@ public class PhotoDetailMapperTest {
 		@DisplayName("正常系：selectで0件の場合")
 		void getPhotoList_not_found() {
 			PhotoListGetDto photoSelectDto = new PhotoListGetDto();
-			photoSelectDto.setAccountNo(1);
-			photoSelectDto.setPhotoAccountNo(3);
+			photoSelectDto.setAccountNo(1L);
+			photoSelectDto.setPhotoAccountNo(3L);
 			
 			List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
 			assertEquals(new ArrayList<PhotoDto>(), actual);
@@ -95,16 +95,16 @@ public class PhotoDetailMapperTest {
 		@DisplayName("正常系：selectで1件の場合")
 		void getPhotoDetail_found() {
 			PhotoDetailGetDto photoGetDto = new PhotoDetailGetDto();
-			photoGetDto.setAccountNo(1);
-			photoGetDto.setPhotoAccountNo(1);
-			photoGetDto.setPhotoNo(1);
+			photoGetDto.setAccountNo(1L);
+			photoGetDto.setPhotoAccountNo(1L);
+			photoGetDto.setPhotoNo(1L);
 			
 			PhotoDetailDto actual = photoDetailMapper.getPhotoDetail(photoGetDto);
-			assertEquals(1, actual.getAccountNo());
-			assertEquals(1, actual.getPhotoNo());
+			assertEquals(1L, actual.getAccountNo());
+			assertEquals(1L, actual.getPhotoNo());
 			assertEquals(true, actual.getIsFavorite());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt());
-			assertEquals(1, actual.getLocationNo());
+			assertEquals(1L, actual.getLocationNo());
 			assertEquals("住所1", actual.getAddress());
 			assertEquals(0, BigDecimal.valueOf(38.1).compareTo(actual.getLatitude()));
 			assertEquals(0, BigDecimal.valueOf(115.1).compareTo(actual.getLongitude()));
@@ -125,9 +125,9 @@ public class PhotoDetailMapperTest {
 		@DisplayName("正常系：selectで0件の場合")
 		void getPhotoDetail_not_found() {
 			PhotoDetailGetDto photoGetDto = new PhotoDetailGetDto();
-			photoGetDto.setAccountNo(1);
-			photoGetDto.setPhotoAccountNo(3);
-			photoGetDto.setPhotoNo(1);
+			photoGetDto.setAccountNo(1L);
+			photoGetDto.setPhotoAccountNo(3L);
+			photoGetDto.setPhotoNo(1L);
 			
 			PhotoDetailDto actual = photoDetailMapper.getPhotoDetail(photoGetDto);
 			assertNull(actual);

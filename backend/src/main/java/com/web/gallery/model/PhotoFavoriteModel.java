@@ -15,15 +15,15 @@ import lombok.Value;
 public class PhotoFavoriteModel {
 	/** アカウント番号 */
 	@NonNull
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** お気に入り写真アカウント番号 */
 	@NonNull
-	private Integer favoritePhotoAccountNo;
-	
+	private Long favoritePhotoAccountNo;
+
 	/** 写真番号 */
 	@NonNull
-	private Integer favoritePhotoNo;
+	private Long favoritePhotoNo;
 
 	/**
 	 * お気に入り登録リクエストからPhotoFavoriteModelを生成する
@@ -32,7 +32,7 @@ public class PhotoFavoriteModel {
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link PhotoFavoriteModel}
 	 */
-	public static PhotoFavoriteModel from(PhotoFavoriteRegistRequest request, Integer accountNo) {
+	public static PhotoFavoriteModel from(PhotoFavoriteRegistRequest request, Long accountNo) {
 		return PhotoFavoriteModel.builder()
 				.accountNo(accountNo)
 				.favoritePhotoAccountNo(request.getFavoritePhotoAccountNo())
@@ -47,7 +47,7 @@ public class PhotoFavoriteModel {
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link PhotoFavoriteModel}
 	 */
-	public static PhotoFavoriteModel from(PhotoFavoriteDeleteRequest request, Integer accountNo) {
+	public static PhotoFavoriteModel from(PhotoFavoriteDeleteRequest request, Long accountNo) {
 		return PhotoFavoriteModel.builder()
 				.accountNo(accountNo)
 				.favoritePhotoAccountNo(request.getFavoritePhotoAccountNo())

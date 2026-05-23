@@ -43,7 +43,7 @@ public class AccountPrincipal implements UserDetails {
 	 *
 	 * @return	アカウント番号
 	 */
-	public Integer getAccountNo() {
+	public Long getAccountNo() {
 		return accountModel.getAccountNo();
 	}
 

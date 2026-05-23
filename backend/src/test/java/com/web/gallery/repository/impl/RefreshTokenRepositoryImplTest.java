@@ -40,7 +40,7 @@ public class RefreshTokenRepositoryImplTest {
 		@DisplayName("正常系：リフレッシュトークンを保存する")
 		void save_success() {
 			RefreshTokenModel refreshTokenModel = RefreshTokenModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.tokenHash("abc123hash")
 					.expiresAt(OffsetDateTime.now().plusDays(7))
 					.build();
@@ -63,8 +63,8 @@ public class RefreshTokenRepositoryImplTest {
 		void findByTokenHash_success() {
 			OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7);
 			RefreshToken mapperResult = RefreshToken.builder()
-					.tokenId(1)
-					.accountNo(1)
+					.tokenId(1L)
+					.accountNo(1L)
 					.tokenHash("abc123hash")
 					.expiresAt(expiresAt)
 					.isRevoked(false)
@@ -75,7 +75,7 @@ public class RefreshTokenRepositoryImplTest {
 			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash("abc123hash");
 
 			assertNotNull(actual);
-			assertEquals(1, actual.getAccountNo());
+			assertEquals(1L, actual.getAccountNo());
 			assertEquals("abc123hash", actual.getTokenHash());
 			assertEquals(expiresAt, actual.getExpiresAt());
 			assertFalse(actual.getIsRevoked());
@@ -103,11 +103,11 @@ public class RefreshTokenRepositoryImplTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号に該当するリフレッシュトークンをすべて無効化する")
 		void revokeAllByAccountNo_success() {
-			doReturn(2).when(refreshTokenMapper).revokeAllByAccountNo(1);
+			doReturn(2).when(refreshTokenMapper).revokeAllByAccountNo(1L);
 
-			refreshTokenRepositoryImpl.revokeAllByAccountNo(1);
+			refreshTokenRepositoryImpl.revokeAllByAccountNo(1L);
 
-			verify(refreshTokenMapper, times(1)).revokeAllByAccountNo(1);
+			verify(refreshTokenMapper, times(1)).revokeAllByAccountNo(1L);
 		}
 	}
 

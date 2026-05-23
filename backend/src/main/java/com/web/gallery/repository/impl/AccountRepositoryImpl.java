@@ -36,7 +36,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 * 							取得できない場合はnullを返す
 	 */
 	@Override
-	public AccountModel getByAccountNo(Integer accountNo) {
+	public AccountModel getByAccountNo(Long accountNo) {
 		List<Account> accountList = accountMapper.select(Account.conditionByAccountNo(accountNo));
 		return accountList.isEmpty() ? null : AccountModel.from(accountList.getFirst());
 	}
@@ -115,7 +115,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 * @return				true：存在する
 	 */
 	@Override
-	public Boolean isExistAccount(Integer accountNo, String accountId) {
+	public Boolean isExistAccount(Long accountNo, String accountId) {
 		return accountMapper.isExistAccount(Account.conditionForExistCheck(accountNo, accountId));
 	}
 	

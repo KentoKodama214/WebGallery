@@ -12,10 +12,10 @@ import lombok.Data;
 @Data
 public class PhotoDto {
 	/** アカウントNo */
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** 写真番号 */
-	private Integer photoNo;
+	private Long photoNo;
 
 	/** お気に入り数 */
 	private Integer favoriteCount;

@@ -19,22 +19,22 @@ import lombok.Data;
 @Builder
 public class PhotoMst {
 	/** ID */
-	private Integer id;
+	private Long id;
 
 	/** アカウント番号 */
-	private Integer accountNo;
+	private Long accountNo;
 
 	/** 写真番号 */
-	private Integer photoNo;
+	private Long photoNo;
 
 	/** 作成者 */
-	private Integer createdBy;
+	private Long createdBy;
 
 	/** 作成日時 */
 	private OffsetDateTime createdAt;
 
 	/** 更新者 */
-	private Integer updatedBy;
+	private Long updatedBy;
 
 	/** 更新日時 */
 	private OffsetDateTime updatedAt;
@@ -46,7 +46,7 @@ public class PhotoMst {
 	private OffsetDateTime photoAt;
 
 	/** ロケーション番号 */
-	private Integer locationNo;
+	private Long locationNo;
 
 	/** 画像ファイルパス */
 	private String imageFilePath;
@@ -87,7 +87,7 @@ public class PhotoMst {
 	 * @param	newPhotoNo	新規採番した写真番号
 	 * @return				{@link PhotoMst}
 	 */
-	public static PhotoMst fromForRegist(PhotoDetailModel model, String filePath, Integer newPhotoNo) {
+	public static PhotoMst fromForRegist(PhotoDetailModel model, String filePath, Long newPhotoNo) {
 		return PhotoMst.builder()
 				.accountNo(model.getAccountNo())
 				.photoNo(newPhotoNo)
@@ -96,7 +96,7 @@ public class PhotoMst {
 				.photoAt(
 					Optional.ofNullable(model.getPhotoAt()).orElse(Consts.MIN_OFFSET_DATE_TIME))
 				.locationNo(
-					Optional.ofNullable(model.getLocationNo()).orElse(0))
+					Optional.ofNullable(model.getLocationNo()).orElse(0L))
 				.imageFilePath(filePath)
 				.photoJapaneseTitle(
 					Optional.ofNullable(model.getPhotoJapaneseTitle()).orElse(Consts.STRING_EMPTY))
@@ -130,7 +130,7 @@ public class PhotoMst {
 				.photoAt(
 					Optional.ofNullable(model.getPhotoAt()).orElse(Consts.MIN_OFFSET_DATE_TIME))
 				.locationNo(
-					Optional.ofNullable(model.getLocationNo()).orElse(0))
+					Optional.ofNullable(model.getLocationNo()).orElse(0L))
 				.imageFilePath(model.getImageFilePath())
 				.photoJapaneseTitle(
 					Optional.ofNullable(model.getPhotoJapaneseTitle()).orElse(Consts.STRING_EMPTY))
@@ -158,7 +158,7 @@ public class PhotoMst {
 	 * @param	photoNo		写真番号
 	 * @return				{@link PhotoMst}
 	 */
-	public static PhotoMst condition(Integer accountNo, Integer photoNo) {
+	public static PhotoMst condition(Long accountNo, Long photoNo) {
 		return PhotoMst.builder()
 				.accountNo(accountNo)
 				.photoNo(photoNo)
@@ -197,7 +197,7 @@ public class PhotoMst {
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link PhotoMst}
 	 */
-	public static PhotoMst conditionForCount(Integer accountNo) {
+	public static PhotoMst conditionForCount(Long accountNo) {
 		return PhotoMst.builder()
 				.accountNo(accountNo)
 				.isDeleted(false)

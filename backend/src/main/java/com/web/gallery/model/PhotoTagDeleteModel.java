@@ -12,9 +12,9 @@ import lombok.Value;
 public class PhotoTagDeleteModel {
 	/** アカウント番号 */
 	@NonNull
-	private Integer accountNo;
+	private Long accountNo;
 
 	/** 写真番号 */
 	@NonNull
-	private Integer photoNo;
+	private Long photoNo;
 }
