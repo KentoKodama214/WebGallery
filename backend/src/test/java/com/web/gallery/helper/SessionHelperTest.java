@@ -49,7 +49,7 @@ public class SessionHelperTest {
 			doReturn(1L).when(accountPrincipal).getAccountNo();
 			
 			Long actual = sessionHelper.getAccountNo();
-			assertEquals(Integer.valueOf(1), actual);
+			assertEquals(Long.valueOf(1L), actual);
 		}
 		
 		@Test
