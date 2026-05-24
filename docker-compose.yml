@@ -18,6 +18,19 @@ services:
       - ./db/photo:/docker-entrypoint-initdb.d/photo
       - ./db/init/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
 
+  schemaspy:
+    image: schemaspy/schemaspy:latest
+    container_name: web-gallery-schemaspy
+    depends_on:
+      - postgres-db
+    volumes:
+      - ./docker/schemaspy:/config
+      - ./doc/database:/output
+    entrypoint: /bin/sh
+    command: /config/run.sh
+    profiles:
+      - docs
+
   postgres-test-db:
     build:
       context: docker/db
