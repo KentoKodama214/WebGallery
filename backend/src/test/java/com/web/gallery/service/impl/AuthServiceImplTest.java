@@ -66,7 +66,7 @@ class AuthServiceImplTest {
 			String password = "password1";
 
 			AccountPrincipal principal = mock(AccountPrincipal.class);
-			when(principal.getAccountNo()).thenReturn(1);
+			when(principal.getAccountNo()).thenReturn(1L);
 
 			Authentication authentication = mock(Authentication.class);
 			when(authentication.getPrincipal()).thenReturn(principal);
@@ -85,7 +85,7 @@ class AuthServiceImplTest {
 			assertEquals("refresh-token", result.getRefreshToken());
 			assertEquals(900L, result.getExpiresIn());
 
-			verify(refreshTokenRepository).revokeAllByAccountNo(1);
+			verify(refreshTokenRepository).revokeAllByAccountNo(1L);
 			verify(refreshTokenRepository).save(any(RefreshTokenModel.class));
 		}
 
@@ -121,7 +121,7 @@ class AuthServiceImplTest {
 		void refresh_success() {
 			String refreshToken = "valid-refresh-token";
 			RefreshTokenModel storedToken = RefreshTokenModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.tokenHash("hashed-token")
 					.expiresAt(OffsetDateTime.now().plusDays(7))
 					.isRevoked(false)
@@ -130,10 +130,10 @@ class AuthServiceImplTest {
 			when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(storedToken);
 
 			AccountModel account = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("testuser1")
 					.build();
-			when(accountRepository.getByAccountNo(1)).thenReturn(account);
+			when(accountRepository.getByAccountNo(1L)).thenReturn(account);
 
 			AccountPrincipal principal = mock(AccountPrincipal.class);
 			when(accountServiceImpl.loadUserByUsername("testuser1")).thenReturn(principal);
@@ -151,7 +151,7 @@ class AuthServiceImplTest {
 		@DisplayName("異常系: リフレッシュトークンが無効化されている場合は例外がスローされること")
 		void refresh_revokedToken() {
 			RefreshTokenModel storedToken = RefreshTokenModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.tokenHash("hashed-token")
 					.expiresAt(OffsetDateTime.now().plusDays(7))
 					.isRevoked(true)
@@ -168,7 +168,7 @@ class AuthServiceImplTest {
 		@DisplayName("異常系: リフレッシュトークンの有効期限が切れている場合は例外がスローされること")
 		void refresh_expiredToken() {
 			RefreshTokenModel storedToken = RefreshTokenModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.tokenHash("hashed-token")
 					.expiresAt(OffsetDateTime.now().minusDays(1))
 					.isRevoked(false)

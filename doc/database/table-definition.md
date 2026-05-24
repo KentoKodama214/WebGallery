@@ -37,10 +37,10 @@
 
 | No | カラム名 | データ型 | NOT NULL | デフォルト値 | 説明 |
 |----|----------|----------|----------|-------------|------|
-| 1 | account_no | serial | YES | (自動採番) | アカウント番号 |
-| 2 | created_by | int | YES | - | 作成者 |
+| 1 | account_no | bigserial | YES | (自動採番) | アカウント番号 |
+| 2 | created_by | bigint | YES | - | 作成者 |
 | 3 | created_at | timestamp with time zone | YES | - | 作成日時 |
-| 4 | updated_by | int | YES | - | 更新者 |
+| 4 | updated_by | bigint | YES | - | 更新者 |
 | 5 | updated_at | timestamp with time zone | YES | - | 更新日時 |
 | 6 | is_deleted | boolean | YES | false | 削除フラグ |
 | 7 | account_id | varchar(20) | YES | - | アカウントID（8〜20文字の英数字） |
@@ -117,12 +117,12 @@
 
 | No | カラム名 | データ型 | NOT NULL | デフォルト値 | 説明 |
 |----|----------|----------|----------|-------------|------|
-| 1 | id | serial | YES | (自動採番) | ロケーションID |
-| 2 | account_no | int | YES | - | アカウント番号 |
-| 3 | location_no | int | YES | - | ロケーション番号 |
-| 4 | created_by | int | YES | - | 作成者 |
+| 1 | id | bigserial | YES | (自動採番) | ロケーションID |
+| 2 | account_no | bigint | YES | - | アカウント番号 |
+| 3 | location_no | bigint | YES | - | ロケーション番号 |
+| 4 | created_by | bigint | YES | - | 作成者 |
 | 5 | created_at | timestamp with time zone | YES | - | 作成日時 |
-| 6 | updated_by | int | YES | - | 更新者 |
+| 6 | updated_by | bigint | YES | - | 更新者 |
 | 7 | updated_at | timestamp with time zone | YES | - | 更新日時 |
 | 8 | is_deleted | boolean | YES | false | 削除フラグ |
 | 9 | location_name | text | YES | - | ロケーション名 |
@@ -149,8 +149,8 @@ JWT認証のリフレッシュトークンを管理するテーブル。
 
 | No | カラム名 | データ型 | NOT NULL | デフォルト値 | 説明 |
 |----|----------|----------|----------|-------------|------|
-| 1 | token_id | serial | YES | (自動採番) | トークンID |
-| 2 | account_no | int | YES | - | アカウント番号 |
+| 1 | token_id | bigserial | YES | (自動採番) | トークンID |
+| 2 | account_no | bigint | YES | - | アカウント番号 |
 | 3 | token_hash | varchar(256) | YES | - | トークンハッシュ（SHA-256） |
 | 4 | expires_at | timestamp with time zone | YES | - | 有効期限 |
 | 5 | created_at | timestamp with time zone | YES | NOW() | 作成日時 |
@@ -180,16 +180,16 @@ JWT認証のリフレッシュトークンを管理するテーブル。
 
 | No | カラム名 | データ型 | NOT NULL | デフォルト値 | 説明 |
 |----|----------|----------|----------|-------------|------|
-| 1 | id | serial | YES | (自動採番) | 写真ID |
-| 2 | account_no | int | YES | - | アカウント番号 |
-| 3 | photo_no | int | YES | - | 写真番号 |
-| 4 | created_by | int | YES | - | 作成者 |
+| 1 | id | bigserial | YES | (自動採番) | 写真ID |
+| 2 | account_no | bigint | YES | - | アカウント番号 |
+| 3 | photo_no | bigint | YES | - | 写真番号 |
+| 4 | created_by | bigint | YES | - | 作成者 |
 | 5 | created_at | timestamp with time zone | YES | - | 作成日時 |
-| 6 | updated_by | int | YES | - | 更新者 |
+| 6 | updated_by | bigint | YES | - | 更新者 |
 | 7 | updated_at | timestamp with time zone | YES | - | 更新日時 |
 | 8 | is_deleted | boolean | YES | false | 削除フラグ |
 | 9 | photo_at | timestamp with time zone | YES | - | 撮影日時 |
-| 10 | location_no | int | YES | - | ロケーション番号 |
+| 10 | location_no | bigint | YES | - | ロケーション番号 |
 | 11 | image_file_path | text | YES | - | 画像ファイルパス |
 | 12 | photo_japanese_title | varchar(100) | YES | - | 写真タイトル（日本語） |
 | 13 | photo_english_title | varchar(100) | YES | '""' | 写真タイトル（英語） |
@@ -218,11 +218,11 @@ JWT認証のリフレッシュトークンを管理するテーブル。
 
 | No | カラム名 | データ型 | NOT NULL | デフォルト値 | 説明 |
 |----|----------|----------|----------|-------------|------|
-| 1 | id | serial | YES | (自動採番) | タグID |
-| 2 | account_no | int | YES | - | アカウント番号 |
-| 3 | photo_no | int | YES | - | 写真番号 |
-| 4 | tag_no | int | YES | - | タグ番号 |
-| 5 | created_by | int | YES | - | 作成者 |
+| 1 | id | bigserial | YES | (自動採番) | タグID |
+| 2 | account_no | bigint | YES | - | アカウント番号 |
+| 3 | photo_no | bigint | YES | - | 写真番号 |
+| 4 | tag_no | bigint | YES | - | タグ番号 |
+| 5 | created_by | bigint | YES | - | 作成者 |
 | 6 | created_at | timestamp with time zone | YES | - | 作成日時 |
 | 7 | tag_japanese_name | varchar(20) | YES | - | タグ名（日本語） |
 | 8 | tag_english_name | varchar(20) | YES | '""' | タグ名（英語） |
@@ -245,11 +245,11 @@ JWT認証のリフレッシュトークンを管理するテーブル。
 
 | No | カラム名 | データ型 | NOT NULL | デフォルト値 | 説明 |
 |----|----------|----------|----------|-------------|------|
-| 1 | id | serial | YES | (自動採番) | お気に入りID |
-| 2 | account_no | int | YES | - | アカウント番号（お気に入りしたユーザー） |
-| 3 | favorite_photo_account_no | int | YES | - | 写真所有者のアカウント番号 |
-| 4 | favorite_photo_no | int | YES | - | 写真番号 |
-| 5 | created_by | int | YES | - | 作成者 |
+| 1 | id | bigserial | YES | (自動採番) | お気に入りID |
+| 2 | account_no | bigint | YES | - | アカウント番号（お気に入りしたユーザー） |
+| 3 | favorite_photo_account_no | bigint | YES | - | 写真所有者のアカウント番号 |
+| 4 | favorite_photo_no | bigint | YES | - | 写真番号 |
+| 5 | created_by | bigint | YES | - | 作成者 |
 | 6 | created_at | timestamp with time zone | YES | - | 作成日時 |
 
 ### 制約

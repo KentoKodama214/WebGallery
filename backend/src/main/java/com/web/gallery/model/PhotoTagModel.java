@@ -18,13 +18,13 @@ import lombok.Value;
 public class PhotoTagModel {
 	/** アカウント番号 */
 	@NonNull
-	private Integer accountNo;
+	private Long accountNo;
 
 	/** 写真番号 */
-	private Integer photoNo;
+	private Long photoNo;
 
 	/** タグ番号 */
-	private Integer tagNo;
+	private Long tagNo;
 
 	/** タグ日本語名 */
 	@NonNull

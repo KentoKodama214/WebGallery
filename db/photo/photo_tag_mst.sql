@@ -6,15 +6,15 @@ DROP TABLE IF EXISTS photo.photo_tag_mst;
 CREATE TABLE photo.photo_tag_mst
 (
 	-- ID
-	id serial NOT NULL,
+	id bigserial NOT NULL,
 	-- アカウント番号
-	account_no int NOT NULL,
+	account_no bigint NOT NULL,
 	-- 写真番号
-	photo_no int NOT NULL,
+	photo_no bigint NOT NULL,
 	-- タグ番号
-	tag_no int NOT NULL,
+	tag_no bigint NOT NULL,
 	-- 作成者
-	created_by int NOT NULL,
+	created_by bigint NOT NULL,
 	-- 作成日時
 	created_at timestamp with time zone NOT NULL,
 	-- タグ日本語名: 空文字不可

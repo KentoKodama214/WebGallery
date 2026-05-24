@@ -13,12 +13,12 @@ public class PhotoDeleteRequest {
 	/** アカウント番号 */
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** 写真番号 */
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
-	private Integer photoNo;
+	private Long photoNo;
 	
 	/** 画像ファイルパス */
 	@NotBlank(message = "{validation.common.notBlank}")

@@ -83,8 +83,8 @@ public class PhotoRestControllerTest {
 		private List<PhotoModel> createPhotoModelList() {
 			List<PhotoModel> photoList = new ArrayList<PhotoModel>();
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(1)
+					.accountNo(1L)
+					.photoNo(1L)
 					.favoriteCount(1)
 					.isFavorite(false)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -94,8 +94,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(2)
+					.accountNo(1L)
+					.photoNo(2L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -105,8 +105,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(3)
+					.accountNo(1L)
+					.photoNo(3L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -116,8 +116,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(4)
+					.accountNo(1L)
+					.photoNo(4L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -127,8 +127,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(5)
+					.accountNo(1L)
+					.photoNo(5L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -138,8 +138,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(6)
+					.accountNo(1L)
+					.photoNo(6L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -149,8 +149,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(7)
+					.accountNo(1L)
+					.photoNo(7L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -167,7 +167,7 @@ public class PhotoRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：Nullのパラメータがある場合")
 		void getPhotoList_with_null_parameter() throws Exception {
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			List<PhotoModel> photoList = createPhotoModelList();
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
@@ -199,7 +199,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.photoList[2].directionKbn").value("horizontal"));
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
-			assertEquals(1, photoListGetModel.getAccountNo());
+			assertEquals(1L, photoListGetModel.getAccountNo());
 			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.NONE, photoListGetModel.getDirectionKbn());
 			assertFalse(photoListGetModel.getIsFavoriteOnly());
@@ -211,7 +211,7 @@ public class PhotoRestControllerTest {
 		@Order(2)
 		@DisplayName("正常系：タグに半角スペースが含まれている場合")
 		void getPhotoList_with_halfspace_tag() throws Exception {
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			List<PhotoModel> photoList = createPhotoModelList().subList(0, 4);
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
@@ -236,7 +236,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.photoList[0].directionKbn").value("horizontal"));
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
-			assertEquals(1, photoListGetModel.getAccountNo());
+			assertEquals(1L, photoListGetModel.getAccountNo());
 			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.VERTICAL, photoListGetModel.getDirectionKbn());
 			assertTrue(photoListGetModel.getIsFavoriteOnly());
@@ -249,7 +249,7 @@ public class PhotoRestControllerTest {
 		@Order(3)
 		@DisplayName("正常系：タグに全角スペースが含まれている場合")
 		void getPhotoList_with_fullspace_tag() throws Exception {
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			List<PhotoModel> photoList = createPhotoModelList().subList(0, 4);
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
@@ -274,7 +274,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.photoList[0].directionKbn").value("horizontal"));
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
-			assertEquals(1, photoListGetModel.getAccountNo());
+			assertEquals(1L, photoListGetModel.getAccountNo());
 			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.VERTICAL, photoListGetModel.getDirectionKbn());
 			assertTrue(photoListGetModel.getIsFavoriteOnly());
@@ -287,7 +287,7 @@ public class PhotoRestControllerTest {
 		@Order(4)
 		@DisplayName("正常系：写真が0件の場合")
 		void getPhotoList_not_found_photo() throws Exception {
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			List<PhotoModel> photoList = new ArrayList<PhotoModel>();
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
@@ -301,7 +301,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.photoList.length()").value(0));
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
-			assertEquals(1, photoListGetModel.getAccountNo());
+			assertEquals(1L, photoListGetModel.getAccountNo());
 			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.NONE, photoListGetModel.getDirectionKbn());
 			assertFalse(photoListGetModel.getIsFavoriteOnly());
@@ -327,12 +327,12 @@ public class PhotoRestControllerTest {
 					"sample image".getBytes());
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-			doReturn(1).when(sessionHelper).getAccountNo();
-			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1);
+			doReturn(1L).when(sessionHelper).getAccountNo();
+			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1L);
 
 			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
-			doReturn(1).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+			doReturn(1L).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
@@ -346,7 +346,7 @@ public class PhotoRestControllerTest {
 
 			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
-			assertEquals(1, photoDetailModelList.getFirst().getAccountNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getAccountNo());
 			assertNull(photoDetailModelList.getFirst().getPhotoNo());
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
@@ -391,7 +391,7 @@ public class PhotoRestControllerTest {
 
 			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
-			doReturn(1).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+			doReturn(1L).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
@@ -428,15 +428,15 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
 
 			verify(sessionHelper, times(0)).getAccountNo();
-			verify(photoServiceImpl, times(0)).isReachedUpperLimit(1);
+			verify(photoServiceImpl, times(0)).isReachedUpperLimit(1L);
 
 			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
-			assertEquals(1, photoDetailModelList.getFirst().getAccountNo());
-			assertEquals(1, photoDetailModelList.getFirst().getPhotoNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getAccountNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo());
 			assertFalse(photoDetailModelList.getFirst().getIsFavorite());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), photoDetailModelList.getFirst().getPhotoAt());
-			assertEquals(1, photoDetailModelList.getFirst().getLocationNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getLocationNo());
 			assertEquals(address, photoDetailModelList.getFirst().getAddress());
 			assertEquals(0, BigDecimal.valueOf(35.000).compareTo(photoDetailModelList.getFirst().getLatitude()));
 			assertEquals(0, BigDecimal.valueOf(135.000).compareTo(photoDetailModelList.getFirst().getLongitude()));
@@ -452,10 +452,10 @@ public class PhotoRestControllerTest {
 			assertEquals(0, BigDecimal.valueOf(0.001).compareTo(photoDetailModelList.getFirst().getShutterSpeed()));
 			assertEquals(100, photoDetailModelList.getFirst().getIso());
 
-			assertEquals(1, photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getTagNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getTagNo());
 			assertEquals("太陽", photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getTagJapaneseName());
 			assertEquals("sun", photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getTagEnglishName());
-			assertEquals(2, photoDetailModelList.getFirst().getPhotoTagModelList().get(1).getTagNo());
+			assertEquals(2L, photoDetailModelList.getFirst().getPhotoTagModelList().get(1).getTagNo());
 			assertEquals("海", photoDetailModelList.getFirst().getPhotoTagModelList().get(1).getTagJapaneseName());
 			assertEquals("", photoDetailModelList.getFirst().getPhotoTagModelList().get(1).getTagEnglishName());
 
@@ -474,7 +474,7 @@ public class PhotoRestControllerTest {
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isForbidden());
 
-			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Integer.class));
+			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
 		}
 
@@ -484,8 +484,8 @@ public class PhotoRestControllerTest {
 		@DisplayName("異常系：登録上限に達している。PhotoNotAdditableExceptionをthrowする")
 		void savePhoto_PhotoNotAdditableException() throws Exception {
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-			doReturn(1).when(sessionHelper).getAccountNo();
-			doReturn(true).when(photoServiceImpl).isReachedUpperLimit(1);
+			doReturn(1L).when(sessionHelper).getAccountNo();
+			doReturn(true).when(photoServiceImpl).isReachedUpperLimit(1L);
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.param("accountNo", "1")
@@ -501,8 +501,8 @@ public class PhotoRestControllerTest {
 		@DisplayName("異常系：画像ファイル、ファイルパスともにnull。BadRequestExceptionをthrowする")
 		void savePhoto_BadRequestException_file_and_filepath_is_null() throws Exception {
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-			doReturn(1).when(sessionHelper).getAccountNo();
-			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1);
+			doReturn(1L).when(sessionHelper).getAccountNo();
+			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1L);
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.param("accountNo", "1")
@@ -518,8 +518,8 @@ public class PhotoRestControllerTest {
 		@DisplayName("異常系：画像ファイルがnull、ファイルパスがblank。BadRequestExceptionをthrowする")
 		void savePhoto_BadRequestException_file_and_filepath_is_blank() throws Exception {
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-			doReturn(1).when(sessionHelper).getAccountNo();
-			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1);
+			doReturn(1L).when(sessionHelper).getAccountNo();
+			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1L);
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.param("accountNo", "1")
@@ -536,8 +536,8 @@ public class PhotoRestControllerTest {
 		@DisplayName("異常系：画像ファイル、ファイルパス以外のパラメータ不正。BadRequestExceptionをthrowする")
 		void savePhoto_BadRequestException_others() throws Exception {
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-			doReturn(1).when(sessionHelper).getAccountNo();
-			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1);
+			doReturn(1L).when(sessionHelper).getAccountNo();
+			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1L);
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.param("accountNo", "1")
@@ -575,13 +575,13 @@ public class PhotoRestControllerTest {
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isConflict());
 
-			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Integer.class));
+			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 			verify(sessionHelper, times(0)).getAccountNo();
 
 			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
-			assertEquals(1, photoDetailModelList.getFirst().getAccountNo());
-			assertEquals(1, photoDetailModelList.getFirst().getPhotoNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getAccountNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo());
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
 			assertNull(photoDetailModelList.getFirst().getLocationNo());
@@ -630,13 +630,13 @@ public class PhotoRestControllerTest {
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isConflict());
 
-			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Integer.class));
+			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 			verify(sessionHelper, times(0)).getAccountNo();
 
 			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
-			assertEquals(1, photoDetailModelList.getFirst().getAccountNo());
-			assertEquals(1, photoDetailModelList.getFirst().getPhotoNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getAccountNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo());
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
 			assertNull(photoDetailModelList.getFirst().getLocationNo());
@@ -685,13 +685,13 @@ public class PhotoRestControllerTest {
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isConflict());
 
-			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Integer.class));
+			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 			verify(sessionHelper, times(0)).getAccountNo();
 
 			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
-			assertEquals(1, photoDetailModelList.getFirst().getAccountNo());
-			assertEquals(1, photoDetailModelList.getFirst().getPhotoNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getAccountNo());
+			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo());
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
 			assertNull(photoDetailModelList.getFirst().getLocationNo());
@@ -742,8 +742,8 @@ public class PhotoRestControllerTest {
 
 			List<PhotoDeleteModel> photoDeleteModelList = photoDeleteModelCaptor.getValue();
 			assertEquals(1, photoDeleteModelList.size());
-			assertEquals(1, photoDeleteModelList.getFirst().getAccountNo());
-			assertEquals(1, photoDeleteModelList.getFirst().getPhotoNo());
+			assertEquals(1L, photoDeleteModelList.getFirst().getAccountNo());
+			assertEquals(1L, photoDeleteModelList.getFirst().getPhotoNo());
 			assertEquals(imageFilePath, photoDeleteModelList.getFirst().getImageFilePath());
 			assertEquals("aaaaaaaa", photoAcountIdCaptor.getValue());
 		}
@@ -796,8 +796,8 @@ public class PhotoRestControllerTest {
 
 			List<PhotoDeleteModel> photoDeleteModelList = photoDeleteModelCaptor.getValue();
 			assertEquals(1, photoDeleteModelList.size());
-			assertEquals(1, photoDeleteModelList.getFirst().getAccountNo());
-			assertEquals(1, photoDeleteModelList.getFirst().getPhotoNo());
+			assertEquals(1L, photoDeleteModelList.getFirst().getAccountNo());
+			assertEquals(1L, photoDeleteModelList.getFirst().getPhotoNo());
 			assertEquals(imageFilePath, photoDeleteModelList.getFirst().getImageFilePath());
 			assertEquals("aaaaaaaa", photoAcountIdCaptor.getValue());
 		}
@@ -810,8 +810,8 @@ public class PhotoRestControllerTest {
 		private List<PhotoModel> createPhotoList() {
 			List<PhotoModel> photoList = new ArrayList<PhotoModel>();
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(1)
+					.accountNo(1L)
+					.photoNo(1L)
 					.favoriteCount(1)
 					.isFavorite(false)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -821,8 +821,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(2)
+					.accountNo(1L)
+					.photoNo(2L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -832,8 +832,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(3)
+					.accountNo(1L)
+					.photoNo(3L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -843,8 +843,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(4)
+					.accountNo(1L)
+					.photoNo(4L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -854,8 +854,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(5)
+					.accountNo(1L)
+					.photoNo(5L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -865,8 +865,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(6)
+					.accountNo(1L)
+					.photoNo(6L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -876,8 +876,8 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1)
-					.photoNo(7)
+					.accountNo(1L)
+					.photoNo(7L)
 					.favoriteCount(1)
 					.isFavorite(true)
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
@@ -900,8 +900,8 @@ public class PhotoRestControllerTest {
 
 			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(1, actual.getPhotoList().size());
-			assertEquals(1, actual.getPhotoList().getFirst().getAccountNo());
-			assertEquals(1, actual.getPhotoList().getFirst().getPhotoNo());
+			assertEquals(1L, actual.getPhotoList().getFirst().getAccountNo());
+			assertEquals(1L, actual.getPhotoList().getFirst().getPhotoNo());
 			assertFalse(actual.getPhotoList().getFirst().getIsFavorite());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.getPhotoList().getFirst().getImageFilePath());
 			assertEquals("キャプション1", actual.getPhotoList().getFirst().getCaption());
@@ -919,20 +919,20 @@ public class PhotoRestControllerTest {
 
 			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(3, actual.getPhotoList().size());
-			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
-			assertEquals(1, actual.getPhotoList().get(0).getPhotoNo());
+			assertEquals(1L, actual.getPhotoList().get(0).getAccountNo());
+			assertEquals(1L, actual.getPhotoList().get(0).getPhotoNo());
 			assertFalse(actual.getPhotoList().get(0).getIsFavorite());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.getPhotoList().get(0).getImageFilePath());
 			assertEquals("キャプション1", actual.getPhotoList().get(0).getCaption());
 			assertEquals(DirectionEnum.VERTICAL, actual.getPhotoList().get(0).getDirectionKbn());
-			assertEquals(1, actual.getPhotoList().get(1).getAccountNo());
-			assertEquals(2, actual.getPhotoList().get(1).getPhotoNo());
+			assertEquals(1L, actual.getPhotoList().get(1).getAccountNo());
+			assertEquals(2L, actual.getPhotoList().get(1).getPhotoNo());
 			assertTrue(actual.getPhotoList().get(1).getIsFavorite());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC222.jpg", actual.getPhotoList().get(1).getImageFilePath());
 			assertEquals("キャプション2", actual.getPhotoList().get(1).getCaption());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(1).getDirectionKbn());
-			assertEquals(1, actual.getPhotoList().get(2).getAccountNo());
-			assertEquals(3, actual.getPhotoList().get(2).getPhotoNo());
+			assertEquals(1L, actual.getPhotoList().get(2).getAccountNo());
+			assertEquals(3L, actual.getPhotoList().get(2).getPhotoNo());
 			assertTrue(actual.getPhotoList().get(2).getIsFavorite());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC333.jpg", actual.getPhotoList().get(2).getImageFilePath());
 			assertEquals("キャプション3", actual.getPhotoList().get(2).getCaption());
@@ -950,8 +950,8 @@ public class PhotoRestControllerTest {
 
 			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(1, actual.getPhotoList().size());
-			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
-			assertEquals(4, actual.getPhotoList().get(0).getPhotoNo());
+			assertEquals(1L, actual.getPhotoList().get(0).getAccountNo());
+			assertEquals(4L, actual.getPhotoList().get(0).getPhotoNo());
 			assertTrue(actual.getPhotoList().get(0).getIsFavorite());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC444.jpg", actual.getPhotoList().get(0).getImageFilePath());
 			assertEquals("キャプション4", actual.getPhotoList().get(0).getCaption());
@@ -969,20 +969,20 @@ public class PhotoRestControllerTest {
 
 			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(3, actual.getPhotoList().size());
-			assertEquals(1, actual.getPhotoList().get(0).getAccountNo());
-			assertEquals(4, actual.getPhotoList().get(0).getPhotoNo());
+			assertEquals(1L, actual.getPhotoList().get(0).getAccountNo());
+			assertEquals(4L, actual.getPhotoList().get(0).getPhotoNo());
 			assertTrue(actual.getPhotoList().get(0).getIsFavorite());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC444.jpg", actual.getPhotoList().get(0).getImageFilePath());
 			assertEquals("キャプション4", actual.getPhotoList().get(0).getCaption());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(0).getDirectionKbn());
-			assertEquals(1, actual.getPhotoList().get(1).getAccountNo());
-			assertEquals(5, actual.getPhotoList().get(1).getPhotoNo());
+			assertEquals(1L, actual.getPhotoList().get(1).getAccountNo());
+			assertEquals(5L, actual.getPhotoList().get(1).getPhotoNo());
 			assertTrue(actual.getPhotoList().get(1).getIsFavorite());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC555.jpg", actual.getPhotoList().get(1).getImageFilePath());
 			assertEquals("キャプション5", actual.getPhotoList().get(1).getCaption());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(1).getDirectionKbn());
-			assertEquals(1, actual.getPhotoList().get(2).getAccountNo());
-			assertEquals(6, actual.getPhotoList().get(2).getPhotoNo());
+			assertEquals(1L, actual.getPhotoList().get(2).getAccountNo());
+			assertEquals(6L, actual.getPhotoList().get(2).getPhotoNo());
 			assertTrue(actual.getPhotoList().get(2).getIsFavorite());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC666.jpg", actual.getPhotoList().get(2).getImageFilePath());
 			assertEquals("キャプション6", actual.getPhotoList().get(2).getCaption());
@@ -1000,8 +1000,8 @@ public class PhotoRestControllerTest {
 		@DisplayName("正常系：自分のアカウントで上限未到達の場合")
 		void getPhotoUpperLimit_not_reached() throws Exception {
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-			doReturn(1).when(sessionHelper).getAccountNo();
-			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1);
+			doReturn(1L).when(sessionHelper).getAccountNo();
+			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1L);
 
 			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/upper-limit"))
 				.andExpect(status().isOk())
@@ -1013,8 +1013,8 @@ public class PhotoRestControllerTest {
 		@DisplayName("正常系：自分のアカウントで上限到達の場合")
 		void getPhotoUpperLimit_reached() throws Exception {
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-			doReturn(1).when(sessionHelper).getAccountNo();
-			doReturn(true).when(photoServiceImpl).isReachedUpperLimit(1);
+			doReturn(1L).when(sessionHelper).getAccountNo();
+			doReturn(true).when(photoServiceImpl).isReachedUpperLimit(1L);
 
 			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/upper-limit"))
 				.andExpect(status().isOk())
@@ -1031,7 +1031,7 @@ public class PhotoRestControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.isReachedUpperLimit").value(false));
 
-			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Integer.class));
+			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 		}
 	}
 }

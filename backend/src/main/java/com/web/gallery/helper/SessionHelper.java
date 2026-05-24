@@ -16,8 +16,8 @@ public class SessionHelper {
 	 * 
 	 * @return	アカウント番号
 	 */
-	public Integer getAccountNo() {
-		Integer accountNo = null;
+	public Long getAccountNo() {
+		Long accountNo = null;
 
 		Authentication authentication =
 				SecurityContextHolder.getContext().getAuthentication();

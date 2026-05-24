@@ -12,10 +12,10 @@ public class PhotoFavoriteRegistRequest {
 	/** お気に入り写真アカウント番号 */
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
-	private Integer favoritePhotoAccountNo;
-	
+	private Long favoritePhotoAccountNo;
+
 	/** お気に入り写真番号 */
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
-	private Integer favoritePhotoNo;
+	private Long favoritePhotoNo;
 }

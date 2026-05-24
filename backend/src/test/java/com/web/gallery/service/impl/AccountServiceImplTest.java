@@ -62,7 +62,7 @@ public class AccountServiceImplTest {
 			String accountId = "aaaaaaaa";
 			String password = "AAAAAAAA";
 			AccountModel account = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId(accountId)
 					.loginFailureCount(0)
 					.password(password)
@@ -128,8 +128,8 @@ public class AccountServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントを更新")
 		void updateAccount_success() throws UpdateFailureException {
-			AccountModel accountModel = AccountModel.builder().accountNo(1).accountId("aaaaaaaa").build();
-			doReturn(false).when(accountRepositoryImpl).isExistAccount(1, "aaaaaaaa");
+			AccountModel accountModel = AccountModel.builder().accountNo(1L).accountId("aaaaaaaa").build();
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(1L, "aaaaaaaa");
 			doNothing().when(accountRepositoryImpl).update(accountModel);
 			assertFalse(accountServiceImpl.updateAccount(accountModel));
 		}
@@ -138,8 +138,8 @@ public class AccountServiceImplTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが既に存在する")
 		void updateAccount_account_already_exist() throws UpdateFailureException {
-			AccountModel accountModel = AccountModel.builder().accountNo(1).accountId("aaaaaaaa").build();
-			doReturn(true).when(accountRepositoryImpl).isExistAccount(1, "aaaaaaaa");
+			AccountModel accountModel = AccountModel.builder().accountNo(1L).accountId("aaaaaaaa").build();
+			doReturn(true).when(accountRepositoryImpl).isExistAccount(1L, "aaaaaaaa");
 			verify(accountRepositoryImpl,times(0)).update(accountModel);
 			assertTrue(accountServiceImpl.updateAccount(accountModel));
 		}
@@ -148,8 +148,8 @@ public class AccountServiceImplTest {
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void updateAccount_UpdateFailureException() throws UpdateFailureException {
-			AccountModel accountModel = AccountModel.builder().accountNo(1).accountId("aaaaaaaa").build();
-			doReturn(false).when(accountRepositoryImpl).isExistAccount(1, "aaaaaaaa");
+			AccountModel accountModel = AccountModel.builder().accountNo(1L).accountId("aaaaaaaa").build();
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(1L, "aaaaaaaa");
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).update(accountModel);
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel));
 		}
@@ -164,7 +164,7 @@ public class AccountServiceImplTest {
 		@DisplayName("正常系：アカウントが存在する場合")
 		void getAccountById_found() {
 			AccountModel account = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
 					.password("password")
@@ -181,7 +181,7 @@ public class AccountServiceImplTest {
 
 			AccountModel actual = accountServiceImpl.getAccountById("aaaaaaaa");
 
-			assertEquals(1, actual.getAccountNo());
+			assertEquals(1L, actual.getAccountNo());
 			assertEquals("aaaaaaaa", actual.getAccountId());
 			assertEquals("AAAAAAAA", actual.getAccountName());
 			assertEquals("password", actual.getPassword());
@@ -252,7 +252,7 @@ public class AccountServiceImplTest {
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
 			AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
 			
-			AccountModel account = AccountModel.builder().accountNo(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1L).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -261,7 +261,7 @@ public class AccountServiceImplTest {
 			accountServiceImpl.handle(event);
 			
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1, accountModel.getAccountNo());
+			assertEquals(1L, accountModel.getAccountNo());
 			assertNull(accountModel.getAccountId());
 			assertNull(accountModel.getAccountName());
 			assertNull(accountModel.getPassword());
@@ -288,7 +288,7 @@ public class AccountServiceImplTest {
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
 			AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
 			
-			AccountModel account = AccountModel.builder().accountNo(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1L).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -297,7 +297,7 @@ public class AccountServiceImplTest {
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.handle(event));
 			
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1, accountModel.getAccountNo());
+			assertEquals(1L, accountModel.getAccountNo());
 			assertNull(accountModel.getAccountId());
 			assertNull(accountModel.getAccountName());
 			assertNull(accountModel.getPassword());
@@ -332,7 +332,7 @@ public class AccountServiceImplTest {
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
-			AccountModel account = AccountModel.builder().accountNo(1).loginFailureCount(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1L).loginFailureCount(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -341,7 +341,7 @@ public class AccountServiceImplTest {
 			accountServiceImpl.handle(event);
 			
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1, accountModel.getAccountNo());
+			assertEquals(1L, accountModel.getAccountNo());
 			assertNull(accountModel.getAccountId());
 			assertNull(accountModel.getAccountName());
 			assertNull(accountModel.getPassword());
@@ -393,7 +393,7 @@ public class AccountServiceImplTest {
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
-			AccountModel account = AccountModel.builder().accountNo(1).loginFailureCount(1).build();
+			AccountModel account = AccountModel.builder().accountNo(1L).loginFailureCount(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -402,7 +402,7 @@ public class AccountServiceImplTest {
 			assertThrows(UpdateFailureException.class, () ->accountServiceImpl.handle(event));
 			
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1, accountModel.getAccountNo());
+			assertEquals(1L, accountModel.getAccountNo());
 			assertNull(accountModel.getAccountId());
 			assertNull(accountModel.getAccountName());
 			assertNull(accountModel.getPassword());

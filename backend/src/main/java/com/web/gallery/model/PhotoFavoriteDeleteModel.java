@@ -11,13 +11,13 @@ import lombok.Value;
 @Builder
 public class PhotoFavoriteDeleteModel {
 	/** アカウント番号 */
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** お気に入り写真アカウント番号 */
 	@NonNull
-	private Integer favoritePhotoAccountNo;
-	
+	private Long favoritePhotoAccountNo;
+
 	/** 写真番号 */
 	@NonNull
-	private Integer favoritePhotoNo;
+	private Long favoritePhotoNo;
 }

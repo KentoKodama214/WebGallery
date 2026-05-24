@@ -36,7 +36,7 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 */
 	@Override
-	public void regist(PhotoDetailModel photoDetailModel, String filePath, Integer newPhotoNo) throws RegistFailureException {
+	public void regist(PhotoDetailModel photoDetailModel, String filePath, Long newPhotoNo) throws RegistFailureException {
 		PhotoMst photoMst = PhotoMst.fromForRegist(photoDetailModel, filePath, newPhotoNo);
 		
 		try {
@@ -89,9 +89,9 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 * @return				新規採番した写真番号
 	 */
 	@Override
-	public Integer getNewPhotoNo(Integer accountNo) {
-		Integer photoNo = photoMstMapper.getMaxPhotoNo(accountNo);
-		return Optional.ofNullable(photoNo).map(num -> num + 1).orElse(1);
+	public Long getNewPhotoNo(Long accountNo) {
+		Long photoNo = photoMstMapper.getMaxPhotoNo(accountNo);
+		return Optional.ofNullable(photoNo).map(num -> num + 1).orElse(1L);
 	}
 	
 	/**
@@ -112,7 +112,7 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 * @return				登録件数
 	 */
 	@Override
-	public Integer count(Integer accountNo) {
+	public Integer count(Long accountNo) {
 		return photoMstMapper.count(PhotoMst.conditionForCount(accountNo));
 	}
 }

@@ -16,10 +16,10 @@ import lombok.Data;
 @Data
 public class PhotoSettingRequest {
 	/** アカウント番号 */
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** 写真番号 */
-	private Integer photoNo;
+	private Long photoNo;
 	
 	/** お気に入り */
 	private Boolean isFavorite;
@@ -28,7 +28,7 @@ public class PhotoSettingRequest {
 	private OffsetDateTime photoAt;
 	
 	/** ロケーション番号 */
-	private Integer locationNo;
+	private Long locationNo;
 	
 	/** 住所 */
 	private String address;

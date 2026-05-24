@@ -92,10 +92,10 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='mmmmmmmm'", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -112,9 +112,9 @@ public class AccountServiceImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(0, actualData.getFirst().getCreatedBy());
-			assertEquals(0, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(0L, actualData.getFirst().getCreatedBy());
+			assertEquals(0L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("mmmmmmmm", actualData.getFirst().getAccountId());
 			assertEquals("MMMMMMMM", actualData.getFirst().getAccountName());
@@ -153,16 +153,16 @@ public class AccountServiceImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントを更新")
 		void updateAccount_success() throws UpdateFailureException {
-			AccountModel accountModel = AccountModel.builder().accountNo(1).accountId("zzzzzzzz").build();
+			AccountModel accountModel = AccountModel.builder().accountNo(1L).accountId("zzzzzzzz").build();
 			assertFalse(accountServiceImpl.updateAccount(accountModel));
 			
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -179,9 +179,9 @@ public class AccountServiceImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("zzzzzzzz", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -200,16 +200,16 @@ public class AccountServiceImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが既に存在する")
 		void updateAccount_account_already_exist() throws UpdateFailureException {
-			AccountModel accountModel = AccountModel.builder().accountNo(1).accountId("bbbbbbbb").build();
+			AccountModel accountModel = AccountModel.builder().accountNo(1L).accountId("bbbbbbbb").build();
 			assertTrue(accountServiceImpl.updateAccount(accountModel));
 			
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -226,9 +226,9 @@ public class AccountServiceImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -247,7 +247,7 @@ public class AccountServiceImplIntegrationTest {
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void updateAccount_UpdateFailureException() throws UpdateFailureException {
-			AccountModel accountModel = AccountModel.builder().accountNo(99).accountId("zzzzzzzz").build();
+			AccountModel accountModel = AccountModel.builder().accountNo(99L).accountId("zzzzzzzz").build();
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel));
 		}
 	}
@@ -264,7 +264,7 @@ public class AccountServiceImplIntegrationTest {
 		void getAccountById_found() {
 			AccountModel actual = accountServiceImpl.getAccountById("aaaaaaaa");
 
-			assertEquals(1, actual.getAccountNo());
+			assertEquals(1L, actual.getAccountNo());
 			assertEquals("aaaaaaaa", actual.getAccountId());
 			assertEquals("AAAAAAAA", actual.getAccountName());
 			assertEquals("$2a$10$password1", actual.getPassword());
@@ -345,10 +345,10 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=11", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -365,9 +365,9 @@ public class AccountServiceImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(11, actualData.getFirst().getAccountNo());
-			assertEquals(11, actualData.getFirst().getCreatedBy());
-			assertEquals(11, actualData.getFirst().getUpdatedBy());
+			assertEquals(11L, actualData.getFirst().getAccountNo());
+			assertEquals(11L, actualData.getFirst().getCreatedBy());
+			assertEquals(11L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("kkkkkkkk", actualData.getFirst().getAccountId());
 			assertEquals("KKKKKKKK", actualData.getFirst().getAccountName());
@@ -410,10 +410,10 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='aaaaaaaa'", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -430,9 +430,9 @@ public class AccountServiceImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -468,10 +468,10 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='zzzzzzzz'", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))

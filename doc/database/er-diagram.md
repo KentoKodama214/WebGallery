@@ -7,10 +7,10 @@ erDiagram
     %% ========== common スキーマ ==========
 
     account {
-        serial account_no PK "アカウント番号"
-        int created_by "作成者"
+        bigserial account_no PK "アカウント番号"
+        bigint created_by "作成者"
         timestamptz created_at "作成日時"
-        int updated_by "更新者"
+        bigint updated_by "更新者"
         timestamptz updated_at "更新日時"
         boolean is_deleted "削除フラグ"
         varchar account_id UK "アカウントID"
@@ -43,12 +43,12 @@ erDiagram
     }
 
     location_mst {
-        serial id PK "ロケーションID"
-        int account_no FK,UK "アカウント番号"
-        int location_no UK "ロケーション番号"
-        int created_by "作成者"
+        bigserial id PK "ロケーションID"
+        bigint account_no FK,UK "アカウント番号"
+        bigint location_no UK "ロケーション番号"
+        bigint created_by "作成者"
         timestamptz created_at "作成日時"
-        int updated_by "更新者"
+        bigint updated_by "更新者"
         timestamptz updated_at "更新日時"
         boolean is_deleted "削除フラグ"
         text location_name UK "ロケーション名"
@@ -58,8 +58,8 @@ erDiagram
     }
 
     refresh_token {
-        serial token_id PK "トークンID"
-        int account_no FK "アカウント番号"
+        bigserial token_id PK "トークンID"
+        bigint account_no FK "アカウント番号"
         varchar token_hash "トークンハッシュ"
         timestamptz expires_at "有効期限"
         timestamptz created_at "作成日時"
@@ -69,16 +69,16 @@ erDiagram
     %% ========== photo スキーマ ==========
 
     photo_mst {
-        serial id PK "写真ID"
-        int account_no FK,UK "アカウント番号"
-        int photo_no UK "写真番号"
-        int created_by "作成者"
+        bigserial id PK "写真ID"
+        bigint account_no FK,UK "アカウント番号"
+        bigint photo_no UK "写真番号"
+        bigint created_by "作成者"
         timestamptz created_at "作成日時"
-        int updated_by "更新者"
+        bigint updated_by "更新者"
         timestamptz updated_at "更新日時"
         boolean is_deleted "削除フラグ"
         timestamptz photo_at "撮影日時"
-        int location_no "ロケーション番号"
+        bigint location_no "ロケーション番号"
         text image_file_path "画像ファイルパス"
         varchar photo_japanese_title "写真タイトル(日本語)"
         varchar photo_english_title "写真タイトル(英語)"
@@ -91,22 +91,22 @@ erDiagram
     }
 
     photo_tag_mst {
-        serial id PK "タグID"
-        int account_no FK,UK "アカウント番号"
-        int photo_no FK,UK "写真番号"
-        int tag_no UK "タグ番号"
-        int created_by "作成者"
+        bigserial id PK "タグID"
+        bigint account_no FK,UK "アカウント番号"
+        bigint photo_no FK,UK "写真番号"
+        bigint tag_no UK "タグ番号"
+        bigint created_by "作成者"
         timestamptz created_at "作成日時"
         varchar tag_japanese_name "タグ名(日本語)"
         varchar tag_english_name "タグ名(英語)"
     }
 
     photo_favorite {
-        serial id PK "お気に入りID"
-        int account_no FK,UK "アカウント番号"
-        int favorite_photo_account_no FK,UK "写真所有者アカウント番号"
-        int favorite_photo_no FK,UK "写真番号"
-        int created_by "作成者"
+        bigserial id PK "お気に入りID"
+        bigint account_no FK,UK "アカウント番号"
+        bigint favorite_photo_account_no FK,UK "写真所有者アカウント番号"
+        bigint favorite_photo_no FK,UK "写真番号"
+        bigint created_by "作成者"
         timestamptz created_at "作成日時"
     }
 
@@ -127,10 +127,10 @@ erDiagram
 ```mermaid
 erDiagram
     account {
-        serial account_no PK "アカウント番号"
-        int created_by "作成者"
+        bigserial account_no PK "アカウント番号"
+        bigint created_by "作成者"
         timestamptz created_at "作成日時"
-        int updated_by "更新者"
+        bigint updated_by "更新者"
         timestamptz updated_at "更新日時"
         boolean is_deleted "削除フラグ"
         varchar account_id UK "アカウントID"
@@ -163,12 +163,12 @@ erDiagram
     }
 
     location_mst {
-        serial id PK "ロケーションID"
-        int account_no FK,UK "アカウント番号"
-        int location_no UK "ロケーション番号"
-        int created_by "作成者"
+        bigserial id PK "ロケーションID"
+        bigint account_no FK,UK "アカウント番号"
+        bigint location_no UK "ロケーション番号"
+        bigint created_by "作成者"
         timestamptz created_at "作成日時"
-        int updated_by "更新者"
+        bigint updated_by "更新者"
         timestamptz updated_at "更新日時"
         boolean is_deleted "削除フラグ"
         text location_name UK "ロケーション名"
@@ -178,8 +178,8 @@ erDiagram
     }
 
     refresh_token {
-        serial token_id PK "トークンID"
-        int account_no FK "アカウント番号"
+        bigserial token_id PK "トークンID"
+        bigint account_no FK "アカウント番号"
         varchar token_hash "トークンハッシュ"
         timestamptz expires_at "有効期限"
         timestamptz created_at "作成日時"
@@ -195,22 +195,22 @@ erDiagram
 ```mermaid
 erDiagram
     account {
-        serial account_no PK "アカウント番号"
+        bigserial account_no PK "アカウント番号"
         varchar account_id UK "アカウントID"
         varchar account_name "アカウント名"
     }
 
     photo_mst {
-        serial id PK "写真ID"
-        int account_no FK,UK "アカウント番号"
-        int photo_no UK "写真番号"
-        int created_by "作成者"
+        bigserial id PK "写真ID"
+        bigint account_no FK,UK "アカウント番号"
+        bigint photo_no UK "写真番号"
+        bigint created_by "作成者"
         timestamptz created_at "作成日時"
-        int updated_by "更新者"
+        bigint updated_by "更新者"
         timestamptz updated_at "更新日時"
         boolean is_deleted "削除フラグ"
         timestamptz photo_at "撮影日時"
-        int location_no "ロケーション番号"
+        bigint location_no "ロケーション番号"
         text image_file_path "画像ファイルパス"
         varchar photo_japanese_title "写真タイトル(日本語)"
         varchar photo_english_title "写真タイトル(英語)"
@@ -223,22 +223,22 @@ erDiagram
     }
 
     photo_tag_mst {
-        serial id PK "タグID"
-        int account_no FK,UK "アカウント番号"
-        int photo_no FK,UK "写真番号"
-        int tag_no UK "タグ番号"
-        int created_by "作成者"
+        bigserial id PK "タグID"
+        bigint account_no FK,UK "アカウント番号"
+        bigint photo_no FK,UK "写真番号"
+        bigint tag_no UK "タグ番号"
+        bigint created_by "作成者"
         timestamptz created_at "作成日時"
         varchar tag_japanese_name "タグ名(日本語)"
         varchar tag_english_name "タグ名(英語)"
     }
 
     photo_favorite {
-        serial id PK "お気に入りID"
-        int account_no FK,UK "アカウント番号"
-        int favorite_photo_account_no FK,UK "写真所有者アカウント番号"
-        int favorite_photo_no FK,UK "写真番号"
-        int created_by "作成者"
+        bigserial id PK "お気に入りID"
+        bigint account_no FK,UK "アカウント番号"
+        bigint favorite_photo_account_no FK,UK "写真所有者アカウント番号"
+        bigint favorite_photo_no FK,UK "写真番号"
+        bigint created_by "作成者"
         timestamptz created_at "作成日時"
     }
 

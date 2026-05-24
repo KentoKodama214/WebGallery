@@ -124,7 +124,7 @@ public class AccountRestControllerTest {
 			doReturn(accountId).when(sessionHelper).getAccountId();
 
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId(accountId)
 					.accountName("AAAAAAAA")
 					.birthdate(LocalDate.of(2000, 1, 1))
@@ -156,7 +156,7 @@ public class AccountRestControllerTest {
 			doReturn(accountId).when(sessionHelper).getAccountId();
 
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId(accountId)
 					.accountName("AAAAAAAA")
 					.birthdate(Consts.MIN_LOCAL_DATE)
@@ -306,7 +306,7 @@ public class AccountRestControllerTest {
 		void update_not_change_accountID_and_password() throws Exception {
 			String accountId = "aaaaaaaa";
 
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 			doReturn(accountId).when(sessionHelper).getAccountId();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -323,7 +323,7 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.message").value(""));
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1, accountModel.getAccountNo());
+			assertEquals(1L, accountModel.getAccountNo());
 			assertEquals(accountId, accountModel.getAccountId());
 			assertEquals("AAAAAAAA", accountModel.getAccountName());
 			assertNull(accountModel.getPassword());
@@ -343,7 +343,7 @@ public class AccountRestControllerTest {
 		void update_change_accountID() throws Exception {
 			String accountId = "aaaaaaaa";
 
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -360,7 +360,7 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.message").value(""));
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1, accountModel.getAccountNo());
+			assertEquals(1L, accountModel.getAccountNo());
 			assertEquals(accountId, accountModel.getAccountId());
 			assertEquals("AAAAAAAA", accountModel.getAccountName());
 			assertNull(accountModel.getPassword());
@@ -372,7 +372,7 @@ public class AccountRestControllerTest {
 		void update_change_password() throws Exception {
 			String accountId = "aaaaaaaa";
 
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 			doReturn(accountId).when(sessionHelper).getAccountId();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -389,7 +389,7 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.message").value(""));
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1, accountModel.getAccountNo());
+			assertEquals(1L, accountModel.getAccountNo());
 			assertEquals(accountId, accountModel.getAccountId());
 			assertEquals("AAAAAAAA", accountModel.getAccountName());
 			assertEquals("password01", accountModel.getPassword());
@@ -401,7 +401,7 @@ public class AccountRestControllerTest {
 		void update_change_accountId_and_password() throws Exception {
 			String accountId = "aaaaaaaa";
 
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -418,7 +418,7 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.message").value(""));
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1, accountModel.getAccountNo());
+			assertEquals(1L, accountModel.getAccountNo());
 			assertEquals(accountId, accountModel.getAccountId());
 			assertEquals("password01", accountModel.getPassword());
 		}
@@ -429,7 +429,7 @@ public class AccountRestControllerTest {
 		void update_duplicate_accountId() throws Exception {
 			String accountId = "aaaaaaaa";
 
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -446,7 +446,7 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.message").value(""));
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1, accountModel.getAccountNo());
+			assertEquals(1L, accountModel.getAccountNo());
 			assertEquals(accountId, accountModel.getAccountId());
 			assertNull(accountModel.getPassword());
 		}
@@ -496,7 +496,7 @@ public class AccountRestControllerTest {
 		void update_UpdateFailureException() throws Exception {
 			String accountId = "aaaaaaaa";
 
-			doReturn(1).when(sessionHelper).getAccountNo();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
 			doThrow(UpdateFailureException.class).when(accountServiceImpl).updateAccount(accountModelCaptor.capture());
@@ -507,7 +507,7 @@ public class AccountRestControllerTest {
 				.andExpect(status().isConflict());
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1, accountModel.getAccountNo());
+			assertEquals(1L, accountModel.getAccountNo());
 			assertEquals(accountId, accountModel.getAccountId());
 			assertEquals("AAAAAAAA", accountModel.getAccountName());
 			assertEquals("password01", accountModel.getPassword());

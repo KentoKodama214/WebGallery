@@ -35,7 +35,7 @@ public interface RefreshTokenMapper {
 	 * @param	accountNo	アカウント番号
 	 * @return				更新件数
 	 */
-	public Integer revokeAllByAccountNo(@Param("accountNo") Integer accountNo);
+	public Integer revokeAllByAccountNo(@Param("accountNo") Long accountNo);
 
 	/**
 	 * トークンハッシュに該当するリフ���ッシュトークンを無効化する

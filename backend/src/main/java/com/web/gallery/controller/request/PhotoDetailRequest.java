@@ -12,10 +12,10 @@ public class PhotoDetailRequest {
 	/** アカウント番号 */
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** 写真番号 */
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
-	private Integer photoNo;
+	private Long photoNo;
 }

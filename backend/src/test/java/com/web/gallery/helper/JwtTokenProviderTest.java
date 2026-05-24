@@ -47,7 +47,7 @@ class JwtTokenProviderTest {
 		@DisplayName("正常系: アクセストークンが生成されること")
 		void generateAccessToken_success() {
 			when(principal.getUsername()).thenReturn("testuser1");
-			when(principal.getAccountNo()).thenReturn(1);
+			when(principal.getAccountNo()).thenReturn(1L);
 			when(principal.getAccountName()).thenReturn("テストユーザー");
 			doReturn(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")))
 					.when(principal).getAuthorities();
@@ -62,7 +62,7 @@ class JwtTokenProviderTest {
 		@DisplayName("正常系: 生成されたトークンからアカウントIDが取得できること")
 		void generateAccessToken_containsAccountId() {
 			when(principal.getUsername()).thenReturn("testuser1");
-			when(principal.getAccountNo()).thenReturn(1);
+			when(principal.getAccountNo()).thenReturn(1L);
 			when(principal.getAccountName()).thenReturn("テストユーザー");
 			doReturn(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")))
 					.when(principal).getAuthorities();
@@ -105,7 +105,7 @@ class JwtTokenProviderTest {
 		@DisplayName("正常系: 有効なトークンのクレームが取得できること")
 		void validateAccessToken_success() {
 			when(principal.getUsername()).thenReturn("testuser1");
-			when(principal.getAccountNo()).thenReturn(1);
+			when(principal.getAccountNo()).thenReturn(1L);
 			when(principal.getAccountName()).thenReturn("テストユーザー");
 			doReturn(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")))
 					.when(principal).getAuthorities();
@@ -136,7 +136,7 @@ class JwtTokenProviderTest {
 		@DisplayName("正常系: 有効なトークンの場合はtrueを返すこと")
 		void isTokenValid_validToken() {
 			when(principal.getUsername()).thenReturn("testuser1");
-			when(principal.getAccountNo()).thenReturn(1);
+			when(principal.getAccountNo()).thenReturn(1L);
 			when(principal.getAccountName()).thenReturn("テストユーザー");
 			doReturn(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")))
 					.when(principal).getAuthorities();

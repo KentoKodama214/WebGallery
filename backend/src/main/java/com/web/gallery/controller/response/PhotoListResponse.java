@@ -13,10 +13,10 @@ import lombok.Data;
 @Builder
 public class PhotoListResponse {
 	/** アカウント番号 */
-	private Integer accountNo;
+	private Long accountNo;
 
 	/** 写真番号 */
-	private Integer photoNo;
+	private Long photoNo;
 
 	/** お気に入り */
 	private Boolean isFavorite;

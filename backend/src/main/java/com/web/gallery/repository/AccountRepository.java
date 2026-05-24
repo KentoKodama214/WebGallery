@@ -17,7 +17,7 @@ public interface AccountRepository {
 	 * @return	AccountModel	{@link AccountModel}<p>
 	 * 							取得できない場合はnullを返す
 	 */
-	AccountModel getByAccountNo(Integer accountNo);
+	AccountModel getByAccountNo(Long accountNo);
 
 	/**
 	 * Accountテーブルで該当するレコードを取得する
@@ -59,7 +59,7 @@ public interface AccountRepository {
 	 * @param	accountId	アカウントID
 	 * @return				true：存在する
 	 */
-	Boolean isExistAccount(Integer accountNo, String accountId);
+	Boolean isExistAccount(Long accountNo, String accountId);
 
 	/**
 	 * アカウントの一覧を取得する

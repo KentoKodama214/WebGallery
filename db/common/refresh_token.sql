@@ -6,9 +6,9 @@ DROP TABLE IF EXISTS common.refresh_token;
 CREATE TABLE common.refresh_token
 (
 	-- トークンID
-	token_id serial NOT NULL,
+	token_id bigserial NOT NULL,
 	-- アカウント番号
-	account_no integer NOT NULL,
+	account_no bigint NOT NULL,
 	-- トークンハッシュ
 	token_hash varchar(256) NOT NULL,
 	-- 有効期限

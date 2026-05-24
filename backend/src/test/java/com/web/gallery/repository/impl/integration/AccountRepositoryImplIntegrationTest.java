@@ -49,9 +49,9 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが取得できた場合")
 		void getByAccountNo_found() {
-			AccountModel actual = accountRepositoryImpl.getByAccountNo(1);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(1L);
 
-			assertEquals(1, actual.getAccountNo());
+			assertEquals(1L, actual.getAccountNo());
 			assertFalse(actual.getIsDeleted());
 			assertEquals("aaaaaaaa", actual.getAccountId());
 			assertEquals("AAAAAAAA", actual.getAccountName());
@@ -70,7 +70,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが取得できなかった場合")
 		void getByAccountNo_not_found() {
-			AccountModel actual = accountRepositoryImpl.getByAccountNo(99);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(99L);
 			assertNull(actual);
 		}
 	}
@@ -87,7 +87,7 @@ public class AccountRepositoryImplIntegrationTest {
 		void getByAccountId_found() {
 			AccountModel actual = accountRepositoryImpl.getByAccountId("aaaaaaaa");
 
-			assertEquals(1, actual.getAccountNo());
+			assertEquals(1L, actual.getAccountNo());
 			assertFalse(actual.getIsDeleted());
 			assertEquals("aaaaaaaa", actual.getAccountId());
 			assertEquals("AAAAAAAA", actual.getAccountName());
@@ -132,10 +132,10 @@ public class AccountRepositoryImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='zzzzzzzz'", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -152,9 +152,9 @@ public class AccountRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(0, actualData.getFirst().getCreatedBy());
-			assertEquals(0, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(0L, actualData.getFirst().getCreatedBy());
+			assertEquals(0L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("zzzzzzzz", actualData.getFirst().getAccountId());
 			assertEquals("ZZZZZZZZ", actualData.getFirst().getAccountName());
@@ -190,10 +190,10 @@ public class AccountRepositoryImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='zzzzzzzz'", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -210,9 +210,9 @@ public class AccountRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(0, actualData.getFirst().getCreatedBy());
-			assertEquals(0, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(0L, actualData.getFirst().getCreatedBy());
+			assertEquals(0L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("zzzzzzzz", actualData.getFirst().getAccountId());
 			assertEquals("ZZZZZZZZ", actualData.getFirst().getAccountName());
@@ -253,7 +253,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@DisplayName("正常系：Nullのパラメータを含むAccountModelでの更新")
 		void update_contain_null_parameter() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
 					.build();
@@ -263,10 +263,10 @@ public class AccountRepositoryImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='aaaaaaaa'", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -283,9 +283,9 @@ public class AccountRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -305,7 +305,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@DisplayName("正常系：Nullのパラメータを含まないAccountModelでの更新")
 		void update_not_contain_null_parameter() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
 					.password("aaaaaaaa")
@@ -323,10 +323,10 @@ public class AccountRepositoryImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='aaaaaaaa'", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -343,9 +343,9 @@ public class AccountRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -365,7 +365,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void update_UpdateFailureException() {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(13)
+					.accountNo(13L)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
 					.build();
@@ -385,7 +385,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@DisplayName("正常系：Nullのパラメータを含むAccountModelでの更新")
 		void updateLoginFailureCount_contain_null_parameter() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(8)
+					.accountNo(8L)
 					.build();
 			
 			accountRepositoryImpl.updateLoginFailureCount(accountModel);
@@ -393,10 +393,10 @@ public class AccountRepositoryImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=8", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -413,9 +413,9 @@ public class AccountRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(8, actualData.getFirst().getAccountNo());
-			assertEquals(8, actualData.getFirst().getCreatedBy());
-			assertEquals(8, actualData.getFirst().getUpdatedBy());
+			assertEquals(8L, actualData.getFirst().getAccountNo());
+			assertEquals(8L, actualData.getFirst().getCreatedBy());
+			assertEquals(8L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("hhhhhhhh", actualData.getFirst().getAccountId());
 			assertEquals("HHHHHHHH", actualData.getFirst().getAccountName());
@@ -435,7 +435,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@DisplayName("正常系：Nullのパラメータを含まないAccountModelでの更新")
 		void updateLoginFailureCount_not_contain_null_parameter() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.lastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
 					.loginFailureCount(2)
 					.build();
@@ -445,10 +445,10 @@ public class AccountRepositoryImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(rs.getInt("account_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getInt("updated_by"))
+							.updatedBy(rs.getLong("updated_by"))
 							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 							.isDeleted(rs.getBoolean("is_deleted"))
 							.accountId(rs.getString("account_id"))
@@ -465,9 +465,9 @@ public class AccountRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
-			assertEquals(1, actualData.getFirst().getUpdatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
@@ -487,7 +487,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void updateLoginFailureCount_UpdateFailureException() {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(13)
+					.accountNo(13L)
 					.loginFailureCount(2)
 					.build();
 			
@@ -505,14 +505,14 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが存在する場合")
 		void isExistAccount_true() {
-			assertTrue(accountRepositoryImpl.isExistAccount(2, "aaaaaaaa"));
+			assertTrue(accountRepositoryImpl.isExistAccount(2L, "aaaaaaaa"));
 		}
 		
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
 		void isExistAccount_false() {
-			assertFalse(accountRepositoryImpl.isExistAccount(1, "zzzzzzzz"));
+			assertFalse(accountRepositoryImpl.isExistAccount(1L, "zzzzzzzz"));
 		}
 	}
 	

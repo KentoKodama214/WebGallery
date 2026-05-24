@@ -54,7 +54,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 
 	private Authentication createAuthentication() {
 		AccountModel sessionAccount = AccountModel.builder()
-				.accountNo(1)
+				.accountNo(1L)
 				.accountId("aaaaaaaa")
 				.accountName("AAAAAAAA")
 				.password("$2a$10$password1")
@@ -95,17 +95,17 @@ public class PhotoFavoriteControllerIntegrationTest {
 			List<PhotoFavorite> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite WHERE account_no=1 and favorite_photo_account_no=2 and favorite_photo_no=1", (rs, rowNum) ->
 						PhotoFavorite.builder()
-							.accountNo(rs.getInt("account_no"))
-							.favoritePhotoAccountNo(rs.getInt("favorite_photo_account_no"))
-							.favoritePhotoNo(rs.getInt("favorite_photo_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.favoritePhotoAccountNo(rs.getLong("favorite_photo_account_no"))
+							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
 							.build());
 			assertEquals(1, actualData.size());
-			assertEquals(1, actualData.getFirst().getAccountNo());
-			assertEquals(2, actualData.getFirst().getFavoritePhotoAccountNo());
-			assertEquals(1, actualData.getFirst().getFavoritePhotoNo());
-			assertEquals(1, actualData.getFirst().getCreatedBy());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(2L, actualData.getFirst().getFavoritePhotoAccountNo());
+			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
 		}
 
 		@Test
@@ -177,10 +177,10 @@ public class PhotoFavoriteControllerIntegrationTest {
 			List<PhotoFavorite> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite WHERE account_no=1 and favorite_photo_account_no=1 and favorite_photo_no=1", (rs, rowNum) ->
 						PhotoFavorite.builder()
-							.accountNo(rs.getInt("account_no"))
-							.favoritePhotoAccountNo(rs.getInt("favorite_photo_account_no"))
-							.favoritePhotoNo(rs.getInt("favorite_photo_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.favoritePhotoAccountNo(rs.getLong("favorite_photo_account_no"))
+							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
 							.build());
 			assertEquals(0, actualData.size());
@@ -188,23 +188,23 @@ public class PhotoFavoriteControllerIntegrationTest {
 			List<PhotoFavorite> actualRestData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite", (rs, rowNum) ->
 						PhotoFavorite.builder()
-							.accountNo(rs.getInt("account_no"))
-							.favoritePhotoAccountNo(rs.getInt("favorite_photo_account_no"))
-							.favoritePhotoNo(rs.getInt("favorite_photo_no"))
-							.createdBy(rs.getInt("created_by"))
+							.accountNo(rs.getLong("account_no"))
+							.favoritePhotoAccountNo(rs.getLong("favorite_photo_account_no"))
+							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.createdBy(rs.getLong("created_by"))
 							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
 							.build());
 
 			assertEquals(3, actualRestData.size());
-			assertEquals(1, actualRestData.get(0).getAccountNo());
-			assertEquals(1, actualRestData.get(0).getFavoritePhotoAccountNo());
-			assertEquals(2, actualRestData.get(0).getFavoritePhotoNo());
-			assertEquals(2, actualRestData.get(1).getAccountNo());
-			assertEquals(1, actualRestData.get(1).getFavoritePhotoAccountNo());
-			assertEquals(2, actualRestData.get(1).getFavoritePhotoNo());
-			assertEquals(2, actualRestData.get(2).getAccountNo());
-			assertEquals(2, actualRestData.get(2).getFavoritePhotoAccountNo());
-			assertEquals(1, actualRestData.get(2).getFavoritePhotoNo());
+			assertEquals(1L, actualRestData.get(0).getAccountNo());
+			assertEquals(1L, actualRestData.get(0).getFavoritePhotoAccountNo());
+			assertEquals(2L, actualRestData.get(0).getFavoritePhotoNo());
+			assertEquals(2L, actualRestData.get(1).getAccountNo());
+			assertEquals(1L, actualRestData.get(1).getFavoritePhotoAccountNo());
+			assertEquals(2L, actualRestData.get(1).getFavoritePhotoNo());
+			assertEquals(2L, actualRestData.get(2).getAccountNo());
+			assertEquals(2L, actualRestData.get(2).getFavoritePhotoAccountNo());
+			assertEquals(1L, actualRestData.get(2).getFavoritePhotoNo());
 		}
 
 		@Test

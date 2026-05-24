@@ -36,7 +36,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
 	}
 
 	@Override
-	public void revokeAllByAccountNo(Integer accountNo) {
+	public void revokeAllByAccountNo(Long accountNo) {
 		refreshTokenMapper.revokeAllByAccountNo(accountNo);
 	}
 

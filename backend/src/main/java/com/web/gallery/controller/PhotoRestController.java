@@ -110,8 +110,8 @@ public class PhotoRestController {
 	@GetMapping(ApiRoutes.API_PHOTO_DETAIL)
 	public ResponseEntity<PhotoDetailGetResponse> getPhotoDetail(
 			@PathVariable String photoAccountId,
-			@PathVariable Integer photoNo,
-			Integer accountNo) throws PhotoNotFoundException {
+			@PathVariable Long photoNo,
+			Long accountNo) throws PhotoNotFoundException {
 
 		PhotoDetailModel photoDetailModel = photoService.getPhotoDetail(
 				PhotoDetailGetModel.of(sessionHelper.getAccountNo(), accountNo, photoNo));
@@ -162,7 +162,7 @@ public class PhotoRestController {
 		
 		List<PhotoDetailModel> photoDetailModelList = List.of(PhotoDetailModel.from(photoSaveRequest));
 
-		Integer savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
+		Long savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
 
 		String savedImageFilePath;
 		if (Objects.isNull(photoSaveRequest.getPhotoNo()) && !Objects.isNull(photoSaveRequest.getImageFile())) {

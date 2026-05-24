@@ -11,15 +11,15 @@ import lombok.Value;
 @Builder
 public class PhotoDetailGetModel {
 	/** ログイン中のアカウントNo */
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** 写真のアカウントNo */
 	@NonNull
-	private Integer photoAccountNo;
-	
+	private Long photoAccountNo;
+
 	/** 写真番号 */
 	@NonNull
-	private Integer photoNo;
+	private Long photoNo;
 
 	/**
 	 * パラメータからPhotoDetailGetModelを生成する
@@ -29,7 +29,7 @@ public class PhotoDetailGetModel {
 	 * @param	photoNo			写真番号
 	 * @return					{@link PhotoDetailGetModel}
 	 */
-	public static PhotoDetailGetModel of(Integer accountNo, Integer photoAccountNo, Integer photoNo) {
+	public static PhotoDetailGetModel of(Long accountNo, Long photoAccountNo, Long photoNo) {
 		return PhotoDetailGetModel.builder()
 				.accountNo(accountNo)
 				.photoAccountNo(photoAccountNo)

@@ -17,10 +17,10 @@ import lombok.Data;
 @Builder
 public class RefreshToken {
 	/** トークンID */
-	private Integer tokenId;
+	private Long tokenId;
 
 	/** アカウント番号 */
-	private Integer accountNo;
+	private Long accountNo;
 
 	/** トークンハッシュ */
 	private String tokenHash;

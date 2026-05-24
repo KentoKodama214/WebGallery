@@ -108,7 +108,7 @@ public class AuthServiceImplIntegrationTest {
 			String tokenHash = hashToken(result.getRefreshToken());
 			RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 			assertNotNull(storedToken);
-			assertEquals(1, storedToken.getAccountNo());
+			assertEquals(1L, storedToken.getAccountNo());
 			assertFalse(storedToken.getIsRevoked());
 			assertTrue(storedToken.getExpiresAt().isAfter(OffsetDateTime.now()));
 		}

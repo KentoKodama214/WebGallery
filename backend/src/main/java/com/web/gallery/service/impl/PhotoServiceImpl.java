@@ -111,12 +111,12 @@ public class PhotoServiceImpl implements PhotoService {
 	 */
 	@Override
 	@Transactional
-	public Integer savePhotos(String accountId, List<PhotoDetailModel> photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+	public Long savePhotos(String accountId, List<PhotoDetailModel> photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException {
 		if(Objects.isNull(photoDetailModelList)) return null;
 		if(photoDetailModelList.isEmpty()) return null;
 
-		Integer photoNo = photoMstRepository.getNewPhotoNo(photoDetailModelList.getFirst().getAccountNo());
-		Integer savedPhotoNo = photoNo;
+		Long photoNo = photoMstRepository.getNewPhotoNo(photoDetailModelList.getFirst().getAccountNo());
+		Long savedPhotoNo = photoNo;
 		String filePath = photoConfig.getOutputPath() + accountId + "/";
 
 		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
@@ -176,7 +176,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public Boolean isReachedUpperLimit(Integer accountNo) {
+	public Boolean isReachedUpperLimit(Long accountNo) {
 		if(Objects.isNull(accountNo)) return true;
 		
 		AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
@@ -274,7 +274,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @param	newPhotoNo				新規採番された写真番号
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 */
-	private void registPhotoTags(List<PhotoTagModel> photoTagModelList, Integer newPhotoNo) throws RegistFailureException {
+	private void registPhotoTags(List<PhotoTagModel> photoTagModelList, Long newPhotoNo) throws RegistFailureException {
 		if(Objects.isNull(photoTagModelList)) return; 
 		
 		int tagNo = 1;
@@ -282,7 +282,7 @@ public class PhotoServiceImpl implements PhotoService {
 			PhotoTagModel photoTagRegistModel = PhotoTagModel.builder()
 					.accountNo(photoTagModel.getAccountNo())
 					.photoNo(!Objects.isNull(newPhotoNo) ? newPhotoNo : photoTagModel.getPhotoNo())
-					.tagNo(tagNo)
+					.tagNo((long) tagNo)
 					.tagJapaneseName(photoTagModel.getTagJapaneseName())
 					.tagEnglishName(photoTagModel.getTagEnglishName())
 					.build();
@@ -312,7 +312,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @param	accountNo	削除する写真のアカウント番号
 	 * @param	photoNo		削除する写真の写真番号
 	 */
-	private void deletePhotoTags(Integer accountNo, Integer photoNo) {
+	private void deletePhotoTags(Long accountNo, Long photoNo) {
 		photoTagMstRepository.clear(
 			PhotoTagDeleteModel.builder()
 				.accountNo(accountNo)

@@ -29,7 +29,7 @@ public interface RefreshTokenRepository {
 	 *
 	 * @param	accountNo	アカウント番号
 	 */
-	void revokeAllByAccountNo(Integer accountNo);
+	void revokeAllByAccountNo(Long accountNo);
 
 	/**
 	 * トークンハッシュに該当するリフレッシュトークンを無効化する

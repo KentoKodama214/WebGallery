@@ -20,11 +20,11 @@ import lombok.Value;
 public class PhotoModel {
 	/** アカウント番号 */
 	@NonNull
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** 写真番号 */
 	@NonNull
-	private Integer photoNo;
+	private Long photoNo;
 
 	/** お気に入り数 */
 	@NonNull

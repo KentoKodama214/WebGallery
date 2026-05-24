@@ -41,7 +41,7 @@ public interface PhotoMstMapper {
 	 * @param	accountNo	アカウント番号
 	 * @return				最大の写真番号
 	 */
-	public Integer getMaxPhotoNo(Integer accountNo);
+	public Long getMaxPhotoNo(Long accountNo);
 	
 	/**
 	 * ファイル名から登録済みの写真家判定する

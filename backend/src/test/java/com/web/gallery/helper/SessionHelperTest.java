@@ -46,10 +46,10 @@ public class SessionHelperTest {
 		@DisplayName("正常系：セッションに存在し、アカウント番号を返す")
 		void getAccountNo_found() {
 			doReturn(accountPrincipal).when(authentication).getPrincipal();
-			doReturn(1).when(accountPrincipal).getAccountNo();
+			doReturn(1L).when(accountPrincipal).getAccountNo();
 			
-			Integer actual = sessionHelper.getAccountNo();
-			assertEquals(Integer.valueOf(1), actual);
+			Long actual = sessionHelper.getAccountNo();
+			assertEquals(Long.valueOf(1L), actual);
 		}
 		
 		@Test
@@ -58,7 +58,7 @@ public class SessionHelperTest {
 		void getAccountNo_not_found() {
 			doReturn(null).when(authentication).getPrincipal();
 			
-			Integer actual = sessionHelper.getAccountNo();
+			Long actual = sessionHelper.getAccountNo();
 			assertNull(actual);
 			verify(accountPrincipal, times(0)).getAccountNo();
 		}

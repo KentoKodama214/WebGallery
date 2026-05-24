@@ -6,13 +6,13 @@ DROP TABLE IF EXISTS common.account;
 CREATE TABLE common.account
 (
 	-- アカウント番号
-	account_no serial NOT NULL,
+	account_no bigserial NOT NULL,
 	-- 作成者
-	created_by int NOT NULL,
+	created_by bigint NOT NULL,
 	-- 作成日時
 	created_at timestamp with time zone NOT NULL,
 	-- 更新者
-	updated_by int NOT NULL,
+	updated_by bigint NOT NULL,
 	-- 更新日時
 	updated_at timestamp with time zone NOT NULL,
 	-- 削除フラグ

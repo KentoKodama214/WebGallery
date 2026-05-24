@@ -6,15 +6,15 @@ DROP TABLE IF EXISTS photo.photo_favorite;
 CREATE TABLE photo.photo_favorite
 (
 	-- ID
-	id serial NOT NULL,
+	id bigserial NOT NULL,
 	-- アカウント番号
-	account_no int NOT NULL,
+	account_no bigint NOT NULL,
 	-- お気に入り写真アカウント番号
-	favorite_photo_account_no int NOT NULL,
+	favorite_photo_account_no bigint NOT NULL,
 	-- お気に入り写真番号
-	favorite_photo_no int NOT NULL,
+	favorite_photo_no bigint NOT NULL,
 	-- 作成者
-	created_by int NOT NULL,
+	created_by bigint NOT NULL,
 	-- 作成日時
 	created_at timestamp with time zone NOT NULL,
 	PRIMARY KEY (id),

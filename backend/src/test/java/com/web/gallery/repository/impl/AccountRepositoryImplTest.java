@@ -55,10 +55,10 @@ public class AccountRepositoryImplTest {
 		@DisplayName("正常系：アカウントが取得できた場合")
 		void getByAccountNo_found() {
 			Account account = Account.builder()
-					.accountNo(1)
-					.createdBy(1)
+					.accountNo(1L)
+					.createdBy(1L)
 					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(1)
+					.updatedBy(1L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("aaaaaaaa")
@@ -80,11 +80,11 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(accountList).when(accountMapper).select(accountCaptor.capture());
 			
-			AccountModel actual = accountRepositoryImpl.getByAccountNo(1);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(1L);
 
 			verify(accountMapper).select(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
-			assertEquals(1, accountCapture.getAccountNo());
+			assertEquals(1L, accountCapture.getAccountNo());
 
 			assertNotNull(actual);
 			assertEquals(account.getAccountNo(), actual.getAccountNo());
@@ -108,11 +108,11 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(new ArrayList<Account>()).when(accountMapper).select(accountCaptor.capture());
 			
-			AccountModel actual = accountRepositoryImpl.getByAccountNo(1);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(1L);
 			
 			verify(accountMapper).select(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
-			assertEquals(1, accountCapture.getAccountNo());
+			assertEquals(1L, accountCapture.getAccountNo());
 			
 			assertNull(actual);
 		}
@@ -127,10 +127,10 @@ public class AccountRepositoryImplTest {
 		@DisplayName("正常系：アカウントが取得できた場合")
 		void getByAccountId_found() {
 			Account account = Account.builder()
-					.accountNo(1)
-					.createdBy(1)
+					.accountNo(1L)
+					.createdBy(1L)
 					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(1)
+					.updatedBy(1L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("aaaaaaaa")
@@ -213,9 +213,9 @@ public class AccountRepositoryImplTest {
 			verify(accountMapper).insert(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
 			assertEquals(null, accountCapture.getAccountNo());
-			assertEquals(0, accountCapture.getCreatedBy());
+			assertEquals(0L, accountCapture.getCreatedBy());
 			assertEquals(null, accountCapture.getCreatedAt());
-			assertEquals(0, accountCapture.getUpdatedBy());
+			assertEquals(0L, accountCapture.getUpdatedBy());
 			assertEquals(null, accountCapture.getUpdatedAt());
 			assertEquals(null, accountCapture.getIsDeleted());
 			assertEquals("aaaaaaaa", accountCapture.getAccountId());
@@ -255,9 +255,9 @@ public class AccountRepositoryImplTest {
 			verify(accountMapper).insert(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
 			assertEquals(null, accountCapture.getAccountNo());
-			assertEquals(0, accountCapture.getCreatedBy());
+			assertEquals(0L, accountCapture.getCreatedBy());
 			assertEquals(null, accountCapture.getCreatedAt());
-			assertEquals(0, accountCapture.getUpdatedBy());
+			assertEquals(0L, accountCapture.getUpdatedBy());
 			assertEquals(null, accountCapture.getUpdatedAt());
 			assertEquals(null, accountCapture.getIsDeleted());
 			assertEquals("aaaaaaaa", accountCapture.getAccountId());
@@ -292,9 +292,9 @@ public class AccountRepositoryImplTest {
 			verify(accountMapper).insert(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
 			assertEquals(null, accountCapture.getAccountNo());
-			assertEquals(0, accountCapture.getCreatedBy());
+			assertEquals(0L, accountCapture.getCreatedBy());
 			assertEquals(null, accountCapture.getCreatedAt());
-			assertEquals(0, accountCapture.getUpdatedBy());
+			assertEquals(0L, accountCapture.getUpdatedBy());
 			assertEquals(null, accountCapture.getUpdatedAt());
 			assertEquals(null, accountCapture.getIsDeleted());
 			assertEquals("aaaaaaaa", accountCapture.getAccountId());
@@ -320,7 +320,7 @@ public class AccountRepositoryImplTest {
 		@DisplayName("正常系：Nullのパラメータを含むAccountModelでの更新")
 		void update_contain_null_parameter() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
 					.build();
@@ -333,7 +333,7 @@ public class AccountRepositoryImplTest {
 			
 			verify(accountMapper).update(any(Account.class), any(Account.class));
 			Account cndAccountCapture = cndAccountCaptor.getValue();
-			assertEquals(1, cndAccountCapture.getAccountNo());
+			assertEquals(1L, cndAccountCapture.getAccountNo());
 			
 			Account targetAccountCapture = targetAccountCaptor.getValue();
 			assertEquals(null, targetAccountCapture.getCreatedBy());
@@ -359,7 +359,7 @@ public class AccountRepositoryImplTest {
 		@DisplayName("正常系：Nullのパラメータを含まないAccountModelでの更新")
 		void update_not_contain_null_parameter() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
 					.password("aaaaaaaa")
@@ -381,7 +381,7 @@ public class AccountRepositoryImplTest {
 			
 			verify(accountMapper).update(any(Account.class), any(Account.class));
 			Account cndAccountCapture = cndAccountCaptor.getValue();
-			assertEquals(1, cndAccountCapture.getAccountNo());
+			assertEquals(1L, cndAccountCapture.getAccountNo());
 			
 			Account targetAccountCapture = targetAccountCaptor.getValue();
 			assertEquals(null, targetAccountCapture.getCreatedBy());
@@ -407,7 +407,7 @@ public class AccountRepositoryImplTest {
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void update_UpdateFailureException() {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.accountId("aaaaaaaa")
 					.accountName("AAAAAAAA")
 					.build();
@@ -420,7 +420,7 @@ public class AccountRepositoryImplTest {
 			
 			verify(accountMapper).update(any(Account.class), any(Account.class));
 			Account cndAccountCapture = cndAccountCaptor.getValue();
-			assertEquals(1, cndAccountCapture.getAccountNo());
+			assertEquals(1L, cndAccountCapture.getAccountNo());
 			
 			Account targetAccountCapture = targetAccountCaptor.getValue();
 			assertEquals(null, targetAccountCapture.getCreatedBy());
@@ -451,7 +451,7 @@ public class AccountRepositoryImplTest {
 		@DisplayName("正常系：Nullのパラメータを含むAccountModelでの更新")
 		void updateLoginFailureCount_contain_null_parameter() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.build();
 			
 			ArgumentCaptor<Account> cndAccountCaptor = ArgumentCaptor.forClass(Account.class);
@@ -462,7 +462,7 @@ public class AccountRepositoryImplTest {
 			
 			verify(accountMapper).update(any(Account.class), any(Account.class));
 			Account cndAccountCapture = cndAccountCaptor.getValue();
-			assertEquals(cndAccountCapture.getAccountNo(), 1);
+			assertEquals(cndAccountCapture.getAccountNo(), 1L);
 			
 			Account targetAccountCapture = targetAccountCaptor.getValue();
 			assertEquals(null, targetAccountCapture.getCreatedBy());
@@ -488,7 +488,7 @@ public class AccountRepositoryImplTest {
 		@DisplayName("正常系：Nullのパラメータを含まないAccountModelでの更新")
 		void updateLoginFailureCount_not_contain_null_parameter() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.lastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
 					.loginFailureCount(2)
 					.build();
@@ -501,7 +501,7 @@ public class AccountRepositoryImplTest {
 			
 			verify(accountMapper).update(any(Account.class), any(Account.class));
 			Account cndAccountCapture = cndAccountCaptor.getValue();
-			assertEquals(cndAccountCapture.getAccountNo(), 1);
+			assertEquals(cndAccountCapture.getAccountNo(), 1L);
 			
 			Account targetAccountCapture = targetAccountCaptor.getValue();
 			assertEquals(null, targetAccountCapture.getCreatedBy());
@@ -527,7 +527,7 @@ public class AccountRepositoryImplTest {
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void updateLoginFailureCount_UpdateFailureException() {
 			AccountModel accountModel = AccountModel.builder()
-					.accountNo(1)
+					.accountNo(1L)
 					.build();
 			
 			ArgumentCaptor<Account> cndAccountCaptor = ArgumentCaptor.forClass(Account.class);
@@ -538,7 +538,7 @@ public class AccountRepositoryImplTest {
 			
 			verify(accountMapper).update(any(Account.class), any(Account.class));
 			Account cndAccountCapture = cndAccountCaptor.getValue();
-			assertEquals(cndAccountCapture.getAccountNo(), 1);
+			assertEquals(cndAccountCapture.getAccountNo(), 1L);
 			
 			Account targetAccountCapture = targetAccountCaptor.getValue();
 			assertEquals(null, targetAccountCapture.getCreatedBy());
@@ -571,11 +571,11 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(true).when(accountMapper).isExistAccount(accountCaptor.capture());
 			
-			assertTrue(accountRepositoryImpl.isExistAccount(1, "aaaaaaaa"));
+			assertTrue(accountRepositoryImpl.isExistAccount(1L, "aaaaaaaa"));
 			verify(accountMapper, times(1)).isExistAccount(any(Account.class));
 			
 			Account accountCapture = accountCaptor.getValue();
-			assertEquals(1, accountCapture.getAccountNo());
+			assertEquals(1L, accountCapture.getAccountNo());
 			assertEquals("aaaaaaaa", accountCapture.getAccountId());
 		}
 		
@@ -586,11 +586,11 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(false).when(accountMapper).isExistAccount(accountCaptor.capture());
 			
-			assertFalse(accountRepositoryImpl.isExistAccount(1, "aaaaaaaa"));
+			assertFalse(accountRepositoryImpl.isExistAccount(1L, "aaaaaaaa"));
 			verify(accountMapper, times(1)).isExistAccount(any());
 			
 			Account accountCapture = accountCaptor.getValue();
-			assertEquals(1, accountCapture.getAccountNo());
+			assertEquals(1L, accountCapture.getAccountNo());
 			assertEquals("aaaaaaaa", accountCapture.getAccountId());
 		}
 	}
@@ -604,10 +604,10 @@ public class AccountRepositoryImplTest {
 		@DisplayName("正常系：アカウントを2件以上取得")
 		void getAccountList_found_some_accounts() {
 			Account account1 = Account.builder()
-					.accountNo(1)
-					.createdBy(1)
+					.accountNo(1L)
+					.createdBy(1L)
 					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(1)
+					.updatedBy(1L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("aaaaaaaa")
@@ -623,10 +623,10 @@ public class AccountRepositoryImplTest {
 					.loginFailureCount(0)
 					.build();
 			Account account2 = Account.builder()
-					.accountNo(2)
-					.createdBy(2)
+					.accountNo(2L)
+					.createdBy(2L)
 					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.updatedBy(2)
+					.updatedBy(2L)
 					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.isDeleted(false)
 					.accountId("bbbbbbbb")
@@ -655,7 +655,7 @@ public class AccountRepositoryImplTest {
 			assertFalse(account.getIsDeleted());
 			
 			AccountModel actualAccountModel1 = actual.stream().sorted(Comparator.comparing(AccountModel::getAccountNo)).toList().getFirst();
-			assertEquals(1, actualAccountModel1.getAccountNo());
+			assertEquals(1L, actualAccountModel1.getAccountNo());
 			assertEquals("aaaaaaaa", actualAccountModel1.getAccountId());
 			assertEquals("AAAAAAAA", actualAccountModel1.getAccountName());
 			assertEquals("$2a$10$password1", actualAccountModel1.getPassword());
@@ -669,7 +669,7 @@ public class AccountRepositoryImplTest {
 			assertEquals(0, actualAccountModel1.getLoginFailureCount());
 			
 			AccountModel actualAccountModel2 = actual.stream().sorted(Comparator.comparing(AccountModel::getAccountNo)).toList().getLast();
-			assertEquals(2, actualAccountModel2.getAccountNo());
+			assertEquals(2L, actualAccountModel2.getAccountNo());
 			assertEquals("bbbbbbbb", actualAccountModel2.getAccountId());
 			assertEquals("BBBBBBBB", actualAccountModel2.getAccountName());
 			assertEquals("$2a$10$password2", actualAccountModel2.getPassword());

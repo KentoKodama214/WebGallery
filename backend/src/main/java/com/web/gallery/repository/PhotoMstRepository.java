@@ -17,7 +17,7 @@ public interface PhotoMstRepository {
 	 * @param	newPhotoNo				新規採番した写真番号
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 */
-	void regist(PhotoDetailModel photoDetailModel, String filePath, Integer newPhotoNo) throws RegistFailureException;
+	void regist(PhotoDetailModel photoDetailModel, String filePath, Long newPhotoNo) throws RegistFailureException;
 	
 	/**
 	 * 写真マスタを更新する
@@ -41,7 +41,7 @@ public interface PhotoMstRepository {
 	 * @param	accountNo	アカウント番号
 	 * @return				新規採番した写真番号
 	 */
-	Integer getNewPhotoNo(Integer accountNo);
+	Long getNewPhotoNo(Long accountNo);
 	
 	/**
 	 * 同じファイル名の写真が存在するかチェックする
@@ -57,5 +57,5 @@ public interface PhotoMstRepository {
 	 * @param	accountNo	アカウント番号
 	 * @return				登録件数
 	 */
-	Integer count(Integer accountNo);
+	Integer count(Long accountNo);
 }

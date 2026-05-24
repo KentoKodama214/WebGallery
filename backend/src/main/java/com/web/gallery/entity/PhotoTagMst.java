@@ -17,19 +17,19 @@ import lombok.Data;
 @Builder
 public class PhotoTagMst {
 	/** ID */
-	private Integer id;
+	private Long id;
 
 	/** アカウント番号 */
-	private Integer accountNo;
+	private Long accountNo;
 
 	/** 写真番号 */
-	private Integer photoNo;
+	private Long photoNo;
 
 	/** タグ番号 */
-	private Integer tagNo;
+	private Long tagNo;
 
 	/** 作成者 */
-	private Integer createdBy;
+	private Long createdBy;
 
 	/** 作成日時 */
 	private OffsetDateTime createdAt;

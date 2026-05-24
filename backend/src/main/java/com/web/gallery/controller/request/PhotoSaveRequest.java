@@ -22,11 +22,11 @@ public class PhotoSaveRequest {
 	/** アカウント番号 */
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** 写真番号 */
 	@Positive(message = "{validation.common.positive}")
-	private Integer photoNo;
+	private Long photoNo;
 
 	/** お気に入り数 */
 	private Integer favoriteCount;
@@ -39,7 +39,7 @@ public class PhotoSaveRequest {
 	private LocalDateTime photoAt;
 	
 	/** ロケーション番号 */
-	private Integer locationNo;
+	private Long locationNo;
 	
 	/** 住所 */
 	private String address;

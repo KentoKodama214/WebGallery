@@ -8,8 +8,8 @@ import lombok.Data;
 @Data
 public class PhotoListGetDto {
 	/** ログイン中のアカウントNo */
-	private Integer accountNo;
-	
+	private Long accountNo;
+
 	/** 写真のアカウントNo */
-	private Integer photoAccountNo;
+	private Long photoAccountNo;
 }
