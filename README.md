@@ -195,7 +195,7 @@ docker compose --profile docs run --rm schemaspy
 
 ## API
 
-REST APIの詳細は [`doc/api/`](doc/api/) を参照してください。
+REST APIの詳細は `http://localhost:8080/scalar` を参照してください。
 
 ## プロジェクト構成
 
