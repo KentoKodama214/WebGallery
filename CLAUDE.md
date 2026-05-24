@@ -75,14 +75,7 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 
 ### データベーススキーマ
 
-SchemaSpyで自動生成したドキュメントを参照。生成手順は以下の通り。
-
-```bash
-docker compose up -d
-docker compose --profile docs run --rm schemaspy
-```
-
-生成後、`doc/database/common/index.html`（commonスキーマ）と`doc/database/photo/index.html`（photoスキーマ）をブラウザで開くと、ER図・テーブル定義・データディクショナリを確認できる。
+詳しくは、[データベース定義書](doc/database/README.md)を参照。テーブル定義・ER図はSchemaSpyで自動生成する。
 
 ## テスト規約
 
