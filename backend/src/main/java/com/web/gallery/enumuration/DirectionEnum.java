@@ -5,12 +5,14 @@ import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
  * 写真の向きを管理するEnumクラス
  */
+@Schema(description = "写真の向き区分")
 @Getter
 @AllArgsConstructor
 public enum DirectionEnum {

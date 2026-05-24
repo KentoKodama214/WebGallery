@@ -2,6 +2,7 @@ package com.web.gallery.controller.response;
 
 import com.web.gallery.model.AuthTokenModel;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,13 +12,16 @@ import lombok.Data;
  * @version	1.0.0
  * @since	1.0.0
  */
+@Schema(description = "ログイン認証レスポンス")
 @Data
 @Builder
 public class AuthLoginResponse {
 	/** アクセストークン */
+	@Schema(description = "アクセストークン")
 	private String accessToken;
 
 	/** アクセストークン有効期限（秒） */
+	@Schema(description = "アクセストークン有効期限（秒）", example = "900")
 	private Long expiresIn;
 
 	/**

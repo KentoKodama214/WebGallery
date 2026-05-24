@@ -33,6 +33,11 @@ import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.service.impl.AccountServiceImpl;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "アカウント", description = "アカウント管理に関するAPI")
 public class AccountRestController {
 	private final AccountServiceImpl accountServiceImpl;
 	private final SessionHelper sessionHelper;
@@ -54,6 +60,8 @@ public class AccountRestController {
 	 *
 	 * @return	{@link AccountListItemResponse}のリスト
 	 */
+	@Operation(summary = "アカウント一覧取得", description = "登録されているアカウントの一覧を取得する")
+	@ApiResponse(responseCode = "200", description = "取得成功")
 	@GetMapping(ApiRoutes.API_ACCOUNTS)
 	public ResponseEntity<List<AccountListItemResponse>> getAccountList() {
 		List<AccountListItemResponse> responseList = accountServiceImpl.getAccountList().stream()
@@ -70,6 +78,10 @@ public class AccountRestController {
 	 * @return				{@link AccountDetailResponse}
 	 * @throws	ForbiddenAccountException	認証ユーザーと異なるアカウントIDの場合
 	 */
+	@Operation(summary = "アカウント詳細取得", description = "指定したアカウントの詳細情報を取得する")
+	@ApiResponse(responseCode = "200", description = "取得成功")
+	@ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
+	@SecurityRequirement(name = "Bearer")
 	@GetMapping(ApiRoutes.API_ACCOUNT)
 	public ResponseEntity<AccountDetailResponse> getAccount(
 			@PathVariable String accountId) throws ForbiddenAccountException {
@@ -94,6 +106,10 @@ public class AccountRestController {
 	 * @throws	BadRequestException 	リクエストパラメータが不正の場合
 	 * @throws	RegistFailureException 	一意制約違反でアカウントの登録に失敗した場合
 	 */
+	@Operation(summary = "アカウント登録", description = "新規アカウントを登録する")
+	@ApiResponse(responseCode = "200", description = "登録成功")
+	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+	@ApiResponse(responseCode = "409", description = "アカウントIDが既に使用されている", content = @Content)
 	@PostMapping(ApiRoutes.API_ACCOUNTS)
 	public ResponseEntity<AccountRegistResponse> register(
 			@RequestBody @Validated AccountRegistRequest accountRegistRequest,
@@ -123,6 +139,12 @@ public class AccountRestController {
 	 * @throws	BadRequestException		リクエストパラメータが不正の場合
 	 * @throws	UpdateFailureException	更新に失敗した場合
 	 */
+	@Operation(summary = "アカウント更新", description = "アカウント情報を更新する")
+	@ApiResponse(responseCode = "200", description = "更新成功")
+	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+	@ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
+	@ApiResponse(responseCode = "409", description = "変更後のアカウントIDが既に使用されている", content = @Content)
+	@SecurityRequirement(name = "Bearer")
 	@PutMapping(ApiRoutes.API_ACCOUNT)
 	public ResponseEntity<AccountUpdateResponse> update(
 			@PathVariable String accountId,

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import com.web.gallery.controller.request.ErrorRequest;
 import com.web.gallery.controller.response.BadRequestResponse;
 import com.web.gallery.exception.BadRequestException;
@@ -22,6 +23,7 @@ import com.web.gallery.exception.UpdateFailureException;
  * @version	1.0.0
  * @since	1.0.0
 */
+@Hidden
 @RestControllerAdvice(assignableTypes = {
 		AccountRestController.class,
 		KbnMstRestController.class,

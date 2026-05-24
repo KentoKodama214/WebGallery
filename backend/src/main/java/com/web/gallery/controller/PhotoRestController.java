@@ -45,6 +45,12 @@ import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.service.PhotoService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,6 +63,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "写真", description = "写真管理に関するAPI")
 public class PhotoRestController {
 	
 	private final PhotoService photoService;
@@ -71,6 +78,8 @@ public class PhotoRestController {
 	 * @param	photoListRequest	{@link PhotoListRequest}
 	 * @return						{@link PhotoListGetResponse}
 	 */
+	@Operation(summary = "写真一覧取得", description = "抽出条件に該当する写真を、指定の並び順で取得する")
+	@ApiResponse(responseCode = "200", description = "取得成功")
 	@GetMapping(ApiRoutes.API_PHOTOS)
 	public ResponseEntity<PhotoListGetResponse> getPhotoList(
 			@PathVariable String photoAccountId,
@@ -88,6 +97,8 @@ public class PhotoRestController {
 	 * @param	photoAccountId		ページ所有者のアカウントID
 	 * @return						{@link PhotoUpperLimitResponse}
 	 */
+	@Operation(summary = "写真登録上限チェック", description = "指定のアカウントが写真の登録枚数の上限に達しているかをチェックする")
+	@ApiResponse(responseCode = "200", description = "チェック成功")
 	@GetMapping(ApiRoutes.API_PHOTO_UPPER_LIMIT)
 	public ResponseEntity<PhotoUpperLimitResponse> getPhotoUpperLimit(
 			@PathVariable String photoAccountId) {
@@ -107,6 +118,9 @@ public class PhotoRestController {
 	 * @return						{@link PhotoDetailGetResponse}
 	 * @throws	PhotoNotFoundException	写真が存在しない場合
 	 */
+	@Operation(summary = "写真詳細取得", description = "写真の詳細情報（EXIF・タグを含む）を取得する")
+	@ApiResponse(responseCode = "200", description = "取得成功")
+	@ApiResponse(responseCode = "404", description = "写真が存在しない", content = @Content)
 	@GetMapping(ApiRoutes.API_PHOTO_DETAIL)
 	public ResponseEntity<PhotoDetailGetResponse> getPhotoDetail(
 			@PathVariable String photoAccountId,
@@ -133,6 +147,12 @@ public class PhotoRestController {
 	 * @throws	RegistFailureException 		写真の登録に失敗した場合
 	 * @throws	UpdateFailureException 		写真の更新に失敗した場合
 	 */
+	@Operation(summary = "写真保存", description = "写真を新規登録または更新する")
+	@ApiResponse(responseCode = "200", description = "保存成功")
+	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+	@ApiResponse(responseCode = "403", description = "写真の所有者以外によるリクエスト", content = @Content)
+	@ApiResponse(responseCode = "409", description = "ファイルが重複または登録失敗", content = @Content)
+	@SecurityRequirement(name = "Bearer")
 	@RequestMapping(value = ApiRoutes.API_PHOTOS, method = {RequestMethod.POST, RequestMethod.PUT})
 	public ResponseEntity<PhotoEditResponse> savePhoto(
 			@PathVariable String photoAccountId, 
@@ -185,6 +205,12 @@ public class PhotoRestController {
 	 * @throws ForbiddenAccountException 	写真の所有者以外がリクエストした場合
 	 * @throws UpdateFailureException 		写真の削除に失敗した場合
 	 */
+	@Operation(summary = "写真削除", description = "指定した写真を削除する")
+	@ApiResponse(responseCode = "200", description = "削除成功")
+	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+	@ApiResponse(responseCode = "403", description = "写真の所有者以外によるリクエスト", content = @Content)
+	@ApiResponse(responseCode = "409", description = "削除失敗", content = @Content)
+	@SecurityRequirement(name = "Bearer")
 	@DeleteMapping(ApiRoutes.API_PHOTOS)
 	public ResponseEntity<PhotoEditResponse> deletePhoto(
 			@PathVariable String photoAccountId, 

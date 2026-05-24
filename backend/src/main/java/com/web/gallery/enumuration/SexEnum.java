@@ -5,6 +5,7 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.web.gallery.constant.Consts;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 性別を管理するEnumクラス
  */
+@Schema(description = "性別区分")
 @Slf4j
 @Getter
 @AllArgsConstructor
