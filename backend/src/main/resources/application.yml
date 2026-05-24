@@ -12,6 +12,12 @@ server:
       remote-ip-header: "x-forwarded-for"
       protocol-header: "x-forwarded-proto"
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  scalar:
+    path: /scalar
+
 mybatis:
   type-handlers-package: com.web.gallery.type_handler
 

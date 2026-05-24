@@ -14,6 +14,9 @@ import com.web.gallery.helper.KbnHelper;
 import com.web.gallery.model.KbnMstModel;
 import com.web.gallery.service.KbnMstService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -25,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "都道府県", description = "都道府県マスタに関するAPI")
 public class KbnMstRestController {
 	private final KbnMstService kbnMstService;
 	private final KbnHelper kbnHelper;
@@ -34,6 +38,8 @@ public class KbnMstRestController {
 	 *
 	 * @return	都道府県グループリスト
 	 */
+	@Operation(summary = "都道府県一覧取得", description = "都道府県を地方ごとにグループ化して取得する")
+	@ApiResponse(responseCode = "200", description = "取得成功")
 	@GetMapping(ApiRoutes.API_PREFECTURES)
 	public ResponseEntity<List<PrefectureGroupResponse>> getPrefectures() {
 		List<KbnMstModel> prefectureList = kbnMstService.getPrefectureList();

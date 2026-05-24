@@ -23,6 +23,11 @@ import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.service.AuthService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "認証", description = "JWT認証に関するAPI")
 public class AuthRestController {
 	private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
@@ -49,6 +55,11 @@ public class AuthRestController {
 	 * @return						{@link AuthLoginResponse}
 	 * @throws	BadRequestException	リクエストパラメータが不正の場合
 	 */
+	@Operation(summary = "ログイン", description = "アカウントIDとパスワードで認証し、JWTトークンを発行する")
+	@ApiResponse(responseCode = "200", description = "認証成功")
+	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+	@ApiResponse(responseCode = "401", description = "認証失敗（アカウントIDまたはパスワードが不正）", content = @Content)
+	@ApiResponse(responseCode = "423", description = "アカウントロック", content = @Content)
 	@PostMapping(ApiRoutes.API_AUTH_LOGIN)
 	public ResponseEntity<AuthLoginResponse> login(
 			@RequestBody @Validated AuthLoginRequest authLoginRequest,
@@ -79,6 +90,9 @@ public class AuthRestController {
 	 * @param	refreshToken	リフレッシュトークン（cookieから取得）
 	 * @return					{@link AuthLoginResponse}
 	 */
+	@Operation(summary = "トークンリフレッシュ", description = "リフレッシュトークン（cookie）を使用してアクセストークンを再発行する")
+	@ApiResponse(responseCode = "200", description = "リフレッシュ成功")
+	@ApiResponse(responseCode = "401", description = "リフレッシュトークンが無効", content = @Content)
 	@PostMapping(ApiRoutes.API_AUTH_REFRESH)
 	public ResponseEntity<AuthLoginResponse> refresh(
 			@CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
@@ -100,6 +114,8 @@ public class AuthRestController {
 	 * @param	refreshToken	リフレッシュトークン（cookieから取得）
 	 * @return					204 No Content
 	 */
+	@Operation(summary = "ログアウト", description = "リフレッシュトークンを無効化し、cookieを削除する")
+	@ApiResponse(responseCode = "204", description = "ログアウト成功")
 	@PostMapping(ApiRoutes.API_AUTH_LOGOUT)
 	public ResponseEntity<Void> logout(
 			@CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
@@ -176,5 +192,6 @@ public class AuthRestController {
 	 * エラーレスポンス用の内部クラス
 	 * @param message エラーメッセージ
 	 */
-	private record ErrorResponse(String message) {}
+	@Schema(description = "認証エラーレスポンス")
+	private record ErrorResponse(@Schema(description = "エラーメッセージ", example = "アカウントIDまたはパスワードが間違っています。") String message) {}
 }

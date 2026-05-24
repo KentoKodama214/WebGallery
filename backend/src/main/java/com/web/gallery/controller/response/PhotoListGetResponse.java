@@ -4,19 +4,23 @@ import java.util.List;
 
 import com.web.gallery.model.PhotoModel;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
 /**
  * 写真一覧のレスポンスパラメータを保持するクラス
  */
+@Schema(description = "写真一覧レスポンス")
 @Data
 @Builder
 public class PhotoListGetResponse {
 	/** 最後まで写真を取得できたか */
+	@Schema(description = "最後のページかどうか")
 	private Boolean isLast;
 
 	/** 写真リスト */
+	@Schema(description = "写真リスト")
 	private List<PhotoListResponse> photoList;
 
 	/**

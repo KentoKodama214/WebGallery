@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.http.HttpMethod;
@@ -72,12 +73,28 @@ public class SecurityConfig {
 	}
 
 	/**
+	 * OpenAPIドキュメント用のSecurityFilterChainを生成します
+	 * @param	http	HTTPセキュリティオブジェクト
+	 * @return			SecurityFilterChainオブジェクト
+	 * @throws Exception
+	 */
+	@Bean
+	@Order(0)
+	SecurityFilterChain openApiSecurityFilterChain(HttpSecurity http) throws Exception {
+		http.securityMatcher("/v3/api-docs/**", "/scalar/**")
+			.authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
+			.csrf(csrf -> csrf.disable());
+		return http.build();
+	}
+
+	/**
 	 * API用のSecurityFilterChainを生成します（JWT認証、ステートレス）
 	 * @param	http	HTTPセキュリティオブジェクト
 	 * @return			SecurityFilterChainオブジェクト
 	 * @throws Exception
 	 */
 	@Bean
+	@Order(1)
 	SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
 		http.securityMatcher("/api/**")
 			.cors(cors -> cors.configurationSource(corsConfigurationSource()))

@@ -21,6 +21,11 @@ import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoFavoriteModel;
 import com.web.gallery.service.PhotoFavoriteService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "お気に入り", description = "お気に入り管理に関するAPI")
 public class PhotoFavoriteController {
 	
 	private final PhotoFavoriteService photoFavoriteService;
@@ -47,6 +53,10 @@ public class PhotoFavoriteController {
 	 * @throws	BadRequestException 		リクエストパラメータが不正の場合
 	 * @throws	RegistFailureException 		お気に入りの登録に失敗した場合
 	 */
+	@Operation(summary = "お気に入り登録", description = "指定した写真をお気に入りに登録する")
+	@ApiResponse(responseCode = "200", description = "登録成功")
+	@ApiResponse(responseCode = "409", description = "既にお気に入りに登録済み", content = @Content)
+	@SecurityRequirement(name = "Bearer")
 	@PostMapping(ApiRoutes.API_FAVORITES)
 	public ResponseEntity<PhotoFavoriteResponse> addFavorite(
 			@RequestBody @Validated PhotoFavoriteRegistRequest photoFavoriteRegistRequest,
@@ -72,6 +82,10 @@ public class PhotoFavoriteController {
 	 * @throws	BadRequestException 		リクエストパラメータが不正の場合
 	 * @throws	UpdateFailureException 		お気に入りの解除に失敗した場合
 	 */
+	@Operation(summary = "お気に入り解除", description = "指定した写真のお気に入りを解除する")
+	@ApiResponse(responseCode = "200", description = "解除成功")
+	@ApiResponse(responseCode = "409", description = "お気に入りに登録されていない", content = @Content)
+	@SecurityRequirement(name = "Bearer")
 	@DeleteMapping(ApiRoutes.API_FAVORITES)
 	public ResponseEntity<PhotoFavoriteResponse> deleteFavorite(
 			@RequestBody @Validated PhotoFavoriteDeleteRequest photoFavoriteDeleteRequest,

@@ -71,7 +71,7 @@ docker-compose up -d
 
 ### ユーザー権限レベル・エラーコード
 
-詳しくは、[API設計書](doc/api/README.md)および[エラー定義](doc/api/error-definition.md)を参照。
+API仕様はアプリケーション起動後、Scalar UI（`/scalar`）またはOpenAPI JSON（`/v3/api-docs`）で確認できる。
 
 ### データベーススキーマ
 
