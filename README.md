@@ -180,7 +180,14 @@ just dev
 
 ## データベース構成
 
-データベースの詳細は [`doc/database/`](doc/database/) を参照してください。
+データベースドキュメント（ER図・テーブル定義・データディクショナリ）はSchemaSpyで自動生成します。
+
+```bash
+# DBが起動している状態で実行
+docker compose --profile docs run --rm schemaspy
+```
+
+生成後、`doc/database/common/index.html`（commonスキーマ）と`doc/database/photo/index.html`（photoスキーマ）をブラウザで開いてください。
 
 ## 画面設計
 
@@ -188,7 +195,7 @@ just dev
 
 ## API
 
-REST APIの詳細は [`doc/api/`](doc/api/) を参照してください。
+REST APIの詳細は `http://localhost:8080/scalar` を参照してください。
 
 ## プロジェクト構成
 
@@ -205,7 +212,9 @@ WebGallery/
 │       ├── checkstyle.yml          # CheckstyleによるJavadocチェックのGithub Action
 │       └── test.yml                # テスト実行のGithub Action
 ├── docker-compose.yml
-├── docker/db/                      # DBイメージ用Dockerfile
+├── docker/
+│   ├── db/                        # DBイメージ用Dockerfile
+│   └── schemaspy/                 # SchemaSpy設定ファイル
 ├── db/                             # DB初期化スクリプト
 │   ├── init/                       # 初期化エントリポイント
 │   ├── common/                     # commonスキーマSQL
@@ -213,7 +222,7 @@ WebGallery/
 ├── doc/
 │   ├── api/                        # API設計書
 │   ├── architecture/               # アーキテクチャ設計書
-│   ├── database/                   # データベース設計書
+│   ├── database/                   # データベースドキュメント（SchemaSpy自動生成）
 │   └── view/                       # 画面設計書
 ├── scripts/
 │   └── check-architecture.sh       # アーキテクチャチェックスクリプト

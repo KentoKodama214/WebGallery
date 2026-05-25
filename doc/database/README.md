@@ -11,9 +11,15 @@ WebGalleryはPostgreSQLを使用し、以下の2つのスキーマで構成さ�
 
 ## ドキュメント一覧
 
-- [テーブル定義・カラム一覧](./table-definition.md)
-- [ER図](./er-diagram.md)
+- テーブル定義・ER図: SchemaSpyで自動生成（[commonスキーマ](./common/index.html) / [photoスキーマ](./photo/index.html)）
 - [データ辞書](./data-dictionary.md)
+
+SchemaSpyドキュメントの生成方法:
+
+```bash
+docker compose up -d
+docker compose --profile docs run --rm schemaspy
+```
 
 ## カスタム型
 

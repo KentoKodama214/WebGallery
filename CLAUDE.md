@@ -75,7 +75,7 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 
 ### データベーススキーマ
 
-詳しくは、[データベース定義書](doc/database/README.md)を参照。
+詳しくは、[データベース定義書](doc/database/README.md)を参照。テーブル定義・ER図はSchemaSpyで自動生成する。
 
 ## テスト規約
 
