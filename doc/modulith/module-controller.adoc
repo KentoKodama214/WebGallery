@@ -1,0 +1,27 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.controller`
+|Spring components
+|_Controllers_
+
+* `c.w.g.c.AccountRestController`
+* `c.w.g.c.AuthRestController`
+* `c.w.g.c.KbnMstRestController`
+* `c.w.g.c.PhotoFavoriteController`
+* `c.w.g.c.PhotoRestController`
+
+_Others_
+
+* `c.w.g.c.CommonRestControllerAdvice`
+|Bean references
+|* `c.w.g.s.impl.AccountServiceImpl` (in Service)
+* `c.w.g.h.SessionHelper` (in Helper)
+* `c.w.g.s.AuthService` (in Service)
+* `c.w.g.c.JwtConfig` (in Config)
+* `c.w.g.s.KbnMstService` (in Service)
+* `c.w.g.h.KbnHelper` (in Helper)
+* `c.w.g.s.PhotoFavoriteService` (in Service)
+* `c.w.g.s.PhotoService` (in Service)
+* `c.w.g.c.PhotoConfig` (in Config)
+|===

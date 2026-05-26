@@ -1,0 +1,11 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.helper`
+|Spring components
+|* `c.w.g.h.JwtTokenProvider`
+* `c.w.g.h.KbnHelper`
+* `c.w.g.h.SessionHelper`
+|Bean references
+|* `c.w.g.c.JwtConfig` (in Config)
+|===
