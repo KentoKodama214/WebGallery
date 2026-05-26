@@ -26,6 +26,12 @@ configurations {
 	}
 }
 
+dependencyManagement {
+	imports {
+		mavenBom 'org.springframework.modulith:spring-modulith-bom:2.0.6'
+	}
+}
+
 repositories {
 	mavenCentral()
 }
@@ -54,12 +60,14 @@ dependencies {
 	testImplementation 'org.mockito:mockito-core:5.20.0'
 	testImplementation 'org.mockito:mockito-junit-jupiter:5.20.0'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.0.3'
+	testImplementation 'org.springframework.modulith:spring-modulith-docs'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
 	exclude '**/*IntegrationTest*'
 	exclude '**/mapper/*Test*'
+	exclude '**/ModulithDocumentationTest*'
 }
 
 tasks.register('integrationTest', Test) {
@@ -74,4 +82,12 @@ tasks.register('allTest', Test) {
 	description = '単体テストと統合テストをすべて実行する'
 	group = 'verification'
 	useJUnitPlatform()
+	exclude '**/ModulithDocumentationTest*'
+}
+
+tasks.register('generateModulithDocs', Test) {
+	description = 'Spring Modulithのドキュメントを生成する'
+	group = 'documentation'
+	useJUnitPlatform()
+	include '**/ModulithDocumentationTest*'
 }

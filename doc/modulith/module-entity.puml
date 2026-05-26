@@ -1,0 +1,37 @@
+@startuml
+title <size:24>Entity</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Component>
+
+System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
+  Container_Boundary("WebGalleryApplication.WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
+    Component(WebGalleryApplication.WebGalleryApplication.Model, "Model", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Constant, "Constant", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Entity, "Entity", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Enumuration, "Enumuration", $techn="Module", $descr="", $tags="", $link="")
+  }
+
+}
+
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Entity, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Entity, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Entity, WebGalleryApplication.WebGalleryApplication.Model, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Entity, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml

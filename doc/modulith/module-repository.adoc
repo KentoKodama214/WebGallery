@@ -1,0 +1,24 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.repository`
+|Spring components
+|_Repositories_
+
+* `c.w.g.r.AccountRepository` (via `c.w.g.r.impl.AccountRepositoryImpl`)
+* `c.w.g.r.FileRepository` (via `c.w.g.r.impl.FileRepositoryImpl`)
+* `c.w.g.r.KbnMstRepository` (via `c.w.g.r.impl.KbnMstRepositoryImpl`)
+* `c.w.g.r.PhotoDetailRepository` (via `c.w.g.r.impl.PhotoDetailRepositoryImpl`)
+* `c.w.g.r.PhotoFavoriteRepository` (via `c.w.g.r.impl.PhotoFavoriteRepositoryImpl`)
+* `c.w.g.r.PhotoMstRepository` (via `c.w.g.r.impl.PhotoMstRepositoryImpl`)
+* `c.w.g.r.PhotoTagMstRepository` (via `c.w.g.r.impl.PhotoTagMstRepositoryImpl`)
+* `c.w.g.r.RefreshTokenRepository` (via `c.w.g.r.impl.RefreshTokenRepositoryImpl`)
+|Bean references
+|* `c.w.g.m.AccountMapper` (in Mapper)
+* `c.w.g.m.KbnMstMapper` (in Mapper)
+* `c.w.g.m.PhotoTagMstMapper` (in Mapper)
+* `c.w.g.m.PhotoDetailMapper` (in Mapper)
+* `c.w.g.m.PhotoFavoriteMapper` (in Mapper)
+* `c.w.g.m.PhotoMstMapper` (in Mapper)
+* `c.w.g.m.RefreshTokenMapper` (in Mapper)
+|===

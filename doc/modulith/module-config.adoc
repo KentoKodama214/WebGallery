@@ -1,0 +1,21 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.config`
+|Spring components
+|_Configuration properties_
+
+* `c.w.g.c.JwtConfig`
+* `c.w.g.c.LoginConfig`
+* `c.w.g.c.PhotoConfig`
+
+_Others_
+
+* `c.w.g.c.JwtAuthenticationFilter`
+* `c.w.g.c.OpenApiConfig`
+* `c.w.g.c.SecurityConfig`
+* `c.w.g.c.WebConfig`
+|Bean references
+|* `c.w.g.h.JwtTokenProvider` (in Helper)
+* `c.w.g.s.impl.AccountServiceImpl` (in Service)
+|===

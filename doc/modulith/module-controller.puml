@@ -1,0 +1,57 @@
+@startuml
+title <size:24>Controller</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Component>
+
+System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
+  Container_Boundary("WebGalleryApplication.WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
+    Component(WebGalleryApplication.WebGalleryApplication.Helper, "Helper", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Model, "Model", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Service, "Service", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Config, "Config", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Constant, "Constant", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Controller, "Controller", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Enumuration, "Enumuration", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Exception, "Exception", $techn="Module", $descr="", $tags="", $link="")
+  }
+
+}
+
+Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Helper, "uses", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Service, "uses", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Exception, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Controller, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Helper, WebGalleryApplication.WebGalleryApplication.Model, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Helper, WebGalleryApplication.WebGalleryApplication.Config, "uses", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Exception, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Model, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Service, "uses", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Helper, "uses", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Config, "uses", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Model, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Exception, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Config, "uses", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Helper, "uses", $techn="", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml

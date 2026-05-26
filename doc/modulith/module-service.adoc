@@ -1,0 +1,28 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.service`
+|Spring components
+|_Services_
+
+* `c.w.g.s.AuthService` (via `c.w.g.s.impl.AuthServiceImpl`)
+* `c.w.g.s.KbnMstService` (via `c.w.g.s.impl.KbnMstServiceImpl`)
+* `c.w.g.s.PhotoFavoriteService` (via `c.w.g.s.impl.PhotoFavoriteServiceImpl`)
+* `c.w.g.s.PhotoService` (via `c.w.g.s.impl.PhotoServiceImpl`)
+|Bean references
+|* `c.w.g.r.AccountRepository` (in Repository)
+* `c.w.g.c.LoginConfig` (in Config)
+* `c.w.g.h.JwtTokenProvider` (in Helper)
+* `c.w.g.c.JwtConfig` (in Config)
+* `c.w.g.r.RefreshTokenRepository` (in Repository)
+* `c.w.g.r.KbnMstRepository` (in Repository)
+* `c.w.g.r.PhotoFavoriteRepository` (in Repository)
+* `c.w.g.r.PhotoDetailRepository` (in Repository)
+* `c.w.g.r.PhotoMstRepository` (in Repository)
+* `c.w.g.r.PhotoTagMstRepository` (in Repository)
+* `c.w.g.r.FileRepository` (in Repository)
+* `c.w.g.c.PhotoConfig` (in Config)
+|Events listened to
+|* `org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent` 
+* `org.springframework.security.authentication.event.AuthenticationSuccessEvent` 
+|===

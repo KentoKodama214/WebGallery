@@ -1,0 +1,55 @@
+== WebGalleryApplication
+plantuml::components.puml[,,format=svg]
+
+== Config
+plantuml::module-config.puml[,,format=svg]
+include::module-config.adoc[]
+
+== Constant
+plantuml::module-constant.puml[,,format=svg]
+include::module-constant.adoc[]
+
+== Controller
+plantuml::module-controller.puml[,,format=svg]
+include::module-controller.adoc[]
+
+== Dto
+plantuml::module-dto.puml[,,format=svg]
+include::module-dto.adoc[]
+
+== Entity
+plantuml::module-entity.puml[,,format=svg]
+include::module-entity.adoc[]
+
+== Enumuration
+plantuml::module-enumuration.puml[,,format=svg]
+include::module-enumuration.adoc[]
+
+== Exception
+plantuml::module-exception.puml[,,format=svg]
+include::module-exception.adoc[]
+
+== Helper
+plantuml::module-helper.puml[,,format=svg]
+include::module-helper.adoc[]
+
+== Mapper
+plantuml::module-mapper.puml[,,format=svg]
+include::module-mapper.adoc[]
+
+== Model
+plantuml::module-model.puml[,,format=svg]
+include::module-model.adoc[]
+
+== Repository
+plantuml::module-repository.puml[,,format=svg]
+include::module-repository.adoc[]
+
+== Service
+plantuml::module-service.puml[,,format=svg]
+include::module-service.adoc[]
+
+== Type_handler
+plantuml::module-type_handler.puml[,,format=svg]
+include::module-type_handler.adoc[]
+
