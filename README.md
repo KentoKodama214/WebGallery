@@ -21,6 +21,7 @@
   - [ビルド・テスト](#ビルドテスト)
   - [アーキテクチャ](#アーキテクチャ)
   - [データベース構成](#データベース構成)
+  - [コード構造の可視化（JIG）](#コード構造の可視化jig)
   - [画面設計](#画面設計)
   - [API](#api)
   - [プロジェクト構成](#プロジェクト構成)
@@ -188,6 +189,16 @@ docker compose --profile docs run --rm schemaspy
 ```
 
 生成後、`doc/database/common/index.html`（commonスキーマ）と`doc/database/photo/index.html`（photoスキーマ）をブラウザで開いてください。
+
+## コード構造の可視化（JIG）
+
+[JIG（Java Integration Graph）](https://github.com/dddjava/jig)によるコード構造のドキュメントを自動生成できます。パッケージ関連図・ユースケース図・ドメインモデルなどが出力されます。
+
+```bash
+./backend/gradlew -p backend jigReports
+```
+
+生成後、`backend/build/jig/index.html` をブラウザで開いてください。
 
 ## 画面設計
 
