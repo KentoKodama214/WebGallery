@@ -46,4 +46,14 @@ public final class ApiRoutes {
 	// お気に入り関連
 	/** お気に入りAPI（POST=登録, DELETE=解除） */
 	public static final String API_FAVORITES = API_PREFIX + "/photos/favorites";
+
+	// 管理者関連
+	/** アカウント番号 */
+	public static final String ACCOUNT_NO = "{accountNo}";
+	/** 管理者用アカウント一覧API */
+	public static final String API_ADMIN_ACCOUNTS = API_PREFIX + "/admin/accounts";
+	/** 管理者用アカウントロック解除API */
+	public static final String API_ADMIN_ACCOUNT_UNLOCK = API_ADMIN_ACCOUNTS + "/" + ACCOUNT_NO + "/unlock";
+	/** 管理者用アカウント強制ロックAPI */
+	public static final String API_ADMIN_ACCOUNT_LOCK = API_ADMIN_ACCOUNTS + "/" + ACCOUNT_NO + "/lock";
 }

@@ -205,4 +205,13 @@ public class Account {
 				.isDeleted(false)
 				.build();
 	}
+
+	/**
+	 * 管理者用アカウント一覧取得用の条件Accountエンティティを生成する（全件取得）
+	 *
+	 * @return	{@link Account}
+	 */
+	public static Account conditionForAdminList() {
+		return Account.builder().build();
+	}
 }

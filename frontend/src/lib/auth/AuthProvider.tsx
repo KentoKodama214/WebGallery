@@ -13,6 +13,7 @@ import * as apiClient from "@/lib/api/client";
 export interface User {
   accountId: string;
   accountNo: number;
+  role: string;
 }
 
 interface AuthContextType {
@@ -41,7 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const token = apiClient.getAccessToken();
         if (token) {
           const payload = parseJwt(token);
-          setUser({ accountId: payload.sub, accountNo: payload.accountNo });
+          setUser({ accountId: payload.sub, accountNo: payload.accountNo, role: payload.role });
         }
       }
       setIsLoading(false);
@@ -54,7 +55,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const token = apiClient.getAccessToken();
     if (token) {
       const payload = parseJwt(token);
-      setUser({ accountId, accountNo: payload.accountNo });
+      setUser({ accountId, accountNo: payload.accountNo, role: payload.role });
     }
   }, []);
 

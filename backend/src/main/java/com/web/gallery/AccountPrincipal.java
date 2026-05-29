@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.web.gallery.enumuration.AuthorityEnum;
 import com.web.gallery.model.AccountModel;
 
 /**
@@ -45,6 +46,15 @@ public class AccountPrincipal implements UserDetails {
 	 */
 	public Long getAccountNo() {
 		return accountModel.getAccountNo();
+	}
+
+	/**
+	 * 権限区分を取得する
+	 *
+	 * @return	権限区分
+	 */
+	public AuthorityEnum getAuthorityKbn() {
+		return accountModel.getAuthorityKbn();
 	}
 
 	/**

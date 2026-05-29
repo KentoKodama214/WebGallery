@@ -238,6 +238,97 @@ public class AccountServiceImplTest {
 	@Nested
 	@Order(6)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class getAccountListForAdmin {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：全アカウントを取得（削除済み含む）してソートされること")
+		void getAccountListForAdmin_found() {
+			List<AccountModel> accountModelList = new ArrayList<AccountModel>();
+			accountModelList.add(AccountModel.builder().accountId("cccccccc").isDeleted(true).build());
+			accountModelList.add(AccountModel.builder().accountId("bbbbbbbb").isDeleted(false).build());
+			accountModelList.add(AccountModel.builder().accountId("aaaaaaaa").isDeleted(false).build());
+
+			doReturn(accountModelList).when(accountRepositoryImpl).getAccountListAll();
+
+			List<AccountModel> actual = accountServiceImpl.getAccountListForAdmin();
+			assertEquals(3, actual.size());
+			assertEquals("aaaaaaaa", actual.get(0).getAccountId());
+			assertEquals("bbbbbbbb", actual.get(1).getAccountId());
+			assertEquals("cccccccc", actual.get(2).getAccountId());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：アカウントが存在しない場合")
+		void getAccountListForAdmin_not_found() {
+			doReturn(new ArrayList<AccountModel>()).when(accountRepositoryImpl).getAccountListAll();
+
+			List<AccountModel> actual = accountServiceImpl.getAccountListForAdmin();
+			assertEquals(0, actual.size());
+		}
+	}
+
+	@Nested
+	@Order(7)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class unlockAccountTest {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：ログイン失敗回数が0にリセットされること")
+		void unlockAccount_success() throws UpdateFailureException {
+			ArgumentCaptor<AccountModel> captor = ArgumentCaptor.forClass(AccountModel.class);
+			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(captor.capture());
+
+			accountServiceImpl.unlockAccount(1L);
+
+			AccountModel accountModel = captor.getValue();
+			assertEquals(1L, accountModel.getAccountNo());
+			assertEquals(0, accountModel.getLoginFailureCount());
+			assertNotNull(accountModel.getLastLoginDatetime());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
+		void unlockAccount_UpdateFailureException() throws UpdateFailureException {
+			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).updateLoginFailureCount(any(AccountModel.class));
+			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.unlockAccount(999L));
+		}
+	}
+
+	@Nested
+	@Order(8)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class lockAccountTest {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：ログイン失敗回数が上限値に設定されること")
+		void lockAccount_success() throws UpdateFailureException {
+			doReturn(10).when(loginConfig).getFailCount();
+
+			ArgumentCaptor<AccountModel> captor = ArgumentCaptor.forClass(AccountModel.class);
+			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(captor.capture());
+
+			accountServiceImpl.lockAccount(1L);
+
+			AccountModel accountModel = captor.getValue();
+			assertEquals(1L, accountModel.getAccountNo());
+			assertEquals(10, accountModel.getLoginFailureCount());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
+		void lockAccount_UpdateFailureException() throws UpdateFailureException {
+			doReturn(10).when(loginConfig).getFailCount();
+			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).updateLoginFailureCount(any(AccountModel.class));
+			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.lockAccount(999L));
+		}
+	}
+
+	@Nested
+	@Order(9)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class handleAuthenticationSuccess {
 		@Test
 		@Order(1)
@@ -313,7 +404,7 @@ public class AccountServiceImplTest {
 	}
 	
 	@Nested
-	@Order(7)
+	@Order(10)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class handleAuthenticationFailureBadCredentials {
 		@Test

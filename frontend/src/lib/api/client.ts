@@ -469,3 +469,64 @@ export async function savePhoto(
   }
   return response.json();
 }
+
+/** 管理者用アカウント一覧アイテム */
+export interface AdminAccountListItem {
+  accountNo: number;
+  accountId: string;
+  accountName: string;
+  authorityKbn: string;
+  isDeleted: boolean;
+  lastLoginDatetime: string | null;
+  loginFailureCount: number;
+}
+
+/** 管理者用アカウントロック操作結果 */
+export interface AdminAccountLockResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+}
+
+/**
+ * 管理者用アカウント一覧を取得する
+ */
+export async function getAdminAccountList(): Promise<AdminAccountListItem[]> {
+  const response = await fetchWithAuth("/api/v1/admin/accounts");
+  if (!response.ok) {
+    throw new Error("アカウント一覧の取得に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * 管理者用アカウントロック解除
+ */
+export async function unlockAccount(
+  accountNo: number
+): Promise<AdminAccountLockResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/admin/accounts/${accountNo}/unlock`,
+    { method: "PUT" }
+  );
+  if (!response.ok) {
+    throw new Error("アカウントのロック解除に失敗しました");
+  }
+  return response.json();
+}
+
+/**
+ * 管理者用アカウント強制ロック
+ */
+export async function lockAccount(
+  accountNo: number
+): Promise<AdminAccountLockResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/admin/accounts/${accountNo}/lock`,
+    { method: "PUT" }
+  );
+  if (!response.ok) {
+    throw new Error("アカウントのロックに失敗しました");
+  }
+  return response.json();
+}
