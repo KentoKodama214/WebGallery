@@ -231,9 +231,9 @@ WebGallery/
 │   ├── common/                     # commonスキーマSQL
 │   └── photo/                      # photoスキーマSQL
 ├── doc/
-│   ├── api/                        # API設計書
 │   ├── architecture/               # アーキテクチャ設計書
 │   ├── database/                   # データベースドキュメント（SchemaSpy自動生成）
+│   ├── modulith/                   # モジュールドキュメント（Spring Modulith自動生成）
 │   └── view/                       # 画面設計書
 ├── scripts/
 │   └── check-architecture.sh       # アーキテクチャチェックスクリプト
