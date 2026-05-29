@@ -114,7 +114,14 @@ public enum ErrorEnum {
 	 * <p>
 	 * エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_ADMIN}
 	 */
-	NOT_AUTHORIZED_TO_ADMIN("E-A-0001", MessageConst.ERR_NOT_AUTHORIZED_TO_ADMIN);
+	NOT_AUTHORIZED_TO_ADMIN("E-A-0001", MessageConst.ERR_NOT_AUTHORIZED_TO_ADMIN),
+
+	/**
+	 * エラーコード：E-C-0004
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_DELETE_ACCOUNT}
+	 */
+	FAIL_TO_DELETE_ACCOUNT("E-C-0004", MessageConst.ERR_FAIL_TO_DELETE_ACCOUNT);
 	
 	/** エラーコード */
 	private final String errorCode;

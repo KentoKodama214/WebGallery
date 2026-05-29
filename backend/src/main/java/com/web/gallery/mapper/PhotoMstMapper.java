@@ -45,9 +45,17 @@ public interface PhotoMstMapper {
 	
 	/**
 	 * ファイル名から登録済みの写真家判定する
-	 * 
+	 *
 	 * @param	photoMst	{@link PhotoMst}
 	 * @return				登録有無
 	 */
 	public Boolean isExistPhoto(PhotoMst photoMst);
+
+	/**
+	 * 写真マスタを物理削除する
+	 *
+	 * @param	photoMst	削除対象の抽出条件
+	 * @return				削除件数
+	 */
+	public Integer delete(PhotoMst photoMst);
 }

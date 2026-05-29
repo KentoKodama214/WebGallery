@@ -130,4 +130,13 @@
 		AND image_file_path LIKE CONCAT('%', #{imageFilePath})
 		AND is_deleted = false
 	</select>
+
+	<delete id="delete" parameterType="com.web.gallery.entity.PhotoMst">
+		DELETE FROM
+			photo.photo_mst
+		<where>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
+		</where>
+	</delete>
 </mapper>

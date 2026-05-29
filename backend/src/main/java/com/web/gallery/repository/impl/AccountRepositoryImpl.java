@@ -140,4 +140,14 @@ public class AccountRepositoryImpl implements AccountRepository {
 		List<Account> accountList = accountMapper.select(Account.conditionForAdminList());
 		return accountList.stream().map(AccountModel::from).toList();
 	}
+
+	/**
+	 * Accountテーブルから該当するレコードを物理削除する
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	@Override
+	public void delete(Long accountNo) {
+		accountMapper.delete(Account.conditionByAccountNo(accountNo));
+	}
 }

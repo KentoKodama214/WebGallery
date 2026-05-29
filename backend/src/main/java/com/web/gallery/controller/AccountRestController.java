@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -180,6 +181,30 @@ public class AccountRestController {
 					Consts.STRING_EMPTY));
 	}
 	
+	/**
+	 * アカウント削除
+	 *
+	 * @param	accountId				アカウントID
+	 * @return							{@link ResponseEntity}
+	 * @throws	ForbiddenAccountException	認証ユーザーと異なるアカウントIDの場合
+	 */
+	@Operation(summary = "アカウント削除", description = "アカウントと関連データをすべて物理削除する")
+	@ApiResponse(responseCode = "200", description = "削除成功")
+	@ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
+	@SecurityRequirement(name = "Bearer")
+	@DeleteMapping(ApiRoutes.API_ACCOUNT)
+	public ResponseEntity<Void> deleteAccount(
+			@PathVariable String accountId) throws ForbiddenAccountException {
+
+		if (!accountId.equals(sessionHelper.getAccountId())) {
+			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT);
+		}
+
+		accountServiceImpl.deleteAccount(sessionHelper.getAccountNo(), accountId);
+
+		return ResponseEntity.ok().build();
+	}
+
 	/**
 	 * アカウント登録に失敗した時のExceptionHandler
 	 * 
