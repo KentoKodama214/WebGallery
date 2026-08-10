@@ -538,4 +538,33 @@ public class AccountRepositoryImplIntegrationTest {
 			assertEquals(0, actual.size());
 		}
 	}
+
+	@Nested
+	@Order(8)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
+	class delete {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウントを物理削除する")
+		void delete_success() {
+			accountRepositoryImpl.delete(1L);
+
+			List<Account> actualData = jdbcTemplate.query(
+					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
+						Account.builder()
+							.accountNo(rs.getLong("account_no"))
+							.build());
+			assertEquals(0, actualData.size());
+
+			// 他のアカウントは残っていることを確認
+			List<Account> otherData = jdbcTemplate.query(
+					"SELECT * FROM common.account where account_no=2", (rs, rowNum) ->
+						Account.builder()
+							.accountNo(rs.getLong("account_no"))
+							.build());
+			assertEquals(1, otherData.size());
+		}
+	}
 }

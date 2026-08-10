@@ -325,6 +325,66 @@ public class AccountServiceImplIntegrationTest {
 	@Order(6)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/service/AccountServiceImplDeleteAccountIntegrationTest.sql")
+	class deleteAccount {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウントと関連データがすべて物理削除されること")
+		void deleteAccount_success() {
+			accountServiceImpl.deleteAccount(1L, "aaaaaaaa");
+
+			// アカウントが削除されたことを確認
+			List<Account> accountData = jdbcTemplate.query(
+					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
+						Account.builder()
+							.accountNo(rs.getLong("account_no"))
+							.build());
+			assertEquals(0, accountData.size());
+
+			// account_no=2のアカウントは残っていること
+			List<Account> otherAccountData = jdbcTemplate.query(
+					"SELECT * FROM common.account where account_no=2", (rs, rowNum) ->
+						Account.builder()
+							.accountNo(rs.getLong("account_no"))
+							.build());
+			assertEquals(1, otherAccountData.size());
+
+			// 写真マスタが削除されたことを確認
+			Integer photoMstCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst where account_no=1", Integer.class);
+			assertEquals(0, photoMstCount);
+
+			// account_no=2の写真マスタは残っていること
+			Integer otherPhotoMstCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst where account_no=2", Integer.class);
+			assertEquals(1, otherPhotoMstCount);
+
+			// 写真タグが削除されたことを確認
+			Integer photoTagCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_tag_mst where account_no=1", Integer.class);
+			assertEquals(0, photoTagCount);
+
+			// 自分が登録したお気に入りが削除されたことを確認
+			Integer favoriteByAccount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_favorite where account_no=1", Integer.class);
+			assertEquals(0, favoriteByAccount);
+
+			// 他人が自分の写真に対して登録したお気に入りが削除されたことを確認
+			Integer favoriteForAccount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_favorite where favorite_photo_account_no=1", Integer.class);
+			assertEquals(0, favoriteForAccount);
+
+			// account_no=2が自分の写真をお気に入りにしたレコードは残っていること
+			Integer otherFavoriteCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_favorite where account_no=2 and favorite_photo_account_no=2", Integer.class);
+			assertEquals(1, otherFavoriteCount);
+		}
+	}
+
+	@Nested
+	@Order(7)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/service/AccountServiceImplIntegrationTest.sql")
 	class handleAuthenticationSuccess {
 		@Test
@@ -384,7 +444,7 @@ public class AccountServiceImplIntegrationTest {
 	}
 	
 	@Nested
-	@Order(7)
+	@Order(8)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/service/AccountServiceImplIntegrationTest.sql")

@@ -74,4 +74,11 @@ public interface AccountRepository {
 	 * @return	{@link AccountModel}
 	 */
 	List<AccountModel> getAccountListAll();
+
+	/**
+	 * Accountテーブルから該当するレコードを物理削除する
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	void delete(Long accountNo);
 }

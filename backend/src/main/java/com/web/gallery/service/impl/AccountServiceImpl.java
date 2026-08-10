@@ -16,12 +16,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.LoginConfig;
+import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
+import com.web.gallery.entity.PhotoFavorite;
+import com.web.gallery.entity.PhotoMst;
+import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.mapper.PhotoFavoriteMapper;
+import com.web.gallery.mapper.PhotoMstMapper;
+import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.repository.AccountRepository;
+import com.web.gallery.repository.FileRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +43,12 @@ import lombok.extern.slf4j.Slf4j;
 public class AccountServiceImpl implements UserDetailsService {
 
 	private final AccountRepository accountRepository;
+	private final FileRepository fileRepository;
+	private final PhotoFavoriteMapper photoFavoriteMapper;
+	private final PhotoTagMstMapper photoTagMstMapper;
+	private final PhotoMstMapper photoMstMapper;
 	private final LoginConfig loginConfig;
+	private final PhotoConfig photoConfig;
 
 	/**
 	 * アカウントIDからアカウント情報の存在を確認する
@@ -143,6 +156,33 @@ public class AccountServiceImpl implements UserDetailsService {
 				.loginFailureCount(loginConfig.getFailCount())
 				.build();
 		accountRepository.updateLoginFailureCount(updateModel);
+	}
+
+	/**
+	 * アカウントを削除する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @param	accountId	アカウントID
+	 */
+	@Transactional
+	public void deleteAccount(Long accountNo, String accountId) {
+		// 自分が登録したお気に入りを削除
+		photoFavoriteMapper.delete(PhotoFavorite.builder().accountNo(accountNo).build());
+
+		// 自分の写真に対する他人のお気に入りを削除
+		photoFavoriteMapper.delete(PhotoFavorite.builder().favoritePhotoAccountNo(accountNo).build());
+
+		// 写真タグを削除
+		photoTagMstMapper.delete(PhotoTagMst.builder().accountNo(accountNo).build());
+
+		// 写真マスタを物理削除
+		photoMstMapper.delete(PhotoMst.builder().accountNo(accountNo).build());
+
+		// アカウントを物理削除
+		accountRepository.delete(accountNo);
+
+		// 写真ファイルのディレクトリを削除
+		fileRepository.delete(photoConfig.getOutputPath() + accountId + "/");
 	}
 
 	/**

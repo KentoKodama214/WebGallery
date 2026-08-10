@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import {
   getAccount,
   updateAccount,
+  deleteAccount,
   getPrefectures,
 } from "@/lib/api/client";
 import type {
@@ -37,6 +38,10 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteCompleteModal, setShowDeleteCompleteModal] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState("");
@@ -137,6 +142,27 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       setDuplicateError("更新に失敗しました");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  /**
+   * アカウント削除
+   */
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount(accountId);
+      await logout();
+      setShowDeleteConfirm(false);
+      setShowDeleteCompleteModal(true);
+      setTimeout(() => {
+        router.push("/login");
+      }, 3000);
+    } catch {
+      setShowDeleteConfirm(false);
+      setDuplicateError("アカウント削除に失敗しました");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -320,8 +346,57 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               )}
             </button>
           </form>
+
+          <div className="mt-6 bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-5">
+            <p className="text-[#444] text-sm mb-3">アカウントを削除すると、登録した写真やお気に入りはすべて削除され、復旧できなくなります。</p>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full h-[50px] bg-[#e53935] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#e53935]"
+            >
+              アカウント削除
+            </button>
+          </div>
         </div>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]">
+          <div className="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]">
+            <p className="text-[#444] text-center mb-4">
+              登録した写真やお気に入りはすべて削除され、復旧できなくなります。よろしいですか？
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 h-[40px] bg-gray-300 text-[#444] border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                いいえ
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="flex-1 h-[40px] bg-[#e53935] text-white border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? (
+                  <span className="inline-block w-5 h-5 border-[3px] border-white border-t-[rgba(255,255,255,0.3)] rounded-full animate-spin" />
+                ) : (
+                  "はい"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteCompleteModal && (
+        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]">
+          <div className="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]">
+            <p className="text-[#444] text-center">アカウントを削除しました</p>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]">

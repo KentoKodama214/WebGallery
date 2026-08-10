@@ -140,6 +140,18 @@ export async function getAccount(accountId: string): Promise<AccountDetail> {
 }
 
 /**
+ * アカウントを削除する
+ */
+export async function deleteAccount(accountId: string): Promise<void> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${accountId}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    throw new Error("アカウントの削除に失敗しました");
+  }
+}
+
+/**
  * アカウント情報を更新する
  */
 export async function updateAccount(

@@ -517,6 +517,39 @@ public class AccountRestControllerTest {
 	@Nested
 	@Order(5)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class deleteAccount {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント削除に成功する")
+		void deleteAccount_success() throws Exception {
+			String accountId = "aaaaaaaa";
+
+			doReturn(accountId).when(sessionHelper).getAccountId();
+			doReturn(1L).when(sessionHelper).getAccountNo();
+			doNothing().when(accountServiceImpl).deleteAccount(1L, accountId);
+
+			mockMvc.perform(delete("/api/v1/accounts/" + accountId))
+				.andExpect(status().isOk());
+
+			verify(accountServiceImpl, times(1)).deleteAccount(1L, accountId);
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：認証ユーザーと異なるアカウントIDの場合は403を返すこと")
+		void deleteAccount_forbidden() throws Exception {
+			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
+
+			mockMvc.perform(delete("/api/v1/accounts/aaaaaaaa"))
+				.andExpect(status().isForbidden());
+
+			verify(accountServiceImpl, times(0)).deleteAccount(anyLong(), anyString());
+		}
+	}
+
+	@Nested
+	@Order(6)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class handleInsertFailedException {
 		@Test
 		@Order(1)
