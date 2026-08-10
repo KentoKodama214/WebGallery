@@ -106,6 +106,46 @@ public class AccountServiceImpl implements UserDetailsService {
 	}
 
 	/**
+	 * 管理者用：削除済みを含む全アカウントの一覧を取得する
+	 *
+	 * @return	{@link AccountModel}
+	 */
+	@Transactional(readOnly = true)
+	public List<AccountModel> getAccountListForAdmin() {
+		return accountRepository.getAccountListAll().stream().sorted(Comparator.comparing(AccountModel::getAccountId)).toList();
+	}
+
+	/**
+	 * 管理者用：アカウントのロックを解除する（ログイン失敗回数を0にリセット）
+	 *
+	 * @param	accountNo				アカウント番号
+	 * @throws	UpdateFailureException	更新に失敗した場合
+	 */
+	@Transactional
+	public void unlockAccount(Long accountNo) throws UpdateFailureException {
+		AccountModel updateModel = AccountModel.builder()
+				.accountNo(accountNo)
+				.loginFailureCount(0)
+				.build();
+		accountRepository.updateLoginFailureCount(updateModel);
+	}
+
+	/**
+	 * 管理者用：アカウントを強制ロックする（ログイン失敗回数を上限超過に設定）
+	 *
+	 * @param	accountNo				アカウント番号
+	 * @throws	UpdateFailureException	更新に失敗した場合
+	 */
+	@Transactional
+	public void lockAccount(Long accountNo) throws UpdateFailureException {
+		AccountModel updateModel = AccountModel.builder()
+				.accountNo(accountNo)
+				.loginFailureCount(loginConfig.getFailCount())
+				.build();
+		accountRepository.updateLoginFailureCount(updateModel);
+	}
+
+	/**
 	 * 認証成功
 	 *
 	 * @param	event					{@link AuthenticationSuccessEvent}

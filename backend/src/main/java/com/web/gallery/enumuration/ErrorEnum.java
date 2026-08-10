@@ -107,7 +107,14 @@ public enum ErrorEnum {
 	 * <p>
 	 * エラーメッセージ：{@value MessageConst#ERR_REACHED_REGISTRATION_LIMIT}
 	 */
-	REACHED_REGISTRATION_LIMIT("E-P-0010", MessageConst.ERR_REACHED_REGISTRATION_LIMIT);
+	REACHED_REGISTRATION_LIMIT("E-P-0010", MessageConst.ERR_REACHED_REGISTRATION_LIMIT),
+
+	/**
+	 * エラーコード：E-A-0001
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_ADMIN}
+	 */
+	NOT_AUTHORIZED_TO_ADMIN("E-A-0001", MessageConst.ERR_NOT_AUTHORIZED_TO_ADMIN);
 	
 	/** エラーコード */
 	private final String errorCode;

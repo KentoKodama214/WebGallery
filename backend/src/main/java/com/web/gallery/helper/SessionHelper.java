@@ -5,6 +5,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.enumuration.AuthorityEnum;
 
 /**
  * セッション管理のためのHelperクラス
@@ -33,7 +34,7 @@ public class SessionHelper {
 	
 	/**
 	 * セッション情報からアカウントIDを取得する
-	 * 
+	 *
 	 * @return	アカウントID
 	 */
 	public String getAccountId() {
@@ -41,13 +42,33 @@ public class SessionHelper {
 
 		Authentication authentication =
 				SecurityContextHolder.getContext().getAuthentication();
-		
+
 		if (authentication.getPrincipal() instanceof AccountPrincipal) {
 			AccountPrincipal accountPrincipal =
 					AccountPrincipal.class.cast(authentication.getPrincipal());
 			accountId = accountPrincipal.getUsername();
 		}
-		
+
 		return accountId;
+	}
+
+	/**
+	 * セッション情報から権限区分を取得する
+	 *
+	 * @return	権限区分
+	 */
+	public AuthorityEnum getAuthorityKbn() {
+		AuthorityEnum authorityKbn = null;
+
+		Authentication authentication =
+				SecurityContextHolder.getContext().getAuthentication();
+
+		if (authentication.getPrincipal() instanceof AccountPrincipal) {
+			AccountPrincipal accountPrincipal =
+					AccountPrincipal.class.cast(authentication.getPrincipal());
+			authorityKbn = accountPrincipal.getAuthorityKbn();
+		}
+
+		return authorityKbn;
 	}
 }

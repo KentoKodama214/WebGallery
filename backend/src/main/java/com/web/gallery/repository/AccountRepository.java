@@ -67,4 +67,11 @@ public interface AccountRepository {
 	 * @return	{@link AccountModel}
 	 */
 	List<AccountModel> getAccountList();
+
+	/**
+	 * 削除済みを含む全アカウントの一覧を取得する
+	 *
+	 * @return	{@link AccountModel}
+	 */
+	List<AccountModel> getAccountListAll();
 }

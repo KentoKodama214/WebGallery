@@ -26,6 +26,7 @@ import com.web.gallery.exception.UpdateFailureException;
 @Hidden
 @RestControllerAdvice(assignableTypes = {
 		AccountRestController.class,
+		AdminAccountRestController.class,
 		KbnMstRestController.class,
 		PhotoFavoriteController.class,
 		PhotoRestController.class

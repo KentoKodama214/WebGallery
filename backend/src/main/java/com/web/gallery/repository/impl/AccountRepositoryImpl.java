@@ -129,4 +129,15 @@ public class AccountRepositoryImpl implements AccountRepository {
 		List<Account> accountList = accountMapper.select(Account.conditionForList());
 		return accountList.stream().map(AccountModel::from).toList();
 	}
+
+	/**
+	 * 削除済みを含む全アカウントの一覧を取得する
+	 *
+	 * @return	{@link AccountModel}
+	 */
+	@Override
+	public List<AccountModel> getAccountListAll() {
+		List<Account> accountList = accountMapper.select(Account.conditionForAdminList());
+		return accountList.stream().map(AccountModel::from).toList();
+	}
 }
