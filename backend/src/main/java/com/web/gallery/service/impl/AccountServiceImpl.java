@@ -125,7 +125,6 @@ public class AccountServiceImpl implements UserDetailsService {
 	public void unlockAccount(Long accountNo) throws UpdateFailureException {
 		AccountModel updateModel = AccountModel.builder()
 				.accountNo(accountNo)
-				.lastLoginDatetime(OffsetDateTime.now(Consts.JST))
 				.loginFailureCount(0)
 				.build();
 		accountRepository.updateLoginFailureCount(updateModel);

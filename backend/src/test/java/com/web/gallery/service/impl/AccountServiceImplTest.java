@@ -284,7 +284,7 @@ public class AccountServiceImplTest {
 			AccountModel accountModel = captor.getValue();
 			assertEquals(1L, accountModel.getAccountNo());
 			assertEquals(0, accountModel.getLoginFailureCount());
-			assertNotNull(accountModel.getLastLoginDatetime());
+			assertNull(accountModel.getLastLoginDatetime());
 		}
 
 		@Test
