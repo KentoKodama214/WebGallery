@@ -360,6 +360,7 @@ public class AccountServiceImplTest {
 			Long accountNo = 1L;
 			String accountId = "aaaaaaaa";
 
+			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
 			doReturn(1).when(photoFavoriteMapper).delete(any(PhotoFavorite.class));
 			doReturn(1).when(photoTagMstMapper).delete(any(PhotoTagMst.class));
 			doReturn(1).when(photoMstMapper).delete(any(PhotoMst.class));
@@ -369,7 +370,17 @@ public class AccountServiceImplTest {
 
 			accountServiceImpl.deleteAccount(accountNo, accountId);
 
-			verify(photoFavoriteMapper, times(2)).delete(any(PhotoFavorite.class));
+			verify(photoFavoriteMapper, times(2)).delete(photoFavoriteCaptor.capture());
+			List<PhotoFavorite> capturedFavorites = photoFavoriteCaptor.getAllValues();
+
+			// 1回目：自分が登録したお気に入りの削除（accountNoで指定）
+			assertEquals(accountNo, capturedFavorites.get(0).getAccountNo());
+			assertNull(capturedFavorites.get(0).getFavoritePhotoAccountNo());
+
+			// 2回目：自分の写真に対する他人のお気に入りの削除（favoritePhotoAccountNoで指定）
+			assertNull(capturedFavorites.get(1).getAccountNo());
+			assertEquals(accountNo, capturedFavorites.get(1).getFavoritePhotoAccountNo());
+
 			verify(photoTagMstMapper, times(1)).delete(any(PhotoTagMst.class));
 			verify(photoMstMapper, times(1)).delete(any(PhotoMst.class));
 			verify(accountRepositoryImpl, times(1)).delete(accountNo);
