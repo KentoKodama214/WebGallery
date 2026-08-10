@@ -563,6 +563,25 @@ public class AccountRepositoryImplTest {
 	@Nested
 	@Order(6)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class delete {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウントを物理削除する")
+		void delete_success() {
+			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+			doReturn(1).when(accountMapper).delete(accountCaptor.capture());
+
+			accountRepositoryImpl.delete(1L);
+
+			verify(accountMapper, times(1)).delete(any(Account.class));
+			Account accountCapture = accountCaptor.getValue();
+			assertEquals(1L, accountCapture.getAccountNo());
+		}
+	}
+
+	@Nested
+	@Order(7)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class isExistAccount {
 		@Test
 		@Order(1)
@@ -570,33 +589,33 @@ public class AccountRepositoryImplTest {
 		void isExistAccount_true() {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(true).when(accountMapper).isExistAccount(accountCaptor.capture());
-			
+
 			assertTrue(accountRepositoryImpl.isExistAccount(1L, "aaaaaaaa"));
 			verify(accountMapper, times(1)).isExistAccount(any(Account.class));
-			
+
 			Account accountCapture = accountCaptor.getValue();
 			assertEquals(1L, accountCapture.getAccountNo());
 			assertEquals("aaaaaaaa", accountCapture.getAccountId());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
 		void isExistAccount_false() {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(false).when(accountMapper).isExistAccount(accountCaptor.capture());
-			
+
 			assertFalse(accountRepositoryImpl.isExistAccount(1L, "aaaaaaaa"));
 			verify(accountMapper, times(1)).isExistAccount(any());
-			
+
 			Account accountCapture = accountCaptor.getValue();
 			assertEquals(1L, accountCapture.getAccountNo());
 			assertEquals("aaaaaaaa", accountCapture.getAccountId());
 		}
 	}
-	
+
 	@Nested
-	@Order(7)
+	@Order(8)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class getAccountList {
 		@Test

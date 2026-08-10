@@ -31,9 +31,17 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.LoginConfig;
+import com.web.gallery.config.PhotoConfig;
+import com.web.gallery.entity.PhotoFavorite;
+import com.web.gallery.entity.PhotoMst;
+import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.mapper.PhotoFavoriteMapper;
+import com.web.gallery.mapper.PhotoMstMapper;
+import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 
 @ActiveProfiles("test")
@@ -44,12 +52,27 @@ public class AccountServiceImplTest {
 	
 	@Mock
 	private AccountRepositoryImpl accountRepositoryImpl;
-	
+
+	@Mock
+	private FileRepository fileRepository;
+
+	@Mock
+	private PhotoFavoriteMapper photoFavoriteMapper;
+
+	@Mock
+	private PhotoTagMstMapper photoTagMstMapper;
+
+	@Mock
+	private PhotoMstMapper photoMstMapper;
+
 	@Mock
 	private AccountPrincipal accountPrincipal;
-	
+
 	@Mock
 	private LoginConfig loginConfig;
+
+	@Mock
+	private PhotoConfig photoConfig;
 	
 	@Nested
 	@Order(1)
@@ -329,6 +352,34 @@ public class AccountServiceImplTest {
 	@Nested
 	@Order(9)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class deleteAccountTest {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウントを削除する")
+		void deleteAccount_success() {
+			Long accountNo = 1L;
+			String accountId = "aaaaaaaa";
+
+			doReturn(1).when(photoFavoriteMapper).delete(any(PhotoFavorite.class));
+			doReturn(1).when(photoTagMstMapper).delete(any(PhotoTagMst.class));
+			doReturn(1).when(photoMstMapper).delete(any(PhotoMst.class));
+			doNothing().when(accountRepositoryImpl).delete(accountNo);
+			doReturn("/output/").when(photoConfig).getOutputPath();
+			doNothing().when(fileRepository).delete("/output/" + accountId + "/");
+
+			accountServiceImpl.deleteAccount(accountNo, accountId);
+
+			verify(photoFavoriteMapper, times(2)).delete(any(PhotoFavorite.class));
+			verify(photoTagMstMapper, times(1)).delete(any(PhotoTagMst.class));
+			verify(photoMstMapper, times(1)).delete(any(PhotoMst.class));
+			verify(accountRepositoryImpl, times(1)).delete(accountNo);
+			verify(fileRepository, times(1)).delete("/output/" + accountId + "/");
+		}
+	}
+
+	@Nested
+	@Order(10)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class handleAuthenticationSuccess {
 		@Test
 		@Order(1)
@@ -404,7 +455,7 @@ public class AccountServiceImplTest {
 	}
 	
 	@Nested
-	@Order(10)
+	@Order(11)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class handleAuthenticationFailureBadCredentials {
 		@Test

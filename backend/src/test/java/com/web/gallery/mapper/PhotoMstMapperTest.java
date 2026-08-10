@@ -782,6 +782,66 @@ public class PhotoMstMapperTest {
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/mapper/PhotoMstMapperTest.sql")
+	class delete {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント番号でのdeleteで複数件削除される場合")
+		void delete_by_accountNo() {
+			PhotoMst photoMst = PhotoMst.builder().accountNo(1L).build();
+			Integer actual = photoMstMapper.delete(photoMst);
+			assertEquals(3, actual);
+
+			Integer remainCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=1", Integer.class);
+			assertEquals(0, remainCount);
+
+			// 他のアカウントの写真は残っていること
+			Integer otherCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=2", Integer.class);
+			assertEquals(3, otherCount);
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：写真番号でのdeleteで複数件削除される場合")
+		void delete_by_photoNo() {
+			PhotoMst photoMst = PhotoMst.builder().photoNo(1L).build();
+			Integer actual = photoMstMapper.delete(photoMst);
+			assertEquals(2, actual);
+
+			Integer remainCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst WHERE photo_no=1", Integer.class);
+			assertEquals(0, remainCount);
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("正常系：アカウント番号と写真番号でのdeleteで1件削除される場合")
+		void delete_by_accountNo_and_photoNo() {
+			PhotoMst photoMst = PhotoMst.builder().accountNo(1L).photoNo(1L).build();
+			Integer actual = photoMstMapper.delete(photoMst);
+			assertEquals(1, actual);
+
+			Integer remainCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=1", Integer.class);
+			assertEquals(2, remainCount);
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("正常系：該当するレコードがない場合は0件")
+		void delete_not_found() {
+			PhotoMst photoMst = PhotoMst.builder().accountNo(100L).build();
+			Integer actual = photoMstMapper.delete(photoMst);
+			assertEquals(0, actual);
+		}
+	}
+
+	@Nested
+	@Order(5)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/mapper/PhotoMstMapperTest.sql")
 	class getMaxPhotoNo {
 		@Test
 		@Order(1)
@@ -801,7 +861,7 @@ public class PhotoMstMapperTest {
 	}
 	
 	@Nested
-	@Order(5)
+	@Order(6)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/mapper/PhotoMstMapperTest.sql")

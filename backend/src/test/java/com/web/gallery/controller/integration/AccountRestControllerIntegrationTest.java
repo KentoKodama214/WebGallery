@@ -697,4 +697,93 @@ public class AccountRestControllerIntegrationTest {
 				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.getErrorMessage()));
 		}
 	}
+
+	@Nested
+	@Order(5)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/controller/AccountRestControllerDeleteAccountIntegrationTest.sql")
+	class deleteAccount {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント削除に成功する")
+		void deleteAccount_success() throws Exception {
+			String accountId = "aaaaaaaa";
+
+			AccountModel sessionAccount = AccountModel.builder()
+					.accountNo(1L)
+					.accountId(accountId)
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.build();
+
+			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(
+					accountPrincipal, null, accountPrincipal.getAuthorities());
+
+			mockMvc.perform(
+					delete("/api/v1/accounts/" + accountId)
+					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+					.with(csrf())
+				)
+				.andExpect(status().isOk());
+
+			// アカウントが削除されたことを確認
+			Integer accountCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM common.account where account_no=1", Integer.class);
+			assertEquals(0, accountCount);
+
+			// 写真マスタが削除されたことを確認
+			Integer photoMstCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst where account_no=1", Integer.class);
+			assertEquals(0, photoMstCount);
+
+			// 写真タグが削除されたことを確認
+			Integer photoTagCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_tag_mst where account_no=1", Integer.class);
+			assertEquals(0, photoTagCount);
+
+			// お気に入りが削除されたことを確認（自分が登録したもの＋自分の写真に対する他人のもの）
+			Integer favoriteCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_favorite where account_no=1 or favorite_photo_account_no=1", Integer.class);
+			assertEquals(0, favoriteCount);
+
+			// account_no=2は残っていること
+			Integer otherAccountCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM common.account where account_no=2", Integer.class);
+			assertEquals(1, otherAccountCount);
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：認証ユーザーと異なるアカウントIDの場合は403を返すこと")
+		void deleteAccount_forbidden() throws Exception {
+			String accountId = "aaaaaaaa";
+
+			AccountModel sessionAccount = AccountModel.builder()
+					.accountNo(2L)
+					.accountId("bbbbbbbb")
+					.accountName("BBBBBBBB")
+					.password("$2a$10$password2")
+					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
+					.build();
+
+			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+			Authentication authentication = new UsernamePasswordAuthenticationToken(
+					accountPrincipal, null, accountPrincipal.getAuthorities());
+
+			mockMvc.perform(
+					delete("/api/v1/accounts/" + accountId)
+					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+					.with(csrf())
+				)
+				.andExpect(status().isForbidden());
+
+			// アカウントは削除されていないことを確認
+			Integer accountCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM common.account where account_no=1", Integer.class);
+			assertEquals(1, accountCount);
+		}
+	}
 }
