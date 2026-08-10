@@ -1,4 +1,4 @@
-# 📺 画面遷移図
+# 画面遷移図
 
 ## 画面一覧
 
@@ -11,6 +11,7 @@
 | 5 | 写真一覧 | `photo_list` | `/photo/{photoAccountId}/photo_list` | 公開 |
 | 6 | 写真詳細 | `photo_detail` | `/photo/{photoAccountId}/photo_detail` | 公開 |
 | 7 | 写真設定 | `photo_setting` | `/photo/{photoAccountId}/photo_setting` | 認証必須（本人のみ） |
+| 8 | 管理者アカウント管理 | `admin_account_management` | `/admin/account_management` | 認証必須（管理者のみ） |
 
 ---
 
@@ -19,8 +20,7 @@
 ```mermaid
 graph TD
     subgraph 認証フロー
-        ROOT["/ （ルート）"] -->|未認証| LOGIN["ログイン\n/login"]
-        ROOT -->|認証済み| PHOTO_LIST
+        ROOT["/ （ルート）"] -->|リダイレクト| LOGIN["ログイン\n/login"]
         LOGIN -->|ログイン成功| PHOTO_LIST
         LOGIN -->|ログイン失敗| LOGIN
         LOGIN -->|アカウント作成リンク| REGISTER["アカウント登録\n/register"]
@@ -36,6 +36,10 @@ graph TD
         ACCOUNT_SETTING["アカウント設定<br/>/{id}/account_setting"]
     end
 
+    subgraph 管理者画面
+        ADMIN_ACCOUNT["管理者アカウント管理<br/>/admin/account_management"]
+    end
+
     ACCOUNT_LIST -->|ギャラリーボタン| PHOTO_LIST
     PHOTO_LIST -->|写真選択| PHOTO_DETAIL
     PHOTO_LIST -->|＋写真追加| PHOTO_SETTING
@@ -45,7 +49,8 @@ graph TD
     PHOTO_SETTING -->|登録/更新成功| PHOTO_LIST
     PHOTO_SETTING -->|← back| PHOTO_LIST
     ACCOUNT_SETTING -->|← back| PHOTO_LIST
-    ACCOUNT_SETTING -->|ID/PW変更| LOGIN
+    ACCOUNT_SETTING -->|PW変更| LOGIN
+    ACCOUNT_SETTING -->|アカウント削除| LOGIN
 
     REGISTER -->|登録失敗| REGISTER
     ACCOUNT_SETTING -->|更新失敗| ACCOUNT_SETTING
@@ -163,16 +168,26 @@ sequenceDiagram
         Setting->>API: PUT /api/v1/accounts/{id}
         API-->>Setting: 更新成功
         Setting->>Setting: モーダル表示（5秒で自動クローズ）
-    else アカウントID/パスワード変更
+    else パスワード変更
         Setting->>API: PUT /api/v1/accounts/{id}
         API-->>Setting: 更新成功
-        Setting->>Setting: アラート表示
-        Setting->>Login: ログアウト → /login に遷移
+        Setting->>Setting: ログアウト
+        Setting->>Login: /login に遷移
     else 更新失敗（アカウントID重複）
         Setting->>API: PUT /api/v1/accounts/{id}
         API-->>Setting: エラー返却
         Setting->>Setting: エラーメッセージ表示
     end
+
+    Note over User, Login: アカウント削除フロー
+    User->>Setting: アカウント削除ボタンをクリック
+    Setting->>Setting: 確認ダイアログ表示
+    User->>Setting: 「はい」をクリック
+    Setting->>API: DELETE /api/v1/accounts/{id}
+    API-->>Setting: 削除成功
+    Setting->>Setting: ログアウト
+    Setting->>Setting: 削除完了モーダル表示
+    Setting->>Login: 3秒後に /login に遷移
 ```
 
 ---
@@ -200,14 +215,44 @@ sequenceDiagram
 
 ---
 
+## 管理者アカウント管理フロー
+
+```mermaid
+sequenceDiagram
+    actor Admin as 管理者
+    participant Management as 管理者アカウント管理画面
+    participant API as REST API
+
+    Admin->>Management: /admin/account_management にアクセス
+    Management->>API: GET /api/v1/admin/accounts
+    API-->>Management: アカウント一覧返却
+
+    alt アカウントロック解除
+        Admin->>Management: ロック解除ボタンをクリック
+        Management->>Management: 確認ダイアログ表示
+        Admin->>Management: OK
+        Management->>API: PATCH /api/v1/admin/accounts/{accountNo}/unlock
+        API-->>Management: 成功
+        Management->>Management: 一覧を再取得・更新
+    else アカウント強制ロック
+        Admin->>Management: 強制ロックボタンをクリック
+        Management->>Management: 確認ダイアログ表示
+        Admin->>Management: OK
+        Management->>API: PATCH /api/v1/admin/accounts/{accountNo}/lock
+        API-->>Management: 成功
+        Management->>Management: 一覧を再取得・更新
+    end
+```
+
+---
+
 ## 遷移詳細テーブル
 
 ### ルート (`/`)
 
 | 条件 | 遷移先 |
 |------|--------|
-| 未認証 | `/login` にリダイレクト |
-| 認証済み | `/photo/{accountId}/photo_list` にリダイレクト |
+| 常時 | `/login` にリダイレクト |
 
 ### ログイン (`/login`)
 
@@ -240,9 +285,11 @@ sequenceDiagram
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
 | 更新成功 | 同画面（モーダル表示） | AJAX |
-| アカウントID/パスワード変更 | `/login` | AJAX → アラート → ログアウト |
+| パスワード変更 | `/login` | AJAX → ログアウト → リダイレクト |
 | 更新失敗（重複） | 同画面（エラー表示） | 画面内表示 |
 | 更新失敗（その他） | 同画面（エラー表示） | 画面内表示 |
+| アカウント削除 → 成功 | `/login` | AJAX → ログアウト → モーダル → 3秒後リダイレクト |
+| アカウント削除 → 失敗 | 同画面（エラー表示） | 画面内表示 |
 | 「← back」リンク | `/photo/{accountId}/photo_list` | リンク |
 | メニュー「Sign Out」 | `/login` | ログアウト |
 
@@ -282,6 +329,17 @@ sequenceDiagram
 | 「← back」リンク | `/photo/{photoAccountId}/photo_list` | リンク |
 | メニュー「Sign Out」 | `/login` | ログアウト |
 
+### 管理者アカウント管理 (`/admin/account_management`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| ロック解除 → 成功 | 同画面（一覧更新） | AJAX |
+| 強制ロック → 成功 | 同画面（一覧更新） | AJAX |
+| 操作失敗 | 同画面（エラー表示） | 画面内表示 |
+| メニュー「My Gallery」 | `/photo/{accountId}/photo_list` | リンク |
+| メニュー「Account Setting」 | `/{accountId}/account_setting` | リンク |
+| メニュー「Sign Out」 | `/login` | ログアウト |
+
 ---
 
 ## REST API（画面遷移に関連するもの）
@@ -291,12 +349,19 @@ sequenceDiagram
 | API | メソッド | 呼び出し元画面 | 成功時の遷移 |
 |-----|---------|-------------|------------|
 | `/api/v1/auth/login` | POST | ログイン | → 写真一覧 |
+| `/api/v1/auth/refresh` | POST | 全画面（AuthProvider） | なし（トークン復旧） |
 | `/api/v1/auth/logout` | POST | 共通メニュー | → ログイン |
 | `/api/v1/accounts` | POST | アカウント登録 | → ログイン |
 | `/api/v1/accounts/{accountId}` | PUT | アカウント設定 | → 同画面 or ログイン |
+| `/api/v1/accounts/{accountId}` | DELETE | アカウント設定 | → ログイン |
 | `/api/v1/accounts/{photoAccountId}/photos` | GET | 写真一覧 | なし（データ表示） |
+| `/api/v1/accounts/{photoAccountId}/photos/{photoNo}` | GET | 写真詳細 | なし（データ表示） |
 | `/api/v1/accounts/{photoAccountId}/photos` | POST | 写真設定（新規） | → 写真一覧 |
 | `/api/v1/accounts/{photoAccountId}/photos` | PUT | 写真設定（編集） | → 写真一覧 |
 | `/api/v1/accounts/{photoAccountId}/photos` | DELETE | 写真詳細 | → 写真一覧 |
+| `/api/v1/accounts/{photoAccountId}/photos/upper-limit` | GET | 写真一覧 | なし（上限チェック） |
 | `/api/v1/photos/favorites` | POST | 写真詳細 | なし（状態切替） |
 | `/api/v1/photos/favorites` | DELETE | 写真詳細 | なし（状態切替） |
+| `/api/v1/admin/accounts` | GET | 管理者アカウント管理 | なし（データ表示） |
+| `/api/v1/admin/accounts/{accountNo}/unlock` | PATCH | 管理者アカウント管理 | なし（一覧更新） |
+| `/api/v1/admin/accounts/{accountNo}/lock` | PATCH | 管理者アカウント管理 | なし（一覧更新） |
