@@ -34,34 +34,12 @@ docker-compose up -d
 
 ### レイヤードアーキテクチャ (Controller -> Service -> Repository -> Mapper)
 
-1. **Controller層** (`controller/`)
-   - RESTコントローラーはJSONレスポンスを返す（REST APIのみ、サーバーサイドレンダリングなし）
-   - `CommonRestControllerAdvice`で例外をハンドリングする
-   - `controller/request/`のリクエストクラスのプロパティにアノテーションを付与してリクエストバリデーションを行う
-   - すべてのAPIルートは`constant/ApiRoutes.java`に一元定義
-   - 専用のリクエスト/レスポンスオブジェクトを使用し、エンティティクラスやRequest・Responseを除くDTOクラスは扱わない
-   - `/model/`のModelオブジェクトでService層と転送する
+1. **Controller層** (`controller/`) - RESTコントローラー。`/model/`のModelオブジェクトでService層と転送する
+2. **Service層** (`service/` + `service/impl/`) - ビジネスロジックとバリデーション。`/model/`のModelオブジェクトでController層・Repository層と転送する
+3. **Repository層** (`repository/` + `repository/impl/`) - データベースアクセス。`/model/`でService層と、`/entity/`や`/dto/`でMapper層と転送する
+4. **MyBatis Mapper層** (`mapper/`) - SQLは`resources/com/web/gallery/mapper/*.xml`のXMLファイルで定義
 
-2. **Service層** (`service/` + `service/impl/`)
-   - インターフェースベース設計：`service/`にインターフェース、`service/impl/`に実装
-   - 必要に応じて`@Service`と`@Transactional`を付与
-   - ビジネスロジックとバリデーションはここに配置
-   - Request・ResponseのDTOクラスやエンティティクラスは扱わない
-   - `/model/`のModelオブジェクトでController層・Repository層と転送する
-
-3. **Repository層** (`repository/` + `repository/impl/`)
-   - インターフェースベース設計：`repository/`にインターフェース、`repository/impl/`に実装
-   - `@Repository`を付与
-   - MyBatisマッパーへのデータベースアクセスを委譲
-   - `FileRepository`がファイルシステム操作を担当
-   - Request・ResponseのDTOクラスは扱わない
-   - `/model/`のModelオブジェクトでService層と転送する
-   - `/entity/`のEntityオブジェクト、または`/dto/`のDTOオブジェクトでMapper層と転送する
-
-4. **MyBatis Mapper層** (`mapper/`)
-   - Javaインターフェースでメソッドシグネチャを定義
-   - SQLは`resources/com/web/gallery/mapper/*.xml`のXMLファイルで定義
-   - `type_handler/`の列挙型からDB変換用カスタムタイプハンドラー
+各レイヤーの詳細なルール（依存関係、命名規則、アノテーション規約等）は `.claude/rules/` 配下のルールファイルを参照。
 
 ### セキュリティモデル
 
@@ -77,13 +55,7 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 
 ## テスト規約
 
-### テスト種別
-
-- **ユニットテスト**: `@ExtendWith(MockitoExtension.class)`でモック化した依存関係を使用
-- **統合テスト**: クラス名に`IntegrationTest`サフィックスを付与し、`integration/`サブディレクトリに配置
-  - `@SpringBootTest`と`@ActiveProfiles("test")`を使用
-  - `@Transactional`による自動ロールバック
-  - `@Sql("/sql/...")`アノテーションでテストフィクスチャデータを読み込み
+テストクラスの種別・命名規則・配置ルールは `.claude/rules/unit-test.md` と `.claude/rules/integration-test.md` を参照。
 
 ### テストデータベース
 
@@ -103,27 +75,15 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 
 ## 遵守すべき規約
 
-### 命名規則
+パッケージごとの詳細ルール（レイヤー依存関係、Lombokアノテーション、命名規則、ファクトリメソッド等）は `.claude/rules/` 配下のルールファイルに定義されている。対象パッケージのファイル編集時に自動適用される。
+
+### 全パッケージ共通の規約
 
 - パッケージ名：小文字、アンダースコア区切り（例：`type_handler`）
-- クラス名：PascalCaseで説明的なサフィックスを付与（`Controller`、`RestController`、`Service`、`ServiceImpl`、`Repository`、`RepositoryImpl`、`Mapper`、`Model`、`Dto`、`Enum`、`Exception`）
-- ユニットテストクラス：`Test`サフィックスを付与
-- 統合テストクラス：`IntegrationTest`サフィックスを付与
+- クラス名：PascalCase
 - 定数：`UPPER_SNAKE_CASE`
-
-### コードスタイル
-
 - ルートは`ApiRoutes`、デフォルト値は`Consts`、メッセージは`MessageConst`で一元管理する
 - すべてのpublicクラスとメソッドに日本語のJavaDocコメントを記述
-- サービスとリポジトリはインターフェースベース設計
-- Lombokアノテーションでボイラープレートを削減（`@Builder`、`@Getter`、`@Setter`を優先）
-- Entityクラスには `@Data` と `@Builder` のみを使用する（`@NoArgsConstructor` や `@AllArgsConstructor` は使用しない）
-- Modelクラスには `@Value` と `@Builder` のみを使用する（`@NoArgsConstructor` や `@AllArgsConstructor` は使用しない）
-- DTOクラスには `@Data` のみを使用する（`@Builder`、`@NoArgsConstructor`、`@AllArgsConstructor` は使用しない）
-- ModelクラスでNull許容しないプロパティには、`@NonNull` のアノテーションを付与する
-- Responseクラスにはファクトリメソッドを定義し、レスポンス生成ロジックをResponseクラス側に集約する。Controllerではファクトリメソッドを呼び出すだけにする
-  - `static from(Model)`: Model/Entity→Responseの変換に使用する
-  - `static of(...)`: 固定値や少数のパラメータから直接生成する場合に使用する
 - 明示的なリンティング・フォーマットツールは未設定。既存のコードスタイルに従うこと
 
 ### 新機能追加の手順
@@ -153,7 +113,6 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 
 ### 重要事項
 
-- パッケージ名`enumuration`（`enumeration`ではない）はプロジェクトの意図的な規約であり、リネームしないこと
 - ファイルアップロード上限は1ファイルあたり5MB（サーブレットレベルでは6MB）
 - 写真の出力パスは`backend/src/main/resources/application.yml`の`app.photo.outputPath`で設定可能
 - プロジェクトはTomcatデプロイ用のWARパッケージング（実行可能JARではない）
