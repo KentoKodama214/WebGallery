@@ -25,7 +25,8 @@ model: sonnet
 - `.claude/rules/request.md` - Requestクラスのルール
 - `.claude/rules/response.md` - Responseクラスのルール
 - `.claude/rules/mapper.md` - Mapper層のルール
-- `.claude/rules/test.md` - テストクラスのルール
+- `.claude/rules/unit-test.md` - ユニットテストのルール
+- `.claude/rules/integration-test.md` - 統合テストのルール
 
 ## 実行手順
 

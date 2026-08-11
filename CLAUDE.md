@@ -55,7 +55,7 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 
 ## テスト規約
 
-テストクラスの種別・命名規則・配置ルールは `.claude/rules/test.md` を参照。
+テストクラスの種別・命名規則・配置ルールは `.claude/rules/unit-test.md` と `.claude/rules/integration-test.md` を参照。
 
 ### テストデータベース
 
