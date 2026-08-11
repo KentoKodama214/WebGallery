@@ -25,6 +25,7 @@ model: sonnet
 - `.claude/rules/request.md` - Requestクラスのルール
 - `.claude/rules/response.md` - Responseクラスのルール
 - `.claude/rules/mapper.md` - Mapper層のルール
+- `.claude/rules/exception.md` - Exceptionクラスのルール
 - `.claude/rules/unit-test.md` - ユニットテストのルール
 - `.claude/rules/integration-test.md` - 統合テストのルール
 
@@ -52,7 +53,6 @@ model: sonnet
 
 ### 命名規則（ルールファイル未定義のパッケージ）
 
-- `exception/`: `Exception`サフィックス
 - `enumuration/`: `Enum`サフィックス
 - `type_handler/`: `TypeHandler`サフィックス
 
