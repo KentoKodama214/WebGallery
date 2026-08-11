@@ -52,7 +52,7 @@ public class PhotoTagMst {
 				.accountNo(model.getAccountNo())
 				.photoNo(model.getPhotoNo())
 				.tagNo(model.getTagNo())
-				.createdBy(new CreatedBy(model.getAccountNo().getValue()))
+				.createdBy(new CreatedBy(model.getAccountNo().value()))
 				.tagJapaneseName(model.getTagJapaneseName())
 				.tagEnglishName(model.getTagEnglishName())
 				.build();

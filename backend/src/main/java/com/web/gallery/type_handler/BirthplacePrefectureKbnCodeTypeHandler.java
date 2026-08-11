@@ -16,7 +16,7 @@ import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 public class BirthplacePrefectureKbnCodeTypeHandler extends BaseTypeHandler<BirthplacePrefectureKbnCode> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, BirthplacePrefectureKbnCode parameter, JdbcType jdbcType) throws SQLException {
-		ps.setString(i, parameter.getValue());
+		ps.setString(i, parameter.value());
 	}
 
 	@Override

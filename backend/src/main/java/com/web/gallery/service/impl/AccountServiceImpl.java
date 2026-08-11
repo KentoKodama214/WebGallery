@@ -79,7 +79,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional
 	public Boolean registAccount(AccountModel accountModel) throws RegistFailureException {
-		Boolean isExist = accountRepository.isExistAccount(null, accountModel.getAccountId().getValue());
+		Boolean isExist = accountRepository.isExistAccount(null, accountModel.getAccountId().value());
 		if(!isExist) accountRepository.regist(accountModel);
 		return !isExist;
 	}
@@ -93,7 +93,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional
 	public Boolean updateAccount(AccountModel accountModel) throws UpdateFailureException {
-		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo().getValue(), accountModel.getAccountId().getValue());
+		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo().value(), accountModel.getAccountId().value());
 		if(!isExist) accountRepository.update(accountModel);
 		return isExist;
 	}
@@ -116,7 +116,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional(readOnly = true)
 	public List<AccountModel> getAccountList() {
-		return accountRepository.getAccountList().stream().sorted(Comparator.comparing(m -> m.getAccountId().getValue())).toList();
+		return accountRepository.getAccountList().stream().sorted(Comparator.comparing(m -> m.getAccountId().value())).toList();
 	}
 
 	/**
@@ -126,7 +126,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional(readOnly = true)
 	public List<AccountModel> getAccountListForAdmin() {
-		return accountRepository.getAccountListAll().stream().sorted(Comparator.comparing(m -> m.getAccountId().getValue())).toList();
+		return accountRepository.getAccountListAll().stream().sorted(Comparator.comparing(m -> m.getAccountId().value())).toList();
 	}
 
 	/**

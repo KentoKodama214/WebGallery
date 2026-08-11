@@ -16,7 +16,7 @@ import com.web.gallery.domain.account.FreeMemo;
 public class FreeMemoTypeHandler extends BaseTypeHandler<FreeMemo> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, FreeMemo parameter, JdbcType jdbcType) throws SQLException {
-		ps.setString(i, parameter.getValue());
+		ps.setString(i, parameter.value());
 	}
 
 	@Override

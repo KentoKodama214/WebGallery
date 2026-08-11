@@ -16,7 +16,7 @@ import com.web.gallery.domain.account.AccountId;
 public class AccountIdTypeHandler extends BaseTypeHandler<AccountId> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, AccountId parameter, JdbcType jdbcType) throws SQLException {
-		ps.setString(i, parameter.getValue());
+		ps.setString(i, parameter.value());
 	}
 
 	@Override

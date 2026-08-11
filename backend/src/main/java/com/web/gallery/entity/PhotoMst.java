@@ -97,8 +97,8 @@ public class PhotoMst {
 		return PhotoMst.builder()
 				.accountNo(model.getAccountNo())
 				.photoNo(newPhotoNo)
-				.createdBy(new CreatedBy(model.getAccountNo().getValue()))
-				.updatedBy(new UpdatedBy(model.getAccountNo().getValue()))
+				.createdBy(new CreatedBy(model.getAccountNo().value()))
+				.updatedBy(new UpdatedBy(model.getAccountNo().value()))
 				.photoAt(
 					Optional.ofNullable(model.getPhotoAt()).orElse(Consts.MIN_OFFSET_DATE_TIME))
 				.locationNo(
@@ -131,7 +131,7 @@ public class PhotoMst {
 	 */
 	public static PhotoMst targetForUpdate(PhotoDetailModel model) {
 		return PhotoMst.builder()
-				.updatedBy(new UpdatedBy(model.getAccountNo().getValue()))
+				.updatedBy(new UpdatedBy(model.getAccountNo().value()))
 				.isDeleted(new IsDeleted(false))
 				.photoAt(
 					Optional.ofNullable(model.getPhotoAt()).orElse(Consts.MIN_OFFSET_DATE_TIME))
@@ -179,7 +179,7 @@ public class PhotoMst {
 	 */
 	public static PhotoMst targetForDelete(PhotoDeleteModel model) {
 		return PhotoMst.builder()
-				.updatedBy(new UpdatedBy(model.getAccountNo().getValue()))
+				.updatedBy(new UpdatedBy(model.getAccountNo().value()))
 				.isDeleted(new IsDeleted(true))
 				.build();
 	}

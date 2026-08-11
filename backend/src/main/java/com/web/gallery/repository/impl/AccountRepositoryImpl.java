@@ -68,7 +68,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 			accountMapper.insert(account);
 		}
 		catch (DuplicateKeyException e) {
-			log.warn("Account: Duplicate Key (AccountId: {})", accountModel.getAccountId().getValue(), e);
+			log.warn("Account: Duplicate Key (AccountId: {})", accountModel.getAccountId().value(), e);
 			throw new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_ACCOUNT);
 		}
 	}
@@ -81,11 +81,11 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public void update(AccountModel accountModel) throws UpdateFailureException {
-		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo().getValue());
+		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo().value());
 		Account targetAccount = Account.fromForUpdate(accountModel, passwordEncoder);
 
 		if (accountMapper.update(cndAccount, targetAccount) < 1) {
-			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().getValue());
+			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT);
 		}
 	}
@@ -98,11 +98,11 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public void updateLoginFailureCount(AccountModel accountModel) throws UpdateFailureException {
-		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo().getValue());
+		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo().value());
 		Account targetAccount = Account.fromForUpdateLoginFailure(accountModel);
 
 		if (accountMapper.update(cndAccount, targetAccount) < 1) {
-			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().getValue());
+			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT);
 		}
 	}

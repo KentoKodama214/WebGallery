@@ -168,7 +168,7 @@ public class AccountRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(0L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(0L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("zzzzzzzz"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("ZZZZZZZZ"), actualData.getFirst().getAccountName());
 			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.getFirst().getBirthdate());
@@ -226,7 +226,7 @@ public class AccountRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(0L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(0L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("zzzzzzzz"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("ZZZZZZZZ"), actualData.getFirst().getAccountName());
 			assertEquals(new BirthDate(LocalDate.of(1991, 2, 14)), actualData.getFirst().getBirthdate());
@@ -299,7 +299,7 @@ public class AccountRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
@@ -359,7 +359,7 @@ public class AccountRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
 			assertNotEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
@@ -429,7 +429,7 @@ public class AccountRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(8L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(8L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(8L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("hhhhhhhh"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("HHHHHHHH"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password8"), actualData.getFirst().getPassword());
@@ -481,7 +481,7 @@ public class AccountRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());

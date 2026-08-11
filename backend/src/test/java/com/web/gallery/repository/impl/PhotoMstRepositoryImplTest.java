@@ -228,7 +228,7 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(targetPhotoMst.getCreatedAt());
 			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
 			assertNull(targetPhotoMst.getUpdatedAt());
-			assertFalse(targetPhotoMst.getIsDeleted().getValue());
+			assertFalse(targetPhotoMst.getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetPhotoMst.getPhotoAt());
 			assertEquals(0L, targetPhotoMst.getLocationNo());
 			assertEquals(imageFilePath, targetPhotoMst.getImageFilePath());
@@ -299,7 +299,7 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(targetPhotoMst.getCreatedAt());
 			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
 			assertNull(targetPhotoMst.getUpdatedAt());
-			assertFalse(targetPhotoMst.getIsDeleted().getValue());
+			assertFalse(targetPhotoMst.getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), targetPhotoMst.getPhotoAt());
 			assertEquals(1L, targetPhotoMst.getLocationNo());
 			assertEquals(imageFilePath, targetPhotoMst.getImageFilePath());
@@ -360,7 +360,7 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(targetPhotoMst.getCreatedAt());
 			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
 			assertNull(targetPhotoMst.getUpdatedAt());
-			assertFalse(targetPhotoMst.getIsDeleted().getValue());
+			assertFalse(targetPhotoMst.getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetPhotoMst.getPhotoAt());
 			assertEquals(0L, targetPhotoMst.getLocationNo());
 			assertEquals(imageFilePath, targetPhotoMst.getImageFilePath());
@@ -426,7 +426,7 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(targetPhotoMst.getCreatedAt());
 			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
 			assertNull(targetPhotoMst.getUpdatedAt());
-			assertTrue(targetPhotoMst.getIsDeleted().getValue());
+			assertTrue(targetPhotoMst.getIsDeleted().value());
 			assertNull(targetPhotoMst.getPhotoAt());
 			assertNull(targetPhotoMst.getLocationNo());
 			assertNull(targetPhotoMst.getImageFilePath());
@@ -487,7 +487,7 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(targetPhotoMst.getCreatedAt());
 			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
 			assertNull(targetPhotoMst.getUpdatedAt());
-			assertTrue(targetPhotoMst.getIsDeleted().getValue());
+			assertTrue(targetPhotoMst.getIsDeleted().value());
 			assertNull(targetPhotoMst.getPhotoAt());
 			assertNull(targetPhotoMst.getLocationNo());
 			assertNull(targetPhotoMst.getImageFilePath());
@@ -599,7 +599,7 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(photoMst.getCreatedAt());
 			assertNull(photoMst.getUpdatedBy());
 			assertNull(photoMst.getUpdatedAt());
-			assertFalse(photoMst.getIsDeleted().getValue());
+			assertFalse(photoMst.getIsDeleted().value());
 			assertNull(photoMst.getPhotoAt());
 			assertNull(photoMst.getLocationNo());
 			assertNull(photoMst.getImageFilePath());

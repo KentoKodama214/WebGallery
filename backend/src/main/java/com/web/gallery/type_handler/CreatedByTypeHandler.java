@@ -16,7 +16,7 @@ import com.web.gallery.domain.common.CreatedBy;
 public class CreatedByTypeHandler extends BaseTypeHandler<CreatedBy> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, CreatedBy parameter, JdbcType jdbcType) throws SQLException {
-		ps.setLong(i, parameter.getValue());
+		ps.setLong(i, parameter.value());
 	}
 
 	@Override

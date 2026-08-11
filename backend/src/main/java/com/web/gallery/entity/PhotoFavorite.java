@@ -44,7 +44,7 @@ public class PhotoFavorite {
 				.accountNo(model.getAccountNo())
 				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
 				.favoritePhotoNo(model.getFavoritePhotoNo())
-				.createdBy(new CreatedBy(model.getAccountNo().getValue()))
+				.createdBy(new CreatedBy(model.getAccountNo().value()))
 				.build();
 	}
 

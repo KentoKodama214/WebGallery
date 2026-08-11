@@ -16,7 +16,7 @@ import com.web.gallery.domain.common.UpdatedBy;
 public class UpdatedByTypeHandler extends BaseTypeHandler<UpdatedBy> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, UpdatedBy parameter, JdbcType jdbcType) throws SQLException {
-		ps.setLong(i, parameter.getValue());
+		ps.setLong(i, parameter.value());
 	}
 
 	@Override

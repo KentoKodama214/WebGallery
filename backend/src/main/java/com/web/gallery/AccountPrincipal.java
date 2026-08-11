@@ -45,7 +45,7 @@ public class AccountPrincipal implements UserDetails {
 	 * @return	アカウント番号
 	 */
 	public Long getAccountNo() {
-		return accountModel.getAccountNo().getValue();
+		return accountModel.getAccountNo().value();
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class AccountPrincipal implements UserDetails {
 	 * @return	アカウント名
 	 */
 	public String getAccountName() {
-		return accountModel.getAccountName().getValue();
+		return accountModel.getAccountName().value();
 	}
 
 	/**
@@ -73,7 +73,7 @@ public class AccountPrincipal implements UserDetails {
 	 */
 	@Override
 	public String getPassword() {
-		return accountModel.getPassword().getValue();
+		return accountModel.getPassword().value();
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class AccountPrincipal implements UserDetails {
 	 */
 	@Override
 	public String getUsername() {
-		return accountModel.getAccountId().getValue();
+		return accountModel.getAccountId().value();
 	}
 
 	/***
@@ -123,6 +123,6 @@ public class AccountPrincipal implements UserDetails {
 	 */
 	@Override
 	public boolean isEnabled() {
-		return !accountModel.getIsDeleted().getValue();
+		return !accountModel.getIsDeleted().value();
 	}
 }

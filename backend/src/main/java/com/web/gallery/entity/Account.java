@@ -104,7 +104,7 @@ public class Account {
 				.updatedBy(new UpdatedBy(0L))
 				.accountId(model.getAccountId())
 				.accountName(model.getAccountName())
-				.password(new Password(passwordEncoder.encode(model.getPassword().getValue())))
+				.password(new Password(passwordEncoder.encode(model.getPassword().value())))
 				.birthdate(
 					Optional.ofNullable(model.getBirthdate())
 						.orElse(new BirthDate(Consts.MIN_LOCAL_DATE)))
@@ -157,7 +157,7 @@ public class Account {
 				.build();
 
 		if (model.getPassword() != null) {
-			account.setPassword(new Password(passwordEncoder.encode(model.getPassword().getValue())));
+			account.setPassword(new Password(passwordEncoder.encode(model.getPassword().value())));
 		}
 
 		return account;

@@ -16,7 +16,7 @@ import com.web.gallery.domain.common.IsDeleted;
 public class IsDeletedTypeHandler extends BaseTypeHandler<IsDeleted> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, IsDeleted parameter, JdbcType jdbcType) throws SQLException {
-		ps.setBoolean(i, parameter.getValue());
+		ps.setBoolean(i, parameter.value());
 	}
 
 	@Override

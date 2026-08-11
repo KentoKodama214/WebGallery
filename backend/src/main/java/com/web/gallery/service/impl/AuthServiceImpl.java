@@ -116,8 +116,8 @@ public class AuthServiceImpl implements AuthService {
 		}
 
 		// アカウント番号からアカウント情報を取得し、新しいアクセストークンを発行
-		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo().getValue());
-		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId().getValue());
+		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo().value());
+		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId().value());
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
 
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);

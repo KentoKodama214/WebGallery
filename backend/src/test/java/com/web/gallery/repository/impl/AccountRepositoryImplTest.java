@@ -684,9 +684,9 @@ public class AccountRepositoryImplTest {
 			List<AccountModel> actual = accountRepositoryImpl.getAccountList();
 
 			Account account = accountCaptor.getValue();
-			assertFalse(account.getIsDeleted().getValue());
+			assertFalse(account.getIsDeleted().value());
 
-			AccountModel actualAccountModel1 = actual.stream().sorted(Comparator.comparing(m -> m.getAccountNo().getValue())).toList().getFirst();
+			AccountModel actualAccountModel1 = actual.stream().sorted(Comparator.comparing(m -> m.getAccountNo().value())).toList().getFirst();
 			assertEquals(new AccountNo(1L), actualAccountModel1.getAccountNo());
 			assertEquals(new AccountId("aaaaaaaa"), actualAccountModel1.getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualAccountModel1.getAccountName());
@@ -700,7 +700,7 @@ public class AccountRepositoryImplTest {
 			assertEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualAccountModel1.getLastLoginDatetime());
 			assertEquals(0, actualAccountModel1.getLoginFailureCount());
 
-			AccountModel actualAccountModel2 = actual.stream().sorted(Comparator.comparing(m -> m.getAccountNo().getValue())).toList().getLast();
+			AccountModel actualAccountModel2 = actual.stream().sorted(Comparator.comparing(m -> m.getAccountNo().value())).toList().getLast();
 			assertEquals(new AccountNo(2L), actualAccountModel2.getAccountNo());
 			assertEquals(new AccountId("bbbbbbbb"), actualAccountModel2.getAccountId());
 			assertEquals(new AccountName("BBBBBBBB"), actualAccountModel2.getAccountName());
@@ -728,7 +728,7 @@ public class AccountRepositoryImplTest {
 			assertEquals(expected, actual);
 
 			Account account = accountCaptor.getValue();
-			assertFalse(account.getIsDeleted().getValue());
+			assertFalse(account.getIsDeleted().value());
 		}
 	}
 }

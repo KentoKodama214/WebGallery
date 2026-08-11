@@ -17,7 +17,7 @@ import com.web.gallery.domain.common.UpdatedAt;
 public class UpdatedAtTypeHandler extends BaseTypeHandler<UpdatedAt> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, UpdatedAt parameter, JdbcType jdbcType) throws SQLException {
-		ps.setObject(i, parameter.getValue());
+		ps.setObject(i, parameter.value());
 	}
 
 	@Override

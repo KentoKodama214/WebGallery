@@ -52,11 +52,11 @@ public class AdminAccountListItemResponse {
 	 */
 	public static AdminAccountListItemResponse from(AccountModel model) {
 		return AdminAccountListItemResponse.builder()
-				.accountNo(model.getAccountNo().getValue())
-				.accountId(model.getAccountId().getValue())
-				.accountName(model.getAccountName().getValue())
+				.accountNo(model.getAccountNo().value())
+				.accountId(model.getAccountId().value())
+				.accountName(model.getAccountName().value())
 				.authorityKbn(model.getAuthorityKbn().getDbValue())
-				.isDeleted(model.getIsDeleted().getValue())
+				.isDeleted(model.getIsDeleted().value())
 				.lastLoginDatetime(model.getLastLoginDatetime())
 				.loginFailureCount(model.getLoginFailureCount())
 				.build();

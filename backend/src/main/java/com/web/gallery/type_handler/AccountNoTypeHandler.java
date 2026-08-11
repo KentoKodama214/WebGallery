@@ -16,7 +16,7 @@ import com.web.gallery.domain.account.AccountNo;
 public class AccountNoTypeHandler extends BaseTypeHandler<AccountNo> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, AccountNo parameter, JdbcType jdbcType) throws SQLException {
-		ps.setLong(i, parameter.getValue());
+		ps.setLong(i, parameter.value());
 	}
 
 	@Override

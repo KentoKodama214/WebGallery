@@ -116,7 +116,7 @@ public class PhotoServiceImpl implements PhotoService {
 		if(Objects.isNull(photoDetailModelList)) return null;
 		if(photoDetailModelList.isEmpty()) return null;
 
-		Long photoNo = photoMstRepository.getNewPhotoNo(photoDetailModelList.getFirst().getAccountNo().getValue());
+		Long photoNo = photoMstRepository.getNewPhotoNo(photoDetailModelList.getFirst().getAccountNo().value());
 		Long savedPhotoNo = photoNo;
 		String filePath = photoConfig.getOutputPath() + accountId + "/";
 

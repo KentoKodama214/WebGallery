@@ -95,7 +95,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			assertEquals(4L, actualData.getFirst().getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC14.jpg", actualData.getFirst().getImageFilePath());
@@ -161,7 +161,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			assertEquals(4L, actualData.getFirst().getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(1L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC14.jpg", actualData.getFirst().getImageFilePath());
@@ -239,7 +239,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			assertEquals(1L, actualData.getFirst().getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.getFirst().getImageFilePath());
@@ -305,7 +305,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			assertEquals(1L, actualData.getFirst().getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(1L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.getFirst().getImageFilePath());
@@ -384,7 +384,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			assertEquals(1L, actualData.getFirst().getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertTrue(actualData.getFirst().getIsDeleted().getValue());
+			assertTrue(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(1L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC11.jpg", actualData.getFirst().getImageFilePath());

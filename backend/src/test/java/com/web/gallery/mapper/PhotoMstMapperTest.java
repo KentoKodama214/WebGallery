@@ -254,7 +254,7 @@ public class PhotoMstMapperTest {
 			assertEquals(4L, actualData.getFirst().getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt());
 			assertEquals(6L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC666.jpg", actualData.getFirst().getImageFilePath());
@@ -315,7 +315,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -339,14 +339,14 @@ public class PhotoMstMapperTest {
 			assertEquals(2, actual);
 			
 			List<PhotoMst> actualData = getPhotoMstList("photo_no=1")
-					.stream().sorted(Comparator.comparing(p -> p.getAccountNo().getValue())).toList();
+					.stream().sorted(Comparator.comparing(p -> p.getAccountNo().value())).toList();
 			assertEquals(2, actualData.size());
 			
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -363,7 +363,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(1).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(1).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(1).getUpdatedBy());
-			assertFalse(actualData.get(1).getIsDeleted().getValue());
+			assertFalse(actualData.get(1).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(1).getPhotoAt());
 			assertEquals(4L, actualData.get(1).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC444.jpg", actualData.get(1).getImageFilePath());
@@ -389,12 +389,12 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("is_deleted=true");
 			assertEquals(3, actualData.size());
 			
-			actualData = actualData.stream().filter(photoMst -> photoMst.getAccountNo().getValue() == 2).toList();
+			actualData = actualData.stream().filter(photoMst -> photoMst.getAccountNo().value() == 2).toList();
 			assertEquals(new AccountNo(2L), actualData.get(0).getAccountNo());
 			assertEquals(3L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertTrue(actualData.get(0).getIsDeleted().getValue());
+			assertTrue(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2022, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(6L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC555.jpg", actualData.get(0).getImageFilePath());
@@ -425,7 +425,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -455,7 +455,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -485,7 +485,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -515,7 +515,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -545,7 +545,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -575,7 +575,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -605,7 +605,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -635,7 +635,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -665,7 +665,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -695,7 +695,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -725,7 +725,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -768,7 +768,7 @@ public class PhotoMstMapperTest {
 			assertEquals(1L, actualData.get(0).getPhotoNo());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted().getValue());
+			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());

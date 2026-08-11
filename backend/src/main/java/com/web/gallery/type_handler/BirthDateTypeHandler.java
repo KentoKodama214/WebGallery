@@ -18,7 +18,7 @@ import com.web.gallery.domain.account.BirthDate;
 public class BirthDateTypeHandler extends BaseTypeHandler<BirthDate> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, BirthDate parameter, JdbcType jdbcType) throws SQLException {
-		ps.setDate(i, Date.valueOf(parameter.getValue()));
+		ps.setDate(i, Date.valueOf(parameter.value()));
 	}
 
 	@Override

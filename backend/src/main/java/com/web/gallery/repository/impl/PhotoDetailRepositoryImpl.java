@@ -45,8 +45,8 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 	@Override
 	public List<PhotoModel> getPhotoList(PhotoGetModel photoGetModel) {
 		PhotoListGetDto photoListGetDto = new PhotoListGetDto();
-		photoListGetDto.setAccountNo(photoGetModel.getAccountNo() != null ? photoGetModel.getAccountNo().getValue() : null);
-		photoListGetDto.setPhotoAccountNo(photoGetModel.getPhotoAccountNo().getValue());
+		photoListGetDto.setAccountNo(photoGetModel.getAccountNo() != null ? photoGetModel.getAccountNo().value() : null);
+		photoListGetDto.setPhotoAccountNo(photoGetModel.getPhotoAccountNo().value());
 		List<PhotoDto> photoDtoList = photoDetailMapper.getPhotoList(photoListGetDto);
 
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
@@ -67,8 +67,8 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 	@Override
 	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws PhotoNotFoundException {
 		PhotoDetailGetDto photoGetDto = new PhotoDetailGetDto();
-		photoGetDto.setAccountNo(photoDetailGetModel.getAccountNo() != null ? photoDetailGetModel.getAccountNo().getValue() : null);
-		photoGetDto.setPhotoAccountNo(photoDetailGetModel.getPhotoAccountNo().getValue());
+		photoGetDto.setAccountNo(photoDetailGetModel.getAccountNo() != null ? photoDetailGetModel.getAccountNo().value() : null);
+		photoGetDto.setPhotoAccountNo(photoDetailGetModel.getPhotoAccountNo().value());
 		photoGetDto.setPhotoNo(photoDetailGetModel.getPhotoNo());
 		PhotoDetailDto photoDetailDto = photoDetailMapper.getPhotoDetail(photoGetDto);
 

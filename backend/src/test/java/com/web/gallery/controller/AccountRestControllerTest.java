@@ -220,14 +220,14 @@ public class AccountRestControllerTest {
 
 			AccountModel accountModel = accountModelCaptor.getValue();
 			assertNull(accountModel.getAccountNo());
-			assertEquals("aaaaaaaa", accountModel.getAccountId().getValue());
-			assertEquals("AAAAAAAA", accountModel.getAccountName().getValue());
-			assertEquals("password01", accountModel.getPassword().getValue());
-			assertEquals(LocalDate.of(2000, 1, 1), accountModel.getBirthdate().getValue());
+			assertEquals("aaaaaaaa", accountModel.getAccountId().value());
+			assertEquals("AAAAAAAA", accountModel.getAccountName().value());
+			assertEquals("password01", accountModel.getPassword().value());
+			assertEquals(LocalDate.of(2000, 1, 1), accountModel.getBirthdate().value());
 			assertEquals(SexEnum.WOMAN, accountModel.getSexKbn());
-			assertEquals("Hokkaido", accountModel.getBirthplacePrefectureKbnCode().getValue());
-			assertEquals("Okinawa", accountModel.getResidentPrefectureKbnCode().getValue());
-			assertEquals("フリーメモ", accountModel.getFreeMemo().getValue());
+			assertEquals("Hokkaido", accountModel.getBirthplacePrefectureKbnCode().value());
+			assertEquals("Okinawa", accountModel.getResidentPrefectureKbnCode().value());
+			assertEquals("フリーメモ", accountModel.getFreeMemo().value());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNull(accountModel.getLastLoginDatetime());
 			assertEquals(0, accountModel.getLoginFailureCount());
@@ -250,14 +250,14 @@ public class AccountRestControllerTest {
 
 			AccountModel accountModel = accountModelCaptor.getValue();
 			assertNull(accountModel.getAccountNo());
-			assertEquals("aaaaaaaa", accountModel.getAccountId().getValue());
-			assertEquals("AAAAAAAA", accountModel.getAccountName().getValue());
-			assertEquals("password01", accountModel.getPassword().getValue());
-			assertEquals(LocalDate.of(2000, 1, 1), accountModel.getBirthdate().getValue());
+			assertEquals("aaaaaaaa", accountModel.getAccountId().value());
+			assertEquals("AAAAAAAA", accountModel.getAccountName().value());
+			assertEquals("password01", accountModel.getPassword().value());
+			assertEquals(LocalDate.of(2000, 1, 1), accountModel.getBirthdate().value());
 			assertEquals(SexEnum.WOMAN, accountModel.getSexKbn());
-			assertEquals("Hokkaido", accountModel.getBirthplacePrefectureKbnCode().getValue());
-			assertEquals("Okinawa", accountModel.getResidentPrefectureKbnCode().getValue());
-			assertEquals("フリーメモ", accountModel.getFreeMemo().getValue());
+			assertEquals("Hokkaido", accountModel.getBirthplacePrefectureKbnCode().value());
+			assertEquals("Okinawa", accountModel.getResidentPrefectureKbnCode().value());
+			assertEquals("フリーメモ", accountModel.getFreeMemo().value());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNull(accountModel.getLastLoginDatetime());
 			assertEquals(0, accountModel.getLoginFailureCount());
@@ -289,14 +289,14 @@ public class AccountRestControllerTest {
 
 			AccountModel accountModel = accountModelCaptor.getValue();
 			assertNull(accountModel.getAccountNo());
-			assertEquals("aaaaaaaa", accountModel.getAccountId().getValue());
-			assertEquals("AAAAAAAA", accountModel.getAccountName().getValue());
-			assertEquals("password01", accountModel.getPassword().getValue());
-			assertEquals(LocalDate.of(2000, 1, 1), accountModel.getBirthdate().getValue());
+			assertEquals("aaaaaaaa", accountModel.getAccountId().value());
+			assertEquals("AAAAAAAA", accountModel.getAccountName().value());
+			assertEquals("password01", accountModel.getPassword().value());
+			assertEquals(LocalDate.of(2000, 1, 1), accountModel.getBirthdate().value());
 			assertEquals(SexEnum.WOMAN, accountModel.getSexKbn());
-			assertEquals("Hokkaido", accountModel.getBirthplacePrefectureKbnCode().getValue());
-			assertEquals("Okinawa", accountModel.getResidentPrefectureKbnCode().getValue());
-			assertEquals("フリーメモ", accountModel.getFreeMemo().getValue());
+			assertEquals("Hokkaido", accountModel.getBirthplacePrefectureKbnCode().value());
+			assertEquals("Okinawa", accountModel.getResidentPrefectureKbnCode().value());
+			assertEquals("フリーメモ", accountModel.getFreeMemo().value());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNull(accountModel.getLastLoginDatetime());
 			assertEquals(0, accountModel.getLoginFailureCount());
@@ -330,15 +330,15 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.message").value(""));
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1L, accountModel.getAccountNo().getValue());
-			assertEquals(accountId, accountModel.getAccountId().getValue());
-			assertEquals("AAAAAAAA", accountModel.getAccountName().getValue());
+			assertEquals(1L, accountModel.getAccountNo().value());
+			assertEquals(accountId, accountModel.getAccountId().value());
+			assertEquals("AAAAAAAA", accountModel.getAccountName().value());
 			assertNull(accountModel.getPassword());
-			assertEquals(LocalDate.of(2000, 1, 1), accountModel.getBirthdate().getValue());
+			assertEquals(LocalDate.of(2000, 1, 1), accountModel.getBirthdate().value());
 			assertEquals(SexEnum.WOMAN, accountModel.getSexKbn());
-			assertEquals("Hokkaido", accountModel.getBirthplacePrefectureKbnCode().getValue());
-			assertEquals("Okinawa", accountModel.getResidentPrefectureKbnCode().getValue());
-			assertEquals("フリーメモ", accountModel.getFreeMemo().getValue());
+			assertEquals("Hokkaido", accountModel.getBirthplacePrefectureKbnCode().value());
+			assertEquals("Okinawa", accountModel.getResidentPrefectureKbnCode().value());
+			assertEquals("フリーメモ", accountModel.getFreeMemo().value());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNull(accountModel.getLastLoginDatetime());
 			assertNull(accountModel.getLoginFailureCount());
@@ -367,9 +367,9 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.message").value(""));
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1L, accountModel.getAccountNo().getValue());
-			assertEquals(accountId, accountModel.getAccountId().getValue());
-			assertEquals("AAAAAAAA", accountModel.getAccountName().getValue());
+			assertEquals(1L, accountModel.getAccountNo().value());
+			assertEquals(accountId, accountModel.getAccountId().value());
+			assertEquals("AAAAAAAA", accountModel.getAccountName().value());
 			assertNull(accountModel.getPassword());
 		}
 
@@ -396,10 +396,10 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.message").value(""));
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1L, accountModel.getAccountNo().getValue());
-			assertEquals(accountId, accountModel.getAccountId().getValue());
-			assertEquals("AAAAAAAA", accountModel.getAccountName().getValue());
-			assertEquals("password01", accountModel.getPassword().getValue());
+			assertEquals(1L, accountModel.getAccountNo().value());
+			assertEquals(accountId, accountModel.getAccountId().value());
+			assertEquals("AAAAAAAA", accountModel.getAccountName().value());
+			assertEquals("password01", accountModel.getPassword().value());
 		}
 
 		@Test
@@ -425,9 +425,9 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.message").value(""));
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1L, accountModel.getAccountNo().getValue());
-			assertEquals(accountId, accountModel.getAccountId().getValue());
-			assertEquals("password01", accountModel.getPassword().getValue());
+			assertEquals(1L, accountModel.getAccountNo().value());
+			assertEquals(accountId, accountModel.getAccountId().value());
+			assertEquals("password01", accountModel.getPassword().value());
 		}
 
 		@Test
@@ -453,8 +453,8 @@ public class AccountRestControllerTest {
 				.andExpect(jsonPath("$.message").value(""));
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1L, accountModel.getAccountNo().getValue());
-			assertEquals(accountId, accountModel.getAccountId().getValue());
+			assertEquals(1L, accountModel.getAccountNo().value());
+			assertEquals(accountId, accountModel.getAccountId().value());
 			assertNull(accountModel.getPassword());
 		}
 
@@ -514,10 +514,10 @@ public class AccountRestControllerTest {
 				.andExpect(status().isConflict());
 
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1L, accountModel.getAccountNo().getValue());
-			assertEquals(accountId, accountModel.getAccountId().getValue());
-			assertEquals("AAAAAAAA", accountModel.getAccountName().getValue());
-			assertEquals("password01", accountModel.getPassword().getValue());
+			assertEquals(1L, accountModel.getAccountNo().value());
+			assertEquals(accountId, accountModel.getAccountId().value());
+			assertEquals("AAAAAAAA", accountModel.getAccountName().value());
+			assertEquals("password01", accountModel.getPassword().value());
 		}
 	}
 

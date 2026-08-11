@@ -822,7 +822,7 @@ public class AccountMapperTest {
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
@@ -882,7 +882,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
@@ -911,7 +911,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(9L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(9L), actualData.getFirst().getUpdatedBy());
-			assertTrue(actualData.getFirst().getIsDeleted().getValue());
+			assertTrue(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("iiiiiiii"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("IIIIIIII"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password9"), actualData.getFirst().getPassword());
@@ -940,7 +940,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
@@ -969,7 +969,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
@@ -998,7 +998,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
@@ -1027,7 +1027,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
@@ -1056,7 +1056,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(2L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(2L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("bbbbbbbb"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("BBBBBBBB"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password2"), actualData.getFirst().getPassword());
@@ -1085,7 +1085,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(3L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(3L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("cccccccc"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("CCCCCCCC"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password3"), actualData.getFirst().getPassword());
@@ -1114,7 +1114,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(4L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(4L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("dddddddd"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("DDDDDDDD"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password4"), actualData.getFirst().getPassword());
@@ -1143,7 +1143,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(5L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(5L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("eeeeeeee"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("EEEEEEEE"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password5"), actualData.getFirst().getPassword());
@@ -1172,7 +1172,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(6L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(6L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("ffffffff"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("FFFFFFFF"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password6"), actualData.getFirst().getPassword());
@@ -1203,7 +1203,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(7L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(7L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("gggggggg"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("GGGGGGGG"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password7"), actualData.getFirst().getPassword());
@@ -1232,7 +1232,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(8L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(8L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("hhhhhhhh"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("HHHHHHHH"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password8"), actualData.getFirst().getPassword());
@@ -1274,7 +1274,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(9L), actualData.get(0).getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt());
 			assertEquals(new UpdatedBy(9L), actualData.get(0).getUpdatedBy());
-			assertTrue(actualData.get(0).getIsDeleted().getValue());
+			assertTrue(actualData.get(0).getIsDeleted().value());
 			assertEquals(new AccountId("iiiiiiii"), actualData.get(0).getAccountId());
 			assertEquals(new AccountName("IIIIIIII"), actualData.get(0).getAccountName());
 			assertEquals(new Password("$2a$10$password9"), actualData.get(0).getPassword());
@@ -1291,7 +1291,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(10L), actualData.get(1).getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(1).getCreatedAt());
 			assertEquals(new UpdatedBy(10L), actualData.get(1).getUpdatedBy());
-			assertFalse(actualData.get(1).getIsDeleted().getValue());
+			assertFalse(actualData.get(1).getIsDeleted().value());
 			assertEquals(new AccountId("jjjjjjjj"), actualData.get(1).getAccountId());
 			assertEquals(new AccountName("JJJJJJJJ"), actualData.get(1).getAccountName());
 			assertEquals(new Password("$2a$10$password10"), actualData.get(1).getPassword());
@@ -1326,7 +1326,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(12L), actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(12L), actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted().getValue());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("llllllll"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("LLLLLLLL"), actualData.getFirst().getAccountName());
 			assertEquals(new Password("$2a$10$password12"), actualData.getFirst().getPassword());

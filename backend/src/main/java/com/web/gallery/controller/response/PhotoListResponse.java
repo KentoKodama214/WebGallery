@@ -50,7 +50,7 @@ public class PhotoListResponse {
 	 */
 	public static PhotoListResponse from(PhotoModel model) {
 		return PhotoListResponse.builder()
-				.accountNo(model.getAccountNo().getValue())
+				.accountNo(model.getAccountNo().value())
 				.photoNo(model.getPhotoNo())
 				.isFavorite(model.getIsFavorite())
 				.imageFilePath(model.getImageFilePath())

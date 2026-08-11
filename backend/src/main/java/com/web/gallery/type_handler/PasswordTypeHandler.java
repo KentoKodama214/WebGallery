@@ -16,7 +16,7 @@ import com.web.gallery.domain.account.Password;
 public class PasswordTypeHandler extends BaseTypeHandler<Password> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, Password parameter, JdbcType jdbcType) throws SQLException {
-		ps.setString(i, parameter.getValue());
+		ps.setString(i, parameter.value());
 	}
 
 	@Override

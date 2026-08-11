@@ -103,8 +103,8 @@ public class PhotoTagMstMapperTest {
 			expected.add(expectedPhotoTagMst5);
 			
 			assertEquals(5, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
 		}
 		
 		@Test
@@ -138,8 +138,8 @@ public class PhotoTagMstMapperTest {
 			expected.add(expectedPhotoTagMst2);
 			
 			assertEquals(2, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
 		}
 		
 		@Test
@@ -173,8 +173,8 @@ public class PhotoTagMstMapperTest {
 			expected.add(expectedPhotoTagMst2);
 			
 			assertEquals(2, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
 		}
 		
 		@Test
@@ -208,8 +208,8 @@ public class PhotoTagMstMapperTest {
 			expected.add(expectedPhotoTagMst2);
 			
 			assertEquals(2, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
 		}
 		
 		@Test
@@ -243,8 +243,8 @@ public class PhotoTagMstMapperTest {
 			expected.add(expectedPhotoTagMst2);
 			
 			assertEquals(2, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
 		}
 		
 		@Test
@@ -283,8 +283,8 @@ public class PhotoTagMstMapperTest {
 			expected.add(expectedPhotoTagMst1);
 			
 			assertEquals(1, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().getValue())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
 		}
 	}
 	

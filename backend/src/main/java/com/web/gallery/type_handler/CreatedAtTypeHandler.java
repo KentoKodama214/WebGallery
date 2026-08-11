@@ -17,7 +17,7 @@ import com.web.gallery.domain.common.CreatedAt;
 public class CreatedAtTypeHandler extends BaseTypeHandler<CreatedAt> {
 	@Override
 	public void setNonNullParameter(PreparedStatement ps, int i, CreatedAt parameter, JdbcType jdbcType) throws SQLException {
-		ps.setObject(i, parameter.getValue());
+		ps.setObject(i, parameter.value());
 	}
 
 	@Override

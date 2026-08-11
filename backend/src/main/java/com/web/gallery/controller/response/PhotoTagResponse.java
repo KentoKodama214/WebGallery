@@ -41,7 +41,7 @@ public class PhotoTagResponse {
 	 */
 	public static PhotoTagResponse from(PhotoTagModel model) {
 		return PhotoTagResponse.builder()
-				.accountNo(model.getAccountNo().getValue())
+				.accountNo(model.getAccountNo().value())
 				.photoNo(model.getPhotoNo())
 				.tagNo(model.getTagNo())
 				.tagJapaneseName(model.getTagJapaneseName())

@@ -287,7 +287,7 @@ public class PhotoRestControllerIntegrationTest {
 			assertEquals(1, actualPhotoMst.size());
 			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
 			assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo());
-			assertFalse(actualPhotoMst.getFirst().getIsDeleted().getValue());
+			assertFalse(actualPhotoMst.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
@@ -394,7 +394,7 @@ public class PhotoRestControllerIntegrationTest {
 			assertEquals(1, actualPhotoMst.size());
 			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
 			assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo());
-			assertFalse(actualPhotoMst.getFirst().getIsDeleted().getValue());
+			assertFalse(actualPhotoMst.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
@@ -509,7 +509,7 @@ public class PhotoRestControllerIntegrationTest {
 			assertEquals(1, actualPhotoMst.size());
 			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
 			assertEquals(1L, actualPhotoMst.getFirst().getPhotoNo());
-			assertFalse(actualPhotoMst.getFirst().getIsDeleted().getValue());
+			assertFalse(actualPhotoMst.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/bbbbbbbb/DSC21.jpg", actualPhotoMst.getFirst().getImageFilePath());
@@ -865,7 +865,7 @@ public class PhotoRestControllerIntegrationTest {
 						.shutterSpeed(rs.getBigDecimal("shutter_speed"))
 						.iso(rs.getInt("iso"))
 						.build());
-			assertTrue(actualPhotoMst.getFirst().getIsDeleted().getValue());
+			assertTrue(actualPhotoMst.getFirst().getIsDeleted().value());
 			
 			// photo_tag_mst削除チェック
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(

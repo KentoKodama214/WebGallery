@@ -69,7 +69,7 @@ public class PhotoModel {
 	public static PhotoModel from(PhotoDto dto, List<PhotoTagMst> photoTagMstList) {
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream()
 				.filter(tag ->
-					tag.getAccountNo().getValue().equals(dto.getAccountNo()) &&
+					tag.getAccountNo().value().equals(dto.getAccountNo()) &&
 					Objects.equals(tag.getPhotoNo(), dto.getPhotoNo()))
 				.map(PhotoTagModel::from)
 				.toList();
