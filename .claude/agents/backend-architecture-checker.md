@@ -1,5 +1,5 @@
 ---
-name: backend-arch-checker
+name: backend-architecture-checker
 description: backendのアーキテクチャ・設計規約違反を検出する専門エージェント。レイヤー間の依存関係、Lombokアノテーション、命名規則、ファクトリメソッドなどの規約準拠をチェックする。
 tools: Read, Grep, Glob
 model: sonnet
