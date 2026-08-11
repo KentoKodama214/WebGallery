@@ -28,12 +28,13 @@
 
 ## 主な機能
 
-- **アカウント管理** - ユーザー登録・ログイン・プロフィール編集
+- **アカウント管理** - ユーザー登録・ログイン・プロフィール編集・アカウント削除
 - **写真管理** - 写真のアップロード・編集・削除（EXIF情報の自動取得に対応）
 - **タグ機能** - 写真への日本語・英語タグ付け
 - **お気に入り** - 他ユーザーの写真をお気に入り登録
 - **写真一覧** - フィルタリング（方向・タグ）やソート（撮影日・お気に入り数・季節）に対応
 - **権限管理** - 4段階のユーザー権限によるアップロード枚数制限
+- **管理者機能** - アカウント一覧管理・アカウントロック/ロック解除
 
 ### ユーザー権限
 
@@ -249,6 +250,8 @@ WebGallery/
 │   ├── jest.config.js              # Jestテスト設定
 │   ├── playwright.config.ts        # E2Eテスト設定
 │   ├── e2e/                        # Playwright E2Eテスト
+│   │   ├── login.spec.ts           # ログインE2Eテスト
+│   │   └── admin_account_management.spec.ts  # 管理者アカウント管理E2Eテスト
 │   ├── public/
 │   │   └── image/                  # 静的画像（アイコン等）
 │   └── src/
@@ -267,6 +270,8 @@ WebGallery/
 │       │   │   ├── photo_list/         # 写真一覧ページ（PhotoSwipe統合）
 │       │   │   ├── photo_detail/       # 写真詳細ページ
 │       │   │   └── photo_setting/      # 写真設定ページ
+│       │   ├── admin/
+│       │   │   └── account_management/ # 管理者アカウント管理ページ
 │       │   └── api/v1/                  # Next.js APIルート（プロキシ）
 │       ├── components/
 │       │   └── layout/                  # 共通レイアウト
@@ -277,8 +282,9 @@ WebGallery/
 │       └── lib/
 │           ├── api/
 │           │   └── client.ts            # APIクライアント
-│           └── auth/
-│               └── AuthProvider.tsx      # 認証プロバイダー
+│           ├── auth/
+│           │   └── AuthProvider.tsx      # 認証プロバイダー
+│           └── cookie.ts                # Cookie操作ユーティリティ
 ├── backend/                        # バックエンド（Spring Boot）
 │   ├── build.gradle
 │   ├── settings.gradle
