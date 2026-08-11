@@ -24,3 +24,4 @@ paths:
 ## Springアノテーション
 
 - `service/impl/`の実装クラスには`@Service`アノテーションを付与すること
+- `service/impl/`の実装クラスのpublicメソッドには、`@Transactional`アノテーションを付与すること

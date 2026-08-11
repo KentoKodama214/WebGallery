@@ -5,6 +5,13 @@ paths:
 
 # テストクラスのアーキテクチャルール
 
+## テスト種別
+
+- **ユニットテスト**: `@ExtendWith(MockitoExtension.class)`でモック化した依存関係を使用
+- **統合テスト**: `@SpringBootTest`と`@ActiveProfiles("test")`を使用
+  - `@Transactional`による自動ロールバック
+  - `@Sql("/sql/...")`アノテーションでテストフィクスチャデータを読み込み
+
 ## 命名規則
 
 - **ユニットテスト**: クラス名に`Test`サフィックスを付与すること
