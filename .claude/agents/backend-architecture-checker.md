@@ -25,6 +25,7 @@ model: sonnet
 - `.claude/rules/request.md` - Requestクラスのルール
 - `.claude/rules/response.md` - Responseクラスのルール
 - `.claude/rules/mapper.md` - Mapper層のルール
+- `.claude/rules/enumuration.md` - Enumクラスのルール
 - `.claude/rules/exception.md` - Exceptionクラスのルール
 - `.claude/rules/type_handler.md` - TypeHandlerクラスのルール
 - `.claude/rules/unit-test.md` - ユニットテストのルール
@@ -51,10 +52,6 @@ model: sonnet
 
 - すべてのpublicクラスに日本語のJavaDocコメントがあるか
 - すべてのpublicメソッドに日本語のJavaDocコメントがあるか
-
-### 命名規則（ルールファイル未定義のパッケージ）
-
-- `enumuration/`: `Enum`サフィックス
 
 ## 出力フォーマット
 

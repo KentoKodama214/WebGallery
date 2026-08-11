@@ -113,7 +113,6 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 
 ### 重要事項
 
-- パッケージ名`enumuration`（`enumeration`ではない）はプロジェクトの意図的な規約であり、リネームしないこと
 - ファイルアップロード上限は1ファイルあたり5MB（サーブレットレベルでは6MB）
 - 写真の出力パスは`backend/src/main/resources/application.yml`の`app.photo.outputPath`で設定可能
 - プロジェクトはTomcatデプロイ用のWARパッケージング（実行可能JARではない）
