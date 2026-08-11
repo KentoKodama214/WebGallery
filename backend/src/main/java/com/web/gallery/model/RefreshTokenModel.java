@@ -2,6 +2,7 @@ package com.web.gallery.model;
 
 import java.time.OffsetDateTime;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.RefreshToken;
 
 import lombok.Builder;
@@ -17,7 +18,7 @@ import lombok.Value;
 @Builder
 public class RefreshTokenModel {
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** トークンハッシュ */
 	private String tokenHash;

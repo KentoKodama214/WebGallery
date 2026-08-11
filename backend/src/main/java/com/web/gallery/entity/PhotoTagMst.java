@@ -1,7 +1,8 @@
 package com.web.gallery.entity;
 
-import java.time.OffsetDateTime;
-
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoTagDeleteModel;
@@ -20,7 +21,7 @@ public class PhotoTagMst {
 	private Long id;
 
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
 	private Long photoNo;
@@ -29,10 +30,10 @@ public class PhotoTagMst {
 	private Long tagNo;
 
 	/** 作成者 */
-	private Long createdBy;
+	private CreatedBy createdBy;
 
 	/** 作成日時 */
-	private OffsetDateTime createdAt;
+	private CreatedAt createdAt;
 
 	/** タグ日本語名 */
 	private String tagJapaneseName;
@@ -51,7 +52,7 @@ public class PhotoTagMst {
 				.accountNo(model.getAccountNo())
 				.photoNo(model.getPhotoNo())
 				.tagNo(model.getTagNo())
-				.createdBy(model.getAccountNo())
+				.createdBy(new CreatedBy(model.getAccountNo().getValue()))
 				.tagJapaneseName(model.getTagJapaneseName())
 				.tagEnglishName(model.getTagEnglishName())
 				.build();

@@ -40,6 +40,15 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountName;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.UpdatedBy;
+import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.entity.PhotoMst;
@@ -222,10 +231,10 @@ public class PhotoRestControllerIntegrationTest {
 					"sample image".getBytes());
 			
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId("bbbbbbbb")
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("bbbbbbbb"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 			
@@ -255,13 +264,13 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=4", (rs, rowNum) ->
 					PhotoMst.builder()
-						.accountNo(rs.getLong("account_no"))
+						.accountNo(new AccountNo(rs.getLong("account_no")))
 						.photoNo(rs.getLong("photo_no"))
-						.createdBy(rs.getLong("created_by"))
-						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-						.updatedBy(rs.getLong("updated_by"))
-						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-						.isDeleted(rs.getBoolean("is_deleted"))
+						.createdBy(new CreatedBy(rs.getLong("created_by")))
+						.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+						.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+						.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+						.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 						.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 						.locationNo(rs.getLong("location_no"))
 						.imageFilePath(rs.getString("image_file_path"))
@@ -276,9 +285,9 @@ public class PhotoRestControllerIntegrationTest {
 						.build());
 			
 			assertEquals(1, actualPhotoMst.size());
-			assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
+			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
 			assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo());
-			assertFalse(actualPhotoMst.getFirst().getIsDeleted());
+			assertFalse(actualPhotoMst.getFirst().getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
@@ -295,11 +304,11 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=4", (rs, rowNum) ->
 							PhotoTagMst.builder()
-								.accountNo(rs.getLong("account_no"))
+								.accountNo(new AccountNo(rs.getLong("account_no")))
 								.photoNo(rs.getLong("photo_no"))
 								.tagNo(rs.getLong("tag_no"))
-								.createdBy(rs.getLong("created_by"))
-								.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+								.createdBy(new CreatedBy(rs.getLong("created_by")))
+								.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 								.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
 								.tagEnglishName(rs.getObject("tag_english_name").toString())
 								.build());
@@ -318,10 +327,10 @@ public class PhotoRestControllerIntegrationTest {
 					"sample image".getBytes());
 			
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId("bbbbbbbb")
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("bbbbbbbb"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 			
@@ -362,13 +371,13 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=4", (rs, rowNum) ->
 					PhotoMst.builder()
-						.accountNo(rs.getLong("account_no"))
+						.accountNo(new AccountNo(rs.getLong("account_no")))
 						.photoNo(rs.getLong("photo_no"))
-						.createdBy(rs.getLong("created_by"))
-						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-						.updatedBy(rs.getLong("updated_by"))
-						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-						.isDeleted(rs.getBoolean("is_deleted"))
+						.createdBy(new CreatedBy(rs.getLong("created_by")))
+						.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+						.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+						.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+						.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 						.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 						.locationNo(rs.getLong("location_no"))
 						.imageFilePath(rs.getString("image_file_path"))
@@ -383,9 +392,9 @@ public class PhotoRestControllerIntegrationTest {
 						.build());
 			
 			assertEquals(1, actualPhotoMst.size());
-			assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
+			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
 			assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo());
-			assertFalse(actualPhotoMst.getFirst().getIsDeleted());
+			assertFalse(actualPhotoMst.getFirst().getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
@@ -402,22 +411,22 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=4", (rs, rowNum) ->
 							PhotoTagMst.builder()
-								.accountNo(rs.getLong("account_no"))
+								.accountNo(new AccountNo(rs.getLong("account_no")))
 								.photoNo(rs.getLong("photo_no"))
 								.tagNo(rs.getLong("tag_no"))
-								.createdBy(rs.getLong("created_by"))
-								.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+								.createdBy(new CreatedBy(rs.getLong("created_by")))
+								.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 								.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
 								.tagEnglishName(rs.getObject("tag_english_name").toString())
 								.build());
 			assertEquals(2, actualPhotoTagMst.size());
 			
-			assertEquals(2L, actualPhotoTagMst.get(0).getAccountNo());
+			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(0).getAccountNo());
 			assertEquals(4L, actualPhotoTagMst.get(0).getPhotoNo());
 			assertEquals(1L, actualPhotoTagMst.get(0).getTagNo());
 			assertEquals("太陽", actualPhotoTagMst.get(0).getTagJapaneseName());
 			assertEquals("sun", actualPhotoTagMst.get(0).getTagEnglishName());
-			assertEquals(2L, actualPhotoTagMst.get(1).getAccountNo());
+			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(1).getAccountNo());
 			assertEquals(4L, actualPhotoTagMst.get(1).getPhotoNo());
 			assertEquals(2L, actualPhotoTagMst.get(1).getTagNo());
 			assertEquals("青空", actualPhotoTagMst.get(1).getTagJapaneseName());
@@ -431,10 +440,10 @@ public class PhotoRestControllerIntegrationTest {
 			String photoAccountId = "bbbbbbbb";
 			
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId("bbbbbbbb")
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("bbbbbbbb"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 			
@@ -477,13 +486,13 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=1", (rs, rowNum) ->
 					PhotoMst.builder()
-						.accountNo(rs.getLong("account_no"))
+						.accountNo(new AccountNo(rs.getLong("account_no")))
 						.photoNo(rs.getLong("photo_no"))
-						.createdBy(rs.getLong("created_by"))
-						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-						.updatedBy(rs.getLong("updated_by"))
-						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-						.isDeleted(rs.getBoolean("is_deleted"))
+						.createdBy(new CreatedBy(rs.getLong("created_by")))
+						.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+						.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+						.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+						.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 						.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 						.locationNo(rs.getLong("location_no"))
 						.imageFilePath(rs.getString("image_file_path"))
@@ -498,9 +507,9 @@ public class PhotoRestControllerIntegrationTest {
 						.build());
 			
 			assertEquals(1, actualPhotoMst.size());
-			assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
+			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
 			assertEquals(1L, actualPhotoMst.getFirst().getPhotoNo());
-			assertFalse(actualPhotoMst.getFirst().getIsDeleted());
+			assertFalse(actualPhotoMst.getFirst().getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/bbbbbbbb/DSC21.jpg", actualPhotoMst.getFirst().getImageFilePath());
@@ -517,22 +526,22 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=1", (rs, rowNum) ->
 							PhotoTagMst.builder()
-								.accountNo(rs.getLong("account_no"))
+								.accountNo(new AccountNo(rs.getLong("account_no")))
 								.photoNo(rs.getLong("photo_no"))
 								.tagNo(rs.getLong("tag_no"))
-								.createdBy(rs.getLong("created_by"))
-								.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+								.createdBy(new CreatedBy(rs.getLong("created_by")))
+								.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 								.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
 								.tagEnglishName(rs.getObject("tag_english_name").toString())
 								.build());
 			assertEquals(2, actualPhotoTagMst.size());
 			
-			assertEquals(2L, actualPhotoTagMst.get(0).getAccountNo());
+			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(0).getAccountNo());
 			assertEquals(1L, actualPhotoTagMst.get(0).getPhotoNo());
 			assertEquals(1L, actualPhotoTagMst.get(0).getTagNo());
 			assertEquals("太陽", actualPhotoTagMst.get(0).getTagJapaneseName());
 			assertEquals("sun", actualPhotoTagMst.get(0).getTagEnglishName());
-			assertEquals(2L, actualPhotoTagMst.get(1).getAccountNo());
+			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(1).getAccountNo());
 			assertEquals(1L, actualPhotoTagMst.get(1).getPhotoNo());
 			assertEquals(2L, actualPhotoTagMst.get(1).getTagNo());
 			assertEquals("青空", actualPhotoTagMst.get(1).getTagJapaneseName());
@@ -551,10 +560,10 @@ public class PhotoRestControllerIntegrationTest {
 					"sample image".getBytes());
 			
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId("aaaaaaaa")
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName("AAAAAAAA"))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 			
@@ -589,10 +598,10 @@ public class PhotoRestControllerIntegrationTest {
 					"sample image".getBytes());
 			
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId("aaaaaaaa")
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName("AAAAAAAA"))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.MINI)
 					.build();
 			
@@ -622,10 +631,10 @@ public class PhotoRestControllerIntegrationTest {
 			String photoAccountId = "bbbbbbbb";
 			
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId("bbbbbbbb")
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("bbbbbbbb"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.MINI)
 					.build();
 			
@@ -653,10 +662,10 @@ public class PhotoRestControllerIntegrationTest {
 			String photoAccountId = "bbbbbbbb";
 			
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId("bbbbbbbb")
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("bbbbbbbb"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.MINI)
 					.build();
 			
@@ -690,10 +699,10 @@ public class PhotoRestControllerIntegrationTest {
 					"sample image".getBytes());
 			
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId("bbbbbbbb")
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("bbbbbbbb"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 			
@@ -728,10 +737,10 @@ public class PhotoRestControllerIntegrationTest {
 					"sample image".getBytes());
 			
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId("bbbbbbbb")
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("bbbbbbbb"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 			
@@ -765,10 +774,10 @@ public class PhotoRestControllerIntegrationTest {
 			String photoAccountId = "bbbbbbbb";
 			
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId("bbbbbbbb")
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("bbbbbbbb"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 			
@@ -810,10 +819,10 @@ public class PhotoRestControllerIntegrationTest {
 			String loginAccountId = "aaaaaaaa";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId(loginAccountId)
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId(loginAccountId))
+					.accountName(new AccountName("AAAAAAAA"))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -837,13 +846,13 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 1 and photo_no=1", (rs, rowNum) ->
 					PhotoMst.builder()
-						.accountNo(rs.getLong("account_no"))
+						.accountNo(new AccountNo(rs.getLong("account_no")))
 						.photoNo(rs.getLong("photo_no"))
-						.createdBy(rs.getLong("created_by"))
-						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-						.updatedBy(rs.getLong("updated_by"))
-						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-						.isDeleted(rs.getBoolean("is_deleted"))
+						.createdBy(new CreatedBy(rs.getLong("created_by")))
+						.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+						.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+						.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+						.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 						.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 						.locationNo(rs.getLong("location_no"))
 						.imageFilePath(rs.getString("image_file_path"))
@@ -856,17 +865,17 @@ public class PhotoRestControllerIntegrationTest {
 						.shutterSpeed(rs.getBigDecimal("shutter_speed"))
 						.iso(rs.getInt("iso"))
 						.build());
-			assertTrue(actualPhotoMst.getFirst().getIsDeleted());
+			assertTrue(actualPhotoMst.getFirst().getIsDeleted().getValue());
 			
 			// photo_tag_mst削除チェック
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(
 						"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 							PhotoTagMst.builder()
-								.accountNo(rs.getLong("account_no"))
+								.accountNo(new AccountNo(rs.getLong("account_no")))
 								.photoNo(rs.getLong("photo_no"))
 								.tagNo(rs.getLong("tag_no"))
-								.createdBy(rs.getLong("created_by"))
-								.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+								.createdBy(new CreatedBy(rs.getLong("created_by")))
+								.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 								.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
 								.tagEnglishName(rs.getObject("tag_english_name").toString())
 								.build());
@@ -876,11 +885,11 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoFavorite> actualPhotoFavoriteData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite WHERE favorite_photo_account_no=1 and favorite_photo_no=1", (rs, rowNum) ->
 						PhotoFavorite.builder()
-							.accountNo(rs.getLong("account_no"))
-							.favoritePhotoAccountNo(rs.getLong("favorite_photo_account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
+							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
 							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
 			assertEquals(0, actualPhotoFavoriteData.size());
 		}
@@ -893,10 +902,10 @@ public class PhotoRestControllerIntegrationTest {
 			String loginAccountId = "eeeeeeee";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId(loginAccountId)
-					.accountName("EEEEEEEE")
-					.password("$2a$10$password5")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId(loginAccountId))
+					.accountName(new AccountName("EEEEEEEE"))
+					.password(new Password("$2a$10$password5"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -926,10 +935,10 @@ public class PhotoRestControllerIntegrationTest {
 			String loginAccountId = "aaaaaaaa";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId(loginAccountId)
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId(loginAccountId))
+					.accountName(new AccountName("AAAAAAAA"))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -958,10 +967,10 @@ public class PhotoRestControllerIntegrationTest {
 			String loginAccountId = "aaaaaaaa";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId(loginAccountId)
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId(loginAccountId))
+					.accountName(new AccountName("AAAAAAAA"))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -995,10 +1004,10 @@ public class PhotoRestControllerIntegrationTest {
 			String photoAccountId = "bbbbbbbb";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId(photoAccountId)
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId(photoAccountId))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.MINI)
 					.build();
 
@@ -1022,10 +1031,10 @@ public class PhotoRestControllerIntegrationTest {
 			String photoAccountId = "aaaaaaaa";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId(photoAccountId)
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId(photoAccountId))
+					.accountName(new AccountName("AAAAAAAA"))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.MINI)
 					.build();
 
@@ -1047,10 +1056,10 @@ public class PhotoRestControllerIntegrationTest {
 		@DisplayName("正常系：他人のアカウントの場合はfalse")
 		void getPhotoUpperLimit_other_account() throws Exception {
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId("bbbbbbbb")
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("bbbbbbbb"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.MINI)
 					.build();
 

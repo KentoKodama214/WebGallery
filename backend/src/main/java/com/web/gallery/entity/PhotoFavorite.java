@@ -1,7 +1,8 @@
 package com.web.gallery.entity;
 
-import java.time.OffsetDateTime;
-
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoFavoriteModel;
 
@@ -18,19 +19,19 @@ public class PhotoFavorite {
 	private Long id;
 
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** お気に入り写真アカウント番号 */
-	private Long favoritePhotoAccountNo;
+	private AccountNo favoritePhotoAccountNo;
 
 	/** お気に入り写真番号 */
 	private Long favoritePhotoNo;
 
 	/** 作成者 */
-	private Long createdBy;
+	private CreatedBy createdBy;
 
 	/** 作成日時 */
-	private OffsetDateTime createdAt;
+	private CreatedAt createdAt;
 
 	/**
 	 * PhotoFavoriteModelからPhotoFavoriteエンティティを生成する
@@ -43,7 +44,7 @@ public class PhotoFavorite {
 				.accountNo(model.getAccountNo())
 				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
 				.favoritePhotoNo(model.getFavoritePhotoNo())
-				.createdBy(model.getAccountNo())
+				.createdBy(new CreatedBy(model.getAccountNo().getValue()))
 				.build();
 	}
 

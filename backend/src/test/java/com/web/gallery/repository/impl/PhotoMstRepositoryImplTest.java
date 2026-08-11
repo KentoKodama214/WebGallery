@@ -24,6 +24,10 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.UpdatedBy;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.exception.RegistFailureException;
@@ -52,7 +56,7 @@ public class PhotoMstRepositoryImplTest {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -64,11 +68,11 @@ public class PhotoMstRepositoryImplTest {
 			
 			verify(photoMstMapper).insert(any(PhotoMst.class));
 			PhotoMst photoMst = photoMstCaptor.getValue();
-			assertEquals(1L, photoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 			assertEquals(1L, photoMst.getPhotoNo());
-			assertEquals(1L, photoMst.getCreatedBy());
+			assertEquals(new CreatedBy(1L), photoMst.getCreatedBy());
 			assertNull(photoMst.getCreatedAt());
-			assertEquals(1L, photoMst.getUpdatedBy());
+			assertEquals(new UpdatedBy(1L), photoMst.getUpdatedBy());
 			assertNull(photoMst.getUpdatedAt());
 			assertNull(photoMst.getIsDeleted());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), photoMst.getPhotoAt());
@@ -91,7 +95,7 @@ public class PhotoMstRepositoryImplTest {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.photoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.locationNo(1L)
@@ -113,11 +117,11 @@ public class PhotoMstRepositoryImplTest {
 			
 			verify(photoMstMapper).insert(any(PhotoMst.class));
 			PhotoMst photoMst = photoMstCaptor.getValue();
-			assertEquals(1L, photoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 			assertEquals(1L, photoMst.getPhotoNo());
-			assertEquals(1L, photoMst.getCreatedBy());
+			assertEquals(new CreatedBy(1L), photoMst.getCreatedBy());
 			assertNull(photoMst.getCreatedAt());
-			assertEquals(1L, photoMst.getUpdatedBy());
+			assertEquals(new UpdatedBy(1L), photoMst.getUpdatedBy());
 			assertNull(photoMst.getUpdatedAt());
 			assertNull(photoMst.getIsDeleted());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), photoMst.getPhotoAt());
@@ -140,7 +144,7 @@ public class PhotoMstRepositoryImplTest {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -152,11 +156,11 @@ public class PhotoMstRepositoryImplTest {
 			
 			verify(photoMstMapper).insert(any(PhotoMst.class));
 			PhotoMst photoMst = photoMstCaptor.getValue();
-			assertEquals(1L, photoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 			assertEquals(1L, photoMst.getPhotoNo());
-			assertEquals(1L, photoMst.getCreatedBy());
+			assertEquals(new CreatedBy(1L), photoMst.getCreatedBy());
 			assertNull(photoMst.getCreatedAt());
-			assertEquals(1L, photoMst.getUpdatedBy());
+			assertEquals(new UpdatedBy(1L), photoMst.getUpdatedBy());
 			assertNull(photoMst.getUpdatedAt());
 			assertNull(photoMst.getIsDeleted());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), photoMst.getPhotoAt());
@@ -184,7 +188,7 @@ public class PhotoMstRepositoryImplTest {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -198,7 +202,7 @@ public class PhotoMstRepositoryImplTest {
 			
 			verify(photoMstMapper).update(any(PhotoMst.class), any(PhotoMst.class));
 			PhotoMst cndPhotoMst = cndPhotoMstCaptor.getValue();
-			assertEquals(1L, cndPhotoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), cndPhotoMst.getAccountNo());
 			assertEquals(1L, cndPhotoMst.getPhotoNo());
 			assertNull(cndPhotoMst.getCreatedBy());
 			assertNull(cndPhotoMst.getCreatedAt());
@@ -222,9 +226,9 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(targetPhotoMst.getPhotoNo());
 			assertNull(targetPhotoMst.getCreatedBy());
 			assertNull(targetPhotoMst.getCreatedAt());
-			assertEquals(1L, targetPhotoMst.getUpdatedBy());
+			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
 			assertNull(targetPhotoMst.getUpdatedAt());
-			assertFalse(targetPhotoMst.getIsDeleted());
+			assertFalse(targetPhotoMst.getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetPhotoMst.getPhotoAt());
 			assertEquals(0L, targetPhotoMst.getLocationNo());
 			assertEquals(imageFilePath, targetPhotoMst.getImageFilePath());
@@ -245,7 +249,7 @@ public class PhotoMstRepositoryImplTest {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.photoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.locationNo(1L)
@@ -269,7 +273,7 @@ public class PhotoMstRepositoryImplTest {
 			
 			verify(photoMstMapper).update(any(PhotoMst.class), any(PhotoMst.class));
 			PhotoMst cndPhotoMst = cndPhotoMstCaptor.getValue();
-			assertEquals(1L, cndPhotoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), cndPhotoMst.getAccountNo());
 			assertEquals(1L, cndPhotoMst.getPhotoNo());
 			assertNull(cndPhotoMst.getCreatedBy());
 			assertNull(cndPhotoMst.getCreatedAt());
@@ -293,9 +297,9 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(targetPhotoMst.getPhotoNo());
 			assertNull(targetPhotoMst.getCreatedBy());
 			assertNull(targetPhotoMst.getCreatedAt());
-			assertEquals(1L, targetPhotoMst.getUpdatedBy());
+			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
 			assertNull(targetPhotoMst.getUpdatedAt());
-			assertFalse(targetPhotoMst.getIsDeleted());
+			assertFalse(targetPhotoMst.getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), targetPhotoMst.getPhotoAt());
 			assertEquals(1L, targetPhotoMst.getLocationNo());
 			assertEquals(imageFilePath, targetPhotoMst.getImageFilePath());
@@ -316,7 +320,7 @@ public class PhotoMstRepositoryImplTest {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -330,7 +334,7 @@ public class PhotoMstRepositoryImplTest {
 			
 			verify(photoMstMapper).update(any(PhotoMst.class), any(PhotoMst.class));
 			PhotoMst cndPhotoMst = cndPhotoMstCaptor.getValue();
-			assertEquals(1L, cndPhotoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), cndPhotoMst.getAccountNo());
 			assertEquals(1L, cndPhotoMst.getPhotoNo());
 			assertNull(cndPhotoMst.getCreatedBy());
 			assertNull(cndPhotoMst.getCreatedAt());
@@ -354,9 +358,9 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(targetPhotoMst.getPhotoNo());
 			assertNull(targetPhotoMst.getCreatedBy());
 			assertNull(targetPhotoMst.getCreatedAt());
-			assertEquals(1L, targetPhotoMst.getUpdatedBy());
+			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
 			assertNull(targetPhotoMst.getUpdatedAt());
-			assertFalse(targetPhotoMst.getIsDeleted());
+			assertFalse(targetPhotoMst.getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetPhotoMst.getPhotoAt());
 			assertEquals(0L, targetPhotoMst.getLocationNo());
 			assertEquals(imageFilePath, targetPhotoMst.getImageFilePath());
@@ -382,7 +386,7 @@ public class PhotoMstRepositoryImplTest {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDeleteModel photoDeleteModel = PhotoDeleteModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -396,7 +400,7 @@ public class PhotoMstRepositoryImplTest {
 			
 			verify(photoMstMapper).update(any(PhotoMst.class), any(PhotoMst.class));
 			PhotoMst cndPhotoMst = cndPhotoMstCaptor.getValue();
-			assertEquals(1L, cndPhotoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), cndPhotoMst.getAccountNo());
 			assertEquals(1L, cndPhotoMst.getPhotoNo());
 			assertNull(cndPhotoMst.getCreatedBy());
 			assertNull(cndPhotoMst.getCreatedAt());
@@ -420,9 +424,9 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(targetPhotoMst.getPhotoNo());
 			assertNull(targetPhotoMst.getCreatedBy());
 			assertNull(targetPhotoMst.getCreatedAt());
-			assertEquals(1L, targetPhotoMst.getUpdatedBy());
+			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
 			assertNull(targetPhotoMst.getUpdatedAt());
-			assertTrue(targetPhotoMst.getIsDeleted());
+			assertTrue(targetPhotoMst.getIsDeleted().getValue());
 			assertNull(targetPhotoMst.getPhotoAt());
 			assertNull(targetPhotoMst.getLocationNo());
 			assertNull(targetPhotoMst.getImageFilePath());
@@ -443,7 +447,7 @@ public class PhotoMstRepositoryImplTest {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDeleteModel photoDeleteModel = PhotoDeleteModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -457,7 +461,7 @@ public class PhotoMstRepositoryImplTest {
 			
 			verify(photoMstMapper).update(any(PhotoMst.class), any(PhotoMst.class));
 			PhotoMst cndPhotoMst = cndPhotoMstCaptor.getValue();
-			assertEquals(1L, cndPhotoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), cndPhotoMst.getAccountNo());
 			assertEquals(1L, cndPhotoMst.getPhotoNo());
 			assertNull(cndPhotoMst.getCreatedBy());
 			assertNull(cndPhotoMst.getCreatedAt());
@@ -481,9 +485,9 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(targetPhotoMst.getPhotoNo());
 			assertNull(targetPhotoMst.getCreatedBy());
 			assertNull(targetPhotoMst.getCreatedAt());
-			assertEquals(1L, targetPhotoMst.getUpdatedBy());
+			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
 			assertNull(targetPhotoMst.getUpdatedAt());
-			assertTrue(targetPhotoMst.getIsDeleted());
+			assertTrue(targetPhotoMst.getIsDeleted().getValue());
 			assertNull(targetPhotoMst.getPhotoAt());
 			assertNull(targetPhotoMst.getLocationNo());
 			assertNull(targetPhotoMst.getImageFilePath());
@@ -535,7 +539,7 @@ public class PhotoMstRepositoryImplTest {
 			);
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();
@@ -545,7 +549,7 @@ public class PhotoMstRepositoryImplTest {
 			assertFalse(photoMstRepositoryImpl.isExistPhoto(photoDetailModel));
 			
 			PhotoMst photoMst = photoMstCaptor.getValue();
-			assertEquals(1L, photoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 			assertEquals("DSC111.jpg", photoMst.getImageFilePath());
 		}
 		
@@ -561,7 +565,7 @@ public class PhotoMstRepositoryImplTest {
 			);
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();
@@ -571,7 +575,7 @@ public class PhotoMstRepositoryImplTest {
 			assertTrue(photoMstRepositoryImpl.isExistPhoto(photoDetailModel));
 			
 			PhotoMst photoMst = photoMstCaptor.getValue();
-			assertEquals(1L, photoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 		}
 	}
 	
@@ -589,13 +593,13 @@ public class PhotoMstRepositoryImplTest {
 			assertEquals(3, photoMstRepositoryImpl.count(1L));
 			
 			PhotoMst photoMst = photoMstCaptor.getValue();
-			assertEquals(1L, photoMst.getAccountNo());
+			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 			assertNull(photoMst.getPhotoNo());
 			assertNull(photoMst.getCreatedBy());
 			assertNull(photoMst.getCreatedAt());
 			assertNull(photoMst.getUpdatedBy());
 			assertNull(photoMst.getUpdatedAt());
-			assertFalse(photoMst.getIsDeleted());
+			assertFalse(photoMst.getIsDeleted().getValue());
 			assertNull(photoMst.getPhotoAt());
 			assertNull(photoMst.getLocationNo());
 			assertNull(photoMst.getImageFilePath());

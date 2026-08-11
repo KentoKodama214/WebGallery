@@ -1,10 +1,18 @@
 package com.web.gallery.model;
 
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 import com.web.gallery.controller.request.AccountRegistRequest;
 import com.web.gallery.controller.request.AccountUpdateRequest;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountName;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.BirthDate;
+import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
+import com.web.gallery.domain.account.FreeMemo;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
+import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.entity.Account;
 import com.web.gallery.enumuration.AuthorityEnum;
 import com.web.gallery.enumuration.SexEnum;
@@ -19,21 +27,21 @@ import lombok.Value;
 @Builder
 public class AccountModel {
 	/** アカウント番号 */
-	private Long accountNo;
-	
+	private AccountNo accountNo;
+
 	/** アカウントID */
-	private String accountId;
-	
+	private AccountId accountId;
+
 	/** アカウント名 */
-	private String accountName;
+	private AccountName accountName;
 
 	/** パスワード */
-	private String password;
-	
-	/** 生年月日 */
-	private LocalDate birthdate;
+	private Password password;
 
-	/** 
+	/** 生年月日 */
+	private BirthDate birthdate;
+
+	/**
 	 * 性別区分
 	 * <p>
 	 * {@link SexEnum}
@@ -41,29 +49,29 @@ public class AccountModel {
 	private SexEnum sexKbn;
 
 	/** 出身都道府県区分コード */
-	private String birthplacePrefectureKbnCode;
+	private BirthplacePrefectureKbnCode birthplacePrefectureKbnCode;
 
 	/** 在住都道府県区分コード */
-	private String residentPrefectureKbnCode;
+	private ResidentPrefectureKbnCode residentPrefectureKbnCode;
 
 	/** フリーメモ */
-	private String freeMemo;
-	
+	private FreeMemo freeMemo;
+
 	/**
 	 * 権限区分
 	 * <p>
 	 * {@link AuthorityEnum}
 	 */
 	private AuthorityEnum authorityKbn;
-	
+
 	/** 最終ログイン日時 */
 	private OffsetDateTime lastLoginDatetime;
-	
+
 	/** ログイン失敗回数 */
 	private Integer loginFailureCount;
 
 	/** 削除フラグ */
-	private Boolean isDeleted;
+	private IsDeleted isDeleted;
 
 	/**
 	 * AccountエンティティからAccountModelを生成する
@@ -97,14 +105,14 @@ public class AccountModel {
 	 */
 	public static AccountModel from(AccountRegistRequest request) {
 		return AccountModel.builder()
-				.accountId(request.getAccountId())
-				.accountName(request.getAccountName())
-				.password(request.getPassword())
-				.birthdate(request.getBirthdate())
+				.accountId(new AccountId(request.getAccountId()))
+				.accountName(new AccountName(request.getAccountName()))
+				.password(new Password(request.getPassword()))
+				.birthdate(request.getBirthdate() != null ? new BirthDate(request.getBirthdate()) : null)
 				.sexKbn(request.getSexKbn())
-				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode())
-				.residentPrefectureKbnCode(request.getResidentPrefectureKbnCode())
-				.freeMemo(request.getFreeMemo())
+				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode() != null ? new BirthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode()) : null)
+				.residentPrefectureKbnCode(request.getResidentPrefectureKbnCode() != null ? new ResidentPrefectureKbnCode(request.getResidentPrefectureKbnCode()) : null)
+				.freeMemo(request.getFreeMemo() != null ? new FreeMemo(request.getFreeMemo()) : null)
 				.loginFailureCount(0)
 				.build();
 	}
@@ -118,15 +126,15 @@ public class AccountModel {
 	 */
 	public static AccountModel from(AccountUpdateRequest request, Long accountNo) {
 		return AccountModel.builder()
-				.accountNo(accountNo)
-				.accountId(request.getAccountId())
-				.accountName(request.getAccountName())
-				.password(request.getNewPassword().isEmpty() ? null : request.getNewPassword())
-				.birthdate(request.getBirthdate())
+				.accountNo(new AccountNo(accountNo))
+				.accountId(new AccountId(request.getAccountId()))
+				.accountName(new AccountName(request.getAccountName()))
+				.password(request.getNewPassword().isEmpty() ? null : new Password(request.getNewPassword()))
+				.birthdate(request.getBirthdate() != null ? new BirthDate(request.getBirthdate()) : null)
 				.sexKbn(request.getSexKbn())
-				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode())
-				.residentPrefectureKbnCode(request.getResidentPrefectureKbnCode())
-				.freeMemo(request.getFreeMemo())
+				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode() != null ? new BirthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode()) : null)
+				.residentPrefectureKbnCode(request.getResidentPrefectureKbnCode() != null ? new ResidentPrefectureKbnCode(request.getResidentPrefectureKbnCode()) : null)
+				.freeMemo(request.getFreeMemo() != null ? new FreeMemo(request.getFreeMemo()) : null)
 				.build();
 	}
 }

@@ -1,5 +1,7 @@
 package com.web.gallery.model;
 
+import com.web.gallery.domain.account.AccountNo;
+
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -11,11 +13,11 @@ import lombok.Value;
 @Builder
 public class PhotoFavoriteDeleteModel {
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** お気に入り写真アカウント番号 */
 	@NonNull
-	private Long favoritePhotoAccountNo;
+	private AccountNo favoritePhotoAccountNo;
 
 	/** 写真番号 */
 	@NonNull

@@ -21,6 +21,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.UpdatedAt;
+import com.web.gallery.domain.common.UpdatedBy;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.enumuration.DirectionEnum;
 
@@ -44,7 +50,7 @@ public class PhotoMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのcountで1件の場合")
 		void count_by_accountNo() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(1L).build();
+			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(3, actual);
 		}
@@ -62,7 +68,7 @@ public class PhotoMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：削除フラグでのcountで1件以上の場合")
 		void count_by_isDeleted() {
-			PhotoMst photoMst = PhotoMst.builder().isDeleted(true).build();
+			PhotoMst photoMst = PhotoMst.builder().isDeleted(new IsDeleted(true)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(3, actual);
 		}
@@ -171,7 +177,7 @@ public class PhotoMstMapperTest {
 		@Order(15)
 		@DisplayName("正常系：countで0件の場合")
 		void count_not_found() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(100L).build();
+			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(100L)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(0, actual);
 		}
@@ -180,7 +186,7 @@ public class PhotoMstMapperTest {
 		@Order(16)
 		@DisplayName("正常系：複数の条件でcountする場合")
 		void count_some_conditions() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(1L).photoNo(1L).build();
+			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).photoNo(1L).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -197,13 +203,13 @@ public class PhotoMstMapperTest {
 		@DisplayName("正常系：登録成功")
 		void insert_success() {
 			PhotoMst insertPhotoMst = PhotoMst.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
-					.createdBy(1L)
-					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
-					.updatedBy(1L)
-					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
-					.isDeleted(false)
+					.createdBy(new CreatedBy(1L))
+					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
+					.updatedBy(new UpdatedBy(1L))
+					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
+					.isDeleted(new IsDeleted(false))
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(9)))
 					.locationNo(6L)
 					.imageFilePath("https://www.xxx.com/DSC666.jpg")
@@ -223,13 +229,13 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=4", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getLong("account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.photoNo(rs.getLong("photo_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getLong("updated_by"))
-							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-							.isDeleted(rs.getBoolean("is_deleted"))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
@@ -244,11 +250,11 @@ public class PhotoMstMapperTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(4L, actualData.getFirst().getPhotoNo());
-			assertEquals(1L, actualData.getFirst().getCreatedBy());
-			assertEquals(1L, actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertFalse(actualData.getFirst().getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt());
 			assertEquals(6L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC666.jpg", actualData.getFirst().getImageFilePath());
@@ -273,13 +279,13 @@ public class PhotoMstMapperTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE " + condition, (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getLong("account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.photoNo(rs.getLong("photo_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getLong("updated_by"))
-							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-							.isDeleted(rs.getBoolean("is_deleted"))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
@@ -298,18 +304,18 @@ public class PhotoMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのupdate")
 		void update_by_accountNo() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(1L).build();
+			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(1000).build();
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(3, actual);
 			
 			List<PhotoMst> actualData = getPhotoMstList("account_no=1");
 			assertEquals(3, actualData.size());
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -333,14 +339,14 @@ public class PhotoMstMapperTest {
 			assertEquals(2, actual);
 			
 			List<PhotoMst> actualData = getPhotoMstList("photo_no=1")
-					.stream().sorted(Comparator.comparing(PhotoMst::getAccountNo)).toList();
+					.stream().sorted(Comparator.comparing(p -> p.getAccountNo().getValue())).toList();
 			assertEquals(2, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -353,11 +359,11 @@ public class PhotoMstMapperTest {
 			assertEquals(0, BigDecimal.valueOf(1).compareTo(actualData.get(0).getShutterSpeed()));
 			assertEquals(1000, actualData.get(0).getIso());
 			
-			assertEquals(2L, actualData.get(1).getAccountNo());
+			assertEquals(new AccountNo(2L), actualData.get(1).getAccountNo());
 			assertEquals(1L, actualData.get(1).getPhotoNo());
-			assertEquals(1L, actualData.get(1).getCreatedBy());
-			assertEquals(1L, actualData.get(1).getUpdatedBy());
-			assertFalse(actualData.get(1).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(1).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(1).getUpdatedBy());
+			assertFalse(actualData.get(1).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(1).getPhotoAt());
 			assertEquals(4L, actualData.get(1).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC444.jpg", actualData.get(1).getImageFilePath());
@@ -375,7 +381,7 @@ public class PhotoMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：削除フラグでのupdate")
 		void update_by_isDeleted() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().isDeleted(true).build();
+			PhotoMst conditionPhotoMst = PhotoMst.builder().isDeleted(new IsDeleted(true)).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(1000).build();
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(3, actual);
@@ -383,12 +389,12 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("is_deleted=true");
 			assertEquals(3, actualData.size());
 			
-			actualData = actualData.stream().filter(photoMst -> photoMst.getAccountNo() == 2).toList();
-			assertEquals(2L, actualData.get(0).getAccountNo());
+			actualData = actualData.stream().filter(photoMst -> photoMst.getAccountNo().getValue() == 2).toList();
+			assertEquals(new AccountNo(2L), actualData.get(0).getAccountNo());
 			assertEquals(3L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertTrue(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertTrue(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2022, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(6L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC555.jpg", actualData.get(0).getImageFilePath());
@@ -415,11 +421,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("photo_at='2021-01-01 00:00:00.000 +0000'");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -445,11 +451,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("location_no=1");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -475,11 +481,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("image_file_path='https://www.xxx.com/DSC111.jpg'");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -505,11 +511,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("photo_japanese_title='タイトル11'");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -535,11 +541,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("photo_english_title='title11'");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -565,11 +571,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("caption='キャプション11'");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -595,11 +601,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("direction_kbn='vertical'");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -625,11 +631,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("focal_length=24");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -655,11 +661,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("f_value=8.0");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -685,11 +691,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("shutter_speed=1");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -715,11 +721,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("iso=1000");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -737,7 +743,7 @@ public class PhotoMstMapperTest {
 		@Order(15)
 		@DisplayName("正常系：updateで0件の場合")
 		void update_not_found() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(100L).build();
+			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(new AccountNo(100L)).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(1000).build();
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(0, actual);
@@ -750,7 +756,7 @@ public class PhotoMstMapperTest {
 		@Order(16)
 		@DisplayName("正常系：複数の条件でupdateする場合")
 		void update_some_conditions() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(1L).photoNo(1L).build();
+			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).photoNo(1L).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(1000).build();
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -758,11 +764,11 @@ public class PhotoMstMapperTest {
 			List<PhotoMst> actualData = getPhotoMstList("account_no=1 and photo_no=1");
 			assertEquals(1, actualData.size());
 			
-			assertEquals(1L, actualData.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo());
-			assertEquals(1L, actualData.get(0).getCreatedBy());
-			assertEquals(1L, actualData.get(0).getUpdatedBy());
-			assertFalse(actualData.get(0).getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertFalse(actualData.get(0).getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt());
 			assertEquals(1L, actualData.get(0).getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
@@ -787,7 +793,7 @@ public class PhotoMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのdeleteで複数件削除される場合")
 		void delete_by_accountNo() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(1L).build();
+			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).build();
 			Integer actual = photoMstMapper.delete(photoMst);
 			assertEquals(3, actual);
 
@@ -818,7 +824,7 @@ public class PhotoMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：アカウント番号と写真番号でのdeleteで1件削除される場合")
 		void delete_by_accountNo_and_photoNo() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(1L).photoNo(1L).build();
+			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).photoNo(1L).build();
 			Integer actual = photoMstMapper.delete(photoMst);
 			assertEquals(1, actual);
 
@@ -831,7 +837,7 @@ public class PhotoMstMapperTest {
 		@Order(4)
 		@DisplayName("正常系：該当するレコードがない場合は0件")
 		void delete_not_found() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(100L).build();
+			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(100L)).build();
 			Integer actual = photoMstMapper.delete(photoMst);
 			assertEquals(0, actual);
 		}
@@ -871,7 +877,7 @@ public class PhotoMstMapperTest {
 		@DisplayName("正常系：画像ファイルパスに該当する写真が1つある場合")
 		void isExistPhoto_photo_found() {
 			PhotoMst photoMst = PhotoMst.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.imageFilePath("DSC111.jpg")
 					.build();
 			assertTrue(photoMstMapper.isExistPhoto(photoMst));
@@ -882,7 +888,7 @@ public class PhotoMstMapperTest {
 		@DisplayName("正常系：画像ファイルパスに該当する写真が複数ある場合")
 		void isExistPhoto_photos_found() {
 			PhotoMst photoMst = PhotoMst.builder()
-					.accountNo(2L)
+					.accountNo(new AccountNo(2L))
 					.imageFilePath("DSC555.jpg")
 					.build();
 			assertTrue(photoMstMapper.isExistPhoto(photoMst));
@@ -893,7 +899,7 @@ public class PhotoMstMapperTest {
 		@DisplayName("正常系：画像ファイルパスに該当する写真があるが、削除済みの場合")
 		void isExistPhoto_found_is_deleted() {
 			PhotoMst photoMst = PhotoMst.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.imageFilePath("DSC333.jpg")
 					.build();
 			assertFalse(photoMstMapper.isExistPhoto(photoMst));
@@ -904,7 +910,7 @@ public class PhotoMstMapperTest {
 		@DisplayName("正常系：画像ファイルパスに該当する写真がない場合")
 		void isExistPhoto_not_found() {
 			PhotoMst photoMst = PhotoMst.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.imageFilePath("DSC999.jpg")
 					.build();
 			assertFalse(photoMstMapper.isExistPhoto(photoMst));

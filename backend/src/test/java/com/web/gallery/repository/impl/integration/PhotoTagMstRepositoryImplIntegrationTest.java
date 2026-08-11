@@ -19,6 +19,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.model.PhotoTagDeleteModel;
@@ -46,7 +49,7 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 		@DisplayName("正常系")
 		void regist_contain_null_parameter() throws RegistFailureException {
 			PhotoTagModel photoTagModel = PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(3L)
 					.tagJapaneseName("海")
@@ -58,19 +61,19 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 			List<PhotoTagMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1 and tag_no=3", (rs, rowNum) ->
 						PhotoTagMst.builder()
-							.accountNo(rs.getLong("account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.photoNo(rs.getLong("photo_no"))
 							.tagNo(rs.getLong("tag_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
 							.tagEnglishName(rs.getObject("tag_english_name").toString())
 							.build());
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(1L, actualData.getFirst().getPhotoNo());
 			assertEquals(3L, actualData.getFirst().getTagNo());
-			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals("海", actualData.getFirst().getTagJapaneseName());
 			assertEquals("sea", actualData.getFirst().getTagEnglishName());
 		}
@@ -80,7 +83,7 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void regist_RegistFailureException() {
 			PhotoTagModel photoTagModel = PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("海")
@@ -102,7 +105,7 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 		@DisplayName("正常系：")
 		void clear_success() {
 			PhotoTagDeleteModel photoTagDeleteModel = PhotoTagDeleteModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.build();
 			
@@ -111,11 +114,11 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 			List<PhotoTagMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoTagMst.builder()
-							.accountNo(rs.getLong("account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.photoNo(rs.getLong("photo_no"))
 							.tagNo(rs.getLong("tag_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
 							.tagEnglishName(rs.getObject("tag_english_name").toString())
 							.build());
@@ -124,11 +127,11 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 			List<PhotoTagMst> actualRestData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst", (rs, rowNum) ->
 						PhotoTagMst.builder()
-							.accountNo(rs.getLong("account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.photoNo(rs.getLong("photo_no"))
 							.tagNo(rs.getLong("tag_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
 							.tagEnglishName(rs.getObject("tag_english_name").toString())
 							.build());

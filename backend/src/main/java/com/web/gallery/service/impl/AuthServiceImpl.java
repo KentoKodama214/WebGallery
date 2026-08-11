@@ -6,6 +6,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
 
 import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.account.AccountNo;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -79,7 +81,7 @@ public class AuthServiceImpl implements AuthService {
 
 		// リフレッシュトークンをDB保存（ハッシュ化して保存）
 		RefreshTokenModel refreshTokenModel = RefreshTokenModel.builder()
-				.accountNo(principal.getAccountNo())
+				.accountNo(new AccountNo(principal.getAccountNo()))
 				.tokenHash(hashToken(refreshToken))
 				.expiresAt(OffsetDateTime.now().plusDays(jwtConfig.getRefreshTokenExpirationDays()))
 				.build();
@@ -114,8 +116,8 @@ public class AuthServiceImpl implements AuthService {
 		}
 
 		// アカウント番号からアカウント情報を取得し、新しいアクセストークンを発行
-		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo());
-		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId());
+		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo().getValue());
+		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId().getValue());
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
 
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);

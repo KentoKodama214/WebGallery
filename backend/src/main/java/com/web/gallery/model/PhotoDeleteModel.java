@@ -1,6 +1,7 @@
 package com.web.gallery.model;
 
 import com.web.gallery.controller.request.PhotoDeleteRequest;
+import com.web.gallery.domain.account.AccountNo;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -14,12 +15,12 @@ import lombok.Value;
 public class PhotoDeleteModel {
 	/** アカウント番号 */
 	@NonNull
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
 	@NonNull
 	private Long photoNo;
-	
+
 	/** 画像ファイルパス */
 	@NonNull
 	private String imageFilePath;
@@ -32,7 +33,7 @@ public class PhotoDeleteModel {
 	 */
 	public static PhotoDeleteModel from(PhotoDeleteRequest request) {
 		return PhotoDeleteModel.builder()
-				.accountNo(request.getAccountNo())
+				.accountNo(new AccountNo(request.getAccountNo()))
 				.photoNo(request.getPhotoNo())
 				.imageFilePath(request.getImageFilePath())
 				.build();

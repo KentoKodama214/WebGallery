@@ -117,7 +117,7 @@ public class PhotoDetailGetResponse {
 		}
 
 		return PhotoDetailGetResponse.builder()
-				.accountNo(model.getAccountNo())
+				.accountNo(model.getAccountNo().getValue())
 				.photoNo(model.getPhotoNo())
 				.isFavorite(model.getIsFavorite())
 				.photoAt(model.getPhotoAt())

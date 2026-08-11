@@ -19,6 +19,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.entity.RefreshToken;
 import com.web.gallery.model.RefreshTokenModel;
 import com.web.gallery.repository.impl.RefreshTokenRepositoryImpl;
@@ -38,10 +40,10 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			"SELECT * FROM common.refresh_token WHERE token_hash = ?",
 			(rs, rowNum) -> RefreshToken.builder()
 				.tokenId(rs.getLong("token_id"))
-				.accountNo(rs.getLong("account_no"))
+				.accountNo(new AccountNo(rs.getLong("account_no")))
 				.tokenHash(rs.getString("token_hash"))
 				.expiresAt(rs.getObject("expires_at", OffsetDateTime.class))
-				.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+				.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 				.isRevoked(rs.getBoolean("is_revoked"))
 				.build(),
 			tokenHash
@@ -53,10 +55,10 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			"SELECT * FROM common.refresh_token WHERE account_no = ?",
 			(rs, rowNum) -> RefreshToken.builder()
 				.tokenId(rs.getLong("token_id"))
-				.accountNo(rs.getLong("account_no"))
+				.accountNo(new AccountNo(rs.getLong("account_no")))
 				.tokenHash(rs.getString("token_hash"))
 				.expiresAt(rs.getObject("expires_at", OffsetDateTime.class))
-				.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+				.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 				.isRevoked(rs.getBoolean("is_revoked"))
 				.build(),
 			accountNo
@@ -78,7 +80,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@DisplayName("正常系：リフレッシュトークンを保存する")
 		void save_success() {
 			RefreshTokenModel refreshToken = RefreshTokenModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.tokenHash("new_token_hash")
 					.expiresAt(OffsetDateTime.now().plusDays(7))
 					.build();
@@ -87,7 +89,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 
 			List<RefreshToken> actualData = getRefreshTokenData("new_token_hash");
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals("new_token_hash", actualData.getFirst().getTokenHash());
 			assertFalse(actualData.getFirst().getIsRevoked());
 			assertNotNull(actualData.getFirst().getCreatedAt());
@@ -108,7 +110,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash("valid_token_hash_1");
 
 			assertNotNull(actual);
-			assertEquals(1L, actual.getAccountNo());
+			assertEquals(new AccountNo(1L), actual.getAccountNo());
 			assertEquals("valid_token_hash_1", actual.getTokenHash());
 			assertFalse(actual.getIsRevoked());
 		}

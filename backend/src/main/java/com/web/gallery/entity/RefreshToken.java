@@ -1,8 +1,10 @@
 package com.web.gallery.entity;
 
-import java.time.OffsetDateTime;
-
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.model.RefreshTokenModel;
+
+import java.time.OffsetDateTime;
 
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +22,7 @@ public class RefreshToken {
 	private Long tokenId;
 
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** トークンハッシュ */
 	private String tokenHash;
@@ -29,7 +31,7 @@ public class RefreshToken {
 	private OffsetDateTime expiresAt;
 
 	/** 作成日時 */
-	private OffsetDateTime createdAt;
+	private CreatedAt createdAt;
 
 	/** 無効化フラグ */
 	private Boolean isRevoked;

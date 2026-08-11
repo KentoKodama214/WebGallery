@@ -21,32 +21,32 @@ import lombok.extern.slf4j.Slf4j;
 @Repository
 @RequiredArgsConstructor
 public class PhotoTagMstRepositoryImpl implements PhotoTagMstRepository {
-	
+
 	private final PhotoTagMstMapper photoTagMstMapper;
-	
+
 	/**
 	 * 写真タグマスタを登録する
-	 * 
+	 *
 	 * @param	photoTagModel			{@link PhotoTagModel}
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 */
 	@Override
 	public void regist(PhotoTagModel photoTagModel) throws RegistFailureException {
 		PhotoTagMst photoTagMst = PhotoTagMst.from(photoTagModel);
-		
+
 		try {
 			photoTagMstMapper.insert(photoTagMst);
 		}
 		catch (DuplicateKeyException e) {
 			log.warn("PhotoTagMst: Duplicate Key (AccountNo: {}, PhototNo: {}, TagNo: {})",
-					photoTagModel.getAccountNo(), photoTagModel.getPhotoNo(), photoTagModel.getTagNo(), e);
+					photoTagModel.getAccountNo().getValue(), photoTagModel.getPhotoNo(), photoTagModel.getTagNo(), e);
 			throw new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_PHOTO_TAG);
 		}
 	}
-	
+
 	/**
 	 * 該当写真の写真タグを全件削除する
-	 * 
+	 *
 	 * @param	photoTagDeleteModel	{@link PhotoTagDeleteModel}
 	 */
 	@Override

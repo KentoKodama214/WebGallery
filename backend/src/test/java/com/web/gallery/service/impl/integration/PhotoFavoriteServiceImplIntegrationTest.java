@@ -19,6 +19,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -46,8 +49,8 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 		@DisplayName("正常系")
 		void addFavorite_success() throws RegistFailureException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(2L)
-					.favoritePhotoAccountNo(1L)
+					.accountNo(new AccountNo(2L))
+					.favoritePhotoAccountNo(new AccountNo(1L))
 					.favoritePhotoNo(1L)
 					.build();
 			
@@ -56,17 +59,17 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 			List<PhotoFavorite> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite WHERE account_no=2 and favorite_photo_account_no=1 and favorite_photo_no=1", (rs, rowNum) ->
 						PhotoFavorite.builder()
-							.accountNo(rs.getLong("account_no"))
-							.favoritePhotoAccountNo(rs.getLong("favorite_photo_account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
+							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
 							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
 			assertEquals(1, actualData.size());
-			assertEquals(2L, actualData.getFirst().getAccountNo());
-			assertEquals(1L, actualData.getFirst().getFavoritePhotoAccountNo());
+			assertEquals(new AccountNo(2L), actualData.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.getFirst().getFavoritePhotoAccountNo());
 			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo());
-			assertEquals(2L, actualData.getFirst().getCreatedBy());
+			assertEquals(new CreatedBy(2L), actualData.getFirst().getCreatedBy());
 		}
 		
 		@Test
@@ -74,11 +77,11 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void addFavorite_RegistFailureException() throws RegistFailureException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(1L)
-					.favoritePhotoAccountNo(1L)
+					.accountNo(new AccountNo(1L))
+					.favoritePhotoAccountNo(new AccountNo(1L))
 					.favoritePhotoNo(1L)
 					.build();
-			
+
 			assertThrows(RegistFailureException.class, () -> photoFavoriteServiceImpl.addFavorite(photoFavoriteModel));
 		}
 	}
@@ -94,32 +97,32 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 		@DisplayName("正常系")
 		void deleteFavorite_success() throws UpdateFailureException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(1L)
-					.favoritePhotoAccountNo(1L)
+					.accountNo(new AccountNo(1L))
+					.favoritePhotoAccountNo(new AccountNo(1L))
 					.favoritePhotoNo(1L)
 					.build();
-			
+
 			photoFavoriteServiceImpl.deleteFavorite(photoFavoriteModel);
-			
+
 			List<PhotoFavorite> actualData = jdbcTemplate.query(
 			"SELECT * FROM photo.photo_favorite WHERE account_no=1 and favorite_photo_account_no=2 and favorite_photo_no=1", (rs, rowNum) ->
 				PhotoFavorite.builder()
-					.accountNo(rs.getLong("account_no"))
-					.favoritePhotoAccountNo(rs.getLong("favorite_photo_account_no"))
+					.accountNo(new AccountNo(rs.getLong("account_no")))
+					.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
 					.favoritePhotoNo(rs.getLong("favorite_photo_no"))
-					.createdBy(rs.getLong("created_by"))
-					.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+					.createdBy(new CreatedBy(rs.getLong("created_by")))
+					.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 					.build());
 			assertEquals(0, actualData.size());
-			
+
 			List<PhotoFavorite> actualRestData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite", (rs, rowNum) ->
 						PhotoFavorite.builder()
-							.accountNo(rs.getLong("account_no"))
-							.favoritePhotoAccountNo(rs.getLong("favorite_photo_account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
+							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
 							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
 			assertEquals(3, actualRestData.size());
 		}
@@ -129,8 +132,8 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void deleteFavorite_UpdateFailureException() throws UpdateFailureException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(9L)
-					.favoritePhotoAccountNo(1L)
+					.accountNo(new AccountNo(9L))
+					.favoritePhotoAccountNo(new AccountNo(1L))
 					.favoritePhotoNo(1L)
 					.build();
 			

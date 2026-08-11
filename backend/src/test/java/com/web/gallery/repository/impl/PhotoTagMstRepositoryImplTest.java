@@ -18,6 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.mapper.PhotoTagMstMapper;
@@ -42,7 +44,7 @@ public class PhotoTagMstRepositoryImplTest {
 		@DisplayName("正常系")
 		void regist_contain_null_parameter() throws RegistFailureException {
 			PhotoTagModel photoTagModel = PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
@@ -56,10 +58,10 @@ public class PhotoTagMstRepositoryImplTest {
 			
 			verify(photoTagMstMapper).insert(any(PhotoTagMst.class));
 			PhotoTagMst photoTagMst = photoTagMstCaptor.getValue();
-			assertEquals(1L, photoTagMst.getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagMst.getAccountNo());
 			assertEquals(1L, photoTagMst.getPhotoNo());
 			assertEquals(1L, photoTagMst.getTagNo());
-			assertEquals(1L, photoTagMst.getCreatedBy());
+			assertEquals(new CreatedBy(1L), photoTagMst.getCreatedBy());
 			assertNull(photoTagMst.getCreatedAt());
 			assertEquals("太陽", photoTagMst.getTagJapaneseName());
 			assertEquals("sun", photoTagMst.getTagEnglishName());
@@ -70,7 +72,7 @@ public class PhotoTagMstRepositoryImplTest {
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void regist_RegistFailureException() {
 			PhotoTagModel photoTagModel = PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
@@ -84,10 +86,10 @@ public class PhotoTagMstRepositoryImplTest {
 			
 			verify(photoTagMstMapper).insert(any(PhotoTagMst.class));
 			PhotoTagMst photoTagMst = photoTagMstCaptor.getValue();
-			assertEquals(1L, photoTagMst.getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagMst.getAccountNo());
 			assertEquals(1L, photoTagMst.getPhotoNo());
 			assertEquals(1L, photoTagMst.getTagNo());
-			assertEquals(1L, photoTagMst.getCreatedBy());
+			assertEquals(new CreatedBy(1L), photoTagMst.getCreatedBy());
 			assertNull(photoTagMst.getCreatedAt());
 			assertEquals("太陽", photoTagMst.getTagJapaneseName());
 			assertEquals("sun", photoTagMst.getTagEnglishName());
@@ -103,7 +105,7 @@ public class PhotoTagMstRepositoryImplTest {
 		@DisplayName("正常系：")
 		void clear_success() {
 			PhotoTagDeleteModel photoTagDeleteModel = PhotoTagDeleteModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.build();
 			
@@ -114,7 +116,7 @@ public class PhotoTagMstRepositoryImplTest {
 			
 			verify(photoTagMstMapper).delete(any(PhotoTagMst.class));
 			PhotoTagMst photoTagMst = photoTagMstCaptor.getValue();
-			assertEquals(1L, photoTagMst.getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagMst.getAccountNo());
 			assertEquals(1L, photoTagMst.getPhotoNo());
 			assertNull(photoTagMst.getTagNo());
 			assertNull(photoTagMst.getCreatedBy());

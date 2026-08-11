@@ -1,5 +1,7 @@
 package com.web.gallery.model;
 
+import com.web.gallery.domain.account.AccountNo;
+
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -12,7 +14,7 @@ import lombok.Value;
 public class PhotoTagDeleteModel {
 	/** アカウント番号 */
 	@NonNull
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
 	@NonNull

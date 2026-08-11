@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoSaveRequest;
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.dto.PhotoDetailDto;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.enumuration.DirectionEnum;
@@ -28,20 +29,20 @@ import lombok.Value;
 public class PhotoDetailModel {
 	/** アカウント番号 */
 	@NonNull
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
 	private Long photoNo;
 
 	/** お気に入り */
 	private Boolean isFavorite;
-	
+
 	/** 撮影日時 */
 	private OffsetDateTime photoAt;
-	
+
 	/** ロケーション番号 */
 	private Long locationNo;
-	
+
 	/** 住所 */
 	private String address;
 
@@ -50,13 +51,13 @@ public class PhotoDetailModel {
 
 	/** 経度 */
 	private BigDecimal longitude;
-	
+
 	/** ロケーション名 */
 	private String locationName;
-	
+
 	/** 画像ファイル */
 	private MultipartFile imageFile;
-	
+
 	/** 画像ファイルパス */
 	@NonNull
 	private String imageFilePath;
@@ -66,11 +67,11 @@ public class PhotoDetailModel {
 
 	/** 写真タイトル英語名 */
 	private String photoEnglishTitle;
-	
+
 	/** キャプション */
 	private String caption;
 
-	/** 
+	/**
 	 * 向き区分
 	 * <p>
 	 * {@link DirectionEnum}
@@ -88,7 +89,7 @@ public class PhotoDetailModel {
 
 	/** ISO */
 	private Integer iso;
-	
+
 	/** 写真タグリスト */
 	private List<PhotoTagModel> photoTagModelList;
 
@@ -102,7 +103,7 @@ public class PhotoDetailModel {
 	public static PhotoDetailModel from(PhotoDetailDto dto, List<PhotoTagMst> photoTagMstList) {
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
 		return PhotoDetailModel.builder()
-				.accountNo(dto.getAccountNo())
+				.accountNo(new AccountNo(dto.getAccountNo()))
 				.photoNo(dto.getPhotoNo())
 				.isFavorite(dto.getIsFavorite())
 				.photoAt(
@@ -138,7 +139,7 @@ public class PhotoDetailModel {
 						.map(PhotoTagModel::from)
 						.collect(Collectors.toList());
 		return PhotoDetailModel.builder()
-				.accountNo(request.getAccountNo())
+				.accountNo(new AccountNo(request.getAccountNo()))
 				.photoNo(request.getPhotoNo())
 				.isFavorite(request.getIsFavorite())
 				.photoAt(Optional.ofNullable(request.getPhotoAt())

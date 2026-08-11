@@ -30,6 +30,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.web.gallery.config.PhotoConfig;
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.enumuration.AuthorityEnum;
 import com.web.gallery.enumuration.DirectionEnum;
@@ -92,21 +93,21 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoTagModel> photoTagModelList1 = new ArrayList<PhotoTagModel>();
 			photoTagModelList1.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			photoTagModelList1.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(2L)
 					.tagJapaneseName("海")
 					.tagEnglishName("sea")
 					.build());
 			PhotoModel photoModel1 = PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.favoriteCount(1)
 					.isFavorite(false)
@@ -120,21 +121,21 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoTagModel> photoTagModelList2 = new ArrayList<PhotoTagModel>();
 			photoTagModelList2.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			photoTagModelList2.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.tagNo(2L)
 					.tagJapaneseName("海")
 					.tagEnglishName("sea")
 					.build());
 			PhotoModel photoModel2 = PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.favoriteCount(3)
 					.isFavorite(false)
@@ -148,21 +149,21 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoTagModel> photoTagModelList3 = new ArrayList<PhotoTagModel>();
 			photoTagModelList3.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(3L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			photoTagModelList3.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(3L)
 					.tagNo(2L)
 					.tagJapaneseName("海")
 					.tagEnglishName("sea")
 					.build());
 			PhotoModel photoModel3 = PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(3L)
 					.favoriteCount(2)
 					.isFavorite(false)
@@ -176,14 +177,14 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoTagModel> photoTagModelList4 = new ArrayList<PhotoTagModel>();
 			photoTagModelList4.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			PhotoModel photoModel4 = PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
 					.favoriteCount(4)
 					.isFavorite(true)
@@ -197,14 +198,14 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoTagModel> photoTagModelList5 = new ArrayList<PhotoTagModel>();
 			photoTagModelList5.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(5L)
 					.tagNo(1L)
 					.tagJapaneseName("海")
 					.tagEnglishName("sea")
 					.build());
 			PhotoModel photoModel5 = PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(5L)
 					.favoriteCount(10)
 					.isFavorite(false)
@@ -217,7 +218,7 @@ public class PhotoServiceImplTest {
 			photoModelList.add(photoModel5);
 			
 			PhotoModel photoModel6 = PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(6L)
 					.favoriteCount(0)
 					.isFavorite(false)
@@ -239,14 +240,14 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			List<String> tags = new ArrayList<String>();
 			
-			AccountModel account = AccountModel.builder().accountNo(1L).build();
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
 			
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
 			doReturn(new ArrayList<PhotoModel>()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
-					.accountNo(2L)
+					.accountNo(new AccountNo(2L))
 					.photoAccountId(accountId)
 					.directionKbn(DirectionEnum.NONE)
 					.isFavoriteOnly(false)
@@ -260,8 +261,8 @@ public class PhotoServiceImplTest {
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
 			
 			PhotoGetModel photoGetModel = photoGetModelCaptor.getValue();
-			assertEquals(2L, photoGetModel.getAccountNo());
-			assertEquals(1L, photoGetModel.getPhotoAccountNo());
+			assertEquals(new AccountNo(2L), photoGetModel.getAccountNo());
+			assertEquals(new AccountNo(1L), photoGetModel.getPhotoAccountNo());
 		}
 		
 		@Test
@@ -271,14 +272,14 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
 			
-			AccountModel account = AccountModel.builder().accountNo(1L).build();
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
 			
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
 			doReturn(createPhotoModelList()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
-					.accountNo(2L)
+					.accountNo(new AccountNo(2L))
 					.photoAccountId(accountId)
 					.directionKbn(DirectionEnum.VERTICAL)
 					.isFavoriteOnly(false)
@@ -296,8 +297,8 @@ public class PhotoServiceImplTest {
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
 			
 			PhotoGetModel photoGetModel = photoGetModelCaptor.getValue();
-			assertEquals(2L, photoGetModel.getAccountNo());
-			assertEquals(1L, photoGetModel.getPhotoAccountNo());
+			assertEquals(new AccountNo(2L), photoGetModel.getAccountNo());
+			assertEquals(new AccountNo(1L), photoGetModel.getPhotoAccountNo());
 		}
 		
 		@Test
@@ -307,14 +308,14 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
 			
-			AccountModel account = AccountModel.builder().accountNo(1L).build();
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
 			
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
 			doReturn(createPhotoModelList()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
-					.accountNo(2L)
+					.accountNo(new AccountNo(2L))
 					.photoAccountId(accountId)
 					.directionKbn(DirectionEnum.VERTICAL)
 					.isFavoriteOnly(false)
@@ -332,8 +333,8 @@ public class PhotoServiceImplTest {
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
 			
 			PhotoGetModel photoGetModel = photoGetModelCaptor.getValue();
-			assertEquals(2L, photoGetModel.getAccountNo());
-			assertEquals(1L, photoGetModel.getPhotoAccountNo());
+			assertEquals(new AccountNo(2L), photoGetModel.getAccountNo());
+			assertEquals(new AccountNo(1L), photoGetModel.getPhotoAccountNo());
 		}
 		
 		@Test
@@ -343,14 +344,14 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
 			
-			AccountModel account = AccountModel.builder().accountNo(1L).build();
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
 			
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
 			doReturn(createPhotoModelList()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
-					.accountNo(2L)
+					.accountNo(new AccountNo(2L))
 					.photoAccountId(accountId)
 					.directionKbn(DirectionEnum.VERTICAL)
 					.isFavoriteOnly(false)
@@ -368,8 +369,8 @@ public class PhotoServiceImplTest {
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
 			
 			PhotoGetModel photoGetModel = photoGetModelCaptor.getValue();
-			assertEquals(2L, photoGetModel.getAccountNo());
-			assertEquals(1L, photoGetModel.getPhotoAccountNo());
+			assertEquals(new AccountNo(2L), photoGetModel.getAccountNo());
+			assertEquals(new AccountNo(1L), photoGetModel.getPhotoAccountNo());
 		}
 	}
 	
@@ -382,12 +383,12 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系")
 		void getPhotoDetail_success() throws PhotoNotFoundException {
 			PhotoDetailModel actual = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.imageFilePath("https://www.xxx.com/DSC111.jpg")
 					.build();
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-					.accountNo(1L)
-					.photoAccountNo(1L)
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.build();
 			
@@ -400,8 +401,8 @@ public class PhotoServiceImplTest {
 		@DisplayName("異常系：PhotoNotFoundExceptionをthrowする")
 		void getPhotoDetail_PhotoNotFoundException() throws PhotoNotFoundException {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-					.accountNo(1L)
-					.photoAccountNo(1L)
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.build();
 			
@@ -418,14 +419,14 @@ public class PhotoServiceImplTest {
 		PhotoDetailModel createNewPhotoWithTag() {
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(5L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(5L)
 					.tagNo(2L)
 					.tagJapaneseName("海")
@@ -438,7 +439,7 @@ public class PhotoServiceImplTest {
 					"sample image".getBytes()
 			);
 			return PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.imageFile(multipartFile)
 					.imageFilePath("")
@@ -461,7 +462,7 @@ public class PhotoServiceImplTest {
 					"sample image".getBytes()
 				);
 			return PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();
@@ -470,14 +471,14 @@ public class PhotoServiceImplTest {
 		PhotoDetailModel createUpdatePhotoWithTag() {
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.tagNo(2L)
 					.tagJapaneseName("海")
@@ -490,7 +491,7 @@ public class PhotoServiceImplTest {
 					"sample image".getBytes()
 			);
 			return PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.photoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.imageFile(multipartFile)
@@ -514,7 +515,7 @@ public class PhotoServiceImplTest {
 					"sample image".getBytes()
 			);
 			return PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(3L)
 					.photoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.imageFile(multipartFile)
@@ -594,12 +595,12 @@ public class PhotoServiceImplTest {
 			verify(fileRepositoryImpl, times(2)).save(any(FileModel.class));
 
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(1L, photoTagModelCaptureList.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(5L, photoTagModelCaptureList.get(0).getPhotoNo());
 			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo());
 			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName());
 			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName());
-			assertEquals(1L, photoTagModelCaptureList.get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(1).getAccountNo());
 			assertEquals(5L, photoTagModelCaptureList.get(1).getPhotoNo());
 			assertEquals(2L, photoTagModelCaptureList.get(1).getTagNo());
 			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName());
@@ -650,12 +651,12 @@ public class PhotoServiceImplTest {
 			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
 
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(1L, photoTagModelCaptureList.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(2L, photoTagModelCaptureList.get(0).getPhotoNo());
 			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo());
 			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName());
 			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName());
-			assertEquals(1L, photoTagModelCaptureList.get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(1).getAccountNo());
 			assertEquals(2L, photoTagModelCaptureList.get(1).getPhotoNo());
 			assertEquals(2L, photoTagModelCaptureList.get(1).getTagNo());
 			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName());
@@ -704,12 +705,12 @@ public class PhotoServiceImplTest {
 			verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
 
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(1L, photoTagModelCaptureList.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(5L, photoTagModelCaptureList.get(0).getPhotoNo());
 			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo());
 			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName());
 			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName());
-			assertEquals(1L, photoTagModelCaptureList.get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(1).getAccountNo());
 			assertEquals(5L, photoTagModelCaptureList.get(1).getPhotoNo());
 			assertEquals(2L, photoTagModelCaptureList.get(1).getTagNo());
 			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName());
@@ -811,7 +812,7 @@ public class PhotoServiceImplTest {
 			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
 			
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(1L, photoTagModelCaptureList.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(5L, photoTagModelCaptureList.get(0).getPhotoNo());
 			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo());
 			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName());
@@ -854,7 +855,7 @@ public class PhotoServiceImplTest {
 			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
 			
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(1L, photoTagModelCaptureList.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(2L, photoTagModelCaptureList.get(0).getPhotoNo());
 			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo());
 			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName());
@@ -929,12 +930,12 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
 			photoDeleteModelList.add(PhotoDeleteModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath("DSC111.jpg")
 					.build());
 			photoDeleteModelList.add(PhotoDeleteModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.imageFilePath("DSC222.jpg")
 					.build());
@@ -947,23 +948,23 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptureList = photoFavoriteDeleteModelCaptor.getAllValues();
 			assertEquals(null, photoFavoriteDeleteModelCaptureList.get(0).getAccountNo());
-			assertEquals(1L, photoFavoriteDeleteModelCaptureList.get(0).getFavoritePhotoAccountNo());
+			assertEquals(new AccountNo(1L), photoFavoriteDeleteModelCaptureList.get(0).getFavoritePhotoAccountNo());
 			assertEquals(1L, photoFavoriteDeleteModelCaptureList.get(0).getFavoritePhotoNo());
 			assertEquals(null, photoFavoriteDeleteModelCaptureList.get(1).getAccountNo());
-			assertEquals(1L, photoFavoriteDeleteModelCaptureList.get(1).getFavoritePhotoAccountNo());
+			assertEquals(new AccountNo(1L), photoFavoriteDeleteModelCaptureList.get(1).getFavoritePhotoAccountNo());
 			assertEquals(2L, photoFavoriteDeleteModelCaptureList.get(1).getFavoritePhotoNo());
 			
 			List<PhotoTagDeleteModel> photoTagDeleteModelCaptureList = photoTagDeleteModelCaptor.getAllValues();
-			assertEquals(1L, photoTagDeleteModelCaptureList.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagDeleteModelCaptureList.get(0).getAccountNo());
 			assertEquals(1L, photoTagDeleteModelCaptureList.get(0).getPhotoNo());
-			assertEquals(1L, photoTagDeleteModelCaptureList.get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagDeleteModelCaptureList.get(1).getAccountNo());
 			assertEquals(2L, photoTagDeleteModelCaptureList.get(1).getPhotoNo());
 			
 			List<PhotoDeleteModel> photoDeleteModelCaptureList = photoDeleteModelCaptor.getAllValues();
-			assertEquals(1L, photoDeleteModelCaptureList.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), photoDeleteModelCaptureList.get(0).getAccountNo());
 			assertEquals(1L, photoDeleteModelCaptureList.get(0).getPhotoNo());
 			assertEquals("DSC111.jpg", photoDeleteModelCaptureList.get(0).getImageFilePath());
-			assertEquals(1L, photoDeleteModelCaptureList.get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), photoDeleteModelCaptureList.get(1).getAccountNo());
 			assertEquals(2L, photoDeleteModelCaptureList.get(1).getPhotoNo());
 			assertEquals("DSC222.jpg", photoDeleteModelCaptureList.get(1).getImageFilePath());
 			
@@ -984,7 +985,7 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
 			photoDeleteModelList.add(PhotoDeleteModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath("https://www.xxx.com/DSC111.jpg")
 					.build());
@@ -996,7 +997,7 @@ public class PhotoServiceImplTest {
 			verify(fileRepositoryImpl, times(0)).delete(any(String.class));
 			
 			PhotoFavoriteDeleteModel photoFavoriteDeleteModelCapture = photoFavoriteDeleteModelCaptor.getValue();
-			assertEquals(1L, photoFavoriteDeleteModelCapture.getFavoritePhotoAccountNo());
+			assertEquals(new AccountNo(1L), photoFavoriteDeleteModelCapture.getFavoritePhotoAccountNo());
 			assertEquals(1L, photoFavoriteDeleteModelCapture.getFavoritePhotoNo());
 		}
 	}
@@ -1103,7 +1104,7 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.favoriteCount(1)
 					.isFavorite(false)
@@ -1114,7 +1115,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.favoriteCount(3)
 					.isFavorite(false)
@@ -1125,7 +1126,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(3L)
 					.favoriteCount(2)
 					.isFavorite(false)
@@ -1136,7 +1137,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
 					.favoriteCount(2)
 					.isFavorite(false)
@@ -1147,7 +1148,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(5L)
 					.favoriteCount(3)
 					.isFavorite(false)
@@ -1178,7 +1179,7 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.favoriteCount(1)
 					.isFavorite(false)
@@ -1189,7 +1190,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.favoriteCount(3)
 					.isFavorite(false)
@@ -1200,7 +1201,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(3L)
 					.favoriteCount(2)
 					.isFavorite(false)
@@ -1211,7 +1212,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
 					.favoriteCount(2)
 					.isFavorite(false)
@@ -1222,7 +1223,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(5L)
 					.favoriteCount(3)
 					.isFavorite(false)
@@ -1253,7 +1254,7 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.favoriteCount(1)
 					.isFavorite(false)
@@ -1264,7 +1265,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.favoriteCount(3)
 					.isFavorite(false)
@@ -1275,7 +1276,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(3L)
 					.favoriteCount(2)
 					.isFavorite(false)
@@ -1286,7 +1287,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
 					.favoriteCount(2)
 					.isFavorite(false)
@@ -1297,7 +1298,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(5L)
 					.favoriteCount(3)
 					.isFavorite(false)
@@ -1328,7 +1329,7 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.favoriteCount(1)
 					.isFavorite(false)
@@ -1339,7 +1340,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.favoriteCount(3)
 					.isFavorite(false)
@@ -1350,7 +1351,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(3L)
 					.favoriteCount(2)
 					.isFavorite(false)
@@ -1361,7 +1362,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
 					.favoriteCount(2)
 					.isFavorite(false)
@@ -1372,7 +1373,7 @@ public class PhotoServiceImplTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoModelList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(5L)
 					.favoriteCount(3)
 					.isFavorite(false)
@@ -1490,21 +1491,21 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("月")
 					.tagEnglishName("moon")
 					.build());
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("海")
@@ -1528,21 +1529,21 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("月")
 					.tagEnglishName("moon")
 					.build());
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("海")
@@ -1598,14 +1599,14 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(2L)
 					.tagJapaneseName("海")
@@ -1617,12 +1618,12 @@ public class PhotoServiceImplTest {
 			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
 			
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(1L, photoTagModelCaptureList.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(1L, photoTagModelCaptureList.get(0).getPhotoNo());
 			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo());
 			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName());
 			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName());
-			assertEquals(1L, photoTagModelCaptureList.get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(1).getAccountNo());
 			assertEquals(1L, photoTagModelCaptureList.get(1).getPhotoNo());
 			assertEquals(2L, photoTagModelCaptureList.get(1).getTagNo());
 			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName());
@@ -1641,14 +1642,14 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(2L)
 					.tagJapaneseName("海")
@@ -1660,12 +1661,12 @@ public class PhotoServiceImplTest {
 			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
 			
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(1L, photoTagModelCaptureList.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(3L, photoTagModelCaptureList.get(0).getPhotoNo());
 			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo());
 			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName());
 			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName());
-			assertEquals(1L, photoTagModelCaptureList.get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(1).getAccountNo());
 			assertEquals(3L, photoTagModelCaptureList.get(1).getPhotoNo());
 			assertEquals(2L, photoTagModelCaptureList.get(1).getTagNo());
 			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName());
@@ -1683,14 +1684,14 @@ public class PhotoServiceImplTest {
 			
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(1L)
 					.tagJapaneseName("太陽")
 					.tagEnglishName("sun")
 					.build());
 			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.tagNo(2L)
 					.tagJapaneseName("海")
@@ -1748,17 +1749,17 @@ public class PhotoServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void deletePhotoTags_success() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method deletePhotoTags = PhotoServiceImpl.class.getDeclaredMethod("deletePhotoTags", Long.class, Long.class);
+			Method deletePhotoTags = PhotoServiceImpl.class.getDeclaredMethod("deletePhotoTags", AccountNo.class, Long.class);
 			deletePhotoTags.setAccessible(true);
-			
+
 			ArgumentCaptor<PhotoTagDeleteModel> photoTagDeleteModelCaptor = ArgumentCaptor.forClass(PhotoTagDeleteModel.class);
 			doNothing().when(photoTagMstRepositoryImpl).clear(photoTagDeleteModelCaptor.capture());
-			
-			deletePhotoTags.invoke(photoServiceImpl, 1L, 1L);
+
+			deletePhotoTags.invoke(photoServiceImpl, new AccountNo(1L), 1L);
 			
 			verify(photoTagMstRepositoryImpl).clear(any(PhotoTagDeleteModel.class));
 			PhotoTagDeleteModel photoTagDeleteModelCapture = photoTagDeleteModelCaptor.getValue();
-			assertEquals(1L, photoTagDeleteModelCapture.getAccountNo());
+			assertEquals(new AccountNo(1L), photoTagDeleteModelCapture.getAccountNo());
 			assertEquals(1L, photoTagDeleteModelCapture.getPhotoNo());
 		}
 	}

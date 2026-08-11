@@ -29,8 +29,8 @@ public class AccountListItemResponse {
 	 */
 	public static AccountListItemResponse from(AccountModel model) {
 		return AccountListItemResponse.builder()
-				.accountId(model.getAccountId())
-				.accountName(model.getAccountName())
+				.accountId(model.getAccountId().getValue())
+				.accountName(model.getAccountName().getValue())
 				.build();
 	}
 }

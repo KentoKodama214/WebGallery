@@ -3,18 +3,24 @@
 
 <mapper namespace="com.web.gallery.mapper.PhotoMstMapper">
 	<resultMap id="PhotoMstMap" type="com.web.gallery.entity.PhotoMst">
+		<result property="accountNo" column="account_no" typeHandler="com.web.gallery.type_handler.AccountNoTypeHandler"/>
+		<result property="createdBy" column="created_by" typeHandler="com.web.gallery.type_handler.CreatedByTypeHandler"/>
+		<result property="createdAt" column="created_at" typeHandler="com.web.gallery.type_handler.CreatedAtTypeHandler"/>
+		<result property="updatedBy" column="updated_by" typeHandler="com.web.gallery.type_handler.UpdatedByTypeHandler"/>
+		<result property="updatedAt" column="updated_at" typeHandler="com.web.gallery.type_handler.UpdatedAtTypeHandler"/>
+		<result property="isDeleted" column="is_deleted" typeHandler="com.web.gallery.type_handler.IsDeletedTypeHandler"/>
 		<result property="directionKbn" column="direction_kbn" typeHandler="com.web.gallery.type_handler.DirectionEnumTypeHandler"/>
 	</resultMap>
-	
+
 	<select id="count" parameterType="com.web.gallery.entity.PhotoMst" resultType="Integer">
 		SELECT
 			COUNT(*)
 		FROM
 			photo.photo_mst
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
 			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
-			<if test="isDeleted != null"> AND is_deleted = #{isDeleted}</if>
+			<if test="isDeleted != null"> AND is_deleted = #{isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
 			<if test="photoAt != null"> AND photo_at = #{photoAt}</if>
 			<if test="locationNo != null"> AND location_no = #{locationNo}</if>
 			<if test="imageFilePath != null"> AND image_file_path = #{imageFilePath}</if>
@@ -28,7 +34,7 @@
 			<if test="iso != null"> AND iso = #{iso}</if>
 		</where>
 	</select>
-	
+
 	<insert id="insert" parameterType="com.web.gallery.entity.PhotoMst">
 		INSERT INTO
 			photo.photo_mst (
@@ -53,11 +59,11 @@
 			)
 		VALUES
 			(
-				#{accountNo},
+				#{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler},
 				#{photoNo},
-				#{createdBy},
+				#{createdBy, typeHandler=com.web.gallery.type_handler.CreatedByTypeHandler},
 				NOW(),
-				#{updatedBy},
+				#{updatedBy, typeHandler=com.web.gallery.type_handler.UpdatedByTypeHandler},
 				NOW(),
 				false,
 				#{photoAt},
@@ -73,14 +79,14 @@
 				#{iso}
 			)
 	</insert>
-	
+
 	<update id="update" parameterType="com.web.gallery.entity.PhotoMst">
-		UPDATE 
+		UPDATE
 			photo.photo_mst
 		<set>
 			updated_at = NOW()
-			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy}</if>
-			<if test="target.isDeleted != null"> , is_deleted = #{target.isDeleted}</if>
+			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy, typeHandler=com.web.gallery.type_handler.UpdatedByTypeHandler}</if>
+			<if test="target.isDeleted != null"> , is_deleted = #{target.isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
 			<if test="target.photoAt != null"> , photo_at = #{target.photoAt}</if>
 			<if test="target.locationNo != null"> , location_no = #{target.locationNo}</if>
 			<if test="target.imageFilePath != null"> , image_file_path = #{target.imageFilePath}</if>
@@ -94,9 +100,9 @@
 			<if test="target.iso != null"> , iso = #{target.iso}</if>
 		</set>
 		<where>
-			<if test="condition.accountNo != null"> AND account_no = #{condition.accountNo}</if>
+			<if test="condition.accountNo != null"> AND account_no = #{condition.accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
 			<if test="condition.photoNo != null"> AND photo_no = #{condition.photoNo}</if>
-			<if test="condition.isDeleted != null"> AND is_deleted = #{condition.isDeleted}</if>
+			<if test="condition.isDeleted != null"> AND is_deleted = #{condition.isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
 			<if test="condition.photoAt != null"> AND photo_at = #{condition.photoAt}</if>
 			<if test="condition.locationNo != null"> AND location_no = #{condition.locationNo}</if>
 			<if test="condition.imageFilePath != null"> AND image_file_path = #{condition.imageFilePath}</if>
@@ -110,7 +116,7 @@
 			<if test="condition.iso != null"> AND iso = #{condition.iso}</if>
 		</where>
 	</update>
-	
+
 	<select id="getMaxPhotoNo" parameterType="Long" resultType="Long">
 		SELECT
 			MAX(photo_no) AS photoNo
@@ -119,14 +125,14 @@
 		WHERE
 			account_no = #{accountNo}
 	</select>
-	
+
 	<select id="isExistPhoto" parameterType="com.web.gallery.entity.PhotoMst" resultType="Boolean">
 		SELECT
 			CASE WHEN COUNT(*)>0 THEN true ELSE false END
 		FROM
 			photo.photo_mst
 		WHERE
-			account_no = #{accountNo}
+			account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}
 		AND image_file_path LIKE CONCAT('%', #{imageFilePath})
 		AND is_deleted = false
 	</select>
@@ -135,7 +141,7 @@
 		DELETE FROM
 			photo.photo_mst
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
 			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
 		</where>
 	</delete>

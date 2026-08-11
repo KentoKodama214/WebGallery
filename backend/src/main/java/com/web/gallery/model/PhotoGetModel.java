@@ -1,5 +1,7 @@
 package com.web.gallery.model;
 
+import com.web.gallery.domain.account.AccountNo;
+
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -11,9 +13,9 @@ import lombok.Value;
 @Builder
 public class PhotoGetModel {
 	/** ログイン中のアカウントNo */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真のアカウントNo */
 	@NonNull
-	private Long photoAccountNo;
+	private AccountNo photoAccountNo;
 }

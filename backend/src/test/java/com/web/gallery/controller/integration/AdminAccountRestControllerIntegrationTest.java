@@ -27,6 +27,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.constant.MessageConst;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountName;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.Password;
 import com.web.gallery.enumuration.AuthorityEnum;
 import com.web.gallery.enumuration.ErrorEnum;
 import com.web.gallery.model.AccountModel;
@@ -44,10 +48,10 @@ public class AdminAccountRestControllerIntegrationTest {
 
 	private Authentication createAdminAuthentication() {
 		AccountModel sessionAccount = AccountModel.builder()
-				.accountNo(1L)
-				.accountId("aaaaaaaa")
-				.accountName("AAAAAAAA")
-				.password("$2a$10$password1")
+				.accountNo(new AccountNo(1L))
+				.accountId(new AccountId("aaaaaaaa"))
+				.accountName(new AccountName("AAAAAAAA"))
+				.password(new Password("$2a$10$password1"))
 				.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 				.build();
 		AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
@@ -56,10 +60,10 @@ public class AdminAccountRestControllerIntegrationTest {
 
 	private Authentication createNonAdminAuthentication() {
 		AccountModel sessionAccount = AccountModel.builder()
-				.accountNo(2L)
-				.accountId("bbbbbbbb")
-				.accountName("BBBBBBBB")
-				.password("$2a$10$password2")
+				.accountNo(new AccountNo(2L))
+				.accountId(new AccountId("bbbbbbbb"))
+				.accountName(new AccountName("BBBBBBBB"))
+				.password(new Password("$2a$10$password2"))
 				.authorityKbn(AuthorityEnum.MINI)
 				.build();
 		AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);

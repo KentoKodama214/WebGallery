@@ -2,7 +2,13 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.web.gallery.mapper.PhotoTagMstMapper">
-	<select id="select" parameterType="com.web.gallery.entity.PhotoTagMst" resultType="com.web.gallery.entity.PhotoTagMst">
+	<resultMap id="PhotoTagMstMap" type="com.web.gallery.entity.PhotoTagMst">
+		<result property="accountNo" column="account_no" typeHandler="com.web.gallery.type_handler.AccountNoTypeHandler"/>
+		<result property="createdBy" column="created_by" typeHandler="com.web.gallery.type_handler.CreatedByTypeHandler"/>
+		<result property="createdAt" column="created_at" typeHandler="com.web.gallery.type_handler.CreatedAtTypeHandler"/>
+	</resultMap>
+
+	<select id="select" parameterType="com.web.gallery.entity.PhotoTagMst" resultMap="PhotoTagMstMap">
 		SELECT
 			id,
 			account_no AS accountNo,
@@ -15,14 +21,14 @@
 		FROM
 			photo.photo_tag_mst
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
 			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
 			<if test="tagNo != null"> AND tag_no = #{tagNo}</if>
 			<if test="tagJapaneseName != null"> AND tag_japanese_name = #{tagJapaneseName}</if>
 			<if test="tagEnglishName != null"> AND tag_english_name = #{tagEnglishName}</if>
 		</where>
 	</select>
-	
+
 	<insert id="insert" parameterType="com.web.gallery.entity.PhotoTagMst">
 		INSERT INTO
 			photo.photo_tag_mst (
@@ -32,25 +38,25 @@
 				created_by,
 				created_at,
 				tag_japanese_name,
-				tag_english_name 
+				tag_english_name
 			)
 		VALUES
 			(
-				#{accountNo},
+				#{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler},
 				#{photoNo},
 				#{tagNo},
-				#{createdBy},
+				#{createdBy, typeHandler=com.web.gallery.type_handler.CreatedByTypeHandler},
 				NOW(),
 				#{tagJapaneseName},
 				#{tagEnglishName}
 			)
 	</insert>
-	
+
 	<delete id="delete" parameterType="com.web.gallery.entity.PhotoTagMst">
 		DELETE FROM
 			photo.photo_tag_mst
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
 			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
 			<if test="tagNo != null"> AND tag_no = #{tagNo}</if>
 			<if test="tagJapaneseName != null"> AND tag_japanese_name = #{tagJapaneseName}</if>

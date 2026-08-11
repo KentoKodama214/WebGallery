@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.model.PhotoDetailGetModel;
@@ -46,8 +47,8 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 		@DisplayName("正常系：写真が0件の場合")
 		void getPhotoList_photo_not_found() {
 			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
-					.accountNo(1L)
-					.photoAccountNo(3L)
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(3L))
 					.build();
 			List<PhotoModel> actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 			assertEquals(0, actual.size());
@@ -58,17 +59,17 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 		@DisplayName("正常系：写真が1件以上、写真タグが0件の場合")
 		void getPhotoList_photoTag_not_found() {
 			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
-					.accountNo(1L)
-					.photoAccountNo(2L)
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(2L))
 					.build();
-			
+
 			List<PhotoModel> actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
-			
+
 			assertEquals(2, actual.size());
-			assertEquals(2L, actual.get(0).getAccountNo());
+			assertEquals(new AccountNo(2L), actual.get(0).getAccountNo());
 			assertEquals(1L, actual.get(0).getPhotoNo());
 			assertEquals(0, actual.get(0).getPhotoTagModelList().size());
-			assertEquals(2L, actual.get(1).getAccountNo());
+			assertEquals(new AccountNo(2L), actual.get(1).getAccountNo());
 			assertEquals(2L, actual.get(1).getPhotoNo());
 			assertEquals(0, actual.get(1).getPhotoTagModelList().size());
 		}
@@ -78,42 +79,42 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 		@DisplayName("正常系：写真が1件以上、写真タグが1件以上の場合")
 		void getPhotoList_photoTag_found() {
 			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
-					.accountNo(1L)
-					.photoAccountNo(1L)
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
 					.build();
 			
 			List<PhotoModel> actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 			
 			assertEquals(2, actual.size());
 			
-			assertEquals(1L, actual.get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actual.get(0).getAccountNo());
 			assertEquals(1L, actual.get(0).getPhotoNo());
 			assertEquals(2, actual.get(0).getPhotoTagModelList().size());
-			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actual.get(0).getPhotoTagModelList().get(0).getAccountNo());
 			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getPhotoNo());
 			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getTagNo());
 			assertEquals("太陽", actual.get(0).getPhotoTagModelList().get(0).getTagJapaneseName());
 			assertEquals("sun", actual.get(0).getPhotoTagModelList().get(0).getTagEnglishName());
-			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), actual.get(0).getPhotoTagModelList().get(1).getAccountNo());
 			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(1).getPhotoNo());
 			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(1).getTagNo());
 			assertEquals("青空", actual.get(0).getPhotoTagModelList().get(1).getTagJapaneseName());
 			assertEquals("bluesky", actual.get(0).getPhotoTagModelList().get(1).getTagEnglishName());
 			
-			assertEquals(1L, actual.get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), actual.get(1).getAccountNo());
 			assertEquals(2L, actual.get(1).getPhotoNo());
 			assertEquals(3, actual.get(1).getPhotoTagModelList().size());
-			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(0).getAccountNo());
 			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(0).getPhotoNo());
 			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(0).getTagNo());
 			assertEquals("太陽", actual.get(1).getPhotoTagModelList().get(0).getTagJapaneseName());
 			assertEquals("sun", actual.get(1).getPhotoTagModelList().get(0).getTagEnglishName());
-			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(1).getAccountNo());
 			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(1).getPhotoNo());
 			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(1).getTagNo());
 			assertEquals("曇天", actual.get(1).getPhotoTagModelList().get(1).getTagJapaneseName());
 			assertEquals("cloudy", actual.get(1).getPhotoTagModelList().get(1).getTagEnglishName());
-			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(2).getAccountNo());
+			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(2).getAccountNo());
 			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(2).getPhotoNo());
 			assertEquals(3L, actual.get(1).getPhotoTagModelList().get(2).getTagNo());
 			assertEquals("花", actual.get(1).getPhotoTagModelList().get(2).getTagJapaneseName());
@@ -132,14 +133,14 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 		@DisplayName("正常系：写真のメタデータがデフォルト値、写真タグが0件の場合")
 		void getPhotoDetail_photoTag_default_value_not_found() throws PhotoNotFoundException {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-					.accountNo(1L)
-					.photoAccountNo(2L)
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(2L))
 					.photoNo(1L)
 					.build();
 			
 			PhotoDetailModel actual = photoDetailRepositoryImpl.getPhotoDetail(photoDetailGetModel);
 			
-			assertEquals(2L, actual.getAccountNo());
+			assertEquals(new AccountNo(2L), actual.getAccountNo());
 			assertEquals(1L, actual.getPhotoNo());
 			assertFalse(actual.getIsFavorite());
 			assertEquals(OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt());
@@ -165,14 +166,14 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 		@DisplayName("正常系：写真のメタデータがデフォルト値でない場、写真タグが1件以上の場合")
 		void getPhotoDetail_not_default_value_photoTag_found() throws PhotoNotFoundException {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-					.accountNo(1L)
-					.photoAccountNo(1L)
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.build();
 			
 			PhotoDetailModel actual = photoDetailRepositoryImpl.getPhotoDetail(photoDetailGetModel);
 			
-			assertEquals(1L, actual.getAccountNo());
+			assertEquals(new AccountNo(1L), actual.getAccountNo());
 			assertEquals(1L, actual.getPhotoNo());
 			assertTrue(actual.getIsFavorite());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt());
@@ -192,12 +193,12 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			assertEquals(100, actual.getIso());
 			assertEquals(2, actual.getPhotoTagModelList().size());
 			
-			assertEquals(1L, actual.getPhotoTagModelList().get(0).getAccountNo());
+			assertEquals(new AccountNo(1L), actual.getPhotoTagModelList().get(0).getAccountNo());
 			assertEquals(1L, actual.getPhotoTagModelList().get(0).getPhotoNo());
 			assertEquals(1L, actual.getPhotoTagModelList().get(0).getTagNo());
 			assertEquals("太陽", actual.getPhotoTagModelList().get(0).getTagJapaneseName());
 			assertEquals("sun", actual.getPhotoTagModelList().get(0).getTagEnglishName());
-			assertEquals(1L, actual.getPhotoTagModelList().get(1).getAccountNo());
+			assertEquals(new AccountNo(1L), actual.getPhotoTagModelList().get(1).getAccountNo());
 			assertEquals(1L, actual.getPhotoTagModelList().get(1).getPhotoNo());
 			assertEquals(2L, actual.getPhotoTagModelList().get(1).getTagNo());
 			assertEquals("青空", actual.getPhotoTagModelList().get(1).getTagJapaneseName());
@@ -209,8 +210,8 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 		@DisplayName("異常系：PhotoNotFoundExceptionをthrowする")
 		void getPhotoDetail_PhotoNotFoundException() {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-					.accountNo(1L)
-					.photoAccountNo(1L)
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
 					.photoNo(99L)
 					.build();
 			

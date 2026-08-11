@@ -5,6 +5,12 @@ import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.UpdatedBy;
+import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailModel;
@@ -22,25 +28,25 @@ public class PhotoMst {
 	private Long id;
 
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
 	private Long photoNo;
 
 	/** 作成者 */
-	private Long createdBy;
+	private CreatedBy createdBy;
 
 	/** 作成日時 */
-	private OffsetDateTime createdAt;
+	private CreatedAt createdAt;
 
 	/** 更新者 */
-	private Long updatedBy;
+	private UpdatedBy updatedBy;
 
 	/** 更新日時 */
-	private OffsetDateTime updatedAt;
+	private UpdatedAt updatedAt;
 
 	/** 削除フラグ */
-	private Boolean isDeleted;
+	private IsDeleted isDeleted;
 
 	/** 撮影日時 */
 	private OffsetDateTime photoAt;
@@ -60,7 +66,7 @@ public class PhotoMst {
 	/** キャプション */
 	private String caption;
 
-	/** 
+	/**
 	 * 向き区分
 	 * <p>
 	 * {@link DirectionEnum}
@@ -91,8 +97,8 @@ public class PhotoMst {
 		return PhotoMst.builder()
 				.accountNo(model.getAccountNo())
 				.photoNo(newPhotoNo)
-				.createdBy(model.getAccountNo())
-				.updatedBy(model.getAccountNo())
+				.createdBy(new CreatedBy(model.getAccountNo().getValue()))
+				.updatedBy(new UpdatedBy(model.getAccountNo().getValue()))
 				.photoAt(
 					Optional.ofNullable(model.getPhotoAt()).orElse(Consts.MIN_OFFSET_DATE_TIME))
 				.locationNo(
@@ -125,8 +131,8 @@ public class PhotoMst {
 	 */
 	public static PhotoMst targetForUpdate(PhotoDetailModel model) {
 		return PhotoMst.builder()
-				.updatedBy(model.getAccountNo())
-				.isDeleted(false)
+				.updatedBy(new UpdatedBy(model.getAccountNo().getValue()))
+				.isDeleted(new IsDeleted(false))
 				.photoAt(
 					Optional.ofNullable(model.getPhotoAt()).orElse(Consts.MIN_OFFSET_DATE_TIME))
 				.locationNo(
@@ -160,7 +166,7 @@ public class PhotoMst {
 	 */
 	public static PhotoMst condition(Long accountNo, Long photoNo) {
 		return PhotoMst.builder()
-				.accountNo(accountNo)
+				.accountNo(new AccountNo(accountNo))
 				.photoNo(photoNo)
 				.build();
 	}
@@ -173,8 +179,8 @@ public class PhotoMst {
 	 */
 	public static PhotoMst targetForDelete(PhotoDeleteModel model) {
 		return PhotoMst.builder()
-				.updatedBy(model.getAccountNo())
-				.isDeleted(true)
+				.updatedBy(new UpdatedBy(model.getAccountNo().getValue()))
+				.isDeleted(new IsDeleted(true))
 				.build();
 	}
 
@@ -199,8 +205,8 @@ public class PhotoMst {
 	 */
 	public static PhotoMst conditionForCount(Long accountNo) {
 		return PhotoMst.builder()
-				.accountNo(accountNo)
-				.isDeleted(false)
+				.accountNo(new AccountNo(accountNo))
+				.isDeleted(new IsDeleted(false))
 				.build();
 	}
 }

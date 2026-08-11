@@ -4,6 +4,11 @@
 
 <mapper namespace="com.web.gallery.mapper.RefreshTokenMapper">
 
+	<resultMap id="RefreshTokenMap" type="com.web.gallery.entity.RefreshToken">
+		<result property="accountNo" column="account_no" typeHandler="com.web.gallery.type_handler.AccountNoTypeHandler"/>
+		<result property="createdAt" column="created_at" typeHandler="com.web.gallery.type_handler.CreatedAtTypeHandler"/>
+	</resultMap>
+
 	<insert id="insert" parameterType="com.web.gallery.entity.RefreshToken">
 		INSERT INTO common.refresh_token (
 			account_no,
@@ -12,15 +17,15 @@
 			created_at,
 			is_revoked
 		) VALUES (
-			#{accountNo},
+			#{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler},
 			#{tokenHash},
 			#{expiresAt},
-			COALESCE(#{createdAt}, NOW()),
+			COALESCE(#{createdAt, typeHandler=com.web.gallery.type_handler.CreatedAtTypeHandler}, NOW()),
 			COALESCE(#{isRevoked}, FALSE)
 		)
 	</insert>
 
-	<select id="selectByTokenHash" parameterType="String" resultType="com.web.gallery.entity.RefreshToken">
+	<select id="selectByTokenHash" parameterType="String" resultMap="RefreshTokenMap">
 		SELECT
 			token_id AS tokenId,
 			account_no AS accountNo,

@@ -2,6 +2,7 @@ package com.web.gallery.model;
 
 import com.web.gallery.controller.request.PhotoFavoriteDeleteRequest;
 import com.web.gallery.controller.request.PhotoFavoriteRegistRequest;
+import com.web.gallery.domain.account.AccountNo;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -15,11 +16,11 @@ import lombok.Value;
 public class PhotoFavoriteModel {
 	/** アカウント番号 */
 	@NonNull
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** お気に入り写真アカウント番号 */
 	@NonNull
-	private Long favoritePhotoAccountNo;
+	private AccountNo favoritePhotoAccountNo;
 
 	/** 写真番号 */
 	@NonNull
@@ -34,8 +35,8 @@ public class PhotoFavoriteModel {
 	 */
 	public static PhotoFavoriteModel from(PhotoFavoriteRegistRequest request, Long accountNo) {
 		return PhotoFavoriteModel.builder()
-				.accountNo(accountNo)
-				.favoritePhotoAccountNo(request.getFavoritePhotoAccountNo())
+				.accountNo(new AccountNo(accountNo))
+				.favoritePhotoAccountNo(new AccountNo(request.getFavoritePhotoAccountNo()))
 				.favoritePhotoNo(request.getFavoritePhotoNo())
 				.build();
 	}
@@ -49,8 +50,8 @@ public class PhotoFavoriteModel {
 	 */
 	public static PhotoFavoriteModel from(PhotoFavoriteDeleteRequest request, Long accountNo) {
 		return PhotoFavoriteModel.builder()
-				.accountNo(accountNo)
-				.favoritePhotoAccountNo(request.getFavoritePhotoAccountNo())
+				.accountNo(new AccountNo(accountNo))
+				.favoritePhotoAccountNo(new AccountNo(request.getFavoritePhotoAccountNo()))
 				.favoritePhotoNo(request.getFavoritePhotoNo())
 				.build();
 	}

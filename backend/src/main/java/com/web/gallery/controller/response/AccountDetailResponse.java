@@ -53,13 +53,14 @@ public class AccountDetailResponse {
 	 */
 	public static AccountDetailResponse from(AccountModel model) {
 		return AccountDetailResponse.builder()
-				.accountId(model.getAccountId())
-				.accountName(model.getAccountName())
-				.birthdate(Consts.MIN_LOCAL_DATE.equals(model.getBirthdate()) ? null : model.getBirthdate())
+				.accountId(model.getAccountId().getValue())
+				.accountName(model.getAccountName().getValue())
+				.birthdate(model.getBirthdate() == null ? null :
+					(Consts.MIN_LOCAL_DATE.equals(model.getBirthdate().getValue()) ? null : model.getBirthdate().getValue()))
 				.sexKbn(model.getSexKbn())
-				.birthplacePrefectureKbnCode(model.getBirthplacePrefectureKbnCode())
-				.residentPrefectureKbnCode(model.getResidentPrefectureKbnCode())
-				.freeMemo(model.getFreeMemo())
+				.birthplacePrefectureKbnCode(model.getBirthplacePrefectureKbnCode() == null ? null : model.getBirthplacePrefectureKbnCode().getValue())
+				.residentPrefectureKbnCode(model.getResidentPrefectureKbnCode() == null ? null : model.getResidentPrefectureKbnCode().getValue())
+				.freeMemo(model.getFreeMemo() == null ? null : model.getFreeMemo().getValue())
 				.build();
 	}
 }

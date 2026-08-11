@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoTagSaveRequest;
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.PhotoTagMst;
 
 import lombok.Builder;
@@ -18,7 +19,7 @@ import lombok.Value;
 public class PhotoTagModel {
 	/** アカウント番号 */
 	@NonNull
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
 	private Long photoNo;
@@ -58,7 +59,7 @@ public class PhotoTagModel {
 	 */
 	public static PhotoTagModel from(PhotoTagSaveRequest request) {
 		return PhotoTagModel.builder()
-				.accountNo(request.getAccountNo())
+				.accountNo(new AccountNo(request.getAccountNo()))
 				.photoNo(request.getPhotoNo())
 				.tagNo(request.getTagNo())
 				.tagJapaneseName(Optional.ofNullable(request.getTagJapaneseName()).orElse(Consts.STRING_EMPTY))

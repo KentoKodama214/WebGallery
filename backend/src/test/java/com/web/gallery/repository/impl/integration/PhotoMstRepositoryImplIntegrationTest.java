@@ -23,6 +23,12 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.UpdatedBy;
+import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.exception.RegistFailureException;
@@ -54,7 +60,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC14.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -64,13 +70,13 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=4", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getLong("account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.photoNo(rs.getLong("photo_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getLong("updated_by"))
-							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-							.isDeleted(rs.getBoolean("is_deleted"))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
@@ -85,11 +91,11 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(4L, actualData.getFirst().getPhotoNo());
-			assertEquals(1L, actualData.getFirst().getCreatedBy());
-			assertEquals(1L, actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertFalse(actualData.getFirst().getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC14.jpg", actualData.getFirst().getImageFilePath());
@@ -110,7 +116,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC14.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
 					.photoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.locationNo(1L)
@@ -130,13 +136,13 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=4", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getLong("account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.photoNo(rs.getLong("photo_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getLong("updated_by"))
-							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-							.isDeleted(rs.getBoolean("is_deleted"))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
@@ -151,11 +157,11 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(4L, actualData.getFirst().getPhotoNo());
-			assertEquals(1L, actualData.getFirst().getCreatedBy());
-			assertEquals(1L, actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertFalse(actualData.getFirst().getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(1L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC14.jpg", actualData.getFirst().getImageFilePath());
@@ -176,7 +182,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC11.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -198,7 +204,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -208,13 +214,13 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getLong("account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.photoNo(rs.getLong("photo_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getLong("updated_by"))
-							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-							.isDeleted(rs.getBoolean("is_deleted"))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
@@ -229,11 +235,11 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(1L, actualData.getFirst().getPhotoNo());
-			assertEquals(1L, actualData.getFirst().getCreatedBy());
-			assertEquals(1L, actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertFalse(actualData.getFirst().getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.getFirst().getImageFilePath());
@@ -254,7 +260,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.photoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.locationNo(1L)
@@ -274,13 +280,13 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getLong("account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.photoNo(rs.getLong("photo_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getLong("updated_by"))
-							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-							.isDeleted(rs.getBoolean("is_deleted"))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
@@ -295,11 +301,11 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(1L, actualData.getFirst().getPhotoNo());
-			assertEquals(1L, actualData.getFirst().getCreatedBy());
-			assertEquals(1L, actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertFalse(actualData.getFirst().getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(1L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actualData.getFirst().getImageFilePath());
@@ -320,7 +326,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC999.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(9L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -342,7 +348,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC11.jpg";
 			
 			PhotoDeleteModel photoDeleteModel = PhotoDeleteModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -352,13 +358,13 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoMst.builder()
-							.accountNo(rs.getLong("account_no"))
+							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.photoNo(rs.getLong("photo_no"))
-							.createdBy(rs.getLong("created_by"))
-							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-							.updatedBy(rs.getLong("updated_by"))
-							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-							.isDeleted(rs.getBoolean("is_deleted"))
+							.createdBy(new CreatedBy(rs.getLong("created_by")))
+							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
@@ -374,11 +380,11 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			
 			assertEquals(1, actualData.size());
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(1L, actualData.getFirst().getPhotoNo());
-			assertEquals(1L, actualData.getFirst().getCreatedBy());
-			assertEquals(1L, actualData.getFirst().getUpdatedBy());
-			assertTrue(actualData.getFirst().getIsDeleted());
+			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertTrue(actualData.getFirst().getIsDeleted().getValue());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(1L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC11.jpg", actualData.getFirst().getImageFilePath());
@@ -399,7 +405,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			String imageFilePath = "https://www.xxx.com/DSC11.jpg";
 			
 			PhotoDeleteModel photoDeleteModel = PhotoDeleteModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(9L)
 					.imageFilePath(imageFilePath)
 					.build();
@@ -447,7 +453,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			);
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();
@@ -467,7 +473,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			);
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(2L)
+					.accountNo(new AccountNo(2L))
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();
@@ -487,7 +493,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			);
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();
@@ -507,7 +513,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			);
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.imageFile(multipartFile)
 					.imageFilePath("")
 					.build();

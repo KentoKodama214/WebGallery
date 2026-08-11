@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.enumuration.DirectionEnum;
@@ -20,7 +21,7 @@ import lombok.Value;
 public class PhotoModel {
 	/** アカウント番号 */
 	@NonNull
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
 	@NonNull
@@ -29,31 +30,31 @@ public class PhotoModel {
 	/** お気に入り数 */
 	@NonNull
 	private Integer favoriteCount;
-	
+
 	/** お気に入り */
 	@NonNull
 	private Boolean isFavorite;
-	
+
 	/** 撮影日時 */
 	@NonNull
 	private OffsetDateTime photoAt;
-	
+
 	/** 画像ファイルパス */
 	@NonNull
 	private String imageFilePath;
-	
+
 	/** キャプション */
 	@NonNull
 	private String caption;
 
-	/** 
+	/**
 	 * 向き区分
 	 * <p>
 	 * {@link DirectionEnum}
 	 */
 	@NonNull
 	private DirectionEnum directionKbn;
-	
+
 	/** 写真タグリスト */
 	@NonNull
 	private List<PhotoTagModel> photoTagModelList;
@@ -68,12 +69,12 @@ public class PhotoModel {
 	public static PhotoModel from(PhotoDto dto, List<PhotoTagMst> photoTagMstList) {
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream()
 				.filter(tag ->
-					tag.getAccountNo().equals(dto.getAccountNo()) &&
+					tag.getAccountNo().getValue().equals(dto.getAccountNo()) &&
 					Objects.equals(tag.getPhotoNo(), dto.getPhotoNo()))
 				.map(PhotoTagModel::from)
 				.toList();
 		return PhotoModel.builder()
-				.accountNo(dto.getAccountNo())
+				.accountNo(new AccountNo(dto.getAccountNo()))
 				.photoNo(dto.getPhotoNo())
 				.favoriteCount(dto.getFavoriteCount())
 				.isFavorite(dto.getIsFavorite())

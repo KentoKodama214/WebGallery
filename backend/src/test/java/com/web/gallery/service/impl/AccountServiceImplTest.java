@@ -32,6 +32,14 @@ import org.springframework.test.context.ActiveProfiles;
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.LoginConfig;
 import com.web.gallery.config.PhotoConfig;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountName;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
+import com.web.gallery.domain.account.FreeMemo;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
+import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoTagMst;
@@ -85,10 +93,10 @@ public class AccountServiceImplTest {
 			String accountId = "aaaaaaaa";
 			String password = "AAAAAAAA";
 			AccountModel account = AccountModel.builder()
-					.accountNo(1L)
-					.accountId(accountId)
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId(accountId))
 					.loginFailureCount(0)
-					.password(password)
+					.password(new Password(password))
 					.build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
 			doReturn(3).when(loginConfig).getFailCount();
@@ -116,7 +124,7 @@ public class AccountServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントを新規登録")
 		void registAccount_success() throws RegistFailureException {
-			AccountModel accountModel = AccountModel.builder().accountId("aaaaaaaa").build();
+			AccountModel accountModel = AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(null, "aaaaaaaa");
 			doNothing().when(accountRepositoryImpl).regist(accountModel);
 			assertTrue(accountServiceImpl.registAccount(accountModel));
@@ -126,7 +134,7 @@ public class AccountServiceImplTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが既に存在する")
 		void registAccount_account_already_exist() throws RegistFailureException {
-			AccountModel accountModel = AccountModel.builder().accountId("aaaaaaaa").build();
+			AccountModel accountModel = AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(true).when(accountRepositoryImpl).isExistAccount(null, "aaaaaaaa");
 			verify(accountRepositoryImpl,times(0)).regist(accountModel);
 			assertFalse(accountServiceImpl.registAccount(accountModel));
@@ -136,7 +144,7 @@ public class AccountServiceImplTest {
 		@Order(3)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void registAccount_RegistFailureException() throws RegistFailureException {
-			AccountModel accountModel = AccountModel.builder().accountId("aaaaaaaa").build();
+			AccountModel accountModel = AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(null, "aaaaaaaa");
 			doThrow(RegistFailureException.class).when(accountRepositoryImpl).regist(accountModel);
 			assertThrows(RegistFailureException.class, () -> accountServiceImpl.registAccount(accountModel));
@@ -151,7 +159,7 @@ public class AccountServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントを更新")
 		void updateAccount_success() throws UpdateFailureException {
-			AccountModel accountModel = AccountModel.builder().accountNo(1L).accountId("aaaaaaaa").build();
+			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(1L, "aaaaaaaa");
 			doNothing().when(accountRepositoryImpl).update(accountModel);
 			assertFalse(accountServiceImpl.updateAccount(accountModel));
@@ -161,7 +169,7 @@ public class AccountServiceImplTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが既に存在する")
 		void updateAccount_account_already_exist() throws UpdateFailureException {
-			AccountModel accountModel = AccountModel.builder().accountNo(1L).accountId("aaaaaaaa").build();
+			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(true).when(accountRepositoryImpl).isExistAccount(1L, "aaaaaaaa");
 			verify(accountRepositoryImpl,times(0)).update(accountModel);
 			assertTrue(accountServiceImpl.updateAccount(accountModel));
@@ -171,7 +179,7 @@ public class AccountServiceImplTest {
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void updateAccount_UpdateFailureException() throws UpdateFailureException {
-			AccountModel accountModel = AccountModel.builder().accountNo(1L).accountId("aaaaaaaa").build();
+			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(1L, "aaaaaaaa");
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).update(accountModel);
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel));
@@ -187,15 +195,15 @@ public class AccountServiceImplTest {
 		@DisplayName("正常系：アカウントが存在する場合")
 		void getAccountById_found() {
 			AccountModel account = AccountModel.builder()
-					.accountNo(1L)
-					.accountId("aaaaaaaa")
-					.accountName("AAAAAAAA")
-					.password("password")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName("AAAAAAAA"))
+					.password(new Password("password"))
 					.birthdate(null)
 					.sexKbn(null)
-					.birthplacePrefectureKbnCode("none")
-					.residentPrefectureKbnCode("none")
-					.freeMemo("")
+					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
+					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
+					.freeMemo(new FreeMemo(""))
 					.authorityKbn(null)
 					.lastLoginDatetime(null)
 					.loginFailureCount(0)
@@ -204,13 +212,13 @@ public class AccountServiceImplTest {
 
 			AccountModel actual = accountServiceImpl.getAccountById("aaaaaaaa");
 
-			assertEquals(1L, actual.getAccountNo());
-			assertEquals("aaaaaaaa", actual.getAccountId());
-			assertEquals("AAAAAAAA", actual.getAccountName());
-			assertEquals("password", actual.getPassword());
-			assertEquals("none", actual.getBirthplacePrefectureKbnCode());
-			assertEquals("none", actual.getResidentPrefectureKbnCode());
-			assertEquals("", actual.getFreeMemo());
+			assertEquals(new AccountNo(1L), actual.getAccountNo());
+			assertEquals(new AccountId("aaaaaaaa"), actual.getAccountId());
+			assertEquals(new AccountName("AAAAAAAA"), actual.getAccountName());
+			assertEquals(new Password("password"), actual.getPassword());
+			assertEquals(new BirthplacePrefectureKbnCode("none"), actual.getBirthplacePrefectureKbnCode());
+			assertEquals(new ResidentPrefectureKbnCode("none"), actual.getResidentPrefectureKbnCode());
+			assertEquals(new FreeMemo(""), actual.getFreeMemo());
 			assertEquals(0, actual.getLoginFailureCount());
 		}
 
@@ -232,17 +240,17 @@ public class AccountServiceImplTest {
 		@DisplayName("正常系：アカウントが存在する場合")
 		void getAccountList_found() {
 			List<AccountModel> accountModelList = new ArrayList<AccountModel>();
-			accountModelList.add(AccountModel.builder().accountId("cccccccc").build());
-			accountModelList.add(AccountModel.builder().accountId("bbbbbbbb").build());
-			accountModelList.add(AccountModel.builder().accountId("aaaaaaaa").build());
-			
+			accountModelList.add(AccountModel.builder().accountId(new AccountId("cccccccc")).build());
+			accountModelList.add(AccountModel.builder().accountId(new AccountId("bbbbbbbb")).build());
+			accountModelList.add(AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build());
+
 			doReturn(accountModelList).when(accountRepositoryImpl).getAccountList();
-			
+
 			List<AccountModel> actual = accountServiceImpl.getAccountList();
 			assertEquals(accountModelList.size(), actual.size());
-			assertEquals("aaaaaaaa", actual.get(0).getAccountId());
-			assertEquals("bbbbbbbb", actual.get(1).getAccountId());
-			assertEquals("cccccccc", actual.get(2).getAccountId());
+			assertEquals(new AccountId("aaaaaaaa"), actual.get(0).getAccountId());
+			assertEquals(new AccountId("bbbbbbbb"), actual.get(1).getAccountId());
+			assertEquals(new AccountId("cccccccc"), actual.get(2).getAccountId());
 		}
 		
 		@Test
@@ -267,17 +275,17 @@ public class AccountServiceImplTest {
 		@DisplayName("正常系：全アカウントを取得（削除済み含む）してソートされること")
 		void getAccountListForAdmin_found() {
 			List<AccountModel> accountModelList = new ArrayList<AccountModel>();
-			accountModelList.add(AccountModel.builder().accountId("cccccccc").isDeleted(true).build());
-			accountModelList.add(AccountModel.builder().accountId("bbbbbbbb").isDeleted(false).build());
-			accountModelList.add(AccountModel.builder().accountId("aaaaaaaa").isDeleted(false).build());
+			accountModelList.add(AccountModel.builder().accountId(new AccountId("cccccccc")).isDeleted(new IsDeleted(true)).build());
+			accountModelList.add(AccountModel.builder().accountId(new AccountId("bbbbbbbb")).isDeleted(new IsDeleted(false)).build());
+			accountModelList.add(AccountModel.builder().accountId(new AccountId("aaaaaaaa")).isDeleted(new IsDeleted(false)).build());
 
 			doReturn(accountModelList).when(accountRepositoryImpl).getAccountListAll();
 
 			List<AccountModel> actual = accountServiceImpl.getAccountListForAdmin();
 			assertEquals(3, actual.size());
-			assertEquals("aaaaaaaa", actual.get(0).getAccountId());
-			assertEquals("bbbbbbbb", actual.get(1).getAccountId());
-			assertEquals("cccccccc", actual.get(2).getAccountId());
+			assertEquals(new AccountId("aaaaaaaa"), actual.get(0).getAccountId());
+			assertEquals(new AccountId("bbbbbbbb"), actual.get(1).getAccountId());
+			assertEquals(new AccountId("cccccccc"), actual.get(2).getAccountId());
 		}
 
 		@Test
@@ -305,7 +313,7 @@ public class AccountServiceImplTest {
 			accountServiceImpl.unlockAccount(1L);
 
 			AccountModel accountModel = captor.getValue();
-			assertEquals(1L, accountModel.getAccountNo());
+			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
 			assertEquals(0, accountModel.getLoginFailureCount());
 			assertNull(accountModel.getLastLoginDatetime());
 		}
@@ -335,7 +343,7 @@ public class AccountServiceImplTest {
 			accountServiceImpl.lockAccount(1L);
 
 			AccountModel accountModel = captor.getValue();
-			assertEquals(1L, accountModel.getAccountNo());
+			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
 			assertEquals(10, accountModel.getLoginFailureCount());
 		}
 
@@ -374,12 +382,12 @@ public class AccountServiceImplTest {
 			List<PhotoFavorite> capturedFavorites = photoFavoriteCaptor.getAllValues();
 
 			// 1回目：自分が登録したお気に入りの削除（accountNoで指定）
-			assertEquals(accountNo, capturedFavorites.get(0).getAccountNo());
+			assertEquals(new AccountNo(accountNo), capturedFavorites.get(0).getAccountNo());
 			assertNull(capturedFavorites.get(0).getFavoritePhotoAccountNo());
 
 			// 2回目：自分の写真に対する他人のお気に入りの削除（favoritePhotoAccountNoで指定）
 			assertNull(capturedFavorites.get(1).getAccountNo());
-			assertEquals(accountNo, capturedFavorites.get(1).getFavoritePhotoAccountNo());
+			assertEquals(new AccountNo(accountNo), capturedFavorites.get(1).getFavoritePhotoAccountNo());
 
 			verify(photoTagMstMapper, times(1)).delete(any(PhotoTagMst.class));
 			verify(photoMstMapper, times(1)).delete(any(PhotoMst.class));
@@ -405,7 +413,7 @@ public class AccountServiceImplTest {
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
 			AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
 			
-			AccountModel account = AccountModel.builder().accountNo(1L).build();
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -414,7 +422,7 @@ public class AccountServiceImplTest {
 			accountServiceImpl.handle(event);
 			
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1L, accountModel.getAccountNo());
+			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
 			assertNull(accountModel.getAccountId());
 			assertNull(accountModel.getAccountName());
 			assertNull(accountModel.getPassword());
@@ -441,7 +449,7 @@ public class AccountServiceImplTest {
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
 			AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
 			
-			AccountModel account = AccountModel.builder().accountNo(1L).build();
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -450,7 +458,7 @@ public class AccountServiceImplTest {
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.handle(event));
 			
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1L, accountModel.getAccountNo());
+			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
 			assertNull(accountModel.getAccountId());
 			assertNull(accountModel.getAccountName());
 			assertNull(accountModel.getPassword());
@@ -485,7 +493,7 @@ public class AccountServiceImplTest {
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
-			AccountModel account = AccountModel.builder().accountNo(1L).loginFailureCount(1).build();
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -494,7 +502,7 @@ public class AccountServiceImplTest {
 			accountServiceImpl.handle(event);
 			
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1L, accountModel.getAccountNo());
+			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
 			assertNull(accountModel.getAccountId());
 			assertNull(accountModel.getAccountName());
 			assertNull(accountModel.getPassword());
@@ -546,7 +554,7 @@ public class AccountServiceImplTest {
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
-			AccountModel account = AccountModel.builder().accountNo(1L).loginFailureCount(1).build();
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(1).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -555,7 +563,7 @@ public class AccountServiceImplTest {
 			assertThrows(UpdateFailureException.class, () ->accountServiceImpl.handle(event));
 			
 			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(1L, accountModel.getAccountNo());
+			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
 			assertNull(accountModel.getAccountId());
 			assertNull(accountModel.getAccountName());
 			assertNull(accountModel.getPassword());

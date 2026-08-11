@@ -31,6 +31,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.controller.response.PhotoListGetResponse;
 import com.web.gallery.enumuration.DirectionEnum;
@@ -83,7 +84,7 @@ public class PhotoRestControllerTest {
 		private List<PhotoModel> createPhotoModelList() {
 			List<PhotoModel> photoList = new ArrayList<PhotoModel>();
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.favoriteCount(1)
 					.isFavorite(false)
@@ -94,7 +95,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -105,7 +106,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(3L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -116,7 +117,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -127,7 +128,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(5L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -138,7 +139,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(6L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -149,7 +150,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(7L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -199,7 +200,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.photoList[2].directionKbn").value("horizontal"));
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
-			assertEquals(1L, photoListGetModel.getAccountNo());
+			assertEquals(new AccountNo(1L), photoListGetModel.getAccountNo());
 			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.NONE, photoListGetModel.getDirectionKbn());
 			assertFalse(photoListGetModel.getIsFavoriteOnly());
@@ -236,7 +237,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.photoList[0].directionKbn").value("horizontal"));
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
-			assertEquals(1L, photoListGetModel.getAccountNo());
+			assertEquals(new AccountNo(1L), photoListGetModel.getAccountNo());
 			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.VERTICAL, photoListGetModel.getDirectionKbn());
 			assertTrue(photoListGetModel.getIsFavoriteOnly());
@@ -274,7 +275,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.photoList[0].directionKbn").value("horizontal"));
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
-			assertEquals(1L, photoListGetModel.getAccountNo());
+			assertEquals(new AccountNo(1L), photoListGetModel.getAccountNo());
 			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.VERTICAL, photoListGetModel.getDirectionKbn());
 			assertTrue(photoListGetModel.getIsFavoriteOnly());
@@ -301,7 +302,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.photoList.length()").value(0));
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
-			assertEquals(1L, photoListGetModel.getAccountNo());
+			assertEquals(new AccountNo(1L), photoListGetModel.getAccountNo());
 			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.NONE, photoListGetModel.getDirectionKbn());
 			assertFalse(photoListGetModel.getIsFavoriteOnly());
@@ -346,7 +347,7 @@ public class PhotoRestControllerTest {
 
 			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
-			assertEquals(1L, photoDetailModelList.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertNull(photoDetailModelList.getFirst().getPhotoNo());
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
@@ -432,7 +433,7 @@ public class PhotoRestControllerTest {
 
 			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
-			assertEquals(1L, photoDetailModelList.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo());
 			assertFalse(photoDetailModelList.getFirst().getIsFavorite());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), photoDetailModelList.getFirst().getPhotoAt());
@@ -580,7 +581,7 @@ public class PhotoRestControllerTest {
 
 			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
-			assertEquals(1L, photoDetailModelList.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo());
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
@@ -635,7 +636,7 @@ public class PhotoRestControllerTest {
 
 			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
-			assertEquals(1L, photoDetailModelList.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo());
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
@@ -690,7 +691,7 @@ public class PhotoRestControllerTest {
 
 			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
-			assertEquals(1L, photoDetailModelList.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo());
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
@@ -742,7 +743,7 @@ public class PhotoRestControllerTest {
 
 			List<PhotoDeleteModel> photoDeleteModelList = photoDeleteModelCaptor.getValue();
 			assertEquals(1, photoDeleteModelList.size());
-			assertEquals(1L, photoDeleteModelList.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), photoDeleteModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDeleteModelList.getFirst().getPhotoNo());
 			assertEquals(imageFilePath, photoDeleteModelList.getFirst().getImageFilePath());
 			assertEquals("aaaaaaaa", photoAcountIdCaptor.getValue());
@@ -796,7 +797,7 @@ public class PhotoRestControllerTest {
 
 			List<PhotoDeleteModel> photoDeleteModelList = photoDeleteModelCaptor.getValue();
 			assertEquals(1, photoDeleteModelList.size());
-			assertEquals(1L, photoDeleteModelList.getFirst().getAccountNo());
+			assertEquals(new AccountNo(1L), photoDeleteModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDeleteModelList.getFirst().getPhotoNo());
 			assertEquals(imageFilePath, photoDeleteModelList.getFirst().getImageFilePath());
 			assertEquals("aaaaaaaa", photoAcountIdCaptor.getValue());
@@ -810,7 +811,7 @@ public class PhotoRestControllerTest {
 		private List<PhotoModel> createPhotoList() {
 			List<PhotoModel> photoList = new ArrayList<PhotoModel>();
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(1L)
 					.favoriteCount(1)
 					.isFavorite(false)
@@ -821,7 +822,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(2L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -832,7 +833,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(3L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -843,7 +844,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(4L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -854,7 +855,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(5L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -865,7 +866,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(6L)
 					.favoriteCount(1)
 					.isFavorite(true)
@@ -876,7 +877,7 @@ public class PhotoRestControllerTest {
 					.photoTagModelList(new ArrayList<PhotoTagModel>())
 					.build());
 			photoList.add(PhotoModel.builder()
-					.accountNo(1L)
+					.accountNo(new AccountNo(1L))
 					.photoNo(7L)
 					.favoriteCount(1)
 					.isFavorite(true)

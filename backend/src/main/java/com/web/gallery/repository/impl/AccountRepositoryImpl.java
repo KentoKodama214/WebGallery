@@ -27,7 +27,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 
 	private final AccountMapper accountMapper;
 	private final PasswordEncoder passwordEncoder;
-	
+
 	/**
 	 * Accountテーブルで該当するレコードを取得する
 	 *
@@ -56,60 +56,60 @@ public class AccountRepositoryImpl implements AccountRepository {
 
 	/**
 	 * Accountテーブルへ登録する
-	 * 
+	 *
 	 * @param	accountModel			{@link AccountModel}
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 */
 	@Override
 	public void regist(AccountModel accountModel) throws RegistFailureException {
 		Account account = Account.from(accountModel, passwordEncoder);
-		
+
 		try {
 			accountMapper.insert(account);
 		}
 		catch (DuplicateKeyException e) {
-			log.warn("Account: Duplicate Key (AccountId: {})", accountModel.getAccountId(), e);
+			log.warn("Account: Duplicate Key (AccountId: {})", accountModel.getAccountId().getValue(), e);
 			throw new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_ACCOUNT);
 		}
 	}
 
 	/**
 	 * Accountテーブルで該当するレコードを更新する
-	 * 
+	 *
 	 * @param	accountModel			{@link AccountModel}
-	 * @throws	UpdateFailureException	更新に失敗した場合 
+	 * @throws	UpdateFailureException	更新に失敗した場合
 	 */
 	@Override
 	public void update(AccountModel accountModel) throws UpdateFailureException {
-		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo());
+		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo().getValue());
 		Account targetAccount = Account.fromForUpdate(accountModel, passwordEncoder);
 
 		if (accountMapper.update(cndAccount, targetAccount) < 1) {
-			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo());
+			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().getValue());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT);
 		}
 	}
-	
+
 	/**
 	 * Accountテーブルのログイン失敗回数を更新する
-	 * 
+	 *
 	 * @param	accountModel			{@link AccountModel}
 	 * @throws	UpdateFailureException	更新に失敗した場合
 	 */
 	@Override
 	public void updateLoginFailureCount(AccountModel accountModel) throws UpdateFailureException {
-		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo());
+		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo().getValue());
 		Account targetAccount = Account.fromForUpdateLoginFailure(accountModel);
 
 		if (accountMapper.update(cndAccount, targetAccount) < 1) {
-			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo());
+			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().getValue());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT);
 		}
 	}
-	
+
 	/**
 	 * アカウントIDに該当するアカウントの存在有無をチェックする
-	 * 
+	 *
 	 * @param	accountNo	検索対象外のアカウント番号
 	 * @param	accountId	アカウントID
 	 * @return				true：存在する
@@ -118,7 +118,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	public Boolean isExistAccount(Long accountNo, String accountId) {
 		return accountMapper.isExistAccount(Account.conditionForExistCheck(accountNo, accountId));
 	}
-	
+
 	/**
 	 * アカウントの一覧を取得する
 	 *

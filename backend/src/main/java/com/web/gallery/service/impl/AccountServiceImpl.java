@@ -19,6 +19,7 @@ import com.web.gallery.config.LoginConfig;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoTagMst;
@@ -78,7 +79,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional
 	public Boolean registAccount(AccountModel accountModel) throws RegistFailureException {
-		Boolean isExist = accountRepository.isExistAccount(null, accountModel.getAccountId());
+		Boolean isExist = accountRepository.isExistAccount(null, accountModel.getAccountId().getValue());
 		if(!isExist) accountRepository.regist(accountModel);
 		return !isExist;
 	}
@@ -92,7 +93,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional
 	public Boolean updateAccount(AccountModel accountModel) throws UpdateFailureException {
-		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
+		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo().getValue(), accountModel.getAccountId().getValue());
 		if(!isExist) accountRepository.update(accountModel);
 		return isExist;
 	}
@@ -115,7 +116,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional(readOnly = true)
 	public List<AccountModel> getAccountList() {
-		return accountRepository.getAccountList().stream().sorted(Comparator.comparing(AccountModel::getAccountId)).toList();
+		return accountRepository.getAccountList().stream().sorted(Comparator.comparing(m -> m.getAccountId().getValue())).toList();
 	}
 
 	/**
@@ -125,7 +126,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional(readOnly = true)
 	public List<AccountModel> getAccountListForAdmin() {
-		return accountRepository.getAccountListAll().stream().sorted(Comparator.comparing(AccountModel::getAccountId)).toList();
+		return accountRepository.getAccountListAll().stream().sorted(Comparator.comparing(m -> m.getAccountId().getValue())).toList();
 	}
 
 	/**
@@ -137,7 +138,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	@Transactional
 	public void unlockAccount(Long accountNo) throws UpdateFailureException {
 		AccountModel updateModel = AccountModel.builder()
-				.accountNo(accountNo)
+				.accountNo(new AccountNo(accountNo))
 				.loginFailureCount(0)
 				.build();
 		accountRepository.updateLoginFailureCount(updateModel);
@@ -152,7 +153,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	@Transactional
 	public void lockAccount(Long accountNo) throws UpdateFailureException {
 		AccountModel updateModel = AccountModel.builder()
-				.accountNo(accountNo)
+				.accountNo(new AccountNo(accountNo))
 				.loginFailureCount(loginConfig.getFailCount())
 				.build();
 		accountRepository.updateLoginFailureCount(updateModel);
@@ -166,17 +167,19 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional
 	public void deleteAccount(Long accountNo, String accountId) {
+		AccountNo accountNoVo = new AccountNo(accountNo);
+
 		// 自分が登録したお気に入りを削除
-		photoFavoriteMapper.delete(PhotoFavorite.builder().accountNo(accountNo).build());
+		photoFavoriteMapper.delete(PhotoFavorite.builder().accountNo(accountNoVo).build());
 
 		// 自分の写真に対する他人のお気に入りを削除
-		photoFavoriteMapper.delete(PhotoFavorite.builder().favoritePhotoAccountNo(accountNo).build());
+		photoFavoriteMapper.delete(PhotoFavorite.builder().favoritePhotoAccountNo(accountNoVo).build());
 
 		// 写真タグを削除
-		photoTagMstMapper.delete(PhotoTagMst.builder().accountNo(accountNo).build());
+		photoTagMstMapper.delete(PhotoTagMst.builder().accountNo(accountNoVo).build());
 
 		// 写真マスタを物理削除
-		photoMstMapper.delete(PhotoMst.builder().accountNo(accountNo).build());
+		photoMstMapper.delete(PhotoMst.builder().accountNo(accountNoVo).build());
 
 		// アカウントを物理削除
 		accountRepository.delete(accountNo);
