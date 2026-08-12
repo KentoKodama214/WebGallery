@@ -27,6 +27,8 @@
       "Bash(just*)",
       "Bash(find*)",
       "Bash(./backend/gradlew*)",
+      "Bash(npm *)",
+      "Bash(npx *)",
       "Edit",
       "Write",
       "Read",
@@ -35,9 +37,11 @@
       "LS"
     ],
     "deny": [
+      "Bash(rm -rf*)",
       "Bash(git push * --force*)",
       "Bash(git push *-f*)",
       "Bash(git reset --hard*)",
+      "Bash(git clean -fd*)",
       "Bash(gh pr close*)",
       "Bash(gh repo delete*)"
     ]
