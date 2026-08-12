@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch",
+      "Bash(chmod*)",
+      "Bash(git add *)",
+      "Bash(git branch*)",
+      "Bash(git checkout*)",
+      "Bash(git commit*)",
+      "Bash(git diff*)",
+      "Bash(git fetch*)",
+      "Bash(git log*)",
+      "Bash(git push*)",
+      "Bash(git pull*)",
+      "Bash(git reset*)",
+      "Bash(git show*)",
+      "Bash(git stash*)",
+      "Bash(git status*)",
+      "Bash(git switch*)",
+      "Bash(gh api*)",
+      "Bash(gh pr *)",
+      "Bash(gh run *)",
+      "Bash(xargs*)",
+      "Bash(python3*)",
+      "Bash(docker*)",
+      "Bash(just*)",
+      "Bash(find*)",
+      "Bash(./backend/gradlew*)",
+      "Edit",
+      "Write",
+      "Read",
+      "Glob",
+      "Grep",
+      "LS"
+    ],
+    "deny": [
+      "Bash(git push * --force*)",
+      "Bash(git push *-f*)",
+      "Bash(git reset --hard*)",
+      "Bash(gh pr close*)",
+      "Bash(gh repo delete*)"
+    ]
+  }
+}
