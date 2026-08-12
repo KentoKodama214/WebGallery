@@ -103,7 +103,7 @@ public class AccountPrincipal implements UserDetails {
 	 */
 	@Override
 	public boolean isAccountNonLocked() {
-		return accountModel.getLoginFailureCount() < maxFailCount;
+		return accountModel.getLoginFailureCount().value() < maxFailCount;
 	}
 
 	/***

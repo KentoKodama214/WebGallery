@@ -33,6 +33,7 @@ import com.web.gallery.AccountPrincipal;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.common.CreatedAt;
@@ -68,7 +69,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 				.password(new Password("$2a$10$password1"))
 				.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 				.isDeleted(new IsDeleted(false))
-				.loginFailureCount(0)
+				.loginFailureCount(new LoginFailureCount(0))
 				.build();
 		AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
 		return new UsernamePasswordAuthenticationToken(

@@ -26,6 +26,9 @@ import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.JwtConfig;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.ExpiresAt;
+import com.web.gallery.domain.common.IsRevoked;
+import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.helper.JwtTokenProvider;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AuthTokenModel;
@@ -124,9 +127,9 @@ class AuthServiceImplTest {
 			String refreshToken = "valid-refresh-token";
 			RefreshTokenModel storedToken = RefreshTokenModel.builder()
 					.accountNo(new AccountNo(1L))
-					.tokenHash("hashed-token")
-					.expiresAt(OffsetDateTime.now().plusDays(7))
-					.isRevoked(false)
+					.tokenHash(new TokenHash("hashed-token"))
+					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
+					.isRevoked(new IsRevoked(false))
 					.build();
 
 			when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(storedToken);
@@ -154,9 +157,9 @@ class AuthServiceImplTest {
 		void refresh_revokedToken() {
 			RefreshTokenModel storedToken = RefreshTokenModel.builder()
 					.accountNo(new AccountNo(1L))
-					.tokenHash("hashed-token")
-					.expiresAt(OffsetDateTime.now().plusDays(7))
-					.isRevoked(true)
+					.tokenHash(new TokenHash("hashed-token"))
+					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
+					.isRevoked(new IsRevoked(true))
 					.build();
 
 			when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(storedToken);
@@ -171,9 +174,9 @@ class AuthServiceImplTest {
 		void refresh_expiredToken() {
 			RefreshTokenModel storedToken = RefreshTokenModel.builder()
 					.accountNo(new AccountNo(1L))
-					.tokenHash("hashed-token")
-					.expiresAt(OffsetDateTime.now().minusDays(1))
-					.isRevoked(false)
+					.tokenHash(new TokenHash("hashed-token"))
+					.expiresAt(new ExpiresAt(OffsetDateTime.now().minusDays(1)))
+					.isRevoked(new IsRevoked(false))
 					.build();
 
 			when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(storedToken);

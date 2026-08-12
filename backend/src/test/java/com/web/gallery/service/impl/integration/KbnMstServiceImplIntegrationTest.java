@@ -41,7 +41,7 @@ public class KbnMstServiceImplIntegrationTest {
 			List<KbnMstModel> actual = kbnMstServiceImpl.getPrefectureList();
 			assertEquals(47, actual.size());
 			
-			List<KbnMstModel> actualSorded = actual.stream().sorted(Comparator.comparing(KbnMstModel::getSortOrder)).toList();
+			List<KbnMstModel> actualSorded = actual.stream().sorted(Comparator.comparing(m -> m.getSortOrder().value())).toList();
 			assertEquals("Hokkaido", actualSorded.get(0).getKbnCode());
 			assertEquals("Aomori", actualSorded.get(1).getKbnCode());
 			assertEquals("Iwate", actualSorded.get(2).getKbnCode());

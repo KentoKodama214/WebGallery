@@ -1,6 +1,5 @@
 package com.web.gallery.entity;
 
-import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,6 +11,8 @@ import com.web.gallery.domain.account.BirthDate;
 import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.FreeMemo;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.LastLoginDatetime;
+import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.CreatedBy;
@@ -86,10 +87,10 @@ public class Account {
 	private AuthorityEnum authorityKbn;
 
 	/** 最終ログイン日時 */
-	private OffsetDateTime lastLoginDatetime;
+	private LastLoginDatetime lastLoginDatetime;
 
 	/** ログイン失敗回数 */
-	private Integer loginFailureCount;
+	private LoginFailureCount loginFailureCount;
 
 	/**
 	 * アカウント登録用のAccountModelからAccountエンティティを生成する
@@ -120,8 +121,8 @@ public class Account {
 					Optional.ofNullable(model.getFreeMemo())
 						.orElse(new FreeMemo(Consts.STRING_EMPTY)))
 				.authorityKbn(AuthorityEnum.MINI)
-				.lastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME)
-				.loginFailureCount(0)
+				.lastLoginDatetime(new LastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME))
+				.loginFailureCount(new LoginFailureCount(0))
 				.build();
 	}
 
@@ -151,9 +152,11 @@ public class Account {
 					Optional.ofNullable(model.getFreeMemo())
 						.orElse(new FreeMemo(Consts.STRING_EMPTY)))
 				.lastLoginDatetime(
-					Optional.ofNullable(model.getLastLoginDatetime()).orElse(Consts.MIN_OFFSET_DATE_TIME))
+					Optional.ofNullable(model.getLastLoginDatetime())
+						.orElse(new LastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME)))
 				.loginFailureCount(
-					Optional.ofNullable(model.getLoginFailureCount()).orElse(0))
+					Optional.ofNullable(model.getLoginFailureCount())
+						.orElse(new LoginFailureCount(0)))
 				.build();
 
 		if (model.getPassword() != null) {
@@ -172,7 +175,9 @@ public class Account {
 	public static Account fromForUpdateLoginFailure(AccountModel model) {
 		return Account.builder()
 				.lastLoginDatetime(model.getLastLoginDatetime())
-				.loginFailureCount(Optional.ofNullable(model.getLoginFailureCount()).orElse(0))
+				.loginFailureCount(
+					Optional.ofNullable(model.getLoginFailureCount())
+						.orElse(new LoginFailureCount(0)))
 				.build();
 	}
 

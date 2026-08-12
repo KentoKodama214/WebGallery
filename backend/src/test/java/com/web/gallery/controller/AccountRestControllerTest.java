@@ -38,6 +38,7 @@ import com.web.gallery.controller.request.ErrorRequest;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.BirthDate;
 import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.FreeMemo;
@@ -230,7 +231,7 @@ public class AccountRestControllerTest {
 			assertEquals("フリーメモ", accountModel.getFreeMemo().value());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNull(accountModel.getLastLoginDatetime());
-			assertEquals(0, accountModel.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), accountModel.getLoginFailureCount());
 		}
 
 		@Test
@@ -260,7 +261,7 @@ public class AccountRestControllerTest {
 			assertEquals("フリーメモ", accountModel.getFreeMemo().value());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNull(accountModel.getLastLoginDatetime());
-			assertEquals(0, accountModel.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), accountModel.getLoginFailureCount());
 		}
 
 		@Test
@@ -299,7 +300,7 @@ public class AccountRestControllerTest {
 			assertEquals("フリーメモ", accountModel.getFreeMemo().value());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNull(accountModel.getLastLoginDatetime());
-			assertEquals(0, accountModel.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), accountModel.getLoginFailureCount());
 		}
 	}
 

@@ -27,6 +27,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.LastLoginDatetime;
+import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.Password;
@@ -83,8 +85,8 @@ public class AccountRepositoryImplTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(""))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 
 			List<Account> accountList = new ArrayList<Account>();
@@ -155,8 +157,8 @@ public class AccountRepositoryImplTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(""))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 
 			List<Account> accountList = new ArrayList<Account>();
@@ -240,8 +242,8 @@ public class AccountRepositoryImplTest {
 			assertEquals(new ResidentPrefectureKbnCode("none"), accountCapture.getResidentPrefectureKbnCode());
 			assertEquals(new FreeMemo(""), accountCapture.getFreeMemo());
 			assertEquals(AuthorityEnum.MINI, accountCapture.getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), accountCapture.getLastLoginDatetime());
-			assertEquals(0, accountCapture.getLoginFailureCount());
+			assertEquals(new LastLoginDatetime(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))), accountCapture.getLastLoginDatetime());
+			assertEquals(new LoginFailureCount(0), accountCapture.getLoginFailureCount());
 		}
 
 		@Test
@@ -282,8 +284,8 @@ public class AccountRepositoryImplTest {
 			assertEquals(new ResidentPrefectureKbnCode("Okinawa"), accountCapture.getResidentPrefectureKbnCode());
 			assertEquals(new FreeMemo("フリーメモ"), accountCapture.getFreeMemo());
 			assertEquals(AuthorityEnum.MINI, accountCapture.getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), accountCapture.getLastLoginDatetime());
-			assertEquals(0, accountCapture.getLoginFailureCount());
+			assertEquals(new LastLoginDatetime(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))), accountCapture.getLastLoginDatetime());
+			assertEquals(new LoginFailureCount(0), accountCapture.getLoginFailureCount());
 		}
 
 		@Test
@@ -319,8 +321,8 @@ public class AccountRepositoryImplTest {
 			assertEquals(new ResidentPrefectureKbnCode("none"), accountCapture.getResidentPrefectureKbnCode());
 			assertEquals(new FreeMemo(""), accountCapture.getFreeMemo());
 			assertEquals(AuthorityEnum.MINI, accountCapture.getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), accountCapture.getLastLoginDatetime());
-			assertEquals(0, accountCapture.getLoginFailureCount());
+			assertEquals(new LastLoginDatetime(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))), accountCapture.getLastLoginDatetime());
+			assertEquals(new LoginFailureCount(0), accountCapture.getLoginFailureCount());
 		}
 	}
 	
@@ -363,8 +365,8 @@ public class AccountRepositoryImplTest {
 			assertEquals(new ResidentPrefectureKbnCode("none"), targetAccountCapture.getResidentPrefectureKbnCode());
 			assertEquals(new FreeMemo(""), targetAccountCapture.getFreeMemo());
 			assertEquals(null, targetAccountCapture.getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetAccountCapture.getLastLoginDatetime());
-			assertEquals(0, targetAccountCapture.getLoginFailureCount());
+			assertEquals(new LastLoginDatetime(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))), targetAccountCapture.getLastLoginDatetime());
+			assertEquals(new LoginFailureCount(0), targetAccountCapture.getLoginFailureCount());
 		}
 
 		@Test
@@ -381,8 +383,8 @@ public class AccountRepositoryImplTest {
 					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido"))
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa"))
 					.freeMemo(new FreeMemo("フリーメモ"))
-					.lastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
-					.loginFailureCount(2)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
+					.loginFailureCount(new LoginFailureCount(2))
 					.build();
 
 			ArgumentCaptor<Account> cndAccountCaptor = ArgumentCaptor.forClass(Account.class);
@@ -411,8 +413,8 @@ public class AccountRepositoryImplTest {
 			assertEquals(new ResidentPrefectureKbnCode("Okinawa"), targetAccountCapture.getResidentPrefectureKbnCode());
 			assertEquals(new FreeMemo("フリーメモ"), targetAccountCapture.getFreeMemo());
 			assertEquals(null, targetAccountCapture.getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetAccountCapture.getLastLoginDatetime());
-			assertEquals(2, targetAccountCapture.getLoginFailureCount());
+			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))), targetAccountCapture.getLastLoginDatetime());
+			assertEquals(new LoginFailureCount(2), targetAccountCapture.getLoginFailureCount());
 		}
 
 		@Test
@@ -450,8 +452,8 @@ public class AccountRepositoryImplTest {
 			assertEquals(new ResidentPrefectureKbnCode("none"), targetAccountCapture.getResidentPrefectureKbnCode());
 			assertEquals(new FreeMemo(""), targetAccountCapture.getFreeMemo());
 			assertEquals(null, targetAccountCapture.getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetAccountCapture.getLastLoginDatetime());
-			assertEquals(0, targetAccountCapture.getLoginFailureCount());
+			assertEquals(new LastLoginDatetime(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))), targetAccountCapture.getLastLoginDatetime());
+			assertEquals(new LoginFailureCount(0), targetAccountCapture.getLoginFailureCount());
 		}
 	}
 	
@@ -493,7 +495,7 @@ public class AccountRepositoryImplTest {
 			assertEquals(null, targetAccountCapture.getFreeMemo());
 			assertEquals(null, targetAccountCapture.getAuthorityKbn());
 			assertEquals(null, targetAccountCapture.getLastLoginDatetime());
-			assertEquals(0, targetAccountCapture.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), targetAccountCapture.getLoginFailureCount());
 		}
 
 		@Test
@@ -502,8 +504,8 @@ public class AccountRepositoryImplTest {
 		void updateLoginFailureCount_not_contain_null_parameter() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
-					.lastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
-					.loginFailureCount(2)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
+					.loginFailureCount(new LoginFailureCount(2))
 					.build();
 
 			ArgumentCaptor<Account> cndAccountCaptor = ArgumentCaptor.forClass(Account.class);
@@ -531,8 +533,8 @@ public class AccountRepositoryImplTest {
 			assertEquals(null, targetAccountCapture.getResidentPrefectureKbnCode());
 			assertEquals(null, targetAccountCapture.getFreeMemo());
 			assertEquals(null, targetAccountCapture.getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetAccountCapture.getLastLoginDatetime());
-			assertEquals(2, targetAccountCapture.getLoginFailureCount());
+			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))), targetAccountCapture.getLastLoginDatetime());
+			assertEquals(new LoginFailureCount(2), targetAccountCapture.getLoginFailureCount());
 		}
 
 		@Test
@@ -569,7 +571,7 @@ public class AccountRepositoryImplTest {
 			assertEquals(null, targetAccountCapture.getFreeMemo());
 			assertEquals(null, targetAccountCapture.getAuthorityKbn());
 			assertEquals(null, targetAccountCapture.getLastLoginDatetime());
-			assertEquals(0, targetAccountCapture.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), targetAccountCapture.getLoginFailureCount());
 		}
 	}
 	
@@ -651,8 +653,8 @@ public class AccountRepositoryImplTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Aomori"))
 					.freeMemo(new FreeMemo("よろしく"))
 					.authorityKbn(AuthorityEnum.MINI)
-					.lastLoginDatetime(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			Account account2 = Account.builder()
 					.accountNo(new AccountNo(2L))
@@ -670,8 +672,8 @@ public class AccountRepositoryImplTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa"))
 					.freeMemo(new FreeMemo("お願いします"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(1)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(1))
 					.build();
 
 			List<Account> accountList = new ArrayList<Account>();
@@ -697,8 +699,8 @@ public class AccountRepositoryImplTest {
 			assertEquals(new ResidentPrefectureKbnCode("Aomori"), actualAccountModel1.getResidentPrefectureKbnCode());
 			assertEquals(new FreeMemo("よろしく"), actualAccountModel1.getFreeMemo());
 			assertEquals(AuthorityEnum.MINI, actualAccountModel1.getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualAccountModel1.getLastLoginDatetime());
-			assertEquals(0, actualAccountModel1.getLoginFailureCount());
+			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualAccountModel1.getLastLoginDatetime());
+			assertEquals(new LoginFailureCount(0), actualAccountModel1.getLoginFailureCount());
 
 			AccountModel actualAccountModel2 = actual.stream().sorted(Comparator.comparing(m -> m.getAccountNo().value())).toList().getLast();
 			assertEquals(new AccountNo(2L), actualAccountModel2.getAccountNo());
@@ -711,8 +713,8 @@ public class AccountRepositoryImplTest {
 			assertEquals(new ResidentPrefectureKbnCode("Okinawa"), actualAccountModel2.getResidentPrefectureKbnCode());
 			assertEquals(new FreeMemo("お願いします"), actualAccountModel2.getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualAccountModel2.getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualAccountModel2.getLastLoginDatetime());
-			assertEquals(1, actualAccountModel2.getLoginFailureCount());
+			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualAccountModel2.getLastLoginDatetime());
+			assertEquals(new LoginFailureCount(1), actualAccountModel2.getLoginFailureCount());
 		}
 
 		@Test

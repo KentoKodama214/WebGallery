@@ -30,6 +30,8 @@ import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.LastLoginDatetime;
+import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.enumuration.AuthorityEnum;
 import com.web.gallery.exception.UpdateFailureException;
@@ -80,8 +82,8 @@ public class AdminAccountRestControllerTest {
 							.accountName(new AccountName("AAAAAAAA"))
 							.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 							.isDeleted(new IsDeleted(false))
-							.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
-							.loginFailureCount(0)
+							.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
+							.loginFailureCount(new LoginFailureCount(0))
 							.build(),
 					AccountModel.builder()
 							.accountNo(new AccountNo(2L))
@@ -89,8 +91,8 @@ public class AdminAccountRestControllerTest {
 							.accountName(new AccountName("BBBBBBBB"))
 							.authorityKbn(AuthorityEnum.MINI)
 							.isDeleted(new IsDeleted(true))
-							.lastLoginDatetime(OffsetDateTime.of(2024, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
-							.loginFailureCount(5)
+							.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
+							.loginFailureCount(new LoginFailureCount(5))
 							.build()
 			);
 

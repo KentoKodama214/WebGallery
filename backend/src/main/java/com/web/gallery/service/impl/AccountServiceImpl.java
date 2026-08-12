@@ -20,6 +20,8 @@ import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.LastLoginDatetime;
+import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoTagMst;
@@ -139,7 +141,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	public void unlockAccount(Long accountNo) throws UpdateFailureException {
 		AccountModel updateModel = AccountModel.builder()
 				.accountNo(new AccountNo(accountNo))
-				.loginFailureCount(0)
+				.loginFailureCount(new LoginFailureCount(0))
 				.build();
 		accountRepository.updateLoginFailureCount(updateModel);
 	}
@@ -154,7 +156,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	public void lockAccount(Long accountNo) throws UpdateFailureException {
 		AccountModel updateModel = AccountModel.builder()
 				.accountNo(new AccountNo(accountNo))
-				.loginFailureCount(loginConfig.getFailCount())
+				.loginFailureCount(new LoginFailureCount(loginConfig.getFailCount()))
 				.build();
 		accountRepository.updateLoginFailureCount(updateModel);
 	}
@@ -201,8 +203,8 @@ public class AccountServiceImpl implements UserDetailsService {
 
 		AccountModel updateModel = AccountModel.builder()
 				.accountNo(accountModel.getAccountNo())
-				.lastLoginDatetime(OffsetDateTime.now(Consts.JST))
-				.loginFailureCount(0)
+				.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.now(Consts.JST)))
+				.loginFailureCount(new LoginFailureCount(0))
 				.build();
 		accountRepository.updateLoginFailureCount(updateModel);
 	}
@@ -221,7 +223,7 @@ public class AccountServiceImpl implements UserDetailsService {
 		if(!Objects.isNull(accountModel)) {
 			AccountModel updateModel = AccountModel.builder()
 					.accountNo(accountModel.getAccountNo())
-					.loginFailureCount(accountModel.getLoginFailureCount() + 1)
+					.loginFailureCount(new LoginFailureCount(accountModel.getLoginFailureCount().value() + 1))
 					.build();
 			accountRepository.updateLoginFailureCount(updateModel);
 		}

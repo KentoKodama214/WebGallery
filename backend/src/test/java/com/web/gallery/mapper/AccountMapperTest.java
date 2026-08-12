@@ -27,6 +27,8 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.BirthDate;
 import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.FreeMemo;
+import com.web.gallery.domain.account.LastLoginDatetime;
+import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.CreatedAt;
@@ -77,8 +79,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -111,8 +113,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.SPECIAL)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -145,8 +147,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -179,8 +181,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -213,8 +215,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -247,8 +249,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -281,8 +283,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -315,8 +317,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -349,8 +351,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -383,8 +385,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo("フリーメモ"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -417,8 +419,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.MINI)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -432,7 +434,7 @@ public class AccountMapperTest {
 		@Order(12)
 		@DisplayName("正常系：最終ログイン日時でのselectで1件の場合")
 		void select_by_lastLoginDatetime() {
-			Account account = Account.builder().lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))).build();
+			Account account = Account.builder().lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -451,8 +453,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -466,7 +468,7 @@ public class AccountMapperTest {
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのselectで1件の場合")
 		void select_by_loginFailureCount() {
-			Account account = Account.builder().loginFailureCount(2).build();
+			Account account = Account.builder().loginFailureCount(new LoginFailureCount(2)).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -485,8 +487,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(2)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(2))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -531,8 +533,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.SPECIAL)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			Account expectedAccount2 = Account.builder()
@@ -551,8 +553,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(AuthorityEnum.SPECIAL)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -592,8 +594,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
 					.freeMemo(new FreeMemo("よろしく"))
 					.authorityKbn(AuthorityEnum.NORMAL)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-					.loginFailureCount(3)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.loginFailureCount(new LoginFailureCount(3))
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -714,7 +716,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：最終ログイン日時でのcount")
 		void count_by_lastLoginDatetime() {
 			Account account = Account.builder()
-					.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
@@ -724,7 +726,7 @@ public class AccountMapperTest {
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのcount")
 		void count_by_loginFailureCount() {
-			Account account = Account.builder().loginFailureCount(2).build();
+			Account account = Account.builder().loginFailureCount(new LoginFailureCount(2)).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -789,8 +791,8 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa"))
 					.freeMemo(new FreeMemo("フリーメモ"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(9)))
-					.loginFailureCount(0)
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(9))))
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
 			Integer actualCount = accountMapper.insert(insertAccount);
@@ -814,8 +816,8 @@ public class AccountMapperTest {
 							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
 							.freeMemo(new FreeMemo(rs.getString("free_memo")))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
-							.loginFailureCount(rs.getInt("login_failure_count"))
+							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
+							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 							.build());
 			
 			assertEquals(1, actualData.size());
@@ -833,7 +835,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo("フリーメモ"), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(0, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
 		}
 	}
 	
@@ -862,8 +864,8 @@ public class AccountMapperTest {
 							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
 							.freeMemo(new FreeMemo(rs.getString("free_memo")))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
-							.loginFailureCount(rs.getInt("login_failure_count"))
+							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
+							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 							.build());
 		}
 		
@@ -872,7 +874,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：アカウント番号でのupdate")
 		void update_by_accountNo() {
 			Account conditionAccount = Account.builder().accountNo(new AccountNo(1L)).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -893,7 +895,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -901,7 +903,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：削除フラグでのupdate")
 		void update_by_isDeleted() {
 			Account conditionAccount = Account.builder().isDeleted(new IsDeleted(true)).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -922,7 +924,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.SPECIAL, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -930,7 +932,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：アカウントIDでのupdate")
 		void update_by_accountId() {
 			Account conditionAccount = Account.builder().accountId(new AccountId("aaaaaaaa")).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -951,7 +953,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -959,7 +961,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：アカウント名でのupdate")
 		void update_by_accountName() {
 			Account conditionAccount = Account.builder().accountName(new AccountName("AAAAAAAA")).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -980,7 +982,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -988,7 +990,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：パスワードでのupdate")
 		void update_by_password() {
 			Account conditionAccount = Account.builder().password(new Password("$2a$10$password1")).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -1009,7 +1011,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1017,7 +1019,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：生年月日でのupdate")
 		void update_by_birthdate() {
 			Account conditionAccount = Account.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -1038,7 +1040,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1046,7 +1048,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：性別区分コードでのupdate")
 		void update_by_sexKbnCode() {
 			Account conditionAccount = Account.builder().sexKbn(SexEnum.MAN).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -1067,7 +1069,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1075,7 +1077,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：出身都道府県区分コードでのupdate")
 		void update_by_birthplacePrefectureKbnCode() {
 			Account conditionAccount = Account.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -1096,7 +1098,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1104,7 +1106,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：在住都道府県区分コードでのupdate")
 		void update_by_residentPrefectureKbnCode() {
 			Account conditionAccount = Account.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -1125,7 +1127,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1133,7 +1135,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：フリーメモでのupdate")
 		void update_by_freeMemo() {
 			Account conditionAccount = Account.builder().freeMemo(new FreeMemo("フリーメモ")).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -1154,7 +1156,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo("フリーメモ"), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1162,7 +1164,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：権限区分コードでのupdate")
 		void update_by_authorityKbnCode() {
 			Account conditionAccount = Account.builder().authorityKbn(AuthorityEnum.MINI).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -1183,7 +1185,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.MINI, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1191,9 +1193,9 @@ public class AccountMapperTest {
 		@DisplayName("正常系：最終ログイン日時でのupdate")
 		void update_by_lastLoginDatetime() {
 			Account conditionAccount = Account.builder()
-					.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -1214,15 +1216,15 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(1, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのupdate")
 		void update_by_loginFailureCounte() {
-			Account conditionAccount = Account.builder().loginFailureCount(2).build();
-			Account targetAccount = Account.builder().loginFailureCount(0).build();
+			Account conditionAccount = Account.builder().loginFailureCount(new LoginFailureCount(2)).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(0)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -1243,7 +1245,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(0, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1251,7 +1253,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：更新対象のレコードなし")
 		void update_not_found() {
 			Account conditionAccount = Account.builder().accountNo(new AccountNo(99L)).build();
-			Account targetAccount = Account.builder().loginFailureCount(0).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(0)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(0, actual);
 			
@@ -1264,7 +1266,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：2件以上updateの場合")
 		void update_accounts() {
 			Account conditionAccount = Account.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
-			Account targetAccount = Account.builder().loginFailureCount(1).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(2, actual);
 			
@@ -1285,7 +1287,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.get(0).getFreeMemo());
 			assertEquals(AuthorityEnum.SPECIAL, actualData.get(0).getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getLastLoginDatetime());
-			assertEquals(1, actualData.get(0).getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.get(0).getLoginFailureCount());
 			
 			assertEquals(new AccountNo(10L), actualData.get(1).getAccountNo());
 			assertEquals(new CreatedBy(10L), actualData.get(1).getCreatedBy());
@@ -1302,7 +1304,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo(""), actualData.get(1).getFreeMemo());
 			assertEquals(AuthorityEnum.SPECIAL, actualData.get(1).getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(1).getLastLoginDatetime());
-			assertEquals(1, actualData.get(1).getLoginFailureCount());
+			assertEquals(new LoginFailureCount(1), actualData.get(1).getLoginFailureCount());
 		}
 		
 		@Test
@@ -1316,7 +1318,7 @@ public class AccountMapperTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
 					.freeMemo(new FreeMemo("よろしく"))
 					.build();
-			Account targetAccount = Account.builder().loginFailureCount(0).build();
+			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(0)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 			
@@ -1337,7 +1339,7 @@ public class AccountMapperTest {
 			assertEquals(new FreeMemo("よろしく"), actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.NORMAL, actualData.getFirst().getAuthorityKbn());
 			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(0, actualData.getFirst().getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
 		}
 	}
 	
@@ -1366,8 +1368,8 @@ public class AccountMapperTest {
 							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
 							.freeMemo(new FreeMemo(rs.getString("free_memo")))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
-							.loginFailureCount(rs.getInt("login_failure_count"))
+							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
+							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 							.build());
 		}
 		
@@ -1541,7 +1543,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：最終ログイン日時でのdelete")
 		void delete_by_lastLoginDatetime() {
 			Account deleteAccount = Account.builder()
-					.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
@@ -1557,7 +1559,7 @@ public class AccountMapperTest {
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのdelete")
 		void delete_by_loginFailureCount() {
-			Account deleteAccount = Account.builder().loginFailureCount(2).build();
+			Account deleteAccount = Account.builder().loginFailureCount(new LoginFailureCount(2)).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			

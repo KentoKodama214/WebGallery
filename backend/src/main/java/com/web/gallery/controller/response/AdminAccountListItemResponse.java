@@ -57,8 +57,8 @@ public class AdminAccountListItemResponse {
 				.accountName(model.getAccountName().value())
 				.authorityKbn(model.getAuthorityKbn().getDbValue())
 				.isDeleted(model.getIsDeleted().value())
-				.lastLoginDatetime(model.getLastLoginDatetime())
-				.loginFailureCount(model.getLoginFailureCount())
+				.lastLoginDatetime(model.getLastLoginDatetime() != null ? model.getLastLoginDatetime().value() : null)
+				.loginFailureCount(model.getLoginFailureCount() != null ? model.getLoginFailureCount().value() : null)
 				.build();
 	}
 }

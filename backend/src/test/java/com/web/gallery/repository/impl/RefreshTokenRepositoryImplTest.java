@@ -19,6 +19,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.TokenId;
+import com.web.gallery.domain.common.TokenHash;
+import com.web.gallery.domain.common.ExpiresAt;
+import com.web.gallery.domain.common.IsRevoked;
 import com.web.gallery.entity.RefreshToken;
 import com.web.gallery.mapper.RefreshTokenMapper;
 import com.web.gallery.model.RefreshTokenModel;
@@ -42,8 +46,8 @@ public class RefreshTokenRepositoryImplTest {
 		void save_success() {
 			RefreshTokenModel refreshTokenModel = RefreshTokenModel.builder()
 					.accountNo(new AccountNo(1L))
-					.tokenHash("abc123hash")
-					.expiresAt(OffsetDateTime.now().plusDays(7))
+					.tokenHash(new TokenHash("abc123hash"))
+					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
 					.build();
 
 			doReturn(1).when(refreshTokenMapper).insert(any(RefreshToken.class));
@@ -64,11 +68,11 @@ public class RefreshTokenRepositoryImplTest {
 		void findByTokenHash_success() {
 			OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7);
 			RefreshToken mapperResult = RefreshToken.builder()
-					.tokenId(1L)
+					.tokenId(new TokenId(1L))
 					.accountNo(new AccountNo(1L))
-					.tokenHash("abc123hash")
-					.expiresAt(expiresAt)
-					.isRevoked(false)
+					.tokenHash(new TokenHash("abc123hash"))
+					.expiresAt(new ExpiresAt(expiresAt))
+					.isRevoked(new IsRevoked(false))
 					.build();
 
 			doReturn(mapperResult).when(refreshTokenMapper).selectByTokenHash("abc123hash");
@@ -77,9 +81,9 @@ public class RefreshTokenRepositoryImplTest {
 
 			assertNotNull(actual);
 			assertEquals(new AccountNo(1L), actual.getAccountNo());
-			assertEquals("abc123hash", actual.getTokenHash());
-			assertEquals(expiresAt, actual.getExpiresAt());
-			assertFalse(actual.getIsRevoked());
+			assertEquals(new TokenHash("abc123hash"), actual.getTokenHash());
+			assertEquals(new ExpiresAt(expiresAt), actual.getExpiresAt());
+			assertFalse(actual.getIsRevoked().value());
 			verify(refreshTokenMapper, times(1)).selectByTokenHash("abc123hash");
 		}
 

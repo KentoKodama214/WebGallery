@@ -7,6 +7,8 @@ import java.time.OffsetDateTime;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.ExpiresAt;
+import com.web.gallery.domain.common.TokenHash;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -82,8 +84,8 @@ public class AuthServiceImpl implements AuthService {
 		// リフレッシュトークンをDB保存（ハッシュ化して保存）
 		RefreshTokenModel refreshTokenModel = RefreshTokenModel.builder()
 				.accountNo(new AccountNo(principal.getAccountNo()))
-				.tokenHash(hashToken(refreshToken))
-				.expiresAt(OffsetDateTime.now().plusDays(jwtConfig.getRefreshTokenExpirationDays()))
+				.tokenHash(new TokenHash(hashToken(refreshToken)))
+				.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(jwtConfig.getRefreshTokenExpirationDays())))
 				.build();
 		refreshTokenRepository.save(refreshTokenModel);
 
@@ -107,11 +109,11 @@ public class AuthServiceImpl implements AuthService {
 		String tokenHash = hashToken(refreshToken);
 		RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 
-		if (storedToken == null || storedToken.getIsRevoked()) {
+		if (storedToken == null || storedToken.getIsRevoked().value()) {
 			throw new IllegalArgumentException("無効なリフレッシュトークンです");
 		}
 
-		if (storedToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
+		if (storedToken.getExpiresAt().value().isBefore(OffsetDateTime.now())) {
 			throw new IllegalArgumentException("リフレッシュトークンの有効期限が切れています");
 		}
 

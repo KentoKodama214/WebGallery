@@ -20,6 +20,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.entity.KbnMst;
+import com.web.gallery.domain.common.KbnClassCode;
+import com.web.gallery.domain.common.KbnCode;
+import com.web.gallery.domain.common.SortOrder;
+import com.web.gallery.domain.common.KbnGroupCode;
+import com.web.gallery.domain.common.KbnClassJapaneseName;
+import com.web.gallery.domain.common.KbnGroupJapaneseName;
+import com.web.gallery.domain.common.KbnJapaneseName;
+import com.web.gallery.domain.common.KbnClassEnglishName;
+import com.web.gallery.domain.common.KbnGroupEnglishName;
+import com.web.gallery.domain.common.KbnEnglishName;
+import com.web.gallery.domain.common.Explanation;
 import com.web.gallery.mapper.KbnMstMapper;
 import com.web.gallery.model.KbnMstModel;
 
@@ -44,30 +55,30 @@ public class KbnMstRepositoryImplTest {
 			
 			List<KbnMst> expected = new ArrayList<KbnMst>();
 			expected.add(KbnMst.builder()
-					.kbnClassCode(kbnClassCode)
-					.kbnCode("Hokkaido")
-					.sortOrder(1)
-					.kbnGroupCode("Hokkaido_Tohoku")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("北海道・東北")
-					.kbnJapaneseName("北海道")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("Hokkaido_Tohoku")
-					.kbnEnglishName("Hokkaido")
-					.explanation("北海道はでっかいどう")
+					.kbnClassCode(new KbnClassCode(kbnClassCode))
+					.kbnCode(new KbnCode("Hokkaido"))
+					.sortOrder(new SortOrder(1))
+					.kbnGroupCode(new KbnGroupCode("Hokkaido_Tohoku"))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName("北海道・東北"))
+					.kbnJapaneseName(new KbnJapaneseName("北海道"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName("Hokkaido_Tohoku"))
+					.kbnEnglishName(new KbnEnglishName("Hokkaido"))
+					.explanation(new Explanation("北海道はでっかいどう"))
 					.build());
 			expected.add(KbnMst.builder()
-					.kbnClassCode(kbnClassCode)
-					.kbnCode("Okinawa")
-					.sortOrder(47)
-					.kbnGroupCode("Kyushu_Okinawa")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("九州・沖縄")
-					.kbnJapaneseName("沖縄")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("Kyushu_Okinawa")
-					.kbnEnglishName("Okinawa")
-					.explanation("沖縄は南国")
+					.kbnClassCode(new KbnClassCode(kbnClassCode))
+					.kbnCode(new KbnCode("Okinawa"))
+					.sortOrder(new SortOrder(47))
+					.kbnGroupCode(new KbnGroupCode("Kyushu_Okinawa"))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName("九州・沖縄"))
+					.kbnJapaneseName(new KbnJapaneseName("沖縄"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName("Kyushu_Okinawa"))
+					.kbnEnglishName(new KbnEnglishName("Okinawa"))
+					.explanation(new Explanation("沖縄は南国"))
 					.build());
 			
 			ArgumentCaptor<KbnMst> kbnMstCaptor = ArgumentCaptor.forClass(KbnMst.class);
@@ -76,7 +87,7 @@ public class KbnMstRepositoryImplTest {
 			List<KbnMstModel> actual = kbnMstRepositoryImpl.get(kbnClassCode);
 			
 			KbnMst kbnMstCapture = kbnMstCaptor.getValue();
-			assertEquals(kbnClassCode, kbnMstCapture.getKbnClassCode());
+			assertEquals(new KbnClassCode(kbnClassCode), kbnMstCapture.getKbnClassCode());
 			
 			assertEquals(expected.size(), actual.size());
 			assertEquals(expected.get(0).getKbnClassCode(), actual.get(0).getKbnClassCode());
@@ -105,7 +116,7 @@ public class KbnMstRepositoryImplTest {
 			List<KbnMstModel> actual = kbnMstRepositoryImpl.get(kbnClassCode);
 
 			KbnMst kbnMstCapture = kbnMstCaptor.getValue();
-			assertEquals(kbnClassCode, kbnMstCapture.getKbnClassCode());
+			assertEquals(new KbnClassCode(kbnClassCode), kbnMstCapture.getKbnClassCode());
 			assertEquals(0, actual.size());
 		}
 	}

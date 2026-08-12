@@ -37,6 +37,7 @@ import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.FreeMemo;
+import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IsDeleted;
@@ -95,7 +96,7 @@ public class AccountServiceImplTest {
 			AccountModel account = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId(accountId))
-					.loginFailureCount(0)
+					.loginFailureCount(new LoginFailureCount(0))
 					.password(new Password(password))
 					.build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
@@ -206,7 +207,7 @@ public class AccountServiceImplTest {
 					.freeMemo(new FreeMemo(""))
 					.authorityKbn(null)
 					.lastLoginDatetime(null)
-					.loginFailureCount(0)
+					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId("aaaaaaaa");
 
@@ -219,7 +220,7 @@ public class AccountServiceImplTest {
 			assertEquals(new BirthplacePrefectureKbnCode("none"), actual.getBirthplacePrefectureKbnCode());
 			assertEquals(new ResidentPrefectureKbnCode("none"), actual.getResidentPrefectureKbnCode());
 			assertEquals(new FreeMemo(""), actual.getFreeMemo());
-			assertEquals(0, actual.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), actual.getLoginFailureCount());
 		}
 
 		@Test
@@ -314,7 +315,7 @@ public class AccountServiceImplTest {
 
 			AccountModel accountModel = captor.getValue();
 			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
-			assertEquals(0, accountModel.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), accountModel.getLoginFailureCount());
 			assertNull(accountModel.getLastLoginDatetime());
 		}
 
@@ -344,7 +345,7 @@ public class AccountServiceImplTest {
 
 			AccountModel accountModel = captor.getValue();
 			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
-			assertEquals(10, accountModel.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(10), accountModel.getLoginFailureCount());
 		}
 
 		@Test
@@ -433,7 +434,7 @@ public class AccountServiceImplTest {
 			assertNull(accountModel.getFreeMemo());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNotNull(accountModel.getLastLoginDatetime());
-			assertEquals(0, accountModel.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), accountModel.getLoginFailureCount());
 		}
 		
 		@Test
@@ -469,7 +470,7 @@ public class AccountServiceImplTest {
 			assertNull(accountModel.getFreeMemo());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNotNull(accountModel.getLastLoginDatetime());
-			assertEquals(0, accountModel.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(0), accountModel.getLoginFailureCount());
 		}
 	}
 	
@@ -493,7 +494,7 @@ public class AccountServiceImplTest {
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
-			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(1).build();
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(new LoginFailureCount(1)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -513,7 +514,7 @@ public class AccountServiceImplTest {
 			assertNull(accountModel.getFreeMemo());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNull(accountModel.getLastLoginDatetime());
-			assertEquals(2, accountModel.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(2), accountModel.getLoginFailureCount());
 		}
 		
 		@Test
@@ -554,7 +555,7 @@ public class AccountServiceImplTest {
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
-			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(1).build();
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(new LoginFailureCount(1)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -574,7 +575,7 @@ public class AccountServiceImplTest {
 			assertNull(accountModel.getFreeMemo());
 			assertNull(accountModel.getAuthorityKbn());
 			assertNull(accountModel.getLastLoginDatetime());
-			assertEquals(2, accountModel.getLoginFailureCount());
+			assertEquals(new LoginFailureCount(2), accountModel.getLoginFailureCount());
 		}
 	}
 }

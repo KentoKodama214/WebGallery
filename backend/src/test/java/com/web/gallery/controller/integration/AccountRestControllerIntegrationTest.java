@@ -39,6 +39,8 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.BirthDate;
 import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.FreeMemo;
+import com.web.gallery.domain.account.LastLoginDatetime;
+import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.CreatedBy;
@@ -232,8 +234,8 @@ public class AccountRestControllerIntegrationTest {
 						.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
 						.freeMemo(new FreeMemo(rs.getString("free_memo")))
 						.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-						.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
-						.loginFailureCount(rs.getInt("login_failure_count"))
+						.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
+						.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 						.build());
 		}
 
@@ -275,8 +277,8 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals(residentPrefectureKbnCode, actualData.getFirst().getResidentPrefectureKbnCode().value());
 			assertEquals(freeMemo, actualData.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.MINI, actualData.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().plusHours(9));
-			assertEquals(0, actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -346,8 +348,8 @@ public class AccountRestControllerIntegrationTest {
 						.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
 						.freeMemo(new FreeMemo(rs.getString("free_memo")))
 						.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-						.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
-						.loginFailureCount(rs.getInt("login_failure_count"))
+						.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
+						.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 						.build());
 		}
 
@@ -400,8 +402,8 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode().value());
 			assertEquals("", actual.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
-			assertEquals(0, actual.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertEquals(new LoginFailureCount(0), actual.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -453,8 +455,8 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode().value());
 			assertEquals("", actual.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
-			assertEquals(0, actual.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertEquals(new LoginFailureCount(0), actual.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -506,8 +508,8 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode().value());
 			assertEquals("", actual.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
-			assertEquals(0, actual.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertEquals(new LoginFailureCount(0), actual.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -559,8 +561,8 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode().value());
 			assertEquals("", actual.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
-			assertEquals(0, actual.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertEquals(new LoginFailureCount(0), actual.getFirst().getLoginFailureCount());
 		}
 
 		@Test

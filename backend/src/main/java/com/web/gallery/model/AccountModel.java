@@ -1,7 +1,5 @@
 package com.web.gallery.model;
 
-import java.time.OffsetDateTime;
-
 import com.web.gallery.controller.request.AccountRegistRequest;
 import com.web.gallery.controller.request.AccountUpdateRequest;
 import com.web.gallery.domain.account.AccountId;
@@ -10,6 +8,8 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.BirthDate;
 import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.FreeMemo;
+import com.web.gallery.domain.account.LastLoginDatetime;
+import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IsDeleted;
@@ -65,10 +65,10 @@ public class AccountModel {
 	private AuthorityEnum authorityKbn;
 
 	/** 最終ログイン日時 */
-	private OffsetDateTime lastLoginDatetime;
+	private LastLoginDatetime lastLoginDatetime;
 
 	/** ログイン失敗回数 */
-	private Integer loginFailureCount;
+	private LoginFailureCount loginFailureCount;
 
 	/** 削除フラグ */
 	private IsDeleted isDeleted;
@@ -113,7 +113,7 @@ public class AccountModel {
 				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode() != null ? new BirthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode()) : null)
 				.residentPrefectureKbnCode(request.getResidentPrefectureKbnCode() != null ? new ResidentPrefectureKbnCode(request.getResidentPrefectureKbnCode()) : null)
 				.freeMemo(request.getFreeMemo() != null ? new FreeMemo(request.getFreeMemo()) : null)
-				.loginFailureCount(0)
+				.loginFailureCount(new LoginFailureCount(0))
 				.build();
 	}
 

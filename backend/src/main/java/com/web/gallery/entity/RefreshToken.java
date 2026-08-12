@@ -2,9 +2,11 @@ package com.web.gallery.entity;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.common.ExpiresAt;
+import com.web.gallery.domain.common.IsRevoked;
+import com.web.gallery.domain.common.TokenHash;
+import com.web.gallery.domain.common.TokenId;
 import com.web.gallery.model.RefreshTokenModel;
-
-import java.time.OffsetDateTime;
 
 import lombok.Builder;
 import lombok.Data;
@@ -19,22 +21,22 @@ import lombok.Data;
 @Builder
 public class RefreshToken {
 	/** トークンID */
-	private Long tokenId;
+	private TokenId tokenId;
 
 	/** アカウント番号 */
 	private AccountNo accountNo;
 
 	/** トークンハッシュ */
-	private String tokenHash;
+	private TokenHash tokenHash;
 
 	/** 有効期限 */
-	private OffsetDateTime expiresAt;
+	private ExpiresAt expiresAt;
 
 	/** 作成日時 */
 	private CreatedAt createdAt;
 
 	/** 無効化フラグ */
-	private Boolean isRevoked;
+	private IsRevoked isRevoked;
 
 	/**
 	 * RefreshTokenModelからRefreshTokenエンティティを生成する

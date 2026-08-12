@@ -24,6 +24,17 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.web.gallery.domain.common.Explanation;
+import com.web.gallery.domain.common.KbnClassCode;
+import com.web.gallery.domain.common.KbnClassEnglishName;
+import com.web.gallery.domain.common.KbnClassJapaneseName;
+import com.web.gallery.domain.common.KbnCode;
+import com.web.gallery.domain.common.KbnEnglishName;
+import com.web.gallery.domain.common.KbnGroupCode;
+import com.web.gallery.domain.common.KbnGroupEnglishName;
+import com.web.gallery.domain.common.KbnGroupJapaneseName;
+import com.web.gallery.domain.common.KbnJapaneseName;
+import com.web.gallery.domain.common.SortOrder;
 import com.web.gallery.helper.KbnHelper;
 import com.web.gallery.model.KbnMstModel;
 import com.web.gallery.service.KbnMstService;
@@ -57,43 +68,43 @@ public class KbnMstRestControllerTest {
 		void getPrefectures_success() throws Exception {
 			List<KbnMstModel> prefectureList = new ArrayList<>();
 			KbnMstModel hokkaido = KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Hokkaido")
-					.sortOrder(1)
-					.kbnGroupCode("hokkaido_tohoku")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("北海道・東北地方")
-					.kbnJapaneseName("北海道")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("hokkaido_tohoku")
-					.kbnEnglishName("Hokkaido")
-					.explanation("")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Hokkaido"))
+					.sortOrder(new SortOrder(1))
+					.kbnGroupCode(new KbnGroupCode("hokkaido_tohoku"))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName("北海道・東北地方"))
+					.kbnJapaneseName(new KbnJapaneseName("北海道"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName("hokkaido_tohoku"))
+					.kbnEnglishName(new KbnEnglishName("Hokkaido"))
+					.explanation(new Explanation(""))
 					.build();
 			KbnMstModel aomori = KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Aomori")
-					.sortOrder(2)
-					.kbnGroupCode("hokkaido_tohoku")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("北海道・東北地方")
-					.kbnJapaneseName("青森県")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("hokkaido_tohoku")
-					.kbnEnglishName("Aomori")
-					.explanation("")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Aomori"))
+					.sortOrder(new SortOrder(2))
+					.kbnGroupCode(new KbnGroupCode("hokkaido_tohoku"))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName("北海道・東北地方"))
+					.kbnJapaneseName(new KbnJapaneseName("青森県"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName("hokkaido_tohoku"))
+					.kbnEnglishName(new KbnEnglishName("Aomori"))
+					.explanation(new Explanation(""))
 					.build();
 			KbnMstModel tokyo = KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Tokyo")
-					.sortOrder(13)
-					.kbnGroupCode("kanto")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("関東地方")
-					.kbnJapaneseName("東京都")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("kanto")
-					.kbnEnglishName("Tokyo")
-					.explanation("")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Tokyo"))
+					.sortOrder(new SortOrder(13))
+					.kbnGroupCode(new KbnGroupCode("kanto"))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName("関東地方"))
+					.kbnJapaneseName(new KbnJapaneseName("東京都"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName("kanto"))
+					.kbnEnglishName(new KbnEnglishName("Tokyo"))
+					.explanation(new Explanation(""))
 					.build();
 
 			prefectureList.add(hokkaido);
