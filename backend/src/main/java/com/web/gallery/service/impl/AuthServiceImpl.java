@@ -7,6 +7,9 @@ import java.time.OffsetDateTime;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.auth.AccessToken;
+import com.web.gallery.domain.auth.ExpiresIn;
+import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.ExpiresAt;
 import com.web.gallery.domain.common.TokenHash;
 
@@ -90,9 +93,9 @@ public class AuthServiceImpl implements AuthService {
 		refreshTokenRepository.save(refreshTokenModel);
 
 		return AuthTokenModel.builder()
-				.accessToken(accessToken)
-				.refreshToken(refreshToken)
-				.expiresIn((long) jwtConfig.getAccessTokenExpirationMinutes() * 60)
+				.accessToken(new AccessToken(accessToken))
+				.refreshToken(new RefreshTokenValue(refreshToken))
+				.expiresIn(new ExpiresIn((long) jwtConfig.getAccessTokenExpirationMinutes() * 60))
 				.build();
 	}
 
@@ -125,9 +128,9 @@ public class AuthServiceImpl implements AuthService {
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);
 
 		return AuthTokenModel.builder()
-				.accessToken(accessToken)
-				.refreshToken(refreshToken)
-				.expiresIn((long) jwtConfig.getAccessTokenExpirationMinutes() * 60)
+				.accessToken(new AccessToken(accessToken))
+				.refreshToken(new RefreshTokenValue(refreshToken))
+				.expiresIn(new ExpiresIn((long) jwtConfig.getAccessTokenExpirationMinutes() * 60))
 				.build();
 	}
 

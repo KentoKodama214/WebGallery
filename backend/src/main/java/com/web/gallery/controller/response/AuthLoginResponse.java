@@ -32,8 +32,8 @@ public class AuthLoginResponse {
 	 */
 	public static AuthLoginResponse from(AuthTokenModel model) {
 		return AuthLoginResponse.builder()
-				.accessToken(model.getAccessToken())
-				.expiresIn(model.getExpiresIn())
+				.accessToken(model.getAccessToken().value())
+				.expiresIn(model.getExpiresIn().value())
 				.build();
 	}
 }

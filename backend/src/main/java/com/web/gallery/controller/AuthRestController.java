@@ -74,7 +74,7 @@ public class AuthRestController {
 				authLoginRequest.getPassword());
 
 		ResponseCookie refreshTokenCookie = createRefreshTokenCookie(
-				tokenModel.getRefreshToken(),
+				tokenModel.getRefreshToken().value(),
 				jwtConfig.getRefreshTokenExpirationDays() * 24 * 60 * 60L);
 
 		AuthLoginResponse response = AuthLoginResponse.from(tokenModel);

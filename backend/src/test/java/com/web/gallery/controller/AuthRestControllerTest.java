@@ -23,6 +23,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.web.gallery.config.JwtConfig;
+import com.web.gallery.domain.auth.AccessToken;
+import com.web.gallery.domain.auth.ExpiresIn;
+import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.service.impl.AuthServiceImpl;
 
@@ -56,9 +59,9 @@ public class AuthRestControllerTest {
 		@DisplayName("正常系：ログイン成功")
 		void login_success() throws Exception {
 			AuthTokenModel tokenModel = AuthTokenModel.builder()
-					.accessToken("test-access-token")
-					.refreshToken("test-refresh-token")
-					.expiresIn(900L)
+					.accessToken(new AccessToken("test-access-token"))
+					.refreshToken(new RefreshTokenValue("test-refresh-token"))
+					.expiresIn(new ExpiresIn(900L))
 					.build();
 
 			doReturn(tokenModel).when(authServiceImpl).login("testuser", "password123");
@@ -147,9 +150,9 @@ public class AuthRestControllerTest {
 		@DisplayName("正常系：リフレッシュ成功")
 		void refresh_success() throws Exception {
 			AuthTokenModel tokenModel = AuthTokenModel.builder()
-					.accessToken("new-access-token")
-					.refreshToken("test-refresh-token")
-					.expiresIn(900L)
+					.accessToken(new AccessToken("new-access-token"))
+					.refreshToken(new RefreshTokenValue("test-refresh-token"))
+					.expiresIn(new ExpiresIn(900L))
 					.build();
 
 			doReturn(tokenModel).when(authServiceImpl).refresh("test-refresh-token");

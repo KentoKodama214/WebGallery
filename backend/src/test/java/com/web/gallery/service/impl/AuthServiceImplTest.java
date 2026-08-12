@@ -86,9 +86,9 @@ class AuthServiceImplTest {
 			AuthTokenModel result = authServiceImpl.login(accountId, password);
 
 			assertNotNull(result);
-			assertEquals("access-token", result.getAccessToken());
-			assertEquals("refresh-token", result.getRefreshToken());
-			assertEquals(900L, result.getExpiresIn());
+			assertEquals("access-token", result.getAccessToken().value());
+			assertEquals("refresh-token", result.getRefreshToken().value());
+			assertEquals(900L, result.getExpiresIn().value());
 
 			verify(refreshTokenRepository).revokeAllByAccountNo(1L);
 			verify(refreshTokenRepository).save(any(RefreshTokenModel.class));
@@ -148,8 +148,8 @@ class AuthServiceImplTest {
 			AuthTokenModel result = authServiceImpl.refresh(refreshToken);
 
 			assertNotNull(result);
-			assertEquals("new-access-token", result.getAccessToken());
-			assertEquals(900L, result.getExpiresIn());
+			assertEquals("new-access-token", result.getAccessToken().value());
+			assertEquals(900L, result.getExpiresIn().value());
 		}
 
 		@Test
