@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -52,7 +53,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 			PhotoFavoriteModel favoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(2L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 
 			photoFavoriteRepositoryImpl.regist(favoriteModel);
@@ -62,14 +63,14 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new AccountNo(2L), actualData.getFirst().getFavoritePhotoAccountNo());
-			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo());
+			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 		}
 		
@@ -80,7 +81,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 			PhotoFavoriteModel favoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 
 			assertThrows(RegistFailureException.class, () -> photoFavoriteRepositoryImpl.regist(favoriteModel));
@@ -100,7 +101,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			photoFavoriteRepositoryImpl.delete(favoriteDeleteModel);
@@ -110,7 +111,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
@@ -121,7 +122,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
@@ -135,7 +136,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(3L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			assertThrows(UpdateFailureException.class, () -> photoFavoriteRepositoryImpl.delete(favoriteDeleteModel));
@@ -154,7 +155,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 		void clear_success() {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			photoFavoriteRepositoryImpl.clear(favoriteDeleteModel);
@@ -164,7 +165,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
@@ -175,7 +176,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());

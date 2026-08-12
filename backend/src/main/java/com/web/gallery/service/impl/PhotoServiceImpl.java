@@ -16,6 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.enumuration.ErrorEnum;
 import com.web.gallery.enumuration.SortPhotoEnum;
@@ -132,7 +134,7 @@ public class PhotoServiceImpl implements PhotoService {
 				registPhotoTags(photoDetailModel.getPhotoTagModelList(), photoNo++);
 				uploadFile(filePath + filename, photoDetailModel.getImageFile());
 			} else {
-				savedPhotoNo = photoDetailModel.getPhotoNo();
+				savedPhotoNo = photoDetailModel.getPhotoNo().value();
 				photoMstRepository.update(photoDetailModel);
 				deletePhotoTags(photoDetailModel.getAccountNo(), photoDetailModel.getPhotoNo());
 				registPhotoTags(photoDetailModel.getPhotoTagModelList(), null);
@@ -164,7 +166,7 @@ public class PhotoServiceImpl implements PhotoService {
 
 			photoMstRepository.delete(photoDeleteModel);
 
-			String fileName = new File(photoDeleteModel.getImageFilePath()).getName();
+			String fileName = new File(photoDeleteModel.getImageFilePath().value()).getName();
 			fileRepository.delete(filePath + fileName);
 		}
 	}
@@ -205,15 +207,15 @@ public class PhotoServiceImpl implements PhotoService {
 	private Comparator<PhotoModel> getComparator(SortPhotoEnum sortBy) {
 		switch(sortBy) {
 			case PHOTO_AT:
-				return Comparator.comparing(PhotoModel::getPhotoAt).reversed();
+				return Comparator.comparing(photoModel -> photoModel.getPhotoAt().value(), Comparator.reverseOrder());
 			case FAVORITE:
 				return Comparator.comparing(PhotoModel::getFavoriteCount).reversed();
 			case SEASON:
 				return new Comparator<PhotoModel>() {
 					@Override
 					public int compare(PhotoModel photoModelA, PhotoModel photoModelB) {
-						OffsetDateTime photoAtA = photoModelA.getPhotoAt().plusHours(9);
-						OffsetDateTime photoAtB = photoModelB.getPhotoAt().plusHours(9);
+						OffsetDateTime photoAtA = photoModelA.getPhotoAt().value().plusHours(9);
+						OffsetDateTime photoAtB = photoModelB.getPhotoAt().value().plusHours(9);
 
 						LocalDate dateA = LocalDate.of(2000, photoAtA.getMonth().getValue(), photoAtA.getDayOfMonth());
 						LocalDate dateB = LocalDate.of(2000, photoAtB.getMonth().getValue(), photoAtB.getDayOfMonth());
@@ -222,7 +224,7 @@ public class PhotoServiceImpl implements PhotoService {
 					}
 				};
 			default:
-				return Comparator.comparing(PhotoModel::getPhotoAt).reversed();
+				return Comparator.comparing(photoModel -> photoModel.getPhotoAt().value(), Comparator.reverseOrder());
 		}
 	}
 
@@ -262,8 +264,8 @@ public class PhotoServiceImpl implements PhotoService {
 		if(tags.size() == 0 || Consts.STRING_EMPTY.equals(tags.getFirst())) return true;
 
 		List<String> photoTags = new ArrayList<String>();
-		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagJapaneseName()).toList());
-		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagEnglishName()).toList());
+		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagJapaneseName().value()).toList());
+		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagEnglishName().value()).toList());
 
 		return photoTags.containsAll(tags);
 	}
@@ -282,8 +284,8 @@ public class PhotoServiceImpl implements PhotoService {
 		for(PhotoTagModel photoTagModel : photoTagModelList) {
 			PhotoTagModel photoTagRegistModel = PhotoTagModel.builder()
 					.accountNo(photoTagModel.getAccountNo())
-					.photoNo(!Objects.isNull(newPhotoNo) ? newPhotoNo : photoTagModel.getPhotoNo())
-					.tagNo((long) tagNo)
+					.photoNo(!Objects.isNull(newPhotoNo) ? new PhotoNo(newPhotoNo) : photoTagModel.getPhotoNo())
+					.tagNo(new TagNo((long) tagNo))
 					.tagJapaneseName(photoTagModel.getTagJapaneseName())
 					.tagEnglishName(photoTagModel.getTagEnglishName())
 					.build();
@@ -313,7 +315,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @param	accountNo	削除する写真のアカウント番号
 	 * @param	photoNo		削除する写真の写真番号
 	 */
-	private void deletePhotoTags(AccountNo accountNo, Long photoNo) {
+	private void deletePhotoTags(AccountNo accountNo, PhotoNo photoNo) {
 		photoTagMstRepository.clear(
 			PhotoTagDeleteModel.builder()
 				.accountNo(accountNo)

@@ -5,6 +5,10 @@ import java.util.Optional;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoTagSaveRequest;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.TagEnglishName;
+import com.web.gallery.domain.photo.TagJapaneseName;
+import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.entity.PhotoTagMst;
 
 import lombok.Builder;
@@ -22,18 +26,18 @@ public class PhotoTagModel {
 	private AccountNo accountNo;
 
 	/** 写真番号 */
-	private Long photoNo;
+	private PhotoNo photoNo;
 
 	/** タグ番号 */
-	private Long tagNo;
+	private TagNo tagNo;
 
 	/** タグ日本語名 */
 	@NonNull
-	private String tagJapaneseName;
+	private TagJapaneseName tagJapaneseName;
 
 	/** タグ英語名 */
 	@NonNull
-	private String tagEnglishName;
+	private TagEnglishName tagEnglishName;
 
 	/**
 	 * PhotoTagMstエンティティからPhotoTagModelを生成する
@@ -60,10 +64,10 @@ public class PhotoTagModel {
 	public static PhotoTagModel from(PhotoTagSaveRequest request) {
 		return PhotoTagModel.builder()
 				.accountNo(new AccountNo(request.getAccountNo()))
-				.photoNo(request.getPhotoNo())
-				.tagNo(request.getTagNo())
-				.tagJapaneseName(Optional.ofNullable(request.getTagJapaneseName()).orElse(Consts.STRING_EMPTY))
-				.tagEnglishName(Optional.ofNullable(request.getTagEnglishName()).orElse(Consts.STRING_EMPTY))
+				.photoNo(request.getPhotoNo() != null ? new PhotoNo(request.getPhotoNo()) : null)
+				.tagNo(request.getTagNo() != null ? new TagNo(request.getTagNo()) : null)
+				.tagJapaneseName(new TagJapaneseName(Optional.ofNullable(request.getTagJapaneseName()).orElse(Consts.STRING_EMPTY)))
+				.tagEnglishName(new TagEnglishName(Optional.ofNullable(request.getTagEnglishName()).orElse(Consts.STRING_EMPTY)))
 				.build();
 	}
 }

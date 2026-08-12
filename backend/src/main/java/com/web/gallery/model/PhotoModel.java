@@ -1,10 +1,13 @@
 package com.web.gallery.model;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.PhotoAt;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.enumuration.DirectionEnum;
@@ -25,7 +28,7 @@ public class PhotoModel {
 
 	/** 写真番号 */
 	@NonNull
-	private Long photoNo;
+	private PhotoNo photoNo;
 
 	/** お気に入り数 */
 	@NonNull
@@ -37,15 +40,15 @@ public class PhotoModel {
 
 	/** 撮影日時 */
 	@NonNull
-	private OffsetDateTime photoAt;
+	private PhotoAt photoAt;
 
 	/** 画像ファイルパス */
 	@NonNull
-	private String imageFilePath;
+	private ImageFilePath imageFilePath;
 
 	/** キャプション */
 	@NonNull
-	private String caption;
+	private Caption caption;
 
 	/**
 	 * 向き区分
@@ -70,17 +73,17 @@ public class PhotoModel {
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream()
 				.filter(tag ->
 					tag.getAccountNo().value().equals(dto.getAccountNo()) &&
-					Objects.equals(tag.getPhotoNo(), dto.getPhotoNo()))
+					Objects.equals(tag.getPhotoNo().value(), dto.getPhotoNo()))
 				.map(PhotoTagModel::from)
 				.toList();
 		return PhotoModel.builder()
 				.accountNo(new AccountNo(dto.getAccountNo()))
-				.photoNo(dto.getPhotoNo())
+				.photoNo(new PhotoNo(dto.getPhotoNo()))
 				.favoriteCount(dto.getFavoriteCount())
 				.isFavorite(dto.getIsFavorite())
-				.photoAt(dto.getPhotoAt().plusHours(9))
-				.imageFilePath(dto.getImageFilePath())
-				.caption(dto.getCaption())
+				.photoAt(new PhotoAt(dto.getPhotoAt().plusHours(9)))
+				.imageFilePath(new ImageFilePath(dto.getImageFilePath()))
+				.caption(new Caption(dto.getCaption()))
 				.directionKbn(dto.getDirectionKbn())
 				.photoTagModelList(photoTagModelList)
 				.build();

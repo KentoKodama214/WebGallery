@@ -21,6 +21,20 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.PhotoAt;
+import com.web.gallery.domain.photo.LocationNo;
+import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.PhotoJapaneseTitle;
+import com.web.gallery.domain.photo.PhotoEnglishTitle;
+import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.FocalLength;
+import com.web.gallery.domain.photo.FValue;
+import com.web.gallery.domain.photo.ShutterSpeed;
+import com.web.gallery.domain.photo.Iso;
+import com.web.gallery.domain.photo.TagNo;
+import com.web.gallery.domain.photo.TagJapaneseName;
+import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.model.PhotoDetailGetModel;
@@ -67,10 +81,10 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 
 			assertEquals(2, actual.size());
 			assertEquals(new AccountNo(2L), actual.get(0).getAccountNo());
-			assertEquals(1L, actual.get(0).getPhotoNo());
+			assertEquals(1L, actual.get(0).getPhotoNo().value());
 			assertEquals(0, actual.get(0).getPhotoTagModelList().size());
 			assertEquals(new AccountNo(2L), actual.get(1).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoNo());
+			assertEquals(2L, actual.get(1).getPhotoNo().value());
 			assertEquals(0, actual.get(1).getPhotoTagModelList().size());
 		}
 		
@@ -88,37 +102,37 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			assertEquals(2, actual.size());
 			
 			assertEquals(new AccountNo(1L), actual.get(0).getAccountNo());
-			assertEquals(1L, actual.get(0).getPhotoNo());
+			assertEquals(1L, actual.get(0).getPhotoNo().value());
 			assertEquals(2, actual.get(0).getPhotoTagModelList().size());
 			assertEquals(new AccountNo(1L), actual.get(0).getPhotoTagModelList().get(0).getAccountNo());
-			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getPhotoNo());
-			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getTagNo());
-			assertEquals("太陽", actual.get(0).getPhotoTagModelList().get(0).getTagJapaneseName());
-			assertEquals("sun", actual.get(0).getPhotoTagModelList().get(0).getTagEnglishName());
+			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getPhotoNo().value());
+			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getTagNo().value());
+			assertEquals("太陽", actual.get(0).getPhotoTagModelList().get(0).getTagJapaneseName().value());
+			assertEquals("sun", actual.get(0).getPhotoTagModelList().get(0).getTagEnglishName().value());
 			assertEquals(new AccountNo(1L), actual.get(0).getPhotoTagModelList().get(1).getAccountNo());
-			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(1).getPhotoNo());
-			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(1).getTagNo());
-			assertEquals("青空", actual.get(0).getPhotoTagModelList().get(1).getTagJapaneseName());
-			assertEquals("bluesky", actual.get(0).getPhotoTagModelList().get(1).getTagEnglishName());
+			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(1).getPhotoNo().value());
+			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(1).getTagNo().value());
+			assertEquals("青空", actual.get(0).getPhotoTagModelList().get(1).getTagJapaneseName().value());
+			assertEquals("bluesky", actual.get(0).getPhotoTagModelList().get(1).getTagEnglishName().value());
 			
 			assertEquals(new AccountNo(1L), actual.get(1).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoNo());
+			assertEquals(2L, actual.get(1).getPhotoNo().value());
 			assertEquals(3, actual.get(1).getPhotoTagModelList().size());
 			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(0).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(0).getPhotoNo());
-			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(0).getTagNo());
-			assertEquals("太陽", actual.get(1).getPhotoTagModelList().get(0).getTagJapaneseName());
-			assertEquals("sun", actual.get(1).getPhotoTagModelList().get(0).getTagEnglishName());
+			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(0).getPhotoNo().value());
+			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(0).getTagNo().value());
+			assertEquals("太陽", actual.get(1).getPhotoTagModelList().get(0).getTagJapaneseName().value());
+			assertEquals("sun", actual.get(1).getPhotoTagModelList().get(0).getTagEnglishName().value());
 			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(1).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(1).getPhotoNo());
-			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(1).getTagNo());
-			assertEquals("曇天", actual.get(1).getPhotoTagModelList().get(1).getTagJapaneseName());
-			assertEquals("cloudy", actual.get(1).getPhotoTagModelList().get(1).getTagEnglishName());
+			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(1).getPhotoNo().value());
+			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(1).getTagNo().value());
+			assertEquals("曇天", actual.get(1).getPhotoTagModelList().get(1).getTagJapaneseName().value());
+			assertEquals("cloudy", actual.get(1).getPhotoTagModelList().get(1).getTagEnglishName().value());
 			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(2).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(2).getPhotoNo());
-			assertEquals(3L, actual.get(1).getPhotoTagModelList().get(2).getTagNo());
-			assertEquals("花", actual.get(1).getPhotoTagModelList().get(2).getTagJapaneseName());
-			assertEquals("flower", actual.get(1).getPhotoTagModelList().get(2).getTagEnglishName());
+			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(2).getPhotoNo().value());
+			assertEquals(3L, actual.get(1).getPhotoTagModelList().get(2).getTagNo().value());
+			assertEquals("花", actual.get(1).getPhotoTagModelList().get(2).getTagJapaneseName().value());
+			assertEquals("flower", actual.get(1).getPhotoTagModelList().get(2).getTagEnglishName().value());
 		}
 	}
 	
@@ -135,29 +149,29 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(2L))
-					.photoNo(1L)
+					.photoNo(new PhotoNo(1L))
 					.build();
 			
 			PhotoDetailModel actual = photoDetailRepositoryImpl.getPhotoDetail(photoDetailGetModel);
 			
 			assertEquals(new AccountNo(2L), actual.getAccountNo());
-			assertEquals(1L, actual.getPhotoNo());
+			assertEquals(1L, actual.getPhotoNo().value());
 			assertFalse(actual.getIsFavorite());
-			assertEquals(OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt());
-			assertEquals(4L, actual.getLocationNo());
+			assertEquals(OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt().value());
+			assertEquals(4L, actual.getLocationNo().value());
 			assertEquals("住所4", actual.getAddress());
 			assertEquals(0, BigDecimal.valueOf(38.400).compareTo(actual.getLatitude()));
 			assertEquals(0, BigDecimal.valueOf(115.400).compareTo(actual.getLongitude()));
 			assertEquals("ロケーション4", actual.getLocationName());
-			assertEquals("https://www.xxx.com/DSC444.jpg", actual.getImageFilePath());
-			assertEquals("タイトル21", actual.getPhotoJapaneseTitle());
-			assertEquals("title21", actual.getPhotoEnglishTitle());
-			assertEquals("キャプション21", actual.getCaption());
+			assertEquals("https://www.xxx.com/DSC444.jpg", actual.getImageFilePath().value());
+			assertEquals("タイトル21", actual.getPhotoJapaneseTitle().value());
+			assertEquals("title21", actual.getPhotoEnglishTitle().value());
+			assertEquals("キャプション21", actual.getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.getDirectionKbn());
-			assertEquals(80, actual.getFocalLength());
-			assertEquals(0, BigDecimal.valueOf(12.0).compareTo(actual.getFValue()));
-			assertEquals(0, BigDecimal.valueOf(5).compareTo(actual.getShutterSpeed()));
-			assertEquals(800, actual.getIso());
+			assertEquals(80, actual.getFocalLength().value());
+			assertEquals(0, BigDecimal.valueOf(12.0).compareTo(actual.getFValue().value()));
+			assertEquals(0, BigDecimal.valueOf(5).compareTo(actual.getShutterSpeed().value()));
+			assertEquals(800, actual.getIso().value());
 			assertEquals(0, actual.getPhotoTagModelList().size());
 		}
 		
@@ -168,41 +182,41 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))
-					.photoNo(1L)
+					.photoNo(new PhotoNo(1L))
 					.build();
 			
 			PhotoDetailModel actual = photoDetailRepositoryImpl.getPhotoDetail(photoDetailGetModel);
 			
 			assertEquals(new AccountNo(1L), actual.getAccountNo());
-			assertEquals(1L, actual.getPhotoNo());
+			assertEquals(1L, actual.getPhotoNo().value());
 			assertTrue(actual.getIsFavorite());
-			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt());
-			assertEquals(1L, actual.getLocationNo());
+			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt().value());
+			assertEquals(1L, actual.getLocationNo().value());
 			assertEquals("住所1", actual.getAddress());
 			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getLatitude()));
 			assertEquals(0, BigDecimal.valueOf(115.100).compareTo(actual.getLongitude()));
 			assertEquals("ロケーション1", actual.getLocationName());
-			assertEquals("https://www.xxx.com/DSC111.jpg", actual.getImageFilePath());
-			assertEquals("タイトル11", actual.getPhotoJapaneseTitle());
-			assertEquals("title11", actual.getPhotoEnglishTitle());
-			assertEquals("キャプション11", actual.getCaption());
+			assertEquals("https://www.xxx.com/DSC111.jpg", actual.getImageFilePath().value());
+			assertEquals("タイトル11", actual.getPhotoJapaneseTitle().value());
+			assertEquals("title11", actual.getPhotoEnglishTitle().value());
+			assertEquals("キャプション11", actual.getCaption().value());
 			assertEquals(DirectionEnum.VERTICAL, actual.getDirectionKbn());
-			assertEquals(24, actual.getFocalLength());
-			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actual.getFValue()));
-			assertEquals(0, BigDecimal.valueOf(1).compareTo(actual.getShutterSpeed()));
-			assertEquals(100, actual.getIso());
+			assertEquals(24, actual.getFocalLength().value());
+			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actual.getFValue().value()));
+			assertEquals(0, BigDecimal.valueOf(1).compareTo(actual.getShutterSpeed().value()));
+			assertEquals(100, actual.getIso().value());
 			assertEquals(2, actual.getPhotoTagModelList().size());
 			
 			assertEquals(new AccountNo(1L), actual.getPhotoTagModelList().get(0).getAccountNo());
-			assertEquals(1L, actual.getPhotoTagModelList().get(0).getPhotoNo());
-			assertEquals(1L, actual.getPhotoTagModelList().get(0).getTagNo());
-			assertEquals("太陽", actual.getPhotoTagModelList().get(0).getTagJapaneseName());
-			assertEquals("sun", actual.getPhotoTagModelList().get(0).getTagEnglishName());
+			assertEquals(1L, actual.getPhotoTagModelList().get(0).getPhotoNo().value());
+			assertEquals(1L, actual.getPhotoTagModelList().get(0).getTagNo().value());
+			assertEquals("太陽", actual.getPhotoTagModelList().get(0).getTagJapaneseName().value());
+			assertEquals("sun", actual.getPhotoTagModelList().get(0).getTagEnglishName().value());
 			assertEquals(new AccountNo(1L), actual.getPhotoTagModelList().get(1).getAccountNo());
-			assertEquals(1L, actual.getPhotoTagModelList().get(1).getPhotoNo());
-			assertEquals(2L, actual.getPhotoTagModelList().get(1).getTagNo());
-			assertEquals("青空", actual.getPhotoTagModelList().get(1).getTagJapaneseName());
-			assertEquals("bluesky", actual.getPhotoTagModelList().get(1).getTagEnglishName());
+			assertEquals(1L, actual.getPhotoTagModelList().get(1).getPhotoNo().value());
+			assertEquals(2L, actual.getPhotoTagModelList().get(1).getTagNo().value());
+			assertEquals("青空", actual.getPhotoTagModelList().get(1).getTagJapaneseName().value());
+			assertEquals("bluesky", actual.getPhotoTagModelList().get(1).getTagEnglishName().value());
 		}
 		
 		@Test
@@ -212,7 +226,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))
-					.photoNo(99L)
+					.photoNo(new PhotoNo(99L))
 					.build();
 			
 			assertThrows(PhotoNotFoundException.class, () -> photoDetailRepositoryImpl.getPhotoDetail(photoDetailGetModel));

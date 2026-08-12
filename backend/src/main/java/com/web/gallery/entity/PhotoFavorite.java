@@ -3,6 +3,7 @@ package com.web.gallery.entity;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoFavoriteModel;
 
@@ -25,7 +26,7 @@ public class PhotoFavorite {
 	private AccountNo favoritePhotoAccountNo;
 
 	/** お気に入り写真番号 */
-	private Long favoritePhotoNo;
+	private PhotoNo favoritePhotoNo;
 
 	/** 作成者 */
 	private CreatedBy createdBy;

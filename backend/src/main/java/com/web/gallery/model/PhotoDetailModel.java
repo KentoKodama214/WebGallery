@@ -1,7 +1,6 @@
 package com.web.gallery.model;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -13,6 +12,17 @@ import org.springframework.web.multipart.MultipartFile;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoSaveRequest;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.FValue;
+import com.web.gallery.domain.photo.FocalLength;
+import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.Iso;
+import com.web.gallery.domain.photo.LocationNo;
+import com.web.gallery.domain.photo.PhotoAt;
+import com.web.gallery.domain.photo.PhotoEnglishTitle;
+import com.web.gallery.domain.photo.PhotoJapaneseTitle;
+import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.dto.PhotoDetailDto;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.enumuration.DirectionEnum;
@@ -32,16 +42,16 @@ public class PhotoDetailModel {
 	private AccountNo accountNo;
 
 	/** 写真番号 */
-	private Long photoNo;
+	private PhotoNo photoNo;
 
 	/** お気に入り */
 	private Boolean isFavorite;
 
 	/** 撮影日時 */
-	private OffsetDateTime photoAt;
+	private PhotoAt photoAt;
 
 	/** ロケーション番号 */
-	private Long locationNo;
+	private LocationNo locationNo;
 
 	/** 住所 */
 	private String address;
@@ -60,16 +70,16 @@ public class PhotoDetailModel {
 
 	/** 画像ファイルパス */
 	@NonNull
-	private String imageFilePath;
+	private ImageFilePath imageFilePath;
 
 	/** 写真タイトル日本語名 */
-	private String photoJapaneseTitle;
+	private PhotoJapaneseTitle photoJapaneseTitle;
 
 	/** 写真タイトル英語名 */
-	private String photoEnglishTitle;
+	private PhotoEnglishTitle photoEnglishTitle;
 
 	/** キャプション */
-	private String caption;
+	private Caption caption;
 
 	/**
 	 * 向き区分
@@ -79,16 +89,16 @@ public class PhotoDetailModel {
 	private DirectionEnum directionKbn;
 
 	/** 焦点距離 */
-	private Integer focalLength;
+	private FocalLength focalLength;
 
 	/** F値 */
-	private BigDecimal fValue;
+	private FValue fValue;
 
 	/** シャッタースピード */
-	private BigDecimal shutterSpeed;
+	private ShutterSpeed shutterSpeed;
 
 	/** ISO */
-	private Integer iso;
+	private Iso iso;
 
 	/** 写真タグリスト */
 	private List<PhotoTagModel> photoTagModelList;
@@ -104,24 +114,24 @@ public class PhotoDetailModel {
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
 		return PhotoDetailModel.builder()
 				.accountNo(new AccountNo(dto.getAccountNo()))
-				.photoNo(dto.getPhotoNo())
+				.photoNo(new PhotoNo(dto.getPhotoNo()))
 				.isFavorite(dto.getIsFavorite())
 				.photoAt(
-					dto.getPhotoAt().isEqual(Consts.MIN_OFFSET_DATE_TIME) ? null : dto.getPhotoAt().plusHours(9))
-				.locationNo(dto.getLocationNo())
+					dto.getPhotoAt().isEqual(Consts.MIN_OFFSET_DATE_TIME) ? null : new PhotoAt(dto.getPhotoAt().plusHours(9)))
+				.locationNo(new LocationNo(dto.getLocationNo()))
 				.address(dto.getAddress())
 				.latitude(dto.getLatitude())
 				.longitude(dto.getLongitude())
 				.locationName(dto.getLocationName())
-				.imageFilePath(dto.getImageFilePath())
-				.photoJapaneseTitle(dto.getPhotoJapaneseTitle())
-				.photoEnglishTitle(dto.getPhotoEnglishTitle())
-				.caption(dto.getCaption())
+				.imageFilePath(new ImageFilePath(dto.getImageFilePath()))
+				.photoJapaneseTitle(new PhotoJapaneseTitle(dto.getPhotoJapaneseTitle()))
+				.photoEnglishTitle(new PhotoEnglishTitle(dto.getPhotoEnglishTitle()))
+				.caption(new Caption(dto.getCaption()))
 				.directionKbn(dto.getDirectionKbn())
-				.focalLength(dto.getFocalLength() != 0 ? dto.getFocalLength() : null)
-				.fValue(dto.getFValue().compareTo(BigDecimal.ZERO) == 1 ? dto.getFValue() : null)
-				.shutterSpeed(dto.getShutterSpeed().compareTo(BigDecimal.ZERO) == 1 ? dto.getShutterSpeed() : null)
-				.iso(dto.getIso() != 0 ? dto.getIso() : null)
+				.focalLength(dto.getFocalLength() != 0 ? new FocalLength(dto.getFocalLength()) : null)
+				.fValue(dto.getFValue().compareTo(BigDecimal.ZERO) == 1 ? new FValue(dto.getFValue()) : null)
+				.shutterSpeed(dto.getShutterSpeed().compareTo(BigDecimal.ZERO) == 1 ? new ShutterSpeed(dto.getShutterSpeed()) : null)
+				.iso(dto.getIso() != 0 ? new Iso(dto.getIso()) : null)
 				.photoTagModelList(photoTagModelList)
 				.build();
 	}
@@ -140,25 +150,25 @@ public class PhotoDetailModel {
 						.collect(Collectors.toList());
 		return PhotoDetailModel.builder()
 				.accountNo(new AccountNo(request.getAccountNo()))
-				.photoNo(request.getPhotoNo())
+				.photoNo(request.getPhotoNo() != null ? new PhotoNo(request.getPhotoNo()) : null)
 				.isFavorite(request.getIsFavorite())
 				.photoAt(Optional.ofNullable(request.getPhotoAt())
-						.map(photoAt -> photoAt.atOffset(Consts.JST)).orElse(null))
-				.locationNo(request.getLocationNo())
+						.map(photoAt -> new PhotoAt(photoAt.atOffset(Consts.JST))).orElse(null))
+				.locationNo(request.getLocationNo() != null ? new LocationNo(request.getLocationNo()) : null)
 				.address(request.getAddress())
 				.latitude(request.getLatitude())
 				.longitude(request.getLongitude())
 				.locationName(request.getLocationName())
 				.imageFile(request.getImageFile())
-				.imageFilePath(Optional.ofNullable(request.getImageFilePath()).orElse(Consts.STRING_EMPTY))
-				.photoJapaneseTitle(request.getPhotoJapaneseTitle())
-				.photoEnglishTitle(request.getPhotoEnglishTitle())
-				.caption(request.getCaption())
+				.imageFilePath(new ImageFilePath(Optional.ofNullable(request.getImageFilePath()).orElse(Consts.STRING_EMPTY)))
+				.photoJapaneseTitle(request.getPhotoJapaneseTitle() != null ? new PhotoJapaneseTitle(request.getPhotoJapaneseTitle()) : null)
+				.photoEnglishTitle(request.getPhotoEnglishTitle() != null ? new PhotoEnglishTitle(request.getPhotoEnglishTitle()) : null)
+				.caption(request.getCaption() != null ? new Caption(request.getCaption()) : null)
 				.directionKbn(request.getDirectionKbn())
-				.focalLength(request.getFocalLength())
-				.fValue(request.getFValue())
-				.shutterSpeed(request.getShutterSpeed())
-				.iso(request.getIso())
+				.focalLength(request.getFocalLength() != null ? new FocalLength(request.getFocalLength()) : null)
+				.fValue(request.getFValue() != null ? new FValue(request.getFValue()) : null)
+				.shutterSpeed(request.getShutterSpeed() != null ? new ShutterSpeed(request.getShutterSpeed()) : null)
+				.iso(request.getIso() != null ? new Iso(request.getIso()) : null)
 				.photoTagModelList(photoTagModelList)
 				.build();
 	}

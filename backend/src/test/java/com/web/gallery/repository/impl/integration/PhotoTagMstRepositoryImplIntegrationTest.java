@@ -22,6 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.TagNo;
+import com.web.gallery.domain.photo.TagJapaneseName;
+import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.model.PhotoTagDeleteModel;
@@ -50,10 +54,10 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 		void regist_contain_null_parameter() throws RegistFailureException {
 			PhotoTagModel photoTagModel = PhotoTagModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoNo(1L)
-					.tagNo(3L)
-					.tagJapaneseName("海")
-					.tagEnglishName("sea")
+					.photoNo(new PhotoNo(1L))
+					.tagNo(new TagNo(3L))
+					.tagJapaneseName(new TagJapaneseName("海"))
+					.tagEnglishName(new TagEnglishName("sea"))
 					.build();
 			
 			photoTagMstRepositoryImpl.regist(photoTagModel);
@@ -62,20 +66,20 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1 and tag_no=3", (rs, rowNum) ->
 						PhotoTagMst.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.photoNo(rs.getLong("photo_no"))
-							.tagNo(rs.getLong("tag_no"))
+							.photoNo(new PhotoNo(rs.getLong("photo_no")))
+							.tagNo(new TagNo(rs.getLong("tag_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
-							.tagEnglishName(rs.getObject("tag_english_name").toString())
+							.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
+							.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
 							.build());
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
-			assertEquals(1L, actualData.getFirst().getPhotoNo());
-			assertEquals(3L, actualData.getFirst().getTagNo());
+			assertEquals(1L, actualData.getFirst().getPhotoNo().value());
+			assertEquals(3L, actualData.getFirst().getTagNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
-			assertEquals("海", actualData.getFirst().getTagJapaneseName());
-			assertEquals("sea", actualData.getFirst().getTagEnglishName());
+			assertEquals("海", actualData.getFirst().getTagJapaneseName().value());
+			assertEquals("sea", actualData.getFirst().getTagEnglishName().value());
 		}
 		
 		@Test
@@ -84,10 +88,10 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 		void regist_RegistFailureException() {
 			PhotoTagModel photoTagModel = PhotoTagModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoNo(1L)
-					.tagNo(1L)
-					.tagJapaneseName("海")
-					.tagEnglishName("sea")
+					.photoNo(new PhotoNo(1L))
+					.tagNo(new TagNo(1L))
+					.tagJapaneseName(new TagJapaneseName("海"))
+					.tagEnglishName(new TagEnglishName("sea"))
 					.build();
 			
 			assertThrows(RegistFailureException.class, () -> photoTagMstRepositoryImpl.regist(photoTagModel));
@@ -106,7 +110,7 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 		void clear_success() {
 			PhotoTagDeleteModel photoTagDeleteModel = PhotoTagDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoNo(1L)
+					.photoNo(new PhotoNo(1L))
 					.build();
 			
 			photoTagMstRepositoryImpl.clear(photoTagDeleteModel);
@@ -115,12 +119,12 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoTagMst.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.photoNo(rs.getLong("photo_no"))
-							.tagNo(rs.getLong("tag_no"))
+							.photoNo(new PhotoNo(rs.getLong("photo_no")))
+							.tagNo(new TagNo(rs.getLong("tag_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
-							.tagEnglishName(rs.getObject("tag_english_name").toString())
+							.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
+							.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
 							.build());
 			assertEquals(0, actualData.size());
 			
@@ -128,12 +132,12 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 					"SELECT * FROM photo.photo_tag_mst", (rs, rowNum) ->
 						PhotoTagMst.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.photoNo(rs.getLong("photo_no"))
-							.tagNo(rs.getLong("tag_no"))
+							.photoNo(new PhotoNo(rs.getLong("photo_no")))
+							.tagNo(new TagNo(rs.getLong("tag_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
-							.tagEnglishName(rs.getObject("tag_english_name").toString())
+							.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
+							.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
 							.build());
 			assertEquals(3, actualRestData.size());
 		}

@@ -84,7 +84,7 @@ public class PhotoFavoriteControllerTest {
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoFavoriteModel.getAccountNo());
 			assertEquals(new AccountNo(2L), photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo().value());
 		}
 
 		@Test
@@ -117,7 +117,7 @@ public class PhotoFavoriteControllerTest {
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoFavoriteModel.getAccountNo());
 			assertEquals(new AccountNo(2L), photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo().value());
 		}
 	}
 
@@ -145,7 +145,7 @@ public class PhotoFavoriteControllerTest {
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoFavoriteModel.getAccountNo());
 			assertEquals(new AccountNo(2L), photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo().value());
 		}
 
 		@Test
@@ -178,7 +178,7 @@ public class PhotoFavoriteControllerTest {
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoFavoriteModel.getAccountNo());
 			assertEquals(new AccountNo(2L), photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo().value());
 		}
 	}
 }

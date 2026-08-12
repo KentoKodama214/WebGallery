@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -51,7 +52,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(2L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			photoFavoriteServiceImpl.addFavorite(photoFavoriteModel);
@@ -61,14 +62,14 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(2L), actualData.getFirst().getAccountNo());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getFavoritePhotoAccountNo());
-			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo());
+			assertEquals(new PhotoNo(1L), actualData.getFirst().getFavoritePhotoNo());
 			assertEquals(new CreatedBy(2L), actualData.getFirst().getCreatedBy());
 		}
 		
@@ -79,7 +80,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 
 			assertThrows(RegistFailureException.class, () -> photoFavoriteServiceImpl.addFavorite(photoFavoriteModel));
@@ -99,7 +100,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 
 			photoFavoriteServiceImpl.deleteFavorite(photoFavoriteModel);
@@ -109,7 +110,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 				PhotoFavorite.builder()
 					.accountNo(new AccountNo(rs.getLong("account_no")))
 					.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-					.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+					.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 					.createdBy(new CreatedBy(rs.getLong("created_by")))
 					.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 					.build());
@@ -120,7 +121,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
@@ -134,7 +135,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(9L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			assertThrows(UpdateFailureException.class, () ->photoFavoriteServiceImpl.deleteFavorite(photoFavoriteModel));

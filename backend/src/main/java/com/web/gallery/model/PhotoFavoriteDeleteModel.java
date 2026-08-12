@@ -1,6 +1,7 @@
 package com.web.gallery.model;
 
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.PhotoNo;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -21,5 +22,5 @@ public class PhotoFavoriteDeleteModel {
 
 	/** 写真番号 */
 	@NonNull
-	private Long favoritePhotoNo;
+	private PhotoNo favoritePhotoNo;
 }

@@ -1,6 +1,7 @@
 package com.web.gallery.model;
 
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.PhotoNo;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -21,7 +22,7 @@ public class PhotoDetailGetModel {
 
 	/** 写真番号 */
 	@NonNull
-	private Long photoNo;
+	private PhotoNo photoNo;
 
 	/**
 	 * パラメータからPhotoDetailGetModelを生成する
@@ -35,7 +36,7 @@ public class PhotoDetailGetModel {
 		return PhotoDetailGetModel.builder()
 				.accountNo(accountNo != null ? new AccountNo(accountNo) : null)
 				.photoAccountNo(new AccountNo(photoAccountNo))
-				.photoNo(photoNo)
+				.photoNo(new PhotoNo(photoNo))
 				.build();
 	}
 }

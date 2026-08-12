@@ -69,7 +69,7 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 		PhotoDetailGetDto photoGetDto = new PhotoDetailGetDto();
 		photoGetDto.setAccountNo(photoDetailGetModel.getAccountNo() != null ? photoDetailGetModel.getAccountNo().value() : null);
 		photoGetDto.setPhotoAccountNo(photoDetailGetModel.getPhotoAccountNo().value());
-		photoGetDto.setPhotoNo(photoDetailGetModel.getPhotoNo());
+		photoGetDto.setPhotoNo(photoDetailGetModel.getPhotoNo().value());
 		PhotoDetailDto photoDetailDto = photoDetailMapper.getPhotoDetail(photoGetDto);
 
 		if(Objects.isNull(photoDetailDto)) {

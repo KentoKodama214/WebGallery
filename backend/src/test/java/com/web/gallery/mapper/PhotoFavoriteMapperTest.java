@@ -21,6 +21,7 @@ import org.springframework.test.context.jdbc.Sql;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
 
 @MybatisTest
@@ -46,7 +47,7 @@ public class PhotoFavoriteMapperTest {
 			PhotoFavorite insertPhotoFavorite = PhotoFavorite.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(2L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.createdBy(new CreatedBy(1L))
 					.build();
 			
@@ -58,14 +59,14 @@ public class PhotoFavoriteMapperTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new AccountNo(2L), actualData.getFirst().getFavoritePhotoAccountNo());
-			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo());
+			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 		}
 	}
@@ -82,7 +83,7 @@ public class PhotoFavoriteMapperTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
@@ -122,7 +123,7 @@ public class PhotoFavoriteMapperTest {
 		@Order(3)
 		@DisplayName("正常系：お気に入り写真番号でのdelete")
 		void delete_by_favoritePhotoNo() {
-			PhotoFavorite deletePhotoFavorite = PhotoFavorite.builder().favoritePhotoNo(1L).build();
+			PhotoFavorite deletePhotoFavorite = PhotoFavorite.builder().favoritePhotoNo(new PhotoNo(1L)).build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(2, actual);
 			
@@ -155,7 +156,7 @@ public class PhotoFavoriteMapperTest {
 			PhotoFavorite deletePhotoFavorite = PhotoFavorite.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(1, actual);

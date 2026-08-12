@@ -3,6 +3,10 @@ package com.web.gallery.entity;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.TagEnglishName;
+import com.web.gallery.domain.photo.TagJapaneseName;
+import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoTagDeleteModel;
@@ -24,10 +28,10 @@ public class PhotoTagMst {
 	private AccountNo accountNo;
 
 	/** 写真番号 */
-	private Long photoNo;
+	private PhotoNo photoNo;
 
 	/** タグ番号 */
-	private Long tagNo;
+	private TagNo tagNo;
 
 	/** 作成者 */
 	private CreatedBy createdBy;
@@ -36,10 +40,10 @@ public class PhotoTagMst {
 	private CreatedAt createdAt;
 
 	/** タグ日本語名 */
-	private String tagJapaneseName;
+	private TagJapaneseName tagJapaneseName;
 
 	/** タグ英語名 */
-	private String tagEnglishName;
+	private TagEnglishName tagEnglishName;
 
 	/**
 	 * PhotoTagModelからPhotoTagMstエンティティを生成する

@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -47,7 +48,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			PhotoFavoriteModel favoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
@@ -59,7 +60,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
 			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
 			assertEquals(new CreatedBy(1L), photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}
@@ -71,7 +72,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			PhotoFavoriteModel favoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
@@ -83,7 +84,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
 			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
 			assertEquals(new CreatedBy(1L), photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}
@@ -100,7 +101,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
@@ -112,7 +113,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
 			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
 			assertNull(photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}
@@ -124,7 +125,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
@@ -136,7 +137,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
 			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
 			assertNull(photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}
@@ -152,7 +153,7 @@ public class PhotoFavoriteRepositoryImplTest {
 		void clear_success() {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(1L)
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 
 			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
@@ -164,7 +165,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
 			assertNull(photoFavorite.getAccountNo());
 			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
 			assertNull(photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}

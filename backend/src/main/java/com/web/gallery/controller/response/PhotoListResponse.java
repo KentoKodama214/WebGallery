@@ -51,10 +51,10 @@ public class PhotoListResponse {
 	public static PhotoListResponse from(PhotoModel model) {
 		return PhotoListResponse.builder()
 				.accountNo(model.getAccountNo().value())
-				.photoNo(model.getPhotoNo())
+				.photoNo(model.getPhotoNo().value())
 				.isFavorite(model.getIsFavorite())
-				.imageFilePath(model.getImageFilePath())
-				.caption(model.getCaption())
+				.imageFilePath(model.getImageFilePath().value())
+				.caption(model.getCaption().value())
 				.directionKbn(model.getDirectionKbn())
 				.build();
 	}

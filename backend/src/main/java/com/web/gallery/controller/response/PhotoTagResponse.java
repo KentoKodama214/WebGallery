@@ -42,10 +42,10 @@ public class PhotoTagResponse {
 	public static PhotoTagResponse from(PhotoTagModel model) {
 		return PhotoTagResponse.builder()
 				.accountNo(model.getAccountNo().value())
-				.photoNo(model.getPhotoNo())
-				.tagNo(model.getTagNo())
-				.tagJapaneseName(model.getTagJapaneseName())
-				.tagEnglishName(model.getTagEnglishName())
+				.photoNo(model.getPhotoNo() != null ? model.getPhotoNo().value() : null)
+				.tagNo(model.getTagNo() != null ? model.getTagNo().value() : null)
+				.tagJapaneseName(model.getTagJapaneseName().value())
+				.tagEnglishName(model.getTagEnglishName().value())
 				.build();
 	}
 }

@@ -56,11 +56,11 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 */
 	@Override
 	public void update(PhotoDetailModel photoDetailModel) throws UpdateFailureException {
-		PhotoMst cndPhotoMst = PhotoMst.condition(photoDetailModel.getAccountNo().value(), photoDetailModel.getPhotoNo());
+		PhotoMst cndPhotoMst = PhotoMst.condition(photoDetailModel.getAccountNo().value(), photoDetailModel.getPhotoNo().value());
 		PhotoMst targetPhotoMst = PhotoMst.targetForUpdate(photoDetailModel);
 
 		if (photoMstMapper.update(cndPhotoMst, targetPhotoMst) < 1) {
-			log.warn("PhotoMst: Update Failed (AccountNo: {}, PhotoNo: {})", photoDetailModel.getAccountNo().value(), photoDetailModel.getPhotoNo());
+			log.warn("PhotoMst: Update Failed (AccountNo: {}, PhotoNo: {})", photoDetailModel.getAccountNo().value(), photoDetailModel.getPhotoNo().value());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_PHOTO);
 		}
 	}
@@ -73,11 +73,11 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 */
 	@Override
 	public void delete(PhotoDeleteModel photoDeleteModel) throws UpdateFailureException {
-		PhotoMst cndPhotoMst = PhotoMst.condition(photoDeleteModel.getAccountNo().value(), photoDeleteModel.getPhotoNo());
+		PhotoMst cndPhotoMst = PhotoMst.condition(photoDeleteModel.getAccountNo().value(), photoDeleteModel.getPhotoNo().value());
 		PhotoMst targetPhotoMst = PhotoMst.targetForDelete(photoDeleteModel);
 
 		if (photoMstMapper.update(cndPhotoMst, targetPhotoMst) < 1) {
-			log.warn("PhotoMst: Delete Failed (AccountNo: {}, PhotoNo: {})", photoDeleteModel.getAccountNo().value(), photoDeleteModel.getPhotoNo());
+			log.warn("PhotoMst: Delete Failed (AccountNo: {}, PhotoNo: {})", photoDeleteModel.getAccountNo().value(), photoDeleteModel.getPhotoNo().value());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_DELETE_PHOTO);
 		}
 	}

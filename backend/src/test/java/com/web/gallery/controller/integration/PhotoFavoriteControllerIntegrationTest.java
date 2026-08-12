@@ -37,6 +37,7 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.enumuration.AuthorityEnum;
 import com.web.gallery.enumuration.ErrorEnum;
@@ -104,14 +105,14 @@ public class PhotoFavoriteControllerIntegrationTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new AccountNo(2L), actualData.getFirst().getFavoritePhotoAccountNo());
-			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo());
+			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 		}
 
@@ -186,7 +187,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
@@ -197,7 +198,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 						PhotoFavorite.builder()
 							.accountNo(new AccountNo(rs.getLong("account_no")))
 							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
 							.createdBy(new CreatedBy(rs.getLong("created_by")))
 							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
 							.build());
@@ -205,13 +206,13 @@ public class PhotoFavoriteControllerIntegrationTest {
 			assertEquals(3, actualRestData.size());
 			assertEquals(new AccountNo(1L), actualRestData.get(0).getAccountNo());
 			assertEquals(new AccountNo(1L), actualRestData.get(0).getFavoritePhotoAccountNo());
-			assertEquals(2L, actualRestData.get(0).getFavoritePhotoNo());
+			assertEquals(2L, actualRestData.get(0).getFavoritePhotoNo().value());
 			assertEquals(new AccountNo(2L), actualRestData.get(1).getAccountNo());
 			assertEquals(new AccountNo(1L), actualRestData.get(1).getFavoritePhotoAccountNo());
-			assertEquals(2L, actualRestData.get(1).getFavoritePhotoNo());
+			assertEquals(2L, actualRestData.get(1).getFavoritePhotoNo().value());
 			assertEquals(new AccountNo(2L), actualRestData.get(2).getAccountNo());
 			assertEquals(new AccountNo(2L), actualRestData.get(2).getFavoritePhotoAccountNo());
-			assertEquals(1L, actualRestData.get(2).getFavoritePhotoNo());
+			assertEquals(1L, actualRestData.get(2).getFavoritePhotoNo().value());
 		}
 
 		@Test

@@ -15,7 +15,7 @@
 			(
 				#{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler},
 				#{favoritePhotoAccountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler},
-				#{favoritePhotoNo},
+				#{favoritePhotoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler},
 				#{createdBy, typeHandler=com.web.gallery.type_handler.CreatedByTypeHandler},
 				NOW()
 			)
@@ -27,7 +27,7 @@
 		<where>
 			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
 			<if test="favoritePhotoAccountNo != null"> AND favorite_photo_account_no = #{favoritePhotoAccountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
-			<if test="favoritePhotoNo != null"> AND favorite_photo_no = #{favoritePhotoNo}</if>
+			<if test="favoritePhotoNo != null"> AND favorite_photo_no = #{favoritePhotoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}</if>
 		</where>
 	</delete>
 </mapper>
