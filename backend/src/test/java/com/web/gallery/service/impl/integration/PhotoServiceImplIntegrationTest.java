@@ -41,6 +41,7 @@ import com.web.gallery.domain.common.UpdatedBy;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.PhotoAt;
 import com.web.gallery.domain.photo.LocationNo;
+import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoEnglishTitle;
@@ -453,7 +454,7 @@ public class PhotoServiceImplIntegrationTest {
 			return PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath(""))
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル21"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title21"))
@@ -475,7 +476,7 @@ public class PhotoServiceImplIntegrationTest {
 				);
 			return PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath(""))
 					.build();
 		}
@@ -506,7 +507,7 @@ public class PhotoServiceImplIntegrationTest {
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(2L))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/aaaaaaaa/DSC222.jpg"))
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル2"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title2"))
@@ -530,7 +531,7 @@ public class PhotoServiceImplIntegrationTest {
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(3L))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/aaaaaaaa/DSC333.jpg"))
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル3"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title3"))
@@ -821,7 +822,7 @@ public class PhotoServiceImplIntegrationTest {
 			PhotoDetailModel photoDetailModel1 = PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/aaaaaaaa/DSC11.jpg"))
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル11"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title11"))

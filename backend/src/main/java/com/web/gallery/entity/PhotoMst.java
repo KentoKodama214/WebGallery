@@ -203,7 +203,7 @@ public class PhotoMst {
 	public static PhotoMst conditionForExistCheck(PhotoDetailModel model) {
 		return PhotoMst.builder()
 				.accountNo(model.getAccountNo())
-				.imageFilePath(new ImageFilePath(model.getImageFile().getOriginalFilename()))
+				.imageFilePath(new ImageFilePath(model.getImageFile().value().getOriginalFilename()))
 				.build();
 	}
 

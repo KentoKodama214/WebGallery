@@ -1,6 +1,6 @@
 package com.web.gallery.model;
 
-import org.springframework.web.multipart.MultipartFile;
+import com.web.gallery.domain.photo.ImageFile;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -15,8 +15,8 @@ public class FileModel {
 	/** ファイルパス */
 	@NonNull
 	private String filePath;
-	
+
 	/** ファイル */
 	@NonNull
-	private MultipartFile imageFile;
+	private ImageFile imageFile;
 }

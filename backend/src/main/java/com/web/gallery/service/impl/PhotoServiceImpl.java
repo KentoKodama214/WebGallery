@@ -11,9 +11,10 @@ import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
+
 
 import com.web.gallery.config.PhotoConfig;
+import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
@@ -124,7 +125,7 @@ public class PhotoServiceImpl implements PhotoService {
 
 		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
 			if(Objects.isNull(photoDetailModel.getPhotoNo())) {
-				String filename = photoDetailModel.getImageFile().getOriginalFilename();
+				String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
 				if(photoMstRepository.isExistPhoto(photoDetailModel)) {
 					log.warn("Duplicate image file (filename: {}}", filename);
 					throw new FileDuplicateException(ErrorEnum.DUPLICATE_PHOTO_FILE);
@@ -300,7 +301,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @param	filePath	アップロードのファイルパス
 	 * @param	imageFile	アップロードするファイル
 	 */
-	private void uploadFile(String filePath, MultipartFile imageFile) {
+	private void uploadFile(String filePath, ImageFile imageFile) {
 		fileRepository.save(
 			FileModel.builder()
 				.filePath(filePath)

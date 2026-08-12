@@ -7,8 +7,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.web.multipart.MultipartFile;
-
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoSaveRequest;
 import com.web.gallery.domain.account.AccountNo;
@@ -18,6 +16,7 @@ import com.web.gallery.domain.common.LocationName;
 import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.FValue;
+import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.IsFavorite;
@@ -71,7 +70,7 @@ public class PhotoDetailModel {
 	private LocationName locationName;
 
 	/** 画像ファイル */
-	private MultipartFile imageFile;
+	private ImageFile imageFile;
 
 	/** 画像ファイルパス */
 	@NonNull
@@ -164,7 +163,7 @@ public class PhotoDetailModel {
 				.latitude(request.getLatitude() != null ? new Latitude(request.getLatitude()) : null)
 				.longitude(request.getLongitude() != null ? new Longitude(request.getLongitude()) : null)
 				.locationName(request.getLocationName() != null ? new LocationName(request.getLocationName()) : null)
-				.imageFile(request.getImageFile())
+				.imageFile(request.getImageFile() != null ? new ImageFile(request.getImageFile()) : null)
 				.imageFilePath(new ImageFilePath(Optional.ofNullable(request.getImageFilePath()).orElse(Consts.STRING_EMPTY)))
 				.photoJapaneseTitle(request.getPhotoJapaneseTitle() != null ? new PhotoJapaneseTitle(request.getPhotoJapaneseTitle()) : null)
 				.photoEnglishTitle(request.getPhotoEnglishTitle() != null ? new PhotoEnglishTitle(request.getPhotoEnglishTitle()) : null)

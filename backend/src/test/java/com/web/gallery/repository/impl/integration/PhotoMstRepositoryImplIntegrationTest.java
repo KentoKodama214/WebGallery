@@ -32,6 +32,7 @@ import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.PhotoAt;
 import com.web.gallery.domain.photo.LocationNo;
+import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoEnglishTitle;
@@ -465,7 +466,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath(""))
 					.build();
 			
@@ -485,7 +486,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
 					.accountNo(new AccountNo(2L))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath(""))
 					.build();
 			
@@ -505,7 +506,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath(""))
 					.build();
 			
@@ -525,7 +526,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath(""))
 					.build();
 			

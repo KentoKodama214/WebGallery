@@ -34,6 +34,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.FocalLength;
+import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.Iso;
 import com.web.gallery.domain.photo.LocationNo;
@@ -459,7 +460,7 @@ public class PhotoServiceImplTest {
 			return PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath(""))
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル1"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title1"))
@@ -481,7 +482,7 @@ public class PhotoServiceImplTest {
 				);
 			return PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath(""))
 					.build();
 		}
@@ -512,7 +513,7 @@ public class PhotoServiceImplTest {
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(2L))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/DSC222.jpg"))
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル2"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title2"))
@@ -536,7 +537,7 @@ public class PhotoServiceImplTest {
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(3L))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFile(multipartFile)
+					.imageFile(new ImageFile(multipartFile))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/DSC333.jpg"))
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル3"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title3"))
@@ -1737,12 +1738,12 @@ public class PhotoServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void uploadFile_success() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method uploadFile = PhotoServiceImpl.class.getDeclaredMethod("uploadFile", String.class, MultipartFile.class);
+			Method uploadFile = PhotoServiceImpl.class.getDeclaredMethod("uploadFile", String.class, ImageFile.class);
 			uploadFile.setAccessible(true);
-			
+
 			ArgumentCaptor<FileModel> fileModelCaptor = ArgumentCaptor.forClass(FileModel.class);
 			doNothing().when(fileRepositoryImpl).save(fileModelCaptor.capture());
-			
+
 			String filePath = "DSC111.jpg";
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
@@ -1750,12 +1751,13 @@ public class PhotoServiceImplTest {
 					"multipart/form-data",
 					"sample image".getBytes()
 			);
-			uploadFile.invoke(photoServiceImpl, filePath, multipartFile);
-			
+			ImageFile imageFile = new ImageFile(multipartFile);
+			uploadFile.invoke(photoServiceImpl, filePath, imageFile);
+
 			verify(fileRepositoryImpl).save(any(FileModel.class));
 			FileModel fileModelCapture = fileModelCaptor.getValue();
 			assertEquals(filePath, fileModelCapture.getFilePath());
-			assertEquals(multipartFile, fileModelCapture.getImageFile());
+			assertEquals(imageFile, fileModelCapture.getImageFile());
 		}
 	}
 	
