@@ -2,15 +2,47 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.web.gallery.mapper.PhotoDetailMapper">
-	<select id="getPhotoList" parameterType="com.web.gallery.dto.PhotoListGetDto" resultType="com.web.gallery.dto.PhotoDto">
+	<resultMap id="PhotoDtoResultMap" type="com.web.gallery.dto.PhotoDto">
+		<result column="accountNo" property="accountNo" typeHandler="com.web.gallery.type_handler.AccountNoTypeHandler"/>
+		<result column="photoNo" property="photoNo" typeHandler="com.web.gallery.type_handler.PhotoNoTypeHandler"/>
+		<result column="favoriteCount" property="favoriteCount" typeHandler="com.web.gallery.type_handler.FavoriteCountTypeHandler"/>
+		<result column="isFavorite" property="isFavorite" typeHandler="com.web.gallery.type_handler.IsFavoriteTypeHandler"/>
+		<result column="photoAt" property="photoAt" typeHandler="com.web.gallery.type_handler.PhotoAtTypeHandler"/>
+		<result column="imageFilePath" property="imageFilePath" typeHandler="com.web.gallery.type_handler.ImageFilePathTypeHandler"/>
+		<result column="caption" property="caption" typeHandler="com.web.gallery.type_handler.CaptionTypeHandler"/>
+		<result column="directionKbn" property="directionKbn" typeHandler="com.web.gallery.type_handler.DirectionEnumTypeHandler"/>
+	</resultMap>
+
+	<resultMap id="PhotoDetailDtoResultMap" type="com.web.gallery.dto.PhotoDetailDto">
+		<result column="accountNo" property="accountNo" typeHandler="com.web.gallery.type_handler.AccountNoTypeHandler"/>
+		<result column="photoNo" property="photoNo" typeHandler="com.web.gallery.type_handler.PhotoNoTypeHandler"/>
+		<result column="isFavorite" property="isFavorite" typeHandler="com.web.gallery.type_handler.IsFavoriteTypeHandler"/>
+		<result column="photoAt" property="photoAt" typeHandler="com.web.gallery.type_handler.PhotoAtTypeHandler"/>
+		<result column="locationNo" property="locationNo" typeHandler="com.web.gallery.type_handler.LocationNoTypeHandler"/>
+		<result column="address" property="address" typeHandler="com.web.gallery.type_handler.AddressTypeHandler"/>
+		<result column="latitude" property="latitude" typeHandler="com.web.gallery.type_handler.LatitudeTypeHandler"/>
+		<result column="longitude" property="longitude" typeHandler="com.web.gallery.type_handler.LongitudeTypeHandler"/>
+		<result column="locationName" property="locationName" typeHandler="com.web.gallery.type_handler.LocationNameTypeHandler"/>
+		<result column="imageFilePath" property="imageFilePath" typeHandler="com.web.gallery.type_handler.ImageFilePathTypeHandler"/>
+		<result column="photoJapaneseTitle" property="photoJapaneseTitle" typeHandler="com.web.gallery.type_handler.PhotoJapaneseTitleTypeHandler"/>
+		<result column="photoEnglishTitle" property="photoEnglishTitle" typeHandler="com.web.gallery.type_handler.PhotoEnglishTitleTypeHandler"/>
+		<result column="caption" property="caption" typeHandler="com.web.gallery.type_handler.CaptionTypeHandler"/>
+		<result column="directionKbn" property="directionKbn" typeHandler="com.web.gallery.type_handler.DirectionEnumTypeHandler"/>
+		<result column="focalLength" property="focalLength" typeHandler="com.web.gallery.type_handler.FocalLengthTypeHandler"/>
+		<result column="fValue" property="fValue" typeHandler="com.web.gallery.type_handler.FValueTypeHandler"/>
+		<result column="shutterSpeed" property="shutterSpeed" typeHandler="com.web.gallery.type_handler.ShutterSpeedTypeHandler"/>
+		<result column="iso" property="iso" typeHandler="com.web.gallery.type_handler.IsoTypeHandler"/>
+	</resultMap>
+
+	<select id="getPhotoList" parameterType="com.web.gallery.dto.PhotoListGetDto" resultMap="PhotoDtoResultMap">
 		WITH isFavorite AS (
-			SELECT 
+			SELECT
 				favorite_photo_account_no,
 				favorite_photo_no
 			FROM
 				photo.photo_favorite
 			WHERE
-				account_no = #{accountNo}
+				account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}
 		),
 		countOfFavorite AS (
 			SELECT
@@ -19,43 +51,43 @@
 				count(*) as favoriteCount
 			FROM
 				photo.photo_favorite
-			WHERE 
-				favorite_photo_account_no = #{photoAccountNo}
+			WHERE
+				favorite_photo_account_no = #{photoAccountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}
 			GROUP BY
 				favorite_photo_account_no,
 				favorite_photo_no
 		)
-		
-		SELECT 
+
+		SELECT
 			photo_mst.account_no AS accountNo,
 			photo_mst.photo_no AS photoNo,
 			CASE WHEN
 				countOfFavorite.favoriteCount > 0 THEN countOfFavorite.favoriteCount
 				ELSE 0
 			END AS favoriteCount,
-			CASE WHEN 
-				isFavorite.favorite_photo_account_no IS NOT NULL THEN true 
+			CASE WHEN
+				isFavorite.favorite_photo_account_no IS NOT NULL THEN true
 				ELSE false
 			END AS isFavorite,
 			photo_mst.photo_at AS photoAt,
 			photo_mst.image_file_path AS imageFilePath,
 			photo_mst.caption AS caption,
 			photo_mst.direction_kbn AS directionKbn
-		FROM 
+		FROM
 			photo.photo_mst photo_mst
 		LEFT JOIN isFavorite ON
-			photo_mst.account_no = isFavorite.favorite_photo_account_no AND 
+			photo_mst.account_no = isFavorite.favorite_photo_account_no AND
  			photo_mst.photo_no = isFavorite.favorite_photo_no
 		LEFT JOIN countOfFavorite ON
 			photo_mst.account_no = countOfFavorite.favorite_photo_account_no AND
 			photo_mst.photo_no = countOfFavorite.favorite_photo_no
 		WHERE
-			photo_mst.account_no = #{photoAccountNo} AND
+			photo_mst.account_no = #{photoAccountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler} AND
 			photo_mst.is_deleted = false
 	</select>
-	
-	<select id="getPhotoDetail" parameterType="com.web.gallery.dto.PhotoDetailGetDto" resultType="com.web.gallery.dto.PhotoDetailDto">
-		SELECT 
+
+	<select id="getPhotoDetail" parameterType="com.web.gallery.dto.PhotoDetailGetDto" resultMap="PhotoDetailDtoResultMap">
+		SELECT
 			photo_mst.account_no AS accountNo,
 			photo_mst.photo_no AS photoNo,
 			CASE WHEN (
@@ -64,9 +96,9 @@
 				FROM
 					photo.photo_favorite
 				WHERE
-					account_no = #{accountNo} AND
-					favorite_photo_account_no = #{photoAccountNo} AND
-					favorite_photo_no = #{photoNo}
+					account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler} AND
+					favorite_photo_account_no = #{photoAccountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler} AND
+					favorite_photo_no = #{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}
 			) THEN true ELSE false END AS isFavorite,
 			photo_mst.photo_at AS photoAt,
 			location_mst.location_no AS locationNo,
@@ -83,15 +115,15 @@
 			photo_mst.f_value AS fValue,
 			photo_mst.shutter_speed AS shutterSpeed,
 			photo_mst.iso AS iso
-		FROM 
+		FROM
 			photo.photo_mst photo_mst
 		LEFT JOIN common.location_mst location_mst ON
 			photo_mst.account_no = location_mst.account_no AND
 			photo_mst.location_no = location_mst.location_no AND
 			location_mst.is_deleted = false
 		WHERE
-			photo_mst.account_no = #{photoAccountNo} AND
-			photo_mst.photo_no = #{photoNo} AND
+			photo_mst.account_no = #{photoAccountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler} AND
+			photo_mst.photo_no = #{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler} AND
 			photo_mst.is_deleted = false
 	</select>
 </mapper>

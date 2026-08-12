@@ -24,7 +24,15 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.Address;
+import com.web.gallery.domain.common.Latitude;
+import com.web.gallery.domain.common.Longitude;
+import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.photo.FavoriteCount;
+import com.web.gallery.domain.photo.IsFavorite;
+import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.common.IsDeleted;
@@ -85,9 +93,9 @@ public class PhotoServiceImplIntegrationTest {
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoAccountId("dddddddd")
+					.photoAccountId(new AccountId("dddddddd"))
 					.directionKbn(DirectionEnum.NONE)
-					.isFavoriteOnly(false)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
@@ -104,9 +112,9 @@ public class PhotoServiceImplIntegrationTest {
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoAccountId("aaaaaaaa")
+					.photoAccountId(new AccountId("aaaaaaaa"))
 					.directionKbn(DirectionEnum.NONE)
-					.isFavoriteOnly(false)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
@@ -130,8 +138,8 @@ public class PhotoServiceImplIntegrationTest {
 			
 			// 抜き取りで、PhotoModelのデータチェック
 			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(0, actual.get(0).getFavoriteCount());
-			assertFalse(actual.get(0).getIsFavorite());
+			assertEquals(0, actual.get(0).getFavoriteCount().value());
+			assertFalse(actual.get(0).getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2023, 9, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC19.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション19", actual.get(0).getCaption().value());
@@ -147,9 +155,9 @@ public class PhotoServiceImplIntegrationTest {
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoAccountId("aaaaaaaa")
+					.photoAccountId(new AccountId("aaaaaaaa"))
 					.directionKbn(DirectionEnum.NONE)
-					.isFavoriteOnly(false)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.FAVORITE)
 					.build();
@@ -173,8 +181,8 @@ public class PhotoServiceImplIntegrationTest {
 			
 			// 抜き取りで、PhotoModelのデータチェック
 			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(4, actual.get(0).getFavoriteCount());
-			assertTrue(actual.get(0).getIsFavorite());
+			assertEquals(4, actual.get(0).getFavoriteCount().value());
+			assertTrue(actual.get(0).getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC12.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション12", actual.get(0).getCaption().value());
@@ -198,9 +206,9 @@ public class PhotoServiceImplIntegrationTest {
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoAccountId("aaaaaaaa")
+					.photoAccountId(new AccountId("aaaaaaaa"))
 					.directionKbn(DirectionEnum.NONE)
-					.isFavoriteOnly(false)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.SEASON)
 					.build();
@@ -224,8 +232,8 @@ public class PhotoServiceImplIntegrationTest {
 			
 			// 抜き取りで、PhotoModelのデータチェック
 			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(0, actual.get(0).getFavoriteCount());
-			assertFalse(actual.get(0).getIsFavorite());
+			assertEquals(0, actual.get(0).getFavoriteCount().value());
+			assertFalse(actual.get(0).getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2021, 10, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC20.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション20", actual.get(0).getCaption().value());
@@ -241,9 +249,9 @@ public class PhotoServiceImplIntegrationTest {
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoAccountId("aaaaaaaa")
+					.photoAccountId(new AccountId("aaaaaaaa"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.isFavoriteOnly(false)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
@@ -260,8 +268,8 @@ public class PhotoServiceImplIntegrationTest {
 			
 			// 抜き取りで、PhotoModelのデータチェック
 			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(0, actual.get(0).getFavoriteCount());
-			assertFalse(actual.get(0).getIsFavorite());
+			assertEquals(0, actual.get(0).getFavoriteCount().value());
+			assertFalse(actual.get(0).getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2023, 8, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC18.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション18", actual.get(0).getCaption().value());
@@ -277,9 +285,9 @@ public class PhotoServiceImplIntegrationTest {
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoAccountId("aaaaaaaa")
+					.photoAccountId(new AccountId("aaaaaaaa"))
 					.directionKbn(DirectionEnum.NONE)
-					.isFavoriteOnly(true)
+					.isFavoriteOnly(new IsFavoriteOnly(true))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
@@ -295,8 +303,8 @@ public class PhotoServiceImplIntegrationTest {
 			
 			// 抜き取りで、PhotoModelのデータチェック
 			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(4, actual.get(0).getFavoriteCount());
-			assertTrue(actual.get(0).getIsFavorite());
+			assertEquals(4, actual.get(0).getFavoriteCount().value());
+			assertTrue(actual.get(0).getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC12.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション12", actual.get(0).getCaption().value());
@@ -322,9 +330,9 @@ public class PhotoServiceImplIntegrationTest {
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoAccountId("aaaaaaaa")
+					.photoAccountId(new AccountId("aaaaaaaa"))
 					.directionKbn(DirectionEnum.NONE)
-					.isFavoriteOnly(false)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
@@ -336,8 +344,8 @@ public class PhotoServiceImplIntegrationTest {
 			
 			// 抜き取りで、PhotoModelのデータチェック
 			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(3, actual.get(0).getFavoriteCount());
-			assertTrue(actual.get(0).getIsFavorite());
+			assertEquals(3, actual.get(0).getFavoriteCount().value());
+			assertTrue(actual.get(0).getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC11.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション11", actual.get(0).getCaption().value());
@@ -373,13 +381,13 @@ public class PhotoServiceImplIntegrationTest {
 			PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
 			assertEquals(1L, actual.getAccountNo().value());
 			assertEquals(1L, actual.getPhotoNo().value());
-			assertTrue(actual.getIsFavorite());
+			assertTrue(actual.getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt().value());
 			assertEquals(1L, actual.getLocationNo().value());
-			assertEquals("住所1", actual.getAddress());
-			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getLatitude()));
-			assertEquals(0, BigDecimal.valueOf(115.100).compareTo(actual.getLongitude()));
-			assertEquals("ロケーション1", actual.getLocationName());
+			assertEquals("住所1", actual.getAddress().value());
+			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getLatitude().value()));
+			assertEquals(0, BigDecimal.valueOf(115.100).compareTo(actual.getLongitude().value()));
+			assertEquals("ロケーション1", actual.getLocationName().value());
 			assertNull(actual.getImageFile());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC11.jpg", actual.getImageFilePath().value());
 			assertEquals("タイトル11", actual.getPhotoJapaneseTitle().value());

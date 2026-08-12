@@ -22,6 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.common.Address;
+import com.web.gallery.domain.common.Latitude;
+import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.PhotoAt;
 import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.domain.photo.ImageFilePath;
@@ -31,6 +35,7 @@ import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.ShutterSpeed;
+import com.web.gallery.domain.photo.IsFavorite;
 import com.web.gallery.domain.photo.Iso;
 import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.domain.photo.TagJapaneseName;
@@ -156,13 +161,13 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			
 			assertEquals(new AccountNo(2L), actual.getAccountNo());
 			assertEquals(1L, actual.getPhotoNo().value());
-			assertFalse(actual.getIsFavorite());
+			assertFalse(actual.getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt().value());
 			assertEquals(4L, actual.getLocationNo().value());
-			assertEquals("住所4", actual.getAddress());
-			assertEquals(0, BigDecimal.valueOf(38.400).compareTo(actual.getLatitude()));
-			assertEquals(0, BigDecimal.valueOf(115.400).compareTo(actual.getLongitude()));
-			assertEquals("ロケーション4", actual.getLocationName());
+			assertEquals("住所4", actual.getAddress().value());
+			assertEquals(0, BigDecimal.valueOf(38.400).compareTo(actual.getLatitude().value()));
+			assertEquals(0, BigDecimal.valueOf(115.400).compareTo(actual.getLongitude().value()));
+			assertEquals("ロケーション4", actual.getLocationName().value());
 			assertEquals("https://www.xxx.com/DSC444.jpg", actual.getImageFilePath().value());
 			assertEquals("タイトル21", actual.getPhotoJapaneseTitle().value());
 			assertEquals("title21", actual.getPhotoEnglishTitle().value());
@@ -189,13 +194,13 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			
 			assertEquals(new AccountNo(1L), actual.getAccountNo());
 			assertEquals(1L, actual.getPhotoNo().value());
-			assertTrue(actual.getIsFavorite());
+			assertTrue(actual.getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt().value());
 			assertEquals(1L, actual.getLocationNo().value());
-			assertEquals("住所1", actual.getAddress());
-			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getLatitude()));
-			assertEquals(0, BigDecimal.valueOf(115.100).compareTo(actual.getLongitude()));
-			assertEquals("ロケーション1", actual.getLocationName());
+			assertEquals("住所1", actual.getAddress().value());
+			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getLatitude().value()));
+			assertEquals(0, BigDecimal.valueOf(115.100).compareTo(actual.getLongitude().value()));
+			assertEquals("ロケーション1", actual.getLocationName().value());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actual.getImageFilePath().value());
 			assertEquals("タイトル11", actual.getPhotoJapaneseTitle().value());
 			assertEquals("title11", actual.getPhotoEnglishTitle().value());

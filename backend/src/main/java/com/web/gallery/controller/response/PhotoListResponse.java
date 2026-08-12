@@ -52,7 +52,7 @@ public class PhotoListResponse {
 		return PhotoListResponse.builder()
 				.accountNo(model.getAccountNo().value())
 				.photoNo(model.getPhotoNo().value())
-				.isFavorite(model.getIsFavorite())
+				.isFavorite(model.getIsFavorite().value())
 				.imageFilePath(model.getImageFilePath().value())
 				.caption(model.getCaption().value())
 				.directionKbn(model.getDirectionKbn())

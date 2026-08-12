@@ -12,10 +12,15 @@ import org.springframework.web.multipart.MultipartFile;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoSaveRequest;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.Address;
+import com.web.gallery.domain.common.Latitude;
+import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.IsFavorite;
 import com.web.gallery.domain.photo.Iso;
 import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.domain.photo.PhotoAt;
@@ -45,7 +50,7 @@ public class PhotoDetailModel {
 	private PhotoNo photoNo;
 
 	/** お気に入り */
-	private Boolean isFavorite;
+	private IsFavorite isFavorite;
 
 	/** 撮影日時 */
 	private PhotoAt photoAt;
@@ -54,16 +59,16 @@ public class PhotoDetailModel {
 	private LocationNo locationNo;
 
 	/** 住所 */
-	private String address;
+	private Address address;
 
 	/** 緯度 */
-	private BigDecimal latitude;
+	private Latitude latitude;
 
 	/** 経度 */
-	private BigDecimal longitude;
+	private Longitude longitude;
 
 	/** ロケーション名 */
-	private String locationName;
+	private LocationName locationName;
 
 	/** 画像ファイル */
 	private MultipartFile imageFile;
@@ -113,25 +118,25 @@ public class PhotoDetailModel {
 	public static PhotoDetailModel from(PhotoDetailDto dto, List<PhotoTagMst> photoTagMstList) {
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
 		return PhotoDetailModel.builder()
-				.accountNo(new AccountNo(dto.getAccountNo()))
-				.photoNo(new PhotoNo(dto.getPhotoNo()))
+				.accountNo(dto.getAccountNo())
+				.photoNo(dto.getPhotoNo())
 				.isFavorite(dto.getIsFavorite())
 				.photoAt(
-					dto.getPhotoAt().isEqual(Consts.MIN_OFFSET_DATE_TIME) ? null : new PhotoAt(dto.getPhotoAt().plusHours(9)))
-				.locationNo(new LocationNo(dto.getLocationNo()))
+					dto.getPhotoAt().value().isEqual(Consts.MIN_OFFSET_DATE_TIME) ? null : new PhotoAt(dto.getPhotoAt().value().plusHours(9)))
+				.locationNo(dto.getLocationNo())
 				.address(dto.getAddress())
 				.latitude(dto.getLatitude())
 				.longitude(dto.getLongitude())
 				.locationName(dto.getLocationName())
-				.imageFilePath(new ImageFilePath(dto.getImageFilePath()))
-				.photoJapaneseTitle(new PhotoJapaneseTitle(dto.getPhotoJapaneseTitle()))
-				.photoEnglishTitle(new PhotoEnglishTitle(dto.getPhotoEnglishTitle()))
-				.caption(new Caption(dto.getCaption()))
+				.imageFilePath(dto.getImageFilePath())
+				.photoJapaneseTitle(dto.getPhotoJapaneseTitle())
+				.photoEnglishTitle(dto.getPhotoEnglishTitle())
+				.caption(dto.getCaption())
 				.directionKbn(dto.getDirectionKbn())
-				.focalLength(dto.getFocalLength() != 0 ? new FocalLength(dto.getFocalLength()) : null)
-				.fValue(dto.getFValue().compareTo(BigDecimal.ZERO) == 1 ? new FValue(dto.getFValue()) : null)
-				.shutterSpeed(dto.getShutterSpeed().compareTo(BigDecimal.ZERO) == 1 ? new ShutterSpeed(dto.getShutterSpeed()) : null)
-				.iso(dto.getIso() != 0 ? new Iso(dto.getIso()) : null)
+				.focalLength(dto.getFocalLength() != null && dto.getFocalLength().value() != 0 ? dto.getFocalLength() : null)
+				.fValue(dto.getFValue() != null && dto.getFValue().value().compareTo(BigDecimal.ZERO) == 1 ? dto.getFValue() : null)
+				.shutterSpeed(dto.getShutterSpeed() != null && dto.getShutterSpeed().value().compareTo(BigDecimal.ZERO) == 1 ? dto.getShutterSpeed() : null)
+				.iso(dto.getIso() != null && dto.getIso().value() != 0 ? dto.getIso() : null)
 				.photoTagModelList(photoTagModelList)
 				.build();
 	}
@@ -151,14 +156,14 @@ public class PhotoDetailModel {
 		return PhotoDetailModel.builder()
 				.accountNo(new AccountNo(request.getAccountNo()))
 				.photoNo(request.getPhotoNo() != null ? new PhotoNo(request.getPhotoNo()) : null)
-				.isFavorite(request.getIsFavorite())
+				.isFavorite(request.getIsFavorite() != null ? new IsFavorite(request.getIsFavorite()) : null)
 				.photoAt(Optional.ofNullable(request.getPhotoAt())
 						.map(photoAt -> new PhotoAt(photoAt.atOffset(Consts.JST))).orElse(null))
 				.locationNo(request.getLocationNo() != null ? new LocationNo(request.getLocationNo()) : null)
-				.address(request.getAddress())
-				.latitude(request.getLatitude())
-				.longitude(request.getLongitude())
-				.locationName(request.getLocationName())
+				.address(request.getAddress() != null ? new Address(request.getAddress()) : null)
+				.latitude(request.getLatitude() != null ? new Latitude(request.getLatitude()) : null)
+				.longitude(request.getLongitude() != null ? new Longitude(request.getLongitude()) : null)
+				.locationName(request.getLocationName() != null ? new LocationName(request.getLocationName()) : null)
 				.imageFile(request.getImageFile())
 				.imageFilePath(new ImageFilePath(Optional.ofNullable(request.getImageFilePath()).orElse(Consts.STRING_EMPTY)))
 				.photoJapaneseTitle(request.getPhotoJapaneseTitle() != null ? new PhotoJapaneseTitle(request.getPhotoJapaneseTitle()) : null)

@@ -31,9 +31,17 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.Address;
+import com.web.gallery.domain.common.Latitude;
+import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.FavoriteCount;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.IsFavorite;
+import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.domain.photo.PhotoAt;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.config.PhotoConfig;
@@ -90,8 +98,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(1L))
-					.favoriteCount(1)
-					.isFavorite(false)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(false))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))
 					.caption(new Caption("キャプション1"))
@@ -101,8 +109,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(2L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"))
 					.caption(new Caption("キャプション2"))
@@ -112,8 +120,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(3L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC333.jpg"))
 					.caption(new Caption("キャプション3"))
@@ -123,8 +131,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(4L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC444.jpg"))
 					.caption(new Caption("キャプション4"))
@@ -134,8 +142,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(5L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC555.jpg"))
 					.caption(new Caption("キャプション5"))
@@ -145,8 +153,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(6L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC666.jpg"))
 					.caption(new Caption("キャプション6"))
@@ -156,8 +164,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(7L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC777.jpg"))
 					.caption(new Caption("キャプション7"))
@@ -205,9 +213,9 @@ public class PhotoRestControllerTest {
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoListGetModel.getAccountNo());
-			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
+			assertEquals(new AccountId("aaaaaaaa"), photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.NONE, photoListGetModel.getDirectionKbn());
-			assertFalse(photoListGetModel.getIsFavoriteOnly());
+			assertFalse(photoListGetModel.getIsFavoriteOnly().value());
 			assertEquals(new ArrayList<String>(), photoListGetModel.getTagList());
 			assertEquals(SortPhotoEnum.PHOTO_AT, photoListGetModel.getSortBy());
 		}
@@ -242,9 +250,9 @@ public class PhotoRestControllerTest {
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoListGetModel.getAccountNo());
-			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
+			assertEquals(new AccountId("aaaaaaaa"), photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.VERTICAL, photoListGetModel.getDirectionKbn());
-			assertTrue(photoListGetModel.getIsFavoriteOnly());
+			assertTrue(photoListGetModel.getIsFavoriteOnly().value());
 			assertEquals("太陽", photoListGetModel.getTagList().get(0));
 			assertEquals("海", photoListGetModel.getTagList().get(1));
 			assertEquals(SortPhotoEnum.SEASON, photoListGetModel.getSortBy());
@@ -280,9 +288,9 @@ public class PhotoRestControllerTest {
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoListGetModel.getAccountNo());
-			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
+			assertEquals(new AccountId("aaaaaaaa"), photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.VERTICAL, photoListGetModel.getDirectionKbn());
-			assertTrue(photoListGetModel.getIsFavoriteOnly());
+			assertTrue(photoListGetModel.getIsFavoriteOnly().value());
 			assertEquals("太陽", photoListGetModel.getTagList().get(0));
 			assertEquals("海", photoListGetModel.getTagList().get(1));
 			assertEquals(SortPhotoEnum.SEASON, photoListGetModel.getSortBy());
@@ -307,9 +315,9 @@ public class PhotoRestControllerTest {
 
 			PhotoListGetModel photoListGetModel = photoListGetModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoListGetModel.getAccountNo());
-			assertEquals("aaaaaaaa", photoListGetModel.getPhotoAccountId());
+			assertEquals(new AccountId("aaaaaaaa"), photoListGetModel.getPhotoAccountId());
 			assertEquals(DirectionEnum.NONE, photoListGetModel.getDirectionKbn());
-			assertFalse(photoListGetModel.getIsFavoriteOnly());
+			assertFalse(photoListGetModel.getIsFavoriteOnly().value());
 			assertEquals(new ArrayList<String>(), photoListGetModel.getTagList());
 			assertEquals(SortPhotoEnum.PHOTO_AT, photoListGetModel.getSortBy());
 		}
@@ -439,13 +447,13 @@ public class PhotoRestControllerTest {
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
-			assertFalse(photoDetailModelList.getFirst().getIsFavorite());
+			assertFalse(photoDetailModelList.getFirst().getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), photoDetailModelList.getFirst().getPhotoAt().value());
 			assertEquals(1L, photoDetailModelList.getFirst().getLocationNo().value());
-			assertEquals(address, photoDetailModelList.getFirst().getAddress());
-			assertEquals(0, BigDecimal.valueOf(35.000).compareTo(photoDetailModelList.getFirst().getLatitude()));
-			assertEquals(0, BigDecimal.valueOf(135.000).compareTo(photoDetailModelList.getFirst().getLongitude()));
-			assertEquals(locationName, photoDetailModelList.getFirst().getLocationName());
+			assertEquals(address, photoDetailModelList.getFirst().getAddress().value());
+			assertEquals(0, BigDecimal.valueOf(35.000).compareTo(photoDetailModelList.getFirst().getLatitude().value()));
+			assertEquals(0, BigDecimal.valueOf(135.000).compareTo(photoDetailModelList.getFirst().getLongitude().value()));
+			assertEquals(locationName, photoDetailModelList.getFirst().getLocationName().value());
 			assertNotNull(photoDetailModelList.getFirst().getImageFile());
 			assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
 			assertEquals(photoJapaneseTitle, photoDetailModelList.getFirst().getPhotoJapaneseTitle().value());
@@ -817,8 +825,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(1L))
-					.favoriteCount(1)
-					.isFavorite(false)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(false))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))
 					.caption(new Caption("キャプション1"))
@@ -828,8 +836,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(2L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"))
 					.caption(new Caption("キャプション2"))
@@ -839,8 +847,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(3L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC333.jpg"))
 					.caption(new Caption("キャプション3"))
@@ -850,8 +858,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(4L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC444.jpg"))
 					.caption(new Caption("キャプション4"))
@@ -861,8 +869,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(5L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC555.jpg"))
 					.caption(new Caption("キャプション5"))
@@ -872,8 +880,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(6L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC666.jpg"))
 					.caption(new Caption("キャプション6"))
@@ -883,8 +891,8 @@ public class PhotoRestControllerTest {
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(7L))
-					.favoriteCount(1)
-					.isFavorite(true)
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(true))
 					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC777.jpg"))
 					.caption(new Caption("キャプション7"))

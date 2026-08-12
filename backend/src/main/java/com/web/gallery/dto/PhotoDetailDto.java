@@ -1,8 +1,22 @@
 package com.web.gallery.dto;
 
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
-
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.Address;
+import com.web.gallery.domain.common.Latitude;
+import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.Longitude;
+import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.FValue;
+import com.web.gallery.domain.photo.FocalLength;
+import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.IsFavorite;
+import com.web.gallery.domain.photo.Iso;
+import com.web.gallery.domain.photo.LocationNo;
+import com.web.gallery.domain.photo.PhotoAt;
+import com.web.gallery.domain.photo.PhotoEnglishTitle;
+import com.web.gallery.domain.photo.PhotoJapaneseTitle;
+import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.enumuration.DirectionEnum;
 
 import lombok.Data;
@@ -13,45 +27,45 @@ import lombok.Data;
 @Data
 public class PhotoDetailDto {
 	/** アカウントNo */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
-	private Long photoNo;
+	private PhotoNo photoNo;
 
 	/** お気に入り */
-	private Boolean isFavorite;
+	private IsFavorite isFavorite;
 
 	/** 撮影日時 */
-	private OffsetDateTime photoAt;
-	
+	private PhotoAt photoAt;
+
 	/** ロケーション番号 */
-	private Long locationNo;
-	
+	private LocationNo locationNo;
+
 	/** 住所 */
-	private String address;
+	private Address address;
 
 	/** 緯度 */
-	private BigDecimal latitude;
+	private Latitude latitude;
 
 	/** 経度 */
-	private BigDecimal longitude;
-	
+	private Longitude longitude;
+
 	/** ロケーション名 */
-	private String locationName;
-	
+	private LocationName locationName;
+
 	/** 画像ファイルパス */
-	private String imageFilePath;
+	private ImageFilePath imageFilePath;
 
 	/** 写真タイトル日本語名 */
-	private String photoJapaneseTitle;
+	private PhotoJapaneseTitle photoJapaneseTitle;
 
 	/** 写真タイトル英語名 */
-	private String photoEnglishTitle;
-	
-	/** キャプション */
-	private String caption;
+	private PhotoEnglishTitle photoEnglishTitle;
 
-	/** 
+	/** キャプション */
+	private Caption caption;
+
+	/**
 	 * 向き区分
 	 * <p>
 	 * {@link DirectionEnum}
@@ -59,14 +73,14 @@ public class PhotoDetailDto {
 	private DirectionEnum directionKbn;
 
 	/** 焦点距離 */
-	private Integer focalLength;
+	private FocalLength focalLength;
 
 	/** F値 */
-	private BigDecimal fValue;
+	private FValue fValue;
 
 	/** シャッタースピード */
-	private BigDecimal shutterSpeed;
+	private ShutterSpeed shutterSpeed;
 
 	/** ISO */
-	private Integer iso;
+	private Iso iso;
 }

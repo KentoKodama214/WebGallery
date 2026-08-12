@@ -7,7 +7,9 @@ import java.util.Optional;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoListRequest;
+import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.enumuration.SortPhotoEnum;
 
@@ -25,8 +27,7 @@ public class PhotoListGetModel {
 	private AccountNo accountNo;
 
 	/** 写真のアカウントID */
-	@NonNull
-	private String photoAccountId;
+	private AccountId photoAccountId;
 
 	/**
 	 * 向き区分
@@ -37,8 +38,7 @@ public class PhotoListGetModel {
 	private DirectionEnum directionKbn;
 
 	/** お気に入り写真のみ */
-	@NonNull
-	private Boolean isFavoriteOnly;
+	private IsFavoriteOnly isFavoriteOnly;
 
 	/** タグワードリスト */
 	@NonNull
@@ -68,9 +68,9 @@ public class PhotoListGetModel {
 
 		return PhotoListGetModel.builder()
 				.accountNo(accountNo != null ? new AccountNo(accountNo) : null)
-				.photoAccountId(photoAccountId)
+				.photoAccountId(new AccountId(photoAccountId))
 				.directionKbn(request.getDirectionKbn())
-				.isFavoriteOnly(Optional.ofNullable(request.getIsFavorite()).orElse(Boolean.FALSE))
+				.isFavoriteOnly(new IsFavoriteOnly(Optional.ofNullable(request.getIsFavorite()).orElse(Boolean.FALSE)))
 				.tagList(tagList)
 				.sortBy(request.getSortBy())
 				.build();

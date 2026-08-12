@@ -5,7 +5,9 @@ import java.util.Objects;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.FavoriteCount;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.IsFavorite;
 import com.web.gallery.domain.photo.PhotoAt;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.dto.PhotoDto;
@@ -31,12 +33,10 @@ public class PhotoModel {
 	private PhotoNo photoNo;
 
 	/** お気に入り数 */
-	@NonNull
-	private Integer favoriteCount;
+	private FavoriteCount favoriteCount;
 
 	/** お気に入り */
-	@NonNull
-	private Boolean isFavorite;
+	private IsFavorite isFavorite;
 
 	/** 撮影日時 */
 	@NonNull
@@ -72,18 +72,18 @@ public class PhotoModel {
 	public static PhotoModel from(PhotoDto dto, List<PhotoTagMst> photoTagMstList) {
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream()
 				.filter(tag ->
-					tag.getAccountNo().value().equals(dto.getAccountNo()) &&
-					Objects.equals(tag.getPhotoNo().value(), dto.getPhotoNo()))
+					tag.getAccountNo().value().equals(dto.getAccountNo().value()) &&
+					Objects.equals(tag.getPhotoNo().value(), dto.getPhotoNo().value()))
 				.map(PhotoTagModel::from)
 				.toList();
 		return PhotoModel.builder()
-				.accountNo(new AccountNo(dto.getAccountNo()))
-				.photoNo(new PhotoNo(dto.getPhotoNo()))
+				.accountNo(dto.getAccountNo())
+				.photoNo(dto.getPhotoNo())
 				.favoriteCount(dto.getFavoriteCount())
 				.isFavorite(dto.getIsFavorite())
-				.photoAt(new PhotoAt(dto.getPhotoAt().plusHours(9)))
-				.imageFilePath(new ImageFilePath(dto.getImageFilePath()))
-				.caption(new Caption(dto.getCaption()))
+				.photoAt(new PhotoAt(dto.getPhotoAt().value().plusHours(9)))
+				.imageFilePath(dto.getImageFilePath())
+				.caption(dto.getCaption())
 				.directionKbn(dto.getDirectionKbn())
 				.photoTagModelList(photoTagModelList)
 				.build();

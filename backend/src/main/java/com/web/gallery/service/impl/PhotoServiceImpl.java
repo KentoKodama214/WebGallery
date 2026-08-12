@@ -72,7 +72,7 @@ public class PhotoServiceImpl implements PhotoService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<PhotoModel> getPhotoList(PhotoListGetModel photoListGetModel) {
-		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId());
+		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId().value());
 
 		List<PhotoModel> photoModelList
 			= photoDetailRepository.getPhotoList(PhotoGetModel.builder()
@@ -84,7 +84,7 @@ public class PhotoServiceImpl implements PhotoService {
 					.filter(photoModel ->
 						filteringByDirectionKbn(photoModel.getDirectionKbn(), photoListGetModel.getDirectionKbn()))
 					.filter(photoModel ->
-						filteringByIsFavorite(photoModel.getIsFavorite(), photoListGetModel.getIsFavoriteOnly()))
+						filteringByIsFavorite(photoModel.getIsFavorite().value(), photoListGetModel.getIsFavoriteOnly().value()))
 					.filter(photoModel ->
 						filteringByTag(photoModel.getPhotoTagModelList(), photoListGetModel.getTagList()))
 					.sorted(getComparator(photoListGetModel.getSortBy()))
@@ -209,7 +209,7 @@ public class PhotoServiceImpl implements PhotoService {
 			case PHOTO_AT:
 				return Comparator.comparing(photoModel -> photoModel.getPhotoAt().value(), Comparator.reverseOrder());
 			case FAVORITE:
-				return Comparator.comparing(PhotoModel::getFavoriteCount).reversed();
+				return Comparator.comparing((PhotoModel photoModel) -> photoModel.getFavoriteCount().value()).reversed();
 			case SEASON:
 				return new Comparator<PhotoModel>() {
 					@Override
