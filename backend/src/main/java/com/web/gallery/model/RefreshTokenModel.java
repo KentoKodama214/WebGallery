@@ -44,4 +44,20 @@ public class RefreshTokenModel {
 				.isRevoked(entity.getIsRevoked())
 				.build();
 	}
+
+	/**
+	 * アカウント番号・トークンハッシュ・有効期限からRefreshTokenModelを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @param	tokenHash	トークンハッシュ
+	 * @param	expiresAt	有効期限
+	 * @return				{@link RefreshTokenModel}
+	 */
+	public static RefreshTokenModel of(AccountNo accountNo, TokenHash tokenHash, ExpiresAt expiresAt) {
+		return RefreshTokenModel.builder()
+				.accountNo(accountNo)
+				.tokenHash(tokenHash)
+				.expiresAt(expiresAt)
+				.build();
+	}
 }

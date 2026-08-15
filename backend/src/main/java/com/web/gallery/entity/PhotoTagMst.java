@@ -99,4 +99,16 @@ public class PhotoTagMst {
 				.accountNo(model.getPhotoAccountNo())
 				.build();
 	}
+
+	/**
+	 * アカウント番号で写真タグ削除用のPhotoTagMstエンティティを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link PhotoTagMst}
+	 */
+	public static PhotoTagMst conditionByAccountNo(AccountNo accountNo) {
+		return PhotoTagMst.builder()
+				.accountNo(accountNo)
+				.build();
+	}
 }

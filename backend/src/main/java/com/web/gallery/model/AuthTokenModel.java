@@ -25,4 +25,20 @@ public class AuthTokenModel {
 	/** アクセストークン有効期限（秒） */
 	@NonNull
 	private ExpiresIn expiresIn;
+
+	/**
+	 * アクセストークン・リフレッシュトークン・有効期限（秒）からAuthTokenModelを生成する
+	 *
+	 * @param	accessToken			アクセストークン文字列
+	 * @param	refreshToken		リフレッシュトークン文字列
+	 * @param	expiresInSeconds	有効期限（秒）
+	 * @return						{@link AuthTokenModel}
+	 */
+	public static AuthTokenModel of(String accessToken, String refreshToken, Long expiresInSeconds) {
+		return AuthTokenModel.builder()
+				.accessToken(new AccessToken(accessToken))
+				.refreshToken(new RefreshTokenValue(refreshToken))
+				.expiresIn(new ExpiresIn(expiresInSeconds))
+				.build();
+	}
 }

@@ -20,4 +20,18 @@ public class PhotoTagDeleteModel {
 	/** 写真番号 */
 	@NonNull
 	private PhotoNo photoNo;
+
+	/**
+	 * アカウント番号と写真番号からPhotoTagDeleteModelを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @param	photoNo		写真番号
+	 * @return				{@link PhotoTagDeleteModel}
+	 */
+	public static PhotoTagDeleteModel of(AccountNo accountNo, PhotoNo photoNo) {
+		return PhotoTagDeleteModel.builder()
+				.accountNo(accountNo)
+				.photoNo(photoNo)
+				.build();
+	}
 }

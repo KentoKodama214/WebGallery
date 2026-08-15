@@ -20,4 +20,18 @@ public class FileModel {
 	/** ファイル */
 	@NonNull
 	private ImageFile imageFile;
+
+	/**
+	 * ファイルパスとファイルからFileModelを生成する
+	 *
+	 * @param	filePath	ファイルパス
+	 * @param	imageFile	画像ファイル
+	 * @return				{@link FileModel}
+	 */
+	public static FileModel of(ImageFilePath filePath, ImageFile imageFile) {
+		return FileModel.builder()
+				.filePath(filePath)
+				.imageFile(imageFile)
+				.build();
+	}
 }

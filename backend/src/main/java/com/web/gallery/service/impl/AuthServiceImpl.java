@@ -7,9 +7,6 @@ import java.time.OffsetDateTime;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.auth.AccessToken;
-import com.web.gallery.domain.auth.ExpiresIn;
-import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.ExpiresAt;
 import com.web.gallery.domain.common.TokenHash;
 
@@ -85,18 +82,13 @@ public class AuthServiceImpl implements AuthService {
 		String refreshToken = jwtTokenProvider.generateRefreshToken();
 
 		// リフレッシュトークンをDB保存（ハッシュ化して保存）
-		RefreshTokenModel refreshTokenModel = RefreshTokenModel.builder()
-				.accountNo(new AccountNo(principal.getAccountNo()))
-				.tokenHash(new TokenHash(hashToken(refreshToken)))
-				.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(jwtConfig.getRefreshTokenExpirationDays())))
-				.build();
-		refreshTokenRepository.save(refreshTokenModel);
+		refreshTokenRepository.save(RefreshTokenModel.of(
+				new AccountNo(principal.getAccountNo()),
+				new TokenHash(hashToken(refreshToken)),
+				new ExpiresAt(OffsetDateTime.now().plusDays(jwtConfig.getRefreshTokenExpirationDays()))));
 
-		return AuthTokenModel.builder()
-				.accessToken(new AccessToken(accessToken))
-				.refreshToken(new RefreshTokenValue(refreshToken))
-				.expiresIn(new ExpiresIn((long) jwtConfig.getAccessTokenExpirationMinutes() * 60))
-				.build();
+		return AuthTokenModel.of(accessToken, refreshToken,
+				(long) jwtConfig.getAccessTokenExpirationMinutes() * 60);
 	}
 
 	/**
@@ -127,11 +119,8 @@ public class AuthServiceImpl implements AuthService {
 
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);
 
-		return AuthTokenModel.builder()
-				.accessToken(new AccessToken(accessToken))
-				.refreshToken(new RefreshTokenValue(refreshToken))
-				.expiresIn(new ExpiresIn((long) jwtConfig.getAccessTokenExpirationMinutes() * 60))
-				.build();
+		return AuthTokenModel.of(accessToken, refreshToken,
+				(long) jwtConfig.getAccessTokenExpirationMinutes() * 60);
 	}
 
 	/**

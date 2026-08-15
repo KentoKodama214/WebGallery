@@ -75,4 +75,28 @@ public class PhotoFavorite {
 				.favoritePhotoNo(model.getFavoritePhotoNo())
 				.build();
 	}
+
+	/**
+	 * アカウント番号で自分が登録したお気に入り削除用のPhotoFavoriteエンティティを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link PhotoFavorite}
+	 */
+	public static PhotoFavorite conditionByAccountNo(AccountNo accountNo) {
+		return PhotoFavorite.builder()
+				.accountNo(accountNo)
+				.build();
+	}
+
+	/**
+	 * アカウント番号で自分の写真に対する他人のお気に入り削除用のPhotoFavoriteエンティティを生成する
+	 *
+	 * @param	favoritePhotoAccountNo	お気に入り写真アカウント番号
+	 * @return							{@link PhotoFavorite}
+	 */
+	public static PhotoFavorite conditionByFavoritePhotoAccountNo(AccountNo favoritePhotoAccountNo) {
+		return PhotoFavorite.builder()
+				.favoritePhotoAccountNo(favoritePhotoAccountNo)
+				.build();
+	}
 }

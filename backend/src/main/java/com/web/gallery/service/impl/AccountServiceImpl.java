@@ -1,6 +1,5 @@
 package com.web.gallery.service.impl;
 
-import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -17,11 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.LoginConfig;
 import com.web.gallery.config.PhotoConfig;
-import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.account.LastLoginDatetime;
-import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoTagMst;
@@ -139,11 +135,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional
 	public void unlockAccount(Long accountNo) throws UpdateFailureException {
-		AccountModel updateModel = AccountModel.builder()
-				.accountNo(new AccountNo(accountNo))
-				.loginFailureCount(new LoginFailureCount(0))
-				.build();
-		accountRepository.updateLoginFailureCount(updateModel);
+		accountRepository.updateLoginFailureCount(AccountModel.forUnlock(accountNo));
 	}
 
 	/**
@@ -154,11 +146,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional
 	public void lockAccount(Long accountNo) throws UpdateFailureException {
-		AccountModel updateModel = AccountModel.builder()
-				.accountNo(new AccountNo(accountNo))
-				.loginFailureCount(new LoginFailureCount(loginConfig.getFailCount()))
-				.build();
-		accountRepository.updateLoginFailureCount(updateModel);
+		accountRepository.updateLoginFailureCount(AccountModel.forLock(accountNo, loginConfig.getFailCount()));
 	}
 
 	/**
@@ -172,16 +160,16 @@ public class AccountServiceImpl implements UserDetailsService {
 		AccountNo accountNoVo = new AccountNo(accountNo);
 
 		// 自分が登録したお気に入りを削除
-		photoFavoriteMapper.delete(PhotoFavorite.builder().accountNo(accountNoVo).build());
+		photoFavoriteMapper.delete(PhotoFavorite.conditionByAccountNo(accountNoVo));
 
 		// 自分の写真に対する他人のお気に入りを削除
-		photoFavoriteMapper.delete(PhotoFavorite.builder().favoritePhotoAccountNo(accountNoVo).build());
+		photoFavoriteMapper.delete(PhotoFavorite.conditionByFavoritePhotoAccountNo(accountNoVo));
 
 		// 写真タグを削除
-		photoTagMstMapper.delete(PhotoTagMst.builder().accountNo(accountNoVo).build());
+		photoTagMstMapper.delete(PhotoTagMst.conditionByAccountNo(accountNoVo));
 
 		// 写真マスタを物理削除
-		photoMstMapper.delete(PhotoMst.builder().accountNo(accountNoVo).build());
+		photoMstMapper.delete(PhotoMst.conditionByAccountNo(accountNoVo));
 
 		// アカウントを物理削除
 		accountRepository.delete(accountNo);
@@ -201,12 +189,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	public void handle(AuthenticationSuccessEvent event) throws UpdateFailureException {
 		AccountModel accountModel = accountRepository.getByAccountId(event.getAuthentication().getName());
 
-		AccountModel updateModel = AccountModel.builder()
-				.accountNo(accountModel.getAccountNo())
-				.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.now(Consts.JST)))
-				.loginFailureCount(new LoginFailureCount(0))
-				.build();
-		accountRepository.updateLoginFailureCount(updateModel);
+		accountRepository.updateLoginFailureCount(AccountModel.forLoginSuccess(accountModel.getAccountNo()));
 	}
 
 	/**
@@ -221,11 +204,8 @@ public class AccountServiceImpl implements UserDetailsService {
 		AccountModel accountModel = accountRepository.getByAccountId(event.getAuthentication().getName());
 
 		if(!Objects.isNull(accountModel)) {
-			AccountModel updateModel = AccountModel.builder()
-					.accountNo(accountModel.getAccountNo())
-					.loginFailureCount(new LoginFailureCount(accountModel.getLoginFailureCount().value() + 1))
-					.build();
-			accountRepository.updateLoginFailureCount(updateModel);
+			accountRepository.updateLoginFailureCount(
+					AccountModel.forLoginFailure(accountModel.getAccountNo(), accountModel.getLoginFailureCount()));
 		}
 	}
 }

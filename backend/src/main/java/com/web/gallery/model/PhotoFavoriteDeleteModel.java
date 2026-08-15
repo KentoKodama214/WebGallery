@@ -23,4 +23,31 @@ public class PhotoFavoriteDeleteModel {
 	/** 写真番号 */
 	@NonNull
 	private PhotoNo favoritePhotoNo;
+
+	/**
+	 * PhotoFavoriteModelからPhotoFavoriteDeleteModelを生成する
+	 *
+	 * @param	model	{@link PhotoFavoriteModel}
+	 * @return			{@link PhotoFavoriteDeleteModel}
+	 */
+	public static PhotoFavoriteDeleteModel from(PhotoFavoriteModel model) {
+		return PhotoFavoriteDeleteModel.builder()
+				.accountNo(model.getAccountNo())
+				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
+				.favoritePhotoNo(model.getFavoritePhotoNo())
+				.build();
+	}
+
+	/**
+	 * PhotoDeleteModelからPhotoFavoriteDeleteModelを生成する
+	 *
+	 * @param	model	{@link PhotoDeleteModel}
+	 * @return			{@link PhotoFavoriteDeleteModel}
+	 */
+	public static PhotoFavoriteDeleteModel from(PhotoDeleteModel model) {
+		return PhotoFavoriteDeleteModel.builder()
+				.favoritePhotoAccountNo(model.getAccountNo())
+				.favoritePhotoNo(model.getPhotoNo())
+				.build();
+	}
 }

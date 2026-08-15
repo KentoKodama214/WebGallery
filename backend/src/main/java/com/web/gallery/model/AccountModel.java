@@ -1,5 +1,8 @@
 package com.web.gallery.model;
 
+import java.time.OffsetDateTime;
+
+import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.AccountRegistRequest;
 import com.web.gallery.controller.request.AccountUpdateRequest;
 import com.web.gallery.domain.account.AccountId;
@@ -135,6 +138,61 @@ public class AccountModel {
 				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode() != null ? new BirthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode()) : null)
 				.residentPrefectureKbnCode(request.getResidentPrefectureKbnCode() != null ? new ResidentPrefectureKbnCode(request.getResidentPrefectureKbnCode()) : null)
 				.freeMemo(request.getFreeMemo() != null ? new FreeMemo(request.getFreeMemo()) : null)
+				.build();
+	}
+
+	/**
+	 * アカウントロック解除用のAccountModelを生成する（ログイン失敗回数を0にリセット）
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link AccountModel}
+	 */
+	public static AccountModel forUnlock(Long accountNo) {
+		return AccountModel.builder()
+				.accountNo(new AccountNo(accountNo))
+				.loginFailureCount(new LoginFailureCount(0))
+				.build();
+	}
+
+	/**
+	 * アカウント強制ロック用のAccountModelを生成する（ログイン失敗回数を上限値に設定）
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @param	failCount	ログイン失敗回数の上限値
+	 * @return				{@link AccountModel}
+	 */
+	public static AccountModel forLock(Long accountNo, Integer failCount) {
+		return AccountModel.builder()
+				.accountNo(new AccountNo(accountNo))
+				.loginFailureCount(new LoginFailureCount(failCount))
+				.build();
+	}
+
+	/**
+	 * 認証成功時のAccountModelを生成する（最終ログイン日時を現在時刻に設定し、ログイン失敗回数を0にリセット）
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link AccountModel}
+	 */
+	public static AccountModel forLoginSuccess(AccountNo accountNo) {
+		return AccountModel.builder()
+				.accountNo(accountNo)
+				.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.now(Consts.JST)))
+				.loginFailureCount(new LoginFailureCount(0))
+				.build();
+	}
+
+	/**
+	 * 認証失敗時のAccountModelを生成する（ログイン失敗回数を1加算）
+	 *
+	 * @param	accountNo		アカウント番号
+	 * @param	currentCount	現在のログイン失敗回数
+	 * @return					{@link AccountModel}
+	 */
+	public static AccountModel forLoginFailure(AccountNo accountNo, LoginFailureCount currentCount) {
+		return AccountModel.builder()
+				.accountNo(accountNo)
+				.loginFailureCount(new LoginFailureCount(currentCount.value() + 1))
 				.build();
 	}
 }

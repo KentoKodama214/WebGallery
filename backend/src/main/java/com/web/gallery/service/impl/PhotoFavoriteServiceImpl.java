@@ -42,10 +42,6 @@ public class PhotoFavoriteServiceImpl implements PhotoFavoriteService {
 	@Override
 	@Transactional
 	public void deleteFavorite(PhotoFavoriteModel photoFavoriteModel) throws UpdateFailureException {
-		photoFavoriteRepository.delete(PhotoFavoriteDeleteModel.builder()
-				.accountNo(photoFavoriteModel.getAccountNo())
-				.favoritePhotoAccountNo(photoFavoriteModel.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(photoFavoriteModel.getFavoritePhotoNo())
-				.build());
+		photoFavoriteRepository.delete(PhotoFavoriteDeleteModel.from(photoFavoriteModel));
 	}
 }

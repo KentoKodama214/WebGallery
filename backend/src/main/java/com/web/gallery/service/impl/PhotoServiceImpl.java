@@ -77,10 +77,8 @@ public class PhotoServiceImpl implements PhotoService {
 		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId().value());
 
 		List<PhotoModel> photoModelList
-			= photoDetailRepository.getPhotoList(PhotoGetModel.builder()
-					.accountNo(photoListGetModel.getAccountNo())
-					.photoAccountNo(accountModel.getAccountNo())
-					.build());
+			= photoDetailRepository.getPhotoList(
+					PhotoGetModel.of(photoListGetModel.getAccountNo(), accountModel.getAccountNo()));
 
 		return photoModelList.stream()
 					.filter(photoModel ->
@@ -158,12 +156,7 @@ public class PhotoServiceImpl implements PhotoService {
 		String filePath = photoConfig.getOutputPath() + accountId + "/";
 
 		for(PhotoDeleteModel photoDeleteModel : photoDeleteModelList) {
-			photoFavoriteRepository.clear(
-				PhotoFavoriteDeleteModel.builder()
-					.favoritePhotoAccountNo(photoDeleteModel.getAccountNo())
-					.favoritePhotoNo(photoDeleteModel.getPhotoNo())
-					.build()
-			);
+			photoFavoriteRepository.clear(PhotoFavoriteDeleteModel.from(photoDeleteModel));
 			deletePhotoTags(photoDeleteModel.getAccountNo(), photoDeleteModel.getPhotoNo());
 
 			photoMstRepository.delete(photoDeleteModel);
@@ -284,13 +277,10 @@ public class PhotoServiceImpl implements PhotoService {
 
 		int tagNo = 1;
 		for(PhotoTagModel photoTagModel : photoTagModelList) {
-			PhotoTagModel photoTagRegistModel = PhotoTagModel.builder()
-					.accountNo(photoTagModel.getAccountNo())
-					.photoNo(!Objects.isNull(newPhotoNo) ? new PhotoNo(newPhotoNo) : photoTagModel.getPhotoNo())
-					.tagNo(new TagNo((long) tagNo))
-					.tagJapaneseName(photoTagModel.getTagJapaneseName())
-					.tagEnglishName(photoTagModel.getTagEnglishName())
-					.build();
+			PhotoTagModel photoTagRegistModel = PhotoTagModel.forRegist(
+					photoTagModel,
+					!Objects.isNull(newPhotoNo) ? new PhotoNo(newPhotoNo) : photoTagModel.getPhotoNo(),
+					new TagNo((long) tagNo));
 			photoTagMstRepository.regist(photoTagRegistModel);
 			++tagNo;
 		}
@@ -303,12 +293,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @param	imageFile	アップロードするファイル
 	 */
 	private void uploadFile(ImageFilePath filePath, ImageFile imageFile) {
-		fileRepository.save(
-			FileModel.builder()
-				.filePath(filePath)
-				.imageFile(imageFile)
-				.build()
-		);
+		fileRepository.save(FileModel.of(filePath, imageFile));
 	}
 
 	/**
@@ -318,11 +303,6 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @param	photoNo		削除する写真の写真番号
 	 */
 	private void deletePhotoTags(AccountNo accountNo, PhotoNo photoNo) {
-		photoTagMstRepository.clear(
-			PhotoTagDeleteModel.builder()
-				.accountNo(accountNo)
-				.photoNo(photoNo)
-				.build()
-		);
+		photoTagMstRepository.clear(PhotoTagDeleteModel.of(accountNo, photoNo));
 	}
 }

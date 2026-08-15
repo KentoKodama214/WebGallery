@@ -56,6 +56,24 @@ public class PhotoTagModel {
 	}
 
 	/**
+	 * タグ登録用にphotoNoとtagNoを差し替えたPhotoTagModelを生成する
+	 *
+	 * @param	source	元のPhotoTagModel
+	 * @param	photoNo	写真番号
+	 * @param	tagNo	タグ番号
+	 * @return			{@link PhotoTagModel}
+	 */
+	public static PhotoTagModel forRegist(PhotoTagModel source, PhotoNo photoNo, TagNo tagNo) {
+		return PhotoTagModel.builder()
+				.accountNo(source.getAccountNo())
+				.photoNo(photoNo)
+				.tagNo(tagNo)
+				.tagJapaneseName(source.getTagJapaneseName())
+				.tagEnglishName(source.getTagEnglishName())
+				.build();
+	}
+
+	/**
 	 * 写真タグ保存リクエストからPhotoTagModelを生成する
 	 *
 	 * @param	request	{@link PhotoTagSaveRequest}

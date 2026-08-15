@@ -219,4 +219,16 @@ public class PhotoMst {
 				.isDeleted(new IsDeleted(false))
 				.build();
 	}
+
+	/**
+	 * アカウント番号で写真マスタ削除用のPhotoMstエンティティを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link PhotoMst}
+	 */
+	public static PhotoMst conditionByAccountNo(AccountNo accountNo) {
+		return PhotoMst.builder()
+				.accountNo(accountNo)
+				.build();
+	}
 }
