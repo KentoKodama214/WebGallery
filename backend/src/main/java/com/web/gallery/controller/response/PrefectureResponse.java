@@ -29,8 +29,8 @@ public class PrefectureResponse {
 	 */
 	public static PrefectureResponse from(KbnMstModel model) {
 		return PrefectureResponse.builder()
-				.kbnCode(model.getKbnCode())
-				.kbnJapaneseName(model.getKbnJapaneseName())
+				.kbnCode(model.getKbnCode().value())
+				.kbnJapaneseName(model.getKbnJapaneseName().value())
 				.build();
 	}
 }

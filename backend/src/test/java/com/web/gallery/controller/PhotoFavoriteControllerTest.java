@@ -26,6 +26,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
@@ -81,9 +82,9 @@ public class PhotoFavoriteControllerTest {
 				.andExpect(jsonPath("$.message").value("お気に入りに追加しました。"));
 
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
-			assertEquals(1L, photoFavoriteModel.getAccountNo());
-			assertEquals(2L, photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(new AccountNo(1L), photoFavoriteModel.getAccountNo());
+			assertEquals(new AccountNo(2L), photoFavoriteModel.getFavoritePhotoAccountNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo().value());
 		}
 
 		@Test
@@ -114,9 +115,9 @@ public class PhotoFavoriteControllerTest {
 				.andExpect(status().isConflict());
 
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
-			assertEquals(1L, photoFavoriteModel.getAccountNo());
-			assertEquals(2L, photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(new AccountNo(1L), photoFavoriteModel.getAccountNo());
+			assertEquals(new AccountNo(2L), photoFavoriteModel.getFavoritePhotoAccountNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo().value());
 		}
 	}
 
@@ -142,9 +143,9 @@ public class PhotoFavoriteControllerTest {
 				.andExpect(jsonPath("$.message").value("お気に入りを解除しました。"));
 
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
-			assertEquals(1L, photoFavoriteModel.getAccountNo());
-			assertEquals(2L, photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(new AccountNo(1L), photoFavoriteModel.getAccountNo());
+			assertEquals(new AccountNo(2L), photoFavoriteModel.getFavoritePhotoAccountNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo().value());
 		}
 
 		@Test
@@ -175,9 +176,9 @@ public class PhotoFavoriteControllerTest {
 				.andExpect(status().isConflict());
 
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
-			assertEquals(1L, photoFavoriteModel.getAccountNo());
-			assertEquals(2L, photoFavoriteModel.getFavoritePhotoAccountNo());
-			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo());
+			assertEquals(new AccountNo(1L), photoFavoriteModel.getAccountNo());
+			assertEquals(new AccountNo(2L), photoFavoriteModel.getFavoritePhotoAccountNo());
+			assertEquals(3L, photoFavoriteModel.getFavoritePhotoNo().value());
 		}
 	}
 }

@@ -26,10 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 
 	private final PhotoMstMapper photoMstMapper;
-	
+
 	/**
 	 * 写真マスタを登録する
-	 * 
+	 *
 	 * @param	photoDetailModel		{@link PhotoDetailModel}
 	 * @param	filePath				写真の保存ファイルパス
 	 * @param	newPhotoNo				新規採番した写真番号
@@ -38,53 +38,53 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	@Override
 	public void regist(PhotoDetailModel photoDetailModel, String filePath, Long newPhotoNo) throws RegistFailureException {
 		PhotoMst photoMst = PhotoMst.fromForRegist(photoDetailModel, filePath, newPhotoNo);
-		
+
 		try {
 			photoMstMapper.insert(photoMst);
 		}
 		catch (DuplicateKeyException e) {
-			log.warn("PhotoMst: Duplicate Key (AccountNo: {}, PhotoNo: {})", photoDetailModel.getAccountNo(), newPhotoNo, e);
+			log.warn("PhotoMst: Duplicate Key (AccountNo: {}, PhotoNo: {})", photoDetailModel.getAccountNo().value(), newPhotoNo, e);
 			throw new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_PHOTO);
 		}
 	}
-	
+
 	/**
 	 * 写真マスタを更新する
-	 * 
+	 *
 	 * @param	photoDetailModel		{@link PhotoDetailModel}
 	 * @throws	UpdateFailureException	更新に失敗した場合
 	 */
 	@Override
 	public void update(PhotoDetailModel photoDetailModel) throws UpdateFailureException {
-		PhotoMst cndPhotoMst = PhotoMst.condition(photoDetailModel.getAccountNo(), photoDetailModel.getPhotoNo());
+		PhotoMst cndPhotoMst = PhotoMst.condition(photoDetailModel.getAccountNo().value(), photoDetailModel.getPhotoNo().value());
 		PhotoMst targetPhotoMst = PhotoMst.targetForUpdate(photoDetailModel);
-		
+
 		if (photoMstMapper.update(cndPhotoMst, targetPhotoMst) < 1) {
-			log.warn("PhotoMst: Update Failed (AccountNo: {}, PhotoNo: {})", cndPhotoMst.getAccountNo(), cndPhotoMst.getPhotoNo());
+			log.warn("PhotoMst: Update Failed (AccountNo: {}, PhotoNo: {})", photoDetailModel.getAccountNo().value(), photoDetailModel.getPhotoNo().value());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_PHOTO);
 		}
 	}
-	
+
 	/**
 	 * 写真マスタを削除する
-	 * 
+	 *
 	 * @param	photoDeleteModel		{@link PhotoDeleteModel}
 	 * @throws	UpdateFailureException	削除に失敗した場合
 	 */
 	@Override
 	public void delete(PhotoDeleteModel photoDeleteModel) throws UpdateFailureException {
-		PhotoMst cndPhotoMst = PhotoMst.condition(photoDeleteModel.getAccountNo(), photoDeleteModel.getPhotoNo());
+		PhotoMst cndPhotoMst = PhotoMst.condition(photoDeleteModel.getAccountNo().value(), photoDeleteModel.getPhotoNo().value());
 		PhotoMst targetPhotoMst = PhotoMst.targetForDelete(photoDeleteModel);
-		
+
 		if (photoMstMapper.update(cndPhotoMst, targetPhotoMst) < 1) {
-			log.warn("PhotoMst: Delete Failed (AccountNo: {}, PhotoNo: {})", cndPhotoMst.getAccountNo(), cndPhotoMst.getPhotoNo());
+			log.warn("PhotoMst: Delete Failed (AccountNo: {}, PhotoNo: {})", photoDeleteModel.getAccountNo().value(), photoDeleteModel.getPhotoNo().value());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_DELETE_PHOTO);
 		}
 	}
-	
+
 	/**
 	 * アカウント番号から新しい写真番号を発番する
-	 * 
+	 *
 	 * @param	accountNo	アカウント番号
 	 * @return				新規採番した写真番号
 	 */
@@ -93,10 +93,10 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 		Long photoNo = photoMstMapper.getMaxPhotoNo(accountNo);
 		return Optional.ofNullable(photoNo).map(num -> num + 1).orElse(1L);
 	}
-	
+
 	/**
 	 * 同じファイル名の写真が存在するかチェックする
-	 * 
+	 *
 	 * @param	photoDetailModel	{@link PhotoDetailModel}
 	 * @return						写真が存在する場合、true
 	 */
@@ -104,10 +104,10 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	public Boolean isExistPhoto(PhotoDetailModel photoDetailModel) {
 		return photoMstMapper.isExistPhoto(PhotoMst.conditionForExistCheck(photoDetailModel));
 	}
-	
+
 	/**
 	 * アカウントに登録されている写真の件数を取得する
-	 * 
+	 *
 	 * @param	accountNo	アカウント番号
 	 * @return				登録件数
 	 */

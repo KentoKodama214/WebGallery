@@ -6,6 +6,10 @@ import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
 
 import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.ExpiresAt;
+import com.web.gallery.domain.common.TokenHash;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -78,18 +82,13 @@ public class AuthServiceImpl implements AuthService {
 		String refreshToken = jwtTokenProvider.generateRefreshToken();
 
 		// リフレッシュトークンをDB保存（ハッシュ化して保存）
-		RefreshTokenModel refreshTokenModel = RefreshTokenModel.builder()
-				.accountNo(principal.getAccountNo())
-				.tokenHash(hashToken(refreshToken))
-				.expiresAt(OffsetDateTime.now().plusDays(jwtConfig.getRefreshTokenExpirationDays()))
-				.build();
-		refreshTokenRepository.save(refreshTokenModel);
+		refreshTokenRepository.save(RefreshTokenModel.of(
+				new AccountNo(principal.getAccountNo()),
+				new TokenHash(hashToken(refreshToken)),
+				new ExpiresAt(OffsetDateTime.now().plusDays(jwtConfig.getRefreshTokenExpirationDays()))));
 
-		return AuthTokenModel.builder()
-				.accessToken(accessToken)
-				.refreshToken(refreshToken)
-				.expiresIn((long) jwtConfig.getAccessTokenExpirationMinutes() * 60)
-				.build();
+		return AuthTokenModel.of(accessToken, refreshToken,
+				(long) jwtConfig.getAccessTokenExpirationMinutes() * 60);
 	}
 
 	/**
@@ -105,26 +104,23 @@ public class AuthServiceImpl implements AuthService {
 		String tokenHash = hashToken(refreshToken);
 		RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 
-		if (storedToken == null || storedToken.getIsRevoked()) {
+		if (storedToken == null || storedToken.getIsRevoked().value()) {
 			throw new IllegalArgumentException("無効なリフレッシュトークンです");
 		}
 
-		if (storedToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
+		if (storedToken.getExpiresAt().value().isBefore(OffsetDateTime.now())) {
 			throw new IllegalArgumentException("リフレッシュトークンの有効期限が切れています");
 		}
 
 		// アカウント番号からアカウント情報を取得し、新しいアクセストークンを発行
-		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo());
-		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId());
+		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo().value());
+		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId().value());
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
 
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);
 
-		return AuthTokenModel.builder()
-				.accessToken(accessToken)
-				.refreshToken(refreshToken)
-				.expiresIn((long) jwtConfig.getAccessTokenExpirationMinutes() * 60)
-				.build();
+		return AuthTokenModel.of(accessToken, refreshToken,
+				(long) jwtConfig.getAccessTokenExpirationMinutes() * 60);
 	}
 
 	/**

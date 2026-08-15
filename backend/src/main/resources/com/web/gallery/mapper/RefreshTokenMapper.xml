@@ -4,6 +4,15 @@
 
 <mapper namespace="com.web.gallery.mapper.RefreshTokenMapper">
 
+	<resultMap id="RefreshTokenMap" type="com.web.gallery.entity.RefreshToken">
+		<result property="tokenId" column="token_id" typeHandler="com.web.gallery.type_handler.TokenIdTypeHandler"/>
+		<result property="accountNo" column="account_no" typeHandler="com.web.gallery.type_handler.AccountNoTypeHandler"/>
+		<result property="tokenHash" column="token_hash" typeHandler="com.web.gallery.type_handler.TokenHashTypeHandler"/>
+		<result property="expiresAt" column="expires_at" typeHandler="com.web.gallery.type_handler.ExpiresAtTypeHandler"/>
+		<result property="createdAt" column="created_at" typeHandler="com.web.gallery.type_handler.CreatedAtTypeHandler"/>
+		<result property="isRevoked" column="is_revoked" typeHandler="com.web.gallery.type_handler.IsRevokedTypeHandler"/>
+	</resultMap>
+
 	<insert id="insert" parameterType="com.web.gallery.entity.RefreshToken">
 		INSERT INTO common.refresh_token (
 			account_no,
@@ -12,15 +21,15 @@
 			created_at,
 			is_revoked
 		) VALUES (
-			#{accountNo},
-			#{tokenHash},
-			#{expiresAt},
-			COALESCE(#{createdAt}, NOW()),
-			COALESCE(#{isRevoked}, FALSE)
+			#{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler},
+			#{tokenHash, typeHandler=com.web.gallery.type_handler.TokenHashTypeHandler},
+			#{expiresAt, typeHandler=com.web.gallery.type_handler.ExpiresAtTypeHandler},
+			COALESCE(#{createdAt, typeHandler=com.web.gallery.type_handler.CreatedAtTypeHandler}, NOW()),
+			COALESCE(#{isRevoked, typeHandler=com.web.gallery.type_handler.IsRevokedTypeHandler}, FALSE)
 		)
 	</insert>
 
-	<select id="selectByTokenHash" parameterType="String" resultType="com.web.gallery.entity.RefreshToken">
+	<select id="selectByTokenHash" parameterType="String" resultMap="RefreshTokenMap">
 		SELECT
 			token_id AS tokenId,
 			account_no AS accountNo,

@@ -1,9 +1,15 @@
 package com.web.gallery.model;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.FavoriteCount;
+import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.IsFavorite;
+import com.web.gallery.domain.photo.PhotoAt;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.enumuration.DirectionEnum;
@@ -20,40 +26,38 @@ import lombok.Value;
 public class PhotoModel {
 	/** アカウント番号 */
 	@NonNull
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
 	@NonNull
-	private Long photoNo;
+	private PhotoNo photoNo;
 
 	/** お気に入り数 */
-	@NonNull
-	private Integer favoriteCount;
-	
+	private FavoriteCount favoriteCount;
+
 	/** お気に入り */
-	@NonNull
-	private Boolean isFavorite;
-	
+	private IsFavorite isFavorite;
+
 	/** 撮影日時 */
 	@NonNull
-	private OffsetDateTime photoAt;
-	
+	private PhotoAt photoAt;
+
 	/** 画像ファイルパス */
 	@NonNull
-	private String imageFilePath;
-	
+	private ImageFilePath imageFilePath;
+
 	/** キャプション */
 	@NonNull
-	private String caption;
+	private Caption caption;
 
-	/** 
+	/**
 	 * 向き区分
 	 * <p>
 	 * {@link DirectionEnum}
 	 */
 	@NonNull
 	private DirectionEnum directionKbn;
-	
+
 	/** 写真タグリスト */
 	@NonNull
 	private List<PhotoTagModel> photoTagModelList;
@@ -68,8 +72,8 @@ public class PhotoModel {
 	public static PhotoModel from(PhotoDto dto, List<PhotoTagMst> photoTagMstList) {
 		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream()
 				.filter(tag ->
-					tag.getAccountNo().equals(dto.getAccountNo()) &&
-					Objects.equals(tag.getPhotoNo(), dto.getPhotoNo()))
+					tag.getAccountNo().value().equals(dto.getAccountNo().value()) &&
+					Objects.equals(tag.getPhotoNo().value(), dto.getPhotoNo().value()))
 				.map(PhotoTagModel::from)
 				.toList();
 		return PhotoModel.builder()
@@ -77,7 +81,7 @@ public class PhotoModel {
 				.photoNo(dto.getPhotoNo())
 				.favoriteCount(dto.getFavoriteCount())
 				.isFavorite(dto.getIsFavorite())
-				.photoAt(dto.getPhotoAt().plusHours(9))
+				.photoAt(new PhotoAt(dto.getPhotoAt().value().plusHours(9)))
 				.imageFilePath(dto.getImageFilePath())
 				.caption(dto.getCaption())
 				.directionKbn(dto.getDirectionKbn())

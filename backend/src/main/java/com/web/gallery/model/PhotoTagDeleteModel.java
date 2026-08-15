@@ -1,5 +1,8 @@
 package com.web.gallery.model;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.PhotoNo;
+
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -12,9 +15,23 @@ import lombok.Value;
 public class PhotoTagDeleteModel {
 	/** アカウント番号 */
 	@NonNull
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
 	@NonNull
-	private Long photoNo;
+	private PhotoNo photoNo;
+
+	/**
+	 * アカウント番号と写真番号からPhotoTagDeleteModelを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @param	photoNo		写真番号
+	 * @return				{@link PhotoTagDeleteModel}
+	 */
+	public static PhotoTagDeleteModel of(AccountNo accountNo, PhotoNo photoNo) {
+		return PhotoTagDeleteModel.builder()
+				.accountNo(accountNo)
+				.photoNo(photoNo)
+				.build();
+	}
 }

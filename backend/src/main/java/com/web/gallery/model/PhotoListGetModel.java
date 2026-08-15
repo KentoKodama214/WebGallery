@@ -7,6 +7,9 @@ import java.util.Optional;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoListRequest;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.enumuration.SortPhotoEnum;
 
@@ -21,28 +24,26 @@ import lombok.Value;
 @Builder
 public class PhotoListGetModel {
 	/** ログイン中のアカウントNo */
-	private Long accountNo;
-	
+	private AccountNo accountNo;
+
 	/** 写真のアカウントID */
-	@NonNull
-	private String photoAccountId;
-	
-	/** 
+	private AccountId photoAccountId;
+
+	/**
 	 * 向き区分
 	 * <p>
 	 * {@link DirectionEnum}
 	 */
 	@NonNull
 	private DirectionEnum directionKbn;
-	
+
 	/** お気に入り写真のみ */
-	@NonNull
-	private Boolean isFavoriteOnly;
-	
+	private IsFavoriteOnly isFavoriteOnly;
+
 	/** タグワードリスト */
 	@NonNull
 	private List<String> tagList;
-	
+
 	/**
 	 * 並び順
 	 * <p>
@@ -66,10 +67,10 @@ public class PhotoListGetModel {
 				.orElse(new ArrayList<String>());
 
 		return PhotoListGetModel.builder()
-				.accountNo(accountNo)
-				.photoAccountId(photoAccountId)
+				.accountNo(accountNo != null ? new AccountNo(accountNo) : null)
+				.photoAccountId(new AccountId(photoAccountId))
 				.directionKbn(request.getDirectionKbn())
-				.isFavoriteOnly(Optional.ofNullable(request.getIsFavorite()).orElse(Boolean.FALSE))
+				.isFavoriteOnly(new IsFavoriteOnly(Optional.ofNullable(request.getIsFavorite()).orElse(Boolean.FALSE)))
 				.tagList(tagList)
 				.sortBy(request.getSortBy())
 				.build();

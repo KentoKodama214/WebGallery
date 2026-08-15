@@ -1,7 +1,9 @@
 package com.web.gallery.model;
 
-import java.time.OffsetDateTime;
-
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.ExpiresAt;
+import com.web.gallery.domain.common.IsRevoked;
+import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.entity.RefreshToken;
 
 import lombok.Builder;
@@ -17,16 +19,16 @@ import lombok.Value;
 @Builder
 public class RefreshTokenModel {
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** トークンハッシュ */
-	private String tokenHash;
+	private TokenHash tokenHash;
 
 	/** 有効期限 */
-	private OffsetDateTime expiresAt;
+	private ExpiresAt expiresAt;
 
 	/** 無効化フラグ */
-	private Boolean isRevoked;
+	private IsRevoked isRevoked;
 
 	/**
 	 * RefreshTokenエンティティからRefreshTokenModelを生成する
@@ -40,6 +42,22 @@ public class RefreshTokenModel {
 				.tokenHash(entity.getTokenHash())
 				.expiresAt(entity.getExpiresAt())
 				.isRevoked(entity.getIsRevoked())
+				.build();
+	}
+
+	/**
+	 * アカウント番号・トークンハッシュ・有効期限からRefreshTokenModelを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @param	tokenHash	トークンハッシュ
+	 * @param	expiresAt	有効期限
+	 * @return				{@link RefreshTokenModel}
+	 */
+	public static RefreshTokenModel of(AccountNo accountNo, TokenHash tokenHash, ExpiresAt expiresAt) {
+		return RefreshTokenModel.builder()
+				.accountNo(accountNo)
+				.tokenHash(tokenHash)
+				.expiresAt(expiresAt)
 				.build();
 	}
 }

@@ -22,49 +22,50 @@ import lombok.extern.slf4j.Slf4j;
 @Repository
 @RequiredArgsConstructor
 public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
-	
+
 	private final PhotoFavoriteMapper photoFavoriteMapper;
-	
+
 	/**
 	 * 写真お気に入りを登録する
-	 * 
+	 *
 	 * @param	favoriteModel			{@link PhotoFavoriteModel}
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 */
 	@Override
 	public void regist(PhotoFavoriteModel favoriteModel) throws RegistFailureException {
 		PhotoFavorite photoFavorite = PhotoFavorite.from(favoriteModel);
-		
+
 		try {
 			photoFavoriteMapper.insert(photoFavorite);
 		}
 		catch (DuplicateKeyException e) {
 			log.warn("PhotoFavorite: Duplicate Key (AccountNo: {}, FavoritePhotoAccountNo: {}, FavoritePhotoNo: {})",
-					favoriteModel.getAccountNo(), favoriteModel.getFavoritePhotoAccountNo(), favoriteModel.getFavoritePhotoNo(), e);
+					favoriteModel.getAccountNo().value(), favoriteModel.getFavoritePhotoAccountNo().value(), favoriteModel.getFavoritePhotoNo().value(), e);
 			throw new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_FAVORITE);
 		}
 	}
-	
+
 	/**
 	 * 写真お気に入りを削除する
-	 * 
+	 *
 	 * @param	favoriteDeleteModel		{@link PhotoFavoriteDeleteModel}
 	 * @throws	UpdateFailureException	更新に失敗した場合
 	 */
 	@Override
 	public void delete(PhotoFavoriteDeleteModel favoriteDeleteModel) throws UpdateFailureException {
 		PhotoFavorite photoFavorite = PhotoFavorite.from(favoriteDeleteModel);
-		
+
 		if (photoFavoriteMapper.delete(photoFavorite) < 1) {
 			log.warn("PhotoFavorite: Delete Failed (AccountNo: {}, FavoritePhotoAccountNo: {}, FavoritePhotoNo: {})",
-					favoriteDeleteModel.getAccountNo(), favoriteDeleteModel.getFavoritePhotoAccountNo(), favoriteDeleteModel.getFavoritePhotoNo());
+					favoriteDeleteModel.getAccountNo() != null ? favoriteDeleteModel.getAccountNo().value() : null,
+					favoriteDeleteModel.getFavoritePhotoAccountNo().value(), favoriteDeleteModel.getFavoritePhotoNo().value());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_CANCEL_FAVORITE);
 		}
 	}
-	
+
 	/**
 	 * 該当写真の写真お気に入りを全件削除する
-	 * 
+	 *
 	 * @param	favoriteDeleteModel	{@link PhotoFavoriteDeleteModel}
 	 */
 	@Override

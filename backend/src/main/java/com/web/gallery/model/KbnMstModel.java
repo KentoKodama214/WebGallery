@@ -1,5 +1,16 @@
 package com.web.gallery.model;
 
+import com.web.gallery.domain.common.Explanation;
+import com.web.gallery.domain.common.KbnClassCode;
+import com.web.gallery.domain.common.KbnClassEnglishName;
+import com.web.gallery.domain.common.KbnClassJapaneseName;
+import com.web.gallery.domain.common.KbnCode;
+import com.web.gallery.domain.common.KbnEnglishName;
+import com.web.gallery.domain.common.KbnGroupCode;
+import com.web.gallery.domain.common.KbnGroupEnglishName;
+import com.web.gallery.domain.common.KbnGroupJapaneseName;
+import com.web.gallery.domain.common.KbnJapaneseName;
+import com.web.gallery.domain.common.SortOrder;
 import com.web.gallery.entity.KbnMst;
 
 import lombok.Builder;
@@ -14,47 +25,47 @@ import lombok.Value;
 public class KbnMstModel {
 	/** 区分分類コード */
 	@NonNull
-	private String kbnClassCode;
-	
+	private KbnClassCode kbnClassCode;
+
 	/** 区分コード */
 	@NonNull
-	private String kbnCode;
-	
+	private KbnCode kbnCode;
+
 	/** 並び順 */
 	@NonNull
-	private Integer sortOrder;
-	
+	private SortOrder sortOrder;
+
 	/** 区分グループコード */
 	@NonNull
-	private String kbnGroupCode;
-	
+	private KbnGroupCode kbnGroupCode;
+
 	/** 区分分類日本語名 */
 	@NonNull
-	private String kbnClassJapaneseName;
-	
+	private KbnClassJapaneseName kbnClassJapaneseName;
+
 	/** 区分グループ日本語名 */
 	@NonNull
-	private String kbnGroupJapaneseName;
-	
+	private KbnGroupJapaneseName kbnGroupJapaneseName;
+
 	/** 区分日本語名 */
 	@NonNull
-	private String kbnJapaneseName;
+	private KbnJapaneseName kbnJapaneseName;
 
 	/** 区分分類英語名 */
 	@NonNull
-	private String kbnClassEnglishName;
-	
+	private KbnClassEnglishName kbnClassEnglishName;
+
 	/** 区分グループ英語名 */
 	@NonNull
-	private String kbnGroupEnglishName;
-	
+	private KbnGroupEnglishName kbnGroupEnglishName;
+
 	/** 区分英語名 */
 	@NonNull
-	private String kbnEnglishName;
-	
+	private KbnEnglishName kbnEnglishName;
+
 	/** 説明 */
 	@NonNull
-	private String explanation;
+	private Explanation explanation;
 
 	/**
 	 * KbnMstエンティティからKbnMstModelを生成する

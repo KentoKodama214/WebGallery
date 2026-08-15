@@ -18,6 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -43,9 +46,9 @@ public class PhotoFavoriteRepositoryImplTest {
 		@DisplayName("正常系")
 		void regist_contain_null_parameter() throws RegistFailureException {
 			PhotoFavoriteModel favoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(1L)
-					.favoritePhotoAccountNo(1L)
-					.favoritePhotoNo(1L)
+					.accountNo(new AccountNo(1L))
+					.favoritePhotoAccountNo(new AccountNo(1L))
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
@@ -55,10 +58,10 @@ public class PhotoFavoriteRepositoryImplTest {
 			
 			verify(photoFavoriteMapper).insert(any(PhotoFavorite.class));
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
-			assertEquals(1L, photoFavorite.getAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
-			assertEquals(1L, photoFavorite.getCreatedBy());
+			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
+			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
+			assertEquals(new CreatedBy(1L), photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}
 		
@@ -67,9 +70,9 @@ public class PhotoFavoriteRepositoryImplTest {
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void regist_RegistFailureException() {
 			PhotoFavoriteModel favoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(1L)
-					.favoritePhotoAccountNo(1L)
-					.favoritePhotoNo(1L)
+					.accountNo(new AccountNo(1L))
+					.favoritePhotoAccountNo(new AccountNo(1L))
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
@@ -79,10 +82,10 @@ public class PhotoFavoriteRepositoryImplTest {
 			
 			verify(photoFavoriteMapper).insert(any(PhotoFavorite.class));
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
-			assertEquals(1L, photoFavorite.getAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
-			assertEquals(1L, photoFavorite.getCreatedBy());
+			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
+			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
+			assertEquals(new CreatedBy(1L), photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}
 	}
@@ -96,9 +99,9 @@ public class PhotoFavoriteRepositoryImplTest {
 		@DisplayName("正常系")
 		void delete_contain_null_parameter() throws UpdateFailureException {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
-					.accountNo(1L)
-					.favoritePhotoAccountNo(1L)
-					.favoritePhotoNo(1L)
+					.accountNo(new AccountNo(1L))
+					.favoritePhotoAccountNo(new AccountNo(1L))
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
@@ -108,9 +111,9 @@ public class PhotoFavoriteRepositoryImplTest {
 			
 			verify(photoFavoriteMapper).delete(any(PhotoFavorite.class));
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
-			assertEquals(1L, photoFavorite.getAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
+			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
+			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
 			assertNull(photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}
@@ -120,9 +123,9 @@ public class PhotoFavoriteRepositoryImplTest {
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void delete_UpdateFailureException() throws UpdateFailureException {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
-					.accountNo(1L)
-					.favoritePhotoAccountNo(1L)
-					.favoritePhotoNo(1L)
+					.accountNo(new AccountNo(1L))
+					.favoritePhotoAccountNo(new AccountNo(1L))
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			
 			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
@@ -132,9 +135,9 @@ public class PhotoFavoriteRepositoryImplTest {
 			
 			verify(photoFavoriteMapper).delete(any(PhotoFavorite.class));
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
-			assertEquals(1L, photoFavorite.getAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
+			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
+			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
 			assertNull(photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}
@@ -149,20 +152,20 @@ public class PhotoFavoriteRepositoryImplTest {
 		@DisplayName("正常系：")
 		void clear_success() {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
-					.favoritePhotoAccountNo(1L)
-					.favoritePhotoNo(1L)
+					.favoritePhotoAccountNo(new AccountNo(1L))
+					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
-			
+
 			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
 			doReturn(1).when(photoFavoriteMapper).delete(photoFavoriteCaptor.capture());
-			
+
 			photoFavoriteRepositoryImpl.clear(favoriteDeleteModel);
 			
 			verify(photoFavoriteMapper).delete(any(PhotoFavorite.class));
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
 			assertNull(photoFavorite.getAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
+			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
 			assertNull(photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}

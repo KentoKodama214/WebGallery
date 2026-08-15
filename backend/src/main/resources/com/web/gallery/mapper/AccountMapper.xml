@@ -4,8 +4,23 @@
 
 <mapper namespace="com.web.gallery.mapper.AccountMapper">
 	<resultMap id="AccountMap" type="com.web.gallery.entity.Account">
+		<result property="accountNo" column="account_no" typeHandler="com.web.gallery.type_handler.AccountNoTypeHandler"/>
+		<result property="createdBy" column="created_by" typeHandler="com.web.gallery.type_handler.CreatedByTypeHandler"/>
+		<result property="createdAt" column="created_at" typeHandler="com.web.gallery.type_handler.CreatedAtTypeHandler"/>
+		<result property="updatedBy" column="updated_by" typeHandler="com.web.gallery.type_handler.UpdatedByTypeHandler"/>
+		<result property="updatedAt" column="updated_at" typeHandler="com.web.gallery.type_handler.UpdatedAtTypeHandler"/>
+		<result property="isDeleted" column="is_deleted" typeHandler="com.web.gallery.type_handler.IsDeletedTypeHandler"/>
+		<result property="accountId" column="account_id" typeHandler="com.web.gallery.type_handler.AccountIdTypeHandler"/>
+		<result property="accountName" column="account_name" typeHandler="com.web.gallery.type_handler.AccountNameTypeHandler"/>
+		<result property="password" column="password" typeHandler="com.web.gallery.type_handler.PasswordTypeHandler"/>
+		<result property="birthdate" column="birthdate" typeHandler="com.web.gallery.type_handler.BirthDateTypeHandler"/>
 		<result property="sexKbn" column="sex_kbn" typeHandler="com.web.gallery.type_handler.SexEnumTypeHandler"/>
+		<result property="birthplacePrefectureKbnCode" column="birthplace_prefecture_kbn_code" typeHandler="com.web.gallery.type_handler.BirthplacePrefectureKbnCodeTypeHandler"/>
+		<result property="residentPrefectureKbnCode" column="resident_prefecture_kbn_code" typeHandler="com.web.gallery.type_handler.ResidentPrefectureKbnCodeTypeHandler"/>
+		<result property="freeMemo" column="free_memo" typeHandler="com.web.gallery.type_handler.FreeMemoTypeHandler"/>
 		<result property="authorityKbn" column="authority_kbn" typeHandler="com.web.gallery.type_handler.AuthorityEnumTypeHandler"/>
+		<result property="lastLoginDatetime" column="last_login_datetime" typeHandler="com.web.gallery.type_handler.LastLoginDatetimeTypeHandler"/>
+		<result property="loginFailureCount" column="login_failure_count" typeHandler="com.web.gallery.type_handler.LoginFailureCountTypeHandler"/>
 	</resultMap>
 
 	<select id="select" parameterType="com.web.gallery.entity.Account" resultMap="AccountMap">
@@ -30,44 +45,44 @@
 		FROM
 			common.account
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
-			<if test="isDeleted != null"> AND is_deleted = #{isDeleted}</if>
-			<if test="accountId != null"> AND account_id = #{accountId}</if>
-			<if test="accountName != null"> AND account_name = #{accountName}</if>
-			<if test="password != null"> AND password = #{password}</if>
-			<if test="birthdate != null"> AND birthdate = #{birthdate}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
+			<if test="isDeleted != null"> AND is_deleted = #{isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
+			<if test="accountId != null"> AND account_id = #{accountId, typeHandler=com.web.gallery.type_handler.AccountIdTypeHandler}</if>
+			<if test="accountName != null"> AND account_name = #{accountName, typeHandler=com.web.gallery.type_handler.AccountNameTypeHandler}</if>
+			<if test="password != null"> AND password = #{password, typeHandler=com.web.gallery.type_handler.PasswordTypeHandler}</if>
+			<if test="birthdate != null"> AND birthdate = #{birthdate, typeHandler=com.web.gallery.type_handler.BirthDateTypeHandler}</if>
 			<if test="sexKbn != null"> AND sex_kbn = #{sexKbn}::common.sex_enum</if>
-			<if test="birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{birthplacePrefectureKbnCode}</if>
-			<if test="residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{residentPrefectureKbnCode}</if>
-			<if test="freeMemo != null"> AND free_memo = #{freeMemo}</if>
+			<if test="birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{birthplacePrefectureKbnCode, typeHandler=com.web.gallery.type_handler.BirthplacePrefectureKbnCodeTypeHandler}</if>
+			<if test="residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{residentPrefectureKbnCode, typeHandler=com.web.gallery.type_handler.ResidentPrefectureKbnCodeTypeHandler}</if>
+			<if test="freeMemo != null"> AND free_memo = #{freeMemo, typeHandler=com.web.gallery.type_handler.FreeMemoTypeHandler}</if>
 			<if test="authorityKbn != null"> AND authority_kbn = #{authorityKbn}::common.authority_enum</if>
-			<if test="lastLoginDatetime != null"> AND last_login_datetime = #{lastLoginDatetime}</if>
-			<if test="loginFailureCount != null"> AND login_failure_count = #{loginFailureCount}</if>
+			<if test="lastLoginDatetime != null"> AND last_login_datetime = #{lastLoginDatetime, typeHandler=com.web.gallery.type_handler.LastLoginDatetimeTypeHandler}</if>
+			<if test="loginFailureCount != null"> AND login_failure_count = #{loginFailureCount, typeHandler=com.web.gallery.type_handler.LoginFailureCountTypeHandler}</if>
 		</where>
 	</select>
-	
+
 	<select id="count" parameterType="com.web.gallery.entity.Account" resultType="Integer">
 		SELECT
 			COUNT(*)
 		FROM
 			common.account
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
-			<if test="isDeleted != null"> AND is_deleted = #{isDeleted}</if>
-			<if test="accountId != null"> AND account_id = #{accountId}</if>
-			<if test="accountName != null"> AND account_name = #{accountName}</if>
-			<if test="password != null"> AND password = #{password}</if>
-			<if test="birthdate != null"> AND birthdate = #{birthdate}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
+			<if test="isDeleted != null"> AND is_deleted = #{isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
+			<if test="accountId != null"> AND account_id = #{accountId, typeHandler=com.web.gallery.type_handler.AccountIdTypeHandler}</if>
+			<if test="accountName != null"> AND account_name = #{accountName, typeHandler=com.web.gallery.type_handler.AccountNameTypeHandler}</if>
+			<if test="password != null"> AND password = #{password, typeHandler=com.web.gallery.type_handler.PasswordTypeHandler}</if>
+			<if test="birthdate != null"> AND birthdate = #{birthdate, typeHandler=com.web.gallery.type_handler.BirthDateTypeHandler}</if>
 			<if test="sexKbn != null"> AND sex_kbn = #{sexKbn}::common.sex_enum</if>
-			<if test="birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{birthplacePrefectureKbnCode}</if>
-			<if test="residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{residentPrefectureKbnCode}</if>
-			<if test="freeMemo != null"> AND free_memo = #{freeMemo}</if>
+			<if test="birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{birthplacePrefectureKbnCode, typeHandler=com.web.gallery.type_handler.BirthplacePrefectureKbnCodeTypeHandler}</if>
+			<if test="residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{residentPrefectureKbnCode, typeHandler=com.web.gallery.type_handler.ResidentPrefectureKbnCodeTypeHandler}</if>
+			<if test="freeMemo != null"> AND free_memo = #{freeMemo, typeHandler=com.web.gallery.type_handler.FreeMemoTypeHandler}</if>
 			<if test="authorityKbn != null"> AND authority_kbn = #{authorityKbn}::common.authority_enum</if>
-			<if test="lastLoginDatetime != null"> AND last_login_datetime = #{lastLoginDatetime}</if>
-			<if test="loginFailureCount != null"> AND login_failure_count = #{loginFailureCount}</if>
+			<if test="lastLoginDatetime != null"> AND last_login_datetime = #{lastLoginDatetime, typeHandler=com.web.gallery.type_handler.LastLoginDatetimeTypeHandler}</if>
+			<if test="loginFailureCount != null"> AND login_failure_count = #{loginFailureCount, typeHandler=com.web.gallery.type_handler.LoginFailureCountTypeHandler}</if>
 		</where>
 	</select>
-	
+
 	<insert id="insert" parameterType="com.web.gallery.entity.Account">
 		INSERT INTO
 			common.account (
@@ -92,89 +107,89 @@
 		VALUES
 			(
 				nextval('common.account_account_no_seq'),
-				#{createdBy},
+				#{createdBy, typeHandler=com.web.gallery.type_handler.CreatedByTypeHandler},
 				NOW(),
-				#{updatedBy},
+				#{updatedBy, typeHandler=com.web.gallery.type_handler.UpdatedByTypeHandler},
 				NOW(),
 				false,
-				#{accountId},
-				#{accountName},
-				#{password},
-				#{birthdate},
+				#{accountId, typeHandler=com.web.gallery.type_handler.AccountIdTypeHandler},
+				#{accountName, typeHandler=com.web.gallery.type_handler.AccountNameTypeHandler},
+				#{password, typeHandler=com.web.gallery.type_handler.PasswordTypeHandler},
+				#{birthdate, typeHandler=com.web.gallery.type_handler.BirthDateTypeHandler},
 				#{sexKbn}::common.sex_enum,
-				#{birthplacePrefectureKbnCode},
-				#{residentPrefectureKbnCode},
-				#{freeMemo},
+				#{birthplacePrefectureKbnCode, typeHandler=com.web.gallery.type_handler.BirthplacePrefectureKbnCodeTypeHandler},
+				#{residentPrefectureKbnCode, typeHandler=com.web.gallery.type_handler.ResidentPrefectureKbnCodeTypeHandler},
+				#{freeMemo, typeHandler=com.web.gallery.type_handler.FreeMemoTypeHandler},
 				#{authorityKbn}::common.authority_enum,
-				#{lastLoginDatetime},
-				#{loginFailureCount}
+				#{lastLoginDatetime, typeHandler=com.web.gallery.type_handler.LastLoginDatetimeTypeHandler},
+				#{loginFailureCount, typeHandler=com.web.gallery.type_handler.LoginFailureCountTypeHandler}
 			)
 	</insert>
-	
+
 	<update id="update" parameterType="com.web.gallery.entity.Account">
-		UPDATE 
+		UPDATE
 			common.account
 		<set>
 			updated_at = NOW()
-			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy}</if>
-			<if test="target.isDeleted != null"> , is_deleted = #{target.isDeleted}</if>
-			<if test="target.accountId != null"> , account_id = #{target.accountId}</if>
-			<if test="target.accountName != null"> , account_name = #{target.accountName}</if>
-			<if test="target.password != null"> , password = #{target.password}</if>
-			<if test="target.birthdate != null"> , birthdate = #{target.birthdate}</if>
+			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy, typeHandler=com.web.gallery.type_handler.UpdatedByTypeHandler}</if>
+			<if test="target.isDeleted != null"> , is_deleted = #{target.isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
+			<if test="target.accountId != null"> , account_id = #{target.accountId, typeHandler=com.web.gallery.type_handler.AccountIdTypeHandler}</if>
+			<if test="target.accountName != null"> , account_name = #{target.accountName, typeHandler=com.web.gallery.type_handler.AccountNameTypeHandler}</if>
+			<if test="target.password != null"> , password = #{target.password, typeHandler=com.web.gallery.type_handler.PasswordTypeHandler}</if>
+			<if test="target.birthdate != null"> , birthdate = #{target.birthdate, typeHandler=com.web.gallery.type_handler.BirthDateTypeHandler}</if>
 			<if test="target.sexKbn != null"> , sex_kbn = #{target.sexKbn}::common.sex_enum</if>
-			<if test="target.birthplacePrefectureKbnCode != null"> , birthplace_prefecture_kbn_code = #{target.birthplacePrefectureKbnCode}</if>
-			<if test="target.residentPrefectureKbnCode != null"> , resident_prefecture_kbn_code = #{target.residentPrefectureKbnCode}</if>
-			<if test="target.freeMemo != null"> , free_memo = #{target.freeMemo}</if>
+			<if test="target.birthplacePrefectureKbnCode != null"> , birthplace_prefecture_kbn_code = #{target.birthplacePrefectureKbnCode, typeHandler=com.web.gallery.type_handler.BirthplacePrefectureKbnCodeTypeHandler}</if>
+			<if test="target.residentPrefectureKbnCode != null"> , resident_prefecture_kbn_code = #{target.residentPrefectureKbnCode, typeHandler=com.web.gallery.type_handler.ResidentPrefectureKbnCodeTypeHandler}</if>
+			<if test="target.freeMemo != null"> , free_memo = #{target.freeMemo, typeHandler=com.web.gallery.type_handler.FreeMemoTypeHandler}</if>
 			<if test="target.authorityKbn != null"> , authority_kbn = #{target.authorityKbn}::common.authority_enum</if>
-			<if test="target.lastLoginDatetime != null"> , last_login_datetime = #{target.lastLoginDatetime}</if>
-			<if test="target.loginFailureCount != null"> , login_failure_count = #{target.loginFailureCount}</if>
+			<if test="target.lastLoginDatetime != null"> , last_login_datetime = #{target.lastLoginDatetime, typeHandler=com.web.gallery.type_handler.LastLoginDatetimeTypeHandler}</if>
+			<if test="target.loginFailureCount != null"> , login_failure_count = #{target.loginFailureCount, typeHandler=com.web.gallery.type_handler.LoginFailureCountTypeHandler}</if>
 		</set>
 		<where>
-			<if test="condition.accountNo != null"> AND account_no = #{condition.accountNo}</if>
-			<if test="condition.isDeleted != null"> AND is_deleted = #{condition.isDeleted}</if>
-			<if test="condition.accountId != null"> AND account_id = #{condition.accountId}</if>
-			<if test="condition.accountName != null"> AND account_name = #{condition.accountName}</if>
-			<if test="condition.password != null"> AND password = #{condition.password}</if>
-			<if test="condition.birthdate != null"> AND birthdate = #{condition.birthdate}</if>
+			<if test="condition.accountNo != null"> AND account_no = #{condition.accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
+			<if test="condition.isDeleted != null"> AND is_deleted = #{condition.isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
+			<if test="condition.accountId != null"> AND account_id = #{condition.accountId, typeHandler=com.web.gallery.type_handler.AccountIdTypeHandler}</if>
+			<if test="condition.accountName != null"> AND account_name = #{condition.accountName, typeHandler=com.web.gallery.type_handler.AccountNameTypeHandler}</if>
+			<if test="condition.password != null"> AND password = #{condition.password, typeHandler=com.web.gallery.type_handler.PasswordTypeHandler}</if>
+			<if test="condition.birthdate != null"> AND birthdate = #{condition.birthdate, typeHandler=com.web.gallery.type_handler.BirthDateTypeHandler}</if>
 			<if test="condition.sexKbn != null"> AND sex_kbn = #{condition.sexKbn}::common.sex_enum</if>
-			<if test="condition.birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{condition.birthplacePrefectureKbnCode}</if>
-			<if test="condition.residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{condition.residentPrefectureKbnCode}</if>
-			<if test="condition.freeMemo != null"> AND free_memo = #{condition.freeMemo}</if>
+			<if test="condition.birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{condition.birthplacePrefectureKbnCode, typeHandler=com.web.gallery.type_handler.BirthplacePrefectureKbnCodeTypeHandler}</if>
+			<if test="condition.residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{condition.residentPrefectureKbnCode, typeHandler=com.web.gallery.type_handler.ResidentPrefectureKbnCodeTypeHandler}</if>
+			<if test="condition.freeMemo != null"> AND free_memo = #{condition.freeMemo, typeHandler=com.web.gallery.type_handler.FreeMemoTypeHandler}</if>
 			<if test="condition.authorityKbn != null"> AND authority_kbn = #{condition.authorityKbn}::common.authority_enum</if>
-			<if test="condition.lastLoginDatetime != null"> AND last_login_datetime = #{condition.lastLoginDatetime}</if>
-			<if test="condition.loginFailureCount != null"> AND login_failure_count = #{condition.loginFailureCount}</if>
+			<if test="condition.lastLoginDatetime != null"> AND last_login_datetime = #{condition.lastLoginDatetime, typeHandler=com.web.gallery.type_handler.LastLoginDatetimeTypeHandler}</if>
+			<if test="condition.loginFailureCount != null"> AND login_failure_count = #{condition.loginFailureCount, typeHandler=com.web.gallery.type_handler.LoginFailureCountTypeHandler}</if>
 		</where>
 	</update>
-	
+
 	<delete id="delete" parameterType="com.web.gallery.entity.Account">
 		DELETE FROM
 			common.account
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
-			<if test="isDeleted != null"> AND is_deleted = #{isDeleted}</if>
-			<if test="accountId != null"> AND account_id = #{accountId}</if>
-			<if test="accountName != null"> AND account_name = #{accountName}</if>
-			<if test="password != null"> AND password = #{password}</if>
-			<if test="birthdate != null"> AND birthdate = #{birthdate}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
+			<if test="isDeleted != null"> AND is_deleted = #{isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
+			<if test="accountId != null"> AND account_id = #{accountId, typeHandler=com.web.gallery.type_handler.AccountIdTypeHandler}</if>
+			<if test="accountName != null"> AND account_name = #{accountName, typeHandler=com.web.gallery.type_handler.AccountNameTypeHandler}</if>
+			<if test="password != null"> AND password = #{password, typeHandler=com.web.gallery.type_handler.PasswordTypeHandler}</if>
+			<if test="birthdate != null"> AND birthdate = #{birthdate, typeHandler=com.web.gallery.type_handler.BirthDateTypeHandler}</if>
 			<if test="sexKbn != null"> AND sex_kbn = #{sexKbn}::common.sex_enum</if>
-			<if test="birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{birthplacePrefectureKbnCode}</if>
-			<if test="residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{residentPrefectureKbnCode}</if>
-			<if test="freeMemo != null"> AND free_memo = #{freeMemo}</if>
+			<if test="birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{birthplacePrefectureKbnCode, typeHandler=com.web.gallery.type_handler.BirthplacePrefectureKbnCodeTypeHandler}</if>
+			<if test="residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{residentPrefectureKbnCode, typeHandler=com.web.gallery.type_handler.ResidentPrefectureKbnCodeTypeHandler}</if>
+			<if test="freeMemo != null"> AND free_memo = #{freeMemo, typeHandler=com.web.gallery.type_handler.FreeMemoTypeHandler}</if>
 			<if test="authorityKbn != null"> AND authority_kbn = #{authorityKbn}::common.authority_enum</if>
-			<if test="lastLoginDatetime != null"> AND last_login_datetime = #{lastLoginDatetime}</if>
-			<if test="loginFailureCount != null"> AND login_failure_count = #{loginFailureCount}</if>
+			<if test="lastLoginDatetime != null"> AND last_login_datetime = #{lastLoginDatetime, typeHandler=com.web.gallery.type_handler.LastLoginDatetimeTypeHandler}</if>
+			<if test="loginFailureCount != null"> AND login_failure_count = #{loginFailureCount, typeHandler=com.web.gallery.type_handler.LoginFailureCountTypeHandler}</if>
 		</where>
 	</delete>
-	
+
 	<select id="isExistAccount" parameterType="com.web.gallery.entity.Account" resultType="Boolean">
 		SELECT
 			CASE WHEN COUNT(*)>0 THEN true ELSE false END
 		FROM
 			common.account
 		<where>
-			<if test="accountNo != null"> AND account_no &lt;&gt; #{accountNo}</if>
-			<if test="accountId != null"> AND account_id = #{accountId}</if>
+			<if test="accountNo != null"> AND account_no &lt;&gt; #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
+			<if test="accountId != null"> AND account_id = #{accountId, typeHandler=com.web.gallery.type_handler.AccountIdTypeHandler}</if>
 		</where>
 	</select>
 </mapper>

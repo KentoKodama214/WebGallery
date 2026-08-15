@@ -98,19 +98,19 @@ public class AuthServiceImplIntegrationTest {
 		void login_success() throws Exception {
 			AuthTokenModel result = authServiceImpl.login("testuser01", TEST_PASSWORD);
 
-			assertNotNull(result.getAccessToken());
-			assertFalse(result.getAccessToken().isEmpty());
-			assertNotNull(result.getRefreshToken());
-			assertFalse(result.getRefreshToken().isEmpty());
-			assertTrue(result.getExpiresIn() > 0);
+			assertNotNull(result.getAccessToken().value());
+			assertFalse(result.getAccessToken().value().isEmpty());
+			assertNotNull(result.getRefreshToken().value());
+			assertFalse(result.getRefreshToken().value().isEmpty());
+			assertTrue(result.getExpiresIn().value() > 0);
 
 			// リフレッシュトークンがDBに保存されていることを検証
-			String tokenHash = hashToken(result.getRefreshToken());
+			String tokenHash = hashToken(result.getRefreshToken().value());
 			RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 			assertNotNull(storedToken);
-			assertEquals(1L, storedToken.getAccountNo());
-			assertFalse(storedToken.getIsRevoked());
-			assertTrue(storedToken.getExpiresAt().isAfter(OffsetDateTime.now()));
+			assertEquals(1L, storedToken.getAccountNo().value());
+			assertFalse(storedToken.getIsRevoked().value());
+			assertTrue(storedToken.getExpiresAt().value().isAfter(OffsetDateTime.now()));
 		}
 
 		@Test
@@ -119,21 +119,21 @@ public class AuthServiceImplIntegrationTest {
 		void login_revokes_existing_tokens() throws Exception {
 			// 1回目のログイン
 			AuthTokenModel firstResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
-			String firstTokenHash = hashToken(firstResult.getRefreshToken());
+			String firstTokenHash = hashToken(firstResult.getRefreshToken().value());
 
 			// 2回目のログイン
 			AuthTokenModel secondResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
-			String secondTokenHash = hashToken(secondResult.getRefreshToken());
+			String secondTokenHash = hashToken(secondResult.getRefreshToken().value());
 
 			// 1回目のトークンが無効化されていることを検証
 			RefreshTokenModel firstToken = refreshTokenRepository.findByTokenHash(firstTokenHash);
 			assertNotNull(firstToken);
-			assertTrue(firstToken.getIsRevoked());
+			assertTrue(firstToken.getIsRevoked().value());
 
 			// 2回目のトークンが有効であることを検証
 			RefreshTokenModel secondToken = refreshTokenRepository.findByTokenHash(secondTokenHash);
 			assertNotNull(secondToken);
-			assertFalse(secondToken.getIsRevoked());
+			assertFalse(secondToken.getIsRevoked().value());
 		}
 
 		@Test
@@ -179,12 +179,12 @@ public class AuthServiceImplIntegrationTest {
 			AuthTokenModel loginResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
 
 			// リフレッシュ
-			AuthTokenModel refreshResult = authServiceImpl.refresh(loginResult.getRefreshToken());
+			AuthTokenModel refreshResult = authServiceImpl.refresh(loginResult.getRefreshToken().value());
 
-			assertNotNull(refreshResult.getAccessToken());
-			assertFalse(refreshResult.getAccessToken().isEmpty());
-			assertEquals(loginResult.getRefreshToken(), refreshResult.getRefreshToken());
-			assertTrue(refreshResult.getExpiresIn() > 0);
+			assertNotNull(refreshResult.getAccessToken().value());
+			assertFalse(refreshResult.getAccessToken().value().isEmpty());
+			assertEquals(loginResult.getRefreshToken().value(), refreshResult.getRefreshToken().value());
+			assertTrue(refreshResult.getExpiresIn().value() > 0);
 		}
 
 		@Test
@@ -202,7 +202,7 @@ public class AuthServiceImplIntegrationTest {
 		void refresh_revoked_token() throws Exception {
 			// ログインしてリフレッシュトークンを取得
 			AuthTokenModel loginResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
-			String refreshToken = loginResult.getRefreshToken();
+			String refreshToken = loginResult.getRefreshToken().value();
 
 			// トークンを無効化
 			refreshTokenRepository.revokeByTokenHash(hashToken(refreshToken));
@@ -219,7 +219,7 @@ public class AuthServiceImplIntegrationTest {
 		void refresh_expired_token() throws Exception {
 			// ログインしてリフレッシュトークンを取得
 			AuthTokenModel loginResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
-			String refreshToken = loginResult.getRefreshToken();
+			String refreshToken = loginResult.getRefreshToken().value();
 
 			// 有効期限を過去に設定
 			String tokenHash = hashToken(refreshToken);
@@ -251,13 +251,13 @@ public class AuthServiceImplIntegrationTest {
 		void logout_success() throws Exception {
 			// ログインしてリフレッシュトークンを取得
 			AuthTokenModel loginResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
-			String refreshToken = loginResult.getRefreshToken();
+			String refreshToken = loginResult.getRefreshToken().value();
 			String tokenHash = hashToken(refreshToken);
 
 			// ログアウト前はトークンが有効
 			RefreshTokenModel beforeLogout = refreshTokenRepository.findByTokenHash(tokenHash);
 			assertNotNull(beforeLogout);
-			assertFalse(beforeLogout.getIsRevoked());
+			assertFalse(beforeLogout.getIsRevoked().value());
 
 			// ログアウト
 			authServiceImpl.logout(refreshToken);
@@ -265,7 +265,7 @@ public class AuthServiceImplIntegrationTest {
 			// ログアウト後はトークンが無効化されている
 			RefreshTokenModel afterLogout = refreshTokenRepository.findByTokenHash(tokenHash);
 			assertNotNull(afterLogout);
-			assertTrue(afterLogout.getIsRevoked());
+			assertTrue(afterLogout.getIsRevoked().value());
 		}
 
 		@Test
@@ -281,7 +281,7 @@ public class AuthServiceImplIntegrationTest {
 		void logout_then_refresh_fails() {
 			// ログイン
 			AuthTokenModel loginResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
-			String refreshToken = loginResult.getRefreshToken();
+			String refreshToken = loginResult.getRefreshToken().value();
 
 			// ログアウト
 			authServiceImpl.logout(refreshToken);

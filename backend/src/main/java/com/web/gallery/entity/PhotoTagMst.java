@@ -1,7 +1,12 @@
 package com.web.gallery.entity;
 
-import java.time.OffsetDateTime;
-
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.TagEnglishName;
+import com.web.gallery.domain.photo.TagJapaneseName;
+import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoTagDeleteModel;
@@ -20,25 +25,25 @@ public class PhotoTagMst {
 	private Long id;
 
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
-	private Long photoNo;
+	private PhotoNo photoNo;
 
 	/** タグ番号 */
-	private Long tagNo;
+	private TagNo tagNo;
 
 	/** 作成者 */
-	private Long createdBy;
+	private CreatedBy createdBy;
 
 	/** 作成日時 */
-	private OffsetDateTime createdAt;
+	private CreatedAt createdAt;
 
 	/** タグ日本語名 */
-	private String tagJapaneseName;
+	private TagJapaneseName tagJapaneseName;
 
 	/** タグ英語名 */
-	private String tagEnglishName;
+	private TagEnglishName tagEnglishName;
 
 	/**
 	 * PhotoTagModelからPhotoTagMstエンティティを生成する
@@ -51,7 +56,7 @@ public class PhotoTagMst {
 				.accountNo(model.getAccountNo())
 				.photoNo(model.getPhotoNo())
 				.tagNo(model.getTagNo())
-				.createdBy(model.getAccountNo())
+				.createdBy(new CreatedBy(model.getAccountNo().value()))
 				.tagJapaneseName(model.getTagJapaneseName())
 				.tagEnglishName(model.getTagEnglishName())
 				.build();
@@ -92,6 +97,18 @@ public class PhotoTagMst {
 	public static PhotoTagMst condition(PhotoGetModel model) {
 		return PhotoTagMst.builder()
 				.accountNo(model.getPhotoAccountNo())
+				.build();
+	}
+
+	/**
+	 * アカウント番号で写真タグ削除用のPhotoTagMstエンティティを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link PhotoTagMst}
+	 */
+	public static PhotoTagMst conditionByAccountNo(AccountNo accountNo) {
+		return PhotoTagMst.builder()
+				.accountNo(accountNo)
 				.build();
 	}
 }

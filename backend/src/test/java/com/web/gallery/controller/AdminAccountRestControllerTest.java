@@ -27,6 +27,12 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import tools.jackson.databind.json.JsonMapper;
 import com.web.gallery.constant.MessageConst;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountName;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.LastLoginDatetime;
+import com.web.gallery.domain.account.LoginFailureCount;
+import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.enumuration.AuthorityEnum;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
@@ -71,22 +77,22 @@ public class AdminAccountRestControllerTest {
 
 			List<AccountModel> accountModels = List.of(
 					AccountModel.builder()
-							.accountNo(1L)
-							.accountId("aaaaaaaa")
-							.accountName("AAAAAAAA")
+							.accountNo(new AccountNo(1L))
+							.accountId(new AccountId("aaaaaaaa"))
+							.accountName(new AccountName("AAAAAAAA"))
 							.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-							.isDeleted(false)
-							.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
-							.loginFailureCount(0)
+							.isDeleted(new IsDeleted(false))
+							.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
+							.loginFailureCount(new LoginFailureCount(0))
 							.build(),
 					AccountModel.builder()
-							.accountNo(2L)
-							.accountId("bbbbbbbb")
-							.accountName("BBBBBBBB")
+							.accountNo(new AccountNo(2L))
+							.accountId(new AccountId("bbbbbbbb"))
+							.accountName(new AccountName("BBBBBBBB"))
 							.authorityKbn(AuthorityEnum.MINI)
-							.isDeleted(true)
-							.lastLoginDatetime(OffsetDateTime.of(2024, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
-							.loginFailureCount(5)
+							.isDeleted(new IsDeleted(true))
+							.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
+							.loginFailureCount(new LoginFailureCount(5))
 							.build()
 			);
 

@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.web.gallery.domain.common.KbnCode;
 import com.web.gallery.model.KbnMstModel;
 import com.web.gallery.repository.impl.KbnMstRepositoryImpl;
 
@@ -39,8 +40,8 @@ public class KbnMstRepositoryImplIntegrationTest {
 		void get_found() {
 			List<KbnMstModel> actual = kbnMstRepositoryImpl.get("sex");
 			assertEquals(2, actual.size());
-			assertEquals("man", actual.get(0).getKbnCode());
-			assertEquals("woman", actual.get(1).getKbnCode());
+			assertEquals(new KbnCode("man"), actual.get(0).getKbnCode());
+			assertEquals(new KbnCode("woman"), actual.get(1).getKbnCode());
 		}
 		
 		@Test

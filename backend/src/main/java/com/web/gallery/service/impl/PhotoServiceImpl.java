@@ -11,10 +11,15 @@ import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
+
 
 import com.web.gallery.config.PhotoConfig;
+import com.web.gallery.domain.photo.ImageFile;
+import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.enumuration.ErrorEnum;
 import com.web.gallery.enumuration.SortPhotoEnum;
@@ -59,30 +64,28 @@ public class PhotoServiceImpl implements PhotoService {
 	private final AccountRepository accountRepository;
 	private final FileRepository fileRepository;
 	private final PhotoConfig photoConfig;
-	
+
 	/**
 	 * 写真一覧を取得する
-	 * 
+	 *
 	 * @param	photoListGetModel	{@link PhotoListGetModel}
 	 * @return						{@link PhotoModel}
 	 */
 	@Override
 	@Transactional(readOnly = true)
 	public List<PhotoModel> getPhotoList(PhotoListGetModel photoListGetModel) {
-		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId());
+		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId().value());
 
 		List<PhotoModel> photoModelList
-			= photoDetailRepository.getPhotoList(PhotoGetModel.builder()
-					.accountNo(photoListGetModel.getAccountNo())
-					.photoAccountNo(accountModel.getAccountNo())
-					.build());
-		
+			= photoDetailRepository.getPhotoList(
+					PhotoGetModel.of(photoListGetModel.getAccountNo(), accountModel.getAccountNo()));
+
 		return photoModelList.stream()
-					.filter(photoModel -> 
+					.filter(photoModel ->
 						filteringByDirectionKbn(photoModel.getDirectionKbn(), photoListGetModel.getDirectionKbn()))
-					.filter(photoModel -> 
-						filteringByIsFavorite(photoModel.getIsFavorite(), photoListGetModel.getIsFavoriteOnly()))
-					.filter(photoModel -> 
+					.filter(photoModel ->
+						filteringByIsFavorite(photoModel.getIsFavorite().value(), photoListGetModel.getIsFavoriteOnly().value()))
+					.filter(photoModel ->
 						filteringByTag(photoModel.getPhotoTagModelList(), photoListGetModel.getTagList()))
 					.sorted(getComparator(photoListGetModel.getSortBy()))
 					.toList();
@@ -90,7 +93,7 @@ public class PhotoServiceImpl implements PhotoService {
 
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する
-	 * 
+	 *
 	 * @param	photoDetailGetModel		{@link PhotoDetailGetModel}
 	 * @return							{@link PhotoDetailModel}
 	 * @throws	PhotoNotFoundException	写真が存在しなかった場合
@@ -100,10 +103,10 @@ public class PhotoServiceImpl implements PhotoService {
 	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws PhotoNotFoundException {
 		return photoDetailRepository.getPhotoDetail(photoDetailGetModel);
 	}
-	
+
 	/**
 	 * 写真を登録・更新する
-	 * 
+	 *
 	 * @param	photoDetailModelList	{@link PhotoDetailModel}
 	 * @throws	FileDuplicateException 	同じファイル名のファイルが既に保存済みの場合
 	 * @throws	RegistFailureException	登録に失敗した場合
@@ -115,13 +118,13 @@ public class PhotoServiceImpl implements PhotoService {
 		if(Objects.isNull(photoDetailModelList)) return null;
 		if(photoDetailModelList.isEmpty()) return null;
 
-		Long photoNo = photoMstRepository.getNewPhotoNo(photoDetailModelList.getFirst().getAccountNo());
+		Long photoNo = photoMstRepository.getNewPhotoNo(photoDetailModelList.getFirst().getAccountNo().value());
 		Long savedPhotoNo = photoNo;
 		String filePath = photoConfig.getOutputPath() + accountId + "/";
 
 		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
 			if(Objects.isNull(photoDetailModel.getPhotoNo())) {
-				String filename = photoDetailModel.getImageFile().getOriginalFilename();
+				String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
 				if(photoMstRepository.isExistPhoto(photoDetailModel)) {
 					log.warn("Duplicate image file (filename: {}}", filename);
 					throw new FileDuplicateException(ErrorEnum.DUPLICATE_PHOTO_FILE);
@@ -129,9 +132,9 @@ public class PhotoServiceImpl implements PhotoService {
 
 				photoMstRepository.regist(photoDetailModel, filePath + filename, photoNo);
 				registPhotoTags(photoDetailModel.getPhotoTagModelList(), photoNo++);
-				uploadFile(filePath + filename, photoDetailModel.getImageFile());
+				uploadFile(new ImageFilePath(filePath + filename), photoDetailModel.getImageFile());
 			} else {
-				savedPhotoNo = photoDetailModel.getPhotoNo();
+				savedPhotoNo = photoDetailModel.getPhotoNo().value();
 				photoMstRepository.update(photoDetailModel);
 				deletePhotoTags(photoDetailModel.getAccountNo(), photoDetailModel.getPhotoNo());
 				registPhotoTags(photoDetailModel.getPhotoTagModelList(), null);
@@ -139,10 +142,10 @@ public class PhotoServiceImpl implements PhotoService {
 		}
 		return savedPhotoNo;
 	}
-	
+
 	/**
 	 * 写真を削除する
-	 * 
+	 *
 	 * @param	accountId				アカウントID
 	 * @param	photoDeleteModelList	{@link PhotoDeleteModel}
 	 * @throws	UpdateFailureException	削除に失敗した場合
@@ -151,26 +154,21 @@ public class PhotoServiceImpl implements PhotoService {
 	@Transactional
 	public void deletePhotos(String accountId, List<PhotoDeleteModel> photoDeleteModelList) throws UpdateFailureException {
 		String filePath = photoConfig.getOutputPath() + accountId + "/";
-		
+
 		for(PhotoDeleteModel photoDeleteModel : photoDeleteModelList) {
-			photoFavoriteRepository.clear(
-				PhotoFavoriteDeleteModel.builder()
-					.favoritePhotoAccountNo(photoDeleteModel.getAccountNo())
-					.favoritePhotoNo(photoDeleteModel.getPhotoNo())
-					.build()
-			);
+			photoFavoriteRepository.clear(PhotoFavoriteDeleteModel.from(photoDeleteModel));
 			deletePhotoTags(photoDeleteModel.getAccountNo(), photoDeleteModel.getPhotoNo());
-			
+
 			photoMstRepository.delete(photoDeleteModel);
-			
-			String fileName = new File(photoDeleteModel.getImageFilePath()).getName();
+
+			String fileName = new File(photoDeleteModel.getImageFilePath().value()).getName();
 			fileRepository.delete(filePath + fileName);
 		}
 	}
-	
+
 	/**
 	 * 該当アカウントが写真の登録枚数の上限に達しているかチェックする
-	 * 
+	 *
 	 * @param	accountNo	アカウント番号
 	 * @return				上限に達している場合、true
 	 */
@@ -178,7 +176,7 @@ public class PhotoServiceImpl implements PhotoService {
 	@Transactional(readOnly = true)
 	public Boolean isReachedUpperLimit(Long accountNo) {
 		if(Objects.isNull(accountNo)) return true;
-		
+
 		AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
 		Integer count = photoMstRepository.count(accountNo);
 
@@ -194,40 +192,40 @@ public class PhotoServiceImpl implements PhotoService {
 				return true;
 		}
 	}
-	
+
 	/**
 	 * 写真一覧の並び順のComparatorを取得する
-	 * 
+	 *
 	 * @param	sortBy	{@link SortPhotoEnum}
 	 * @return			{@link PhotoModel}のComparator
 	 */
 	private Comparator<PhotoModel> getComparator(SortPhotoEnum sortBy) {
 		switch(sortBy) {
 			case PHOTO_AT:
-				return Comparator.comparing(PhotoModel::getPhotoAt).reversed();
+				return Comparator.comparing(photoModel -> photoModel.getPhotoAt().value(), Comparator.reverseOrder());
 			case FAVORITE:
-				return Comparator.comparing(PhotoModel::getFavoriteCount).reversed();
+				return Comparator.comparing((PhotoModel photoModel) -> photoModel.getFavoriteCount().value()).reversed();
 			case SEASON:
 				return new Comparator<PhotoModel>() {
 					@Override
 					public int compare(PhotoModel photoModelA, PhotoModel photoModelB) {
-						OffsetDateTime photoAtA = photoModelA.getPhotoAt().plusHours(9);
-						OffsetDateTime photoAtB = photoModelB.getPhotoAt().plusHours(9);
-						
-						LocalDate dateA = LocalDate.of(2000, photoAtA.getMonth().getValue(), photoAtA.getDayOfMonth()); 
-						LocalDate dateB = LocalDate.of(2000, photoAtB.getMonth().getValue(), photoAtB.getDayOfMonth()); 
-						
+						OffsetDateTime photoAtA = photoModelA.getPhotoAt().value().plusHours(9);
+						OffsetDateTime photoAtB = photoModelB.getPhotoAt().value().plusHours(9);
+
+						LocalDate dateA = LocalDate.of(2000, photoAtA.getMonth().getValue(), photoAtA.getDayOfMonth());
+						LocalDate dateB = LocalDate.of(2000, photoAtB.getMonth().getValue(), photoAtB.getDayOfMonth());
+
 						return (int) ChronoUnit.DAYS.between(dateA, dateB);
 					}
 				};
 			default:
-				return Comparator.comparing(PhotoModel::getPhotoAt).reversed();
+				return Comparator.comparing(photoModel -> photoModel.getPhotoAt().value(), Comparator.reverseOrder());
 		}
 	}
-	
+
 	/**
 	 * 写真の向きでフィルタリングする
-	 * 
+	 *
 	 * @param	targetDirectionKbn	フィルター対象の向き区分
 	 * @param	conditionDirectionKbn	フィルター条件の向き区分
 	 * @return	フィルタリングして除外する場合はfalse
@@ -236,10 +234,10 @@ public class PhotoServiceImpl implements PhotoService {
 		if(DirectionEnum.NONE.equals(conditionDirectionKbn)) return true;
 		else return targetDirectionKbn.equals(conditionDirectionKbn);
 	}
-	
+
 	/**
 	 * お気に入りでフィルタリングする
-	 * 
+	 *
 	 * @param	isFavorite		写真がお気に入りならtrue
 	 * @param	isFavoriteOnly	お気に入りに絞るならtrue
 	 * @return					フィルタリングして除外する場合はfalse
@@ -248,76 +246,63 @@ public class PhotoServiceImpl implements PhotoService {
 		if(!isFavoriteOnly) return true;
 		else return isFavorite;
 	}
-	
+
 	/**
 	 * タグでフィルタリングする<p>
 	 * タグが複数ある場合、すべてのタグを持つ写真にフィルタリングする
-	 * 
+	 *
 	 * @param	photoTagModelList	{@link PhotoTagModel}
 	 * @param	tags				フィルター条件のタグのリスト
 	 * @return						フィルタリングして除外する場合はfalse
 	 */
 	private Boolean filteringByTag(List<PhotoTagModel> photoTagModelList, List<String> tags) {
 		if(tags.size() == 0 || Consts.STRING_EMPTY.equals(tags.getFirst())) return true;
-		
+
 		List<String> photoTags = new ArrayList<String>();
-		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagJapaneseName()).toList());
-		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagEnglishName()).toList());
-		
+		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagJapaneseName().value()).toList());
+		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagEnglishName().value()).toList());
+
 		return photoTags.containsAll(tags);
 	}
-	
+
 	/**
 	 * 写真タグを登録する
-	 * 
+	 *
 	 * @param	photoTagModelList		{@link PhotoTagModel}
 	 * @param	newPhotoNo				新規採番された写真番号
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 */
 	private void registPhotoTags(List<PhotoTagModel> photoTagModelList, Long newPhotoNo) throws RegistFailureException {
-		if(Objects.isNull(photoTagModelList)) return; 
-		
+		if(Objects.isNull(photoTagModelList)) return;
+
 		int tagNo = 1;
 		for(PhotoTagModel photoTagModel : photoTagModelList) {
-			PhotoTagModel photoTagRegistModel = PhotoTagModel.builder()
-					.accountNo(photoTagModel.getAccountNo())
-					.photoNo(!Objects.isNull(newPhotoNo) ? newPhotoNo : photoTagModel.getPhotoNo())
-					.tagNo((long) tagNo)
-					.tagJapaneseName(photoTagModel.getTagJapaneseName())
-					.tagEnglishName(photoTagModel.getTagEnglishName())
-					.build();
+			PhotoTagModel photoTagRegistModel = PhotoTagModel.forRegist(
+					photoTagModel,
+					!Objects.isNull(newPhotoNo) ? new PhotoNo(newPhotoNo) : photoTagModel.getPhotoNo(),
+					new TagNo((long) tagNo));
 			photoTagMstRepository.regist(photoTagRegistModel);
 			++tagNo;
 		}
 	}
-	
+
 	/**
 	 * ファイルをアップロードする
-	 * 
+	 *
 	 * @param	filePath	アップロードのファイルパス
 	 * @param	imageFile	アップロードするファイル
 	 */
-	private void uploadFile(String filePath, MultipartFile imageFile) {
-		fileRepository.save(
-			FileModel.builder()
-				.filePath(filePath)
-				.imageFile(imageFile)
-				.build()
-		);
+	private void uploadFile(ImageFilePath filePath, ImageFile imageFile) {
+		fileRepository.save(FileModel.of(filePath, imageFile));
 	}
-	
+
 	/**
 	 * 写真タグを一括削除する
-	 * 
+	 *
 	 * @param	accountNo	削除する写真のアカウント番号
 	 * @param	photoNo		削除する写真の写真番号
 	 */
-	private void deletePhotoTags(Long accountNo, Long photoNo) {
-		photoTagMstRepository.clear(
-			PhotoTagDeleteModel.builder()
-				.accountNo(accountNo)
-				.photoNo(photoNo)
-				.build()
-		);
+	private void deletePhotoTags(AccountNo accountNo, PhotoNo photoNo) {
+		photoTagMstRepository.clear(PhotoTagDeleteModel.of(accountNo, photoNo));
 	}
 }

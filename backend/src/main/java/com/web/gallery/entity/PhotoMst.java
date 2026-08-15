@@ -1,10 +1,26 @@
 package com.web.gallery.entity;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.UpdatedBy;
+import com.web.gallery.domain.common.UpdatedAt;
+import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.FValue;
+import com.web.gallery.domain.photo.FocalLength;
+import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.Iso;
+import com.web.gallery.domain.photo.LocationNo;
+import com.web.gallery.domain.photo.PhotoAt;
+import com.web.gallery.domain.photo.PhotoEnglishTitle;
+import com.web.gallery.domain.photo.PhotoJapaneseTitle;
+import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailModel;
@@ -22,45 +38,45 @@ public class PhotoMst {
 	private Long id;
 
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 写真番号 */
-	private Long photoNo;
+	private PhotoNo photoNo;
 
 	/** 作成者 */
-	private Long createdBy;
+	private CreatedBy createdBy;
 
 	/** 作成日時 */
-	private OffsetDateTime createdAt;
+	private CreatedAt createdAt;
 
 	/** 更新者 */
-	private Long updatedBy;
+	private UpdatedBy updatedBy;
 
 	/** 更新日時 */
-	private OffsetDateTime updatedAt;
+	private UpdatedAt updatedAt;
 
 	/** 削除フラグ */
-	private Boolean isDeleted;
+	private IsDeleted isDeleted;
 
 	/** 撮影日時 */
-	private OffsetDateTime photoAt;
+	private PhotoAt photoAt;
 
 	/** ロケーション番号 */
-	private Long locationNo;
+	private LocationNo locationNo;
 
 	/** 画像ファイルパス */
-	private String imageFilePath;
+	private ImageFilePath imageFilePath;
 
 	/** 写真タイトル日本語名 */
-	private String photoJapaneseTitle;
+	private PhotoJapaneseTitle photoJapaneseTitle;
 
 	/** 写真タイトル英語名 */
-	private String photoEnglishTitle;
+	private PhotoEnglishTitle photoEnglishTitle;
 
 	/** キャプション */
-	private String caption;
+	private Caption caption;
 
-	/** 
+	/**
 	 * 向き区分
 	 * <p>
 	 * {@link DirectionEnum}
@@ -68,16 +84,16 @@ public class PhotoMst {
 	private DirectionEnum directionKbn;
 
 	/** 焦点距離 */
-	private Integer focalLength;
+	private FocalLength focalLength;
 
 	/** F値 */
-	private BigDecimal fValue;
+	private FValue fValue;
 
 	/** シャッタースピード */
-	private BigDecimal shutterSpeed;
+	private ShutterSpeed shutterSpeed;
 
 	/** ISO */
-	private Integer iso;
+	private Iso iso;
 
 	/**
 	 * 写真登録用のPhotoDetailModelからPhotoMstエンティティを生成する
@@ -90,30 +106,30 @@ public class PhotoMst {
 	public static PhotoMst fromForRegist(PhotoDetailModel model, String filePath, Long newPhotoNo) {
 		return PhotoMst.builder()
 				.accountNo(model.getAccountNo())
-				.photoNo(newPhotoNo)
-				.createdBy(model.getAccountNo())
-				.updatedBy(model.getAccountNo())
-				.photoAt(
-					Optional.ofNullable(model.getPhotoAt()).orElse(Consts.MIN_OFFSET_DATE_TIME))
-				.locationNo(
-					Optional.ofNullable(model.getLocationNo()).orElse(0L))
-				.imageFilePath(filePath)
-				.photoJapaneseTitle(
-					Optional.ofNullable(model.getPhotoJapaneseTitle()).orElse(Consts.STRING_EMPTY))
-				.photoEnglishTitle(
-					Optional.ofNullable(model.getPhotoEnglishTitle()).orElse(Consts.STRING_EMPTY))
-				.caption(
-					Optional.ofNullable(model.getCaption()).orElse(Consts.STRING_EMPTY))
+				.photoNo(new PhotoNo(newPhotoNo))
+				.createdBy(new CreatedBy(model.getAccountNo().value()))
+				.updatedBy(new UpdatedBy(model.getAccountNo().value()))
+				.photoAt(new PhotoAt(
+					Optional.ofNullable(model.getPhotoAt()).map(PhotoAt::value).orElse(Consts.MIN_OFFSET_DATE_TIME)))
+				.locationNo(new LocationNo(
+					Optional.ofNullable(model.getLocationNo()).map(LocationNo::value).orElse(0L)))
+				.imageFilePath(new ImageFilePath(filePath))
+				.photoJapaneseTitle(new PhotoJapaneseTitle(
+					Optional.ofNullable(model.getPhotoJapaneseTitle()).map(PhotoJapaneseTitle::value).orElse(Consts.STRING_EMPTY)))
+				.photoEnglishTitle(new PhotoEnglishTitle(
+					Optional.ofNullable(model.getPhotoEnglishTitle()).map(PhotoEnglishTitle::value).orElse(Consts.STRING_EMPTY)))
+				.caption(new Caption(
+					Optional.ofNullable(model.getCaption()).map(Caption::value).orElse(Consts.STRING_EMPTY)))
 				.directionKbn(
 					Optional.ofNullable(model.getDirectionKbn()).orElse(DirectionEnum.NONE))
-				.focalLength(
-					Optional.ofNullable(model.getFocalLength()).orElse(0))
-				.fValue(
-					Optional.ofNullable(model.getFValue()).orElse(BigDecimal.ZERO))
-				.shutterSpeed(
-					Optional.ofNullable(model.getShutterSpeed()).orElse(BigDecimal.ZERO))
-				.iso(
-					Optional.ofNullable(model.getIso()).orElse(0))
+				.focalLength(new FocalLength(
+					Optional.ofNullable(model.getFocalLength()).map(FocalLength::value).orElse(0)))
+				.fValue(new FValue(
+					Optional.ofNullable(model.getFValue()).map(FValue::value).orElse(BigDecimal.ZERO)))
+				.shutterSpeed(new ShutterSpeed(
+					Optional.ofNullable(model.getShutterSpeed()).map(ShutterSpeed::value).orElse(BigDecimal.ZERO)))
+				.iso(new Iso(
+					Optional.ofNullable(model.getIso()).map(Iso::value).orElse(0)))
 				.build();
 	}
 
@@ -125,29 +141,29 @@ public class PhotoMst {
 	 */
 	public static PhotoMst targetForUpdate(PhotoDetailModel model) {
 		return PhotoMst.builder()
-				.updatedBy(model.getAccountNo())
-				.isDeleted(false)
-				.photoAt(
-					Optional.ofNullable(model.getPhotoAt()).orElse(Consts.MIN_OFFSET_DATE_TIME))
-				.locationNo(
-					Optional.ofNullable(model.getLocationNo()).orElse(0L))
+				.updatedBy(new UpdatedBy(model.getAccountNo().value()))
+				.isDeleted(new IsDeleted(false))
+				.photoAt(new PhotoAt(
+					Optional.ofNullable(model.getPhotoAt()).map(PhotoAt::value).orElse(Consts.MIN_OFFSET_DATE_TIME)))
+				.locationNo(new LocationNo(
+					Optional.ofNullable(model.getLocationNo()).map(LocationNo::value).orElse(0L)))
 				.imageFilePath(model.getImageFilePath())
-				.photoJapaneseTitle(
-					Optional.ofNullable(model.getPhotoJapaneseTitle()).orElse(Consts.STRING_EMPTY))
-				.photoEnglishTitle(
-					Optional.ofNullable(model.getPhotoEnglishTitle()).orElse(Consts.STRING_EMPTY))
-				.caption(
-					Optional.ofNullable(model.getCaption()).orElse(Consts.STRING_EMPTY))
+				.photoJapaneseTitle(new PhotoJapaneseTitle(
+					Optional.ofNullable(model.getPhotoJapaneseTitle()).map(PhotoJapaneseTitle::value).orElse(Consts.STRING_EMPTY)))
+				.photoEnglishTitle(new PhotoEnglishTitle(
+					Optional.ofNullable(model.getPhotoEnglishTitle()).map(PhotoEnglishTitle::value).orElse(Consts.STRING_EMPTY)))
+				.caption(new Caption(
+					Optional.ofNullable(model.getCaption()).map(Caption::value).orElse(Consts.STRING_EMPTY)))
 				.directionKbn(
 					Optional.ofNullable(model.getDirectionKbn()).orElse(DirectionEnum.NONE))
-				.focalLength(
-					Optional.ofNullable(model.getFocalLength()).orElse(0))
-				.fValue(
-					Optional.ofNullable(model.getFValue()).orElse(BigDecimal.ZERO))
-				.shutterSpeed(
-					Optional.ofNullable(model.getShutterSpeed()).orElse(BigDecimal.ZERO))
-				.iso(
-					Optional.ofNullable(model.getIso()).orElse(0))
+				.focalLength(new FocalLength(
+					Optional.ofNullable(model.getFocalLength()).map(FocalLength::value).orElse(0)))
+				.fValue(new FValue(
+					Optional.ofNullable(model.getFValue()).map(FValue::value).orElse(BigDecimal.ZERO)))
+				.shutterSpeed(new ShutterSpeed(
+					Optional.ofNullable(model.getShutterSpeed()).map(ShutterSpeed::value).orElse(BigDecimal.ZERO)))
+				.iso(new Iso(
+					Optional.ofNullable(model.getIso()).map(Iso::value).orElse(0)))
 				.build();
 	}
 
@@ -160,8 +176,8 @@ public class PhotoMst {
 	 */
 	public static PhotoMst condition(Long accountNo, Long photoNo) {
 		return PhotoMst.builder()
-				.accountNo(accountNo)
-				.photoNo(photoNo)
+				.accountNo(new AccountNo(accountNo))
+				.photoNo(new PhotoNo(photoNo))
 				.build();
 	}
 
@@ -173,8 +189,8 @@ public class PhotoMst {
 	 */
 	public static PhotoMst targetForDelete(PhotoDeleteModel model) {
 		return PhotoMst.builder()
-				.updatedBy(model.getAccountNo())
-				.isDeleted(true)
+				.updatedBy(new UpdatedBy(model.getAccountNo().value()))
+				.isDeleted(new IsDeleted(true))
 				.build();
 	}
 
@@ -187,7 +203,7 @@ public class PhotoMst {
 	public static PhotoMst conditionForExistCheck(PhotoDetailModel model) {
 		return PhotoMst.builder()
 				.accountNo(model.getAccountNo())
-				.imageFilePath(model.getImageFile().getOriginalFilename())
+				.imageFilePath(new ImageFilePath(model.getImageFile().value().getOriginalFilename()))
 				.build();
 	}
 
@@ -199,8 +215,20 @@ public class PhotoMst {
 	 */
 	public static PhotoMst conditionForCount(Long accountNo) {
 		return PhotoMst.builder()
+				.accountNo(new AccountNo(accountNo))
+				.isDeleted(new IsDeleted(false))
+				.build();
+	}
+
+	/**
+	 * アカウント番号で写真マスタ削除用のPhotoMstエンティティを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link PhotoMst}
+	 */
+	public static PhotoMst conditionByAccountNo(AccountNo accountNo) {
+		return PhotoMst.builder()
 				.accountNo(accountNo)
-				.isDeleted(false)
 				.build();
 	}
 }

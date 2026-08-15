@@ -1,13 +1,25 @@
 package com.web.gallery.entity;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountName;
+import com.web.gallery.domain.account.BirthDate;
+import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
+import com.web.gallery.domain.account.FreeMemo;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.LastLoginDatetime;
+import com.web.gallery.domain.account.LoginFailureCount;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.UpdatedBy;
+import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.enumuration.AuthorityEnum;
 import com.web.gallery.enumuration.SexEnum;
 import com.web.gallery.model.AccountModel;
@@ -22,36 +34,36 @@ import lombok.Data;
 @Builder
 public class Account {
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** 作成者 */
-	private Long createdBy;
+	private CreatedBy createdBy;
 
 	/** 作成日時 */
-	private OffsetDateTime createdAt;
+	private CreatedAt createdAt;
 
 	/** 更新者 */
-	private Long updatedBy;
+	private UpdatedBy updatedBy;
 
 	/** 更新日時 */
-	private OffsetDateTime updatedAt;
+	private UpdatedAt updatedAt;
 
 	/** 削除フラグ */
-	private Boolean isDeleted;
+	private IsDeleted isDeleted;
 
 	/** アカウントID */
-	private String accountId;
+	private AccountId accountId;
 
 	/** アカウント名 */
-	private String accountName;
+	private AccountName accountName;
 
 	/** パスワード */
-	private String password;
+	private Password password;
 
 	/** 生年月日 */
-	private LocalDate birthdate;
+	private BirthDate birthdate;
 
-	/** 
+	/**
 	 * 性別区分
 	 * <p>
 	 * {@link SexEnum}
@@ -59,13 +71,13 @@ public class Account {
 	private SexEnum sexKbn;
 
 	/** 出身都道府県区分コード */
-	private String birthplacePrefectureKbnCode;
+	private BirthplacePrefectureKbnCode birthplacePrefectureKbnCode;
 
 	/** 在住都道府県区分コード */
-	private String residentPrefectureKbnCode;
+	private ResidentPrefectureKbnCode residentPrefectureKbnCode;
 
 	/** フリーメモ */
-	private String freeMemo;
+	private FreeMemo freeMemo;
 
 	/**
 	 * 権限区分
@@ -75,10 +87,10 @@ public class Account {
 	private AuthorityEnum authorityKbn;
 
 	/** 最終ログイン日時 */
-	private OffsetDateTime lastLoginDatetime;
-	
+	private LastLoginDatetime lastLoginDatetime;
+
 	/** ログイン失敗回数 */
-	private Integer loginFailureCount;
+	private LoginFailureCount loginFailureCount;
 
 	/**
 	 * アカウント登録用のAccountModelからAccountエンティティを生成する
@@ -89,24 +101,28 @@ public class Account {
 	 */
 	public static Account from(AccountModel model, PasswordEncoder passwordEncoder) {
 		return Account.builder()
-				.createdBy(0L)
-				.updatedBy(0L)
+				.createdBy(new CreatedBy(0L))
+				.updatedBy(new UpdatedBy(0L))
 				.accountId(model.getAccountId())
 				.accountName(model.getAccountName())
-				.password(passwordEncoder.encode(model.getPassword()))
+				.password(new Password(passwordEncoder.encode(model.getPassword().value())))
 				.birthdate(
-					Optional.ofNullable(model.getBirthdate()).orElse(Consts.MIN_LOCAL_DATE))
+					Optional.ofNullable(model.getBirthdate())
+						.orElse(new BirthDate(Consts.MIN_LOCAL_DATE)))
 				.sexKbn(
 					Optional.ofNullable(model.getSexKbn()).orElse(SexEnum.NONE))
 				.birthplacePrefectureKbnCode(
-					Optional.ofNullable(model.getBirthplacePrefectureKbnCode()).orElse(Consts.STRING_NONE))
+					Optional.ofNullable(model.getBirthplacePrefectureKbnCode())
+						.orElse(new BirthplacePrefectureKbnCode(Consts.STRING_NONE)))
 				.residentPrefectureKbnCode(
-					Optional.ofNullable(model.getResidentPrefectureKbnCode()).orElse(Consts.STRING_NONE))
+					Optional.ofNullable(model.getResidentPrefectureKbnCode())
+						.orElse(new ResidentPrefectureKbnCode(Consts.STRING_NONE)))
 				.freeMemo(
-					Optional.ofNullable(model.getFreeMemo()).orElse(Consts.STRING_EMPTY))
+					Optional.ofNullable(model.getFreeMemo())
+						.orElse(new FreeMemo(Consts.STRING_EMPTY)))
 				.authorityKbn(AuthorityEnum.MINI)
-				.lastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME)
-				.loginFailureCount(0)
+				.lastLoginDatetime(new LastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME))
+				.loginFailureCount(new LoginFailureCount(0))
 				.build();
 	}
 
@@ -122,23 +138,29 @@ public class Account {
 				.accountId(model.getAccountId())
 				.accountName(model.getAccountName())
 				.birthdate(
-					Optional.ofNullable(model.getBirthdate()).orElse(Consts.MIN_LOCAL_DATE))
+					Optional.ofNullable(model.getBirthdate())
+						.orElse(new BirthDate(Consts.MIN_LOCAL_DATE)))
 				.sexKbn(
 					Optional.ofNullable(model.getSexKbn()).orElse(SexEnum.NONE))
 				.birthplacePrefectureKbnCode(
-					Optional.ofNullable(model.getBirthplacePrefectureKbnCode()).orElse(Consts.STRING_NONE))
+					Optional.ofNullable(model.getBirthplacePrefectureKbnCode())
+						.orElse(new BirthplacePrefectureKbnCode(Consts.STRING_NONE)))
 				.residentPrefectureKbnCode(
-					Optional.ofNullable(model.getResidentPrefectureKbnCode()).orElse(Consts.STRING_NONE))
+					Optional.ofNullable(model.getResidentPrefectureKbnCode())
+						.orElse(new ResidentPrefectureKbnCode(Consts.STRING_NONE)))
 				.freeMemo(
-					Optional.ofNullable(model.getFreeMemo()).orElse(Consts.STRING_EMPTY))
+					Optional.ofNullable(model.getFreeMemo())
+						.orElse(new FreeMemo(Consts.STRING_EMPTY)))
 				.lastLoginDatetime(
-					Optional.ofNullable(model.getLastLoginDatetime()).orElse(Consts.MIN_OFFSET_DATE_TIME))
+					Optional.ofNullable(model.getLastLoginDatetime())
+						.orElse(new LastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME)))
 				.loginFailureCount(
-					Optional.ofNullable(model.getLoginFailureCount()).orElse(0))
+					Optional.ofNullable(model.getLoginFailureCount())
+						.orElse(new LoginFailureCount(0)))
 				.build();
 
-		if (!Objects.isNull(model.getPassword())) {
-			account.setPassword(passwordEncoder.encode(model.getPassword()));
+		if (model.getPassword() != null) {
+			account.setPassword(new Password(passwordEncoder.encode(model.getPassword().value())));
 		}
 
 		return account;
@@ -153,7 +175,9 @@ public class Account {
 	public static Account fromForUpdateLoginFailure(AccountModel model) {
 		return Account.builder()
 				.lastLoginDatetime(model.getLastLoginDatetime())
-				.loginFailureCount(Optional.ofNullable(model.getLoginFailureCount()).orElse(0))
+				.loginFailureCount(
+					Optional.ofNullable(model.getLoginFailureCount())
+						.orElse(new LoginFailureCount(0)))
 				.build();
 	}
 
@@ -165,7 +189,7 @@ public class Account {
 	 */
 	public static Account conditionByAccountNo(Long accountNo) {
 		return Account.builder()
-				.accountNo(accountNo)
+				.accountNo(new AccountNo(accountNo))
 				.build();
 	}
 
@@ -177,7 +201,7 @@ public class Account {
 	 */
 	public static Account conditionByAccountId(String accountId) {
 		return Account.builder()
-				.accountId(accountId)
+				.accountId(new AccountId(accountId))
 				.build();
 	}
 
@@ -190,8 +214,8 @@ public class Account {
 	 */
 	public static Account conditionForExistCheck(Long accountNo, String accountId) {
 		return Account.builder()
-				.accountNo(accountNo)
-				.accountId(accountId)
+				.accountNo(accountNo != null ? new AccountNo(accountNo) : null)
+				.accountId(new AccountId(accountId))
 				.build();
 	}
 
@@ -202,7 +226,7 @@ public class Account {
 	 */
 	public static Account conditionForList() {
 		return Account.builder()
-				.isDeleted(false)
+				.isDeleted(new IsDeleted(false))
 				.build();
 	}
 

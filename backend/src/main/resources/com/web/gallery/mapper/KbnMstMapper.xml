@@ -2,7 +2,23 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.web.gallery.mapper.KbnMstMapper">
-	<select id="select" parameterType="com.web.gallery.entity.KbnMst" resultType="com.web.gallery.entity.KbnMst">
+	<resultMap id="KbnMstMap" type="com.web.gallery.entity.KbnMst">
+		<result property="kbnClassCode" column="kbn_class_code" typeHandler="com.web.gallery.type_handler.KbnClassCodeTypeHandler"/>
+		<result property="kbnCode" column="kbn_code" typeHandler="com.web.gallery.type_handler.KbnCodeTypeHandler"/>
+		<result property="createdBy" column="created_by" typeHandler="com.web.gallery.type_handler.CreatedByTypeHandler"/>
+		<result property="createdAt" column="created_at" typeHandler="com.web.gallery.type_handler.CreatedAtTypeHandler"/>
+		<result property="sortOrder" column="sort_order" typeHandler="com.web.gallery.type_handler.SortOrderTypeHandler"/>
+		<result property="kbnGroupCode" column="kbn_group_code" typeHandler="com.web.gallery.type_handler.KbnGroupCodeTypeHandler"/>
+		<result property="kbnClassJapaneseName" column="kbn_class_japanese_name" typeHandler="com.web.gallery.type_handler.KbnClassJapaneseNameTypeHandler"/>
+		<result property="kbnGroupJapaneseName" column="kbn_group_japanese_name" typeHandler="com.web.gallery.type_handler.KbnGroupJapaneseNameTypeHandler"/>
+		<result property="kbnJapaneseName" column="kbn_japanese_name" typeHandler="com.web.gallery.type_handler.KbnJapaneseNameTypeHandler"/>
+		<result property="kbnClassEnglishName" column="kbn_class_english_name" typeHandler="com.web.gallery.type_handler.KbnClassEnglishNameTypeHandler"/>
+		<result property="kbnGroupEnglishName" column="kbn_group_english_name" typeHandler="com.web.gallery.type_handler.KbnGroupEnglishNameTypeHandler"/>
+		<result property="kbnEnglishName" column="kbn_english_name" typeHandler="com.web.gallery.type_handler.KbnEnglishNameTypeHandler"/>
+		<result property="explanation" column="explanation" typeHandler="com.web.gallery.type_handler.ExplanationTypeHandler"/>
+	</resultMap>
+
+	<select id="select" parameterType="com.web.gallery.entity.KbnMst" resultMap="KbnMstMap">
 		SELECT
 			kbn_class_code AS kbnClassCode,
 			kbn_code AS kbnCode,
@@ -20,17 +36,17 @@
 		FROM
 			common.kbn_mst
 		<where>
-			<if test="kbnClassCode != null"> AND kbn_class_code = #{kbnClassCode}</if>
-			<if test="kbnCode != null"> AND kbn_code = #{kbnCode}</if>
-			<if test="sortOrder != null"> AND sort_order = #{sortOrder}</if>
-			<if test="kbnGroupCode != null">AND kbn_group_code = #{kbnGroupCode}</if>
-			<if test="kbnClassJapaneseName != null"> AND kbn_class_japanese_name = #{kbnClassJapaneseName}</if>
-			<if test="kbnGroupJapaneseName != null">AND kbn_group_japanese_name = #{kbnGroupJapaneseName}</if>
-			<if test="kbnJapaneseName != null"> AND kbn_japanese_name = #{kbnJapaneseName}</if>
-			<if test="kbnClassEnglishName != null"> AND kbn_class_english_name = #{kbnClassEnglishName}</if>
-			<if test="kbnGroupEnglishName != null">AND kbn_group_english_name = #{kbnGroupEnglishName}</if>
-			<if test="kbnEnglishName != null"> AND kbn_english_name = #{kbnEnglishName}</if>
-			<if test="explanation != null"> AND explanation = #{explanation}</if>
+			<if test="kbnClassCode != null"> AND kbn_class_code = #{kbnClassCode, typeHandler=com.web.gallery.type_handler.KbnClassCodeTypeHandler}</if>
+			<if test="kbnCode != null"> AND kbn_code = #{kbnCode, typeHandler=com.web.gallery.type_handler.KbnCodeTypeHandler}</if>
+			<if test="sortOrder != null"> AND sort_order = #{sortOrder, typeHandler=com.web.gallery.type_handler.SortOrderTypeHandler}</if>
+			<if test="kbnGroupCode != null">AND kbn_group_code = #{kbnGroupCode, typeHandler=com.web.gallery.type_handler.KbnGroupCodeTypeHandler}</if>
+			<if test="kbnClassJapaneseName != null"> AND kbn_class_japanese_name = #{kbnClassJapaneseName, typeHandler=com.web.gallery.type_handler.KbnClassJapaneseNameTypeHandler}</if>
+			<if test="kbnGroupJapaneseName != null">AND kbn_group_japanese_name = #{kbnGroupJapaneseName, typeHandler=com.web.gallery.type_handler.KbnGroupJapaneseNameTypeHandler}</if>
+			<if test="kbnJapaneseName != null"> AND kbn_japanese_name = #{kbnJapaneseName, typeHandler=com.web.gallery.type_handler.KbnJapaneseNameTypeHandler}</if>
+			<if test="kbnClassEnglishName != null"> AND kbn_class_english_name = #{kbnClassEnglishName, typeHandler=com.web.gallery.type_handler.KbnClassEnglishNameTypeHandler}</if>
+			<if test="kbnGroupEnglishName != null">AND kbn_group_english_name = #{kbnGroupEnglishName, typeHandler=com.web.gallery.type_handler.KbnGroupEnglishNameTypeHandler}</if>
+			<if test="kbnEnglishName != null"> AND kbn_english_name = #{kbnEnglishName, typeHandler=com.web.gallery.type_handler.KbnEnglishNameTypeHandler}</if>
+			<if test="explanation != null"> AND explanation = #{explanation, typeHandler=com.web.gallery.type_handler.ExplanationTypeHandler}</if>
 		</where>
 	</select>
 </mapper>

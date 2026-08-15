@@ -52,13 +52,13 @@ public class AdminAccountListItemResponse {
 	 */
 	public static AdminAccountListItemResponse from(AccountModel model) {
 		return AdminAccountListItemResponse.builder()
-				.accountNo(model.getAccountNo())
-				.accountId(model.getAccountId())
-				.accountName(model.getAccountName())
+				.accountNo(model.getAccountNo().value())
+				.accountId(model.getAccountId().value())
+				.accountName(model.getAccountName().value())
 				.authorityKbn(model.getAuthorityKbn().getDbValue())
-				.isDeleted(model.getIsDeleted())
-				.lastLoginDatetime(model.getLastLoginDatetime())
-				.loginFailureCount(model.getLoginFailureCount())
+				.isDeleted(model.getIsDeleted().value())
+				.lastLoginDatetime(model.getLastLoginDatetime() != null ? model.getLastLoginDatetime().value() : null)
+				.loginFailureCount(model.getLoginFailureCount() != null ? model.getLoginFailureCount().value() : null)
 				.build();
 	}
 }

@@ -16,6 +16,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.web.gallery.domain.common.Explanation;
+import com.web.gallery.domain.common.KbnClassCode;
+import com.web.gallery.domain.common.KbnClassEnglishName;
+import com.web.gallery.domain.common.KbnClassJapaneseName;
+import com.web.gallery.domain.common.KbnCode;
+import com.web.gallery.domain.common.KbnEnglishName;
+import com.web.gallery.domain.common.KbnGroupCode;
+import com.web.gallery.domain.common.KbnGroupEnglishName;
+import com.web.gallery.domain.common.KbnGroupJapaneseName;
+import com.web.gallery.domain.common.KbnJapaneseName;
+import com.web.gallery.domain.common.SortOrder;
 import com.web.gallery.model.KbnMstModel;
 
 @SpringBootTest
@@ -34,56 +45,56 @@ public class KbnHelperTest {
 		void convertToLinkedHashMap_not_kbnGroup() {
 			List<KbnMstModel> kbnMstModelList = new ArrayList<KbnMstModel>();
 			kbnMstModelList.add(KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Aomori")
-					.sortOrder(2)
-					.kbnGroupCode("")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("")
-					.kbnJapaneseName("青森")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("")
-					.kbnEnglishName("Aomori")
-					.explanation("青森は本州最北")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Aomori"))
+					.sortOrder(new SortOrder(2))
+					.kbnGroupCode(new KbnGroupCode(""))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName(""))
+					.kbnJapaneseName(new KbnJapaneseName("青森"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName(""))
+					.kbnEnglishName(new KbnEnglishName("Aomori"))
+					.explanation(new Explanation("青森は本州最北"))
 					.build());
 			kbnMstModelList.add(KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Hokkaido")
-					.sortOrder(1)
-					.kbnGroupCode("")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("")
-					.kbnJapaneseName("北海道")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("")
-					.kbnEnglishName("Hokkaido")
-					.explanation("北海道はでっかいどう")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Hokkaido"))
+					.sortOrder(new SortOrder(1))
+					.kbnGroupCode(new KbnGroupCode(""))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName(""))
+					.kbnJapaneseName(new KbnJapaneseName("北海道"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName(""))
+					.kbnEnglishName(new KbnEnglishName("Hokkaido"))
+					.explanation(new Explanation("北海道はでっかいどう"))
 					.build());
 			kbnMstModelList.add(KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Okinawa")
-					.sortOrder(47)
-					.kbnGroupCode("")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("")
-					.kbnJapaneseName("沖縄")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("")
-					.kbnEnglishName("Okinawa")
-					.explanation("沖縄は南国")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Okinawa"))
+					.sortOrder(new SortOrder(47))
+					.kbnGroupCode(new KbnGroupCode(""))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName(""))
+					.kbnJapaneseName(new KbnJapaneseName("沖縄"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName(""))
+					.kbnEnglishName(new KbnEnglishName("Okinawa"))
+					.explanation(new Explanation("沖縄は南国"))
 					.build());
 			kbnMstModelList.add(KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Kagoshima")
-					.sortOrder(46)
-					.kbnGroupCode("")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("")
-					.kbnJapaneseName("鹿児島")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("")
-					.kbnEnglishName("Kagoshima")
-					.explanation("鹿児島は九州最南")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Kagoshima"))
+					.sortOrder(new SortOrder(46))
+					.kbnGroupCode(new KbnGroupCode(""))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName(""))
+					.kbnJapaneseName(new KbnJapaneseName("鹿児島"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName(""))
+					.kbnEnglishName(new KbnEnglishName("Kagoshima"))
+					.explanation(new Explanation("鹿児島は九州最南"))
 					.build());
 			
 			Map<String, List<KbnMstModel>> actual
@@ -91,10 +102,10 @@ public class KbnHelperTest {
 			
 			List<KbnMstModel> kbnMstModelList1 = actual.get("");
 			assertEquals(4, kbnMstModelList1.size());
-			assertEquals("Hokkaido", kbnMstModelList1.get(0).getKbnCode());
-			assertEquals("Aomori", kbnMstModelList1.get(1).getKbnCode());
-			assertEquals("Kagoshima", kbnMstModelList1.get(2).getKbnCode());
-			assertEquals("Okinawa", kbnMstModelList1.get(3).getKbnCode());
+			assertEquals("Hokkaido", kbnMstModelList1.get(0).getKbnCode().value());
+			assertEquals("Aomori", kbnMstModelList1.get(1).getKbnCode().value());
+			assertEquals("Kagoshima", kbnMstModelList1.get(2).getKbnCode().value());
+			assertEquals("Okinawa", kbnMstModelList1.get(3).getKbnCode().value());
 		}
 		
 		@Test
@@ -103,56 +114,56 @@ public class KbnHelperTest {
 		void convertToLinkedHashMap_with_kbnGroup() {
 			List<KbnMstModel> kbnMstModelList = new ArrayList<KbnMstModel>();
 			kbnMstModelList.add(KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Aomori")
-					.sortOrder(2)
-					.kbnGroupCode("Hokkaido_Tohoku")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("北海道・東北")
-					.kbnJapaneseName("青森")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("Hokkaido_Tohoku")
-					.kbnEnglishName("Aomori")
-					.explanation("青森は本州最北")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Aomori"))
+					.sortOrder(new SortOrder(2))
+					.kbnGroupCode(new KbnGroupCode("Hokkaido_Tohoku"))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName("北海道・東北"))
+					.kbnJapaneseName(new KbnJapaneseName("青森"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName("Hokkaido_Tohoku"))
+					.kbnEnglishName(new KbnEnglishName("Aomori"))
+					.explanation(new Explanation("青森は本州最北"))
 					.build());
 			kbnMstModelList.add(KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Hokkaido")
-					.sortOrder(1)
-					.kbnGroupCode("Hokkaido_Tohoku")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("北海道・東北")
-					.kbnJapaneseName("北海道")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("Hokkaido_Tohoku")
-					.kbnEnglishName("Hokkaido")
-					.explanation("北海道はでっかいどう")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Hokkaido"))
+					.sortOrder(new SortOrder(1))
+					.kbnGroupCode(new KbnGroupCode("Hokkaido_Tohoku"))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName("北海道・東北"))
+					.kbnJapaneseName(new KbnJapaneseName("北海道"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName("Hokkaido_Tohoku"))
+					.kbnEnglishName(new KbnEnglishName("Hokkaido"))
+					.explanation(new Explanation("北海道はでっかいどう"))
 					.build());
 			kbnMstModelList.add(KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Okinawa")
-					.sortOrder(47)
-					.kbnGroupCode("Kyushu_Okinawa")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("九州・沖縄")
-					.kbnJapaneseName("沖縄")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("Kyushu_Okinawa")
-					.kbnEnglishName("Okinawa")
-					.explanation("沖縄は南国")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Okinawa"))
+					.sortOrder(new SortOrder(47))
+					.kbnGroupCode(new KbnGroupCode("Kyushu_Okinawa"))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName("九州・沖縄"))
+					.kbnJapaneseName(new KbnJapaneseName("沖縄"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName("Kyushu_Okinawa"))
+					.kbnEnglishName(new KbnEnglishName("Okinawa"))
+					.explanation(new Explanation("沖縄は南国"))
 					.build());
 			kbnMstModelList.add(KbnMstModel.builder()
-					.kbnClassCode("prefecture")
-					.kbnCode("Kagoshima")
-					.sortOrder(46)
-					.kbnGroupCode("Kyushu_Okinawa")
-					.kbnClassJapaneseName("都道府県")
-					.kbnGroupJapaneseName("九州・沖縄")
-					.kbnJapaneseName("鹿児島")
-					.kbnClassEnglishName("prefecture")
-					.kbnGroupEnglishName("Kyushu_Okinawa")
-					.kbnEnglishName("Kagoshima")
-					.explanation("鹿児島は九州最南")
+					.kbnClassCode(new KbnClassCode("prefecture"))
+					.kbnCode(new KbnCode("Kagoshima"))
+					.sortOrder(new SortOrder(46))
+					.kbnGroupCode(new KbnGroupCode("Kyushu_Okinawa"))
+					.kbnClassJapaneseName(new KbnClassJapaneseName("都道府県"))
+					.kbnGroupJapaneseName(new KbnGroupJapaneseName("九州・沖縄"))
+					.kbnJapaneseName(new KbnJapaneseName("鹿児島"))
+					.kbnClassEnglishName(new KbnClassEnglishName("prefecture"))
+					.kbnGroupEnglishName(new KbnGroupEnglishName("Kyushu_Okinawa"))
+					.kbnEnglishName(new KbnEnglishName("Kagoshima"))
+					.explanation(new Explanation("鹿児島は九州最南"))
 					.build());
 			
 			Map<String, List<KbnMstModel>> actual
@@ -160,12 +171,12 @@ public class KbnHelperTest {
 			
 			List<KbnMstModel> kbnMstModelList1 = actual.get("北海道・東北");
 			assertEquals(2, kbnMstModelList1.size());
-			assertEquals("Hokkaido", kbnMstModelList1.get(0).getKbnCode());
-			assertEquals("Aomori", kbnMstModelList1.get(1).getKbnCode());
+			assertEquals("Hokkaido", kbnMstModelList1.get(0).getKbnCode().value());
+			assertEquals("Aomori", kbnMstModelList1.get(1).getKbnCode().value());
 			List<KbnMstModel> kbnMstModelList2 = actual.get("九州・沖縄");
 			assertEquals(2, kbnMstModelList2.size());
-			assertEquals("Kagoshima", kbnMstModelList2.get(0).getKbnCode());
-			assertEquals("Okinawa", kbnMstModelList2.get(1).getKbnCode());
+			assertEquals("Kagoshima", kbnMstModelList2.get(0).getKbnCode().value());
+			assertEquals("Okinawa", kbnMstModelList2.get(1).getKbnCode().value());
 		}
 	}
 }

@@ -1,23 +1,44 @@
 package com.web.gallery.model;
 
+import com.web.gallery.domain.auth.AccessToken;
+import com.web.gallery.domain.auth.ExpiresIn;
+import com.web.gallery.domain.auth.RefreshTokenValue;
+
 import lombok.Builder;
-import lombok.Data;
+import lombok.NonNull;
+import lombok.Value;
 
 /**
  * 認証トークン情報を保持するモデルクラス
- * @author	Kento Kodama
- * @version	1.0.0
- * @since	1.0.0
  */
-@Data
+@Value
 @Builder
 public class AuthTokenModel {
 	/** アクセストークン */
-	private String accessToken;
+	@NonNull
+	private AccessToken accessToken;
 
 	/** リフレッシュトークン */
-	private String refreshToken;
+	@NonNull
+	private RefreshTokenValue refreshToken;
 
 	/** アクセストークン有効期限（秒） */
-	private Long expiresIn;
+	@NonNull
+	private ExpiresIn expiresIn;
+
+	/**
+	 * アクセストークン・リフレッシュトークン・有効期限（秒）からAuthTokenModelを生成する
+	 *
+	 * @param	accessToken			アクセストークン文字列
+	 * @param	refreshToken		リフレッシュトークン文字列
+	 * @param	expiresInSeconds	有効期限（秒）
+	 * @return						{@link AuthTokenModel}
+	 */
+	public static AuthTokenModel of(String accessToken, String refreshToken, Long expiresInSeconds) {
+		return AuthTokenModel.builder()
+				.accessToken(new AccessToken(accessToken))
+				.refreshToken(new RefreshTokenValue(refreshToken))
+				.expiresIn(new ExpiresIn(expiresInSeconds))
+				.build();
+	}
 }

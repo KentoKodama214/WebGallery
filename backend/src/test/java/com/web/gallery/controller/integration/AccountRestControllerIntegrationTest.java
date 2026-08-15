@@ -33,6 +33,21 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountName;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.BirthDate;
+import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
+import com.web.gallery.domain.account.FreeMemo;
+import com.web.gallery.domain.account.LastLoginDatetime;
+import com.web.gallery.domain.account.LoginFailureCount;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.UpdatedBy;
+import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.entity.Account;
 import com.web.gallery.enumuration.AuthorityEnum;
 import com.web.gallery.enumuration.ErrorEnum;
@@ -107,10 +122,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "aaaaaaaa";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId(accountId)
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId(accountId))
+					.accountName(new AccountName("AAAAAAAA"))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -140,10 +155,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "bbbbbbbb";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId(accountId)
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId(accountId))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -171,10 +186,10 @@ public class AccountRestControllerIntegrationTest {
 		@DisplayName("異常系：他人のアカウントIDを指定した場合はForbidden")
 		void getAccount_forbidden() throws Exception {
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId("aaaaaaaa")
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName("AAAAAAAA"))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -204,23 +219,23 @@ public class AccountRestControllerIntegrationTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='" + accountId + "'", (rs, rowNum) ->
 					Account.builder()
-						.accountNo(rs.getLong("account_no"))
-						.createdBy(rs.getLong("created_by"))
-						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-						.updatedBy(rs.getLong("updated_by"))
-						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-						.isDeleted(rs.getBoolean("is_deleted"))
-						.accountId(rs.getString("account_id"))
-						.accountName(rs.getString("account_name"))
-						.password(rs.getString("password"))
-						.birthdate(rs.getObject("birthdate", LocalDate.class))
+						.accountNo(new AccountNo(rs.getLong("account_no")))
+						.createdBy(new CreatedBy(rs.getLong("created_by")))
+						.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+						.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+						.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+						.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
+						.accountId(new AccountId(rs.getString("account_id")))
+						.accountName(new AccountName(rs.getString("account_name")))
+						.password(new Password(rs.getString("password")))
+						.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
 						.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-						.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
-						.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
-						.freeMemo(rs.getString("free_memo"))
+						.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
+						.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
+						.freeMemo(new FreeMemo(rs.getString("free_memo")))
 						.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-						.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
-						.loginFailureCount(rs.getInt("login_failure_count"))
+						.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
+						.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 						.build());
 		}
 
@@ -250,20 +265,20 @@ public class AccountRestControllerIntegrationTest {
 			List<Account> actualData = getAccountList(accountId);
 
 			assertEquals(1, actualData.size());
-			assertEquals(4L, actualData.getFirst().getAccountNo());
-			assertEquals(0L, actualData.getFirst().getCreatedBy());
-			assertEquals(0L, actualData.getFirst().getUpdatedBy());
-			assertFalse(actualData.getFirst().getIsDeleted());
-			assertEquals(accountId, actualData.getFirst().getAccountId());
-			assertEquals(accountName, actualData.getFirst().getAccountName());
-			assertEquals(birthDate, actualData.getFirst().getBirthdate());
+			assertEquals(new AccountNo(4L), actualData.getFirst().getAccountNo());
+			assertEquals(new CreatedBy(0L), actualData.getFirst().getCreatedBy());
+			assertEquals(new UpdatedBy(0L), actualData.getFirst().getUpdatedBy());
+			assertFalse(actualData.getFirst().getIsDeleted().value());
+			assertEquals(accountId, actualData.getFirst().getAccountId().value());
+			assertEquals(accountName, actualData.getFirst().getAccountName().value());
+			assertEquals(birthDate, actualData.getFirst().getBirthdate().value());
 			assertEquals(SexEnum.WOMAN, actualData.getFirst().getSexKbn());
-			assertEquals(birthplacePrefectureKbnCode, actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(residentPrefectureKbnCode, actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(freeMemo, actualData.getFirst().getFreeMemo());
+			assertEquals(birthplacePrefectureKbnCode, actualData.getFirst().getBirthplacePrefectureKbnCode().value());
+			assertEquals(residentPrefectureKbnCode, actualData.getFirst().getResidentPrefectureKbnCode().value());
+			assertEquals(freeMemo, actualData.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.MINI, actualData.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().plusHours(9));
-			assertEquals(0, actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -286,8 +301,8 @@ public class AccountRestControllerIntegrationTest {
 
 			List<Account> actualData = getAccountList(accountId);
 			assertEquals(1, actualData.size());
-			assertEquals(accountId, actualData.getFirst().getAccountId());
-			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+			assertEquals(accountId, actualData.getFirst().getAccountId().value());
+			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName().value());
 		}
 
 		@Test
@@ -318,23 +333,23 @@ public class AccountRestControllerIntegrationTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='" + accountId + "'", (rs, rowNum) ->
 					Account.builder()
-						.accountNo(rs.getLong("account_no"))
-						.createdBy(rs.getLong("created_by"))
-						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-						.updatedBy(rs.getLong("updated_by"))
-						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-						.isDeleted(rs.getBoolean("is_deleted"))
-						.accountId(rs.getString("account_id"))
-						.accountName(rs.getString("account_name"))
-						.password(rs.getString("password"))
-						.birthdate(rs.getObject("birthdate", LocalDate.class))
+						.accountNo(new AccountNo(rs.getLong("account_no")))
+						.createdBy(new CreatedBy(rs.getLong("created_by")))
+						.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+						.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
+						.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
+						.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
+						.accountId(new AccountId(rs.getString("account_id")))
+						.accountName(new AccountName(rs.getString("account_name")))
+						.password(new Password(rs.getString("password")))
+						.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
 						.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-						.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
-						.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
-						.freeMemo(rs.getString("free_memo"))
+						.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
+						.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
+						.freeMemo(new FreeMemo(rs.getString("free_memo")))
 						.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-						.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
-						.loginFailureCount(rs.getInt("login_failure_count"))
+						.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
+						.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 						.build());
 		}
 
@@ -346,10 +361,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId(accountId)
-					.accountName(accountName)
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId(accountId))
+					.accountName(new AccountName(accountName))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -373,22 +388,22 @@ public class AccountRestControllerIntegrationTest {
 
 			List<Account> actual = getAccountList(accountId);
 			assertEquals(1, actual.size());
-			assertEquals(1L, actual.getFirst().getAccountNo());
-			assertEquals(1L, actual.getFirst().getCreatedBy());
-			assertNotEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getCreatedAt());
-			assertEquals(1L, actual.getFirst().getUpdatedBy());
-			assertFalse(actual.getFirst().getIsDeleted());
-			assertEquals(accountId, actual.getFirst().getAccountId());
-			assertEquals(accountName, actual.getFirst().getAccountName());
-			assertEquals("$2a$10$password1", actual.getFirst().getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate());
+			assertEquals(new AccountNo(1L), actual.getFirst().getAccountNo());
+			assertEquals(new CreatedBy(1L), actual.getFirst().getCreatedBy());
+			assertNotEquals(new CreatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
+			assertEquals(new UpdatedBy(1L), actual.getFirst().getUpdatedBy());
+			assertFalse(actual.getFirst().getIsDeleted().value());
+			assertEquals(accountId, actual.getFirst().getAccountId().value());
+			assertEquals(accountName, actual.getFirst().getAccountName().value());
+			assertEquals("$2a$10$password1", actual.getFirst().getPassword().value());
+			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate().value());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
-			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode());
-			assertEquals("", actual.getFirst().getFreeMemo());
+			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode().value());
+			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode().value());
+			assertEquals("", actual.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
-			assertEquals(0, actual.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertEquals(new LoginFailureCount(0), actual.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -399,10 +414,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId("aaaaaaaa")
-					.accountName(accountName)
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName(accountName))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -426,22 +441,22 @@ public class AccountRestControllerIntegrationTest {
 
 			List<Account> actual = getAccountList(accountId);
 			assertEquals(1, actual.size());
-			assertEquals(1L, actual.getFirst().getAccountNo());
-			assertEquals(1L, actual.getFirst().getCreatedBy());
-			assertNotEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getCreatedAt());
-			assertEquals(1L, actual.getFirst().getUpdatedBy());
-			assertFalse(actual.getFirst().getIsDeleted());
-			assertEquals(accountId, actual.getFirst().getAccountId());
-			assertEquals(accountName, actual.getFirst().getAccountName());
-			assertEquals("$2a$10$password1", actual.getFirst().getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate());
+			assertEquals(new AccountNo(1L), actual.getFirst().getAccountNo());
+			assertEquals(new CreatedBy(1L), actual.getFirst().getCreatedBy());
+			assertNotEquals(new CreatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
+			assertEquals(new UpdatedBy(1L), actual.getFirst().getUpdatedBy());
+			assertFalse(actual.getFirst().getIsDeleted().value());
+			assertEquals(accountId, actual.getFirst().getAccountId().value());
+			assertEquals(accountName, actual.getFirst().getAccountName().value());
+			assertEquals("$2a$10$password1", actual.getFirst().getPassword().value());
+			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate().value());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
-			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode());
-			assertEquals("", actual.getFirst().getFreeMemo());
+			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode().value());
+			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode().value());
+			assertEquals("", actual.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
-			assertEquals(0, actual.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertEquals(new LoginFailureCount(0), actual.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -452,10 +467,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId(accountId)
-					.accountName(accountName)
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId(accountId))
+					.accountName(new AccountName(accountName))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -479,22 +494,22 @@ public class AccountRestControllerIntegrationTest {
 
 			List<Account> actual = getAccountList(accountId);
 			assertEquals(1, actual.size());
-			assertEquals(1L, actual.getFirst().getAccountNo());
-			assertEquals(1L, actual.getFirst().getCreatedBy());
-			assertNotEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getCreatedAt());
-			assertEquals(1L, actual.getFirst().getUpdatedBy());
-			assertFalse(actual.getFirst().getIsDeleted());
-			assertEquals(accountId, actual.getFirst().getAccountId());
-			assertEquals(accountName, actual.getFirst().getAccountName());
-			assertNotEquals("$2a$10$password1", actual.getFirst().getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate());
+			assertEquals(new AccountNo(1L), actual.getFirst().getAccountNo());
+			assertEquals(new CreatedBy(1L), actual.getFirst().getCreatedBy());
+			assertNotEquals(new CreatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
+			assertEquals(new UpdatedBy(1L), actual.getFirst().getUpdatedBy());
+			assertFalse(actual.getFirst().getIsDeleted().value());
+			assertEquals(accountId, actual.getFirst().getAccountId().value());
+			assertEquals(accountName, actual.getFirst().getAccountName().value());
+			assertNotEquals("$2a$10$password1", actual.getFirst().getPassword().value());
+			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate().value());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
-			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode());
-			assertEquals("", actual.getFirst().getFreeMemo());
+			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode().value());
+			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode().value());
+			assertEquals("", actual.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
-			assertEquals(0, actual.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertEquals(new LoginFailureCount(0), actual.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -505,10 +520,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId("aaaaaaaa")
-					.accountName(accountName)
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName(accountName))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -532,22 +547,22 @@ public class AccountRestControllerIntegrationTest {
 
 			List<Account> actual = getAccountList(accountId);
 			assertEquals(1, actual.size());
-			assertEquals(1L, actual.getFirst().getAccountNo());
-			assertEquals(1L, actual.getFirst().getCreatedBy());
-			assertNotEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getCreatedAt());
-			assertEquals(1L, actual.getFirst().getUpdatedBy());
-			assertFalse(actual.getFirst().getIsDeleted());
-			assertEquals(accountId, actual.getFirst().getAccountId());
-			assertEquals(accountName, actual.getFirst().getAccountName());
-			assertNotEquals("$2a$10$password1", actual.getFirst().getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate());
+			assertEquals(new AccountNo(1L), actual.getFirst().getAccountNo());
+			assertEquals(new CreatedBy(1L), actual.getFirst().getCreatedBy());
+			assertNotEquals(new CreatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
+			assertEquals(new UpdatedBy(1L), actual.getFirst().getUpdatedBy());
+			assertFalse(actual.getFirst().getIsDeleted().value());
+			assertEquals(accountId, actual.getFirst().getAccountId().value());
+			assertEquals(accountName, actual.getFirst().getAccountName().value());
+			assertNotEquals("$2a$10$password1", actual.getFirst().getPassword().value());
+			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate().value());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
-			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode());
-			assertEquals("", actual.getFirst().getFreeMemo());
+			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode().value());
+			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode().value());
+			assertEquals("", actual.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
-			assertEquals(0, actual.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertEquals(new LoginFailureCount(0), actual.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -557,10 +572,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId("aaaaaaaa")
-					.accountName(accountName)
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName(accountName))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -590,10 +605,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId("aaaaaaaa")
-					.accountName(accountName)
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName(accountName))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -617,10 +632,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId("aaaaaaaa")
-					.accountName(accountName)
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName(accountName))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -645,10 +660,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId("aaaaaaaa")
-					.accountName(accountName)
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName(accountName))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -673,10 +688,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountName = "AAAAAAAA";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(9L)
-					.accountId(accountId)
-					.accountName(accountName)
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(9L))
+					.accountId(new AccountId(accountId))
+					.accountName(new AccountName(accountName))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -711,10 +726,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "aaaaaaaa";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(1L)
-					.accountId(accountId)
-					.accountName("AAAAAAAA")
-					.password("$2a$10$password1")
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId(accountId))
+					.accountName(new AccountName("AAAAAAAA"))
+					.password(new Password("$2a$10$password1"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 
@@ -762,10 +777,10 @@ public class AccountRestControllerIntegrationTest {
 			String accountId = "aaaaaaaa";
 
 			AccountModel sessionAccount = AccountModel.builder()
-					.accountNo(2L)
-					.accountId("bbbbbbbb")
-					.accountName("BBBBBBBB")
-					.password("$2a$10$password2")
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("bbbbbbbb"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
 

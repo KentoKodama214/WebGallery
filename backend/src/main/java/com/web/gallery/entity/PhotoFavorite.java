@@ -1,7 +1,9 @@
 package com.web.gallery.entity;
 
-import java.time.OffsetDateTime;
-
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.CreatedBy;
+import com.web.gallery.domain.common.CreatedAt;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoFavoriteModel;
 
@@ -18,19 +20,19 @@ public class PhotoFavorite {
 	private Long id;
 
 	/** アカウント番号 */
-	private Long accountNo;
+	private AccountNo accountNo;
 
 	/** お気に入り写真アカウント番号 */
-	private Long favoritePhotoAccountNo;
+	private AccountNo favoritePhotoAccountNo;
 
 	/** お気に入り写真番号 */
-	private Long favoritePhotoNo;
+	private PhotoNo favoritePhotoNo;
 
 	/** 作成者 */
-	private Long createdBy;
+	private CreatedBy createdBy;
 
 	/** 作成日時 */
-	private OffsetDateTime createdAt;
+	private CreatedAt createdAt;
 
 	/**
 	 * PhotoFavoriteModelからPhotoFavoriteエンティティを生成する
@@ -43,7 +45,7 @@ public class PhotoFavorite {
 				.accountNo(model.getAccountNo())
 				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
 				.favoritePhotoNo(model.getFavoritePhotoNo())
-				.createdBy(model.getAccountNo())
+				.createdBy(new CreatedBy(model.getAccountNo().value()))
 				.build();
 	}
 
@@ -71,6 +73,30 @@ public class PhotoFavorite {
 		return PhotoFavorite.builder()
 				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
 				.favoritePhotoNo(model.getFavoritePhotoNo())
+				.build();
+	}
+
+	/**
+	 * アカウント番号で自分が登録したお気に入り削除用のPhotoFavoriteエンティティを生成する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link PhotoFavorite}
+	 */
+	public static PhotoFavorite conditionByAccountNo(AccountNo accountNo) {
+		return PhotoFavorite.builder()
+				.accountNo(accountNo)
+				.build();
+	}
+
+	/**
+	 * アカウント番号で自分の写真に対する他人のお気に入り削除用のPhotoFavoriteエンティティを生成する
+	 *
+	 * @param	favoritePhotoAccountNo	お気に入り写真アカウント番号
+	 * @return							{@link PhotoFavorite}
+	 */
+	public static PhotoFavorite conditionByFavoritePhotoAccountNo(AccountNo favoritePhotoAccountNo) {
+		return PhotoFavorite.builder()
+				.favoritePhotoAccountNo(favoritePhotoAccountNo)
 				.build();
 	}
 }
