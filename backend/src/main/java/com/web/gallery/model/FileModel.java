@@ -1,6 +1,7 @@
 package com.web.gallery.model;
 
 import com.web.gallery.domain.photo.ImageFile;
+import com.web.gallery.domain.photo.ImageFilePath;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -14,7 +15,7 @@ import lombok.Value;
 public class FileModel {
 	/** ファイルパス */
 	@NonNull
-	private String filePath;
+	private ImageFilePath filePath;
 
 	/** ファイル */
 	@NonNull

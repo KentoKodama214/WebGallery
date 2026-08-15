@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.domain.photo.ImageFile;
+import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
@@ -133,7 +134,7 @@ public class PhotoServiceImpl implements PhotoService {
 
 				photoMstRepository.regist(photoDetailModel, filePath + filename, photoNo);
 				registPhotoTags(photoDetailModel.getPhotoTagModelList(), photoNo++);
-				uploadFile(filePath + filename, photoDetailModel.getImageFile());
+				uploadFile(new ImageFilePath(filePath + filename), photoDetailModel.getImageFile());
 			} else {
 				savedPhotoNo = photoDetailModel.getPhotoNo().value();
 				photoMstRepository.update(photoDetailModel);
@@ -301,7 +302,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @param	filePath	アップロードのファイルパス
 	 * @param	imageFile	アップロードするファイル
 	 */
-	private void uploadFile(String filePath, ImageFile imageFile) {
+	private void uploadFile(ImageFilePath filePath, ImageFile imageFile) {
 		fileRepository.save(
 			FileModel.builder()
 				.filePath(filePath)

@@ -626,9 +626,9 @@ public class PhotoServiceImplTest {
 			assertEquals("sea", photoTagModelCaptureList.get(1).getTagEnglishName().value());
 
 			List<FileModel> fileModelCapture = fileModelCaptor.getAllValues();
-			assertEquals(filePath + accountId + "/DSC111.jpg", fileModelCapture.get(0).getFilePath());
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC111.jpg"), fileModelCapture.get(0).getFilePath());
 			assertEquals(photoDetailModel1.getImageFile(), fileModelCapture.get(0).getImageFile());
-			assertEquals(filePath + accountId + "/DSC222.jpg", fileModelCapture.get(1).getFilePath());
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC222.jpg"), fileModelCapture.get(1).getFilePath());
 			assertEquals(photoDetailModel2.getImageFile(), fileModelCapture.get(1).getImageFile());
 		}
 		
@@ -1738,13 +1738,13 @@ public class PhotoServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void uploadFile_success() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method uploadFile = PhotoServiceImpl.class.getDeclaredMethod("uploadFile", String.class, ImageFile.class);
+			Method uploadFile = PhotoServiceImpl.class.getDeclaredMethod("uploadFile", ImageFilePath.class, ImageFile.class);
 			uploadFile.setAccessible(true);
 
 			ArgumentCaptor<FileModel> fileModelCaptor = ArgumentCaptor.forClass(FileModel.class);
 			doNothing().when(fileRepositoryImpl).save(fileModelCaptor.capture());
 
-			String filePath = "DSC111.jpg";
+			ImageFilePath filePath = new ImageFilePath("DSC111.jpg");
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
 					"DSC111.jpg",
