@@ -26,6 +26,8 @@
       "Bash(docker*)",
       "Bash(just*)",
       "Bash(find*)",
+      "Bash(grep*)",
+      "Bash(sed*)",
       "Bash(./backend/gradlew*)",
       "Bash(npm *)",
       "Bash(npx *)",
