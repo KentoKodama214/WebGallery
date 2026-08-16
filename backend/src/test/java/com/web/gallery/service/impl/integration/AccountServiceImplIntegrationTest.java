@@ -427,7 +427,9 @@ public class AccountServiceImplIntegrationTest {
 			AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
+			OffsetDateTime beforeLogin = OffsetDateTime.now();
 			accountServiceImpl.handle(event);
+			OffsetDateTime afterLogin = OffsetDateTime.now();
 
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=11", (rs, rowNum) ->
@@ -467,7 +469,8 @@ public class AccountServiceImplIntegrationTest {
 			assertEquals("Tokyo", actualData.getFirst().getResidentPrefectureKbnCode().value());
 			assertEquals("よろしく", actualData.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.NORMAL, actualData.getFirst().getAuthorityKbn());
-			assertNotEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertFalse(actualData.getFirst().getLastLoginDatetime().value().isBefore(beforeLogin));
+			assertFalse(actualData.getFirst().getLastLoginDatetime().value().isAfter(afterLogin));
 			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
 		}
 	}

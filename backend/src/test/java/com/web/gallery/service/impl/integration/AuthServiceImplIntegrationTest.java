@@ -23,6 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.web.gallery.config.JwtConfig;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.model.RefreshTokenModel;
 import com.web.gallery.repository.RefreshTokenRepository;
@@ -43,6 +44,9 @@ public class AuthServiceImplIntegrationTest {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private JwtConfig jwtConfig;
 
 	private static final String TEST_PASSWORD = "password123";
 
@@ -96,7 +100,9 @@ public class AuthServiceImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：ログイン成功")
 		void login_success() throws Exception {
+			OffsetDateTime beforeLogin = OffsetDateTime.now();
 			AuthTokenModel result = authServiceImpl.login("testuser01", TEST_PASSWORD);
+			OffsetDateTime afterLogin = OffsetDateTime.now();
 
 			assertNotNull(result.getAccessToken().value());
 			assertFalse(result.getAccessToken().value().isEmpty());
@@ -110,7 +116,8 @@ public class AuthServiceImplIntegrationTest {
 			assertNotNull(storedToken);
 			assertEquals(1L, storedToken.getAccountNo().value());
 			assertFalse(storedToken.getIsRevoked().value());
-			assertTrue(storedToken.getExpiresAt().value().isAfter(OffsetDateTime.now()));
+			assertFalse(storedToken.getExpiresAt().value().isBefore(beforeLogin.plusDays(jwtConfig.getRefreshTokenExpirationDays())));
+			assertFalse(storedToken.getExpiresAt().value().isAfter(afterLogin.plusDays(jwtConfig.getRefreshTokenExpirationDays())));
 		}
 
 		@Test

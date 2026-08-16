@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -104,7 +105,9 @@ class AuthServiceImplTest {
 			assertEquals(900L, result.getExpiresIn().value());
 
 			verify(refreshTokenRepository).revokeAllByAccountNo(1L);
-			verify(refreshTokenRepository).save(any(RefreshTokenModel.class));
+			ArgumentCaptor<RefreshTokenModel> refreshTokenModelCaptor = ArgumentCaptor.forClass(RefreshTokenModel.class);
+			verify(refreshTokenRepository).save(refreshTokenModelCaptor.capture());
+			assertEquals(OffsetDateTime.now(clock).plusDays(7), refreshTokenModelCaptor.getValue().getExpiresAt().value());
 		}
 
 		@Test

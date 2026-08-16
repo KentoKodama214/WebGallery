@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -429,7 +430,7 @@ public class AccountServiceImplTest {
 			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(accountModelCaptor.capture());
 			
 			accountServiceImpl.handle(event);
-			
+
 			AccountModel accountModel = accountModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
 			assertNull(accountModel.getAccountId());
@@ -441,7 +442,7 @@ public class AccountServiceImplTest {
 			assertNull(accountModel.getResidentPrefectureKbnCode());
 			assertNull(accountModel.getFreeMemo());
 			assertNull(accountModel.getAuthorityKbn());
-			assertNotNull(accountModel.getLastLoginDatetime());
+			assertEquals(OffsetDateTime.now(clock), accountModel.getLastLoginDatetime().value());
 			assertEquals(new LoginFailureCount(0), accountModel.getLoginFailureCount());
 		}
 		

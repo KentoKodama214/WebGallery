@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,17 +45,22 @@ public class RefreshTokenRepositoryImplTest {
 		@Order(1)
 		@DisplayName("正常系：リフレッシュトークンを保存する")
 		void save_success() {
+			OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7);
 			RefreshTokenModel refreshTokenModel = RefreshTokenModel.builder()
 					.accountNo(new AccountNo(1L))
 					.tokenHash(new TokenHash("abc123hash"))
-					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
+					.expiresAt(new ExpiresAt(expiresAt))
 					.build();
 
 			doReturn(1).when(refreshTokenMapper).insert(any(RefreshToken.class));
 
 			refreshTokenRepositoryImpl.save(refreshTokenModel);
 
-			verify(refreshTokenMapper, times(1)).insert(any(RefreshToken.class));
+			ArgumentCaptor<RefreshToken> refreshTokenCaptor = ArgumentCaptor.forClass(RefreshToken.class);
+			verify(refreshTokenMapper, times(1)).insert(refreshTokenCaptor.capture());
+			assertEquals(new AccountNo(1L), refreshTokenCaptor.getValue().getAccountNo());
+			assertEquals(new TokenHash("abc123hash"), refreshTokenCaptor.getValue().getTokenHash());
+			assertEquals(new ExpiresAt(expiresAt), refreshTokenCaptor.getValue().getExpiresAt());
 		}
 	}
 

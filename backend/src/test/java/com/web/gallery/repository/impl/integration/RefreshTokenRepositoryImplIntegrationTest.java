@@ -83,10 +83,11 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：リフレッシュトークンを保存する")
 		void save_success() {
+			OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7);
 			RefreshTokenModel refreshToken = RefreshTokenModel.builder()
 					.accountNo(new AccountNo(1L))
 					.tokenHash(new TokenHash("new_token_hash"))
-					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
+					.expiresAt(new ExpiresAt(expiresAt))
 					.build();
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
@@ -98,7 +99,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			assertEquals(new TokenHash("new_token_hash"), actualData.getFirst().getTokenHash());
 			assertFalse(actualData.getFirst().getIsRevoked().value());
 			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
-			assertTrue(actualData.getFirst().getExpiresAt().value().isAfter(OffsetDateTime.now()));
+			assertTrue(expiresAt.isEqual(actualData.getFirst().getExpiresAt().value()));
 		}
 	}
 
