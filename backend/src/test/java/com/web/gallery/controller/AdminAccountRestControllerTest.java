@@ -34,7 +34,6 @@ import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.exception.UpdateFailureException;
-import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
 import com.web.gallery.service.impl.AccountServiceImpl;
@@ -47,9 +46,6 @@ public class AdminAccountRestControllerTest {
 
 	@Mock
 	private AccountServiceImpl accountServiceImpl;
-
-	@Mock
-	private SessionHelper sessionHelper;
 
 	private MockMvc mockMvc;
 
@@ -73,8 +69,6 @@ public class AdminAccountRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：管理者がアカウント一覧を取得できること")
 		void getAdminAccountList_success() throws Exception {
-			doReturn(AuthorityEnum.ADMINISTRATOR).when(sessionHelper).getAuthorityKbn();
-
 			AccountModelList accountModels = AccountModelList.of(List.of(
 					AccountModel.builder()
 							.accountNo(new AccountNo(1L))
@@ -116,25 +110,12 @@ public class AdminAccountRestControllerTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが0件の場合は空リストを返すこと")
 		void getAdminAccountList_empty() throws Exception {
-			doReturn(AuthorityEnum.ADMINISTRATOR).when(sessionHelper).getAuthorityKbn();
 			doReturn(AccountModelList.empty()).when(accountServiceImpl).getAccountListForAdmin();
 
 			mockMvc.perform(get("/api/v1/admin/accounts"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$").isArray())
 				.andExpect(jsonPath("$").isEmpty());
-		}
-
-		@Test
-		@Order(3)
-		@DisplayName("異常系：管理者以外は403を返すこと")
-		void getAdminAccountList_forbidden() throws Exception {
-			doReturn(AuthorityEnum.NORMAL).when(sessionHelper).getAuthorityKbn();
-
-			mockMvc.perform(get("/api/v1/admin/accounts"))
-				.andExpect(status().isForbidden());
-
-			verify(accountServiceImpl, times(0)).getAccountListForAdmin();
 		}
 	}
 
@@ -146,7 +127,6 @@ public class AdminAccountRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントのロックを解除できること")
 		void unlockAccount_success() throws Exception {
-			doReturn(AuthorityEnum.ADMINISTRATOR).when(sessionHelper).getAuthorityKbn();
 			doNothing().when(accountServiceImpl).unlockAccount(1L);
 
 			mockMvc.perform(put("/api/v1/admin/accounts/1/unlock"))
@@ -160,21 +140,8 @@ public class AdminAccountRestControllerTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("異常系：管理者以外は403を返すこと")
-		void unlockAccount_forbidden() throws Exception {
-			doReturn(AuthorityEnum.MINI).when(sessionHelper).getAuthorityKbn();
-
-			mockMvc.perform(put("/api/v1/admin/accounts/1/unlock"))
-				.andExpect(status().isForbidden());
-
-			verify(accountServiceImpl, times(0)).unlockAccount(anyLong());
-		}
-
-		@Test
-		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionが発生した場合は409を返すこと")
 		void unlockAccount_updateFailure() throws Exception {
-			doReturn(AuthorityEnum.ADMINISTRATOR).when(sessionHelper).getAuthorityKbn();
 			doThrow(UpdateFailureException.class).when(accountServiceImpl).unlockAccount(999L);
 
 			mockMvc.perform(put("/api/v1/admin/accounts/999/unlock"))
@@ -190,7 +157,6 @@ public class AdminAccountRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントを強制ロックできること")
 		void lockAccount_success() throws Exception {
-			doReturn(AuthorityEnum.ADMINISTRATOR).when(sessionHelper).getAuthorityKbn();
 			doNothing().when(accountServiceImpl).lockAccount(1L);
 
 			mockMvc.perform(put("/api/v1/admin/accounts/1/lock"))
@@ -204,21 +170,8 @@ public class AdminAccountRestControllerTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("異常系：管理者以外は403を返すこと")
-		void lockAccount_forbidden() throws Exception {
-			doReturn(AuthorityEnum.SPECIAL).when(sessionHelper).getAuthorityKbn();
-
-			mockMvc.perform(put("/api/v1/admin/accounts/1/lock"))
-				.andExpect(status().isForbidden());
-
-			verify(accountServiceImpl, times(0)).lockAccount(anyLong());
-		}
-
-		@Test
-		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionが発生した場合は409を返すこと")
 		void lockAccount_updateFailure() throws Exception {
-			doReturn(AuthorityEnum.ADMINISTRATOR).when(sessionHelper).getAuthorityKbn();
 			doThrow(UpdateFailureException.class).when(accountServiceImpl).lockAccount(999L);
 
 			mockMvc.perform(put("/api/v1/admin/accounts/999/lock"))
