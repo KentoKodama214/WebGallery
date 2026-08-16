@@ -53,7 +53,9 @@ import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoDeleteModel;
+import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
@@ -344,7 +346,7 @@ public class PhotoRestControllerTest {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1L);
 
-			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doReturn(1L).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
@@ -358,7 +360,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
 
-			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
+			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertNull(photoDetailModelList.getFirst().getPhotoNo());
@@ -403,7 +405,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doReturn(1L).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
@@ -444,7 +446,7 @@ public class PhotoRestControllerTest {
 			verify(sessionHelper, times(0)).getAccountNo();
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(1L);
 
-			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
+			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
@@ -489,7 +491,7 @@ public class PhotoRestControllerTest {
 				.andExpect(status().isForbidden());
 
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
-			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
+			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(PhotoDetailModelList.class));
 		}
 
 		@Test
@@ -506,7 +508,7 @@ public class PhotoRestControllerTest {
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isBadRequest());
 
-			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
+			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(PhotoDetailModelList.class));
 		}
 
 		@Test
@@ -523,7 +525,7 @@ public class PhotoRestControllerTest {
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isBadRequest());
 
-			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
+			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(PhotoDetailModelList.class));
 		}
 
 		@Test
@@ -541,7 +543,7 @@ public class PhotoRestControllerTest {
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isBadRequest());
 
-			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
+			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(PhotoDetailModelList.class));
 		}
 
 		@Test
@@ -560,7 +562,7 @@ public class PhotoRestControllerTest {
 					.param("focalLength", "-1"))
 				.andExpect(status().isBadRequest());
 
-			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
+			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(PhotoDetailModelList.class));
 		}
 
 		@Test
@@ -577,7 +579,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doThrow(FileDuplicateException.class).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
@@ -592,7 +594,7 @@ public class PhotoRestControllerTest {
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 			verify(sessionHelper, times(0)).getAccountNo();
 
-			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
+			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
@@ -632,7 +634,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doThrow(RegistFailureException.class).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
@@ -647,7 +649,7 @@ public class PhotoRestControllerTest {
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 			verify(sessionHelper, times(0)).getAccountNo();
 
-			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
+			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
@@ -687,7 +689,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doThrow(UpdateFailureException.class).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
@@ -702,7 +704,7 @@ public class PhotoRestControllerTest {
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 			verify(sessionHelper, times(0)).getAccountNo();
 
-			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
+			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
@@ -742,7 +744,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDeleteModel>> photoDeleteModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDeleteModelList> photoDeleteModelCaptor = ArgumentCaptor.forClass(PhotoDeleteModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doNothing().when(photoServiceImpl).deletePhotos(photoAcountIdCaptor.capture(), photoDeleteModelCaptor.capture());
 
@@ -754,7 +756,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value("写真削除が完了しました。"));
 
-			List<PhotoDeleteModel> photoDeleteModelList = photoDeleteModelCaptor.getValue();
+			PhotoDeleteModelList photoDeleteModelList = photoDeleteModelCaptor.getValue();
 			assertEquals(1, photoDeleteModelList.size());
 			assertEquals(new AccountNo(1L), photoDeleteModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDeleteModelList.getFirst().getPhotoNo().value());
@@ -799,7 +801,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDeleteModel>> photoDeleteModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDeleteModelList> photoDeleteModelCaptor = ArgumentCaptor.forClass(PhotoDeleteModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doThrow(UpdateFailureException.class).when(photoServiceImpl).deletePhotos(photoAcountIdCaptor.capture(), photoDeleteModelCaptor.capture());
 
@@ -808,7 +810,7 @@ public class PhotoRestControllerTest {
 					.content(readJsonFile("delete_photo.json")))
 				.andExpect(status().isConflict());
 
-			List<PhotoDeleteModel> photoDeleteModelList = photoDeleteModelCaptor.getValue();
+			PhotoDeleteModelList photoDeleteModelList = photoDeleteModelCaptor.getValue();
 			assertEquals(1, photoDeleteModelList.size());
 			assertEquals(new AccountNo(1L), photoDeleteModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDeleteModelList.getFirst().getPhotoNo().value());

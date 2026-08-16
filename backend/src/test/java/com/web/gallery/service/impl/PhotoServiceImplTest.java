@@ -61,8 +61,10 @@ import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
+import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoListGetModel;
@@ -568,7 +570,7 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系：photoDetailModelListがemptyの場合、終了")
 		void savePhotos_photoDetailModelList_is_empty() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			Long actual = photoServiceImpl.savePhotos("aaaaaaaa", photoDetailModelList);
+			Long actual = photoServiceImpl.savePhotos("aaaaaaaa", PhotoDetailModelList.of(photoDetailModelList));
 			assertNull(actual);
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(Long.class));
 			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
@@ -605,7 +607,7 @@ public class PhotoServiceImplTest {
 			doReturn(false).when(photoMstRepositoryImpl).isExistPhoto(photoDetailModel2);
 			doNothing().when(photoMstRepositoryImpl).regist(photoDetailModel2, filePath + accountId + "/DSC222.jpg", 6L);
 			
-			Long actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(5, actual);
 			verify(photoMstRepositoryImpl, times(2)).isExistPhoto(any(PhotoDetailModel.class));
@@ -661,7 +663,7 @@ public class PhotoServiceImplTest {
 			photoDetailModelList.add(photoDetailModel2);
 			doNothing().when(photoMstRepositoryImpl).update(photoDetailModel2);
 			
-			Long actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(3, actual);
 			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
@@ -715,7 +717,7 @@ public class PhotoServiceImplTest {
 			photoDetailModelList.add(photoDetailModel2);
 			doNothing().when(photoMstRepositoryImpl).update(photoDetailModel2);
 			
-			Long actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(3, actual);
 			verify(photoMstRepositoryImpl, times(1)).isExistPhoto(any(PhotoDetailModel.class));
@@ -758,7 +760,7 @@ public class PhotoServiceImplTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			assertThrows(FileDuplicateException.class, () -> photoServiceImpl.savePhotos(accountId, photoDetailModelList));
+			assertThrows(FileDuplicateException.class, () -> photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList)));
 			
 			verify(photoMstRepositoryImpl, times(1)).isExistPhoto(any(PhotoDetailModel.class));
 			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(String.class), any(Long.class));
@@ -789,7 +791,7 @@ public class PhotoServiceImplTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(accountId, photoDetailModelList));
+			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList)));
 			
 			verify(photoMstRepositoryImpl, times(1)).isExistPhoto(any(PhotoDetailModel.class));
 			verify(photoMstRepositoryImpl, times(1)).regist(any(PhotoDetailModel.class), any(String.class), any(Long.class));
@@ -823,7 +825,7 @@ public class PhotoServiceImplTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(accountId, photoDetailModelList));
+			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList)));
 			
 			verify(photoMstRepositoryImpl, times(1)).isExistPhoto(any(PhotoDetailModel.class));
 			verify(photoMstRepositoryImpl, times(1)).regist(any(PhotoDetailModel.class), any(String.class), any(Long.class));
@@ -866,7 +868,7 @@ public class PhotoServiceImplTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(accountId, photoDetailModelList));
+			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList)));
 			
 			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
 			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(String.class), any(Long.class));
@@ -903,7 +905,7 @@ public class PhotoServiceImplTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.savePhotos(accountId, photoDetailModelList));
+			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList)));
 			
 			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
 			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(String.class), any(Long.class));
@@ -924,7 +926,7 @@ public class PhotoServiceImplTest {
 		void deletePhotos_photoDeleteModelList_empty() throws UpdateFailureException {
 			doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
 			
-			photoServiceImpl.deletePhotos("aaaaaaaa", new ArrayList<PhotoDeleteModel>());
+			photoServiceImpl.deletePhotos("aaaaaaaa", PhotoDeleteModelList.empty());
 			verify(photoFavoriteRepositoryImpl, times(0)).clear(any(PhotoFavoriteDeleteModel.class));
 			verify(photoTagMstRepositoryImpl, times(0)).clear(any(PhotoTagDeleteModel.class));
 			verify(photoMstRepositoryImpl, times(0)).delete(any(PhotoDeleteModel.class));
@@ -961,7 +963,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("DSC222.jpg"))
 					.build());
 			
-			photoServiceImpl.deletePhotos("aaaaaaaa", photoDeleteModelList);
+			photoServiceImpl.deletePhotos("aaaaaaaa", PhotoDeleteModelList.of(photoDeleteModelList));
 			verify(photoFavoriteRepositoryImpl, times(2)).clear(any(PhotoFavoriteDeleteModel.class));
 			verify(photoTagMstRepositoryImpl, times(2)).clear(any(PhotoTagDeleteModel.class));
 			verify(photoMstRepositoryImpl, times(2)).delete(any(PhotoDeleteModel.class));
@@ -1011,7 +1013,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
 					.build());
 			
-			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.deletePhotos("aaaaaaaa", photoDeleteModelList));
+			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.deletePhotos("aaaaaaaa", PhotoDeleteModelList.of(photoDeleteModelList)));
 
 			verify(photoFavoriteRepositoryImpl, times(1)).clear(any(PhotoFavoriteDeleteModel.class));
 			verify(photoMstRepositoryImpl, times(1)).delete(any(PhotoDeleteModel.class));

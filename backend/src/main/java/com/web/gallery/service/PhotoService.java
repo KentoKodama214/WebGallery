@@ -1,14 +1,13 @@
 package com.web.gallery.service;
 
-import java.util.List;
-
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
-import com.web.gallery.model.PhotoDeleteModel;
+import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModelList;
 
@@ -37,22 +36,22 @@ public interface PhotoService {
 	 * 写真を登録・更新する
 	 * 
 	 * @param	accountId				アカウントID
-	 * @param	photoDetailModelList	{@link PhotoDetailModel}
+	 * @param	photoDetailModelList	{@link PhotoDetailModelList}
 	 * @throws	FileDuplicateException 	同じファイル名のファイルが既に保存済みの場合
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 * @throws	UpdateFailureException	更新に失敗した場合
 	 * @return							登録・更新した写真番号
 	 */
-	Long savePhotos(String accountId, List<PhotoDetailModel> photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException;
-	
+	Long savePhotos(String accountId, PhotoDetailModelList photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException;
+
 	/**
 	 * 写真を削除する
-	 * 
+	 *
 	 * @param	accountId				アカウントID
-	 * @param	photoDeleteModelList	{@link PhotoDeleteModel}
+	 * @param	photoDeleteModelList	{@link PhotoDeleteModelList}
 	 * @throws	UpdateFailureException	削除に失敗した場合
 	 */
-	void deletePhotos(String accountId, List<PhotoDeleteModel> photoDeleteModelList) throws UpdateFailureException;
+	void deletePhotos(String accountId, PhotoDeleteModelList photoDeleteModelList) throws UpdateFailureException;
 	
 	/**
 	 * 該当アカウントが写真の登録枚数の上限に達しているかチェックする

@@ -10,6 +10,8 @@ import com.web.gallery.entity.Account;
 
 /**
  * AccountModelのコレクションを表すクラス
+ *
+ * @param	accountModelList	{@link AccountModel}のリスト
  */
 public record AccountModelList(List<AccountModel> accountModelList) implements Iterable<AccountModel> {
 

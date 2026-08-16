@@ -10,6 +10,8 @@ import com.web.gallery.entity.KbnMst;
 
 /**
  * KbnMstModelのコレクションを表すクラス
+ *
+ * @param	kbnMstModelList	{@link KbnMstModel}のリスト
  */
 public record KbnMstModelList(List<KbnMstModel> kbnMstModelList) implements Iterable<KbnMstModel> {
 

@@ -12,6 +12,8 @@ import com.web.gallery.enumuration.DirectionEnum;
 
 /**
  * PhotoModelのコレクションを表すクラス
+ *
+ * @param	photoModelList	{@link PhotoModel}のリスト
  */
 public record PhotoModelList(List<PhotoModel> photoModelList) implements Iterable<PhotoModel> {
 

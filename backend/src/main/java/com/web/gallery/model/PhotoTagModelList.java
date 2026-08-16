@@ -14,6 +14,8 @@ import com.web.gallery.entity.PhotoTagMst;
 
 /**
  * PhotoTagModelのコレクションを表すクラス
+ *
+ * @param	photoTagModelList	{@link PhotoTagModel}のリスト
  */
 public record PhotoTagModelList(List<PhotoTagModel> photoTagModelList) implements Iterable<PhotoTagModel> {
 

@@ -63,8 +63,10 @@ import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDeleteModel;
+import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoTagModel;
@@ -602,7 +604,7 @@ public class PhotoServiceImplIntegrationTest {
 			String accountId = "aaaaaaaa";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 			List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
-			Long actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
 			assertNull(actual);
 			List<PhotoMst> afterData = getPhotoMstData(accountId);
 			assertEquals(beforeSaveData.size(), afterData.size());
@@ -622,7 +624,7 @@ public class PhotoServiceImplIntegrationTest {
 			PhotoDetailModel photoDetailModel2 = createNewPhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			Long actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(11, actual);
 			List<PhotoMst> actualData = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo().value() > 10).toList();
@@ -687,7 +689,7 @@ public class PhotoServiceImplIntegrationTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			Long actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(3, actual);
 			List<PhotoMst> actualData1 = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo().value()==2).toList();
@@ -753,7 +755,7 @@ public class PhotoServiceImplIntegrationTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			Long actual = photoServiceImpl.savePhotos(accountId, photoDetailModelList);
+			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(3, actual);
 			List<PhotoMst> actualData = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo().value() > 10).toList();
@@ -838,7 +840,7 @@ public class PhotoServiceImplIntegrationTest {
 			PhotoDetailModel photoDetailModel2 = createNewPhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			assertThrows(FileDuplicateException.class, () -> photoServiceImpl.savePhotos(accountId, photoDetailModelList));
+			assertThrows(FileDuplicateException.class, () -> photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList)));
 		}
 	}
 	
@@ -852,7 +854,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：photoDeleteModelListが0件の場合、終了")
 		void deletePhotos_photoDeleteModelList_empty() throws UpdateFailureException {
-			photoServiceImpl.deletePhotos("aaaaaaaa", new ArrayList<PhotoDeleteModel>());
+			photoServiceImpl.deletePhotos("aaaaaaaa", PhotoDeleteModelList.empty());
 			
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = (SELECT account_no FROM common.account where account_id='aaaaaaaa')", (rs, rowNum) ->
@@ -896,7 +898,7 @@ public class PhotoServiceImplIntegrationTest {
 					.imageFilePath(new ImageFilePath("DSC12.jpg"))
 					.build());
 			
-			photoServiceImpl.deletePhotos("aaaaaaaa", photoDeleteModelList);
+			photoServiceImpl.deletePhotos("aaaaaaaa", PhotoDeleteModelList.of(photoDeleteModelList));
 			
 			List<PhotoMst> actualPhotoMstData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no=1 and photo_no in (1, 2)", (rs, rowNum) ->
@@ -1008,7 +1010,7 @@ public class PhotoServiceImplIntegrationTest {
 					.imageFilePath(new ImageFilePath("DSC99.jpg"))
 					.build());
 			
-			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.deletePhotos("aaaaaaaa", photoDeleteModelList));
+			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.deletePhotos("aaaaaaaa", PhotoDeleteModelList.of(photoDeleteModelList)));
 		}
 	}
 	

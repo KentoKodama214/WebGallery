@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 
 import org.springframework.stereotype.Service;
@@ -26,8 +25,10 @@ import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
+import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.AccountModel;
@@ -102,14 +103,14 @@ public class PhotoServiceImpl implements PhotoService {
 	/**
 	 * 写真を登録・更新する
 	 *
-	 * @param	photoDetailModelList	{@link PhotoDetailModel}
+	 * @param	photoDetailModelList	{@link PhotoDetailModelList}
 	 * @throws	FileDuplicateException 	同じファイル名のファイルが既に保存済みの場合
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 * @throws	UpdateFailureException	更新に失敗した場合
 	 */
 	@Override
 	@Transactional
-	public Long savePhotos(String accountId, List<PhotoDetailModel> photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+	public Long savePhotos(String accountId, PhotoDetailModelList photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException {
 		if(Objects.isNull(photoDetailModelList)) return null;
 		if(photoDetailModelList.isEmpty()) return null;
 
@@ -142,12 +143,12 @@ public class PhotoServiceImpl implements PhotoService {
 	 * 写真を削除する
 	 *
 	 * @param	accountId				アカウントID
-	 * @param	photoDeleteModelList	{@link PhotoDeleteModel}
+	 * @param	photoDeleteModelList	{@link PhotoDeleteModelList}
 	 * @throws	UpdateFailureException	削除に失敗した場合
 	 */
 	@Override
 	@Transactional
-	public void deletePhotos(String accountId, List<PhotoDeleteModel> photoDeleteModelList) throws UpdateFailureException {
+	public void deletePhotos(String accountId, PhotoDeleteModelList photoDeleteModelList) throws UpdateFailureException {
 		String filePath = photoConfig.getOutputPath() + accountId + "/";
 
 		for(PhotoDeleteModel photoDeleteModel : photoDeleteModelList) {
