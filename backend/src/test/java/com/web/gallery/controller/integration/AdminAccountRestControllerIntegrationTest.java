@@ -31,8 +31,8 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
-import com.web.gallery.enumuration.AuthorityEnum;
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.model.AccountModel;
 
 @ActiveProfiles("test")

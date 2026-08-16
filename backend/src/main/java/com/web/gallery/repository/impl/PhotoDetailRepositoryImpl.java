@@ -11,7 +11,7 @@ import com.web.gallery.dto.PhotoDetailGetDto;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.dto.PhotoListGetDto;
 import com.web.gallery.entity.PhotoTagMst;
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.mapper.PhotoDetailMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;

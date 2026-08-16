@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.PhotoTagMst;
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoTagDeleteModel;

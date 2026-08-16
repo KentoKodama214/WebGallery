@@ -303,7 +303,7 @@ WebGallery/
 │       │   │   │   ├── request/        # リクエストDTO
 │       │   │   │   └── response/       # レスポンスDTO
 │       │   │   ├── entity/             # エンティティ
-│       │   │   ├── enumuration/        # 列挙型
+│       │   │   ├── enumeration/        # 列挙型
 │       │   │   ├── exception/          # カスタム例外
 │       │   │   ├── helper/             # ヘルパーユーティリティ
 │       │   │   ├── mapper/             # MyBatisマッパー

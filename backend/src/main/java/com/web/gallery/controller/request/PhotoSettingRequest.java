@@ -6,7 +6,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import com.web.gallery.enumuration.DirectionEnum;
+import com.web.gallery.enumeration.DirectionEnum;
 
 import lombok.Data;
 

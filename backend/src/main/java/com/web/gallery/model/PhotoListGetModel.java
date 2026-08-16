@@ -10,8 +10,8 @@ import com.web.gallery.controller.request.PhotoListRequest;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.IsFavoriteOnly;
-import com.web.gallery.enumuration.DirectionEnum;
-import com.web.gallery.enumuration.SortPhotoEnum;
+import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.enumeration.SortPhotoEnum;
 
 import lombok.Builder;
 import lombok.NonNull;

@@ -7,7 +7,7 @@ import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.IsFavorite;
 import com.web.gallery.domain.photo.PhotoAt;
 import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.enumuration.DirectionEnum;
+import com.web.gallery.enumeration.DirectionEnum;
 
 import lombok.Data;
 

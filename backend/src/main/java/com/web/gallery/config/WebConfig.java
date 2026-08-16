@@ -4,8 +4,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.web.gallery.enumuration.DirectionEnum;
-import com.web.gallery.enumuration.SortPhotoEnum;
+import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.enumeration.SortPhotoEnum;
 
 import org.springframework.core.convert.converter.Converter;
 

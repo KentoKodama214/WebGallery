@@ -27,7 +27,7 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.dto.PhotoDetailDto;
 import com.web.gallery.entity.PhotoTagMst;
-import com.web.gallery.enumuration.DirectionEnum;
+import com.web.gallery.enumeration.DirectionEnum;
 
 import lombok.Builder;
 import lombok.NonNull;

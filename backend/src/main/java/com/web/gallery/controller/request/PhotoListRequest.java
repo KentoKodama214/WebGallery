@@ -2,8 +2,8 @@ package com.web.gallery.controller.request;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import com.web.gallery.enumuration.DirectionEnum;
-import com.web.gallery.enumuration.SortPhotoEnum;
+import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.enumeration.SortPhotoEnum;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;

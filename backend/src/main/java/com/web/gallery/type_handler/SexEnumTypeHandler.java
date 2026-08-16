@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
-import com.web.gallery.enumuration.SexEnum;
+import com.web.gallery.enumeration.SexEnum;
 
 /**
  * 性別のJavaとPostgresのEnum型を仲介する型変換クラス

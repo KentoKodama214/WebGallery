@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.ForbiddenAccountException;

@@ -27,7 +27,7 @@ import com.web.gallery.dto.PhotoDetailDto;
 import com.web.gallery.dto.PhotoDetailGetDto;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.dto.PhotoListGetDto;
-import com.web.gallery.enumuration.DirectionEnum;
+import com.web.gallery.enumeration.DirectionEnum;
 
 @MybatisTest
 @ActiveProfiles("test")

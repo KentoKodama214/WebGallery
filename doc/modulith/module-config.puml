@@ -20,16 +20,16 @@ System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags
     Component(WebGalleryApplication.WebGalleryApplication.Helper, "Helper", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Service, "Service", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Config, "Config", $techn="Module", $descr="", $tags="", $link="")
-    Component(WebGalleryApplication.WebGalleryApplication.Enumuration, "Enumuration", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Enumeration, "Enumeration", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
 
-Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Helper, "uses", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Service, "uses", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Helper, WebGalleryApplication.WebGalleryApplication.Config, "uses", $techn="", $tags="", $link="")
-Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Config, "uses", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Helper, "uses", $techn="", $tags="", $link="")
 

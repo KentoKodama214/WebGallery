@@ -7,7 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 import com.web.gallery.entity.Account;
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.AccountMapper;

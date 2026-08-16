@@ -67,9 +67,9 @@ import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoTagMst;
-import com.web.gallery.enumuration.AuthorityEnum;
-import com.web.gallery.enumuration.DirectionEnum;
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 
 @ActiveProfiles("test")
 @SpringBootTest

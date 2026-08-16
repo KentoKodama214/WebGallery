@@ -23,30 +23,30 @@ System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags
     Component(WebGalleryApplication.WebGalleryApplication.Service, "Service", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Config, "Config", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Constant, "Constant", $techn="Module", $descr="", $tags="", $link="")
-    Component(WebGalleryApplication.WebGalleryApplication.Enumuration, "Enumuration", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Enumeration, "Enumeration", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Exception, "Exception", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
 
-Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Helper, "uses", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Config, WebGalleryApplication.WebGalleryApplication.Service, "uses", $techn="", $tags="", $link="")
-Rel(WebGalleryApplication.WebGalleryApplication.Exception, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
-Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Exception, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Helper, WebGalleryApplication.WebGalleryApplication.Model, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Helper, WebGalleryApplication.WebGalleryApplication.Config, "uses", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Model, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Exception, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
-Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Repository, "uses", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Config, "uses", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Helper, "uses", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Repository, WebGalleryApplication.WebGalleryApplication.Model, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Repository, WebGalleryApplication.WebGalleryApplication.Exception, "depends on", $techn="", $tags="", $link="")
-Rel(WebGalleryApplication.WebGalleryApplication.Repository, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Repository, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 
 SHOW_LEGEND(true)
 hide stereotypes

@@ -1,6 +1,6 @@
 package com.web.gallery.controller.response;
 
-import com.web.gallery.enumuration.DirectionEnum;
+import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.model.PhotoModel;
 
 import io.swagger.v3.oas.annotations.media.Schema;

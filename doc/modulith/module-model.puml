@@ -22,21 +22,21 @@ System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags
     Component(WebGalleryApplication.WebGalleryApplication.Controller, "Controller", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Dto, "Dto", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Entity, "Entity", $techn="Module", $descr="", $tags="", $link="")
-    Component(WebGalleryApplication.WebGalleryApplication.Enumuration, "Enumuration", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Enumeration, "Enumeration", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
 
-Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Controller, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Entity, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Dto, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
-Rel(WebGalleryApplication.WebGalleryApplication.Dto, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
-Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Dto, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Model, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Controller, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
-Rel(WebGalleryApplication.WebGalleryApplication.Entity, WebGalleryApplication.WebGalleryApplication.Enumuration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Entity, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Entity, WebGalleryApplication.WebGalleryApplication.Model, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Entity, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
 

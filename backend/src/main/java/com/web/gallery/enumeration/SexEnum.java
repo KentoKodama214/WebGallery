@@ -1,4 +1,4 @@
-package com.web.gallery.enumuration;
+package com.web.gallery.enumeration;
 
 import java.util.Objects;
 

@@ -40,8 +40,8 @@ import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
-import com.web.gallery.enumuration.AuthorityEnum;
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.model.AccountModel;
 
 @ActiveProfiles("test")
