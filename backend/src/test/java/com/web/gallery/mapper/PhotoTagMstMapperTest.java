@@ -311,9 +311,10 @@ public class PhotoTagMstMapperTest {
 					.tagEnglishName(new TagEnglishName("spring"))
 					.build();
 			
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actualCount = photoTagMstMapper.insert(photoTagMst);
 			assertEquals(1, actualCount);
-			
+
 			List<PhotoTagMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1 and tag_no=3", (rs, rowNum) ->
 						PhotoTagMst.builder()
@@ -330,6 +331,7 @@ public class PhotoTagMstMapperTest {
 			assertEquals(1L, actualData.getFirst().getPhotoNo().value());
 			assertEquals(3L, actualData.getFirst().getTagNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertEquals("春", actualData.getFirst().getTagJapaneseName().value());
 			assertEquals("spring", actualData.getFirst().getTagEnglishName().value());
 		}

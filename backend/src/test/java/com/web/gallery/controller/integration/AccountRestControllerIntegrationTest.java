@@ -250,6 +250,7 @@ public class AccountRestControllerIntegrationTest {
 			String residentPrefectureKbnCode = "Okinawa";
 			String freeMemo = "フリーメモ";
 
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			mockMvc.perform(
 					post("/api/v1/accounts")
 					.contentType(MediaType.APPLICATION_JSON)
@@ -267,7 +268,9 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(4L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(0L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(0L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(accountId, actualData.getFirst().getAccountId().value());
 			assertEquals(accountName, actualData.getFirst().getAccountName().value());
@@ -371,6 +374,7 @@ public class AccountRestControllerIntegrationTest {
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
 			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			mockMvc.perform(
 					put("/api/v1/accounts/" + accountId)
 					.contentType(MediaType.APPLICATION_JSON)
@@ -390,8 +394,9 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals(1, actual.size());
 			assertEquals(new AccountNo(1L), actual.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actual.getFirst().getCreatedBy());
-			assertNotEquals(new CreatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
+			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actual.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actual.getFirst().getUpdatedAt().value());
 			assertFalse(actual.getFirst().getIsDeleted().value());
 			assertEquals(accountId, actual.getFirst().getAccountId().value());
 			assertEquals(accountName, actual.getFirst().getAccountName().value());
@@ -424,6 +429,7 @@ public class AccountRestControllerIntegrationTest {
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
 			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
 					.contentType(MediaType.APPLICATION_JSON)
@@ -443,8 +449,9 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals(1, actual.size());
 			assertEquals(new AccountNo(1L), actual.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actual.getFirst().getCreatedBy());
-			assertNotEquals(new CreatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
+			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actual.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actual.getFirst().getUpdatedAt().value());
 			assertFalse(actual.getFirst().getIsDeleted().value());
 			assertEquals(accountId, actual.getFirst().getAccountId().value());
 			assertEquals(accountName, actual.getFirst().getAccountName().value());
@@ -477,6 +484,7 @@ public class AccountRestControllerIntegrationTest {
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
 			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			mockMvc.perform(
 					put("/api/v1/accounts/" + accountId)
 					.contentType(MediaType.APPLICATION_JSON)
@@ -496,8 +504,9 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals(1, actual.size());
 			assertEquals(new AccountNo(1L), actual.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actual.getFirst().getCreatedBy());
-			assertNotEquals(new CreatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
+			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actual.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actual.getFirst().getUpdatedAt().value());
 			assertFalse(actual.getFirst().getIsDeleted().value());
 			assertEquals(accountId, actual.getFirst().getAccountId().value());
 			assertEquals(accountName, actual.getFirst().getAccountName().value());
@@ -530,6 +539,7 @@ public class AccountRestControllerIntegrationTest {
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
 			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			mockMvc.perform(
 					put("/api/v1/accounts/aaaaaaaa")
 					.contentType(MediaType.APPLICATION_JSON)
@@ -549,8 +559,9 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals(1, actual.size());
 			assertEquals(new AccountNo(1L), actual.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actual.getFirst().getCreatedBy());
-			assertNotEquals(new CreatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
+			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actual.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actual.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actual.getFirst().getUpdatedAt().value());
 			assertFalse(actual.getFirst().getIsDeleted().value());
 			assertEquals(accountId, actual.getFirst().getAccountId().value());
 			assertEquals(accountName, actual.getFirst().getAccountName().value());

@@ -795,9 +795,10 @@ public class AccountMapperTest {
 					.loginFailureCount(new LoginFailureCount(0))
 					.build();
 			
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actualCount = accountMapper.insert(insertAccount);
 			assertEquals(1, actualCount);
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account", (rs, rowNum) ->
 						Account.builder()
@@ -823,7 +824,9 @@ public class AccountMapperTest {
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
@@ -875,15 +878,17 @@ public class AccountMapperTest {
 		void update_by_accountNo() {
 			Account conditionAccount = Account.builder().accountNo(new AccountNo(1L)).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("account_no=1");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
@@ -904,15 +909,17 @@ public class AccountMapperTest {
 		void update_by_isDeleted() {
 			Account conditionAccount = Account.builder().isDeleted(new IsDeleted(true)).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("is_deleted=true");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(9L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(9L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(9L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertTrue(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("iiiiiiii"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("IIIIIIII"), actualData.getFirst().getAccountName());
@@ -933,15 +940,17 @@ public class AccountMapperTest {
 		void update_by_accountId() {
 			Account conditionAccount = Account.builder().accountId(new AccountId("aaaaaaaa")).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("account_id='aaaaaaaa'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
@@ -962,15 +971,17 @@ public class AccountMapperTest {
 		void update_by_accountName() {
 			Account conditionAccount = Account.builder().accountName(new AccountName("AAAAAAAA")).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("account_name='AAAAAAAA'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
@@ -991,15 +1002,17 @@ public class AccountMapperTest {
 		void update_by_password() {
 			Account conditionAccount = Account.builder().password(new Password("$2a$10$password1")).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("password='$2a$10$password1'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
@@ -1020,15 +1033,17 @@ public class AccountMapperTest {
 		void update_by_birthdate() {
 			Account conditionAccount = Account.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("birthdate='1991-02-14'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
@@ -1049,15 +1064,17 @@ public class AccountMapperTest {
 		void update_by_sexKbnCode() {
 			Account conditionAccount = Account.builder().sexKbn(SexEnum.MAN).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("sex_kbn='man'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(2L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(2L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(2L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("bbbbbbbb"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("BBBBBBBB"), actualData.getFirst().getAccountName());
@@ -1078,15 +1095,17 @@ public class AccountMapperTest {
 		void update_by_birthplacePrefectureKbnCode() {
 			Account conditionAccount = Account.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("birthplace_prefecture_kbn_code='Hokkaido'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(3L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(3L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(3L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("cccccccc"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("CCCCCCCC"), actualData.getFirst().getAccountName());
@@ -1107,15 +1126,17 @@ public class AccountMapperTest {
 		void update_by_residentPrefectureKbnCode() {
 			Account conditionAccount = Account.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("resident_prefecture_kbn_code='Okinawa'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(4L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(4L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(4L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("dddddddd"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("DDDDDDDD"), actualData.getFirst().getAccountName());
@@ -1136,15 +1157,17 @@ public class AccountMapperTest {
 		void update_by_freeMemo() {
 			Account conditionAccount = Account.builder().freeMemo(new FreeMemo("フリーメモ")).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("free_memo='フリーメモ'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(5L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(5L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(5L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("eeeeeeee"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("EEEEEEEE"), actualData.getFirst().getAccountName());
@@ -1165,15 +1188,17 @@ public class AccountMapperTest {
 		void update_by_authorityKbnCode() {
 			Account conditionAccount = Account.builder().authorityKbn(AuthorityEnum.MINI).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("authority_kbn='mini-user'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(6L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(6L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(6L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("ffffffff"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("FFFFFFFF"), actualData.getFirst().getAccountName());
@@ -1196,15 +1221,17 @@ public class AccountMapperTest {
 					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("last_login_datetime='2024-01-01 00:00:00.000 +0000'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(7L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(7L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(7L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("gggggggg"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("GGGGGGGG"), actualData.getFirst().getAccountName());
@@ -1225,15 +1252,17 @@ public class AccountMapperTest {
 		void update_by_loginFailureCounte() {
 			Account conditionAccount = Account.builder().loginFailureCount(new LoginFailureCount(2)).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(0)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("account_no=8");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(8L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(8L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(8L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("hhhhhhhh"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("HHHHHHHH"), actualData.getFirst().getAccountName());
@@ -1267,15 +1296,17 @@ public class AccountMapperTest {
 		void update_accounts() {
 			Account conditionAccount = Account.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(2, actual);
-			
+
 			List<Account> actualData = getAccountList("authority_kbn='special-user' order by account_no");
 			assertEquals(2, actualData.size());
 			assertEquals(new AccountNo(9L), actualData.get(0).getAccountNo());
 			assertEquals(new CreatedBy(9L), actualData.get(0).getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.get(0).getCreatedAt());
 			assertEquals(new UpdatedBy(9L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertTrue(actualData.get(0).getIsDeleted().value());
 			assertEquals(new AccountId("iiiiiiii"), actualData.get(0).getAccountId());
 			assertEquals(new AccountName("IIIIIIII"), actualData.get(0).getAccountName());
@@ -1293,6 +1324,7 @@ public class AccountMapperTest {
 			assertEquals(new CreatedBy(10L), actualData.get(1).getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.get(1).getCreatedAt());
 			assertEquals(new UpdatedBy(10L), actualData.get(1).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(1).getUpdatedAt().value());
 			assertFalse(actualData.get(1).getIsDeleted().value());
 			assertEquals(new AccountId("jjjjjjjj"), actualData.get(1).getAccountId());
 			assertEquals(new AccountName("JJJJJJJJ"), actualData.get(1).getAccountName());
@@ -1319,15 +1351,17 @@ public class AccountMapperTest {
 					.freeMemo(new FreeMemo("よろしく"))
 					.build();
 			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(0)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
-			
+
 			List<Account> actualData = getAccountList("account_id='llllllll'");
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(12L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(12L), actualData.getFirst().getCreatedBy());
 			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
 			assertEquals(new UpdatedBy(12L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("llllllll"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("LLLLLLLL"), actualData.getFirst().getAccountName());

@@ -59,9 +59,10 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 					.tagJapaneseName(new TagJapaneseName("海"))
 					.tagEnglishName(new TagEnglishName("sea"))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			photoTagMstRepositoryImpl.regist(photoTagModel);
-			
+
 			List<PhotoTagMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1 and tag_no=3", (rs, rowNum) ->
 						PhotoTagMst.builder()
@@ -78,6 +79,7 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 			assertEquals(1L, actualData.getFirst().getPhotoNo().value());
 			assertEquals(3L, actualData.getFirst().getTagNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertEquals("海", actualData.getFirst().getTagJapaneseName().value());
 			assertEquals("sea", actualData.getFirst().getTagEnglishName().value());
 		}

@@ -76,9 +76,10 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.photoNo(new PhotoNo(4L))
 					.imageFilePath(new ImageFilePath(imageFilePath))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 4L);
-			
+
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=4", (rs, rowNum) ->
 						PhotoMst.builder()
@@ -101,12 +102,14 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
 							.iso(new Iso(rs.getInt("iso")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(4L, actualData.getFirst().getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().value().plusHours(9));
 			assertEquals(0L, actualData.getFirst().getLocationNo().value());
@@ -120,7 +123,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			assertEquals(0, BigDecimal.ZERO.compareTo(actualData.getFirst().getShutterSpeed().value()));
 			assertEquals(0, actualData.getFirst().getIso().value());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：Nullのパラメータを含まないPhotoDetailModelの登録")
@@ -142,9 +145,10 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
 					.iso(new Iso(100))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 4L);
-			
+
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=4", (rs, rowNum) ->
 						PhotoMst.builder()
@@ -167,12 +171,14 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
 							.iso(new Iso(rs.getInt("iso")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(4L, actualData.getFirst().getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().value().plusHours(9));
 			assertEquals(1L, actualData.getFirst().getLocationNo().value());
@@ -220,9 +226,10 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.photoNo(new PhotoNo(1L))
 					.imageFilePath(new ImageFilePath(imageFilePath))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			photoMstRepositoryImpl.update(photoDetailModel);
-			
+
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoMst.builder()
@@ -245,12 +252,14 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
 							.iso(new Iso(rs.getInt("iso")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(1L, actualData.getFirst().getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().value().plusHours(9));
 			assertEquals(0L, actualData.getFirst().getLocationNo().value());
@@ -286,9 +295,10 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(1)))
 					.iso(new Iso(1000))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			photoMstRepositoryImpl.update(photoDetailModel);
-			
+
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoMst.builder()
@@ -311,12 +321,14 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
 							.iso(new Iso(rs.getInt("iso")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(1L, actualData.getFirst().getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().value().plusHours(9));
 			assertEquals(1L, actualData.getFirst().getLocationNo().value());
@@ -364,9 +376,10 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.photoNo(new PhotoNo(1L))
 					.imageFilePath(new ImageFilePath(imageFilePath))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			photoMstRepositoryImpl.delete(photoDeleteModel);
-			
+
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoMst.builder()
@@ -389,13 +402,15 @@ public class PhotoMstRepositoryImplIntegrationTest {
 							.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
 							.iso(new Iso(rs.getInt("iso")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(1L, actualData.getFirst().getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertTrue(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().value().plusHours(9));
 			assertEquals(1L, actualData.getFirst().getLocationNo().value());

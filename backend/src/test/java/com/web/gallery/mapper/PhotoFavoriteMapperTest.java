@@ -51,9 +51,10 @@ public class PhotoFavoriteMapperTest {
 					.createdBy(new CreatedBy(1L))
 					.build();
 			
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actualCount = photoFavoriteMapper.insert(insertPhotoFavorite);
 			assertEquals(1, actualCount);
-			
+
 			List<PhotoFavorite> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite WHERE account_no=1 and favorite_photo_account_no=2 and favorite_photo_no=1", (rs, rowNum) ->
 						PhotoFavorite.builder()
@@ -68,6 +69,7 @@ public class PhotoFavoriteMapperTest {
 			assertEquals(new AccountNo(2L), actualData.getFirst().getFavoritePhotoAccountNo());
 			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 		}
 	}
 	

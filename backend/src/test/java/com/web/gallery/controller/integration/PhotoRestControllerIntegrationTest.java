@@ -254,7 +254,8 @@ public class PhotoRestControllerIntegrationTest {
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
 			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.file(multipartFile)
@@ -273,7 +274,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
-			
+
 			// photo_mst登録チェック
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=4", (rs, rowNum) ->
@@ -297,10 +298,12 @@ public class PhotoRestControllerIntegrationTest {
 						.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
 						.iso(new Iso(rs.getInt("iso")))
 						.build());
-			
+
 			assertEquals(1, actualPhotoMst.size());
 			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
 			assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo().value());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getCreatedAt().value());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt().value());
 			assertFalse(actualPhotoMst.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().value().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo().value());
@@ -350,7 +353,8 @@ public class PhotoRestControllerIntegrationTest {
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
 			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.file(multipartFile)
@@ -380,7 +384,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
-			
+
 			// photo_mst登録チェック
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=4", (rs, rowNum) ->
@@ -404,10 +408,12 @@ public class PhotoRestControllerIntegrationTest {
 						.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
 						.iso(new Iso(rs.getInt("iso")))
 						.build());
-			
+
 			assertEquals(1, actualPhotoMst.size());
 			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
 			assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo().value());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getCreatedAt().value());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt().value());
 			assertFalse(actualPhotoMst.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().value().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo().value());
@@ -420,7 +426,7 @@ public class PhotoRestControllerIntegrationTest {
 			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualPhotoMst.getFirst().getFValue().value()));
 			assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualPhotoMst.getFirst().getShutterSpeed().value()));
 			assertEquals(100, actualPhotoMst.getFirst().getIso().value());
-			
+
 			// photo_tag_mst登録チェック
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=4", (rs, rowNum) ->
@@ -434,15 +440,17 @@ public class PhotoRestControllerIntegrationTest {
 								.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
 								.build());
 			assertEquals(2, actualPhotoTagMst.size());
-			
+
 			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(0).getAccountNo());
 			assertEquals(4L, actualPhotoTagMst.get(0).getPhotoNo().value());
 			assertEquals(1L, actualPhotoTagMst.get(0).getTagNo().value());
+			assertEquals(transactionNow, actualPhotoTagMst.get(0).getCreatedAt().value());
 			assertEquals("太陽", actualPhotoTagMst.get(0).getTagJapaneseName().value());
 			assertEquals("sun", actualPhotoTagMst.get(0).getTagEnglishName().value());
 			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(1).getAccountNo());
 			assertEquals(4L, actualPhotoTagMst.get(1).getPhotoNo().value());
 			assertEquals(2L, actualPhotoTagMst.get(1).getTagNo().value());
+			assertEquals(transactionNow, actualPhotoTagMst.get(1).getCreatedAt().value());
 			assertEquals("青空", actualPhotoTagMst.get(1).getTagJapaneseName().value());
 			assertEquals("bluesky", actualPhotoTagMst.get(1).getTagEnglishName().value());
 		}
@@ -463,7 +471,8 @@ public class PhotoRestControllerIntegrationTest {
 			
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
 			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.contentType(MediaType.MULTIPART_FORM_DATA)
@@ -495,7 +504,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
-			
+
 			// photo_mst登録チェック
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=1", (rs, rowNum) ->
@@ -519,10 +528,12 @@ public class PhotoRestControllerIntegrationTest {
 						.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
 						.iso(new Iso(rs.getInt("iso")))
 						.build());
-			
+
 			assertEquals(1, actualPhotoMst.size());
 			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
 			assertEquals(1L, actualPhotoMst.getFirst().getPhotoNo().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getCreatedAt().value());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt().value());
 			assertFalse(actualPhotoMst.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().value().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo().value());
@@ -535,8 +546,8 @@ public class PhotoRestControllerIntegrationTest {
 			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualPhotoMst.getFirst().getFValue().value()));
 			assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualPhotoMst.getFirst().getShutterSpeed().value()));
 			assertEquals(100, actualPhotoMst.getFirst().getIso().value());
-			
-			// photo_tag_mst登録チェック
+
+			// photo_tag_mst登録チェック（更新時は既存タグを一旦削除してから再登録するため、いずれも新規登録扱い）
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=1", (rs, rowNum) ->
 							PhotoTagMst.builder()
@@ -549,15 +560,17 @@ public class PhotoRestControllerIntegrationTest {
 								.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
 								.build());
 			assertEquals(2, actualPhotoTagMst.size());
-			
+
 			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(0).getAccountNo());
 			assertEquals(1L, actualPhotoTagMst.get(0).getPhotoNo().value());
 			assertEquals(1L, actualPhotoTagMst.get(0).getTagNo().value());
+			assertEquals(transactionNow, actualPhotoTagMst.get(0).getCreatedAt().value());
 			assertEquals("太陽", actualPhotoTagMst.get(0).getTagJapaneseName().value());
 			assertEquals("sun", actualPhotoTagMst.get(0).getTagEnglishName().value());
 			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(1).getAccountNo());
 			assertEquals(1L, actualPhotoTagMst.get(1).getPhotoNo().value());
 			assertEquals(2L, actualPhotoTagMst.get(1).getTagNo().value());
+			assertEquals(transactionNow, actualPhotoTagMst.get(1).getCreatedAt().value());
 			assertEquals("青空", actualPhotoTagMst.get(1).getTagJapaneseName().value());
 			assertEquals("bluesky", actualPhotoTagMst.get(1).getTagEnglishName().value());
 		}
@@ -843,6 +856,7 @@ public class PhotoRestControllerIntegrationTest {
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
 			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
 
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + photoAccountId + "/photos")
 					.contentType(MediaType.APPLICATION_JSON)
@@ -855,7 +869,7 @@ public class PhotoRestControllerIntegrationTest {
 				.andExpect(jsonPath("$.httpStatus").value(200))
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value("写真削除が完了しました。"));
-			
+
 			// photo_mst削除チェック
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 1 and photo_no=1", (rs, rowNum) ->
@@ -879,6 +893,8 @@ public class PhotoRestControllerIntegrationTest {
 						.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
 						.iso(new Iso(rs.getInt("iso")))
 						.build());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getCreatedAt().value());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt().value());
 			assertTrue(actualPhotoMst.getFirst().getIsDeleted().value());
 			
 			// photo_tag_mst削除チェック

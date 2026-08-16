@@ -56,6 +56,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			photoFavoriteRepositoryImpl.regist(favoriteModel);
 
 			List<PhotoFavorite> actualData = jdbcTemplate.query(
@@ -72,6 +73,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(2L), actualData.getFirst().getFavoritePhotoAccountNo());
 			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 		}
 		
 		@Test

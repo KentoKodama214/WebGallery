@@ -142,9 +142,10 @@ public class AccountRepositoryImplIntegrationTest {
 					.accountName(new AccountName("ZZZZZZZZ"))
 					.password(new Password("zzzzzzzz"))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			accountRepositoryImpl.regist(accountModel);
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='zzzzzzzz'", (rs, rowNum) ->
 						Account.builder()
@@ -166,11 +167,13 @@ public class AccountRepositoryImplIntegrationTest {
 							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
 							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(0L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(0L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("zzzzzzzz"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("ZZZZZZZZ"), actualData.getFirst().getAccountName());
@@ -200,9 +203,10 @@ public class AccountRepositoryImplIntegrationTest {
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa"))
 					.freeMemo(new FreeMemo("フリーメモ"))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			accountRepositoryImpl.regist(accountModel);
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='zzzzzzzz'", (rs, rowNum) ->
 						Account.builder()
@@ -224,11 +228,13 @@ public class AccountRepositoryImplIntegrationTest {
 							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
 							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(0L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(0L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("zzzzzzzz"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("ZZZZZZZZ"), actualData.getFirst().getAccountName());
@@ -273,9 +279,10 @@ public class AccountRepositoryImplIntegrationTest {
 					.accountId(new AccountId("aaaaaaaa"))
 					.accountName(new AccountName("AAAAAAAA"))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			accountRepositoryImpl.update(accountModel);
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='aaaaaaaa'", (rs, rowNum) ->
 						Account.builder()
@@ -297,11 +304,13 @@ public class AccountRepositoryImplIntegrationTest {
 							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
 							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
@@ -333,9 +342,10 @@ public class AccountRepositoryImplIntegrationTest {
 					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
 					.loginFailureCount(new LoginFailureCount(2))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			accountRepositoryImpl.update(accountModel);
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='aaaaaaaa'", (rs, rowNum) ->
 						Account.builder()
@@ -357,11 +367,13 @@ public class AccountRepositoryImplIntegrationTest {
 							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
 							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
@@ -403,9 +415,10 @@ public class AccountRepositoryImplIntegrationTest {
 			AccountModel accountModel = AccountModel.builder()
 					.accountNo(new AccountNo(8L))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			accountRepositoryImpl.updateLoginFailureCount(accountModel);
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=8", (rs, rowNum) ->
 						Account.builder()
@@ -427,11 +440,13 @@ public class AccountRepositoryImplIntegrationTest {
 							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
 							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(8L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(8L), actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(8L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("hhhhhhhh"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("HHHHHHHH"), actualData.getFirst().getAccountName());
@@ -455,9 +470,10 @@ public class AccountRepositoryImplIntegrationTest {
 					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
 					.loginFailureCount(new LoginFailureCount(2))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			accountRepositoryImpl.updateLoginFailureCount(accountModel);
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
 						Account.builder()
@@ -479,11 +495,13 @@ public class AccountRepositoryImplIntegrationTest {
 							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
 							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
 			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());

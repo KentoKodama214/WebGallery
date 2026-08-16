@@ -54,9 +54,10 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 					.favoritePhotoAccountNo(new AccountNo(1L))
 					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			photoFavoriteServiceImpl.addFavorite(photoFavoriteModel);
-			
+
 			List<PhotoFavorite> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite WHERE account_no=2 and favorite_photo_account_no=1 and favorite_photo_no=1", (rs, rowNum) ->
 						PhotoFavorite.builder()
@@ -71,6 +72,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 			assertEquals(new AccountNo(1L), actualData.getFirst().getFavoritePhotoAccountNo());
 			assertEquals(new PhotoNo(1L), actualData.getFirst().getFavoritePhotoNo());
 			assertEquals(new CreatedBy(2L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 		}
 		
 		@Test

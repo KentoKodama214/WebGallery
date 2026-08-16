@@ -89,6 +89,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
 					.build();
 
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			refreshTokenRepositoryImpl.save(refreshToken);
 
 			List<RefreshToken> actualData = getRefreshTokenData("new_token_hash");
@@ -96,7 +97,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new TokenHash("new_token_hash"), actualData.getFirst().getTokenHash());
 			assertFalse(actualData.getFirst().getIsRevoked().value());
-			assertNotNull(actualData.getFirst().getCreatedAt());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertTrue(actualData.getFirst().getExpiresAt().value().isAfter(OffsetDateTime.now()));
 		}
 	}
