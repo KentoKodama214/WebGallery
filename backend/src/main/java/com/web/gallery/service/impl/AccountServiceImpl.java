@@ -16,18 +16,15 @@ import com.web.gallery.config.LoginConfig;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.entity.PhotoFavorite;
-import com.web.gallery.entity.PhotoMst;
-import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
-import com.web.gallery.mapper.PhotoFavoriteMapper;
-import com.web.gallery.mapper.PhotoMstMapper;
-import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
+import com.web.gallery.repository.PhotoFavoriteRepository;
+import com.web.gallery.repository.PhotoMstRepository;
+import com.web.gallery.repository.PhotoTagMstRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,9 +39,9 @@ public class AccountServiceImpl implements UserDetailsService {
 
 	private final AccountRepository accountRepository;
 	private final FileRepository fileRepository;
-	private final PhotoFavoriteMapper photoFavoriteMapper;
-	private final PhotoTagMstMapper photoTagMstMapper;
-	private final PhotoMstMapper photoMstMapper;
+	private final PhotoFavoriteRepository photoFavoriteRepository;
+	private final PhotoTagMstRepository photoTagMstRepository;
+	private final PhotoMstRepository photoMstRepository;
 	private final LoginConfig loginConfig;
 	private final PhotoConfig photoConfig;
 
@@ -159,16 +156,16 @@ public class AccountServiceImpl implements UserDetailsService {
 		AccountNo accountNoVo = new AccountNo(accountNo);
 
 		// 自分が登録したお気に入りを削除
-		photoFavoriteMapper.delete(PhotoFavorite.conditionByAccountNo(accountNoVo));
+		photoFavoriteRepository.deleteByAccountNo(accountNoVo);
 
 		// 自分の写真に対する他人のお気に入りを削除
-		photoFavoriteMapper.delete(PhotoFavorite.conditionByFavoritePhotoAccountNo(accountNoVo));
+		photoFavoriteRepository.deleteByFavoritePhotoAccountNo(accountNoVo);
 
 		// 写真タグを削除
-		photoTagMstMapper.delete(PhotoTagMst.conditionByAccountNo(accountNoVo));
+		photoTagMstRepository.deleteByAccountNo(accountNoVo);
 
 		// 写真マスタを物理削除
-		photoMstMapper.delete(PhotoMst.conditionByAccountNo(accountNoVo));
+		photoMstRepository.deleteByAccountNo(accountNoVo);
 
 		// アカウントを物理削除
 		accountRepository.delete(accountNo);

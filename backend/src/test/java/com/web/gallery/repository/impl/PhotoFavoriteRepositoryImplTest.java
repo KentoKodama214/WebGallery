@@ -170,4 +170,46 @@ public class PhotoFavoriteRepositoryImplTest {
 			assertNull(photoFavorite.getCreatedAt());
 		}
 	}
+
+	@Nested
+	@Order(4)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class deleteByAccountNo {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント番号で自分が登録したお気に入りを全件削除する")
+		void deleteByAccountNo_success() {
+			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
+			doReturn(1).when(photoFavoriteMapper).delete(photoFavoriteCaptor.capture());
+
+			photoFavoriteRepositoryImpl.deleteByAccountNo(new AccountNo(1L));
+
+			verify(photoFavoriteMapper).delete(any(PhotoFavorite.class));
+			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
+			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
+			assertNull(photoFavorite.getFavoritePhotoAccountNo());
+			assertNull(photoFavorite.getFavoritePhotoNo());
+		}
+	}
+
+	@Nested
+	@Order(5)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class deleteByFavoritePhotoAccountNo {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント番号で自分の写真に対する他人のお気に入りを全件削除する")
+		void deleteByFavoritePhotoAccountNo_success() {
+			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
+			doReturn(1).when(photoFavoriteMapper).delete(photoFavoriteCaptor.capture());
+
+			photoFavoriteRepositoryImpl.deleteByFavoritePhotoAccountNo(new AccountNo(1L));
+
+			verify(photoFavoriteMapper).delete(any(PhotoFavorite.class));
+			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
+			assertNull(photoFavorite.getAccountNo());
+			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
+			assertNull(photoFavorite.getFavoritePhotoNo());
+		}
+	}
 }

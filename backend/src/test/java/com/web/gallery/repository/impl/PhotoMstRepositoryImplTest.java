@@ -625,4 +625,24 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(photoMst.getIso());
 		}
 	}
+
+	@Nested
+	@Order(7)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class deleteByAccountNo {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント番号で写真マスタを物理削除する")
+		void deleteByAccountNo_success() {
+			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			doReturn(1).when(photoMstMapper).delete(photoMstCaptor.capture());
+
+			photoMstRepositoryImpl.deleteByAccountNo(new AccountNo(1L));
+
+			verify(photoMstMapper).delete(any(PhotoMst.class));
+			PhotoMst photoMst = photoMstCaptor.getValue();
+			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
+			assertNull(photoMst.getPhotoNo());
+		}
+	}
 }

@@ -3,6 +3,7 @@ package com.web.gallery.repository.impl;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.enumuration.ErrorEnum;
 import com.web.gallery.exception.RegistFailureException;
@@ -53,5 +54,15 @@ public class PhotoTagMstRepositoryImpl implements PhotoTagMstRepository {
 	public void clear(PhotoTagDeleteModel photoTagDeleteModel) {
 		PhotoTagMst photoTagMst = PhotoTagMst.from(photoTagDeleteModel);
 		photoTagMstMapper.delete(photoTagMst);
+	}
+
+	/**
+	 * アカウント番号で写真タグを全件削除する
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	@Override
+	public void deleteByAccountNo(AccountNo accountNo) {
+		photoTagMstMapper.delete(PhotoTagMst.conditionByAccountNo(accountNo));
 	}
 }
