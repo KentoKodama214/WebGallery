@@ -17,8 +17,8 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.entity.Account;
-import com.web.gallery.enumuration.AuthorityEnum;
-import com.web.gallery.enumuration.SexEnum;
+import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.enumeration.SexEnum;
 
 import lombok.Builder;
 import lombok.Value;

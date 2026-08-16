@@ -39,7 +39,7 @@ import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.entity.PhotoMst;
-import com.web.gallery.enumuration.DirectionEnum;
+import com.web.gallery.enumeration.DirectionEnum;
 
 @MybatisTest
 @ActiveProfiles("test")

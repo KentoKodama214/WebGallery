@@ -9,7 +9,7 @@ import com.web.gallery.domain.photo.PhotoAt;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.entity.PhotoTagMst;
-import com.web.gallery.enumuration.DirectionEnum;
+import com.web.gallery.enumeration.DirectionEnum;
 
 import java.util.List;
 

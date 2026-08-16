@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.web.gallery.enumuration.DirectionEnum;
+import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.model.PhotoDetailModel;
 
 import io.swagger.v3.oas.annotations.media.Schema;

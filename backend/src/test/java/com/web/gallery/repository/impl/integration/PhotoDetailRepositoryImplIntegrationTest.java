@@ -40,7 +40,7 @@ import com.web.gallery.domain.photo.Iso;
 import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagEnglishName;
-import com.web.gallery.enumuration.DirectionEnum;
+import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;

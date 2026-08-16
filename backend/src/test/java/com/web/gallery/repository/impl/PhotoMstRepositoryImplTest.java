@@ -41,7 +41,7 @@ import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.domain.photo.Iso;
 import com.web.gallery.entity.PhotoMst;
-import com.web.gallery.enumuration.DirectionEnum;
+import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.PhotoMstMapper;

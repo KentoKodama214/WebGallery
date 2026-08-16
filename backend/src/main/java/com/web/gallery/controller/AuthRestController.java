@@ -18,7 +18,7 @@ import com.web.gallery.config.JwtConfig;
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.controller.request.AuthLoginRequest;
 import com.web.gallery.controller.response.AuthLoginResponse;
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.service.AuthService;

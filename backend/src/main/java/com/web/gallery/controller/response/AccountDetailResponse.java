@@ -3,7 +3,7 @@ package com.web.gallery.controller.response;
 import java.time.LocalDate;
 
 import com.web.gallery.constant.Consts;
-import com.web.gallery.enumuration.SexEnum;
+import com.web.gallery.enumeration.SexEnum;
 import com.web.gallery.model.AccountModel;
 
 import io.swagger.v3.oas.annotations.media.Schema;

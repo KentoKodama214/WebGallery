@@ -1,4 +1,4 @@
-package com.web.gallery.enumuration;
+package com.web.gallery.enumeration;
 
 import com.web.gallery.constant.MessageConst;
 

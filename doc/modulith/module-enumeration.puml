@@ -1,5 +1,5 @@
 @startuml
-title <size:24>Enumuration</size>
+title <size:24>Enumeration</size>
 
 set separator none
 top to bottom direction
@@ -17,7 +17,7 @@ top to bottom direction
 
 System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
   Container_Boundary("WebGalleryApplication.WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
-    Component(WebGalleryApplication.WebGalleryApplication.Enumuration, "Enumuration", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Enumeration, "Enumeration", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }

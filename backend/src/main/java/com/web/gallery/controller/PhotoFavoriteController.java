@@ -13,7 +13,7 @@ import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.request.PhotoFavoriteDeleteRequest;
 import com.web.gallery.controller.request.PhotoFavoriteRegistRequest;
 import com.web.gallery.controller.response.PhotoFavoriteResponse;
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;

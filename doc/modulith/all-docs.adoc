@@ -21,9 +21,9 @@ include::module-dto.adoc[]
 plantuml::module-entity.puml[,,format=svg]
 include::module-entity.adoc[]
 
-== Enumuration
-plantuml::module-enumuration.puml[,,format=svg]
-include::module-enumuration.adoc[]
+== Enumeration
+plantuml::module-enumeration.puml[,,format=svg]
+include::module-enumeration.adoc[]
 
 == Exception
 plantuml::module-exception.puml[,,format=svg]

@@ -25,7 +25,7 @@ import com.web.gallery.controller.response.AccountDetailResponse;
 import com.web.gallery.controller.response.AccountListItemResponse;
 import com.web.gallery.controller.response.AccountRegistResponse;
 import com.web.gallery.controller.response.AccountUpdateResponse;
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.RegistFailureException;

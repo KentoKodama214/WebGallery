@@ -5,7 +5,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import com.web.gallery.AccountPrincipal;
-import com.web.gallery.enumuration.AuthorityEnum;
+import com.web.gallery.enumeration.AuthorityEnum;
 
 /**
  * セッション管理のためのHelperクラス

@@ -29,7 +29,7 @@ import com.web.gallery.controller.response.PhotoDetailGetResponse;
 import com.web.gallery.controller.response.PhotoEditResponse;
 import com.web.gallery.controller.response.PhotoListGetResponse;
 import com.web.gallery.controller.response.PhotoUpperLimitResponse;
-import com.web.gallery.enumuration.ErrorEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.ForbiddenAccountException;

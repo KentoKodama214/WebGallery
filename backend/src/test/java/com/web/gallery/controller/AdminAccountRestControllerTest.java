@@ -32,7 +32,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.LastLoginDatetime;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.common.IsDeleted;
-import com.web.gallery.enumuration.AuthorityEnum;
+import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.AccountModel;

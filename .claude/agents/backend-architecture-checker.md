@@ -25,7 +25,7 @@ model: sonnet
 - `.claude/rules/request.md` - Requestクラスのルール
 - `.claude/rules/response.md` - Responseクラスのルール
 - `.claude/rules/mapper.md` - Mapper層のルール
-- `.claude/rules/enumuration.md` - Enumクラスのルール
+- `.claude/rules/enumeration.md` - Enumクラスのルール
 - `.claude/rules/exception.md` - Exceptionクラスのルール
 - `.claude/rules/type_handler.md` - TypeHandlerクラスのルール
 - `.claude/rules/unit-test.md` - ユニットテストのルール
@@ -77,7 +77,3 @@ model: sonnet
 - **高**: レイヤー間依存関係の違反、インターフェースベース設計の欠如
 - **中**: Lombokアノテーション規約違反、命名規則違反、ファクトリメソッドの欠如、Springアノテーションの欠如、定数の一元管理違反、Mapper XMLの欠如
 - **低**: JavaDocの欠如、@NonNullの未付与、Requestバリデーションの欠如、テスト命名規則違反
-
-## 注意事項
-
-- パッケージ名`enumuration`は`enumeration`のtypoではなく、プロジェクトの意図的な命名規約である。typoとして報告しないこと

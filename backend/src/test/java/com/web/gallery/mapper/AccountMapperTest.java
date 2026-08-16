@@ -37,8 +37,8 @@ import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.domain.common.UpdatedBy;
 import com.web.gallery.entity.Account;
-import com.web.gallery.enumuration.AuthorityEnum;
-import com.web.gallery.enumuration.SexEnum;
+import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.enumeration.SexEnum;
 
 @MybatisTest
 @ActiveProfiles("test")

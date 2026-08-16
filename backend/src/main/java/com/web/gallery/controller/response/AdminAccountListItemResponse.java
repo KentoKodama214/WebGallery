@@ -2,7 +2,7 @@ package com.web.gallery.controller.response;
 
 import java.time.OffsetDateTime;
 
-import com.web.gallery.enumuration.AuthorityEnum;
+import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.model.AccountModel;
 
 import io.swagger.v3.oas.annotations.media.Schema;
