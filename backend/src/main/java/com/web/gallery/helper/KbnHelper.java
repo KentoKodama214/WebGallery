@@ -2,6 +2,7 @@ package com.web.gallery.helper;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,8 @@ public class KbnHelper {
 	 * @return					区分マスタのLinkedHashMap
 	 */
 	public Map<String, KbnMstModelList> convertToLinkedHashMap(KbnMstModelList kbnMstModelList){
+		if(kbnMstModelList.isEmpty()) throw new NoSuchElementException();
+
 		KbnMstModelList sortedKbnMstModelList = kbnMstModelList.sortBySortOrder();
 
 		LinkedHashMap<String, KbnMstModelList> kbnMstLinkedHashMap = new LinkedHashMap<String, KbnMstModelList>();
