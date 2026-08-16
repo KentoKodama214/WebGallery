@@ -12,19 +12,14 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoTagMst;
 
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
-
 /**
  * PhotoTagModelのコレクションを表すクラス
  */
-@Value
-@Builder
-public class PhotoTagModelList implements Iterable<PhotoTagModel> {
-	/** PhotoTagModelのリスト */
-	@NonNull
-	private List<PhotoTagModel> photoTagModelList;
+public record PhotoTagModelList(List<PhotoTagModel> photoTagModelList) implements Iterable<PhotoTagModel> {
+
+	public PhotoTagModelList {
+		Objects.requireNonNull(photoTagModelList);
+	}
 
 	/**
 	 * PhotoTagModelのリストからPhotoTagModelListを生成する
@@ -33,7 +28,7 @@ public class PhotoTagModelList implements Iterable<PhotoTagModel> {
 	 * @return						{@link PhotoTagModelList}
 	 */
 	public static PhotoTagModelList of(List<PhotoTagModel> photoTagModelList) {
-		return PhotoTagModelList.builder().photoTagModelList(photoTagModelList).build();
+		return new PhotoTagModelList(photoTagModelList);
 	}
 
 	/**

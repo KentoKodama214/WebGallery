@@ -3,25 +3,21 @@ package com.web.gallery.model;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.enumuration.DirectionEnum;
 
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
-
 /**
  * PhotoModelのコレクションを表すクラス
  */
-@Value
-@Builder
-public class PhotoModelList implements Iterable<PhotoModel> {
-	/** PhotoModelのリスト */
-	@NonNull
-	private List<PhotoModel> photoModelList;
+public record PhotoModelList(List<PhotoModel> photoModelList) implements Iterable<PhotoModel> {
+
+	public PhotoModelList {
+		Objects.requireNonNull(photoModelList);
+	}
 
 	/**
 	 * PhotoModelのリストからPhotoModelListを生成する
@@ -30,7 +26,7 @@ public class PhotoModelList implements Iterable<PhotoModel> {
 	 * @return					{@link PhotoModelList}
 	 */
 	public static PhotoModelList of(List<PhotoModel> photoModelList) {
-		return PhotoModelList.builder().photoModelList(photoModelList).build();
+		return new PhotoModelList(photoModelList);
 	}
 
 	/**

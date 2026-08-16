@@ -3,23 +3,19 @@ package com.web.gallery.model;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import com.web.gallery.entity.Account;
 
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
-
 /**
  * AccountModelのコレクションを表すクラス
  */
-@Value
-@Builder
-public class AccountModelList implements Iterable<AccountModel> {
-	/** AccountModelのリスト */
-	@NonNull
-	private List<AccountModel> accountModelList;
+public record AccountModelList(List<AccountModel> accountModelList) implements Iterable<AccountModel> {
+
+	public AccountModelList {
+		Objects.requireNonNull(accountModelList);
+	}
 
 	/**
 	 * AccountModelのリストからAccountModelListを生成する
@@ -28,7 +24,7 @@ public class AccountModelList implements Iterable<AccountModel> {
 	 * @return						{@link AccountModelList}
 	 */
 	public static AccountModelList of(List<AccountModel> accountModelList) {
-		return AccountModelList.builder().accountModelList(accountModelList).build();
+		return new AccountModelList(accountModelList);
 	}
 
 	/**

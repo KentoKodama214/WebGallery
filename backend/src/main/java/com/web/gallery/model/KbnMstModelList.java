@@ -3,23 +3,19 @@ package com.web.gallery.model;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import com.web.gallery.entity.KbnMst;
 
-import lombok.Builder;
-import lombok.NonNull;
-import lombok.Value;
-
 /**
  * KbnMstModelのコレクションを表すクラス
  */
-@Value
-@Builder
-public class KbnMstModelList implements Iterable<KbnMstModel> {
-	/** KbnMstModelのリスト */
-	@NonNull
-	private List<KbnMstModel> kbnMstModelList;
+public record KbnMstModelList(List<KbnMstModel> kbnMstModelList) implements Iterable<KbnMstModel> {
+
+	public KbnMstModelList {
+		Objects.requireNonNull(kbnMstModelList);
+	}
 
 	/**
 	 * KbnMstModelのリストからKbnMstModelListを生成する
@@ -28,7 +24,7 @@ public class KbnMstModelList implements Iterable<KbnMstModel> {
 	 * @return					{@link KbnMstModelList}
 	 */
 	public static KbnMstModelList of(List<KbnMstModel> kbnMstModelList) {
-		return KbnMstModelList.builder().kbnMstModelList(kbnMstModelList).build();
+		return new KbnMstModelList(kbnMstModelList);
 	}
 
 	/**
