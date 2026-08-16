@@ -2,9 +2,6 @@ package com.web.gallery.service.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Comparator;
-import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -19,7 +16,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.domain.common.KbnCode;
-import com.web.gallery.model.KbnMstModel;
+import com.web.gallery.model.KbnMstModelList;
 import com.web.gallery.service.impl.KbnMstServiceImpl;
 
 @ActiveProfiles("test")
@@ -39,10 +36,10 @@ public class KbnMstServiceImplIntegrationTest {
 		@Sql("/sql/common/cleanup.sql")
 		@Sql("/sql/service/KbnMstServiceImplIntegrationTest.sql")
 		void getPrefectureList_found() {
-			List<KbnMstModel> actual = kbnMstServiceImpl.getPrefectureList();
+			KbnMstModelList actual = kbnMstServiceImpl.getPrefectureList();
 			assertEquals(47, actual.size());
-			
-			List<KbnMstModel> actualSorded = actual.stream().sorted(Comparator.comparing(m -> m.getSortOrder().value())).toList();
+
+			KbnMstModelList actualSorded = actual.sortBySortOrder();
 			assertEquals(new KbnCode("Hokkaido"), actualSorded.get(0).getKbnCode());
 			assertEquals(new KbnCode("Aomori"), actualSorded.get(1).getKbnCode());
 			assertEquals(new KbnCode("Iwate"), actualSorded.get(2).getKbnCode());
@@ -97,7 +94,7 @@ public class KbnMstServiceImplIntegrationTest {
 		@DisplayName("正常系：区分マスタが存在しない場合")
 		@Sql("/sql/common/cleanup.sql")
 		void getPrefectureList_not_found() {
-			List<KbnMstModel> actual = kbnMstServiceImpl.getPrefectureList();
+			KbnMstModelList actual = kbnMstServiceImpl.getPrefectureList();
 			assertEquals(0, actual.size());
 		}
 	}

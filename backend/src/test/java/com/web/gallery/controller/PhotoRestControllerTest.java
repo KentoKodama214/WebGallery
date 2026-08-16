@@ -53,10 +53,13 @@ import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoDeleteModel;
+import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
-import com.web.gallery.model.PhotoTagModel;
+import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.service.impl.PhotoServiceImpl;
 
 @ActiveProfiles("test")
@@ -93,7 +96,7 @@ public class PhotoRestControllerTest {
 	@Order(1)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class getPhotoList {
-		private List<PhotoModel> createPhotoModelList() {
+		private PhotoModelList createPhotoModelList() {
 			List<PhotoModel> photoList = new ArrayList<PhotoModel>();
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -104,7 +107,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))
 					.caption(new Caption("キャプション1"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -115,7 +118,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"))
 					.caption(new Caption("キャプション2"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -126,7 +129,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC333.jpg"))
 					.caption(new Caption("キャプション3"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -137,7 +140,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC444.jpg"))
 					.caption(new Caption("キャプション4"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -148,7 +151,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC555.jpg"))
 					.caption(new Caption("キャプション5"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -159,7 +162,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC666.jpg"))
 					.caption(new Caption("キャプション6"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -170,10 +173,10 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC777.jpg"))
 					.caption(new Caption("キャプション7"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 
-			return photoList;
+			return PhotoModelList.of(photoList);
 		}
 
 		@Test
@@ -182,7 +185,7 @@ public class PhotoRestControllerTest {
 		void getPhotoList_with_null_parameter() throws Exception {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 
-			List<PhotoModel> photoList = createPhotoModelList();
+			PhotoModelList photoList = createPhotoModelList();
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
 			doReturn(photoList).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
 
@@ -226,7 +229,7 @@ public class PhotoRestControllerTest {
 		void getPhotoList_with_halfspace_tag() throws Exception {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 
-			List<PhotoModel> photoList = createPhotoModelList().subList(0, 4);
+			PhotoModelList photoList = PhotoModelList.of(createPhotoModelList().toList().subList(0, 4));
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
 			doReturn(photoList).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
 
@@ -264,7 +267,7 @@ public class PhotoRestControllerTest {
 		void getPhotoList_with_fullspace_tag() throws Exception {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 
-			List<PhotoModel> photoList = createPhotoModelList().subList(0, 4);
+			PhotoModelList photoList = PhotoModelList.of(createPhotoModelList().toList().subList(0, 4));
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
 			doReturn(photoList).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
 
@@ -302,7 +305,7 @@ public class PhotoRestControllerTest {
 		void getPhotoList_not_found_photo() throws Exception {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 
-			List<PhotoModel> photoList = new ArrayList<PhotoModel>();
+			PhotoModelList photoList = PhotoModelList.empty();
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
 			doReturn(photoList).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
 
@@ -343,7 +346,7 @@ public class PhotoRestControllerTest {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(1L);
 
-			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doReturn(1L).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
@@ -357,7 +360,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
 
-			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
+			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertNull(photoDetailModelList.getFirst().getPhotoNo());
@@ -378,7 +381,7 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getFValue());
 			assertNull(photoDetailModelList.getFirst().getShutterSpeed());
 			assertNull(photoDetailModelList.getFirst().getIso());
-			assertEquals(new ArrayList<PhotoDetailModel>(), photoDetailModelList.getFirst().getPhotoTagModelList());
+			assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
 
 			assertEquals("aaaaaaaa", photoAcountIdCaptor.getValue());
 		}
@@ -402,7 +405,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doReturn(1L).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
@@ -443,7 +446,7 @@ public class PhotoRestControllerTest {
 			verify(sessionHelper, times(0)).getAccountNo();
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(1L);
 
-			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
+			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
@@ -488,7 +491,7 @@ public class PhotoRestControllerTest {
 				.andExpect(status().isForbidden());
 
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
-			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
+			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(PhotoDetailModelList.class));
 		}
 
 		@Test
@@ -505,7 +508,7 @@ public class PhotoRestControllerTest {
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isBadRequest());
 
-			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
+			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(PhotoDetailModelList.class));
 		}
 
 		@Test
@@ -522,7 +525,7 @@ public class PhotoRestControllerTest {
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isBadRequest());
 
-			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
+			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(PhotoDetailModelList.class));
 		}
 
 		@Test
@@ -540,7 +543,7 @@ public class PhotoRestControllerTest {
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isBadRequest());
 
-			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
+			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(PhotoDetailModelList.class));
 		}
 
 		@Test
@@ -559,7 +562,7 @@ public class PhotoRestControllerTest {
 					.param("focalLength", "-1"))
 				.andExpect(status().isBadRequest());
 
-			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(List.class));
+			verify(photoServiceImpl, times(0)).savePhotos(any(String.class), any(PhotoDetailModelList.class));
 		}
 
 		@Test
@@ -576,7 +579,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doThrow(FileDuplicateException.class).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
@@ -591,7 +594,7 @@ public class PhotoRestControllerTest {
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 			verify(sessionHelper, times(0)).getAccountNo();
 
-			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
+			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
@@ -612,7 +615,7 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getFValue());
 			assertNull(photoDetailModelList.getFirst().getShutterSpeed());
 			assertNull(photoDetailModelList.getFirst().getIso());
-			assertEquals(new ArrayList<PhotoDetailModel>(), photoDetailModelList.getFirst().getPhotoTagModelList());
+			assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
 
 			assertEquals("aaaaaaaa", photoAcountIdCaptor.getValue());
 		}
@@ -631,7 +634,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doThrow(RegistFailureException.class).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
@@ -646,7 +649,7 @@ public class PhotoRestControllerTest {
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 			verify(sessionHelper, times(0)).getAccountNo();
 
-			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
+			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
@@ -667,7 +670,7 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getFValue());
 			assertNull(photoDetailModelList.getFirst().getShutterSpeed());
 			assertNull(photoDetailModelList.getFirst().getIso());
-			assertEquals(new ArrayList<PhotoDetailModel>(), photoDetailModelList.getFirst().getPhotoTagModelList());
+			assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
 
 			assertEquals("aaaaaaaa", photoAcountIdCaptor.getValue());
 		}
@@ -686,7 +689,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDetailModel>> photoDetailModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doThrow(UpdateFailureException.class).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
@@ -701,7 +704,7 @@ public class PhotoRestControllerTest {
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(Long.class));
 			verify(sessionHelper, times(0)).getAccountNo();
 
-			List<PhotoDetailModel> photoDetailModelList = photoDetailModelCaptor.getValue();
+			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
 			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
@@ -722,7 +725,7 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getFValue());
 			assertNull(photoDetailModelList.getFirst().getShutterSpeed());
 			assertNull(photoDetailModelList.getFirst().getIso());
-			assertEquals(new ArrayList<PhotoDetailModel>(), photoDetailModelList.getFirst().getPhotoTagModelList());
+			assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
 
 			assertEquals("aaaaaaaa", photoAcountIdCaptor.getValue());
 		}
@@ -741,7 +744,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDeleteModel>> photoDeleteModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDeleteModelList> photoDeleteModelCaptor = ArgumentCaptor.forClass(PhotoDeleteModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doNothing().when(photoServiceImpl).deletePhotos(photoAcountIdCaptor.capture(), photoDeleteModelCaptor.capture());
 
@@ -753,7 +756,7 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value("写真削除が完了しました。"));
 
-			List<PhotoDeleteModel> photoDeleteModelList = photoDeleteModelCaptor.getValue();
+			PhotoDeleteModelList photoDeleteModelList = photoDeleteModelCaptor.getValue();
 			assertEquals(1, photoDeleteModelList.size());
 			assertEquals(new AccountNo(1L), photoDeleteModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDeleteModelList.getFirst().getPhotoNo().value());
@@ -798,7 +801,7 @@ public class PhotoRestControllerTest {
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			ArgumentCaptor<List<PhotoDeleteModel>> photoDeleteModelCaptor = ArgumentCaptor.forClass(List.class);
+			ArgumentCaptor<PhotoDeleteModelList> photoDeleteModelCaptor = ArgumentCaptor.forClass(PhotoDeleteModelList.class);
 			ArgumentCaptor<String> photoAcountIdCaptor = ArgumentCaptor.forClass(String.class);
 			doThrow(UpdateFailureException.class).when(photoServiceImpl).deletePhotos(photoAcountIdCaptor.capture(), photoDeleteModelCaptor.capture());
 
@@ -807,7 +810,7 @@ public class PhotoRestControllerTest {
 					.content(readJsonFile("delete_photo.json")))
 				.andExpect(status().isConflict());
 
-			List<PhotoDeleteModel> photoDeleteModelList = photoDeleteModelCaptor.getValue();
+			PhotoDeleteModelList photoDeleteModelList = photoDeleteModelCaptor.getValue();
 			assertEquals(1, photoDeleteModelList.size());
 			assertEquals(new AccountNo(1L), photoDeleteModelList.getFirst().getAccountNo());
 			assertEquals(1L, photoDeleteModelList.getFirst().getPhotoNo().value());
@@ -820,7 +823,7 @@ public class PhotoRestControllerTest {
 	@Order(4)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class createPhotoListGetResponse {
-		private List<PhotoModel> createPhotoList() {
+		private PhotoModelList createPhotoList() {
 			List<PhotoModel> photoList = new ArrayList<PhotoModel>();
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -831,7 +834,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))
 					.caption(new Caption("キャプション1"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -842,7 +845,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"))
 					.caption(new Caption("キャプション2"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -853,7 +856,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC333.jpg"))
 					.caption(new Caption("キャプション3"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -864,7 +867,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC444.jpg"))
 					.caption(new Caption("キャプション4"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -875,7 +878,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC555.jpg"))
 					.caption(new Caption("キャプション5"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -886,7 +889,7 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC666.jpg"))
 					.caption(new Caption("キャプション6"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -897,10 +900,10 @@ public class PhotoRestControllerTest {
 					.imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC777.jpg"))
 					.caption(new Caption("キャプション7"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 
-			return photoList;
+			return PhotoModelList.of(photoList);
 		}
 
 		@Test
@@ -909,7 +912,7 @@ public class PhotoRestControllerTest {
 		void createPhotoListGetResponse_pageNo_1_lastPage() {
 			Integer pageNo = 1;
 			Integer photoCountPerPage = 3;
-			List<PhotoModel> photoList = createPhotoList().subList(0, 1);
+			PhotoModelList photoList = PhotoModelList.of(createPhotoList().toList().subList(0, 1));
 
 			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(1, actual.getPhotoList().size());
@@ -928,7 +931,7 @@ public class PhotoRestControllerTest {
 		void createPhotoListGetResponse_pageNo_1() {
 			Integer pageNo = 1;
 			Integer photoCountPerPage = 3;
-			List<PhotoModel> photoList = createPhotoList().subList(0, 4);
+			PhotoModelList photoList = PhotoModelList.of(createPhotoList().toList().subList(0, 4));
 
 			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(3, actual.getPhotoList().size());
@@ -959,7 +962,7 @@ public class PhotoRestControllerTest {
 		void createPhotoListGetResponse_pageNo_2_lastPage() {
 			Integer pageNo = 2;
 			Integer photoCountPerPage = 3;
-			List<PhotoModel> photoList = createPhotoList().subList(0, 4);
+			PhotoModelList photoList = PhotoModelList.of(createPhotoList().toList().subList(0, 4));
 
 			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(1, actual.getPhotoList().size());
@@ -978,7 +981,7 @@ public class PhotoRestControllerTest {
 		void createPhotoListGetResponse_pageNo_2() {
 			Integer pageNo = 2;
 			Integer photoCountPerPage = 3;
-			List<PhotoModel> photoList = createPhotoList();
+			PhotoModelList photoList = createPhotoList();
 
 			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
 			assertEquals(3, actual.getPhotoList().size());

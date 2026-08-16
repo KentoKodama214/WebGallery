@@ -1,14 +1,12 @@
 package com.web.gallery.helper;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Component;
 
-import com.web.gallery.model.KbnMstModel;
+import com.web.gallery.model.KbnMstModelList;
 
 /**
  * 区分マスタに関するHelperクラス
@@ -18,37 +16,18 @@ public class KbnHelper {
 	/**
 	 * データベースから取得した区分マスタの一覧を、グループ単位に分けてLinkedHashMapに変換する
 	 *
-	 * @param kbnMstModelList	{@link KbnMstModel}
+	 * @param kbnMstModelList	{@link KbnMstModelList}
 	 * @return					区分マスタのLinkedHashMap
 	 */
-	public Map<String, List<KbnMstModel>> convertToLinkedHashMap(List<KbnMstModel> kbnMstModelList){
-		LinkedHashMap<String, List<KbnMstModel>> kbnMstLinkedHashMap = new LinkedHashMap<String, List<KbnMstModel>>();
+	public Map<String, KbnMstModelList> convertToLinkedHashMap(KbnMstModelList kbnMstModelList){
+		if(kbnMstModelList.isEmpty()) throw new NoSuchElementException();
 
-		kbnMstModelList = kbnMstModelList.stream().sorted(Comparator.comparing(m -> m.getSortOrder().value())).toList();
-		KbnMstModel firstKbnMstModel = kbnMstModelList.getFirst();
-		KbnMstModel lastKbnMstModel = kbnMstModelList.getLast();
-		List<KbnMstModel> tempKbnMstModelList = new ArrayList<KbnMstModel>();
-		String kbnGroupJapaneseName = null;
+		KbnMstModelList sortedKbnMstModelList = kbnMstModelList.sortBySortOrder();
 
-		for(KbnMstModel kbnMstModel : kbnMstModelList) {
-			if(kbnMstModel.equals(firstKbnMstModel)) {
-				kbnGroupJapaneseName = kbnMstModel.getKbnGroupJapaneseName().value();
-				tempKbnMstModelList.add(kbnMstModel);
-			}
-			else if(kbnMstModel.equals(lastKbnMstModel)) {
-				tempKbnMstModelList.add(kbnMstModel);
-				kbnMstLinkedHashMap.put(kbnGroupJapaneseName, tempKbnMstModelList);
-			}
-			else if(!kbnGroupJapaneseName.equals(kbnMstModel.getKbnGroupJapaneseName().value())) {
-				kbnMstLinkedHashMap.put(kbnGroupJapaneseName, tempKbnMstModelList);
-				tempKbnMstModelList = new ArrayList<KbnMstModel>();
-				kbnGroupJapaneseName = kbnMstModel.getKbnGroupJapaneseName().value();
-				tempKbnMstModelList.add(kbnMstModel);
-			}
-			else {
-				tempKbnMstModelList.add(kbnMstModel);
-			}
-		};
+		LinkedHashMap<String, KbnMstModelList> kbnMstLinkedHashMap = new LinkedHashMap<String, KbnMstModelList>();
+		for(String kbnGroupJapaneseName : sortedKbnMstModelList.stream().map(kbnMstModel -> kbnMstModel.getKbnGroupJapaneseName().value()).distinct().toList()) {
+			kbnMstLinkedHashMap.put(kbnGroupJapaneseName, sortedKbnMstModelList.filterByKbnGroupJapaneseName(kbnGroupJapaneseName));
+		}
 
 		return kbnMstLinkedHashMap;
 	}

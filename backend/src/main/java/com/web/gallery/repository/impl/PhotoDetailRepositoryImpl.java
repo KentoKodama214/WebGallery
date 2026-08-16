@@ -18,7 +18,7 @@ import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoGetModel;
-import com.web.gallery.model.PhotoModel;
+import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.repository.PhotoDetailRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -40,18 +40,16 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 	 * 該当アカウントの写真の一覧を取得する
 	 *
 	 * @param	photoGetModel	{@link PhotoGetModel}
-	 * @return						{@link PhotoModel}
+	 * @return						{@link PhotoModelList}
 	 */
 	@Override
-	public List<PhotoModel> getPhotoList(PhotoGetModel photoGetModel) {
+	public PhotoModelList getPhotoList(PhotoGetModel photoGetModel) {
 		List<PhotoDto> photoDtoList = photoDetailMapper.getPhotoList(PhotoListGetDto.from(photoGetModel));
 
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
 				PhotoTagMst.condition(photoGetModel));
 
-		return photoDtoList.stream()
-				.map(photoDto -> PhotoModel.from(photoDto, photoTagMstList))
-				.toList();
+		return PhotoModelList.from(photoDtoList, photoTagMstList);
 	}
 
 	/**

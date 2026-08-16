@@ -1,10 +1,9 @@
 package com.web.gallery.repository;
 
-import java.util.List;
-
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.AccountModelList;
 
 /**
  * アカウントデータを永続化するRepositoryクラス
@@ -64,16 +63,16 @@ public interface AccountRepository {
 	/**
 	 * アカウントの一覧を取得する
 	 *
-	 * @return	{@link AccountModel}
+	 * @return	{@link AccountModelList}
 	 */
-	List<AccountModel> getAccountList();
+	AccountModelList getAccountList();
 
 	/**
 	 * 削除済みを含む全アカウントの一覧を取得する
 	 *
-	 * @return	{@link AccountModel}
+	 * @return	{@link AccountModelList}
 	 */
-	List<AccountModel> getAccountListAll();
+	AccountModelList getAccountListAll();
 
 	/**
 	 * Accountテーブルから該当するレコードを物理削除する

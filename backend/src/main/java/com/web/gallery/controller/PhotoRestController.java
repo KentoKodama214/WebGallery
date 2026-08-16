@@ -39,10 +39,12 @@ import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoDeleteModel;
+import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoModel;
+import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.service.PhotoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -85,7 +87,7 @@ public class PhotoRestController {
 			@PathVariable String photoAccountId,
 			@ModelAttribute @Validated PhotoListRequest photoListRequest) {
 		// 抽出条件に該当する写真の一覧を、指定の並び順で取得する
-		List<PhotoModel> photoList = photoService.getPhotoList(
+		PhotoModelList photoList = photoService.getPhotoList(
 				PhotoListGetModel.from(photoListRequest, sessionHelper.getAccountNo(), photoAccountId));
 		return ResponseEntity.ok(PhotoListGetResponse.from(photoList, photoListRequest.getPageNo(), photoConfig.getPhotoCountPerPage()));
 	}
@@ -180,7 +182,7 @@ public class PhotoRestController {
 			}
 		};
 		
-		List<PhotoDetailModel> photoDetailModelList = List.of(PhotoDetailModel.from(photoSaveRequest));
+		PhotoDetailModelList photoDetailModelList = PhotoDetailModelList.of(List.of(PhotoDetailModel.from(photoSaveRequest)));
 
 		Long savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
 
@@ -227,7 +229,7 @@ public class PhotoRestController {
 			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
 		}
 		
-		List<PhotoDeleteModel> photoDeleteModelList = List.of(PhotoDeleteModel.from(photoDeleteRequest));
+		PhotoDeleteModelList photoDeleteModelList = PhotoDeleteModelList.of(List.of(PhotoDeleteModel.from(photoDeleteRequest)));
 
 		photoService.deletePhotos(photoAccountId, photoDeleteModelList);
 		

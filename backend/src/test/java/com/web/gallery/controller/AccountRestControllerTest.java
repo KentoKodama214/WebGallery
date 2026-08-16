@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +48,7 @@ import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.AccountModelList;
 import com.web.gallery.service.impl.AccountServiceImpl;
 
 @ActiveProfiles("test")
@@ -91,10 +91,10 @@ public class AccountRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント一覧を取得できること")
 		void getAccountList_success() throws Exception {
-			List<AccountModel> accountModels = List.of(
+			AccountModelList accountModels = AccountModelList.of(List.of(
 					AccountModel.builder().accountId(new AccountId("aaaaaaaa")).accountName(new AccountName("AAAAAAAA")).build(),
 					AccountModel.builder().accountId(new AccountId("bbbbbbbb")).accountName(new AccountName("BBBBBBBB")).build()
-			);
+			));
 
 			doReturn(accountModels).when(accountServiceImpl).getAccountList();
 
@@ -110,7 +110,7 @@ public class AccountRestControllerTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが0件の場合は空リストを返すこと")
 		void getAccountList_empty() throws Exception {
-			doReturn(Collections.emptyList()).when(accountServiceImpl).getAccountList();
+			doReturn(AccountModelList.empty()).when(accountServiceImpl).getAccountList();
 
 			mockMvc.perform(get("/api/v1/accounts"))
 				.andExpect(status().isOk())

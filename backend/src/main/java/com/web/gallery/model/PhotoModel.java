@@ -1,8 +1,5 @@
 package com.web.gallery.model;
 
-import java.util.List;
-import java.util.Objects;
-
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.FavoriteCount;
@@ -13,6 +10,8 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.enumuration.DirectionEnum;
+
+import java.util.List;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -60,7 +59,7 @@ public class PhotoModel {
 
 	/** 写真タグリスト */
 	@NonNull
-	private List<PhotoTagModel> photoTagModelList;
+	private PhotoTagModelList photoTagModelList;
 
 	/**
 	 * PhotoDtoとタグエンティティリストからPhotoModelを生成する
@@ -70,12 +69,8 @@ public class PhotoModel {
 	 * @return					{@link PhotoModel}
 	 */
 	public static PhotoModel from(PhotoDto dto, List<PhotoTagMst> photoTagMstList) {
-		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream()
-				.filter(tag ->
-					tag.getAccountNo().value().equals(dto.getAccountNo().value()) &&
-					Objects.equals(tag.getPhotoNo().value(), dto.getPhotoNo().value()))
-				.map(PhotoTagModel::from)
-				.toList();
+		PhotoTagModelList photoTagModelList = PhotoTagModelList.from(photoTagMstList)
+				.filterByPhoto(dto.getAccountNo(), dto.getPhotoNo());
 		return PhotoModel.builder()
 				.accountNo(dto.getAccountNo())
 				.photoNo(dto.getPhotoNo())

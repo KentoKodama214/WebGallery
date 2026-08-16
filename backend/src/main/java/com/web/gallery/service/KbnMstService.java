@@ -1,8 +1,6 @@
 package com.web.gallery.service;
 
-import java.util.List;
-
-import com.web.gallery.model.KbnMstModel;
+import com.web.gallery.model.KbnMstModelList;
 
 /**
  * 区分マスタに関するビジネスロジックを行うServiceクラス
@@ -10,8 +8,8 @@ import com.web.gallery.model.KbnMstModel;
 public interface KbnMstService {
 	/**
 	 * 都道府県の区分マスタを取得する
-	 * 
-	 * @return	{@link KbnMstModel}
+	 *
+	 * @return	{@link KbnMstModelList}
 	 */
-	List<KbnMstModel> getPrefectureList();
+	KbnMstModelList getPrefectureList();
 }

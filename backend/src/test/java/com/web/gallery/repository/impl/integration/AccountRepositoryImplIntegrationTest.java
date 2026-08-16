@@ -42,6 +42,7 @@ import com.web.gallery.enumuration.SexEnum;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.AccountModelList;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 
 @ActiveProfiles("test")
@@ -541,7 +542,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Sql("/sql/common/cleanup.sql")
 		@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
 		void getAccountList_found_some_accounts() {
-			List<AccountModel> actual = accountRepositoryImpl.getAccountList();
+			AccountModelList actual = accountRepositoryImpl.getAccountList();
 			assertEquals(11, actual.size());
 		}
 		
@@ -549,7 +550,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが0件")
 		void getAccountList_not_found() {
-			List<AccountModel> actual = accountRepositoryImpl.getAccountList();
+			AccountModelList actual = accountRepositoryImpl.getAccountList();
 			assertEquals(0, actual.size());
 		}
 	}

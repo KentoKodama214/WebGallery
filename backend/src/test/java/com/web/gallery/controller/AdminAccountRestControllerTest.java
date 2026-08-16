@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +36,7 @@ import com.web.gallery.enumuration.AuthorityEnum;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.AccountModelList;
 import com.web.gallery.service.impl.AccountServiceImpl;
 
 @ActiveProfiles("test")
@@ -75,7 +75,7 @@ public class AdminAccountRestControllerTest {
 		void getAdminAccountList_success() throws Exception {
 			doReturn(AuthorityEnum.ADMINISTRATOR).when(sessionHelper).getAuthorityKbn();
 
-			List<AccountModel> accountModels = List.of(
+			AccountModelList accountModels = AccountModelList.of(List.of(
 					AccountModel.builder()
 							.accountNo(new AccountNo(1L))
 							.accountId(new AccountId("aaaaaaaa"))
@@ -94,7 +94,7 @@ public class AdminAccountRestControllerTest {
 							.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
 							.loginFailureCount(new LoginFailureCount(5))
 							.build()
-			);
+			));
 
 			doReturn(accountModels).when(accountServiceImpl).getAccountListForAdmin();
 
@@ -117,7 +117,7 @@ public class AdminAccountRestControllerTest {
 		@DisplayName("正常系：アカウントが0件の場合は空リストを返すこと")
 		void getAdminAccountList_empty() throws Exception {
 			doReturn(AuthorityEnum.ADMINISTRATOR).when(sessionHelper).getAuthorityKbn();
-			doReturn(Collections.emptyList()).when(accountServiceImpl).getAccountListForAdmin();
+			doReturn(AccountModelList.empty()).when(accountServiceImpl).getAccountListForAdmin();
 
 			mockMvc.perform(get("/api/v1/admin/accounts"))
 				.andExpect(status().isOk())

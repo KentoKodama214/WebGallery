@@ -32,7 +32,7 @@ import com.web.gallery.domain.common.KbnGroupEnglishName;
 import com.web.gallery.domain.common.KbnEnglishName;
 import com.web.gallery.domain.common.Explanation;
 import com.web.gallery.mapper.KbnMstMapper;
-import com.web.gallery.model.KbnMstModel;
+import com.web.gallery.model.KbnMstModelList;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -84,7 +84,7 @@ public class KbnMstRepositoryImplTest {
 			ArgumentCaptor<KbnMst> kbnMstCaptor = ArgumentCaptor.forClass(KbnMst.class);
 			doReturn(expected).when(kbnMstMapper).select(kbnMstCaptor.capture());
 			
-			List<KbnMstModel> actual = kbnMstRepositoryImpl.get(kbnClassCode);
+			KbnMstModelList actual = kbnMstRepositoryImpl.get(kbnClassCode);
 			
 			KbnMst kbnMstCapture = kbnMstCaptor.getValue();
 			assertEquals(new KbnClassCode(kbnClassCode), kbnMstCapture.getKbnClassCode());
@@ -113,7 +113,7 @@ public class KbnMstRepositoryImplTest {
 			ArgumentCaptor<KbnMst> kbnMstCaptor = ArgumentCaptor.forClass(KbnMst.class);
 			doReturn(expected).when(kbnMstMapper).select(kbnMstCaptor.capture());
 			
-			List<KbnMstModel> actual = kbnMstRepositoryImpl.get(kbnClassCode);
+			KbnMstModelList actual = kbnMstRepositoryImpl.get(kbnClassCode);
 
 			KbnMst kbnMstCapture = kbnMstCaptor.getValue();
 			assertEquals(new KbnClassCode(kbnClassCode), kbnMstCapture.getKbnClassCode());
