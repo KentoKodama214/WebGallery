@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "WebSearch(domain:*)",
+      "WebSearch",
       "WebFetch(domain:*)",
       "Bash(chmod*)",
       "Bash(git add *)",
