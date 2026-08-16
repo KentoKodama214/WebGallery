@@ -24,6 +24,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Address;
@@ -144,7 +145,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(0, actual.get(0).getFavoriteCount().value());
 			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2023, 9, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2023, 9, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC19.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション19", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
@@ -187,7 +188,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(4, actual.get(0).getFavoriteCount().value());
 			assertTrue(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC12.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション12", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
@@ -238,7 +239,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(0, actual.get(0).getFavoriteCount().value());
 			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 10, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 10, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC20.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション20", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
@@ -274,7 +275,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(0, actual.get(0).getFavoriteCount().value());
 			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2023, 8, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2023, 8, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC18.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション18", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.VERTICAL, actual.get(0).getDirectionKbn());
@@ -309,7 +310,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(4, actual.get(0).getFavoriteCount().value());
 			assertTrue(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC12.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション12", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
@@ -350,7 +351,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(3, actual.get(0).getFavoriteCount().value());
 			assertTrue(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC11.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション11", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
@@ -386,7 +387,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.getAccountNo().value());
 			assertEquals(1L, actual.getPhotoNo().value());
 			assertTrue(actual.getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoAt().value());
 			assertEquals(1L, actual.getLocationNo().value());
 			assertEquals("住所1", actual.getAddress().value());
 			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getLatitude().value()));

@@ -4,9 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -32,6 +35,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.LoginConfig;
 import com.web.gallery.config.PhotoConfig;
+import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
@@ -80,7 +84,16 @@ public class AccountServiceImplTest {
 
 	@Mock
 	private PhotoConfig photoConfig;
-	
+
+	@Mock
+	private Clock clock;
+
+	@BeforeEach
+	void setUpClock() {
+		lenient().when(clock.instant()).thenReturn(Instant.now());
+		lenient().when(clock.getZone()).thenReturn(Consts.JST);
+	}
+
 	@Nested
 	@Order(1)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)

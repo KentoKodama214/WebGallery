@@ -20,6 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.common.Address;
@@ -162,7 +163,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(2L), actual.getAccountNo());
 			assertEquals(1L, actual.getPhotoNo().value());
 			assertFalse(actual.getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoAt().value());
 			assertEquals(4L, actual.getLocationNo().value());
 			assertEquals("住所4", actual.getAddress().value());
 			assertEquals(0, BigDecimal.valueOf(38.400).compareTo(actual.getLatitude().value()));
@@ -195,7 +196,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(1L), actual.getAccountNo());
 			assertEquals(1L, actual.getPhotoNo().value());
 			assertTrue(actual.getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoAt().value());
 			assertEquals(1L, actual.getLocationNo().value());
 			assertEquals("住所1", actual.getAddress().value());
 			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getLatitude().value()));

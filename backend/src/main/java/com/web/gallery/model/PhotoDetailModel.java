@@ -119,7 +119,7 @@ public class PhotoDetailModel {
 				.photoNo(dto.getPhotoNo())
 				.isFavorite(dto.getIsFavorite())
 				.photoAt(
-					dto.getPhotoAt().value().isEqual(Consts.MIN_OFFSET_DATE_TIME) ? null : new PhotoAt(dto.getPhotoAt().value().plusHours(9)))
+					dto.getPhotoAt().value().isEqual(Consts.MIN_OFFSET_DATE_TIME) ? null : new PhotoAt(dto.getPhotoAt().value().withOffsetSameInstant(Consts.JST)))
 				.locationNo(dto.getLocationNo())
 				.address(dto.getAddress())
 				.latitude(dto.getLatitude())
