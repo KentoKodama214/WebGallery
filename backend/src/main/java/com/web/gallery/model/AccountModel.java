@@ -1,8 +1,8 @@
 package com.web.gallery.model;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
 
-import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.AccountRegistRequest;
 import com.web.gallery.controller.request.AccountUpdateRequest;
 import com.web.gallery.domain.account.AccountId;
@@ -172,12 +172,13 @@ public class AccountModel {
 	 * 認証成功時のAccountModelを生成する（最終ログイン日時を現在時刻に設定し、ログイン失敗回数を0にリセット）
 	 *
 	 * @param	accountNo	アカウント番号
+	 * @param	clock		現在時刻取得用の{@link Clock}
 	 * @return				{@link AccountModel}
 	 */
-	public static AccountModel forLoginSuccess(AccountNo accountNo) {
+	public static AccountModel forLoginSuccess(AccountNo accountNo, Clock clock) {
 		return AccountModel.builder()
 				.accountNo(accountNo)
-				.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.now(Consts.JST)))
+				.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.now(clock)))
 				.loginFailureCount(new LoginFailureCount(0))
 				.build();
 	}

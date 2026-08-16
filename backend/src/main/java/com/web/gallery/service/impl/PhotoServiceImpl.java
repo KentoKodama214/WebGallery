@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 import com.web.gallery.config.PhotoConfig;
+import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.account.AccountNo;
@@ -205,8 +206,8 @@ public class PhotoServiceImpl implements PhotoService {
 				return new Comparator<PhotoModel>() {
 					@Override
 					public int compare(PhotoModel photoModelA, PhotoModel photoModelB) {
-						OffsetDateTime photoAtA = photoModelA.getPhotoAt().value().plusHours(9);
-						OffsetDateTime photoAtB = photoModelB.getPhotoAt().value().plusHours(9);
+						OffsetDateTime photoAtA = photoModelA.getPhotoAt().value().withOffsetSameInstant(Consts.JST);
+						OffsetDateTime photoAtB = photoModelB.getPhotoAt().value().withOffsetSameInstant(Consts.JST);
 
 						LocalDate dateA = LocalDate.of(2000, photoAtA.getMonth().getValue(), photoAtA.getDayOfMonth());
 						LocalDate dateB = LocalDate.of(2000, photoAtB.getMonth().getValue(), photoAtB.getDayOfMonth());

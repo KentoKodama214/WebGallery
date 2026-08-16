@@ -1,5 +1,6 @@
 package com.web.gallery.service.impl;
 
+import java.time.Clock;
 import java.util.Objects;
 
 import org.springframework.context.event.EventListener;
@@ -44,6 +45,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	private final PhotoMstRepository photoMstRepository;
 	private final LoginConfig loginConfig;
 	private final PhotoConfig photoConfig;
+	private final Clock clock;
 
 	/**
 	 * アカウントIDからアカウント情報の存在を確認する
@@ -185,7 +187,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	public void handle(AuthenticationSuccessEvent event) throws UpdateFailureException {
 		AccountModel accountModel = accountRepository.getByAccountId(event.getAuthentication().getName());
 
-		accountRepository.updateLoginFailureCount(AccountModel.forLoginSuccess(accountModel.getAccountNo()));
+		accountRepository.updateLoginFailureCount(AccountModel.forLoginSuccess(accountModel.getAccountNo(), clock));
 	}
 
 	/**

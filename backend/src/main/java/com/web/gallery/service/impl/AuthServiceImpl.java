@@ -3,6 +3,7 @@ package com.web.gallery.service.impl;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
 import java.time.OffsetDateTime;
 
 import com.web.gallery.constant.Consts;
@@ -43,6 +44,7 @@ public class AuthServiceImpl implements AuthService {
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final AccountRepository accountRepository;
 	private final AccountServiceImpl accountServiceImpl;
+	private final Clock clock;
 
 	public AuthServiceImpl(
 			@Lazy AuthenticationManager authenticationManager,
@@ -50,13 +52,15 @@ public class AuthServiceImpl implements AuthService {
 			JwtConfig jwtConfig,
 			RefreshTokenRepository refreshTokenRepository,
 			AccountRepository accountRepository,
-			@Lazy AccountServiceImpl accountServiceImpl) {
+			@Lazy AccountServiceImpl accountServiceImpl,
+			Clock clock) {
 		this.authenticationManager = authenticationManager;
 		this.jwtTokenProvider = jwtTokenProvider;
 		this.jwtConfig = jwtConfig;
 		this.refreshTokenRepository = refreshTokenRepository;
 		this.accountRepository = accountRepository;
 		this.accountServiceImpl = accountServiceImpl;
+		this.clock = clock;
 	}
 
 	/**
@@ -85,7 +89,7 @@ public class AuthServiceImpl implements AuthService {
 		refreshTokenRepository.save(RefreshTokenModel.of(
 				new AccountNo(principal.getAccountNo()),
 				new TokenHash(hashToken(refreshToken)),
-				new ExpiresAt(OffsetDateTime.now().plusDays(jwtConfig.getRefreshTokenExpirationDays()))));
+				new ExpiresAt(OffsetDateTime.now(clock).plusDays(jwtConfig.getRefreshTokenExpirationDays()))));
 
 		return AuthTokenModel.of(accessToken, refreshToken,
 				(long) jwtConfig.getAccessTokenExpirationMinutes() * 60);
@@ -108,7 +112,7 @@ public class AuthServiceImpl implements AuthService {
 			throw new IllegalArgumentException("無効なリフレッシュトークンです");
 		}
 
-		if (storedToken.getExpiresAt().value().isBefore(OffsetDateTime.now())) {
+		if (storedToken.getExpiresAt().value().isBefore(OffsetDateTime.now(clock))) {
 			throw new IllegalArgumentException("リフレッシュトークンの有効期限が切れています");
 		}
 

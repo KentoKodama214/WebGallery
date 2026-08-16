@@ -5,13 +5,17 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doReturn;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,6 +28,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.JwtConfig;
+import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.ExpiresAt;
@@ -60,6 +65,15 @@ class AuthServiceImplTest {
 	@Mock
 	private AccountServiceImpl accountServiceImpl;
 
+	@Mock
+	private Clock clock;
+
+	@BeforeEach
+	void setUpClock() {
+		lenient().when(clock.instant()).thenReturn(Instant.now());
+		lenient().when(clock.getZone()).thenReturn(Consts.JST);
+	}
+
 	@Nested
 	@DisplayName("#login")
 	class Login {
@@ -91,7 +105,9 @@ class AuthServiceImplTest {
 			assertEquals(900L, result.getExpiresIn().value());
 
 			verify(refreshTokenRepository).revokeAllByAccountNo(1L);
-			verify(refreshTokenRepository).save(any(RefreshTokenModel.class));
+			ArgumentCaptor<RefreshTokenModel> refreshTokenModelCaptor = ArgumentCaptor.forClass(RefreshTokenModel.class);
+			verify(refreshTokenRepository).save(refreshTokenModelCaptor.capture());
+			assertEquals(OffsetDateTime.now(clock).plusDays(7), refreshTokenModelCaptor.getValue().getExpiresAt().value());
 		}
 
 		@Test

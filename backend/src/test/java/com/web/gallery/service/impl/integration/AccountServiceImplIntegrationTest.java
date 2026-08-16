@@ -103,8 +103,10 @@ public class AccountServiceImplIntegrationTest {
 					.accountName(new AccountName("MMMMMMMM"))
 					.password(new Password("mmmmmmmm"))
 					.build();
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			assertTrue(accountServiceImpl.registAccount(accountModel));
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='mmmmmmmm'", (rs, rowNum) ->
 						Account.builder()
@@ -130,7 +132,9 @@ public class AccountServiceImplIntegrationTest {
 			assertEquals(1, actualData.size());
 			assertEquals(1L, actualData.getFirst().getAccountNo().value());
 			assertEquals(0L, actualData.getFirst().getCreatedBy().value());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertEquals(0L, actualData.getFirst().getUpdatedBy().value());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals("mmmmmmmm", actualData.getFirst().getAccountId().value());
 			assertEquals("MMMMMMMM", actualData.getFirst().getAccountName().value());
@@ -170,8 +174,10 @@ public class AccountServiceImplIntegrationTest {
 		@DisplayName("正常系：アカウントを更新")
 		void updateAccount_success() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("zzzzzzzz")).build();
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			assertFalse(accountServiceImpl.updateAccount(accountModel));
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
 						Account.builder()
@@ -197,7 +203,9 @@ public class AccountServiceImplIntegrationTest {
 			assertEquals(1, actualData.size());
 			assertEquals(1L, actualData.getFirst().getAccountNo().value());
 			assertEquals(1L, actualData.getFirst().getCreatedBy().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(1L, actualData.getFirst().getUpdatedBy().value());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals("zzzzzzzz", actualData.getFirst().getAccountId().value());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName().value());
@@ -218,7 +226,7 @@ public class AccountServiceImplIntegrationTest {
 		void updateAccount_account_already_exist() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("bbbbbbbb")).build();
 			assertTrue(accountServiceImpl.updateAccount(accountModel));
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
 						Account.builder()
@@ -240,11 +248,13 @@ public class AccountServiceImplIntegrationTest {
 							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
 							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(1L, actualData.getFirst().getAccountNo().value());
 			assertEquals(1L, actualData.getFirst().getCreatedBy().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(1L, actualData.getFirst().getUpdatedBy().value());
+			assertEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId().value());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName().value());
@@ -415,9 +425,12 @@ public class AccountServiceImplIntegrationTest {
 			
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
 			AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
+			OffsetDateTime beforeLogin = OffsetDateTime.now();
 			accountServiceImpl.handle(event);
-			
+			OffsetDateTime afterLogin = OffsetDateTime.now();
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=11", (rs, rowNum) ->
 						Account.builder()
@@ -443,7 +456,9 @@ public class AccountServiceImplIntegrationTest {
 			assertEquals(1, actualData.size());
 			assertEquals(11L, actualData.getFirst().getAccountNo().value());
 			assertEquals(11L, actualData.getFirst().getCreatedBy().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 11, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(11L, actualData.getFirst().getUpdatedBy().value());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals("kkkkkkkk", actualData.getFirst().getAccountId().value());
 			assertEquals("KKKKKKKK", actualData.getFirst().getAccountName().value());
@@ -454,7 +469,8 @@ public class AccountServiceImplIntegrationTest {
 			assertEquals("Tokyo", actualData.getFirst().getResidentPrefectureKbnCode().value());
 			assertEquals("よろしく", actualData.getFirst().getFreeMemo().value());
 			assertEquals(AuthorityEnum.NORMAL, actualData.getFirst().getAuthorityKbn());
-			assertNotEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().value().plusHours(9));
+			assertFalse(actualData.getFirst().getLastLoginDatetime().value().isBefore(beforeLogin));
+			assertFalse(actualData.getFirst().getLastLoginDatetime().value().isAfter(afterLogin));
 			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
 		}
 	}
@@ -480,9 +496,10 @@ public class AccountServiceImplIntegrationTest {
 			BadCredentialsException exception = new BadCredentialsException(message);
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			accountServiceImpl.handle(event);
-			
+
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='aaaaaaaa'", (rs, rowNum) ->
 						Account.builder()
@@ -508,7 +525,9 @@ public class AccountServiceImplIntegrationTest {
 			assertEquals(1, actualData.size());
 			assertEquals(1L, actualData.getFirst().getAccountNo().value());
 			assertEquals(1L, actualData.getFirst().getCreatedBy().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
 			assertEquals(1L, actualData.getFirst().getUpdatedBy().value());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId().value());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName().value());

@@ -1,5 +1,6 @@
 package com.web.gallery.model;
 
+import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.FavoriteCount;
@@ -76,7 +77,7 @@ public class PhotoModel {
 				.photoNo(dto.getPhotoNo())
 				.favoriteCount(dto.getFavoriteCount())
 				.isFavorite(dto.getIsFavorite())
-				.photoAt(new PhotoAt(dto.getPhotoAt().value().plusHours(9)))
+				.photoAt(new PhotoAt(dto.getPhotoAt().value().withOffsetSameInstant(Consts.JST)))
 				.imageFilePath(dto.getImageFilePath())
 				.caption(dto.getCaption())
 				.directionKbn(dto.getDirectionKbn())

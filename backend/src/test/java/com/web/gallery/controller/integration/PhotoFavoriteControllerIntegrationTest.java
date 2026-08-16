@@ -88,6 +88,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 		void addFavorite_success() throws Exception {
 			Authentication authentication = createAuthentication();
 
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			mockMvc.perform(
 					post("/api/v1/photos/favorites")
 					.contentType(MediaType.APPLICATION_JSON)
@@ -115,6 +116,7 @@ public class PhotoFavoriteControllerIntegrationTest {
 			assertEquals(new AccountNo(2L), actualData.getFirst().getFavoritePhotoAccountNo());
 			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 		}
 
 		@Test

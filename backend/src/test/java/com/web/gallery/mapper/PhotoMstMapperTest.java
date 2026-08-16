@@ -234,6 +234,7 @@ public class PhotoMstMapperTest {
 					.iso(new Iso(200))
 					.build();
 			
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actualCount = photoMstMapper.insert(insertPhotoMst);
 			assertEquals(1, actualCount);
 			
@@ -264,7 +265,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(4L, actualData.getFirst().getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
 			assertFalse(actualData.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt().value());
 			assertEquals(6L, actualData.getFirst().getLocationNo().value());
@@ -317,6 +320,7 @@ public class PhotoMstMapperTest {
 		void update_by_accountNo() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(3, actual);
 			
@@ -325,7 +329,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -346,6 +352,7 @@ public class PhotoMstMapperTest {
 		void update_by_photoNo() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().photoNo(new PhotoNo(1L)).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(2, actual);
 			
@@ -356,7 +363,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -373,7 +382,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(2L), actualData.get(1).getAccountNo());
 			assertEquals(1L, actualData.get(1).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(1).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(1).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(1).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(1).getUpdatedAt().value());
 			assertFalse(actualData.get(1).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2022, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(1).getPhotoAt().value());
 			assertEquals(4L, actualData.get(1).getLocationNo().value());
@@ -394,6 +405,7 @@ public class PhotoMstMapperTest {
 		void update_by_isDeleted() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().isDeleted(new IsDeleted(true)).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(3, actual);
 			
@@ -404,7 +416,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(2L), actualData.get(0).getAccountNo());
 			assertEquals(3L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertTrue(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2022, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(6L, actualData.get(0).getLocationNo().value());
@@ -426,6 +440,7 @@ public class PhotoMstMapperTest {
 			PhotoMst conditionPhotoMst = PhotoMst.builder()
 					.photoAt(new PhotoAt(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -435,7 +450,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -456,6 +473,7 @@ public class PhotoMstMapperTest {
 		void update_by_locationNo() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().locationNo(new LocationNo(1L)).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -465,7 +483,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -486,6 +506,7 @@ public class PhotoMstMapperTest {
 		void update_by_imageFilePath() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg")).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -495,7 +516,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -516,6 +539,7 @@ public class PhotoMstMapperTest {
 		void update_by_photoJapaneseTitle() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().photoJapaneseTitle(new PhotoJapaneseTitle("タイトル11")).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -525,7 +549,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -546,6 +572,7 @@ public class PhotoMstMapperTest {
 		void update_by_photoEnglishTitle() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().photoEnglishTitle(new PhotoEnglishTitle("title11")).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -555,7 +582,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -576,6 +605,7 @@ public class PhotoMstMapperTest {
 		void update_by_caption() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().caption(new Caption("キャプション11")).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -585,7 +615,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -606,6 +638,7 @@ public class PhotoMstMapperTest {
 		void update_by_directionKbnCode() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().directionKbn(DirectionEnum.VERTICAL).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -615,7 +648,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -636,6 +671,7 @@ public class PhotoMstMapperTest {
 		void update_by_focalLength() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().focalLength(new FocalLength(24)).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -645,7 +681,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -666,6 +704,7 @@ public class PhotoMstMapperTest {
 		void update_by_fValue() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().fValue(new FValue(BigDecimal.valueOf(8.0))).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -675,7 +714,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -696,6 +737,7 @@ public class PhotoMstMapperTest {
 		void update_by_shutterSpeed() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(1))).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -705,7 +747,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -726,6 +770,7 @@ public class PhotoMstMapperTest {
 		void update_by_iso() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().iso(new Iso(100)).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -735,7 +780,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());
@@ -769,6 +816,7 @@ public class PhotoMstMapperTest {
 		void update_some_conditions() {
 			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).photoNo(new PhotoNo(1L)).build();
 			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
 			
@@ -778,7 +826,9 @@ public class PhotoMstMapperTest {
 			assertEquals(new AccountNo(1L), actualData.get(0).getAccountNo());
 			assertEquals(1L, actualData.get(0).getPhotoNo().value());
 			assertEquals(new CreatedBy(1L), actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt().value());
 			assertEquals(new UpdatedBy(1L), actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals(1L, actualData.get(0).getLocationNo().value());

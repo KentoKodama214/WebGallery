@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.common.Address;
@@ -151,7 +152,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(1L, actual.get(0).getPhotoNo().value());
 			assertEquals(1, actual.get(0).getFavoriteCount().value());
 			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション1", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.VERTICAL, actual.get(0).getDirectionKbn());
@@ -160,7 +161,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(2L, actual.get(1).getPhotoNo().value());
 			assertEquals(2, actual.get(1).getFavoriteCount().value());
 			assertTrue(actual.get(1).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2000, 2, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(1).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2000, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(1).getPhotoAt().value());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC222.jpg", actual.get(1).getImageFilePath().value());
 			assertEquals("キャプション2", actual.get(1).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(1).getDirectionKbn());
@@ -233,7 +234,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(1L, actual.get(0).getPhotoNo().value());
 			assertEquals(1, actual.get(0).getFavoriteCount().value());
 			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション1", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.VERTICAL, actual.get(0).getDirectionKbn());
@@ -246,7 +247,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(2L, actual.get(1).getPhotoNo().value());
 			assertEquals(2, actual.get(1).getFavoriteCount().value());
 			assertTrue(actual.get(1).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2000, 2, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(1).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2000, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(1).getPhotoAt().value());
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC222.jpg", actual.get(1).getImageFilePath().value());
 			assertEquals("キャプション2", actual.get(1).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(1).getDirectionKbn());
@@ -398,7 +399,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(new AccountNo(1L), actual.getAccountNo());
 			assertEquals(1L, actual.getPhotoNo().value());
 			assertFalse(actual.getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoAt().value());
 			assertEquals(1L, actual.getLocationNo().value());
 			assertEquals("住所", actual.getAddress().value());
 			assertEquals(0, BigDecimal.valueOf(38.000).compareTo(actual.getLatitude().value()));

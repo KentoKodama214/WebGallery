@@ -3,6 +3,7 @@ package com.web.gallery.repository.impl.integration;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
@@ -83,12 +84,15 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：リフレッシュトークンを保存する")
 		void save_success() {
+			// PostgreSQLのtimestamp with time zone型はマイクロ秒精度までしか保持しないため、ナノ秒精度を切り捨てて比較値を揃える
+			OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MICROS);
 			RefreshTokenModel refreshToken = RefreshTokenModel.builder()
 					.accountNo(new AccountNo(1L))
 					.tokenHash(new TokenHash("new_token_hash"))
-					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
+					.expiresAt(new ExpiresAt(expiresAt))
 					.build();
 
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			refreshTokenRepositoryImpl.save(refreshToken);
 
 			List<RefreshToken> actualData = getRefreshTokenData("new_token_hash");
@@ -96,8 +100,8 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
 			assertEquals(new TokenHash("new_token_hash"), actualData.getFirst().getTokenHash());
 			assertFalse(actualData.getFirst().getIsRevoked().value());
-			assertNotNull(actualData.getFirst().getCreatedAt());
-			assertTrue(actualData.getFirst().getExpiresAt().value().isAfter(OffsetDateTime.now()));
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
+			assertTrue(expiresAt.isEqual(actualData.getFirst().getExpiresAt().value()));
 		}
 	}
 

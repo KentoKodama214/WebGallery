@@ -24,6 +24,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Address;
@@ -144,7 +145,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(0, actual.get(0).getFavoriteCount().value());
 			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2023, 9, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2023, 9, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC19.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション19", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
@@ -187,7 +188,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(4, actual.get(0).getFavoriteCount().value());
 			assertTrue(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC12.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション12", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
@@ -238,7 +239,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(0, actual.get(0).getFavoriteCount().value());
 			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 10, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 10, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC20.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション20", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
@@ -274,7 +275,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(0, actual.get(0).getFavoriteCount().value());
 			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2023, 8, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2023, 8, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC18.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション18", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.VERTICAL, actual.get(0).getDirectionKbn());
@@ -309,7 +310,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(4, actual.get(0).getFavoriteCount().value());
 			assertTrue(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC12.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション12", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
@@ -350,7 +351,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.get(0).getAccountNo().value());
 			assertEquals(3, actual.get(0).getFavoriteCount().value());
 			assertTrue(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.get(0).getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC11.jpg", actual.get(0).getImageFilePath().value());
 			assertEquals("キャプション11", actual.get(0).getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
@@ -386,7 +387,7 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1L, actual.getAccountNo().value());
 			assertEquals(1L, actual.getPhotoNo().value());
 			assertTrue(actual.getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getPhotoAt().value());
+			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoAt().value());
 			assertEquals(1L, actual.getLocationNo().value());
 			assertEquals("住所1", actual.getAddress().value());
 			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getLatitude().value()));
@@ -623,7 +624,8 @@ public class PhotoServiceImplIntegrationTest {
 			// 新規登録2枚目
 			PhotoDetailModel photoDetailModel2 = createNewPhoto();
 			photoDetailModelList.add(photoDetailModel2);
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(11, actual);
@@ -632,6 +634,8 @@ public class PhotoServiceImplIntegrationTest {
 
 			assertEquals(1L, actualData.get(0).getAccountNo().value());
 			assertEquals(11L, actualData.get(0).getPhotoNo().value());
+			assertEquals(transactionNow, actualData.get(0).getCreatedAt().value());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/" + accountId + "/DSC21.jpg", actualData.get(0).getImageFilePath().value());
@@ -646,6 +650,8 @@ public class PhotoServiceImplIntegrationTest {
 
 			assertEquals(1L, actualData.get(1).getAccountNo().value());
 			assertEquals(12L, actualData.get(1).getPhotoNo().value());
+			assertEquals(transactionNow, actualData.get(1).getCreatedAt().value());
+			assertEquals(transactionNow, actualData.get(1).getUpdatedAt().value());
 			assertFalse(actualData.get(1).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(1).getPhotoAt().value().plusHours(9));
 			assertEquals("https://www.xxx.com/" + accountId + "/DSC22.jpg", actualData.get(1).getImageFilePath().value());
@@ -688,7 +694,8 @@ public class PhotoServiceImplIntegrationTest {
 			// 更新2枚目
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(3, actual);
@@ -696,6 +703,8 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1, actualData1.size());
 			assertEquals(1L, actualData1.getFirst().getAccountNo().value());
 			assertEquals(2L, actualData1.getFirst().getPhotoNo().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData1.getFirst().getCreatedAt().value());
+			assertEquals(transactionNow, actualData1.getFirst().getUpdatedAt().value());
 			assertFalse(actualData1.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData1.getFirst().getPhotoAt().value());
 			assertEquals("https://www.xxx.com/" + accountId + "/DSC222.jpg", actualData1.getFirst().getImageFilePath().value());
@@ -725,6 +734,8 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1, actualData2.size());
 			assertEquals(1L, actualData2.getFirst().getAccountNo().value());
 			assertEquals(3L, actualData2.getFirst().getPhotoNo().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData2.getFirst().getCreatedAt().value());
+			assertEquals(transactionNow, actualData2.getFirst().getUpdatedAt().value());
 			assertFalse(actualData2.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData2.getFirst().getPhotoAt().value());
 			assertEquals("https://www.xxx.com/" + accountId + "/DSC333.jpg", actualData2.getFirst().getImageFilePath().value());
@@ -736,11 +747,11 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData2.getFirst().getFValue().value()));
 			assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData2.getFirst().getShutterSpeed().value()));
 			assertEquals(100, actualData2.getFirst().getIso().value());
-			
+
 			List<PhotoTagMst> actualTagData2 = getPhotoTagMst(accountId, 3L);
 			assertEquals(0, actualTagData2.size());
 		}
-		
+
 		@Test
 		@Order(5)
 		@DisplayName("正常系：新規登録＋更新")
@@ -754,7 +765,8 @@ public class PhotoServiceImplIntegrationTest {
 			// 更新1枚目
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(3, actual);
@@ -763,6 +775,8 @@ public class PhotoServiceImplIntegrationTest {
 
 			assertEquals(1L, actualData.get(0).getAccountNo().value());
 			assertEquals(11L, actualData.get(0).getPhotoNo().value());
+			assertEquals(transactionNow, actualData.get(0).getCreatedAt().value());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
 			assertFalse(actualData.get(0).getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getPhotoAt().value());
 			assertEquals("https://www.xxx.com/" + accountId + "/DSC21.jpg", actualData.get(0).getImageFilePath().value());
@@ -792,6 +806,8 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(1, actualData2.size());
 			assertEquals(1L, actualData2.getFirst().getAccountNo().value());
 			assertEquals(3L, actualData2.getFirst().getPhotoNo().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData2.getFirst().getCreatedAt().value());
+			assertEquals(transactionNow, actualData2.getFirst().getUpdatedAt().value());
 			assertFalse(actualData2.getFirst().getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData2.getFirst().getPhotoAt().value());
 			assertEquals("https://www.xxx.com/" + accountId + "/DSC333.jpg", actualData2.getFirst().getImageFilePath().value());
@@ -803,11 +819,11 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData2.getFirst().getFValue().value()));
 			assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData2.getFirst().getShutterSpeed().value()));
 			assertEquals(100, actualData2.getFirst().getIso().value());
-			
+
 			List<PhotoTagMst> actualTagData2 = getPhotoTagMst(accountId, 3L);
 			assertEquals(0, actualTagData2.size());
 		}
-		
+
 		@Test
 		@Order(6)
 		@DisplayName("異常系：FileDuplicateExceptionをthrowする（写真は複数枚）")
@@ -897,9 +913,10 @@ public class PhotoServiceImplIntegrationTest {
 					.photoNo(new PhotoNo(2L))
 					.imageFilePath(new ImageFilePath("DSC12.jpg"))
 					.build());
-			
+
+			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			photoServiceImpl.deletePhotos("aaaaaaaa", PhotoDeleteModelList.of(photoDeleteModelList));
-			
+
 			List<PhotoMst> actualPhotoMstData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no=1 and photo_no in (1, 2)", (rs, rowNum) ->
 						PhotoMst.builder()
@@ -923,7 +940,11 @@ public class PhotoServiceImplIntegrationTest {
 							.iso(new Iso(rs.getInt("iso")))
 							.build());
 			assertEquals(2, actualPhotoMstData.size());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMstData.get(0).getCreatedAt().value());
+			assertEquals(transactionNow, actualPhotoMstData.get(0).getUpdatedAt().value());
 			assertTrue(actualPhotoMstData.get(0).getIsDeleted().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMstData.get(1).getCreatedAt().value());
+			assertEquals(transactionNow, actualPhotoMstData.get(1).getUpdatedAt().value());
 			assertTrue(actualPhotoMstData.get(1).getIsDeleted().value());
 			
 			List<PhotoMst> actualPhotoMstRestData = jdbcTemplate.query(
