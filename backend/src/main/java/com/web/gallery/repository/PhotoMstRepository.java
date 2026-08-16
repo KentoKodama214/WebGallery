@@ -1,5 +1,6 @@
 package com.web.gallery.repository;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -53,9 +54,16 @@ public interface PhotoMstRepository {
 	
 	/**
 	 * アカウントに登録されている写真の件数を取得する
-	 * 
+	 *
 	 * @param	accountNo	アカウント番号
 	 * @return				登録件数
 	 */
 	Integer count(Long accountNo);
+
+	/**
+	 * アカウント番号で写真マスタを物理削除する
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	void deleteByAccountNo(AccountNo accountNo);
 }

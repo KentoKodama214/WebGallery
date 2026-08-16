@@ -41,17 +41,14 @@ import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IsDeleted;
-import com.web.gallery.entity.PhotoFavorite;
-import com.web.gallery.entity.PhotoMst;
-import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
-import com.web.gallery.mapper.PhotoFavoriteMapper;
-import com.web.gallery.mapper.PhotoMstMapper;
-import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
 import com.web.gallery.repository.FileRepository;
+import com.web.gallery.repository.PhotoFavoriteRepository;
+import com.web.gallery.repository.PhotoMstRepository;
+import com.web.gallery.repository.PhotoTagMstRepository;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 
 @ActiveProfiles("test")
@@ -67,13 +64,13 @@ public class AccountServiceImplTest {
 	private FileRepository fileRepository;
 
 	@Mock
-	private PhotoFavoriteMapper photoFavoriteMapper;
+	private PhotoFavoriteRepository photoFavoriteRepository;
 
 	@Mock
-	private PhotoTagMstMapper photoTagMstMapper;
+	private PhotoTagMstRepository photoTagMstRepository;
 
 	@Mock
-	private PhotoMstMapper photoMstMapper;
+	private PhotoMstRepository photoMstRepository;
 
 	@Mock
 	private AccountPrincipal accountPrincipal;
@@ -370,29 +367,26 @@ public class AccountServiceImplTest {
 			Long accountNo = 1L;
 			String accountId = "aaaaaaaa";
 
-			ArgumentCaptor<PhotoFavorite> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavorite.class);
-			doReturn(1).when(photoFavoriteMapper).delete(any(PhotoFavorite.class));
-			doReturn(1).when(photoTagMstMapper).delete(any(PhotoTagMst.class));
-			doReturn(1).when(photoMstMapper).delete(any(PhotoMst.class));
+			doNothing().when(photoFavoriteRepository).deleteByAccountNo(any(AccountNo.class));
+			doNothing().when(photoFavoriteRepository).deleteByFavoritePhotoAccountNo(any(AccountNo.class));
+			doNothing().when(photoTagMstRepository).deleteByAccountNo(any(AccountNo.class));
+			doNothing().when(photoMstRepository).deleteByAccountNo(any(AccountNo.class));
 			doNothing().when(accountRepositoryImpl).delete(accountNo);
 			doReturn("/output/").when(photoConfig).getOutputPath();
 			doNothing().when(fileRepository).delete("/output/" + accountId + "/");
 
 			accountServiceImpl.deleteAccount(accountNo, accountId);
 
-			verify(photoFavoriteMapper, times(2)).delete(photoFavoriteCaptor.capture());
-			List<PhotoFavorite> capturedFavorites = photoFavoriteCaptor.getAllValues();
+			ArgumentCaptor<AccountNo> favoriteCaptor = ArgumentCaptor.forClass(AccountNo.class);
+			verify(photoFavoriteRepository, times(1)).deleteByAccountNo(favoriteCaptor.capture());
+			assertEquals(new AccountNo(accountNo), favoriteCaptor.getValue());
 
-			// 1回目：自分が登録したお気に入りの削除（accountNoで指定）
-			assertEquals(new AccountNo(accountNo), capturedFavorites.get(0).getAccountNo());
-			assertNull(capturedFavorites.get(0).getFavoritePhotoAccountNo());
+			ArgumentCaptor<AccountNo> favoritePhotoCaptor = ArgumentCaptor.forClass(AccountNo.class);
+			verify(photoFavoriteRepository, times(1)).deleteByFavoritePhotoAccountNo(favoritePhotoCaptor.capture());
+			assertEquals(new AccountNo(accountNo), favoritePhotoCaptor.getValue());
 
-			// 2回目：自分の写真に対する他人のお気に入りの削除（favoritePhotoAccountNoで指定）
-			assertNull(capturedFavorites.get(1).getAccountNo());
-			assertEquals(new AccountNo(accountNo), capturedFavorites.get(1).getFavoritePhotoAccountNo());
-
-			verify(photoTagMstMapper, times(1)).delete(any(PhotoTagMst.class));
-			verify(photoMstMapper, times(1)).delete(any(PhotoMst.class));
+			verify(photoTagMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
+			verify(photoMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
 			verify(accountRepositoryImpl, times(1)).delete(accountNo);
 			verify(fileRepository, times(1)).delete("/output/" + accountId + "/");
 		}

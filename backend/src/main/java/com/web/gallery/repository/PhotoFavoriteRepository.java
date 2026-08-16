@@ -1,5 +1,6 @@
 package com.web.gallery.repository;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
@@ -27,8 +28,22 @@ public interface PhotoFavoriteRepository {
 	
 	/**
 	 * 該当写真の写真お気に入りを全件削除する
-	 * 
+	 *
 	 * @param	favoriteDeleteModel	{@link PhotoFavoriteDeleteModel}
 	 */
 	void clear(PhotoFavoriteDeleteModel favoriteDeleteModel);
+
+	/**
+	 * アカウント番号で自分が登録した写真お気に入りを全件削除する
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	void deleteByAccountNo(AccountNo accountNo);
+
+	/**
+	 * アカウント番号で自分の写真に対する他人の写真お気に入りを全件削除する
+	 *
+	 * @param	favoritePhotoAccountNo	お気に入り写真アカウント番号
+	 */
+	void deleteByFavoritePhotoAccountNo(AccountNo favoritePhotoAccountNo);
 }

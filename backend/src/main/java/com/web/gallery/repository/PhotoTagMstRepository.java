@@ -1,5 +1,6 @@
 package com.web.gallery.repository;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
@@ -18,8 +19,15 @@ public interface PhotoTagMstRepository {
 	
 	/**
 	 * 該当写真の写真タグを全件削除する
-	 * 
+	 *
 	 * @param	photoTagDeleteModel	{@link PhotoTagDeleteModel}
 	 */
 	void clear(PhotoTagDeleteModel photoTagDeleteModel);
+
+	/**
+	 * アカウント番号で写真タグを全件削除する
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	void deleteByAccountNo(AccountNo accountNo);
 }

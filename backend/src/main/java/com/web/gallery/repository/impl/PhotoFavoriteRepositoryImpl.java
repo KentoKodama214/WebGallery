@@ -3,6 +3,7 @@ package com.web.gallery.repository.impl;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.enumuration.ErrorEnum;
 import com.web.gallery.exception.RegistFailureException;
@@ -72,5 +73,25 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	public void clear(PhotoFavoriteDeleteModel favoriteDeleteModel) {
 		PhotoFavorite photoFavorite = PhotoFavorite.fromForClear(favoriteDeleteModel);
 		photoFavoriteMapper.delete(photoFavorite);
+	}
+
+	/**
+	 * アカウント番号で自分が登録した写真お気に入りを全件削除する
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	@Override
+	public void deleteByAccountNo(AccountNo accountNo) {
+		photoFavoriteMapper.delete(PhotoFavorite.conditionByAccountNo(accountNo));
+	}
+
+	/**
+	 * アカウント番号で自分の写真に対する他人の写真お気に入りを全件削除する
+	 *
+	 * @param	favoritePhotoAccountNo	お気に入り写真アカウント番号
+	 */
+	@Override
+	public void deleteByFavoritePhotoAccountNo(AccountNo favoritePhotoAccountNo) {
+		photoFavoriteMapper.delete(PhotoFavorite.conditionByFavoritePhotoAccountNo(favoritePhotoAccountNo));
 	}
 }

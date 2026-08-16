@@ -129,4 +129,25 @@ public class PhotoTagMstRepositoryImplTest {
 			assertNull(photoTagMst.getTagEnglishName());
 		}
 	}
+
+	@Nested
+	@Order(3)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class deleteByAccountNo {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント番号で写真タグを全件削除する")
+		void deleteByAccountNo_success() {
+			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
+			doReturn(1).when(photoTagMstMapper).delete(photoTagMstCaptor.capture());
+
+			photoTagMstRepositoryImpl.deleteByAccountNo(new AccountNo(1L));
+
+			verify(photoTagMstMapper).delete(any(PhotoTagMst.class));
+			PhotoTagMst photoTagMst = photoTagMstCaptor.getValue();
+			assertEquals(new AccountNo(1L), photoTagMst.getAccountNo());
+			assertNull(photoTagMst.getPhotoNo());
+			assertNull(photoTagMst.getTagNo());
+		}
+	}
 }

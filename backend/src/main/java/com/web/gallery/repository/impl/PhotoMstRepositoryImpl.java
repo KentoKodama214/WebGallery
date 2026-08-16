@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.enumuration.ErrorEnum;
 import com.web.gallery.exception.RegistFailureException;
@@ -114,5 +115,15 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	@Override
 	public Integer count(Long accountNo) {
 		return photoMstMapper.count(PhotoMst.conditionForCount(accountNo));
+	}
+
+	/**
+	 * アカウント番号で写真マスタを物理削除する
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	@Override
+	public void deleteByAccountNo(AccountNo accountNo) {
+		photoMstMapper.delete(PhotoMst.conditionByAccountNo(accountNo));
 	}
 }
