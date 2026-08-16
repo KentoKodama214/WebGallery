@@ -1,7 +1,5 @@
 package com.web.gallery.service.impl;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 
 import org.springframework.context.event.EventListener;
@@ -27,6 +25,7 @@ import com.web.gallery.mapper.PhotoFavoriteMapper;
 import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.AccountModelList;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
 
@@ -110,21 +109,21 @@ public class AccountServiceImpl implements UserDetailsService {
 	/**
 	 * アカウントの一覧を取得する
 	 *
-	 * @return	{@link AccountModel}
+	 * @return	{@link AccountModelList}
 	 */
 	@Transactional(readOnly = true)
-	public List<AccountModel> getAccountList() {
-		return accountRepository.getAccountList().stream().sorted(Comparator.comparing(m -> m.getAccountId().value())).toList();
+	public AccountModelList getAccountList() {
+		return accountRepository.getAccountList().sortByAccountId();
 	}
 
 	/**
 	 * 管理者用：削除済みを含む全アカウントの一覧を取得する
 	 *
-	 * @return	{@link AccountModel}
+	 * @return	{@link AccountModelList}
 	 */
 	@Transactional(readOnly = true)
-	public List<AccountModel> getAccountListForAdmin() {
-		return accountRepository.getAccountListAll().stream().sorted(Comparator.comparing(m -> m.getAccountId().value())).toList();
+	public AccountModelList getAccountListForAdmin() {
+		return accountRepository.getAccountListAll().sortByAccountId();
 	}
 
 	/**

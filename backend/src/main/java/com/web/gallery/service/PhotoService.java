@@ -10,7 +10,7 @@ import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoModel;
+import com.web.gallery.model.PhotoModelList;
 
 /**
  * 写真に関するビジネスロジックを行うServiceクラス
@@ -18,11 +18,11 @@ import com.web.gallery.model.PhotoModel;
 public interface PhotoService {
 	/**
 	 * 写真一覧を取得する
-	 * 
+	 *
 	 * @param	photoListGetModel	{@link PhotoListGetModel}
-	 * @return						{@link PhotoModel}
+	 * @return						{@link PhotoModelList}
 	 */
-	List<PhotoModel> getPhotoList(PhotoListGetModel photoListGetModel);
+	PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel);
 	
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する

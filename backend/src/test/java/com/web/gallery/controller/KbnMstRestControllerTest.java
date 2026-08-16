@@ -4,7 +4,6 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +36,7 @@ import com.web.gallery.domain.common.KbnJapaneseName;
 import com.web.gallery.domain.common.SortOrder;
 import com.web.gallery.helper.KbnHelper;
 import com.web.gallery.model.KbnMstModel;
+import com.web.gallery.model.KbnMstModelList;
 import com.web.gallery.service.KbnMstService;
 
 @ActiveProfiles("test")
@@ -66,7 +66,6 @@ public class KbnMstRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：都道府県一覧を取得できること")
 		void getPrefectures_success() throws Exception {
-			List<KbnMstModel> prefectureList = new ArrayList<>();
 			KbnMstModel hokkaido = KbnMstModel.builder()
 					.kbnClassCode(new KbnClassCode("prefecture"))
 					.kbnCode(new KbnCode("Hokkaido"))
@@ -107,13 +106,11 @@ public class KbnMstRestControllerTest {
 					.explanation(new Explanation(""))
 					.build();
 
-			prefectureList.add(hokkaido);
-			prefectureList.add(aomori);
-			prefectureList.add(tokyo);
+			KbnMstModelList prefectureList = KbnMstModelList.of(List.of(hokkaido, aomori, tokyo));
 
-			Map<String, List<KbnMstModel>> groupedMap = new LinkedHashMap<>();
-			groupedMap.put("北海道・東北地方", List.of(hokkaido, aomori));
-			groupedMap.put("関東地方", List.of(tokyo));
+			Map<String, KbnMstModelList> groupedMap = new LinkedHashMap<>();
+			groupedMap.put("北海道・東北地方", KbnMstModelList.of(List.of(hokkaido, aomori)));
+			groupedMap.put("関東地方", KbnMstModelList.of(List.of(tokyo)));
 
 			doReturn(prefectureList).when(kbnMstService).getPrefectureList();
 			doReturn(groupedMap).when(kbnHelper).convertToLinkedHashMap(prefectureList);
@@ -134,8 +131,8 @@ public class KbnMstRestControllerTest {
 		@Order(2)
 		@DisplayName("正常系：空のリストの場合は空配列を返すこと")
 		void getPrefectures_empty() throws Exception {
-			List<KbnMstModel> emptyList = new ArrayList<>();
-			Map<String, List<KbnMstModel>> emptyMap = new LinkedHashMap<>();
+			KbnMstModelList emptyList = KbnMstModelList.empty();
+			Map<String, KbnMstModelList> emptyMap = new LinkedHashMap<>();
 
 			doReturn(emptyList).when(kbnMstService).getPrefectureList();
 			doReturn(emptyMap).when(kbnHelper).convertToLinkedHashMap(emptyList);

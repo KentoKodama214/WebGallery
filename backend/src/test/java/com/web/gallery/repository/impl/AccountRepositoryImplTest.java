@@ -48,6 +48,7 @@ import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.AccountMapper;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.AccountModelList;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -683,7 +684,7 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(accountList).when(accountMapper).select(accountCaptor.capture());
 
-			List<AccountModel> actual = accountRepositoryImpl.getAccountList();
+			AccountModelList actual = accountRepositoryImpl.getAccountList();
 
 			Account account = accountCaptor.getValue();
 			assertFalse(account.getIsDeleted().value());
@@ -726,8 +727,8 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(expected).when(accountMapper).select(accountCaptor.capture());
 
-			List<AccountModel> actual = accountRepositoryImpl.getAccountList();
-			assertEquals(expected, actual);
+			AccountModelList actual = accountRepositoryImpl.getAccountList();
+			assertEquals(expected.size(), actual.size());
 
 			Account account = accountCaptor.getValue();
 			assertFalse(account.getIsDeleted().value());

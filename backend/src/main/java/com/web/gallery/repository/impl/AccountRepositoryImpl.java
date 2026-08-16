@@ -12,6 +12,7 @@ import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.AccountMapper;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.AccountModelList;
 import com.web.gallery.repository.AccountRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -122,23 +123,23 @@ public class AccountRepositoryImpl implements AccountRepository {
 	/**
 	 * アカウントの一覧を取得する
 	 *
-	 * @return	{@link AccountModel}
+	 * @return	{@link AccountModelList}
 	 */
 	@Override
-	public List<AccountModel> getAccountList() {
+	public AccountModelList getAccountList() {
 		List<Account> accountList = accountMapper.select(Account.conditionForList());
-		return accountList.stream().map(AccountModel::from).toList();
+		return AccountModelList.from(accountList);
 	}
 
 	/**
 	 * 削除済みを含む全アカウントの一覧を取得する
 	 *
-	 * @return	{@link AccountModel}
+	 * @return	{@link AccountModelList}
 	 */
 	@Override
-	public List<AccountModel> getAccountListAll() {
+	public AccountModelList getAccountListAll() {
 		List<Account> accountList = accountMapper.select(Account.conditionForAdminList());
-		return accountList.stream().map(AccountModel::from).toList();
+		return AccountModelList.from(accountList);
 	}
 
 	/**

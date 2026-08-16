@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.controller.response.PrefectureGroupResponse;
 import com.web.gallery.helper.KbnHelper;
-import com.web.gallery.model.KbnMstModel;
+import com.web.gallery.model.KbnMstModelList;
 import com.web.gallery.service.KbnMstService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,8 +42,8 @@ public class KbnMstRestController {
 	@ApiResponse(responseCode = "200", description = "取得成功")
 	@GetMapping(ApiRoutes.API_PREFECTURES)
 	public ResponseEntity<List<PrefectureGroupResponse>> getPrefectures() {
-		List<KbnMstModel> prefectureList = kbnMstService.getPrefectureList();
-		Map<String, List<KbnMstModel>> groupedMap = kbnHelper.convertToLinkedHashMap(prefectureList);
+		KbnMstModelList prefectureList = kbnMstService.getPrefectureList();
+		Map<String, KbnMstModelList> groupedMap = kbnHelper.convertToLinkedHashMap(prefectureList);
 
 		List<PrefectureGroupResponse> response = groupedMap.entrySet().stream()
 				.map(entry -> PrefectureGroupResponse.from(entry.getKey(), entry.getValue()))

@@ -50,6 +50,7 @@ import com.web.gallery.mapper.PhotoFavoriteMapper;
 import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.AccountModelList;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 
@@ -240,14 +241,14 @@ public class AccountServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが存在する場合")
 		void getAccountList_found() {
-			List<AccountModel> accountModelList = new ArrayList<AccountModel>();
-			accountModelList.add(AccountModel.builder().accountId(new AccountId("cccccccc")).build());
-			accountModelList.add(AccountModel.builder().accountId(new AccountId("bbbbbbbb")).build());
-			accountModelList.add(AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build());
+			AccountModelList accountModelList = AccountModelList.of(List.of(
+					AccountModel.builder().accountId(new AccountId("cccccccc")).build(),
+					AccountModel.builder().accountId(new AccountId("bbbbbbbb")).build(),
+					AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build()));
 
 			doReturn(accountModelList).when(accountRepositoryImpl).getAccountList();
 
-			List<AccountModel> actual = accountServiceImpl.getAccountList();
+			AccountModelList actual = accountServiceImpl.getAccountList();
 			assertEquals(accountModelList.size(), actual.size());
 			assertEquals(new AccountId("aaaaaaaa"), actual.get(0).getAccountId());
 			assertEquals(new AccountId("bbbbbbbb"), actual.get(1).getAccountId());
@@ -258,11 +259,11 @@ public class AccountServiceImplTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
 		void getAccountList_not_found() {
-			List<AccountModel> accountModelList = new ArrayList<AccountModel>();
-			
+			AccountModelList accountModelList = AccountModelList.empty();
+
 			doReturn(accountModelList).when(accountRepositoryImpl).getAccountList();
-			
-			List<AccountModel> actual = accountServiceImpl.getAccountList();
+
+			AccountModelList actual = accountServiceImpl.getAccountList();
 			assertEquals(0, actual.size());
 		}
 	}
@@ -275,14 +276,14 @@ public class AccountServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系：全アカウントを取得（削除済み含む）してソートされること")
 		void getAccountListForAdmin_found() {
-			List<AccountModel> accountModelList = new ArrayList<AccountModel>();
-			accountModelList.add(AccountModel.builder().accountId(new AccountId("cccccccc")).isDeleted(new IsDeleted(true)).build());
-			accountModelList.add(AccountModel.builder().accountId(new AccountId("bbbbbbbb")).isDeleted(new IsDeleted(false)).build());
-			accountModelList.add(AccountModel.builder().accountId(new AccountId("aaaaaaaa")).isDeleted(new IsDeleted(false)).build());
+			AccountModelList accountModelList = AccountModelList.of(List.of(
+					AccountModel.builder().accountId(new AccountId("cccccccc")).isDeleted(new IsDeleted(true)).build(),
+					AccountModel.builder().accountId(new AccountId("bbbbbbbb")).isDeleted(new IsDeleted(false)).build(),
+					AccountModel.builder().accountId(new AccountId("aaaaaaaa")).isDeleted(new IsDeleted(false)).build()));
 
 			doReturn(accountModelList).when(accountRepositoryImpl).getAccountListAll();
 
-			List<AccountModel> actual = accountServiceImpl.getAccountListForAdmin();
+			AccountModelList actual = accountServiceImpl.getAccountListForAdmin();
 			assertEquals(3, actual.size());
 			assertEquals(new AccountId("aaaaaaaa"), actual.get(0).getAccountId());
 			assertEquals(new AccountId("bbbbbbbb"), actual.get(1).getAccountId());
@@ -293,9 +294,9 @@ public class AccountServiceImplTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
 		void getAccountListForAdmin_not_found() {
-			doReturn(new ArrayList<AccountModel>()).when(accountRepositoryImpl).getAccountListAll();
+			doReturn(AccountModelList.empty()).when(accountRepositoryImpl).getAccountListAll();
 
-			List<AccountModel> actual = accountServiceImpl.getAccountListForAdmin();
+			AccountModelList actual = accountServiceImpl.getAccountListForAdmin();
 			assertEquals(0, actual.size());
 		}
 	}

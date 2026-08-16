@@ -42,7 +42,7 @@ import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoModel;
+import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.service.PhotoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -85,7 +85,7 @@ public class PhotoRestController {
 			@PathVariable String photoAccountId,
 			@ModelAttribute @Validated PhotoListRequest photoListRequest) {
 		// 抽出条件に該当する写真の一覧を、指定の並び順で取得する
-		List<PhotoModel> photoList = photoService.getPhotoList(
+		PhotoModelList photoList = photoService.getPhotoList(
 				PhotoListGetModel.from(photoListRequest, sessionHelper.getAccountNo(), photoAccountId));
 		return ResponseEntity.ok(PhotoListGetResponse.from(photoList, photoListRequest.getPageNo(), photoConfig.getPhotoCountPerPage()));
 	}

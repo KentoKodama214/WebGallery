@@ -1,11 +1,9 @@
 package com.web.gallery.model;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoSaveRequest;
@@ -105,7 +103,7 @@ public class PhotoDetailModel {
 	private Iso iso;
 
 	/** 写真タグリスト */
-	private List<PhotoTagModel> photoTagModelList;
+	private PhotoTagModelList photoTagModelList;
 
 	/**
 	 * PhotoDetailDtoとタグエンティティリストからPhotoDetailModelを生成する
@@ -115,7 +113,7 @@ public class PhotoDetailModel {
 	 * @return					{@link PhotoDetailModel}
 	 */
 	public static PhotoDetailModel from(PhotoDetailDto dto, List<PhotoTagMst> photoTagMstList) {
-		List<PhotoTagModel> photoTagModelList = photoTagMstList.stream().map(PhotoTagModel::from).toList();
+		PhotoTagModelList photoTagModelList = PhotoTagModelList.from(photoTagMstList);
 		return PhotoDetailModel.builder()
 				.accountNo(dto.getAccountNo())
 				.photoNo(dto.getPhotoNo())
@@ -147,11 +145,11 @@ public class PhotoDetailModel {
 	 * @return			{@link PhotoDetailModel}
 	 */
 	public static PhotoDetailModel from(PhotoSaveRequest request) {
-		List<PhotoTagModel> photoTagModelList = Objects.isNull(request.getPhotoTagRegistRequestList())
-				? new ArrayList<PhotoTagModel>()
-				: request.getPhotoTagRegistRequestList().stream()
+		PhotoTagModelList photoTagModelList = Objects.isNull(request.getPhotoTagRegistRequestList())
+				? PhotoTagModelList.empty()
+				: PhotoTagModelList.of(request.getPhotoTagRegistRequestList().stream()
 						.map(PhotoTagModel::from)
-						.collect(Collectors.toList());
+						.toList());
 		return PhotoDetailModel.builder()
 				.accountNo(new AccountNo(request.getAccountNo()))
 				.photoNo(request.getPhotoNo() != null ? new PhotoNo(request.getPhotoNo()) : null)

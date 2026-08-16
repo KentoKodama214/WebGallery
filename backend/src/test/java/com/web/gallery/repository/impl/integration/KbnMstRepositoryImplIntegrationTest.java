@@ -2,8 +2,6 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -18,7 +16,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.domain.common.KbnCode;
-import com.web.gallery.model.KbnMstModel;
+import com.web.gallery.model.KbnMstModelList;
 import com.web.gallery.repository.impl.KbnMstRepositoryImpl;
 
 @ActiveProfiles("test")
@@ -38,7 +36,7 @@ public class KbnMstRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：区分マスタが取得できた場合")
 		void get_found() {
-			List<KbnMstModel> actual = kbnMstRepositoryImpl.get("sex");
+			KbnMstModelList actual = kbnMstRepositoryImpl.get("sex");
 			assertEquals(2, actual.size());
 			assertEquals(new KbnCode("man"), actual.get(0).getKbnCode());
 			assertEquals(new KbnCode("woman"), actual.get(1).getKbnCode());
@@ -48,7 +46,7 @@ public class KbnMstRepositoryImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：区分マスタが取得できなかった場合")
 		void get_not_found() {
-			List<KbnMstModel> actual = kbnMstRepositoryImpl.get("test");
+			KbnMstModelList actual = kbnMstRepositoryImpl.get("test");
 			assertEquals(0, actual.size());
 		}
 	}

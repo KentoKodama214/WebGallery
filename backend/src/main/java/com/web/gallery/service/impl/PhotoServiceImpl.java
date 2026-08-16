@@ -4,7 +4,6 @@ import java.io.File;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -16,11 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagNo;
-import com.web.gallery.enumuration.DirectionEnum;
 import com.web.gallery.enumuration.ErrorEnum;
 import com.web.gallery.enumuration.SortPhotoEnum;
 import com.web.gallery.exception.FileDuplicateException;
@@ -36,8 +33,10 @@ import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
+import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
+import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.PhotoDetailRepository;
@@ -69,26 +68,22 @@ public class PhotoServiceImpl implements PhotoService {
 	 * 写真一覧を取得する
 	 *
 	 * @param	photoListGetModel	{@link PhotoListGetModel}
-	 * @return						{@link PhotoModel}
+	 * @return						{@link PhotoModelList}
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public List<PhotoModel> getPhotoList(PhotoListGetModel photoListGetModel) {
+	public PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel) {
 		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId().value());
 
-		List<PhotoModel> photoModelList
+		PhotoModelList photoModelList
 			= photoDetailRepository.getPhotoList(
 					PhotoGetModel.of(photoListGetModel.getAccountNo(), accountModel.getAccountNo()));
 
-		return photoModelList.stream()
-					.filter(photoModel ->
-						filteringByDirectionKbn(photoModel.getDirectionKbn(), photoListGetModel.getDirectionKbn()))
-					.filter(photoModel ->
-						filteringByIsFavorite(photoModel.getIsFavorite().value(), photoListGetModel.getIsFavoriteOnly().value()))
-					.filter(photoModel ->
-						filteringByTag(photoModel.getPhotoTagModelList(), photoListGetModel.getTagList()))
-					.sorted(getComparator(photoListGetModel.getSortBy()))
-					.toList();
+		return photoModelList
+					.filterByDirectionKbn(photoListGetModel.getDirectionKbn())
+					.filterByFavorite(photoListGetModel.getIsFavoriteOnly().value())
+					.filterByTags(photoListGetModel.getTagList())
+					.sorted(getComparator(photoListGetModel.getSortBy()));
 	}
 
 	/**
@@ -224,55 +219,13 @@ public class PhotoServiceImpl implements PhotoService {
 	}
 
 	/**
-	 * 写真の向きでフィルタリングする
-	 *
-	 * @param	targetDirectionKbn	フィルター対象の向き区分
-	 * @param	conditionDirectionKbn	フィルター条件の向き区分
-	 * @return	フィルタリングして除外する場合はfalse
-	 */
-	private Boolean filteringByDirectionKbn(DirectionEnum targetDirectionKbn, DirectionEnum conditionDirectionKbn) {
-		if(DirectionEnum.NONE.equals(conditionDirectionKbn)) return true;
-		else return targetDirectionKbn.equals(conditionDirectionKbn);
-	}
-
-	/**
-	 * お気に入りでフィルタリングする
-	 *
-	 * @param	isFavorite		写真がお気に入りならtrue
-	 * @param	isFavoriteOnly	お気に入りに絞るならtrue
-	 * @return					フィルタリングして除外する場合はfalse
-	 */
-	private Boolean filteringByIsFavorite(Boolean isFavorite, Boolean isFavoriteOnly) {
-		if(!isFavoriteOnly) return true;
-		else return isFavorite;
-	}
-
-	/**
-	 * タグでフィルタリングする<p>
-	 * タグが複数ある場合、すべてのタグを持つ写真にフィルタリングする
-	 *
-	 * @param	photoTagModelList	{@link PhotoTagModel}
-	 * @param	tags				フィルター条件のタグのリスト
-	 * @return						フィルタリングして除外する場合はfalse
-	 */
-	private Boolean filteringByTag(List<PhotoTagModel> photoTagModelList, List<String> tags) {
-		if(tags.size() == 0 || Consts.STRING_EMPTY.equals(tags.getFirst())) return true;
-
-		List<String> photoTags = new ArrayList<String>();
-		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagJapaneseName().value()).toList());
-		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagEnglishName().value()).toList());
-
-		return photoTags.containsAll(tags);
-	}
-
-	/**
 	 * 写真タグを登録する
 	 *
-	 * @param	photoTagModelList		{@link PhotoTagModel}
+	 * @param	photoTagModelList		{@link PhotoTagModelList}
 	 * @param	newPhotoNo				新規採番された写真番号
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 */
-	private void registPhotoTags(List<PhotoTagModel> photoTagModelList, Long newPhotoNo) throws RegistFailureException {
+	private void registPhotoTags(PhotoTagModelList photoTagModelList, Long newPhotoNo) throws RegistFailureException {
 		if(Objects.isNull(photoTagModelList)) return;
 
 		int tagNo = 1;

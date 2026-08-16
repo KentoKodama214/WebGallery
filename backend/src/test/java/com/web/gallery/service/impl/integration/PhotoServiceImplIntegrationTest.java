@@ -66,8 +66,9 @@ import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoModel;
+import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoTagModel;
+import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.service.impl.PhotoServiceImpl;
 
 @ActiveProfiles("test")
@@ -101,8 +102,8 @@ public class PhotoServiceImplIntegrationTest {
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			assertEquals(new ArrayList<PhotoModel>(), actual);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			assertTrue(actual.isEmpty());
 		}
 		
 		@Test
@@ -120,7 +121,7 @@ public class PhotoServiceImplIntegrationTest {
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			
 			// List<PhotoModel>の数チェック
 			assertEquals(10, actual.size());
@@ -163,7 +164,7 @@ public class PhotoServiceImplIntegrationTest {
 					.sortBy(SortPhotoEnum.FAVORITE)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			
 			// List<PhotoModel>の数チェック
 			assertEquals(10, actual.size());
@@ -214,7 +215,7 @@ public class PhotoServiceImplIntegrationTest {
 					.sortBy(SortPhotoEnum.SEASON)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			
 			// List<PhotoModel>の数チェック
 			assertEquals(10, actual.size());
@@ -257,7 +258,7 @@ public class PhotoServiceImplIntegrationTest {
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			
 			// List<PhotoModel>の数チェック
 			assertEquals(3, actual.size());
@@ -293,7 +294,7 @@ public class PhotoServiceImplIntegrationTest {
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			
 			// List<PhotoModel>の数チェック
 			assertEquals(2, actual.size());
@@ -338,7 +339,7 @@ public class PhotoServiceImplIntegrationTest {
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			
 			// List<PhotoModel>の数チェック
 			assertEquals(1, actual.size());
@@ -463,7 +464,7 @@ public class PhotoServiceImplIntegrationTest {
 					.fValue(new FValue(BigDecimal.valueOf(2.8)))
 					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
 					.iso(new Iso(100))
-					.photoTagModelList(photoTagModelList)
+					.photoTagModelList(PhotoTagModelList.of(photoTagModelList))
 					.build();
 		}
 		
@@ -516,7 +517,7 @@ public class PhotoServiceImplIntegrationTest {
 					.fValue(new FValue(BigDecimal.valueOf(2.8)))
 					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
 					.iso(new Iso(100))
-					.photoTagModelList(photoTagModelList)
+					.photoTagModelList(PhotoTagModelList.of(photoTagModelList))
 					.build();
 		}
 		

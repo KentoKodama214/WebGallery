@@ -56,7 +56,7 @@ import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoGetModel;
-import com.web.gallery.model.PhotoModel;
+import com.web.gallery.model.PhotoModelList;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -93,11 +93,9 @@ public class PhotoDetailRepositoryImplTest {
 			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
 			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
 
-			List<PhotoModel> expected = new ArrayList<PhotoModel>();
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
-			List<PhotoModel> actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
-
-			assertEquals(expected, actual);
+			assertTrue(actual.isEmpty());
 
 			PhotoListGetDto photoListGetDtoCapture = photoListGetDtoCaptor.getValue();
 			assertEquals(1L, photoListGetDtoCapture.getAccountNo().value());
@@ -147,7 +145,7 @@ public class PhotoDetailRepositoryImplTest {
 			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
 			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
 
-			List<PhotoModel> actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
 			assertEquals(new AccountNo(1L), actual.get(0).getAccountNo());
 			assertEquals(1L, actual.get(0).getPhotoNo().value());
@@ -229,7 +227,7 @@ public class PhotoDetailRepositoryImplTest {
 			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
 			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
 
-			List<PhotoModel> actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
 			assertEquals(new AccountNo(1L), actual.get(0).getAccountNo());
 			assertEquals(1L, actual.get(0).getPhotoNo().value());

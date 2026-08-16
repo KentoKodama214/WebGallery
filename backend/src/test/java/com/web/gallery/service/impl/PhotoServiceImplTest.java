@@ -67,8 +67,10 @@ import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
+import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
+import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 import com.web.gallery.repository.impl.FileRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
@@ -107,7 +109,7 @@ public class PhotoServiceImplTest {
 	@Order(1)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class getPhotoList {
-		List<PhotoModel> createPhotoModelList() {
+		PhotoModelList createPhotoModelList() {
 			List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
 			
 			List<PhotoTagModel> photoTagModelList1 = new ArrayList<PhotoTagModel>();
@@ -134,7 +136,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("DSC111.jpg"))
 					.caption(new Caption("キャプション1"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(photoTagModelList1)
+					.photoTagModelList(PhotoTagModelList.of(photoTagModelList1))
 					.build();
 			photoModelList.add(photoModel1);
 			
@@ -162,7 +164,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("DSC222.jpg"))
 					.caption(new Caption("キャプション2"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(photoTagModelList2)
+					.photoTagModelList(PhotoTagModelList.of(photoTagModelList2))
 					.build();
 			photoModelList.add(photoModel2);
 			
@@ -190,7 +192,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("DSC333.jpg"))
 					.caption(new Caption("キャプション3"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(photoTagModelList3)
+					.photoTagModelList(PhotoTagModelList.of(photoTagModelList3))
 					.build();
 			photoModelList.add(photoModel3);
 			
@@ -211,7 +213,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("DSC444.jpg"))
 					.caption(new Caption("キャプション4"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(photoTagModelList4)
+					.photoTagModelList(PhotoTagModelList.of(photoTagModelList4))
 					.build();
 			photoModelList.add(photoModel4);
 			
@@ -232,7 +234,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("DSC444.jpg"))
 					.caption(new Caption("キャプション4"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.photoTagModelList(photoTagModelList5)
+					.photoTagModelList(PhotoTagModelList.of(photoTagModelList5))
 					.build();
 			photoModelList.add(photoModel5);
 			
@@ -245,11 +247,11 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("DSC666.jpg"))
 					.caption(new Caption("キャプション6"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build();
 			photoModelList.add(photoModel6);
-			
-			return photoModelList;
+
+			return PhotoModelList.of(photoModelList);
 		}
 		
 		@Test
@@ -263,7 +265,7 @@ public class PhotoServiceImplTest {
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
 			
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
-			doReturn(new ArrayList<PhotoModel>()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
+			doReturn(PhotoModelList.empty()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
 			
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -274,8 +276,8 @@ public class PhotoServiceImplTest {
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			assertEquals(new ArrayList<PhotoModel>(), actual);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			assertTrue(actual.isEmpty());
 			verify(accountRepositoryImpl).getByAccountId(accountId);
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
 			
@@ -306,7 +308,7 @@ public class PhotoServiceImplTest {
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			assertEquals(3, actual.size());
 			assertEquals(3L, actual.get(0).getPhotoNo().value());
 			assertEquals(2L, actual.get(1).getPhotoNo().value());
@@ -342,7 +344,7 @@ public class PhotoServiceImplTest {
 					.sortBy(SortPhotoEnum.FAVORITE)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			assertEquals(3, actual.size());
 			assertEquals(2L, actual.get(0).getPhotoNo().value());
 			assertEquals(3L, actual.get(1).getPhotoNo().value());
@@ -378,7 +380,7 @@ public class PhotoServiceImplTest {
 					.sortBy(SortPhotoEnum.SEASON)
 					.build();
 			
-			List<PhotoModel> actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			assertEquals(3, actual.size());
 			assertEquals(1L, actual.get(0).getPhotoNo().value());
 			assertEquals(2L, actual.get(1).getPhotoNo().value());
@@ -469,7 +471,7 @@ public class PhotoServiceImplTest {
 					.fValue(new FValue(BigDecimal.valueOf(2.8)))
 					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
 					.iso(new Iso(100))
-					.photoTagModelList(photoTagModelList)
+					.photoTagModelList(PhotoTagModelList.of(photoTagModelList))
 					.build();
 		}
 		
@@ -522,7 +524,7 @@ public class PhotoServiceImplTest {
 					.fValue(new FValue(BigDecimal.valueOf(2.8)))
 					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
 					.iso(new Iso(100))
-					.photoTagModelList(photoTagModelList)
+					.photoTagModelList(PhotoTagModelList.of(photoTagModelList))
 					.build();
 		}
 		
@@ -1131,7 +1133,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
 					.caption(new Caption("キャプション1"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1142,7 +1144,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC222.jpg"))
 					.caption(new Caption("キャプション2"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1153,7 +1155,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC333.jpg"))
 					.caption(new Caption("キャプション3"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1164,7 +1166,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC444.jpg"))
 					.caption(new Caption("キャプション4"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1175,7 +1177,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC555.jpg"))
 					.caption(new Caption("キャプション5"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			
 			List<PhotoModel> actualData = photoModelList.stream().sorted(actual).toList();
@@ -1206,7 +1208,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
 					.caption(new Caption("キャプション1"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1217,7 +1219,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC222.jpg"))
 					.caption(new Caption("キャプション2"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1228,7 +1230,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC333.jpg"))
 					.caption(new Caption("キャプション3"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1239,7 +1241,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC444.jpg"))
 					.caption(new Caption("キャプション4"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1250,7 +1252,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC555.jpg"))
 					.caption(new Caption("キャプション5"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			
 			List<PhotoModel> actualData = photoModelList.stream().sorted(actual).toList();
@@ -1281,7 +1283,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
 					.caption(new Caption("キャプション1"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1292,7 +1294,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC222.jpg"))
 					.caption(new Caption("キャプション2"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1303,7 +1305,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC333.jpg"))
 					.caption(new Caption("キャプション3"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1314,7 +1316,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC444.jpg"))
 					.caption(new Caption("キャプション4"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1325,7 +1327,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC555.jpg"))
 					.caption(new Caption("キャプション5"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			
 			List<PhotoModel> actualData = photoModelList.stream().sorted(actual).toList();
@@ -1356,7 +1358,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
 					.caption(new Caption("キャプション1"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1367,7 +1369,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC222.jpg"))
 					.caption(new Caption("キャプション2"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1378,7 +1380,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC333.jpg"))
 					.caption(new Caption("キャプション3"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1389,7 +1391,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC444.jpg"))
 					.caption(new Caption("キャプション4"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1400,7 +1402,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC555.jpg"))
 					.caption(new Caption("キャプション5"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(new ArrayList<PhotoTagModel>())
+					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
 			
 			List<PhotoModel> actualData = photoModelList.stream().sorted(actual).toList();
@@ -1415,207 +1417,41 @@ public class PhotoServiceImplTest {
 	@Nested
 	@Order(7)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class filteringByDirectionKbn {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：抽出条件が未指定の場合")
-		void filteringByDirectionKbn_not_condition() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method filteringByDirectionKbn = PhotoServiceImpl.class.getDeclaredMethod("filteringByDirectionKbn", DirectionEnum.class, DirectionEnum.class);
-			filteringByDirectionKbn.setAccessible(true);
-			assertTrue((Boolean) filteringByDirectionKbn.invoke(photoServiceImpl, DirectionEnum.NONE, DirectionEnum.NONE));
-		}
-		
-		@Test
-		@Order(2)
-		@DisplayName("正常系：抽出条件が指定されていて、条件と一致の場合")
-		void filteringByDirectionKbn_match_condition() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method filteringByDirectionKbn = PhotoServiceImpl.class.getDeclaredMethod("filteringByDirectionKbn", DirectionEnum.class, DirectionEnum.class);
-			filteringByDirectionKbn.setAccessible(true);
-			assertTrue((Boolean) filteringByDirectionKbn.invoke(photoServiceImpl, DirectionEnum.VERTICAL, DirectionEnum.VERTICAL));
-		}
-		
-		@Test
-		@Order(3)
-		@DisplayName("正常系：抽出条件が指定されていて、条件と不一致の場合")
-		void filteringByDirectionKbn_mismatch_condition() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method filteringByDirectionKbn = PhotoServiceImpl.class.getDeclaredMethod("filteringByDirectionKbn", DirectionEnum.class, DirectionEnum.class);
-			filteringByDirectionKbn.setAccessible(true);
-			assertFalse((Boolean) filteringByDirectionKbn.invoke(photoServiceImpl, DirectionEnum.VERTICAL, DirectionEnum.HORIZONTAL));
-		}
-	}
-	
-	@Nested
-	@Order(8)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class filteringByIsFavorite {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：お気に入りのみが未指定の場合")
-		void filteringByIsFavorite_not_condition() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method filteringByIsFavorite = PhotoServiceImpl.class.getDeclaredMethod("filteringByIsFavorite", Boolean.class, Boolean.class);
-			filteringByIsFavorite.setAccessible(true);
-			assertTrue((Boolean) filteringByIsFavorite.invoke(photoServiceImpl, true, false));
-		}
-		
-		@Test
-		@Order(2)
-		@DisplayName("正常系：お気に入りのみが指定されていて、写真がお気に入りの場合")
-		void filteringByIsFavorite_match_condition() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method filteringByIsFavorite = PhotoServiceImpl.class.getDeclaredMethod("filteringByIsFavorite", Boolean.class, Boolean.class);
-			filteringByIsFavorite.setAccessible(true);
-			assertTrue((Boolean) filteringByIsFavorite.invoke(photoServiceImpl, true, true));
-		}
-		
-		@Test
-		@Order(3)
-		@DisplayName("正常系：お気に入りのみが指定されていて、写真がお気に入りでない場合")
-		void filteringByIsFavorite_mismatch_condition() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method filteringByIsFavorite = PhotoServiceImpl.class.getDeclaredMethod("filteringByIsFavorite", Boolean.class, Boolean.class);
-			filteringByIsFavorite.setAccessible(true);
-			assertFalse((Boolean) filteringByIsFavorite.invoke(photoServiceImpl, false, true));
-		}
-	}
-	
-	@Nested
-	@Order(9)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class filteringByTag {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：tagsが0件の場合")
-		void filteringByTag_tags_empty() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method filteringByTag = PhotoServiceImpl.class.getDeclaredMethod("filteringByTag", List.class, List.class);
-			filteringByTag.setAccessible(true);
-			assertTrue((Boolean) filteringByTag.invoke(photoServiceImpl, new ArrayList<PhotoTagModel>(), new ArrayList<String>()));
-		}
-		
-		@Test
-		@Order(2)
-		@DisplayName("正常系：tagsの1件目が''の場合")
-		void filteringByTag_tags_blank() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method filteringByTag = PhotoServiceImpl.class.getDeclaredMethod("filteringByTag", List.class, List.class);
-			filteringByTag.setAccessible(true);
-			
-			List<String> tags = new ArrayList<String>();
-			tags.add("");
-			assertTrue((Boolean) filteringByTag.invoke(photoServiceImpl, new ArrayList<PhotoTagModel>(), tags));
-		}
-		
-		@Test
-		@Order(3)
-		@DisplayName("正常系：tagsのすべてが含まれる場合")
-		void filteringByTag_contain_all_tag() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method filteringByTag = PhotoServiceImpl.class.getDeclaredMethod("filteringByTag", List.class, List.class);
-			filteringByTag.setAccessible(true);
-			
-			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
-					.build());
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("月"))
-					.tagEnglishName(new TagEnglishName("moon"))
-					.build());
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("海"))
-					.tagEnglishName(new TagEnglishName("sea"))
-					.build());
-
-			List<String> tags = new ArrayList<String>();
-			tags.add("太陽");
-			tags.add("sun");
-			tags.add("sea");
-			
-			assertTrue((Boolean) filteringByTag.invoke(photoServiceImpl, photoTagModelList, tags));
-		}
-		
-		@Test
-		@Order(4)
-		@DisplayName("正常系：tagsのすべてが含まれない場合")
-		void filteringByTag_not_contain_all_tag() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method filteringByTag = PhotoServiceImpl.class.getDeclaredMethod("filteringByTag", List.class, List.class);
-			filteringByTag.setAccessible(true);
-			
-			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
-					.build());
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("月"))
-					.tagEnglishName(new TagEnglishName("moon"))
-					.build());
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("海"))
-					.tagEnglishName(new TagEnglishName("sea"))
-					.build());
-
-			List<String> tags = new ArrayList<String>();
-			tags.add("太陽");
-			tags.add("sum");
-			tags.add("wood");
-			
-			assertFalse((Boolean) filteringByTag.invoke(photoServiceImpl, photoTagModelList, tags));
-		}
-	}
-	
-	@Nested
-	@Order(10)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class registPhotoTags {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：photoTagModelListがnullの場合")
 		void registPhotoTags_photoTagModelList_is_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, RegistFailureException {
-			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", List.class, Long.class);
+			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
 			registPhotoTags.setAccessible(true);
-			
+
 			registPhotoTags.invoke(photoServiceImpl, null, null);
-			
+
 			verify(photoTagMstRepositoryImpl, times(0)).regist(any(PhotoTagModel.class));
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：photoTagModelListがemptyの場合")
 		void registPhotoTags_photoTagModelList_is_empty() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, RegistFailureException {
-			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", List.class, Long.class);
+			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
 			registPhotoTags.setAccessible(true);
-			
-			registPhotoTags.invoke(photoServiceImpl, new ArrayList<PhotoTagModel>(), null);
-			
+
+			registPhotoTags.invoke(photoServiceImpl, PhotoTagModelList.empty(), null);
+
 			verify(photoTagMstRepositoryImpl, times(0)).regist(any(PhotoTagModel.class));
 		}
-		
+
 		@Test
 		@Order(3)
 		@DisplayName("正常系：newPhotoNoがnullの場合")
 		void registPhotoTags_newPhotoNo_is_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, RegistFailureException {
-			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", List.class, Long.class);
+			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
 			registPhotoTags.setAccessible(true);
-			
+
 			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
 			doNothing().when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
-			
+
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1631,11 +1467,11 @@ public class PhotoServiceImplTest {
 					.tagJapaneseName(new TagJapaneseName("海"))
 					.tagEnglishName(new TagEnglishName("sea"))
 					.build());
-			
-			registPhotoTags.invoke(photoServiceImpl, photoTagModelList, null);
-			
+
+			registPhotoTags.invoke(photoServiceImpl, PhotoTagModelList.of(photoTagModelList), null);
+
 			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
-			
+
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
 			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(1L, photoTagModelCaptureList.get(0).getPhotoNo().value());
@@ -1648,17 +1484,17 @@ public class PhotoServiceImplTest {
 			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName().value());
 			assertEquals("sea", photoTagModelCaptureList.get(1).getTagEnglishName().value());
 		}
-		
+
 		@Test
 		@Order(4)
 		@DisplayName("正常系：newPhotoNoがnullでない場合")
 		void registPhotoTags_newPhotoNo_is_not_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, RegistFailureException {
-			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", List.class, Long.class);
+			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
 			registPhotoTags.setAccessible(true);
-			
+
 			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
 			doNothing().when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
-			
+
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1674,11 +1510,11 @@ public class PhotoServiceImplTest {
 					.tagJapaneseName(new TagJapaneseName("海"))
 					.tagEnglishName(new TagEnglishName("sea"))
 					.build());
-			
-			registPhotoTags.invoke(photoServiceImpl, photoTagModelList, 3L);
-			
+
+			registPhotoTags.invoke(photoServiceImpl, PhotoTagModelList.of(photoTagModelList), 3L);
+
 			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
-			
+
 			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
 			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
 			assertEquals(3L, photoTagModelCaptureList.get(0).getPhotoNo().value());
@@ -1691,16 +1527,16 @@ public class PhotoServiceImplTest {
 			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName().value());
 			assertEquals("sea", photoTagModelCaptureList.get(1).getTagEnglishName().value());
 		}
-		
+
 		@Test
 		@Order(5)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void registPhotoTags_RegistFailureException() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, RegistFailureException {
-			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", List.class, Long.class);
+			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
 			registPhotoTags.setAccessible(true);
-			
+
 			doThrow(new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_PHOTO_TAG)).when(photoTagMstRepositoryImpl).regist(any(PhotoTagModel.class));
-			
+
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1716,9 +1552,9 @@ public class PhotoServiceImplTest {
 					.tagJapaneseName(new TagJapaneseName("海"))
 					.tagEnglishName(new TagEnglishName("sea"))
 					.build());
-			
+
 			try {
-				registPhotoTags.invoke(photoServiceImpl, photoTagModelList, null);
+				registPhotoTags.invoke(photoServiceImpl, PhotoTagModelList.of(photoTagModelList), null);
 				assertTrue(false);
 			}
 			catch(InvocationTargetException e) {

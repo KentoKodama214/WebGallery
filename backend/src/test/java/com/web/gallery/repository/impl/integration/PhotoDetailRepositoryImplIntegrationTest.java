@@ -45,7 +45,7 @@ import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoGetModel;
-import com.web.gallery.model.PhotoModel;
+import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
 
 @ActiveProfiles("test")
@@ -69,7 +69,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(3L))
 					.build();
-			List<PhotoModel> actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 			assertEquals(0, actual.size());
 		}
 		
@@ -82,7 +82,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.photoAccountNo(new AccountNo(2L))
 					.build();
 
-			List<PhotoModel> actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
 			assertEquals(2, actual.size());
 			assertEquals(new AccountNo(2L), actual.get(0).getAccountNo());
@@ -102,7 +102,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.photoAccountNo(new AccountNo(1L))
 					.build();
 			
-			List<PhotoModel> actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 			
 			assertEquals(2, actual.size());
 			
