@@ -3,7 +3,6 @@ package com.web.gallery.controller;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -186,14 +185,7 @@ public class PhotoRestController {
 
 		Long savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
 
-		String savedImageFilePath;
-		if (Objects.isNull(photoSaveRequest.getPhotoNo()) && !Objects.isNull(photoSaveRequest.getImageFile())) {
-			savedImageFilePath = photoConfig.getOutputPath() + photoAccountId + "/" + photoSaveRequest.getImageFile().getOriginalFilename();
-		} else {
-			savedImageFilePath = Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse(Consts.STRING_EMPTY);
-		}
-
-		return ResponseEntity.ok(PhotoEditResponse.of(MessageConst.REGIST_PHOTO, savedPhotoNo, savedImageFilePath));
+		return ResponseEntity.ok(PhotoEditResponse.of(savedPhotoNo, photoAccountId, photoConfig.getOutputPath(), photoSaveRequest));
 	}
 	
 	/**
