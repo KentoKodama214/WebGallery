@@ -288,7 +288,7 @@ public class AccountServiceImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが存在する場合")
 		void getAccountById_found() {
-			AccountModel actual = accountServiceImpl.getAccountById("aaaaaaaa");
+			AccountModel actual = accountServiceImpl.getAccountById(new AccountId("aaaaaaaa"));
 
 			assertEquals(1L, actual.getAccountNo().value());
 			assertEquals("aaaaaaaa", actual.getAccountId().value());
@@ -308,7 +308,7 @@ public class AccountServiceImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合、nullを返す")
 		void getAccountById_not_found() {
-			assertNull(accountServiceImpl.getAccountById("zzzzzzzz"));
+			assertNull(accountServiceImpl.getAccountById(new AccountId("zzzzzzzz")));
 		}
 	}
 	
@@ -357,7 +357,7 @@ public class AccountServiceImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントと関連データがすべて物理削除されること")
 		void deleteAccount_success() {
-			accountServiceImpl.deleteAccount(1L, "aaaaaaaa");
+			accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 
 			// アカウントが削除されたことを確認
 			List<Account> accountData = jdbcTemplate.query(

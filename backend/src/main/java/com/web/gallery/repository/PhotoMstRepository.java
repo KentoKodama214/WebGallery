@@ -1,6 +1,8 @@
 package com.web.gallery.repository;
 
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -18,7 +20,7 @@ public interface PhotoMstRepository {
 	 * @param	newPhotoNo				新規採番した写真番号
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 */
-	void regist(PhotoDetailModel photoDetailModel, String filePath, Long newPhotoNo) throws RegistFailureException;
+	void regist(PhotoDetailModel photoDetailModel, ImageFilePath filePath, PhotoNo newPhotoNo) throws RegistFailureException;
 	
 	/**
 	 * 写真マスタを更新する
@@ -42,7 +44,7 @@ public interface PhotoMstRepository {
 	 * @param	accountNo	アカウント番号
 	 * @return				新規採番した写真番号
 	 */
-	Long getNewPhotoNo(Long accountNo);
+	PhotoNo getNewPhotoNo(AccountNo accountNo);
 	
 	/**
 	 * 同じファイル名の写真が存在するかチェックする
@@ -58,7 +60,7 @@ public interface PhotoMstRepository {
 	 * @param	accountNo	アカウント番号
 	 * @return				登録件数
 	 */
-	Integer count(Long accountNo);
+	Integer count(AccountNo accountNo);
 
 	/**
 	 * アカウント番号で写真マスタを物理削除する

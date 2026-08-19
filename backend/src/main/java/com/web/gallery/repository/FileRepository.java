@@ -1,5 +1,6 @@
 package com.web.gallery.repository;
 
+import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.model.FileModel;
 
 /**
@@ -8,6 +9,6 @@ import com.web.gallery.model.FileModel;
 public interface FileRepository {
 
 	void save(FileModel fileModel);
-	
-	void delete(String filePath);
+
+	void delete(ImageFilePath filePath);
 }

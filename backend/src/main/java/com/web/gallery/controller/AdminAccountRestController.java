@@ -13,6 +13,7 @@ import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.response.AdminAccountListItemResponse;
 import com.web.gallery.controller.response.AdminAccountLockResponse;
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.service.impl.AccountServiceImpl;
@@ -71,7 +72,7 @@ public class AdminAccountRestController {
 	public ResponseEntity<AdminAccountLockResponse> unlockAccount(
 			@PathVariable Long accountNo) throws ForbiddenAccountException, UpdateFailureException {
 
-		accountServiceImpl.unlockAccount(accountNo);
+		accountServiceImpl.unlockAccount(new AccountNo(accountNo));
 
 		return ResponseEntity.ok(AdminAccountLockResponse.of(MessageConst.UNLOCK_ACCOUNT));
 	}
@@ -92,7 +93,7 @@ public class AdminAccountRestController {
 	public ResponseEntity<AdminAccountLockResponse> lockAccount(
 			@PathVariable Long accountNo) throws ForbiddenAccountException, UpdateFailureException {
 
-		accountServiceImpl.lockAccount(accountNo);
+		accountServiceImpl.lockAccount(new AccountNo(accountNo));
 
 		return ResponseEntity.ok(AdminAccountLockResponse.of(MessageConst.LOCK_ACCOUNT));
 	}

@@ -25,6 +25,8 @@ import com.web.gallery.controller.response.AccountDetailResponse;
 import com.web.gallery.controller.response.AccountListItemResponse;
 import com.web.gallery.controller.response.AccountRegistResponse;
 import com.web.gallery.controller.response.AccountUpdateResponse;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.ForbiddenAccountException;
@@ -91,7 +93,7 @@ public class AccountRestController {
 			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT);
 		}
 
-		AccountModel accountModel = accountServiceImpl.getAccountById(accountId);
+		AccountModel accountModel = accountServiceImpl.getAccountById(new AccountId(accountId));
 
 		AccountDetailResponse response = AccountDetailResponse.from(accountModel);
 
@@ -200,7 +202,7 @@ public class AccountRestController {
 			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT);
 		}
 
-		accountServiceImpl.deleteAccount(sessionHelper.getAccountNo(), accountId);
+		accountServiceImpl.deleteAccount(new AccountNo(sessionHelper.getAccountNo()), new AccountId(accountId));
 
 		return ResponseEntity.ok().build();
 	}

@@ -142,7 +142,7 @@ public class AccountRestControllerTest {
 					.freeMemo(new FreeMemo("フリーメモ"))
 					.build();
 
-			doReturn(accountModel).when(accountServiceImpl).getAccountById(accountId);
+			doReturn(accountModel).when(accountServiceImpl).getAccountById(new AccountId(accountId));
 
 			mockMvc.perform(get("/api/v1/accounts/" + accountId))
 				.andExpect(status().isOk())
@@ -174,7 +174,7 @@ public class AccountRestControllerTest {
 					.freeMemo(new FreeMemo(""))
 					.build();
 
-			doReturn(accountModel).when(accountServiceImpl).getAccountById(accountId);
+			doReturn(accountModel).when(accountServiceImpl).getAccountById(new AccountId(accountId));
 
 			mockMvc.perform(get("/api/v1/accounts/" + accountId))
 				.andExpect(status().isOk())
@@ -196,7 +196,7 @@ public class AccountRestControllerTest {
 			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa"))
 				.andExpect(status().isForbidden());
 
-			verify(accountServiceImpl, times(0)).getAccountById(anyString());
+			verify(accountServiceImpl, times(0)).getAccountById(any(AccountId.class));
 		}
 	}
 
@@ -534,12 +534,12 @@ public class AccountRestControllerTest {
 
 			doReturn(accountId).when(sessionHelper).getAccountId();
 			doReturn(1L).when(sessionHelper).getAccountNo();
-			doNothing().when(accountServiceImpl).deleteAccount(1L, accountId);
+			doNothing().when(accountServiceImpl).deleteAccount(new AccountNo(1L), new AccountId(accountId));
 
 			mockMvc.perform(delete("/api/v1/accounts/" + accountId))
 				.andExpect(status().isOk());
 
-			verify(accountServiceImpl, times(1)).deleteAccount(1L, accountId);
+			verify(accountServiceImpl, times(1)).deleteAccount(new AccountNo(1L), new AccountId(accountId));
 		}
 
 		@Test
@@ -551,7 +551,7 @@ public class AccountRestControllerTest {
 			mockMvc.perform(delete("/api/v1/accounts/aaaaaaaa"))
 				.andExpect(status().isForbidden());
 
-			verify(accountServiceImpl, times(0)).deleteAccount(anyLong(), anyString());
+			verify(accountServiceImpl, times(0)).deleteAccount(any(AccountNo.class), any(AccountId.class));
 		}
 	}
 

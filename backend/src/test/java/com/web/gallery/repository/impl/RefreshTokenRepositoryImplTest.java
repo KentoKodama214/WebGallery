@@ -83,7 +83,7 @@ public class RefreshTokenRepositoryImplTest {
 
 			doReturn(mapperResult).when(refreshTokenMapper).selectByTokenHash("abc123hash");
 
-			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash("abc123hash");
+			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("abc123hash"));
 
 			assertNotNull(actual);
 			assertEquals(new AccountNo(1L), actual.getAccountNo());
@@ -99,7 +99,7 @@ public class RefreshTokenRepositoryImplTest {
 		void findByTokenHash_not_found() {
 			doReturn(null).when(refreshTokenMapper).selectByTokenHash("nonexistent");
 
-			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash("nonexistent");
+			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("nonexistent"));
 
 			assertNull(actual);
 			verify(refreshTokenMapper, times(1)).selectByTokenHash("nonexistent");
@@ -116,7 +116,7 @@ public class RefreshTokenRepositoryImplTest {
 		void revokeAllByAccountNo_success() {
 			doReturn(2).when(refreshTokenMapper).revokeAllByAccountNo(1L);
 
-			refreshTokenRepositoryImpl.revokeAllByAccountNo(1L);
+			refreshTokenRepositoryImpl.revokeAllByAccountNo(new AccountNo(1L));
 
 			verify(refreshTokenMapper, times(1)).revokeAllByAccountNo(1L);
 		}
@@ -132,7 +132,7 @@ public class RefreshTokenRepositoryImplTest {
 		void revokeByTokenHash_success() {
 			doReturn(1).when(refreshTokenMapper).revokeByTokenHash("abc123hash");
 
-			refreshTokenRepositoryImpl.revokeByTokenHash("abc123hash");
+			refreshTokenRepositoryImpl.revokeByTokenHash(new TokenHash("abc123hash"));
 
 			verify(refreshTokenMapper, times(1)).revokeByTokenHash("abc123hash");
 		}

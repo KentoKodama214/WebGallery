@@ -28,6 +28,9 @@ import com.web.gallery.controller.response.PhotoDetailGetResponse;
 import com.web.gallery.controller.response.PhotoEditResponse;
 import com.web.gallery.controller.response.PhotoListGetResponse;
 import com.web.gallery.controller.response.PhotoUpperLimitResponse;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.FileDuplicateException;
@@ -105,7 +108,7 @@ public class PhotoRestController {
 			@PathVariable String photoAccountId) {
 		Boolean isReachedUpperLimit = false;
 		if (photoAccountId.equals(sessionHelper.getAccountId())) {
-			isReachedUpperLimit = photoService.isReachedUpperLimit(sessionHelper.getAccountNo());
+			isReachedUpperLimit = photoService.isReachedUpperLimit(new AccountNo(sessionHelper.getAccountNo()));
 		}
 		return ResponseEntity.ok(PhotoUpperLimitResponse.of(isReachedUpperLimit));
 	}
@@ -164,7 +167,7 @@ public class PhotoRestController {
 			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO);
 		}
 
-		if(Objects.isNull(photoSaveRequest.getPhotoNo()) && photoService.isReachedUpperLimit(sessionHelper.getAccountNo())) {
+		if(Objects.isNull(photoSaveRequest.getPhotoNo()) && photoService.isReachedUpperLimit(new AccountNo(sessionHelper.getAccountNo()))) {
 			throw new PhotoNotAdditableException(ErrorEnum.REACHED_REGISTRATION_LIMIT);
 		}
 		
@@ -183,9 +186,9 @@ public class PhotoRestController {
 		
 		PhotoDetailModelList photoDetailModelList = PhotoDetailModelList.of(List.of(PhotoDetailModel.from(photoSaveRequest)));
 
-		Long savedPhotoNo = photoService.savePhotos(photoAccountId, photoDetailModelList);
+		PhotoNo savedPhotoNo = photoService.savePhotos(new AccountId(photoAccountId), photoDetailModelList);
 
-		return ResponseEntity.ok(PhotoEditResponse.of(savedPhotoNo, photoAccountId, photoConfig.getOutputPath(), photoSaveRequest));
+		return ResponseEntity.ok(PhotoEditResponse.of(savedPhotoNo.value(), photoAccountId, photoConfig.getOutputPath(), photoSaveRequest));
 	}
 	
 	/**
@@ -223,7 +226,7 @@ public class PhotoRestController {
 		
 		PhotoDeleteModelList photoDeleteModelList = PhotoDeleteModelList.of(List.of(PhotoDeleteModel.from(photoDeleteRequest)));
 
-		photoService.deletePhotos(photoAccountId, photoDeleteModelList);
+		photoService.deletePhotos(new AccountId(photoAccountId), photoDeleteModelList);
 		
 		return ResponseEntity.ok(PhotoEditResponse.of(MessageConst.DELETE_PHOTO, null, null));
 	}

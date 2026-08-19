@@ -1,5 +1,8 @@
 package com.web.gallery.service;
 
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
@@ -42,7 +45,7 @@ public interface PhotoService {
 	 * @throws	UpdateFailureException	更新に失敗した場合
 	 * @return							登録・更新した写真番号
 	 */
-	Long savePhotos(String accountId, PhotoDetailModelList photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException;
+	PhotoNo savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException;
 
 	/**
 	 * 写真を削除する
@@ -51,7 +54,7 @@ public interface PhotoService {
 	 * @param	photoDeleteModelList	{@link PhotoDeleteModelList}
 	 * @throws	UpdateFailureException	削除に失敗した場合
 	 */
-	void deletePhotos(String accountId, PhotoDeleteModelList photoDeleteModelList) throws UpdateFailureException;
+	void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList) throws UpdateFailureException;
 	
 	/**
 	 * 該当アカウントが写真の登録枚数の上限に達しているかチェックする
@@ -59,5 +62,5 @@ public interface PhotoService {
 	 * @param	accountNo	アカウント番号
 	 * @return				上限に達している場合、true
 	 */
-	Boolean isReachedUpperLimit(Long accountNo);
+	Boolean isReachedUpperLimit(AccountNo accountNo);
 }

@@ -65,7 +65,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが取得できた場合")
 		void getByAccountNo_found() {
-			AccountModel actual = accountRepositoryImpl.getByAccountNo(1L);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(new AccountNo(1L));
 
 			assertEquals(new AccountNo(1L), actual.getAccountNo());
 			assertEquals(new IsDeleted(false), actual.getIsDeleted());
@@ -86,7 +86,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが取得できなかった場合")
 		void getByAccountNo_not_found() {
-			AccountModel actual = accountRepositoryImpl.getByAccountNo(99L);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(new AccountNo(99L));
 			assertNull(actual);
 		}
 	}
@@ -101,7 +101,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが取得できた場合")
 		void getByAccountId_found() {
-			AccountModel actual = accountRepositoryImpl.getByAccountId("aaaaaaaa");
+			AccountModel actual = accountRepositoryImpl.getByAccountId(new AccountId("aaaaaaaa"));
 
 			assertEquals(new AccountNo(1L), actual.getAccountNo());
 			assertEquals(new IsDeleted(false), actual.getIsDeleted());
@@ -122,7 +122,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが取得できなかった場合")
 		void getByAccountId_not_found() {
-			AccountModel actual = accountRepositoryImpl.getByAccountId("zzzzzzzz");
+			AccountModel actual = accountRepositoryImpl.getByAccountId(new AccountId("zzzzzzzz"));
 			assertNull(actual);
 		}
 	}
@@ -539,14 +539,14 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントが存在する場合")
 		void isExistAccount_true() {
-			assertTrue(accountRepositoryImpl.isExistAccount(2L, "aaaaaaaa"));
+			assertTrue(accountRepositoryImpl.isExistAccount(new AccountNo(2L), new AccountId("aaaaaaaa")));
 		}
 		
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
 		void isExistAccount_false() {
-			assertFalse(accountRepositoryImpl.isExistAccount(1L, "zzzzzzzz"));
+			assertFalse(accountRepositoryImpl.isExistAccount(new AccountNo(1L), new AccountId("zzzzzzzz")));
 		}
 	}
 	
@@ -583,7 +583,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントを物理削除する")
 		void delete_success() {
-			accountRepositoryImpl.delete(1L);
+			accountRepositoryImpl.delete(new AccountNo(1L));
 
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->

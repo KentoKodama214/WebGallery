@@ -31,6 +31,8 @@ import com.web.gallery.config.JwtConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.ExpiresAt;
 import com.web.gallery.domain.common.IsRevoked;
 import com.web.gallery.domain.common.TokenHash;
@@ -97,14 +99,14 @@ class AuthServiceImplTest {
 			when(jwtConfig.getRefreshTokenExpirationDays()).thenReturn(7);
 			when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
 
-			AuthTokenModel result = authServiceImpl.login(accountId, password);
+			AuthTokenModel result = authServiceImpl.login(new AccountId(accountId), new Password(password));
 
 			assertNotNull(result);
 			assertEquals("access-token", result.getAccessToken().value());
 			assertEquals("refresh-token", result.getRefreshToken().value());
 			assertEquals(900L, result.getExpiresIn().value());
 
-			verify(refreshTokenRepository).revokeAllByAccountNo(1L);
+			verify(refreshTokenRepository).revokeAllByAccountNo(new AccountNo(1L));
 			ArgumentCaptor<RefreshTokenModel> refreshTokenModelCaptor = ArgumentCaptor.forClass(RefreshTokenModel.class);
 			verify(refreshTokenRepository).save(refreshTokenModelCaptor.capture());
 			assertEquals(OffsetDateTime.now(clock).plusDays(7), refreshTokenModelCaptor.getValue().getExpiresAt().value());
@@ -117,7 +119,7 @@ class AuthServiceImplTest {
 					.thenThrow(new BadCredentialsException("Bad credentials"));
 
 			assertThrows(BadCredentialsException.class, () -> {
-				authServiceImpl.login("testuser1", "wrongpassword");
+				authServiceImpl.login(new AccountId("testuser1"), new Password("wrongpassword"));
 			});
 		}
 
@@ -128,7 +130,7 @@ class AuthServiceImplTest {
 					.thenThrow(new LockedException("Account is locked"));
 
 			assertThrows(LockedException.class, () -> {
-				authServiceImpl.login("testuser1", "password1");
+				authServiceImpl.login(new AccountId("testuser1"), new Password("password1"));
 			});
 		}
 	}
@@ -148,20 +150,20 @@ class AuthServiceImplTest {
 					.isRevoked(new IsRevoked(false))
 					.build();
 
-			when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(storedToken);
+			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
 
 			AccountModel account = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId("testuser1"))
 					.build();
-			when(accountRepository.getByAccountNo(1L)).thenReturn(account);
+			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
 
 			AccountPrincipal principal = mock(AccountPrincipal.class);
 			when(accountServiceImpl.loadUserByUsername("testuser1")).thenReturn(principal);
 			when(jwtTokenProvider.generateAccessToken(principal)).thenReturn("new-access-token");
 			when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
 
-			AuthTokenModel result = authServiceImpl.refresh(refreshToken);
+			AuthTokenModel result = authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
 
 			assertNotNull(result);
 			assertEquals("new-access-token", result.getAccessToken().value());
@@ -178,10 +180,10 @@ class AuthServiceImplTest {
 					.isRevoked(new IsRevoked(true))
 					.build();
 
-			when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(storedToken);
+			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
 
 			assertThrows(IllegalArgumentException.class, () -> {
-				authServiceImpl.refresh("revoked-token");
+				authServiceImpl.refresh(new RefreshTokenValue("revoked-token"));
 			});
 		}
 
@@ -195,20 +197,20 @@ class AuthServiceImplTest {
 					.isRevoked(new IsRevoked(false))
 					.build();
 
-			when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(storedToken);
+			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
 
 			assertThrows(IllegalArgumentException.class, () -> {
-				authServiceImpl.refresh("expired-token");
+				authServiceImpl.refresh(new RefreshTokenValue("expired-token"));
 			});
 		}
 
 		@Test
 		@DisplayName("異常系: リフレッシュトークンが存在しない場合は例外がスローされること")
 		void refresh_tokenNotFound() {
-			when(refreshTokenRepository.findByTokenHash(anyString())).thenReturn(null);
+			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(null);
 
 			assertThrows(IllegalArgumentException.class, () -> {
-				authServiceImpl.refresh("nonexistent-token");
+				authServiceImpl.refresh(new RefreshTokenValue("nonexistent-token"));
 			});
 		}
 	}
@@ -220,9 +222,9 @@ class AuthServiceImplTest {
 		@Test
 		@DisplayName("正常系: リフレッシュトークンが無効化されること")
 		void logout_success() {
-			authServiceImpl.logout("refresh-token");
+			authServiceImpl.logout(new RefreshTokenValue("refresh-token"));
 
-			verify(refreshTokenRepository).revokeByTokenHash(anyString());
+			verify(refreshTokenRepository).revokeByTokenHash(any(TokenHash.class));
 		}
 	}
 }

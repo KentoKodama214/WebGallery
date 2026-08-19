@@ -16,7 +16,9 @@ import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.LoginConfig;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.MessageConst;
+import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
@@ -57,7 +59,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	@Override
 	@Transactional(readOnly = true)
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		AccountModel accountModel = accountRepository.getByAccountId(username);
+		AccountModel accountModel = accountRepository.getByAccountId(new AccountId(username));
 
 		if (Objects.isNull(accountModel)) {
 			log.info("User not found. (username: {})", username);
@@ -75,7 +77,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional
 	public Boolean registAccount(AccountModel accountModel) throws RegistFailureException {
-		Boolean isExist = accountRepository.isExistAccount(null, accountModel.getAccountId().value());
+		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountId());
 		if(!isExist) accountRepository.regist(accountModel);
 		return !isExist;
 	}
@@ -89,7 +91,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 */
 	@Transactional
 	public Boolean updateAccount(AccountModel accountModel) throws UpdateFailureException {
-		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo().value(), accountModel.getAccountId().value());
+		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
 		if(!isExist) accountRepository.update(accountModel);
 		return isExist;
 	}
@@ -101,7 +103,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @return				{@link AccountModel}
 	 */
 	@Transactional(readOnly = true)
-	public AccountModel getAccountById(String accountId) {
+	public AccountModel getAccountById(AccountId accountId) {
 		return accountRepository.getByAccountId(accountId);
 	}
 
@@ -132,8 +134,8 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @throws	UpdateFailureException	更新に失敗した場合
 	 */
 	@Transactional
-	public void unlockAccount(Long accountNo) throws UpdateFailureException {
-		accountRepository.updateLoginFailureCount(AccountModel.forUnlock(accountNo));
+	public void unlockAccount(AccountNo accountNo) throws UpdateFailureException {
+		accountRepository.updateLoginFailureCount(AccountModel.forUnlock(accountNo.value()));
 	}
 
 	/**
@@ -143,8 +145,8 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @throws	UpdateFailureException	更新に失敗した場合
 	 */
 	@Transactional
-	public void lockAccount(Long accountNo) throws UpdateFailureException {
-		accountRepository.updateLoginFailureCount(AccountModel.forLock(accountNo, loginConfig.getFailCount()));
+	public void lockAccount(AccountNo accountNo) throws UpdateFailureException {
+		accountRepository.updateLoginFailureCount(AccountModel.forLock(accountNo.value(), loginConfig.getFailCount()));
 	}
 
 	/**
@@ -154,26 +156,24 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @param	accountId	アカウントID
 	 */
 	@Transactional
-	public void deleteAccount(Long accountNo, String accountId) {
-		AccountNo accountNoVo = new AccountNo(accountNo);
-
+	public void deleteAccount(AccountNo accountNo, AccountId accountId) {
 		// 自分が登録したお気に入りを削除
-		photoFavoriteRepository.deleteByAccountNo(accountNoVo);
+		photoFavoriteRepository.deleteByAccountNo(accountNo);
 
 		// 自分の写真に対する他人のお気に入りを削除
-		photoFavoriteRepository.deleteByFavoritePhotoAccountNo(accountNoVo);
+		photoFavoriteRepository.deleteByFavoritePhotoAccountNo(accountNo);
 
 		// 写真タグを削除
-		photoTagMstRepository.deleteByAccountNo(accountNoVo);
+		photoTagMstRepository.deleteByAccountNo(accountNo);
 
 		// 写真マスタを物理削除
-		photoMstRepository.deleteByAccountNo(accountNoVo);
+		photoMstRepository.deleteByAccountNo(accountNo);
 
 		// アカウントを物理削除
 		accountRepository.delete(accountNo);
 
 		// 写真ファイルのディレクトリを削除
-		fileRepository.delete(photoConfig.getOutputPath() + accountId + "/");
+		fileRepository.delete(new ImageFilePath(photoConfig.getOutputPath() + accountId.value() + "/"));
 	}
 
 	/**
@@ -185,7 +185,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	@EventListener
 	@Transactional
 	public void handle(AuthenticationSuccessEvent event) throws UpdateFailureException {
-		AccountModel accountModel = accountRepository.getByAccountId(event.getAuthentication().getName());
+		AccountModel accountModel = accountRepository.getByAccountId(new AccountId(event.getAuthentication().getName()));
 
 		accountRepository.updateLoginFailureCount(AccountModel.forLoginSuccess(accountModel.getAccountNo(), clock));
 	}
@@ -199,7 +199,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	@EventListener
 	@Transactional
 	public void handle(AuthenticationFailureBadCredentialsEvent event) throws UpdateFailureException {
-		AccountModel accountModel = accountRepository.getByAccountId(event.getAuthentication().getName());
+		AccountModel accountModel = accountRepository.getByAccountId(new AccountId(event.getAuthentication().getName()));
 
 		if(!Objects.isNull(accountModel)) {
 			accountRepository.updateLoginFailureCount(

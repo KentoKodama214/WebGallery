@@ -2,6 +2,8 @@ package com.web.gallery.repository.impl;
 
 import org.springframework.stereotype.Repository;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.entity.RefreshToken;
 import com.web.gallery.mapper.RefreshTokenMapper;
 import com.web.gallery.model.RefreshTokenModel;
@@ -27,8 +29,8 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
 	}
 
 	@Override
-	public RefreshTokenModel findByTokenHash(String tokenHash) {
-		RefreshToken refreshToken = refreshTokenMapper.selectByTokenHash(tokenHash);
+	public RefreshTokenModel findByTokenHash(TokenHash tokenHash) {
+		RefreshToken refreshToken = refreshTokenMapper.selectByTokenHash(tokenHash.value());
 		if (refreshToken == null) {
 			return null;
 		}
@@ -36,13 +38,13 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
 	}
 
 	@Override
-	public void revokeAllByAccountNo(Long accountNo) {
-		refreshTokenMapper.revokeAllByAccountNo(accountNo);
+	public void revokeAllByAccountNo(AccountNo accountNo) {
+		refreshTokenMapper.revokeAllByAccountNo(accountNo.value());
 	}
 
 	@Override
-	public void revokeByTokenHash(String tokenHash) {
-		refreshTokenMapper.revokeByTokenHash(tokenHash);
+	public void revokeByTokenHash(TokenHash tokenHash) {
+		refreshTokenMapper.revokeByTokenHash(tokenHash.value());
 	}
 
 	@Override

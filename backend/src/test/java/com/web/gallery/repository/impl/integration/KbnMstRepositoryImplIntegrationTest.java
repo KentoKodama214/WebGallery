@@ -15,6 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.common.KbnCode;
 import com.web.gallery.model.KbnMstModelList;
 import com.web.gallery.repository.impl.KbnMstRepositoryImpl;
@@ -36,7 +37,7 @@ public class KbnMstRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：区分マスタが取得できた場合")
 		void get_found() {
-			KbnMstModelList actual = kbnMstRepositoryImpl.get("sex");
+			KbnMstModelList actual = kbnMstRepositoryImpl.get(new KbnClassCode("sex"));
 			assertEquals(2, actual.size());
 			assertEquals(new KbnCode("man"), actual.get(0).getKbnCode());
 			assertEquals(new KbnCode("woman"), actual.get(1).getKbnCode());
@@ -46,7 +47,7 @@ public class KbnMstRepositoryImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：区分マスタが取得できなかった場合")
 		void get_not_found() {
-			KbnMstModelList actual = kbnMstRepositoryImpl.get("test");
+			KbnMstModelList actual = kbnMstRepositoryImpl.get(new KbnClassCode("test"));
 			assertEquals(0, actual.size());
 		}
 	}

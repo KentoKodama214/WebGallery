@@ -76,7 +76,7 @@ public class PhotoMstRepositoryImplTest {
 			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
 			doReturn(1).when(photoMstMapper).insert(photoMstCaptor.capture());
 			
-			photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 1L);
+			photoMstRepositoryImpl.regist(photoDetailModel, new ImageFilePath(imageFilePath), new PhotoNo(1L));
 			
 			verify(photoMstMapper).insert(any(PhotoMst.class));
 			PhotoMst photoMst = photoMstCaptor.getValue();
@@ -125,7 +125,7 @@ public class PhotoMstRepositoryImplTest {
 			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
 			doReturn(1).when(photoMstMapper).insert(photoMstCaptor.capture());
 			
-			photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 1L);
+			photoMstRepositoryImpl.regist(photoDetailModel, new ImageFilePath(imageFilePath), new PhotoNo(1L));
 			
 			verify(photoMstMapper).insert(any(PhotoMst.class));
 			PhotoMst photoMst = photoMstCaptor.getValue();
@@ -164,7 +164,7 @@ public class PhotoMstRepositoryImplTest {
 			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
 			doThrow(DuplicateKeyException.class).when(photoMstMapper).insert(photoMstCaptor.capture());
 			
-			assertThrows(RegistFailureException.class, () -> photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 1L));
+			assertThrows(RegistFailureException.class, () -> photoMstRepositoryImpl.regist(photoDetailModel, new ImageFilePath(imageFilePath), new PhotoNo(1L)));
 			
 			verify(photoMstMapper).insert(any(PhotoMst.class));
 			PhotoMst photoMst = photoMstCaptor.getValue();
@@ -523,7 +523,7 @@ public class PhotoMstRepositoryImplTest {
 		@DisplayName("正常系：getMaxPhotoNoがある場合")
 		void getNewPhotoNo_getMaxPhotoNo_found() {
 			doReturn(1L).when(photoMstMapper).getMaxPhotoNo(1L);
-			assertEquals(2L, photoMstRepositoryImpl.getNewPhotoNo(1L));
+			assertEquals(new PhotoNo(2L), photoMstRepositoryImpl.getNewPhotoNo(new AccountNo(1L)));
 		}
 		
 		@Test
@@ -531,7 +531,7 @@ public class PhotoMstRepositoryImplTest {
 		@DisplayName("正常系：getMaxPhotoNoがない場合")
 		void getNewPhotoNo_getMaxPhotoNo_not_found() {
 			doReturn(null).when(photoMstMapper).getMaxPhotoNo(1L);
-			assertEquals(1L, photoMstRepositoryImpl.getNewPhotoNo(1L));
+			assertEquals(new PhotoNo(1L), photoMstRepositoryImpl.getNewPhotoNo(new AccountNo(1L)));
 		}
 	}
 	
@@ -602,7 +602,7 @@ public class PhotoMstRepositoryImplTest {
 			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
 			doReturn(3).when(photoMstMapper).count(photoMstCaptor.capture());
 			
-			assertEquals(3, photoMstRepositoryImpl.count(1L));
+			assertEquals(3, photoMstRepositoryImpl.count(new AccountNo(1L)));
 			
 			PhotoMst photoMst = photoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoMst.getAccountNo());

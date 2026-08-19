@@ -7,7 +7,10 @@ import java.time.Clock;
 import java.time.OffsetDateTime;
 
 import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.ExpiresAt;
 import com.web.gallery.domain.common.TokenHash;
 
@@ -72,14 +75,14 @@ public class AuthServiceImpl implements AuthService {
 	 */
 	@Override
 	@Transactional
-	public AuthTokenModel login(String accountId, String password) {
+	public AuthTokenModel login(AccountId accountId, Password password) {
 		Authentication authentication = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(accountId, password));
+				new UsernamePasswordAuthenticationToken(accountId.value(), password.value()));
 
 		AccountPrincipal principal = (AccountPrincipal) authentication.getPrincipal();
 
 		// 既存のリフレッシュトークンをすべて無効化（同時セッション制限）
-		refreshTokenRepository.revokeAllByAccountNo(principal.getAccountNo());
+		refreshTokenRepository.revokeAllByAccountNo(new AccountNo(principal.getAccountNo()));
 
 		// 新しいトークンを生成
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);
@@ -104,8 +107,8 @@ public class AuthServiceImpl implements AuthService {
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public AuthTokenModel refresh(String refreshToken) {
-		String tokenHash = hashToken(refreshToken);
+	public AuthTokenModel refresh(RefreshTokenValue refreshToken) {
+		TokenHash tokenHash = new TokenHash(hashToken(refreshToken.value()));
 		RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 
 		if (storedToken == null || storedToken.getIsRevoked().value()) {
@@ -117,13 +120,13 @@ public class AuthServiceImpl implements AuthService {
 		}
 
 		// アカウント番号からアカウント情報を取得し、新しいアクセストークンを発行
-		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo().value());
+		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo());
 		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId().value());
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
 
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);
 
-		return AuthTokenModel.of(accessToken, refreshToken,
+		return AuthTokenModel.of(accessToken, refreshToken.value(),
 				(long) jwtConfig.getAccessTokenExpirationMinutes() * 60);
 	}
 
@@ -134,8 +137,8 @@ public class AuthServiceImpl implements AuthService {
 	 */
 	@Override
 	@Transactional
-	public void logout(String refreshToken) {
-		refreshTokenRepository.revokeByTokenHash(hashToken(refreshToken));
+	public void logout(RefreshTokenValue refreshToken) {
+		refreshTokenRepository.revokeByTokenHash(new TokenHash(hashToken(refreshToken.value())));
 	}
 
 	/**

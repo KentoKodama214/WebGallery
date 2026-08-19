@@ -1,5 +1,7 @@
 package com.web.gallery.repository;
 
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
@@ -16,7 +18,7 @@ public interface AccountRepository {
 	 * @return	AccountModel	{@link AccountModel}<p>
 	 * 							取得できない場合はnullを返す
 	 */
-	AccountModel getByAccountNo(Long accountNo);
+	AccountModel getByAccountNo(AccountNo accountNo);
 
 	/**
 	 * Accountテーブルで該当するレコードを取得する
@@ -25,7 +27,7 @@ public interface AccountRepository {
 	 * @return	AccountModel	{@link AccountModel}<p>
 	 * 							取得できない場合はnullを返す
 	 */
-	AccountModel getByAccountId(String accountId);
+	AccountModel getByAccountId(AccountId accountId);
 
 	/**
 	 * Accountテーブルへ登録する
@@ -52,13 +54,21 @@ public interface AccountRepository {
 	void updateLoginFailureCount(AccountModel accountModel) throws UpdateFailureException;
 
 	/**
-	 * アカウントIDに該当するアカウントの存在有無をチェックする
+	 * アカウントIDに該当するアカウントの存在有無をチェックする（新規登録用、除外なし）
+	 *
+	 * @param	accountId	アカウントID
+	 * @return				true：存在する
+	 */
+	Boolean isExistAccount(AccountId accountId);
+
+	/**
+	 * アカウントIDに該当するアカウントの存在有無をチェックする（更新用、自分自身を除外）
 	 *
 	 * @param	accountNo	検索対象外のアカウント番号
 	 * @param	accountId	アカウントID
 	 * @return				true：存在する
 	 */
-	Boolean isExistAccount(Long accountNo, String accountId);
+	Boolean isExistAccount(AccountNo accountNo, AccountId accountId);
 
 	/**
 	 * アカウントの一覧を取得する
@@ -79,5 +89,5 @@ public interface AccountRepository {
 	 *
 	 * @param	accountNo	アカウント番号
 	 */
-	void delete(Long accountNo);
+	void delete(AccountNo accountNo);
 }

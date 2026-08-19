@@ -84,7 +84,7 @@ public class KbnMstRepositoryImplTest {
 			ArgumentCaptor<KbnMst> kbnMstCaptor = ArgumentCaptor.forClass(KbnMst.class);
 			doReturn(expected).when(kbnMstMapper).select(kbnMstCaptor.capture());
 			
-			KbnMstModelList actual = kbnMstRepositoryImpl.get(kbnClassCode);
+			KbnMstModelList actual = kbnMstRepositoryImpl.get(new KbnClassCode(kbnClassCode));
 			
 			KbnMst kbnMstCapture = kbnMstCaptor.getValue();
 			assertEquals(new KbnClassCode(kbnClassCode), kbnMstCapture.getKbnClassCode());
@@ -113,7 +113,7 @@ public class KbnMstRepositoryImplTest {
 			ArgumentCaptor<KbnMst> kbnMstCaptor = ArgumentCaptor.forClass(KbnMst.class);
 			doReturn(expected).when(kbnMstMapper).select(kbnMstCaptor.capture());
 			
-			KbnMstModelList actual = kbnMstRepositoryImpl.get(kbnClassCode);
+			KbnMstModelList actual = kbnMstRepositoryImpl.get(new KbnClassCode(kbnClassCode));
 
 			KbnMst kbnMstCapture = kbnMstCaptor.getValue();
 			assertEquals(new KbnClassCode(kbnClassCode), kbnMstCapture.getKbnClassCode());

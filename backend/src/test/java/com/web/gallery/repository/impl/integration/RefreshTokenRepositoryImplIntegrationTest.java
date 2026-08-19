@@ -115,7 +115,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：トークンハッシュに該当するリフレッシュトークンを取得する")
 		void findByTokenHash_success() {
-			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash("valid_token_hash_1");
+			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
 
 			assertNotNull(actual);
 			assertEquals(new AccountNo(1L), actual.getAccountNo());
@@ -127,7 +127,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：無効化済みのトークンも取得できる")
 		void findByTokenHash_revoked() {
-			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash("revoked_token_hash_1");
+			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("revoked_token_hash_1"));
 
 			assertNotNull(actual);
 			assertTrue(actual.getIsRevoked().value());
@@ -137,7 +137,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@Order(3)
 		@DisplayName("正常系：該当するトークンが存在しない場合、nullを返す")
 		void findByTokenHash_not_found() {
-			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash("nonexistent_hash");
+			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("nonexistent_hash"));
 
 			assertNull(actual);
 		}
@@ -154,7 +154,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@DisplayName("正常系：アカウント番号に該当する有効なリフレッシュトークンをすべて無効化する")
 		void revokeAllByAccountNo_success() {
 			// アカウント1の有効なトークンが2件（token_id=1,5）、無効化済み1件（token_id=2）、期限切れ1件（token_id=3）
-			refreshTokenRepositoryImpl.revokeAllByAccountNo(1L);
+			refreshTokenRepositoryImpl.revokeAllByAccountNo(new AccountNo(1L));
 
 			List<RefreshToken> account1Tokens = getRefreshTokensByAccountNo(1L);
 			// アカウント1のトークンはすべて無効化されている
@@ -163,7 +163,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			}
 
 			// アカウント2のトークンは影響を受けない
-			RefreshTokenModel account2Token = refreshTokenRepositoryImpl.findByTokenHash("valid_token_hash_2");
+			RefreshTokenModel account2Token = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_2"));
 			assertNotNull(account2Token);
 			assertFalse(account2Token.getIsRevoked().value());
 		}
@@ -172,7 +172,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：該当するトークンが存在しない場合もエラーにならない")
 		void revokeAllByAccountNo_no_tokens() {
-			assertDoesNotThrow(() -> refreshTokenRepositoryImpl.revokeAllByAccountNo(999L));
+			assertDoesNotThrow(() -> refreshTokenRepositoryImpl.revokeAllByAccountNo(new AccountNo(999L)));
 		}
 	}
 
@@ -187,17 +187,17 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@DisplayName("正常系：トークンハッシュに該当するリフレッシュトークンを無効化する")
 		void revokeByTokenHash_success() {
 			// 無効化前は有効
-			RefreshTokenModel before = refreshTokenRepositoryImpl.findByTokenHash("valid_token_hash_1");
+			RefreshTokenModel before = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
 			assertFalse(before.getIsRevoked().value());
 
-			refreshTokenRepositoryImpl.revokeByTokenHash("valid_token_hash_1");
+			refreshTokenRepositoryImpl.revokeByTokenHash(new TokenHash("valid_token_hash_1"));
 
 			// 無効化後はis_revoked=true
-			RefreshTokenModel after = refreshTokenRepositoryImpl.findByTokenHash("valid_token_hash_1");
+			RefreshTokenModel after = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
 			assertTrue(after.getIsRevoked().value());
 
 			// 他のトークンは影響を受けない
-			RefreshTokenModel otherToken = refreshTokenRepositoryImpl.findByTokenHash("valid_token_hash_1b");
+			RefreshTokenModel otherToken = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1b"));
 			assertFalse(otherToken.getIsRevoked().value());
 		}
 
@@ -205,7 +205,7 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：該当するトークンが存在しない場合もエラーにならない")
 		void revokeByTokenHash_not_found() {
-			assertDoesNotThrow(() -> refreshTokenRepositoryImpl.revokeByTokenHash("nonexistent_hash"));
+			assertDoesNotThrow(() -> refreshTokenRepositoryImpl.revokeByTokenHash(new TokenHash("nonexistent_hash")));
 		}
 	}
 
@@ -230,11 +230,11 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			assertEquals(4, afterCount);
 
 			// 期限切れトークン（token_id=3）が削除されていることを検証
-			RefreshTokenModel deletedToken = refreshTokenRepositoryImpl.findByTokenHash("expired_token_hash_1");
+			RefreshTokenModel deletedToken = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("expired_token_hash_1"));
 			assertNull(deletedToken);
 
 			// 有効なトークンは残っている
-			RefreshTokenModel validToken = refreshTokenRepositoryImpl.findByTokenHash("valid_token_hash_1");
+			RefreshTokenModel validToken = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
 			assertNotNull(validToken);
 		}
 	}
