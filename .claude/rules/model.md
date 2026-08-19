@@ -5,6 +5,11 @@ paths:
 
 # Modelクラスのアーキテクチャルール
 
+## 命名規則
+
+- クラス名サフィックス: `Model`
+- Modelのコレクションを表すクラスのクラス名サフィックス: `ModelList`（例：`AccountModelList`、`PhotoModelList`）
+
 ## Lombokアノテーション規約
 
 - **許可**: `@Value` と `@Builder` のみ
@@ -15,12 +20,7 @@ paths:
 - Null許容しないプロパティには`@NonNull`アノテーションを付与すること
 - `@NonNull`が一つも使われていないModelクラスは違反の可能性がある
 
-## 命名規則
-
-- クラス名サフィックス: `Model`
-- Modelのコレクションを表すクラスのクラス名サフィックス: `ModelList`（例：`AccountModelList`、`PhotoModelList`）
-
-## コレクションクラス（`XxxModelList`）
+## コレクションオブジェクト（ファーストクラスコレクション、`XxxModelList`）
 
 - `record XxxModelList(List<XxxModel> xxxModelList) implements Iterable<XxxModel>`として実装する（Lombokの`@Value`/`@Builder`は使用しない）
 - コンパクトコンストラクタで`Objects.requireNonNull()`によるnullチェックを行う

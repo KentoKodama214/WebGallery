@@ -5,15 +5,15 @@ paths:
 
 # 統合テストのアーキテクチャルール
 
+## 命名規則
+
+- クラス名に`IntegrationTest`サフィックスを付与すること
+
 ## テスト種別
 
 - `@SpringBootTest`と`@ActiveProfiles("test")`を使用
 - `@Transactional`による自動ロールバック
 - `@Sql("/sql/...")`アノテーションでテストフィクスチャデータを読み込み
-
-## 命名規則
-
-- クラス名に`IntegrationTest`サフィックスを付与すること
 
 ## 配置ルール
 
