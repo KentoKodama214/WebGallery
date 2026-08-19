@@ -1,5 +1,6 @@
 package com.web.gallery.repository;
 
+import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.model.KbnMstModelList;
 
 /**
@@ -12,5 +13,5 @@ public interface KbnMstRepository {
 	 * @param	kbnClassCode	区分クラスコード
 	 * @return					{@link KbnMstModelList}
 	 */
-	KbnMstModelList get(String kbnClassCode);
+	KbnMstModelList get(KbnClassCode kbnClassCode);
 }

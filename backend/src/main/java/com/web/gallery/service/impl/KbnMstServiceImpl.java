@@ -4,6 +4,7 @@ import com.web.gallery.constant.Consts;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.model.KbnMstModelList;
 import com.web.gallery.repository.KbnMstRepository;
 import com.web.gallery.service.KbnMstService;
@@ -27,6 +28,6 @@ public class KbnMstServiceImpl implements KbnMstService {
 	@Override
 	@Transactional(readOnly = true)
 	public KbnMstModelList getPrefectureList() {
-		return kbnMstRepository.get(Consts.PREFECTURE);
+		return kbnMstRepository.get(new KbnClassCode(Consts.PREFECTURE));
 	}
 }

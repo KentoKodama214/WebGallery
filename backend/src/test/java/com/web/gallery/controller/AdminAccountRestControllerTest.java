@@ -127,7 +127,7 @@ public class AdminAccountRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントのロックを解除できること")
 		void unlockAccount_success() throws Exception {
-			doNothing().when(accountServiceImpl).unlockAccount(1L);
+			doNothing().when(accountServiceImpl).unlockAccount(new AccountNo(1L));
 
 			mockMvc.perform(put("/api/v1/admin/accounts/1/unlock"))
 				.andExpect(status().isOk())
@@ -135,14 +135,14 @@ public class AdminAccountRestControllerTest {
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value(MessageConst.UNLOCK_ACCOUNT));
 
-			verify(accountServiceImpl, times(1)).unlockAccount(1L);
+			verify(accountServiceImpl, times(1)).unlockAccount(new AccountNo(1L));
 		}
 
 		@Test
 		@Order(2)
 		@DisplayName("異常系：UpdateFailureExceptionが発生した場合は409を返すこと")
 		void unlockAccount_updateFailure() throws Exception {
-			doThrow(UpdateFailureException.class).when(accountServiceImpl).unlockAccount(999L);
+			doThrow(UpdateFailureException.class).when(accountServiceImpl).unlockAccount(new AccountNo(999L));
 
 			mockMvc.perform(put("/api/v1/admin/accounts/999/unlock"))
 				.andExpect(status().isConflict());
@@ -157,7 +157,7 @@ public class AdminAccountRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントを強制ロックできること")
 		void lockAccount_success() throws Exception {
-			doNothing().when(accountServiceImpl).lockAccount(1L);
+			doNothing().when(accountServiceImpl).lockAccount(new AccountNo(1L));
 
 			mockMvc.perform(put("/api/v1/admin/accounts/1/lock"))
 				.andExpect(status().isOk())
@@ -165,14 +165,14 @@ public class AdminAccountRestControllerTest {
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value(MessageConst.LOCK_ACCOUNT));
 
-			verify(accountServiceImpl, times(1)).lockAccount(1L);
+			verify(accountServiceImpl, times(1)).lockAccount(new AccountNo(1L));
 		}
 
 		@Test
 		@Order(2)
 		@DisplayName("異常系：UpdateFailureExceptionが発生した場合は409を返すこと")
 		void lockAccount_updateFailure() throws Exception {
-			doThrow(UpdateFailureException.class).when(accountServiceImpl).lockAccount(999L);
+			doThrow(UpdateFailureException.class).when(accountServiceImpl).lockAccount(new AccountNo(999L));
 
 			mockMvc.perform(put("/api/v1/admin/accounts/999/lock"))
 				.andExpect(status().isConflict());

@@ -15,6 +15,7 @@ import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagNo;
@@ -75,7 +76,7 @@ public class PhotoServiceImpl implements PhotoService {
 	@Override
 	@Transactional(readOnly = true)
 	public PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel) {
-		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId().value());
+		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId());
 
 		PhotoModelList photoModelList
 			= photoDetailRepository.getPhotoList(
@@ -111,13 +112,13 @@ public class PhotoServiceImpl implements PhotoService {
 	 */
 	@Override
 	@Transactional
-	public Long savePhotos(String accountId, PhotoDetailModelList photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+	public PhotoNo savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException {
 		if(Objects.isNull(photoDetailModelList)) return null;
 		if(photoDetailModelList.isEmpty()) return null;
 
-		Long photoNo = photoMstRepository.getNewPhotoNo(photoDetailModelList.getFirst().getAccountNo().value());
-		Long savedPhotoNo = photoNo;
-		String filePath = photoConfig.getOutputPath() + accountId + "/";
+		Long photoNo = photoMstRepository.getNewPhotoNo(photoDetailModelList.getFirst().getAccountNo()).value();
+		PhotoNo savedPhotoNo = new PhotoNo(photoNo);
+		String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
 
 		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
 			if(Objects.isNull(photoDetailModel.getPhotoNo())) {
@@ -127,11 +128,11 @@ public class PhotoServiceImpl implements PhotoService {
 					throw new FileDuplicateException(ErrorEnum.DUPLICATE_PHOTO_FILE);
 				}
 
-				photoMstRepository.regist(photoDetailModel, filePath + filename, photoNo);
+				photoMstRepository.regist(photoDetailModel, new ImageFilePath(filePath + filename), new PhotoNo(photoNo));
 				registPhotoTags(photoDetailModel.getPhotoTagModelList(), photoNo++);
 				uploadFile(new ImageFilePath(filePath + filename), photoDetailModel.getImageFile());
 			} else {
-				savedPhotoNo = photoDetailModel.getPhotoNo().value();
+				savedPhotoNo = photoDetailModel.getPhotoNo();
 				photoMstRepository.update(photoDetailModel);
 				deletePhotoTags(photoDetailModel.getAccountNo(), photoDetailModel.getPhotoNo());
 				registPhotoTags(photoDetailModel.getPhotoTagModelList(), null);
@@ -149,8 +150,8 @@ public class PhotoServiceImpl implements PhotoService {
 	 */
 	@Override
 	@Transactional
-	public void deletePhotos(String accountId, PhotoDeleteModelList photoDeleteModelList) throws UpdateFailureException {
-		String filePath = photoConfig.getOutputPath() + accountId + "/";
+	public void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList) throws UpdateFailureException {
+		String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
 
 		for(PhotoDeleteModel photoDeleteModel : photoDeleteModelList) {
 			photoFavoriteRepository.clear(PhotoFavoriteDeleteModel.from(photoDeleteModel));
@@ -159,7 +160,7 @@ public class PhotoServiceImpl implements PhotoService {
 			photoMstRepository.delete(photoDeleteModel);
 
 			String fileName = new File(photoDeleteModel.getImageFilePath().value()).getName();
-			fileRepository.delete(filePath + fileName);
+			fileRepository.delete(new ImageFilePath(filePath + fileName));
 		}
 	}
 
@@ -171,9 +172,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public Boolean isReachedUpperLimit(Long accountNo) {
-		if(Objects.isNull(accountNo)) return true;
-
+	public Boolean isReachedUpperLimit(AccountNo accountNo) {
 		AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
 		Integer count = photoMstRepository.count(accountNo);
 

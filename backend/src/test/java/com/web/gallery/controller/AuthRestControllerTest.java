@@ -23,6 +23,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.web.gallery.config.JwtConfig;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.AccessToken;
 import com.web.gallery.domain.auth.ExpiresIn;
 import com.web.gallery.domain.auth.RefreshTokenValue;
@@ -64,7 +66,7 @@ public class AuthRestControllerTest {
 					.expiresIn(new ExpiresIn(900L))
 					.build();
 
-			doReturn(tokenModel).when(authServiceImpl).login("testuser", "password123");
+			doReturn(tokenModel).when(authServiceImpl).login(new AccountId("testuser"), new Password("password123"));
 			doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
 
 			mockMvc.perform(
@@ -77,7 +79,7 @@ public class AuthRestControllerTest {
 				.andExpect(jsonPath("$.expiresIn").value(900))
 				.andExpect(header().exists("Set-Cookie"));
 
-			verify(authServiceImpl, times(1)).login("testuser", "password123");
+			verify(authServiceImpl, times(1)).login(new AccountId("testuser"), new Password("password123"));
 		}
 
 		@Test
@@ -91,7 +93,7 @@ public class AuthRestControllerTest {
 				)
 				.andExpect(status().isBadRequest());
 
-			verify(authServiceImpl, times(0)).login(anyString(), anyString());
+			verify(authServiceImpl, times(0)).login(any(AccountId.class), any(Password.class));
 		}
 
 		@Test
@@ -105,7 +107,7 @@ public class AuthRestControllerTest {
 				)
 				.andExpect(status().isBadRequest());
 
-			verify(authServiceImpl, times(0)).login(anyString(), anyString());
+			verify(authServiceImpl, times(0)).login(any(AccountId.class), any(Password.class));
 		}
 
 		@Test
@@ -113,7 +115,7 @@ public class AuthRestControllerTest {
 		@DisplayName("異常系：認証失敗（BadCredentialsException）の場合、401を返す")
 		void login_bad_credentials() throws Exception {
 			doThrow(new BadCredentialsException("Bad credentials"))
-				.when(authServiceImpl).login("testuser", "wrongpassword");
+				.when(authServiceImpl).login(new AccountId("testuser"), new Password("wrongpassword"));
 
 			mockMvc.perform(
 					post("/api/v1/auth/login")
@@ -129,7 +131,7 @@ public class AuthRestControllerTest {
 		@DisplayName("異常系：アカウントロック（LockedException）の場合、423を返す")
 		void login_locked() throws Exception {
 			doThrow(new LockedException("Account is locked"))
-				.when(authServiceImpl).login("testuser", "password123");
+				.when(authServiceImpl).login(new AccountId("testuser"), new Password("password123"));
 
 			mockMvc.perform(
 					post("/api/v1/auth/login")
@@ -155,7 +157,7 @@ public class AuthRestControllerTest {
 					.expiresIn(new ExpiresIn(900L))
 					.build();
 
-			doReturn(tokenModel).when(authServiceImpl).refresh("test-refresh-token");
+			doReturn(tokenModel).when(authServiceImpl).refresh(new RefreshTokenValue("test-refresh-token"));
 
 			mockMvc.perform(
 					post("/api/v1/auth/refresh")
@@ -165,7 +167,7 @@ public class AuthRestControllerTest {
 				.andExpect(jsonPath("$.accessToken").value("new-access-token"))
 				.andExpect(jsonPath("$.expiresIn").value(900));
 
-			verify(authServiceImpl, times(1)).refresh("test-refresh-token");
+			verify(authServiceImpl, times(1)).refresh(new RefreshTokenValue("test-refresh-token"));
 		}
 
 		@Test
@@ -177,7 +179,7 @@ public class AuthRestControllerTest {
 				)
 				.andExpect(status().isUnauthorized());
 
-			verify(authServiceImpl, times(0)).refresh(anyString());
+			verify(authServiceImpl, times(0)).refresh(any(RefreshTokenValue.class));
 		}
 
 		@Test
@@ -190,7 +192,7 @@ public class AuthRestControllerTest {
 				)
 				.andExpect(status().isUnauthorized());
 
-			verify(authServiceImpl, times(0)).refresh(anyString());
+			verify(authServiceImpl, times(0)).refresh(any(RefreshTokenValue.class));
 		}
 
 		@Test
@@ -198,7 +200,7 @@ public class AuthRestControllerTest {
 		@DisplayName("異常系：無効なリフレッシュトークンの場合、401を返す")
 		void refresh_invalid_token() throws Exception {
 			doThrow(new IllegalArgumentException("無効なリフレッシュトークンです"))
-				.when(authServiceImpl).refresh("invalid-token");
+				.when(authServiceImpl).refresh(new RefreshTokenValue("invalid-token"));
 
 			mockMvc.perform(
 					post("/api/v1/auth/refresh")
@@ -217,7 +219,7 @@ public class AuthRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：ログアウト成功（refreshTokenあり）")
 		void logout_with_token() throws Exception {
-			doNothing().when(authServiceImpl).logout("test-refresh-token");
+			doNothing().when(authServiceImpl).logout(new RefreshTokenValue("test-refresh-token"));
 
 			mockMvc.perform(
 					post("/api/v1/auth/logout")
@@ -226,7 +228,7 @@ public class AuthRestControllerTest {
 				.andExpect(status().isNoContent())
 				.andExpect(header().exists("Set-Cookie"));
 
-			verify(authServiceImpl, times(1)).logout("test-refresh-token");
+			verify(authServiceImpl, times(1)).logout(new RefreshTokenValue("test-refresh-token"));
 		}
 
 		@Test
@@ -239,7 +241,7 @@ public class AuthRestControllerTest {
 				.andExpect(status().isNoContent())
 				.andExpect(header().exists("Set-Cookie"));
 
-			verify(authServiceImpl, times(0)).logout(anyString());
+			verify(authServiceImpl, times(0)).logout(any(RefreshTokenValue.class));
 		}
 
 		@Test
@@ -253,7 +255,7 @@ public class AuthRestControllerTest {
 				.andExpect(status().isNoContent())
 				.andExpect(header().exists("Set-Cookie"));
 
-			verify(authServiceImpl, times(0)).logout(anyString());
+			verify(authServiceImpl, times(0)).logout(any(RefreshTokenValue.class));
 		}
 	}
 }

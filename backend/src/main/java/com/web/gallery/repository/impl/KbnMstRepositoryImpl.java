@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.entity.KbnMst;
 import com.web.gallery.mapper.KbnMstMapper;
 import com.web.gallery.model.KbnMstModelList;
@@ -27,8 +28,8 @@ public class KbnMstRepositoryImpl implements KbnMstRepository {
 	 * @return					{@link KbnMstModelList}
 	 */
 	@Override
-	public KbnMstModelList get(String kbnClassCode) {
-		List<KbnMst> kbnMstList = kbnMstMapper.select(KbnMst.condition(kbnClassCode));
+	public KbnMstModelList get(KbnClassCode kbnClassCode) {
+		List<KbnMst> kbnMstList = kbnMstMapper.select(KbnMst.condition(kbnClassCode.value()));
 
 		return KbnMstModelList.from(kbnMstList);
 	}

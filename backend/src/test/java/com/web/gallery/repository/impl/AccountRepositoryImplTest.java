@@ -96,7 +96,7 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(accountList).when(accountMapper).select(accountCaptor.capture());
 
-			AccountModel actual = accountRepositoryImpl.getByAccountNo(1L);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(new AccountNo(1L));
 
 			verify(accountMapper).select(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
@@ -124,7 +124,7 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(new ArrayList<Account>()).when(accountMapper).select(accountCaptor.capture());
 
-			AccountModel actual = accountRepositoryImpl.getByAccountNo(1L);
+			AccountModel actual = accountRepositoryImpl.getByAccountNo(new AccountNo(1L));
 
 			verify(accountMapper).select(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
@@ -168,7 +168,7 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(accountList).when(accountMapper).select(accountCaptor.capture());
 
-			AccountModel actual = accountRepositoryImpl.getByAccountId("aaaaaaaa");
+			AccountModel actual = accountRepositoryImpl.getByAccountId(new AccountId("aaaaaaaa"));
 
 			verify(accountMapper).select(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
@@ -196,7 +196,7 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(new ArrayList<Account>()).when(accountMapper).select(accountCaptor.capture());
 			
-			AccountModel actual = accountRepositoryImpl.getByAccountId("aaaaaaaa");
+			AccountModel actual = accountRepositoryImpl.getByAccountId(new AccountId("aaaaaaaa"));
 			
 			verify(accountMapper).select(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
@@ -587,7 +587,7 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(1).when(accountMapper).delete(accountCaptor.capture());
 
-			accountRepositoryImpl.delete(1L);
+			accountRepositoryImpl.delete(new AccountNo(1L));
 
 			verify(accountMapper, times(1)).delete(any(Account.class));
 			Account accountCapture = accountCaptor.getValue();
@@ -606,7 +606,7 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(true).when(accountMapper).isExistAccount(accountCaptor.capture());
 
-			assertTrue(accountRepositoryImpl.isExistAccount(1L, "aaaaaaaa"));
+			assertTrue(accountRepositoryImpl.isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa")));
 			verify(accountMapper, times(1)).isExistAccount(any(Account.class));
 
 			Account accountCapture = accountCaptor.getValue();
@@ -621,7 +621,7 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			doReturn(false).when(accountMapper).isExistAccount(accountCaptor.capture());
 
-			assertFalse(accountRepositoryImpl.isExistAccount(1L, "aaaaaaaa"));
+			assertFalse(accountRepositoryImpl.isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa")));
 			verify(accountMapper, times(1)).isExistAccount(any());
 
 			Account accountCapture = accountCaptor.getValue();

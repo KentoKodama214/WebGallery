@@ -1,5 +1,7 @@
 package com.web.gallery.repository;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.model.RefreshTokenModel;
 
 /**
@@ -22,21 +24,21 @@ public interface RefreshTokenRepository {
 	 * @param	tokenHash	トークンハッシュ
 	 * @return				{@link RefreshTokenModel}、取得できない場合はnull
 	 */
-	RefreshTokenModel findByTokenHash(String tokenHash);
+	RefreshTokenModel findByTokenHash(TokenHash tokenHash);
 
 	/**
 	 * アカウント番号に該当するリフレッシュトークンをすべて無効化する
 	 *
 	 * @param	accountNo	アカウント番号
 	 */
-	void revokeAllByAccountNo(Long accountNo);
+	void revokeAllByAccountNo(AccountNo accountNo);
 
 	/**
 	 * トークンハッシュに該当するリフレッシュトークンを無効化する
 	 *
 	 * @param	tokenHash	トークンハッシュ
 	 */
-	void revokeByTokenHash(String tokenHash);
+	void revokeByTokenHash(TokenHash tokenHash);
 
 	/**
 	 * 有効期限切れのリフレッシュトークンを削除する

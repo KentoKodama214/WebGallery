@@ -46,6 +46,7 @@ import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
@@ -111,7 +112,7 @@ public class AccountServiceImplTest {
 					.loginFailureCount(new LoginFailureCount(0))
 					.password(new Password(password))
 					.build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountId(accountId);
+			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 			doReturn(3).when(loginConfig).getFailCount();
 
 			UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountId);
@@ -124,7 +125,7 @@ public class AccountServiceImplTest {
 		@DisplayName("異常系：UsernameNotFoundExceptionをthrowする")
 		void loadUserByUsername_UsernameNotFoundException() {
 			String accountId = "aaaaaaaa";
-			doReturn(null).when(accountRepositoryImpl).getByAccountId(accountId);
+			doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 			assertThrows(UsernameNotFoundException.class, () -> accountServiceImpl.loadUserByUsername(accountId));
 		}
 	}
@@ -138,7 +139,7 @@ public class AccountServiceImplTest {
 		@DisplayName("正常系：アカウントを新規登録")
 		void registAccount_success() throws RegistFailureException {
 			AccountModel accountModel = AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
-			doReturn(false).when(accountRepositoryImpl).isExistAccount(null, "aaaaaaaa");
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
 			doNothing().when(accountRepositoryImpl).regist(accountModel);
 			assertTrue(accountServiceImpl.registAccount(accountModel));
 		}
@@ -148,7 +149,7 @@ public class AccountServiceImplTest {
 		@DisplayName("正常系：アカウントが既に存在する")
 		void registAccount_account_already_exist() throws RegistFailureException {
 			AccountModel accountModel = AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
-			doReturn(true).when(accountRepositoryImpl).isExistAccount(null, "aaaaaaaa");
+			doReturn(true).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
 			verify(accountRepositoryImpl,times(0)).regist(accountModel);
 			assertFalse(accountServiceImpl.registAccount(accountModel));
 		}
@@ -158,7 +159,7 @@ public class AccountServiceImplTest {
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void registAccount_RegistFailureException() throws RegistFailureException {
 			AccountModel accountModel = AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
-			doReturn(false).when(accountRepositoryImpl).isExistAccount(null, "aaaaaaaa");
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
 			doThrow(RegistFailureException.class).when(accountRepositoryImpl).regist(accountModel);
 			assertThrows(RegistFailureException.class, () -> accountServiceImpl.registAccount(accountModel));
 		}
@@ -173,7 +174,7 @@ public class AccountServiceImplTest {
 		@DisplayName("正常系：アカウントを更新")
 		void updateAccount_success() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
-			doReturn(false).when(accountRepositoryImpl).isExistAccount(1L, "aaaaaaaa");
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doNothing().when(accountRepositoryImpl).update(accountModel);
 			assertFalse(accountServiceImpl.updateAccount(accountModel));
 		}
@@ -183,7 +184,7 @@ public class AccountServiceImplTest {
 		@DisplayName("正常系：アカウントが既に存在する")
 		void updateAccount_account_already_exist() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
-			doReturn(true).when(accountRepositoryImpl).isExistAccount(1L, "aaaaaaaa");
+			doReturn(true).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			verify(accountRepositoryImpl,times(0)).update(accountModel);
 			assertTrue(accountServiceImpl.updateAccount(accountModel));
 		}
@@ -193,7 +194,7 @@ public class AccountServiceImplTest {
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void updateAccount_UpdateFailureException() throws UpdateFailureException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
-			doReturn(false).when(accountRepositoryImpl).isExistAccount(1L, "aaaaaaaa");
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).update(accountModel);
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel));
 		}
@@ -221,9 +222,9 @@ public class AccountServiceImplTest {
 					.lastLoginDatetime(null)
 					.loginFailureCount(new LoginFailureCount(0))
 					.build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountId("aaaaaaaa");
+			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId("aaaaaaaa"));
 
-			AccountModel actual = accountServiceImpl.getAccountById("aaaaaaaa");
+			AccountModel actual = accountServiceImpl.getAccountById(new AccountId("aaaaaaaa"));
 
 			assertEquals(new AccountNo(1L), actual.getAccountNo());
 			assertEquals(new AccountId("aaaaaaaa"), actual.getAccountId());
@@ -239,8 +240,8 @@ public class AccountServiceImplTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合、nullを返す")
 		void getAccountById_not_found() {
-			doReturn(null).when(accountRepositoryImpl).getByAccountId("aaaaaaaa");
-			assertNull(accountServiceImpl.getAccountById("aaaaaaaa"));
+			doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId("aaaaaaaa"));
+			assertNull(accountServiceImpl.getAccountById(new AccountId("aaaaaaaa")));
 		}
 	}
 	
@@ -323,7 +324,7 @@ public class AccountServiceImplTest {
 			ArgumentCaptor<AccountModel> captor = ArgumentCaptor.forClass(AccountModel.class);
 			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(captor.capture());
 
-			accountServiceImpl.unlockAccount(1L);
+			accountServiceImpl.unlockAccount(new AccountNo(1L));
 
 			AccountModel accountModel = captor.getValue();
 			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
@@ -336,7 +337,7 @@ public class AccountServiceImplTest {
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void unlockAccount_UpdateFailureException() throws UpdateFailureException {
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).updateLoginFailureCount(any(AccountModel.class));
-			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.unlockAccount(999L));
+			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.unlockAccount(new AccountNo(999L)));
 		}
 	}
 
@@ -353,7 +354,7 @@ public class AccountServiceImplTest {
 			ArgumentCaptor<AccountModel> captor = ArgumentCaptor.forClass(AccountModel.class);
 			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(captor.capture());
 
-			accountServiceImpl.lockAccount(1L);
+			accountServiceImpl.lockAccount(new AccountNo(1L));
 
 			AccountModel accountModel = captor.getValue();
 			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
@@ -366,7 +367,7 @@ public class AccountServiceImplTest {
 		void lockAccount_UpdateFailureException() throws UpdateFailureException {
 			doReturn(10).when(loginConfig).getFailCount();
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).updateLoginFailureCount(any(AccountModel.class));
-			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.lockAccount(999L));
+			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.lockAccount(new AccountNo(999L)));
 		}
 	}
 
@@ -385,11 +386,11 @@ public class AccountServiceImplTest {
 			doNothing().when(photoFavoriteRepository).deleteByFavoritePhotoAccountNo(any(AccountNo.class));
 			doNothing().when(photoTagMstRepository).deleteByAccountNo(any(AccountNo.class));
 			doNothing().when(photoMstRepository).deleteByAccountNo(any(AccountNo.class));
-			doNothing().when(accountRepositoryImpl).delete(accountNo);
+			doNothing().when(accountRepositoryImpl).delete(new AccountNo(accountNo));
 			doReturn("/output/").when(photoConfig).getOutputPath();
-			doNothing().when(fileRepository).delete("/output/" + accountId + "/");
+			doNothing().when(fileRepository).delete(new ImageFilePath("/output/" + accountId + "/"));
 
-			accountServiceImpl.deleteAccount(accountNo, accountId);
+			accountServiceImpl.deleteAccount(new AccountNo(accountNo), new AccountId(accountId));
 
 			ArgumentCaptor<AccountNo> favoriteCaptor = ArgumentCaptor.forClass(AccountNo.class);
 			verify(photoFavoriteRepository, times(1)).deleteByAccountNo(favoriteCaptor.capture());
@@ -401,8 +402,8 @@ public class AccountServiceImplTest {
 
 			verify(photoTagMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
 			verify(photoMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
-			verify(accountRepositoryImpl, times(1)).delete(accountNo);
-			verify(fileRepository, times(1)).delete("/output/" + accountId + "/");
+			verify(accountRepositoryImpl, times(1)).delete(new AccountNo(accountNo));
+			verify(fileRepository, times(1)).delete(new ImageFilePath("/output/" + accountId + "/"));
 		}
 	}
 
@@ -424,7 +425,7 @@ public class AccountServiceImplTest {
 			AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
 			
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
+			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
 			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(accountModelCaptor.capture());
@@ -460,7 +461,7 @@ public class AccountServiceImplTest {
 			AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
 			
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
+			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).updateLoginFailureCount(accountModelCaptor.capture());
@@ -504,7 +505,7 @@ public class AccountServiceImplTest {
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(new LoginFailureCount(1)).build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
+			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
 			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(accountModelCaptor.capture());
@@ -542,7 +543,7 @@ public class AccountServiceImplTest {
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
-			doReturn(null).when(accountRepositoryImpl).getByAccountId(username);
+			doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
 			
 			accountServiceImpl.handle(event);
 			verify(accountRepositoryImpl, times(0)).updateLoginFailureCount(any(AccountModel.class));
@@ -565,7 +566,7 @@ public class AccountServiceImplTest {
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 			
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(new LoginFailureCount(1)).build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountId(username);
+			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
 			
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).updateLoginFailureCount(accountModelCaptor.capture());

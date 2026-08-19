@@ -24,6 +24,10 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.config.JwtConfig;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.auth.RefreshTokenValue;
+import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.model.RefreshTokenModel;
 import com.web.gallery.repository.RefreshTokenRepository;
@@ -101,7 +105,7 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("正常系：ログイン成功")
 		void login_success() throws Exception {
 			OffsetDateTime beforeLogin = OffsetDateTime.now();
-			AuthTokenModel result = authServiceImpl.login("testuser01", TEST_PASSWORD);
+			AuthTokenModel result = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
 			OffsetDateTime afterLogin = OffsetDateTime.now();
 
 			assertNotNull(result.getAccessToken().value());
@@ -112,7 +116,7 @@ public class AuthServiceImplIntegrationTest {
 
 			// リフレッシュトークンがDBに保存されていることを検証
 			String tokenHash = hashToken(result.getRefreshToken().value());
-			RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
+			RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(new TokenHash(tokenHash));
 			assertNotNull(storedToken);
 			assertEquals(1L, storedToken.getAccountNo().value());
 			assertFalse(storedToken.getIsRevoked().value());
@@ -125,20 +129,20 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("正常系：再ログイン時に既存のリフレッシュトークンが無効化される")
 		void login_revokes_existing_tokens() throws Exception {
 			// 1回目のログイン
-			AuthTokenModel firstResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
+			AuthTokenModel firstResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
 			String firstTokenHash = hashToken(firstResult.getRefreshToken().value());
 
 			// 2回目のログイン
-			AuthTokenModel secondResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
+			AuthTokenModel secondResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
 			String secondTokenHash = hashToken(secondResult.getRefreshToken().value());
 
 			// 1回目のトークンが無効化されていることを検証
-			RefreshTokenModel firstToken = refreshTokenRepository.findByTokenHash(firstTokenHash);
+			RefreshTokenModel firstToken = refreshTokenRepository.findByTokenHash(new TokenHash(firstTokenHash));
 			assertNotNull(firstToken);
 			assertTrue(firstToken.getIsRevoked().value());
 
 			// 2回目のトークンが有効であることを検証
-			RefreshTokenModel secondToken = refreshTokenRepository.findByTokenHash(secondTokenHash);
+			RefreshTokenModel secondToken = refreshTokenRepository.findByTokenHash(new TokenHash(secondTokenHash));
 			assertNotNull(secondToken);
 			assertFalse(secondToken.getIsRevoked().value());
 		}
@@ -148,7 +152,7 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("異常系：パスワード不一致の場合、BadCredentialsExceptionをthrowする")
 		void login_wrong_password() {
 			assertThrows(BadCredentialsException.class,
-				() -> authServiceImpl.login("testuser01", "wrongpassword"));
+				() -> authServiceImpl.login(new AccountId("testuser01"), new Password("wrongpassword")));
 		}
 
 		@Test
@@ -156,7 +160,7 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("異常系：存在しないアカウントIDの場合、BadCredentialsExceptionをthrowする")
 		void login_account_not_found() {
 			assertThrows(BadCredentialsException.class,
-				() -> authServiceImpl.login("notexists", TEST_PASSWORD));
+				() -> authServiceImpl.login(new AccountId("notexists"), new Password(TEST_PASSWORD)));
 		}
 
 		@Test
@@ -164,7 +168,7 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("異常系：アカウントロックの場合、LockedException をthrowする")
 		void login_locked_account() {
 			assertThrows(LockedException.class,
-				() -> authServiceImpl.login("lockeduser", TEST_PASSWORD));
+				() -> authServiceImpl.login(new AccountId("lockeduser"), new Password(TEST_PASSWORD)));
 		}
 	}
 
@@ -183,10 +187,10 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("正常系：リフレッシュ成功")
 		void refresh_success() {
 			// ログインしてリフレッシュトークンを取得
-			AuthTokenModel loginResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
+			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
 
 			// リフレッシュ
-			AuthTokenModel refreshResult = authServiceImpl.refresh(loginResult.getRefreshToken().value());
+			AuthTokenModel refreshResult = authServiceImpl.refresh(loginResult.getRefreshToken());
 
 			assertNotNull(refreshResult.getAccessToken().value());
 			assertFalse(refreshResult.getAccessToken().value().isEmpty());
@@ -199,7 +203,7 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("異常系：存在しないリフレッシュトークンの場合、IllegalArgumentExceptionをthrowする")
 		void refresh_invalid_token() {
 			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-				() -> authServiceImpl.refresh("invalid-refresh-token"));
+				() -> authServiceImpl.refresh(new RefreshTokenValue("invalid-refresh-token")));
 			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
 		}
 
@@ -208,15 +212,15 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("異常系：無効化済みリフレッシュトークンの場合、IllegalArgumentExceptionをthrowする")
 		void refresh_revoked_token() throws Exception {
 			// ログインしてリフレッシュトークンを取得
-			AuthTokenModel loginResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
+			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
 			String refreshToken = loginResult.getRefreshToken().value();
 
 			// トークンを無効化
-			refreshTokenRepository.revokeByTokenHash(hashToken(refreshToken));
+			refreshTokenRepository.revokeByTokenHash(new TokenHash(hashToken(refreshToken)));
 
 			// 無効化済みトークンでリフレッシュ
 			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-				() -> authServiceImpl.refresh(refreshToken));
+				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
 			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
 		}
 
@@ -225,7 +229,7 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("異常系：有効期限切れリフレッシュトークンの場合、IllegalArgumentExceptionをthrowする")
 		void refresh_expired_token() throws Exception {
 			// ログインしてリフレッシュトークンを取得
-			AuthTokenModel loginResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
+			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
 			String refreshToken = loginResult.getRefreshToken().value();
 
 			// 有効期限を過去に設定
@@ -237,7 +241,7 @@ public class AuthServiceImplIntegrationTest {
 
 			// 有効期限切れトークンでリフレッシュ
 			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-				() -> authServiceImpl.refresh(refreshToken));
+				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
 			assertEquals("リフレッシュトークンの有効期限が切れています", exception.getMessage());
 		}
 	}
@@ -257,20 +261,20 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("正常系：ログアウト成功（リフレッシュトークンが無効化される）")
 		void logout_success() throws Exception {
 			// ログインしてリフレッシュトークンを取得
-			AuthTokenModel loginResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
+			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
 			String refreshToken = loginResult.getRefreshToken().value();
 			String tokenHash = hashToken(refreshToken);
 
 			// ログアウト前はトークンが有効
-			RefreshTokenModel beforeLogout = refreshTokenRepository.findByTokenHash(tokenHash);
+			RefreshTokenModel beforeLogout = refreshTokenRepository.findByTokenHash(new TokenHash(tokenHash));
 			assertNotNull(beforeLogout);
 			assertFalse(beforeLogout.getIsRevoked().value());
 
 			// ログアウト
-			authServiceImpl.logout(refreshToken);
+			authServiceImpl.logout(new RefreshTokenValue(refreshToken));
 
 			// ログアウト後はトークンが無効化されている
-			RefreshTokenModel afterLogout = refreshTokenRepository.findByTokenHash(tokenHash);
+			RefreshTokenModel afterLogout = refreshTokenRepository.findByTokenHash(new TokenHash(tokenHash));
 			assertNotNull(afterLogout);
 			assertTrue(afterLogout.getIsRevoked().value());
 		}
@@ -279,7 +283,7 @@ public class AuthServiceImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：存在しないリフレッシュトークンでログアウトしてもエラーにならない")
 		void logout_with_nonexistent_token() {
-			assertDoesNotThrow(() -> authServiceImpl.logout("nonexistent-token"));
+			assertDoesNotThrow(() -> authServiceImpl.logout(new RefreshTokenValue("nonexistent-token")));
 		}
 
 		@Test
@@ -287,15 +291,15 @@ public class AuthServiceImplIntegrationTest {
 		@DisplayName("正常系：ログアウト後にリフレッシュが失敗する")
 		void logout_then_refresh_fails() {
 			// ログイン
-			AuthTokenModel loginResult = authServiceImpl.login("testuser01", TEST_PASSWORD);
+			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
 			String refreshToken = loginResult.getRefreshToken().value();
 
 			// ログアウト
-			authServiceImpl.logout(refreshToken);
+			authServiceImpl.logout(new RefreshTokenValue(refreshToken));
 
 			// ログアウト後のリフレッシュは失敗
 			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-				() -> authServiceImpl.refresh(refreshToken));
+				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
 			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
 		}
 	}

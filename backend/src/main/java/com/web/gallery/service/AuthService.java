@@ -1,5 +1,8 @@
 package com.web.gallery.service;
 
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.model.AuthTokenModel;
 
 /**
@@ -16,7 +19,7 @@ public interface AuthService {
 	 * @param	password	パスワード
 	 * @return				{@link AuthTokenModel}
 	 */
-	AuthTokenModel login(String accountId, String password);
+	AuthTokenModel login(AccountId accountId, Password password);
 
 	/**
 	 * リフレッシュトークンを検証し、新しいアクセストークンを発行する
@@ -24,12 +27,12 @@ public interface AuthService {
 	 * @param	refreshToken	リフレッシュトークン
 	 * @return					{@link AuthTokenModel}
 	 */
-	AuthTokenModel refresh(String refreshToken);
+	AuthTokenModel refresh(RefreshTokenValue refreshToken);
 
 	/**
 	 * ログアウトし、リフレッシュトークンを無効化する
 	 *
 	 * @param	refreshToken	リフレッシュトークン
 	 */
-	void logout(String refreshToken);
+	void logout(RefreshTokenValue refreshToken);
 }

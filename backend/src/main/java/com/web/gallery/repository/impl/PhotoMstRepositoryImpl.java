@@ -6,6 +6,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.RegistFailureException;
@@ -37,14 +39,14 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 * @throws	RegistFailureException	登録に失敗した場合
 	 */
 	@Override
-	public void regist(PhotoDetailModel photoDetailModel, String filePath, Long newPhotoNo) throws RegistFailureException {
-		PhotoMst photoMst = PhotoMst.fromForRegist(photoDetailModel, filePath, newPhotoNo);
+	public void regist(PhotoDetailModel photoDetailModel, ImageFilePath filePath, PhotoNo newPhotoNo) throws RegistFailureException {
+		PhotoMst photoMst = PhotoMst.fromForRegist(photoDetailModel, filePath.value(), newPhotoNo.value());
 
 		try {
 			photoMstMapper.insert(photoMst);
 		}
 		catch (DuplicateKeyException e) {
-			log.warn("PhotoMst: Duplicate Key (AccountNo: {}, PhotoNo: {})", photoDetailModel.getAccountNo().value(), newPhotoNo, e);
+			log.warn("PhotoMst: Duplicate Key (AccountNo: {}, PhotoNo: {})", photoDetailModel.getAccountNo().value(), newPhotoNo.value(), e);
 			throw new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_PHOTO);
 		}
 	}
@@ -90,9 +92,9 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 * @return				新規採番した写真番号
 	 */
 	@Override
-	public Long getNewPhotoNo(Long accountNo) {
-		Long photoNo = photoMstMapper.getMaxPhotoNo(accountNo);
-		return Optional.ofNullable(photoNo).map(num -> num + 1).orElse(1L);
+	public PhotoNo getNewPhotoNo(AccountNo accountNo) {
+		Long photoNo = photoMstMapper.getMaxPhotoNo(accountNo.value());
+		return new PhotoNo(Optional.ofNullable(photoNo).map(num -> num + 1).orElse(1L));
 	}
 
 	/**
@@ -113,8 +115,8 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 * @return				登録件数
 	 */
 	@Override
-	public Integer count(Long accountNo) {
-		return photoMstMapper.count(PhotoMst.conditionForCount(accountNo));
+	public Integer count(AccountNo accountNo) {
+		return photoMstMapper.count(PhotoMst.conditionForCount(accountNo.value()));
 	}
 
 	/**

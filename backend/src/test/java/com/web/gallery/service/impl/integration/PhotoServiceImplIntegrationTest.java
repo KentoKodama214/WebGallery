@@ -592,7 +592,7 @@ public class PhotoServiceImplIntegrationTest {
 		void savePhotos_photoDetailModelList_is_null() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
 			String accountId = "aaaaaaaa";
 			List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
-			Long actual = photoServiceImpl.savePhotos(accountId, null);
+			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), null);
 			assertNull(actual);
 			List<PhotoMst> afterData = getPhotoMstData(accountId);
 			assertEquals(beforeSaveData.size(), afterData.size());
@@ -605,7 +605,7 @@ public class PhotoServiceImplIntegrationTest {
 			String accountId = "aaaaaaaa";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 			List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
-			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
+			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 			assertNull(actual);
 			List<PhotoMst> afterData = getPhotoMstData(accountId);
 			assertEquals(beforeSaveData.size(), afterData.size());
@@ -626,9 +626,9 @@ public class PhotoServiceImplIntegrationTest {
 			photoDetailModelList.add(photoDetailModel2);
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
+			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
-			assertEquals(11, actual);
+			assertEquals(new PhotoNo(11L), actual);
 			List<PhotoMst> actualData = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo().value() > 10).toList();
 			assertEquals(2, actualData.size());
 
@@ -696,9 +696,9 @@ public class PhotoServiceImplIntegrationTest {
 			photoDetailModelList.add(photoDetailModel2);
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
+			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
-			assertEquals(3, actual);
+			assertEquals(new PhotoNo(3L), actual);
 			List<PhotoMst> actualData1 = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo().value()==2).toList();
 			assertEquals(1, actualData1.size());
 			assertEquals(1L, actualData1.getFirst().getAccountNo().value());
@@ -767,9 +767,9 @@ public class PhotoServiceImplIntegrationTest {
 			photoDetailModelList.add(photoDetailModel2);
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			Long actual = photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList));
+			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
-			assertEquals(3, actual);
+			assertEquals(new PhotoNo(3L), actual);
 			List<PhotoMst> actualData = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo().value() > 10).toList();
 			assertEquals(1, actualData.size());
 
@@ -856,7 +856,7 @@ public class PhotoServiceImplIntegrationTest {
 			PhotoDetailModel photoDetailModel2 = createNewPhoto();
 			photoDetailModelList.add(photoDetailModel2);
 			
-			assertThrows(FileDuplicateException.class, () -> photoServiceImpl.savePhotos(accountId, PhotoDetailModelList.of(photoDetailModelList)));
+			assertThrows(FileDuplicateException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
 		}
 	}
 	
@@ -870,7 +870,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：photoDeleteModelListが0件の場合、終了")
 		void deletePhotos_photoDeleteModelList_empty() throws UpdateFailureException {
-			photoServiceImpl.deletePhotos("aaaaaaaa", PhotoDeleteModelList.empty());
+			photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.empty());
 			
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = (SELECT account_no FROM common.account where account_id='aaaaaaaa')", (rs, rowNum) ->
@@ -915,7 +915,7 @@ public class PhotoServiceImplIntegrationTest {
 					.build());
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			photoServiceImpl.deletePhotos("aaaaaaaa", PhotoDeleteModelList.of(photoDeleteModelList));
+			photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList));
 
 			List<PhotoMst> actualPhotoMstData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no=1 and photo_no in (1, 2)", (rs, rowNum) ->
@@ -1031,7 +1031,7 @@ public class PhotoServiceImplIntegrationTest {
 					.imageFilePath(new ImageFilePath("DSC99.jpg"))
 					.build());
 			
-			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.deletePhotos("aaaaaaaa", PhotoDeleteModelList.of(photoDeleteModelList)));
+			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
 		}
 	}
 	
@@ -1043,16 +1043,16 @@ public class PhotoServiceImplIntegrationTest {
 	class isReachedUpperLimit {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：アカウント番号がnullの場合")
+		@DisplayName("異常系：アカウント番号がnullの場合、NullPointerExceptionをthrowする")
 		void isReachedUpperLimit_accountNo_is_null() {
-			assertTrue(photoServiceImpl.isReachedUpperLimit(null));
+			assertThrows(NullPointerException.class, () -> photoServiceImpl.isReachedUpperLimit(null));
 		}
 		
 		@Test
 		@Order(2)
 		@DisplayName("正常系：mini-userで、上限まで登録済みの場合")
 		void isReachedUpperLimit_mini_user_reached() {
-			Long accountNo = 1L;
+			AccountNo accountNo = new AccountNo(1L);
 			assertTrue(photoServiceImpl.isReachedUpperLimit(accountNo));
 		}
 		
@@ -1060,7 +1060,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(3)
 		@DisplayName("正常系：mini-userで、上限まで未登録の場合")
 		void isReachedUpperLimit_mini_user_not_reached() {
-			Long accountNo = 2L;
+			AccountNo accountNo = new AccountNo(2L);
 			assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
 		}
 		
@@ -1068,7 +1068,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(4)
 		@DisplayName("正常系：normal-userで、上限まで登録済みの場合")
 		void isReachedUpperLimit_normal_user_reached() {
-			Long accountNo = 3L;
+			AccountNo accountNo = new AccountNo(3L);
 			assertTrue(photoServiceImpl.isReachedUpperLimit(accountNo));
 		}
 		
@@ -1076,7 +1076,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(5)
 		@DisplayName("正常系：normal-userで、上限まで未登録の場合")
 		void isReachedUpperLimit_normal_user_not_reached() {
-			Long accountNo = 4L;
+			AccountNo accountNo = new AccountNo(4L);
 			assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
 		}
 		
@@ -1084,7 +1084,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(6)
 		@DisplayName("正常系：special-userの場合")
 		void isReachedUpperLimit_special_user() {
-			Long accountNo = 5L;
+			AccountNo accountNo = new AccountNo(5L);
 			assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
 		}
 		
@@ -1092,7 +1092,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(7)
 		@DisplayName("正常系：administratorの場合")
 		void isReachedUpperLimit_administrator() {
-			Long accountNo = 6L;
+			AccountNo accountNo = new AccountNo(6L);
 			assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
 		}
 	}

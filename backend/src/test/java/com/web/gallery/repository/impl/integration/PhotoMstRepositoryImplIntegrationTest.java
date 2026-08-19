@@ -78,7 +78,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.build();
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 4L);
+			photoMstRepositoryImpl.regist(photoDetailModel, new ImageFilePath(imageFilePath), new PhotoNo(4L));
 
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=4", (rs, rowNum) ->
@@ -147,7 +147,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.build();
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 4L);
+			photoMstRepositoryImpl.regist(photoDetailModel, new ImageFilePath(imageFilePath), new PhotoNo(4L));
 
 			List<PhotoMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst WHERE account_no=1 and photo_no=4", (rs, rowNum) ->
@@ -205,7 +205,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.imageFilePath(new ImageFilePath(imageFilePath))
 					.build();
 			
-			assertThrows(RegistFailureException.class , () -> photoMstRepositoryImpl.regist(photoDetailModel, imageFilePath, 1L));
+			assertThrows(RegistFailureException.class , () -> photoMstRepositoryImpl.regist(photoDetailModel, new ImageFilePath(imageFilePath), new PhotoNo(1L)));
 		}
 	}
 	
@@ -451,14 +451,14 @@ public class PhotoMstRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系：getMaxPhotoNoがある場合")
 		void getNewPhotoNo_getMaxPhotoNo_found() {
-			assertEquals(4L, photoMstRepositoryImpl.getNewPhotoNo(1L));
+			assertEquals(new PhotoNo(4L), photoMstRepositoryImpl.getNewPhotoNo(new AccountNo(1L)));
 		}
 		
 		@Test
 		@Order(2)
 		@DisplayName("正常系：getMaxPhotoNoがない場合")
 		void getNewPhotoNo_getMaxPhotoNo_not_found() {
-			assertEquals(1L, photoMstRepositoryImpl.getNewPhotoNo(9L));
+			assertEquals(new PhotoNo(1L), photoMstRepositoryImpl.getNewPhotoNo(new AccountNo(9L)));
 		}
 	}
 	
@@ -560,7 +560,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void count_success() {
-			assertEquals(2, photoMstRepositoryImpl.count(1L));
+			assertEquals(2, photoMstRepositoryImpl.count(new AccountNo(1L)));
 		}
 	}
 }

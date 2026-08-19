@@ -18,6 +18,9 @@ import com.web.gallery.config.JwtConfig;
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.controller.request.AuthLoginRequest;
 import com.web.gallery.controller.response.AuthLoginResponse;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.model.AuthTokenModel;
@@ -70,8 +73,8 @@ public class AuthRestController {
 		}
 
 		AuthTokenModel tokenModel = authService.login(
-				authLoginRequest.getAccountId(),
-				authLoginRequest.getPassword());
+				new AccountId(authLoginRequest.getAccountId()),
+				new Password(authLoginRequest.getPassword()));
 
 		ResponseCookie refreshTokenCookie = createRefreshTokenCookie(
 				tokenModel.getRefreshToken().value(),
@@ -101,7 +104,7 @@ public class AuthRestController {
 			return ResponseEntity.status(401).build();
 		}
 
-		AuthTokenModel tokenModel = authService.refresh(refreshToken);
+		AuthTokenModel tokenModel = authService.refresh(new RefreshTokenValue(refreshToken));
 
 		AuthLoginResponse response = AuthLoginResponse.from(tokenModel);
 
@@ -121,7 +124,7 @@ public class AuthRestController {
 			@CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
 
 		if (refreshToken != null && !refreshToken.isEmpty()) {
-			authService.logout(refreshToken);
+			authService.logout(new RefreshTokenValue(refreshToken));
 		}
 
 		// リフレッシュトークンcookieを削除

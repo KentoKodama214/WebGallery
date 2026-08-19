@@ -76,7 +76,7 @@ public class KbnMstServiceImplTest {
 							.kbnEnglishName(new KbnEnglishName("Okinawa"))
 							.explanation(new Explanation("沖縄は南国"))
 							.build()));
-			doReturn(kbnMstModelList).when(kbnMstRepositoryImpl).get("prefecture");
+			doReturn(kbnMstModelList).when(kbnMstRepositoryImpl).get(new KbnClassCode("prefecture"));
 			assertEquals(kbnMstModelList, kbnMstServiceImpl.getPrefectureList());
 		}
 
@@ -85,7 +85,7 @@ public class KbnMstServiceImplTest {
 		@DisplayName("正常系：区分マスタが存在しない場合")
 		void getPrefectureList_not_found() {
 			KbnMstModelList kbnMstModelList = KbnMstModelList.empty();
-			doReturn(kbnMstModelList).when(kbnMstRepositoryImpl).get("prefecture");
+			doReturn(kbnMstModelList).when(kbnMstRepositoryImpl).get(new KbnClassCode("prefecture"));
 			assertEquals(kbnMstModelList, kbnMstServiceImpl.getPrefectureList());
 		}
 	}

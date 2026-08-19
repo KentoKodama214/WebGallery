@@ -2,6 +2,7 @@ package com.web.gallery.repository.impl;
 
 import org.springframework.stereotype.Repository;
 
+import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.model.FileModel;
 import com.web.gallery.repository.FileRepository;
 
@@ -21,7 +22,7 @@ public class FileRepositoryImpl implements FileRepository {
 	}
 
 	@Override
-	public void delete(String filePath) {
+	public void delete(ImageFilePath filePath) {
 		// TODO 自動生成されたメソッド・スタブ
 		return;
 	}
