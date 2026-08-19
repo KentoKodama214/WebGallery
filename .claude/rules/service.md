@@ -25,3 +25,9 @@ paths:
 
 - `service/impl/`の実装クラスには`@Service`アノテーションを付与すること
 - `service/impl/`の実装クラスのpublicメソッドには、`@Transactional`アノテーションを付与すること
+
+## メソッドシグネチャ
+
+- 引数の型は、ドメインクラスのみとする
+- 返り値の型は、ドメインクラス、Boolean、Integer、voidのみとする
+- 引数が4つ以上になるなら、別途専用のModelクラスを定義する
