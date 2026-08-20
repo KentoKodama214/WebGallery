@@ -19,9 +19,10 @@
     - [3. フロントエンドのセットアップ](#3-フロントエンドのセットアップ)
     - [4. アプリケーションの起動](#4-アプリケーションの起動)
   - [ビルド・テスト](#ビルドテスト)
+    - [E2Eテストの実行（要Docker）](#e2eテストの実行要docker)
   - [アーキテクチャ](#アーキテクチャ)
   - [データベース構成](#データベース構成)
-  - [コード構造の可視化（JIG）](#コード構造の可視化jig)
+  - [コード構造の可視化（JIG / Spring Modulith）](#コード構造の可視化jig--spring-modulith)
   - [画面設計](#画面設計)
   - [API](#api)
   - [プロジェクト構成](#プロジェクト構成)
@@ -176,6 +177,17 @@ just dev
 ./backend/gradlew -p backend clean build
 ```
 
+```bash
+# フロントエンドのビルド
+just build
+
+# フロントエンドのlint
+just lint
+
+# フロントエンドの単体テスト（Jest）
+cd frontend && pnpm test
+```
+
 ### E2Eテストの実行（要Docker）
 
 フロントエンドの画面操作を通したE2Eテスト（Playwright）を一括実行できます。DB（docker-compose）とバックエンドが未起動の場合は自動的に起動し、終了後に自動起動したバックエンドは停止します。
@@ -207,7 +219,7 @@ docker compose --profile docs run --rm schemaspy
 
 生成後、`doc/database/common/index.html`（commonスキーマ）と`doc/database/photo/index.html`（photoスキーマ）をブラウザで開いてください。
 
-## コード構造の可視化（JIG）
+## コード構造の可視化（JIG / Spring Modulith）
 
 [JIG（Java Integration Graph）](https://github.com/dddjava/jig)によるコード構造のドキュメントを自動生成できます。パッケージ関連図・ユースケース図・ドメインモデルなどが出力されます。
 
@@ -216,6 +228,14 @@ docker compose --profile docs run --rm schemaspy
 ```
 
 生成後、`backend/build/jig/index.html` をブラウザで開いてください。
+
+また、Spring Modulithによるモジュール構成図（PlantUML）とモジュールキャンバス（AsciiDoc）を生成できます。
+
+```bash
+./backend/gradlew -p backend generateModulithDocs
+```
+
+生成後、`doc/modulith/` 配下のファイルを参照してください。
 
 ## 画面設計
 
@@ -272,24 +292,25 @@ WebGallery/
 │   ├── public/
 │   │   └── image/                  # 静的画像（アイコン等）
 │   └── src/
-│       ├── proxy.ts                     # APIプロキシ設定
+│       ├── proxy.ts                     # 認証状態に基づくルーティング制御（ミドルウェア）
 │       ├── app/
 │       │   ├── favicon.ico              # ファビコン
 │       │   ├── globals.css              # グローバルCSS
 │       │   ├── layout.tsx               # ルートレイアウト
 │       │   ├── page.tsx                 # トップページ
-│       │   ├── login/                   # ログインページ
-│       │   ├── register/               # アカウント登録ページ
-│       │   ├── account_list/           # アカウント一覧ページ
+│       │   ├── login/                   # ログインページ（__tests__/にJestテスト）
+│       │   ├── register/               # アカウント登録ページ（__tests__/にJestテスト）
+│       │   ├── account_list/           # アカウント一覧ページ（__tests__/にJestテスト）
 │       │   ├── [accountId]/
-│       │   │   └── account_setting/    # アカウント設定ページ
+│       │   │   └── account_setting/    # アカウント設定ページ（__tests__/にJestテスト）
 │       │   ├── photo/[photoAccountId]/
-│       │   │   ├── photo_list/         # 写真一覧ページ（PhotoSwipe統合）
-│       │   │   ├── photo_detail/       # 写真詳細ページ
-│       │   │   └── photo_setting/      # 写真設定ページ
+│       │   │   ├── photo_list/         # 写真一覧ページ（PhotoSwipe統合、__tests__/にJestテスト）
+│       │   │   ├── photo_detail/       # 写真詳細ページ（__tests__/にJestテスト）
+│       │   │   └── photo_setting/      # 写真設定ページ（__tests__/にJestテスト）
 │       │   ├── admin/
 │       │   │   └── account_management/ # 管理者アカウント管理ページ
-│       │   └── api/v1/                  # Next.js APIルート（プロキシ）
+│       │   └── api/v1/accounts/[photoAccountId]/photos/
+│       │       └── route.ts            # 写真保存APIのプロキシ（multipart/form-data、Next.js rewritesでは非対応のため個別実装）
 │       ├── components/
 │       │   └── layout/                  # 共通レイアウト
 │       │       ├── Header.tsx
@@ -300,7 +321,8 @@ WebGallery/
 │           ├── api/
 │           │   └── client.ts            # APIクライアント
 │           ├── auth/
-│           │   └── AuthProvider.tsx      # 認証プロバイダー
+│           │   ├── AuthProvider.tsx      # 認証プロバイダー
+│           │   └── __tests__/            # Jestテスト
 │           └── cookie.ts                # Cookie操作ユーティリティ
 ├── backend/                        # バックエンド（Spring Boot）
 │   ├── build.gradle
@@ -314,11 +336,15 @@ WebGallery/
 │   └── src/
 │       ├── main/
 │       │   ├── java/com/web/gallery/
+│       │   │   ├── annotation/         # カスタムアノテーション
+│       │   │   ├── aspect/             # AOP（管理者権限チェック等）
 │       │   │   ├── config/             # 設定クラス
 │       │   │   ├── constant/           # 定数（APIルート・メッセージ）
 │       │   │   ├── controller/         # コントローラ
 │       │   │   │   ├── request/        # リクエストDTO
 │       │   │   │   └── response/       # レスポンスDTO
+│       │   │   ├── domain/             # ドメインオブジェクト（値オブジェクト）
+│       │   │   ├── dto/                # DBアクセス層の複合データ転送オブジェクト
 │       │   │   ├── entity/             # エンティティ
 │       │   │   ├── enumeration/        # 列挙型
 │       │   │   ├── exception/          # カスタム例外
@@ -332,6 +358,9 @@ WebGallery/
 │       │   │   └── type_handler/       # MyBatis型ハンドラ
 │       │   └── resources/
 │       │       ├── application.yml
+│       │       ├── application-local.yml       # ローカル開発用プロファイル
+│       │       ├── application-development.yml # 開発環境用プロファイル
+│       │       ├── application-prod.yml        # 本番環境用プロファイル
 │       │       ├── messages.properties
 │       │       └── com/web/gallery/mapper/  # MyBatis XMLマッパー
 │       └── test/
