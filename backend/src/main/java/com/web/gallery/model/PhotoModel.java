@@ -70,16 +70,18 @@ public class PhotoModel {
 	 * @return					{@link PhotoModel}
 	 */
 	public static PhotoModel from(PhotoDto dto, List<PhotoTagMst> photoTagMstList) {
+		AccountNo accountNo = new AccountNo(dto.getAccountNo());
+		PhotoNo photoNo = new PhotoNo(dto.getPhotoNo());
 		PhotoTagModelList photoTagModelList = PhotoTagModelList.from(photoTagMstList)
-				.filterByPhoto(dto.getAccountNo(), dto.getPhotoNo());
+				.filterByPhoto(accountNo, photoNo);
 		return PhotoModel.builder()
-				.accountNo(dto.getAccountNo())
-				.photoNo(dto.getPhotoNo())
-				.favoriteCount(dto.getFavoriteCount())
-				.isFavorite(dto.getIsFavorite())
-				.photoAt(new PhotoAt(dto.getPhotoAt().value().withOffsetSameInstant(Consts.JST)))
-				.imageFilePath(dto.getImageFilePath())
-				.caption(dto.getCaption())
+				.accountNo(accountNo)
+				.photoNo(photoNo)
+				.favoriteCount(new FavoriteCount(dto.getFavoriteCount()))
+				.isFavorite(new IsFavorite(dto.getIsFavorite()))
+				.photoAt(new PhotoAt(dto.getPhotoAt().withOffsetSameInstant(Consts.JST)))
+				.imageFilePath(new ImageFilePath(dto.getImageFilePath()))
+				.caption(new Caption(dto.getCaption()))
 				.directionKbn(dto.getDirectionKbn())
 				.photoTagModelList(photoTagModelList)
 				.build();

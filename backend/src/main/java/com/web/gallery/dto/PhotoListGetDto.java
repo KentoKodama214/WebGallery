@@ -1,6 +1,7 @@
 package com.web.gallery.dto;
 
-import com.web.gallery.domain.account.AccountNo;
+import java.util.Objects;
+
 import com.web.gallery.model.PhotoGetModel;
 
 import lombok.Data;
@@ -11,10 +12,10 @@ import lombok.Data;
 @Data
 public class PhotoListGetDto {
 	/** ログイン中のアカウントNo */
-	private AccountNo accountNo;
+	private Long accountNo;
 
 	/** 写真のアカウントNo */
-	private AccountNo photoAccountNo;
+	private Long photoAccountNo;
 
 	/**
 	 * PhotoGetModelからPhotoListGetDtoを生成する
@@ -24,8 +25,8 @@ public class PhotoListGetDto {
 	 */
 	public static PhotoListGetDto from(PhotoGetModel model) {
 		PhotoListGetDto dto = new PhotoListGetDto();
-		dto.setAccountNo(model.getAccountNo());
-		dto.setPhotoAccountNo(model.getPhotoAccountNo());
+		dto.setAccountNo(Objects.nonNull(model.getAccountNo()) ? model.getAccountNo().value() : null);
+		dto.setPhotoAccountNo(model.getPhotoAccountNo().value());
 		return dto;
 	}
 }

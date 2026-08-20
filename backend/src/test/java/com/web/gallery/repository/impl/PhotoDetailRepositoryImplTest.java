@@ -99,8 +99,8 @@ public class PhotoDetailRepositoryImplTest {
 			assertTrue(actual.isEmpty());
 
 			PhotoListGetDto photoListGetDtoCapture = photoListGetDtoCaptor.getValue();
-			assertEquals(1L, photoListGetDtoCapture.getAccountNo().value());
-			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo().value());
+			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
+			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo());
 
 			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
@@ -117,24 +117,24 @@ public class PhotoDetailRepositoryImplTest {
 			
 			List<PhotoDto> photoDtoList = new ArrayList<PhotoDto>();
 			PhotoDto photoDto1 = new PhotoDto();
-			photoDto1.setAccountNo(new AccountNo(1L));
-			photoDto1.setPhotoNo(new PhotoNo(1L));
-			photoDto1.setFavoriteCount(new FavoriteCount(1));
-			photoDto1.setIsFavorite(new IsFavorite(false));
-			photoDto1.setPhotoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))));
-			photoDto1.setImageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"));
-			photoDto1.setCaption(new Caption("キャプション1"));
+			photoDto1.setAccountNo(1L);
+			photoDto1.setPhotoNo(1L);
+			photoDto1.setFavoriteCount(1);
+			photoDto1.setIsFavorite(false);
+			photoDto1.setPhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+			photoDto1.setImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg");
+			photoDto1.setCaption("キャプション1");
 			photoDto1.setDirectionKbn(DirectionEnum.VERTICAL);
 			photoDtoList.add(photoDto1);
 
 			PhotoDto photoDto2 = new PhotoDto();
-			photoDto2.setAccountNo(new AccountNo(1L));
-			photoDto2.setPhotoNo(new PhotoNo(2L));
-			photoDto2.setFavoriteCount(new FavoriteCount(2));
-			photoDto2.setIsFavorite(new IsFavorite(true));
-			photoDto2.setPhotoAt(new PhotoAt(OffsetDateTime.of(2000, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))));
-			photoDto2.setImageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"));
-			photoDto2.setCaption(new Caption("キャプション2"));
+			photoDto2.setAccountNo(1L);
+			photoDto2.setPhotoNo(2L);
+			photoDto2.setFavoriteCount(2);
+			photoDto2.setIsFavorite(true);
+			photoDto2.setPhotoAt(OffsetDateTime.of(2000, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+			photoDto2.setImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg");
+			photoDto2.setCaption("キャプション2");
 			photoDto2.setDirectionKbn(DirectionEnum.HORIZONTAL);
 			photoDtoList.add(photoDto2);
 
@@ -167,8 +167,8 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(DirectionEnum.HORIZONTAL, actual.get(1).getDirectionKbn());
 
 			PhotoListGetDto photoListGetDtoCapture = photoListGetDtoCaptor.getValue();
-			assertEquals(1L, photoListGetDtoCapture.getAccountNo().value());
-			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo().value());
+			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
+			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo());
 
 			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
@@ -185,24 +185,24 @@ public class PhotoDetailRepositoryImplTest {
 			
 			List<PhotoDto> photoDtoList = new ArrayList<PhotoDto>();
 			PhotoDto photoDto1 = new PhotoDto();
-			photoDto1.setAccountNo(new AccountNo(1L));
-			photoDto1.setPhotoNo(new PhotoNo(1L));
-			photoDto1.setFavoriteCount(new FavoriteCount(1));
-			photoDto1.setIsFavorite(new IsFavorite(false));
-			photoDto1.setPhotoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))));
-			photoDto1.setImageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"));
-			photoDto1.setCaption(new Caption("キャプション1"));
+			photoDto1.setAccountNo(1L);
+			photoDto1.setPhotoNo(1L);
+			photoDto1.setFavoriteCount(1);
+			photoDto1.setIsFavorite(false);
+			photoDto1.setPhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+			photoDto1.setImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg");
+			photoDto1.setCaption("キャプション1");
 			photoDto1.setDirectionKbn(DirectionEnum.VERTICAL);
 			photoDtoList.add(photoDto1);
 
 			PhotoDto photoDto2 = new PhotoDto();
-			photoDto2.setAccountNo(new AccountNo(1L));
-			photoDto2.setPhotoNo(new PhotoNo(2L));
-			photoDto2.setFavoriteCount(new FavoriteCount(2));
-			photoDto2.setIsFavorite(new IsFavorite(true));
-			photoDto2.setPhotoAt(new PhotoAt(OffsetDateTime.of(2000, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))));
-			photoDto2.setImageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"));
-			photoDto2.setCaption(new Caption("キャプション2"));
+			photoDto2.setAccountNo(1L);
+			photoDto2.setPhotoNo(2L);
+			photoDto2.setFavoriteCount(2);
+			photoDto2.setIsFavorite(true);
+			photoDto2.setPhotoAt(OffsetDateTime.of(2000, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+			photoDto2.setImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg");
+			photoDto2.setCaption("キャプション2");
 			photoDto2.setDirectionKbn(DirectionEnum.HORIZONTAL);
 			photoDtoList.add(photoDto2);
 
@@ -257,8 +257,8 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals("sea", actual.get(1).getPhotoTagModelList().get(0).getTagEnglishName().value());
 
 			PhotoListGetDto photoListGetDtoCapture = photoListGetDtoCaptor.getValue();
-			assertEquals(1L, photoListGetDtoCapture.getAccountNo().value());
-			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo().value());
+			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
+			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo());
 
 			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
@@ -280,24 +280,24 @@ public class PhotoDetailRepositoryImplTest {
 					.build();
 			
 			PhotoDetailDto photoDetailDto = new PhotoDetailDto();
-			photoDetailDto.setAccountNo(new AccountNo(1L));
-			photoDetailDto.setPhotoNo(new PhotoNo(1L));
-			photoDetailDto.setIsFavorite(new IsFavorite(false));
-			photoDetailDto.setPhotoAt(new PhotoAt(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))));
-			photoDetailDto.setLocationNo(new LocationNo(0L));
+			photoDetailDto.setAccountNo(1L);
+			photoDetailDto.setPhotoNo(1L);
+			photoDetailDto.setIsFavorite(false);
+			photoDetailDto.setPhotoAt(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)));
+			photoDetailDto.setLocationNo(0L);
 			photoDetailDto.setAddress(null);
 			photoDetailDto.setLatitude(null);
 			photoDetailDto.setLongitude(null);
 			photoDetailDto.setLocationName(null);
-			photoDetailDto.setImageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"));
-			photoDetailDto.setPhotoJapaneseTitle(new PhotoJapaneseTitle(""));
-			photoDetailDto.setPhotoEnglishTitle(new PhotoEnglishTitle(""));
-			photoDetailDto.setCaption(new Caption(""));
+			photoDetailDto.setImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg");
+			photoDetailDto.setPhotoJapaneseTitle("");
+			photoDetailDto.setPhotoEnglishTitle("");
+			photoDetailDto.setCaption("");
 			photoDetailDto.setDirectionKbn(DirectionEnum.VERTICAL);
-			photoDetailDto.setFocalLength(new FocalLength(0));
-			photoDetailDto.setFValue(new FValue(BigDecimal.ZERO));
-			photoDetailDto.setShutterSpeed(new ShutterSpeed(BigDecimal.ZERO));
-			photoDetailDto.setIso(new Iso(0));
+			photoDetailDto.setFocalLength(0);
+			photoDetailDto.setFValue(BigDecimal.ZERO);
+			photoDetailDto.setShutterSpeed(BigDecimal.ZERO);
+			photoDetailDto.setIso(0);
 
 			ArgumentCaptor<PhotoDetailGetDto> photoDetailGetDtoCaptor = ArgumentCaptor.forClass(PhotoDetailGetDto.class);
 			doReturn(photoDetailDto).when(photoDetailMapper).getPhotoDetail(photoDetailGetDtoCaptor.capture());
@@ -330,10 +330,10 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(0, actual.getPhotoTagModelList().size());
 
 			PhotoDetailGetDto photoDetailGetDtoCapture = photoDetailGetDtoCaptor.getValue();
-			assertEquals(1L, photoDetailGetDtoCapture.getAccountNo().value());
-			assertEquals(1L, photoDetailGetDtoCapture.getPhotoAccountNo().value());
-			assertEquals(1L, photoDetailGetDtoCapture.getPhotoNo().value());
-			
+			assertEquals(1L, photoDetailGetDtoCapture.getAccountNo());
+			assertEquals(1L, photoDetailGetDtoCapture.getPhotoAccountNo());
+			assertEquals(1L, photoDetailGetDtoCapture.getPhotoNo());
+
 			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
 			assertEquals(1L, photoTagMstCapture.getPhotoNo().value());
@@ -341,7 +341,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertNull(photoTagMstCapture.getTagJapaneseName());
 			assertNull(photoTagMstCapture.getTagEnglishName());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：写真のメタデータがデフォルト値でない場、写真タグが1件以上の場合")
@@ -353,24 +353,24 @@ public class PhotoDetailRepositoryImplTest {
 					.build();
 			
 			PhotoDetailDto photoDetailDto = new PhotoDetailDto();
-			photoDetailDto.setAccountNo(new AccountNo(1L));
-			photoDetailDto.setPhotoNo(new PhotoNo(1L));
-			photoDetailDto.setIsFavorite(new IsFavorite(false));
-			photoDetailDto.setPhotoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))));
-			photoDetailDto.setLocationNo(new LocationNo(1L));
-			photoDetailDto.setAddress(new Address("住所"));
-			photoDetailDto.setLatitude(new Latitude(BigDecimal.valueOf(38.000)));
-			photoDetailDto.setLongitude(new Longitude(BigDecimal.valueOf(115.000)));
-			photoDetailDto.setLocationName(new LocationName("富士山"));
-			photoDetailDto.setImageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"));
-			photoDetailDto.setPhotoJapaneseTitle(new PhotoJapaneseTitle("タイトル"));
-			photoDetailDto.setPhotoEnglishTitle(new PhotoEnglishTitle("title"));
-			photoDetailDto.setCaption(new Caption("キャプション"));
+			photoDetailDto.setAccountNo(1L);
+			photoDetailDto.setPhotoNo(1L);
+			photoDetailDto.setIsFavorite(false);
+			photoDetailDto.setPhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+			photoDetailDto.setLocationNo(1L);
+			photoDetailDto.setAddress("住所");
+			photoDetailDto.setLatitude(BigDecimal.valueOf(38.000));
+			photoDetailDto.setLongitude(BigDecimal.valueOf(115.000));
+			photoDetailDto.setLocationName("富士山");
+			photoDetailDto.setImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg");
+			photoDetailDto.setPhotoJapaneseTitle("タイトル");
+			photoDetailDto.setPhotoEnglishTitle("title");
+			photoDetailDto.setCaption("キャプション");
 			photoDetailDto.setDirectionKbn(DirectionEnum.VERTICAL);
-			photoDetailDto.setFocalLength(new FocalLength(24));
-			photoDetailDto.setFValue(new FValue(BigDecimal.valueOf(2.8)));
-			photoDetailDto.setShutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)));
-			photoDetailDto.setIso(new Iso(100));
+			photoDetailDto.setFocalLength(24);
+			photoDetailDto.setFValue(BigDecimal.valueOf(2.8));
+			photoDetailDto.setShutterSpeed(BigDecimal.valueOf(0.01));
+			photoDetailDto.setIso(100);
 			
 			ArgumentCaptor<PhotoDetailGetDto> photoDetailGetDtoCaptor = ArgumentCaptor.forClass(PhotoDetailGetDto.class);
 			doReturn(photoDetailDto).when(photoDetailMapper).getPhotoDetail(photoDetailGetDtoCaptor.capture());
@@ -418,10 +418,10 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals("sea", actual.getPhotoTagModelList().get(1).getTagEnglishName().value());
 
 			PhotoDetailGetDto photoDetailGetDtoCapture = photoDetailGetDtoCaptor.getValue();
-			assertEquals(1L, photoDetailGetDtoCapture.getAccountNo().value());
-			assertEquals(1L, photoDetailGetDtoCapture.getPhotoAccountNo().value());
-			assertEquals(1L, photoDetailGetDtoCapture.getPhotoNo().value());
-			
+			assertEquals(1L, photoDetailGetDtoCapture.getAccountNo());
+			assertEquals(1L, photoDetailGetDtoCapture.getPhotoAccountNo());
+			assertEquals(1L, photoDetailGetDtoCapture.getPhotoNo());
+
 			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
 			assertEquals(1L, photoTagMstCapture.getPhotoNo().value());

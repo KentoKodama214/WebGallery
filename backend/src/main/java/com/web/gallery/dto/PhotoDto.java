@@ -1,12 +1,7 @@
 package com.web.gallery.dto;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.Caption;
-import com.web.gallery.domain.photo.FavoriteCount;
-import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.domain.photo.IsFavorite;
-import com.web.gallery.domain.photo.PhotoAt;
-import com.web.gallery.domain.photo.PhotoNo;
+import java.time.OffsetDateTime;
+
 import com.web.gallery.enumeration.DirectionEnum;
 
 import lombok.Data;
@@ -17,25 +12,25 @@ import lombok.Data;
 @Data
 public class PhotoDto {
 	/** アカウントNo */
-	private AccountNo accountNo;
+	private Long accountNo;
 
 	/** 写真番号 */
-	private PhotoNo photoNo;
+	private Long photoNo;
 
 	/** お気に入り数 */
-	private FavoriteCount favoriteCount;
+	private Integer favoriteCount;
 
 	/** お気に入り */
-	private IsFavorite isFavorite;
+	private Boolean isFavorite;
 
 	/** 撮影日時 */
-	private PhotoAt photoAt;
+	private OffsetDateTime photoAt;
 
 	/** 画像ファイルパス */
-	private ImageFilePath imageFilePath;
+	private String imageFilePath;
 
 	/** キャプション */
-	private Caption caption;
+	private String caption;
 
 	/**
 	 * 向き区分
