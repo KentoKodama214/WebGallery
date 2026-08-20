@@ -36,6 +36,7 @@
       "Bash(mv *)",
       "Bash(npm *)",
       "Bash(npx *)",
+      "Bash(pnpm *)",
       "Bash(python3*)",
       "Bash(sed*)",
       "Bash(xargs*)",
