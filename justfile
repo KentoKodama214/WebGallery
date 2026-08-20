@@ -16,3 +16,7 @@ build:
 # lint
 lint:
     cd frontend && mise exec -- pnpm lint
+
+# E2Eテスト実行（DB・バックエンドを未起動の場合は自動起動）
+e2e:
+    ./scripts/e2e.sh

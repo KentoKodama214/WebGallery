@@ -11,13 +11,16 @@ WebGalleryは、Spring Bootで構築されたフォトギャラリーWebアプ�
 ## ビルド・実行コマンド
 
 ```bash
-# プロジェクトのビルド
+# PostgreSQLデータベースの起動（アプリ実行前に必要）
+docker-compose up -d
+
+# backendのビルド
 ./backend/gradlew -p backend build
 
-# テストのみ実行
+# backendのテストのみ実行
 ./backend/gradlew -p backend test
 
-# アプリケーションの実行
+# backendアプリケーションの実行
 ./backend/gradlew -p backend bootRun
 
 # WARファイルのビルド
@@ -26,8 +29,14 @@ WebGalleryは、Spring Bootで構築されたフォトギャラリーWebアプ�
 # クリーンビルド
 ./backend/gradlew -p backend clean build
 
-# PostgreSQLデータベースの起動（アプリ実行前に必要）
-docker-compose up -d
+# frontendの依存パッケージインストール・開発サーバー起動・ビルド・lint（just経由）
+just setup
+just dev
+just build
+just lint
+
+# E2Eテスト一括実行（DB・backendを自動起動）
+just e2e
 ```
 
 ## アーキテクチャ
@@ -38,6 +47,8 @@ docker-compose up -d
 2. **Service層** (`service/` + `service/impl/`) - ビジネスロジックとバリデーション。`/model/`のModelオブジェクトでController層・Repository層と転送する
 3. **Repository層** (`repository/` + `repository/impl/`) - データベースアクセス。`/model/`でService層と、`/entity/`や`/dto/`でMapper層と転送する
 4. **MyBatis Mapper層** (`mapper/`) - SQLは`resources/com/web/gallery/mapper/*.xml`のXMLファイルで定義
+
+上記に加え、`domain/`にはプロパティ単位の値オブジェクト（`record`）が定義されており、Model・Repository・Serviceのメソッド引数・返り値として利用される。また、管理者権限チェックには`annotation/`のカスタムアノテーションと`aspect/`のAOPを使用する。
 
 各レイヤーの詳細なルール（依存関係、命名規則、アノテーション規約等）は `.claude/rules/` 配下のルールファイルを参照。
 
@@ -66,12 +77,23 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 ### テスト実行
 
 ```bash
-# 全テスト実行
+# backendの全テスト実行
 ./backend/gradlew -p backend test
 
-# 特定のテストクラスを実行
+# backendの特定のテストクラスを実行
 ./backend/gradlew -p backend test --tests "com.web.gallery.service.impl.PhotoServiceImplTest"
+
+# frontendの単体テスト（Jest）
+cd frontend && pnpm test
+
+# frontendのE2Eテスト（Playwright、DB・backendを自動起動）
+just e2e
 ```
+
+### フロントエンドのテスト
+
+- 単体テスト（Jest）は各コンポーネントと同階層の`__tests__/`に配置する（例：`frontend/src/app/login/__tests__/LoginForm.test.tsx`）
+- E2Eテスト（Playwright）は`frontend/e2e/pages/`（ページ単位）と`frontend/e2e/scenarios/`（ページ間シナリオ）に分けて配置する
 
 ## 遵守すべき規約
 
@@ -95,10 +117,10 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 4. テーブルを追加した場合
    1. `db/init`の`init-db.sh`と`init-test-db.sh`のSQL_FILESに追加したテーブルのSQLファイルを追加する
    2. `doc/database/README.md`に追加したテーブルを追記
-   3. `doc/database/data-dictionaly.md`に追加したカラムがなければ追記
+   3. `doc/database/data-dictionary.md`に追加したカラムがなければ追記
    4. `entity/`にエンティティを作成
 5. カラムを追加・修正した場合
-   1. `doc/database/data-dictionaly.md`にカラムを追加・修正
+   1. `doc/database/data-dictionary.md`にカラムを追加・修正
    2. `entity/`の該当テーブルのエンティティを追加・修正
 6. `mapper/`にMyBatisマッパーインターフェース、`resources/com/web/gallery/mapper/`にXMLを作成
 7. 3以外でテーブルと同等ではないプロパティや複数テーブルを結合してプロパティを取得する場合、または特殊な条件で抽出する場合は`dto/`にDTOクラスを作成
@@ -108,7 +130,7 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 11. `controller/`にコントローラーを作成
 12. `backend/src/test/resources/sql/`にテスト用SQLフィクスチャを追加
 13. `backend/src/test/resources/json/controller`にテスト用APIリクエストのjsonを作成
-14. 既存パターンに従って`backend/src/test`にユニットテストと統合テスト、`frontend/e2e`にE2Eテストを追加
+14. 既存パターンに従って`backend/src/test`にユニットテストと統合テスト、対象コンポーネントの`__tests__/`にfrontendのユニットテスト（Jest）、`frontend/e2e/pages/`または`frontend/e2e/scenarios/`にE2Eテストを追加
 15. すべてのユニットテスト・統合テスト・E2Eテストを実行して、成功することを確認
 
 ### 重要事項
