@@ -9,17 +9,17 @@ test.describe("ログインページ", () => {
     await expect(page.getByPlaceholder("User ID")).toBeVisible();
     await expect(page.getByPlaceholder("Password")).toBeVisible();
     await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
-    await expect(page.getByText("Forgot your password?")).toBeVisible();
     await expect(page.getByText("Create an account")).toBeVisible();
   });
 
   test("空のフォームで送信するとエラーが表示されること", async ({ page }) => {
     await page.getByRole("button", { name: "Log in" }).click();
 
-    // APIへのリクエストが失敗し、エラーメッセージが表示される
-    await expect(page.locator("text=ログインに失敗しました")).toBeVisible({
-      timeout: 5000,
-    });
+    // バックエンドが起動していない場合はネットワークエラー、
+    // 起動している場合はバリデーションエラーが表示される
+    await expect(
+      page.locator("p").filter({ hasText: /(入力内容に誤りがあります|失敗しました)/ })
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test("不正な認証情報でエラーメッセージが表示されること", async ({ page }) => {

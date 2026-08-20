@@ -1,0 +1,31 @@
+import { test, expect } from "@playwright/test";
+
+test.describe("写真一覧ページ", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/photo/e2e-test-account/photo_list");
+  });
+
+  test("ページタイトルが正しいこと", async ({ page }) => {
+    await expect(page).toHaveTitle(/写真一覧/);
+  });
+
+  test("フィルタートリガーが表示されること", async ({ page }) => {
+    await expect(page.getByTestId("filter-trigger")).toBeVisible();
+  });
+
+  test("フィルターパネルの開閉ができること", async ({ page }) => {
+    const filterPanel = page.getByTestId("filter-panel");
+
+    await page.getByTestId("filter-trigger").click();
+    await expect(filterPanel).toHaveClass(/filterOpen/);
+
+    await page.getByTestId("filter-close-button").click();
+    await expect(filterPanel).not.toHaveClass(/filterOpen/);
+  });
+
+  test("写真一覧が表示されるか、取得エラーが表示されること", async ({ page }) => {
+    const empty = page.getByText("写真がありません");
+    const error = page.getByText("写真一覧の取得に失敗しました");
+    await expect(empty.or(error)).toBeVisible({ timeout: 10000 });
+  });
+});

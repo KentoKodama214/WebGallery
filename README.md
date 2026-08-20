@@ -176,6 +176,22 @@ just dev
 ./backend/gradlew -p backend clean build
 ```
 
+### E2Eテストの実行（要Docker）
+
+フロントエンドの画面操作を通したE2Eテスト（Playwright）を一括実行できます。DB（docker-compose）とバックエンドが未起動の場合は自動的に起動し、終了後に自動起動したバックエンドは停止します。
+
+```bash
+just e2e
+# もしくは
+./scripts/e2e.sh
+```
+
+DB・バックエンドを自分で起動済みの場合は、フロントエンドのみで直接実行できます。
+
+```bash
+cd frontend && pnpm test:e2e
+```
+
 ## アーキテクチャ
 
 アーキテクチャの詳細は [`doc/architecture/`](doc/architecture/) を参照してください。
@@ -237,7 +253,8 @@ WebGallery/
 │   ├── modulith/                   # モジュールドキュメント（Spring Modulith自動生成）
 │   └── view/                       # 画面設計書
 ├── scripts/
-│   └── check-architecture.sh       # アーキテクチャチェックスクリプト
+│   ├── check-architecture.sh       # アーキテクチャチェックスクリプト
+│   └── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド自動起動）
 ├── frontend/                       # フロントエンド（Next.js）
 │   ├── package.json
 │   ├── pnpm-lock.yaml
@@ -250,8 +267,8 @@ WebGallery/
 │   ├── jest.config.js              # Jestテスト設定
 │   ├── playwright.config.ts        # E2Eテスト設定
 │   ├── e2e/                        # Playwright E2Eテスト
-│   │   ├── login.spec.ts           # ログインE2Eテスト
-│   │   └── admin_account_management.spec.ts  # 管理者アカウント管理E2Eテスト
+│   │   ├── pages/                  # ページ単位のE2Eテスト
+│   │   └── scenarios/              # ページ間シナリオのE2Eテスト
 │   ├── public/
 │   │   └── image/                  # 静的画像（アイコン等）
 │   └── src/
