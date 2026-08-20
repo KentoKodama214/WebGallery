@@ -20,6 +20,7 @@
 - [ ] `./backend/gradlew -p backend test` で単体テストが成功することを確認
 - [ ] `./backend/gradlew -p backend integrationTest` で結合テストが成功することを確認
 - [ ] `just dev` で frontend の起動が成功することを確認
+- [ ] `just e2e` でE2Eテストが成功することを確認
 
 
 # 懸念事項
