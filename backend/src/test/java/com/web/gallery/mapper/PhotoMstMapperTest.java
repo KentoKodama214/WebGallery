@@ -39,6 +39,8 @@ import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.entity.PhotoMst;
+import com.web.gallery.entity.PhotoMstCondition;
+import com.web.gallery.entity.PhotoMstUpdateTarget;
 import com.web.gallery.enumeration.DirectionEnum;
 
 @MybatisTest
@@ -61,7 +63,7 @@ public class PhotoMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのcountで1件の場合")
 		void count_by_accountNo() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(new AccountNo(1L)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(3, actual);
 		}
@@ -70,7 +72,7 @@ public class PhotoMstMapperTest {
 		@Order(2)
 		@DisplayName("正常系：写真番号でのcountで1件の場合")
 		void count_by_photoNo() {
-			PhotoMst photoMst = PhotoMst.builder().photoNo(new PhotoNo(1L)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().photoNo(new PhotoNo(1L)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(2, actual);
 		}
@@ -79,7 +81,7 @@ public class PhotoMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：削除フラグでのcountで1件以上の場合")
 		void count_by_isDeleted() {
-			PhotoMst photoMst = PhotoMst.builder().isDeleted(new IsDeleted(true)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().isDeleted(new IsDeleted(true)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(3, actual);
 		}
@@ -88,7 +90,7 @@ public class PhotoMstMapperTest {
 		@Order(4)
 		@DisplayName("正常系：撮影日時でのcountで1件の場合")
 		void count_by_photoAt() {
-			PhotoMst photoMst = PhotoMst.builder()
+			PhotoMstCondition photoMst = PhotoMstCondition.builder()
 					.photoAt(new PhotoAt(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
@@ -98,7 +100,7 @@ public class PhotoMstMapperTest {
 		@Order(5)
 		@DisplayName("正常系：ロケーション番号でのcountで1件の場合")
 		void count_by_locationNo() {
-			PhotoMst photoMst = PhotoMst.builder().locationNo(new LocationNo(1L)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().locationNo(new LocationNo(1L)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -107,7 +109,7 @@ public class PhotoMstMapperTest {
 		@Order(6)
 		@DisplayName("正常系：画像ファイルパスでのcountで1件の場合")
 		void count_by_imageFilePath() {
-			PhotoMst photoMst = PhotoMst.builder().imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg")).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg")).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -116,7 +118,7 @@ public class PhotoMstMapperTest {
 		@Order(7)
 		@DisplayName("正常系：写真タイトル日本語でのcountで1件の場合")
 		void count_by_photoJapaneseTitle() {
-			PhotoMst photoMst = PhotoMst.builder().photoJapaneseTitle(new PhotoJapaneseTitle("タイトル11")).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().photoJapaneseTitle(new PhotoJapaneseTitle("タイトル11")).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -125,7 +127,7 @@ public class PhotoMstMapperTest {
 		@Order(8)
 		@DisplayName("正常系：写真タイトル英語でのcountで1件の場合")
 		void count_by_photoEnglishTitle() {
-			PhotoMst photoMst = PhotoMst.builder().photoEnglishTitle(new PhotoEnglishTitle("title11")).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().photoEnglishTitle(new PhotoEnglishTitle("title11")).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -134,7 +136,7 @@ public class PhotoMstMapperTest {
 		@Order(9)
 		@DisplayName("正常系：キャプションでのcountで1件の場合")
 		void count_by_caption() {
-			PhotoMst photoMst = PhotoMst.builder().caption(new Caption("キャプション11")).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().caption(new Caption("キャプション11")).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -143,7 +145,7 @@ public class PhotoMstMapperTest {
 		@Order(10)
 		@DisplayName("正常系：向き区分コードでのcountで1件の場合")
 		void count_by_directionKbnCode() {
-			PhotoMst photoMst = PhotoMst.builder().directionKbn(DirectionEnum.VERTICAL).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().directionKbn(DirectionEnum.VERTICAL).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -152,7 +154,7 @@ public class PhotoMstMapperTest {
 		@Order(11)
 		@DisplayName("正常系：焦点距離でのcountで1件の場合")
 		void count_by_focalLength() {
-			PhotoMst photoMst = PhotoMst.builder().focalLength(new FocalLength(24)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().focalLength(new FocalLength(24)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -161,7 +163,7 @@ public class PhotoMstMapperTest {
 		@Order(12)
 		@DisplayName("正常系：F値でのcountで1件の場合")
 		void count_by_fValue() {
-			PhotoMst photoMst = PhotoMst.builder().fValue(new FValue(BigDecimal.valueOf(8.0))).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().fValue(new FValue(BigDecimal.valueOf(8.0))).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -170,7 +172,7 @@ public class PhotoMstMapperTest {
 		@Order(13)
 		@DisplayName("正常系：シャッタースピードでのcountで1件の場合")
 		void count_by_shutterSpeed() {
-			PhotoMst photoMst = PhotoMst.builder().shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(1))).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(1))).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -179,7 +181,7 @@ public class PhotoMstMapperTest {
 		@Order(14)
 		@DisplayName("正常系：ISOでのcountで1件の場合")
 		void count_by_iso() {
-			PhotoMst photoMst = PhotoMst.builder().iso(new Iso(100)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().iso(new Iso(100)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -188,7 +190,7 @@ public class PhotoMstMapperTest {
 		@Order(15)
 		@DisplayName("正常系：countで0件の場合")
 		void count_not_found() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(100L)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(new AccountNo(100L)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(0, actual);
 		}
@@ -197,7 +199,7 @@ public class PhotoMstMapperTest {
 		@Order(16)
 		@DisplayName("正常系：複数の条件でcountする場合")
 		void count_some_conditions() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).photoNo(new PhotoNo(1L)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(new AccountNo(1L)).photoNo(new PhotoNo(1L)).build();
 			Integer actual = photoMstMapper.count(photoMst);
 			assertEquals(1, actual);
 		}
@@ -318,8 +320,8 @@ public class PhotoMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのupdate")
 		void update_by_accountNo() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().accountNo(new AccountNo(1L)).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(3, actual);
@@ -350,8 +352,8 @@ public class PhotoMstMapperTest {
 		@Order(2)
 		@DisplayName("正常系：写真番号でのupdate")
 		void update_by_photoNo() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().photoNo(new PhotoNo(1L)).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().photoNo(new PhotoNo(1L)).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(2, actual);
@@ -403,8 +405,8 @@ public class PhotoMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：削除フラグでのupdate")
 		void update_by_isDeleted() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().isDeleted(new IsDeleted(true)).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().isDeleted(new IsDeleted(true)).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(3, actual);
@@ -437,9 +439,9 @@ public class PhotoMstMapperTest {
 		@Order(4)
 		@DisplayName("正常系：撮影日時でのupdate")
 		void update_by_photoAt() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder()
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder()
 					.photoAt(new PhotoAt(OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -471,8 +473,8 @@ public class PhotoMstMapperTest {
 		@Order(5)
 		@DisplayName("正常系：ロケーション番号でのupdate")
 		void update_by_locationNo() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().locationNo(new LocationNo(1L)).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().locationNo(new LocationNo(1L)).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -504,8 +506,8 @@ public class PhotoMstMapperTest {
 		@Order(6)
 		@DisplayName("正常系：画像ファイルパスでのupdate")
 		void update_by_imageFilePath() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg")).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg")).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -537,8 +539,8 @@ public class PhotoMstMapperTest {
 		@Order(7)
 		@DisplayName("正常系：写真タイトル日本語でのupdate")
 		void update_by_photoJapaneseTitle() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().photoJapaneseTitle(new PhotoJapaneseTitle("タイトル11")).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().photoJapaneseTitle(new PhotoJapaneseTitle("タイトル11")).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -570,8 +572,8 @@ public class PhotoMstMapperTest {
 		@Order(8)
 		@DisplayName("正常系：写真タイトル英語でのupdate")
 		void update_by_photoEnglishTitle() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().photoEnglishTitle(new PhotoEnglishTitle("title11")).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().photoEnglishTitle(new PhotoEnglishTitle("title11")).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -603,8 +605,8 @@ public class PhotoMstMapperTest {
 		@Order(9)
 		@DisplayName("正常系：キャプションでのcountで1件の場合")
 		void update_by_caption() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().caption(new Caption("キャプション11")).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().caption(new Caption("キャプション11")).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -636,8 +638,8 @@ public class PhotoMstMapperTest {
 		@Order(10)
 		@DisplayName("正常系：向き区分コードでのupdate")
 		void update_by_directionKbnCode() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().directionKbn(DirectionEnum.VERTICAL).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().directionKbn(DirectionEnum.VERTICAL).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -669,8 +671,8 @@ public class PhotoMstMapperTest {
 		@Order(11)
 		@DisplayName("正常系：焦点距離でのupdate")
 		void update_by_focalLength() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().focalLength(new FocalLength(24)).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().focalLength(new FocalLength(24)).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -702,8 +704,8 @@ public class PhotoMstMapperTest {
 		@Order(12)
 		@DisplayName("正常系：F値でのupdate")
 		void update_by_fValue() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().fValue(new FValue(BigDecimal.valueOf(8.0))).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().fValue(new FValue(BigDecimal.valueOf(8.0))).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -735,8 +737,8 @@ public class PhotoMstMapperTest {
 		@Order(13)
 		@DisplayName("正常系：シャッタースピードでのupdate")
 		void update_by_shutterSpeed() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(1))).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(1))).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -768,8 +770,8 @@ public class PhotoMstMapperTest {
 		@Order(14)
 		@DisplayName("正常系：ISOでのupdate")
 		void update_by_iso() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().iso(new Iso(100)).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().iso(new Iso(100)).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -801,8 +803,8 @@ public class PhotoMstMapperTest {
 		@Order(15)
 		@DisplayName("正常系：updateで0件の場合")
 		void update_not_found() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(new AccountNo(100L)).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().accountNo(new AccountNo(100L)).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(0, actual);
 			
@@ -814,8 +816,8 @@ public class PhotoMstMapperTest {
 		@Order(16)
 		@DisplayName("正常系：複数の条件でupdateする場合")
 		void update_some_conditions() {
-			PhotoMst conditionPhotoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).photoNo(new PhotoNo(1L)).build();
-			PhotoMst targetPhotoMst = PhotoMst.builder().iso(new Iso(1000)).build();
+			PhotoMstCondition conditionPhotoMst = PhotoMstCondition.builder().accountNo(new AccountNo(1L)).photoNo(new PhotoNo(1L)).build();
+			PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(new Iso(1000)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
 			assertEquals(1, actual);
@@ -854,7 +856,7 @@ public class PhotoMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのdeleteで複数件削除される場合")
 		void delete_by_accountNo() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(new AccountNo(1L)).build();
 			Integer actual = photoMstMapper.delete(photoMst);
 			assertEquals(3, actual);
 
@@ -872,7 +874,7 @@ public class PhotoMstMapperTest {
 		@Order(2)
 		@DisplayName("正常系：写真番号でのdeleteで複数件削除される場合")
 		void delete_by_photoNo() {
-			PhotoMst photoMst = PhotoMst.builder().photoNo(new PhotoNo(1L)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().photoNo(new PhotoNo(1L)).build();
 			Integer actual = photoMstMapper.delete(photoMst);
 			assertEquals(2, actual);
 
@@ -885,7 +887,7 @@ public class PhotoMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：アカウント番号と写真番号でのdeleteで1件削除される場合")
 		void delete_by_accountNo_and_photoNo() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(1L)).photoNo(new PhotoNo(1L)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(new AccountNo(1L)).photoNo(new PhotoNo(1L)).build();
 			Integer actual = photoMstMapper.delete(photoMst);
 			assertEquals(1, actual);
 
@@ -898,7 +900,7 @@ public class PhotoMstMapperTest {
 		@Order(4)
 		@DisplayName("正常系：該当するレコードがない場合は0件")
 		void delete_not_found() {
-			PhotoMst photoMst = PhotoMst.builder().accountNo(new AccountNo(100L)).build();
+			PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(new AccountNo(100L)).build();
 			Integer actual = photoMstMapper.delete(photoMst);
 			assertEquals(0, actual);
 		}
@@ -937,7 +939,7 @@ public class PhotoMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：画像ファイルパスに該当する写真が1つある場合")
 		void isExistPhoto_photo_found() {
-			PhotoMst photoMst = PhotoMst.builder()
+			PhotoMstCondition photoMst = PhotoMstCondition.builder()
 					.accountNo(new AccountNo(1L))
 					.imageFilePath(new ImageFilePath("DSC111.jpg"))
 					.build();
@@ -948,7 +950,7 @@ public class PhotoMstMapperTest {
 		@Order(2)
 		@DisplayName("正常系：画像ファイルパスに該当する写真が複数ある場合")
 		void isExistPhoto_photos_found() {
-			PhotoMst photoMst = PhotoMst.builder()
+			PhotoMstCondition photoMst = PhotoMstCondition.builder()
 					.accountNo(new AccountNo(2L))
 					.imageFilePath(new ImageFilePath("DSC555.jpg"))
 					.build();
@@ -959,7 +961,7 @@ public class PhotoMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：画像ファイルパスに該当する写真があるが、削除済みの場合")
 		void isExistPhoto_found_is_deleted() {
-			PhotoMst photoMst = PhotoMst.builder()
+			PhotoMstCondition photoMst = PhotoMstCondition.builder()
 					.accountNo(new AccountNo(1L))
 					.imageFilePath(new ImageFilePath("DSC333.jpg"))
 					.build();
@@ -970,7 +972,7 @@ public class PhotoMstMapperTest {
 		@Order(4)
 		@DisplayName("正常系：画像ファイルパスに該当する写真がない場合")
 		void isExistPhoto_not_found() {
-			PhotoMst photoMst = PhotoMst.builder()
+			PhotoMstCondition photoMst = PhotoMstCondition.builder()
 					.accountNo(new AccountNo(1L))
 					.imageFilePath(new ImageFilePath("DSC999.jpg"))
 					.build();
