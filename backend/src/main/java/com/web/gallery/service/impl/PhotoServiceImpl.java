@@ -80,13 +80,12 @@ public class PhotoServiceImpl implements PhotoService {
 
 		PhotoModelList photoModelList
 			= photoDetailRepository.getPhotoList(
-					PhotoGetModel.of(photoListGetModel.getAccountNo(), accountModel.getAccountNo()));
+					PhotoGetModel.of(photoListGetModel, accountModel.getAccountNo()));
 
-		return photoModelList
-					.filterByDirectionKbn(photoListGetModel.getDirectionKbn())
-					.filterByFavorite(photoListGetModel.getIsFavoriteOnly().value())
-					.filterByTags(photoListGetModel.getTagList())
-					.sorted(getComparator(photoListGetModel.getSortBy()));
+		if(SortPhotoEnum.SEASON.equals(photoListGetModel.getSortBy())) {
+			return photoModelList.sorted(getSeasonComparator());
+		}
+		return photoModelList;
 	}
 
 	/**
@@ -190,33 +189,24 @@ public class PhotoServiceImpl implements PhotoService {
 	}
 
 	/**
-	 * 写真一覧の並び順のComparatorを取得する
+	 * 写真一覧の季節・時期順のComparatorを取得する<p>
+	 * 月日ベースの近似ソートのため、SQLのORDER BYではなくアプリケーション層で計算する
 	 *
-	 * @param	sortBy	{@link SortPhotoEnum}
-	 * @return			{@link PhotoModel}のComparator
+	 * @return	{@link PhotoModel}のComparator
 	 */
-	private Comparator<PhotoModel> getComparator(SortPhotoEnum sortBy) {
-		switch(sortBy) {
-			case PHOTO_AT:
-				return Comparator.comparing(photoModel -> photoModel.getPhotoAt().value(), Comparator.reverseOrder());
-			case FAVORITE:
-				return Comparator.comparing((PhotoModel photoModel) -> photoModel.getFavoriteCount().value()).reversed();
-			case SEASON:
-				return new Comparator<PhotoModel>() {
-					@Override
-					public int compare(PhotoModel photoModelA, PhotoModel photoModelB) {
-						OffsetDateTime photoAtA = photoModelA.getPhotoAt().value().withOffsetSameInstant(Consts.JST);
-						OffsetDateTime photoAtB = photoModelB.getPhotoAt().value().withOffsetSameInstant(Consts.JST);
+	private Comparator<PhotoModel> getSeasonComparator() {
+		return new Comparator<PhotoModel>() {
+			@Override
+			public int compare(PhotoModel photoModelA, PhotoModel photoModelB) {
+				OffsetDateTime photoAtA = photoModelA.getPhotoAt().value().withOffsetSameInstant(Consts.JST);
+				OffsetDateTime photoAtB = photoModelB.getPhotoAt().value().withOffsetSameInstant(Consts.JST);
 
-						LocalDate dateA = LocalDate.of(2000, photoAtA.getMonth().getValue(), photoAtA.getDayOfMonth());
-						LocalDate dateB = LocalDate.of(2000, photoAtB.getMonth().getValue(), photoAtB.getDayOfMonth());
+				LocalDate dateA = LocalDate.of(2000, photoAtA.getMonth().getValue(), photoAtA.getDayOfMonth());
+				LocalDate dateB = LocalDate.of(2000, photoAtB.getMonth().getValue(), photoAtB.getDayOfMonth());
 
-						return (int) ChronoUnit.DAYS.between(dateA, dateB);
-					}
-				};
-			default:
-				return Comparator.comparing(photoModel -> photoModel.getPhotoAt().value(), Comparator.reverseOrder());
-		}
+				return (int) ChronoUnit.DAYS.between(dateA, dateB);
+			}
+		};
 	}
 
 	/**

@@ -262,13 +262,13 @@ public class PhotoServiceImplTest {
 		void getPhotoList_not_found() {
 			String accountId = "aaaaaaaa";
 			List<String> tags = new ArrayList<String>();
-			
+
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
-			
+
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
 			doReturn(PhotoModelList.empty()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
-			
+
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(2L))
 					.photoAccountId(new AccountId(accountId))
@@ -277,102 +277,108 @@ public class PhotoServiceImplTest {
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
-			
+
 			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			assertTrue(actual.isEmpty());
 			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
-			
+
 			PhotoGetModel photoGetModel = photoGetModelCaptor.getValue();
 			assertEquals(new AccountNo(2L), photoGetModel.getAccountNo());
 			assertEquals(new AccountNo(1L), photoGetModel.getPhotoAccountNo());
+			assertEquals(DirectionEnum.NONE, photoGetModel.getDirectionKbn());
+			assertFalse(photoGetModel.getIsFavoriteOnly().value());
+			assertEquals(tags, photoGetModel.getTagList());
+			assertEquals(SortPhotoEnum.PHOTO_AT, photoGetModel.getSortBy());
 		}
-		
+
 		@Test
 		@Order(2)
-		@DisplayName("正常系：写真が存在した場合で、撮影日順に並び替え")
-		void getPhotoList_sortBy_photoAt() {
+		@DisplayName("正常系：sortByがSEASON以外の場合、フィルタリング・ソート済みのRepositoryの取得結果をそのまま返すこと")
+		void getPhotoList_passThrough_when_sortBy_is_not_season() {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
-			
+
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
-			
+
+			PhotoModelList repositoryResult = createPhotoModelList();
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
-			doReturn(createPhotoModelList()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
-			
+			doReturn(repositoryResult).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
+
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(2L))
 					.photoAccountId(new AccountId(accountId))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.isFavoriteOnly(new IsFavoriteOnly(false))
-					.tagList(tags)
-					.sortBy(SortPhotoEnum.PHOTO_AT)
-					.build();
-			
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			assertEquals(3, actual.size());
-			assertEquals(3L, actual.get(0).getPhotoNo().value());
-			assertEquals(2L, actual.get(1).getPhotoNo().value());
-			assertEquals(1L, actual.get(2).getPhotoNo().value());
-			
-			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
-			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
-			
-			PhotoGetModel photoGetModel = photoGetModelCaptor.getValue();
-			assertEquals(new AccountNo(2L), photoGetModel.getAccountNo());
-			assertEquals(new AccountNo(1L), photoGetModel.getPhotoAccountNo());
-		}
-		
-		@Test
-		@Order(3)
-		@DisplayName("正常系：写真が存在した場合で、お気に入り数順に並び替え")
-		void getPhotoList_sortBy_Favorite() {
-			String accountId = "aaaaaaaa";
-			List<String> tags = Arrays.asList("太陽", "海");
-			
-			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
-			
-			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
-			doReturn(createPhotoModelList()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
-			
-			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
-					.accountNo(new AccountNo(2L))
-					.photoAccountId(new AccountId(accountId))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.isFavoriteOnly(new IsFavoriteOnly(true))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.FAVORITE)
 					.build();
-			
+
 			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			assertEquals(3, actual.size());
-			assertEquals(2L, actual.get(0).getPhotoNo().value());
-			assertEquals(3L, actual.get(1).getPhotoNo().value());
-			assertEquals(1L, actual.get(2).getPhotoNo().value());
-			
+			assertEquals(repositoryResult.toList(), actual.toList());
+
 			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
-			
+
 			PhotoGetModel photoGetModel = photoGetModelCaptor.getValue();
 			assertEquals(new AccountNo(2L), photoGetModel.getAccountNo());
 			assertEquals(new AccountNo(1L), photoGetModel.getPhotoAccountNo());
+			assertEquals(DirectionEnum.VERTICAL, photoGetModel.getDirectionKbn());
+			assertTrue(photoGetModel.getIsFavoriteOnly().value());
+			assertEquals(tags, photoGetModel.getTagList());
+			assertEquals(SortPhotoEnum.FAVORITE, photoGetModel.getSortBy());
 		}
-		
+
 		@Test
-		@Order(4)
-		@DisplayName("正常系：写真が存在した場合で、季節・時期順に並び替え")
+		@Order(3)
+		@DisplayName("正常系：sortByがSEASONの場合、季節・時期順に並び替えられること")
 		void getPhotoList_sortBy_season() {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
-			
+
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
-			
+
+			// SQL側で絞り込み済みの想定で、季節順とは異なる並びでRepositoryの結果をモックする
+			List<PhotoModel> repositoryResultList = new ArrayList<PhotoModel>();
+			repositoryResultList.add(PhotoModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoNo(new PhotoNo(3L))
+					.favoriteCount(new FavoriteCount(2))
+					.isFavorite(new IsFavorite(false))
+					.photoAt(new PhotoAt(OffsetDateTime.of(2002, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.imageFilePath(new ImageFilePath("DSC333.jpg"))
+					.caption(new Caption("キャプション3"))
+					.directionKbn(DirectionEnum.VERTICAL)
+					.photoTagModelList(PhotoTagModelList.empty())
+					.build());
+			repositoryResultList.add(PhotoModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoNo(new PhotoNo(1L))
+					.favoriteCount(new FavoriteCount(1))
+					.isFavorite(new IsFavorite(false))
+					.photoAt(new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.imageFilePath(new ImageFilePath("DSC111.jpg"))
+					.caption(new Caption("キャプション1"))
+					.directionKbn(DirectionEnum.VERTICAL)
+					.photoTagModelList(PhotoTagModelList.empty())
+					.build());
+			repositoryResultList.add(PhotoModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoNo(new PhotoNo(2L))
+					.favoriteCount(new FavoriteCount(3))
+					.isFavorite(new IsFavorite(false))
+					.photoAt(new PhotoAt(OffsetDateTime.of(2001, 6, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.imageFilePath(new ImageFilePath("DSC222.jpg"))
+					.caption(new Caption("キャプション2"))
+					.directionKbn(DirectionEnum.VERTICAL)
+					.photoTagModelList(PhotoTagModelList.empty())
+					.build());
+
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
-			doReturn(createPhotoModelList()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
-			
+			doReturn(PhotoModelList.of(repositoryResultList)).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
+
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(2L))
 					.photoAccountId(new AccountId(accountId))
@@ -381,19 +387,20 @@ public class PhotoServiceImplTest {
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.SEASON)
 					.build();
-			
+
 			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
 			assertEquals(3, actual.size());
 			assertEquals(1L, actual.get(0).getPhotoNo().value());
 			assertEquals(2L, actual.get(1).getPhotoNo().value());
 			assertEquals(3L, actual.get(2).getPhotoNo().value());
-			
+
 			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
-			
+
 			PhotoGetModel photoGetModel = photoGetModelCaptor.getValue();
 			assertEquals(new AccountNo(2L), photoGetModel.getAccountNo());
 			assertEquals(new AccountNo(1L), photoGetModel.getPhotoAccountNo());
+			assertEquals(SortPhotoEnum.SEASON, photoGetModel.getSortBy());
 		}
 	}
 	
@@ -1112,17 +1119,17 @@ public class PhotoServiceImplTest {
 	@Nested
 	@Order(6)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class getComparator {
+	class getSeasonComparator {
 		@Test
 		@Order(1)
 		@SuppressWarnings("unchecked")
-		@DisplayName("正常系：photoAtの場合")
-		void getComparator_photoAt() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method getComparator = PhotoServiceImpl.class.getDeclaredMethod("getComparator", SortPhotoEnum.class);
-			getComparator.setAccessible(true);
-			
-			Comparator<PhotoModel> actual = (Comparator<PhotoModel>) getComparator.invoke(photoServiceImpl, SortPhotoEnum.PHOTO_AT);
-			
+		@DisplayName("正常系：季節・時期順に並び替えられること")
+		void getSeasonComparator_success() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
+			Method getSeasonComparator = PhotoServiceImpl.class.getDeclaredMethod("getSeasonComparator");
+			getSeasonComparator.setAccessible(true);
+
+			Comparator<PhotoModel> actual = (Comparator<PhotoModel>) getSeasonComparator.invoke(photoServiceImpl);
+
 			List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
 			photoModelList.add(PhotoModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1179,238 +1186,13 @@ public class PhotoServiceImplTest {
 					.directionKbn(DirectionEnum.VERTICAL)
 					.photoTagModelList(PhotoTagModelList.empty())
 					.build());
-			
-			List<PhotoModel> actualData = photoModelList.stream().sorted(actual).toList();
-			assertEquals(5L, actualData.get(0).getPhotoNo().value());
-			assertEquals(3L, actualData.get(1).getPhotoNo().value());
-			assertEquals(2L, actualData.get(2).getPhotoNo().value());
-			assertEquals(1L, actualData.get(3).getPhotoNo().value());
-			assertEquals(4L, actualData.get(4).getPhotoNo().value());
-		}
-		
-		@Test
-		@Order(2)
-		@SuppressWarnings("unchecked")
-		@DisplayName("正常系：favoriteの場合")
-		void getComparator_favorite() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method getComparator = PhotoServiceImpl.class.getDeclaredMethod("getComparator", SortPhotoEnum.class);
-			getComparator.setAccessible(true);
-			
-			Comparator<PhotoModel> actual = (Comparator<PhotoModel>) getComparator.invoke(photoServiceImpl, SortPhotoEnum.FAVORITE);
-			
-			List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.favoriteCount(new FavoriteCount(1))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
-					.caption(new Caption("キャプション1"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.favoriteCount(new FavoriteCount(3))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2002, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC222.jpg"))
-					.caption(new Caption("キャプション2"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(3L))
-					.favoriteCount(new FavoriteCount(2))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2002, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC333.jpg"))
-					.caption(new Caption("キャプション3"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(4L))
-					.favoriteCount(new FavoriteCount(2))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2001, 3, 31, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC444.jpg"))
-					.caption(new Caption("キャプション4"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(5L))
-					.favoriteCount(new FavoriteCount(3))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2003, 3, 31, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC555.jpg"))
-					.caption(new Caption("キャプション5"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			
-			List<PhotoModel> actualData = photoModelList.stream().sorted(actual).toList();
-			assertEquals(2L, actualData.get(0).getPhotoNo().value());
-			assertEquals(5L, actualData.get(1).getPhotoNo().value());
-			assertEquals(3L, actualData.get(2).getPhotoNo().value());
-			assertEquals(4L, actualData.get(3).getPhotoNo().value());
-			assertEquals(1L, actualData.get(4).getPhotoNo().value());
-		}
-		
-		@Test
-		@Order(3)
-		@SuppressWarnings("unchecked")
-		@DisplayName("正常系：seasonの場合")
-		void getComparator_season() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method getComparator = PhotoServiceImpl.class.getDeclaredMethod("getComparator", SortPhotoEnum.class);
-			getComparator.setAccessible(true);
-			
-			Comparator<PhotoModel> actual = (Comparator<PhotoModel>) getComparator.invoke(photoServiceImpl, SortPhotoEnum.SEASON);
-			
-			List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.favoriteCount(new FavoriteCount(1))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
-					.caption(new Caption("キャプション1"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.favoriteCount(new FavoriteCount(3))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2002, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC222.jpg"))
-					.caption(new Caption("キャプション2"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(3L))
-					.favoriteCount(new FavoriteCount(2))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2002, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC333.jpg"))
-					.caption(new Caption("キャプション3"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(4L))
-					.favoriteCount(new FavoriteCount(2))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2001, 3, 31, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC444.jpg"))
-					.caption(new Caption("キャプション4"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(5L))
-					.favoriteCount(new FavoriteCount(3))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2003, 3, 31, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC555.jpg"))
-					.caption(new Caption("キャプション5"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			
+
 			List<PhotoModel> actualData = photoModelList.stream().sorted(actual).toList();
 			assertEquals(4L, actualData.get(0).getPhotoNo().value());
 			assertEquals(5L, actualData.get(1).getPhotoNo().value());
 			assertEquals(3L, actualData.get(2).getPhotoNo().value());
 			assertEquals(2L, actualData.get(3).getPhotoNo().value());
 			assertEquals(1L, actualData.get(4).getPhotoNo().value());
-		}
-		
-		@Test
-		@Order(4)
-		@SuppressWarnings("unchecked")
-		@DisplayName("正常系：それ以外の場合")
-		void getComparator_others() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method getComparator = PhotoServiceImpl.class.getDeclaredMethod("getComparator", SortPhotoEnum.class);
-			getComparator.setAccessible(true);
-			
-			Comparator<PhotoModel> actual = (Comparator<PhotoModel>) getComparator.invoke(photoServiceImpl, SortPhotoEnum.PHOTO_AT);
-			
-			List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.favoriteCount(new FavoriteCount(1))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
-					.caption(new Caption("キャプション1"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.favoriteCount(new FavoriteCount(3))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2002, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC222.jpg"))
-					.caption(new Caption("キャプション2"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(3L))
-					.favoriteCount(new FavoriteCount(2))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2002, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC333.jpg"))
-					.caption(new Caption("キャプション3"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(4L))
-					.favoriteCount(new FavoriteCount(2))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2001, 3, 31, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC444.jpg"))
-					.caption(new Caption("キャプション4"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			photoModelList.add(PhotoModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(5L))
-					.favoriteCount(new FavoriteCount(3))
-					.isFavorite(new IsFavorite(false))
-					.photoAt(new PhotoAt(OffsetDateTime.of(2003, 3, 31, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC555.jpg"))
-					.caption(new Caption("キャプション5"))
-					.directionKbn(DirectionEnum.VERTICAL)
-					.photoTagModelList(PhotoTagModelList.empty())
-					.build());
-			
-			List<PhotoModel> actualData = photoModelList.stream().sorted(actual).toList();
-			assertEquals(5L, actualData.get(0).getPhotoNo().value());
-			assertEquals(3L, actualData.get(1).getPhotoNo().value());
-			assertEquals(2L, actualData.get(2).getPhotoNo().value());
-			assertEquals(1L, actualData.get(3).getPhotoNo().value());
-			assertEquals(4L, actualData.get(4).getPhotoNo().value());
 		}
 	}
 	

@@ -41,7 +41,9 @@ import com.web.gallery.domain.photo.Iso;
 import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagEnglishName;
+import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
@@ -69,6 +71,10 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(3L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 			assertEquals(0, actual.size());
@@ -81,16 +87,20 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(2L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 
 			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
 			assertEquals(2, actual.size());
 			assertEquals(new AccountNo(2L), actual.get(0).getAccountNo());
-			assertEquals(1L, actual.get(0).getPhotoNo().value());
+			assertEquals(2L, actual.get(0).getPhotoNo().value());
 			assertEquals(0, actual.get(0).getPhotoTagModelList().size());
 			assertEquals(new AccountNo(2L), actual.get(1).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoNo().value());
+			assertEquals(1L, actual.get(1).getPhotoNo().value());
 			assertEquals(0, actual.get(1).getPhotoTagModelList().size());
 		}
 		
@@ -101,47 +111,132 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
-			
+
 			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
-			
+
 			assertEquals(2, actual.size());
-			
+
 			assertEquals(new AccountNo(1L), actual.get(0).getAccountNo());
-			assertEquals(1L, actual.get(0).getPhotoNo().value());
-			assertEquals(2, actual.get(0).getPhotoTagModelList().size());
+			assertEquals(2L, actual.get(0).getPhotoNo().value());
+			assertEquals(3, actual.get(0).getPhotoTagModelList().size());
 			assertEquals(new AccountNo(1L), actual.get(0).getPhotoTagModelList().get(0).getAccountNo());
-			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getPhotoNo().value());
+			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(0).getPhotoNo().value());
 			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getTagNo().value());
 			assertEquals("太陽", actual.get(0).getPhotoTagModelList().get(0).getTagJapaneseName().value());
 			assertEquals("sun", actual.get(0).getPhotoTagModelList().get(0).getTagEnglishName().value());
 			assertEquals(new AccountNo(1L), actual.get(0).getPhotoTagModelList().get(1).getAccountNo());
-			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(1).getPhotoNo().value());
+			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(1).getPhotoNo().value());
 			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(1).getTagNo().value());
-			assertEquals("青空", actual.get(0).getPhotoTagModelList().get(1).getTagJapaneseName().value());
-			assertEquals("bluesky", actual.get(0).getPhotoTagModelList().get(1).getTagEnglishName().value());
-			
+			assertEquals("曇天", actual.get(0).getPhotoTagModelList().get(1).getTagJapaneseName().value());
+			assertEquals("cloudy", actual.get(0).getPhotoTagModelList().get(1).getTagEnglishName().value());
+			assertEquals(new AccountNo(1L), actual.get(0).getPhotoTagModelList().get(2).getAccountNo());
+			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(2).getPhotoNo().value());
+			assertEquals(3L, actual.get(0).getPhotoTagModelList().get(2).getTagNo().value());
+			assertEquals("花", actual.get(0).getPhotoTagModelList().get(2).getTagJapaneseName().value());
+			assertEquals("flower", actual.get(0).getPhotoTagModelList().get(2).getTagEnglishName().value());
+
 			assertEquals(new AccountNo(1L), actual.get(1).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoNo().value());
-			assertEquals(3, actual.get(1).getPhotoTagModelList().size());
+			assertEquals(1L, actual.get(1).getPhotoNo().value());
+			assertEquals(2, actual.get(1).getPhotoTagModelList().size());
 			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(0).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(0).getPhotoNo().value());
+			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(0).getPhotoNo().value());
 			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(0).getTagNo().value());
 			assertEquals("太陽", actual.get(1).getPhotoTagModelList().get(0).getTagJapaneseName().value());
 			assertEquals("sun", actual.get(1).getPhotoTagModelList().get(0).getTagEnglishName().value());
 			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(1).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(1).getPhotoNo().value());
+			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(1).getPhotoNo().value());
 			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(1).getTagNo().value());
-			assertEquals("曇天", actual.get(1).getPhotoTagModelList().get(1).getTagJapaneseName().value());
-			assertEquals("cloudy", actual.get(1).getPhotoTagModelList().get(1).getTagEnglishName().value());
-			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(2).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(2).getPhotoNo().value());
-			assertEquals(3L, actual.get(1).getPhotoTagModelList().get(2).getTagNo().value());
-			assertEquals("花", actual.get(1).getPhotoTagModelList().get(2).getTagJapaneseName().value());
-			assertEquals("flower", actual.get(1).getPhotoTagModelList().get(2).getTagEnglishName().value());
+			assertEquals("青空", actual.get(1).getPhotoTagModelList().get(1).getTagJapaneseName().value());
+			assertEquals("bluesky", actual.get(1).getPhotoTagModelList().get(1).getTagEnglishName().value());
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("正常系：向き区分で絞り込まれること")
+		void getPhotoList_filterByDirectionKbn() {
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.VERTICAL)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.build();
+
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			assertEquals(1, actual.size());
+			assertEquals(1L, actual.get(0).getPhotoNo().value());
+			assertEquals(DirectionEnum.VERTICAL, actual.get(0).getDirectionKbn());
+		}
+
+		@Test
+		@Order(5)
+		@DisplayName("正常系：お気に入りのみに絞り込まれること")
+		void getPhotoList_filterByFavorite() {
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(true))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.build();
+
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			assertEquals(1, actual.size());
+			assertEquals(1L, actual.get(0).getPhotoNo().value());
+			assertTrue(actual.get(0).getIsFavorite().value());
+		}
+
+		@Test
+		@Order(6)
+		@DisplayName("正常系：タグをすべて保持する写真のみに絞り込まれること")
+		void getPhotoList_filterByTags() {
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of("太陽", "青空"))
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.build();
+
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			assertEquals(1, actual.size());
+			assertEquals(1L, actual.get(0).getPhotoNo().value());
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("正常系：お気に入り数の降順に並び替えられること")
+		void getPhotoList_sortBy_favorite() {
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.FAVORITE)
+					.build();
+
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			assertEquals(2, actual.size());
+			assertEquals(1L, actual.get(0).getPhotoNo().value());
+			assertEquals(2, actual.get(0).getFavoriteCount().value());
+			assertEquals(2L, actual.get(1).getPhotoNo().value());
+			assertEquals(1, actual.get(1).getFavoriteCount().value());
 		}
 	}
-	
+
 	@Nested
 	@Order(2)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)

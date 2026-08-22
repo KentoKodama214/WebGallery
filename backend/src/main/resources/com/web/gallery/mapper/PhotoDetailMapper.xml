@@ -84,6 +84,34 @@
 		WHERE
 			photo_mst.account_no = #{photoAccountNo} AND
 			photo_mst.is_deleted = false
+			<if test="directionKbn != null">
+				AND photo_mst.direction_kbn = #{directionKbn, typeHandler=com.web.gallery.type_handler.DirectionEnumTypeHandler}
+			</if>
+			<if test="isFavoriteOnly != null and isFavoriteOnly">
+				AND isFavorite.favorite_photo_account_no IS NOT NULL
+			</if>
+			<if test="tagList != null and !tagList.isEmpty() and tagList[0] != ''">
+				<foreach item="tag" collection="tagList">
+					AND EXISTS (
+						SELECT
+							1
+						FROM
+							photo.photo_tag_mst photo_tag_mst
+						WHERE
+							photo_tag_mst.account_no = photo_mst.account_no AND
+							photo_tag_mst.photo_no = photo_mst.photo_no AND
+							(photo_tag_mst.tag_japanese_name = #{tag} OR photo_tag_mst.tag_english_name = #{tag})
+					)
+				</foreach>
+			</if>
+		<choose>
+			<when test="sortBy == 'FAVORITE'">
+				ORDER BY favoriteCount DESC
+			</when>
+			<otherwise>
+				ORDER BY photo_mst.photo_at DESC
+			</otherwise>
+		</choose>
 	</select>
 
 	<select id="getPhotoDetail" parameterType="com.web.gallery.dto.PhotoDetailGetDto" resultMap="PhotoDetailDtoResultMap">

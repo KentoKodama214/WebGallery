@@ -49,8 +49,10 @@ import com.web.gallery.dto.PhotoDetailDto;
 import com.web.gallery.dto.PhotoDetailGetDto;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.dto.PhotoListGetDto;
+import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.mapper.PhotoDetailMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
@@ -82,6 +84,10 @@ public class PhotoDetailRepositoryImplTest {
 			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 
 			List<PhotoDto> photoDtoList = new ArrayList<PhotoDto>();
@@ -101,6 +107,10 @@ public class PhotoDetailRepositoryImplTest {
 			PhotoListGetDto photoListGetDtoCapture = photoListGetDtoCaptor.getValue();
 			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
 			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo());
+			assertNull(photoListGetDtoCapture.getDirectionKbn());
+			assertFalse(photoListGetDtoCapture.getIsFavoriteOnly());
+			assertEquals(List.of(), photoListGetDtoCapture.getTagList());
+			assertEquals("PHOTO_AT", photoListGetDtoCapture.getSortBy());
 
 			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
@@ -113,6 +123,10 @@ public class PhotoDetailRepositoryImplTest {
 			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 			
 			List<PhotoDto> photoDtoList = new ArrayList<PhotoDto>();
@@ -169,6 +183,10 @@ public class PhotoDetailRepositoryImplTest {
 			PhotoListGetDto photoListGetDtoCapture = photoListGetDtoCaptor.getValue();
 			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
 			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo());
+			assertNull(photoListGetDtoCapture.getDirectionKbn());
+			assertFalse(photoListGetDtoCapture.getIsFavoriteOnly());
+			assertEquals(List.of(), photoListGetDtoCapture.getTagList());
+			assertEquals("PHOTO_AT", photoListGetDtoCapture.getSortBy());
 
 			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
@@ -181,6 +199,10 @@ public class PhotoDetailRepositoryImplTest {
 			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
 					.build();
 			
 			List<PhotoDto> photoDtoList = new ArrayList<PhotoDto>();
@@ -259,6 +281,10 @@ public class PhotoDetailRepositoryImplTest {
 			PhotoListGetDto photoListGetDtoCapture = photoListGetDtoCaptor.getValue();
 			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
 			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo());
+			assertNull(photoListGetDtoCapture.getDirectionKbn());
+			assertFalse(photoListGetDtoCapture.getIsFavoriteOnly());
+			assertEquals(List.of(), photoListGetDtoCapture.getTagList());
+			assertEquals("PHOTO_AT", photoListGetDtoCapture.getSortBy());
 
 			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());

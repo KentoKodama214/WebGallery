@@ -4,14 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Comparator;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.domain.account.AccountNo;
@@ -40,67 +37,18 @@ public class PhotoModelListTest {
 				.build();
 	}
 
-	@Nested
-	@Order(1)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class filterByDirectionKbn {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：抽出条件が未指定の場合はフィルタリングしないこと")
-		void filterByDirectionKbn_not_condition() {
-			PhotoModelList photoModelList = PhotoModelList.of(List.of(
-					createPhotoModel(1L, DirectionEnum.VERTICAL, false),
-					createPhotoModel(2L, DirectionEnum.HORIZONTAL, false)));
+	@Test
+	@DisplayName("正常系：指定のComparatorでソートされること")
+	void sorted_success() {
+		PhotoModelList photoModelList = PhotoModelList.of(List.of(
+				createPhotoModel(1L, DirectionEnum.VERTICAL, false),
+				createPhotoModel(2L, DirectionEnum.HORIZONTAL, false)));
 
-			PhotoModelList actual = photoModelList.filterByDirectionKbn(DirectionEnum.NONE);
+		PhotoModelList actual = photoModelList.sorted(
+				Comparator.comparing((PhotoModel photoModel) -> photoModel.getPhotoNo().value(), Comparator.reverseOrder()));
 
-			assertEquals(2, actual.size());
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：抽出条件と一致するものだけに絞り込まれること")
-		void filterByDirectionKbn_match_condition() {
-			PhotoModelList photoModelList = PhotoModelList.of(List.of(
-					createPhotoModel(1L, DirectionEnum.VERTICAL, false),
-					createPhotoModel(2L, DirectionEnum.HORIZONTAL, false)));
-
-			PhotoModelList actual = photoModelList.filterByDirectionKbn(DirectionEnum.VERTICAL);
-
-			assertEquals(1, actual.size());
-			assertEquals(new PhotoNo(1L), actual.get(0).getPhotoNo());
-		}
-	}
-
-	@Nested
-	@Order(2)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class filterByFavorite {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：お気に入りのみが指定されていない場合はフィルタリングしないこと")
-		void filterByFavorite_not_condition() {
-			PhotoModelList photoModelList = PhotoModelList.of(List.of(
-					createPhotoModel(1L, DirectionEnum.VERTICAL, true),
-					createPhotoModel(2L, DirectionEnum.VERTICAL, false)));
-
-			PhotoModelList actual = photoModelList.filterByFavorite(false);
-
-			assertEquals(2, actual.size());
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：お気に入りのみが指定されている場合はお気に入りの写真のみに絞り込まれること")
-		void filterByFavorite_match_condition() {
-			PhotoModelList photoModelList = PhotoModelList.of(List.of(
-					createPhotoModel(1L, DirectionEnum.VERTICAL, true),
-					createPhotoModel(2L, DirectionEnum.VERTICAL, false)));
-
-			PhotoModelList actual = photoModelList.filterByFavorite(true);
-
-			assertEquals(1, actual.size());
-			assertEquals(new PhotoNo(1L), actual.get(0).getPhotoNo());
-		}
+		assertEquals(2, actual.size());
+		assertEquals(new PhotoNo(2L), actual.get(0).getPhotoNo());
+		assertEquals(new PhotoNo(1L), actual.get(1).getPhotoNo());
 	}
 }
