@@ -85,7 +85,7 @@
 			photo_mst.account_no = #{photoAccountNo} AND
 			photo_mst.is_deleted = false
 			<if test="directionKbn != null">
-				AND photo_mst.direction_kbn = #{directionKbn, typeHandler=com.web.gallery.type_handler.DirectionEnumTypeHandler}
+				AND photo_mst.direction_kbn = #{directionKbn}::photo.direction_enum
 			</if>
 			<if test="isFavoriteOnly != null and isFavoriteOnly">
 				AND isFavorite.favorite_photo_account_no IS NOT NULL
@@ -106,10 +106,10 @@
 			</if>
 		<choose>
 			<when test="sortBy == 'FAVORITE'">
-				ORDER BY favoriteCount DESC
+				ORDER BY favoriteCount DESC, photo_mst.photo_no ASC
 			</when>
 			<otherwise>
-				ORDER BY photo_mst.photo_at DESC
+				ORDER BY photo_mst.photo_at DESC, photo_mst.photo_no ASC
 			</otherwise>
 		</choose>
 	</select>
