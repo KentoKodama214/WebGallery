@@ -1,5 +1,7 @@
 package com.web.gallery.entity;
 
+import java.util.List;
+
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagEnglishName;
@@ -23,6 +25,9 @@ public class PhotoTagMstCondition {
 
 	/** 写真番号 */
 	private PhotoNo photoNo;
+
+	/** 写真番号リスト */
+	private List<PhotoNo> photoNoList;
 
 	/** タグ番号 */
 	private TagNo tagNo;
@@ -61,13 +66,17 @@ public class PhotoTagMstCondition {
 
 	/**
 	 * PhotoGetModelから抽出条件を生成する
+	 * <p>
+	 * 取得対象の写真番号リストで絞り込むことで、アカウント全体のタグではなく該当写真のタグのみを取得する
 	 *
-	 * @param	model	{@link PhotoGetModel}
-	 * @return			{@link PhotoTagMstCondition}
+	 * @param	model			{@link PhotoGetModel}
+	 * @param	photoNoList		抽出対象の写真番号リスト
+	 * @return					{@link PhotoTagMstCondition}
 	 */
-	public static PhotoTagMstCondition from(PhotoGetModel model) {
+	public static PhotoTagMstCondition from(PhotoGetModel model, List<PhotoNo> photoNoList) {
 		return PhotoTagMstCondition.builder()
 				.accountNo(model.getPhotoAccountNo())
+				.photoNoList(photoNoList)
 				.build();
 	}
 
