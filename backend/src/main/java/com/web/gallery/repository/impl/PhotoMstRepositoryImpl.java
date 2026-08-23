@@ -1,7 +1,5 @@
 package com.web.gallery.repository.impl;
 
-import java.util.Optional;
-
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
@@ -93,8 +91,8 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 */
 	@Override
 	public PhotoNo getNewPhotoNo(AccountNo accountNo) {
-		Long photoNo = photoMstMapper.getMaxPhotoNo(accountNo.value());
-		return new PhotoNo(Optional.ofNullable(photoNo).map(num -> num + 1).orElse(1L));
+		Long maxPhotoNo = photoMstMapper.getMaxPhotoNo(accountNo.value());
+		return PhotoNo.next(maxPhotoNo);
 	}
 
 	/**
