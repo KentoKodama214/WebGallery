@@ -25,6 +25,7 @@ import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.entity.PhotoTagMst;
+import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoTagDeleteModel;
@@ -113,18 +114,16 @@ public class PhotoTagMstRepositoryImplTest {
 					.photoNo(new PhotoNo(1L))
 					.build();
 			
-			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
+			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
 			doReturn(1).when(photoTagMstMapper).delete(photoTagMstCaptor.capture());
 			
 			photoTagMstRepositoryImpl.clear(photoTagDeleteModel);
 			
-			verify(photoTagMstMapper).delete(any(PhotoTagMst.class));
-			PhotoTagMst photoTagMst = photoTagMstCaptor.getValue();
+			verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+			PhotoTagMstCondition photoTagMst = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMst.getAccountNo());
 			assertEquals(1L, photoTagMst.getPhotoNo().value());
 			assertNull(photoTagMst.getTagNo());
-			assertNull(photoTagMst.getCreatedBy());
-			assertNull(photoTagMst.getCreatedAt());
 			assertNull(photoTagMst.getTagJapaneseName());
 			assertNull(photoTagMst.getTagEnglishName());
 		}
@@ -138,13 +137,13 @@ public class PhotoTagMstRepositoryImplTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号で写真タグを全件削除する")
 		void deleteByAccountNo_success() {
-			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
+			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
 			doReturn(1).when(photoTagMstMapper).delete(photoTagMstCaptor.capture());
 
 			photoTagMstRepositoryImpl.deleteByAccountNo(new AccountNo(1L));
 
-			verify(photoTagMstMapper).delete(any(PhotoTagMst.class));
-			PhotoTagMst photoTagMst = photoTagMstCaptor.getValue();
+			verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+			PhotoTagMstCondition photoTagMst = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMst.getAccountNo());
 			assertNull(photoTagMst.getPhotoNo());
 			assertNull(photoTagMst.getTagNo());

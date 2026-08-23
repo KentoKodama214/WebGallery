@@ -23,7 +23,7 @@
 		<result property="loginFailureCount" column="login_failure_count" typeHandler="com.web.gallery.type_handler.LoginFailureCountTypeHandler"/>
 	</resultMap>
 
-	<select id="select" parameterType="com.web.gallery.entity.Account" resultMap="AccountMap">
+	<select id="select" parameterType="com.web.gallery.entity.AccountCondition" resultMap="AccountMap">
 		SELECT
 			account_no AS accountNo,
 			created_by AS createdBy,
@@ -61,7 +61,7 @@
 		</where>
 	</select>
 
-	<select id="count" parameterType="com.web.gallery.entity.Account" resultType="Integer">
+	<select id="count" parameterType="com.web.gallery.entity.AccountCondition" resultType="Integer">
 		SELECT
 			COUNT(*)
 		FROM
@@ -126,7 +126,7 @@
 			)
 	</insert>
 
-	<update id="update" parameterType="com.web.gallery.entity.Account">
+	<update id="update">
 		UPDATE
 			common.account
 		<set>
@@ -162,7 +162,7 @@
 		</where>
 	</update>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.Account">
+	<delete id="delete" parameterType="com.web.gallery.entity.AccountCondition">
 		DELETE FROM
 			common.account
 		<where>
@@ -182,7 +182,7 @@
 		</where>
 	</delete>
 
-	<select id="isExistAccount" parameterType="com.web.gallery.entity.Account" resultType="Boolean">
+	<select id="isExistAccount" parameterType="com.web.gallery.entity.AccountCondition" resultType="Boolean">
 		SELECT
 			CASE WHEN COUNT(*)>0 THEN true ELSE false END
 		FROM

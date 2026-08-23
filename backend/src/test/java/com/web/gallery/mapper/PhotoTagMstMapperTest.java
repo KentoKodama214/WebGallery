@@ -25,6 +25,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.entity.PhotoTagMst;
+import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagNo;
@@ -50,7 +51,7 @@ public class PhotoTagMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのselectで1件以上の場合")
 		void select_by_accountNo() {
-			PhotoTagMst photoTagMst = PhotoTagMst.builder().accountNo(new AccountNo(1L)).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().accountNo(new AccountNo(1L)).build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
@@ -115,7 +116,7 @@ public class PhotoTagMstMapperTest {
 		@Order(2)
 		@DisplayName("正常系：写真番号でのselectで1件の場合")
 		void select_by_photoNo() {
-			PhotoTagMst photoTagMst = PhotoTagMst.builder().photoNo(new PhotoNo(1L)).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().photoNo(new PhotoNo(1L)).build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
@@ -150,7 +151,7 @@ public class PhotoTagMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：タグ番号でのselectで1件の場合")
 		void select_by_tagNo() {
-			PhotoTagMst photoTagMst = PhotoTagMst.builder().tagNo(new TagNo(1L)).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().tagNo(new TagNo(1L)).build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
@@ -185,7 +186,7 @@ public class PhotoTagMstMapperTest {
 		@Order(4)
 		@DisplayName("正常系：タグ日本語名でのselectで1件の場合")
 		void select_by_tagJapaneseName() {
-			PhotoTagMst photoTagMst = PhotoTagMst.builder().tagJapaneseName(new TagJapaneseName("太陽")).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().tagJapaneseName(new TagJapaneseName("太陽")).build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
@@ -220,7 +221,7 @@ public class PhotoTagMstMapperTest {
 		@Order(5)
 		@DisplayName("正常系：タグ英語名でのselectで1件の場合")
 		void select_by_tagEnglishName() {
-			PhotoTagMst photoTagMst = PhotoTagMst.builder().tagEnglishName(new TagEnglishName("sun")).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().tagEnglishName(new TagEnglishName("sun")).build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
@@ -255,7 +256,7 @@ public class PhotoTagMstMapperTest {
 		@Order(6)
 		@DisplayName("正常系：selectで0件の場合")
 		void select_not_found() {
-			PhotoTagMst photoTagMst = PhotoTagMst.builder().accountNo(new AccountNo(3L)).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().accountNo(new AccountNo(3L)).build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			List<PhotoTagMst> expected = new ArrayList<PhotoTagMst>();
 			assertEquals(0, actual.size());
@@ -266,7 +267,7 @@ public class PhotoTagMstMapperTest {
 		@Order(7)
 		@DisplayName("正常系：複数の条件でselectする場合")
 		void select_some_conditions() {
-			PhotoTagMst photoTagMst = PhotoTagMst.builder()
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(1L))
 					.tagNo(new TagNo(1L))
@@ -361,7 +362,7 @@ public class PhotoTagMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのdelete")
 		void delete_by_accountNo() {
-			PhotoTagMst deletePhotoTagMst = PhotoTagMst.builder().accountNo(new AccountNo(1L)).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().accountNo(new AccountNo(1L)).build();
 			Integer deleteCount = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(deleteCount, 5);
 			
@@ -376,7 +377,7 @@ public class PhotoTagMstMapperTest {
 		@Order(2)
 		@DisplayName("正常系：写真番号でのdelete")
 		void delete_by_photoNo() {
-			PhotoTagMst deletePhotoTagMst = PhotoTagMst.builder().photoNo(new PhotoNo(1L)).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().photoNo(new PhotoNo(1L)).build();
 			Integer deleteCount = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(deleteCount, 2);
 			
@@ -391,7 +392,7 @@ public class PhotoTagMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：タグ番号でのdelete")
 		void delete_by_tagNo() {
-			PhotoTagMst deletePhotoTagMst = PhotoTagMst.builder().tagNo(new TagNo(1L)).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().tagNo(new TagNo(1L)).build();
 			Integer actual = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(2, actual);
 			
@@ -406,7 +407,7 @@ public class PhotoTagMstMapperTest {
 		@Order(4)
 		@DisplayName("正常系：タグ日本語名でのdelete")
 		void delete_by_tagJapaneseName() {
-			PhotoTagMst deletePhotoTagMst = PhotoTagMst.builder().tagJapaneseName(new TagJapaneseName("太陽")).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().tagJapaneseName(new TagJapaneseName("太陽")).build();
 			Integer actual = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(2, actual);
 			
@@ -421,7 +422,7 @@ public class PhotoTagMstMapperTest {
 		@Order(5)
 		@DisplayName("正常系：タグ英語名でのdelete")
 		void delete_by_tagEnglishName() {
-			PhotoTagMst deletePhotoTagMst = PhotoTagMst.builder().tagEnglishName(new TagEnglishName("sun")).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().tagEnglishName(new TagEnglishName("sun")).build();
 			Integer actual = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(2, actual);
 			
@@ -436,7 +437,7 @@ public class PhotoTagMstMapperTest {
 		@Order(6)
 		@DisplayName("正常系：deleteで0件の場合")
 		void delete_not_found() {
-			PhotoTagMst deletePhotoTagMst = PhotoTagMst.builder().accountNo(new AccountNo(3L)).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().accountNo(new AccountNo(3L)).build();
 			Integer actual = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(0, actual);
 			
@@ -451,7 +452,7 @@ public class PhotoTagMstMapperTest {
 		@Order(7)
 		@DisplayName("正常系：複数の条件でdeleteする場合")
 		void delete_some_conditions() {
-			PhotoTagMst deletePhotoTagMst = PhotoTagMst.builder()
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(1L))
 					.tagNo(new TagNo(1L))

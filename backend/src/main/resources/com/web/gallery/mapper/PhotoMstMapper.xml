@@ -23,7 +23,7 @@
 		<result property="iso" column="iso" typeHandler="com.web.gallery.type_handler.IsoTypeHandler"/>
 	</resultMap>
 
-	<select id="count" parameterType="com.web.gallery.entity.PhotoMst" resultType="Integer">
+	<select id="count" parameterType="com.web.gallery.entity.PhotoMstCondition" resultType="Integer">
 		SELECT
 			COUNT(*)
 		FROM
@@ -91,7 +91,7 @@
 			)
 	</insert>
 
-	<update id="update" parameterType="com.web.gallery.entity.PhotoMst">
+	<update id="update">
 		UPDATE
 			photo.photo_mst
 		<set>
@@ -137,7 +137,7 @@
 			account_no = #{accountNo}
 	</select>
 
-	<select id="isExistPhoto" parameterType="com.web.gallery.entity.PhotoMst" resultType="Boolean">
+	<select id="isExistPhoto" parameterType="com.web.gallery.entity.PhotoMstCondition" resultType="Boolean">
 		SELECT
 			CASE WHEN COUNT(*)>0 THEN true ELSE false END
 		FROM
@@ -148,7 +148,7 @@
 		AND is_deleted = false
 	</select>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.PhotoMst">
+	<delete id="delete" parameterType="com.web.gallery.entity.PhotoMstCondition">
 		DELETE FROM
 			photo.photo_mst
 		<where>

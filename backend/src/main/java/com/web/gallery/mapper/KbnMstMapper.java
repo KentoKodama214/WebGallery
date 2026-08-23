@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 
 import com.web.gallery.entity.KbnMst;
+import com.web.gallery.entity.KbnMstCondition;
 
 /**
  * 区分マスタテーブルのMapperクラス
@@ -13,9 +14,9 @@ import com.web.gallery.entity.KbnMst;
 public interface KbnMstMapper {
 	/**
 	 * 条件に該当する区分マスタの一覧を取得する
-	 * 
-	 * @param	kbnMst	抽出条件
-	 * @return			{@link KbnMst}
+	 *
+	 * @param	condition	抽出条件
+	 * @return				{@link KbnMst}
 	 */
-	public List<KbnMst> select(KbnMst kbnMst);
+	public List<KbnMst> select(KbnMstCondition condition);
 }

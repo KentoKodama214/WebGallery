@@ -34,6 +34,7 @@ import com.web.gallery.domain.common.KbnGroupJapaneseName;
 import com.web.gallery.domain.common.KbnJapaneseName;
 import com.web.gallery.domain.common.SortOrder;
 import com.web.gallery.entity.KbnMst;
+import com.web.gallery.entity.KbnMstCondition;
 
 @MybatisTest
 @ActiveProfiles("test")
@@ -52,7 +53,7 @@ public class KbmMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：区分クラスコードでのselectで1件以上の場合")
 		void select_by_kbnClassCode() {
-			KbnMst kbnMst = KbnMst.builder().kbnClassCode(new KbnClassCode("sex")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnClassCode(new KbnClassCode("sex")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -101,7 +102,7 @@ public class KbmMstMapperTest {
 		@Order(2)
 		@DisplayName("正常系：区分コードでのselectで1件以上の場合")
 		void select_by_kbnCode() {
-			KbnMst kbnMst = KbnMst.builder().kbnCode(new KbnCode("man")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnCode(new KbnCode("man")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -133,7 +134,7 @@ public class KbmMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：並び順でのselectで1件の場合")
 		void select_by_sortOrder() {
-			KbnMst kbnMst = KbnMst.builder().sortOrder(new SortOrder(47)).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().sortOrder(new SortOrder(47)).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -165,7 +166,7 @@ public class KbmMstMapperTest {
 		@Order(4)
 		@DisplayName("正常系：区分グループコードでのselectで1件の場合")
 		void select_by_kbnGroupCode() {
-			KbnMst kbnMst = KbnMst.builder().kbnGroupCode(new KbnGroupCode("Shikoku")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnGroupCode(new KbnGroupCode("Shikoku")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -245,7 +246,7 @@ public class KbmMstMapperTest {
 		@Order(5)
 		@DisplayName("正常系：区分クラス日本語名でのselectで1件の場合")
 		void select_by_kbnClassJapaneseName() {
-			KbnMst kbnMst = KbnMst.builder().kbnClassJapaneseName(new KbnClassJapaneseName("性別")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnClassJapaneseName(new KbnClassJapaneseName("性別")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -294,7 +295,7 @@ public class KbmMstMapperTest {
 		@Order(6)
 		@DisplayName("正常系：区分グループ日本語名でのselectで1件の場合")
 		void select_by_kbnGroupJapaneseName() {
-			KbnMst kbnMst = KbnMst.builder().kbnGroupJapaneseName(new KbnGroupJapaneseName("四国")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnGroupJapaneseName(new KbnGroupJapaneseName("四国")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -374,7 +375,7 @@ public class KbmMstMapperTest {
 		@Order(7)
 		@DisplayName("正常系：区分日本語名でのselectで1件の場合")
 		void select_by_kbnJapaneseName() {
-			KbnMst kbnMst = KbnMst.builder().kbnJapaneseName(new KbnJapaneseName("男性")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnJapaneseName(new KbnJapaneseName("男性")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -406,7 +407,7 @@ public class KbmMstMapperTest {
 		@Order(8)
 		@DisplayName("正常系：区分クラス英語名でのselectで1件の場合")
 		void select_by_kbnClassEnglishName() {
-			KbnMst kbnMst = KbnMst.builder().kbnClassEnglishName(new KbnClassEnglishName("sex")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnClassEnglishName(new KbnClassEnglishName("sex")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -455,7 +456,7 @@ public class KbmMstMapperTest {
 		@Order(9)
 		@DisplayName("正常系：区分グループ英語名でのselectで1件の場合")
 		void select_by_kbnGroupEnglishName() {
-			KbnMst kbnMst = KbnMst.builder().kbnGroupEnglishName(new KbnGroupEnglishName("Shikoku")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnGroupEnglishName(new KbnGroupEnglishName("Shikoku")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -535,7 +536,7 @@ public class KbmMstMapperTest {
 		@Order(10)
 		@DisplayName("正常系：区分英語名でのselectで1件の場合")
 		void select_by_kbnEnglishName() {
-			KbnMst kbnMst = KbnMst.builder().kbnEnglishName(new KbnEnglishName("man")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnEnglishName(new KbnEnglishName("man")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -567,7 +568,7 @@ public class KbmMstMapperTest {
 		@Order(11)
 		@DisplayName("正常系：説明でのselectで1件の場合")
 		void select_by_explanation() {
-			KbnMst kbnMst = KbnMst.builder().explanation(new Explanation("サイトを管理・運営する人")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().explanation(new Explanation("サイトを管理・運営する人")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -599,7 +600,7 @@ public class KbmMstMapperTest {
 		@Order(12)
 		@DisplayName("正常系：selectで0件の場合")
 		void select_not_found() {
-			KbnMst kbnMst = KbnMst.builder().kbnCode(new KbnCode("superman")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnCode(new KbnCode("superman")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			List<KbnMst> expected = new ArrayList<KbnMst>();
@@ -612,7 +613,7 @@ public class KbmMstMapperTest {
 		@Order(13)
 		@DisplayName("正常系：selectで2件以上の場合")
 		void select_kbnMsts() {
-			KbnMst kbnMst = KbnMst.builder().kbnClassCode(new KbnClassCode("sex")).build();
+			KbnMstCondition kbnMst = KbnMstCondition.builder().kbnClassCode(new KbnClassCode("sex")).build();
 			
 			List<KbnMst> actual = kbnMstMapper.select(kbnMst);
 			
@@ -661,7 +662,7 @@ public class KbmMstMapperTest {
 		@Order(14)
 		@DisplayName("正常系：複数の条件でselectする場合")
 		void select_some_conditions() {
-			KbnMst kbnMst = KbnMst.builder()
+			KbnMstCondition kbnMst = KbnMstCondition.builder()
 					.kbnClassCode(new KbnClassCode("sex"))
 					.kbnCode(new KbnCode("man"))
 					.build();

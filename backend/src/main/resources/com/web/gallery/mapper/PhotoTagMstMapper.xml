@@ -12,7 +12,7 @@
 		<result property="tagEnglishName" column="tag_english_name" typeHandler="com.web.gallery.type_handler.TagEnglishNameTypeHandler"/>
 	</resultMap>
 
-	<select id="select" parameterType="com.web.gallery.entity.PhotoTagMst" resultMap="PhotoTagMstMap">
+	<select id="select" parameterType="com.web.gallery.entity.PhotoTagMstCondition" resultMap="PhotoTagMstMap">
 		SELECT
 			id,
 			account_no AS accountNo,
@@ -56,7 +56,7 @@
 			)
 	</insert>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.PhotoTagMst">
+	<delete id="delete" parameterType="com.web.gallery.entity.PhotoTagMstCondition">
 		DELETE FROM
 			photo.photo_tag_mst
 		<where>

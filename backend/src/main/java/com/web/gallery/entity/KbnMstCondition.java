@@ -1,7 +1,5 @@
 package com.web.gallery.entity;
 
-import com.web.gallery.domain.common.CreatedBy;
-import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.Explanation;
 import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.common.KbnClassEnglishName;
@@ -18,22 +16,16 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * 区分マスタテーブルのEntityクラス
+ * 区分マスタテーブルの抽出条件クラス
  */
 @Data
 @Builder
-public class KbnMst {
+public class KbnMstCondition {
 	/** 区分分類コード */
 	private KbnClassCode kbnClassCode;
 
 	/** 区分コード */
 	private KbnCode kbnCode;
-
-	/** 作成者 */
-	private CreatedBy createdBy;
-
-	/** 作成日時 */
-	private CreatedAt createdAt;
 
 	/** 並び順 */
 	private SortOrder sortOrder;
@@ -61,4 +53,16 @@ public class KbnMst {
 
 	/** 説明 */
 	private Explanation explanation;
+
+	/**
+	 * 区分分類コードによる抽出条件を生成する
+	 *
+	 * @param	kbnClassCode	区分分類コード
+	 * @return					{@link KbnMstCondition}
+	 */
+	public static KbnMstCondition byKbnClassCode(String kbnClassCode) {
+		return KbnMstCondition.builder()
+				.kbnClassCode(new KbnClassCode(kbnClassCode))
+				.build();
+	}
 }

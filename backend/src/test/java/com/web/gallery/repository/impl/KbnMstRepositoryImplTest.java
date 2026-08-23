@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.entity.KbnMst;
+import com.web.gallery.entity.KbnMstCondition;
 import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.common.KbnCode;
 import com.web.gallery.domain.common.SortOrder;
@@ -81,12 +82,12 @@ public class KbnMstRepositoryImplTest {
 					.explanation(new Explanation("沖縄は南国"))
 					.build());
 			
-			ArgumentCaptor<KbnMst> kbnMstCaptor = ArgumentCaptor.forClass(KbnMst.class);
+			ArgumentCaptor<KbnMstCondition> kbnMstCaptor = ArgumentCaptor.forClass(KbnMstCondition.class);
 			doReturn(expected).when(kbnMstMapper).select(kbnMstCaptor.capture());
 			
 			KbnMstModelList actual = kbnMstRepositoryImpl.get(new KbnClassCode(kbnClassCode));
 			
-			KbnMst kbnMstCapture = kbnMstCaptor.getValue();
+			KbnMstCondition kbnMstCapture = kbnMstCaptor.getValue();
 			assertEquals(new KbnClassCode(kbnClassCode), kbnMstCapture.getKbnClassCode());
 			
 			assertEquals(expected.size(), actual.size());
@@ -110,12 +111,12 @@ public class KbnMstRepositoryImplTest {
 			String kbnClassCode = "prefecture";
 			
 			List<KbnMst> expected = new ArrayList<KbnMst>();
-			ArgumentCaptor<KbnMst> kbnMstCaptor = ArgumentCaptor.forClass(KbnMst.class);
+			ArgumentCaptor<KbnMstCondition> kbnMstCaptor = ArgumentCaptor.forClass(KbnMstCondition.class);
 			doReturn(expected).when(kbnMstMapper).select(kbnMstCaptor.capture());
 			
 			KbnMstModelList actual = kbnMstRepositoryImpl.get(new KbnClassCode(kbnClassCode));
 
-			KbnMst kbnMstCapture = kbnMstCaptor.getValue();
+			KbnMstCondition kbnMstCapture = kbnMstCaptor.getValue();
 			assertEquals(new KbnClassCode(kbnClassCode), kbnMstCapture.getKbnClassCode());
 			assertEquals(0, actual.size());
 		}

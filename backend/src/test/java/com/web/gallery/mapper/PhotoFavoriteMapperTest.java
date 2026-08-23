@@ -23,6 +23,7 @@ import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
+import com.web.gallery.entity.PhotoFavoriteCondition;
 
 @MybatisTest
 @ActiveProfiles("test")
@@ -95,7 +96,7 @@ public class PhotoFavoriteMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのdelete")
 		void delete_by_accountNo() {
-			PhotoFavorite deletePhotoFavorite = PhotoFavorite.builder().accountNo(new AccountNo(1L)).build();
+			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().accountNo(new AccountNo(1L)).build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(2, actual);
 			
@@ -110,7 +111,7 @@ public class PhotoFavoriteMapperTest {
 		@Order(2)
 		@DisplayName("正常系：お気に入り写真アカウント番号でのdelete")
 		void delete_by_favoritePhotoAccountNo() {
-			PhotoFavorite deletePhotoFavorite = PhotoFavorite.builder().favoritePhotoAccountNo(new AccountNo(1L)).build();
+			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().favoritePhotoAccountNo(new AccountNo(1L)).build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(3, actual);
 			
@@ -125,7 +126,7 @@ public class PhotoFavoriteMapperTest {
 		@Order(3)
 		@DisplayName("正常系：お気に入り写真番号でのdelete")
 		void delete_by_favoritePhotoNo() {
-			PhotoFavorite deletePhotoFavorite = PhotoFavorite.builder().favoritePhotoNo(new PhotoNo(1L)).build();
+			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().favoritePhotoNo(new PhotoNo(1L)).build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(2, actual);
 			
@@ -140,7 +141,7 @@ public class PhotoFavoriteMapperTest {
 		@Order(4)
 		@DisplayName("正常系：削除対象のレコードなし")
 		void delete_not_found() {
-			PhotoFavorite deletePhotoFavorite = PhotoFavorite.builder().accountNo(new AccountNo(3L)).build();
+			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().accountNo(new AccountNo(3L)).build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(0, actual);
 			
@@ -155,7 +156,7 @@ public class PhotoFavoriteMapperTest {
 		@Order(5)
 		@DisplayName("正常系：複数の条件でdeleteする場合")
 		void delete_some_conditions() {
-			PhotoFavorite deletePhotoFavorite = PhotoFavorite.builder()
+			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
 					.favoritePhotoNo(new PhotoNo(1L))

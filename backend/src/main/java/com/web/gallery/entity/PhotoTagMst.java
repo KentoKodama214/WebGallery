@@ -7,9 +7,6 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagNo;
-import com.web.gallery.model.PhotoDetailGetModel;
-import com.web.gallery.model.PhotoGetModel;
-import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
 
 import lombok.Builder;
@@ -59,56 +56,6 @@ public class PhotoTagMst {
 				.createdBy(new CreatedBy(model.getAccountNo().value()))
 				.tagJapaneseName(model.getTagJapaneseName())
 				.tagEnglishName(model.getTagEnglishName())
-				.build();
-	}
-
-	/**
-	 * 写真タグ削除用のPhotoTagDeleteModelからPhotoTagMstエンティティを生成する
-	 *
-	 * @param	model	{@link PhotoTagDeleteModel}
-	 * @return			{@link PhotoTagMst}
-	 */
-	public static PhotoTagMst from(PhotoTagDeleteModel model) {
-		return PhotoTagMst.builder()
-				.accountNo(model.getAccountNo())
-				.photoNo(model.getPhotoNo())
-				.build();
-	}
-
-	/**
-	 * PhotoDetailGetModelから条件用のPhotoTagMstエンティティを生成する
-	 *
-	 * @param	model	{@link PhotoDetailGetModel}
-	 * @return			{@link PhotoTagMst}
-	 */
-	public static PhotoTagMst condition(PhotoDetailGetModel model) {
-		return PhotoTagMst.builder()
-				.accountNo(model.getPhotoAccountNo())
-				.photoNo(model.getPhotoNo())
-				.build();
-	}
-
-	/**
-	 * PhotoGetModelから条件用のPhotoTagMstエンティティを生成する
-	 *
-	 * @param	model	{@link PhotoGetModel}
-	 * @return			{@link PhotoTagMst}
-	 */
-	public static PhotoTagMst condition(PhotoGetModel model) {
-		return PhotoTagMst.builder()
-				.accountNo(model.getPhotoAccountNo())
-				.build();
-	}
-
-	/**
-	 * アカウント番号で写真タグ削除用のPhotoTagMstエンティティを生成する
-	 *
-	 * @param	accountNo	アカウント番号
-	 * @return				{@link PhotoTagMst}
-	 */
-	public static PhotoTagMst conditionByAccountNo(AccountNo accountNo) {
-		return PhotoTagMst.builder()
-				.accountNo(accountNo)
 				.build();
 	}
 }

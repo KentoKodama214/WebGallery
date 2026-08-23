@@ -10,16 +10,12 @@ import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.BirthDate;
 import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.FreeMemo;
-import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.LastLoginDatetime;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
-import com.web.gallery.domain.common.CreatedBy;
-import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.common.UpdatedBy;
-import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 import com.web.gallery.model.AccountModel;
@@ -28,25 +24,13 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * アカウントテーブルのEntityクラス
+ * アカウントテーブルの更新対象クラス
  */
 @Data
 @Builder
-public class Account {
-	/** アカウント番号 */
-	private AccountNo accountNo;
-
-	/** 作成者 */
-	private CreatedBy createdBy;
-
-	/** 作成日時 */
-	private CreatedAt createdAt;
-
+public class AccountUpdateTarget {
 	/** 更新者 */
 	private UpdatedBy updatedBy;
-
-	/** 更新日時 */
-	private UpdatedAt updatedAt;
 
 	/** 削除フラグ */
 	private IsDeleted isDeleted;
@@ -93,19 +77,16 @@ public class Account {
 	private LoginFailureCount loginFailureCount;
 
 	/**
-	 * アカウント登録用のAccountModelからAccountエンティティを生成する
+	 * アカウント更新用のAccountModelから更新対象を生成する
 	 *
 	 * @param	model			{@link AccountModel}
 	 * @param	passwordEncoder	{@link PasswordEncoder}
-	 * @return					{@link Account}
+	 * @return					{@link AccountUpdateTarget}
 	 */
-	public static Account from(AccountModel model, PasswordEncoder passwordEncoder) {
-		return Account.builder()
-				.createdBy(new CreatedBy(0L))
-				.updatedBy(new UpdatedBy(0L))
+	public static AccountUpdateTarget fromForUpdate(AccountModel model, PasswordEncoder passwordEncoder) {
+		AccountUpdateTarget target = AccountUpdateTarget.builder()
 				.accountId(model.getAccountId())
 				.accountName(model.getAccountName())
-				.password(new Password(passwordEncoder.encode(model.getPassword().value())))
 				.birthdate(
 					Optional.ofNullable(model.getBirthdate())
 						.orElse(new BirthDate(Consts.MIN_LOCAL_DATE)))
@@ -120,9 +101,33 @@ public class Account {
 				.freeMemo(
 					Optional.ofNullable(model.getFreeMemo())
 						.orElse(new FreeMemo(Consts.STRING_EMPTY)))
-				.authorityKbn(AuthorityEnum.MINI)
-				.lastLoginDatetime(new LastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME))
-				.loginFailureCount(new LoginFailureCount(0))
+				.lastLoginDatetime(
+					Optional.ofNullable(model.getLastLoginDatetime())
+						.orElse(new LastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME)))
+				.loginFailureCount(
+					Optional.ofNullable(model.getLoginFailureCount())
+						.orElse(new LoginFailureCount(0)))
+				.build();
+
+		if (model.getPassword() != null) {
+			target.setPassword(new Password(passwordEncoder.encode(model.getPassword().value())));
+		}
+
+		return target;
+	}
+
+	/**
+	 * ログイン失敗回数更新用のAccountModelから更新対象を生成する
+	 *
+	 * @param	model	{@link AccountModel}
+	 * @return			{@link AccountUpdateTarget}
+	 */
+	public static AccountUpdateTarget fromForUpdateLoginFailure(AccountModel model) {
+		return AccountUpdateTarget.builder()
+				.lastLoginDatetime(model.getLastLoginDatetime())
+				.loginFailureCount(
+					Optional.ofNullable(model.getLoginFailureCount())
+						.orElse(new LoginFailureCount(0)))
 				.build();
 	}
 }

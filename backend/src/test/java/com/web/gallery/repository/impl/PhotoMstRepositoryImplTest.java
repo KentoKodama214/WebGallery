@@ -41,6 +41,8 @@ import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.domain.photo.Iso;
 import com.web.gallery.entity.PhotoMst;
+import com.web.gallery.entity.PhotoMstCondition;
+import com.web.gallery.entity.PhotoMstUpdateTarget;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -205,21 +207,17 @@ public class PhotoMstRepositoryImplTest {
 					.imageFilePath(new ImageFilePath(imageFilePath))
 					.build();
 			
-			ArgumentCaptor<PhotoMst> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
-			ArgumentCaptor<PhotoMst> targetPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			ArgumentCaptor<PhotoMstCondition> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
+			ArgumentCaptor<PhotoMstUpdateTarget> targetPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstUpdateTarget.class);
 			
 			doReturn(1).when(photoMstMapper).update(cndPhotoMstCaptor.capture(), targetPhotoMstCaptor.capture());
 			
 			photoMstRepositoryImpl.update(photoDetailModel);
 			
-			verify(photoMstMapper).update(any(PhotoMst.class), any(PhotoMst.class));
-			PhotoMst cndPhotoMst = cndPhotoMstCaptor.getValue();
+			verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+			PhotoMstCondition cndPhotoMst = cndPhotoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), cndPhotoMst.getAccountNo());
 			assertEquals(1L, cndPhotoMst.getPhotoNo().value());
-			assertNull(cndPhotoMst.getCreatedBy());
-			assertNull(cndPhotoMst.getCreatedAt());
-			assertNull(cndPhotoMst.getUpdatedBy());
-			assertNull(cndPhotoMst.getUpdatedAt());
 			assertNull(cndPhotoMst.getIsDeleted());
 			assertNull(cndPhotoMst.getPhotoAt());
 			assertNull(cndPhotoMst.getLocationNo());
@@ -233,13 +231,8 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(cndPhotoMst.getShutterSpeed());
 			assertNull(cndPhotoMst.getIso());
 			
-			PhotoMst targetPhotoMst = targetPhotoMstCaptor.getValue();
-			assertNull(targetPhotoMst.getAccountNo());
-			assertNull(targetPhotoMst.getPhotoNo());
-			assertNull(targetPhotoMst.getCreatedBy());
-			assertNull(targetPhotoMst.getCreatedAt());
+			PhotoMstUpdateTarget targetPhotoMst = targetPhotoMstCaptor.getValue();
 			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
-			assertNull(targetPhotoMst.getUpdatedAt());
 			assertFalse(targetPhotoMst.getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetPhotoMst.getPhotoAt().value());
 			assertEquals(0L, targetPhotoMst.getLocationNo().value());
@@ -276,21 +269,17 @@ public class PhotoMstRepositoryImplTest {
 					.iso(new Iso(100))
 					.build();
 			
-			ArgumentCaptor<PhotoMst> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
-			ArgumentCaptor<PhotoMst> targetPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			ArgumentCaptor<PhotoMstCondition> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
+			ArgumentCaptor<PhotoMstUpdateTarget> targetPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstUpdateTarget.class);
 			
 			doReturn(1).when(photoMstMapper).update(cndPhotoMstCaptor.capture(), targetPhotoMstCaptor.capture());
 			
 			photoMstRepositoryImpl.update(photoDetailModel);
 			
-			verify(photoMstMapper).update(any(PhotoMst.class), any(PhotoMst.class));
-			PhotoMst cndPhotoMst = cndPhotoMstCaptor.getValue();
+			verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+			PhotoMstCondition cndPhotoMst = cndPhotoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), cndPhotoMst.getAccountNo());
 			assertEquals(1L, cndPhotoMst.getPhotoNo().value());
-			assertNull(cndPhotoMst.getCreatedBy());
-			assertNull(cndPhotoMst.getCreatedAt());
-			assertNull(cndPhotoMst.getUpdatedBy());
-			assertNull(cndPhotoMst.getUpdatedAt());
 			assertNull(cndPhotoMst.getIsDeleted());
 			assertNull(cndPhotoMst.getPhotoAt());
 			assertNull(cndPhotoMst.getLocationNo());
@@ -304,13 +293,8 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(cndPhotoMst.getShutterSpeed());
 			assertNull(cndPhotoMst.getIso());
 			
-			PhotoMst targetPhotoMst = targetPhotoMstCaptor.getValue();
-			assertNull(targetPhotoMst.getAccountNo());
-			assertNull(targetPhotoMst.getPhotoNo());
-			assertNull(targetPhotoMst.getCreatedBy());
-			assertNull(targetPhotoMst.getCreatedAt());
+			PhotoMstUpdateTarget targetPhotoMst = targetPhotoMstCaptor.getValue();
 			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
-			assertNull(targetPhotoMst.getUpdatedAt());
 			assertFalse(targetPhotoMst.getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), targetPhotoMst.getPhotoAt().value());
 			assertEquals(1L, targetPhotoMst.getLocationNo().value());
@@ -337,21 +321,17 @@ public class PhotoMstRepositoryImplTest {
 					.imageFilePath(new ImageFilePath(imageFilePath))
 					.build();
 			
-			ArgumentCaptor<PhotoMst> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
-			ArgumentCaptor<PhotoMst> targetPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			ArgumentCaptor<PhotoMstCondition> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
+			ArgumentCaptor<PhotoMstUpdateTarget> targetPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstUpdateTarget.class);
 			
 			doReturn(0).when(photoMstMapper).update(cndPhotoMstCaptor.capture(), targetPhotoMstCaptor.capture());
 			
 			assertThrows(UpdateFailureException.class, () -> photoMstRepositoryImpl.update(photoDetailModel));
 			
-			verify(photoMstMapper).update(any(PhotoMst.class), any(PhotoMst.class));
-			PhotoMst cndPhotoMst = cndPhotoMstCaptor.getValue();
+			verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+			PhotoMstCondition cndPhotoMst = cndPhotoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), cndPhotoMst.getAccountNo());
 			assertEquals(1L, cndPhotoMst.getPhotoNo().value());
-			assertNull(cndPhotoMst.getCreatedBy());
-			assertNull(cndPhotoMst.getCreatedAt());
-			assertNull(cndPhotoMst.getUpdatedBy());
-			assertNull(cndPhotoMst.getUpdatedAt());
 			assertNull(cndPhotoMst.getIsDeleted());
 			assertNull(cndPhotoMst.getPhotoAt());
 			assertNull(cndPhotoMst.getLocationNo());
@@ -365,13 +345,8 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(cndPhotoMst.getShutterSpeed());
 			assertNull(cndPhotoMst.getIso());
 			
-			PhotoMst targetPhotoMst = targetPhotoMstCaptor.getValue();
-			assertNull(targetPhotoMst.getAccountNo());
-			assertNull(targetPhotoMst.getPhotoNo());
-			assertNull(targetPhotoMst.getCreatedBy());
-			assertNull(targetPhotoMst.getCreatedAt());
+			PhotoMstUpdateTarget targetPhotoMst = targetPhotoMstCaptor.getValue();
 			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
-			assertNull(targetPhotoMst.getUpdatedAt());
 			assertFalse(targetPhotoMst.getIsDeleted().value());
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetPhotoMst.getPhotoAt().value());
 			assertEquals(0L, targetPhotoMst.getLocationNo().value());
@@ -403,21 +378,17 @@ public class PhotoMstRepositoryImplTest {
 					.imageFilePath(new ImageFilePath(imageFilePath))
 					.build();
 			
-			ArgumentCaptor<PhotoMst> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
-			ArgumentCaptor<PhotoMst> targetPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			ArgumentCaptor<PhotoMstCondition> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
+			ArgumentCaptor<PhotoMstUpdateTarget> targetPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstUpdateTarget.class);
 			
 			doReturn(1).when(photoMstMapper).update(cndPhotoMstCaptor.capture(), targetPhotoMstCaptor.capture());
 			
 			photoMstRepositoryImpl.delete(photoDeleteModel);
 			
-			verify(photoMstMapper).update(any(PhotoMst.class), any(PhotoMst.class));
-			PhotoMst cndPhotoMst = cndPhotoMstCaptor.getValue();
+			verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+			PhotoMstCondition cndPhotoMst = cndPhotoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), cndPhotoMst.getAccountNo());
 			assertEquals(1L, cndPhotoMst.getPhotoNo().value());
-			assertNull(cndPhotoMst.getCreatedBy());
-			assertNull(cndPhotoMst.getCreatedAt());
-			assertNull(cndPhotoMst.getUpdatedBy());
-			assertNull(cndPhotoMst.getUpdatedAt());
 			assertNull(cndPhotoMst.getIsDeleted());
 			assertNull(cndPhotoMst.getPhotoAt());
 			assertNull(cndPhotoMst.getLocationNo());
@@ -431,13 +402,8 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(cndPhotoMst.getShutterSpeed());
 			assertNull(cndPhotoMst.getIso());
 			
-			PhotoMst targetPhotoMst = targetPhotoMstCaptor.getValue();
-			assertNull(targetPhotoMst.getAccountNo());
-			assertNull(targetPhotoMst.getPhotoNo());
-			assertNull(targetPhotoMst.getCreatedBy());
-			assertNull(targetPhotoMst.getCreatedAt());
+			PhotoMstUpdateTarget targetPhotoMst = targetPhotoMstCaptor.getValue();
 			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
-			assertNull(targetPhotoMst.getUpdatedAt());
 			assertTrue(targetPhotoMst.getIsDeleted().value());
 			assertNull(targetPhotoMst.getPhotoAt());
 			assertNull(targetPhotoMst.getLocationNo());
@@ -464,21 +430,17 @@ public class PhotoMstRepositoryImplTest {
 					.imageFilePath(new ImageFilePath(imageFilePath))
 					.build();
 			
-			ArgumentCaptor<PhotoMst> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
-			ArgumentCaptor<PhotoMst> targetPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			ArgumentCaptor<PhotoMstCondition> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
+			ArgumentCaptor<PhotoMstUpdateTarget> targetPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstUpdateTarget.class);
 			
 			doReturn(0).when(photoMstMapper).update(cndPhotoMstCaptor.capture(), targetPhotoMstCaptor.capture());
 			
 			assertThrows(UpdateFailureException.class, () -> photoMstRepositoryImpl.delete(photoDeleteModel));
 			
-			verify(photoMstMapper).update(any(PhotoMst.class), any(PhotoMst.class));
-			PhotoMst cndPhotoMst = cndPhotoMstCaptor.getValue();
+			verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+			PhotoMstCondition cndPhotoMst = cndPhotoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), cndPhotoMst.getAccountNo());
 			assertEquals(1L, cndPhotoMst.getPhotoNo().value());
-			assertNull(cndPhotoMst.getCreatedBy());
-			assertNull(cndPhotoMst.getCreatedAt());
-			assertNull(cndPhotoMst.getUpdatedBy());
-			assertNull(cndPhotoMst.getUpdatedAt());
 			assertNull(cndPhotoMst.getIsDeleted());
 			assertNull(cndPhotoMst.getPhotoAt());
 			assertNull(cndPhotoMst.getLocationNo());
@@ -492,13 +454,8 @@ public class PhotoMstRepositoryImplTest {
 			assertNull(cndPhotoMst.getShutterSpeed());
 			assertNull(cndPhotoMst.getIso());
 			
-			PhotoMst targetPhotoMst = targetPhotoMstCaptor.getValue();
-			assertNull(targetPhotoMst.getAccountNo());
-			assertNull(targetPhotoMst.getPhotoNo());
-			assertNull(targetPhotoMst.getCreatedBy());
-			assertNull(targetPhotoMst.getCreatedAt());
+			PhotoMstUpdateTarget targetPhotoMst = targetPhotoMstCaptor.getValue();
 			assertEquals(new UpdatedBy(1L), targetPhotoMst.getUpdatedBy());
-			assertNull(targetPhotoMst.getUpdatedAt());
 			assertTrue(targetPhotoMst.getIsDeleted().value());
 			assertNull(targetPhotoMst.getPhotoAt());
 			assertNull(targetPhotoMst.getLocationNo());
@@ -556,11 +513,11 @@ public class PhotoMstRepositoryImplTest {
 					.imageFilePath(new ImageFilePath(""))
 					.build();
 					
-			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			ArgumentCaptor<PhotoMstCondition> photoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
 			doReturn(false).when(photoMstMapper).isExistPhoto(photoMstCaptor.capture());
 			assertFalse(photoMstRepositoryImpl.isExistPhoto(photoDetailModel));
-			
-			PhotoMst photoMst = photoMstCaptor.getValue();
+
+			PhotoMstCondition photoMst = photoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 			assertEquals("DSC111.jpg", photoMst.getImageFilePath().value());
 		}
@@ -582,11 +539,11 @@ public class PhotoMstRepositoryImplTest {
 					.imageFilePath(new ImageFilePath(""))
 					.build();
 					
-			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			ArgumentCaptor<PhotoMstCondition> photoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
 			doReturn(true).when(photoMstMapper).isExistPhoto(photoMstCaptor.capture());
 			assertTrue(photoMstRepositoryImpl.isExistPhoto(photoDetailModel));
-			
-			PhotoMst photoMst = photoMstCaptor.getValue();
+
+			PhotoMstCondition photoMst = photoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 		}
 	}
@@ -599,18 +556,14 @@ public class PhotoMstRepositoryImplTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void count_success() {
-			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			ArgumentCaptor<PhotoMstCondition> photoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
 			doReturn(3).when(photoMstMapper).count(photoMstCaptor.capture());
-			
+
 			assertEquals(3, photoMstRepositoryImpl.count(new AccountNo(1L)));
-			
-			PhotoMst photoMst = photoMstCaptor.getValue();
+
+			PhotoMstCondition photoMst = photoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 			assertNull(photoMst.getPhotoNo());
-			assertNull(photoMst.getCreatedBy());
-			assertNull(photoMst.getCreatedAt());
-			assertNull(photoMst.getUpdatedBy());
-			assertNull(photoMst.getUpdatedAt());
 			assertFalse(photoMst.getIsDeleted().value());
 			assertNull(photoMst.getPhotoAt());
 			assertNull(photoMst.getLocationNo());
@@ -634,13 +587,13 @@ public class PhotoMstRepositoryImplTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号で写真マスタを物理削除する")
 		void deleteByAccountNo_success() {
-			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			ArgumentCaptor<PhotoMstCondition> photoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
 			doReturn(1).when(photoMstMapper).delete(photoMstCaptor.capture());
 
 			photoMstRepositoryImpl.deleteByAccountNo(new AccountNo(1L));
 
-			verify(photoMstMapper).delete(any(PhotoMst.class));
-			PhotoMst photoMst = photoMstCaptor.getValue();
+			verify(photoMstMapper).delete(any(PhotoMstCondition.class));
+			PhotoMstCondition photoMst = photoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 			assertNull(photoMst.getPhotoNo());
 		}

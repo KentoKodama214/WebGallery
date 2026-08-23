@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.PhotoFavorite;
+import com.web.gallery.entity.PhotoFavoriteCondition;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -54,9 +55,9 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	 */
 	@Override
 	public void delete(PhotoFavoriteDeleteModel favoriteDeleteModel) throws UpdateFailureException {
-		PhotoFavorite photoFavorite = PhotoFavorite.from(favoriteDeleteModel);
+		PhotoFavoriteCondition condition = PhotoFavoriteCondition.from(favoriteDeleteModel);
 
-		if (photoFavoriteMapper.delete(photoFavorite) < 1) {
+		if (photoFavoriteMapper.delete(condition) < 1) {
 			log.warn("PhotoFavorite: Delete Failed (AccountNo: {}, FavoritePhotoAccountNo: {}, FavoritePhotoNo: {})",
 					favoriteDeleteModel.getAccountNo() != null ? favoriteDeleteModel.getAccountNo().value() : null,
 					favoriteDeleteModel.getFavoritePhotoAccountNo().value(), favoriteDeleteModel.getFavoritePhotoNo().value());
@@ -71,8 +72,8 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	 */
 	@Override
 	public void clear(PhotoFavoriteDeleteModel favoriteDeleteModel) {
-		PhotoFavorite photoFavorite = PhotoFavorite.fromForClear(favoriteDeleteModel);
-		photoFavoriteMapper.delete(photoFavorite);
+		PhotoFavoriteCondition condition = PhotoFavoriteCondition.forClear(favoriteDeleteModel);
+		photoFavoriteMapper.delete(condition);
 	}
 
 	/**
@@ -82,7 +83,7 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	 */
 	@Override
 	public void deleteByAccountNo(AccountNo accountNo) {
-		photoFavoriteMapper.delete(PhotoFavorite.conditionByAccountNo(accountNo));
+		photoFavoriteMapper.delete(PhotoFavoriteCondition.byAccountNo(accountNo));
 	}
 
 	/**
@@ -92,6 +93,6 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	 */
 	@Override
 	public void deleteByFavoritePhotoAccountNo(AccountNo favoritePhotoAccountNo) {
-		photoFavoriteMapper.delete(PhotoFavorite.conditionByFavoritePhotoAccountNo(favoritePhotoAccountNo));
+		photoFavoriteMapper.delete(PhotoFavoriteCondition.byFavoritePhotoAccountNo(favoritePhotoAccountNo));
 	}
 }

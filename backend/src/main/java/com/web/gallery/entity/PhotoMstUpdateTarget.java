@@ -4,12 +4,8 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import com.web.gallery.constant.Consts;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.CreatedBy;
-import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.common.UpdatedBy;
-import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.FocalLength;
@@ -19,40 +15,22 @@ import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.domain.photo.PhotoAt;
 import com.web.gallery.domain.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.photo.PhotoJapaneseTitle;
-import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailModel;
 
 import lombok.Builder;
 import lombok.Data;
 
 /**
- * 写真マスタテーブルのEntityクラス
+ * 写真マスタテーブルの更新対象クラス
  */
 @Data
 @Builder
-public class PhotoMst {
-	/** ID */
-	private Long id;
-
-	/** アカウント番号 */
-	private AccountNo accountNo;
-
-	/** 写真番号 */
-	private PhotoNo photoNo;
-
-	/** 作成者 */
-	private CreatedBy createdBy;
-
-	/** 作成日時 */
-	private CreatedAt createdAt;
-
+public class PhotoMstUpdateTarget {
 	/** 更新者 */
 	private UpdatedBy updatedBy;
-
-	/** 更新日時 */
-	private UpdatedAt updatedAt;
 
 	/** 削除フラグ */
 	private IsDeleted isDeleted;
@@ -95,24 +73,20 @@ public class PhotoMst {
 	private Iso iso;
 
 	/**
-	 * 写真登録用のPhotoDetailModelからPhotoMstエンティティを生成する
+	 * 写真更新用のPhotoDetailModelから更新対象を生成する
 	 *
-	 * @param	model		{@link PhotoDetailModel}
-	 * @param	filePath	写真の保存ファイルパス
-	 * @param	newPhotoNo	新規採番した写真番号
-	 * @return				{@link PhotoMst}
+	 * @param	model	{@link PhotoDetailModel}
+	 * @return			{@link PhotoMstUpdateTarget}
 	 */
-	public static PhotoMst fromForRegist(PhotoDetailModel model, String filePath, Long newPhotoNo) {
-		return PhotoMst.builder()
-				.accountNo(model.getAccountNo())
-				.photoNo(new PhotoNo(newPhotoNo))
-				.createdBy(new CreatedBy(model.getAccountNo().value()))
+	public static PhotoMstUpdateTarget fromForUpdate(PhotoDetailModel model) {
+		return PhotoMstUpdateTarget.builder()
 				.updatedBy(new UpdatedBy(model.getAccountNo().value()))
+				.isDeleted(new IsDeleted(false))
 				.photoAt(new PhotoAt(
 					Optional.ofNullable(model.getPhotoAt()).map(PhotoAt::value).orElse(Consts.MIN_OFFSET_DATE_TIME)))
 				.locationNo(new LocationNo(
 					Optional.ofNullable(model.getLocationNo()).map(LocationNo::value).orElse(0L)))
-				.imageFilePath(new ImageFilePath(filePath))
+				.imageFilePath(model.getImageFilePath())
 				.photoJapaneseTitle(new PhotoJapaneseTitle(
 					Optional.ofNullable(model.getPhotoJapaneseTitle()).map(PhotoJapaneseTitle::value).orElse(Consts.STRING_EMPTY)))
 				.photoEnglishTitle(new PhotoEnglishTitle(
@@ -129,6 +103,19 @@ public class PhotoMst {
 					Optional.ofNullable(model.getShutterSpeed()).map(ShutterSpeed::value).orElse(BigDecimal.ZERO)))
 				.iso(new Iso(
 					Optional.ofNullable(model.getIso()).map(Iso::value).orElse(0)))
+				.build();
+	}
+
+	/**
+	 * 写真削除用のPhotoDeleteModelから更新対象を生成する
+	 *
+	 * @param	model	{@link PhotoDeleteModel}
+	 * @return			{@link PhotoMstUpdateTarget}
+	 */
+	public static PhotoMstUpdateTarget forDelete(PhotoDeleteModel model) {
+		return PhotoMstUpdateTarget.builder()
+				.updatedBy(new UpdatedBy(model.getAccountNo().value()))
+				.isDeleted(new IsDeleted(true))
 				.build();
 	}
 }
