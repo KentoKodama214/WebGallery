@@ -8,7 +8,6 @@ import java.util.stream.Stream;
 
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.entity.PhotoTagMst;
-import com.web.gallery.enumeration.DirectionEnum;
 
 /**
  * PhotoModelのコレクションを表すクラス
@@ -61,49 +60,6 @@ public record PhotoModelList(List<PhotoModel> photoModelList) implements Iterabl
 	 */
 	public PhotoModelList sorted(Comparator<PhotoModel> comparator) {
 		return PhotoModelList.of(photoModelList.stream().sorted(comparator).toList());
-	}
-
-	/**
-	 * 向き区分でフィルタリングしたPhotoModelListを生成する<p>
-	 * 条件がNONEの場合はフィルタリングしない
-	 *
-	 * @param	conditionDirectionKbn	フィルター条件の向き区分
-	 * @return							{@link PhotoModelList}
-	 */
-	public PhotoModelList filterByDirectionKbn(DirectionEnum conditionDirectionKbn) {
-		if (DirectionEnum.NONE.equals(conditionDirectionKbn)) return this;
-
-		return PhotoModelList.of(photoModelList.stream()
-				.filter(photoModel -> photoModel.getDirectionKbn().equals(conditionDirectionKbn))
-				.toList());
-	}
-
-	/**
-	 * お気に入りでフィルタリングしたPhotoModelListを生成する<p>
-	 * isFavoriteOnlyがfalseの場合はフィルタリングしない
-	 *
-	 * @param	isFavoriteOnly	お気に入りに絞るならtrue
-	 * @return					{@link PhotoModelList}
-	 */
-	public PhotoModelList filterByFavorite(Boolean isFavoriteOnly) {
-		if (!isFavoriteOnly) return this;
-
-		return PhotoModelList.of(photoModelList.stream()
-				.filter(photoModel -> photoModel.getIsFavorite().value())
-				.toList());
-	}
-
-	/**
-	 * タグでフィルタリングしたPhotoModelListを生成する<p>
-	 * タグが複数ある場合、すべてのタグを持つ写真にフィルタリングする
-	 *
-	 * @param	tags	フィルター条件のタグのリスト
-	 * @return			{@link PhotoModelList}
-	 */
-	public PhotoModelList filterByTags(List<String> tags) {
-		return PhotoModelList.of(photoModelList.stream()
-				.filter(photoModel -> photoModel.getPhotoTagModelList().containsAllTags(tags))
-				.toList());
 	}
 
 	/**

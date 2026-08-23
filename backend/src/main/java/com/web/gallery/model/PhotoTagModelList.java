@@ -1,13 +1,11 @@
 package com.web.gallery.model;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoTagMst;
@@ -77,23 +75,6 @@ public record PhotoTagModelList(List<PhotoTagModel> photoTagModelList) implement
 					photoTagModel.getAccountNo().value().equals(accountNo.value()) &&
 					Objects.equals(photoTagModel.getPhotoNo().value(), photoNo.value()))
 				.toList());
-	}
-
-	/**
-	 * 指定のタグをすべて保持しているかどうかを判定する<p>
-	 * タグが未指定の場合はtrueを返す
-	 *
-	 * @param	tags	判定対象のタグのリスト
-	 * @return			すべてのタグを保持している場合はtrue
-	 */
-	public Boolean containsAllTags(List<String> tags) {
-		if (tags.isEmpty() || Consts.STRING_EMPTY.equals(tags.getFirst())) return true;
-
-		List<String> photoTags = new ArrayList<String>();
-		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagJapaneseName().value()).toList());
-		photoTags.addAll(photoTagModelList.stream().map(photoTagModel -> photoTagModel.getTagEnglishName().value()).toList());
-
-		return photoTags.containsAll(tags);
 	}
 
 	/**

@@ -1,6 +1,11 @@
 package com.web.gallery.model;
 
+import java.util.List;
+
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.IsFavoriteOnly;
+import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.enumeration.SortPhotoEnum;
 
 import lombok.Builder;
 import lombok.NonNull;
@@ -20,16 +25,43 @@ public class PhotoGetModel {
 	private AccountNo photoAccountNo;
 
 	/**
-	 * アカウント番号と写真アカウント番号からPhotoGetModelを生成する
-	 *
-	 * @param	accountNo		ログイン中のアカウントNo
-	 * @param	photoAccountNo	写真のアカウントNo
-	 * @return					{@link PhotoGetModel}
+	 * 向き区分
+	 * <p>
+	 * {@link DirectionEnum}
 	 */
-	public static PhotoGetModel of(AccountNo accountNo, AccountNo photoAccountNo) {
+	@NonNull
+	private DirectionEnum directionKbn;
+
+	/** お気に入り写真のみ */
+	private IsFavoriteOnly isFavoriteOnly;
+
+	/** タグワードリスト */
+	@NonNull
+	private List<String> tagList;
+
+	/**
+	 * 並び順
+	 * <p>
+	 * {@link SortPhotoEnum}
+	 */
+	@NonNull
+	private SortPhotoEnum sortBy;
+
+	/**
+	 * PhotoListGetModelと写真のアカウント番号からPhotoGetModelを生成する
+	 *
+	 * @param	photoListGetModel	{@link PhotoListGetModel}
+	 * @param	photoAccountNo		写真のアカウントNo
+	 * @return						{@link PhotoGetModel}
+	 */
+	public static PhotoGetModel of(PhotoListGetModel photoListGetModel, AccountNo photoAccountNo) {
 		return PhotoGetModel.builder()
-				.accountNo(accountNo)
+				.accountNo(photoListGetModel.getAccountNo())
 				.photoAccountNo(photoAccountNo)
+				.directionKbn(photoListGetModel.getDirectionKbn())
+				.isFavoriteOnly(photoListGetModel.getIsFavoriteOnly())
+				.tagList(photoListGetModel.getTagList())
+				.sortBy(photoListGetModel.getSortBy())
 				.build();
 	}
 }
