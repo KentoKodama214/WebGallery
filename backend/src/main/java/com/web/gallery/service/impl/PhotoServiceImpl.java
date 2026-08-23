@@ -119,23 +119,47 @@ public class PhotoServiceImpl implements PhotoService {
 
 		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
 			if(Objects.isNull(photoDetailModel.getPhotoNo())) {
-				String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
-				if(photoMstRepository.isExistPhoto(photoDetailModel)) {
-					log.warn("Duplicate image file (filename: {}}", filename);
-					throw ErrorEnum.DUPLICATE_PHOTO_FILE.toException();
-				}
-
-				photoMstRepository.regist(photoDetailModel, new ImageFilePath(filePath + filename), new PhotoNo(photoNo));
-				registPhotoTags(photoDetailModel.getPhotoTagModelList(), photoNo++);
-				uploadFile(new ImageFilePath(filePath + filename), photoDetailModel.getImageFile());
+				registPhoto(photoDetailModel, filePath, photoNo);
+				++photoNo;
 			} else {
 				savedPhotoNo = photoDetailModel.getPhotoNo();
-				photoMstRepository.update(photoDetailModel);
-				deletePhotoTags(photoDetailModel.getAccountNo(), photoDetailModel.getPhotoNo());
-				registPhotoTags(photoDetailModel.getPhotoTagModelList(), null);
+				updatePhoto(photoDetailModel);
 			}
 		}
 		return savedPhotoNo;
+	}
+
+	/**
+	 * 写真を新規登録する
+	 *
+	 * @param	photoDetailModel	{@link PhotoDetailModel}
+	 * @param	filePath			保存先のディレクトリパス
+	 * @param	newPhotoNo			新規採番された写真番号
+	 * @throws	GalleryException	同じファイル名のファイルが既に保存済みの場合
+	 */
+	private void registPhoto(PhotoDetailModel photoDetailModel, String filePath, Long newPhotoNo) throws GalleryException {
+		String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
+		if(photoMstRepository.isExistPhoto(photoDetailModel)) {
+			log.warn("Duplicate image file (filename: {}}", filename);
+			throw ErrorEnum.DUPLICATE_PHOTO_FILE.toException();
+		}
+
+		ImageFilePath imageFilePath = new ImageFilePath(filePath + filename);
+		photoMstRepository.regist(photoDetailModel, imageFilePath, new PhotoNo(newPhotoNo));
+		registPhotoTags(photoDetailModel.getPhotoTagModelList(), newPhotoNo);
+		uploadFile(imageFilePath, photoDetailModel.getImageFile());
+	}
+
+	/**
+	 * 写真を更新する
+	 *
+	 * @param	photoDetailModel	{@link PhotoDetailModel}
+	 * @throws	GalleryException	更新に失敗した場合
+	 */
+	private void updatePhoto(PhotoDetailModel photoDetailModel) throws GalleryException {
+		photoMstRepository.update(photoDetailModel);
+		deletePhotoTags(photoDetailModel.getAccountNo(), photoDetailModel.getPhotoNo());
+		registPhotoTags(photoDetailModel.getPhotoTagModelList(), null);
 	}
 
 	/**
