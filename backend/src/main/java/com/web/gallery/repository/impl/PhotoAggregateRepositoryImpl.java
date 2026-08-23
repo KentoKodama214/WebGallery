@@ -1,38 +1,42 @@
 package com.web.gallery.repository.impl;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
 import com.web.gallery.aggregate.Photo;
+import com.web.gallery.entity.PhotoFavoriteCondition;
+import com.web.gallery.entity.PhotoMst;
+import com.web.gallery.entity.PhotoMstCondition;
+import com.web.gallery.entity.PhotoMstUpdateTarget;
+import com.web.gallery.entity.PhotoTagMst;
+import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.FileModel;
+import com.web.gallery.mapper.PhotoFavoriteMapper;
+import com.web.gallery.mapper.PhotoMstMapper;
+import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
-import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.PhotoAggregateRepository;
-import com.web.gallery.repository.PhotoFavoriteRepository;
-import com.web.gallery.repository.PhotoMstRepository;
-import com.web.gallery.repository.PhotoTagMstRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * 写真集約（{@link Photo}）を永続化するRepositoryの実装クラス<p>
- * 単票のPhotoMstRepository・PhotoTagMstRepository・PhotoFavoriteRepository・FileRepositoryを
- * 合成し、写真の登録・更新・削除というユースケース単位で整合性のある永続化を行う
+ * PhotoMst・PhotoTagMst・PhotoFavoriteの3テーブルへの永続化を、写真の登録・更新・削除という
+ * ユースケース単位で整合性のある1操作としてまとめる。他のRepositoryには依存せず、Mapperを直接操作する
  */
 @Slf4j
 @Repository
 @RequiredArgsConstructor
 public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
 
-	private final PhotoMstRepository photoMstRepository;
-	private final PhotoTagMstRepository photoTagMstRepository;
-	private final PhotoFavoriteRepository photoFavoriteRepository;
-	private final FileRepository fileRepository;
+	private final PhotoMstMapper photoMstMapper;
+	private final PhotoTagMstMapper photoTagMstMapper;
+	private final PhotoFavoriteMapper photoFavoriteMapper;
 
 	/**
 	 * 写真集約を新規登録する
@@ -45,14 +49,21 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
 	@Override
 	public void regist(Photo photo) throws GalleryException {
 		String filename = photo.getImageFile().value().getOriginalFilename();
-		if (photoMstRepository.isExistPhoto(photo.getDetail())) {
+		if (photoMstMapper.isExistPhoto(PhotoMstCondition.forExistCheck(photo.getDetail()))) {
 			log.warn("Duplicate image file (filename: {})", filename);
 			throw ErrorEnum.DUPLICATE_PHOTO_FILE.toException();
 		}
 
-		photoMstRepository.regist(photo.getDetail(), photo.getImageFilePath(), photo.getPhotoNo());
+		PhotoMst photoMst = PhotoMst.fromForRegist(photo.getDetail(), photo.getImageFilePath().value(), photo.getPhotoNo().value());
+		try {
+			photoMstMapper.insert(photoMst);
+		}
+		catch (DuplicateKeyException e) {
+			log.warn("PhotoMst: Duplicate Key (AccountNo: {}, PhotoNo: {})", photo.getAccountNo().value(), photo.getPhotoNo().value(), e);
+			throw ErrorEnum.FAIL_TO_REGIST_PHOTO.toException();
+		}
+
 		registTags(photo);
-		fileRepository.save(FileModel.of(photo.getImageFilePath(), photo.getImageFile()));
 	}
 
 	/**
@@ -63,33 +74,47 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
 	 */
 	@Override
 	public void update(Photo photo) throws GalleryException {
-		photoMstRepository.update(photo.getDetail());
-		photoTagMstRepository.clear(PhotoTagDeleteModel.of(photo.getAccountNo(), photo.getPhotoNo()));
+		PhotoMstCondition condition = PhotoMstCondition.byAccountAndPhoto(photo.getAccountNo().value(), photo.getPhotoNo().value());
+		PhotoMstUpdateTarget target = PhotoMstUpdateTarget.fromForUpdate(photo.getDetail());
+
+		if (photoMstMapper.update(condition, target) < 1) {
+			log.warn("PhotoMst: Update Failed (AccountNo: {}, PhotoNo: {})", photo.getAccountNo().value(), photo.getPhotoNo().value());
+			throw ErrorEnum.FAIL_TO_UPDATE_PHOTO.toException();
+		}
+
+		photoTagMstMapper.delete(PhotoTagMstCondition.from(PhotoTagDeleteModel.of(photo.getAccountNo(), photo.getPhotoNo())));
 		registTags(photo);
 	}
 
 	/**
 	 * 写真集約を削除する<p>
-	 * 対象写真への全アカウントからのお気に入り・タグを削除したうえで写真マスタを論理削除し、実ファイルを削除する
+	 * 対象写真への全アカウントからのお気に入り・タグを削除したうえで写真マスタを論理削除する
 	 *
 	 * @param	photo				{@link Photo}
 	 * @throws	GalleryException	削除に失敗した場合
 	 */
 	@Override
 	public void delete(Photo photo) throws GalleryException {
-		photoFavoriteRepository.clear(PhotoFavoriteDeleteModel.builder()
+		PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 				.favoritePhotoAccountNo(photo.getAccountNo())
 				.favoritePhotoNo(photo.getPhotoNo())
-				.build());
-		photoTagMstRepository.clear(PhotoTagDeleteModel.of(photo.getAccountNo(), photo.getPhotoNo()));
+				.build();
+		photoFavoriteMapper.delete(PhotoFavoriteCondition.forClear(favoriteDeleteModel));
 
-		photoMstRepository.delete(PhotoDeleteModel.builder()
+		photoTagMstMapper.delete(PhotoTagMstCondition.from(PhotoTagDeleteModel.of(photo.getAccountNo(), photo.getPhotoNo())));
+
+		PhotoMstCondition condition = PhotoMstCondition.byAccountAndPhoto(photo.getAccountNo().value(), photo.getPhotoNo().value());
+		PhotoDeleteModel photoDeleteModel = PhotoDeleteModel.builder()
 				.accountNo(photo.getAccountNo())
 				.photoNo(photo.getPhotoNo())
 				.imageFilePath(photo.getImageFilePathForDelete())
-				.build());
+				.build();
+		PhotoMstUpdateTarget target = PhotoMstUpdateTarget.forDelete(photoDeleteModel);
 
-		fileRepository.delete(photo.getImageFilePathForDelete());
+		if (photoMstMapper.update(condition, target) < 1) {
+			log.warn("PhotoMst: Delete Failed (AccountNo: {}, PhotoNo: {})", photo.getAccountNo().value(), photo.getPhotoNo().value());
+			throw ErrorEnum.FAIL_TO_DELETE_PHOTO.toException();
+		}
 	}
 
 	/**
@@ -104,7 +129,15 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
 		}
 
 		for (PhotoTagModel photoTagModel : photo.getPhotoTagModelList()) {
-			photoTagMstRepository.regist(photoTagModel);
+			PhotoTagMst photoTagMst = PhotoTagMst.from(photoTagModel);
+			try {
+				photoTagMstMapper.insert(photoTagMst);
+			}
+			catch (DuplicateKeyException e) {
+				log.warn("PhotoTagMst: Duplicate Key (AccountNo: {}, PhotoNo: {}, TagNo: {})",
+						photoTagModel.getAccountNo().value(), photoTagModel.getPhotoNo().value(), photoTagModel.getTagNo().value(), e);
+				throw ErrorEnum.FAIL_TO_REGIST_PHOTO_TAG.toException();
+			}
 		}
 	}
 }

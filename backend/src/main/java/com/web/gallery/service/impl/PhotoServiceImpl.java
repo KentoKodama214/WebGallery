@@ -20,6 +20,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
@@ -31,6 +32,7 @@ import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.repository.AccountRepository;
+import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.PhotoAggregateRepository;
 import com.web.gallery.repository.PhotoDetailRepository;
 import com.web.gallery.repository.PhotoMstRepository;
@@ -51,6 +53,7 @@ public class PhotoServiceImpl implements PhotoService {
 	private final PhotoMstRepository photoMstRepository;
 	private final PhotoAggregateRepository photoAggregateRepository;
 	private final AccountRepository accountRepository;
+	private final FileRepository fileRepository;
 	private final PhotoConfig photoConfig;
 
 	/**
@@ -111,6 +114,7 @@ public class PhotoServiceImpl implements PhotoService {
 				String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
 				Photo photo = Photo.forRegist(photoDetailModel, new PhotoNo(photoNo), new ImageFilePath(filePath + filename));
 				photoAggregateRepository.regist(photo);
+				fileRepository.save(FileModel.of(photo.getImageFilePath(), photo.getImageFile()));
 				++photoNo;
 			} else {
 				savedPhotoNo = photoDetailModel.getPhotoNo();
@@ -138,6 +142,7 @@ public class PhotoServiceImpl implements PhotoService {
 			ImageFilePath imageFilePathForDelete = new ImageFilePath(filePath + fileName);
 			Photo photo = Photo.forDelete(photoDeleteModel.getAccountNo(), photoDeleteModel.getPhotoNo(), imageFilePathForDelete);
 			photoAggregateRepository.delete(photo);
+			fileRepository.delete(imageFilePathForDelete);
 		}
 	}
 

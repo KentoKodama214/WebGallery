@@ -17,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,13 +30,20 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagNo;
+import com.web.gallery.entity.PhotoFavoriteCondition;
+import com.web.gallery.entity.PhotoMst;
+import com.web.gallery.entity.PhotoMstCondition;
+import com.web.gallery.entity.PhotoMstUpdateTarget;
+import com.web.gallery.entity.PhotoTagMst;
+import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.FileModel;
-import com.web.gallery.model.PhotoDeleteModel;
+import com.web.gallery.exception.RegistFailureException;
+import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.mapper.PhotoFavoriteMapper;
+import com.web.gallery.mapper.PhotoMstMapper;
+import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoFavoriteDeleteModel;
-import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
 
@@ -46,16 +54,13 @@ public class PhotoAggregateRepositoryImplTest {
 	private PhotoAggregateRepositoryImpl photoAggregateRepositoryImpl;
 
 	@Mock
-	private PhotoMstRepositoryImpl photoMstRepositoryImpl;
+	private PhotoMstMapper photoMstMapper;
 
 	@Mock
-	private PhotoTagMstRepositoryImpl photoTagMstRepositoryImpl;
+	private PhotoTagMstMapper photoTagMstMapper;
 
 	@Mock
-	private PhotoFavoriteRepositoryImpl photoFavoriteRepositoryImpl;
-
-	@Mock
-	private FileRepositoryImpl fileRepositoryImpl;
+	private PhotoFavoriteMapper photoFavoriteMapper;
 
 	private PhotoDetailModel buildDetail(AccountNo accountNo, PhotoNo photoNo, ImageFilePath imageFilePath, PhotoTagModelList tags) {
 		MultipartFile multipartFile = new MockMultipartFile(
@@ -86,7 +91,7 @@ public class PhotoAggregateRepositoryImplTest {
 	class regist {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：重複がなければ写真マスタ・タグを登録し、ファイルを保存すること")
+		@DisplayName("正常系：重複がなければ写真マスタ・タグを登録すること")
 		void regist_success() throws GalleryException {
 			AccountNo accountNo = new AccountNo(1L);
 			PhotoNo photoNo = new PhotoNo(5L);
@@ -95,28 +100,29 @@ public class PhotoAggregateRepositoryImplTest {
 			PhotoDetailModel requestDetail = buildDetail(accountNo, null, new ImageFilePath(""), tags);
 			Photo photo = Photo.forRegist(requestDetail, photoNo, imageFilePath);
 
-			doReturn(false).when(photoMstRepositoryImpl).isExistPhoto(any(PhotoDetailModel.class));
+			doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
 
-			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
+			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+			doReturn(1).when(photoMstMapper).insert(photoMstCaptor.capture());
 
-			ArgumentCaptor<FileModel> fileModelCaptor = ArgumentCaptor.forClass(FileModel.class);
-			doNothing().when(fileRepositoryImpl).save(fileModelCaptor.capture());
+			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
+			doReturn(1).when(photoTagMstMapper).insert(photoTagMstCaptor.capture());
 
 			photoAggregateRepositoryImpl.regist(photo);
 
-			verify(photoMstRepositoryImpl).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl).regist(photo.getDetail(), imageFilePath, photoNo);
-			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
-			verify(fileRepositoryImpl).save(any(FileModel.class));
+			verify(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+			verify(photoMstMapper).insert(any(PhotoMst.class));
+			verify(photoTagMstMapper, times(2)).insert(any(PhotoTagMst.class));
 
-			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(new TagNo(1L), photoTagModelCaptureList.get(0).getTagNo());
-			assertEquals(photoNo, photoTagModelCaptureList.get(0).getPhotoNo());
-			assertEquals(new TagNo(2L), photoTagModelCaptureList.get(1).getTagNo());
+			PhotoMst photoMstCapture = photoMstCaptor.getValue();
+			assertEquals(accountNo, photoMstCapture.getAccountNo());
+			assertEquals(photoNo, photoMstCapture.getPhotoNo());
+			assertEquals(imageFilePath, photoMstCapture.getImageFilePath());
 
-			FileModel fileModelCapture = fileModelCaptor.getValue();
-			assertEquals(imageFilePath, fileModelCapture.getFilePath());
+			List<PhotoTagMst> photoTagMstCaptureList = photoTagMstCaptor.getAllValues();
+			assertEquals(new TagNo(1L), photoTagMstCaptureList.get(0).getTagNo());
+			assertEquals(photoNo, photoTagMstCaptureList.get(0).getPhotoNo());
+			assertEquals(new TagNo(2L), photoTagMstCaptureList.get(1).getTagNo());
 		}
 
 		@Test
@@ -127,13 +133,28 @@ public class PhotoAggregateRepositoryImplTest {
 			PhotoDetailModel requestDetail = buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty());
 			Photo photo = Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
 
-			doReturn(true).when(photoMstRepositoryImpl).isExistPhoto(any(PhotoDetailModel.class));
+			doReturn(true).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
 
 			assertThrows(FileDuplicateException.class, () -> photoAggregateRepositoryImpl.regist(photo));
 
-			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoTagMstRepositoryImpl, times(0)).regist(any(PhotoTagModel.class));
-			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+			verify(photoMstMapper, times(0)).insert(any(PhotoMst.class));
+			verify(photoTagMstMapper, times(0)).insert(any(PhotoTagMst.class));
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("異常系：写真マスタ登録でDuplicateKeyExceptionが発生した場合、RegistFailureExceptionをthrowすること")
+		void regist_RegistFailureException() {
+			AccountNo accountNo = new AccountNo(1L);
+			PhotoDetailModel requestDetail = buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty());
+			Photo photo = Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
+
+			doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+			doThrow(DuplicateKeyException.class).when(photoMstMapper).insert(any(PhotoMst.class));
+
+			assertThrows(RegistFailureException.class, () -> photoAggregateRepositoryImpl.regist(photo));
+
+			verify(photoTagMstMapper, times(0)).insert(any(PhotoTagMst.class));
 		}
 	}
 
@@ -151,21 +172,43 @@ public class PhotoAggregateRepositoryImplTest {
 			PhotoDetailModel requestDetail = buildDetail(accountNo, photoNo, new ImageFilePath("/path/DSC111.jpg"), tags);
 			Photo photo = Photo.forUpdate(requestDetail);
 
-			ArgumentCaptor<PhotoTagDeleteModel> photoTagDeleteModelCaptor = ArgumentCaptor.forClass(PhotoTagDeleteModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).clear(photoTagDeleteModelCaptor.capture());
+			ArgumentCaptor<PhotoMstCondition> conditionCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
+			ArgumentCaptor<PhotoMstUpdateTarget> targetCaptor = ArgumentCaptor.forClass(PhotoMstUpdateTarget.class);
+			doReturn(1).when(photoMstMapper).update(conditionCaptor.capture(), targetCaptor.capture());
 
-			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
+			ArgumentCaptor<PhotoTagMstCondition> tagConditionCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
+			doReturn(1).when(photoTagMstMapper).delete(tagConditionCaptor.capture());
+
+			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
+			doReturn(1).when(photoTagMstMapper).insert(photoTagMstCaptor.capture());
 
 			photoAggregateRepositoryImpl.update(photo);
 
-			verify(photoMstRepositoryImpl).update(photo.getDetail());
-			verify(photoTagMstRepositoryImpl).clear(any(PhotoTagDeleteModel.class));
-			verify(photoTagMstRepositoryImpl).regist(any(PhotoTagModel.class));
+			verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+			verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+			verify(photoTagMstMapper).insert(any(PhotoTagMst.class));
 
-			PhotoTagDeleteModel photoTagDeleteModelCapture = photoTagDeleteModelCaptor.getValue();
-			assertEquals(accountNo, photoTagDeleteModelCapture.getAccountNo());
-			assertEquals(photoNo, photoTagDeleteModelCapture.getPhotoNo());
+			assertEquals(accountNo, conditionCaptor.getValue().getAccountNo());
+			assertEquals(photoNo, conditionCaptor.getValue().getPhotoNo());
+
+			assertEquals(accountNo, tagConditionCaptor.getValue().getAccountNo());
+			assertEquals(photoNo, tagConditionCaptor.getValue().getPhotoNo());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：写真マスタの更新件数が0件の場合、UpdateFailureExceptionをthrowすること")
+		void update_UpdateFailureException() {
+			AccountNo accountNo = new AccountNo(1L);
+			PhotoNo photoNo = new PhotoNo(5L);
+			PhotoDetailModel requestDetail = buildDetail(accountNo, photoNo, new ImageFilePath("/path/DSC111.jpg"), PhotoTagModelList.empty());
+			Photo photo = Photo.forUpdate(requestDetail);
+
+			doReturn(0).when(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+
+			assertThrows(UpdateFailureException.class, () -> photoAggregateRepositoryImpl.update(photo));
+
+			verify(photoTagMstMapper, times(0)).delete(any(PhotoTagMstCondition.class));
 		}
 	}
 
@@ -175,38 +218,54 @@ public class PhotoAggregateRepositoryImplTest {
 	class delete {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：お気に入り・タグを削除してから写真マスタを論理削除し、実ファイルを削除すること")
+		@DisplayName("正常系：お気に入り・タグを削除してから写真マスタを論理削除すること")
 		void delete_success() throws GalleryException {
 			AccountNo accountNo = new AccountNo(1L);
 			PhotoNo photoNo = new PhotoNo(5L);
 			ImageFilePath imageFilePathForDelete = new ImageFilePath("/path/DSC111.jpg");
 			Photo photo = Photo.forDelete(accountNo, photoNo, imageFilePathForDelete);
 
-			ArgumentCaptor<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteDeleteModel.class);
-			doNothing().when(photoFavoriteRepositoryImpl).clear(photoFavoriteDeleteModelCaptor.capture());
+			ArgumentCaptor<PhotoFavoriteCondition> favoriteConditionCaptor = ArgumentCaptor.forClass(PhotoFavoriteCondition.class);
+			doReturn(1).when(photoFavoriteMapper).delete(favoriteConditionCaptor.capture());
 
-			ArgumentCaptor<PhotoTagDeleteModel> photoTagDeleteModelCaptor = ArgumentCaptor.forClass(PhotoTagDeleteModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).clear(photoTagDeleteModelCaptor.capture());
+			ArgumentCaptor<PhotoTagMstCondition> tagConditionCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
+			doReturn(1).when(photoTagMstMapper).delete(tagConditionCaptor.capture());
 
-			ArgumentCaptor<PhotoDeleteModel> photoDeleteModelCaptor = ArgumentCaptor.forClass(PhotoDeleteModel.class);
-			doNothing().when(photoMstRepositoryImpl).delete(photoDeleteModelCaptor.capture());
+			ArgumentCaptor<PhotoMstCondition> conditionCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
+			ArgumentCaptor<PhotoMstUpdateTarget> targetCaptor = ArgumentCaptor.forClass(PhotoMstUpdateTarget.class);
+			doReturn(1).when(photoMstMapper).update(conditionCaptor.capture(), targetCaptor.capture());
 
 			photoAggregateRepositoryImpl.delete(photo);
 
-			verify(photoFavoriteRepositoryImpl).clear(any(PhotoFavoriteDeleteModel.class));
-			verify(photoTagMstRepositoryImpl).clear(any(PhotoTagDeleteModel.class));
-			verify(photoMstRepositoryImpl).delete(any(PhotoDeleteModel.class));
-			verify(fileRepositoryImpl).delete(imageFilePathForDelete);
+			verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
+			verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+			verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
 
-			PhotoFavoriteDeleteModel photoFavoriteDeleteModelCapture = photoFavoriteDeleteModelCaptor.getValue();
-			assertNull(photoFavoriteDeleteModelCapture.getAccountNo());
-			assertEquals(accountNo, photoFavoriteDeleteModelCapture.getFavoritePhotoAccountNo());
-			assertEquals(photoNo, photoFavoriteDeleteModelCapture.getFavoritePhotoNo());
+			assertNull(favoriteConditionCaptor.getValue().getAccountNo());
+			assertEquals(accountNo, favoriteConditionCaptor.getValue().getFavoritePhotoAccountNo());
+			assertEquals(photoNo, favoriteConditionCaptor.getValue().getFavoritePhotoNo());
 
-			PhotoDeleteModel photoDeleteModelCapture = photoDeleteModelCaptor.getValue();
-			assertEquals(accountNo, photoDeleteModelCapture.getAccountNo());
-			assertEquals(photoNo, photoDeleteModelCapture.getPhotoNo());
-			assertEquals(imageFilePathForDelete, photoDeleteModelCapture.getImageFilePath());
+			assertEquals(accountNo, tagConditionCaptor.getValue().getAccountNo());
+			assertEquals(photoNo, tagConditionCaptor.getValue().getPhotoNo());
+
+			assertEquals(accountNo, conditionCaptor.getValue().getAccountNo());
+			assertEquals(photoNo, conditionCaptor.getValue().getPhotoNo());
+			assertTrue(targetCaptor.getValue().getIsDeleted().value());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：写真マスタの更新件数が0件の場合、UpdateFailureExceptionをthrowすること")
+		void delete_UpdateFailureException() {
+			AccountNo accountNo = new AccountNo(1L);
+			PhotoNo photoNo = new PhotoNo(5L);
+			Photo photo = Photo.forDelete(accountNo, photoNo, new ImageFilePath("/path/DSC111.jpg"));
+
+			doReturn(1).when(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
+			doReturn(1).when(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+			doReturn(0).when(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+
+			assertThrows(UpdateFailureException.class, () -> photoAggregateRepositoryImpl.delete(photo));
 		}
 	}
 }

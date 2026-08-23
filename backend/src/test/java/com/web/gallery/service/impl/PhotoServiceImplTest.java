@@ -60,6 +60,7 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
@@ -72,6 +73,7 @@ import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
+import com.web.gallery.repository.impl.FileRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoMstRepositoryImpl;
@@ -93,6 +95,9 @@ public class PhotoServiceImplTest {
 
 	@Mock
 	private AccountRepositoryImpl accountRepositoryImpl;
+
+	@Mock
+	private FileRepositoryImpl fileRepositoryImpl;
 
 	@Mock
 	private PhotoConfig photoConfig;
@@ -578,6 +583,9 @@ public class PhotoServiceImplTest {
 			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).regist(photoCaptor.capture());
 
+			ArgumentCaptor<FileModel> fileModelCaptor = ArgumentCaptor.forClass(FileModel.class);
+			doNothing().when(fileRepositoryImpl).save(fileModelCaptor.capture());
+
 			// 新規登録1枚目
 			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
 			photoDetailModelList.add(photoDetailModel1);
@@ -591,6 +599,13 @@ public class PhotoServiceImplTest {
 			assertEquals(new PhotoNo(5L), actual);
 			verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
+			verify(fileRepositoryImpl, times(2)).save(any(FileModel.class));
+
+			List<FileModel> fileModelCaptureList = fileModelCaptor.getAllValues();
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC111.jpg"), fileModelCaptureList.get(0).getFilePath());
+			assertEquals(photoDetailModel1.getImageFile(), fileModelCaptureList.get(0).getImageFile());
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC222.jpg"), fileModelCaptureList.get(1).getFilePath());
+			assertEquals(photoDetailModel2.getImageFile(), fileModelCaptureList.get(1).getImageFile());
 
 			List<Photo> photoCaptureList = photoCaptor.getAllValues();
 			assertEquals(new AccountNo(1L), photoCaptureList.get(0).getAccountNo());
@@ -639,6 +654,7 @@ public class PhotoServiceImplTest {
 			assertEquals(new PhotoNo(3L), actual);
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(2)).update(any(Photo.class));
+			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
 
 			List<Photo> photoCaptureList = photoCaptor.getAllValues();
 			assertEquals(new PhotoNo(2L), photoCaptureList.get(0).getPhotoNo());
@@ -668,6 +684,9 @@ public class PhotoServiceImplTest {
 			ArgumentCaptor<Photo> photoUpdateCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).update(photoUpdateCaptor.capture());
 
+			ArgumentCaptor<FileModel> fileModelCaptor = ArgumentCaptor.forClass(FileModel.class);
+			doNothing().when(fileRepositoryImpl).save(fileModelCaptor.capture());
+
 			// 新規登録1枚目
 			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
 			photoDetailModelList.add(photoDetailModel1);
@@ -681,6 +700,11 @@ public class PhotoServiceImplTest {
 			assertEquals(new PhotoNo(3L), actual);
 			verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
+			verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
+
+			FileModel fileModelCapture = fileModelCaptor.getValue();
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC111.jpg"), fileModelCapture.getFilePath());
+			assertEquals(photoDetailModel1.getImageFile(), fileModelCapture.getImageFile());
 
 			Photo registeredPhoto = photoRegistCaptor.getValue();
 			assertEquals(new PhotoNo(5L), registeredPhoto.getPhotoNo());
@@ -715,6 +739,7 @@ public class PhotoServiceImplTest {
 
 			verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
+			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
 		}
 
 		@Test
@@ -767,6 +792,9 @@ public class PhotoServiceImplTest {
 			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).delete(photoCaptor.capture());
 
+			ArgumentCaptor<ImageFilePath> fileDeleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
+			doNothing().when(fileRepositoryImpl).delete(fileDeleteCaptor.capture());
+
 			List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
 			photoDeleteModelList.add(PhotoDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -781,6 +809,11 @@ public class PhotoServiceImplTest {
 
 			photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList));
 			verify(photoAggregateRepositoryImpl, times(2)).delete(any(Photo.class));
+			verify(fileRepositoryImpl, times(2)).delete(any(ImageFilePath.class));
+
+			List<ImageFilePath> fileDeleteCaptureList = fileDeleteCaptor.getAllValues();
+			assertEquals(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"), fileDeleteCaptureList.get(0));
+			assertEquals(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"), fileDeleteCaptureList.get(1));
 
 			List<Photo> photoCaptureList = photoCaptor.getAllValues();
 			assertEquals(new AccountNo(1L), photoCaptureList.get(0).getAccountNo());
@@ -809,6 +842,7 @@ public class PhotoServiceImplTest {
 			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
 
 			verify(photoAggregateRepositoryImpl, times(1)).delete(any(Photo.class));
+			verify(fileRepositoryImpl, times(0)).delete(any(ImageFilePath.class));
 		}
 	}
 	
