@@ -48,7 +48,7 @@ just e2e
 3. **Repository層** (`repository/` + `repository/impl/`) - データベースアクセス。`/model/`でService層と、`/entity/`や`/dto/`でMapper層と転送する
 4. **MyBatis Mapper層** (`mapper/`) - SQLは`resources/com/web/gallery/mapper/*.xml`のXMLファイルで定義
 
-上記に加え、`domain/`にはプロパティ単位の値オブジェクト（`record`）が定義されており、Model・Repository・Serviceのメソッド引数・返り値として利用される。また、管理者権限チェックには`annotation/`のカスタムアノテーションと`aspect/`のAOPを使用する。
+上記に加え、`domain/`にはプロパティ単位の値オブジェクト（`record`）が定義されており、Model・Repository・Serviceのメソッド引数・返り値として利用される。単一のビジネスルールを判定するドメインサービスは`policy/`に配置し、Service層からのみ利用する。また、管理者権限チェックには`annotation/`のカスタムアノテーションと`aspect/`のAOPを使用する。
 
 書き込みユースケース（登録・更新・削除）で複数テーブルにまたがる整合性・ライフサイクルの管理が必要な場合、`aggregate/`に集約ルートクラスを定義し、Service層とRepository層の間に位置づける（例：`Photo`集約）。詳細は`.claude/rules/aggregate.md`を参照。
 
