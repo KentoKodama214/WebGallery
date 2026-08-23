@@ -42,7 +42,7 @@ public enum SexEnum {
 		if(Objects.isNull(value)) {
 			return SexEnum.NONE;
 		}
-		
+
 		try {
 			String upperValue = value.toUpperCase();
 			return SexEnum.valueOf(upperValue);
@@ -50,5 +50,15 @@ public enum SexEnum {
 			log.info("SexEnum: Invalid value. (value: {})", value);
 			return SexEnum.NONE;
 		}
+	}
+
+	/**
+	 * 未設定の場合にデフォルトでNONEを返す
+	 *
+	 * @param	nullable	{@link SexEnum}（null許容）
+	 * @return				nullableがnullでなければそのまま、nullであればNONE
+	 */
+	public static SexEnum getOrDefault(SexEnum nullable) {
+		return nullable != null ? nullable : SexEnum.NONE;
 	}
 }

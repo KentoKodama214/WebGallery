@@ -22,4 +22,14 @@ public record FocalLength(Integer value) implements Serializable {
 			throw new IllegalArgumentException("焦点距離は0以上である必要があります");
 		}
 	}
+
+	/**
+	 * 未設定の場合にDB保存用のデフォルト値を返す
+	 *
+	 * @param	nullable	{@link FocalLength}（null許容）
+	 * @return				nullableがnullでなければそのまま、nullであればデフォルト値を持つ{@link FocalLength}
+	 */
+	public static FocalLength getOrDefault(FocalLength nullable) {
+		return nullable != null ? nullable : new FocalLength(0);
+	}
 }

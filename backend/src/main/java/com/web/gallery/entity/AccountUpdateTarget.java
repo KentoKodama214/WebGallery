@@ -1,10 +1,7 @@
 package com.web.gallery.entity;
 
-import java.util.Optional;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.BirthDate;
@@ -87,26 +84,13 @@ public class AccountUpdateTarget {
 		AccountUpdateTarget target = AccountUpdateTarget.builder()
 				.accountId(model.getAccountId())
 				.accountName(model.getAccountName())
-				.birthdate(
-					Optional.ofNullable(model.getBirthdate())
-						.orElse(new BirthDate(Consts.MIN_LOCAL_DATE)))
-				.sexKbn(
-					Optional.ofNullable(model.getSexKbn()).orElse(SexEnum.NONE))
-				.birthplacePrefectureKbnCode(
-					Optional.ofNullable(model.getBirthplacePrefectureKbnCode())
-						.orElse(new BirthplacePrefectureKbnCode(Consts.STRING_NONE)))
-				.residentPrefectureKbnCode(
-					Optional.ofNullable(model.getResidentPrefectureKbnCode())
-						.orElse(new ResidentPrefectureKbnCode(Consts.STRING_NONE)))
-				.freeMemo(
-					Optional.ofNullable(model.getFreeMemo())
-						.orElse(new FreeMemo(Consts.STRING_EMPTY)))
-				.lastLoginDatetime(
-					Optional.ofNullable(model.getLastLoginDatetime())
-						.orElse(new LastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME)))
-				.loginFailureCount(
-					Optional.ofNullable(model.getLoginFailureCount())
-						.orElse(new LoginFailureCount(0)))
+				.birthdate(BirthDate.getOrDefault(model.getBirthdate()))
+				.sexKbn(SexEnum.getOrDefault(model.getSexKbn()))
+				.birthplacePrefectureKbnCode(BirthplacePrefectureKbnCode.getOrDefault(model.getBirthplacePrefectureKbnCode()))
+				.residentPrefectureKbnCode(ResidentPrefectureKbnCode.getOrDefault(model.getResidentPrefectureKbnCode()))
+				.freeMemo(FreeMemo.getOrDefault(model.getFreeMemo()))
+				.lastLoginDatetime(LastLoginDatetime.getOrDefault(model.getLastLoginDatetime()))
+				.loginFailureCount(LoginFailureCount.getOrDefault(model.getLoginFailureCount()))
 				.build();
 
 		if (model.getPassword() != null) {
@@ -125,9 +109,7 @@ public class AccountUpdateTarget {
 	public static AccountUpdateTarget fromForUpdateLoginFailure(AccountModel model) {
 		return AccountUpdateTarget.builder()
 				.lastLoginDatetime(model.getLastLoginDatetime())
-				.loginFailureCount(
-					Optional.ofNullable(model.getLoginFailureCount())
-						.orElse(new LoginFailureCount(0)))
+				.loginFailureCount(LoginFailureCount.getOrDefault(model.getLoginFailureCount()))
 				.build();
 	}
 }

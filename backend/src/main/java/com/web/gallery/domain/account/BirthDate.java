@@ -3,6 +3,8 @@ package com.web.gallery.domain.account;
 import java.io.Serializable;
 import java.time.LocalDate;
 
+import com.web.gallery.constant.Consts;
+
 /**
  * 生年月日の値オブジェクト
  *
@@ -19,5 +21,15 @@ public record BirthDate(LocalDate value) implements Serializable {
 		if (value == null) {
 			throw new IllegalArgumentException("生年月日はnullにできません");
 		}
+	}
+
+	/**
+	 * 未設定の場合にDB保存用のデフォルト値を返す
+	 *
+	 * @param	nullable	{@link BirthDate}（null許容）
+	 * @return				nullableがnullでなければそのまま、nullであればデフォルト値を持つ{@link BirthDate}
+	 */
+	public static BirthDate getOrDefault(BirthDate nullable) {
+		return nullable != null ? nullable : new BirthDate(Consts.MIN_LOCAL_DATE);
 	}
 }
