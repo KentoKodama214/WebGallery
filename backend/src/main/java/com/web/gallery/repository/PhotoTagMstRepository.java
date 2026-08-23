@@ -1,7 +1,7 @@
 package com.web.gallery.repository;
 
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.exception.RegistFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
 
@@ -12,10 +12,10 @@ public interface PhotoTagMstRepository {
 	/**
 	 * 写真タグマスタを登録する
 	 * 
-	 * @param	photoTagModel			{@link PhotoTagModel}
-	 * @throws	RegistFailureException	登録に失敗した場合
+	 * @param	photoTagModel		{@link PhotoTagModel}
+	 * @throws	GalleryException	登録に失敗した場合
 	 */
-	void regist(PhotoTagModel photoTagModel) throws RegistFailureException;
+	void regist(PhotoTagModel photoTagModel) throws GalleryException;
 	
 	/**
 	 * 該当写真の写真タグを全件削除する

@@ -14,9 +14,7 @@ import com.web.gallery.controller.request.PhotoFavoriteDeleteRequest;
 import com.web.gallery.controller.request.PhotoFavoriteRegistRequest;
 import com.web.gallery.controller.response.PhotoFavoriteResponse;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.BadRequestException;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoFavoriteModel;
 import com.web.gallery.service.PhotoFavoriteService;
@@ -50,8 +48,9 @@ public class PhotoFavoriteController {
 	 * @param	photoFavoriteRegistRequest	{@link PhotoFavoriteRegistRequest}
 	 * @param	result						PhotoFavoriteRegistRequestのバインディング結果
 	 * @return	PhotoFavoriteResponse		{@link PhotoFavoriteResponse}
-	 * @throws	BadRequestException 		リクエストパラメータが不正の場合
-	 * @throws	RegistFailureException 		お気に入りの登録に失敗した場合
+	 * @throws	GalleryException			以下のいずれかに該当する場合
+	 *                              		・リクエストパラメータが不正の場合
+	 *                              		・お気に入りの登録に失敗した場合
 	 */
 	@Operation(summary = "お気に入り登録", description = "指定した写真をお気に入りに登録する")
 	@ApiResponse(responseCode = "200", description = "登録成功")
@@ -60,12 +59,12 @@ public class PhotoFavoriteController {
 	@PostMapping(ApiRoutes.API_FAVORITES)
 	public ResponseEntity<PhotoFavoriteResponse> addFavorite(
 			@RequestBody @Validated PhotoFavoriteRegistRequest photoFavoriteRegistRequest,
-			BindingResult result) throws BadRequestException, RegistFailureException {
-		
+			BindingResult result) throws GalleryException {
+
 		if(result.hasErrors()) {
 			log.info("Invalid input. (FavoritePhotoAccountNo: {}, FavoritePhotoNo: {})",
 					photoFavoriteRegistRequest.getFavoritePhotoAccountNo(), photoFavoriteRegistRequest.getFavoritePhotoNo());
-			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
+			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 		
 		photoFavoriteService.addFavorite(PhotoFavoriteModel.from(photoFavoriteRegistRequest, sessionHelper.getAccountNo()));
@@ -79,8 +78,9 @@ public class PhotoFavoriteController {
 	 * @param	photoFavoriteDeleteRequest	{@link PhotoFavoriteDeleteRequest}
 	 * @param	result						PhotoFavoriteDeleteRequestのバインディング結果
 	 * @return	PhotoFavoriteResponse		{@link PhotoFavoriteResponse}
-	 * @throws	BadRequestException 		リクエストパラメータが不正の場合
-	 * @throws	UpdateFailureException 		お気に入りの解除に失敗した場合
+	 * @throws	GalleryException			以下のいずれかに該当する場合
+	 *                              		・リクエストパラメータが不正の場合
+	 *                              		・お気に入りの解除に失敗した場合
 	 */
 	@Operation(summary = "お気に入り解除", description = "指定した写真のお気に入りを解除する")
 	@ApiResponse(responseCode = "200", description = "解除成功")
@@ -89,12 +89,12 @@ public class PhotoFavoriteController {
 	@DeleteMapping(ApiRoutes.API_FAVORITES)
 	public ResponseEntity<PhotoFavoriteResponse> deleteFavorite(
 			@RequestBody @Validated PhotoFavoriteDeleteRequest photoFavoriteDeleteRequest,
-			BindingResult result) throws BadRequestException, UpdateFailureException {
+			BindingResult result) throws GalleryException {
 
 		if(result.hasErrors()) {
 			log.info("Invalid input. (FavoritePhotoAccountNo: {}, FavoritePhotoNo: {})",
 					photoFavoriteDeleteRequest.getFavoritePhotoAccountNo(), photoFavoriteDeleteRequest.getFavoritePhotoNo());
-			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
+			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 		
 		photoFavoriteService.deleteFavorite(PhotoFavoriteModel.from(photoFavoriteDeleteRequest, sessionHelper.getAccountNo()));

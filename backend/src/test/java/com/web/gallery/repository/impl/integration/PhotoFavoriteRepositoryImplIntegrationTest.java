@@ -24,6 +24,7 @@ import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
@@ -49,7 +50,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系")
-		void regist_contain_null_parameter() throws RegistFailureException {
+		void regist_contain_null_parameter() throws GalleryException {
 			PhotoFavoriteModel favoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(2L))
@@ -99,7 +100,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系")
-		void delete_contain_null_parameter() throws UpdateFailureException {
+		void delete_contain_null_parameter() throws GalleryException {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
@@ -134,7 +135,7 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void delete_UpdateFailureException() throws UpdateFailureException {
+		void delete_UpdateFailureException() throws GalleryException {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(3L))

@@ -1,6 +1,6 @@
 package com.web.gallery.repository;
 
-import com.web.gallery.exception.PhotoNotFoundException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoGetModel;
@@ -23,7 +23,7 @@ public interface PhotoDetailRepository {
 	 * 
 	 * @param	photoDetailGetModel		{@link PhotoDetailGetModel}
 	 * @return							{@link PhotoDetailModel}
-	 * @throws	PhotoNotFoundException	写真が存在しなかった場合
+	 * @throws	GalleryException		写真が存在しなかった場合
 	 */
-	PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws PhotoNotFoundException;
+	PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException;
 }

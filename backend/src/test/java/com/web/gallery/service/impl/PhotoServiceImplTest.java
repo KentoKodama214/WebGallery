@@ -57,6 +57,7 @@ import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.FileDuplicateException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -412,7 +413,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系")
-		void getPhotoDetail_success() throws PhotoNotFoundException {
+		void getPhotoDetail_success() throws GalleryException {
 			PhotoDetailModel actual = PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
@@ -430,7 +431,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("異常系：PhotoNotFoundExceptionをthrowする")
-		void getPhotoDetail_PhotoNotFoundException() throws PhotoNotFoundException {
+		void getPhotoDetail_PhotoNotFoundException() throws GalleryException {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))
@@ -555,7 +556,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：photoDetailModelListがnullの場合、終了")
-		void savePhotos_photoDetailModelList_is_null() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_photoDetailModelList_is_null() throws GalleryException {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), null);
 			assertNull(actual);
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
@@ -567,7 +568,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：photoDetailModelListがemptyの場合、終了")
-		void savePhotos_photoDetailModelList_is_empty() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_photoDetailModelList_is_empty() throws GalleryException {
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), PhotoDetailModelList.of(photoDetailModelList));
 			assertNull(actual);
@@ -580,7 +581,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(3)
 		@DisplayName("正常系：新規登録のみ")
-		void savePhotos_newPhoto() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_newPhoto() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -638,7 +639,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(4)
 		@DisplayName("正常系：更新のみ")
-		void savePhotos_updatePhoto() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_updatePhoto() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -688,7 +689,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(5)
 		@DisplayName("正常系：新規登録＋更新")
-		void savePhotos_newPhoto_and_updatePhoto() throws FileDuplicateException, RegistFailureException, UpdateFailureException  {
+		void savePhotos_newPhoto_and_updatePhoto() throws GalleryException  {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -742,7 +743,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(6)
 		@DisplayName("異常系：FileDuplicateExceptionをthrowする（写真は複数枚）")
-		void savePhotos_FileDuplicateException() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_FileDuplicateException() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -772,7 +773,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(7)
 		@DisplayName("異常系：写真登録でRegistFailureExceptionをthrowする（写真は複数枚）")
-		void savePhotos_registPhoto_RegistFailureException() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_registPhoto_RegistFailureException() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -803,7 +804,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(8)
 		@DisplayName("異常系：新規登録時、写真タグ登録でRegistFailureExceptionをthrowする（写真は複数枚）")
-		void savePhotos_newPhoto_registPhotoTag_RegistFailureException() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_newPhoto_registPhotoTag_RegistFailureException() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -844,7 +845,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(9)
 		@DisplayName("異常系：更新時、写真タグ登録でRegistFailureExceptionをthrowする（写真は複数枚）")
-		void savePhotos_updatePhoto_registPhotoTag_RegistFailureException() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_updatePhoto_registPhotoTag_RegistFailureException() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -887,7 +888,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(10)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする（写真は複数枚）")
-		void savePhotos_UpdateFailureException() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_UpdateFailureException() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -922,7 +923,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：photoDeleteModelListが0件の場合、終了")
-		void deletePhotos_photoDeleteModelList_empty() throws UpdateFailureException {
+		void deletePhotos_photoDeleteModelList_empty() throws GalleryException {
 			doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
 			
 			photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.empty());
@@ -935,7 +936,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：photoDetailModelListが2件以上の場合")
-		void deletePhotos_success() throws UpdateFailureException {
+		void deletePhotos_success() throws GalleryException {
 			doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
 			
 			ArgumentCaptor<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteDeleteModel.class);
@@ -998,7 +999,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void deletePhotos_UpdateFailureException() throws UpdateFailureException {
+		void deletePhotos_UpdateFailureException() throws GalleryException {
 			doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
 			ArgumentCaptor<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteDeleteModel.class);
 			doNothing().when(photoFavoriteRepositoryImpl).clear(photoFavoriteDeleteModelCaptor.capture());
@@ -1195,7 +1196,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：photoTagModelListがnullの場合")
-		void registPhotoTags_photoTagModelList_is_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, RegistFailureException {
+		void registPhotoTags_photoTagModelList_is_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, GalleryException {
 			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
 			registPhotoTags.setAccessible(true);
 
@@ -1207,7 +1208,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：photoTagModelListがemptyの場合")
-		void registPhotoTags_photoTagModelList_is_empty() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, RegistFailureException {
+		void registPhotoTags_photoTagModelList_is_empty() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, GalleryException {
 			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
 			registPhotoTags.setAccessible(true);
 
@@ -1219,7 +1220,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(3)
 		@DisplayName("正常系：newPhotoNoがnullの場合")
-		void registPhotoTags_newPhotoNo_is_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, RegistFailureException {
+		void registPhotoTags_newPhotoNo_is_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, GalleryException {
 			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
 			registPhotoTags.setAccessible(true);
 
@@ -1262,7 +1263,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(4)
 		@DisplayName("正常系：newPhotoNoがnullでない場合")
-		void registPhotoTags_newPhotoNo_is_not_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, RegistFailureException {
+		void registPhotoTags_newPhotoNo_is_not_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, GalleryException {
 			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
 			registPhotoTags.setAccessible(true);
 
@@ -1305,7 +1306,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(5)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
-		void registPhotoTags_RegistFailureException() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, RegistFailureException {
+		void registPhotoTags_RegistFailureException() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, GalleryException {
 			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
 			registPhotoTags.setAccessible(true);
 

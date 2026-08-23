@@ -32,13 +32,7 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.BadRequestException;
-import com.web.gallery.exception.FileDuplicateException;
-import com.web.gallery.exception.ForbiddenAccountException;
-import com.web.gallery.exception.PhotoNotAdditableException;
-import com.web.gallery.exception.PhotoNotFoundException;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
@@ -120,7 +114,7 @@ public class PhotoRestController {
 	 * @param	photoNo				写真番号
 	 * @param	accountNo			写真所有者のアカウント番号
 	 * @return						{@link PhotoDetailGetResponse}
-	 * @throws	PhotoNotFoundException	写真が存在しない場合
+	 * @throws	GalleryException	写真が存在しない場合
 	 */
 	@Operation(summary = "写真詳細取得", description = "写真の詳細情報（EXIF・タグを含む）を取得する")
 	@ApiResponse(responseCode = "200", description = "取得成功")
@@ -129,7 +123,7 @@ public class PhotoRestController {
 	public ResponseEntity<PhotoDetailGetResponse> getPhotoDetail(
 			@PathVariable String photoAccountId,
 			@PathVariable Long photoNo,
-			Long accountNo) throws PhotoNotFoundException {
+			Long accountNo) throws GalleryException {
 
 		PhotoDetailModel photoDetailModel = photoService.getPhotoDetail(
 				PhotoDetailGetModel.of(sessionHelper.getAccountNo(), accountNo, photoNo));
@@ -143,13 +137,14 @@ public class PhotoRestController {
 	 * @param	photoAccountId				ページ所有者のアカウントID
 	 * @param	photoSaveRequest			{@link PhotoSaveRequest}
 	 * @param	result						PhotoSaveRequestのバインディング結果
-	 * @return								{@link PhotoEditResponse}
-	 * @throws	ForbiddenAccountException 	写真の所有者以外がリクエストした場合
-	 * @throws	PhotoNotAdditableException	写真の登録枚数の上限に達している場合
-	 * @throws	BadRequestException 		リクエストパラメータが不正の場合
-	 * @throws	FileDuplicateException 		保存するファイルが重複した場合
-	 * @throws	RegistFailureException 		写真の登録に失敗した場合
-	 * @throws	UpdateFailureException 		写真の更新に失敗した場合
+	 * @return							{@link PhotoEditResponse}
+	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・写真の所有者以外がリクエストした場合
+	 *                              	・写真の登録枚数の上限に達している場合
+	 *                              	・リクエストパラメータが不正の場合
+	 *                              	・保存するファイルが重複した場合
+	 *                              	・写真の登録に失敗した場合
+	 *                              	・写真の更新に失敗した場合
 	 */
 	@Operation(summary = "写真保存", description = "写真を新規登録または更新する")
 	@ApiResponse(responseCode = "200", description = "保存成功")
@@ -159,28 +154,28 @@ public class PhotoRestController {
 	@SecurityRequirement(name = "Bearer")
 	@RequestMapping(value = ApiRoutes.API_PHOTOS, method = {RequestMethod.POST, RequestMethod.PUT})
 	public ResponseEntity<PhotoEditResponse> savePhoto(
-			@PathVariable String photoAccountId, 
-			@ModelAttribute @Validated PhotoSaveRequest photoSaveRequest, 
-			BindingResult result) throws FileDuplicateException, ForbiddenAccountException, RegistFailureException, UpdateFailureException, BadRequestException, PhotoNotAdditableException {
-		
+			@PathVariable String photoAccountId,
+			@ModelAttribute @Validated PhotoSaveRequest photoSaveRequest,
+			BindingResult result) throws GalleryException {
+
 		if(!photoAccountId.equals(sessionHelper.getAccountId())) {
-			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO);
+			throw ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.toException();
 		}
 
 		if(Objects.isNull(photoSaveRequest.getPhotoNo()) && photoService.isReachedUpperLimit(new AccountNo(sessionHelper.getAccountNo()))) {
-			throw new PhotoNotAdditableException(ErrorEnum.REACHED_REGISTRATION_LIMIT);
+			throw ErrorEnum.REACHED_REGISTRATION_LIMIT.toException();
 		}
-		
-		if(Objects.isNull(photoSaveRequest.getImageFile()) && 
+
+		if(Objects.isNull(photoSaveRequest.getImageFile()) &&
 				(Objects.isNull(photoSaveRequest.getImageFilePath()) || Consts.STRING_EMPTY.equals(photoSaveRequest.getImageFilePath()))) {
-			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
+			throw ErrorEnum.INVALID_INPUT.toException();
 		}
-		
+
 		for(FieldError error : result.getFieldErrors()) {
 			if(!error.isBindingFailure()) {
 				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
 						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
-				throw new BadRequestException(ErrorEnum.INVALID_INPUT);
+				throw ErrorEnum.INVALID_INPUT.toException();
 			}
 		};
 		
@@ -197,10 +192,11 @@ public class PhotoRestController {
 	 * @param photoAccountId				ページ所有者のアカウントID
 	 * @param photoDeleteRequest			{@link PhotoDeleteRequest}
 	 * @param result						PhotoDeleteRequestのバインディング結果
-	 * @return								{@link PhotoEditResponse}
-	 * @throws BadRequestException 			リクエストパラメータが不正の場合
-	 * @throws ForbiddenAccountException 	写真の所有者以外がリクエストした場合
-	 * @throws UpdateFailureException 		写真の削除に失敗した場合
+	 * @return							{@link PhotoEditResponse}
+	 * @throws GalleryException			以下のいずれかに該当する場合
+	 *                              	・リクエストパラメータが不正の場合
+	 *                              	・写真の所有者以外がリクエストした場合
+	 *                              	・写真の削除に失敗した場合
 	 */
 	@Operation(summary = "写真削除", description = "指定した写真を削除する")
 	@ApiResponse(responseCode = "200", description = "削除成功")
@@ -210,18 +206,18 @@ public class PhotoRestController {
 	@SecurityRequirement(name = "Bearer")
 	@DeleteMapping(ApiRoutes.API_PHOTOS)
 	public ResponseEntity<PhotoEditResponse> deletePhoto(
-			@PathVariable String photoAccountId, 
-			@RequestBody @Validated PhotoDeleteRequest photoDeleteRequest, 
-			BindingResult result) throws BadRequestException, ForbiddenAccountException, UpdateFailureException {
-		
+			@PathVariable String photoAccountId,
+			@RequestBody @Validated PhotoDeleteRequest photoDeleteRequest,
+			BindingResult result) throws GalleryException {
+
 		if(!photoAccountId.equals(sessionHelper.getAccountId())) {
-			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO);
+			throw ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.toException();
 		}
-		
+
 		if(result.hasErrors()) {
 			log.info("Invalid input. (AccountNo: {}, PhotoNo: {}, ImageFilePath: {})",
 					photoDeleteRequest.getAccountNo(), photoDeleteRequest.getPhotoNo(), photoDeleteRequest.getImageFilePath());
-			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
+			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 		
 		PhotoDeleteModelList photoDeleteModelList = PhotoDeleteModelList.of(List.of(PhotoDeleteModel.from(photoDeleteRequest)));

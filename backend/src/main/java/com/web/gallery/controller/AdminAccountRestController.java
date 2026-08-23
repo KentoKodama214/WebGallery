@@ -14,8 +14,7 @@ import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.response.AdminAccountListItemResponse;
 import com.web.gallery.controller.response.AdminAccountLockResponse;
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.exception.ForbiddenAccountException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.service.impl.AccountServiceImpl;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,7 +38,7 @@ public class AdminAccountRestController {
 	 * 管理者用アカウント一覧取得
 	 *
 	 * @return	{@link AdminAccountListItemResponse}のリスト
-	 * @throws	ForbiddenAccountException	管理者権限がない場合
+	 * @throws	GalleryException	管理者権限がない場合
 	 */
 	@Operation(summary = "管理者用アカウント一覧取得", description = "削除済みを含む全アカウントの一覧を取得する")
 	@ApiResponse(responseCode = "200", description = "取得成功")
@@ -47,7 +46,7 @@ public class AdminAccountRestController {
 	@RequireAdminAuthority
 	@GetMapping(ApiRoutes.API_ADMIN_ACCOUNTS)
 	public ResponseEntity<List<AdminAccountListItemResponse>> getAdminAccountList()
-			throws ForbiddenAccountException {
+			throws GalleryException {
 
 		List<AdminAccountListItemResponse> responseList = accountServiceImpl.getAccountListForAdmin().stream()
 				.map(AdminAccountListItemResponse::from)
@@ -61,8 +60,9 @@ public class AdminAccountRestController {
 	 *
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link AdminAccountLockResponse}
-	 * @throws	ForbiddenAccountException	管理者権限がない場合
-	 * @throws	UpdateFailureException		更新に失敗した場合
+	 * @throws	GalleryException	以下のいずれかに該当する場合
+	 *                          	・管理者権限がない場合
+	 *                          	・更新に失敗した場合
 	 */
 	@Operation(summary = "アカウントロック解除", description = "指定したアカウントのロックを解除する")
 	@ApiResponse(responseCode = "200", description = "ロック解除成功")
@@ -70,7 +70,7 @@ public class AdminAccountRestController {
 	@RequireAdminAuthority
 	@PutMapping(ApiRoutes.API_ADMIN_ACCOUNT_UNLOCK)
 	public ResponseEntity<AdminAccountLockResponse> unlockAccount(
-			@PathVariable Long accountNo) throws ForbiddenAccountException, UpdateFailureException {
+			@PathVariable Long accountNo) throws GalleryException {
 
 		accountServiceImpl.unlockAccount(new AccountNo(accountNo));
 
@@ -82,8 +82,9 @@ public class AdminAccountRestController {
 	 *
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link AdminAccountLockResponse}
-	 * @throws	ForbiddenAccountException	管理者権限がない場合
-	 * @throws	UpdateFailureException		更新に失敗した場合
+	 * @throws	GalleryException	以下のいずれかに該当する場合
+	 *                          	・管理者権限がない場合
+	 *                          	・更新に失敗した場合
 	 */
 	@Operation(summary = "アカウント強制ロック", description = "指定したアカウントを強制的にロックする")
 	@ApiResponse(responseCode = "200", description = "ロック成功")
@@ -91,7 +92,7 @@ public class AdminAccountRestController {
 	@RequireAdminAuthority
 	@PutMapping(ApiRoutes.API_ADMIN_ACCOUNT_LOCK)
 	public ResponseEntity<AdminAccountLockResponse> lockAccount(
-			@PathVariable Long accountNo) throws ForbiddenAccountException, UpdateFailureException {
+			@PathVariable Long accountNo) throws GalleryException {
 
 		accountServiceImpl.lockAccount(new AccountNo(accountNo));
 

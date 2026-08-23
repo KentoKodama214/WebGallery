@@ -45,6 +45,7 @@ import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoMstCondition;
 import com.web.gallery.entity.PhotoMstUpdateTarget;
 import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.PhotoMstMapper;
@@ -67,7 +68,7 @@ public class PhotoMstRepositoryImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：Nullのパラメータを含むPhotoDetailModelの登録")
-		void regist_contain_null_parameter() throws RegistFailureException {
+		void regist_contain_null_parameter() throws GalleryException {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
@@ -106,7 +107,7 @@ public class PhotoMstRepositoryImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：Nullのパラメータを含まないPhotoDetailModelの登録")
-		void regist_not_contain_null_parameter() throws RegistFailureException {
+		void regist_not_contain_null_parameter() throws GalleryException {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
@@ -196,7 +197,7 @@ public class PhotoMstRepositoryImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：Nullのパラメータを含むPhotoDetailModelでの更新")
-		void update_contain_null_parameter() throws UpdateFailureException {
+		void update_contain_null_parameter() throws GalleryException {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
@@ -248,7 +249,7 @@ public class PhotoMstRepositoryImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：Nullのパラメータを含まないPhotoDetailModelでの更新")
-		void update_not_contain_null_parameter() throws UpdateFailureException {
+		void update_not_contain_null_parameter() throws GalleryException {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
@@ -364,7 +365,7 @@ public class PhotoMstRepositoryImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系")
-		void delete_success() throws UpdateFailureException {
+		void delete_success() throws GalleryException {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 			
 			PhotoDeleteModel photoDeleteModel = PhotoDeleteModel.builder()

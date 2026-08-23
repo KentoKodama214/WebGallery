@@ -47,6 +47,7 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
@@ -137,7 +138,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：アカウントを新規登録")
-		void registAccount_success() throws RegistFailureException {
+		void registAccount_success() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
 			doNothing().when(accountRepositoryImpl).regist(accountModel);
@@ -147,7 +148,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが既に存在する")
-		void registAccount_account_already_exist() throws RegistFailureException {
+		void registAccount_account_already_exist() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(true).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
 			verify(accountRepositoryImpl,times(0)).regist(accountModel);
@@ -157,7 +158,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(3)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
-		void registAccount_RegistFailureException() throws RegistFailureException {
+		void registAccount_RegistFailureException() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
 			doThrow(RegistFailureException.class).when(accountRepositoryImpl).regist(accountModel);
@@ -172,7 +173,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：アカウントを更新")
-		void updateAccount_success() throws UpdateFailureException {
+		void updateAccount_success() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doNothing().when(accountRepositoryImpl).update(accountModel);
@@ -182,7 +183,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが既に存在する")
-		void updateAccount_account_already_exist() throws UpdateFailureException {
+		void updateAccount_account_already_exist() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(true).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			verify(accountRepositoryImpl,times(0)).update(accountModel);
@@ -192,7 +193,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void updateAccount_UpdateFailureException() throws UpdateFailureException {
+		void updateAccount_UpdateFailureException() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).update(accountModel);
@@ -320,7 +321,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：ログイン失敗回数が0にリセットされること")
-		void unlockAccount_success() throws UpdateFailureException {
+		void unlockAccount_success() throws GalleryException {
 			ArgumentCaptor<AccountModel> captor = ArgumentCaptor.forClass(AccountModel.class);
 			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(captor.capture());
 
@@ -335,7 +336,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void unlockAccount_UpdateFailureException() throws UpdateFailureException {
+		void unlockAccount_UpdateFailureException() throws GalleryException {
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).updateLoginFailureCount(any(AccountModel.class));
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.unlockAccount(new AccountNo(999L)));
 		}
@@ -348,7 +349,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：ログイン失敗回数が上限値に設定されること")
-		void lockAccount_success() throws UpdateFailureException {
+		void lockAccount_success() throws GalleryException {
 			doReturn(10).when(loginConfig).getFailCount();
 
 			ArgumentCaptor<AccountModel> captor = ArgumentCaptor.forClass(AccountModel.class);
@@ -364,7 +365,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void lockAccount_UpdateFailureException() throws UpdateFailureException {
+		void lockAccount_UpdateFailureException() throws GalleryException {
 			doReturn(10).when(loginConfig).getFailCount();
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).updateLoginFailureCount(any(AccountModel.class));
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.lockAccount(new AccountNo(999L)));
@@ -414,7 +415,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系")
-		void handle_success() throws UpdateFailureException {
+		void handle_success() throws GalleryException {
 			String username = "aaaaaaaa";
 			String password = "AAAAAAAA";
 			
@@ -450,7 +451,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void handle_UpdateFailureException() throws UpdateFailureException {
+		void handle_UpdateFailureException() throws GalleryException {
 			String username = "aaaaaaaa";
 			String password = "AAAAAAAA";
 			
@@ -491,7 +492,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：アカウントが存在する場合")
-		void handle_account_found() throws UpdateFailureException {
+		void handle_account_found() throws GalleryException {
 			String username = "aaaaaaaa";
 			String password = "AAAAAAAA";
 			
@@ -530,7 +531,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
-		void handle_account_not_found() throws UpdateFailureException {
+		void handle_account_not_found() throws GalleryException {
 			String username = "aaaaaaaa";
 			String password = "AAAAAAAA";
 			
@@ -552,7 +553,7 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void handle_UpdateFailureException() throws UpdateFailureException {
+		void handle_UpdateFailureException() throws GalleryException {
 			String username = "aaaaaaaa";
 			String password = "AAAAAAAA";
 			

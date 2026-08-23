@@ -22,7 +22,7 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.BadRequestException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.service.AuthService;
 
@@ -56,7 +56,7 @@ public class AuthRestController {
 	 * @param	authLoginRequest	{@link AuthLoginRequest}
 	 * @param	result				AuthLoginRequestのバインディング結果
 	 * @return						{@link AuthLoginResponse}
-	 * @throws	BadRequestException	リクエストパラメータが不正の場合
+	 * @throws	GalleryException	リクエストパラメータが不正の場合
 	 */
 	@Operation(summary = "ログイン", description = "アカウントIDとパスワードで認証し、JWTトークンを発行する")
 	@ApiResponse(responseCode = "200", description = "認証成功")
@@ -66,10 +66,10 @@ public class AuthRestController {
 	@PostMapping(ApiRoutes.API_AUTH_LOGIN)
 	public ResponseEntity<AuthLoginResponse> login(
 			@RequestBody @Validated AuthLoginRequest authLoginRequest,
-			BindingResult result) throws BadRequestException {
+			BindingResult result) throws GalleryException {
 
 		if (result.hasErrors()) {
-			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
+			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 
 		AuthTokenModel tokenModel = authService.login(

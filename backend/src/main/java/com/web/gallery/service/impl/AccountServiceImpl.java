@@ -19,8 +19,7 @@ import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
 import com.web.gallery.repository.AccountRepository;
@@ -71,12 +70,12 @@ public class AccountServiceImpl implements UserDetailsService {
 	/**
 	 * アカウントを新規登録する
 	 *
-	 * @param	accountModel			{@link AccountModel}
-	 * @return							登録に成功した場合、true
-	 * @throws	RegistFailureException	登録に失敗した場合
+	 * @param	accountModel		{@link AccountModel}
+	 * @return						登録に成功した場合、true
+	 * @throws	GalleryException	登録に失敗した場合
 	 */
 	@Transactional
-	public Boolean registAccount(AccountModel accountModel) throws RegistFailureException {
+	public Boolean registAccount(AccountModel accountModel) throws GalleryException {
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountId());
 		if(!isExist) accountRepository.regist(accountModel);
 		return !isExist;
@@ -85,12 +84,12 @@ public class AccountServiceImpl implements UserDetailsService {
 	/**
 	 * アカウントを更新する
 	 *
-	 * @param	accountModel			{@link AccountModel}
-	 * @return							更新に成功した場合、true
-	 * @throws UpdateFailureException	更新に失敗した場合
+	 * @param	accountModel		{@link AccountModel}
+	 * @return						更新に成功した場合、true
+	 * @throws GalleryException	更新に失敗した場合
 	 */
 	@Transactional
-	public Boolean updateAccount(AccountModel accountModel) throws UpdateFailureException {
+	public Boolean updateAccount(AccountModel accountModel) throws GalleryException {
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
 		if(!isExist) accountRepository.update(accountModel);
 		return isExist;
@@ -130,22 +129,22 @@ public class AccountServiceImpl implements UserDetailsService {
 	/**
 	 * 管理者用：アカウントのロックを解除する（ログイン失敗回数を0にリセット）
 	 *
-	 * @param	accountNo				アカウント番号
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @param	accountNo			アカウント番号
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@Transactional
-	public void unlockAccount(AccountNo accountNo) throws UpdateFailureException {
+	public void unlockAccount(AccountNo accountNo) throws GalleryException {
 		accountRepository.updateLoginFailureCount(AccountModel.forUnlock(accountNo.value()));
 	}
 
 	/**
 	 * 管理者用：アカウントを強制ロックする（ログイン失敗回数を上限超過に設定）
 	 *
-	 * @param	accountNo				アカウント番号
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @param	accountNo			アカウント番号
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@Transactional
-	public void lockAccount(AccountNo accountNo) throws UpdateFailureException {
+	public void lockAccount(AccountNo accountNo) throws GalleryException {
 		accountRepository.updateLoginFailureCount(AccountModel.forLock(accountNo.value(), loginConfig.getFailCount()));
 	}
 
@@ -179,12 +178,12 @@ public class AccountServiceImpl implements UserDetailsService {
 	/**
 	 * 認証成功
 	 *
-	 * @param	event					{@link AuthenticationSuccessEvent}
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @param	event				{@link AuthenticationSuccessEvent}
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@EventListener
 	@Transactional
-	public void handle(AuthenticationSuccessEvent event) throws UpdateFailureException {
+	public void handle(AuthenticationSuccessEvent event) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(new AccountId(event.getAuthentication().getName()));
 
 		accountRepository.updateLoginFailureCount(AccountModel.forLoginSuccess(accountModel.getAccountNo(), clock));
@@ -193,12 +192,12 @@ public class AccountServiceImpl implements UserDetailsService {
 	/**
 	 * 認証失敗
 	 *
-	 * @param	event					{@link AuthenticationFailureBadCredentialsEvent}
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @param	event				{@link AuthenticationFailureBadCredentialsEvent}
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@EventListener
 	@Transactional
-	public void handle(AuthenticationFailureBadCredentialsEvent event) throws UpdateFailureException {
+	public void handle(AuthenticationFailureBadCredentialsEvent event) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(new AccountId(event.getAuthentication().getName()));
 
 		if(!Objects.isNull(accountModel)) {

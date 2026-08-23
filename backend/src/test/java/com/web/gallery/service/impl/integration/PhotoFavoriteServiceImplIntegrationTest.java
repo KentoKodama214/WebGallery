@@ -24,6 +24,7 @@ import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoFavoriteModel;
@@ -48,7 +49,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系")
-		void addFavorite_success() throws RegistFailureException {
+		void addFavorite_success() throws GalleryException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(2L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
@@ -78,7 +79,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
-		void addFavorite_RegistFailureException() throws RegistFailureException {
+		void addFavorite_RegistFailureException() throws GalleryException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
@@ -98,7 +99,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系")
-		void deleteFavorite_success() throws UpdateFailureException {
+		void deleteFavorite_success() throws GalleryException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
@@ -133,7 +134,7 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void deleteFavorite_UpdateFailureException() throws UpdateFailureException {
+		void deleteFavorite_UpdateFailureException() throws GalleryException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(9L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
