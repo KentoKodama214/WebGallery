@@ -37,6 +37,7 @@ import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.ShutterSpeed;
@@ -140,10 +141,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.photoEnglishTitle(new PhotoEnglishTitle("title14"))
 					.caption(new Caption("キャプション14"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.focalLength(new FocalLength(24))
-					.fValue(new FValue(BigDecimal.valueOf(2.8)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
-					.iso(new Iso(100))
+					.exifData(new ExifData(new FocalLength(24), new FValue(BigDecimal.valueOf(2.8)), new ShutterSpeed(BigDecimal.valueOf(0.01)), new Iso(100)))
 					.build();
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
@@ -290,10 +288,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 					.photoEnglishTitle(new PhotoEnglishTitle("title111"))
 					.caption(new Caption("キャプション111"))
 					.directionKbn(DirectionEnum.HORIZONTAL)
-					.focalLength(new FocalLength(50))
-					.fValue(new FValue(BigDecimal.valueOf(8.0)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(1)))
-					.iso(new Iso(1000))
+					.exifData(new ExifData(new FocalLength(50), new FValue(BigDecimal.valueOf(8.0)), new ShutterSpeed(BigDecimal.valueOf(1)), new Iso(1000)))
 					.build();
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);

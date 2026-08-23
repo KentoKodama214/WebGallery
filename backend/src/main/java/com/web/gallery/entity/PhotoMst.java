@@ -11,6 +11,7 @@ import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.common.UpdatedBy;
 import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.ImageFilePath;
@@ -103,6 +104,7 @@ public class PhotoMst {
 	 * @return				{@link PhotoMst}
 	 */
 	public static PhotoMst fromForRegist(PhotoDetailModel model, String filePath, Long newPhotoNo) {
+		ExifData exifData = model.getExifData();
 		return PhotoMst.builder()
 				.accountNo(model.getAccountNo())
 				.photoNo(new PhotoNo(newPhotoNo))
@@ -122,13 +124,13 @@ public class PhotoMst {
 				.directionKbn(
 					Optional.ofNullable(model.getDirectionKbn()).orElse(DirectionEnum.NONE))
 				.focalLength(new FocalLength(
-					Optional.ofNullable(model.getFocalLength()).map(FocalLength::value).orElse(0)))
+					Optional.ofNullable(exifData.focalLength()).map(FocalLength::value).orElse(0)))
 				.fValue(new FValue(
-					Optional.ofNullable(model.getFValue()).map(FValue::value).orElse(BigDecimal.ZERO)))
+					Optional.ofNullable(exifData.fValue()).map(FValue::value).orElse(BigDecimal.ZERO)))
 				.shutterSpeed(new ShutterSpeed(
-					Optional.ofNullable(model.getShutterSpeed()).map(ShutterSpeed::value).orElse(BigDecimal.ZERO)))
+					Optional.ofNullable(exifData.shutterSpeed()).map(ShutterSpeed::value).orElse(BigDecimal.ZERO)))
 				.iso(new Iso(
-					Optional.ofNullable(model.getIso()).map(Iso::value).orElse(0)))
+					Optional.ofNullable(exifData.iso()).map(Iso::value).orElse(0)))
 				.build();
 	}
 }

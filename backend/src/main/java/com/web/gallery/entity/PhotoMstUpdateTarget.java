@@ -7,6 +7,7 @@ import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.common.UpdatedBy;
 import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.ImageFilePath;
@@ -79,6 +80,7 @@ public class PhotoMstUpdateTarget {
 	 * @return			{@link PhotoMstUpdateTarget}
 	 */
 	public static PhotoMstUpdateTarget fromForUpdate(PhotoDetailModel model) {
+		ExifData exifData = model.getExifData();
 		return PhotoMstUpdateTarget.builder()
 				.updatedBy(new UpdatedBy(model.getAccountNo().value()))
 				.isDeleted(new IsDeleted(false))
@@ -96,13 +98,13 @@ public class PhotoMstUpdateTarget {
 				.directionKbn(
 					Optional.ofNullable(model.getDirectionKbn()).orElse(DirectionEnum.NONE))
 				.focalLength(new FocalLength(
-					Optional.ofNullable(model.getFocalLength()).map(FocalLength::value).orElse(0)))
+					Optional.ofNullable(exifData.focalLength()).map(FocalLength::value).orElse(0)))
 				.fValue(new FValue(
-					Optional.ofNullable(model.getFValue()).map(FValue::value).orElse(BigDecimal.ZERO)))
+					Optional.ofNullable(exifData.fValue()).map(FValue::value).orElse(BigDecimal.ZERO)))
 				.shutterSpeed(new ShutterSpeed(
-					Optional.ofNullable(model.getShutterSpeed()).map(ShutterSpeed::value).orElse(BigDecimal.ZERO)))
+					Optional.ofNullable(exifData.shutterSpeed()).map(ShutterSpeed::value).orElse(BigDecimal.ZERO)))
 				.iso(new Iso(
-					Optional.ofNullable(model.getIso()).map(Iso::value).orElse(0)))
+					Optional.ofNullable(exifData.iso()).map(Iso::value).orElse(0)))
 				.build();
 	}
 

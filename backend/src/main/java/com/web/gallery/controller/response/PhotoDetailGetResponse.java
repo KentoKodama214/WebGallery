@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import com.web.gallery.domain.common.GeoLocation;
+import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.model.PhotoDetailModel;
 
@@ -116,25 +118,28 @@ public class PhotoDetailGetResponse {
 					.toList();
 		}
 
+		GeoLocation geoLocation = model.getGeoLocation();
+		ExifData exifData = model.getExifData();
+
 		return PhotoDetailGetResponse.builder()
 				.accountNo(model.getAccountNo().value())
 				.photoNo(model.getPhotoNo().value())
 				.isFavorite(model.getIsFavorite() != null ? model.getIsFavorite().value() : null)
 				.photoAt(model.getPhotoAt() != null ? model.getPhotoAt().value() : null)
 				.locationNo(model.getLocationNo() != null ? model.getLocationNo().value() : null)
-				.address(model.getAddress() != null ? model.getAddress().value() : null)
-				.latitude(model.getLatitude() != null ? model.getLatitude().value() : null)
-				.longitude(model.getLongitude() != null ? model.getLongitude().value() : null)
+				.address(geoLocation.address() != null ? geoLocation.address().value() : null)
+				.latitude(geoLocation.latitude() != null ? geoLocation.latitude().value() : null)
+				.longitude(geoLocation.longitude() != null ? geoLocation.longitude().value() : null)
 				.locationName(model.getLocationName() != null ? model.getLocationName().value() : null)
 				.imageFilePath(model.getImageFilePath().value())
 				.photoJapaneseTitle(model.getPhotoJapaneseTitle() != null ? model.getPhotoJapaneseTitle().value() : null)
 				.photoEnglishTitle(model.getPhotoEnglishTitle() != null ? model.getPhotoEnglishTitle().value() : null)
 				.caption(model.getCaption() != null ? model.getCaption().value() : null)
 				.directionKbn(model.getDirectionKbn())
-				.focalLength(model.getFocalLength() != null ? model.getFocalLength().value() : null)
-				.fValue(model.getFValue() != null ? model.getFValue().value() : null)
-				.shutterSpeed(model.getShutterSpeed() != null ? model.getShutterSpeed().value() : null)
-				.iso(model.getIso() != null ? model.getIso().value() : null)
+				.focalLength(exifData.focalLength() != null ? exifData.focalLength().value() : null)
+				.fValue(exifData.fValue() != null ? exifData.fValue().value() : null)
+				.shutterSpeed(exifData.shutterSpeed() != null ? exifData.shutterSpeed().value() : null)
+				.iso(exifData.iso() != null ? exifData.iso().value() : null)
 				.photoTagList(photoTagResponseList)
 				.build();
 	}
