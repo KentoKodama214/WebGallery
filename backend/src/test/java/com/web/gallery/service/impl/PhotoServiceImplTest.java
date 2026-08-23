@@ -41,6 +41,7 @@ import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.Iso;
 import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.domain.photo.PhotoAt;
+import com.web.gallery.domain.photo.PhotoCount;
 import com.web.gallery.domain.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoNo;
@@ -71,6 +72,7 @@ import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.policy.PhotoQuotaPolicy;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
@@ -96,7 +98,10 @@ public class PhotoServiceImplTest {
 
 	@Mock
 	private PhotoConfig photoConfig;
-	
+
+	@Mock
+	private PhotoQuotaPolicy photoQuotaPolicy;
+
 	@Nested
 	@Order(1)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -821,78 +826,35 @@ public class PhotoServiceImplTest {
 		@DisplayName("異常系：アカウント番号がnullの場合、NullPointerExceptionをthrowする")
 		void isReachedUpperLimit_accountNo_is_null() {
 			assertThrows(NullPointerException.class, () -> photoServiceImpl.isReachedUpperLimit(null));
-			verify(photoConfig, times(0)).getMiniUserUpperLimit();
-			verify(photoConfig, times(0)).getNormalUserUpperLimit();
+			verify(photoQuotaPolicy, times(0)).isReached(any(AuthorityEnum.class), any(PhotoCount.class));
 		}
-		
+
 		@Test
 		@Order(2)
-		@DisplayName("正常系：mini-userで、上限まで登録済みの場合")
-		void isReachedUpperLimit_mini_user_reached() {
+		@DisplayName("正常系：PhotoQuotaPolicyの判定結果（上限に達している）をそのまま返すこと")
+		void isReachedUpperLimit_reached() {
 			AccountNo accountNo = new AccountNo(1L);
 			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.MINI).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
 			doReturn(10).when(photoMstRepositoryImpl).count(accountNo);
-			doReturn(10).when(photoConfig).getMiniUserUpperLimit();
+			doReturn(true).when(photoQuotaPolicy).isReached(AuthorityEnum.MINI, new PhotoCount(10));
+
 			assertTrue(photoServiceImpl.isReachedUpperLimit(accountNo));
+			verify(photoQuotaPolicy).isReached(AuthorityEnum.MINI, new PhotoCount(10));
 		}
-		
+
 		@Test
 		@Order(3)
-		@DisplayName("正常系：mini-userで、上限まで未登録の場合")
-		void isReachedUpperLimit_mini_user_not_reached() {
-			AccountNo accountNo = new AccountNo(1L);
-			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.MINI).build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
-			doReturn(9).when(photoMstRepositoryImpl).count(accountNo);
-			doReturn(10).when(photoConfig).getMiniUserUpperLimit();
-			assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
-		}
-		
-		@Test
-		@Order(4)
-		@DisplayName("正常系：normal-userで、上限まで登録済みの場合")
-		void isReachedUpperLimit_normal_user_reached() {
-			AccountNo accountNo = new AccountNo(1L);
-			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.NORMAL).build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
-			doReturn(1000).when(photoMstRepositoryImpl).count(accountNo);
-			doReturn(1000).when(photoConfig).getNormalUserUpperLimit();
-			assertTrue(photoServiceImpl.isReachedUpperLimit(accountNo));
-		}
-		
-		@Test
-		@Order(5)
-		@DisplayName("正常系：normal-userで、上限まで未登録の場合")
-		void isReachedUpperLimit_normal_user_not_reached() {
+		@DisplayName("正常系：PhotoQuotaPolicyの判定結果（上限に達していない）をそのまま返すこと")
+		void isReachedUpperLimit_not_reached() {
 			AccountNo accountNo = new AccountNo(1L);
 			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.NORMAL).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
 			doReturn(999).when(photoMstRepositoryImpl).count(accountNo);
-			doReturn(1000).when(photoConfig).getNormalUserUpperLimit();
+			doReturn(false).when(photoQuotaPolicy).isReached(AuthorityEnum.NORMAL, new PhotoCount(999));
+
 			assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
-		}
-		
-		@Test
-		@Order(6)
-		@DisplayName("正常系：special-userの場合")
-		void isReachedUpperLimit_special_user() {
-			AccountNo accountNo = new AccountNo(1L);
-			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
-			doReturn(1000).when(photoMstRepositoryImpl).count(accountNo);
-			assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
-		}
-		
-		@Test
-		@Order(7)
-		@DisplayName("正常系：administratorの場合")
-		void isReachedUpperLimit_administrator() {
-			AccountNo accountNo = new AccountNo(1L);
-			AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.ADMINISTRATOR).build();
-			doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
-			doReturn(1000).when(photoMstRepositoryImpl).count(accountNo);
-			assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
+			verify(photoQuotaPolicy).isReached(AuthorityEnum.NORMAL, new PhotoCount(999));
 		}
 	}
 	
