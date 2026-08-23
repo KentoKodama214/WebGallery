@@ -17,7 +17,7 @@ paths:
 
 ## レイヤー間依存関係
 
-- **許可するimport**: `repository/`のインターフェース、`model/`、`constant/`、`enumeration/`、`exception/`
+- **許可するimport**: `repository/`のインターフェース、`model/`、`aggregate/`、`constant/`、`enumeration/`、`exception/`
 - **禁止するimport**: `controller/`、`mapper/`、`entity/`、`dto/`、`repository/impl/`への直接依存
 - **禁止するimport**: `controller/request/`や`controller/response/`のDTO
 
@@ -28,6 +28,6 @@ paths:
 
 ## メソッドシグネチャ
 
-- 引数の型は、ドメインクラス（値オブジェクト）、Modelクラスのみとする（可読性と安全性の担保のため）
-- 返り値の型は、ドメインクラス（値オブジェクト）、Modelクラス、Boolean、Integer（ただし、件数を返す時のみ）、voidのみとする
+- 引数の型は、ドメインクラス（値オブジェクト）、Modelクラス、集約クラス（`aggregate/`）のみとする（可読性と安全性の担保のため）
+- 返り値の型は、ドメインクラス（値オブジェクト）、Modelクラス、集約クラス（`aggregate/`）、Boolean、Integer（ただし、件数を返す時のみ）、voidのみとする
 - 引数が4つ以上になるなら、別途専用のModelクラスを定義する

@@ -29,6 +29,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.web.gallery.aggregate.Photo;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.Caption;
@@ -54,33 +55,26 @@ import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.DirectionEnum;
-import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
-import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
-import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
-import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
-import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
-import com.web.gallery.repository.impl.FileRepositoryImpl;
+import com.web.gallery.repository.impl.PhotoAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
-import com.web.gallery.repository.impl.PhotoFavoriteRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoMstRepositoryImpl;
-import com.web.gallery.repository.impl.PhotoTagMstRepositoryImpl;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -95,17 +89,11 @@ public class PhotoServiceImplTest {
 	private PhotoMstRepositoryImpl photoMstRepositoryImpl;
 	
 	@Mock
-	private PhotoTagMstRepositoryImpl photoTagMstRepositoryImpl;
-	
-	@Mock
-	private PhotoFavoriteRepositoryImpl photoFavoriteRepositoryImpl;
-	
+	private PhotoAggregateRepositoryImpl photoAggregateRepositoryImpl;
+
 	@Mock
 	private AccountRepositoryImpl accountRepositoryImpl;
-	
-	@Mock
-	private FileRepositoryImpl fileRepositoryImpl;
-	
+
 	@Mock
 	private PhotoConfig photoConfig;
 	
@@ -560,11 +548,10 @@ public class PhotoServiceImplTest {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), null);
 			assertNull(actual);
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
-			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoMstRepositoryImpl, times(0)).update(any(PhotoDetailModel.class));
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：photoDetailModelListがemptyの場合、終了")
@@ -573,11 +560,10 @@ public class PhotoServiceImplTest {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), PhotoDetailModelList.of(photoDetailModelList));
 			assertNull(actual);
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
-			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoMstRepositoryImpl, times(0)).update(any(PhotoDetailModel.class));
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
 		}
-		
+
 		@Test
 		@Order(3)
 		@DisplayName("正常系：新規登録のみ")
@@ -585,57 +571,47 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			
+
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
-			
-			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
-			
-			ArgumentCaptor<FileModel> fileModelCaptor = ArgumentCaptor.forClass(FileModel.class);
-			doNothing().when(fileRepositoryImpl).save(fileModelCaptor.capture());
-			
+
+			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
+			doNothing().when(photoAggregateRepositoryImpl).regist(photoCaptor.capture());
+
 			// 新規登録1枚目
 			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
 			photoDetailModelList.add(photoDetailModel1);
-			doReturn(false).when(photoMstRepositoryImpl).isExistPhoto(photoDetailModel1);
-			doNothing().when(photoMstRepositoryImpl).regist(photoDetailModel1, new ImageFilePath(filePath + accountId + "/DSC111.jpg"), new PhotoNo(5L));
-			
+
 			// 新規登録2枚目
 			PhotoDetailModel photoDetailModel2 = createNewPhoto();
 			photoDetailModelList.add(photoDetailModel2);
-			doReturn(false).when(photoMstRepositoryImpl).isExistPhoto(photoDetailModel2);
-			doNothing().when(photoMstRepositoryImpl).regist(photoDetailModel2, new ImageFilePath(filePath + accountId + "/DSC222.jpg"), new PhotoNo(6L));
-			
+
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(new PhotoNo(5L), actual);
-			verify(photoMstRepositoryImpl, times(2)).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl, times(2)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoMstRepositoryImpl, times(0)).update(any(PhotoDetailModel.class));
-			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
-			verify(photoTagMstRepositoryImpl, times(0)).clear(any(PhotoTagDeleteModel.class));
-			verify(fileRepositoryImpl, times(2)).save(any(FileModel.class));
+			verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
+			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
 
-			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
-			assertEquals(5L, photoTagModelCaptureList.get(0).getPhotoNo().value());
-			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo().value());
-			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName().value());
-			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName().value());
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(1).getAccountNo());
-			assertEquals(5L, photoTagModelCaptureList.get(1).getPhotoNo().value());
-			assertEquals(2L, photoTagModelCaptureList.get(1).getTagNo().value());
-			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName().value());
-			assertEquals("sea", photoTagModelCaptureList.get(1).getTagEnglishName().value());
+			List<Photo> photoCaptureList = photoCaptor.getAllValues();
+			assertEquals(new AccountNo(1L), photoCaptureList.get(0).getAccountNo());
+			assertEquals(new PhotoNo(5L), photoCaptureList.get(0).getPhotoNo());
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC111.jpg"), photoCaptureList.get(0).getImageFilePath());
+			assertEquals(2, photoCaptureList.get(0).getPhotoTagModelList().size());
+			assertEquals(new AccountNo(1L), photoCaptureList.get(0).getPhotoTagModelList().get(0).getAccountNo());
+			assertEquals(new PhotoNo(5L), photoCaptureList.get(0).getPhotoTagModelList().get(0).getPhotoNo());
+			assertEquals(1L, photoCaptureList.get(0).getPhotoTagModelList().get(0).getTagNo().value());
+			assertEquals("太陽", photoCaptureList.get(0).getPhotoTagModelList().get(0).getTagJapaneseName().value());
+			assertEquals("sun", photoCaptureList.get(0).getPhotoTagModelList().get(0).getTagEnglishName().value());
+			assertEquals(new PhotoNo(5L), photoCaptureList.get(0).getPhotoTagModelList().get(1).getPhotoNo());
+			assertEquals(2L, photoCaptureList.get(0).getPhotoTagModelList().get(1).getTagNo().value());
+			assertEquals("海", photoCaptureList.get(0).getPhotoTagModelList().get(1).getTagJapaneseName().value());
+			assertEquals("sea", photoCaptureList.get(0).getPhotoTagModelList().get(1).getTagEnglishName().value());
 
-			List<FileModel> fileModelCapture = fileModelCaptor.getAllValues();
-			assertEquals(new ImageFilePath(filePath + accountId + "/DSC111.jpg"), fileModelCapture.get(0).getFilePath());
-			assertEquals(photoDetailModel1.getImageFile(), fileModelCapture.get(0).getImageFile());
-			assertEquals(new ImageFilePath(filePath + accountId + "/DSC222.jpg"), fileModelCapture.get(1).getFilePath());
-			assertEquals(photoDetailModel2.getImageFile(), fileModelCapture.get(1).getImageFile());
+			assertEquals(new AccountNo(1L), photoCaptureList.get(1).getAccountNo());
+			assertEquals(new PhotoNo(6L), photoCaptureList.get(1).getPhotoNo());
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC222.jpg"), photoCaptureList.get(1).getImageFilePath());
 		}
-		
+
 		@Test
 		@Order(4)
 		@DisplayName("正常系：更新のみ")
@@ -643,49 +619,38 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			
+
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
-			
-			ArgumentCaptor<PhotoTagDeleteModel> photoTagDeleteModelCaptor = ArgumentCaptor.forClass(PhotoTagDeleteModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).clear(photoTagDeleteModelCaptor.capture());
-			
-			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
-			
+
+			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
+			doNothing().when(photoAggregateRepositoryImpl).update(photoCaptor.capture());
+
 			// 更新1枚目
 			PhotoDetailModel photoDetailModel1 = createUpdatePhotoWithTag();
 			photoDetailModelList.add(photoDetailModel1);
-			doNothing().when(photoMstRepositoryImpl).update(photoDetailModel1);
-			
+
 			// 更新2枚目
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
-			doNothing().when(photoMstRepositoryImpl).update(photoDetailModel2);
-			
+
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(new PhotoNo(3L), actual);
-			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoMstRepositoryImpl, times(2)).update(any(PhotoDetailModel.class));
-			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
-			verify(photoTagMstRepositoryImpl, times(2)).clear(any(PhotoTagDeleteModel.class));
-			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(photoAggregateRepositoryImpl, times(2)).update(any(Photo.class));
 
-			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
-			assertEquals(2L, photoTagModelCaptureList.get(0).getPhotoNo().value());
-			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo().value());
-			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName().value());
-			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName().value());
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(1).getAccountNo());
-			assertEquals(2L, photoTagModelCaptureList.get(1).getPhotoNo().value());
-			assertEquals(2L, photoTagModelCaptureList.get(1).getTagNo().value());
-			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName().value());
-			assertEquals("sea", photoTagModelCaptureList.get(1).getTagEnglishName().value());
+			List<Photo> photoCaptureList = photoCaptor.getAllValues();
+			assertEquals(new PhotoNo(2L), photoCaptureList.get(0).getPhotoNo());
+			assertEquals(2, photoCaptureList.get(0).getPhotoTagModelList().size());
+			assertEquals(1L, photoCaptureList.get(0).getPhotoTagModelList().get(0).getTagNo().value());
+			assertEquals("太陽", photoCaptureList.get(0).getPhotoTagModelList().get(0).getTagJapaneseName().value());
+			assertEquals(2L, photoCaptureList.get(0).getPhotoTagModelList().get(1).getTagNo().value());
+			assertEquals("海", photoCaptureList.get(0).getPhotoTagModelList().get(1).getTagJapaneseName().value());
+
+			assertEquals(new PhotoNo(3L), photoCaptureList.get(1).getPhotoNo());
 		}
-		
+
 		@Test
 		@Order(5)
 		@DisplayName("正常系：新規登録＋更新")
@@ -693,226 +658,89 @@ public class PhotoServiceImplTest {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			
+
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
-			
-			ArgumentCaptor<PhotoTagDeleteModel> photoTagDeleteModelCaptor = ArgumentCaptor.forClass(PhotoTagDeleteModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).clear(photoTagDeleteModelCaptor.capture());
-			
-			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
-			
-			ArgumentCaptor<FileModel> fileModelCaptor = ArgumentCaptor.forClass(FileModel.class);
-			doNothing().when(fileRepositoryImpl).save(fileModelCaptor.capture());
-			
+
+			ArgumentCaptor<Photo> photoRegistCaptor = ArgumentCaptor.forClass(Photo.class);
+			doNothing().when(photoAggregateRepositoryImpl).regist(photoRegistCaptor.capture());
+
+			ArgumentCaptor<Photo> photoUpdateCaptor = ArgumentCaptor.forClass(Photo.class);
+			doNothing().when(photoAggregateRepositoryImpl).update(photoUpdateCaptor.capture());
+
 			// 新規登録1枚目
 			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
 			photoDetailModelList.add(photoDetailModel1);
-			doReturn(false).when(photoMstRepositoryImpl).isExistPhoto(photoDetailModel1);
-			doNothing().when(photoMstRepositoryImpl).regist(photoDetailModel1, new ImageFilePath(filePath + accountId + "/DSC111.jpg"), new PhotoNo(5L));
-			
+
 			// 更新1枚目
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
-			doNothing().when(photoMstRepositoryImpl).update(photoDetailModel2);
-			
+
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(new PhotoNo(3L), actual);
-			verify(photoMstRepositoryImpl, times(1)).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl, times(1)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoMstRepositoryImpl, times(1)).update(any(PhotoDetailModel.class));
-			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
-			verify(photoTagMstRepositoryImpl, times(1)).clear(any(PhotoTagDeleteModel.class));
-			verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
+			verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
+			verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
 
-			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
-			assertEquals(5L, photoTagModelCaptureList.get(0).getPhotoNo().value());
-			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo().value());
-			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName().value());
-			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName().value());
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(1).getAccountNo());
-			assertEquals(5L, photoTagModelCaptureList.get(1).getPhotoNo().value());
-			assertEquals(2L, photoTagModelCaptureList.get(1).getTagNo().value());
-			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName().value());
-			assertEquals("sea", photoTagModelCaptureList.get(1).getTagEnglishName().value());
+			Photo registeredPhoto = photoRegistCaptor.getValue();
+			assertEquals(new PhotoNo(5L), registeredPhoto.getPhotoNo());
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC111.jpg"), registeredPhoto.getImageFilePath());
+			assertEquals(2, registeredPhoto.getPhotoTagModelList().size());
+
+			Photo updatedPhoto = photoUpdateCaptor.getValue();
+			assertEquals(new PhotoNo(3L), updatedPhoto.getPhotoNo());
 		}
-		
+
 		@Test
 		@Order(6)
-		@DisplayName("異常系：FileDuplicateExceptionをthrowする（写真は複数枚）")
-		void savePhotos_FileDuplicateException() throws GalleryException {
+		@DisplayName("異常系：写真登録でGalleryExceptionをthrowする（写真は複数枚）")
+		void savePhotos_registPhoto_GalleryException() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			
+
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
-			
+			doThrow(RegistFailureException.class).when(photoAggregateRepositoryImpl).regist(any(Photo.class));
+
 			// 新規登録1枚目
 			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
 			photoDetailModelList.add(photoDetailModel1);
-			doReturn(true).when(photoMstRepositoryImpl).isExistPhoto(photoDetailModel1);
-			
+
 			// 更新1枚目
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
-			
-			assertThrows(FileDuplicateException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
-			
-			verify(photoMstRepositoryImpl, times(1)).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoMstRepositoryImpl, times(0)).update(any(PhotoDetailModel.class));
-			verify(photoTagMstRepositoryImpl, times(0)).regist(any(PhotoTagModel.class));
-			verify(photoTagMstRepositoryImpl, times(0)).clear(any(PhotoTagDeleteModel.class));
-			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+
+			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
+			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
 		}
-		
+
 		@Test
 		@Order(7)
-		@DisplayName("異常系：写真登録でRegistFailureExceptionをthrowする（写真は複数枚）")
-		void savePhotos_registPhoto_RegistFailureException() throws GalleryException {
+		@DisplayName("異常系：写真更新でGalleryExceptionをthrowする（写真は複数枚）")
+		void savePhotos_updatePhoto_GalleryException() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			String filePath = "https://localhost:8080/image/";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			
+
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
-			
-			// 新規登録1枚目
-			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
-			photoDetailModelList.add(photoDetailModel1);
-			doReturn(false).when(photoMstRepositoryImpl).isExistPhoto(photoDetailModel1);
-			doThrow(RegistFailureException.class).when(photoMstRepositoryImpl).regist(photoDetailModel1, new ImageFilePath(filePath + accountId + "/DSC111.jpg"), new PhotoNo(5L));
-			
-			// 更新1枚目
-			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
-			photoDetailModelList.add(photoDetailModel2);
-			
-			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
-			
-			verify(photoMstRepositoryImpl, times(1)).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl, times(1)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoMstRepositoryImpl, times(0)).update(any(PhotoDetailModel.class));
-			verify(photoTagMstRepositoryImpl, times(0)).regist(any(PhotoTagModel.class));
-			verify(photoTagMstRepositoryImpl, times(0)).clear(any(PhotoTagDeleteModel.class));
-			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-		}
-		
-		@Test
-		@Order(8)
-		@DisplayName("異常系：新規登録時、写真タグ登録でRegistFailureExceptionをthrowする（写真は複数枚）")
-		void savePhotos_newPhoto_registPhotoTag_RegistFailureException() throws GalleryException {
-			String accountId = "aaaaaaaa";
-			String filePath = "https://localhost:8080/image/";
-			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			
-			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-			doReturn(filePath).when(photoConfig).getOutputPath();
-			
-			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
-			doThrow(RegistFailureException.class).when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
-			
-			// 新規登録1枚目
-			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
-			photoDetailModelList.add(photoDetailModel1);
-			doReturn(false).when(photoMstRepositoryImpl).isExistPhoto(photoDetailModel1);
-			doNothing().when(photoMstRepositoryImpl).regist(photoDetailModel1, new ImageFilePath(filePath + accountId + "/DSC111.jpg"), new PhotoNo(5L));
-			
-			// 更新1枚目
-			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
-			photoDetailModelList.add(photoDetailModel2);
-			
-			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
-			
-			verify(photoMstRepositoryImpl, times(1)).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl, times(1)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoMstRepositoryImpl, times(0)).update(any(PhotoDetailModel.class));
-			verify(photoTagMstRepositoryImpl, times(1)).regist(any(PhotoTagModel.class));
-			verify(photoTagMstRepositoryImpl, times(0)).clear(any(PhotoTagDeleteModel.class));
-			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-			
-			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
-			assertEquals(5L, photoTagModelCaptureList.get(0).getPhotoNo().value());
-			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo().value());
-			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName().value());
-			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName().value());
-		}
-		
-		@Test
-		@Order(9)
-		@DisplayName("異常系：更新時、写真タグ登録でRegistFailureExceptionをthrowする（写真は複数枚）")
-		void savePhotos_updatePhoto_registPhotoTag_RegistFailureException() throws GalleryException {
-			String accountId = "aaaaaaaa";
-			String filePath = "https://localhost:8080/image/";
-			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			
-			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-			doReturn(filePath).when(photoConfig).getOutputPath();
-			
-			ArgumentCaptor<PhotoTagDeleteModel> photoTagDeleteModelCaptor = ArgumentCaptor.forClass(PhotoTagDeleteModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).clear(photoTagDeleteModelCaptor.capture());
-			
-			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
-			doThrow(RegistFailureException.class).when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
-			
+			doThrow(UpdateFailureException.class).when(photoAggregateRepositoryImpl).update(any(Photo.class));
+
 			// 更新1枚目
 			PhotoDetailModel photoDetailModel1 = createUpdatePhotoWithTag();
 			photoDetailModelList.add(photoDetailModel1);
-			doNothing().when(photoMstRepositoryImpl).update(photoDetailModel1);
-			
+
 			// 更新2枚目
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
-			
-			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
-			
-			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoMstRepositoryImpl, times(1)).update(any(PhotoDetailModel.class));
-			verify(photoTagMstRepositoryImpl, times(1)).regist(any(PhotoTagModel.class));
-			verify(photoTagMstRepositoryImpl, times(1)).clear(any(PhotoTagDeleteModel.class));
-			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-			
-			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
-			assertEquals(2L, photoTagModelCaptureList.get(0).getPhotoNo().value());
-			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo().value());
-			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName().value());
-			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName().value());
-		}
-		
-		@Test
-		@Order(10)
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする（写真は複数枚）")
-		void savePhotos_UpdateFailureException() throws GalleryException {
-			String accountId = "aaaaaaaa";
-			String filePath = "https://localhost:8080/image/";
-			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			
-			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-			doReturn(filePath).when(photoConfig).getOutputPath();
-			
-			// 更新1枚目
-			PhotoDetailModel photoDetailModel1 = createUpdatePhotoWithTag();
-			photoDetailModelList.add(photoDetailModel1);
-			doThrow(UpdateFailureException.class).when(photoMstRepositoryImpl).update(photoDetailModel1);
-			
-			// 更新2枚目
-			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
-			photoDetailModelList.add(photoDetailModel2);
-			
+
 			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
-			
-			verify(photoMstRepositoryImpl, times(0)).isExistPhoto(any(PhotoDetailModel.class));
-			verify(photoMstRepositoryImpl, times(0)).regist(any(PhotoDetailModel.class), any(ImageFilePath.class), any(PhotoNo.class));
-			verify(photoMstRepositoryImpl, times(1)).update(any(PhotoDetailModel.class));
-			verify(photoTagMstRepositoryImpl, times(0)).regist(any(PhotoTagModel.class));
-			verify(photoTagMstRepositoryImpl, times(0)).clear(any(PhotoTagDeleteModel.class));
-			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
 		}
 	}
 	
@@ -925,32 +753,20 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系：photoDeleteModelListが0件の場合、終了")
 		void deletePhotos_photoDeleteModelList_empty() throws GalleryException {
 			doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
-			
+
 			photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.empty());
-			verify(photoFavoriteRepositoryImpl, times(0)).clear(any(PhotoFavoriteDeleteModel.class));
-			verify(photoTagMstRepositoryImpl, times(0)).clear(any(PhotoTagDeleteModel.class));
-			verify(photoMstRepositoryImpl, times(0)).delete(any(PhotoDeleteModel.class));
-			verify(fileRepositoryImpl, times(0)).delete(any(ImageFilePath.class));
+			verify(photoAggregateRepositoryImpl, times(0)).delete(any(Photo.class));
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：photoDetailModelListが2件以上の場合")
 		void deletePhotos_success() throws GalleryException {
 			doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
-			
-			ArgumentCaptor<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteDeleteModel.class);
-			doNothing().when(photoFavoriteRepositoryImpl).clear(photoFavoriteDeleteModelCaptor.capture());
-			
-			ArgumentCaptor<PhotoTagDeleteModel> photoTagDeleteModelCaptor = ArgumentCaptor.forClass(PhotoTagDeleteModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).clear(photoTagDeleteModelCaptor.capture());
-			
-			ArgumentCaptor<PhotoDeleteModel> photoDeleteModelCaptor = ArgumentCaptor.forClass(PhotoDeleteModel.class);
-			doNothing().when(photoMstRepositoryImpl).delete(photoDeleteModelCaptor.capture());
-			
-			ArgumentCaptor<ImageFilePath> fileDeleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
-			doNothing().when(fileRepositoryImpl).delete(fileDeleteCaptor.capture());
-			
+
+			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
+			doNothing().when(photoAggregateRepositoryImpl).delete(photoCaptor.capture());
+
 			List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
 			photoDeleteModelList.add(PhotoDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -962,66 +778,37 @@ public class PhotoServiceImplTest {
 					.photoNo(new PhotoNo(2L))
 					.imageFilePath(new ImageFilePath("DSC222.jpg"))
 					.build());
-			
+
 			photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList));
-			verify(photoFavoriteRepositoryImpl, times(2)).clear(any(PhotoFavoriteDeleteModel.class));
-			verify(photoTagMstRepositoryImpl, times(2)).clear(any(PhotoTagDeleteModel.class));
-			verify(photoMstRepositoryImpl, times(2)).delete(any(PhotoDeleteModel.class));
-			verify(fileRepositoryImpl, times(2)).delete(any(ImageFilePath.class));
-			
-			List<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptureList = photoFavoriteDeleteModelCaptor.getAllValues();
-			assertEquals(null, photoFavoriteDeleteModelCaptureList.get(0).getAccountNo());
-			assertEquals(new AccountNo(1L), photoFavoriteDeleteModelCaptureList.get(0).getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavoriteDeleteModelCaptureList.get(0).getFavoritePhotoNo().value());
-			assertEquals(null, photoFavoriteDeleteModelCaptureList.get(1).getAccountNo());
-			assertEquals(new AccountNo(1L), photoFavoriteDeleteModelCaptureList.get(1).getFavoritePhotoAccountNo());
-			assertEquals(2L, photoFavoriteDeleteModelCaptureList.get(1).getFavoritePhotoNo().value());
-			
-			List<PhotoTagDeleteModel> photoTagDeleteModelCaptureList = photoTagDeleteModelCaptor.getAllValues();
-			assertEquals(new AccountNo(1L), photoTagDeleteModelCaptureList.get(0).getAccountNo());
-			assertEquals(1L, photoTagDeleteModelCaptureList.get(0).getPhotoNo().value());
-			assertEquals(new AccountNo(1L), photoTagDeleteModelCaptureList.get(1).getAccountNo());
-			assertEquals(2L, photoTagDeleteModelCaptureList.get(1).getPhotoNo().value());
-			
-			List<PhotoDeleteModel> photoDeleteModelCaptureList = photoDeleteModelCaptor.getAllValues();
-			assertEquals(new AccountNo(1L), photoDeleteModelCaptureList.get(0).getAccountNo());
-			assertEquals(1L, photoDeleteModelCaptureList.get(0).getPhotoNo().value());
-			assertEquals("DSC111.jpg", photoDeleteModelCaptureList.get(0).getImageFilePath().value());
-			assertEquals(new AccountNo(1L), photoDeleteModelCaptureList.get(1).getAccountNo());
-			assertEquals(2L, photoDeleteModelCaptureList.get(1).getPhotoNo().value());
-			assertEquals("DSC222.jpg", photoDeleteModelCaptureList.get(1).getImageFilePath().value());
-			
-			List<ImageFilePath> fileDeleteCaptureList = fileDeleteCaptor.getAllValues();
-			assertEquals(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"), fileDeleteCaptureList.get(0));
-			assertEquals(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"), fileDeleteCaptureList.get(1));
+			verify(photoAggregateRepositoryImpl, times(2)).delete(any(Photo.class));
+
+			List<Photo> photoCaptureList = photoCaptor.getAllValues();
+			assertEquals(new AccountNo(1L), photoCaptureList.get(0).getAccountNo());
+			assertEquals(1L, photoCaptureList.get(0).getPhotoNo().value());
+			assertTrue(photoCaptureList.get(0).isDeleted());
+			assertEquals(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"), photoCaptureList.get(0).getImageFilePathForDelete());
+			assertEquals(new AccountNo(1L), photoCaptureList.get(1).getAccountNo());
+			assertEquals(2L, photoCaptureList.get(1).getPhotoNo().value());
+			assertEquals(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"), photoCaptureList.get(1).getImageFilePathForDelete());
 		}
-		
+
 		@Test
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void deletePhotos_UpdateFailureException() throws GalleryException {
 			doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
-			ArgumentCaptor<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteDeleteModel.class);
-			doNothing().when(photoFavoriteRepositoryImpl).clear(photoFavoriteDeleteModelCaptor.capture());
-			doNothing().when(photoTagMstRepositoryImpl).clear(any(PhotoTagDeleteModel.class));
-			doThrow(UpdateFailureException.class).when(photoMstRepositoryImpl).delete(any(PhotoDeleteModel.class));
-			
+			doThrow(UpdateFailureException.class).when(photoAggregateRepositoryImpl).delete(any(Photo.class));
+
 			List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
 			photoDeleteModelList.add(PhotoDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(1L))
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
 					.build());
-			
+
 			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
 
-			verify(photoFavoriteRepositoryImpl, times(1)).clear(any(PhotoFavoriteDeleteModel.class));
-			verify(photoMstRepositoryImpl, times(1)).delete(any(PhotoDeleteModel.class));
-			verify(fileRepositoryImpl, times(0)).delete(any(ImageFilePath.class));
-			
-			PhotoFavoriteDeleteModel photoFavoriteDeleteModelCapture = photoFavoriteDeleteModelCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoFavoriteDeleteModelCapture.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavoriteDeleteModelCapture.getFavoritePhotoNo().value());
+			verify(photoAggregateRepositoryImpl, times(1)).delete(any(Photo.class));
 		}
 	}
 	
@@ -1189,209 +976,4 @@ public class PhotoServiceImplTest {
 		}
 	}
 	
-	@Nested
-	@Order(7)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class registPhotoTags {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：photoTagModelListがnullの場合")
-		void registPhotoTags_photoTagModelList_is_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, GalleryException {
-			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
-			registPhotoTags.setAccessible(true);
-
-			registPhotoTags.invoke(photoServiceImpl, null, null);
-
-			verify(photoTagMstRepositoryImpl, times(0)).regist(any(PhotoTagModel.class));
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：photoTagModelListがemptyの場合")
-		void registPhotoTags_photoTagModelList_is_empty() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, GalleryException {
-			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
-			registPhotoTags.setAccessible(true);
-
-			registPhotoTags.invoke(photoServiceImpl, PhotoTagModelList.empty(), null);
-
-			verify(photoTagMstRepositoryImpl, times(0)).regist(any(PhotoTagModel.class));
-		}
-
-		@Test
-		@Order(3)
-		@DisplayName("正常系：newPhotoNoがnullの場合")
-		void registPhotoTags_newPhotoNo_is_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, GalleryException {
-			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
-			registPhotoTags.setAccessible(true);
-
-			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
-
-			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
-					.build());
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(2L))
-					.tagJapaneseName(new TagJapaneseName("海"))
-					.tagEnglishName(new TagEnglishName("sea"))
-					.build());
-
-			registPhotoTags.invoke(photoServiceImpl, PhotoTagModelList.of(photoTagModelList), null);
-
-			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
-
-			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
-			assertEquals(1L, photoTagModelCaptureList.get(0).getPhotoNo().value());
-			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo().value());
-			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName().value());
-			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName().value());
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(1).getAccountNo());
-			assertEquals(1L, photoTagModelCaptureList.get(1).getPhotoNo().value());
-			assertEquals(2L, photoTagModelCaptureList.get(1).getTagNo().value());
-			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName().value());
-			assertEquals("sea", photoTagModelCaptureList.get(1).getTagEnglishName().value());
-		}
-
-		@Test
-		@Order(4)
-		@DisplayName("正常系：newPhotoNoがnullでない場合")
-		void registPhotoTags_newPhotoNo_is_not_null() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, GalleryException {
-			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
-			registPhotoTags.setAccessible(true);
-
-			ArgumentCaptor<PhotoTagModel> photoTagModelCaptor = ArgumentCaptor.forClass(PhotoTagModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).regist(photoTagModelCaptor.capture());
-
-			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
-					.build());
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(2L))
-					.tagJapaneseName(new TagJapaneseName("海"))
-					.tagEnglishName(new TagEnglishName("sea"))
-					.build());
-
-			registPhotoTags.invoke(photoServiceImpl, PhotoTagModelList.of(photoTagModelList), 3L);
-
-			verify(photoTagMstRepositoryImpl, times(2)).regist(any(PhotoTagModel.class));
-
-			List<PhotoTagModel> photoTagModelCaptureList = photoTagModelCaptor.getAllValues();
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(0).getAccountNo());
-			assertEquals(3L, photoTagModelCaptureList.get(0).getPhotoNo().value());
-			assertEquals(1L, photoTagModelCaptureList.get(0).getTagNo().value());
-			assertEquals("太陽", photoTagModelCaptureList.get(0).getTagJapaneseName().value());
-			assertEquals("sun", photoTagModelCaptureList.get(0).getTagEnglishName().value());
-			assertEquals(new AccountNo(1L), photoTagModelCaptureList.get(1).getAccountNo());
-			assertEquals(3L, photoTagModelCaptureList.get(1).getPhotoNo().value());
-			assertEquals(2L, photoTagModelCaptureList.get(1).getTagNo().value());
-			assertEquals("海", photoTagModelCaptureList.get(1).getTagJapaneseName().value());
-			assertEquals("sea", photoTagModelCaptureList.get(1).getTagEnglishName().value());
-		}
-
-		@Test
-		@Order(5)
-		@DisplayName("異常系：RegistFailureExceptionをthrowする")
-		void registPhotoTags_RegistFailureException() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException, GalleryException {
-			Method registPhotoTags = PhotoServiceImpl.class.getDeclaredMethod("registPhotoTags", PhotoTagModelList.class, Long.class);
-			registPhotoTags.setAccessible(true);
-
-			doThrow(new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_PHOTO_TAG)).when(photoTagMstRepositoryImpl).regist(any(PhotoTagModel.class));
-
-			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
-					.build());
-			photoTagModelList.add(PhotoTagModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(2L))
-					.tagJapaneseName(new TagJapaneseName("海"))
-					.tagEnglishName(new TagEnglishName("sea"))
-					.build());
-
-			try {
-				registPhotoTags.invoke(photoServiceImpl, PhotoTagModelList.of(photoTagModelList), null);
-				assertTrue(false);
-			}
-			catch(InvocationTargetException e) {
-				Throwable targetException = e.getTargetException();
-				assertEquals(RegistFailureException.class, targetException.getClass());
-				assertEquals(ErrorEnum.FAIL_TO_REGIST_PHOTO_TAG.getErrorMessage(), targetException.getMessage());
-				verify(photoTagMstRepositoryImpl, times(1)).regist(any(PhotoTagModel.class));
-			}
-		}
-	}
-	
-	@Nested
-	@Order(11)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class uploadFile {
-		@Test
-		@Order(1)
-		@DisplayName("正常系")
-		void uploadFile_success() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method uploadFile = PhotoServiceImpl.class.getDeclaredMethod("uploadFile", ImageFilePath.class, ImageFile.class);
-			uploadFile.setAccessible(true);
-
-			ArgumentCaptor<FileModel> fileModelCaptor = ArgumentCaptor.forClass(FileModel.class);
-			doNothing().when(fileRepositoryImpl).save(fileModelCaptor.capture());
-
-			ImageFilePath filePath = new ImageFilePath("DSC111.jpg");
-			MultipartFile multipartFile = new MockMultipartFile(
-					"file",
-					"DSC111.jpg",
-					"multipart/form-data",
-					"sample image".getBytes()
-			);
-			ImageFile imageFile = new ImageFile(multipartFile);
-			uploadFile.invoke(photoServiceImpl, filePath, imageFile);
-
-			verify(fileRepositoryImpl).save(any(FileModel.class));
-			FileModel fileModelCapture = fileModelCaptor.getValue();
-			assertEquals(filePath, fileModelCapture.getFilePath());
-			assertEquals(imageFile, fileModelCapture.getImageFile());
-		}
-	}
-	
-	@Nested
-	@Order(12)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class deletePhotoTags {
-		@Test
-		@Order(1)
-		@DisplayName("正常系")
-		void deletePhotoTags_success() throws NoSuchMethodException, SecurityException, IllegalAccessException, InvocationTargetException {
-			Method deletePhotoTags = PhotoServiceImpl.class.getDeclaredMethod("deletePhotoTags", AccountNo.class, PhotoNo.class);
-			deletePhotoTags.setAccessible(true);
-
-			ArgumentCaptor<PhotoTagDeleteModel> photoTagDeleteModelCaptor = ArgumentCaptor.forClass(PhotoTagDeleteModel.class);
-			doNothing().when(photoTagMstRepositoryImpl).clear(photoTagDeleteModelCaptor.capture());
-
-			deletePhotoTags.invoke(photoServiceImpl, new AccountNo(1L), new PhotoNo(1L));
-			
-			verify(photoTagMstRepositoryImpl).clear(any(PhotoTagDeleteModel.class));
-			PhotoTagDeleteModel photoTagDeleteModelCapture = photoTagDeleteModelCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoTagDeleteModelCapture.getAccountNo());
-			assertEquals(1L, photoTagDeleteModelCapture.getPhotoNo().value());
-		}
-	}
 }

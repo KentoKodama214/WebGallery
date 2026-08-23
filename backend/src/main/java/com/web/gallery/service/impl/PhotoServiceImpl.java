@@ -11,38 +11,29 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import com.web.gallery.aggregate.Photo;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.Consts;
-import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.domain.photo.TagNo;
-import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
-import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
-import com.web.gallery.model.PhotoTagDeleteModel;
-import com.web.gallery.model.PhotoTagModel;
-import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.repository.AccountRepository;
-import com.web.gallery.repository.FileRepository;
+import com.web.gallery.repository.PhotoAggregateRepository;
 import com.web.gallery.repository.PhotoDetailRepository;
-import com.web.gallery.repository.PhotoFavoriteRepository;
 import com.web.gallery.repository.PhotoMstRepository;
-import com.web.gallery.repository.PhotoTagMstRepository;
 import com.web.gallery.service.PhotoService;
 
 import lombok.RequiredArgsConstructor;
@@ -58,10 +49,8 @@ public class PhotoServiceImpl implements PhotoService {
 
 	private final PhotoDetailRepository photoDetailRepository;
 	private final PhotoMstRepository photoMstRepository;
-	private final PhotoTagMstRepository photoTagMstRepository;
-	private final PhotoFavoriteRepository photoFavoriteRepository;
+	private final PhotoAggregateRepository photoAggregateRepository;
 	private final AccountRepository accountRepository;
-	private final FileRepository fileRepository;
 	private final PhotoConfig photoConfig;
 
 	/**
@@ -119,47 +108,17 @@ public class PhotoServiceImpl implements PhotoService {
 
 		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
 			if(Objects.isNull(photoDetailModel.getPhotoNo())) {
-				registPhoto(photoDetailModel, filePath, photoNo);
+				String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
+				Photo photo = Photo.forRegist(photoDetailModel, new PhotoNo(photoNo), new ImageFilePath(filePath + filename));
+				photoAggregateRepository.regist(photo);
 				++photoNo;
 			} else {
 				savedPhotoNo = photoDetailModel.getPhotoNo();
-				updatePhoto(photoDetailModel);
+				Photo photo = Photo.forUpdate(photoDetailModel);
+				photoAggregateRepository.update(photo);
 			}
 		}
 		return savedPhotoNo;
-	}
-
-	/**
-	 * 写真を新規登録する
-	 *
-	 * @param	photoDetailModel	{@link PhotoDetailModel}
-	 * @param	filePath			保存先のディレクトリパス
-	 * @param	newPhotoNo			新規採番された写真番号
-	 * @throws	GalleryException	同じファイル名のファイルが既に保存済みの場合
-	 */
-	private void registPhoto(PhotoDetailModel photoDetailModel, String filePath, Long newPhotoNo) throws GalleryException {
-		String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
-		if(photoMstRepository.isExistPhoto(photoDetailModel)) {
-			log.warn("Duplicate image file (filename: {}}", filename);
-			throw ErrorEnum.DUPLICATE_PHOTO_FILE.toException();
-		}
-
-		ImageFilePath imageFilePath = new ImageFilePath(filePath + filename);
-		photoMstRepository.regist(photoDetailModel, imageFilePath, new PhotoNo(newPhotoNo));
-		registPhotoTags(photoDetailModel.getPhotoTagModelList(), newPhotoNo);
-		uploadFile(imageFilePath, photoDetailModel.getImageFile());
-	}
-
-	/**
-	 * 写真を更新する
-	 *
-	 * @param	photoDetailModel	{@link PhotoDetailModel}
-	 * @throws	GalleryException	更新に失敗した場合
-	 */
-	private void updatePhoto(PhotoDetailModel photoDetailModel) throws GalleryException {
-		photoMstRepository.update(photoDetailModel);
-		deletePhotoTags(photoDetailModel.getAccountNo(), photoDetailModel.getPhotoNo());
-		registPhotoTags(photoDetailModel.getPhotoTagModelList(), null);
 	}
 
 	/**
@@ -175,13 +134,10 @@ public class PhotoServiceImpl implements PhotoService {
 		String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
 
 		for(PhotoDeleteModel photoDeleteModel : photoDeleteModelList) {
-			photoFavoriteRepository.clear(PhotoFavoriteDeleteModel.from(photoDeleteModel));
-			deletePhotoTags(photoDeleteModel.getAccountNo(), photoDeleteModel.getPhotoNo());
-
-			photoMstRepository.delete(photoDeleteModel);
-
 			String fileName = new File(photoDeleteModel.getImageFilePath().value()).getName();
-			fileRepository.delete(new ImageFilePath(filePath + fileName));
+			ImageFilePath imageFilePathForDelete = new ImageFilePath(filePath + fileName);
+			Photo photo = Photo.forDelete(photoDeleteModel.getAccountNo(), photoDeleteModel.getPhotoNo(), imageFilePathForDelete);
+			photoAggregateRepository.delete(photo);
 		}
 	}
 
@@ -229,46 +185,5 @@ public class PhotoServiceImpl implements PhotoService {
 				return (int) ChronoUnit.DAYS.between(dateA, dateB);
 			}
 		};
-	}
-
-	/**
-	 * 写真タグを登録する
-	 *
-	 * @param	photoTagModelList	{@link PhotoTagModelList}
-	 * @param	newPhotoNo			新規採番された写真番号
-	 * @throws	GalleryException	登録に失敗した場合
-	 */
-	private void registPhotoTags(PhotoTagModelList photoTagModelList, Long newPhotoNo) throws GalleryException {
-		if(Objects.isNull(photoTagModelList)) return;
-
-		int tagNo = 1;
-		for(PhotoTagModel photoTagModel : photoTagModelList) {
-			PhotoTagModel photoTagRegistModel = PhotoTagModel.forRegist(
-					photoTagModel,
-					!Objects.isNull(newPhotoNo) ? new PhotoNo(newPhotoNo) : photoTagModel.getPhotoNo(),
-					new TagNo((long) tagNo));
-			photoTagMstRepository.regist(photoTagRegistModel);
-			++tagNo;
-		}
-	}
-
-	/**
-	 * ファイルをアップロードする
-	 *
-	 * @param	filePath	アップロードのファイルパス
-	 * @param	imageFile	アップロードするファイル
-	 */
-	private void uploadFile(ImageFilePath filePath, ImageFile imageFile) {
-		fileRepository.save(FileModel.of(filePath, imageFile));
-	}
-
-	/**
-	 * 写真タグを一括削除する
-	 *
-	 * @param	accountNo	削除する写真のアカウント番号
-	 * @param	photoNo		削除する写真の写真番号
-	 */
-	private void deletePhotoTags(AccountNo accountNo, PhotoNo photoNo) {
-		photoTagMstRepository.clear(PhotoTagDeleteModel.of(accountNo, photoNo));
 	}
 }
