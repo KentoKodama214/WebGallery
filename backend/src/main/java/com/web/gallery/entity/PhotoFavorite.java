@@ -4,7 +4,6 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoFavoriteModel;
 
 import lombok.Builder;
@@ -46,57 +45,6 @@ public class PhotoFavorite {
 				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
 				.favoritePhotoNo(model.getFavoritePhotoNo())
 				.createdBy(new CreatedBy(model.getAccountNo().value()))
-				.build();
-	}
-
-	/**
-	 * PhotoFavoriteDeleteModelからPhotoFavoriteエンティティを生成する
-	 *
-	 * @param	model	{@link PhotoFavoriteDeleteModel}
-	 * @return			{@link PhotoFavorite}
-	 */
-	public static PhotoFavorite from(PhotoFavoriteDeleteModel model) {
-		return PhotoFavorite.builder()
-				.accountNo(model.getAccountNo())
-				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(model.getFavoritePhotoNo())
-				.build();
-	}
-
-	/**
-	 * 写真お気に入り全件削除用のPhotoFavoriteDeleteModelからPhotoFavoriteエンティティを生成する
-	 *
-	 * @param	model	{@link PhotoFavoriteDeleteModel}
-	 * @return			{@link PhotoFavorite}
-	 */
-	public static PhotoFavorite fromForClear(PhotoFavoriteDeleteModel model) {
-		return PhotoFavorite.builder()
-				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(model.getFavoritePhotoNo())
-				.build();
-	}
-
-	/**
-	 * アカウント番号で自分が登録したお気に入り削除用のPhotoFavoriteエンティティを生成する
-	 *
-	 * @param	accountNo	アカウント番号
-	 * @return				{@link PhotoFavorite}
-	 */
-	public static PhotoFavorite conditionByAccountNo(AccountNo accountNo) {
-		return PhotoFavorite.builder()
-				.accountNo(accountNo)
-				.build();
-	}
-
-	/**
-	 * アカウント番号で自分の写真に対する他人のお気に入り削除用のPhotoFavoriteエンティティを生成する
-	 *
-	 * @param	favoritePhotoAccountNo	お気に入り写真アカウント番号
-	 * @return							{@link PhotoFavorite}
-	 */
-	public static PhotoFavorite conditionByFavoritePhotoAccountNo(AccountNo favoritePhotoAccountNo) {
-		return PhotoFavorite.builder()
-				.favoritePhotoAccountNo(favoritePhotoAccountNo)
 				.build();
 	}
 }

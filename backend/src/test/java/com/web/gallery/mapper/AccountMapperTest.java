@@ -37,6 +37,8 @@ import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.domain.common.UpdatedBy;
 import com.web.gallery.entity.Account;
+import com.web.gallery.entity.AccountCondition;
+import com.web.gallery.entity.AccountUpdateTarget;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 
@@ -60,7 +62,7 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのselectで1件の場合")
 		void select_by_accountNo() {
-			Account account = Account.builder().accountNo(new AccountNo(1L)).build();
+			AccountCondition account = AccountCondition.builder().accountNo(new AccountNo(1L)).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -94,7 +96,7 @@ public class AccountMapperTest {
 		@Order(2)
 		@DisplayName("正常系：削除フラグでのselectで1件の場合")
 		void select_by_isDeleted() {
-			Account account = Account.builder().isDeleted(new IsDeleted(true)).build();
+			AccountCondition account = AccountCondition.builder().isDeleted(new IsDeleted(true)).build();
 			List<Account> actual = accountMapper.select(account);
 		
 			Account expectedAccount = Account.builder()
@@ -128,7 +130,7 @@ public class AccountMapperTest {
 		@Order(3)
 		@DisplayName("正常系：アカウントIDでのselectで1件の場合")
 		void select_by_accountId() {
-			Account account = Account.builder().accountId(new AccountId("aaaaaaaa")).build();
+			AccountCondition account = AccountCondition.builder().accountId(new AccountId("aaaaaaaa")).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -162,7 +164,7 @@ public class AccountMapperTest {
 		@Order(4)
 		@DisplayName("正常系：アカウント名でのselectで1件の場合")
 		void select_by_accountName() {
-			Account account = Account.builder().accountName(new AccountName("AAAAAAAA")).build();
+			AccountCondition account = AccountCondition.builder().accountName(new AccountName("AAAAAAAA")).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -196,7 +198,7 @@ public class AccountMapperTest {
 		@Order(5)
 		@DisplayName("正常系：パスワードでのselectで1件の場合")
 		void select_by_password() {
-			Account account = Account.builder().password(new Password("$2a$10$password1")).build();
+			AccountCondition account = AccountCondition.builder().password(new Password("$2a$10$password1")).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -230,7 +232,7 @@ public class AccountMapperTest {
 		@Order(6)
 		@DisplayName("正常系：生年月日でのselectで1件の場合")
 		void select_by_birthdate() {
-			Account account = Account.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
+			AccountCondition account = AccountCondition.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -264,7 +266,7 @@ public class AccountMapperTest {
 		@Order(7)
 		@DisplayName("正常系：性別区分コードでのselectで1件の場合")
 		void select_by_sexKbnCode() {
-			Account account = Account.builder().sexKbn(SexEnum.MAN).build();
+			AccountCondition account = AccountCondition.builder().sexKbn(SexEnum.MAN).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -298,7 +300,7 @@ public class AccountMapperTest {
 		@Order(8)
 		@DisplayName("正常系：出身都道府県区分コードでのselectで1件の場合")
 		void select_by_birthplacePrefectureKbnCode() {
-			Account account = Account.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
+			AccountCondition account = AccountCondition.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -332,7 +334,7 @@ public class AccountMapperTest {
 		@Order(9)
 		@DisplayName("正常系：在住都道府県区分コードでのselectで1件の場合")
 		void select_by_residentPrefectureKbnCode() {
-			Account account = Account.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
+			AccountCondition account = AccountCondition.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -366,7 +368,7 @@ public class AccountMapperTest {
 		@Order(10)
 		@DisplayName("正常系：フリーメモでのselectで1件の場合")
 		void select_by_freeMemo() {
-			Account account = Account.builder().freeMemo(new FreeMemo("フリーメモ")).build();
+			AccountCondition account = AccountCondition.builder().freeMemo(new FreeMemo("フリーメモ")).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -400,7 +402,7 @@ public class AccountMapperTest {
 		@Order(11)
 		@DisplayName("正常系：権限区分コードでのselectで1件の場合")
 		void select_by_authorityKbnCode() {
-			Account account = Account.builder().authorityKbn(AuthorityEnum.MINI).build();
+			AccountCondition account = AccountCondition.builder().authorityKbn(AuthorityEnum.MINI).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -434,7 +436,7 @@ public class AccountMapperTest {
 		@Order(12)
 		@DisplayName("正常系：最終ログイン日時でのselectで1件の場合")
 		void select_by_lastLoginDatetime() {
-			Account account = Account.builder().lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))).build();
+			AccountCondition account = AccountCondition.builder().lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -468,7 +470,7 @@ public class AccountMapperTest {
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのselectで1件の場合")
 		void select_by_loginFailureCount() {
-			Account account = Account.builder().loginFailureCount(new LoginFailureCount(2)).build();
+			AccountCondition account = AccountCondition.builder().loginFailureCount(new LoginFailureCount(2)).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
@@ -502,7 +504,7 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：selectで0件の場合")
 		void select_not_found() {
-			Account account = Account.builder().accountNo(new AccountNo(99L)).build();
+			AccountCondition account = AccountCondition.builder().accountNo(new AccountNo(99L)).build();
 			List<Account> actual = accountMapper.select(account);
 			List<Account> expected = new ArrayList<Account>();
 			
@@ -514,7 +516,7 @@ public class AccountMapperTest {
 		@Order(15)
 		@DisplayName("正常系：selectで2件以上の場合")
 		void select_accounts() {
-			Account account = Account.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
+			AccountCondition account = AccountCondition.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount1 = Account.builder()
@@ -569,7 +571,7 @@ public class AccountMapperTest {
 		@Order(16)
 		@DisplayName("正常系：複数の条件でselectする場合")
 		void select_some_conditions() {
-			Account account = Account.builder()
+			AccountCondition account = AccountCondition.builder()
 					.accountId(new AccountId("llllllll"))
 					.sexKbn(SexEnum.WOMAN)
 					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Okinawa"))
@@ -616,7 +618,7 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのcount")
 		void count_by_accountNo() {
-			Account account = Account.builder().accountNo(new AccountNo(1L)).build();
+			AccountCondition account = AccountCondition.builder().accountNo(new AccountNo(1L)).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -625,7 +627,7 @@ public class AccountMapperTest {
 		@Order(2)
 		@DisplayName("正常系：削除フラグでのcount")
 		void count_by_isDeleted() {
-			Account account = Account.builder().isDeleted(new IsDeleted(true)).build();
+			AccountCondition account = AccountCondition.builder().isDeleted(new IsDeleted(true)).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -634,7 +636,7 @@ public class AccountMapperTest {
 		@Order(3)
 		@DisplayName("正常系：アカウントIDでのcount")
 		void count_by_accountId() {
-			Account account = Account.builder().accountId(new AccountId("aaaaaaaa")).build();
+			AccountCondition account = AccountCondition.builder().accountId(new AccountId("aaaaaaaa")).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -643,7 +645,7 @@ public class AccountMapperTest {
 		@Order(4)
 		@DisplayName("正常系：アカウント名でのcount")
 		void count_by_accountName() {
-			Account account = Account.builder().accountName(new AccountName("AAAAAAAA")).build();
+			AccountCondition account = AccountCondition.builder().accountName(new AccountName("AAAAAAAA")).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -652,7 +654,7 @@ public class AccountMapperTest {
 		@Order(5)
 		@DisplayName("正常系：パスワードでのcount")
 		void count_by_password() {
-			Account account = Account.builder().password(new Password("$2a$10$password1")).build();
+			AccountCondition account = AccountCondition.builder().password(new Password("$2a$10$password1")).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -661,7 +663,7 @@ public class AccountMapperTest {
 		@Order(6)
 		@DisplayName("正常系：生年月日でのcount")
 		void count_by_birthdate() {
-			Account account = Account.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
+			AccountCondition account = AccountCondition.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -670,7 +672,7 @@ public class AccountMapperTest {
 		@Order(7)
 		@DisplayName("正常系：性別区分コードでのcount")
 		void count_by_sexKbnCode() {
-			Account account = Account.builder().sexKbn(SexEnum.MAN).build();
+			AccountCondition account = AccountCondition.builder().sexKbn(SexEnum.MAN).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -679,7 +681,7 @@ public class AccountMapperTest {
 		@Order(8)
 		@DisplayName("正常系：出身都道府県区分コードでのcount")
 		void count_by_birthplacePrefectureKbnCode() {
-			Account account = Account.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
+			AccountCondition account = AccountCondition.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -688,7 +690,7 @@ public class AccountMapperTest {
 		@Order(9)
 		@DisplayName("正常系：在住都道府県区分コードでのcount")
 		void count_by_residentPrefectureKbnCode() {
-			Account account = Account.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
+			AccountCondition account = AccountCondition.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -697,7 +699,7 @@ public class AccountMapperTest {
 		@Order(10)
 		@DisplayName("正常系：フリーメモでのcount")
 		void count_by_freeMemo() {
-			Account account = Account.builder().freeMemo(new FreeMemo("フリーメモ")).build();
+			AccountCondition account = AccountCondition.builder().freeMemo(new FreeMemo("フリーメモ")).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -706,7 +708,7 @@ public class AccountMapperTest {
 		@Order(11)
 		@DisplayName("正常系：権限区分コードでのcount")
 		void count_by_authorityKbnCode() {
-			Account account = Account.builder().authorityKbn(AuthorityEnum.MINI).build();
+			AccountCondition account = AccountCondition.builder().authorityKbn(AuthorityEnum.MINI).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -715,7 +717,7 @@ public class AccountMapperTest {
 		@Order(12)
 		@DisplayName("正常系：最終ログイン日時でのcount")
 		void count_by_lastLoginDatetime() {
-			Account account = Account.builder()
+			AccountCondition account = AccountCondition.builder()
 					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.build();
 			Integer actual = accountMapper.count(account);
@@ -726,7 +728,7 @@ public class AccountMapperTest {
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのcount")
 		void count_by_loginFailureCount() {
-			Account account = Account.builder().loginFailureCount(new LoginFailureCount(2)).build();
+			AccountCondition account = AccountCondition.builder().loginFailureCount(new LoginFailureCount(2)).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -735,7 +737,7 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：countで0件の場合")
 		void count_not_found() {
-			Account account = Account.builder().accountNo(new AccountNo(99L)).build();
+			AccountCondition account = AccountCondition.builder().accountNo(new AccountNo(99L)).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(0, actual);
 		}
@@ -744,7 +746,7 @@ public class AccountMapperTest {
 		@Order(15)
 		@DisplayName("正常系：countで2件以上の場合")
 		void count_accounts() {
-			Account account = Account.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
+			AccountCondition account = AccountCondition.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(2, actual);
 		}
@@ -753,7 +755,7 @@ public class AccountMapperTest {
 		@Order(16)
 		@DisplayName("正常系：複数の条件でcountする場合")
 		void count_some_conditions() {
-			Account account = Account.builder()
+			AccountCondition account = AccountCondition.builder()
 					.accountId(new AccountId("llllllll"))
 					.sexKbn(SexEnum.WOMAN)
 					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Okinawa"))
@@ -876,8 +878,8 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのupdate")
 		void update_by_accountNo() {
-			Account conditionAccount = Account.builder().accountNo(new AccountNo(1L)).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().accountNo(new AccountNo(1L)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -907,8 +909,8 @@ public class AccountMapperTest {
 		@Order(2)
 		@DisplayName("正常系：削除フラグでのupdate")
 		void update_by_isDeleted() {
-			Account conditionAccount = Account.builder().isDeleted(new IsDeleted(true)).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().isDeleted(new IsDeleted(true)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -938,8 +940,8 @@ public class AccountMapperTest {
 		@Order(3)
 		@DisplayName("正常系：アカウントIDでのupdate")
 		void update_by_accountId() {
-			Account conditionAccount = Account.builder().accountId(new AccountId("aaaaaaaa")).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().accountId(new AccountId("aaaaaaaa")).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -969,8 +971,8 @@ public class AccountMapperTest {
 		@Order(4)
 		@DisplayName("正常系：アカウント名でのupdate")
 		void update_by_accountName() {
-			Account conditionAccount = Account.builder().accountName(new AccountName("AAAAAAAA")).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().accountName(new AccountName("AAAAAAAA")).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1000,8 +1002,8 @@ public class AccountMapperTest {
 		@Order(5)
 		@DisplayName("正常系：パスワードでのupdate")
 		void update_by_password() {
-			Account conditionAccount = Account.builder().password(new Password("$2a$10$password1")).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().password(new Password("$2a$10$password1")).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1031,8 +1033,8 @@ public class AccountMapperTest {
 		@Order(6)
 		@DisplayName("正常系：生年月日でのupdate")
 		void update_by_birthdate() {
-			Account conditionAccount = Account.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1062,8 +1064,8 @@ public class AccountMapperTest {
 		@Order(7)
 		@DisplayName("正常系：性別区分コードでのupdate")
 		void update_by_sexKbnCode() {
-			Account conditionAccount = Account.builder().sexKbn(SexEnum.MAN).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().sexKbn(SexEnum.MAN).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1093,8 +1095,8 @@ public class AccountMapperTest {
 		@Order(8)
 		@DisplayName("正常系：出身都道府県区分コードでのupdate")
 		void update_by_birthplacePrefectureKbnCode() {
-			Account conditionAccount = Account.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1124,8 +1126,8 @@ public class AccountMapperTest {
 		@Order(9)
 		@DisplayName("正常系：在住都道府県区分コードでのupdate")
 		void update_by_residentPrefectureKbnCode() {
-			Account conditionAccount = Account.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1155,8 +1157,8 @@ public class AccountMapperTest {
 		@Order(10)
 		@DisplayName("正常系：フリーメモでのupdate")
 		void update_by_freeMemo() {
-			Account conditionAccount = Account.builder().freeMemo(new FreeMemo("フリーメモ")).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().freeMemo(new FreeMemo("フリーメモ")).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1186,8 +1188,8 @@ public class AccountMapperTest {
 		@Order(11)
 		@DisplayName("正常系：権限区分コードでのupdate")
 		void update_by_authorityKbnCode() {
-			Account conditionAccount = Account.builder().authorityKbn(AuthorityEnum.MINI).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().authorityKbn(AuthorityEnum.MINI).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1217,10 +1219,10 @@ public class AccountMapperTest {
 		@Order(12)
 		@DisplayName("正常系：最終ログイン日時でのupdate")
 		void update_by_lastLoginDatetime() {
-			Account conditionAccount = Account.builder()
+			AccountCondition conditionAccount = AccountCondition.builder()
 					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1250,8 +1252,8 @@ public class AccountMapperTest {
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのupdate")
 		void update_by_loginFailureCounte() {
-			Account conditionAccount = Account.builder().loginFailureCount(new LoginFailureCount(2)).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(0)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().loginFailureCount(new LoginFailureCount(2)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(0)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1281,8 +1283,8 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：更新対象のレコードなし")
 		void update_not_found() {
-			Account conditionAccount = Account.builder().accountNo(new AccountNo(99L)).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(0)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().accountNo(new AccountNo(99L)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(0)).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(0, actual);
 			
@@ -1294,8 +1296,8 @@ public class AccountMapperTest {
 		@Order(15)
 		@DisplayName("正常系：2件以上updateの場合")
 		void update_accounts() {
-			Account conditionAccount = Account.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(2, actual);
@@ -1343,14 +1345,14 @@ public class AccountMapperTest {
 		@Order(16)
 		@DisplayName("正常系：複数の条件でupdateする場合")
 		void update_some_conditions() {
-			Account conditionAccount = Account.builder()
+			AccountCondition conditionAccount = AccountCondition.builder()
 					.accountId(new AccountId("llllllll"))
 					.sexKbn(SexEnum.WOMAN)
 					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Okinawa"))
 					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
 					.freeMemo(new FreeMemo("よろしく"))
 					.build();
-			Account targetAccount = Account.builder().loginFailureCount(new LoginFailureCount(0)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(0)).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
@@ -1411,7 +1413,7 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのdelete")
 		void delete_by_accountNo() {
-			Account deleteAccount = Account.builder().accountNo(new AccountNo(1L)).build();
+			AccountCondition deleteAccount = AccountCondition.builder().accountNo(new AccountNo(1L)).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1426,7 +1428,7 @@ public class AccountMapperTest {
 		@Order(2)
 		@DisplayName("正常系：削除フラグでのdelete")
 		void delete_by_isDeleted() {
-			Account deleteAccount = Account.builder().isDeleted(new IsDeleted(true)).build();
+			AccountCondition deleteAccount = AccountCondition.builder().isDeleted(new IsDeleted(true)).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1441,7 +1443,7 @@ public class AccountMapperTest {
 		@Order(3)
 		@DisplayName("正常系：アカウントIDでのdelete")
 		void delete_by_accountId() {
-			Account deleteAccount = Account.builder().accountId(new AccountId("aaaaaaaa")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().accountId(new AccountId("aaaaaaaa")).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1456,7 +1458,7 @@ public class AccountMapperTest {
 		@Order(4)
 		@DisplayName("正常系：アカウント名でのdelete")
 		void delete_by_accountName() {
-			Account deleteAccount = Account.builder().accountName(new AccountName("AAAAAAAA")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().accountName(new AccountName("AAAAAAAA")).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1471,7 +1473,7 @@ public class AccountMapperTest {
 		@Order(5)
 		@DisplayName("正常系：パスワードでのdelete")
 		void delete_by_password() {
-			Account deleteAccount = Account.builder().password(new Password("$2a$10$password1")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().password(new Password("$2a$10$password1")).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1486,7 +1488,7 @@ public class AccountMapperTest {
 		@Order(6)
 		@DisplayName("正常系：生年月日でのdelete")
 		void delete_by_birthdate() {
-			Account deleteAccount = Account.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
+			AccountCondition deleteAccount = AccountCondition.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1501,7 +1503,7 @@ public class AccountMapperTest {
 		@Order(7)
 		@DisplayName("正常系：性別区分コードでのdelete")
 		void delete_by_sexKbnCode() {
-			Account deleteAccount = Account.builder().sexKbn(SexEnum.MAN).build();
+			AccountCondition deleteAccount = AccountCondition.builder().sexKbn(SexEnum.MAN).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1516,7 +1518,7 @@ public class AccountMapperTest {
 		@Order(8)
 		@DisplayName("正常系：出身都道府県区分コードでのdelete")
 		void delete_by_birthplacePrefectureKbnCode() {
-			Account deleteAccount = Account.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1531,7 +1533,7 @@ public class AccountMapperTest {
 		@Order(9)
 		@DisplayName("正常系：在住都道府県区分コードでのdelete")
 		void delete_by_residentPrefectureKbnCode() {
-			Account deleteAccount = Account.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1546,7 +1548,7 @@ public class AccountMapperTest {
 		@Order(10)
 		@DisplayName("正常系：フリーメモでのdelete")
 		void delete_by_freeMemo() {
-			Account deleteAccount = Account.builder().freeMemo(new FreeMemo("フリーメモ")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().freeMemo(new FreeMemo("フリーメモ")).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1561,7 +1563,7 @@ public class AccountMapperTest {
 		@Order(11)
 		@DisplayName("正常系：権限区分コードでのdelete")
 		void delete_by_authorityKbnCode() {
-			Account deleteAccount = Account.builder().authorityKbn(AuthorityEnum.MINI).build();
+			AccountCondition deleteAccount = AccountCondition.builder().authorityKbn(AuthorityEnum.MINI).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1576,7 +1578,7 @@ public class AccountMapperTest {
 		@Order(12)
 		@DisplayName("正常系：最終ログイン日時でのdelete")
 		void delete_by_lastLoginDatetime() {
-			Account deleteAccount = Account.builder()
+			AccountCondition deleteAccount = AccountCondition.builder()
 					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
 					.build();
 			Integer actual = accountMapper.delete(deleteAccount);
@@ -1593,7 +1595,7 @@ public class AccountMapperTest {
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのdelete")
 		void delete_by_loginFailureCount() {
-			Account deleteAccount = Account.builder().loginFailureCount(new LoginFailureCount(2)).build();
+			AccountCondition deleteAccount = AccountCondition.builder().loginFailureCount(new LoginFailureCount(2)).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1608,7 +1610,7 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：削除対象のレコードなし")
 		void delete_not_found() {
-			Account deleteAccount = Account.builder().accountNo(new AccountNo(99L)).build();
+			AccountCondition deleteAccount = AccountCondition.builder().accountNo(new AccountNo(99L)).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(0, actual);
 			
@@ -1623,7 +1625,7 @@ public class AccountMapperTest {
 		@Order(15)
 		@DisplayName("正常系：2件以上deleteする場合")
 		void delete_accounts() {
-			Account deleteAccount = Account.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
+			AccountCondition deleteAccount = AccountCondition.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(2, actual);
 			
@@ -1638,7 +1640,7 @@ public class AccountMapperTest {
 		@Order(16)
 		@DisplayName("正常系：複数の条件でdeleteする場合")
 		void delete_some_conditions() {
-			Account deleteAccount = Account.builder()
+			AccountCondition deleteAccount = AccountCondition.builder()
 					.accountId(new AccountId("llllllll"))
 					.sexKbn(SexEnum.WOMAN)
 					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Okinawa"))
@@ -1676,7 +1678,7 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントIDが一致するアカウントが存在する")
 		void isExistAccount_by_accountId_exists() {
-			Account account = Account.builder().accountId(new AccountId("aaaaaaaa")).build();
+			AccountCondition account = AccountCondition.builder().accountId(new AccountId("aaaaaaaa")).build();
 			Boolean isExist = accountMapper.isExistAccount(account);
 			assertTrue(isExist);
 		}
@@ -1685,7 +1687,7 @@ public class AccountMapperTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントIDが一致するアカウントが存在しない")
 		void isExistAccount_by_accountId_not_exist() {
-			Account account = Account.builder().accountId(new AccountId("xxxxxxxx")).build();
+			AccountCondition account = AccountCondition.builder().accountId(new AccountId("xxxxxxxx")).build();
 			Boolean isExist = accountMapper.isExistAccount(account);
 			assertFalse(isExist);
 		}
@@ -1694,7 +1696,7 @@ public class AccountMapperTest {
 		@Order(3)
 		@DisplayName("正常系：アカウント番号以外で、アカウントIDが一致するアカウントが存在しない")
 		void isExistAccount_by_accountId_and_accountNo_exists() {
-			Account account = Account.builder()
+			AccountCondition account = AccountCondition.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId("aaaaaaaa"))
 					.build();
@@ -1705,7 +1707,7 @@ public class AccountMapperTest {
 		@Test
 		@DisplayName("正常系：アカウント番号以外で、アカウントIDが一致するアカウントが存在する")
 		void isExistAccount_by_accountId_and_accountNo_not_exist() {
-			Account account = Account.builder()
+			AccountCondition account = AccountCondition.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId("bbbbbbbb"))
 					.build();

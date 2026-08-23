@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.Account;
+import com.web.gallery.entity.AccountCondition;
+import com.web.gallery.entity.AccountUpdateTarget;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -40,7 +42,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public AccountModel getByAccountNo(AccountNo accountNo) {
-		List<Account> accountList = accountMapper.select(Account.conditionByAccountNo(accountNo.value()));
+		List<Account> accountList = accountMapper.select(AccountCondition.byAccountNo(accountNo.value()));
 		return accountList.isEmpty() ? null : AccountModel.from(accountList.getFirst());
 	}
 
@@ -53,7 +55,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public AccountModel getByAccountId(AccountId accountId) {
-		List<Account> accountList = accountMapper.select(Account.conditionByAccountId(accountId.value()));
+		List<Account> accountList = accountMapper.select(AccountCondition.byAccountId(accountId.value()));
 		return accountList.isEmpty() ? null : AccountModel.from(accountList.getFirst());
 	}
 
@@ -84,10 +86,10 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public void update(AccountModel accountModel) throws UpdateFailureException {
-		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo().value());
-		Account targetAccount = Account.fromForUpdate(accountModel, passwordEncoder);
+		AccountCondition condition = AccountCondition.byAccountNo(accountModel.getAccountNo().value());
+		AccountUpdateTarget target = AccountUpdateTarget.fromForUpdate(accountModel, passwordEncoder);
 
-		if (accountMapper.update(cndAccount, targetAccount) < 1) {
+		if (accountMapper.update(condition, target) < 1) {
 			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT);
 		}
@@ -101,10 +103,10 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public void updateLoginFailureCount(AccountModel accountModel) throws UpdateFailureException {
-		Account cndAccount = Account.conditionByAccountNo(accountModel.getAccountNo().value());
-		Account targetAccount = Account.fromForUpdateLoginFailure(accountModel);
+		AccountCondition condition = AccountCondition.byAccountNo(accountModel.getAccountNo().value());
+		AccountUpdateTarget target = AccountUpdateTarget.fromForUpdateLoginFailure(accountModel);
 
-		if (accountMapper.update(cndAccount, targetAccount) < 1) {
+		if (accountMapper.update(condition, target) < 1) {
 			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
 			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT);
 		}
@@ -118,7 +120,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public Boolean isExistAccount(AccountId accountId) {
-		return accountMapper.isExistAccount(Account.conditionForExistCheck(null, accountId.value()));
+		return accountMapper.isExistAccount(AccountCondition.forExistCheck(null, accountId.value()));
 	}
 
 	/**
@@ -130,7 +132,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public Boolean isExistAccount(AccountNo accountNo, AccountId accountId) {
-		return accountMapper.isExistAccount(Account.conditionForExistCheck(accountNo.value(), accountId.value()));
+		return accountMapper.isExistAccount(AccountCondition.forExistCheck(accountNo.value(), accountId.value()));
 	}
 
 	/**
@@ -140,7 +142,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public AccountModelList getAccountList() {
-		List<Account> accountList = accountMapper.select(Account.conditionForList());
+		List<Account> accountList = accountMapper.select(AccountCondition.forList());
 		return AccountModelList.from(accountList);
 	}
 
@@ -151,7 +153,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public AccountModelList getAccountListAll() {
-		List<Account> accountList = accountMapper.select(Account.conditionForAdminList());
+		List<Account> accountList = accountMapper.select(AccountCondition.forAdminList());
 		return AccountModelList.from(accountList);
 	}
 
@@ -162,6 +164,6 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public void delete(AccountNo accountNo) {
-		accountMapper.delete(Account.conditionByAccountNo(accountNo.value()));
+		accountMapper.delete(AccountCondition.byAccountNo(accountNo.value()));
 	}
 }

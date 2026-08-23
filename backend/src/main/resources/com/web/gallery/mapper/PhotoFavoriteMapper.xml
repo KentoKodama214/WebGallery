@@ -21,7 +21,7 @@
 			)
 	</insert>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.PhotoFavorite">
+	<delete id="delete" parameterType="com.web.gallery.entity.PhotoFavoriteCondition">
 		DELETE FROM
 			photo.photo_favorite
 		<where>

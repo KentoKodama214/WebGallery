@@ -11,6 +11,7 @@ import com.web.gallery.dto.PhotoDetailGetDto;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.dto.PhotoListGetDto;
 import com.web.gallery.entity.PhotoTagMst;
+import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.mapper.PhotoDetailMapper;
@@ -47,7 +48,7 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 		List<PhotoDto> photoDtoList = photoDetailMapper.getPhotoList(PhotoListGetDto.from(photoGetModel));
 
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
-				PhotoTagMst.condition(photoGetModel));
+				PhotoTagMstCondition.from(photoGetModel));
 
 		return PhotoModelList.from(photoDtoList, photoTagMstList);
 	}
@@ -71,7 +72,7 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 		}
 
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
-				PhotoTagMst.condition(photoDetailGetModel));
+				PhotoTagMstCondition.from(photoDetailGetModel));
 
 		return PhotoDetailModel.from(photoDetailDto, photoTagMstList);
 	}

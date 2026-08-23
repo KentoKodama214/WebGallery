@@ -50,6 +50,7 @@ import com.web.gallery.dto.PhotoDetailGetDto;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.dto.PhotoListGetDto;
 import com.web.gallery.entity.PhotoTagMst;
+import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.mapper.PhotoDetailMapper;
@@ -91,7 +92,7 @@ public class PhotoDetailRepositoryImplTest {
 
 			List<PhotoTagMst> photoTagMstList = new ArrayList<PhotoTagMst>();
 
-			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
+			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
 			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
 
 			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
@@ -102,7 +103,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
 			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo());
 
-			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
+			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
 		}
 
@@ -143,7 +144,7 @@ public class PhotoDetailRepositoryImplTest {
 
 			List<PhotoTagMst> photoTagMstList = new ArrayList<PhotoTagMst>();
 
-			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
+			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
 			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
 
 			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
@@ -170,7 +171,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
 			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo());
 
-			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
+			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
 		}
 		
@@ -225,7 +226,7 @@ public class PhotoDetailRepositoryImplTest {
 					.tagEnglishName(new TagEnglishName("sea"))
 					.build());
 
-			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
+			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
 			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
 
 			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
@@ -260,7 +261,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
 			assertEquals(1L, photoListGetDtoCapture.getPhotoAccountNo());
 
-			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
+			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
 		}
 	}
@@ -304,7 +305,7 @@ public class PhotoDetailRepositoryImplTest {
 
 			List<PhotoTagMst> photoTagMstList = new ArrayList<PhotoTagMst>();
 
-			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
+			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
 			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
 
 			PhotoDetailModel actual = photoDetailRepositoryImpl.getPhotoDetail(photoDetailGetModel);
@@ -334,7 +335,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(1L, photoDetailGetDtoCapture.getPhotoAccountNo());
 			assertEquals(1L, photoDetailGetDtoCapture.getPhotoNo());
 
-			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
+			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
 			assertEquals(1L, photoTagMstCapture.getPhotoNo().value());
 			assertNull(photoTagMstCapture.getTagNo());
@@ -391,7 +392,7 @@ public class PhotoDetailRepositoryImplTest {
 					.tagEnglishName(new TagEnglishName("sea"))
 					.build());
 
-			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
+			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
 			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
 
 			PhotoDetailModel actual = photoDetailRepositoryImpl.getPhotoDetail(photoDetailGetModel);
@@ -422,7 +423,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(1L, photoDetailGetDtoCapture.getPhotoAccountNo());
 			assertEquals(1L, photoDetailGetDtoCapture.getPhotoNo());
 
-			PhotoTagMst photoTagMstCapture = photoTagMstCaptor.getValue();
+			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
 			assertEquals(1L, photoTagMstCapture.getPhotoNo().value());
 			assertNull(photoTagMstCapture.getTagNo());
@@ -444,7 +445,7 @@ public class PhotoDetailRepositoryImplTest {
 			doReturn(null).when(photoDetailMapper).getPhotoDetail(photoDetailGetDtoCaptor.capture());
 			
 			assertThrows(PhotoNotFoundException.class, () -> photoDetailRepositoryImpl.getPhotoDetail(photoDetailGetModel));
-			verify(photoTagMstMapper, times(0)).select(any(PhotoTagMst.class));
+			verify(photoTagMstMapper, times(0)).select(any(PhotoTagMstCondition.class));
 		}
 	}
 }

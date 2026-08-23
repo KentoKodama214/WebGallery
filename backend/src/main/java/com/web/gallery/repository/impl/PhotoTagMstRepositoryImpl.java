@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.PhotoTagMst;
+import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.mapper.PhotoTagMstMapper;
@@ -52,8 +53,8 @@ public class PhotoTagMstRepositoryImpl implements PhotoTagMstRepository {
 	 */
 	@Override
 	public void clear(PhotoTagDeleteModel photoTagDeleteModel) {
-		PhotoTagMst photoTagMst = PhotoTagMst.from(photoTagDeleteModel);
-		photoTagMstMapper.delete(photoTagMst);
+		PhotoTagMstCondition condition = PhotoTagMstCondition.from(photoTagDeleteModel);
+		photoTagMstMapper.delete(condition);
 	}
 
 	/**
@@ -63,6 +64,6 @@ public class PhotoTagMstRepositoryImpl implements PhotoTagMstRepository {
 	 */
 	@Override
 	public void deleteByAccountNo(AccountNo accountNo) {
-		photoTagMstMapper.delete(PhotoTagMst.conditionByAccountNo(accountNo));
+		photoTagMstMapper.delete(PhotoTagMstCondition.byAccountNo(accountNo));
 	}
 }
