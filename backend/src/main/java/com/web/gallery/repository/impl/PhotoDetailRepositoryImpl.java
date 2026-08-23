@@ -13,7 +13,7 @@ import com.web.gallery.dto.PhotoListGetDto;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.PhotoNotFoundException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.PhotoDetailMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoDetailGetModel;
@@ -57,18 +57,18 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 	 * 写真のメタデータを含めた詳細情報を取得する
 	 *
 	 * @param	photoDetailGetModel		{@link PhotoDetailGetModel}
-	 * @return							{@link PhotoDetailModel}
-	 * @throws	PhotoNotFoundException	写真が存在しなかった場合
+	 * @return						{@link PhotoDetailModel}
+	 * @throws	GalleryException	写真が存在しなかった場合
 	 */
 	@Override
-	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws PhotoNotFoundException {
+	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException {
 		PhotoDetailGetDto photoGetDto = PhotoDetailGetDto.from(photoDetailGetModel);
 		PhotoDetailDto photoDetailDto = photoDetailMapper.getPhotoDetail(photoGetDto);
 
 		if(Objects.isNull(photoDetailDto)) {
 			log.warn("Photo not found. (AccountNo: {}, PhotoAccountNo: {}, PhotoNo: {})"
 					, photoGetDto.getAccountNo(), photoGetDto.getPhotoAccountNo(), photoGetDto.getPhotoNo());
-			throw new PhotoNotFoundException(ErrorEnum.PHOTO_NOT_FOUND);
+			throw ErrorEnum.PHOTO_NOT_FOUND.toException();
 		}
 
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(

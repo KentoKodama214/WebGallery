@@ -3,8 +3,7 @@ package com.web.gallery.repository;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailModel;
 
@@ -17,26 +16,26 @@ public interface PhotoMstRepository {
 	 * 
 	 * @param	photoDetailModel		{@link PhotoDetailModel}
 	 * @param	filePath				写真の保存ファイルパス
-	 * @param	newPhotoNo				新規採番した写真番号
-	 * @throws	RegistFailureException	登録に失敗した場合
+	 * @param	newPhotoNo			新規採番した写真番号
+	 * @throws	GalleryException	登録に失敗した場合
 	 */
-	void regist(PhotoDetailModel photoDetailModel, ImageFilePath filePath, PhotoNo newPhotoNo) throws RegistFailureException;
-	
+	void regist(PhotoDetailModel photoDetailModel, ImageFilePath filePath, PhotoNo newPhotoNo) throws GalleryException;
+
 	/**
 	 * 写真マスタを更新する
-	 * 
-	 * @param	photoDetailModel		{@link PhotoDetailModel}
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 *
+	 * @param	photoDetailModel	{@link PhotoDetailModel}
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
-	void update(PhotoDetailModel photoDetailModel) throws UpdateFailureException;
-	
+	void update(PhotoDetailModel photoDetailModel) throws GalleryException;
+
 	/**
 	 * 写真マスタを削除する
-	 * 
-	 * @param	photoDeleteModel		{@link PhotoDeleteModel}
-	 * @throws	UpdateFailureException	削除に失敗した場合
+	 *
+	 * @param	photoDeleteModel	{@link PhotoDeleteModel}
+	 * @throws	GalleryException	削除に失敗した場合
 	 */
-	void delete(PhotoDeleteModel photoDeleteModel) throws UpdateFailureException;
+	void delete(PhotoDeleteModel photoDeleteModel) throws GalleryException;
 	
 	/**
 	 * アカウント番号から新しい写真番号を発番する

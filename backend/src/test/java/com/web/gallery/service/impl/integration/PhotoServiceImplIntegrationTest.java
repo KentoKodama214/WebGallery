@@ -60,8 +60,8 @@ import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.FileDuplicateException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
-import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
@@ -376,7 +376,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系")
-		void getPhotoDetail_success() throws PhotoNotFoundException {
+		void getPhotoDetail_success() throws GalleryException {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))
@@ -416,7 +416,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("異常系：PhotoNotFoundExceptionをthrowする")
-		void getPhotoDetail_PhotoNotFoundException() throws PhotoNotFoundException {
+		void getPhotoDetail_PhotoNotFoundException() throws GalleryException {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))
@@ -589,7 +589,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：photoDetailModelListがnullの場合、終了")
-		void savePhotos_photoDetailModelList_is_null() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_photoDetailModelList_is_null() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), null);
@@ -601,7 +601,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：photoDetailModelListがemptyの場合、終了")
-		void savePhotos_photoDetailModelList_is_empty() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_photoDetailModelList_is_empty() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 			List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
@@ -614,7 +614,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(3)
 		@DisplayName("正常系：新規登録のみ")
-		void savePhotos_newPhoto() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_newPhoto() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -684,7 +684,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(4)
 		@DisplayName("正常系：更新のみ")
-		void savePhotos_updatePhoto() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_updatePhoto() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -755,7 +755,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(5)
 		@DisplayName("正常系：新規登録＋更新")
-		void savePhotos_newPhoto_and_updatePhoto() throws FileDuplicateException, RegistFailureException, UpdateFailureException  {
+		void savePhotos_newPhoto_and_updatePhoto() throws GalleryException  {
 			String accountId = "aaaaaaaa";
 			
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -827,7 +827,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(6)
 		@DisplayName("異常系：FileDuplicateExceptionをthrowする（写真は複数枚）")
-		void savePhotos_FileDuplicateException() throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+		void savePhotos_FileDuplicateException() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
@@ -869,7 +869,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：photoDeleteModelListが0件の場合、終了")
-		void deletePhotos_photoDeleteModelList_empty() throws UpdateFailureException {
+		void deletePhotos_photoDeleteModelList_empty() throws GalleryException {
 			photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.empty());
 			
 			List<PhotoMst> actualData = jdbcTemplate.query(
@@ -901,7 +901,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：photoDetailModelListが2件以上の場合")
-		void deletePhotos_success() throws UpdateFailureException {
+		void deletePhotos_success() throws GalleryException {
 			List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
 			photoDeleteModelList.add(PhotoDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -1023,7 +1023,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void deletePhotos_UpdateFailureException() throws UpdateFailureException {
+		void deletePhotos_UpdateFailureException() throws GalleryException {
 			List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
 			photoDeleteModelList.add(PhotoDeleteModel.builder()
 					.accountNo(new AccountNo(1L))

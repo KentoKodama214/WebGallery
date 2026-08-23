@@ -3,10 +3,7 @@ package com.web.gallery.service;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.exception.FileDuplicateException;
-import com.web.gallery.exception.PhotoNotFoundException;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
@@ -29,32 +26,33 @@ public interface PhotoService {
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する
 	 * 
-	 * @param	photoDetailGetModel		{@link PhotoDetailGetModel}
-	 * @return							{@link PhotoDetailModel}
-	 * @throws	PhotoNotFoundException	写真が存在しなかった場合
+	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
+	 * @return						{@link PhotoDetailModel}
+	 * @throws	GalleryException	写真が存在しなかった場合
 	 */
-	PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws PhotoNotFoundException;
-	
+	PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException;
+
 	/**
 	 * 写真を登録・更新する
-	 * 
+	 *
 	 * @param	accountId				アカウントID
 	 * @param	photoDetailModelList	{@link PhotoDetailModelList}
-	 * @throws	FileDuplicateException 	同じファイル名のファイルが既に保存済みの場合
-	 * @throws	RegistFailureException	登録に失敗した場合
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・同じファイル名のファイルが既に保存済みの場合
+	 *                              	・登録に失敗した場合
+	 *                              	・更新に失敗した場合
 	 * @return							登録・更新した写真番号
 	 */
-	PhotoNo savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException;
+	PhotoNo savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws GalleryException;
 
 	/**
 	 * 写真を削除する
 	 *
 	 * @param	accountId				アカウントID
 	 * @param	photoDeleteModelList	{@link PhotoDeleteModelList}
-	 * @throws	UpdateFailureException	削除に失敗した場合
+	 * @throws	GalleryException		削除に失敗した場合
 	 */
-	void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList) throws UpdateFailureException;
+	void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList) throws GalleryException;
 	
 	/**
 	 * 該当アカウントが写真の登録枚数の上限に達しているかチェックする

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.ForbiddenAccountException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
 
 import lombok.RequiredArgsConstructor;
@@ -24,12 +24,12 @@ public class AdminAuthorityAspect {
 	/**
 	 * 管理者権限のバリデーションを行う
 	 *
-	 * @throws	ForbiddenAccountException	管理者権限がない場合
+	 * @throws	GalleryException	管理者権限がない場合
 	 */
 	@Before("@annotation(com.web.gallery.annotation.RequireAdminAuthority)")
-	public void validateAdminAuthority() throws ForbiddenAccountException {
+	public void validateAdminAuthority() throws GalleryException {
 		if (sessionHelper.getAuthorityKbn() != AuthorityEnum.ADMINISTRATOR) {
-			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_ADMIN);
+			throw ErrorEnum.NOT_AUTHORIZED_TO_ADMIN.toException();
 		}
 	}
 }

@@ -39,6 +39,7 @@ import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.entity.Account;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
@@ -136,7 +137,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@DisplayName("正常系：Nullのパラメータを含むAccountModelの登録")
 		@Sql("/sql/common/cleanup.sql")
 		@Sql("/sql/common/ResetAccountNoSeq.sql")
-		void regist_contain_null_parameter() throws RegistFailureException {
+		void regist_contain_null_parameter() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountId(new AccountId("zzzzzzzz"))
 					.accountName(new AccountName("ZZZZZZZZ"))
@@ -192,7 +193,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@DisplayName("正常系：Nullのパラメータを含まないAccountModelの登録")
 		@Sql("/sql/common/cleanup.sql")
 		@Sql("/sql/common/ResetAccountNoSeq.sql")
-		void regist_not_contain_null_parameter() throws RegistFailureException {
+		void regist_not_contain_null_parameter() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountId(new AccountId("zzzzzzzz"))
 					.accountName(new AccountName("ZZZZZZZZ"))
@@ -253,7 +254,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		@Sql("/sql/common/cleanup.sql")
 		@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
-		void regist_RegistFailureException() throws RegistFailureException {
+		void regist_RegistFailureException() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountId(new AccountId("aaaaaaaa"))
 					.accountName(new AccountName("AAAAAAAA"))
@@ -273,7 +274,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：Nullのパラメータを含むAccountModelでの更新")
-		void update_contain_null_parameter() throws UpdateFailureException {
+		void update_contain_null_parameter() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId("aaaaaaaa"))
@@ -328,7 +329,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：Nullのパラメータを含まないAccountModelでの更新")
-		void update_not_contain_null_parameter() throws UpdateFailureException {
+		void update_not_contain_null_parameter() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId("aaaaaaaa"))
@@ -411,7 +412,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：Nullのパラメータを含むAccountModelでの更新")
-		void updateLoginFailureCount_contain_null_parameter() throws UpdateFailureException {
+		void updateLoginFailureCount_contain_null_parameter() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountNo(new AccountNo(8L))
 					.build();
@@ -464,7 +465,7 @@ public class AccountRepositoryImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：Nullのパラメータを含まないAccountModelでの更新")
-		void updateLoginFailureCount_not_contain_null_parameter() throws UpdateFailureException {
+		void updateLoginFailureCount_not_contain_null_parameter() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
 					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))

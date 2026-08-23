@@ -7,8 +7,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.entity.PhotoFavoriteCondition;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoFavoriteModel;
@@ -30,11 +29,11 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	/**
 	 * 写真お気に入りを登録する
 	 *
-	 * @param	favoriteModel			{@link PhotoFavoriteModel}
-	 * @throws	RegistFailureException	登録に失敗した場合
+	 * @param	favoriteModel		{@link PhotoFavoriteModel}
+	 * @throws	GalleryException	登録に失敗した場合
 	 */
 	@Override
-	public void regist(PhotoFavoriteModel favoriteModel) throws RegistFailureException {
+	public void regist(PhotoFavoriteModel favoriteModel) throws GalleryException {
 		PhotoFavorite photoFavorite = PhotoFavorite.from(favoriteModel);
 
 		try {
@@ -43,25 +42,25 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 		catch (DuplicateKeyException e) {
 			log.warn("PhotoFavorite: Duplicate Key (AccountNo: {}, FavoritePhotoAccountNo: {}, FavoritePhotoNo: {})",
 					favoriteModel.getAccountNo().value(), favoriteModel.getFavoritePhotoAccountNo().value(), favoriteModel.getFavoritePhotoNo().value(), e);
-			throw new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_FAVORITE);
+			throw ErrorEnum.FAIL_TO_REGIST_FAVORITE.toException();
 		}
 	}
 
 	/**
 	 * 写真お気に入りを削除する
 	 *
-	 * @param	favoriteDeleteModel		{@link PhotoFavoriteDeleteModel}
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @param	favoriteDeleteModel	{@link PhotoFavoriteDeleteModel}
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@Override
-	public void delete(PhotoFavoriteDeleteModel favoriteDeleteModel) throws UpdateFailureException {
+	public void delete(PhotoFavoriteDeleteModel favoriteDeleteModel) throws GalleryException {
 		PhotoFavoriteCondition condition = PhotoFavoriteCondition.from(favoriteDeleteModel);
 
 		if (photoFavoriteMapper.delete(condition) < 1) {
 			log.warn("PhotoFavorite: Delete Failed (AccountNo: {}, FavoritePhotoAccountNo: {}, FavoritePhotoNo: {})",
 					favoriteDeleteModel.getAccountNo() != null ? favoriteDeleteModel.getAccountNo().value() : null,
 					favoriteDeleteModel.getFavoritePhotoAccountNo().value(), favoriteDeleteModel.getFavoritePhotoNo().value());
-			throw new UpdateFailureException(ErrorEnum.FAIL_TO_CANCEL_FAVORITE);
+			throw ErrorEnum.FAIL_TO_CANCEL_FAVORITE.toException();
 		}
 	}
 

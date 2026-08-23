@@ -44,6 +44,7 @@ import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
@@ -268,7 +269,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：写真のメタデータがデフォルト値、写真タグが0件の場合")
-		void getPhotoDetail_photoTag_default_value_not_found() throws PhotoNotFoundException {
+		void getPhotoDetail_photoTag_default_value_not_found() throws GalleryException {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(2L))
@@ -301,7 +302,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：写真のメタデータがデフォルト値でない場、写真タグが1件以上の場合")
-		void getPhotoDetail_not_default_value_photoTag_found() throws PhotoNotFoundException {
+		void getPhotoDetail_not_default_value_photoTag_found() throws GalleryException {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))

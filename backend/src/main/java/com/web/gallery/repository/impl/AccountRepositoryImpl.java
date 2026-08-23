@@ -12,8 +12,7 @@ import com.web.gallery.entity.Account;
 import com.web.gallery.entity.AccountCondition;
 import com.web.gallery.entity.AccountUpdateTarget;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.AccountMapper;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
@@ -62,11 +61,11 @@ public class AccountRepositoryImpl implements AccountRepository {
 	/**
 	 * Accountテーブルへ登録する
 	 *
-	 * @param	accountModel			{@link AccountModel}
-	 * @throws	RegistFailureException	登録に失敗した場合
+	 * @param	accountModel		{@link AccountModel}
+	 * @throws	GalleryException	登録に失敗した場合
 	 */
 	@Override
-	public void regist(AccountModel accountModel) throws RegistFailureException {
+	public void regist(AccountModel accountModel) throws GalleryException {
 		Account account = Account.from(accountModel, passwordEncoder);
 
 		try {
@@ -74,41 +73,41 @@ public class AccountRepositoryImpl implements AccountRepository {
 		}
 		catch (DuplicateKeyException e) {
 			log.warn("Account: Duplicate Key (AccountId: {})", accountModel.getAccountId().value(), e);
-			throw new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_ACCOUNT);
+			throw ErrorEnum.FAIL_TO_REGIST_ACCOUNT.toException();
 		}
 	}
 
 	/**
 	 * Accountテーブルで該当するレコードを更新する
 	 *
-	 * @param	accountModel			{@link AccountModel}
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @param	accountModel		{@link AccountModel}
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@Override
-	public void update(AccountModel accountModel) throws UpdateFailureException {
+	public void update(AccountModel accountModel) throws GalleryException {
 		AccountCondition condition = AccountCondition.byAccountNo(accountModel.getAccountNo().value());
 		AccountUpdateTarget target = AccountUpdateTarget.fromForUpdate(accountModel, passwordEncoder);
 
 		if (accountMapper.update(condition, target) < 1) {
 			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
-			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT);
+			throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
 		}
 	}
 
 	/**
 	 * Accountテーブルのログイン失敗回数を更新する
 	 *
-	 * @param	accountModel			{@link AccountModel}
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @param	accountModel		{@link AccountModel}
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@Override
-	public void updateLoginFailureCount(AccountModel accountModel) throws UpdateFailureException {
+	public void updateLoginFailureCount(AccountModel accountModel) throws GalleryException {
 		AccountCondition condition = AccountCondition.byAccountNo(accountModel.getAccountNo().value());
 		AccountUpdateTarget target = AccountUpdateTarget.fromForUpdateLoginFailure(accountModel);
 
 		if (accountMapper.update(condition, target) < 1) {
 			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
-			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT);
+			throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
 		}
 	}
 

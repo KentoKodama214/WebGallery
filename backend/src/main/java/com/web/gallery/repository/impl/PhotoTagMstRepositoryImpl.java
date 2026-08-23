@@ -7,7 +7,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.RegistFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
@@ -29,11 +29,11 @@ public class PhotoTagMstRepositoryImpl implements PhotoTagMstRepository {
 	/**
 	 * 写真タグマスタを登録する
 	 *
-	 * @param	photoTagModel			{@link PhotoTagModel}
-	 * @throws	RegistFailureException	登録に失敗した場合
+	 * @param	photoTagModel		{@link PhotoTagModel}
+	 * @throws	GalleryException	登録に失敗した場合
 	 */
 	@Override
-	public void regist(PhotoTagModel photoTagModel) throws RegistFailureException {
+	public void regist(PhotoTagModel photoTagModel) throws GalleryException {
 		PhotoTagMst photoTagMst = PhotoTagMst.from(photoTagModel);
 
 		try {
@@ -42,7 +42,7 @@ public class PhotoTagMstRepositoryImpl implements PhotoTagMstRepository {
 		catch (DuplicateKeyException e) {
 			log.warn("PhotoTagMst: Duplicate Key (AccountNo: {}, PhototNo: {}, TagNo: {})",
 					photoTagModel.getAccountNo().value(), photoTagModel.getPhotoNo().value(), photoTagModel.getTagNo().value(), e);
-			throw new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_PHOTO_TAG);
+			throw ErrorEnum.FAIL_TO_REGIST_PHOTO_TAG.toException();
 		}
 	}
 

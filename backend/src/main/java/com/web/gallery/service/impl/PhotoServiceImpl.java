@@ -21,10 +21,7 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
-import com.web.gallery.exception.FileDuplicateException;
-import com.web.gallery.exception.PhotoNotFoundException;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
@@ -91,13 +88,13 @@ public class PhotoServiceImpl implements PhotoService {
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する
 	 *
-	 * @param	photoDetailGetModel		{@link PhotoDetailGetModel}
-	 * @return							{@link PhotoDetailModel}
-	 * @throws	PhotoNotFoundException	写真が存在しなかった場合
+	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
+	 * @return						{@link PhotoDetailModel}
+	 * @throws	GalleryException	写真が存在しなかった場合
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws PhotoNotFoundException {
+	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException {
 		return photoDetailRepository.getPhotoDetail(photoDetailGetModel);
 	}
 
@@ -105,13 +102,14 @@ public class PhotoServiceImpl implements PhotoService {
 	 * 写真を登録・更新する
 	 *
 	 * @param	photoDetailModelList	{@link PhotoDetailModelList}
-	 * @throws	FileDuplicateException 	同じファイル名のファイルが既に保存済みの場合
-	 * @throws	RegistFailureException	登録に失敗した場合
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・同じファイル名のファイルが既に保存済みの場合
+	 *                              	・登録に失敗した場合
+	 *                              	・更新に失敗した場合
 	 */
 	@Override
 	@Transactional
-	public PhotoNo savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws FileDuplicateException, RegistFailureException, UpdateFailureException {
+	public PhotoNo savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws GalleryException {
 		if(Objects.isNull(photoDetailModelList)) return null;
 		if(photoDetailModelList.isEmpty()) return null;
 
@@ -124,7 +122,7 @@ public class PhotoServiceImpl implements PhotoService {
 				String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
 				if(photoMstRepository.isExistPhoto(photoDetailModel)) {
 					log.warn("Duplicate image file (filename: {}}", filename);
-					throw new FileDuplicateException(ErrorEnum.DUPLICATE_PHOTO_FILE);
+					throw ErrorEnum.DUPLICATE_PHOTO_FILE.toException();
 				}
 
 				photoMstRepository.regist(photoDetailModel, new ImageFilePath(filePath + filename), new PhotoNo(photoNo));
@@ -145,11 +143,11 @@ public class PhotoServiceImpl implements PhotoService {
 	 *
 	 * @param	accountId				アカウントID
 	 * @param	photoDeleteModelList	{@link PhotoDeleteModelList}
-	 * @throws	UpdateFailureException	削除に失敗した場合
+	 * @throws	GalleryException		削除に失敗した場合
 	 */
 	@Override
 	@Transactional
-	public void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList) throws UpdateFailureException {
+	public void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList) throws GalleryException {
 		String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
 
 		for(PhotoDeleteModel photoDeleteModel : photoDeleteModelList) {
@@ -212,11 +210,11 @@ public class PhotoServiceImpl implements PhotoService {
 	/**
 	 * 写真タグを登録する
 	 *
-	 * @param	photoTagModelList		{@link PhotoTagModelList}
-	 * @param	newPhotoNo				新規採番された写真番号
-	 * @throws	RegistFailureException	登録に失敗した場合
+	 * @param	photoTagModelList	{@link PhotoTagModelList}
+	 * @param	newPhotoNo			新規採番された写真番号
+	 * @throws	GalleryException	登録に失敗した場合
 	 */
-	private void registPhotoTags(PhotoTagModelList photoTagModelList, Long newPhotoNo) throws RegistFailureException {
+	private void registPhotoTags(PhotoTagModelList photoTagModelList, Long newPhotoNo) throws GalleryException {
 		if(Objects.isNull(photoTagModelList)) return;
 
 		int tagNo = 1;

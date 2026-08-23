@@ -2,8 +2,7 @@ package com.web.gallery.repository;
 
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
 
@@ -32,26 +31,26 @@ public interface AccountRepository {
 	/**
 	 * Accountテーブルへ登録する
 	 *
-	 * @param	accountModel			{@link AccountModel}
-	 * @throws	RegistFailureException	登録に失敗した場合
+	 * @param	accountModel		{@link AccountModel}
+	 * @throws	GalleryException	登録に失敗した場合
 	 */
-	void regist(AccountModel accountModel) throws RegistFailureException;
+	void regist(AccountModel accountModel) throws GalleryException;
 
 	/**
 	 * Accountテーブルで該当するレコードを更新する
 	 *
-	 * @param	accountModel			{@link AccountModel}
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @param	accountModel		{@link AccountModel}
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
-	void update(AccountModel accountModel) throws UpdateFailureException;
+	void update(AccountModel accountModel) throws GalleryException;
 
 	/**
 	 * Accountテーブルのログイン失敗回数を更新する
 	 *
-	 * @param	accountModel			{@link AccountModel}
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @param	accountModel		{@link AccountModel}
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
-	void updateLoginFailureCount(AccountModel accountModel) throws UpdateFailureException;
+	void updateLoginFailureCount(AccountModel accountModel) throws GalleryException;
 
 	/**
 	 * アカウントIDに該当するアカウントの存在有無をチェックする（新規登録用、除外なし）

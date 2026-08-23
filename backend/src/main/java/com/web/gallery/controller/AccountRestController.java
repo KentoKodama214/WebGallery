@@ -28,10 +28,8 @@ import com.web.gallery.controller.response.AccountUpdateResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.BadRequestException;
-import com.web.gallery.exception.ForbiddenAccountException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.service.impl.AccountServiceImpl;
@@ -79,7 +77,7 @@ public class AccountRestController {
 	 *
 	 * @param	accountId	アカウントID
 	 * @return				{@link AccountDetailResponse}
-	 * @throws	ForbiddenAccountException	認証ユーザーと異なるアカウントIDの場合
+	 * @throws	GalleryException	認証ユーザーと異なるアカウントIDの場合
 	 */
 	@Operation(summary = "アカウント詳細取得", description = "指定したアカウントの詳細情報を取得する")
 	@ApiResponse(responseCode = "200", description = "取得成功")
@@ -87,10 +85,10 @@ public class AccountRestController {
 	@SecurityRequirement(name = "Bearer")
 	@GetMapping(ApiRoutes.API_ACCOUNT)
 	public ResponseEntity<AccountDetailResponse> getAccount(
-			@PathVariable String accountId) throws ForbiddenAccountException {
+			@PathVariable String accountId) throws GalleryException {
 
 		if (!accountId.equals(sessionHelper.getAccountId())) {
-			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT);
+			throw ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT.toException();
 		}
 
 		AccountModel accountModel = accountServiceImpl.getAccountById(new AccountId(accountId));
@@ -106,8 +104,9 @@ public class AccountRestController {
 	 * @param	accountRegistRequest	{@link AccountRegistRequest}
 	 * @param	result					AccountRegistRequestのバインディング結果
 	 * @return							{@link AccountRegistResponse}
-	 * @throws	BadRequestException 	リクエストパラメータが不正の場合
-	 * @throws	RegistFailureException 	一意制約違反でアカウントの登録に失敗した場合
+	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・リクエストパラメータが不正の場合
+	 *                              	・一意制約違反でアカウントの登録に失敗した場合
 	 */
 	@Operation(summary = "アカウント登録", description = "新規アカウントを登録する")
 	@ApiResponse(responseCode = "200", description = "登録成功")
@@ -116,14 +115,14 @@ public class AccountRestController {
 	@PostMapping(ApiRoutes.API_ACCOUNTS)
 	public ResponseEntity<AccountRegistResponse> register(
 			@RequestBody @Validated AccountRegistRequest accountRegistRequest,
-			BindingResult result) throws BadRequestException, RegistFailureException {
-		
+			BindingResult result) throws GalleryException {
+
 		if(result.hasErrors()) {
 			for(FieldError error : result.getFieldErrors()) {
 				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
 						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
 			}
-			throw new BadRequestException(ErrorEnum.INVALID_INPUT);
+			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 		
 		AccountModel accountModel = AccountModel.from(accountRegistRequest);
@@ -139,8 +138,9 @@ public class AccountRestController {
 	 * @param	accountUpdateRequest	{@link AccountUpdateRequest}
 	 * @param	result					AccountUpdateRequestのバインディング結果
 	 * @return							{@link AccountUpdateResponse}
-	 * @throws	BadRequestException		リクエストパラメータが不正の場合
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・リクエストパラメータが不正の場合
+	 *                              	・更新に失敗した場合
 	 */
 	@Operation(summary = "アカウント更新", description = "アカウント情報を更新する")
 	@ApiResponse(responseCode = "200", description = "更新成功")
@@ -152,23 +152,23 @@ public class AccountRestController {
 	public ResponseEntity<AccountUpdateResponse> update(
 			@PathVariable String accountId,
 			@RequestBody @Validated AccountUpdateRequest accountUpdateRequest,
-			BindingResult result) throws BadRequestException, UpdateFailureException {
-		
+			BindingResult result) throws GalleryException {
+
 		if(result.hasErrors()) {
 			for(FieldError error : result.getFieldErrors()) {
 				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
 						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
 			}
-			
+
 			List<String> fieldList
 				= result.getFieldErrors().stream().map(FieldError::getField).distinct().toList();
-			
-			if(!(fieldList.size() == 1 && 
-					"newPassword".equals(fieldList.getFirst()) && 
+
+			if(!(fieldList.size() == 1 &&
+					"newPassword".equals(fieldList.getFirst()) &&
 				accountUpdateRequest.getNewPassword().isEmpty())) {
 					// 新しいパスワードが空欄で他にパラメータ不正がない場合は、スキップ
 					// 新しいパスワード以外や新しいパスワードの入力に不正がある場合は、例外
-					throw new BadRequestException(ErrorEnum.INVALID_INPUT);
+					throw ErrorEnum.INVALID_INPUT.toException();
 			}
 		}
 		
@@ -188,7 +188,7 @@ public class AccountRestController {
 	 *
 	 * @param	accountId				アカウントID
 	 * @return							{@link ResponseEntity}
-	 * @throws	ForbiddenAccountException	認証ユーザーと異なるアカウントIDの場合
+	 * @throws	GalleryException		認証ユーザーと異なるアカウントIDの場合
 	 */
 	@Operation(summary = "アカウント削除", description = "アカウントと関連データをすべて物理削除する")
 	@ApiResponse(responseCode = "200", description = "削除成功")
@@ -196,10 +196,10 @@ public class AccountRestController {
 	@SecurityRequirement(name = "Bearer")
 	@DeleteMapping(ApiRoutes.API_ACCOUNT)
 	public ResponseEntity<Void> deleteAccount(
-			@PathVariable String accountId) throws ForbiddenAccountException {
+			@PathVariable String accountId) throws GalleryException {
 
 		if (!accountId.equals(sessionHelper.getAccountId())) {
-			throw new ForbiddenAccountException(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT);
+			throw ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT.toException();
 		}
 
 		accountServiceImpl.deleteAccount(new AccountNo(sessionHelper.getAccountNo()), new AccountId(accountId));

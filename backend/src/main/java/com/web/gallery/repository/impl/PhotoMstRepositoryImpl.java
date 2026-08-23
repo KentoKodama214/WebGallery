@@ -10,8 +10,7 @@ import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoMstCondition;
 import com.web.gallery.entity.PhotoMstUpdateTarget;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailModel;
@@ -35,11 +34,11 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 *
 	 * @param	photoDetailModel		{@link PhotoDetailModel}
 	 * @param	filePath				写真の保存ファイルパス
-	 * @param	newPhotoNo				新規採番した写真番号
-	 * @throws	RegistFailureException	登録に失敗した場合
+	 * @param	newPhotoNo			新規採番した写真番号
+	 * @throws	GalleryException	登録に失敗した場合
 	 */
 	@Override
-	public void regist(PhotoDetailModel photoDetailModel, ImageFilePath filePath, PhotoNo newPhotoNo) throws RegistFailureException {
+	public void regist(PhotoDetailModel photoDetailModel, ImageFilePath filePath, PhotoNo newPhotoNo) throws GalleryException {
 		PhotoMst photoMst = PhotoMst.fromForRegist(photoDetailModel, filePath.value(), newPhotoNo.value());
 
 		try {
@@ -47,41 +46,41 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 		}
 		catch (DuplicateKeyException e) {
 			log.warn("PhotoMst: Duplicate Key (AccountNo: {}, PhotoNo: {})", photoDetailModel.getAccountNo().value(), newPhotoNo.value(), e);
-			throw new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_PHOTO);
+			throw ErrorEnum.FAIL_TO_REGIST_PHOTO.toException();
 		}
 	}
 
 	/**
 	 * 写真マスタを更新する
 	 *
-	 * @param	photoDetailModel		{@link PhotoDetailModel}
-	 * @throws	UpdateFailureException	更新に失敗した場合
+	 * @param	photoDetailModel	{@link PhotoDetailModel}
+	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@Override
-	public void update(PhotoDetailModel photoDetailModel) throws UpdateFailureException {
+	public void update(PhotoDetailModel photoDetailModel) throws GalleryException {
 		PhotoMstCondition condition = PhotoMstCondition.byAccountAndPhoto(photoDetailModel.getAccountNo().value(), photoDetailModel.getPhotoNo().value());
 		PhotoMstUpdateTarget target = PhotoMstUpdateTarget.fromForUpdate(photoDetailModel);
 
 		if (photoMstMapper.update(condition, target) < 1) {
 			log.warn("PhotoMst: Update Failed (AccountNo: {}, PhotoNo: {})", photoDetailModel.getAccountNo().value(), photoDetailModel.getPhotoNo().value());
-			throw new UpdateFailureException(ErrorEnum.FAIL_TO_UPDATE_PHOTO);
+			throw ErrorEnum.FAIL_TO_UPDATE_PHOTO.toException();
 		}
 	}
 
 	/**
 	 * 写真マスタを削除する
 	 *
-	 * @param	photoDeleteModel		{@link PhotoDeleteModel}
-	 * @throws	UpdateFailureException	削除に失敗した場合
+	 * @param	photoDeleteModel	{@link PhotoDeleteModel}
+	 * @throws	GalleryException	削除に失敗した場合
 	 */
 	@Override
-	public void delete(PhotoDeleteModel photoDeleteModel) throws UpdateFailureException {
+	public void delete(PhotoDeleteModel photoDeleteModel) throws GalleryException {
 		PhotoMstCondition condition = PhotoMstCondition.byAccountAndPhoto(photoDeleteModel.getAccountNo().value(), photoDeleteModel.getPhotoNo().value());
 		PhotoMstUpdateTarget target = PhotoMstUpdateTarget.forDelete(photoDeleteModel);
 
 		if (photoMstMapper.update(condition, target) < 1) {
 			log.warn("PhotoMst: Delete Failed (AccountNo: {}, PhotoNo: {})", photoDeleteModel.getAccountNo().value(), photoDeleteModel.getPhotoNo().value());
-			throw new UpdateFailureException(ErrorEnum.FAIL_TO_DELETE_PHOTO);
+			throw ErrorEnum.FAIL_TO_DELETE_PHOTO.toException();
 		}
 	}
 

@@ -49,7 +49,7 @@ import com.web.gallery.domain.common.UpdatedBy;
 import com.web.gallery.entity.Account;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
-import com.web.gallery.exception.RegistFailureException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
@@ -97,7 +97,7 @@ public class AccountServiceImplIntegrationTest {
 		@DisplayName("正常系：アカウントを新規登録")
 		@Sql("/sql/common/cleanup.sql")
 		@Sql("/sql/common/ResetAccountNoSeq.sql")
-		void registAccount_success() throws RegistFailureException {
+		void registAccount_success() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountId(new AccountId("mmmmmmmm"))
 					.accountName(new AccountName("MMMMMMMM"))
@@ -153,7 +153,7 @@ public class AccountServiceImplIntegrationTest {
 		@DisplayName("正常系：アカウントが既に存在する")
 		@Sql("/sql/common/cleanup.sql")
 		@Sql("/sql/service/AccountServiceImplIntegrationTest.sql")
-		void registAccount_account_already_exist() throws RegistFailureException {
+		void registAccount_account_already_exist() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountId(new AccountId("aaaaaaaa"))
 					.accountName(new AccountName("AAAAAAAA"))
@@ -172,7 +172,7 @@ public class AccountServiceImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：アカウントを更新")
-		void updateAccount_success() throws UpdateFailureException {
+		void updateAccount_success() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("zzzzzzzz")).build();
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
@@ -223,7 +223,7 @@ public class AccountServiceImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが既に存在する")
-		void updateAccount_account_already_exist() throws UpdateFailureException {
+		void updateAccount_account_already_exist() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("bbbbbbbb")).build();
 			assertTrue(accountServiceImpl.updateAccount(accountModel));
 
@@ -272,7 +272,7 @@ public class AccountServiceImplIntegrationTest {
 		@Test
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void updateAccount_UpdateFailureException() throws UpdateFailureException {
+		void updateAccount_UpdateFailureException() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(99L)).accountId(new AccountId("zzzzzzzz")).build();
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel));
 		}
@@ -416,7 +416,7 @@ public class AccountServiceImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系")
-		void handle_success() throws UpdateFailureException {
+		void handle_success() throws GalleryException {
 			String username = "kkkkkkkk";
 			String password = "KKKKKKKK";
 			
@@ -484,7 +484,7 @@ public class AccountServiceImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：アカウントが存在する場合")
-		void handle_account_found() throws UpdateFailureException {
+		void handle_account_found() throws GalleryException {
 			String username = "aaaaaaaa";
 			String password = "AAAAAAAA";
 			
@@ -545,7 +545,7 @@ public class AccountServiceImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
-		void handle_account_not_found() throws UpdateFailureException {
+		void handle_account_not_found() throws GalleryException {
 			String username = "zzzzzzzz";
 			String password = "ZZZZZZZZ";
 			

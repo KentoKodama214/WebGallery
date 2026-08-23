@@ -26,6 +26,7 @@ import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.entity.PhotoTagMstCondition;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoTagDeleteModel;
@@ -47,7 +48,7 @@ public class PhotoTagMstRepositoryImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系")
-		void regist_contain_null_parameter() throws RegistFailureException {
+		void regist_contain_null_parameter() throws GalleryException {
 			PhotoTagModel photoTagModel = PhotoTagModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(1L))
