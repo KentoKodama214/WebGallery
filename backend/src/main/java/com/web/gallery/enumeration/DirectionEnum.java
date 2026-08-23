@@ -46,4 +46,14 @@ public enum DirectionEnum {
 				.findFirst()
 				.orElse(DirectionEnum.NONE);
     }
+
+	/**
+	 * 未設定の場合にデフォルトでNONEを返す
+	 *
+	 * @param	nullable	{@link DirectionEnum}（null許容）
+	 * @return				nullableがnullでなければそのまま、nullであればNONE
+	 */
+	public static DirectionEnum getOrDefault(DirectionEnum nullable) {
+		return nullable != null ? nullable : DirectionEnum.NONE;
+	}
 }

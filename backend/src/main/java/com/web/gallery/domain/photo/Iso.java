@@ -22,4 +22,14 @@ public record Iso(Integer value) implements Serializable {
 			throw new IllegalArgumentException("ISOは0以上である必要があります");
 		}
 	}
+
+	/**
+	 * 未設定の場合にDB保存用のデフォルト値を返す
+	 *
+	 * @param	nullable	{@link Iso}（null許容）
+	 * @return				nullableがnullでなければそのまま、nullであればデフォルト値を持つ{@link Iso}
+	 */
+	public static Iso getOrDefault(Iso nullable) {
+		return nullable != null ? nullable : new Iso(0);
+	}
 }

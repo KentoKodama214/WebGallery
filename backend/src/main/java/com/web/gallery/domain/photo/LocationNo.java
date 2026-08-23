@@ -22,4 +22,14 @@ public record LocationNo(Long value) implements Serializable {
 			throw new IllegalArgumentException("ロケーション番号は0以上である必要があります");
 		}
 	}
+
+	/**
+	 * 未設定の場合にDB保存用のデフォルト値を返す
+	 *
+	 * @param	nullable	{@link LocationNo}（null許容）
+	 * @return				nullableがnullでなければそのまま、nullであればデフォルト値を持つ{@link LocationNo}
+	 */
+	public static LocationNo getOrDefault(LocationNo nullable) {
+		return nullable != null ? nullable : new LocationNo(0L);
+	}
 }

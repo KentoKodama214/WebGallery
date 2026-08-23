@@ -23,4 +23,14 @@ public record ShutterSpeed(BigDecimal value) implements Serializable {
 			throw new IllegalArgumentException("シャッタースピードは0以上である必要があります");
 		}
 	}
+
+	/**
+	 * 未設定の場合にDB保存用のデフォルト値を返す
+	 *
+	 * @param	nullable	{@link ShutterSpeed}（null許容）
+	 * @return				nullableがnullでなければそのまま、nullであればデフォルト値を持つ{@link ShutterSpeed}
+	 */
+	public static ShutterSpeed getOrDefault(ShutterSpeed nullable) {
+		return nullable != null ? nullable : new ShutterSpeed(BigDecimal.ZERO);
+	}
 }

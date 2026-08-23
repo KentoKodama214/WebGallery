@@ -1,9 +1,5 @@
 package com.web.gallery.entity;
 
-import java.math.BigDecimal;
-import java.util.Optional;
-
-import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.common.UpdatedBy;
 import com.web.gallery.domain.photo.Caption;
@@ -84,27 +80,17 @@ public class PhotoMstUpdateTarget {
 		return PhotoMstUpdateTarget.builder()
 				.updatedBy(new UpdatedBy(model.getAccountNo().value()))
 				.isDeleted(new IsDeleted(false))
-				.photoAt(new PhotoAt(
-					Optional.ofNullable(model.getPhotoAt()).map(PhotoAt::value).orElse(Consts.MIN_OFFSET_DATE_TIME)))
-				.locationNo(new LocationNo(
-					Optional.ofNullable(model.getLocationNo()).map(LocationNo::value).orElse(0L)))
+				.photoAt(PhotoAt.getOrDefault(model.getPhotoAt()))
+				.locationNo(LocationNo.getOrDefault(model.getLocationNo()))
 				.imageFilePath(model.getImageFilePath())
-				.photoJapaneseTitle(new PhotoJapaneseTitle(
-					Optional.ofNullable(model.getPhotoJapaneseTitle()).map(PhotoJapaneseTitle::value).orElse(Consts.STRING_EMPTY)))
-				.photoEnglishTitle(new PhotoEnglishTitle(
-					Optional.ofNullable(model.getPhotoEnglishTitle()).map(PhotoEnglishTitle::value).orElse(Consts.STRING_EMPTY)))
-				.caption(new Caption(
-					Optional.ofNullable(model.getCaption()).map(Caption::value).orElse(Consts.STRING_EMPTY)))
-				.directionKbn(
-					Optional.ofNullable(model.getDirectionKbn()).orElse(DirectionEnum.NONE))
-				.focalLength(new FocalLength(
-					Optional.ofNullable(exifData.focalLength()).map(FocalLength::value).orElse(0)))
-				.fValue(new FValue(
-					Optional.ofNullable(exifData.fValue()).map(FValue::value).orElse(BigDecimal.ZERO)))
-				.shutterSpeed(new ShutterSpeed(
-					Optional.ofNullable(exifData.shutterSpeed()).map(ShutterSpeed::value).orElse(BigDecimal.ZERO)))
-				.iso(new Iso(
-					Optional.ofNullable(exifData.iso()).map(Iso::value).orElse(0)))
+				.photoJapaneseTitle(PhotoJapaneseTitle.getOrDefault(model.getPhotoJapaneseTitle()))
+				.photoEnglishTitle(PhotoEnglishTitle.getOrDefault(model.getPhotoEnglishTitle()))
+				.caption(Caption.getOrDefault(model.getCaption()))
+				.directionKbn(DirectionEnum.getOrDefault(model.getDirectionKbn()))
+				.focalLength(FocalLength.getOrDefault(exifData.focalLength()))
+				.fValue(FValue.getOrDefault(exifData.fValue()))
+				.shutterSpeed(ShutterSpeed.getOrDefault(exifData.shutterSpeed()))
+				.iso(Iso.getOrDefault(exifData.iso()))
 				.build();
 	}
 

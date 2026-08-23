@@ -1,7 +1,5 @@
 package com.web.gallery.entity;
 
-import java.util.Optional;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.web.gallery.constant.Consts;
@@ -106,20 +104,11 @@ public class Account {
 				.accountId(model.getAccountId())
 				.accountName(model.getAccountName())
 				.password(new Password(passwordEncoder.encode(model.getPassword().value())))
-				.birthdate(
-					Optional.ofNullable(model.getBirthdate())
-						.orElse(new BirthDate(Consts.MIN_LOCAL_DATE)))
-				.sexKbn(
-					Optional.ofNullable(model.getSexKbn()).orElse(SexEnum.NONE))
-				.birthplacePrefectureKbnCode(
-					Optional.ofNullable(model.getBirthplacePrefectureKbnCode())
-						.orElse(new BirthplacePrefectureKbnCode(Consts.STRING_NONE)))
-				.residentPrefectureKbnCode(
-					Optional.ofNullable(model.getResidentPrefectureKbnCode())
-						.orElse(new ResidentPrefectureKbnCode(Consts.STRING_NONE)))
-				.freeMemo(
-					Optional.ofNullable(model.getFreeMemo())
-						.orElse(new FreeMemo(Consts.STRING_EMPTY)))
+				.birthdate(BirthDate.getOrDefault(model.getBirthdate()))
+				.sexKbn(SexEnum.getOrDefault(model.getSexKbn()))
+				.birthplacePrefectureKbnCode(BirthplacePrefectureKbnCode.getOrDefault(model.getBirthplacePrefectureKbnCode()))
+				.residentPrefectureKbnCode(ResidentPrefectureKbnCode.getOrDefault(model.getResidentPrefectureKbnCode()))
+				.freeMemo(FreeMemo.getOrDefault(model.getFreeMemo()))
 				.authorityKbn(AuthorityEnum.MINI)
 				.lastLoginDatetime(new LastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME))
 				.loginFailureCount(new LoginFailureCount(0))

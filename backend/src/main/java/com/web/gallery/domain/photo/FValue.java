@@ -23,4 +23,14 @@ public record FValue(BigDecimal value) implements Serializable {
 			throw new IllegalArgumentException("F値は0以上である必要があります");
 		}
 	}
+
+	/**
+	 * 未設定の場合にDB保存用のデフォルト値を返す
+	 *
+	 * @param	nullable	{@link FValue}（null許容）
+	 * @return				nullableがnullでなければそのまま、nullであればデフォルト値を持つ{@link FValue}
+	 */
+	public static FValue getOrDefault(FValue nullable) {
+		return nullable != null ? nullable : new FValue(BigDecimal.ZERO);
+	}
 }
