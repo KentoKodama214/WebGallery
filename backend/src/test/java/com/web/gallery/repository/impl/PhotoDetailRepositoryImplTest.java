@@ -97,11 +97,6 @@ public class PhotoDetailRepositoryImplTest {
 			ArgumentCaptor<PhotoListGetDto> photoListGetDtoCaptor = ArgumentCaptor.forClass(PhotoListGetDto.class);
 			doReturn(photoDtoList).when(photoDetailMapper).getPhotoList(photoListGetDtoCaptor.capture());
 
-			List<PhotoTagMst> photoTagMstList = new ArrayList<PhotoTagMst>();
-
-			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
-			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
-
 			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
 			assertTrue(actual.isEmpty());
@@ -114,8 +109,7 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(List.of(), photoListGetDtoCapture.getTagList());
 			assertEquals("PHOTO_AT", photoListGetDtoCapture.getSortBy());
 
-			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
+			verify(photoTagMstMapper, times(0)).select(any(PhotoTagMstCondition.class));
 		}
 
 		@Test
@@ -192,8 +186,9 @@ public class PhotoDetailRepositoryImplTest {
 
 			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
+			assertEquals(List.of(new PhotoNo(1L), new PhotoNo(2L)), photoTagMstCapture.getPhotoNoList());
 		}
-		
+
 		@Test
 		@Order(3)
 		@DisplayName("正常系：写真が1件以上、写真タグが1件以上の場合")
@@ -290,9 +285,10 @@ public class PhotoDetailRepositoryImplTest {
 
 			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
+			assertEquals(List.of(new PhotoNo(1L), new PhotoNo(2L)), photoTagMstCapture.getPhotoNoList());
 		}
 	}
-	
+
 	@Nested
 	@Order(2)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)

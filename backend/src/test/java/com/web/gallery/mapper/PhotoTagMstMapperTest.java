@@ -467,4 +467,92 @@ public class PhotoTagMstMapperTest {
 			assertEquals(4, actualRestData.size());
 		}
 	}
+
+	@Nested
+	@Order(4)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/mapper/PhotoTagMstMapperTest.sql")
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class selectByPhotoNoList {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：写真番号リストでのselectで複数件の場合")
+		void select_by_photoNoList() {
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder()
+					.accountNo(new AccountNo(1L))
+					.photoNoList(List.of(new PhotoNo(1L), new PhotoNo(2L)))
+					.build();
+			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
+			actual.forEach(e -> e.setId(null));
+
+			PhotoTagMst expectedPhotoTagMst1 = PhotoTagMst.builder()
+					.accountNo(new AccountNo(1L))
+					.photoNo(new PhotoNo(1L))
+					.tagNo(new TagNo(1L))
+					.createdBy(new CreatedBy(1L))
+					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.tagJapaneseName(new TagJapaneseName("太陽"))
+					.tagEnglishName(new TagEnglishName("sun"))
+					.build();
+			PhotoTagMst expectedPhotoTagMst2 = PhotoTagMst.builder()
+					.accountNo(new AccountNo(1L))
+					.photoNo(new PhotoNo(1L))
+					.tagNo(new TagNo(2L))
+					.createdBy(new CreatedBy(1L))
+					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.tagJapaneseName(new TagJapaneseName("青空"))
+					.tagEnglishName(new TagEnglishName("bluesky"))
+					.build();
+			PhotoTagMst expectedPhotoTagMst3 = PhotoTagMst.builder()
+					.accountNo(new AccountNo(1L))
+					.photoNo(new PhotoNo(2L))
+					.tagNo(new TagNo(1L))
+					.createdBy(new CreatedBy(1L))
+					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.tagJapaneseName(new TagJapaneseName("太陽"))
+					.tagEnglishName(new TagEnglishName("sun"))
+					.build();
+			PhotoTagMst expectedPhotoTagMst4 = PhotoTagMst.builder()
+					.accountNo(new AccountNo(1L))
+					.photoNo(new PhotoNo(2L))
+					.tagNo(new TagNo(2L))
+					.createdBy(new CreatedBy(1L))
+					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.tagJapaneseName(new TagJapaneseName("曇天"))
+					.tagEnglishName(new TagEnglishName("cloudy"))
+					.build();
+			PhotoTagMst expectedPhotoTagMst5 = PhotoTagMst.builder()
+					.accountNo(new AccountNo(1L))
+					.photoNo(new PhotoNo(2L))
+					.tagNo(new TagNo(3L))
+					.createdBy(new CreatedBy(1L))
+					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 3, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.tagJapaneseName(new TagJapaneseName("花"))
+					.tagEnglishName(new TagEnglishName("flower"))
+					.build();
+			List<PhotoTagMst> expected = new ArrayList<PhotoTagMst>();
+			expected.add(expectedPhotoTagMst1);
+			expected.add(expectedPhotoTagMst2);
+			expected.add(expectedPhotoTagMst3);
+			expected.add(expectedPhotoTagMst4);
+			expected.add(expectedPhotoTagMst5);
+
+			assertEquals(5, actual.size());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：写真番号リストが空の場合は絞り込まれない")
+		void select_by_photoNoList_empty() {
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder()
+					.accountNo(new AccountNo(1L))
+					.photoNoList(List.of())
+					.build();
+			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
+
+			assertEquals(5, actual.size());
+		}
+	}
 }

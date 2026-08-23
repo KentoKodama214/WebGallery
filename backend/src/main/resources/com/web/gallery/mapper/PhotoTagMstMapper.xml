@@ -27,6 +27,12 @@
 		<where>
 			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
 			<if test="photoNo != null"> AND photo_no = #{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}</if>
+			<if test="photoNoList != null and !photoNoList.isEmpty()">
+				AND photo_no IN
+				<foreach item="photoNo" collection="photoNoList" open="(" separator="," close=")">
+					#{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}
+				</foreach>
+			</if>
 			<if test="tagNo != null"> AND tag_no = #{tagNo, typeHandler=com.web.gallery.type_handler.TagNoTypeHandler}</if>
 			<if test="tagJapaneseName != null"> AND tag_japanese_name = #{tagJapaneseName, typeHandler=com.web.gallery.type_handler.TagJapaneseNameTypeHandler}</if>
 			<if test="tagEnglishName != null"> AND tag_english_name = #{tagEnglishName, typeHandler=com.web.gallery.type_handler.TagEnglishNameTypeHandler}</if>
