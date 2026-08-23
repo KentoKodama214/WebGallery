@@ -351,6 +351,7 @@ WebGallery/
 │       │   │   ├── helper/             # ヘルパーユーティリティ
 │       │   │   ├── mapper/             # MyBatisマッパー
 │       │   │   ├── model/              # モデルオブジェクト
+│       │   │   ├── policy/             # ドメインサービス（単一のビジネスルールを判定）
 │       │   │   ├── repository/         # リポジトリ
 │       │   │   │   └── impl/
 │       │   │   ├── service/            # サービス
