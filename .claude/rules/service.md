@@ -17,7 +17,7 @@ paths:
 
 ## レイヤー間依存関係
 
-- **許可するimport**: `repository/`のインターフェース、`model/`、`constant/`、`enumeration/`、`exception/`
+- **許可するimport**: `repository/`のインターフェース、`model/`、`constant/`、`enumeration/`、`exception/`、`policy/`、`domain/`、`config/`
 - **禁止するimport**: `controller/`、`mapper/`、`entity/`、`dto/`、`repository/impl/`への直接依存
 - **禁止するimport**: `controller/request/`や`controller/response/`のDTO
 
