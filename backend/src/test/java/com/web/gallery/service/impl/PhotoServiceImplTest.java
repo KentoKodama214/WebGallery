@@ -32,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.ImageFile;
@@ -476,10 +477,7 @@ public class PhotoServiceImplTest {
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル1"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title1"))
 					.caption(new Caption("キャプション1"))
-					.focalLength(new FocalLength(24))
-					.fValue(new FValue(BigDecimal.valueOf(2.8)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
-					.iso(new Iso(100))
+					.exifData(new ExifData(new FocalLength(24), new FValue(BigDecimal.valueOf(2.8)), new ShutterSpeed(BigDecimal.valueOf(0.01)), new Iso(100)))
 					.photoTagModelList(PhotoTagModelList.of(photoTagModelList))
 					.build();
 		}
@@ -529,10 +527,7 @@ public class PhotoServiceImplTest {
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル2"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title2"))
 					.caption(new Caption("キャプション2"))
-					.focalLength(new FocalLength(24))
-					.fValue(new FValue(BigDecimal.valueOf(2.8)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
-					.iso(new Iso(100))
+					.exifData(new ExifData(new FocalLength(24), new FValue(BigDecimal.valueOf(2.8)), new ShutterSpeed(BigDecimal.valueOf(0.01)), new Iso(100)))
 					.photoTagModelList(PhotoTagModelList.of(photoTagModelList))
 					.build();
 		}
@@ -553,10 +548,7 @@ public class PhotoServiceImplTest {
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル3"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title3"))
 					.caption(new Caption("キャプション3"))
-					.focalLength(new FocalLength(24))
-					.fValue(new FValue(BigDecimal.valueOf(2.8)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
-					.iso(new Iso(100))
+					.exifData(new ExifData(new FocalLength(24), new FValue(BigDecimal.valueOf(2.8)), new ShutterSpeed(BigDecimal.valueOf(0.01)), new Iso(100)))
 					.build();
 		}
 		

@@ -367,9 +367,9 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
 			assertNull(photoDetailModelList.getFirst().getLocationNo());
-			assertNull(photoDetailModelList.getFirst().getAddress());
-			assertNull(photoDetailModelList.getFirst().getLatitude());
-			assertNull(photoDetailModelList.getFirst().getLongitude());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().address());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().latitude());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().longitude());
 			assertNull(photoDetailModelList.getFirst().getLocationName());
 			assertNotNull(photoDetailModelList.getFirst().getImageFile());
 			assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
@@ -377,10 +377,10 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getPhotoEnglishTitle());
 			assertNull(photoDetailModelList.getFirst().getCaption());
 			assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
-			assertNull(photoDetailModelList.getFirst().getFocalLength());
-			assertNull(photoDetailModelList.getFirst().getFValue());
-			assertNull(photoDetailModelList.getFirst().getShutterSpeed());
-			assertNull(photoDetailModelList.getFirst().getIso());
+			assertNull(photoDetailModelList.getFirst().getExifData().focalLength());
+			assertNull(photoDetailModelList.getFirst().getExifData().fValue());
+			assertNull(photoDetailModelList.getFirst().getExifData().shutterSpeed());
+			assertNull(photoDetailModelList.getFirst().getExifData().iso());
 			assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
 
 			assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
@@ -453,9 +453,9 @@ public class PhotoRestControllerTest {
 			assertFalse(photoDetailModelList.getFirst().getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), photoDetailModelList.getFirst().getPhotoAt().value());
 			assertEquals(1L, photoDetailModelList.getFirst().getLocationNo().value());
-			assertEquals(address, photoDetailModelList.getFirst().getAddress().value());
-			assertEquals(0, BigDecimal.valueOf(35.000).compareTo(photoDetailModelList.getFirst().getLatitude().value()));
-			assertEquals(0, BigDecimal.valueOf(135.000).compareTo(photoDetailModelList.getFirst().getLongitude().value()));
+			assertEquals(address, photoDetailModelList.getFirst().getGeoLocation().address().value());
+			assertEquals(0, BigDecimal.valueOf(35.000).compareTo(photoDetailModelList.getFirst().getGeoLocation().latitude().value()));
+			assertEquals(0, BigDecimal.valueOf(135.000).compareTo(photoDetailModelList.getFirst().getGeoLocation().longitude().value()));
 			assertEquals(locationName, photoDetailModelList.getFirst().getLocationName().value());
 			assertNotNull(photoDetailModelList.getFirst().getImageFile());
 			assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
@@ -463,10 +463,10 @@ public class PhotoRestControllerTest {
 			assertEquals(photoEnglishTitle, photoDetailModelList.getFirst().getPhotoEnglishTitle().value());
 			assertEquals(caption, photoDetailModelList.getFirst().getCaption().value());
 			assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
-			assertEquals(50, photoDetailModelList.getFirst().getFocalLength().value());
-			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(photoDetailModelList.getFirst().getFValue().value()));
-			assertEquals(0, BigDecimal.valueOf(0.001).compareTo(photoDetailModelList.getFirst().getShutterSpeed().value()));
-			assertEquals(100, photoDetailModelList.getFirst().getIso().value());
+			assertEquals(50, photoDetailModelList.getFirst().getExifData().focalLength().value());
+			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(photoDetailModelList.getFirst().getExifData().fValue().value()));
+			assertEquals(0, BigDecimal.valueOf(0.001).compareTo(photoDetailModelList.getFirst().getExifData().shutterSpeed().value()));
+			assertEquals(100, photoDetailModelList.getFirst().getExifData().iso().value());
 
 			assertEquals(1L, photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getTagNo().value());
 			assertEquals("太陽", photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getTagJapaneseName().value());
@@ -601,9 +601,9 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
 			assertNull(photoDetailModelList.getFirst().getLocationNo());
-			assertNull(photoDetailModelList.getFirst().getAddress());
-			assertNull(photoDetailModelList.getFirst().getLatitude());
-			assertNull(photoDetailModelList.getFirst().getLongitude());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().address());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().latitude());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().longitude());
 			assertNull(photoDetailModelList.getFirst().getLocationName());
 			assertNotNull(photoDetailModelList.getFirst().getImageFile());
 			assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
@@ -611,10 +611,10 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getPhotoEnglishTitle());
 			assertNull(photoDetailModelList.getFirst().getCaption());
 			assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
-			assertNull(photoDetailModelList.getFirst().getFocalLength());
-			assertNull(photoDetailModelList.getFirst().getFValue());
-			assertNull(photoDetailModelList.getFirst().getShutterSpeed());
-			assertNull(photoDetailModelList.getFirst().getIso());
+			assertNull(photoDetailModelList.getFirst().getExifData().focalLength());
+			assertNull(photoDetailModelList.getFirst().getExifData().fValue());
+			assertNull(photoDetailModelList.getFirst().getExifData().shutterSpeed());
+			assertNull(photoDetailModelList.getFirst().getExifData().iso());
 			assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
 
 			assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
@@ -656,9 +656,9 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
 			assertNull(photoDetailModelList.getFirst().getLocationNo());
-			assertNull(photoDetailModelList.getFirst().getAddress());
-			assertNull(photoDetailModelList.getFirst().getLatitude());
-			assertNull(photoDetailModelList.getFirst().getLongitude());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().address());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().latitude());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().longitude());
 			assertNull(photoDetailModelList.getFirst().getLocationName());
 			assertNotNull(photoDetailModelList.getFirst().getImageFile());
 			assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
@@ -666,10 +666,10 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getPhotoEnglishTitle());
 			assertNull(photoDetailModelList.getFirst().getCaption());
 			assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
-			assertNull(photoDetailModelList.getFirst().getFocalLength());
-			assertNull(photoDetailModelList.getFirst().getFValue());
-			assertNull(photoDetailModelList.getFirst().getShutterSpeed());
-			assertNull(photoDetailModelList.getFirst().getIso());
+			assertNull(photoDetailModelList.getFirst().getExifData().focalLength());
+			assertNull(photoDetailModelList.getFirst().getExifData().fValue());
+			assertNull(photoDetailModelList.getFirst().getExifData().shutterSpeed());
+			assertNull(photoDetailModelList.getFirst().getExifData().iso());
 			assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
 
 			assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
@@ -711,9 +711,9 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getIsFavorite());
 			assertNull(photoDetailModelList.getFirst().getPhotoAt());
 			assertNull(photoDetailModelList.getFirst().getLocationNo());
-			assertNull(photoDetailModelList.getFirst().getAddress());
-			assertNull(photoDetailModelList.getFirst().getLatitude());
-			assertNull(photoDetailModelList.getFirst().getLongitude());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().address());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().latitude());
+			assertNull(photoDetailModelList.getFirst().getGeoLocation().longitude());
 			assertNull(photoDetailModelList.getFirst().getLocationName());
 			assertNotNull(photoDetailModelList.getFirst().getImageFile());
 			assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
@@ -721,10 +721,10 @@ public class PhotoRestControllerTest {
 			assertNull(photoDetailModelList.getFirst().getPhotoEnglishTitle());
 			assertNull(photoDetailModelList.getFirst().getCaption());
 			assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
-			assertNull(photoDetailModelList.getFirst().getFocalLength());
-			assertNull(photoDetailModelList.getFirst().getFValue());
-			assertNull(photoDetailModelList.getFirst().getShutterSpeed());
-			assertNull(photoDetailModelList.getFirst().getIso());
+			assertNull(photoDetailModelList.getFirst().getExifData().focalLength());
+			assertNull(photoDetailModelList.getFirst().getExifData().fValue());
+			assertNull(photoDetailModelList.getFirst().getExifData().shutterSpeed());
+			assertNull(photoDetailModelList.getFirst().getExifData().iso());
 			assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
 
 			assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());

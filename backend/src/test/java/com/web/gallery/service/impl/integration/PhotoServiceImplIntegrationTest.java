@@ -47,6 +47,7 @@ import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.ShutterSpeed;
@@ -389,9 +390,9 @@ public class PhotoServiceImplIntegrationTest {
 			assertTrue(actual.getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoAt().value());
 			assertEquals(1L, actual.getLocationNo().value());
-			assertEquals("住所1", actual.getAddress().value());
-			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getLatitude().value()));
-			assertEquals(0, BigDecimal.valueOf(115.100).compareTo(actual.getLongitude().value()));
+			assertEquals("住所1", actual.getGeoLocation().address().value());
+			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getGeoLocation().latitude().value()));
+			assertEquals(0, BigDecimal.valueOf(115.100).compareTo(actual.getGeoLocation().longitude().value()));
 			assertEquals("ロケーション1", actual.getLocationName().value());
 			assertNull(actual.getImageFile());
 			assertEquals("https://www.xxx.com/aaaaaaaa/DSC11.jpg", actual.getImageFilePath().value());
@@ -399,10 +400,10 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals("title11", actual.getPhotoEnglishTitle().value());
 			assertEquals("キャプション11", actual.getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.getDirectionKbn());
-			assertEquals(24, actual.getFocalLength().value());
-			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actual.getFValue().value()));
-			assertEquals(0, BigDecimal.valueOf(1).compareTo(actual.getShutterSpeed().value()));
-			assertEquals(100, actual.getIso().value());
+			assertEquals(24, actual.getExifData().focalLength().value());
+			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actual.getExifData().fValue().value()));
+			assertEquals(0, BigDecimal.valueOf(1).compareTo(actual.getExifData().shutterSpeed().value()));
+			assertEquals(100, actual.getExifData().iso().value());
 			assertEquals(2, actual.getPhotoTagModelList().size());
 			
 			assertEquals(1L, actual.getPhotoTagModelList().get(0).getTagNo().value());
@@ -463,10 +464,7 @@ public class PhotoServiceImplIntegrationTest {
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル21"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title21"))
 					.caption(new Caption("キャプション21"))
-					.focalLength(new FocalLength(24))
-					.fValue(new FValue(BigDecimal.valueOf(2.8)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
-					.iso(new Iso(100))
+					.exifData(new ExifData(new FocalLength(24), new FValue(BigDecimal.valueOf(2.8)), new ShutterSpeed(BigDecimal.valueOf(0.01)), new Iso(100)))
 					.photoTagModelList(PhotoTagModelList.of(photoTagModelList))
 					.build();
 		}
@@ -516,10 +514,7 @@ public class PhotoServiceImplIntegrationTest {
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル2"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title2"))
 					.caption(new Caption("キャプション2"))
-					.focalLength(new FocalLength(24))
-					.fValue(new FValue(BigDecimal.valueOf(2.8)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
-					.iso(new Iso(100))
+					.exifData(new ExifData(new FocalLength(24), new FValue(BigDecimal.valueOf(2.8)), new ShutterSpeed(BigDecimal.valueOf(0.01)), new Iso(100)))
 					.photoTagModelList(PhotoTagModelList.of(photoTagModelList))
 					.build();
 		}
@@ -540,10 +535,7 @@ public class PhotoServiceImplIntegrationTest {
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル3"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title3"))
 					.caption(new Caption("キャプション3"))
-					.focalLength(new FocalLength(24))
-					.fValue(new FValue(BigDecimal.valueOf(2.8)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
-					.iso(new Iso(100))
+					.exifData(new ExifData(new FocalLength(24), new FValue(BigDecimal.valueOf(2.8)), new ShutterSpeed(BigDecimal.valueOf(0.01)), new Iso(100)))
 					.build();
 		}
 		
@@ -846,10 +838,7 @@ public class PhotoServiceImplIntegrationTest {
 					.photoJapaneseTitle(new PhotoJapaneseTitle("タイトル11"))
 					.photoEnglishTitle(new PhotoEnglishTitle("title11"))
 					.caption(new Caption("キャプション11"))
-					.focalLength(new FocalLength(24))
-					.fValue(new FValue(BigDecimal.valueOf(2.8)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
-					.iso(new Iso(100))
+					.exifData(new ExifData(new FocalLength(24), new FValue(BigDecimal.valueOf(2.8)), new ShutterSpeed(BigDecimal.valueOf(0.01)), new Iso(100)))
 					.build();
 			photoDetailModelList.add(photoDetailModel1);
 			// 新規登録2枚目

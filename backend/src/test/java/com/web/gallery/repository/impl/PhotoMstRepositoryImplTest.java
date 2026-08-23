@@ -36,6 +36,7 @@ import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.ShutterSpeed;
@@ -118,10 +119,7 @@ public class PhotoMstRepositoryImplTest {
 					.photoEnglishTitle(new PhotoEnglishTitle("title1"))
 					.caption(new Caption("キャプション1"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.focalLength(new FocalLength(24))
-					.fValue(new FValue(BigDecimal.valueOf(2.8)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
-					.iso(new Iso(100))
+					.exifData(new ExifData(new FocalLength(24), new FValue(BigDecimal.valueOf(2.8)), new ShutterSpeed(BigDecimal.valueOf(0.01)), new Iso(100)))
 					.build();
 			
 			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
@@ -263,10 +261,7 @@ public class PhotoMstRepositoryImplTest {
 					.photoEnglishTitle(new PhotoEnglishTitle("title1"))
 					.caption(new Caption("キャプション1"))
 					.directionKbn(DirectionEnum.VERTICAL)
-					.focalLength(new FocalLength(24))
-					.fValue(new FValue(BigDecimal.valueOf(2.8)))
-					.shutterSpeed(new ShutterSpeed(BigDecimal.valueOf(0.01)))
-					.iso(new Iso(100))
+					.exifData(new ExifData(new FocalLength(24), new FValue(BigDecimal.valueOf(2.8)), new ShutterSpeed(BigDecimal.valueOf(0.01)), new Iso(100)))
 					.build();
 			
 			ArgumentCaptor<PhotoMstCondition> cndPhotoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);

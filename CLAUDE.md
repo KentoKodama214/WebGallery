@@ -21,7 +21,7 @@ docker-compose up -d
 ./backend/gradlew -p backend test
 
 # backendアプリケーションの実行
-./backend/gradlew -p backend bootRun
+./backend/gradlew -p backend bootRun --args='--spring.profiles.active=local'
 
 # WARファイルのビルド
 ./backend/gradlew -p backend war

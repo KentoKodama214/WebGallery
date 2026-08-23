@@ -282,19 +282,19 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			assertFalse(actual.getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2022, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoAt().value());
 			assertEquals(4L, actual.getLocationNo().value());
-			assertEquals("住所4", actual.getAddress().value());
-			assertEquals(0, BigDecimal.valueOf(38.400).compareTo(actual.getLatitude().value()));
-			assertEquals(0, BigDecimal.valueOf(115.400).compareTo(actual.getLongitude().value()));
+			assertEquals("住所4", actual.getGeoLocation().address().value());
+			assertEquals(0, BigDecimal.valueOf(38.400).compareTo(actual.getGeoLocation().latitude().value()));
+			assertEquals(0, BigDecimal.valueOf(115.400).compareTo(actual.getGeoLocation().longitude().value()));
 			assertEquals("ロケーション4", actual.getLocationName().value());
 			assertEquals("https://www.xxx.com/DSC444.jpg", actual.getImageFilePath().value());
 			assertEquals("タイトル21", actual.getPhotoJapaneseTitle().value());
 			assertEquals("title21", actual.getPhotoEnglishTitle().value());
 			assertEquals("キャプション21", actual.getCaption().value());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.getDirectionKbn());
-			assertEquals(80, actual.getFocalLength().value());
-			assertEquals(0, BigDecimal.valueOf(12.0).compareTo(actual.getFValue().value()));
-			assertEquals(0, BigDecimal.valueOf(5).compareTo(actual.getShutterSpeed().value()));
-			assertEquals(800, actual.getIso().value());
+			assertEquals(80, actual.getExifData().focalLength().value());
+			assertEquals(0, BigDecimal.valueOf(12.0).compareTo(actual.getExifData().fValue().value()));
+			assertEquals(0, BigDecimal.valueOf(5).compareTo(actual.getExifData().shutterSpeed().value()));
+			assertEquals(800, actual.getExifData().iso().value());
 			assertEquals(0, actual.getPhotoTagModelList().size());
 		}
 		
@@ -315,19 +315,19 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			assertTrue(actual.getIsFavorite().value());
 			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoAt().value());
 			assertEquals(1L, actual.getLocationNo().value());
-			assertEquals("住所1", actual.getAddress().value());
-			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getLatitude().value()));
-			assertEquals(0, BigDecimal.valueOf(115.100).compareTo(actual.getLongitude().value()));
+			assertEquals("住所1", actual.getGeoLocation().address().value());
+			assertEquals(0, BigDecimal.valueOf(38.100).compareTo(actual.getGeoLocation().latitude().value()));
+			assertEquals(0, BigDecimal.valueOf(115.100).compareTo(actual.getGeoLocation().longitude().value()));
 			assertEquals("ロケーション1", actual.getLocationName().value());
 			assertEquals("https://www.xxx.com/DSC111.jpg", actual.getImageFilePath().value());
 			assertEquals("タイトル11", actual.getPhotoJapaneseTitle().value());
 			assertEquals("title11", actual.getPhotoEnglishTitle().value());
 			assertEquals("キャプション11", actual.getCaption().value());
 			assertEquals(DirectionEnum.VERTICAL, actual.getDirectionKbn());
-			assertEquals(24, actual.getFocalLength().value());
-			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actual.getFValue().value()));
-			assertEquals(0, BigDecimal.valueOf(1).compareTo(actual.getShutterSpeed().value()));
-			assertEquals(100, actual.getIso().value());
+			assertEquals(24, actual.getExifData().focalLength().value());
+			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actual.getExifData().fValue().value()));
+			assertEquals(0, BigDecimal.valueOf(1).compareTo(actual.getExifData().shutterSpeed().value()));
+			assertEquals(100, actual.getExifData().iso().value());
 			assertEquals(2, actual.getPhotoTagModelList().size());
 			
 			assertEquals(new AccountNo(1L), actual.getPhotoTagModelList().get(0).getAccountNo());
