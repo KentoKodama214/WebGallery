@@ -17,6 +17,7 @@ import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.PhotoCount;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.enumeration.ErrorEnum;
@@ -37,6 +38,7 @@ import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.policy.PhotoQuotaPolicy;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.PhotoDetailRepository;
@@ -63,6 +65,7 @@ public class PhotoServiceImpl implements PhotoService {
 	private final AccountRepository accountRepository;
 	private final FileRepository fileRepository;
 	private final PhotoConfig photoConfig;
+	private final PhotoQuotaPolicy photoQuotaPolicy;
 
 	/**
 	 * 写真一覧を取得する
@@ -197,17 +200,7 @@ public class PhotoServiceImpl implements PhotoService {
 		AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
 		Integer count = photoMstRepository.count(accountNo);
 
-		switch(accountModel.getAuthorityKbn()) {
-			case MINI:
-				return count > (photoConfig.getMiniUserUpperLimit() - 1);
-			case NORMAL:
-				return count > (photoConfig.getNormalUserUpperLimit() - 1);
-			case SPECIAL:
-			case ADMINISTRATOR:
-				return false;
-			default:
-				return true;
-		}
+		return photoQuotaPolicy.isReached(accountModel.getAuthorityKbn(), new PhotoCount(count));
 	}
 
 	/**
