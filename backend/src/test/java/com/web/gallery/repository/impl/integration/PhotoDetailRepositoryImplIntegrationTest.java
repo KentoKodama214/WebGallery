@@ -235,6 +235,28 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			assertEquals(2L, actual.get(1).getPhotoNo().value());
 			assertEquals(1, actual.get(1).getFavoriteCount().value());
 		}
+
+		@Test
+		@Order(8)
+		@DisplayName("正常系：撮影日時の降順に並び替えられること")
+		void getPhotoList_sortBy_photoAt() {
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.build();
+
+			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			assertEquals(2, actual.size());
+			assertEquals(2L, actual.get(0).getPhotoNo().value());
+			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
+			assertEquals(1L, actual.get(1).getPhotoNo().value());
+			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.get(1).getPhotoAt().value());
+		}
 	}
 
 	@Nested
