@@ -244,6 +244,24 @@ public class AuthServiceImplIntegrationTest {
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
 			assertEquals("リフレッシュトークンの有効期限が切れています", exception.getMessage());
 		}
+
+		@Test
+		@Order(5)
+		@DisplayName("異常系：発行後にアカウントがロックされた場合、LockedExceptionをthrowする")
+		void refresh_account_locked_after_token_issued() {
+			// ログインしてリフレッシュトークンを取得
+			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+			String refreshToken = loginResult.getRefreshToken().value();
+
+			// 管理者によるアカウントロックを模擬（ログイン失敗回数を上限に更新）
+			jdbcTemplate.update(
+				"UPDATE common.account SET login_failure_count = 3 WHERE account_no = 1"
+			);
+
+			// ロック後のリフレッシュはLockedExceptionをthrowする
+			assertThrows(LockedException.class,
+				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
+		}
 	}
 
 	@Nested
