@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * アカウントに関するドメインイベントをハンドリングするリスナークラス<p>
- * アカウント登録・削除のログ集計を、Service層のビジネスロジックから疎結合に行う
+ * アカウント登録・更新・削除のログ集計を、Service層のビジネスロジックから疎結合に行う
  */
 @Slf4j
 @Component
@@ -22,6 +22,16 @@ public class AccountEventListener {
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handle(AccountRegisteredEvent event) {
 		log.info("Account registered (accountId: {})", event.accountId().value());
+	}
+
+	/**
+	 * アカウントの更新イベントをハンドリングする
+	 *
+	 * @param	event	{@link AccountUpdatedEvent}
+	 */
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void handle(AccountUpdatedEvent event) {
+		log.info("Account updated (accountNo: {}, accountId: {})", event.accountNo().value(), event.accountId().value());
 	}
 
 	/**

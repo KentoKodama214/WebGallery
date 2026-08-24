@@ -23,6 +23,7 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.event.PhotoRegisteredEvent;
+import com.web.gallery.event.PhotoUpdatedEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -131,6 +132,7 @@ public class PhotoServiceImpl implements PhotoService {
 				savedPhotoNo = photoDetailModel.getPhotoNo();
 				Photo photo = Photo.forUpdate(photoDetailModel);
 				photoAggregateRepository.update(photo);
+				applicationEventPublisher.publishEvent(new PhotoUpdatedEvent(photo.getAccountNo(), photo.getPhotoNo()));
 			}
 		}
 		return savedPhotoNo;

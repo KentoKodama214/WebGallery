@@ -60,6 +60,7 @@ import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.event.PhotoRegisteredEvent;
+import com.web.gallery.event.PhotoUpdatedEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
@@ -676,7 +677,6 @@ public class PhotoServiceImplTest {
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(2)).update(any(Photo.class));
 			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-			verify(applicationEventPublisher, times(0)).publishEvent(any());
 
 			List<Photo> photoCaptureList = photoCaptor.getAllValues();
 			assertEquals(new PhotoNo(2L), photoCaptureList.get(0).getPhotoNo());
@@ -687,6 +687,14 @@ public class PhotoServiceImplTest {
 			assertEquals("海", photoCaptureList.get(0).getPhotoTagModelList().get(1).getTagJapaneseName().value());
 
 			assertEquals(new PhotoNo(3L), photoCaptureList.get(1).getPhotoNo());
+
+			ArgumentCaptor<PhotoUpdatedEvent> photoUpdatedEventCaptor = ArgumentCaptor.forClass(PhotoUpdatedEvent.class);
+			verify(applicationEventPublisher, times(2)).publishEvent(photoUpdatedEventCaptor.capture());
+			List<PhotoUpdatedEvent> photoUpdatedEventCaptureList = photoUpdatedEventCaptor.getAllValues();
+			assertEquals(new AccountNo(1L), photoUpdatedEventCaptureList.get(0).accountNo());
+			assertEquals(new PhotoNo(2L), photoUpdatedEventCaptureList.get(0).photoNo());
+			assertEquals(new AccountNo(1L), photoUpdatedEventCaptureList.get(1).accountNo());
+			assertEquals(new PhotoNo(3L), photoUpdatedEventCaptureList.get(1).photoNo());
 		}
 
 		@Test
@@ -740,6 +748,11 @@ public class PhotoServiceImplTest {
 			verify(applicationEventPublisher, times(1)).publishEvent(photoRegisteredEventCaptor.capture());
 			assertEquals(new AccountNo(1L), photoRegisteredEventCaptor.getValue().accountNo());
 			assertEquals(new PhotoNo(5L), photoRegisteredEventCaptor.getValue().photoNo());
+
+			ArgumentCaptor<PhotoUpdatedEvent> photoUpdatedEventCaptor = ArgumentCaptor.forClass(PhotoUpdatedEvent.class);
+			verify(applicationEventPublisher, times(1)).publishEvent(photoUpdatedEventCaptor.capture());
+			assertEquals(new AccountNo(1L), photoUpdatedEventCaptor.getValue().accountNo());
+			assertEquals(new PhotoNo(3L), photoUpdatedEventCaptor.getValue().photoNo());
 		}
 
 		@Test

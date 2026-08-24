@@ -26,6 +26,13 @@ public class PhotoEventListenerTest {
 	}
 
 	@Test
+	@DisplayName("正常系：PhotoUpdatedEventを受け取っても例外が発生しないこと")
+	void handle_photoUpdatedEvent_success() {
+		PhotoUpdatedEvent event = new PhotoUpdatedEvent(new AccountNo(1L), new PhotoNo(1L));
+		assertDoesNotThrow(() -> photoEventListener.handle(event));
+	}
+
+	@Test
 	@DisplayName("正常系：PhotoDeletedEventを受け取っても例外が発生しないこと")
 	void handle_photoDeletedEvent_success() {
 		PhotoDeletedEvent event = new PhotoDeletedEvent(new AccountNo(1L), new PhotoNo(1L));

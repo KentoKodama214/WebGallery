@@ -22,6 +22,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.event.AccountDeletedEvent;
 import com.web.gallery.event.AccountRegisteredEvent;
+import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
@@ -98,7 +99,10 @@ public class AccountServiceImpl implements UserDetailsService {
 	@Transactional
 	public Boolean updateAccount(AccountModel accountModel) throws GalleryException {
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
-		if(!isExist) accountRepository.update(accountModel);
+		if(!isExist) {
+			accountRepository.update(accountModel);
+			applicationEventPublisher.publishEvent(new AccountUpdatedEvent(accountModel.getAccountNo(), accountModel.getAccountId()));
+		}
 		return isExist;
 	}
 

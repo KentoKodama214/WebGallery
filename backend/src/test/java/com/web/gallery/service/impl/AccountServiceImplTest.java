@@ -50,6 +50,7 @@ import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.event.AccountDeletedEvent;
 import com.web.gallery.event.AccountRegisteredEvent;
+import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -190,8 +191,13 @@ public class AccountServiceImplTest {
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doNothing().when(accountRepositoryImpl).update(accountModel);
 			assertFalse(accountServiceImpl.updateAccount(accountModel));
+
+			ArgumentCaptor<AccountUpdatedEvent> accountUpdatedEventCaptor = ArgumentCaptor.forClass(AccountUpdatedEvent.class);
+			verify(applicationEventPublisher, times(1)).publishEvent(accountUpdatedEventCaptor.capture());
+			assertEquals(new AccountNo(1L), accountUpdatedEventCaptor.getValue().accountNo());
+			assertEquals(new AccountId("aaaaaaaa"), accountUpdatedEventCaptor.getValue().accountId());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが既に存在する")
@@ -200,8 +206,9 @@ public class AccountServiceImplTest {
 			doReturn(true).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			verify(accountRepositoryImpl,times(0)).update(accountModel);
 			assertTrue(accountServiceImpl.updateAccount(accountModel));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
-		
+
 		@Test
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
@@ -210,6 +217,7 @@ public class AccountServiceImplTest {
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).update(accountModel);
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 	}
 	
