@@ -159,6 +159,8 @@ class AuthServiceImplTest {
 			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
 
 			AccountPrincipal principal = mock(AccountPrincipal.class);
+			when(principal.isAccountNonLocked()).thenReturn(true);
+			when(principal.isEnabled()).thenReturn(true);
 			when(accountServiceImpl.loadUserByUsername("testuser1")).thenReturn(principal);
 			when(jwtTokenProvider.generateAccessToken(principal)).thenReturn("new-access-token");
 			when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
@@ -168,6 +170,63 @@ class AuthServiceImplTest {
 			assertNotNull(result);
 			assertEquals("new-access-token", result.getAccessToken().value());
 			assertEquals(900L, result.getExpiresIn().value());
+		}
+
+		@Test
+		@DisplayName("異常系: アカウントがロックされている場合は例外がスローされること")
+		void refresh_accountLocked() {
+			String refreshToken = "valid-refresh-token";
+			RefreshTokenModel storedToken = RefreshTokenModel.builder()
+					.accountNo(new AccountNo(1L))
+					.tokenHash(new TokenHash("hashed-token"))
+					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
+					.isRevoked(new IsRevoked(false))
+					.build();
+
+			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
+
+			AccountModel account = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("testuser1"))
+					.build();
+			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
+
+			AccountPrincipal principal = mock(AccountPrincipal.class);
+			when(principal.isAccountNonLocked()).thenReturn(false);
+			when(accountServiceImpl.loadUserByUsername("testuser1")).thenReturn(principal);
+
+			assertThrows(LockedException.class, () -> {
+				authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
+			});
+		}
+
+		@Test
+		@DisplayName("異常系: アカウントが無効化（削除済み）されている場合は例外がスローされること")
+		void refresh_accountDisabled() {
+			String refreshToken = "valid-refresh-token";
+			RefreshTokenModel storedToken = RefreshTokenModel.builder()
+					.accountNo(new AccountNo(1L))
+					.tokenHash(new TokenHash("hashed-token"))
+					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
+					.isRevoked(new IsRevoked(false))
+					.build();
+
+			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
+
+			AccountModel account = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("testuser1"))
+					.build();
+			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
+
+			AccountPrincipal principal = mock(AccountPrincipal.class);
+			when(principal.isAccountNonLocked()).thenReturn(true);
+			when(principal.isEnabled()).thenReturn(false);
+			when(accountServiceImpl.loadUserByUsername("testuser1")).thenReturn(principal);
+
+			assertThrows(IllegalArgumentException.class, () -> {
+				authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
+			});
 		}
 
 		@Test
