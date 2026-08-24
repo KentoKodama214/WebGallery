@@ -171,14 +171,14 @@ public class PhotoRestController {
 			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 
-		for(FieldError error : result.getFieldErrors()) {
-			if(!error.isBindingFailure()) {
+		if(result.hasErrors()) {
+			for(FieldError error : result.getFieldErrors()) {
 				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
 						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
-				throw ErrorEnum.INVALID_INPUT.toException();
 			}
-		};
-		
+			throw ErrorEnum.INVALID_INPUT.toException();
+		}
+
 		PhotoDetailModelList photoDetailModelList = PhotoDetailModelList.of(List.of(PhotoDetailModel.from(photoSaveRequest)));
 
 		PhotoNo savedPhotoNo = photoService.savePhotos(new AccountId(photoAccountId), photoDetailModelList);
