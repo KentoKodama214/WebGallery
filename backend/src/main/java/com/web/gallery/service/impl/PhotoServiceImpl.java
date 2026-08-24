@@ -111,7 +111,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 *                              	・更新に失敗した場合
 	 */
 	@Override
-	@Transactional
+	@Transactional(rollbackFor = GalleryException.class)
 	public PhotoNo savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws GalleryException {
 		if(Objects.isNull(photoDetailModelList)) return null;
 		if(photoDetailModelList.isEmpty()) return null;
@@ -146,7 +146,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @throws	GalleryException		削除に失敗した場合
 	 */
 	@Override
-	@Transactional
+	@Transactional(rollbackFor = GalleryException.class)
 	public void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList) throws GalleryException {
 		String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
 

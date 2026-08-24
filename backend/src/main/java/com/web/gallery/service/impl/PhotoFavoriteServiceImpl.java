@@ -27,7 +27,7 @@ public class PhotoFavoriteServiceImpl implements PhotoFavoriteService {
 	 * @throws	GalleryException	登録に失敗した場合
 	 */
 	@Override
-	@Transactional
+	@Transactional(rollbackFor = GalleryException.class)
 	public void addFavorite(PhotoFavoriteModel photoFavoriteModel) throws GalleryException {
 		photoFavoriteRepository.regist(photoFavoriteModel);
 	}
@@ -39,7 +39,7 @@ public class PhotoFavoriteServiceImpl implements PhotoFavoriteService {
 	 * @throws	GalleryException	解除に失敗した場合
 	 */
 	@Override
-	@Transactional
+	@Transactional(rollbackFor = GalleryException.class)
 	public void deleteFavorite(PhotoFavoriteModel photoFavoriteModel) throws GalleryException {
 		photoFavoriteRepository.delete(PhotoFavoriteDeleteModel.from(photoFavoriteModel));
 	}

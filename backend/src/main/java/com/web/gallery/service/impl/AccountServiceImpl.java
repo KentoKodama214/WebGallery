@@ -79,7 +79,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @return						登録に成功した場合、true
 	 * @throws	GalleryException	登録に失敗した場合
 	 */
-	@Transactional
+	@Transactional(rollbackFor = GalleryException.class)
 	public Boolean registAccount(AccountModel accountModel) throws GalleryException {
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountId());
 		if(!isExist) {
@@ -96,7 +96,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @return						更新に成功した場合、true
 	 * @throws GalleryException	更新に失敗した場合
 	 */
-	@Transactional
+	@Transactional(rollbackFor = GalleryException.class)
 	public Boolean updateAccount(AccountModel accountModel) throws GalleryException {
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
 		if(!isExist) {
@@ -143,7 +143,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @param	accountNo			アカウント番号
 	 * @throws	GalleryException	更新に失敗した場合
 	 */
-	@Transactional
+	@Transactional(rollbackFor = GalleryException.class)
 	public void unlockAccount(AccountNo accountNo) throws GalleryException {
 		accountRepository.updateLoginFailureCount(AccountModel.forUnlock(accountNo.value()));
 	}
@@ -154,7 +154,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @param	accountNo			アカウント番号
 	 * @throws	GalleryException	更新に失敗した場合
 	 */
-	@Transactional
+	@Transactional(rollbackFor = GalleryException.class)
 	public void lockAccount(AccountNo accountNo) throws GalleryException {
 		accountRepository.updateLoginFailureCount(AccountModel.forLock(accountNo.value(), loginConfig.getFailCount()));
 	}
@@ -195,7 +195,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@EventListener
-	@Transactional
+	@Transactional(rollbackFor = GalleryException.class)
 	public void handle(AuthenticationSuccessEvent event) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(new AccountId(event.getAuthentication().getName()));
 
@@ -209,7 +209,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@EventListener
-	@Transactional
+	@Transactional(rollbackFor = GalleryException.class)
 	public void handle(AuthenticationFailureBadCredentialsEvent event) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(new AccountId(event.getAuthentication().getName()));
 
