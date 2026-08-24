@@ -70,7 +70,7 @@ public interface PhotoMstRepository {
 	void deleteByAccountNo(AccountNo accountNo);
 
 	/**
-	 * アカウント番号に紐づく写真番号の一覧を取得する
+	 * アカウント番号に紐づく未削除の写真番号の一覧を取得する
 	 *
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link PhotoNoList}
