@@ -7,6 +7,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.Objects;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,8 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoCount;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.enumeration.SortPhotoEnum;
+import com.web.gallery.event.PhotoDeletedEvent;
+import com.web.gallery.event.PhotoRegisteredEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -61,6 +64,7 @@ public class PhotoServiceImpl implements PhotoService {
 	private final FileRepository fileRepository;
 	private final PhotoConfig photoConfig;
 	private final PhotoQuotaPolicy photoQuotaPolicy;
+	private final ApplicationEventPublisher applicationEventPublisher;
 
 	/**
 	 * 写真一覧を取得する
@@ -121,6 +125,7 @@ public class PhotoServiceImpl implements PhotoService {
 				Photo photo = Photo.forRegist(photoDetailModel, new PhotoNo(photoNo), new ImageFilePath(filePath + filename));
 				photoAggregateRepository.regist(photo);
 				fileRepository.save(FileModel.of(photo.getImageFilePath(), photo.getImageFile()));
+				applicationEventPublisher.publishEvent(new PhotoRegisteredEvent(photo.getAccountNo(), photo.getPhotoNo()));
 				++photoNo;
 			} else {
 				savedPhotoNo = photoDetailModel.getPhotoNo();
@@ -149,6 +154,7 @@ public class PhotoServiceImpl implements PhotoService {
 			Photo photo = Photo.forDelete(photoDeleteModel.getAccountNo(), photoDeleteModel.getPhotoNo(), imageFilePathForDelete);
 			photoAggregateRepository.delete(photo);
 			fileRepository.delete(imageFilePathForDelete);
+			applicationEventPublisher.publishEvent(new PhotoDeletedEvent(photo.getAccountNo(), photo.getPhotoNo()));
 		}
 	}
 

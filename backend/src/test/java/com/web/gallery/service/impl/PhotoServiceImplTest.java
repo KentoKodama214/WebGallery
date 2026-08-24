@@ -25,6 +25,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
@@ -57,6 +58,8 @@ import com.web.gallery.model.AccountModel;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
+import com.web.gallery.event.PhotoDeletedEvent;
+import com.web.gallery.event.PhotoRegisteredEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
@@ -106,6 +109,9 @@ public class PhotoServiceImplTest {
 
 	@Mock
 	private PhotoQuotaPolicy photoQuotaPolicy;
+
+	@Mock
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	@Nested
 	@Order(1)
@@ -560,6 +566,7 @@ public class PhotoServiceImplTest {
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 
 		@Test
@@ -572,6 +579,7 @@ public class PhotoServiceImplTest {
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 
 		@Test
@@ -630,6 +638,14 @@ public class PhotoServiceImplTest {
 			assertEquals(new AccountNo(1L), photoCaptureList.get(1).getAccountNo());
 			assertEquals(new PhotoNo(6L), photoCaptureList.get(1).getPhotoNo());
 			assertEquals(new ImageFilePath(filePath + accountId + "/DSC222.jpg"), photoCaptureList.get(1).getImageFilePath());
+
+			ArgumentCaptor<PhotoRegisteredEvent> photoRegisteredEventCaptor = ArgumentCaptor.forClass(PhotoRegisteredEvent.class);
+			verify(applicationEventPublisher, times(2)).publishEvent(photoRegisteredEventCaptor.capture());
+			List<PhotoRegisteredEvent> photoRegisteredEventCaptureList = photoRegisteredEventCaptor.getAllValues();
+			assertEquals(new AccountNo(1L), photoRegisteredEventCaptureList.get(0).accountNo());
+			assertEquals(new PhotoNo(5L), photoRegisteredEventCaptureList.get(0).photoNo());
+			assertEquals(new AccountNo(1L), photoRegisteredEventCaptureList.get(1).accountNo());
+			assertEquals(new PhotoNo(6L), photoRegisteredEventCaptureList.get(1).photoNo());
 		}
 
 		@Test
@@ -660,6 +676,7 @@ public class PhotoServiceImplTest {
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(2)).update(any(Photo.class));
 			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 
 			List<Photo> photoCaptureList = photoCaptor.getAllValues();
 			assertEquals(new PhotoNo(2L), photoCaptureList.get(0).getPhotoNo());
@@ -718,6 +735,11 @@ public class PhotoServiceImplTest {
 
 			Photo updatedPhoto = photoUpdateCaptor.getValue();
 			assertEquals(new PhotoNo(3L), updatedPhoto.getPhotoNo());
+
+			ArgumentCaptor<PhotoRegisteredEvent> photoRegisteredEventCaptor = ArgumentCaptor.forClass(PhotoRegisteredEvent.class);
+			verify(applicationEventPublisher, times(1)).publishEvent(photoRegisteredEventCaptor.capture());
+			assertEquals(new AccountNo(1L), photoRegisteredEventCaptor.getValue().accountNo());
+			assertEquals(new PhotoNo(5L), photoRegisteredEventCaptor.getValue().photoNo());
 		}
 
 		@Test
@@ -745,6 +767,7 @@ public class PhotoServiceImplTest {
 			verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
 			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 
 		@Test
@@ -771,6 +794,7 @@ public class PhotoServiceImplTest {
 
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 	}
 	
@@ -786,6 +810,7 @@ public class PhotoServiceImplTest {
 
 			photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.empty());
 			verify(photoAggregateRepositoryImpl, times(0)).delete(any(Photo.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 
 		@Test
@@ -828,6 +853,14 @@ public class PhotoServiceImplTest {
 			assertEquals(new AccountNo(1L), photoCaptureList.get(1).getAccountNo());
 			assertEquals(2L, photoCaptureList.get(1).getPhotoNo().value());
 			assertEquals(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"), photoCaptureList.get(1).getImageFilePathForDelete());
+
+			ArgumentCaptor<PhotoDeletedEvent> photoDeletedEventCaptor = ArgumentCaptor.forClass(PhotoDeletedEvent.class);
+			verify(applicationEventPublisher, times(2)).publishEvent(photoDeletedEventCaptor.capture());
+			List<PhotoDeletedEvent> photoDeletedEventCaptureList = photoDeletedEventCaptor.getAllValues();
+			assertEquals(new AccountNo(1L), photoDeletedEventCaptureList.get(0).accountNo());
+			assertEquals(1L, photoDeletedEventCaptureList.get(0).photoNo().value());
+			assertEquals(new AccountNo(1L), photoDeletedEventCaptureList.get(1).accountNo());
+			assertEquals(2L, photoDeletedEventCaptureList.get(1).photoNo().value());
 		}
 
 		@Test
@@ -848,6 +881,7 @@ public class PhotoServiceImplTest {
 
 			verify(photoAggregateRepositoryImpl, times(1)).delete(any(Photo.class));
 			verify(fileRepositoryImpl, times(0)).delete(any(ImageFilePath.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 	}
 	

@@ -347,6 +347,7 @@ WebGallery/
 │       │   │   ├── dto/                # DBアクセス層の複合データ転送オブジェクト
 │       │   │   ├── entity/             # エンティティ
 │       │   │   ├── enumeration/        # 列挙型
+│       │   │   ├── event/              # ドメインイベント・リスナー
 │       │   │   ├── exception/          # カスタム例外
 │       │   │   ├── helper/             # ヘルパーユーティリティ
 │       │   │   ├── mapper/             # MyBatisマッパー
