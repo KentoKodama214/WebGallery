@@ -3,6 +3,7 @@ package com.web.gallery.service.impl;
 import java.time.Clock;
 import java.util.Objects;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
@@ -19,6 +20,9 @@ import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.event.AccountDeletedEvent;
+import com.web.gallery.event.AccountRegisteredEvent;
+import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
@@ -47,6 +51,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	private final LoginConfig loginConfig;
 	private final PhotoConfig photoConfig;
 	private final Clock clock;
+	private final ApplicationEventPublisher applicationEventPublisher;
 
 	/**
 	 * アカウントIDからアカウント情報の存在を確認する
@@ -77,7 +82,10 @@ public class AccountServiceImpl implements UserDetailsService {
 	@Transactional
 	public Boolean registAccount(AccountModel accountModel) throws GalleryException {
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountId());
-		if(!isExist) accountRepository.regist(accountModel);
+		if(!isExist) {
+			accountRepository.regist(accountModel);
+			applicationEventPublisher.publishEvent(new AccountRegisteredEvent(accountModel.getAccountId()));
+		}
 		return !isExist;
 	}
 
@@ -91,7 +99,10 @@ public class AccountServiceImpl implements UserDetailsService {
 	@Transactional
 	public Boolean updateAccount(AccountModel accountModel) throws GalleryException {
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
-		if(!isExist) accountRepository.update(accountModel);
+		if(!isExist) {
+			accountRepository.update(accountModel);
+			applicationEventPublisher.publishEvent(new AccountUpdatedEvent(accountModel.getAccountNo(), accountModel.getAccountId()));
+		}
 		return isExist;
 	}
 
@@ -173,6 +184,8 @@ public class AccountServiceImpl implements UserDetailsService {
 
 		// 写真ファイルのディレクトリを削除
 		fileRepository.delete(new ImageFilePath(photoConfig.getOutputPath() + accountId.value() + "/"));
+
+		applicationEventPublisher.publishEvent(new AccountDeletedEvent(accountNo, accountId));
 	}
 
 	/**
