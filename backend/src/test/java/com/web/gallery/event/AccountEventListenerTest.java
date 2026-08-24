@@ -1,0 +1,34 @@
+package com.web.gallery.event;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
+
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountNo;
+
+@ActiveProfiles("test")
+@ExtendWith(MockitoExtension.class)
+public class AccountEventListenerTest {
+	@InjectMocks
+	private AccountEventListener accountEventListener;
+
+	@Test
+	@DisplayName("正常系：AccountRegisteredEventを受け取っても例外が発生しないこと")
+	void handle_accountRegisteredEvent_success() {
+		AccountRegisteredEvent event = new AccountRegisteredEvent(new AccountId("aaaaaaaa"));
+		assertDoesNotThrow(() -> accountEventListener.handle(event));
+	}
+
+	@Test
+	@DisplayName("正常系：AccountDeletedEventを受け取っても例外が発生しないこと")
+	void handle_accountDeletedEvent_success() {
+		AccountDeletedEvent event = new AccountDeletedEvent(new AccountNo(1L), new AccountId("aaaaaaaa"));
+		assertDoesNotThrow(() -> accountEventListener.handle(event));
+	}
+}

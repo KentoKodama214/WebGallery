@@ -22,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
@@ -47,6 +48,8 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.event.AccountDeletedEvent;
+import com.web.gallery.event.AccountRegisteredEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -90,6 +93,9 @@ public class AccountServiceImplTest {
 
 	@Mock
 	private Clock clock;
+
+	@Mock
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	@BeforeEach
 	void setUpClock() {
@@ -143,8 +149,12 @@ public class AccountServiceImplTest {
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
 			doNothing().when(accountRepositoryImpl).regist(accountModel);
 			assertTrue(accountServiceImpl.registAccount(accountModel));
+
+			ArgumentCaptor<AccountRegisteredEvent> accountRegisteredEventCaptor = ArgumentCaptor.forClass(AccountRegisteredEvent.class);
+			verify(applicationEventPublisher, times(1)).publishEvent(accountRegisteredEventCaptor.capture());
+			assertEquals(new AccountId("aaaaaaaa"), accountRegisteredEventCaptor.getValue().accountId());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが既に存在する")
@@ -153,8 +163,9 @@ public class AccountServiceImplTest {
 			doReturn(true).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
 			verify(accountRepositoryImpl,times(0)).regist(accountModel);
 			assertFalse(accountServiceImpl.registAccount(accountModel));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
-		
+
 		@Test
 		@Order(3)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
@@ -163,6 +174,7 @@ public class AccountServiceImplTest {
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
 			doThrow(RegistFailureException.class).when(accountRepositoryImpl).regist(accountModel);
 			assertThrows(RegistFailureException.class, () -> accountServiceImpl.registAccount(accountModel));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 	}
 	
@@ -405,6 +417,11 @@ public class AccountServiceImplTest {
 			verify(photoMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
 			verify(accountRepositoryImpl, times(1)).delete(new AccountNo(accountNo));
 			verify(fileRepository, times(1)).delete(new ImageFilePath("/output/" + accountId + "/"));
+
+			ArgumentCaptor<AccountDeletedEvent> accountDeletedEventCaptor = ArgumentCaptor.forClass(AccountDeletedEvent.class);
+			verify(applicationEventPublisher, times(1)).publishEvent(accountDeletedEventCaptor.capture());
+			assertEquals(new AccountNo(accountNo), accountDeletedEventCaptor.getValue().accountNo());
+			assertEquals(new AccountId(accountId), accountDeletedEventCaptor.getValue().accountId());
 		}
 	}
 
