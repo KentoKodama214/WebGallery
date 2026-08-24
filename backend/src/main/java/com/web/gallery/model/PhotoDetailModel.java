@@ -39,7 +39,7 @@ import lombok.Value;
  * 写真のメタデータを含めた詳細情報を受け渡すためのModelクラス
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PhotoDetailModel {
 	/** アカウント番号 */
 	@NonNull
