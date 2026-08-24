@@ -43,4 +43,24 @@ public class AccountEventListener {
 	public void handle(AccountDeletedEvent event) {
 		log.info("Account deleted (accountNo: {}, accountId: {})", event.accountNo().value(), event.accountId().value());
 	}
+
+	/**
+	 * アカウントの強制ロックイベントをハンドリングする
+	 *
+	 * @param	event	{@link AccountLockedEvent}
+	 */
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void handle(AccountLockedEvent event) {
+		log.info("Account locked (accountNo: {})", event.accountNo().value());
+	}
+
+	/**
+	 * アカウントのロック解除イベントをハンドリングする
+	 *
+	 * @param	event	{@link AccountUnlockedEvent}
+	 */
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void handle(AccountUnlockedEvent event) {
+		log.info("Account unlocked (accountNo: {})", event.accountNo().value());
+	}
 }

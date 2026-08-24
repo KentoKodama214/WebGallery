@@ -156,4 +156,13 @@
 			<if test="photoNo != null"> AND photo_no = #{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}</if>
 		</where>
 	</delete>
+
+	<select id="getPhotoNosByAccountNo" parameterType="Long" resultType="Long">
+		SELECT
+			photo_no AS photoNo
+		FROM
+			photo.photo_mst
+		WHERE
+			account_no = #{accountNo}
+	</select>
 </mapper>

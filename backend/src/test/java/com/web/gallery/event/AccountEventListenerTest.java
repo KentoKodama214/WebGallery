@@ -38,4 +38,18 @@ public class AccountEventListenerTest {
 		AccountDeletedEvent event = new AccountDeletedEvent(new AccountNo(1L), new AccountId("aaaaaaaa"));
 		assertDoesNotThrow(() -> accountEventListener.handle(event));
 	}
+
+	@Test
+	@DisplayName("正常系：AccountLockedEventを受け取っても例外が発生しないこと")
+	void handle_accountLockedEvent_success() {
+		AccountLockedEvent event = new AccountLockedEvent(new AccountNo(1L));
+		assertDoesNotThrow(() -> accountEventListener.handle(event));
+	}
+
+	@Test
+	@DisplayName("正常系：AccountUnlockedEventを受け取っても例外が発生しないこと")
+	void handle_accountUnlockedEvent_success() {
+		AccountUnlockedEvent event = new AccountUnlockedEvent(new AccountNo(1L));
+		assertDoesNotThrow(() -> accountEventListener.handle(event));
+	}
 }

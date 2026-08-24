@@ -48,14 +48,19 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.event.AccountDeletedEvent;
+import com.web.gallery.event.AccountLockedEvent;
 import com.web.gallery.event.AccountRegisteredEvent;
+import com.web.gallery.event.AccountUnlockedEvent;
 import com.web.gallery.event.AccountUpdatedEvent;
+import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.PhotoFavoriteRepository;
 import com.web.gallery.repository.PhotoMstRepository;
@@ -351,6 +356,10 @@ public class AccountServiceImplTest {
 			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
 			assertEquals(new LoginFailureCount(0), accountModel.getLoginFailureCount());
 			assertNull(accountModel.getLastLoginDatetime());
+
+			ArgumentCaptor<AccountUnlockedEvent> eventCaptor = ArgumentCaptor.forClass(AccountUnlockedEvent.class);
+			verify(applicationEventPublisher, times(1)).publishEvent(eventCaptor.capture());
+			assertEquals(new AccountNo(1L), eventCaptor.getValue().accountNo());
 		}
 
 		@Test
@@ -380,6 +389,10 @@ public class AccountServiceImplTest {
 			AccountModel accountModel = captor.getValue();
 			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
 			assertEquals(new LoginFailureCount(10), accountModel.getLoginFailureCount());
+
+			ArgumentCaptor<AccountLockedEvent> eventCaptor = ArgumentCaptor.forClass(AccountLockedEvent.class);
+			verify(applicationEventPublisher, times(1)).publishEvent(eventCaptor.capture());
+			assertEquals(new AccountNo(1L), eventCaptor.getValue().accountNo());
 		}
 
 		@Test
@@ -406,6 +419,8 @@ public class AccountServiceImplTest {
 			doNothing().when(photoFavoriteRepository).deleteByAccountNo(any(AccountNo.class));
 			doNothing().when(photoFavoriteRepository).deleteByFavoritePhotoAccountNo(any(AccountNo.class));
 			doNothing().when(photoTagMstRepository).deleteByAccountNo(any(AccountNo.class));
+			doReturn(PhotoNoList.of(List.of(new PhotoNo(1L), new PhotoNo(2L))))
+					.when(photoMstRepository).getPhotoNosByAccountNo(any(AccountNo.class));
 			doNothing().when(photoMstRepository).deleteByAccountNo(any(AccountNo.class));
 			doNothing().when(accountRepositoryImpl).delete(new AccountNo(accountNo));
 			doReturn("/output/").when(photoConfig).getOutputPath();
@@ -422,14 +437,30 @@ public class AccountServiceImplTest {
 			assertEquals(new AccountNo(accountNo), favoritePhotoCaptor.getValue());
 
 			verify(photoTagMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
+			verify(photoMstRepository, times(1)).getPhotoNosByAccountNo(new AccountNo(accountNo));
 			verify(photoMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
 			verify(accountRepositoryImpl, times(1)).delete(new AccountNo(accountNo));
 			verify(fileRepository, times(1)).delete(new ImageFilePath("/output/" + accountId + "/"));
 
-			ArgumentCaptor<AccountDeletedEvent> accountDeletedEventCaptor = ArgumentCaptor.forClass(AccountDeletedEvent.class);
-			verify(applicationEventPublisher, times(1)).publishEvent(accountDeletedEventCaptor.capture());
-			assertEquals(new AccountNo(accountNo), accountDeletedEventCaptor.getValue().accountNo());
-			assertEquals(new AccountId(accountId), accountDeletedEventCaptor.getValue().accountId());
+			ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+			verify(applicationEventPublisher, times(3)).publishEvent(eventCaptor.capture());
+			List<Object> publishedEvents = eventCaptor.getAllValues();
+
+			List<PhotoDeletedEvent> photoDeletedEvents = publishedEvents.stream()
+					.filter(PhotoDeletedEvent.class::isInstance)
+					.map(PhotoDeletedEvent.class::cast)
+					.toList();
+			assertEquals(2, photoDeletedEvents.size());
+			assertEquals(new PhotoNo(1L), photoDeletedEvents.get(0).photoNo());
+			assertEquals(new PhotoNo(2L), photoDeletedEvents.get(1).photoNo());
+
+			List<AccountDeletedEvent> accountDeletedEvents = publishedEvents.stream()
+					.filter(AccountDeletedEvent.class::isInstance)
+					.map(AccountDeletedEvent.class::cast)
+					.toList();
+			assertEquals(1, accountDeletedEvents.size());
+			assertEquals(new AccountNo(accountNo), accountDeletedEvents.get(0).accountNo());
+			assertEquals(new AccountId(accountId), accountDeletedEvents.get(0).accountId());
 		}
 	}
 

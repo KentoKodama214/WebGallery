@@ -20,12 +20,17 @@ import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.event.AccountDeletedEvent;
+import com.web.gallery.event.AccountLockedEvent;
 import com.web.gallery.event.AccountRegisteredEvent;
+import com.web.gallery.event.AccountUnlockedEvent;
 import com.web.gallery.event.AccountUpdatedEvent;
+import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.PhotoFavoriteRepository;
@@ -146,6 +151,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	@Transactional(rollbackFor = GalleryException.class)
 	public void unlockAccount(AccountNo accountNo) throws GalleryException {
 		accountRepository.updateLoginFailureCount(AccountModel.forUnlock(accountNo.value()));
+		applicationEventPublisher.publishEvent(new AccountUnlockedEvent(accountNo));
 	}
 
 	/**
@@ -157,6 +163,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	@Transactional(rollbackFor = GalleryException.class)
 	public void lockAccount(AccountNo accountNo) throws GalleryException {
 		accountRepository.updateLoginFailureCount(AccountModel.forLock(accountNo.value(), loginConfig.getFailCount()));
+		applicationEventPublisher.publishEvent(new AccountLockedEvent(accountNo));
 	}
 
 	/**
@@ -176,6 +183,9 @@ public class AccountServiceImpl implements UserDetailsService {
 		// 写真タグを削除
 		photoTagMstRepository.deleteByAccountNo(accountNo);
 
+		// 削除対象の写真番号を退避（物理削除後にイベント発行するため）
+		PhotoNoList deletedPhotoNoList = photoMstRepository.getPhotoNosByAccountNo(accountNo);
+
 		// 写真マスタを物理削除
 		photoMstRepository.deleteByAccountNo(accountNo);
 
@@ -185,6 +195,9 @@ public class AccountServiceImpl implements UserDetailsService {
 		// 写真ファイルのディレクトリを削除
 		fileRepository.delete(new ImageFilePath(photoConfig.getOutputPath() + accountId.value() + "/"));
 
+		for(PhotoNo photoNo : deletedPhotoNoList) {
+			applicationEventPublisher.publishEvent(new PhotoDeletedEvent(accountNo, photoNo));
+		}
 		applicationEventPublisher.publishEvent(new AccountDeletedEvent(accountNo, accountId));
 	}
 
