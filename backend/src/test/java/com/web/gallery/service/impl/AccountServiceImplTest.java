@@ -65,6 +65,7 @@ import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.PhotoFavoriteRepository;
 import com.web.gallery.repository.PhotoMstRepository;
 import com.web.gallery.repository.PhotoTagMstRepository;
+import com.web.gallery.repository.RefreshTokenRepository;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 
 @ActiveProfiles("test")
@@ -87,6 +88,9 @@ public class AccountServiceImplTest {
 
 	@Mock
 	private PhotoMstRepository photoMstRepository;
+
+	@Mock
+	private RefreshTokenRepository refreshTokenRepository;
 
 	@Mock
 	private AccountPrincipal accountPrincipal;
@@ -422,6 +426,7 @@ public class AccountServiceImplTest {
 			doReturn(PhotoNoList.of(List.of(new PhotoNo(1L), new PhotoNo(2L))))
 					.when(photoMstRepository).getPhotoNosByAccountNo(any(AccountNo.class));
 			doNothing().when(photoMstRepository).deleteByAccountNo(any(AccountNo.class));
+			doNothing().when(refreshTokenRepository).revokeAllByAccountNo(any(AccountNo.class));
 			doNothing().when(accountRepositoryImpl).delete(new AccountNo(accountNo));
 			doReturn("/output/").when(photoConfig).getOutputPath();
 			doNothing().when(fileRepository).delete(new ImageFilePath("/output/" + accountId + "/"));
@@ -439,6 +444,7 @@ public class AccountServiceImplTest {
 			verify(photoTagMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
 			verify(photoMstRepository, times(1)).getPhotoNosByAccountNo(new AccountNo(accountNo));
 			verify(photoMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
+			verify(refreshTokenRepository, times(1)).revokeAllByAccountNo(new AccountNo(accountNo));
 			verify(accountRepositoryImpl, times(1)).delete(new AccountNo(accountNo));
 			verify(fileRepository, times(1)).delete(new ImageFilePath("/output/" + accountId + "/"));
 

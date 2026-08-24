@@ -36,6 +36,7 @@ import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.PhotoFavoriteRepository;
 import com.web.gallery.repository.PhotoMstRepository;
 import com.web.gallery.repository.PhotoTagMstRepository;
+import com.web.gallery.repository.RefreshTokenRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	private final PhotoFavoriteRepository photoFavoriteRepository;
 	private final PhotoTagMstRepository photoTagMstRepository;
 	private final PhotoMstRepository photoMstRepository;
+	private final RefreshTokenRepository refreshTokenRepository;
 	private final LoginConfig loginConfig;
 	private final PhotoConfig photoConfig;
 	private final Clock clock;
@@ -189,6 +191,9 @@ public class AccountServiceImpl implements UserDetailsService {
 
 		// 写真マスタを物理削除
 		photoMstRepository.deleteByAccountNo(accountNo);
+
+		// リフレッシュトークンを失効
+		refreshTokenRepository.revokeAllByAccountNo(accountNo);
 
 		// アカウントを物理削除
 		accountRepository.delete(accountNo);

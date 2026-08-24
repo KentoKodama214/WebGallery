@@ -121,6 +121,9 @@ public class AuthServiceImpl implements AuthService {
 
 		// アカウント番号からアカウント情報を取得し、新しいアクセストークンを発行
 		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo());
+		if (accountModel == null) {
+			throw new IllegalArgumentException("無効なリフレッシュトークンです");
+		}
 		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId().value());
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
 
