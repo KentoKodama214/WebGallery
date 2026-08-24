@@ -1,5 +1,7 @@
 package com.web.gallery.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -60,4 +62,12 @@ public interface PhotoMstMapper {
 	 * @return				削除件数
 	 */
 	public Integer delete(PhotoMstCondition condition);
+
+	/**
+	 * アカウント番号に紐づく写真番号の一覧を取得する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				写真番号のリスト
+	 */
+	public List<Long> getPhotoNosByAccountNo(Long accountNo);
 }

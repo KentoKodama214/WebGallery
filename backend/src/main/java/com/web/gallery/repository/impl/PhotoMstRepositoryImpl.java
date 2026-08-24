@@ -14,6 +14,7 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.PhotoMstRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -126,5 +127,18 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	@Override
 	public void deleteByAccountNo(AccountNo accountNo) {
 		photoMstMapper.delete(PhotoMstCondition.byAccountNo(accountNo));
+	}
+
+	/**
+	 * アカウント番号に紐づく写真番号の一覧を取得する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link PhotoNoList}
+	 */
+	@Override
+	public PhotoNoList getPhotoNosByAccountNo(AccountNo accountNo) {
+		return PhotoNoList.of(photoMstMapper.getPhotoNosByAccountNo(accountNo.value()).stream()
+				.map(PhotoNo::new)
+				.toList());
 	}
 }

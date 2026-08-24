@@ -6,6 +6,7 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoNoList;
 
 /**
  * 写真マスタデータを永続化するRepositoryクラス
@@ -67,4 +68,12 @@ public interface PhotoMstRepository {
 	 * @param	accountNo	アカウント番号
 	 */
 	void deleteByAccountNo(AccountNo accountNo);
+
+	/**
+	 * アカウント番号に紐づく写真番号の一覧を取得する
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link PhotoNoList}
+	 */
+	PhotoNoList getPhotoNosByAccountNo(AccountNo accountNo);
 }

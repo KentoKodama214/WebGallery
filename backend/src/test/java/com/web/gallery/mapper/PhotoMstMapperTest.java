@@ -979,4 +979,27 @@ public class PhotoMstMapperTest {
 			assertFalse(photoMstMapper.isExistPhoto(photoMst));
 		}
 	}
+
+	@Nested
+	@Order(7)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/mapper/PhotoMstMapperTest.sql")
+	class getPhotoNosByAccountNo {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント番号に該当する写真がある場合")
+		void getPhotoNosByAccountNo_found() {
+			List<Long> actual = photoMstMapper.getPhotoNosByAccountNo(1L);
+			assertEquals(List.of(1L, 2L, 3L), actual.stream().sorted().toList());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：アカウント番号に該当する写真がない場合")
+		void getPhotoNosByAccountNo_not_found() {
+			List<Long> actual = photoMstMapper.getPhotoNosByAccountNo(100L);
+			assertTrue(actual.isEmpty());
+		}
+	}
 }

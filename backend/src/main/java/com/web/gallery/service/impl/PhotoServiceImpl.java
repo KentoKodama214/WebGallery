@@ -122,20 +122,44 @@ public class PhotoServiceImpl implements PhotoService {
 
 		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
 			if(Objects.isNull(photoDetailModel.getPhotoNo())) {
-				String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
-				Photo photo = Photo.forRegist(photoDetailModel, new PhotoNo(photoNo), new ImageFilePath(filePath + filename));
-				photoAggregateRepository.regist(photo);
-				fileRepository.save(FileModel.of(photo.getImageFilePath(), photo.getImageFile()));
-				applicationEventPublisher.publishEvent(new PhotoRegisteredEvent(photo.getAccountNo(), photo.getPhotoNo()));
+				registPhoto(photoDetailModel, new PhotoNo(photoNo), filePath);
 				++photoNo;
 			} else {
 				savedPhotoNo = photoDetailModel.getPhotoNo();
-				Photo photo = Photo.forUpdate(photoDetailModel);
-				photoAggregateRepository.update(photo);
-				applicationEventPublisher.publishEvent(new PhotoUpdatedEvent(photo.getAccountNo(), photo.getPhotoNo()));
+				updatePhoto(photoDetailModel);
 			}
 		}
 		return savedPhotoNo;
+	}
+
+	/**
+	 * 写真を1件登録し、登録イベントを発行する
+	 *
+	 * @param	photoDetailModel	{@link PhotoDetailModel}
+	 * @param	newPhotoNo			新規採番した写真番号
+	 * @param	filePath			写真の保存先ディレクトリパス
+	 * @throws	GalleryException	以下のいずれかに該当する場合
+	 *                              	・同じファイル名のファイルが既に保存済みの場合
+	 *                              	・登録に失敗した場合
+	 */
+	private void registPhoto(PhotoDetailModel photoDetailModel, PhotoNo newPhotoNo, String filePath) throws GalleryException {
+		String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
+		Photo photo = Photo.forRegist(photoDetailModel, newPhotoNo, new ImageFilePath(filePath + filename));
+		photoAggregateRepository.regist(photo);
+		fileRepository.save(FileModel.of(photo.getImageFilePath(), photo.getImageFile()));
+		applicationEventPublisher.publishEvent(new PhotoRegisteredEvent(photo.getAccountNo(), photo.getPhotoNo()));
+	}
+
+	/**
+	 * 写真を1件更新し、更新イベントを発行する
+	 *
+	 * @param	photoDetailModel	{@link PhotoDetailModel}
+	 * @throws	GalleryException	更新に失敗した場合
+	 */
+	private void updatePhoto(PhotoDetailModel photoDetailModel) throws GalleryException {
+		Photo photo = Photo.forUpdate(photoDetailModel);
+		photoAggregateRepository.update(photo);
+		applicationEventPublisher.publishEvent(new PhotoUpdatedEvent(photo.getAccountNo(), photo.getPhotoNo()));
 	}
 
 	/**

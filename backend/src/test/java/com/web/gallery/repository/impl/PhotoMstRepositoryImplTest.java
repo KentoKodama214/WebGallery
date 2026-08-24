@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -51,6 +52,7 @@ import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoNoList;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -592,6 +594,33 @@ public class PhotoMstRepositoryImplTest {
 			PhotoMstCondition photoMst = photoMstCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
 			assertNull(photoMst.getPhotoNo());
+		}
+	}
+
+	@Nested
+	@Order(8)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class getPhotoNosByAccountNo {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：アカウント番号に紐づく写真番号の一覧を取得する")
+		void getPhotoNosByAccountNo_found() {
+			doReturn(List.of(1L, 2L, 3L)).when(photoMstMapper).getPhotoNosByAccountNo(1L);
+
+			PhotoNoList actual = photoMstRepositoryImpl.getPhotoNosByAccountNo(new AccountNo(1L));
+
+			assertEquals(List.of(new PhotoNo(1L), new PhotoNo(2L), new PhotoNo(3L)), actual.toList());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：アカウント番号に紐づく写真がない場合")
+		void getPhotoNosByAccountNo_not_found() {
+			doReturn(List.of()).when(photoMstMapper).getPhotoNosByAccountNo(1L);
+
+			PhotoNoList actual = photoMstRepositoryImpl.getPhotoNosByAccountNo(new AccountNo(1L));
+
+			assertTrue(actual.isEmpty());
 		}
 	}
 }
