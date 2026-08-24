@@ -96,6 +96,7 @@ public class AuthRestController {
 	@Operation(summary = "トークンリフレッシュ", description = "リフレッシュトークン（cookie）を使用してアクセストークンを再発行する")
 	@ApiResponse(responseCode = "200", description = "リフレッシュ成功")
 	@ApiResponse(responseCode = "401", description = "リフレッシュトークンが無効", content = @Content)
+	@ApiResponse(responseCode = "423", description = "アカウントロック", content = @Content)
 	@PostMapping(ApiRoutes.API_AUTH_REFRESH)
 	public ResponseEntity<AuthLoginResponse> refresh(
 			@CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {

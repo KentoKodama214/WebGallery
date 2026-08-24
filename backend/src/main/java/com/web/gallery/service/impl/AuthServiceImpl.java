@@ -16,6 +16,7 @@ import com.web.gallery.domain.common.TokenHash;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -104,6 +105,7 @@ public class AuthServiceImpl implements AuthService {
 	 * @param	refreshToken	リフレッシュトークン
 	 * @return					{@link AuthTokenModel}
 	 * @throws	IllegalArgumentException	トークンが無効な場合
+	 * @throws	LockedException				アカウントがロックされている場合
 	 */
 	@Override
 	@Transactional(readOnly = true)
@@ -126,6 +128,13 @@ public class AuthServiceImpl implements AuthService {
 		}
 		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId().value());
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
+
+		if (!principal.isAccountNonLocked()) {
+			throw new LockedException("アカウントがロックされています");
+		}
+		if (!principal.isEnabled()) {
+			throw new IllegalArgumentException("無効なリフレッシュトークンです");
+		}
 
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);
 
