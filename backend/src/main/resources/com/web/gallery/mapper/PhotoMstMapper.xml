@@ -164,5 +164,6 @@
 			photo.photo_mst
 		WHERE
 			account_no = #{accountNo}
+			AND is_deleted = false
 	</select>
 </mapper>

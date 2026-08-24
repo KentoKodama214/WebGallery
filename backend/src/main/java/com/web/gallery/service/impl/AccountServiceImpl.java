@@ -184,6 +184,7 @@ public class AccountServiceImpl implements UserDetailsService {
 		photoTagMstRepository.deleteByAccountNo(accountNo);
 
 		// 削除対象の写真番号を退避（物理削除後にイベント発行するため）
+		// 既に論理削除済みの写真でイベントが重複発行されないよう、未削除の写真のみを対象とする
 		PhotoNoList deletedPhotoNoList = photoMstRepository.getPhotoNosByAccountNo(accountNo);
 
 		// 写真マスタを物理削除

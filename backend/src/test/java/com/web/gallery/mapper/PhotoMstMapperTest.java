@@ -988,14 +988,23 @@ public class PhotoMstMapperTest {
 	class getPhotoNosByAccountNo {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：アカウント番号に該当する写真がある場合")
+		@DisplayName("正常系：アカウント番号に該当する未削除の写真がある場合")
 		void getPhotoNosByAccountNo_found() {
 			List<Long> actual = photoMstMapper.getPhotoNosByAccountNo(1L);
-			assertEquals(List.of(1L, 2L, 3L), actual.stream().sorted().toList());
+			assertEquals(List.of(1L), actual.stream().sorted().toList());
 		}
 
 		@Test
 		@Order(2)
+		@DisplayName("正常系：論理削除済みの写真は取得対象から除外される")
+		void getPhotoNosByAccountNo_excludes_deleted() {
+			List<Long> actual = photoMstMapper.getPhotoNosByAccountNo(1L);
+			assertFalse(actual.contains(2L));
+			assertFalse(actual.contains(3L));
+		}
+
+		@Test
+		@Order(3)
 		@DisplayName("正常系：アカウント番号に該当する写真がない場合")
 		void getPhotoNosByAccountNo_not_found() {
 			List<Long> actual = photoMstMapper.getPhotoNosByAccountNo(100L);
