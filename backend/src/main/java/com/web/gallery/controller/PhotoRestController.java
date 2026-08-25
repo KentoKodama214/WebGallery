@@ -74,14 +74,27 @@ public class PhotoRestController {
 	 * 
 	 * @param	photoAccountId		ページ所有者のアカウントID
 	 * @param	photoListRequest	{@link PhotoListRequest}
+	 * @param	result				バリデーション結果
 	 * @return						{@link PhotoListGetResponse}
+	 * @throws	GalleryException	リクエストパラメータが不正な場合
 	 */
 	@Operation(summary = "写真一覧取得", description = "抽出条件に該当する写真を、指定の並び順で取得する")
 	@ApiResponse(responseCode = "200", description = "取得成功")
+	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
 	@GetMapping(ApiRoutes.API_PHOTOS)
 	public ResponseEntity<PhotoListGetResponse> getPhotoList(
 			@PathVariable String photoAccountId,
-			@ModelAttribute @Validated PhotoListRequest photoListRequest) {
+			@ModelAttribute @Validated PhotoListRequest photoListRequest,
+			BindingResult result) throws GalleryException {
+
+		if(result.hasErrors()) {
+			for(FieldError error : result.getFieldErrors()) {
+				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
+						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
+			}
+			throw ErrorEnum.INVALID_INPUT.toException();
+		}
+
 		// 抽出条件に該当する写真の一覧を、指定の並び順で取得する
 		PhotoModelList photoList = photoService.getPhotoList(
 				PhotoListGetModel.from(photoListRequest, sessionHelper.getAccountNo(), photoAccountId));

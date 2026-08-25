@@ -324,6 +324,17 @@ public class PhotoRestControllerTest {
 			assertEquals(new ArrayList<String>(), photoListGetModel.getTagList());
 			assertEquals(SortPhotoEnum.PHOTO_AT, photoListGetModel.getSortBy());
 		}
+
+		@Test
+		@Order(5)
+		@DisplayName("異常系：ページ番号が0以下。BadRequestExceptionをthrowする")
+		void getPhotoList_BadRequestException_pageNo_not_positive() throws Exception {
+			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos")
+					.param("pageNo", "0"))
+				.andExpect(status().isBadRequest());
+
+			verify(photoServiceImpl, times(0)).getPhotoList(any(PhotoListGetModel.class));
+		}
 	}
 
 	@Nested
