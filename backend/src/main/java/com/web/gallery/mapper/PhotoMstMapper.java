@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.web.gallery.dto.PhotoDeletionDto;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoMstCondition;
 import com.web.gallery.entity.PhotoMstUpdateTarget;
@@ -56,18 +57,10 @@ public interface PhotoMstMapper {
 	public Boolean isExistPhoto(PhotoMstCondition condition);
 
 	/**
-	 * 写真マスタを物理削除する
-	 *
-	 * @param	condition	削除対象の抽出条件
-	 * @return				削除件数
-	 */
-	public Integer delete(PhotoMstCondition condition);
-
-	/**
-	 * アカウント番号に紐づく未削除の写真番号の一覧を取得する
+	 * アカウント番号に紐づく写真マスタを物理削除し、削除した行を返す
 	 *
 	 * @param	accountNo	アカウント番号
-	 * @return				写真番号のリスト
+	 * @return				削除した{@link PhotoDeletionDto}のリスト
 	 */
-	public List<Long> getPhotoNosByAccountNo(Long accountNo);
+	public List<PhotoDeletionDto> deletePhotosByAccountNo(Long accountNo);
 }

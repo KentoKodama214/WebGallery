@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.dto.PhotoDeletionDto;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoMstCondition;
 import com.web.gallery.entity.PhotoMstUpdateTarget;
@@ -120,23 +121,16 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	}
 
 	/**
-	 * アカウント番号で写真マスタを物理削除する
-	 *
-	 * @param	accountNo	アカウント番号
-	 */
-	@Override
-	public void deleteByAccountNo(AccountNo accountNo) {
-		photoMstMapper.delete(PhotoMstCondition.byAccountNo(accountNo));
-	}
-
-	/**
-	 * アカウント番号に紐づく未削除の写真番号の一覧を取得する
+	 * アカウント番号に紐づく写真マスタを物理削除し、削除時点で未削除だった写真番号一覧を返す
 	 *
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link PhotoNoList}
 	 */
 	@Override
-	public PhotoNoList getPhotoNosByAccountNo(AccountNo accountNo) {
-		return PhotoNoList.from(photoMstMapper.getPhotoNosByAccountNo(accountNo.value()));
+	public PhotoNoList deleteAndGetUndeletedPhotoNosByAccountNo(AccountNo accountNo) {
+		return PhotoNoList.from(photoMstMapper.deletePhotosByAccountNo(accountNo.value()).stream()
+				.filter(dto -> !dto.getIsDeleted())
+				.map(PhotoDeletionDto::getPhotoNo)
+				.toList());
 	}
 }

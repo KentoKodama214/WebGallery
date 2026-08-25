@@ -63,17 +63,10 @@ public interface PhotoMstRepository {
 	Integer count(AccountNo accountNo);
 
 	/**
-	 * アカウント番号で写真マスタを物理削除する
-	 *
-	 * @param	accountNo	アカウント番号
-	 */
-	void deleteByAccountNo(AccountNo accountNo);
-
-	/**
-	 * アカウント番号に紐づく未削除の写真番号の一覧を取得する
+	 * アカウント番号に紐づく写真マスタを物理削除し、削除時点で未削除だった写真番号一覧を返す
 	 *
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link PhotoNoList}
 	 */
-	PhotoNoList getPhotoNosByAccountNo(AccountNo accountNo);
+	PhotoNoList deleteAndGetUndeletedPhotoNosByAccountNo(AccountNo accountNo);
 }

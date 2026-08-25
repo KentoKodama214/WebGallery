@@ -424,8 +424,7 @@ public class AccountServiceImplTest {
 			doNothing().when(photoFavoriteRepository).deleteByFavoritePhotoAccountNo(any(AccountNo.class));
 			doNothing().when(photoTagMstRepository).deleteByAccountNo(any(AccountNo.class));
 			doReturn(PhotoNoList.of(List.of(new PhotoNo(1L), new PhotoNo(2L))))
-					.when(photoMstRepository).getPhotoNosByAccountNo(any(AccountNo.class));
-			doNothing().when(photoMstRepository).deleteByAccountNo(any(AccountNo.class));
+					.when(photoMstRepository).deleteAndGetUndeletedPhotoNosByAccountNo(any(AccountNo.class));
 			doNothing().when(refreshTokenRepository).revokeAllByAccountNo(any(AccountNo.class));
 			doNothing().when(accountRepositoryImpl).delete(new AccountNo(accountNo));
 			doReturn("/output/").when(photoConfig).getOutputPath();
@@ -442,8 +441,7 @@ public class AccountServiceImplTest {
 			assertEquals(new AccountNo(accountNo), favoritePhotoCaptor.getValue());
 
 			verify(photoTagMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
-			verify(photoMstRepository, times(1)).getPhotoNosByAccountNo(new AccountNo(accountNo));
-			verify(photoMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
+			verify(photoMstRepository, times(1)).deleteAndGetUndeletedPhotoNosByAccountNo(new AccountNo(accountNo));
 			verify(refreshTokenRepository, times(1)).revokeAllByAccountNo(new AccountNo(accountNo));
 			verify(accountRepositoryImpl, times(1)).delete(new AccountNo(accountNo));
 			verify(fileRepository, times(1)).delete(new ImageFilePath("/output/" + accountId + "/"));

@@ -148,22 +148,18 @@
 		AND is_deleted = false
 	</select>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.PhotoMstCondition">
-		DELETE FROM
-			photo.photo_mst
-		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
-			<if test="photoNo != null"> AND photo_no = #{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}</if>
-		</where>
-	</delete>
+	<resultMap id="PhotoDeletionDtoResultMap" type="com.web.gallery.dto.PhotoDeletionDto">
+		<result column="photoNo" property="photoNo"/>
+		<result column="isDeleted" property="isDeleted"/>
+	</resultMap>
 
-	<select id="getPhotoNosByAccountNo" parameterType="Long" resultType="Long">
-		SELECT
-			photo_no AS photoNo
-		FROM
+	<select id="deletePhotosByAccountNo" parameterType="Long" resultMap="PhotoDeletionDtoResultMap">
+		DELETE FROM
 			photo.photo_mst
 		WHERE
 			account_no = #{accountNo}
-			AND is_deleted = false
+		RETURNING
+			photo_no AS photoNo,
+			is_deleted AS isDeleted
 	</select>
 </mapper>
