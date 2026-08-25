@@ -29,6 +29,18 @@ public record PhotoNoList(List<PhotoNo> photoNoList) implements Iterable<PhotoNo
 	}
 
 	/**
+	 * 写真番号のLongリストからPhotoNoListを生成する
+	 *
+	 * @param	photoNoValueList	写真番号のLongリスト
+	 * @return						{@link PhotoNoList}
+	 */
+	public static PhotoNoList from(List<Long> photoNoValueList) {
+		return PhotoNoList.of(photoNoValueList.stream()
+				.map(PhotoNo::new)
+				.toList());
+	}
+
+	/**
 	 * 空のPhotoNoListを生成する
 	 *
 	 * @return	{@link PhotoNoList}
@@ -53,6 +65,16 @@ public record PhotoNoList(List<PhotoNo> photoNoList) implements Iterable<PhotoNo
 	 */
 	public Boolean isEmpty() {
 		return photoNoList.isEmpty();
+	}
+
+	/**
+	 * 指定インデックスの要素を取得する
+	 *
+	 * @param	index	インデックス
+	 * @return			{@link PhotoNo}
+	 */
+	public PhotoNo get(int index) {
+		return photoNoList.get(index);
 	}
 
 	/**
