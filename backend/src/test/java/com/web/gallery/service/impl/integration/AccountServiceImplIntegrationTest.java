@@ -404,6 +404,16 @@ public class AccountServiceImplIntegrationTest {
 			Integer otherFavoriteCount = jdbcTemplate.queryForObject(
 					"SELECT COUNT(*) FROM photo.photo_favorite where account_no=2 and favorite_photo_account_no=2", Integer.class);
 			assertEquals(1, otherFavoriteCount);
+
+			// リフレッシュトークンが失効・削除されたことを確認
+			Integer refreshTokenCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM common.refresh_token where account_no=1", Integer.class);
+			assertEquals(0, refreshTokenCount);
+
+			// account_no=2の有効なリフレッシュトークンは残っていること
+			Integer otherRefreshTokenCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM common.refresh_token where account_no=2 and is_revoked=false", Integer.class);
+			assertEquals(1, otherRefreshTokenCount);
 		}
 	}
 

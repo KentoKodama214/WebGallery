@@ -272,6 +272,24 @@ class AuthServiceImplTest {
 				authServiceImpl.refresh(new RefreshTokenValue("nonexistent-token"));
 			});
 		}
+
+		@Test
+		@DisplayName("異常系: トークンに紐づくアカウントが既に削除されている場合は例外がスローされること")
+		void refresh_accountNotFound() {
+			RefreshTokenModel storedToken = RefreshTokenModel.builder()
+					.accountNo(new AccountNo(1L))
+					.tokenHash(new TokenHash("hashed-token"))
+					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
+					.isRevoked(new IsRevoked(false))
+					.build();
+
+			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
+			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(null);
+
+			assertThrows(IllegalArgumentException.class, () -> {
+				authServiceImpl.refresh(new RefreshTokenValue("valid-refresh-token"));
+			});
+		}
 	}
 
 	@Nested

@@ -25,12 +25,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.config.JwtConfig;
 import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.model.RefreshTokenModel;
 import com.web.gallery.repository.RefreshTokenRepository;
+import com.web.gallery.service.impl.AccountServiceImpl;
 import com.web.gallery.service.impl.AuthServiceImpl;
 
 @ActiveProfiles("test")
@@ -39,6 +41,9 @@ import com.web.gallery.service.impl.AuthServiceImpl;
 public class AuthServiceImplIntegrationTest {
 	@Autowired
 	private AuthServiceImpl authServiceImpl;
+
+	@Autowired
+	private AccountServiceImpl accountServiceImpl;
 
 	@Autowired
 	private RefreshTokenRepository refreshTokenRepository;
@@ -261,6 +266,41 @@ public class AuthServiceImplIntegrationTest {
 			// ロック後のリフレッシュはLockedExceptionをthrowする
 			assertThrows(LockedException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
+		}
+
+		@Test
+		@Order(6)
+		@DisplayName("異常系：アカウント削除後のリフレッシュトークンの場合、NPEではなくIllegalArgumentExceptionをthrowする")
+		void refresh_after_account_deleted() {
+			// ログインしてリフレッシュトークンを取得
+			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+			String refreshToken = loginResult.getRefreshToken().value();
+
+			// アカウントを削除（本来はdeleteAccount内でリフレッシュトークンも失効するが、
+			// 失効漏れがあった場合の防御的なnullチェックを検証するため直接アカウントのみ削除する）
+			jdbcTemplate.update("DELETE FROM common.account WHERE account_no = ?", 1L);
+
+			// 削除済みアカウントのリフレッシュトークンでリフレッシュ
+			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
+			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("異常系：アカウント削除によりリフレッシュトークンが失効し、リフレッシュに失敗する")
+		void refresh_fails_after_delete_account() {
+			// ログインしてリフレッシュトークンを取得
+			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+			String refreshToken = loginResult.getRefreshToken().value();
+
+			// アカウントを削除（deleteAccount内でリフレッシュトークンも失効される）
+			accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("testuser01"));
+
+			// 削除済みアカウントのリフレッシュトークンでリフレッシュ
+			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
+			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
 		}
 	}
 
