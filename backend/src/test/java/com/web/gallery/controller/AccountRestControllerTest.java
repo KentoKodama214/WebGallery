@@ -49,7 +49,7 @@ import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
-import com.web.gallery.service.impl.AccountServiceImpl;
+import com.web.gallery.service.AccountService;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -58,7 +58,7 @@ public class AccountRestControllerTest {
 	private AccountRestController accountRestController;
 
 	@Mock
-	private AccountServiceImpl accountServiceImpl;
+	private AccountService accountService;
 
 	@Mock
 	private SessionHelper sessionHelper;
@@ -96,7 +96,7 @@ public class AccountRestControllerTest {
 					AccountModel.builder().accountId(new AccountId("bbbbbbbb")).accountName(new AccountName("BBBBBBBB")).build()
 			));
 
-			doReturn(accountModels).when(accountServiceImpl).getAccountList();
+			doReturn(accountModels).when(accountService).getAccountList();
 
 			mockMvc.perform(get("/api/v1/accounts"))
 				.andExpect(status().isOk())
@@ -110,7 +110,7 @@ public class AccountRestControllerTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが0件の場合は空リストを返すこと")
 		void getAccountList_empty() throws Exception {
-			doReturn(AccountModelList.empty()).when(accountServiceImpl).getAccountList();
+			doReturn(AccountModelList.empty()).when(accountService).getAccountList();
 
 			mockMvc.perform(get("/api/v1/accounts"))
 				.andExpect(status().isOk())
@@ -142,7 +142,7 @@ public class AccountRestControllerTest {
 					.freeMemo(new FreeMemo("フリーメモ"))
 					.build();
 
-			doReturn(accountModel).when(accountServiceImpl).getAccountById(new AccountId(accountId));
+			doReturn(accountModel).when(accountService).getAccountById(new AccountId(accountId));
 
 			mockMvc.perform(get("/api/v1/accounts/" + accountId))
 				.andExpect(status().isOk())
@@ -174,7 +174,7 @@ public class AccountRestControllerTest {
 					.freeMemo(new FreeMemo(""))
 					.build();
 
-			doReturn(accountModel).when(accountServiceImpl).getAccountById(new AccountId(accountId));
+			doReturn(accountModel).when(accountService).getAccountById(new AccountId(accountId));
 
 			mockMvc.perform(get("/api/v1/accounts/" + accountId))
 				.andExpect(status().isOk())
@@ -196,7 +196,7 @@ public class AccountRestControllerTest {
 			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa"))
 				.andExpect(status().isForbidden());
 
-			verify(accountServiceImpl, times(0)).getAccountById(any(AccountId.class));
+			verify(accountService, times(0)).getAccountById(any(AccountId.class));
 		}
 	}
 
@@ -209,7 +209,7 @@ public class AccountRestControllerTest {
 		@DisplayName("正常系")
 		void register_regist_success() throws Exception {
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doReturn(true).when(accountServiceImpl).registAccount(accountModelCaptor.capture());
+			doReturn(true).when(accountService).registAccount(accountModelCaptor.capture());
 
 			mockMvc.perform(post("/api/v1/accounts")
 					.contentType(MediaType.APPLICATION_JSON)
@@ -239,7 +239,7 @@ public class AccountRestControllerTest {
 		@DisplayName("正常系：既に使われているアカウントIDの場合")
 		void register_exist_accountId() throws Exception {
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doReturn(false).when(accountServiceImpl).registAccount(accountModelCaptor.capture());
+			doReturn(false).when(accountService).registAccount(accountModelCaptor.capture());
 
 			mockMvc.perform(post("/api/v1/accounts")
 					.contentType(MediaType.APPLICATION_JSON)
@@ -273,7 +273,7 @@ public class AccountRestControllerTest {
 					.content(readJsonFile("regist_badrequest_blank_accountid.json")))
 				.andExpect(status().isBadRequest());
 
-			verify(accountServiceImpl, times(0)).registAccount(any(AccountModel.class));
+			verify(accountService, times(0)).registAccount(any(AccountModel.class));
 		}
 
 		@Test
@@ -281,7 +281,7 @@ public class AccountRestControllerTest {
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void account_setting_RegistFailureException() throws Exception {
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doThrow(new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_ACCOUNT)).when(accountServiceImpl).registAccount(accountModelCaptor.capture());
+			doThrow(new RegistFailureException(ErrorEnum.FAIL_TO_REGIST_ACCOUNT)).when(accountService).registAccount(accountModelCaptor.capture());
 
 			mockMvc.perform(post("/api/v1/accounts")
 					.contentType(MediaType.APPLICATION_JSON)
@@ -318,7 +318,7 @@ public class AccountRestControllerTest {
 			doReturn(accountId).when(sessionHelper).getAccountId();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doReturn(false).when(accountServiceImpl).updateAccount(accountModelCaptor.capture());
+			doReturn(false).when(accountService).updateAccount(accountModelCaptor.capture());
 
 			mockMvc.perform(put("/api/v1/accounts/" + accountId)
 					.contentType(MediaType.APPLICATION_JSON)
@@ -355,7 +355,7 @@ public class AccountRestControllerTest {
 			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doReturn(false).when(accountServiceImpl).updateAccount(accountModelCaptor.capture());
+			doReturn(false).when(accountService).updateAccount(accountModelCaptor.capture());
 
 			mockMvc.perform(put("/api/v1/accounts/" + accountId)
 					.contentType(MediaType.APPLICATION_JSON)
@@ -384,7 +384,7 @@ public class AccountRestControllerTest {
 			doReturn(accountId).when(sessionHelper).getAccountId();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doReturn(false).when(accountServiceImpl).updateAccount(accountModelCaptor.capture());
+			doReturn(false).when(accountService).updateAccount(accountModelCaptor.capture());
 
 			mockMvc.perform(put("/api/v1/accounts/" + accountId)
 					.contentType(MediaType.APPLICATION_JSON)
@@ -413,7 +413,7 @@ public class AccountRestControllerTest {
 			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doReturn(false).when(accountServiceImpl).updateAccount(accountModelCaptor.capture());
+			doReturn(false).when(accountService).updateAccount(accountModelCaptor.capture());
 
 			mockMvc.perform(put("/api/v1/accounts/" + accountId)
 					.contentType(MediaType.APPLICATION_JSON)
@@ -441,7 +441,7 @@ public class AccountRestControllerTest {
 			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doReturn(true).when(accountServiceImpl).updateAccount(accountModelCaptor.capture());
+			doReturn(true).when(accountService).updateAccount(accountModelCaptor.capture());
 
 			mockMvc.perform(put("/api/v1/accounts/" + accountId)
 					.contentType(MediaType.APPLICATION_JSON)
@@ -469,7 +469,7 @@ public class AccountRestControllerTest {
 				.andExpect(status().isBadRequest());
 
 			verify(sessionHelper, times(0)).getAccountNo();
-			verify(accountServiceImpl, times(0)).updateAccount(any(AccountModel.class));
+			verify(accountService, times(0)).updateAccount(any(AccountModel.class));
 		}
 
 		@Test
@@ -482,7 +482,7 @@ public class AccountRestControllerTest {
 				.andExpect(status().isBadRequest());
 
 			verify(sessionHelper, times(0)).getAccountNo();
-			verify(accountServiceImpl, times(0)).updateAccount(any(AccountModel.class));
+			verify(accountService, times(0)).updateAccount(any(AccountModel.class));
 		}
 
 		@Test
@@ -495,7 +495,7 @@ public class AccountRestControllerTest {
 				.andExpect(status().isBadRequest());
 
 			verify(sessionHelper, times(0)).getAccountNo();
-			verify(accountServiceImpl, times(0)).updateAccount(any(AccountModel.class));
+			verify(accountService, times(0)).updateAccount(any(AccountModel.class));
 		}
 
 		@Test
@@ -507,7 +507,7 @@ public class AccountRestControllerTest {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doThrow(UpdateFailureException.class).when(accountServiceImpl).updateAccount(accountModelCaptor.capture());
+			doThrow(UpdateFailureException.class).when(accountService).updateAccount(accountModelCaptor.capture());
 
 			mockMvc.perform(put("/api/v1/accounts/" + accountId)
 					.contentType(MediaType.APPLICATION_JSON)
@@ -534,12 +534,12 @@ public class AccountRestControllerTest {
 
 			doReturn(accountId).when(sessionHelper).getAccountId();
 			doReturn(1L).when(sessionHelper).getAccountNo();
-			doNothing().when(accountServiceImpl).deleteAccount(new AccountNo(1L), new AccountId(accountId));
+			doNothing().when(accountService).deleteAccount(new AccountNo(1L), new AccountId(accountId));
 
 			mockMvc.perform(delete("/api/v1/accounts/" + accountId))
 				.andExpect(status().isOk());
 
-			verify(accountServiceImpl, times(1)).deleteAccount(new AccountNo(1L), new AccountId(accountId));
+			verify(accountService, times(1)).deleteAccount(new AccountNo(1L), new AccountId(accountId));
 		}
 
 		@Test
@@ -551,7 +551,7 @@ public class AccountRestControllerTest {
 			mockMvc.perform(delete("/api/v1/accounts/aaaaaaaa"))
 				.andExpect(status().isForbidden());
 
-			verify(accountServiceImpl, times(0)).deleteAccount(any(AccountNo.class), any(AccountId.class));
+			verify(accountService, times(0)).deleteAccount(any(AccountNo.class), any(AccountId.class));
 		}
 	}
 

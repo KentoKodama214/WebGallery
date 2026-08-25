@@ -32,7 +32,7 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.AccountModel;
-import com.web.gallery.service.impl.AccountServiceImpl;
+import com.web.gallery.service.AccountService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -53,7 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Tag(name = "アカウント", description = "アカウント管理に関するAPI")
 public class AccountRestController {
-	private final AccountServiceImpl accountServiceImpl;
+	private final AccountService accountService;
 	private final SessionHelper sessionHelper;
 	
 	/**
@@ -65,7 +65,7 @@ public class AccountRestController {
 	@ApiResponse(responseCode = "200", description = "取得成功")
 	@GetMapping(ApiRoutes.API_ACCOUNTS)
 	public ResponseEntity<List<AccountListItemResponse>> getAccountList() {
-		List<AccountListItemResponse> responseList = accountServiceImpl.getAccountList().stream()
+		List<AccountListItemResponse> responseList = accountService.getAccountList().stream()
 				.map(AccountListItemResponse::from)
 				.toList();
 
@@ -91,7 +91,7 @@ public class AccountRestController {
 			throw ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT.toException();
 		}
 
-		AccountModel accountModel = accountServiceImpl.getAccountById(new AccountId(accountId));
+		AccountModel accountModel = accountService.getAccountById(new AccountId(accountId));
 
 		AccountDetailResponse response = AccountDetailResponse.from(accountModel);
 
@@ -127,7 +127,7 @@ public class AccountRestController {
 		
 		AccountModel accountModel = AccountModel.from(accountRegistRequest);
 		
-		Boolean isSuccess = accountServiceImpl.registAccount(accountModel);
+		Boolean isSuccess = accountService.registAccount(accountModel);
 		return ResponseEntity.ok(AccountRegistResponse.of(isSuccess, Consts.STRING_EMPTY));
 	}
 	
@@ -174,7 +174,7 @@ public class AccountRestController {
 		
 		AccountModel accountModel = AccountModel.from(accountUpdateRequest, sessionHelper.getAccountNo());
 		
-		Boolean isDuplicateAccountId = accountServiceImpl.updateAccount(accountModel);
+		Boolean isDuplicateAccountId = accountService.updateAccount(accountModel);
 		
 		return ResponseEntity.ok(AccountUpdateResponse.of(
 					isDuplicateAccountId,
@@ -202,7 +202,7 @@ public class AccountRestController {
 			throw ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT.toException();
 		}
 
-		accountServiceImpl.deleteAccount(new AccountNo(sessionHelper.getAccountNo()), new AccountId(accountId));
+		accountService.deleteAccount(new AccountNo(sessionHelper.getAccountNo()), new AccountId(accountId));
 
 		return ResponseEntity.ok().build();
 	}

@@ -20,6 +20,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +48,7 @@ public class AuthServiceImpl implements AuthService {
 	private final JwtConfig jwtConfig;
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final AccountRepository accountRepository;
-	private final AccountServiceImpl accountServiceImpl;
+	private final UserDetailsService userDetailsService;
 	private final Clock clock;
 
 	public AuthServiceImpl(
@@ -56,14 +57,14 @@ public class AuthServiceImpl implements AuthService {
 			JwtConfig jwtConfig,
 			RefreshTokenRepository refreshTokenRepository,
 			AccountRepository accountRepository,
-			@Lazy AccountServiceImpl accountServiceImpl,
+			@Lazy UserDetailsService userDetailsService,
 			Clock clock) {
 		this.authenticationManager = authenticationManager;
 		this.jwtTokenProvider = jwtTokenProvider;
 		this.jwtConfig = jwtConfig;
 		this.refreshTokenRepository = refreshTokenRepository;
 		this.accountRepository = accountRepository;
-		this.accountServiceImpl = accountServiceImpl;
+		this.userDetailsService = userDetailsService;
 		this.clock = clock;
 	}
 
@@ -126,7 +127,7 @@ public class AuthServiceImpl implements AuthService {
 		if (accountModel == null) {
 			throw new IllegalArgumentException("無効なリフレッシュトークンです");
 		}
-		UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountModel.getAccountId().value());
+		UserDetails userDetails = userDetailsService.loadUserByUsername(accountModel.getAccountId().value());
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
 
 		if (!principal.isAccountNonLocked()) {

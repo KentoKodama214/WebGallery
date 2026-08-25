@@ -37,6 +37,7 @@ import com.web.gallery.repository.PhotoFavoriteRepository;
 import com.web.gallery.repository.PhotoMstRepository;
 import com.web.gallery.repository.PhotoTagMstRepository;
 import com.web.gallery.repository.RefreshTokenRepository;
+import com.web.gallery.service.AccountService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AccountServiceImpl implements UserDetailsService {
+public class AccountServiceImpl implements UserDetailsService, AccountService {
 
 	private final AccountRepository accountRepository;
 	private final FileRepository fileRepository;
@@ -86,6 +87,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @return						登録に成功した場合、true
 	 * @throws	GalleryException	登録に失敗した場合
 	 */
+	@Override
 	@Transactional(rollbackFor = GalleryException.class)
 	public Boolean registAccount(AccountModel accountModel) throws GalleryException {
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountId());
@@ -103,6 +105,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @return						更新に成功した場合、true
 	 * @throws GalleryException	更新に失敗した場合
 	 */
+	@Override
 	@Transactional(rollbackFor = GalleryException.class)
 	public Boolean updateAccount(AccountModel accountModel) throws GalleryException {
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
@@ -119,6 +122,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @param	accountId	アカウントID
 	 * @return				{@link AccountModel}
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public AccountModel getAccountById(AccountId accountId) {
 		return accountRepository.getByAccountId(accountId);
@@ -129,6 +133,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 *
 	 * @return	{@link AccountModelList}
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public AccountModelList getAccountList() {
 		return accountRepository.getAccountList().sortByAccountId();
@@ -139,6 +144,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 *
 	 * @return	{@link AccountModelList}
 	 */
+	@Override
 	@Transactional(readOnly = true)
 	public AccountModelList getAccountListForAdmin() {
 		return accountRepository.getAccountListAll().sortByAccountId();
@@ -150,6 +156,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @param	accountNo			アカウント番号
 	 * @throws	GalleryException	更新に失敗した場合
 	 */
+	@Override
 	@Transactional(rollbackFor = GalleryException.class)
 	public void unlockAccount(AccountNo accountNo) throws GalleryException {
 		accountRepository.updateLoginFailureCount(AccountModel.forUnlock(accountNo.value()));
@@ -162,6 +169,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @param	accountNo			アカウント番号
 	 * @throws	GalleryException	更新に失敗した場合
 	 */
+	@Override
 	@Transactional(rollbackFor = GalleryException.class)
 	public void lockAccount(AccountNo accountNo) throws GalleryException {
 		accountRepository.updateLoginFailureCount(AccountModel.forLock(accountNo.value(), loginConfig.getFailCount()));
@@ -174,6 +182,7 @@ public class AccountServiceImpl implements UserDetailsService {
 	 * @param	accountNo	アカウント番号
 	 * @param	accountId	アカウントID
 	 */
+	@Override
 	@Transactional
 	public void deleteAccount(AccountNo accountNo, AccountId accountId) {
 		// 自分が登録したお気に入りを削除
