@@ -36,7 +36,6 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
-import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
@@ -110,9 +109,8 @@ public class PhotoRestController {
 	/**
 	 * 写真詳細取得
 	 *
-	 * @param	photoAccountId		ページ所有者のアカウントID
+	 * @param	photoAccountId		写真所有者のアカウントID
 	 * @param	photoNo				写真番号
-	 * @param	accountNo			写真所有者のアカウント番号
 	 * @return						{@link PhotoDetailGetResponse}
 	 * @throws	GalleryException	写真が存在しない場合
 	 */
@@ -122,11 +120,13 @@ public class PhotoRestController {
 	@GetMapping(ApiRoutes.API_PHOTO_DETAIL)
 	public ResponseEntity<PhotoDetailGetResponse> getPhotoDetail(
 			@PathVariable String photoAccountId,
-			@PathVariable Long photoNo,
-			Long accountNo) throws GalleryException {
+			@PathVariable Long photoNo) throws GalleryException {
+
+		Long sessionAccountNo = sessionHelper.getAccountNo();
+		AccountNo accountNo = Objects.nonNull(sessionAccountNo) ? new AccountNo(sessionAccountNo) : null;
 
 		PhotoDetailModel photoDetailModel = photoService.getPhotoDetail(
-				PhotoDetailGetModel.of(sessionHelper.getAccountNo(), accountNo, photoNo));
+				accountNo, new AccountId(photoAccountId), new PhotoNo(photoNo));
 
 		return ResponseEntity.ok(PhotoDetailGetResponse.from(photoDetailModel));
 	}

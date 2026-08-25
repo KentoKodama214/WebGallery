@@ -419,32 +419,38 @@ public class PhotoServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void getPhotoDetail_success() throws GalleryException {
+			String accountId = "aaaaaaaa";
+
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
 			PhotoDetailModel actual = PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
 					.build();
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-					.accountNo(new AccountNo(1L))
+					.accountNo(new AccountNo(2L))
 					.photoAccountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(1L))
 					.build();
-			
+
 			doReturn(actual).when(photoDetailRepositoryImpl).getPhotoDetail(photoDetailGetModel);
-			assertEquals(actual, photoServiceImpl.getPhotoDetail(photoDetailGetModel));
+			assertEquals(actual, photoServiceImpl.getPhotoDetail(new AccountNo(2L), new AccountId(accountId), new PhotoNo(1L)));
+			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("異常系：PhotoNotFoundExceptionをthrowする")
 		void getPhotoDetail_PhotoNotFoundException() throws GalleryException {
-			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoAccountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.build();
-			
-			doThrow(PhotoNotFoundException.class).when(photoDetailRepositoryImpl).getPhotoDetail(photoDetailGetModel);
-			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
+			String accountId = "aaaaaaaa";
+
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+			doThrow(PhotoNotFoundException.class).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailGetModel.class));
+			assertThrows(PhotoNotFoundException.class,
+					() -> photoServiceImpl.getPhotoDetail(new AccountNo(2L), new AccountId(accountId), new PhotoNo(1L)));
 			verify(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailGetModel.class));
 		}
 	}

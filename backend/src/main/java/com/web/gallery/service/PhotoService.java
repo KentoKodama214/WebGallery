@@ -5,7 +5,6 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.PhotoDeleteModelList;
-import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
@@ -25,12 +24,14 @@ public interface PhotoService {
 	
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する
-	 * 
-	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
+	 *
+	 * @param	accountNo			ログイン中のアカウント番号
+	 * @param	photoAccountId		写真所有者のアカウントID
+	 * @param	photoNo				写真番号
 	 * @return						{@link PhotoDetailModel}
 	 * @throws	GalleryException	写真が存在しなかった場合
 	 */
-	PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException;
+	PhotoDetailModel getPhotoDetail(AccountNo accountNo, AccountId photoAccountId, PhotoNo photoNo) throws GalleryException;
 
 	/**
 	 * 写真を登録・更新する

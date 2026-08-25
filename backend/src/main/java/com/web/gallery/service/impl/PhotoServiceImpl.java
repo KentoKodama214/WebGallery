@@ -91,13 +91,23 @@ public class PhotoServiceImpl implements PhotoService {
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する
 	 *
-	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
+	 * @param	accountNo			ログイン中のアカウント番号
+	 * @param	photoAccountId		写真所有者のアカウントID
+	 * @param	photoNo				写真番号
 	 * @return						{@link PhotoDetailModel}
 	 * @throws	GalleryException	写真が存在しなかった場合
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException {
+	public PhotoDetailModel getPhotoDetail(AccountNo accountNo, AccountId photoAccountId, PhotoNo photoNo) throws GalleryException {
+		AccountModel accountModel = accountRepository.getByAccountId(photoAccountId);
+
+		PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+				.accountNo(accountNo)
+				.photoAccountNo(accountModel.getAccountNo())
+				.photoNo(photoNo)
+				.build();
+
 		return photoDetailRepository.getPhotoDetail(photoDetailGetModel);
 	}
 
