@@ -137,8 +137,6 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 */
 	@Override
 	public PhotoNoList getPhotoNosByAccountNo(AccountNo accountNo) {
-		return PhotoNoList.of(photoMstMapper.getPhotoNosByAccountNo(accountNo.value()).stream()
-				.map(PhotoNo::new)
-				.toList());
+		return PhotoNoList.from(photoMstMapper.getPhotoNosByAccountNo(accountNo.value()));
 	}
 }
