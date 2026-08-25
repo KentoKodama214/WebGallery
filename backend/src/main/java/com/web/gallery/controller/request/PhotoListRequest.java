@@ -6,6 +6,8 @@ import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 /**
@@ -21,11 +23,13 @@ public class PhotoListRequest {
 	 */
 	@Schema(description = "向き区分（未選択/縦/横/正方形）")
 	@JsonSetter(nulls = Nulls.SKIP)
+	@NotNull(message = "{validation.common.notBlank}")
 	private DirectionEnum directionKbn = DirectionEnum.NONE;
 
 	/** お気に入り写真のみ */
 	@Schema(description = "お気に入り写真のみ表示するか", example = "false")
 	@JsonSetter(nulls = Nulls.SKIP)
+	@NotNull(message = "{validation.common.notBlank}")
 	private Boolean isFavorite = Boolean.FALSE;
 
 	/** タグリスト */
@@ -39,10 +43,13 @@ public class PhotoListRequest {
 	 */
 	@Schema(description = "並び順（photoAt: 撮影日順, favorite: お気に入り数順, season: 季節順）")
 	@JsonSetter(nulls = Nulls.SKIP)
+	@NotNull(message = "{validation.common.notBlank}")
 	private SortPhotoEnum sortBy = SortPhotoEnum.PHOTO_AT;
 
 	/** ページ番号 */
 	@Schema(description = "ページ番号", example = "1")
 	@JsonSetter(nulls = Nulls.SKIP)
+	@NotNull(message = "{validation.common.notBlank}")
+	@Positive(message = "{validation.common.positive}")
 	private Integer pageNo = 1;
 }
