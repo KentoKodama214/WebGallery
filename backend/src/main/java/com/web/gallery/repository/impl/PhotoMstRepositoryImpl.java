@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.dto.PhotoDeletionDto;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoMstCondition;
 import com.web.gallery.entity.PhotoMstUpdateTarget;
@@ -127,9 +128,9 @@ public class PhotoMstRepositoryImpl implements PhotoMstRepository {
 	 */
 	@Override
 	public PhotoNoList deleteAndGetUndeletedPhotoNosByAccountNo(AccountNo accountNo) {
-		return PhotoNoList.of(photoMstMapper.deletePhotosByAccountNo(accountNo.value()).stream()
+		return PhotoNoList.from(photoMstMapper.deletePhotosByAccountNo(accountNo.value()).stream()
 				.filter(dto -> !dto.getIsDeleted())
-				.map(dto -> new PhotoNo(dto.getPhotoNo()))
+				.map(PhotoDeletionDto::getPhotoNo)
 				.toList());
 	}
 }
