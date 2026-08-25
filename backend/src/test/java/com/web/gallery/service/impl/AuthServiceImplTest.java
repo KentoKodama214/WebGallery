@@ -25,6 +25,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetailsService;
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.JwtConfig;
@@ -65,7 +66,7 @@ class AuthServiceImplTest {
 	private AccountRepository accountRepository;
 
 	@Mock
-	private AccountServiceImpl accountServiceImpl;
+	private UserDetailsService userDetailsService;
 
 	@Mock
 	private Clock clock;
@@ -161,7 +162,7 @@ class AuthServiceImplTest {
 			AccountPrincipal principal = mock(AccountPrincipal.class);
 			when(principal.isAccountNonLocked()).thenReturn(true);
 			when(principal.isEnabled()).thenReturn(true);
-			when(accountServiceImpl.loadUserByUsername("testuser1")).thenReturn(principal);
+			when(userDetailsService.loadUserByUsername("testuser1")).thenReturn(principal);
 			when(jwtTokenProvider.generateAccessToken(principal)).thenReturn("new-access-token");
 			when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
 
@@ -193,7 +194,7 @@ class AuthServiceImplTest {
 
 			AccountPrincipal principal = mock(AccountPrincipal.class);
 			when(principal.isAccountNonLocked()).thenReturn(false);
-			when(accountServiceImpl.loadUserByUsername("testuser1")).thenReturn(principal);
+			when(userDetailsService.loadUserByUsername("testuser1")).thenReturn(principal);
 
 			assertThrows(LockedException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
@@ -222,7 +223,7 @@ class AuthServiceImplTest {
 			AccountPrincipal principal = mock(AccountPrincipal.class);
 			when(principal.isAccountNonLocked()).thenReturn(true);
 			when(principal.isEnabled()).thenReturn(false);
-			when(accountServiceImpl.loadUserByUsername("testuser1")).thenReturn(principal);
+			when(userDetailsService.loadUserByUsername("testuser1")).thenReturn(principal);
 
 			assertThrows(IllegalArgumentException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue(refreshToken));

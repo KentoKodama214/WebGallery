@@ -36,7 +36,7 @@ import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
-import com.web.gallery.service.impl.AccountServiceImpl;
+import com.web.gallery.service.AccountService;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -45,7 +45,7 @@ public class AdminAccountRestControllerTest {
 	private AdminAccountRestController adminAccountRestController;
 
 	@Mock
-	private AccountServiceImpl accountServiceImpl;
+	private AccountService accountService;
 
 	private MockMvc mockMvc;
 
@@ -90,7 +90,7 @@ public class AdminAccountRestControllerTest {
 							.build()
 			));
 
-			doReturn(accountModels).when(accountServiceImpl).getAccountListForAdmin();
+			doReturn(accountModels).when(accountService).getAccountListForAdmin();
 
 			mockMvc.perform(get("/api/v1/admin/accounts"))
 				.andExpect(status().isOk())
@@ -110,7 +110,7 @@ public class AdminAccountRestControllerTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントが0件の場合は空リストを返すこと")
 		void getAdminAccountList_empty() throws Exception {
-			doReturn(AccountModelList.empty()).when(accountServiceImpl).getAccountListForAdmin();
+			doReturn(AccountModelList.empty()).when(accountService).getAccountListForAdmin();
 
 			mockMvc.perform(get("/api/v1/admin/accounts"))
 				.andExpect(status().isOk())
@@ -127,7 +127,7 @@ public class AdminAccountRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントのロックを解除できること")
 		void unlockAccount_success() throws Exception {
-			doNothing().when(accountServiceImpl).unlockAccount(new AccountNo(1L));
+			doNothing().when(accountService).unlockAccount(new AccountNo(1L));
 
 			mockMvc.perform(put("/api/v1/admin/accounts/1/unlock"))
 				.andExpect(status().isOk())
@@ -135,14 +135,14 @@ public class AdminAccountRestControllerTest {
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value(MessageConst.UNLOCK_ACCOUNT));
 
-			verify(accountServiceImpl, times(1)).unlockAccount(new AccountNo(1L));
+			verify(accountService, times(1)).unlockAccount(new AccountNo(1L));
 		}
 
 		@Test
 		@Order(2)
 		@DisplayName("異常系：UpdateFailureExceptionが発生した場合は409を返すこと")
 		void unlockAccount_updateFailure() throws Exception {
-			doThrow(UpdateFailureException.class).when(accountServiceImpl).unlockAccount(new AccountNo(999L));
+			doThrow(UpdateFailureException.class).when(accountService).unlockAccount(new AccountNo(999L));
 
 			mockMvc.perform(put("/api/v1/admin/accounts/999/unlock"))
 				.andExpect(status().isConflict());
@@ -157,7 +157,7 @@ public class AdminAccountRestControllerTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントを強制ロックできること")
 		void lockAccount_success() throws Exception {
-			doNothing().when(accountServiceImpl).lockAccount(new AccountNo(1L));
+			doNothing().when(accountService).lockAccount(new AccountNo(1L));
 
 			mockMvc.perform(put("/api/v1/admin/accounts/1/lock"))
 				.andExpect(status().isOk())
@@ -165,14 +165,14 @@ public class AdminAccountRestControllerTest {
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value(MessageConst.LOCK_ACCOUNT));
 
-			verify(accountServiceImpl, times(1)).lockAccount(new AccountNo(1L));
+			verify(accountService, times(1)).lockAccount(new AccountNo(1L));
 		}
 
 		@Test
 		@Order(2)
 		@DisplayName("異常系：UpdateFailureExceptionが発生した場合は409を返すこと")
 		void lockAccount_updateFailure() throws Exception {
-			doThrow(UpdateFailureException.class).when(accountServiceImpl).lockAccount(new AccountNo(999L));
+			doThrow(UpdateFailureException.class).when(accountService).lockAccount(new AccountNo(999L));
 
 			mockMvc.perform(put("/api/v1/admin/accounts/999/lock"))
 				.andExpect(status().isConflict());

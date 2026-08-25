@@ -32,7 +32,7 @@ import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.model.RefreshTokenModel;
 import com.web.gallery.repository.RefreshTokenRepository;
-import com.web.gallery.service.impl.AccountServiceImpl;
+import com.web.gallery.service.AccountService;
 import com.web.gallery.service.impl.AuthServiceImpl;
 
 @ActiveProfiles("test")
@@ -43,7 +43,7 @@ public class AuthServiceImplIntegrationTest {
 	private AuthServiceImpl authServiceImpl;
 
 	@Autowired
-	private AccountServiceImpl accountServiceImpl;
+	private AccountService accountServiceImpl;
 
 	@Autowired
 	private RefreshTokenRepository refreshTokenRepository;

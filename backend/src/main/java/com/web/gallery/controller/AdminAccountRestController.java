@@ -15,7 +15,7 @@ import com.web.gallery.controller.response.AdminAccountListItemResponse;
 import com.web.gallery.controller.response.AdminAccountLockResponse;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.service.impl.AccountServiceImpl;
+import com.web.gallery.service.AccountService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "管理者アカウント管理", description = "管理者用アカウント管理に関するAPI")
 @SecurityRequirement(name = "Bearer")
 public class AdminAccountRestController {
-	private final AccountServiceImpl accountServiceImpl;
+	private final AccountService accountService;
 
 	/**
 	 * 管理者用アカウント一覧取得
@@ -48,7 +48,7 @@ public class AdminAccountRestController {
 	public ResponseEntity<List<AdminAccountListItemResponse>> getAdminAccountList()
 			throws GalleryException {
 
-		List<AdminAccountListItemResponse> responseList = accountServiceImpl.getAccountListForAdmin().stream()
+		List<AdminAccountListItemResponse> responseList = accountService.getAccountListForAdmin().stream()
 				.map(AdminAccountListItemResponse::from)
 				.toList();
 
@@ -72,7 +72,7 @@ public class AdminAccountRestController {
 	public ResponseEntity<AdminAccountLockResponse> unlockAccount(
 			@PathVariable Long accountNo) throws GalleryException {
 
-		accountServiceImpl.unlockAccount(new AccountNo(accountNo));
+		accountService.unlockAccount(new AccountNo(accountNo));
 
 		return ResponseEntity.ok(AdminAccountLockResponse.of(MessageConst.UNLOCK_ACCOUNT));
 	}
@@ -94,7 +94,7 @@ public class AdminAccountRestController {
 	public ResponseEntity<AdminAccountLockResponse> lockAccount(
 			@PathVariable Long accountNo) throws GalleryException {
 
-		accountServiceImpl.lockAccount(new AccountNo(accountNo));
+		accountService.lockAccount(new AccountNo(accountNo));
 
 		return ResponseEntity.ok(AdminAccountLockResponse.of(MessageConst.LOCK_ACCOUNT));
 	}
