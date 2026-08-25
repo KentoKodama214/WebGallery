@@ -42,6 +42,7 @@ import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.domain.photo.Iso;
+import com.web.gallery.dto.PhotoDeletionDto;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoMstCondition;
 import com.web.gallery.entity.PhotoMstUpdateTarget;
@@ -580,45 +581,33 @@ public class PhotoMstRepositoryImplTest {
 	@Nested
 	@Order(7)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class deleteByAccountNo {
+	class deleteAndGetUndeletedPhotoNosByAccountNo {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：アカウント番号で写真マスタを物理削除する")
-		void deleteByAccountNo_success() {
-			ArgumentCaptor<PhotoMstCondition> photoMstCaptor = ArgumentCaptor.forClass(PhotoMstCondition.class);
-			doReturn(1).when(photoMstMapper).delete(photoMstCaptor.capture());
+		@DisplayName("正常系：物理削除した写真のうち、未削除だった写真番号の一覧を取得する")
+		void deleteAndGetUndeletedPhotoNosByAccountNo_found() {
+			PhotoDeletionDto undeleted = new PhotoDeletionDto();
+			undeleted.setPhotoNo(1L);
+			undeleted.setIsDeleted(false);
 
-			photoMstRepositoryImpl.deleteByAccountNo(new AccountNo(1L));
+			PhotoDeletionDto alreadyDeleted = new PhotoDeletionDto();
+			alreadyDeleted.setPhotoNo(2L);
+			alreadyDeleted.setIsDeleted(true);
 
-			verify(photoMstMapper).delete(any(PhotoMstCondition.class));
-			PhotoMstCondition photoMst = photoMstCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoMst.getAccountNo());
-			assertNull(photoMst.getPhotoNo());
-		}
-	}
+			doReturn(List.of(undeleted, alreadyDeleted)).when(photoMstMapper).deletePhotosByAccountNo(1L);
 
-	@Nested
-	@Order(8)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class getPhotoNosByAccountNo {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：アカウント番号に紐づく写真番号の一覧を取得する")
-		void getPhotoNosByAccountNo_found() {
-			doReturn(List.of(1L, 2L, 3L)).when(photoMstMapper).getPhotoNosByAccountNo(1L);
+			PhotoNoList actual = photoMstRepositoryImpl.deleteAndGetUndeletedPhotoNosByAccountNo(new AccountNo(1L));
 
-			PhotoNoList actual = photoMstRepositoryImpl.getPhotoNosByAccountNo(new AccountNo(1L));
-
-			assertEquals(List.of(new PhotoNo(1L), new PhotoNo(2L), new PhotoNo(3L)), actual.toList());
+			assertEquals(List.of(new PhotoNo(1L)), actual.toList());
 		}
 
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウント番号に紐づく写真がない場合")
-		void getPhotoNosByAccountNo_not_found() {
-			doReturn(List.of()).when(photoMstMapper).getPhotoNosByAccountNo(1L);
+		void deleteAndGetUndeletedPhotoNosByAccountNo_not_found() {
+			doReturn(List.of()).when(photoMstMapper).deletePhotosByAccountNo(1L);
 
-			PhotoNoList actual = photoMstRepositoryImpl.getPhotoNosByAccountNo(new AccountNo(1L));
+			PhotoNoList actual = photoMstRepositoryImpl.deleteAndGetUndeletedPhotoNosByAccountNo(new AccountNo(1L));
 
 			assertTrue(actual.isEmpty());
 		}

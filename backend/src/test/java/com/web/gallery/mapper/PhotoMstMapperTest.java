@@ -38,6 +38,7 @@ import com.web.gallery.domain.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.ShutterSpeed;
+import com.web.gallery.dto.PhotoDeletionDto;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoMstCondition;
 import com.web.gallery.entity.PhotoMstUpdateTarget;
@@ -847,66 +848,6 @@ public class PhotoMstMapperTest {
 	}
 	
 	@Nested
-	@Order(4)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	@Sql("/sql/common/cleanup.sql")
-	@Sql("/sql/mapper/PhotoMstMapperTest.sql")
-	class delete {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：アカウント番号でのdeleteで複数件削除される場合")
-		void delete_by_accountNo() {
-			PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(new AccountNo(1L)).build();
-			Integer actual = photoMstMapper.delete(photoMst);
-			assertEquals(3, actual);
-
-			Integer remainCount = jdbcTemplate.queryForObject(
-					"SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=1", Integer.class);
-			assertEquals(0, remainCount);
-
-			// 他のアカウントの写真は残っていること
-			Integer otherCount = jdbcTemplate.queryForObject(
-					"SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=2", Integer.class);
-			assertEquals(3, otherCount);
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：写真番号でのdeleteで複数件削除される場合")
-		void delete_by_photoNo() {
-			PhotoMstCondition photoMst = PhotoMstCondition.builder().photoNo(new PhotoNo(1L)).build();
-			Integer actual = photoMstMapper.delete(photoMst);
-			assertEquals(2, actual);
-
-			Integer remainCount = jdbcTemplate.queryForObject(
-					"SELECT COUNT(*) FROM photo.photo_mst WHERE photo_no=1", Integer.class);
-			assertEquals(0, remainCount);
-		}
-
-		@Test
-		@Order(3)
-		@DisplayName("正常系：アカウント番号と写真番号でのdeleteで1件削除される場合")
-		void delete_by_accountNo_and_photoNo() {
-			PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(new AccountNo(1L)).photoNo(new PhotoNo(1L)).build();
-			Integer actual = photoMstMapper.delete(photoMst);
-			assertEquals(1, actual);
-
-			Integer remainCount = jdbcTemplate.queryForObject(
-					"SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=1", Integer.class);
-			assertEquals(2, remainCount);
-		}
-
-		@Test
-		@Order(4)
-		@DisplayName("正常系：該当するレコードがない場合は0件")
-		void delete_not_found() {
-			PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(new AccountNo(100L)).build();
-			Integer actual = photoMstMapper.delete(photoMst);
-			assertEquals(0, actual);
-		}
-	}
-
-	@Nested
 	@Order(5)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
@@ -985,29 +926,37 @@ public class PhotoMstMapperTest {
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/mapper/PhotoMstMapperTest.sql")
-	class getPhotoNosByAccountNo {
+	class deletePhotosByAccountNo {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：アカウント番号に該当する未削除の写真がある場合")
-		void getPhotoNosByAccountNo_found() {
-			List<Long> actual = photoMstMapper.getPhotoNosByAccountNo(1L);
-			assertEquals(List.of(1L), actual.stream().sorted().toList());
+		@DisplayName("正常系：アカウント番号に該当する写真を物理削除し、削除した行を返す")
+		void deletePhotosByAccountNo_found() {
+			List<PhotoDeletionDto> actual = photoMstMapper.deletePhotosByAccountNo(1L);
+
+			assertEquals(3, actual.size());
+			List<PhotoDeletionDto> sorted = actual.stream().sorted((a, b) -> Long.compare(a.getPhotoNo(), b.getPhotoNo())).toList();
+			assertEquals(1L, sorted.get(0).getPhotoNo());
+			assertFalse(sorted.get(0).getIsDeleted());
+			assertEquals(2L, sorted.get(1).getPhotoNo());
+			assertTrue(sorted.get(1).getIsDeleted());
+			assertEquals(3L, sorted.get(2).getPhotoNo());
+			assertTrue(sorted.get(2).getIsDeleted());
+
+			Integer remainCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=1", Integer.class);
+			assertEquals(0, remainCount);
+
+			// 他のアカウントの写真は残っていること
+			Integer otherCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=2", Integer.class);
+			assertEquals(3, otherCount);
 		}
 
 		@Test
 		@Order(2)
-		@DisplayName("正常系：論理削除済みの写真は取得対象から除外される")
-		void getPhotoNosByAccountNo_excludes_deleted() {
-			List<Long> actual = photoMstMapper.getPhotoNosByAccountNo(1L);
-			assertFalse(actual.contains(2L));
-			assertFalse(actual.contains(3L));
-		}
-
-		@Test
-		@Order(3)
 		@DisplayName("正常系：アカウント番号に該当する写真がない場合")
-		void getPhotoNosByAccountNo_not_found() {
-			List<Long> actual = photoMstMapper.getPhotoNosByAccountNo(100L);
+		void deletePhotosByAccountNo_not_found() {
+			List<PhotoDeletionDto> actual = photoMstMapper.deletePhotosByAccountNo(100L);
 			assertTrue(actual.isEmpty());
 		}
 	}

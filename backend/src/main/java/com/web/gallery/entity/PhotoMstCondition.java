@@ -110,16 +110,4 @@ public class PhotoMstCondition {
 				.isDeleted(new IsDeleted(false))
 				.build();
 	}
-
-	/**
-	 * アカウント番号による抽出条件を生成する
-	 *
-	 * @param	accountNo	アカウント番号
-	 * @return				{@link PhotoMstCondition}
-	 */
-	public static PhotoMstCondition byAccountNo(AccountNo accountNo) {
-		return PhotoMstCondition.builder()
-				.accountNo(accountNo)
-				.build();
-	}
 }

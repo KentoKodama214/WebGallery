@@ -185,12 +185,10 @@ public class AccountServiceImpl implements UserDetailsService {
 		// 写真タグを削除
 		photoTagMstRepository.deleteByAccountNo(accountNo);
 
-		// 削除対象の写真番号を退避（物理削除後にイベント発行するため）
-		// 既に論理削除済みの写真でイベントが重複発行されないよう、未削除の写真のみを対象とする
-		PhotoNoList deletedPhotoNoList = photoMstRepository.getPhotoNosByAccountNo(accountNo);
-
-		// 写真マスタを物理削除
-		photoMstRepository.deleteByAccountNo(accountNo);
+		// 写真マスタを物理削除し、削除時点で未削除だった写真番号を取得
+		// SELECTとDELETEの間のTOCTOUギャップを無くすため単一SQLでアトミックに実施し、
+		// 既に論理削除済みだった写真はイベントの重複発行を避けるため対象から除外する
+		PhotoNoList deletedPhotoNoList = photoMstRepository.deleteAndGetUndeletedPhotoNosByAccountNo(accountNo);
 
 		// リフレッシュトークンを失効
 		refreshTokenRepository.revokeAllByAccountNo(accountNo);
