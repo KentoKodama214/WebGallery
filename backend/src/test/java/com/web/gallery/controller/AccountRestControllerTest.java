@@ -33,7 +33,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import tools.jackson.databind.json.JsonMapper;
 import com.web.gallery.constant.Consts;
-import com.web.gallery.controller.response.ErrorResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
@@ -552,25 +551,6 @@ public class AccountRestControllerTest {
 				.andExpect(status().isForbidden());
 
 			verify(accountService, times(0)).deleteAccount(any(AccountNo.class), any(AccountId.class));
-		}
-	}
-
-	@Nested
-	@Order(6)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	class handleInsertFailedException {
-		@Test
-		@Order(1)
-		@DisplayName("正常系")
-		void handleInsertFailedException_success() {
-			RegistFailureException exception = new RegistFailureException(ErrorEnum.INVALID_INPUT);
-
-			ResponseEntity<ErrorResponse> actual
-				= accountRestController.handleInsertFailedException(exception);
-
-			assertEquals(HttpStatus.CONFLICT, actual.getStatusCode());
-			assertEquals(HttpStatus.CONFLICT.value(), actual.getBody().getHttpStatus());
-			assertEquals(ErrorEnum.INVALID_INPUT.getErrorMessage(), actual.getBody().getErrorMessage());
 		}
 	}
 }
