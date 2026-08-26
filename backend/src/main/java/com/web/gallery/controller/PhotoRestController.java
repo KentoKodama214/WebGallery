@@ -36,6 +36,7 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
+import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
@@ -122,11 +123,8 @@ public class PhotoRestController {
 			@PathVariable String photoAccountId,
 			@PathVariable Long photoNo) throws GalleryException {
 
-		Long sessionAccountNo = sessionHelper.getAccountNo();
-		AccountNo accountNo = Objects.nonNull(sessionAccountNo) ? new AccountNo(sessionAccountNo) : null;
-
 		PhotoDetailModel photoDetailModel = photoService.getPhotoDetail(
-				accountNo, new AccountId(photoAccountId), new PhotoNo(photoNo));
+				PhotoDetailGetModel.from(sessionHelper.getAccountNo(), photoAccountId, photoNo));
 
 		return ResponseEntity.ok(PhotoDetailGetResponse.from(photoDetailModel));
 	}

@@ -31,6 +31,7 @@ import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
+import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.PhotoListGetModel;
@@ -91,24 +92,22 @@ public class PhotoServiceImpl implements PhotoService {
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する
 	 *
-	 * @param	accountNo			ログイン中のアカウント番号
-	 * @param	photoAccountId		写真所有者のアカウントID
-	 * @param	photoNo				写真番号
+	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
 	 * @return						{@link PhotoDetailModel}
 	 * @throws	GalleryException	写真が存在しなかった場合
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public PhotoDetailModel getPhotoDetail(AccountNo accountNo, AccountId photoAccountId, PhotoNo photoNo) throws GalleryException {
-		AccountModel accountModel = accountRepository.getByAccountId(photoAccountId);
+	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException {
+		AccountModel accountModel = accountRepository.getByAccountId(photoDetailGetModel.getPhotoAccountId());
 
-		PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-				.accountNo(accountNo)
+		PhotoDetailSearchModel photoDetailSearchModel = PhotoDetailSearchModel.builder()
+				.accountNo(photoDetailGetModel.getAccountNo())
 				.photoAccountNo(accountModel.getAccountNo())
-				.photoNo(photoNo)
+				.photoNo(photoDetailGetModel.getPhotoNo())
 				.build();
 
-		return photoDetailRepository.getPhotoDetail(photoDetailGetModel);
+		return photoDetailRepository.getPhotoDetail(photoDetailSearchModel);
 	}
 
 	/**

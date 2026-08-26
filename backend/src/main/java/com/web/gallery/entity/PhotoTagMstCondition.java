@@ -7,7 +7,7 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagNo;
-import com.web.gallery.model.PhotoDetailGetModel;
+import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoTagDeleteModel;
 
@@ -52,12 +52,12 @@ public class PhotoTagMstCondition {
 	}
 
 	/**
-	 * PhotoDetailGetModelから抽出条件を生成する
+	 * PhotoDetailSearchModelから抽出条件を生成する
 	 *
-	 * @param	model	{@link PhotoDetailGetModel}
+	 * @param	model	{@link PhotoDetailSearchModel}
 	 * @return			{@link PhotoTagMstCondition}
 	 */
-	public static PhotoTagMstCondition from(PhotoDetailGetModel model) {
+	public static PhotoTagMstCondition from(PhotoDetailSearchModel model) {
 		return PhotoTagMstCondition.builder()
 				.accountNo(model.getPhotoAccountNo())
 				.photoNo(model.getPhotoNo())

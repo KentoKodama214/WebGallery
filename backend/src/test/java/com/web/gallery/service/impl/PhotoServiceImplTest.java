@@ -71,6 +71,7 @@ import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
+import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
@@ -428,14 +429,21 @@ public class PhotoServiceImplTest {
 					.accountNo(new AccountNo(1L))
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
 					.build();
-			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+			PhotoDetailSearchModel photoDetailSearchModel = PhotoDetailSearchModel.builder()
 					.accountNo(new AccountNo(2L))
 					.photoAccountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(1L))
 					.build();
 
-			doReturn(actual).when(photoDetailRepositoryImpl).getPhotoDetail(photoDetailGetModel);
-			assertEquals(actual, photoServiceImpl.getPhotoDetail(new AccountNo(2L), new AccountId(accountId), new PhotoNo(1L)));
+			doReturn(actual).when(photoDetailRepositoryImpl).getPhotoDetail(photoDetailSearchModel);
+
+			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+					.accountNo(new AccountNo(2L))
+					.photoAccountId(new AccountId(accountId))
+					.photoNo(new PhotoNo(1L))
+					.build();
+
+			assertEquals(actual, photoServiceImpl.getPhotoDetail(photoDetailGetModel));
 			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 		}
 
@@ -448,10 +456,16 @@ public class PhotoServiceImplTest {
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 
-			doThrow(PhotoNotFoundException.class).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailGetModel.class));
-			assertThrows(PhotoNotFoundException.class,
-					() -> photoServiceImpl.getPhotoDetail(new AccountNo(2L), new AccountId(accountId), new PhotoNo(1L)));
-			verify(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailGetModel.class));
+			doThrow(PhotoNotFoundException.class).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
+
+			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+					.accountNo(new AccountNo(2L))
+					.photoAccountId(new AccountId(accountId))
+					.photoNo(new PhotoNo(1L))
+					.build();
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
+			verify(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 		}
 	}
 	

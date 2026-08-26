@@ -66,6 +66,7 @@ import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
+import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
@@ -377,8 +378,13 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void getPhotoDetail_success() throws GalleryException {
-			PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(
-					new AccountNo(1L), new AccountId("aaaaaaaa"), new PhotoNo(1L));
+			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountId(new AccountId("aaaaaaaa"))
+					.photoNo(new PhotoNo(1L))
+					.build();
+
+			PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
 			assertEquals(1L, actual.getAccountNo().value());
 			assertEquals(1L, actual.getPhotoNo().value());
 			assertTrue(actual.getIsFavorite().value());
@@ -412,8 +418,13 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(2)
 		@DisplayName("異常系：PhotoNotFoundExceptionをthrowする")
 		void getPhotoDetail_PhotoNotFoundException() throws GalleryException {
-			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(
-					new AccountNo(1L), new AccountId("aaaaaaaa"), new PhotoNo(11L)));
+			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountId(new AccountId("aaaaaaaa"))
+					.photoNo(new PhotoNo(11L))
+					.build();
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
 		}
 	}
 	

@@ -2,7 +2,7 @@ package com.web.gallery.dto;
 
 import java.util.Objects;
 
-import com.web.gallery.model.PhotoDetailGetModel;
+import com.web.gallery.model.PhotoDetailSearchModel;
 
 import lombok.Data;
 
@@ -21,12 +21,12 @@ public class PhotoDetailGetDto {
 	private Long photoNo;
 
 	/**
-	 * PhotoDetailGetModelからPhotoDetailGetDtoを生成する
+	 * PhotoDetailSearchModelからPhotoDetailGetDtoを生成する
 	 *
-	 * @param	model	{@link PhotoDetailGetModel}
+	 * @param	model	{@link PhotoDetailSearchModel}
 	 * @return			{@link PhotoDetailGetDto}
 	 */
-	public static PhotoDetailGetDto from(PhotoDetailGetModel model) {
+	public static PhotoDetailGetDto from(PhotoDetailSearchModel model) {
 		PhotoDetailGetDto dto = new PhotoDetailGetDto();
 		dto.setAccountNo(Objects.nonNull(model.getAccountNo()) ? model.getAccountNo().value() : null);
 		dto.setPhotoAccountNo(model.getPhotoAccountNo().value());
