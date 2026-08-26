@@ -13,3 +13,6 @@ app:
     miniUserUpperLimit: ${MINI_USER_UPPER_LIMIT:10}
     normalUserUpperLimit: ${NORMAL_USER_UPPER_LIMIT:1000}
     outputPath: ${OUTPUT_PATH:https://localhost:8080/image/}
+  cors:
+    allowed-origins:
+      - ${FRONTEND_ORIGIN:http://localhost:3000}

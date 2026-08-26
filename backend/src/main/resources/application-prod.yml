@@ -13,3 +13,6 @@ app:
     miniUserUpperLimit: ${MINI_USER_UPPER_LIMIT}
     normalUserUpperLimit: ${NORMAL_USER_UPPER_LIMIT}
     outputPath: ${OUTPUT_PATH}
+  cors:
+    allowed-origins:
+      - ${FRONTEND_ORIGIN}
