@@ -2,11 +2,6 @@ package com.web.gallery.entity;
 
 import java.util.List;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.domain.photo.TagEnglishName;
-import com.web.gallery.domain.photo.TagJapaneseName;
-import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoTagDeleteModel;
@@ -21,22 +16,22 @@ import lombok.Data;
 @Builder
 public class PhotoTagMstCondition {
 	/** アカウント番号 */
-	private AccountNo accountNo;
+	private Long accountNo;
 
 	/** 写真番号 */
-	private PhotoNo photoNo;
+	private Long photoNo;
 
 	/** 写真番号リスト */
-	private List<PhotoNo> photoNoList;
+	private List<Long> photoNoList;
 
 	/** タグ番号 */
-	private TagNo tagNo;
+	private Long tagNo;
 
 	/** タグ日本語名 */
-	private TagJapaneseName tagJapaneseName;
+	private String tagJapaneseName;
 
 	/** タグ英語名 */
-	private TagEnglishName tagEnglishName;
+	private String tagEnglishName;
 
 	/**
 	 * 写真タグ削除用のPhotoTagDeleteModelから抽出条件を生成する
@@ -46,8 +41,8 @@ public class PhotoTagMstCondition {
 	 */
 	public static PhotoTagMstCondition from(PhotoTagDeleteModel model) {
 		return PhotoTagMstCondition.builder()
-				.accountNo(model.getAccountNo())
-				.photoNo(model.getPhotoNo())
+				.accountNo(model.getAccountNo().value())
+				.photoNo(model.getPhotoNo().value())
 				.build();
 	}
 
@@ -59,8 +54,8 @@ public class PhotoTagMstCondition {
 	 */
 	public static PhotoTagMstCondition from(PhotoDetailSearchModel model) {
 		return PhotoTagMstCondition.builder()
-				.accountNo(model.getPhotoAccountNo())
-				.photoNo(model.getPhotoNo())
+				.accountNo(model.getPhotoAccountNo().value())
+				.photoNo(model.getPhotoNo().value())
 				.build();
 	}
 
@@ -73,9 +68,9 @@ public class PhotoTagMstCondition {
 	 * @param	photoNoList		抽出対象の写真番号リスト
 	 * @return					{@link PhotoTagMstCondition}
 	 */
-	public static PhotoTagMstCondition from(PhotoGetModel model, List<PhotoNo> photoNoList) {
+	public static PhotoTagMstCondition from(PhotoGetModel model, List<Long> photoNoList) {
 		return PhotoTagMstCondition.builder()
-				.accountNo(model.getPhotoAccountNo())
+				.accountNo(model.getPhotoAccountNo().value())
 				.photoNoList(photoNoList)
 				.build();
 	}
@@ -86,7 +81,7 @@ public class PhotoTagMstCondition {
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link PhotoTagMstCondition}
 	 */
-	public static PhotoTagMstCondition byAccountNo(AccountNo accountNo) {
+	public static PhotoTagMstCondition byAccountNo(Long accountNo) {
 		return PhotoTagMstCondition.builder()
 				.accountNo(accountNo)
 				.build();

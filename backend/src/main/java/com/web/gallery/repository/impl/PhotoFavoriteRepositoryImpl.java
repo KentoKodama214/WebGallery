@@ -82,7 +82,7 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	 */
 	@Override
 	public void deleteByAccountNo(AccountNo accountNo) {
-		photoFavoriteMapper.delete(PhotoFavoriteCondition.byAccountNo(accountNo));
+		photoFavoriteMapper.delete(PhotoFavoriteCondition.byAccountNo(accountNo.value()));
 	}
 
 	/**
@@ -92,6 +92,6 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 	 */
 	@Override
 	public void deleteByFavoritePhotoAccountNo(AccountNo favoritePhotoAccountNo) {
-		photoFavoriteMapper.delete(PhotoFavoriteCondition.byFavoritePhotoAccountNo(favoritePhotoAccountNo));
+		photoFavoriteMapper.delete(PhotoFavoriteCondition.byFavoritePhotoAccountNo(favoritePhotoAccountNo.value()));
 	}
 }

@@ -18,6 +18,7 @@ import com.web.gallery.config.JwtConfig;
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.request.AuthLoginRequest;
+import com.web.gallery.controller.response.AuthErrorResponse;
 import com.web.gallery.controller.response.AuthLoginResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.Password;
@@ -30,7 +31,6 @@ import com.web.gallery.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -145,10 +145,10 @@ public class AuthRestController {
 	 * @return				401 Unauthorized
 	 */
 	@ExceptionHandler(BadCredentialsException.class)
-	public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException exception) {
+	public ResponseEntity<AuthErrorResponse> handleBadCredentials(BadCredentialsException exception) {
 		log.info("Authentication failed: {}", exception.getMessage());
 		return ResponseEntity.status(401)
-				.body(new ErrorResponse(MessageConst.ERR_BAD_CREDENTIALS));
+				.body(AuthErrorResponse.of(MessageConst.ERR_BAD_CREDENTIALS));
 	}
 
 	/**
@@ -158,10 +158,10 @@ public class AuthRestController {
 	 * @return				423 Locked
 	 */
 	@ExceptionHandler(LockedException.class)
-	public ResponseEntity<ErrorResponse> handleLocked(LockedException exception) {
+	public ResponseEntity<AuthErrorResponse> handleLocked(LockedException exception) {
 		log.info("Account locked: {}", exception.getMessage());
 		return ResponseEntity.status(423)
-				.body(new ErrorResponse(MessageConst.ERR_ACCOUNT_LOCKED));
+				.body(AuthErrorResponse.of(MessageConst.ERR_ACCOUNT_LOCKED));
 	}
 
 	/**
@@ -171,10 +171,10 @@ public class AuthRestController {
 	 * @return				401 Unauthorized
 	 */
 	@ExceptionHandler(InvalidRefreshTokenException.class)
-	public ResponseEntity<ErrorResponse> handleInvalidToken(InvalidRefreshTokenException exception) {
+	public ResponseEntity<AuthErrorResponse> handleInvalidToken(InvalidRefreshTokenException exception) {
 		log.info("Invalid refresh token: {}", exception.getMessage());
 		return ResponseEntity.status(401)
-				.body(new ErrorResponse(MessageConst.ERR_INVALID_REFRESH_TOKEN));
+				.body(AuthErrorResponse.of(MessageConst.ERR_INVALID_REFRESH_TOKEN));
 	}
 
 	/**
@@ -193,11 +193,4 @@ public class AuthRestController {
 				.maxAge(maxAge)
 				.build();
 	}
-
-	/**
-	 * エラーレスポンス用の内部クラス
-	 * @param message エラーメッセージ
-	 */
-	@Schema(description = "認証エラーレスポンス")
-	private record ErrorResponse(@Schema(description = "エラーメッセージ", example = "アカウントIDまたはパスワードが間違っています。") String message) {}
 }

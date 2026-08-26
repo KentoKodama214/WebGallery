@@ -75,17 +75,17 @@ public class KbnMstModel {
 	 */
 	public static KbnMstModel from(KbnMst entity) {
 		return KbnMstModel.builder()
-				.kbnClassCode(entity.getKbnClassCode())
-				.kbnCode(entity.getKbnCode())
-				.sortOrder(entity.getSortOrder())
-				.kbnGroupCode(entity.getKbnGroupCode())
-				.kbnClassJapaneseName(entity.getKbnClassJapaneseName())
-				.kbnGroupJapaneseName(entity.getKbnGroupJapaneseName())
-				.kbnJapaneseName(entity.getKbnJapaneseName())
-				.kbnClassEnglishName(entity.getKbnClassEnglishName())
-				.kbnGroupEnglishName(entity.getKbnGroupEnglishName())
-				.kbnEnglishName(entity.getKbnEnglishName())
-				.explanation(entity.getExplanation())
+				.kbnClassCode(new KbnClassCode(entity.getKbnClassCode()))
+				.kbnCode(new KbnCode(entity.getKbnCode()))
+				.sortOrder(new SortOrder(entity.getSortOrder()))
+				.kbnGroupCode(new KbnGroupCode(entity.getKbnGroupCode()))
+				.kbnClassJapaneseName(new KbnClassJapaneseName(entity.getKbnClassJapaneseName()))
+				.kbnGroupJapaneseName(new KbnGroupJapaneseName(entity.getKbnGroupJapaneseName()))
+				.kbnJapaneseName(new KbnJapaneseName(entity.getKbnJapaneseName()))
+				.kbnClassEnglishName(new KbnClassEnglishName(entity.getKbnClassEnglishName()))
+				.kbnGroupEnglishName(new KbnGroupEnglishName(entity.getKbnGroupEnglishName()))
+				.kbnEnglishName(new KbnEnglishName(entity.getKbnEnglishName()))
+				.explanation(new Explanation(entity.getExplanation()))
 				.build();
 	}
 }

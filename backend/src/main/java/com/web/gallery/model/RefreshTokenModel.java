@@ -38,10 +38,10 @@ public class RefreshTokenModel {
 	 */
 	public static RefreshTokenModel from(RefreshToken entity) {
 		return RefreshTokenModel.builder()
-				.accountNo(entity.getAccountNo())
-				.tokenHash(entity.getTokenHash())
-				.expiresAt(entity.getExpiresAt())
-				.isRevoked(entity.getIsRevoked())
+				.accountNo(new AccountNo(entity.getAccountNo()))
+				.tokenHash(new TokenHash(entity.getTokenHash()))
+				.expiresAt(new ExpiresAt(entity.getExpiresAt()))
+				.isRevoked(entity.getIsRevoked() != null ? new IsRevoked(entity.getIsRevoked()) : null)
 				.build();
 	}
 

@@ -47,11 +47,11 @@ public class PhotoTagModel {
 	 */
 	public static PhotoTagModel from(PhotoTagMst entity) {
 		return PhotoTagModel.builder()
-				.accountNo(entity.getAccountNo())
-				.photoNo(entity.getPhotoNo())
-				.tagNo(entity.getTagNo())
-				.tagJapaneseName(entity.getTagJapaneseName())
-				.tagEnglishName(entity.getTagEnglishName())
+				.accountNo(new AccountNo(entity.getAccountNo()))
+				.photoNo(new PhotoNo(entity.getPhotoNo()))
+				.tagNo(new TagNo(entity.getTagNo()))
+				.tagJapaneseName(new TagJapaneseName(entity.getTagJapaneseName()))
+				.tagEnglishName(new TagEnglishName(entity.getTagEnglishName()))
 				.build();
 	}
 

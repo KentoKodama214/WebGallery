@@ -3,24 +3,24 @@
 
 <mapper namespace="com.web.gallery.mapper.PhotoMstMapper">
 	<resultMap id="PhotoMstMap" type="com.web.gallery.entity.PhotoMst">
-		<result property="accountNo" column="account_no" typeHandler="com.web.gallery.type_handler.AccountNoTypeHandler"/>
-		<result property="photoNo" column="photo_no" typeHandler="com.web.gallery.type_handler.PhotoNoTypeHandler"/>
-		<result property="createdBy" column="created_by" typeHandler="com.web.gallery.type_handler.CreatedByTypeHandler"/>
-		<result property="createdAt" column="created_at" typeHandler="com.web.gallery.type_handler.CreatedAtTypeHandler"/>
-		<result property="updatedBy" column="updated_by" typeHandler="com.web.gallery.type_handler.UpdatedByTypeHandler"/>
-		<result property="updatedAt" column="updated_at" typeHandler="com.web.gallery.type_handler.UpdatedAtTypeHandler"/>
-		<result property="isDeleted" column="is_deleted" typeHandler="com.web.gallery.type_handler.IsDeletedTypeHandler"/>
-		<result property="photoAt" column="photo_at" typeHandler="com.web.gallery.type_handler.PhotoAtTypeHandler"/>
-		<result property="locationNo" column="location_no" typeHandler="com.web.gallery.type_handler.LocationNoTypeHandler"/>
-		<result property="imageFilePath" column="image_file_path" typeHandler="com.web.gallery.type_handler.ImageFilePathTypeHandler"/>
-		<result property="photoJapaneseTitle" column="photo_japanese_title" typeHandler="com.web.gallery.type_handler.PhotoJapaneseTitleTypeHandler"/>
-		<result property="photoEnglishTitle" column="photo_english_title" typeHandler="com.web.gallery.type_handler.PhotoEnglishTitleTypeHandler"/>
-		<result property="caption" column="caption" typeHandler="com.web.gallery.type_handler.CaptionTypeHandler"/>
+		<result property="accountNo" column="account_no"/>
+		<result property="photoNo" column="photo_no"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedBy" column="updated_by"/>
+		<result property="updatedAt" column="updated_at"/>
+		<result property="isDeleted" column="is_deleted"/>
+		<result property="photoAt" column="photo_at"/>
+		<result property="locationNo" column="location_no"/>
+		<result property="imageFilePath" column="image_file_path"/>
+		<result property="photoJapaneseTitle" column="photo_japanese_title"/>
+		<result property="photoEnglishTitle" column="photo_english_title"/>
+		<result property="caption" column="caption"/>
 		<result property="directionKbn" column="direction_kbn" typeHandler="com.web.gallery.type_handler.DirectionEnumTypeHandler"/>
-		<result property="focalLength" column="focal_length" typeHandler="com.web.gallery.type_handler.FocalLengthTypeHandler"/>
-		<result property="fValue" column="f_value" typeHandler="com.web.gallery.type_handler.FValueTypeHandler"/>
-		<result property="shutterSpeed" column="shutter_speed" typeHandler="com.web.gallery.type_handler.ShutterSpeedTypeHandler"/>
-		<result property="iso" column="iso" typeHandler="com.web.gallery.type_handler.IsoTypeHandler"/>
+		<result property="focalLength" column="focal_length"/>
+		<result property="fValue" column="f_value"/>
+		<result property="shutterSpeed" column="shutter_speed"/>
+		<result property="iso" column="iso"/>
 	</resultMap>
 
 	<select id="count" parameterType="com.web.gallery.entity.PhotoMstCondition" resultType="Integer">
@@ -29,20 +29,20 @@
 		FROM
 			photo.photo_mst
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
-			<if test="photoNo != null"> AND photo_no = #{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}</if>
-			<if test="isDeleted != null"> AND is_deleted = #{isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
-			<if test="photoAt != null"> AND photo_at = #{photoAt, typeHandler=com.web.gallery.type_handler.PhotoAtTypeHandler}</if>
-			<if test="locationNo != null"> AND location_no = #{locationNo, typeHandler=com.web.gallery.type_handler.LocationNoTypeHandler}</if>
-			<if test="imageFilePath != null"> AND image_file_path = #{imageFilePath, typeHandler=com.web.gallery.type_handler.ImageFilePathTypeHandler}</if>
-			<if test="photoJapaneseTitle != null"> AND photo_japanese_title = #{photoJapaneseTitle, typeHandler=com.web.gallery.type_handler.PhotoJapaneseTitleTypeHandler}</if>
-			<if test="photoEnglishTitle != null"> AND photo_english_title = #{photoEnglishTitle, typeHandler=com.web.gallery.type_handler.PhotoEnglishTitleTypeHandler}</if>
-			<if test="caption != null"> AND caption = #{caption, typeHandler=com.web.gallery.type_handler.CaptionTypeHandler}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
+			<if test="isDeleted != null"> AND is_deleted = #{isDeleted}</if>
+			<if test="photoAt != null"> AND photo_at = #{photoAt}</if>
+			<if test="locationNo != null"> AND location_no = #{locationNo}</if>
+			<if test="imageFilePath != null"> AND image_file_path = #{imageFilePath}</if>
+			<if test="photoJapaneseTitle != null"> AND photo_japanese_title = #{photoJapaneseTitle}</if>
+			<if test="photoEnglishTitle != null"> AND photo_english_title = #{photoEnglishTitle}</if>
+			<if test="caption != null"> AND caption = #{caption}</if>
 			<if test="directionKbn != null"> AND direction_kbn = #{directionKbn}::photo.direction_enum</if>
-			<if test="focalLength != null"> AND focal_length = #{focalLength, typeHandler=com.web.gallery.type_handler.FocalLengthTypeHandler}</if>
-			<if test="fValue != null"> AND f_value = #{fValue, typeHandler=com.web.gallery.type_handler.FValueTypeHandler}</if>
-			<if test="shutterSpeed != null"> AND shutter_speed = #{shutterSpeed, typeHandler=com.web.gallery.type_handler.ShutterSpeedTypeHandler}</if>
-			<if test="iso != null"> AND iso = #{iso, typeHandler=com.web.gallery.type_handler.IsoTypeHandler}</if>
+			<if test="focalLength != null"> AND focal_length = #{focalLength}</if>
+			<if test="fValue != null"> AND f_value = #{fValue}</if>
+			<if test="shutterSpeed != null"> AND shutter_speed = #{shutterSpeed}</if>
+			<if test="iso != null"> AND iso = #{iso}</if>
 		</where>
 	</select>
 
@@ -70,24 +70,24 @@
 			)
 		VALUES
 			(
-				#{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler},
-				#{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler},
-				#{createdBy, typeHandler=com.web.gallery.type_handler.CreatedByTypeHandler},
+				#{accountNo},
+				#{photoNo},
+				#{createdBy},
 				NOW(),
-				#{updatedBy, typeHandler=com.web.gallery.type_handler.UpdatedByTypeHandler},
+				#{updatedBy},
 				NOW(),
 				false,
-				#{photoAt, typeHandler=com.web.gallery.type_handler.PhotoAtTypeHandler},
-				#{locationNo, typeHandler=com.web.gallery.type_handler.LocationNoTypeHandler},
-				#{imageFilePath, typeHandler=com.web.gallery.type_handler.ImageFilePathTypeHandler},
-				#{photoJapaneseTitle, typeHandler=com.web.gallery.type_handler.PhotoJapaneseTitleTypeHandler},
-				#{photoEnglishTitle, typeHandler=com.web.gallery.type_handler.PhotoEnglishTitleTypeHandler},
-				#{caption, typeHandler=com.web.gallery.type_handler.CaptionTypeHandler},
+				#{photoAt},
+				#{locationNo},
+				#{imageFilePath},
+				#{photoJapaneseTitle},
+				#{photoEnglishTitle},
+				#{caption},
 				#{directionKbn}::photo.direction_enum,
-				#{focalLength, typeHandler=com.web.gallery.type_handler.FocalLengthTypeHandler},
-				#{fValue, typeHandler=com.web.gallery.type_handler.FValueTypeHandler},
-				#{shutterSpeed, typeHandler=com.web.gallery.type_handler.ShutterSpeedTypeHandler},
-				#{iso, typeHandler=com.web.gallery.type_handler.IsoTypeHandler}
+				#{focalLength},
+				#{fValue},
+				#{shutterSpeed},
+				#{iso}
 			)
 	</insert>
 
@@ -96,35 +96,35 @@
 			photo.photo_mst
 		<set>
 			updated_at = NOW()
-			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy, typeHandler=com.web.gallery.type_handler.UpdatedByTypeHandler}</if>
-			<if test="target.isDeleted != null"> , is_deleted = #{target.isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
-			<if test="target.photoAt != null"> , photo_at = #{target.photoAt, typeHandler=com.web.gallery.type_handler.PhotoAtTypeHandler}</if>
-			<if test="target.locationNo != null"> , location_no = #{target.locationNo, typeHandler=com.web.gallery.type_handler.LocationNoTypeHandler}</if>
-			<if test="target.imageFilePath != null"> , image_file_path = #{target.imageFilePath, typeHandler=com.web.gallery.type_handler.ImageFilePathTypeHandler}</if>
-			<if test="target.photoJapaneseTitle != null"> , photo_japanese_title = #{target.photoJapaneseTitle, typeHandler=com.web.gallery.type_handler.PhotoJapaneseTitleTypeHandler}</if>
-			<if test="target.photoEnglishTitle != null"> , photo_english_title = #{target.photoEnglishTitle, typeHandler=com.web.gallery.type_handler.PhotoEnglishTitleTypeHandler}</if>
-			<if test="target.caption != null"> , caption = #{target.caption, typeHandler=com.web.gallery.type_handler.CaptionTypeHandler}</if>
+			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy}</if>
+			<if test="target.isDeleted != null"> , is_deleted = #{target.isDeleted}</if>
+			<if test="target.photoAt != null"> , photo_at = #{target.photoAt}</if>
+			<if test="target.locationNo != null"> , location_no = #{target.locationNo}</if>
+			<if test="target.imageFilePath != null"> , image_file_path = #{target.imageFilePath}</if>
+			<if test="target.photoJapaneseTitle != null"> , photo_japanese_title = #{target.photoJapaneseTitle}</if>
+			<if test="target.photoEnglishTitle != null"> , photo_english_title = #{target.photoEnglishTitle}</if>
+			<if test="target.caption != null"> , caption = #{target.caption}</if>
 			<if test="target.directionKbn != null"> , direction_kbn = #{target.directionKbn}::photo.direction_enum</if>
-			<if test="target.focalLength != null"> , focal_length = #{target.focalLength, typeHandler=com.web.gallery.type_handler.FocalLengthTypeHandler}</if>
-			<if test="target.fValue != null"> , f_value = #{target.fValue, typeHandler=com.web.gallery.type_handler.FValueTypeHandler}</if>
-			<if test="target.shutterSpeed != null"> , shutter_speed = #{target.shutterSpeed, typeHandler=com.web.gallery.type_handler.ShutterSpeedTypeHandler}</if>
-			<if test="target.iso != null"> , iso = #{target.iso, typeHandler=com.web.gallery.type_handler.IsoTypeHandler}</if>
+			<if test="target.focalLength != null"> , focal_length = #{target.focalLength}</if>
+			<if test="target.fValue != null"> , f_value = #{target.fValue}</if>
+			<if test="target.shutterSpeed != null"> , shutter_speed = #{target.shutterSpeed}</if>
+			<if test="target.iso != null"> , iso = #{target.iso}</if>
 		</set>
 		<where>
-			<if test="condition.accountNo != null"> AND account_no = #{condition.accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
-			<if test="condition.photoNo != null"> AND photo_no = #{condition.photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}</if>
-			<if test="condition.isDeleted != null"> AND is_deleted = #{condition.isDeleted, typeHandler=com.web.gallery.type_handler.IsDeletedTypeHandler}</if>
-			<if test="condition.photoAt != null"> AND photo_at = #{condition.photoAt, typeHandler=com.web.gallery.type_handler.PhotoAtTypeHandler}</if>
-			<if test="condition.locationNo != null"> AND location_no = #{condition.locationNo, typeHandler=com.web.gallery.type_handler.LocationNoTypeHandler}</if>
-			<if test="condition.imageFilePath != null"> AND image_file_path = #{condition.imageFilePath, typeHandler=com.web.gallery.type_handler.ImageFilePathTypeHandler}</if>
-			<if test="condition.photoJapaneseTitle != null"> AND photo_japanese_title = #{condition.photoJapaneseTitle, typeHandler=com.web.gallery.type_handler.PhotoJapaneseTitleTypeHandler}</if>
-			<if test="condition.photoEnglishTitle != null"> AND photo_english_title = #{condition.photoEnglishTitle, typeHandler=com.web.gallery.type_handler.PhotoEnglishTitleTypeHandler}</if>
-			<if test="condition.caption != null"> AND caption = #{condition.caption, typeHandler=com.web.gallery.type_handler.CaptionTypeHandler}</if>
+			<if test="condition.accountNo != null"> AND account_no = #{condition.accountNo}</if>
+			<if test="condition.photoNo != null"> AND photo_no = #{condition.photoNo}</if>
+			<if test="condition.isDeleted != null"> AND is_deleted = #{condition.isDeleted}</if>
+			<if test="condition.photoAt != null"> AND photo_at = #{condition.photoAt}</if>
+			<if test="condition.locationNo != null"> AND location_no = #{condition.locationNo}</if>
+			<if test="condition.imageFilePath != null"> AND image_file_path = #{condition.imageFilePath}</if>
+			<if test="condition.photoJapaneseTitle != null"> AND photo_japanese_title = #{condition.photoJapaneseTitle}</if>
+			<if test="condition.photoEnglishTitle != null"> AND photo_english_title = #{condition.photoEnglishTitle}</if>
+			<if test="condition.caption != null"> AND caption = #{condition.caption}</if>
 			<if test="condition.directionKbn != null"> AND direction_kbn = #{condition.directionKbn}::photo.direction_enum</if>
-			<if test="condition.focalLength != null"> AND focal_length = #{condition.focalLength, typeHandler=com.web.gallery.type_handler.FocalLengthTypeHandler}</if>
-			<if test="condition.fValue != null"> AND f_value = #{condition.fValue, typeHandler=com.web.gallery.type_handler.FValueTypeHandler}</if>
-			<if test="condition.shutterSpeed != null"> AND shutter_speed = #{condition.shutterSpeed, typeHandler=com.web.gallery.type_handler.ShutterSpeedTypeHandler}</if>
-			<if test="condition.iso != null"> AND iso = #{condition.iso, typeHandler=com.web.gallery.type_handler.IsoTypeHandler}</if>
+			<if test="condition.focalLength != null"> AND focal_length = #{condition.focalLength}</if>
+			<if test="condition.fValue != null"> AND f_value = #{condition.fValue}</if>
+			<if test="condition.shutterSpeed != null"> AND shutter_speed = #{condition.shutterSpeed}</if>
+			<if test="condition.iso != null"> AND iso = #{condition.iso}</if>
 		</where>
 	</update>
 
@@ -143,8 +143,8 @@
 		FROM
 			photo.photo_mst
 		WHERE
-			account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}
-		AND image_file_path LIKE CONCAT('%', #{imageFilePath, typeHandler=com.web.gallery.type_handler.ImageFilePathTypeHandler}) ESCAPE '\'
+			account_no = #{accountNo}
+		AND image_file_path LIKE CONCAT('%', #{imageFilePath}) ESCAPE '\'
 		AND is_deleted = false
 	</select>
 

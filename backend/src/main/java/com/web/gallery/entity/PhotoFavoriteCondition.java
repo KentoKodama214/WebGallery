@@ -1,7 +1,5 @@
 package com.web.gallery.entity;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 
 import lombok.Builder;
@@ -14,13 +12,13 @@ import lombok.Data;
 @Builder
 public class PhotoFavoriteCondition {
 	/** アカウント番号 */
-	private AccountNo accountNo;
+	private Long accountNo;
 
 	/** お気に入り写真アカウント番号 */
-	private AccountNo favoritePhotoAccountNo;
+	private Long favoritePhotoAccountNo;
 
 	/** お気に入り写真番号 */
-	private PhotoNo favoritePhotoNo;
+	private Long favoritePhotoNo;
 
 	/**
 	 * PhotoFavoriteDeleteModelから抽出条件を生成する
@@ -30,9 +28,9 @@ public class PhotoFavoriteCondition {
 	 */
 	public static PhotoFavoriteCondition from(PhotoFavoriteDeleteModel model) {
 		return PhotoFavoriteCondition.builder()
-				.accountNo(model.getAccountNo())
-				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(model.getFavoritePhotoNo())
+				.accountNo(model.getAccountNo().value())
+				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo().value())
+				.favoritePhotoNo(model.getFavoritePhotoNo().value())
 				.build();
 	}
 
@@ -44,8 +42,8 @@ public class PhotoFavoriteCondition {
 	 */
 	public static PhotoFavoriteCondition forClear(PhotoFavoriteDeleteModel model) {
 		return PhotoFavoriteCondition.builder()
-				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(model.getFavoritePhotoNo())
+				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo().value())
+				.favoritePhotoNo(model.getFavoritePhotoNo().value())
 				.build();
 	}
 
@@ -55,7 +53,7 @@ public class PhotoFavoriteCondition {
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link PhotoFavoriteCondition}
 	 */
-	public static PhotoFavoriteCondition byAccountNo(AccountNo accountNo) {
+	public static PhotoFavoriteCondition byAccountNo(Long accountNo) {
 		return PhotoFavoriteCondition.builder()
 				.accountNo(accountNo)
 				.build();
@@ -67,7 +65,7 @@ public class PhotoFavoriteCondition {
 	 * @param	favoritePhotoAccountNo	お気に入り写真アカウント番号
 	 * @return							{@link PhotoFavoriteCondition}
 	 */
-	public static PhotoFavoriteCondition byFavoritePhotoAccountNo(AccountNo favoritePhotoAccountNo) {
+	public static PhotoFavoriteCondition byFavoritePhotoAccountNo(Long favoritePhotoAccountNo) {
 		return PhotoFavoriteCondition.builder()
 				.favoritePhotoAccountNo(favoritePhotoAccountNo)
 				.build();

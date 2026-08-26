@@ -60,10 +60,10 @@ public class PhotoFavoriteRepositoryImplTest {
 			
 			verify(photoFavoriteMapper).insert(any(PhotoFavorite.class));
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
-			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
-			assertEquals(new CreatedBy(1L), photoFavorite.getCreatedBy());
+			assertEquals(1L, photoFavorite.getAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
+			assertEquals(1L, photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}
 		
@@ -84,10 +84,10 @@ public class PhotoFavoriteRepositoryImplTest {
 			
 			verify(photoFavoriteMapper).insert(any(PhotoFavorite.class));
 			PhotoFavorite photoFavorite = photoFavoriteCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
-			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
-			assertEquals(new CreatedBy(1L), photoFavorite.getCreatedBy());
+			assertEquals(1L, photoFavorite.getAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
+			assertEquals(1L, photoFavorite.getCreatedBy());
 			assertNull(photoFavorite.getCreatedAt());
 		}
 	}
@@ -113,9 +113,9 @@ public class PhotoFavoriteRepositoryImplTest {
 			
 			verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
 			PhotoFavoriteCondition photoFavorite = photoFavoriteCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
-			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
+			assertEquals(1L, photoFavorite.getAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
 		}
 		
 		@Test
@@ -135,9 +135,9 @@ public class PhotoFavoriteRepositoryImplTest {
 			
 			verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
 			PhotoFavoriteCondition photoFavorite = photoFavoriteCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
-			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
+			assertEquals(1L, photoFavorite.getAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
 		}
 	}
 	
@@ -162,8 +162,8 @@ public class PhotoFavoriteRepositoryImplTest {
 			verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
 			PhotoFavoriteCondition photoFavorite = photoFavoriteCaptor.getValue();
 			assertNull(photoFavorite.getAccountNo());
-			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
-			assertEquals(1L, photoFavorite.getFavoritePhotoNo().value());
+			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoNo());
 		}
 	}
 
@@ -182,7 +182,7 @@ public class PhotoFavoriteRepositoryImplTest {
 
 			verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
 			PhotoFavoriteCondition photoFavorite = photoFavoriteCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoFavorite.getAccountNo());
+			assertEquals(1L, photoFavorite.getAccountNo());
 			assertNull(photoFavorite.getFavoritePhotoAccountNo());
 			assertNull(photoFavorite.getFavoritePhotoNo());
 		}
@@ -204,7 +204,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
 			PhotoFavoriteCondition photoFavorite = photoFavoriteCaptor.getValue();
 			assertNull(photoFavorite.getAccountNo());
-			assertEquals(new AccountNo(1L), photoFavorite.getFavoritePhotoAccountNo());
+			assertEquals(1L, photoFavorite.getFavoritePhotoAccountNo());
 			assertNull(photoFavorite.getFavoritePhotoNo());
 		}
 	}

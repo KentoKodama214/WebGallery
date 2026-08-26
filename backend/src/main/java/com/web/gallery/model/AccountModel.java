@@ -84,19 +84,19 @@ public class AccountModel {
 	 */
 	public static AccountModel from(Account entity) {
 		return AccountModel.builder()
-				.accountNo(entity.getAccountNo())
-				.accountId(entity.getAccountId())
-				.accountName(entity.getAccountName())
-				.password(entity.getPassword())
-				.birthdate(entity.getBirthdate())
+				.accountNo(new AccountNo(entity.getAccountNo()))
+				.accountId(new AccountId(entity.getAccountId()))
+				.accountName(new AccountName(entity.getAccountName()))
+				.password(new Password(entity.getPassword()))
+				.birthdate(entity.getBirthdate() != null ? new BirthDate(entity.getBirthdate()) : null)
 				.sexKbn(entity.getSexKbn())
-				.birthplacePrefectureKbnCode(entity.getBirthplacePrefectureKbnCode())
-				.residentPrefectureKbnCode(entity.getResidentPrefectureKbnCode())
-				.freeMemo(entity.getFreeMemo())
+				.birthplacePrefectureKbnCode(entity.getBirthplacePrefectureKbnCode() != null ? new BirthplacePrefectureKbnCode(entity.getBirthplacePrefectureKbnCode()) : null)
+				.residentPrefectureKbnCode(entity.getResidentPrefectureKbnCode() != null ? new ResidentPrefectureKbnCode(entity.getResidentPrefectureKbnCode()) : null)
+				.freeMemo(entity.getFreeMemo() != null ? new FreeMemo(entity.getFreeMemo()) : null)
 				.authorityKbn(entity.getAuthorityKbn())
-				.lastLoginDatetime(entity.getLastLoginDatetime())
-				.loginFailureCount(entity.getLoginFailureCount())
-				.isDeleted(entity.getIsDeleted())
+				.lastLoginDatetime(entity.getLastLoginDatetime() != null ? new LastLoginDatetime(entity.getLastLoginDatetime()) : null)
+				.loginFailureCount(entity.getLoginFailureCount() != null ? new LoginFailureCount(entity.getLoginFailureCount()) : null)
+				.isDeleted(new IsDeleted(entity.getIsDeleted()))
 				.build();
 	}
 

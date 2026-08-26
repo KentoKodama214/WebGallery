@@ -279,55 +279,55 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=4", (rs, rowNum) ->
 					PhotoMst.builder()
-						.accountNo(new AccountNo(rs.getLong("account_no")))
-						.photoNo(new PhotoNo(rs.getLong("photo_no")))
-						.createdBy(new CreatedBy(rs.getLong("created_by")))
-						.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-						.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-						.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-						.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-						.photoAt(new PhotoAt(rs.getObject("photo_at", OffsetDateTime.class)))
-						.locationNo(new LocationNo(rs.getLong("location_no")))
-						.imageFilePath(new ImageFilePath(rs.getString("image_file_path")))
-						.photoJapaneseTitle(new PhotoJapaneseTitle(rs.getString("photo_japanese_title")))
-						.photoEnglishTitle(new PhotoEnglishTitle(rs.getString("photo_english_title")))
-						.caption(new Caption(rs.getString("caption")))
+						.accountNo(rs.getLong("account_no"))
+						.photoNo(rs.getLong("photo_no"))
+						.createdBy(rs.getLong("created_by"))
+						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+						.updatedBy(rs.getLong("updated_by"))
+						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+						.isDeleted(rs.getBoolean("is_deleted"))
+						.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
+						.locationNo(rs.getLong("location_no"))
+						.imageFilePath(rs.getString("image_file_path"))
+						.photoJapaneseTitle(rs.getString("photo_japanese_title"))
+						.photoEnglishTitle(rs.getString("photo_english_title"))
+						.caption(rs.getString("caption"))
 						.directionKbn(DirectionEnum.getOrDefault(rs.getString("direction_kbn")))
-						.focalLength(new FocalLength(rs.getInt("focal_length")))
-						.fValue(new FValue(rs.getBigDecimal("f_value")))
-						.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
-						.iso(new Iso(rs.getInt("iso")))
+						.focalLength(rs.getInt("focal_length"))
+						.fValue(rs.getBigDecimal("f_value"))
+						.shutterSpeed(rs.getBigDecimal("shutter_speed"))
+						.iso(rs.getInt("iso"))
 						.build());
 
 			assertEquals(1, actualPhotoMst.size());
-			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
-			assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo().value());
-			assertEquals(transactionNow, actualPhotoMst.getFirst().getCreatedAt().value());
-			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt().value());
-			assertFalse(actualPhotoMst.getFirst().getIsDeleted().value());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().value().plusHours(9));
-			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo().value());
-			assertEquals("https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath().value());
-			assertEquals("", actualPhotoMst.getFirst().getPhotoJapaneseTitle().value());
-			assertEquals("", actualPhotoMst.getFirst().getPhotoEnglishTitle().value());
-			assertEquals("", actualPhotoMst.getFirst().getCaption().value());
+			assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
+			assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getCreatedAt());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt());
+			assertFalse(actualPhotoMst.getFirst().getIsDeleted());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
+			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
+			assertEquals("https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
+			assertEquals("", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
+			assertEquals("", actualPhotoMst.getFirst().getPhotoEnglishTitle());
+			assertEquals("", actualPhotoMst.getFirst().getCaption());
 			assertEquals(DirectionEnum.VERTICAL, actualPhotoMst.getFirst().getDirectionKbn());
-			assertEquals(0, actualPhotoMst.getFirst().getFocalLength().value());
-			assertEquals(0, BigDecimal.ZERO.compareTo(actualPhotoMst.getFirst().getFValue().value()));
-			assertEquals(0, BigDecimal.ZERO.compareTo(actualPhotoMst.getFirst().getShutterSpeed().value()));
-			assertEquals(0, actualPhotoMst.getFirst().getIso().value());
+			assertEquals(0, actualPhotoMst.getFirst().getFocalLength());
+			assertEquals(0, BigDecimal.ZERO.compareTo(actualPhotoMst.getFirst().getFValue()));
+			assertEquals(0, BigDecimal.ZERO.compareTo(actualPhotoMst.getFirst().getShutterSpeed()));
+			assertEquals(0, actualPhotoMst.getFirst().getIso());
 			
 			// photo_tag_mst登録チェック
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=4", (rs, rowNum) ->
 							PhotoTagMst.builder()
-								.accountNo(new AccountNo(rs.getLong("account_no")))
-								.photoNo(new PhotoNo(rs.getLong("photo_no")))
-								.tagNo(new TagNo(rs.getLong("tag_no")))
-								.createdBy(new CreatedBy(rs.getLong("created_by")))
-								.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-								.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
-								.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
+								.accountNo(rs.getLong("account_no"))
+								.photoNo(rs.getLong("photo_no"))
+								.tagNo(rs.getLong("tag_no"))
+								.createdBy(rs.getLong("created_by"))
+								.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+								.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+								.tagEnglishName(rs.getObject("tag_english_name").toString())
 								.build());
 			assertEquals(0, actualPhotoTagMst.size());
 		}
@@ -389,70 +389,70 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=4", (rs, rowNum) ->
 					PhotoMst.builder()
-						.accountNo(new AccountNo(rs.getLong("account_no")))
-						.photoNo(new PhotoNo(rs.getLong("photo_no")))
-						.createdBy(new CreatedBy(rs.getLong("created_by")))
-						.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-						.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-						.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-						.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-						.photoAt(new PhotoAt(rs.getObject("photo_at", OffsetDateTime.class)))
-						.locationNo(new LocationNo(rs.getLong("location_no")))
-						.imageFilePath(new ImageFilePath(rs.getString("image_file_path")))
-						.photoJapaneseTitle(new PhotoJapaneseTitle(rs.getString("photo_japanese_title")))
-						.photoEnglishTitle(new PhotoEnglishTitle(rs.getString("photo_english_title")))
-						.caption(new Caption(rs.getString("caption")))
+						.accountNo(rs.getLong("account_no"))
+						.photoNo(rs.getLong("photo_no"))
+						.createdBy(rs.getLong("created_by"))
+						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+						.updatedBy(rs.getLong("updated_by"))
+						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+						.isDeleted(rs.getBoolean("is_deleted"))
+						.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
+						.locationNo(rs.getLong("location_no"))
+						.imageFilePath(rs.getString("image_file_path"))
+						.photoJapaneseTitle(rs.getString("photo_japanese_title"))
+						.photoEnglishTitle(rs.getString("photo_english_title"))
+						.caption(rs.getString("caption"))
 						.directionKbn(DirectionEnum.getOrDefault(rs.getString("direction_kbn")))
-						.focalLength(new FocalLength(rs.getInt("focal_length")))
-						.fValue(new FValue(rs.getBigDecimal("f_value")))
-						.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
-						.iso(new Iso(rs.getInt("iso")))
+						.focalLength(rs.getInt("focal_length"))
+						.fValue(rs.getBigDecimal("f_value"))
+						.shutterSpeed(rs.getBigDecimal("shutter_speed"))
+						.iso(rs.getInt("iso"))
 						.build());
 
 			assertEquals(1, actualPhotoMst.size());
-			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
-			assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo().value());
-			assertEquals(transactionNow, actualPhotoMst.getFirst().getCreatedAt().value());
-			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt().value());
-			assertFalse(actualPhotoMst.getFirst().getIsDeleted().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().value().plusHours(9));
-			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo().value());
-			assertEquals("https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath().value());
-			assertEquals("タイトル111", actualPhotoMst.getFirst().getPhotoJapaneseTitle().value());
-			assertEquals("title111", actualPhotoMst.getFirst().getPhotoEnglishTitle().value());
-			assertEquals("caption111", actualPhotoMst.getFirst().getCaption().value());
+			assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
+			assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getCreatedAt());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt());
+			assertFalse(actualPhotoMst.getFirst().getIsDeleted());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
+			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
+			assertEquals("https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
+			assertEquals("タイトル111", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
+			assertEquals("title111", actualPhotoMst.getFirst().getPhotoEnglishTitle());
+			assertEquals("caption111", actualPhotoMst.getFirst().getCaption());
 			assertEquals(DirectionEnum.VERTICAL, actualPhotoMst.getFirst().getDirectionKbn());
-			assertEquals(24, actualPhotoMst.getFirst().getFocalLength().value());
-			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualPhotoMst.getFirst().getFValue().value()));
-			assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualPhotoMst.getFirst().getShutterSpeed().value()));
-			assertEquals(100, actualPhotoMst.getFirst().getIso().value());
+			assertEquals(24, actualPhotoMst.getFirst().getFocalLength());
+			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualPhotoMst.getFirst().getFValue()));
+			assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualPhotoMst.getFirst().getShutterSpeed()));
+			assertEquals(100, actualPhotoMst.getFirst().getIso());
 
 			// photo_tag_mst登録チェック
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=4", (rs, rowNum) ->
 							PhotoTagMst.builder()
-								.accountNo(new AccountNo(rs.getLong("account_no")))
-								.photoNo(new PhotoNo(rs.getLong("photo_no")))
-								.tagNo(new TagNo(rs.getLong("tag_no")))
-								.createdBy(new CreatedBy(rs.getLong("created_by")))
-								.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-								.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
-								.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
+								.accountNo(rs.getLong("account_no"))
+								.photoNo(rs.getLong("photo_no"))
+								.tagNo(rs.getLong("tag_no"))
+								.createdBy(rs.getLong("created_by"))
+								.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+								.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+								.tagEnglishName(rs.getObject("tag_english_name").toString())
 								.build());
 			assertEquals(2, actualPhotoTagMst.size());
 
-			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(0).getAccountNo());
-			assertEquals(4L, actualPhotoTagMst.get(0).getPhotoNo().value());
-			assertEquals(1L, actualPhotoTagMst.get(0).getTagNo().value());
-			assertEquals(transactionNow, actualPhotoTagMst.get(0).getCreatedAt().value());
-			assertEquals("太陽", actualPhotoTagMst.get(0).getTagJapaneseName().value());
-			assertEquals("sun", actualPhotoTagMst.get(0).getTagEnglishName().value());
-			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(1).getAccountNo());
-			assertEquals(4L, actualPhotoTagMst.get(1).getPhotoNo().value());
-			assertEquals(2L, actualPhotoTagMst.get(1).getTagNo().value());
-			assertEquals(transactionNow, actualPhotoTagMst.get(1).getCreatedAt().value());
-			assertEquals("青空", actualPhotoTagMst.get(1).getTagJapaneseName().value());
-			assertEquals("bluesky", actualPhotoTagMst.get(1).getTagEnglishName().value());
+			assertEquals(2L, actualPhotoTagMst.get(0).getAccountNo());
+			assertEquals(4L, actualPhotoTagMst.get(0).getPhotoNo());
+			assertEquals(1L, actualPhotoTagMst.get(0).getTagNo());
+			assertEquals(transactionNow, actualPhotoTagMst.get(0).getCreatedAt());
+			assertEquals("太陽", actualPhotoTagMst.get(0).getTagJapaneseName());
+			assertEquals("sun", actualPhotoTagMst.get(0).getTagEnglishName());
+			assertEquals(2L, actualPhotoTagMst.get(1).getAccountNo());
+			assertEquals(4L, actualPhotoTagMst.get(1).getPhotoNo());
+			assertEquals(2L, actualPhotoTagMst.get(1).getTagNo());
+			assertEquals(transactionNow, actualPhotoTagMst.get(1).getCreatedAt());
+			assertEquals("青空", actualPhotoTagMst.get(1).getTagJapaneseName());
+			assertEquals("bluesky", actualPhotoTagMst.get(1).getTagEnglishName());
 		}
 		
 		@Test
@@ -509,70 +509,70 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=1", (rs, rowNum) ->
 					PhotoMst.builder()
-						.accountNo(new AccountNo(rs.getLong("account_no")))
-						.photoNo(new PhotoNo(rs.getLong("photo_no")))
-						.createdBy(new CreatedBy(rs.getLong("created_by")))
-						.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-						.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-						.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-						.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-						.photoAt(new PhotoAt(rs.getObject("photo_at", OffsetDateTime.class)))
-						.locationNo(new LocationNo(rs.getLong("location_no")))
-						.imageFilePath(new ImageFilePath(rs.getString("image_file_path")))
-						.photoJapaneseTitle(new PhotoJapaneseTitle(rs.getString("photo_japanese_title")))
-						.photoEnglishTitle(new PhotoEnglishTitle(rs.getString("photo_english_title")))
-						.caption(new Caption(rs.getString("caption")))
+						.accountNo(rs.getLong("account_no"))
+						.photoNo(rs.getLong("photo_no"))
+						.createdBy(rs.getLong("created_by"))
+						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+						.updatedBy(rs.getLong("updated_by"))
+						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+						.isDeleted(rs.getBoolean("is_deleted"))
+						.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
+						.locationNo(rs.getLong("location_no"))
+						.imageFilePath(rs.getString("image_file_path"))
+						.photoJapaneseTitle(rs.getString("photo_japanese_title"))
+						.photoEnglishTitle(rs.getString("photo_english_title"))
+						.caption(rs.getString("caption"))
 						.directionKbn(DirectionEnum.getOrDefault(rs.getString("direction_kbn")))
-						.focalLength(new FocalLength(rs.getInt("focal_length")))
-						.fValue(new FValue(rs.getBigDecimal("f_value")))
-						.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
-						.iso(new Iso(rs.getInt("iso")))
+						.focalLength(rs.getInt("focal_length"))
+						.fValue(rs.getBigDecimal("f_value"))
+						.shutterSpeed(rs.getBigDecimal("shutter_speed"))
+						.iso(rs.getInt("iso"))
 						.build());
 
 			assertEquals(1, actualPhotoMst.size());
-			assertEquals(new AccountNo(2L), actualPhotoMst.getFirst().getAccountNo());
-			assertEquals(1L, actualPhotoMst.getFirst().getPhotoNo().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getCreatedAt().value());
-			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt().value());
-			assertFalse(actualPhotoMst.getFirst().getIsDeleted().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().value().plusHours(9));
-			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo().value());
-			assertEquals("https://www.xxx.com/bbbbbbbb/DSC21.jpg", actualPhotoMst.getFirst().getImageFilePath().value());
-			assertEquals("タイトル111", actualPhotoMst.getFirst().getPhotoJapaneseTitle().value());
-			assertEquals("title111", actualPhotoMst.getFirst().getPhotoEnglishTitle().value());
-			assertEquals("caption111", actualPhotoMst.getFirst().getCaption().value());
+			assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
+			assertEquals(1L, actualPhotoMst.getFirst().getPhotoNo());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getCreatedAt());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt());
+			assertFalse(actualPhotoMst.getFirst().getIsDeleted());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
+			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
+			assertEquals("https://www.xxx.com/bbbbbbbb/DSC21.jpg", actualPhotoMst.getFirst().getImageFilePath());
+			assertEquals("タイトル111", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
+			assertEquals("title111", actualPhotoMst.getFirst().getPhotoEnglishTitle());
+			assertEquals("caption111", actualPhotoMst.getFirst().getCaption());
 			assertEquals(DirectionEnum.VERTICAL, actualPhotoMst.getFirst().getDirectionKbn());
-			assertEquals(24, actualPhotoMst.getFirst().getFocalLength().value());
-			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualPhotoMst.getFirst().getFValue().value()));
-			assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualPhotoMst.getFirst().getShutterSpeed().value()));
-			assertEquals(100, actualPhotoMst.getFirst().getIso().value());
+			assertEquals(24, actualPhotoMst.getFirst().getFocalLength());
+			assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualPhotoMst.getFirst().getFValue()));
+			assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualPhotoMst.getFirst().getShutterSpeed()));
+			assertEquals(100, actualPhotoMst.getFirst().getIso());
 
 			// photo_tag_mst登録チェック（更新時は既存タグを一旦削除してから再登録するため、いずれも新規登録扱い）
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=1", (rs, rowNum) ->
 							PhotoTagMst.builder()
-								.accountNo(new AccountNo(rs.getLong("account_no")))
-								.photoNo(new PhotoNo(rs.getLong("photo_no")))
-								.tagNo(new TagNo(rs.getLong("tag_no")))
-								.createdBy(new CreatedBy(rs.getLong("created_by")))
-								.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-								.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
-								.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
+								.accountNo(rs.getLong("account_no"))
+								.photoNo(rs.getLong("photo_no"))
+								.tagNo(rs.getLong("tag_no"))
+								.createdBy(rs.getLong("created_by"))
+								.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+								.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+								.tagEnglishName(rs.getObject("tag_english_name").toString())
 								.build());
 			assertEquals(2, actualPhotoTagMst.size());
 
-			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(0).getAccountNo());
-			assertEquals(1L, actualPhotoTagMst.get(0).getPhotoNo().value());
-			assertEquals(1L, actualPhotoTagMst.get(0).getTagNo().value());
-			assertEquals(transactionNow, actualPhotoTagMst.get(0).getCreatedAt().value());
-			assertEquals("太陽", actualPhotoTagMst.get(0).getTagJapaneseName().value());
-			assertEquals("sun", actualPhotoTagMst.get(0).getTagEnglishName().value());
-			assertEquals(new AccountNo(2L), actualPhotoTagMst.get(1).getAccountNo());
-			assertEquals(1L, actualPhotoTagMst.get(1).getPhotoNo().value());
-			assertEquals(2L, actualPhotoTagMst.get(1).getTagNo().value());
-			assertEquals(transactionNow, actualPhotoTagMst.get(1).getCreatedAt().value());
-			assertEquals("青空", actualPhotoTagMst.get(1).getTagJapaneseName().value());
-			assertEquals("bluesky", actualPhotoTagMst.get(1).getTagEnglishName().value());
+			assertEquals(2L, actualPhotoTagMst.get(0).getAccountNo());
+			assertEquals(1L, actualPhotoTagMst.get(0).getPhotoNo());
+			assertEquals(1L, actualPhotoTagMst.get(0).getTagNo());
+			assertEquals(transactionNow, actualPhotoTagMst.get(0).getCreatedAt());
+			assertEquals("太陽", actualPhotoTagMst.get(0).getTagJapaneseName());
+			assertEquals("sun", actualPhotoTagMst.get(0).getTagEnglishName());
+			assertEquals(2L, actualPhotoTagMst.get(1).getAccountNo());
+			assertEquals(1L, actualPhotoTagMst.get(1).getPhotoNo());
+			assertEquals(2L, actualPhotoTagMst.get(1).getTagNo());
+			assertEquals(transactionNow, actualPhotoTagMst.get(1).getCreatedAt());
+			assertEquals("青空", actualPhotoTagMst.get(1).getTagJapaneseName());
+			assertEquals("bluesky", actualPhotoTagMst.get(1).getTagEnglishName());
 		}
 		
 		@Test
@@ -874,40 +874,40 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoMst> actualPhotoMst = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_mst where account_no = 1 and photo_no=1", (rs, rowNum) ->
 					PhotoMst.builder()
-						.accountNo(new AccountNo(rs.getLong("account_no")))
-						.photoNo(new PhotoNo(rs.getLong("photo_no")))
-						.createdBy(new CreatedBy(rs.getLong("created_by")))
-						.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-						.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-						.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-						.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-						.photoAt(new PhotoAt(rs.getObject("photo_at", OffsetDateTime.class)))
-						.locationNo(new LocationNo(rs.getLong("location_no")))
-						.imageFilePath(new ImageFilePath(rs.getString("image_file_path")))
-						.photoJapaneseTitle(new PhotoJapaneseTitle(rs.getString("photo_japanese_title")))
-						.photoEnglishTitle(new PhotoEnglishTitle(rs.getString("photo_english_title")))
-						.caption(new Caption(rs.getString("caption")))
+						.accountNo(rs.getLong("account_no"))
+						.photoNo(rs.getLong("photo_no"))
+						.createdBy(rs.getLong("created_by"))
+						.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+						.updatedBy(rs.getLong("updated_by"))
+						.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+						.isDeleted(rs.getBoolean("is_deleted"))
+						.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
+						.locationNo(rs.getLong("location_no"))
+						.imageFilePath(rs.getString("image_file_path"))
+						.photoJapaneseTitle(rs.getString("photo_japanese_title"))
+						.photoEnglishTitle(rs.getString("photo_english_title"))
+						.caption(rs.getString("caption"))
 						.directionKbn(DirectionEnum.getOrDefault(rs.getString("direction_kbn")))
-						.focalLength(new FocalLength(rs.getInt("focal_length")))
-						.fValue(new FValue(rs.getBigDecimal("f_value")))
-						.shutterSpeed(new ShutterSpeed(rs.getBigDecimal("shutter_speed")))
-						.iso(new Iso(rs.getInt("iso")))
+						.focalLength(rs.getInt("focal_length"))
+						.fValue(rs.getBigDecimal("f_value"))
+						.shutterSpeed(rs.getBigDecimal("shutter_speed"))
+						.iso(rs.getInt("iso"))
 						.build());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getCreatedAt().value());
-			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt().value());
-			assertTrue(actualPhotoMst.getFirst().getIsDeleted().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getCreatedAt());
+			assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt());
+			assertTrue(actualPhotoMst.getFirst().getIsDeleted());
 			
 			// photo_tag_mst削除チェック
 			List<PhotoTagMst> actualPhotoTagMst = jdbcTemplate.query(
 						"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 							PhotoTagMst.builder()
-								.accountNo(new AccountNo(rs.getLong("account_no")))
-								.photoNo(new PhotoNo(rs.getLong("photo_no")))
-								.tagNo(new TagNo(rs.getLong("tag_no")))
-								.createdBy(new CreatedBy(rs.getLong("created_by")))
-								.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-								.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
-								.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
+								.accountNo(rs.getLong("account_no"))
+								.photoNo(rs.getLong("photo_no"))
+								.tagNo(rs.getLong("tag_no"))
+								.createdBy(rs.getLong("created_by"))
+								.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+								.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+								.tagEnglishName(rs.getObject("tag_english_name").toString())
 								.build());
 			assertEquals(0, actualPhotoTagMst.size());
 			
@@ -915,11 +915,11 @@ public class PhotoRestControllerIntegrationTest {
 			List<PhotoFavorite> actualPhotoFavoriteData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite WHERE favorite_photo_account_no=1 and favorite_photo_no=1", (rs, rowNum) ->
 						PhotoFavorite.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+							.accountNo(rs.getLong("account_no"))
+							.favoritePhotoAccountNo(rs.getLong("favorite_photo_account_no"))
+							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
 							.build());
 			assertEquals(0, actualPhotoFavoriteData.size());
 		}

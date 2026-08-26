@@ -51,54 +51,54 @@ public class PhotoTagMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのselectで1件以上の場合")
 		void select_by_accountNo() {
-			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().accountNo(new AccountNo(1L)).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().accountNo(1L).build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
 			PhotoTagMst expectedPhotoTagMst1 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			PhotoTagMst expectedPhotoTagMst2 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(2L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("青空"))
-					.tagEnglishName(new TagEnglishName("bluesky"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(2L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("青空")
+					.tagEnglishName("bluesky")
 					.build();
 			PhotoTagMst expectedPhotoTagMst3 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			PhotoTagMst expectedPhotoTagMst4 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(2L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("曇天"))
-					.tagEnglishName(new TagEnglishName("cloudy"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(2L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 2, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("曇天")
+					.tagEnglishName("cloudy")
 					.build();
 			PhotoTagMst expectedPhotoTagMst5 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(3L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 3, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("花"))
-					.tagEnglishName(new TagEnglishName("flower"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(3L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 2, 1, 3, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("花")
+					.tagEnglishName("flower")
 					.build();
 			List<PhotoTagMst> expected = new ArrayList<PhotoTagMst>();
 			expected.add(expectedPhotoTagMst1);
@@ -108,155 +108,155 @@ public class PhotoTagMstMapperTest {
 			expected.add(expectedPhotoTagMst5);
 			
 			assertEquals(5, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList());
 		}
 		
 		@Test
 		@Order(2)
 		@DisplayName("正常系：写真番号でのselectで1件の場合")
 		void select_by_photoNo() {
-			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().photoNo(new PhotoNo(1L)).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().photoNo(1L).build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
 			PhotoTagMst expectedPhotoTagMst1 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			PhotoTagMst expectedPhotoTagMst2 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(2L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("青空"))
-					.tagEnglishName(new TagEnglishName("bluesky"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(2L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("青空")
+					.tagEnglishName("bluesky")
 					.build();
 			List<PhotoTagMst> expected = new ArrayList<PhotoTagMst>();
 			expected.add(expectedPhotoTagMst1);
 			expected.add(expectedPhotoTagMst2);
 			
 			assertEquals(2, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList());
 		}
 		
 		@Test
 		@Order(3)
 		@DisplayName("正常系：タグ番号でのselectで1件の場合")
 		void select_by_tagNo() {
-			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().tagNo(new TagNo(1L)).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().tagNo(1L).build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
 			PhotoTagMst expectedPhotoTagMst1 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			PhotoTagMst expectedPhotoTagMst2 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			List<PhotoTagMst> expected = new ArrayList<PhotoTagMst>();
 			expected.add(expectedPhotoTagMst1);
 			expected.add(expectedPhotoTagMst2);
 			
 			assertEquals(2, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList());
 		}
 		
 		@Test
 		@Order(4)
 		@DisplayName("正常系：タグ日本語名でのselectで1件の場合")
 		void select_by_tagJapaneseName() {
-			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().tagJapaneseName(new TagJapaneseName("太陽")).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().tagJapaneseName("太陽").build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
 			PhotoTagMst expectedPhotoTagMst1 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			PhotoTagMst expectedPhotoTagMst2 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			List<PhotoTagMst> expected = new ArrayList<PhotoTagMst>();
 			expected.add(expectedPhotoTagMst1);
 			expected.add(expectedPhotoTagMst2);
 			
 			assertEquals(2, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList());
 		}
 		
 		@Test
 		@Order(5)
 		@DisplayName("正常系：タグ英語名でのselectで1件の場合")
 		void select_by_tagEnglishName() {
-			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().tagEnglishName(new TagEnglishName("sun")).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().tagEnglishName("sun").build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
 			PhotoTagMst expectedPhotoTagMst1 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			PhotoTagMst expectedPhotoTagMst2 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			List<PhotoTagMst> expected = new ArrayList<PhotoTagMst>();
 			expected.add(expectedPhotoTagMst1);
 			expected.add(expectedPhotoTagMst2);
 			
 			assertEquals(2, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList());
 		}
 		
 		@Test
 		@Order(6)
 		@DisplayName("正常系：selectで0件の場合")
 		void select_not_found() {
-			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().accountNo(new AccountNo(3L)).build();
+			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder().accountNo(3L).build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			List<PhotoTagMst> expected = new ArrayList<PhotoTagMst>();
 			assertEquals(0, actual.size());
@@ -268,28 +268,28 @@ public class PhotoTagMstMapperTest {
 		@DisplayName("正常系：複数の条件でselectする場合")
 		void select_some_conditions() {
 			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
 					.build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
 			PhotoTagMst expectedPhotoTagMst1 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			List<PhotoTagMst> expected = new ArrayList<PhotoTagMst>();
 			expected.add(expectedPhotoTagMst1);
 			
 			assertEquals(1, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList());
 		}
 	}
 	
@@ -304,12 +304,12 @@ public class PhotoTagMstMapperTest {
 		@DisplayName("正常系：登録成功")
 		void insert_success() {
 			PhotoTagMst photoTagMst = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(3L))
-					.createdBy(new CreatedBy(1L))
-					.tagJapaneseName(new TagJapaneseName("春"))
-					.tagEnglishName(new TagEnglishName("spring"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(3L)
+					.createdBy(1L)
+					.tagJapaneseName("春")
+					.tagEnglishName("spring")
 					.build();
 			
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
@@ -319,22 +319,22 @@ public class PhotoTagMstMapperTest {
 			List<PhotoTagMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1 and tag_no=3", (rs, rowNum) ->
 						PhotoTagMst.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.photoNo(new PhotoNo(rs.getLong("photo_no")))
-							.tagNo(new TagNo(rs.getLong("tag_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
-							.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.tagNo(rs.getLong("tag_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+							.tagEnglishName(rs.getObject("tag_english_name").toString())
 							.build());
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
-			assertEquals(1L, actualData.getFirst().getPhotoNo().value());
-			assertEquals(3L, actualData.getFirst().getTagNo().value());
-			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
-			assertEquals("春", actualData.getFirst().getTagJapaneseName().value());
-			assertEquals("spring", actualData.getFirst().getTagEnglishName().value());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getPhotoNo());
+			assertEquals(3L, actualData.getFirst().getTagNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt());
+			assertEquals("春", actualData.getFirst().getTagJapaneseName());
+			assertEquals("spring", actualData.getFirst().getTagEnglishName());
 		}
 	}
 	
@@ -348,13 +348,13 @@ public class PhotoTagMstMapperTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE " + condition, (rs, rowNum) ->
 						PhotoTagMst.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.photoNo(new PhotoNo(rs.getLong("photo_no")))
-							.tagNo(new TagNo(rs.getLong("tag_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
-							.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.tagNo(rs.getLong("tag_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+							.tagEnglishName(rs.getObject("tag_english_name").toString())
 							.build());
 		}
 		
@@ -362,7 +362,7 @@ public class PhotoTagMstMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのdelete")
 		void delete_by_accountNo() {
-			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().accountNo(new AccountNo(1L)).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().accountNo(1L).build();
 			Integer deleteCount = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(deleteCount, 5);
 			
@@ -377,7 +377,7 @@ public class PhotoTagMstMapperTest {
 		@Order(2)
 		@DisplayName("正常系：写真番号でのdelete")
 		void delete_by_photoNo() {
-			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().photoNo(new PhotoNo(1L)).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().photoNo(1L).build();
 			Integer deleteCount = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(deleteCount, 2);
 			
@@ -392,7 +392,7 @@ public class PhotoTagMstMapperTest {
 		@Order(3)
 		@DisplayName("正常系：タグ番号でのdelete")
 		void delete_by_tagNo() {
-			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().tagNo(new TagNo(1L)).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().tagNo(1L).build();
 			Integer actual = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(2, actual);
 			
@@ -407,7 +407,7 @@ public class PhotoTagMstMapperTest {
 		@Order(4)
 		@DisplayName("正常系：タグ日本語名でのdelete")
 		void delete_by_tagJapaneseName() {
-			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().tagJapaneseName(new TagJapaneseName("太陽")).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().tagJapaneseName("太陽").build();
 			Integer actual = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(2, actual);
 			
@@ -422,7 +422,7 @@ public class PhotoTagMstMapperTest {
 		@Order(5)
 		@DisplayName("正常系：タグ英語名でのdelete")
 		void delete_by_tagEnglishName() {
-			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().tagEnglishName(new TagEnglishName("sun")).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().tagEnglishName("sun").build();
 			Integer actual = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(2, actual);
 			
@@ -437,7 +437,7 @@ public class PhotoTagMstMapperTest {
 		@Order(6)
 		@DisplayName("正常系：deleteで0件の場合")
 		void delete_not_found() {
-			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().accountNo(new AccountNo(3L)).build();
+			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder().accountNo(3L).build();
 			Integer actual = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(0, actual);
 			
@@ -453,9 +453,9 @@ public class PhotoTagMstMapperTest {
 		@DisplayName("正常系：複数の条件でdeleteする場合")
 		void delete_some_conditions() {
 			PhotoTagMstCondition deletePhotoTagMst = PhotoTagMstCondition.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
 					.build();
 			Integer actual = photoTagMstMapper.delete(deletePhotoTagMst);
 			assertEquals(1, actual);
@@ -479,56 +479,56 @@ public class PhotoTagMstMapperTest {
 		@DisplayName("正常系：写真番号リストでのselectで複数件の場合")
 		void select_by_photoNoList() {
 			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNoList(List.of(new PhotoNo(1L), new PhotoNo(2L)))
+					.accountNo(1L)
+					.photoNoList(List.of(1L, 2L))
 					.build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);
 			actual.forEach(e -> e.setId(null));
 
 			PhotoTagMst expectedPhotoTagMst1 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			PhotoTagMst expectedPhotoTagMst2 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(2L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("青空"))
-					.tagEnglishName(new TagEnglishName("bluesky"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(2L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("青空")
+					.tagEnglishName("bluesky")
 					.build();
 			PhotoTagMst expectedPhotoTagMst3 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 2, 1, 1, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build();
 			PhotoTagMst expectedPhotoTagMst4 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(2L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("曇天"))
-					.tagEnglishName(new TagEnglishName("cloudy"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(2L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 2, 1, 2, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("曇天")
+					.tagEnglishName("cloudy")
 					.build();
 			PhotoTagMst expectedPhotoTagMst5 = PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(3L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 2, 1, 3, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.tagJapaneseName(new TagJapaneseName("花"))
-					.tagEnglishName(new TagEnglishName("flower"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(3L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 2, 1, 3, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.tagJapaneseName("花")
+					.tagEnglishName("flower")
 					.build();
 			List<PhotoTagMst> expected = new ArrayList<PhotoTagMst>();
 			expected.add(expectedPhotoTagMst1);
@@ -538,8 +538,8 @@ public class PhotoTagMstMapperTest {
 			expected.add(expectedPhotoTagMst5);
 
 			assertEquals(5, actual.size());
-			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList(),
-					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt().value())).toList());
+			assertEquals(expected.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList(),
+					actual.stream().sorted(Comparator.comparing(p -> p.getCreatedAt())).toList());
 		}
 
 		@Test
@@ -547,7 +547,7 @@ public class PhotoTagMstMapperTest {
 		@DisplayName("正常系：写真番号リストが空の場合は絞り込まれない")
 		void select_by_photoNoList_empty() {
 			PhotoTagMstCondition photoTagMst = PhotoTagMstCondition.builder()
-					.accountNo(new AccountNo(1L))
+					.accountNo(1L)
 					.photoNoList(List.of())
 					.build();
 			List<PhotoTagMst> actual = photoTagMstMapper.select(photoTagMst);

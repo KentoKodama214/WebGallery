@@ -33,7 +33,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import tools.jackson.databind.json.JsonMapper;
 import com.web.gallery.constant.Consts;
-import com.web.gallery.controller.request.ErrorRequest;
+import com.web.gallery.controller.response.ErrorResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
@@ -565,7 +565,7 @@ public class AccountRestControllerTest {
 		void handleInsertFailedException_success() {
 			RegistFailureException exception = new RegistFailureException(ErrorEnum.INVALID_INPUT);
 
-			ResponseEntity<ErrorRequest> actual
+			ResponseEntity<ErrorResponse> actual
 				= accountRestController.handleInsertFailedException(exception);
 
 			assertEquals(HttpStatus.CONFLICT, actual.getStatusCode());

@@ -20,10 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.TokenId;
 import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.domain.common.ExpiresAt;
-import com.web.gallery.domain.common.IsRevoked;
 import com.web.gallery.entity.RefreshToken;
 import com.web.gallery.mapper.RefreshTokenMapper;
 import com.web.gallery.model.RefreshTokenModel;
@@ -58,9 +56,9 @@ public class RefreshTokenRepositoryImplTest {
 
 			ArgumentCaptor<RefreshToken> refreshTokenCaptor = ArgumentCaptor.forClass(RefreshToken.class);
 			verify(refreshTokenMapper, times(1)).insert(refreshTokenCaptor.capture());
-			assertEquals(new AccountNo(1L), refreshTokenCaptor.getValue().getAccountNo());
-			assertEquals(new TokenHash("abc123hash"), refreshTokenCaptor.getValue().getTokenHash());
-			assertEquals(new ExpiresAt(expiresAt), refreshTokenCaptor.getValue().getExpiresAt());
+			assertEquals(1L, refreshTokenCaptor.getValue().getAccountNo());
+			assertEquals("abc123hash", refreshTokenCaptor.getValue().getTokenHash());
+			assertEquals(expiresAt, refreshTokenCaptor.getValue().getExpiresAt());
 		}
 	}
 
@@ -74,11 +72,11 @@ public class RefreshTokenRepositoryImplTest {
 		void findByTokenHash_success() {
 			OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7);
 			RefreshToken mapperResult = RefreshToken.builder()
-					.tokenId(new TokenId(1L))
-					.accountNo(new AccountNo(1L))
-					.tokenHash(new TokenHash("abc123hash"))
-					.expiresAt(new ExpiresAt(expiresAt))
-					.isRevoked(new IsRevoked(false))
+					.tokenId(1L)
+					.accountNo(1L)
+					.tokenHash("abc123hash")
+					.expiresAt(expiresAt)
+					.isRevoked(false)
 					.build();
 
 			doReturn(mapperResult).when(refreshTokenMapper).selectByTokenHash("abc123hash");

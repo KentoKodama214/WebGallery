@@ -3,13 +3,13 @@
 
 <mapper namespace="com.web.gallery.mapper.PhotoTagMstMapper">
 	<resultMap id="PhotoTagMstMap" type="com.web.gallery.entity.PhotoTagMst">
-		<result property="accountNo" column="account_no" typeHandler="com.web.gallery.type_handler.AccountNoTypeHandler"/>
-		<result property="photoNo" column="photo_no" typeHandler="com.web.gallery.type_handler.PhotoNoTypeHandler"/>
-		<result property="tagNo" column="tag_no" typeHandler="com.web.gallery.type_handler.TagNoTypeHandler"/>
-		<result property="createdBy" column="created_by" typeHandler="com.web.gallery.type_handler.CreatedByTypeHandler"/>
-		<result property="createdAt" column="created_at" typeHandler="com.web.gallery.type_handler.CreatedAtTypeHandler"/>
-		<result property="tagJapaneseName" column="tag_japanese_name" typeHandler="com.web.gallery.type_handler.TagJapaneseNameTypeHandler"/>
-		<result property="tagEnglishName" column="tag_english_name" typeHandler="com.web.gallery.type_handler.TagEnglishNameTypeHandler"/>
+		<result property="accountNo" column="account_no"/>
+		<result property="photoNo" column="photo_no"/>
+		<result property="tagNo" column="tag_no"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="tagJapaneseName" column="tag_japanese_name"/>
+		<result property="tagEnglishName" column="tag_english_name"/>
 	</resultMap>
 
 	<select id="select" parameterType="com.web.gallery.entity.PhotoTagMstCondition" resultMap="PhotoTagMstMap">
@@ -25,17 +25,17 @@
 		FROM
 			photo.photo_tag_mst
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
-			<if test="photoNo != null"> AND photo_no = #{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
 			<if test="photoNoList != null and !photoNoList.isEmpty()">
 				AND photo_no IN
 				<foreach item="photoNo" collection="photoNoList" open="(" separator="," close=")">
-					#{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}
+					#{photoNo}
 				</foreach>
 			</if>
-			<if test="tagNo != null"> AND tag_no = #{tagNo, typeHandler=com.web.gallery.type_handler.TagNoTypeHandler}</if>
-			<if test="tagJapaneseName != null"> AND tag_japanese_name = #{tagJapaneseName, typeHandler=com.web.gallery.type_handler.TagJapaneseNameTypeHandler}</if>
-			<if test="tagEnglishName != null"> AND tag_english_name = #{tagEnglishName, typeHandler=com.web.gallery.type_handler.TagEnglishNameTypeHandler}</if>
+			<if test="tagNo != null"> AND tag_no = #{tagNo}</if>
+			<if test="tagJapaneseName != null"> AND tag_japanese_name = #{tagJapaneseName}</if>
+			<if test="tagEnglishName != null"> AND tag_english_name = #{tagEnglishName}</if>
 		</where>
 	</select>
 
@@ -52,13 +52,13 @@
 			)
 		VALUES
 			(
-				#{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler},
-				#{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler},
-				#{tagNo, typeHandler=com.web.gallery.type_handler.TagNoTypeHandler},
-				#{createdBy, typeHandler=com.web.gallery.type_handler.CreatedByTypeHandler},
+				#{accountNo},
+				#{photoNo},
+				#{tagNo},
+				#{createdBy},
 				NOW(),
-				#{tagJapaneseName, typeHandler=com.web.gallery.type_handler.TagJapaneseNameTypeHandler},
-				#{tagEnglishName, typeHandler=com.web.gallery.type_handler.TagEnglishNameTypeHandler}
+				#{tagJapaneseName},
+				#{tagEnglishName}
 			)
 	</insert>
 
@@ -66,11 +66,11 @@
 		DELETE FROM
 			photo.photo_tag_mst
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
-			<if test="photoNo != null"> AND photo_no = #{photoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}</if>
-			<if test="tagNo != null"> AND tag_no = #{tagNo, typeHandler=com.web.gallery.type_handler.TagNoTypeHandler}</if>
-			<if test="tagJapaneseName != null"> AND tag_japanese_name = #{tagJapaneseName, typeHandler=com.web.gallery.type_handler.TagJapaneseNameTypeHandler}</if>
-			<if test="tagEnglishName != null"> AND tag_english_name = #{tagEnglishName, typeHandler=com.web.gallery.type_handler.TagEnglishNameTypeHandler}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
+			<if test="tagNo != null"> AND tag_no = #{tagNo}</if>
+			<if test="tagJapaneseName != null"> AND tag_japanese_name = #{tagJapaneseName}</if>
+			<if test="tagEnglishName != null"> AND tag_english_name = #{tagEnglishName}</if>
 		</where>
 	</delete>
 </mapper>
