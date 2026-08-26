@@ -2,13 +2,11 @@ package com.web.gallery.controller;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,12 +22,10 @@ import com.web.gallery.controller.response.AccountDetailResponse;
 import com.web.gallery.controller.response.AccountListItemResponse;
 import com.web.gallery.controller.response.AccountRegistResponse;
 import com.web.gallery.controller.response.AccountUpdateResponse;
-import com.web.gallery.controller.response.ErrorResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.service.AccountService;
@@ -205,18 +201,5 @@ public class AccountRestController {
 		accountService.deleteAccount(new AccountNo(sessionHelper.getAccountNo()), new AccountId(accountId));
 
 		return ResponseEntity.ok().build();
-	}
-
-	/**
-	 * アカウント登録に失敗した時のExceptionHandler
-	 * 
-	 * @param	exception	{@link RegistFailureException}
-	 * @return				{@link ErrorResponse}
-	 */
-	@ExceptionHandler(RegistFailureException.class)
-	public ResponseEntity<ErrorResponse> handleInsertFailedException(RegistFailureException exception) {
-		ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.CONFLICT);
-
-		return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.CONFLICT);
 	}
 }
