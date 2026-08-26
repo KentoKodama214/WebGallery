@@ -33,7 +33,7 @@ app:
     photoCountPerPage: 20
     maxFileSizeMb: 5
   jwt:
-    secret: ${JWT_SECRET:default-dev-secret-must-be-at-least-256-bits-long-for-hs256}
+    secret: ${JWT_SECRET}
     accessTokenExpirationMinutes: 15
     refreshTokenExpirationDays: 7
 
