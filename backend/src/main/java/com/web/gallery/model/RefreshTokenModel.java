@@ -7,6 +7,7 @@ import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.entity.RefreshToken;
 
 import lombok.Builder;
+import lombok.NonNull;
 import lombok.Value;
 
 /**
@@ -19,15 +20,18 @@ import lombok.Value;
 @Builder
 public class RefreshTokenModel {
 	/** アカウント番号 */
+	@NonNull
 	private AccountNo accountNo;
 
 	/** トークンハッシュ */
+	@NonNull
 	private TokenHash tokenHash;
 
 	/** 有効期限 */
+	@NonNull
 	private ExpiresAt expiresAt;
 
-	/** 無効化フラグ */
+	/** 無効化フラグ（{@link #of}生成時は未設定のためnull許容） */
 	private IsRevoked isRevoked;
 
 	/**

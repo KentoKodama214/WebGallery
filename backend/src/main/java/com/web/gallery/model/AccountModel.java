@@ -25,6 +25,10 @@ import lombok.Value;
 
 /**
  * アカウント情報を受け渡すためのModelクラス
+ * <p>
+ * {@code forUnlock}/{@code forLock}/{@code forLoginSuccess}/{@code forLoginFailure}のように
+ * ログイン失敗回数等の部分更新専用のファクトリメソッドが存在し、全ファクトリメソッドに共通して
+ * 必須となるプロパティが存在しないため、意図的に{@code @NonNull}を付与していない。
  */
 @Value
 @Builder
