@@ -20,11 +20,11 @@ import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.AccountRegistRequest;
 import com.web.gallery.controller.request.AccountUpdateRequest;
-import com.web.gallery.controller.request.ErrorRequest;
 import com.web.gallery.controller.response.AccountDetailResponse;
 import com.web.gallery.controller.response.AccountListItemResponse;
 import com.web.gallery.controller.response.AccountRegistResponse;
 import com.web.gallery.controller.response.AccountUpdateResponse;
+import com.web.gallery.controller.response.ErrorResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.enumeration.ErrorEnum;
@@ -211,15 +211,12 @@ public class AccountRestController {
 	 * アカウント登録に失敗した時のExceptionHandler
 	 * 
 	 * @param	exception	{@link RegistFailureException}
-	 * @return				{@link ErrorRequest}
+	 * @return				{@link ErrorResponse}
 	 */
 	@ExceptionHandler(RegistFailureException.class)
-	public ResponseEntity<ErrorRequest> handleInsertFailedException(RegistFailureException exception) {
-		ErrorRequest errorResponse = ErrorRequest.builder()
-				.httpStatus(HttpStatus.CONFLICT.value())
-				.errorCode(exception.getErrorCode())
-				.errorMessage(exception.getMessage()).build();
-		
-		return new ResponseEntity<ErrorRequest>(errorResponse, HttpStatus.CONFLICT);
+	public ResponseEntity<ErrorResponse> handleInsertFailedException(RegistFailureException exception) {
+		ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.CONFLICT);
+
+		return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.CONFLICT);
 	}
 }
