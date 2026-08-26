@@ -219,7 +219,7 @@ public class AuthRestControllerIntegrationTest {
 					.cookie(new Cookie("refreshToken", "invalid-refresh-token"))
 				)
 				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.message").value("無効なリフレッシュトークンです"));
+				.andExpect(jsonPath("$.message").value("無効なリフレッシュトークンです。"));
 		}
 	}
 

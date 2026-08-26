@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.JwtConfig;
+import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.helper.JwtTokenProvider;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AuthTokenModel;
@@ -105,8 +106,8 @@ public class AuthServiceImpl implements AuthService {
 	 *
 	 * @param	refreshToken	リフレッシュトークン
 	 * @return					{@link AuthTokenModel}
-	 * @throws	IllegalArgumentException	トークンが無効な場合
-	 * @throws	LockedException				アカウントがロックされている場合
+	 * @throws	InvalidRefreshTokenException	トークンが無効な場合
+	 * @throws	LockedException					アカウントがロックされている場合
 	 */
 	@Override
 	@Transactional(readOnly = true)
@@ -115,17 +116,17 @@ public class AuthServiceImpl implements AuthService {
 		RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 
 		if (storedToken == null || storedToken.getIsRevoked().value()) {
-			throw new IllegalArgumentException("無効なリフレッシュトークンです");
+			throw new InvalidRefreshTokenException("無効なリフレッシュトークンです");
 		}
 
 		if (storedToken.getExpiresAt().value().isBefore(OffsetDateTime.now(clock))) {
-			throw new IllegalArgumentException("リフレッシュトークンの有効期限が切れています");
+			throw new InvalidRefreshTokenException("リフレッシュトークンの有効期限が切れています");
 		}
 
 		// アカウント番号からアカウント情報を取得し、新しいアクセストークンを発行
 		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo());
 		if (accountModel == null) {
-			throw new IllegalArgumentException("無効なリフレッシュトークンです");
+			throw new InvalidRefreshTokenException("無効なリフレッシュトークンです");
 		}
 		UserDetails userDetails = userDetailsService.loadUserByUsername(accountModel.getAccountId().value());
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
@@ -134,7 +135,7 @@ public class AuthServiceImpl implements AuthService {
 			throw new LockedException("アカウントがロックされています");
 		}
 		if (!principal.isEnabled()) {
-			throw new IllegalArgumentException("無効なリフレッシュトークンです");
+			throw new InvalidRefreshTokenException("無効なリフレッシュトークンです");
 		}
 
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);

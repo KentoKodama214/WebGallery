@@ -29,6 +29,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.TokenHash;
+import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.model.RefreshTokenModel;
 import com.web.gallery.repository.RefreshTokenRepository;
@@ -205,16 +206,16 @@ public class AuthServiceImplIntegrationTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("異常系：存在しないリフレッシュトークンの場合、IllegalArgumentExceptionをthrowする")
+		@DisplayName("異常系：存在しないリフレッシュトークンの場合、InvalidRefreshTokenExceptionをthrowする")
 		void refresh_invalid_token() {
-			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue("invalid-refresh-token")));
 			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
 		}
 
 		@Test
 		@Order(3)
-		@DisplayName("異常系：無効化済みリフレッシュトークンの場合、IllegalArgumentExceptionをthrowする")
+		@DisplayName("異常系：無効化済みリフレッシュトークンの場合、InvalidRefreshTokenExceptionをthrowする")
 		void refresh_revoked_token() throws Exception {
 			// ログインしてリフレッシュトークンを取得
 			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
@@ -224,14 +225,14 @@ public class AuthServiceImplIntegrationTest {
 			refreshTokenRepository.revokeByTokenHash(new TokenHash(hashToken(refreshToken)));
 
 			// 無効化済みトークンでリフレッシュ
-			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
 			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
 		}
 
 		@Test
 		@Order(4)
-		@DisplayName("異常系：有効期限切れリフレッシュトークンの場合、IllegalArgumentExceptionをthrowする")
+		@DisplayName("異常系：有効期限切れリフレッシュトークンの場合、InvalidRefreshTokenExceptionをthrowする")
 		void refresh_expired_token() throws Exception {
 			// ログインしてリフレッシュトークンを取得
 			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
@@ -245,7 +246,7 @@ public class AuthServiceImplIntegrationTest {
 			);
 
 			// 有効期限切れトークンでリフレッシュ
-			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
 			assertEquals("リフレッシュトークンの有効期限が切れています", exception.getMessage());
 		}
@@ -270,7 +271,7 @@ public class AuthServiceImplIntegrationTest {
 
 		@Test
 		@Order(6)
-		@DisplayName("異常系：アカウント削除後のリフレッシュトークンの場合、NPEではなくIllegalArgumentExceptionをthrowする")
+		@DisplayName("異常系：アカウント削除後のリフレッシュトークンの場合、NPEではなくInvalidRefreshTokenExceptionをthrowする")
 		void refresh_after_account_deleted() {
 			// ログインしてリフレッシュトークンを取得
 			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
@@ -281,7 +282,7 @@ public class AuthServiceImplIntegrationTest {
 			jdbcTemplate.update("DELETE FROM common.account WHERE account_no = ?", 1L);
 
 			// 削除済みアカウントのリフレッシュトークンでリフレッシュ
-			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
 			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
 		}
@@ -298,7 +299,7 @@ public class AuthServiceImplIntegrationTest {
 			accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("testuser01"));
 
 			// 削除済みアカウントのリフレッシュトークンでリフレッシュ
-			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
 			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
 		}
@@ -356,7 +357,7 @@ public class AuthServiceImplIntegrationTest {
 			authServiceImpl.logout(new RefreshTokenValue(refreshToken));
 
 			// ログアウト後のリフレッシュは失敗
-			IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
 			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
 		}

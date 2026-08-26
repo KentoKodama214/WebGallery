@@ -28,6 +28,7 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.AccessToken;
 import com.web.gallery.domain.auth.ExpiresIn;
 import com.web.gallery.domain.auth.RefreshTokenValue;
+import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.service.impl.AuthServiceImpl;
 
@@ -199,7 +200,7 @@ public class AuthRestControllerTest {
 		@Order(4)
 		@DisplayName("異常系：無効なリフレッシュトークンの場合、401を返す")
 		void refresh_invalid_token() throws Exception {
-			doThrow(new IllegalArgumentException("無効なリフレッシュトークンです"))
+			doThrow(new InvalidRefreshTokenException("無効なリフレッシュトークンです"))
 				.when(authServiceImpl).refresh(new RefreshTokenValue("invalid-token"));
 
 			mockMvc.perform(
@@ -207,7 +208,7 @@ public class AuthRestControllerTest {
 					.cookie(new Cookie("refreshToken", "invalid-token"))
 				)
 				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.message").value("無効なリフレッシュトークンです"));
+				.andExpect(jsonPath("$.message").value("無効なリフレッシュトークンです。"));
 		}
 	}
 

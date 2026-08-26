@@ -37,6 +37,7 @@ import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.ExpiresAt;
 import com.web.gallery.domain.common.IsRevoked;
 import com.web.gallery.domain.common.TokenHash;
+import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.helper.JwtTokenProvider;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AuthTokenModel;
@@ -225,7 +226,7 @@ class AuthServiceImplTest {
 			when(principal.isEnabled()).thenReturn(false);
 			when(userDetailsService.loadUserByUsername("testuser1")).thenReturn(principal);
 
-			assertThrows(IllegalArgumentException.class, () -> {
+			assertThrows(InvalidRefreshTokenException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
 			});
 		}
@@ -242,7 +243,7 @@ class AuthServiceImplTest {
 
 			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
 
-			assertThrows(IllegalArgumentException.class, () -> {
+			assertThrows(InvalidRefreshTokenException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue("revoked-token"));
 			});
 		}
@@ -259,7 +260,7 @@ class AuthServiceImplTest {
 
 			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
 
-			assertThrows(IllegalArgumentException.class, () -> {
+			assertThrows(InvalidRefreshTokenException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue("expired-token"));
 			});
 		}
@@ -269,7 +270,7 @@ class AuthServiceImplTest {
 		void refresh_tokenNotFound() {
 			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(null);
 
-			assertThrows(IllegalArgumentException.class, () -> {
+			assertThrows(InvalidRefreshTokenException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue("nonexistent-token"));
 			});
 		}
@@ -287,7 +288,7 @@ class AuthServiceImplTest {
 			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
 			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(null);
 
-			assertThrows(IllegalArgumentException.class, () -> {
+			assertThrows(InvalidRefreshTokenException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue("valid-refresh-token"));
 			});
 		}
