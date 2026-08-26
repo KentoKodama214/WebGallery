@@ -71,6 +71,7 @@ import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
+import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
@@ -419,33 +420,52 @@ public class PhotoServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系")
 		void getPhotoDetail_success() throws GalleryException {
+			String accountId = "aaaaaaaa";
+
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
 			PhotoDetailModel actual = PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
 					.build();
-			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-					.accountNo(new AccountNo(1L))
+			PhotoDetailSearchModel photoDetailSearchModel = PhotoDetailSearchModel.builder()
+					.accountNo(new AccountNo(2L))
 					.photoAccountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(1L))
 					.build();
-			
-			doReturn(actual).when(photoDetailRepositoryImpl).getPhotoDetail(photoDetailGetModel);
+
+			doReturn(actual).when(photoDetailRepositoryImpl).getPhotoDetail(photoDetailSearchModel);
+
+			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+					.accountNo(new AccountNo(2L))
+					.photoAccountId(new AccountId(accountId))
+					.photoNo(new PhotoNo(1L))
+					.build();
+
 			assertEquals(actual, photoServiceImpl.getPhotoDetail(photoDetailGetModel));
+			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("異常系：PhotoNotFoundExceptionをthrowする")
 		void getPhotoDetail_PhotoNotFoundException() throws GalleryException {
+			String accountId = "aaaaaaaa";
+
+			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+			doThrow(PhotoNotFoundException.class).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
+
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
-					.accountNo(new AccountNo(1L))
-					.photoAccountNo(new AccountNo(1L))
+					.accountNo(new AccountNo(2L))
+					.photoAccountId(new AccountId(accountId))
 					.photoNo(new PhotoNo(1L))
 					.build();
-			
-			doThrow(PhotoNotFoundException.class).when(photoDetailRepositoryImpl).getPhotoDetail(photoDetailGetModel);
+
 			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
-			verify(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailGetModel.class));
+			verify(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 		}
 	}
 	

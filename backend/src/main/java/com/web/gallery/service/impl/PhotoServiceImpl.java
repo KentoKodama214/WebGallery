@@ -31,6 +31,7 @@ import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
+import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.PhotoListGetModel;
@@ -98,7 +99,10 @@ public class PhotoServiceImpl implements PhotoService {
 	@Override
 	@Transactional(readOnly = true)
 	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException {
-		return photoDetailRepository.getPhotoDetail(photoDetailGetModel);
+		AccountModel accountModel = accountRepository.getByAccountId(photoDetailGetModel.getPhotoAccountId());
+
+		return photoDetailRepository.getPhotoDetail(
+				PhotoDetailSearchModel.of(photoDetailGetModel, accountModel.getAccountNo()));
 	}
 
 	/**

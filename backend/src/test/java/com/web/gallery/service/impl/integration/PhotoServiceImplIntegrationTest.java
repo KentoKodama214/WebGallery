@@ -380,10 +380,10 @@ public class PhotoServiceImplIntegrationTest {
 		void getPhotoDetail_success() throws GalleryException {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoAccountNo(new AccountNo(1L))
+					.photoAccountId(new AccountId("aaaaaaaa"))
 					.photoNo(new PhotoNo(1L))
 					.build();
-			
+
 			PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
 			assertEquals(1L, actual.getAccountNo().value());
 			assertEquals(1L, actual.getPhotoNo().value());
@@ -420,10 +420,10 @@ public class PhotoServiceImplIntegrationTest {
 		void getPhotoDetail_PhotoNotFoundException() throws GalleryException {
 			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
 					.accountNo(new AccountNo(1L))
-					.photoAccountNo(new AccountNo(1L))
+					.photoAccountId(new AccountId("aaaaaaaa"))
 					.photoNo(new PhotoNo(11L))
 					.build();
-			
+
 			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
 		}
 	}

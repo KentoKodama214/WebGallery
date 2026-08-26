@@ -25,7 +25,7 @@ public interface PhotoService {
 	
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する
-	 * 
+	 *
 	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
 	 * @return						{@link PhotoDetailModel}
 	 * @throws	GalleryException	写真が存在しなかった場合

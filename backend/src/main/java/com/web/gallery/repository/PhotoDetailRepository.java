@@ -1,8 +1,8 @@
 package com.web.gallery.repository;
 
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoModelList;
 
@@ -21,9 +21,9 @@ public interface PhotoDetailRepository {
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する
 	 * 
-	 * @param	photoDetailGetModel		{@link PhotoDetailGetModel}
+	 * @param	photoDetailSearchModel	{@link PhotoDetailSearchModel}
 	 * @return							{@link PhotoDetailModel}
 	 * @throws	GalleryException		写真が存在しなかった場合
 	 */
-	PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException;
+	PhotoDetailModel getPhotoDetail(PhotoDetailSearchModel photoDetailSearchModel) throws GalleryException;
 }
