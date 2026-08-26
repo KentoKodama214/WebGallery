@@ -94,8 +94,18 @@ public class PhotoMstCondition {
 	public static PhotoMstCondition forExistCheck(PhotoDetailModel model) {
 		return PhotoMstCondition.builder()
 				.accountNo(model.getAccountNo())
-				.imageFilePath(new ImageFilePath(model.getImageFile().value().getOriginalFilename()))
+				.imageFilePath(new ImageFilePath(escapeLike(model.getImageFile().value().getOriginalFilename())))
 				.build();
+	}
+
+	/**
+	 * LIKE検索のワイルドカード文字（{@code \}・{@code %}・{@code _}）をエスケープする
+	 *
+	 * @param	value	エスケープ対象の文字列
+	 * @return			エスケープ後の文字列
+	 */
+	private static String escapeLike(String value) {
+		return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
 	}
 
 	/**
