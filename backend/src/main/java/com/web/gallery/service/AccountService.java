@@ -23,7 +23,7 @@ public interface AccountService {
 	 * アカウントを更新する
 	 *
 	 * @param	accountModel		{@link AccountModel}
-	 * @return						更新に成功した場合、true
+	 * @return						アカウントIDが重複しており更新をスキップした場合、true
 	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	Boolean updateAccount(AccountModel accountModel) throws GalleryException;
