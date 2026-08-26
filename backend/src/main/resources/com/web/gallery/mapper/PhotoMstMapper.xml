@@ -144,7 +144,7 @@
 			photo.photo_mst
 		WHERE
 			account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}
-		AND image_file_path LIKE CONCAT('%', #{imageFilePath, typeHandler=com.web.gallery.type_handler.ImageFilePathTypeHandler})
+		AND image_file_path LIKE CONCAT('%', #{imageFilePath, typeHandler=com.web.gallery.type_handler.ImageFilePathTypeHandler}) ESCAPE '\'
 		AND is_deleted = false
 	</select>
 

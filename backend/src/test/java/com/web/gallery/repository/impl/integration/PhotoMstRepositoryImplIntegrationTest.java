@@ -543,9 +543,29 @@ public class PhotoMstRepositoryImplIntegrationTest {
 			
 			assertFalse(photoMstRepositoryImpl.isExistPhoto(photoDetailModel));
 		}
-		
+
+		@Test
+		@Order(5)
+		@DisplayName("正常系：画像ファイル名にLIKE検索のワイルドカード文字（_）を含むが、リテラルとして扱われ該当する写真がない場合")
+		void isExistPhoto_wildcard_underscore_is_escaped() {
+			MultipartFile multipartFile = new MockMultipartFile(
+					"file",
+					"DSC1_.jpg",
+					"multipart/form-data",
+					"sample image".getBytes()
+			);
+
+			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFile(new ImageFile(multipartFile))
+					.imageFilePath(new ImageFilePath(""))
+					.build();
+
+			assertFalse(photoMstRepositoryImpl.isExistPhoto(photoDetailModel));
+		}
+
 	}
-	
+
 	@Nested
 	@Order(6)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
