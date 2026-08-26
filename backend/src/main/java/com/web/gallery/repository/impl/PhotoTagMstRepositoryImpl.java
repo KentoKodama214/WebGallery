@@ -64,6 +64,6 @@ public class PhotoTagMstRepositoryImpl implements PhotoTagMstRepository {
 	 */
 	@Override
 	public void deleteByAccountNo(AccountNo accountNo) {
-		photoTagMstMapper.delete(PhotoTagMstCondition.byAccountNo(accountNo));
+		photoTagMstMapper.delete(PhotoTagMstCondition.byAccountNo(accountNo.value()));
 	}
 }

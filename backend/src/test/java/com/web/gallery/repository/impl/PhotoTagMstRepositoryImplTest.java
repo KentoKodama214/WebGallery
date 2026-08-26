@@ -64,13 +64,13 @@ public class PhotoTagMstRepositoryImplTest {
 			
 			verify(photoTagMstMapper).insert(any(PhotoTagMst.class));
 			PhotoTagMst photoTagMst = photoTagMstCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoTagMst.getAccountNo());
-			assertEquals(1L, photoTagMst.getPhotoNo().value());
-			assertEquals(1L, photoTagMst.getTagNo().value());
-			assertEquals(new CreatedBy(1L), photoTagMst.getCreatedBy());
+			assertEquals(1L, photoTagMst.getAccountNo());
+			assertEquals(1L, photoTagMst.getPhotoNo());
+			assertEquals(1L, photoTagMst.getTagNo());
+			assertEquals(1L, photoTagMst.getCreatedBy());
 			assertNull(photoTagMst.getCreatedAt());
-			assertEquals("太陽", photoTagMst.getTagJapaneseName().value());
-			assertEquals("sun", photoTagMst.getTagEnglishName().value());
+			assertEquals("太陽", photoTagMst.getTagJapaneseName());
+			assertEquals("sun", photoTagMst.getTagEnglishName());
 		}
 		
 		@Test
@@ -92,13 +92,13 @@ public class PhotoTagMstRepositoryImplTest {
 			
 			verify(photoTagMstMapper).insert(any(PhotoTagMst.class));
 			PhotoTagMst photoTagMst = photoTagMstCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoTagMst.getAccountNo());
-			assertEquals(1L, photoTagMst.getPhotoNo().value());
-			assertEquals(1L, photoTagMst.getTagNo().value());
-			assertEquals(new CreatedBy(1L), photoTagMst.getCreatedBy());
+			assertEquals(1L, photoTagMst.getAccountNo());
+			assertEquals(1L, photoTagMst.getPhotoNo());
+			assertEquals(1L, photoTagMst.getTagNo());
+			assertEquals(1L, photoTagMst.getCreatedBy());
 			assertNull(photoTagMst.getCreatedAt());
-			assertEquals("太陽", photoTagMst.getTagJapaneseName().value());
-			assertEquals("sun", photoTagMst.getTagEnglishName().value());
+			assertEquals("太陽", photoTagMst.getTagJapaneseName());
+			assertEquals("sun", photoTagMst.getTagEnglishName());
 		}
 	}
 	
@@ -122,8 +122,8 @@ public class PhotoTagMstRepositoryImplTest {
 			
 			verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
 			PhotoTagMstCondition photoTagMst = photoTagMstCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoTagMst.getAccountNo());
-			assertEquals(1L, photoTagMst.getPhotoNo().value());
+			assertEquals(1L, photoTagMst.getAccountNo());
+			assertEquals(1L, photoTagMst.getPhotoNo());
 			assertNull(photoTagMst.getTagNo());
 			assertNull(photoTagMst.getTagJapaneseName());
 			assertNull(photoTagMst.getTagEnglishName());
@@ -145,7 +145,7 @@ public class PhotoTagMstRepositoryImplTest {
 
 			verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
 			PhotoTagMstCondition photoTagMst = photoTagMstCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoTagMst.getAccountNo());
+			assertEquals(1L, photoTagMst.getAccountNo());
 			assertNull(photoTagMst.getPhotoNo());
 			assertNull(photoTagMst.getTagNo());
 		}

@@ -110,42 +110,42 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='mmmmmmmm'", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-							.accountId(new AccountId(rs.getString("account_id")))
-							.accountName(new AccountName(rs.getString("account_name")))
-							.password(new Password(rs.getString("password")))
-							.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.updatedBy(rs.getLong("updated_by"))
+							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+							.isDeleted(rs.getBoolean("is_deleted"))
+							.accountId(rs.getString("account_id"))
+							.accountName(rs.getString("account_name"))
+							.password(rs.getString("password"))
+							.birthdate(rs.getObject("birthdate", LocalDate.class))
 							.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-							.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
-							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
-							.freeMemo(new FreeMemo(rs.getString("free_memo")))
+							.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+							.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+							.freeMemo(rs.getString("free_memo"))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
-							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
+							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+							.loginFailureCount(rs.getInt("login_failure_count"))
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo().value());
-			assertEquals(0L, actualData.getFirst().getCreatedBy().value());
-			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
-			assertEquals(0L, actualData.getFirst().getUpdatedBy().value());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals("mmmmmmmm", actualData.getFirst().getAccountId().value());
-			assertEquals("MMMMMMMM", actualData.getFirst().getAccountName().value());
-			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate().value());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(0L, actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt());
+			assertEquals(0L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("mmmmmmmm", actualData.getFirst().getAccountId());
+			assertEquals("MMMMMMMM", actualData.getFirst().getAccountName());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode().value());
-			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode().value());
-			assertEquals("", actualData.getFirst().getFreeMemo().value());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.MINI, actualData.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().value().plusHours(9));
-			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().plusHours(9));
+			assertEquals(0, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -181,43 +181,43 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-							.accountId(new AccountId(rs.getString("account_id")))
-							.accountName(new AccountName(rs.getString("account_name")))
-							.password(new Password(rs.getString("password")))
-							.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.updatedBy(rs.getLong("updated_by"))
+							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+							.isDeleted(rs.getBoolean("is_deleted"))
+							.accountId(rs.getString("account_id"))
+							.accountName(rs.getString("account_name"))
+							.password(rs.getString("password"))
+							.birthdate(rs.getObject("birthdate", LocalDate.class))
 							.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-							.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
-							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
-							.freeMemo(new FreeMemo(rs.getString("free_memo")))
+							.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+							.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+							.freeMemo(rs.getString("free_memo"))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
-							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
+							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+							.loginFailureCount(rs.getInt("login_failure_count"))
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo().value());
-			assertEquals(1L, actualData.getFirst().getCreatedBy().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
-			assertEquals(1L, actualData.getFirst().getUpdatedBy().value());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals("zzzzzzzz", actualData.getFirst().getAccountId().value());
-			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName().value());
-			assertEquals("$2a$10$password1", actualData.getFirst().getPassword().value());
-			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate().value());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("zzzzzzzz", actualData.getFirst().getAccountId());
+			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode().value());
-			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode().value());
-			assertEquals("", actualData.getFirst().getFreeMemo().value());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().value().plusHours(9));
-			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().plusHours(9));
+			assertEquals(0, actualData.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -230,43 +230,43 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-							.accountId(new AccountId(rs.getString("account_id")))
-							.accountName(new AccountName(rs.getString("account_name")))
-							.password(new Password(rs.getString("password")))
-							.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.updatedBy(rs.getLong("updated_by"))
+							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+							.isDeleted(rs.getBoolean("is_deleted"))
+							.accountId(rs.getString("account_id"))
+							.accountName(rs.getString("account_name"))
+							.password(rs.getString("password"))
+							.birthdate(rs.getObject("birthdate", LocalDate.class))
 							.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-							.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
-							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
-							.freeMemo(new FreeMemo(rs.getString("free_memo")))
+							.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+							.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+							.freeMemo(rs.getString("free_memo"))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
-							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
+							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+							.loginFailureCount(rs.getInt("login_failure_count"))
 							.build());
 
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo().value());
-			assertEquals(1L, actualData.getFirst().getCreatedBy().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
-			assertEquals(1L, actualData.getFirst().getUpdatedBy().value());
-			assertEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId().value());
-			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName().value());
-			assertEquals("$2a$10$password1", actualData.getFirst().getPassword().value());
-			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate().value());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
+			assertEquals(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
+			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode().value());
-			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode().value());
-			assertEquals("", actualData.getFirst().getFreeMemo().value());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().value().plusHours(9));
-			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().plusHours(9));
+			assertEquals(0, actualData.getFirst().getLoginFailureCount());
 		}
 
 		@Test
@@ -363,7 +363,7 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> accountData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
+							.accountNo(rs.getLong("account_no"))
 							.build());
 			assertEquals(0, accountData.size());
 
@@ -371,7 +371,7 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> otherAccountData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=2", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
+							.accountNo(rs.getLong("account_no"))
 							.build());
 			assertEquals(1, otherAccountData.size());
 
@@ -444,44 +444,44 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=11", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-							.accountId(new AccountId(rs.getString("account_id")))
-							.accountName(new AccountName(rs.getString("account_name")))
-							.password(new Password(rs.getString("password")))
-							.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.updatedBy(rs.getLong("updated_by"))
+							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+							.isDeleted(rs.getBoolean("is_deleted"))
+							.accountId(rs.getString("account_id"))
+							.accountName(rs.getString("account_name"))
+							.password(rs.getString("password"))
+							.birthdate(rs.getObject("birthdate", LocalDate.class))
 							.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-							.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
-							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
-							.freeMemo(new FreeMemo(rs.getString("free_memo")))
+							.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+							.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+							.freeMemo(rs.getString("free_memo"))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
-							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
+							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+							.loginFailureCount(rs.getInt("login_failure_count"))
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(11L, actualData.getFirst().getAccountNo().value());
-			assertEquals(11L, actualData.getFirst().getCreatedBy().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 11, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
-			assertEquals(11L, actualData.getFirst().getUpdatedBy().value());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals("kkkkkkkk", actualData.getFirst().getAccountId().value());
-			assertEquals("KKKKKKKK", actualData.getFirst().getAccountName().value());
-			assertEquals("$2a$10$password11", actualData.getFirst().getPassword().value());
-			assertEquals(LocalDate.of(1990, 1, 1), actualData.getFirst().getBirthdate().value());
+			assertEquals(11L, actualData.getFirst().getAccountNo());
+			assertEquals(11L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 11, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(11L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("kkkkkkkk", actualData.getFirst().getAccountId());
+			assertEquals("KKKKKKKK", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password11", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1990, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.WOMAN, actualData.getFirst().getSexKbn());
-			assertEquals("Okinawa", actualData.getFirst().getBirthplacePrefectureKbnCode().value());
-			assertEquals("Tokyo", actualData.getFirst().getResidentPrefectureKbnCode().value());
-			assertEquals("よろしく", actualData.getFirst().getFreeMemo().value());
+			assertEquals("Okinawa", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("Tokyo", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("よろしく", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.NORMAL, actualData.getFirst().getAuthorityKbn());
-			assertFalse(actualData.getFirst().getLastLoginDatetime().value().isBefore(beforeLogin));
-			assertFalse(actualData.getFirst().getLastLoginDatetime().value().isAfter(afterLogin));
-			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
+			assertFalse(actualData.getFirst().getLastLoginDatetime().isBefore(beforeLogin));
+			assertFalse(actualData.getFirst().getLastLoginDatetime().isAfter(afterLogin));
+			assertEquals(0, actualData.getFirst().getLoginFailureCount());
 		}
 	}
 	
@@ -513,43 +513,43 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='aaaaaaaa'", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-							.accountId(new AccountId(rs.getString("account_id")))
-							.accountName(new AccountName(rs.getString("account_name")))
-							.password(new Password(rs.getString("password")))
-							.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.updatedBy(rs.getLong("updated_by"))
+							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+							.isDeleted(rs.getBoolean("is_deleted"))
+							.accountId(rs.getString("account_id"))
+							.accountName(rs.getString("account_name"))
+							.password(rs.getString("password"))
+							.birthdate(rs.getObject("birthdate", LocalDate.class))
 							.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-							.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
-							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
-							.freeMemo(new FreeMemo(rs.getString("free_memo")))
+							.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+							.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+							.freeMemo(rs.getString("free_memo"))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
-							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
+							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+							.loginFailureCount(rs.getInt("login_failure_count"))
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo().value());
-			assertEquals(1L, actualData.getFirst().getCreatedBy().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt().value());
-			assertEquals(1L, actualData.getFirst().getUpdatedBy().value());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId().value());
-			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName().value());
-			assertEquals("$2a$10$password1", actualData.getFirst().getPassword().value());
-			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate().value());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
+			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode().value());
-			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode().value());
-			assertEquals("", actualData.getFirst().getFreeMemo().value());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().value().plusHours(9));
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().plusHours(9));
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -573,23 +573,23 @@ public class AccountServiceImplIntegrationTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='zzzzzzzz'", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-							.accountId(new AccountId(rs.getString("account_id")))
-							.accountName(new AccountName(rs.getString("account_name")))
-							.password(new Password(rs.getString("password")))
-							.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.updatedBy(rs.getLong("updated_by"))
+							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+							.isDeleted(rs.getBoolean("is_deleted"))
+							.accountId(rs.getString("account_id"))
+							.accountName(rs.getString("account_name"))
+							.password(rs.getString("password"))
+							.birthdate(rs.getObject("birthdate", LocalDate.class))
 							.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-							.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
-							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
-							.freeMemo(new FreeMemo(rs.getString("free_memo")))
+							.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+							.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+							.freeMemo(rs.getString("free_memo"))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
-							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
+							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+							.loginFailureCount(rs.getInt("login_failure_count"))
 							.build());
 			
 			assertEquals(0, actualData.size());

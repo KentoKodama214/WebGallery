@@ -67,22 +67,22 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 			List<PhotoTagMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1 and tag_no=3", (rs, rowNum) ->
 						PhotoTagMst.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.photoNo(new PhotoNo(rs.getLong("photo_no")))
-							.tagNo(new TagNo(rs.getLong("tag_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
-							.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.tagNo(rs.getLong("tag_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+							.tagEnglishName(rs.getObject("tag_english_name").toString())
 							.build());
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
-			assertEquals(1L, actualData.getFirst().getPhotoNo().value());
-			assertEquals(3L, actualData.getFirst().getTagNo().value());
-			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
-			assertEquals("海", actualData.getFirst().getTagJapaneseName().value());
-			assertEquals("sea", actualData.getFirst().getTagEnglishName().value());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getPhotoNo());
+			assertEquals(3L, actualData.getFirst().getTagNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt());
+			assertEquals("海", actualData.getFirst().getTagJapaneseName());
+			assertEquals("sea", actualData.getFirst().getTagEnglishName());
 		}
 		
 		@Test
@@ -121,26 +121,26 @@ public class PhotoTagMstRepositoryImplIntegrationTest {
 			List<PhotoTagMst> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1", (rs, rowNum) ->
 						PhotoTagMst.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.photoNo(new PhotoNo(rs.getLong("photo_no")))
-							.tagNo(new TagNo(rs.getLong("tag_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
-							.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.tagNo(rs.getLong("tag_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+							.tagEnglishName(rs.getObject("tag_english_name").toString())
 							.build());
 			assertEquals(0, actualData.size());
 			
 			List<PhotoTagMst> actualRestData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_tag_mst", (rs, rowNum) ->
 						PhotoTagMst.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.photoNo(new PhotoNo(rs.getLong("photo_no")))
-							.tagNo(new TagNo(rs.getLong("tag_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.tagJapaneseName(new TagJapaneseName(rs.getObject("tag_japanese_name").toString()))
-							.tagEnglishName(new TagEnglishName(rs.getObject("tag_english_name").toString()))
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.tagNo(rs.getLong("tag_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+							.tagEnglishName(rs.getObject("tag_english_name").toString())
 							.build());
 			assertEquals(3, actualRestData.size());
 		}

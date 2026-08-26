@@ -1,9 +1,7 @@
 package com.web.gallery.entity;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.CreatedBy;
-import com.web.gallery.domain.common.CreatedAt;
-import com.web.gallery.domain.photo.PhotoNo;
+import java.time.OffsetDateTime;
+
 import com.web.gallery.model.PhotoFavoriteModel;
 
 import lombok.Builder;
@@ -19,19 +17,19 @@ public class PhotoFavorite {
 	private Long id;
 
 	/** アカウント番号 */
-	private AccountNo accountNo;
+	private Long accountNo;
 
 	/** お気に入り写真アカウント番号 */
-	private AccountNo favoritePhotoAccountNo;
+	private Long favoritePhotoAccountNo;
 
 	/** お気に入り写真番号 */
-	private PhotoNo favoritePhotoNo;
+	private Long favoritePhotoNo;
 
 	/** 作成者 */
-	private CreatedBy createdBy;
+	private Long createdBy;
 
 	/** 作成日時 */
-	private CreatedAt createdAt;
+	private OffsetDateTime createdAt;
 
 	/**
 	 * PhotoFavoriteModelからPhotoFavoriteエンティティを生成する
@@ -41,10 +39,10 @@ public class PhotoFavorite {
 	 */
 	public static PhotoFavorite from(PhotoFavoriteModel model) {
 		return PhotoFavorite.builder()
-				.accountNo(model.getAccountNo())
-				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo())
-				.favoritePhotoNo(model.getFavoritePhotoNo())
-				.createdBy(new CreatedBy(model.getAccountNo().value()))
+				.accountNo(model.getAccountNo().value())
+				.favoritePhotoAccountNo(model.getFavoritePhotoAccountNo().value())
+				.favoritePhotoNo(model.getFavoritePhotoNo().value())
+				.createdBy(model.getAccountNo().value())
 				.build();
 	}
 }

@@ -46,10 +46,10 @@ public class PhotoFavoriteMapperTest {
 		@DisplayName("正常系：登録成功")
 		void insert_success() {
 			PhotoFavorite insertPhotoFavorite = PhotoFavorite.builder()
-					.accountNo(new AccountNo(1L))
-					.favoritePhotoAccountNo(new AccountNo(2L))
-					.favoritePhotoNo(new PhotoNo(1L))
-					.createdBy(new CreatedBy(1L))
+					.accountNo(1L)
+					.favoritePhotoAccountNo(2L)
+					.favoritePhotoNo(1L)
+					.createdBy(1L)
 					.build();
 			
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
@@ -59,18 +59,18 @@ public class PhotoFavoriteMapperTest {
 			List<PhotoFavorite> actualData = jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite WHERE account_no=1 and favorite_photo_account_no=2 and favorite_photo_no=1", (rs, rowNum) ->
 						PhotoFavorite.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+							.accountNo(rs.getLong("account_no"))
+							.favoritePhotoAccountNo(rs.getLong("favorite_photo_account_no"))
+							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
 							.build());
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
-			assertEquals(new AccountNo(2L), actualData.getFirst().getFavoritePhotoAccountNo());
-			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo().value());
-			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(2L, actualData.getFirst().getFavoritePhotoAccountNo());
+			assertEquals(1L, actualData.getFirst().getFavoritePhotoNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt());
 		}
 	}
 	
@@ -84,11 +84,11 @@ public class PhotoFavoriteMapperTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM photo.photo_favorite WHERE " + condition, (rs, rowNum) ->
 						PhotoFavorite.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.favoritePhotoAccountNo(new AccountNo(rs.getLong("favorite_photo_account_no")))
-							.favoritePhotoNo(new PhotoNo(rs.getLong("favorite_photo_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
+							.accountNo(rs.getLong("account_no"))
+							.favoritePhotoAccountNo(rs.getLong("favorite_photo_account_no"))
+							.favoritePhotoNo(rs.getLong("favorite_photo_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
 							.build());
 		}
 		
@@ -96,7 +96,7 @@ public class PhotoFavoriteMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのdelete")
 		void delete_by_accountNo() {
-			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().accountNo(new AccountNo(1L)).build();
+			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().accountNo(1L).build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(2, actual);
 			
@@ -111,7 +111,7 @@ public class PhotoFavoriteMapperTest {
 		@Order(2)
 		@DisplayName("正常系：お気に入り写真アカウント番号でのdelete")
 		void delete_by_favoritePhotoAccountNo() {
-			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().favoritePhotoAccountNo(new AccountNo(1L)).build();
+			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().favoritePhotoAccountNo(1L).build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(3, actual);
 			
@@ -126,7 +126,7 @@ public class PhotoFavoriteMapperTest {
 		@Order(3)
 		@DisplayName("正常系：お気に入り写真番号でのdelete")
 		void delete_by_favoritePhotoNo() {
-			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().favoritePhotoNo(new PhotoNo(1L)).build();
+			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().favoritePhotoNo(1L).build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(2, actual);
 			
@@ -141,7 +141,7 @@ public class PhotoFavoriteMapperTest {
 		@Order(4)
 		@DisplayName("正常系：削除対象のレコードなし")
 		void delete_not_found() {
-			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().accountNo(new AccountNo(3L)).build();
+			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder().accountNo(3L).build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(0, actual);
 			
@@ -157,9 +157,9 @@ public class PhotoFavoriteMapperTest {
 		@DisplayName("正常系：複数の条件でdeleteする場合")
 		void delete_some_conditions() {
 			PhotoFavoriteCondition deletePhotoFavorite = PhotoFavoriteCondition.builder()
-					.accountNo(new AccountNo(1L))
-					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(new PhotoNo(1L))
+					.accountNo(1L)
+					.favoritePhotoAccountNo(1L)
+					.favoritePhotoNo(1L)
 					.build();
 			Integer actual = photoFavoriteMapper.delete(deletePhotoFavorite);
 			assertEquals(1, actual);

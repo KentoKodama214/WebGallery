@@ -185,8 +185,8 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals("PHOTO_AT", photoListGetDtoCapture.getSortBy());
 
 			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
-			assertEquals(List.of(new PhotoNo(1L), new PhotoNo(2L)), photoTagMstCapture.getPhotoNoList());
+			assertEquals(1L, photoTagMstCapture.getAccountNo());
+			assertEquals(List.of(1L, 2L), photoTagMstCapture.getPhotoNoList());
 		}
 
 		@Test
@@ -230,18 +230,18 @@ public class PhotoDetailRepositoryImplTest {
 
 			List<PhotoTagMst> photoTagMstList = new ArrayList<PhotoTagMst>();
 			photoTagMstList.add(PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build());
 			photoTagMstList.add(PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("海"))
-					.tagEnglishName(new TagEnglishName("sea"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(1L)
+					.tagJapaneseName("海")
+					.tagEnglishName("sea")
 					.build());
 
 			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
@@ -284,8 +284,8 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals("PHOTO_AT", photoListGetDtoCapture.getSortBy());
 
 			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
-			assertEquals(List.of(new PhotoNo(1L), new PhotoNo(2L)), photoTagMstCapture.getPhotoNoList());
+			assertEquals(1L, photoTagMstCapture.getAccountNo());
+			assertEquals(List.of(1L, 2L), photoTagMstCapture.getPhotoNoList());
 		}
 	}
 
@@ -359,8 +359,8 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(1L, photoDetailGetDtoCapture.getPhotoNo());
 
 			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
-			assertEquals(1L, photoTagMstCapture.getPhotoNo().value());
+			assertEquals(1L, photoTagMstCapture.getAccountNo());
+			assertEquals(1L, photoTagMstCapture.getPhotoNo());
 			assertNull(photoTagMstCapture.getTagNo());
 			assertNull(photoTagMstCapture.getTagJapaneseName());
 			assertNull(photoTagMstCapture.getTagEnglishName());
@@ -401,18 +401,18 @@ public class PhotoDetailRepositoryImplTest {
 			
 			List<PhotoTagMst> photoTagMstList = new ArrayList<PhotoTagMst>();
 			photoTagMstList.add(PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(1L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("太陽"))
-					.tagEnglishName(new TagEnglishName("sun"))
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(1L)
+					.tagJapaneseName("太陽")
+					.tagEnglishName("sun")
 					.build());
 			photoTagMstList.add(PhotoTagMst.builder()
-					.accountNo(new AccountNo(1L))
-					.photoNo(new PhotoNo(2L))
-					.tagNo(new TagNo(1L))
-					.tagJapaneseName(new TagJapaneseName("海"))
-					.tagEnglishName(new TagEnglishName("sea"))
+					.accountNo(1L)
+					.photoNo(2L)
+					.tagNo(1L)
+					.tagJapaneseName("海")
+					.tagEnglishName("sea")
 					.build());
 
 			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
@@ -447,8 +447,8 @@ public class PhotoDetailRepositoryImplTest {
 			assertEquals(1L, photoDetailGetDtoCapture.getPhotoNo());
 
 			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
-			assertEquals(new AccountNo(1L), photoTagMstCapture.getAccountNo());
-			assertEquals(1L, photoTagMstCapture.getPhotoNo().value());
+			assertEquals(1L, photoTagMstCapture.getAccountNo());
+			assertEquals(1L, photoTagMstCapture.getPhotoNo());
 			assertNull(photoTagMstCapture.getTagNo());
 			assertNull(photoTagMstCapture.getTagJapaneseName());
 			assertNull(photoTagMstCapture.getTagEnglishName());

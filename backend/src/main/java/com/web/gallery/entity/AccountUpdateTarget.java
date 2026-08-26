@@ -1,18 +1,11 @@
 package com.web.gallery.entity;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountName;
-import com.web.gallery.domain.account.BirthDate;
-import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
-import com.web.gallery.domain.account.FreeMemo;
-import com.web.gallery.domain.account.LastLoginDatetime;
-import com.web.gallery.domain.account.LoginFailureCount;
-import com.web.gallery.domain.account.Password;
-import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
-import com.web.gallery.domain.common.IsDeleted;
-import com.web.gallery.domain.common.UpdatedBy;
+import com.web.gallery.constant.Consts;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 import com.web.gallery.model.AccountModel;
@@ -27,22 +20,22 @@ import lombok.Data;
 @Builder
 public class AccountUpdateTarget {
 	/** 更新者 */
-	private UpdatedBy updatedBy;
+	private Long updatedBy;
 
 	/** 削除フラグ */
-	private IsDeleted isDeleted;
+	private Boolean isDeleted;
 
 	/** アカウントID */
-	private AccountId accountId;
+	private String accountId;
 
 	/** アカウント名 */
-	private AccountName accountName;
+	private String accountName;
 
 	/** パスワード */
-	private Password password;
+	private String password;
 
 	/** 生年月日 */
-	private BirthDate birthdate;
+	private LocalDate birthdate;
 
 	/**
 	 * 性別区分
@@ -52,13 +45,13 @@ public class AccountUpdateTarget {
 	private SexEnum sexKbn;
 
 	/** 出身都道府県区分コード */
-	private BirthplacePrefectureKbnCode birthplacePrefectureKbnCode;
+	private String birthplacePrefectureKbnCode;
 
 	/** 在住都道府県区分コード */
-	private ResidentPrefectureKbnCode residentPrefectureKbnCode;
+	private String residentPrefectureKbnCode;
 
 	/** フリーメモ */
-	private FreeMemo freeMemo;
+	private String freeMemo;
 
 	/**
 	 * 権限区分
@@ -68,10 +61,10 @@ public class AccountUpdateTarget {
 	private AuthorityEnum authorityKbn;
 
 	/** 最終ログイン日時 */
-	private LastLoginDatetime lastLoginDatetime;
+	private OffsetDateTime lastLoginDatetime;
 
 	/** ログイン失敗回数 */
-	private LoginFailureCount loginFailureCount;
+	private Integer loginFailureCount;
 
 	/**
 	 * アカウント更新用のAccountModelから更新対象を生成する
@@ -82,19 +75,19 @@ public class AccountUpdateTarget {
 	 */
 	public static AccountUpdateTarget fromForUpdate(AccountModel model, PasswordEncoder passwordEncoder) {
 		AccountUpdateTarget target = AccountUpdateTarget.builder()
-				.accountId(model.getAccountId())
-				.accountName(model.getAccountName())
-				.birthdate(BirthDate.getOrDefault(model.getBirthdate()))
+				.accountId(model.getAccountId() != null ? model.getAccountId().value() : null)
+				.accountName(model.getAccountName() != null ? model.getAccountName().value() : null)
+				.birthdate(model.getBirthdate() != null ? model.getBirthdate().value() : Consts.MIN_LOCAL_DATE)
 				.sexKbn(SexEnum.getOrDefault(model.getSexKbn()))
-				.birthplacePrefectureKbnCode(BirthplacePrefectureKbnCode.getOrDefault(model.getBirthplacePrefectureKbnCode()))
-				.residentPrefectureKbnCode(ResidentPrefectureKbnCode.getOrDefault(model.getResidentPrefectureKbnCode()))
-				.freeMemo(FreeMemo.getOrDefault(model.getFreeMemo()))
-				.lastLoginDatetime(LastLoginDatetime.getOrDefault(model.getLastLoginDatetime()))
-				.loginFailureCount(LoginFailureCount.getOrDefault(model.getLoginFailureCount()))
+				.birthplacePrefectureKbnCode(model.getBirthplacePrefectureKbnCode() != null ? model.getBirthplacePrefectureKbnCode().value() : Consts.STRING_NONE)
+				.residentPrefectureKbnCode(model.getResidentPrefectureKbnCode() != null ? model.getResidentPrefectureKbnCode().value() : Consts.STRING_NONE)
+				.freeMemo(model.getFreeMemo() != null ? model.getFreeMemo().value() : Consts.STRING_EMPTY)
+				.lastLoginDatetime(model.getLastLoginDatetime() != null ? model.getLastLoginDatetime().value() : Consts.MIN_OFFSET_DATE_TIME)
+				.loginFailureCount(model.getLoginFailureCount() != null ? model.getLoginFailureCount().value() : 0)
 				.build();
 
 		if (model.getPassword() != null) {
-			target.setPassword(new Password(passwordEncoder.encode(model.getPassword().value())));
+			target.setPassword(passwordEncoder.encode(model.getPassword().value()));
 		}
 
 		return target;
@@ -108,8 +101,8 @@ public class AccountUpdateTarget {
 	 */
 	public static AccountUpdateTarget fromForUpdateLoginFailure(AccountModel model) {
 		return AccountUpdateTarget.builder()
-				.lastLoginDatetime(model.getLastLoginDatetime())
-				.loginFailureCount(LoginFailureCount.getOrDefault(model.getLoginFailureCount()))
+				.lastLoginDatetime(model.getLastLoginDatetime() != null ? model.getLastLoginDatetime().value() : null)
+				.loginFailureCount(model.getLoginFailureCount() != null ? model.getLoginFailureCount().value() : 0)
 				.build();
 	}
 }

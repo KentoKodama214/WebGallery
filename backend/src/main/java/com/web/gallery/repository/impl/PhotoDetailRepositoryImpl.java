@@ -6,7 +6,6 @@ import java.util.Objects;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Repository;
 
-import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.dto.PhotoDetailDto;
 import com.web.gallery.dto.PhotoDetailGetDto;
 import com.web.gallery.dto.PhotoDto;
@@ -52,8 +51,8 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 			return PhotoModelList.empty();
 		}
 
-		List<PhotoNo> photoNoList = photoDtoList.stream()
-				.map(photoDto -> new PhotoNo(photoDto.getPhotoNo()))
+		List<Long> photoNoList = photoDtoList.stream()
+				.map(PhotoDto::getPhotoNo)
 				.toList();
 
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(

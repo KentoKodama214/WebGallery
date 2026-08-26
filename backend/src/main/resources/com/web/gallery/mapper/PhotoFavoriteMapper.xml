@@ -13,10 +13,10 @@
 			)
 		VALUES
 			(
-				#{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler},
-				#{favoritePhotoAccountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler},
-				#{favoritePhotoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler},
-				#{createdBy, typeHandler=com.web.gallery.type_handler.CreatedByTypeHandler},
+				#{accountNo},
+				#{favoritePhotoAccountNo},
+				#{favoritePhotoNo},
+				#{createdBy},
 				NOW()
 			)
 	</insert>
@@ -25,9 +25,9 @@
 		DELETE FROM
 			photo.photo_favorite
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
-			<if test="favoritePhotoAccountNo != null"> AND favorite_photo_account_no = #{favoritePhotoAccountNo, typeHandler=com.web.gallery.type_handler.AccountNoTypeHandler}</if>
-			<if test="favoritePhotoNo != null"> AND favorite_photo_no = #{favoritePhotoNo, typeHandler=com.web.gallery.type_handler.PhotoNoTypeHandler}</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="favoritePhotoAccountNo != null"> AND favorite_photo_account_no = #{favoritePhotoAccountNo}</if>
+			<if test="favoritePhotoNo != null"> AND favorite_photo_no = #{favoritePhotoNo}</if>
 		</where>
 	</delete>
 </mapper>

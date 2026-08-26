@@ -1,11 +1,7 @@
 package com.web.gallery.entity;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.CreatedAt;
-import com.web.gallery.domain.common.ExpiresAt;
-import com.web.gallery.domain.common.IsRevoked;
-import com.web.gallery.domain.common.TokenHash;
-import com.web.gallery.domain.common.TokenId;
+import java.time.OffsetDateTime;
+
 import com.web.gallery.model.RefreshTokenModel;
 
 import lombok.Builder;
@@ -21,22 +17,22 @@ import lombok.Data;
 @Builder
 public class RefreshToken {
 	/** トークンID */
-	private TokenId tokenId;
+	private Long tokenId;
 
 	/** アカウント番号 */
-	private AccountNo accountNo;
+	private Long accountNo;
 
 	/** トークンハッシュ */
-	private TokenHash tokenHash;
+	private String tokenHash;
 
 	/** 有効期限 */
-	private ExpiresAt expiresAt;
+	private OffsetDateTime expiresAt;
 
 	/** 作成日時 */
-	private CreatedAt createdAt;
+	private OffsetDateTime createdAt;
 
 	/** 無効化フラグ */
-	private IsRevoked isRevoked;
+	private Boolean isRevoked;
 
 	/**
 	 * RefreshTokenModelからRefreshTokenエンティティを生成する
@@ -46,9 +42,9 @@ public class RefreshToken {
 	 */
 	public static RefreshToken from(RefreshTokenModel model) {
 		return RefreshToken.builder()
-				.accountNo(model.getAccountNo())
-				.tokenHash(model.getTokenHash())
-				.expiresAt(model.getExpiresAt())
+				.accountNo(model.getAccountNo().value())
+				.tokenHash(model.getTokenHash().value())
+				.expiresAt(model.getExpiresAt().value())
 				.build();
 	}
 }
