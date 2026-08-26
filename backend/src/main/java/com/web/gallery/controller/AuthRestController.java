@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.web.gallery.config.JwtConfig;
 import com.web.gallery.constant.ApiRoutes;
+import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.request.AuthLoginRequest;
 import com.web.gallery.controller.response.AuthLoginResponse;
 import com.web.gallery.domain.account.AccountId;
@@ -23,6 +24,7 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.service.AuthService;
 
@@ -165,14 +167,14 @@ public class AuthRestController {
 	/**
 	 * リフレッシュトークン無効時のExceptionHandler
 	 *
-	 * @param	exception	{@link IllegalArgumentException}
+	 * @param	exception	{@link InvalidRefreshTokenException}
 	 * @return				401 Unauthorized
 	 */
-	@ExceptionHandler(IllegalArgumentException.class)
-	public ResponseEntity<ErrorResponse> handleInvalidToken(IllegalArgumentException exception) {
+	@ExceptionHandler(InvalidRefreshTokenException.class)
+	public ResponseEntity<ErrorResponse> handleInvalidToken(InvalidRefreshTokenException exception) {
 		log.info("Invalid refresh token: {}", exception.getMessage());
 		return ResponseEntity.status(401)
-				.body(new ErrorResponse(exception.getMessage()));
+				.body(new ErrorResponse(MessageConst.ERR_INVALID_REFRESH_TOKEN));
 	}
 
 	/**
