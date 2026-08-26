@@ -20,3 +20,6 @@ app:
     miniUserUpperLimit: 10
     normalUserUpperLimit: 20
     outputPath: https://www.xxx.com/
+  cors:
+    allowed-origins:
+      - http://localhost:3000

@@ -36,6 +36,8 @@ public class SecurityConfig {
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+	private final CorsConfig corsConfig;
+
 	/**
 	 * bcryptアルゴリズムでハッシュ化を行うエンコーダのオブジェクトを生成します
 	 * @return PasswordEncoderオブジェクト
@@ -63,7 +65,7 @@ public class SecurityConfig {
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedOrigins(List.of("http://localhost:3000"));
+		config.setAllowedOrigins(corsConfig.getAllowedOrigins());
 		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 		config.setAllowedHeaders(List.of("*"));
 		config.setAllowCredentials(true);
