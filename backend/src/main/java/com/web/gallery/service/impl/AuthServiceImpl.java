@@ -7,6 +7,7 @@ import java.time.Clock;
 import java.time.OffsetDateTime;
 
 import com.web.gallery.constant.Consts;
+import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
@@ -116,26 +117,26 @@ public class AuthServiceImpl implements AuthService {
 		RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 
 		if (storedToken == null || storedToken.getIsRevoked().value()) {
-			throw new InvalidRefreshTokenException("無効なリフレッシュトークンです");
+			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
 		}
 
 		if (storedToken.getExpiresAt().value().isBefore(OffsetDateTime.now(clock))) {
-			throw new InvalidRefreshTokenException("リフレッシュトークンの有効期限が切れています");
+			throw new InvalidRefreshTokenException(MessageConst.ERR_REFRESH_TOKEN_EXPIRED);
 		}
 
 		// アカウント番号からアカウント情報を取得し、新しいアクセストークンを発行
 		AccountModel accountModel = accountRepository.getByAccountNo(storedToken.getAccountNo());
 		if (accountModel == null) {
-			throw new InvalidRefreshTokenException("無効なリフレッシュトークンです");
+			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
 		}
 		UserDetails userDetails = userDetailsService.loadUserByUsername(accountModel.getAccountId().value());
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
 
 		if (!principal.isAccountNonLocked()) {
-			throw new LockedException("アカウントがロックされています");
+			throw new LockedException(MessageConst.ERR_ACCOUNT_LOCKED);
 		}
 		if (!principal.isEnabled()) {
-			throw new InvalidRefreshTokenException("無効なリフレッシュトークンです");
+			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
 		}
 
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);
