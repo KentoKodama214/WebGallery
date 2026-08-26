@@ -23,4 +23,19 @@ public class PhotoDetailSearchModel {
 	/** 写真番号 */
 	@NonNull
 	private PhotoNo photoNo;
+
+	/**
+	 * PhotoDetailGetModelと写真のアカウント番号からPhotoDetailSearchModelを生成する
+	 *
+	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
+	 * @param	photoAccountNo		写真のアカウントNo
+	 * @return						{@link PhotoDetailSearchModel}
+	 */
+	public static PhotoDetailSearchModel of(PhotoDetailGetModel photoDetailGetModel, AccountNo photoAccountNo) {
+		return PhotoDetailSearchModel.builder()
+				.accountNo(photoDetailGetModel.getAccountNo())
+				.photoAccountNo(photoAccountNo)
+				.photoNo(photoDetailGetModel.getPhotoNo())
+				.build();
+	}
 }

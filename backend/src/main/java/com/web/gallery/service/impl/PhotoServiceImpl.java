@@ -101,13 +101,8 @@ public class PhotoServiceImpl implements PhotoService {
 	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(photoDetailGetModel.getPhotoAccountId());
 
-		PhotoDetailSearchModel photoDetailSearchModel = PhotoDetailSearchModel.builder()
-				.accountNo(photoDetailGetModel.getAccountNo())
-				.photoAccountNo(accountModel.getAccountNo())
-				.photoNo(photoDetailGetModel.getPhotoNo())
-				.build();
-
-		return photoDetailRepository.getPhotoDetail(photoDetailSearchModel);
+		return photoDetailRepository.getPhotoDetail(
+				PhotoDetailSearchModel.of(photoDetailGetModel, accountModel.getAccountNo()));
 	}
 
 	/**
