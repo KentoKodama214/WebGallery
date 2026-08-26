@@ -148,7 +148,7 @@ public class AuthRestController {
 	public ResponseEntity<AuthErrorResponse> handleBadCredentials(BadCredentialsException exception) {
 		log.info("Authentication failed: {}", exception.getMessage());
 		return ResponseEntity.status(401)
-				.body(AuthErrorResponse.of("アカウントIDまたはパスワードが間違っています。"));
+				.body(AuthErrorResponse.of(MessageConst.ERR_BAD_CREDENTIALS));
 	}
 
 	/**
@@ -161,7 +161,7 @@ public class AuthRestController {
 	public ResponseEntity<AuthErrorResponse> handleLocked(LockedException exception) {
 		log.info("Account locked: {}", exception.getMessage());
 		return ResponseEntity.status(423)
-				.body(AuthErrorResponse.of("アカウントがロックされています。"));
+				.body(AuthErrorResponse.of(MessageConst.ERR_ACCOUNT_LOCKED));
 	}
 
 	/**

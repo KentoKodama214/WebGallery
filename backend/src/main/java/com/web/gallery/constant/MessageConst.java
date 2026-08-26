@@ -31,6 +31,9 @@ public final class MessageConst {
 	public static final String ERR_NOT_AUTHORIZED_TO_ADMIN = "管理者権限がありません。";
 	public static final String ERR_FAIL_TO_DELETE_ACCOUNT = "アカウント削除でエラーが発生しました。削除をやり直してください。";
 	public static final String ERR_INVALID_REFRESH_TOKEN = "無効なリフレッシュトークンです。";
+	public static final String ERR_REFRESH_TOKEN_EXPIRED = "リフレッシュトークンの有効期限が切れています。";
+	public static final String ERR_BAD_CREDENTIALS = "アカウントIDまたはパスワードが間違っています。";
+	public static final String ERR_ACCOUNT_LOCKED = "アカウントがロックされています。";
 
 	// Admin
 	public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";

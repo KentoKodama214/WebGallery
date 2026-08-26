@@ -24,6 +24,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.config.JwtConfig;
+import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
@@ -210,7 +211,7 @@ public class AuthServiceImplIntegrationTest {
 		void refresh_invalid_token() {
 			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue("invalid-refresh-token")));
-			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
+			assertEquals(MessageConst.ERR_INVALID_REFRESH_TOKEN, exception.getMessage());
 		}
 
 		@Test
@@ -227,7 +228,7 @@ public class AuthServiceImplIntegrationTest {
 			// 無効化済みトークンでリフレッシュ
 			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
-			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
+			assertEquals(MessageConst.ERR_INVALID_REFRESH_TOKEN, exception.getMessage());
 		}
 
 		@Test
@@ -248,7 +249,7 @@ public class AuthServiceImplIntegrationTest {
 			// 有効期限切れトークンでリフレッシュ
 			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
-			assertEquals("リフレッシュトークンの有効期限が切れています", exception.getMessage());
+			assertEquals(MessageConst.ERR_REFRESH_TOKEN_EXPIRED, exception.getMessage());
 		}
 
 		@Test
@@ -284,7 +285,7 @@ public class AuthServiceImplIntegrationTest {
 			// 削除済みアカウントのリフレッシュトークンでリフレッシュ
 			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
-			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
+			assertEquals(MessageConst.ERR_INVALID_REFRESH_TOKEN, exception.getMessage());
 		}
 
 		@Test
@@ -301,7 +302,7 @@ public class AuthServiceImplIntegrationTest {
 			// 削除済みアカウントのリフレッシュトークンでリフレッシュ
 			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
-			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
+			assertEquals(MessageConst.ERR_INVALID_REFRESH_TOKEN, exception.getMessage());
 		}
 	}
 
@@ -359,7 +360,7 @@ public class AuthServiceImplIntegrationTest {
 			// ログアウト後のリフレッシュは失敗
 			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
 				() -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
-			assertEquals("無効なリフレッシュトークンです", exception.getMessage());
+			assertEquals(MessageConst.ERR_INVALID_REFRESH_TOKEN, exception.getMessage());
 		}
 	}
 }
