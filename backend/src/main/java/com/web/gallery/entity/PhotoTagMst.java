@@ -1,12 +1,7 @@
 package com.web.gallery.entity;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.CreatedBy;
-import com.web.gallery.domain.common.CreatedAt;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.domain.photo.TagEnglishName;
-import com.web.gallery.domain.photo.TagJapaneseName;
-import com.web.gallery.domain.photo.TagNo;
+import java.time.OffsetDateTime;
+
 import com.web.gallery.model.PhotoTagModel;
 
 import lombok.Builder;
@@ -22,25 +17,25 @@ public class PhotoTagMst {
 	private Long id;
 
 	/** アカウント番号 */
-	private AccountNo accountNo;
+	private Long accountNo;
 
 	/** 写真番号 */
-	private PhotoNo photoNo;
+	private Long photoNo;
 
 	/** タグ番号 */
-	private TagNo tagNo;
+	private Long tagNo;
 
 	/** 作成者 */
-	private CreatedBy createdBy;
+	private Long createdBy;
 
 	/** 作成日時 */
-	private CreatedAt createdAt;
+	private OffsetDateTime createdAt;
 
 	/** タグ日本語名 */
-	private TagJapaneseName tagJapaneseName;
+	private String tagJapaneseName;
 
 	/** タグ英語名 */
-	private TagEnglishName tagEnglishName;
+	private String tagEnglishName;
 
 	/**
 	 * PhotoTagModelからPhotoTagMstエンティティを生成する
@@ -50,12 +45,12 @@ public class PhotoTagMst {
 	 */
 	public static PhotoTagMst from(PhotoTagModel model) {
 		return PhotoTagMst.builder()
-				.accountNo(model.getAccountNo())
-				.photoNo(model.getPhotoNo())
-				.tagNo(model.getTagNo())
-				.createdBy(new CreatedBy(model.getAccountNo().value()))
-				.tagJapaneseName(model.getTagJapaneseName())
-				.tagEnglishName(model.getTagEnglishName())
+				.accountNo(model.getAccountNo().value())
+				.photoNo(model.getPhotoNo() != null ? model.getPhotoNo().value() : null)
+				.tagNo(model.getTagNo() != null ? model.getTagNo().value() : null)
+				.createdBy(model.getAccountNo().value())
+				.tagJapaneseName(model.getTagJapaneseName().value())
+				.tagEnglishName(model.getTagEnglishName().value())
 				.build();
 	}
 }

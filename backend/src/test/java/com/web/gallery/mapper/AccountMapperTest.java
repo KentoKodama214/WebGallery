@@ -62,27 +62,27 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのselectで1件の場合")
 		void select_by_accountNo() {
-			AccountCondition account = AccountCondition.builder().accountNo(new AccountNo(1L)).build();
+			AccountCondition account = AccountCondition.builder().accountNo(1L).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(1L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("aaaaaaaa"))
-					.accountName(new AccountName("AAAAAAAA"))
-					.password(new Password("$2a$10$password1"))
-					.birthdate(new BirthDate(LocalDate.of(1991, 2, 14)))
+					.accountNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(1L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("aaaaaaaa")
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.birthdate(LocalDate.of(1991, 2, 14))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -96,27 +96,27 @@ public class AccountMapperTest {
 		@Order(2)
 		@DisplayName("正常系：削除フラグでのselectで1件の場合")
 		void select_by_isDeleted() {
-			AccountCondition account = AccountCondition.builder().isDeleted(new IsDeleted(true)).build();
+			AccountCondition account = AccountCondition.builder().isDeleted(true).build();
 			List<Account> actual = accountMapper.select(account);
 		
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(9L))
-					.createdBy(new CreatedBy(9L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(9L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(true))
-					.accountId(new AccountId("iiiiiiii"))
-					.accountName(new AccountName("IIIIIIII"))
-					.password(new Password("$2a$10$password9"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(9L)
+					.createdBy(9L)
+					.createdAt(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(9L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(true)
+					.accountId("iiiiiiii")
+					.accountName("IIIIIIII")
+					.password("$2a$10$password9")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.SPECIAL)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -130,27 +130,27 @@ public class AccountMapperTest {
 		@Order(3)
 		@DisplayName("正常系：アカウントIDでのselectで1件の場合")
 		void select_by_accountId() {
-			AccountCondition account = AccountCondition.builder().accountId(new AccountId("aaaaaaaa")).build();
+			AccountCondition account = AccountCondition.builder().accountId("aaaaaaaa").build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(1L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("aaaaaaaa"))
-					.accountName(new AccountName("AAAAAAAA"))
-					.password(new Password("$2a$10$password1"))
-					.birthdate(new BirthDate(LocalDate.of(1991, 2, 14)))
+					.accountNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(1L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("aaaaaaaa")
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.birthdate(LocalDate.of(1991, 2, 14))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -164,27 +164,27 @@ public class AccountMapperTest {
 		@Order(4)
 		@DisplayName("正常系：アカウント名でのselectで1件の場合")
 		void select_by_accountName() {
-			AccountCondition account = AccountCondition.builder().accountName(new AccountName("AAAAAAAA")).build();
+			AccountCondition account = AccountCondition.builder().accountName("AAAAAAAA").build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(1L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("aaaaaaaa"))
-					.accountName(new AccountName("AAAAAAAA"))
-					.password(new Password("$2a$10$password1"))
-					.birthdate(new BirthDate(LocalDate.of(1991, 2, 14)))
+					.accountNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(1L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("aaaaaaaa")
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.birthdate(LocalDate.of(1991, 2, 14))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -198,27 +198,27 @@ public class AccountMapperTest {
 		@Order(5)
 		@DisplayName("正常系：パスワードでのselectで1件の場合")
 		void select_by_password() {
-			AccountCondition account = AccountCondition.builder().password(new Password("$2a$10$password1")).build();
+			AccountCondition account = AccountCondition.builder().password("$2a$10$password1").build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(1L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("aaaaaaaa"))
-					.accountName(new AccountName("AAAAAAAA"))
-					.password(new Password("$2a$10$password1"))
-					.birthdate(new BirthDate(LocalDate.of(1991, 2, 14)))
+					.accountNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(1L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("aaaaaaaa")
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.birthdate(LocalDate.of(1991, 2, 14))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -232,27 +232,27 @@ public class AccountMapperTest {
 		@Order(6)
 		@DisplayName("正常系：生年月日でのselectで1件の場合")
 		void select_by_birthdate() {
-			AccountCondition account = AccountCondition.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
+			AccountCondition account = AccountCondition.builder().birthdate(LocalDate.of(1991, 2, 14)).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(1L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("aaaaaaaa"))
-					.accountName(new AccountName("AAAAAAAA"))
-					.password(new Password("$2a$10$password1"))
-					.birthdate(new BirthDate(LocalDate.of(1991, 2, 14)))
+					.accountNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(1L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("aaaaaaaa")
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.birthdate(LocalDate.of(1991, 2, 14))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -270,23 +270,23 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(2L))
-					.createdBy(new CreatedBy(2L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(2L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("bbbbbbbb"))
-					.accountName(new AccountName("BBBBBBBB"))
-					.password(new Password("$2a$10$password2"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(2L)
+					.createdBy(2L)
+					.createdAt(OffsetDateTime.of(2000, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(2L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("bbbbbbbb")
+					.accountName("BBBBBBBB")
+					.password("$2a$10$password2")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.MAN)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -300,27 +300,27 @@ public class AccountMapperTest {
 		@Order(8)
 		@DisplayName("正常系：出身都道府県区分コードでのselectで1件の場合")
 		void select_by_birthplacePrefectureKbnCode() {
-			AccountCondition account = AccountCondition.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
+			AccountCondition account = AccountCondition.builder().birthplacePrefectureKbnCode("Hokkaido").build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(3L))
-					.createdBy(new CreatedBy(3L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(3L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("cccccccc"))
-					.accountName(new AccountName("CCCCCCCC"))
-					.password(new Password("$2a$10$password3"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(3L)
+					.createdBy(3L)
+					.createdAt(OffsetDateTime.of(2000, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(3L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("cccccccc")
+					.accountName("CCCCCCCC")
+					.password("$2a$10$password3")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("Hokkaido")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -334,27 +334,27 @@ public class AccountMapperTest {
 		@Order(9)
 		@DisplayName("正常系：在住都道府県区分コードでのselectで1件の場合")
 		void select_by_residentPrefectureKbnCode() {
-			AccountCondition account = AccountCondition.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
+			AccountCondition account = AccountCondition.builder().residentPrefectureKbnCode("Okinawa").build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(4L))
-					.createdBy(new CreatedBy(4L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(4L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("dddddddd"))
-					.accountName(new AccountName("DDDDDDDD"))
-					.password(new Password("$2a$10$password4"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(4L)
+					.createdBy(4L)
+					.createdAt(OffsetDateTime.of(2000, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(4L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("dddddddd")
+					.accountName("DDDDDDDD")
+					.password("$2a$10$password4")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("Okinawa")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -368,27 +368,27 @@ public class AccountMapperTest {
 		@Order(10)
 		@DisplayName("正常系：フリーメモでのselectで1件の場合")
 		void select_by_freeMemo() {
-			AccountCondition account = AccountCondition.builder().freeMemo(new FreeMemo("フリーメモ")).build();
+			AccountCondition account = AccountCondition.builder().freeMemo("フリーメモ").build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(5L))
-					.createdBy(new CreatedBy(5L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(5L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("eeeeeeee"))
-					.accountName(new AccountName("EEEEEEEE"))
-					.password(new Password("$2a$10$password5"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(5L)
+					.createdBy(5L)
+					.createdAt(OffsetDateTime.of(2000, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(5L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("eeeeeeee")
+					.accountName("EEEEEEEE")
+					.password("$2a$10$password5")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo("フリーメモ"))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("フリーメモ")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -406,23 +406,23 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(6L))
-					.createdBy(new CreatedBy(6L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(6L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("ffffffff"))
-					.accountName(new AccountName("FFFFFFFF"))
-					.password(new Password("$2a$10$password6"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(6L)
+					.createdBy(6L)
+					.createdAt(OffsetDateTime.of(2000, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(6L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("ffffffff")
+					.accountName("FFFFFFFF")
+					.password("$2a$10$password6")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.MINI)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -436,27 +436,27 @@ public class AccountMapperTest {
 		@Order(12)
 		@DisplayName("正常系：最終ログイン日時でのselectで1件の場合")
 		void select_by_lastLoginDatetime() {
-			AccountCondition account = AccountCondition.builder().lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))).build();
+			AccountCondition account = AccountCondition.builder().lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(7L))
-					.createdBy(new CreatedBy(7L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(7L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("gggggggg"))
-					.accountName(new AccountName("GGGGGGGG"))
-					.password(new Password("$2a$10$password7"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(7L)
+					.createdBy(7L)
+					.createdAt(OffsetDateTime.of(2000, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(7L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("gggggggg")
+					.accountName("GGGGGGGG")
+					.password("$2a$10$password7")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -470,27 +470,27 @@ public class AccountMapperTest {
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのselectで1件の場合")
 		void select_by_loginFailureCount() {
-			AccountCondition account = AccountCondition.builder().loginFailureCount(new LoginFailureCount(2)).build();
+			AccountCondition account = AccountCondition.builder().loginFailureCount(2).build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount = Account.builder()
-					.accountNo(new AccountNo(8L))
-					.createdBy(new CreatedBy(8L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(8L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("hhhhhhhh"))
-					.accountName(new AccountName("HHHHHHHH"))
-					.password(new Password("$2a$10$password8"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(8L)
+					.createdBy(8L)
+					.createdAt(OffsetDateTime.of(2000, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(8L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("hhhhhhhh")
+					.accountName("HHHHHHHH")
+					.password("$2a$10$password8")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(2))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(2)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -504,7 +504,7 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：selectで0件の場合")
 		void select_not_found() {
-			AccountCondition account = AccountCondition.builder().accountNo(new AccountNo(99L)).build();
+			AccountCondition account = AccountCondition.builder().accountNo(99L).build();
 			List<Account> actual = accountMapper.select(account);
 			List<Account> expected = new ArrayList<Account>();
 			
@@ -520,43 +520,43 @@ public class AccountMapperTest {
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount1 = Account.builder()
-					.accountNo(new AccountNo(9L))
-					.createdBy(new CreatedBy(9L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(9L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(true))
-					.accountId(new AccountId("iiiiiiii"))
-					.accountName(new AccountName("IIIIIIII"))
-					.password(new Password("$2a$10$password9"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(9L)
+					.createdBy(9L)
+					.createdAt(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(9L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(true)
+					.accountId("iiiiiiii")
+					.accountName("IIIIIIII")
+					.password("$2a$10$password9")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.SPECIAL)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			Account expectedAccount2 = Account.builder()
-					.accountNo(new AccountNo(10L))
-					.createdBy(new CreatedBy(10L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(10L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("jjjjjjjj"))
-					.accountName(new AccountName("JJJJJJJJ"))
-					.password(new Password("$2a$10$password10"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(10L)
+					.createdBy(10L)
+					.createdAt(OffsetDateTime.of(2000, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(10L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("jjjjjjjj")
+					.accountName("JJJJJJJJ")
+					.password("$2a$10$password10")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.NONE)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("none"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("none"))
-					.freeMemo(new FreeMemo(""))
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
 					.authorityKbn(AuthorityEnum.SPECIAL)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(0)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -572,32 +572,32 @@ public class AccountMapperTest {
 		@DisplayName("正常系：複数の条件でselectする場合")
 		void select_some_conditions() {
 			AccountCondition account = AccountCondition.builder()
-					.accountId(new AccountId("llllllll"))
+					.accountId("llllllll")
 					.sexKbn(SexEnum.WOMAN)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Okinawa"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
-					.freeMemo(new FreeMemo("よろしく"))
+					.birthplacePrefectureKbnCode("Okinawa")
+					.residentPrefectureKbnCode("Tokyo")
+					.freeMemo("よろしく")
 					.build();
 			List<Account> actual = accountMapper.select(account);
 			
 			Account expectedAccount1 = Account.builder()
-					.accountNo(new AccountNo(12L))
-					.createdBy(new CreatedBy(12L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.updatedBy(new UpdatedBy(12L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("llllllll"))
-					.accountName(new AccountName("LLLLLLLL"))
-					.password(new Password("$2a$10$password12"))
-					.birthdate(new BirthDate(LocalDate.of(1900, 1, 1)))
+					.accountNo(12L)
+					.createdBy(12L)
+					.createdAt(OffsetDateTime.of(2000, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.updatedBy(12L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.isDeleted(false)
+					.accountId("llllllll")
+					.accountName("LLLLLLLL")
+					.password("$2a$10$password12")
+					.birthdate(LocalDate.of(1900, 1, 1))
 					.sexKbn(SexEnum.WOMAN)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Okinawa"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
-					.freeMemo(new FreeMemo("よろしく"))
+					.birthplacePrefectureKbnCode("Okinawa")
+					.residentPrefectureKbnCode("Tokyo")
+					.freeMemo("よろしく")
 					.authorityKbn(AuthorityEnum.NORMAL)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-					.loginFailureCount(new LoginFailureCount(3))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
+					.loginFailureCount(3)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -618,7 +618,7 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのcount")
 		void count_by_accountNo() {
-			AccountCondition account = AccountCondition.builder().accountNo(new AccountNo(1L)).build();
+			AccountCondition account = AccountCondition.builder().accountNo(1L).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -627,7 +627,7 @@ public class AccountMapperTest {
 		@Order(2)
 		@DisplayName("正常系：削除フラグでのcount")
 		void count_by_isDeleted() {
-			AccountCondition account = AccountCondition.builder().isDeleted(new IsDeleted(true)).build();
+			AccountCondition account = AccountCondition.builder().isDeleted(true).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -636,7 +636,7 @@ public class AccountMapperTest {
 		@Order(3)
 		@DisplayName("正常系：アカウントIDでのcount")
 		void count_by_accountId() {
-			AccountCondition account = AccountCondition.builder().accountId(new AccountId("aaaaaaaa")).build();
+			AccountCondition account = AccountCondition.builder().accountId("aaaaaaaa").build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -645,7 +645,7 @@ public class AccountMapperTest {
 		@Order(4)
 		@DisplayName("正常系：アカウント名でのcount")
 		void count_by_accountName() {
-			AccountCondition account = AccountCondition.builder().accountName(new AccountName("AAAAAAAA")).build();
+			AccountCondition account = AccountCondition.builder().accountName("AAAAAAAA").build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -654,7 +654,7 @@ public class AccountMapperTest {
 		@Order(5)
 		@DisplayName("正常系：パスワードでのcount")
 		void count_by_password() {
-			AccountCondition account = AccountCondition.builder().password(new Password("$2a$10$password1")).build();
+			AccountCondition account = AccountCondition.builder().password("$2a$10$password1").build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -663,7 +663,7 @@ public class AccountMapperTest {
 		@Order(6)
 		@DisplayName("正常系：生年月日でのcount")
 		void count_by_birthdate() {
-			AccountCondition account = AccountCondition.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
+			AccountCondition account = AccountCondition.builder().birthdate(LocalDate.of(1991, 2, 14)).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -681,7 +681,7 @@ public class AccountMapperTest {
 		@Order(8)
 		@DisplayName("正常系：出身都道府県区分コードでのcount")
 		void count_by_birthplacePrefectureKbnCode() {
-			AccountCondition account = AccountCondition.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
+			AccountCondition account = AccountCondition.builder().birthplacePrefectureKbnCode("Hokkaido").build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -690,7 +690,7 @@ public class AccountMapperTest {
 		@Order(9)
 		@DisplayName("正常系：在住都道府県区分コードでのcount")
 		void count_by_residentPrefectureKbnCode() {
-			AccountCondition account = AccountCondition.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
+			AccountCondition account = AccountCondition.builder().residentPrefectureKbnCode("Okinawa").build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -699,7 +699,7 @@ public class AccountMapperTest {
 		@Order(10)
 		@DisplayName("正常系：フリーメモでのcount")
 		void count_by_freeMemo() {
-			AccountCondition account = AccountCondition.builder().freeMemo(new FreeMemo("フリーメモ")).build();
+			AccountCondition account = AccountCondition.builder().freeMemo("フリーメモ").build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -718,7 +718,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：最終ログイン日時でのcount")
 		void count_by_lastLoginDatetime() {
 			AccountCondition account = AccountCondition.builder()
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
@@ -728,7 +728,7 @@ public class AccountMapperTest {
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのcount")
 		void count_by_loginFailureCount() {
-			AccountCondition account = AccountCondition.builder().loginFailureCount(new LoginFailureCount(2)).build();
+			AccountCondition account = AccountCondition.builder().loginFailureCount(2).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
 		}
@@ -737,7 +737,7 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：countで0件の場合")
 		void count_not_found() {
-			AccountCondition account = AccountCondition.builder().accountNo(new AccountNo(99L)).build();
+			AccountCondition account = AccountCondition.builder().accountNo(99L).build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(0, actual);
 		}
@@ -756,11 +756,11 @@ public class AccountMapperTest {
 		@DisplayName("正常系：複数の条件でcountする場合")
 		void count_some_conditions() {
 			AccountCondition account = AccountCondition.builder()
-					.accountId(new AccountId("llllllll"))
+					.accountId("llllllll")
 					.sexKbn(SexEnum.WOMAN)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Okinawa"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
-					.freeMemo(new FreeMemo("よろしく"))
+					.birthplacePrefectureKbnCode("Okinawa")
+					.residentPrefectureKbnCode("Tokyo")
+					.freeMemo("よろしく")
 					.build();
 			Integer actual = accountMapper.count(account);
 			assertEquals(1, actual);
@@ -778,23 +778,23 @@ public class AccountMapperTest {
 		@DisplayName("正常系：登録成功")
 		void insert_success() {
 			Account insertAccount = Account.builder()
-					.accountNo(new AccountNo(1L))
-					.createdBy(new CreatedBy(1L))
-					.createdAt(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
-					.updatedBy(new UpdatedBy(1L))
-					.updatedAt(new UpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
-					.isDeleted(new IsDeleted(false))
-					.accountId(new AccountId("aaaaaaaa"))
-					.accountName(new AccountName("AAAAAAAA"))
-					.password(new Password("$2a$10$password1"))
-					.birthdate(new BirthDate(LocalDate.of(1991, 2, 14)))
+					.accountNo(1L)
+					.createdBy(1L)
+					.createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
+					.updatedBy(1L)
+					.updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)))
+					.isDeleted(false)
+					.accountId("aaaaaaaa")
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.birthdate(LocalDate.of(1991, 2, 14))
 					.sexKbn(SexEnum.WOMAN)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa"))
-					.freeMemo(new FreeMemo("フリーメモ"))
+					.birthplacePrefectureKbnCode("Hokkaido")
+					.residentPrefectureKbnCode("Okinawa")
+					.freeMemo("フリーメモ")
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(9))))
-					.loginFailureCount(new LoginFailureCount(0))
+					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(9)))
+					.loginFailureCount(0)
 					.build();
 			
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
@@ -804,43 +804,43 @@ public class AccountMapperTest {
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account", (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-							.accountId(new AccountId(rs.getString("account_id")))
-							.accountName(new AccountName(rs.getString("account_name")))
-							.password(new Password(rs.getString("password")))
-							.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.updatedBy(rs.getLong("updated_by"))
+							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+							.isDeleted(rs.getBoolean("is_deleted"))
+							.accountId(rs.getString("account_id"))
+							.accountName(rs.getString("account_name"))
+							.password(rs.getString("password"))
+							.birthdate(rs.getObject("birthdate", LocalDate.class))
 							.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-							.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
-							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
-							.freeMemo(new FreeMemo(rs.getString("free_memo")))
+							.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+							.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+							.freeMemo(rs.getString("free_memo"))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
-							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
+							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+							.loginFailureCount(rs.getInt("login_failure_count"))
 							.build());
 			
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getCreatedAt().value());
-			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1991, 2, 14)), actualData.getFirst().getBirthdate());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getCreatedAt());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
+			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.WOMAN, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("Hokkaido"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("Okinawa"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo("フリーメモ"), actualData.getFirst().getFreeMemo());
+			assertEquals("Hokkaido", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("Okinawa", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("フリーメモ", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(0, actualData.getFirst().getLoginFailureCount());
 		}
 	}
 	
@@ -854,23 +854,23 @@ public class AccountMapperTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM common.account WHERE " + condition, (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-							.accountId(new AccountId(rs.getString("account_id")))
-							.accountName(new AccountName(rs.getString("account_name")))
-							.password(new Password(rs.getString("password")))
-							.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.updatedBy(rs.getLong("updated_by"))
+							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+							.isDeleted(rs.getBoolean("is_deleted"))
+							.accountId(rs.getString("account_id"))
+							.accountName(rs.getString("account_name"))
+							.password(rs.getString("password"))
+							.birthdate(rs.getObject("birthdate", LocalDate.class))
 							.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-							.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
-							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
-							.freeMemo(new FreeMemo(rs.getString("free_memo")))
+							.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+							.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+							.freeMemo(rs.getString("free_memo"))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
-							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
+							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+							.loginFailureCount(rs.getInt("login_failure_count"))
 							.build());
 		}
 		
@@ -878,186 +878,186 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのupdate")
 		void update_by_accountNo() {
-			AccountCondition conditionAccount = AccountCondition.builder().accountNo(new AccountNo(1L)).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().accountNo(1L).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("account_no=1");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1991, 2, 14)), actualData.getFirst().getBirthdate());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
+			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(2)
 		@DisplayName("正常系：削除フラグでのupdate")
 		void update_by_isDeleted() {
-			AccountCondition conditionAccount = AccountCondition.builder().isDeleted(new IsDeleted(true)).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().isDeleted(true).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("is_deleted=true");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(9L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(9L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(9L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertTrue(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("iiiiiiii"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("IIIIIIII"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password9"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.getFirst().getBirthdate());
+			assertEquals(9L, actualData.getFirst().getAccountNo());
+			assertEquals(9L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(9L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertTrue(actualData.getFirst().getIsDeleted());
+			assertEquals("iiiiiiii", actualData.getFirst().getAccountId());
+			assertEquals("IIIIIIII", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password9", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.SPECIAL, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(3)
 		@DisplayName("正常系：アカウントIDでのupdate")
 		void update_by_accountId() {
-			AccountCondition conditionAccount = AccountCondition.builder().accountId(new AccountId("aaaaaaaa")).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().accountId("aaaaaaaa").build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("account_id='aaaaaaaa'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1991, 2, 14)), actualData.getFirst().getBirthdate());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
+			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(4)
 		@DisplayName("正常系：アカウント名でのupdate")
 		void update_by_accountName() {
-			AccountCondition conditionAccount = AccountCondition.builder().accountName(new AccountName("AAAAAAAA")).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().accountName("AAAAAAAA").build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("account_name='AAAAAAAA'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1991, 2, 14)), actualData.getFirst().getBirthdate());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
+			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(5)
 		@DisplayName("正常系：パスワードでのupdate")
 		void update_by_password() {
-			AccountCondition conditionAccount = AccountCondition.builder().password(new Password("$2a$10$password1")).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().password("$2a$10$password1").build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("password='$2a$10$password1'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1991, 2, 14)), actualData.getFirst().getBirthdate());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
+			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(6)
 		@DisplayName("正常系：生年月日でのupdate")
 		void update_by_birthdate() {
-			AccountCondition conditionAccount = AccountCondition.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().birthdate(LocalDate.of(1991, 2, 14)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("birthdate='1991-02-14'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(1L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(1L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(1L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("aaaaaaaa"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("AAAAAAAA"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password1"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1991, 2, 14)), actualData.getFirst().getBirthdate());
+			assertEquals(1L, actualData.getFirst().getAccountNo());
+			assertEquals(1L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
+			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1065,123 +1065,123 @@ public class AccountMapperTest {
 		@DisplayName("正常系：性別区分コードでのupdate")
 		void update_by_sexKbnCode() {
 			AccountCondition conditionAccount = AccountCondition.builder().sexKbn(SexEnum.MAN).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("sex_kbn='man'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(2L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(2L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(2L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("bbbbbbbb"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("BBBBBBBB"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password2"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.getFirst().getBirthdate());
+			assertEquals(2L, actualData.getFirst().getAccountNo());
+			assertEquals(2L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(2L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("bbbbbbbb", actualData.getFirst().getAccountId());
+			assertEquals("BBBBBBBB", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password2", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.MAN, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(8)
 		@DisplayName("正常系：出身都道府県区分コードでのupdate")
 		void update_by_birthplacePrefectureKbnCode() {
-			AccountCondition conditionAccount = AccountCondition.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().birthplacePrefectureKbnCode("Hokkaido").build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("birthplace_prefecture_kbn_code='Hokkaido'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(3L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(3L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(3L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("cccccccc"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("CCCCCCCC"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password3"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.getFirst().getBirthdate());
+			assertEquals(3L, actualData.getFirst().getAccountNo());
+			assertEquals(3L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(3L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("cccccccc", actualData.getFirst().getAccountId());
+			assertEquals("CCCCCCCC", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password3", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("Hokkaido"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("Hokkaido", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(9)
 		@DisplayName("正常系：在住都道府県区分コードでのupdate")
 		void update_by_residentPrefectureKbnCode() {
-			AccountCondition conditionAccount = AccountCondition.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().residentPrefectureKbnCode("Okinawa").build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("resident_prefecture_kbn_code='Okinawa'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(4L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(4L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(4L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("dddddddd"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("DDDDDDDD"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password4"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.getFirst().getBirthdate());
+			assertEquals(4L, actualData.getFirst().getAccountNo());
+			assertEquals(4L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 4, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(4L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("dddddddd", actualData.getFirst().getAccountId());
+			assertEquals("DDDDDDDD", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password4", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("Okinawa"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("Okinawa", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(10)
 		@DisplayName("正常系：フリーメモでのupdate")
 		void update_by_freeMemo() {
-			AccountCondition conditionAccount = AccountCondition.builder().freeMemo(new FreeMemo("フリーメモ")).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().freeMemo("フリーメモ").build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("free_memo='フリーメモ'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(5L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(5L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(5L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("eeeeeeee"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("EEEEEEEE"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password5"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.getFirst().getBirthdate());
+			assertEquals(5L, actualData.getFirst().getAccountNo());
+			assertEquals(5L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 5, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(5L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("eeeeeeee", actualData.getFirst().getAccountId());
+			assertEquals("EEEEEEEE", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password5", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo("フリーメモ"), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("フリーメモ", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1189,30 +1189,30 @@ public class AccountMapperTest {
 		@DisplayName("正常系：権限区分コードでのupdate")
 		void update_by_authorityKbnCode() {
 			AccountCondition conditionAccount = AccountCondition.builder().authorityKbn(AuthorityEnum.MINI).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("authority_kbn='mini-user'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(6L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(6L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(6L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("ffffffff"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("FFFFFFFF"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password6"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.getFirst().getBirthdate());
+			assertEquals(6L, actualData.getFirst().getAccountNo());
+			assertEquals(6L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 6, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(6L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("ffffffff", actualData.getFirst().getAccountId());
+			assertEquals("FFFFFFFF", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password6", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.MINI, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
@@ -1220,71 +1220,71 @@ public class AccountMapperTest {
 		@DisplayName("正常系：最終ログイン日時でのupdate")
 		void update_by_lastLoginDatetime() {
 			AccountCondition conditionAccount = AccountCondition.builder()
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("last_login_datetime='2024-01-01 00:00:00.000 +0000'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(7L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(7L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(7L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("gggggggg"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("GGGGGGGG"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password7"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.getFirst().getBirthdate());
+			assertEquals(7L, actualData.getFirst().getAccountNo());
+			assertEquals(7L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 7, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(7L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("gggggggg", actualData.getFirst().getAccountId());
+			assertEquals("GGGGGGGG", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password7", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(1, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのupdate")
 		void update_by_loginFailureCounte() {
-			AccountCondition conditionAccount = AccountCondition.builder().loginFailureCount(new LoginFailureCount(2)).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(0)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().loginFailureCount(2).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(0).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("account_no=8");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(8L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(8L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(8L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("hhhhhhhh"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("HHHHHHHH"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password8"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.getFirst().getBirthdate());
+			assertEquals(8L, actualData.getFirst().getAccountNo());
+			assertEquals(8L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 8, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(8L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("hhhhhhhh", actualData.getFirst().getAccountId());
+			assertEquals("HHHHHHHH", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password8", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.getFirst().getFreeMemo());
+			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(0, actualData.getFirst().getLoginFailureCount());
 		}
 		
 		@Test
 		@Order(14)
 		@DisplayName("正常系：更新対象のレコードなし")
 		void update_not_found() {
-			AccountCondition conditionAccount = AccountCondition.builder().accountNo(new AccountNo(99L)).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(0)).build();
+			AccountCondition conditionAccount = AccountCondition.builder().accountNo(99L).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(0).build();
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(0, actual);
 			
@@ -1297,48 +1297,48 @@ public class AccountMapperTest {
 		@DisplayName("正常系：2件以上updateの場合")
 		void update_accounts() {
 			AccountCondition conditionAccount = AccountCondition.builder().authorityKbn(AuthorityEnum.SPECIAL).build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(1)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(1).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(2, actual);
 
 			List<Account> actualData = getAccountList("authority_kbn='special-user' order by account_no");
 			assertEquals(2, actualData.size());
-			assertEquals(new AccountNo(9L), actualData.get(0).getAccountNo());
-			assertEquals(new CreatedBy(9L), actualData.get(0).getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.get(0).getCreatedAt());
-			assertEquals(new UpdatedBy(9L), actualData.get(0).getUpdatedBy());
-			assertEquals(transactionNow, actualData.get(0).getUpdatedAt().value());
-			assertTrue(actualData.get(0).getIsDeleted().value());
-			assertEquals(new AccountId("iiiiiiii"), actualData.get(0).getAccountId());
-			assertEquals(new AccountName("IIIIIIII"), actualData.get(0).getAccountName());
-			assertEquals(new Password("$2a$10$password9"), actualData.get(0).getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.get(0).getBirthdate());
+			assertEquals(9L, actualData.get(0).getAccountNo());
+			assertEquals(9L, actualData.get(0).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 9, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getCreatedAt());
+			assertEquals(9L, actualData.get(0).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(0).getUpdatedAt());
+			assertTrue(actualData.get(0).getIsDeleted());
+			assertEquals("iiiiiiii", actualData.get(0).getAccountId());
+			assertEquals("IIIIIIII", actualData.get(0).getAccountName());
+			assertEquals("$2a$10$password9", actualData.get(0).getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.get(0).getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.get(0).getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.get(0).getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.get(0).getFreeMemo());
+			assertEquals("none", actualData.get(0).getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.get(0).getResidentPrefectureKbnCode());
+			assertEquals("", actualData.get(0).getFreeMemo());
 			assertEquals(AuthorityEnum.SPECIAL, actualData.get(0).getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.get(0).getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.get(0).getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(0).getLastLoginDatetime());
+			assertEquals(1, actualData.get(0).getLoginFailureCount());
 			
-			assertEquals(new AccountNo(10L), actualData.get(1).getAccountNo());
-			assertEquals(new CreatedBy(10L), actualData.get(1).getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.get(1).getCreatedAt());
-			assertEquals(new UpdatedBy(10L), actualData.get(1).getUpdatedBy());
-			assertEquals(transactionNow, actualData.get(1).getUpdatedAt().value());
-			assertFalse(actualData.get(1).getIsDeleted().value());
-			assertEquals(new AccountId("jjjjjjjj"), actualData.get(1).getAccountId());
-			assertEquals(new AccountName("JJJJJJJJ"), actualData.get(1).getAccountName());
-			assertEquals(new Password("$2a$10$password10"), actualData.get(1).getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.get(1).getBirthdate());
+			assertEquals(10L, actualData.get(1).getAccountNo());
+			assertEquals(10L, actualData.get(1).getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 10, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(1).getCreatedAt());
+			assertEquals(10L, actualData.get(1).getUpdatedBy());
+			assertEquals(transactionNow, actualData.get(1).getUpdatedAt());
+			assertFalse(actualData.get(1).getIsDeleted());
+			assertEquals("jjjjjjjj", actualData.get(1).getAccountId());
+			assertEquals("JJJJJJJJ", actualData.get(1).getAccountName());
+			assertEquals("$2a$10$password10", actualData.get(1).getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.get(1).getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("none"), actualData.get(1).getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("none"), actualData.get(1).getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo(""), actualData.get(1).getFreeMemo());
+			assertEquals("none", actualData.get(1).getBirthplacePrefectureKbnCode());
+			assertEquals("none", actualData.get(1).getResidentPrefectureKbnCode());
+			assertEquals("", actualData.get(1).getFreeMemo());
 			assertEquals(AuthorityEnum.SPECIAL, actualData.get(1).getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.get(1).getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(1), actualData.get(1).getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.get(1).getLastLoginDatetime());
+			assertEquals(1, actualData.get(1).getLoginFailureCount());
 		}
 		
 		@Test
@@ -1346,36 +1346,36 @@ public class AccountMapperTest {
 		@DisplayName("正常系：複数の条件でupdateする場合")
 		void update_some_conditions() {
 			AccountCondition conditionAccount = AccountCondition.builder()
-					.accountId(new AccountId("llllllll"))
+					.accountId("llllllll")
 					.sexKbn(SexEnum.WOMAN)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Okinawa"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
-					.freeMemo(new FreeMemo("よろしく"))
+					.birthplacePrefectureKbnCode("Okinawa")
+					.residentPrefectureKbnCode("Tokyo")
+					.freeMemo("よろしく")
 					.build();
-			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(new LoginFailureCount(0)).build();
+			AccountUpdateTarget targetAccount = AccountUpdateTarget.builder().loginFailureCount(0).build();
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 			Integer actual = accountMapper.update(conditionAccount, targetAccount);
 			assertEquals(1, actual);
 
 			List<Account> actualData = getAccountList("account_id='llllllll'");
 			assertEquals(1, actualData.size());
-			assertEquals(new AccountNo(12L), actualData.getFirst().getAccountNo());
-			assertEquals(new CreatedBy(12L), actualData.getFirst().getCreatedBy());
-			assertEquals(new CreatedAt(OffsetDateTime.of(2000, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getCreatedAt());
-			assertEquals(new UpdatedBy(12L), actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt().value());
-			assertFalse(actualData.getFirst().getIsDeleted().value());
-			assertEquals(new AccountId("llllllll"), actualData.getFirst().getAccountId());
-			assertEquals(new AccountName("LLLLLLLL"), actualData.getFirst().getAccountName());
-			assertEquals(new Password("$2a$10$password12"), actualData.getFirst().getPassword());
-			assertEquals(new BirthDate(LocalDate.of(1900, 1, 1)), actualData.getFirst().getBirthdate());
+			assertEquals(12L, actualData.getFirst().getAccountNo());
+			assertEquals(12L, actualData.getFirst().getCreatedBy());
+			assertEquals(OffsetDateTime.of(2000, 1, 12, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
+			assertEquals(12L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getIsDeleted());
+			assertEquals("llllllll", actualData.getFirst().getAccountId());
+			assertEquals("LLLLLLLL", actualData.getFirst().getAccountName());
+			assertEquals("$2a$10$password12", actualData.getFirst().getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.WOMAN, actualData.getFirst().getSexKbn());
-			assertEquals(new BirthplacePrefectureKbnCode("Okinawa"), actualData.getFirst().getBirthplacePrefectureKbnCode());
-			assertEquals(new ResidentPrefectureKbnCode("Tokyo"), actualData.getFirst().getResidentPrefectureKbnCode());
-			assertEquals(new FreeMemo("よろしく"), actualData.getFirst().getFreeMemo());
+			assertEquals("Okinawa", actualData.getFirst().getBirthplacePrefectureKbnCode());
+			assertEquals("Tokyo", actualData.getFirst().getResidentPrefectureKbnCode());
+			assertEquals("よろしく", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.NORMAL, actualData.getFirst().getAuthorityKbn());
-			assertEquals(new LastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))), actualData.getFirst().getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(0), actualData.getFirst().getLoginFailureCount());
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
+			assertEquals(0, actualData.getFirst().getLoginFailureCount());
 		}
 	}
 	
@@ -1389,23 +1389,23 @@ public class AccountMapperTest {
 			return jdbcTemplate.query(
 					"SELECT * FROM common.account WHERE " + condition, (rs, rowNum) ->
 						Account.builder()
-							.accountNo(new AccountNo(rs.getLong("account_no")))
-							.createdBy(new CreatedBy(rs.getLong("created_by")))
-							.createdAt(new CreatedAt(rs.getObject("created_at", OffsetDateTime.class)))
-							.updatedBy(new UpdatedBy(rs.getLong("updated_by")))
-							.updatedAt(new UpdatedAt(rs.getObject("updated_at", OffsetDateTime.class)))
-							.isDeleted(new IsDeleted(rs.getBoolean("is_deleted")))
-							.accountId(new AccountId(rs.getString("account_id")))
-							.accountName(new AccountName(rs.getString("account_name")))
-							.password(new Password(rs.getString("password")))
-							.birthdate(new BirthDate(rs.getObject("birthdate", LocalDate.class)))
+							.accountNo(rs.getLong("account_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.updatedBy(rs.getLong("updated_by"))
+							.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+							.isDeleted(rs.getBoolean("is_deleted"))
+							.accountId(rs.getString("account_id"))
+							.accountName(rs.getString("account_name"))
+							.password(rs.getString("password"))
+							.birthdate(rs.getObject("birthdate", LocalDate.class))
 							.sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
-							.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code")))
-							.residentPrefectureKbnCode(new ResidentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code")))
-							.freeMemo(new FreeMemo(rs.getString("free_memo")))
+							.birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+							.residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+							.freeMemo(rs.getString("free_memo"))
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
-							.lastLoginDatetime(new LastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class)))
-							.loginFailureCount(new LoginFailureCount(rs.getInt("login_failure_count")))
+							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+							.loginFailureCount(rs.getInt("login_failure_count"))
 							.build());
 		}
 		
@@ -1413,7 +1413,7 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号でのdelete")
 		void delete_by_accountNo() {
-			AccountCondition deleteAccount = AccountCondition.builder().accountNo(new AccountNo(1L)).build();
+			AccountCondition deleteAccount = AccountCondition.builder().accountNo(1L).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1428,7 +1428,7 @@ public class AccountMapperTest {
 		@Order(2)
 		@DisplayName("正常系：削除フラグでのdelete")
 		void delete_by_isDeleted() {
-			AccountCondition deleteAccount = AccountCondition.builder().isDeleted(new IsDeleted(true)).build();
+			AccountCondition deleteAccount = AccountCondition.builder().isDeleted(true).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1443,7 +1443,7 @@ public class AccountMapperTest {
 		@Order(3)
 		@DisplayName("正常系：アカウントIDでのdelete")
 		void delete_by_accountId() {
-			AccountCondition deleteAccount = AccountCondition.builder().accountId(new AccountId("aaaaaaaa")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().accountId("aaaaaaaa").build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1458,7 +1458,7 @@ public class AccountMapperTest {
 		@Order(4)
 		@DisplayName("正常系：アカウント名でのdelete")
 		void delete_by_accountName() {
-			AccountCondition deleteAccount = AccountCondition.builder().accountName(new AccountName("AAAAAAAA")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().accountName("AAAAAAAA").build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1473,7 +1473,7 @@ public class AccountMapperTest {
 		@Order(5)
 		@DisplayName("正常系：パスワードでのdelete")
 		void delete_by_password() {
-			AccountCondition deleteAccount = AccountCondition.builder().password(new Password("$2a$10$password1")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().password("$2a$10$password1").build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1488,7 +1488,7 @@ public class AccountMapperTest {
 		@Order(6)
 		@DisplayName("正常系：生年月日でのdelete")
 		void delete_by_birthdate() {
-			AccountCondition deleteAccount = AccountCondition.builder().birthdate(new BirthDate(LocalDate.of(1991, 2, 14))).build();
+			AccountCondition deleteAccount = AccountCondition.builder().birthdate(LocalDate.of(1991, 2, 14)).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1518,7 +1518,7 @@ public class AccountMapperTest {
 		@Order(8)
 		@DisplayName("正常系：出身都道府県区分コードでのdelete")
 		void delete_by_birthplacePrefectureKbnCode() {
-			AccountCondition deleteAccount = AccountCondition.builder().birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().birthplacePrefectureKbnCode("Hokkaido").build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1533,7 +1533,7 @@ public class AccountMapperTest {
 		@Order(9)
 		@DisplayName("正常系：在住都道府県区分コードでのdelete")
 		void delete_by_residentPrefectureKbnCode() {
-			AccountCondition deleteAccount = AccountCondition.builder().residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Okinawa")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().residentPrefectureKbnCode("Okinawa").build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1548,7 +1548,7 @@ public class AccountMapperTest {
 		@Order(10)
 		@DisplayName("正常系：フリーメモでのdelete")
 		void delete_by_freeMemo() {
-			AccountCondition deleteAccount = AccountCondition.builder().freeMemo(new FreeMemo("フリーメモ")).build();
+			AccountCondition deleteAccount = AccountCondition.builder().freeMemo("フリーメモ").build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1579,7 +1579,7 @@ public class AccountMapperTest {
 		@DisplayName("正常系：最終ログイン日時でのdelete")
 		void delete_by_lastLoginDatetime() {
 			AccountCondition deleteAccount = AccountCondition.builder()
-					.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+					.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
@@ -1595,7 +1595,7 @@ public class AccountMapperTest {
 		@Order(13)
 		@DisplayName("正常系：ログイン失敗回数でのdelete")
 		void delete_by_loginFailureCount() {
-			AccountCondition deleteAccount = AccountCondition.builder().loginFailureCount(new LoginFailureCount(2)).build();
+			AccountCondition deleteAccount = AccountCondition.builder().loginFailureCount(2).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
 			
@@ -1610,7 +1610,7 @@ public class AccountMapperTest {
 		@Order(14)
 		@DisplayName("正常系：削除対象のレコードなし")
 		void delete_not_found() {
-			AccountCondition deleteAccount = AccountCondition.builder().accountNo(new AccountNo(99L)).build();
+			AccountCondition deleteAccount = AccountCondition.builder().accountNo(99L).build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(0, actual);
 			
@@ -1641,11 +1641,11 @@ public class AccountMapperTest {
 		@DisplayName("正常系：複数の条件でdeleteする場合")
 		void delete_some_conditions() {
 			AccountCondition deleteAccount = AccountCondition.builder()
-					.accountId(new AccountId("llllllll"))
+					.accountId("llllllll")
 					.sexKbn(SexEnum.WOMAN)
-					.birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Okinawa"))
-					.residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
-					.freeMemo(new FreeMemo("よろしく"))
+					.birthplacePrefectureKbnCode("Okinawa")
+					.residentPrefectureKbnCode("Tokyo")
+					.freeMemo("よろしく")
 					.build();
 			Integer actual = accountMapper.delete(deleteAccount);
 			assertEquals(1, actual);
@@ -1678,7 +1678,7 @@ public class AccountMapperTest {
 		@Order(1)
 		@DisplayName("正常系：アカウントIDが一致するアカウントが存在する")
 		void isExistAccount_by_accountId_exists() {
-			AccountCondition account = AccountCondition.builder().accountId(new AccountId("aaaaaaaa")).build();
+			AccountCondition account = AccountCondition.builder().accountId("aaaaaaaa").build();
 			Boolean isExist = accountMapper.isExistAccount(account);
 			assertTrue(isExist);
 		}
@@ -1687,7 +1687,7 @@ public class AccountMapperTest {
 		@Order(2)
 		@DisplayName("正常系：アカウントIDが一致するアカウントが存在しない")
 		void isExistAccount_by_accountId_not_exist() {
-			AccountCondition account = AccountCondition.builder().accountId(new AccountId("xxxxxxxx")).build();
+			AccountCondition account = AccountCondition.builder().accountId("xxxxxxxx").build();
 			Boolean isExist = accountMapper.isExistAccount(account);
 			assertFalse(isExist);
 		}
@@ -1697,8 +1697,8 @@ public class AccountMapperTest {
 		@DisplayName("正常系：アカウント番号以外で、アカウントIDが一致するアカウントが存在しない")
 		void isExistAccount_by_accountId_and_accountNo_exists() {
 			AccountCondition account = AccountCondition.builder()
-					.accountNo(new AccountNo(1L))
-					.accountId(new AccountId("aaaaaaaa"))
+					.accountNo(1L)
+					.accountId("aaaaaaaa")
 					.build();
 			Boolean isExist = accountMapper.isExistAccount(account);
 			assertFalse(isExist);
@@ -1708,8 +1708,8 @@ public class AccountMapperTest {
 		@DisplayName("正常系：アカウント番号以外で、アカウントIDが一致するアカウントが存在する")
 		void isExistAccount_by_accountId_and_accountNo_not_exist() {
 			AccountCondition account = AccountCondition.builder()
-					.accountNo(new AccountNo(1L))
-					.accountId(new AccountId("bbbbbbbb"))
+					.accountNo(1L)
+					.accountId("bbbbbbbb")
 					.build();
 			Boolean isExist = accountMapper.isExistAccount(account);
 			assertTrue(isExist);

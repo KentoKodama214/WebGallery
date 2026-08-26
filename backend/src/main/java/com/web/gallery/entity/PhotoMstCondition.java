@@ -1,18 +1,8 @@
 package com.web.gallery.entity;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.IsDeleted;
-import com.web.gallery.domain.photo.Caption;
-import com.web.gallery.domain.photo.FValue;
-import com.web.gallery.domain.photo.FocalLength;
-import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.domain.photo.Iso;
-import com.web.gallery.domain.photo.LocationNo;
-import com.web.gallery.domain.photo.PhotoAt;
-import com.web.gallery.domain.photo.PhotoEnglishTitle;
-import com.web.gallery.domain.photo.PhotoJapaneseTitle;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.domain.photo.ShutterSpeed;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.model.PhotoDetailModel;
 
@@ -26,31 +16,31 @@ import lombok.Data;
 @Builder
 public class PhotoMstCondition {
 	/** アカウント番号 */
-	private AccountNo accountNo;
+	private Long accountNo;
 
 	/** 写真番号 */
-	private PhotoNo photoNo;
+	private Long photoNo;
 
 	/** 削除フラグ */
-	private IsDeleted isDeleted;
+	private Boolean isDeleted;
 
 	/** 撮影日時 */
-	private PhotoAt photoAt;
+	private OffsetDateTime photoAt;
 
 	/** ロケーション番号 */
-	private LocationNo locationNo;
+	private Long locationNo;
 
 	/** 画像ファイルパス */
-	private ImageFilePath imageFilePath;
+	private String imageFilePath;
 
 	/** 写真タイトル日本語名 */
-	private PhotoJapaneseTitle photoJapaneseTitle;
+	private String photoJapaneseTitle;
 
 	/** 写真タイトル英語名 */
-	private PhotoEnglishTitle photoEnglishTitle;
+	private String photoEnglishTitle;
 
 	/** キャプション */
-	private Caption caption;
+	private String caption;
 
 	/**
 	 * 向き区分
@@ -60,16 +50,16 @@ public class PhotoMstCondition {
 	private DirectionEnum directionKbn;
 
 	/** 焦点距離 */
-	private FocalLength focalLength;
+	private Integer focalLength;
 
 	/** F値 */
-	private FValue fValue;
+	private BigDecimal fValue;
 
 	/** シャッタースピード */
-	private ShutterSpeed shutterSpeed;
+	private BigDecimal shutterSpeed;
 
 	/** ISO */
-	private Iso iso;
+	private Integer iso;
 
 	/**
 	 * アカウント番号・写真番号による抽出条件を生成する
@@ -80,8 +70,8 @@ public class PhotoMstCondition {
 	 */
 	public static PhotoMstCondition byAccountAndPhoto(Long accountNo, Long photoNo) {
 		return PhotoMstCondition.builder()
-				.accountNo(new AccountNo(accountNo))
-				.photoNo(new PhotoNo(photoNo))
+				.accountNo(accountNo)
+				.photoNo(photoNo)
 				.build();
 	}
 
@@ -93,8 +83,8 @@ public class PhotoMstCondition {
 	 */
 	public static PhotoMstCondition forExistCheck(PhotoDetailModel model) {
 		return PhotoMstCondition.builder()
-				.accountNo(model.getAccountNo())
-				.imageFilePath(new ImageFilePath(escapeLike(model.getImageFile().value().getOriginalFilename())))
+				.accountNo(model.getAccountNo().value())
+				.imageFilePath(escapeLike(model.getImageFile().value().getOriginalFilename()))
 				.build();
 	}
 
@@ -116,8 +106,8 @@ public class PhotoMstCondition {
 	 */
 	public static PhotoMstCondition forCount(Long accountNo) {
 		return PhotoMstCondition.builder()
-				.accountNo(new AccountNo(accountNo))
-				.isDeleted(new IsDeleted(false))
+				.accountNo(accountNo)
+				.isDeleted(false)
 				.build();
 	}
 }

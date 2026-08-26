@@ -29,7 +29,6 @@ import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
-import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.entity.PhotoFavoriteCondition;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoMstCondition;
@@ -115,14 +114,14 @@ public class PhotoAggregateRepositoryImplTest {
 			verify(photoTagMstMapper, times(2)).insert(any(PhotoTagMst.class));
 
 			PhotoMst photoMstCapture = photoMstCaptor.getValue();
-			assertEquals(accountNo, photoMstCapture.getAccountNo());
-			assertEquals(photoNo, photoMstCapture.getPhotoNo());
-			assertEquals(imageFilePath, photoMstCapture.getImageFilePath());
+			assertEquals(accountNo.value(), photoMstCapture.getAccountNo());
+			assertEquals(photoNo.value(), photoMstCapture.getPhotoNo());
+			assertEquals(imageFilePath.value(), photoMstCapture.getImageFilePath());
 
 			List<PhotoTagMst> photoTagMstCaptureList = photoTagMstCaptor.getAllValues();
-			assertEquals(new TagNo(1L), photoTagMstCaptureList.get(0).getTagNo());
-			assertEquals(photoNo, photoTagMstCaptureList.get(0).getPhotoNo());
-			assertEquals(new TagNo(2L), photoTagMstCaptureList.get(1).getTagNo());
+			assertEquals(1L, photoTagMstCaptureList.get(0).getTagNo());
+			assertEquals(photoNo.value(), photoTagMstCaptureList.get(0).getPhotoNo());
+			assertEquals(2L, photoTagMstCaptureList.get(1).getTagNo());
 		}
 
 		@Test
@@ -188,11 +187,11 @@ public class PhotoAggregateRepositoryImplTest {
 			verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
 			verify(photoTagMstMapper).insert(any(PhotoTagMst.class));
 
-			assertEquals(accountNo, conditionCaptor.getValue().getAccountNo());
-			assertEquals(photoNo, conditionCaptor.getValue().getPhotoNo());
+			assertEquals(accountNo.value(), conditionCaptor.getValue().getAccountNo());
+			assertEquals(photoNo.value(), conditionCaptor.getValue().getPhotoNo());
 
-			assertEquals(accountNo, tagConditionCaptor.getValue().getAccountNo());
-			assertEquals(photoNo, tagConditionCaptor.getValue().getPhotoNo());
+			assertEquals(accountNo.value(), tagConditionCaptor.getValue().getAccountNo());
+			assertEquals(photoNo.value(), tagConditionCaptor.getValue().getPhotoNo());
 		}
 
 		@Test
@@ -242,15 +241,15 @@ public class PhotoAggregateRepositoryImplTest {
 			verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
 
 			assertNull(favoriteConditionCaptor.getValue().getAccountNo());
-			assertEquals(accountNo, favoriteConditionCaptor.getValue().getFavoritePhotoAccountNo());
-			assertEquals(photoNo, favoriteConditionCaptor.getValue().getFavoritePhotoNo());
+			assertEquals(accountNo.value(), favoriteConditionCaptor.getValue().getFavoritePhotoAccountNo());
+			assertEquals(photoNo.value(), favoriteConditionCaptor.getValue().getFavoritePhotoNo());
 
-			assertEquals(accountNo, tagConditionCaptor.getValue().getAccountNo());
-			assertEquals(photoNo, tagConditionCaptor.getValue().getPhotoNo());
+			assertEquals(accountNo.value(), tagConditionCaptor.getValue().getAccountNo());
+			assertEquals(photoNo.value(), tagConditionCaptor.getValue().getPhotoNo());
 
-			assertEquals(accountNo, conditionCaptor.getValue().getAccountNo());
-			assertEquals(photoNo, conditionCaptor.getValue().getPhotoNo());
-			assertTrue(targetCaptor.getValue().getIsDeleted().value());
+			assertEquals(accountNo.value(), conditionCaptor.getValue().getAccountNo());
+			assertEquals(photoNo.value(), conditionCaptor.getValue().getPhotoNo());
+			assertTrue(targetCaptor.getValue().getIsDeleted());
 		}
 
 		@Test

@@ -1,16 +1,8 @@
 package com.web.gallery.entity;
 
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountName;
-import com.web.gallery.domain.account.BirthDate;
-import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
-import com.web.gallery.domain.account.FreeMemo;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.account.LastLoginDatetime;
-import com.web.gallery.domain.account.LoginFailureCount;
-import com.web.gallery.domain.account.Password;
-import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
-import com.web.gallery.domain.common.IsDeleted;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 
@@ -24,22 +16,22 @@ import lombok.Data;
 @Builder
 public class AccountCondition {
 	/** アカウント番号 */
-	private AccountNo accountNo;
+	private Long accountNo;
 
 	/** 削除フラグ */
-	private IsDeleted isDeleted;
+	private Boolean isDeleted;
 
 	/** アカウントID */
-	private AccountId accountId;
+	private String accountId;
 
 	/** アカウント名 */
-	private AccountName accountName;
+	private String accountName;
 
 	/** パスワード */
-	private Password password;
+	private String password;
 
 	/** 生年月日 */
-	private BirthDate birthdate;
+	private LocalDate birthdate;
 
 	/**
 	 * 性別区分
@@ -49,13 +41,13 @@ public class AccountCondition {
 	private SexEnum sexKbn;
 
 	/** 出身都道府県区分コード */
-	private BirthplacePrefectureKbnCode birthplacePrefectureKbnCode;
+	private String birthplacePrefectureKbnCode;
 
 	/** 在住都道府県区分コード */
-	private ResidentPrefectureKbnCode residentPrefectureKbnCode;
+	private String residentPrefectureKbnCode;
 
 	/** フリーメモ */
-	private FreeMemo freeMemo;
+	private String freeMemo;
 
 	/**
 	 * 権限区分
@@ -65,10 +57,10 @@ public class AccountCondition {
 	private AuthorityEnum authorityKbn;
 
 	/** 最終ログイン日時 */
-	private LastLoginDatetime lastLoginDatetime;
+	private OffsetDateTime lastLoginDatetime;
 
 	/** ログイン失敗回数 */
-	private LoginFailureCount loginFailureCount;
+	private Integer loginFailureCount;
 
 	/**
 	 * アカウント番号で検索するための抽出条件を生成する
@@ -78,7 +70,7 @@ public class AccountCondition {
 	 */
 	public static AccountCondition byAccountNo(Long accountNo) {
 		return AccountCondition.builder()
-				.accountNo(new AccountNo(accountNo))
+				.accountNo(accountNo)
 				.build();
 	}
 
@@ -90,7 +82,7 @@ public class AccountCondition {
 	 */
 	public static AccountCondition byAccountId(String accountId) {
 		return AccountCondition.builder()
-				.accountId(new AccountId(accountId))
+				.accountId(accountId)
 				.build();
 	}
 
@@ -103,8 +95,8 @@ public class AccountCondition {
 	 */
 	public static AccountCondition forExistCheck(Long accountNo, String accountId) {
 		return AccountCondition.builder()
-				.accountNo(accountNo != null ? new AccountNo(accountNo) : null)
-				.accountId(new AccountId(accountId))
+				.accountNo(accountNo)
+				.accountId(accountId)
 				.build();
 	}
 
@@ -115,7 +107,7 @@ public class AccountCondition {
 	 */
 	public static AccountCondition forList() {
 		return AccountCondition.builder()
-				.isDeleted(new IsDeleted(false))
+				.isDeleted(false)
 				.build();
 	}
 
