@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
  *
  * @param	value	画像ファイル
  */
+// MultipartFileはSerializableを実装しないため、domain.mdの規約から意図的に除外する
 public record ImageFile(MultipartFile value) {
 
 	/**
