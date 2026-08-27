@@ -31,6 +31,12 @@ public class RefreshToken {
 	/** 作成日時 */
 	private OffsetDateTime createdAt;
 
+	/** 更新者 */
+	private Long updatedBy;
+
+	/** 更新日時 */
+	private OffsetDateTime updatedAt;
+
 	/** 無効化フラグ */
 	private Boolean isRevoked;
 
@@ -45,6 +51,7 @@ public class RefreshToken {
 				.accountNo(model.getAccountNo().value())
 				.tokenHash(model.getTokenHash().value())
 				.expiresAt(model.getExpiresAt().value())
+				.updatedBy(model.getAccountNo().value())
 				.build();
 	}
 }

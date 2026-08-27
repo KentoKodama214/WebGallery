@@ -33,17 +33,19 @@ public interface RefreshTokenMapper {
 	 * アカウント番号に該当するリフレッシュトークンをすべて無効化する
 	 *
 	 * @param	accountNo	アカウント番号
+	 * @param	updatedBy	更新者
 	 * @return				更新件数
 	 */
-	public Integer revokeAllByAccountNo(@Param("accountNo") Long accountNo);
+	public Integer revokeAllByAccountNo(@Param("accountNo") Long accountNo, @Param("updatedBy") Long updatedBy);
 
 	/**
-	 * トークンハッシュに該当するリフ���ッシュトークンを無効化する
+	 * トークンハッシュに該当するリフレッシュトークンを無効化する
 	 *
 	 * @param	tokenHash	トークンハッシュ
+	 * @param	updatedBy	更新者
 	 * @return				更新件数
 	 */
-	public Integer revokeByTokenHash(@Param("tokenHash") String tokenHash);
+	public Integer revokeByTokenHash(@Param("tokenHash") String tokenHash, @Param("updatedBy") Long updatedBy);
 
 	/**
 	 * 有効期限切れのリフレッシュトークンを削除する
