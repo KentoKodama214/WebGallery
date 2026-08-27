@@ -8,7 +8,17 @@ import com.web.gallery.model.FileModel;
  */
 public interface FileRepository {
 
+	/**
+	 * ファイルを保存する
+	 *
+	 * @param	fileModel	{@link FileModel}
+	 */
 	void save(FileModel fileModel);
 
+	/**
+	 * ファイルを削除する
+	 *
+	 * @param	filePath	{@link ImageFilePath}
+	 */
 	void delete(ImageFilePath filePath);
 }
