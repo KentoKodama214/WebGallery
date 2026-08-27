@@ -62,6 +62,31 @@
 			)
 	</insert>
 
+	<insert id="insertBulk" parameterType="java.util.List">
+		INSERT INTO
+			photo.photo_tag_mst (
+				account_no,
+				photo_no,
+				tag_no,
+				created_by,
+				created_at,
+				tag_japanese_name,
+				tag_english_name
+			)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(
+				#{item.accountNo},
+				#{item.photoNo},
+				#{item.tagNo},
+				#{item.createdBy},
+				NOW(),
+				#{item.tagJapaneseName},
+				#{item.tagEnglishName}
+			)
+		</foreach>
+	</insert>
+
 	<delete id="delete" parameterType="com.web.gallery.entity.PhotoTagMstCondition">
 		DELETE FROM
 			photo.photo_tag_mst

@@ -104,21 +104,23 @@ public class PhotoAggregateRepositoryImplTest {
 			ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
 			doReturn(1).when(photoMstMapper).insert(photoMstCaptor.capture());
 
-			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
-			doReturn(1).when(photoTagMstMapper).insert(photoTagMstCaptor.capture());
+			@SuppressWarnings("unchecked")
+			ArgumentCaptor<List<PhotoTagMst>> photoTagMstListCaptor = ArgumentCaptor.forClass(List.class);
+			doReturn(2).when(photoTagMstMapper).insertBulk(photoTagMstListCaptor.capture());
 
 			photoAggregateRepositoryImpl.regist(photo);
 
 			verify(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
 			verify(photoMstMapper).insert(any(PhotoMst.class));
-			verify(photoTagMstMapper, times(2)).insert(any(PhotoTagMst.class));
+			verify(photoTagMstMapper).insertBulk(anyList());
 
 			PhotoMst photoMstCapture = photoMstCaptor.getValue();
 			assertEquals(accountNo.value(), photoMstCapture.getAccountNo());
 			assertEquals(photoNo.value(), photoMstCapture.getPhotoNo());
 			assertEquals(imageFilePath.value(), photoMstCapture.getImageFilePath());
 
-			List<PhotoTagMst> photoTagMstCaptureList = photoTagMstCaptor.getAllValues();
+			List<PhotoTagMst> photoTagMstCaptureList = photoTagMstListCaptor.getValue();
+			assertEquals(2, photoTagMstCaptureList.size());
 			assertEquals(1L, photoTagMstCaptureList.get(0).getTagNo());
 			assertEquals(photoNo.value(), photoTagMstCaptureList.get(0).getPhotoNo());
 			assertEquals(2L, photoTagMstCaptureList.get(1).getTagNo());
@@ -137,7 +139,7 @@ public class PhotoAggregateRepositoryImplTest {
 			assertThrows(FileDuplicateException.class, () -> photoAggregateRepositoryImpl.regist(photo));
 
 			verify(photoMstMapper, times(0)).insert(any(PhotoMst.class));
-			verify(photoTagMstMapper, times(0)).insert(any(PhotoTagMst.class));
+			verify(photoTagMstMapper, times(0)).insertBulk(anyList());
 		}
 
 		@Test
@@ -153,7 +155,7 @@ public class PhotoAggregateRepositoryImplTest {
 
 			assertThrows(RegistFailureException.class, () -> photoAggregateRepositoryImpl.regist(photo));
 
-			verify(photoTagMstMapper, times(0)).insert(any(PhotoTagMst.class));
+			verify(photoTagMstMapper, times(0)).insertBulk(anyList());
 		}
 	}
 
@@ -178,14 +180,15 @@ public class PhotoAggregateRepositoryImplTest {
 			ArgumentCaptor<PhotoTagMstCondition> tagConditionCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
 			doReturn(1).when(photoTagMstMapper).delete(tagConditionCaptor.capture());
 
-			ArgumentCaptor<PhotoTagMst> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMst.class);
-			doReturn(1).when(photoTagMstMapper).insert(photoTagMstCaptor.capture());
+			@SuppressWarnings("unchecked")
+			ArgumentCaptor<List<PhotoTagMst>> photoTagMstListCaptor = ArgumentCaptor.forClass(List.class);
+			doReturn(1).when(photoTagMstMapper).insertBulk(photoTagMstListCaptor.capture());
 
 			photoAggregateRepositoryImpl.update(photo);
 
 			verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
 			verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
-			verify(photoTagMstMapper).insert(any(PhotoTagMst.class));
+			verify(photoTagMstMapper).insertBulk(anyList());
 
 			assertEquals(accountNo.value(), conditionCaptor.getValue().getAccountNo());
 			assertEquals(photoNo.value(), conditionCaptor.getValue().getPhotoNo());

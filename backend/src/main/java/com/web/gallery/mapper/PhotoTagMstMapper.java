@@ -29,6 +29,14 @@ public interface PhotoTagMstMapper {
 	public Integer insert(PhotoTagMst photoTagMst);
 
 	/**
+	 * 写真タグマスタを一括登録する
+	 *
+	 * @param	photoTagMstList	{@link PhotoTagMst}のリスト
+	 * @return					登録件数
+	 */
+	public Integer insertBulk(List<PhotoTagMst> photoTagMstList);
+
+	/**
 	 * 写真タグマスタを削除する
 	 *
 	 * @param	condition	削除対象の抽出条件
