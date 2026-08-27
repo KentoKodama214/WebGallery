@@ -7,6 +7,7 @@ paths:
 
 - `record Xxx(型 xxx) implements Serializable`として実装する
 - コンパクトコンストラクタで値のチェックや初期値の代入を行う
+- 例外：`ImageFile`は`MultipartFile`をラップしており、`MultipartFile`自体が`Serializable`を実装しないため`Serializable`を実装しない
 
 ## 複合値オブジェクト
 
