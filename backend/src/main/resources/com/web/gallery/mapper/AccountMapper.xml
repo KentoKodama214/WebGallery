@@ -23,6 +23,22 @@
 		<result property="loginFailureCount" column="login_failure_count"/>
 	</resultMap>
 
+	<sql id="accountConditionWhere">
+		<if test="${prefix}accountNo != null"> AND account_no = #{${prefix}accountNo}</if>
+		<if test="${prefix}isDeleted != null"> AND is_deleted = #{${prefix}isDeleted}</if>
+		<if test="${prefix}accountId != null"> AND account_id = #{${prefix}accountId}</if>
+		<if test="${prefix}accountName != null"> AND account_name = #{${prefix}accountName}</if>
+		<if test="${prefix}password != null"> AND password = #{${prefix}password}</if>
+		<if test="${prefix}birthdate != null"> AND birthdate = #{${prefix}birthdate}</if>
+		<if test="${prefix}sexKbn != null"> AND sex_kbn = #{${prefix}sexKbn}::common.sex_enum</if>
+		<if test="${prefix}birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{${prefix}birthplacePrefectureKbnCode}</if>
+		<if test="${prefix}residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{${prefix}residentPrefectureKbnCode}</if>
+		<if test="${prefix}freeMemo != null"> AND free_memo = #{${prefix}freeMemo}</if>
+		<if test="${prefix}authorityKbn != null"> AND authority_kbn = #{${prefix}authorityKbn}::common.authority_enum</if>
+		<if test="${prefix}lastLoginDatetime != null"> AND last_login_datetime = #{${prefix}lastLoginDatetime}</if>
+		<if test="${prefix}loginFailureCount != null"> AND login_failure_count = #{${prefix}loginFailureCount}</if>
+	</sql>
+
 	<select id="select" parameterType="com.web.gallery.entity.AccountCondition" resultMap="AccountMap">
 		SELECT
 			account_no AS accountNo,
@@ -45,19 +61,9 @@
 		FROM
 			common.account
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
-			<if test="isDeleted != null"> AND is_deleted = #{isDeleted}</if>
-			<if test="accountId != null"> AND account_id = #{accountId}</if>
-			<if test="accountName != null"> AND account_name = #{accountName}</if>
-			<if test="password != null"> AND password = #{password}</if>
-			<if test="birthdate != null"> AND birthdate = #{birthdate}</if>
-			<if test="sexKbn != null"> AND sex_kbn = #{sexKbn}::common.sex_enum</if>
-			<if test="birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{birthplacePrefectureKbnCode}</if>
-			<if test="residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{residentPrefectureKbnCode}</if>
-			<if test="freeMemo != null"> AND free_memo = #{freeMemo}</if>
-			<if test="authorityKbn != null"> AND authority_kbn = #{authorityKbn}::common.authority_enum</if>
-			<if test="lastLoginDatetime != null"> AND last_login_datetime = #{lastLoginDatetime}</if>
-			<if test="loginFailureCount != null"> AND login_failure_count = #{loginFailureCount}</if>
+			<include refid="accountConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
 		</where>
 	</select>
 
@@ -67,19 +73,9 @@
 		FROM
 			common.account
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
-			<if test="isDeleted != null"> AND is_deleted = #{isDeleted}</if>
-			<if test="accountId != null"> AND account_id = #{accountId}</if>
-			<if test="accountName != null"> AND account_name = #{accountName}</if>
-			<if test="password != null"> AND password = #{password}</if>
-			<if test="birthdate != null"> AND birthdate = #{birthdate}</if>
-			<if test="sexKbn != null"> AND sex_kbn = #{sexKbn}::common.sex_enum</if>
-			<if test="birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{birthplacePrefectureKbnCode}</if>
-			<if test="residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{residentPrefectureKbnCode}</if>
-			<if test="freeMemo != null"> AND free_memo = #{freeMemo}</if>
-			<if test="authorityKbn != null"> AND authority_kbn = #{authorityKbn}::common.authority_enum</if>
-			<if test="lastLoginDatetime != null"> AND last_login_datetime = #{lastLoginDatetime}</if>
-			<if test="loginFailureCount != null"> AND login_failure_count = #{loginFailureCount}</if>
+			<include refid="accountConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
 		</where>
 	</select>
 
@@ -146,19 +142,9 @@
 			<if test="target.loginFailureCount != null"> , login_failure_count = #{target.loginFailureCount}</if>
 		</set>
 		<where>
-			<if test="condition.accountNo != null"> AND account_no = #{condition.accountNo}</if>
-			<if test="condition.isDeleted != null"> AND is_deleted = #{condition.isDeleted}</if>
-			<if test="condition.accountId != null"> AND account_id = #{condition.accountId}</if>
-			<if test="condition.accountName != null"> AND account_name = #{condition.accountName}</if>
-			<if test="condition.password != null"> AND password = #{condition.password}</if>
-			<if test="condition.birthdate != null"> AND birthdate = #{condition.birthdate}</if>
-			<if test="condition.sexKbn != null"> AND sex_kbn = #{condition.sexKbn}::common.sex_enum</if>
-			<if test="condition.birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{condition.birthplacePrefectureKbnCode}</if>
-			<if test="condition.residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{condition.residentPrefectureKbnCode}</if>
-			<if test="condition.freeMemo != null"> AND free_memo = #{condition.freeMemo}</if>
-			<if test="condition.authorityKbn != null"> AND authority_kbn = #{condition.authorityKbn}::common.authority_enum</if>
-			<if test="condition.lastLoginDatetime != null"> AND last_login_datetime = #{condition.lastLoginDatetime}</if>
-			<if test="condition.loginFailureCount != null"> AND login_failure_count = #{condition.loginFailureCount}</if>
+			<include refid="accountConditionWhere">
+				<property name="prefix" value="condition."/>
+			</include>
 		</where>
 	</update>
 
@@ -166,19 +152,9 @@
 		DELETE FROM
 			common.account
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
-			<if test="isDeleted != null"> AND is_deleted = #{isDeleted}</if>
-			<if test="accountId != null"> AND account_id = #{accountId}</if>
-			<if test="accountName != null"> AND account_name = #{accountName}</if>
-			<if test="password != null"> AND password = #{password}</if>
-			<if test="birthdate != null"> AND birthdate = #{birthdate}</if>
-			<if test="sexKbn != null"> AND sex_kbn = #{sexKbn}::common.sex_enum</if>
-			<if test="birthplacePrefectureKbnCode != null"> AND birthplace_prefecture_kbn_code = #{birthplacePrefectureKbnCode}</if>
-			<if test="residentPrefectureKbnCode != null"> AND resident_prefecture_kbn_code = #{residentPrefectureKbnCode}</if>
-			<if test="freeMemo != null"> AND free_memo = #{freeMemo}</if>
-			<if test="authorityKbn != null"> AND authority_kbn = #{authorityKbn}::common.authority_enum</if>
-			<if test="lastLoginDatetime != null"> AND last_login_datetime = #{lastLoginDatetime}</if>
-			<if test="loginFailureCount != null"> AND login_failure_count = #{loginFailureCount}</if>
+			<include refid="accountConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
 		</where>
 	</delete>
 
