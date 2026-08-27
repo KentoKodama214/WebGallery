@@ -336,6 +336,7 @@ WebGallery/
 │   └── src/
 │       ├── main/
 │       │   ├── java/com/web/gallery/
+│       │   │   ├── aggregate/          # 集約ルート（複数テーブルにまたがる整合性・ライフサイクル管理）
 │       │   │   ├── annotation/         # カスタムアノテーション
 │       │   │   ├── aspect/             # AOP（管理者権限チェック等）
 │       │   │   ├── config/             # 設定クラス

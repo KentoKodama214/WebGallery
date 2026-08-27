@@ -15,7 +15,7 @@
 | 7 | birthplace_prefecture_kbn_code | 出身地都道府県区分コード | varchar(20) | 'none' | kbn_mstの都道府県区分コードを参照。未設定時は'none' | account |
 | 8 | caption | キャプション | text | '""' | 写真の説明文 | photo_mst |
 | 9 | created_at | 作成日時 | timestamp with time zone | - / NOW() | レコード作成日時（タイムゾーン付き） | account, kbn_mst, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite |
-| 10 | created_by | 作成者 | bigint | - | レコードを作成したアカウント番号。システム側が作成した場合は'0'を入れる | account, kbn_mst, location_mst, photo_mst, photo_tag_mst, photo_favorite |
+| 10 | created_by | 作成者 | bigint（kbn_mstのみint） | - | レコードを作成したアカウント番号。システム側が作成した場合は'0'を入れる | account, kbn_mst, location_mst, photo_mst, photo_tag_mst, photo_favorite |
 | 11 | direction_kbn | 写真の向き | photo.direction_enum | 'none' | vertical（縦）/horizontal（横）/square（正方形）/none（未設定） | photo_mst |
 | 12 | explanation | 説明 | text | '""' | 区分コードの補足説明 | kbn_mst |
 | 13 | expires_at | 有効期限 | timestamp with time zone | - | リフレッシュトークンの有効期限 | refresh_token |
@@ -29,9 +29,9 @@
 | 21 | is_deleted | 削除フラグ | boolean | false | 論理削除フラグ。trueの場合は削除済み | account, location_mst, photo_mst |
 | 22 | is_revoked | 無効化フラグ | boolean | false | リフレッシュトークンの無効化フラグ。ログアウト時やトークンローテーション時にtrueに設定 | refresh_token |
 | 23 | iso | ISO感度 | int | - | EXIF情報から取得したISO感度 | photo_mst |
-| 24 | kbn_class_code | 区分クラスコード | varchar(20) | - | 区分の大分類コード（例: prefecture） | kbn_mst |
-| 25 | kbn_class_english_name | 区分クラス英語名 | varchar(20) | '""' | 区分クラスの英語表記 | kbn_mst |
-| 26 | kbn_class_japanese_name | 区分クラス日本語名（空文字不可） | varchar(20) | - | 区分クラスの日本語表記。kbn_japanese_nameとの複合UNIQUEを構成 | kbn_mst |
+| 24 | kbn_class_code | 区分分類コード | varchar(20) | - | 区分の大分類コード（例: prefecture） | kbn_mst |
+| 25 | kbn_class_english_name | 区分分類英語名 | varchar(20) | '""' | 区分分類の英語表記 | kbn_mst |
+| 26 | kbn_class_japanese_name | 区分分類日本語名（空文字不可） | varchar(20) | - | 区分分類の日本語表記。kbn_japanese_nameとの複合UNIQUEを構成 | kbn_mst |
 | 27 | kbn_code | 区分コード | varchar(20) | - | 区分の個別コード。kbn_class_codeとの複合PKを構成 | kbn_mst |
 | 28 | kbn_english_name | 区分英語名 | varchar(20) | '""' | 区分の英語表記 | kbn_mst |
 | 29 | kbn_group_code | 区分グループコード | varchar(20) | '""' | 区分のグループ分類コード（例: 地域コード） | kbn_mst |

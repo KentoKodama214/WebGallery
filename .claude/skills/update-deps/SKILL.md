@@ -1,6 +1,6 @@
 ---
 name: update-deps
-description: Next.js (pnpm/npm) と Java Spring Boot (Gradle Version Catalog) の依存ライブラリを安全に更新します。
+description: Next.js (pnpm/npm) と Java Spring Boot (Gradle) の依存ライブラリを安全に更新します。
 ---
 
 # Update dependencies
