@@ -112,11 +112,11 @@ public class RefreshTokenRepositoryImplTest {
 		@Order(1)
 		@DisplayName("正常系：アカウント番号に該当するリフレッシュトークンをすべて無効化する")
 		void revokeAllByAccountNo_success() {
-			doReturn(2).when(refreshTokenMapper).revokeAllByAccountNo(1L);
+			doReturn(2).when(refreshTokenMapper).revokeAllByAccountNo(1L, 1L);
 
 			refreshTokenRepositoryImpl.revokeAllByAccountNo(new AccountNo(1L));
 
-			verify(refreshTokenMapper, times(1)).revokeAllByAccountNo(1L);
+			verify(refreshTokenMapper, times(1)).revokeAllByAccountNo(1L, 1L);
 		}
 	}
 
@@ -128,11 +128,28 @@ public class RefreshTokenRepositoryImplTest {
 		@Order(1)
 		@DisplayName("正常系：トークンハッシュに該当するリフレッシュトークンを無効化する")
 		void revokeByTokenHash_success() {
-			doReturn(1).when(refreshTokenMapper).revokeByTokenHash("abc123hash");
+			RefreshToken mapperResult = RefreshToken.builder()
+					.tokenId(1L)
+					.accountNo(1L)
+					.tokenHash("abc123hash")
+					.build();
+			doReturn(mapperResult).when(refreshTokenMapper).selectByTokenHash("abc123hash");
+			doReturn(1).when(refreshTokenMapper).revokeByTokenHash("abc123hash", 1L);
 
 			refreshTokenRepositoryImpl.revokeByTokenHash(new TokenHash("abc123hash"));
 
-			verify(refreshTokenMapper, times(1)).revokeByTokenHash("abc123hash");
+			verify(refreshTokenMapper, times(1)).revokeByTokenHash("abc123hash", 1L);
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：該当するリフレッシュトークンが存在しない場合、無効化処理を行わない")
+		void revokeByTokenHash_not_found() {
+			doReturn(null).when(refreshTokenMapper).selectByTokenHash("nonexistent");
+
+			refreshTokenRepositoryImpl.revokeByTokenHash(new TokenHash("nonexistent"));
+
+			verify(refreshTokenMapper, never()).revokeByTokenHash(anyString(), anyLong());
 		}
 	}
 

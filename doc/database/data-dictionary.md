@@ -58,8 +58,8 @@
 | 50 | tag_no | タグ番号 | bigint | - | 写真単位のタグ連番。account_no, photo_noとの複合UNIQUEを構成 | photo_tag_mst |
 | 51 | token_hash | トークンハッシュ | varchar(256) | - | リフレッシュトークンをSHA-256でハッシュ化した値。検索用インデックスあり | refresh_token |
 | 52 | token_id | トークンID | bigserial | (自動採番) | リフレッシュトークンのPK（自動採番） | refresh_token |
-| 53 | updated_at | 更新日時 | timestamp with time zone | - | レコード最終更新日時（タイムゾーン付き） | account, location_mst, photo_mst |
-| 54 | updated_by | 更新者 | bigint | - | レコードを最後に更新したアカウント番号 | account, location_mst, photo_mst |
+| 53 | updated_at | 更新日時 | timestamp with time zone | - / NOW() | レコード最終更新日時（タイムゾーン付き） | account, location_mst, refresh_token, photo_mst |
+| 54 | updated_by | 更新者 | bigint | - | レコードを最後に更新したアカウント番号。refresh_tokenでは自身のアカウント番号（本人のトークンのみ無効化操作が発生するため） | account, location_mst, refresh_token, photo_mst |
 
 ## カスタム型辞書
 

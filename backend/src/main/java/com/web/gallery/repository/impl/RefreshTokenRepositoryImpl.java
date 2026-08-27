@@ -39,12 +39,16 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
 
 	@Override
 	public void revokeAllByAccountNo(AccountNo accountNo) {
-		refreshTokenMapper.revokeAllByAccountNo(accountNo.value());
+		refreshTokenMapper.revokeAllByAccountNo(accountNo.value(), accountNo.value());
 	}
 
 	@Override
 	public void revokeByTokenHash(TokenHash tokenHash) {
-		refreshTokenMapper.revokeByTokenHash(tokenHash.value());
+		RefreshToken refreshToken = refreshTokenMapper.selectByTokenHash(tokenHash.value());
+		if (refreshToken == null) {
+			return;
+		}
+		refreshTokenMapper.revokeByTokenHash(tokenHash.value(), refreshToken.getAccountNo());
 	}
 
 	@Override

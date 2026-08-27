@@ -23,5 +23,5 @@ insert into photo.photo_favorite values(DEFAULT, 1, 2, 1, 1, now());
 insert into photo.photo_favorite values(DEFAULT, 2, 2, 1, 1, now());
 
 -- common.refresh_token (account_no=1、account_no=2それぞれ有効なリフレッシュトークン)
-insert into common.refresh_token values(DEFAULT, 1, 'hash-account1', now() + interval '7 days', now(), false);
-insert into common.refresh_token values(DEFAULT, 2, 'hash-account2', now() + interval '7 days', now(), false);
+insert into common.refresh_token values(DEFAULT, 1, 'hash-account1', now() + interval '7 days', now(), 1, now(), false);
+insert into common.refresh_token values(DEFAULT, 2, 'hash-account2', now() + interval '7 days', now(), 2, now(), false);

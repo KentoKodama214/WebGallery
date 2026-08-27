@@ -46,6 +46,8 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 				.tokenHash(rs.getString("token_hash"))
 				.expiresAt(rs.getObject("expires_at", OffsetDateTime.class))
 				.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+				.updatedBy(rs.getLong("updated_by"))
+				.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 				.isRevoked(rs.getBoolean("is_revoked"))
 				.build(),
 			tokenHash
@@ -61,6 +63,8 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 				.tokenHash(rs.getString("token_hash"))
 				.expiresAt(rs.getObject("expires_at", OffsetDateTime.class))
 				.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+				.updatedBy(rs.getLong("updated_by"))
+				.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
 				.isRevoked(rs.getBoolean("is_revoked"))
 				.build(),
 			accountNo
@@ -98,6 +102,8 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			assertEquals("new_token_hash", actualData.getFirst().getTokenHash());
 			assertFalse(actualData.getFirst().getIsRevoked());
 			assertEquals(transactionNow, actualData.getFirst().getCreatedAt());
+			assertEquals(1L, actualData.getFirst().getUpdatedBy());
+			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
 			assertTrue(expiresAt.isEqual(actualData.getFirst().getExpiresAt()));
 		}
 	}
@@ -159,6 +165,11 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 				assertTrue(token.getIsRevoked());
 			}
 
+			// 無効化されたトークンの更新者・更新日時が記録されている
+			RefreshToken revokedToken = getRefreshTokenData("valid_token_hash_1").getFirst();
+			assertEquals(1L, revokedToken.getUpdatedBy());
+			assertNotNull(revokedToken.getUpdatedAt());
+
 			// アカウント2のトークンは影響を受けない
 			RefreshTokenModel account2Token = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_2"));
 			assertNotNull(account2Token);
@@ -192,6 +203,11 @@ public class RefreshTokenRepositoryImplIntegrationTest {
 			// 無効化後はis_revoked=true
 			RefreshTokenModel after = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
 			assertTrue(after.getIsRevoked().value());
+
+			// 無効化されたトークンの更新者・更新日時が記録されている（account_no=1のトークンのためupdated_by=1）
+			RefreshToken revokedToken = getRefreshTokenData("valid_token_hash_1").getFirst();
+			assertEquals(1L, revokedToken.getUpdatedBy());
+			assertNotNull(revokedToken.getUpdatedAt());
 
 			// 他のトークンは影響を受けない
 			RefreshTokenModel otherToken = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1b"));

@@ -15,6 +15,10 @@ CREATE TABLE common.refresh_token
 	expires_at timestamptz NOT NULL,
 	-- 作成日時
 	created_at timestamptz NOT NULL DEFAULT NOW(),
+	-- 更新者
+	updated_by bigint NOT NULL,
+	-- 更新日時
+	updated_at timestamptz NOT NULL DEFAULT NOW(),
 	-- 無効化フラグ
 	is_revoked boolean NOT NULL DEFAULT FALSE,
 	PRIMARY KEY (token_id)
