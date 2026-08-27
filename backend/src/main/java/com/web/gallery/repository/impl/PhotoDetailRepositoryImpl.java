@@ -3,7 +3,6 @@ package com.web.gallery.repository.impl;
 import java.util.List;
 import java.util.Objects;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Repository;
 
 import com.web.gallery.dto.PhotoDetailDto;
@@ -35,7 +34,6 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 
 	private final PhotoTagMstMapper photoTagMstMapper;
 	private final PhotoDetailMapper photoDetailMapper;
-	private final ModelMapper modelMapper = new ModelMapper();
 
 	/**
 	 * 該当アカウントの写真の一覧を取得する
