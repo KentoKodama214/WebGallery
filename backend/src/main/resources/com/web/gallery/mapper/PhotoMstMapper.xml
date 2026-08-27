@@ -23,26 +23,32 @@
 		<result property="iso" column="iso"/>
 	</resultMap>
 
+	<sql id="photoMstConditionWhere">
+		<if test="${prefix}accountNo != null"> AND account_no = #{${prefix}accountNo}</if>
+		<if test="${prefix}photoNo != null"> AND photo_no = #{${prefix}photoNo}</if>
+		<if test="${prefix}isDeleted != null"> AND is_deleted = #{${prefix}isDeleted}</if>
+		<if test="${prefix}photoAt != null"> AND photo_at = #{${prefix}photoAt}</if>
+		<if test="${prefix}locationNo != null"> AND location_no = #{${prefix}locationNo}</if>
+		<if test="${prefix}imageFilePath != null"> AND image_file_path = #{${prefix}imageFilePath}</if>
+		<if test="${prefix}photoJapaneseTitle != null"> AND photo_japanese_title = #{${prefix}photoJapaneseTitle}</if>
+		<if test="${prefix}photoEnglishTitle != null"> AND photo_english_title = #{${prefix}photoEnglishTitle}</if>
+		<if test="${prefix}caption != null"> AND caption = #{${prefix}caption}</if>
+		<if test="${prefix}directionKbn != null"> AND direction_kbn = #{${prefix}directionKbn}::photo.direction_enum</if>
+		<if test="${prefix}focalLength != null"> AND focal_length = #{${prefix}focalLength}</if>
+		<if test="${prefix}fValue != null"> AND f_value = #{${prefix}fValue}</if>
+		<if test="${prefix}shutterSpeed != null"> AND shutter_speed = #{${prefix}shutterSpeed}</if>
+		<if test="${prefix}iso != null"> AND iso = #{${prefix}iso}</if>
+	</sql>
+
 	<select id="count" parameterType="com.web.gallery.entity.PhotoMstCondition" resultType="Integer">
 		SELECT
 			COUNT(*)
 		FROM
 			photo.photo_mst
 		<where>
-			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
-			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
-			<if test="isDeleted != null"> AND is_deleted = #{isDeleted}</if>
-			<if test="photoAt != null"> AND photo_at = #{photoAt}</if>
-			<if test="locationNo != null"> AND location_no = #{locationNo}</if>
-			<if test="imageFilePath != null"> AND image_file_path = #{imageFilePath}</if>
-			<if test="photoJapaneseTitle != null"> AND photo_japanese_title = #{photoJapaneseTitle}</if>
-			<if test="photoEnglishTitle != null"> AND photo_english_title = #{photoEnglishTitle}</if>
-			<if test="caption != null"> AND caption = #{caption}</if>
-			<if test="directionKbn != null"> AND direction_kbn = #{directionKbn}::photo.direction_enum</if>
-			<if test="focalLength != null"> AND focal_length = #{focalLength}</if>
-			<if test="fValue != null"> AND f_value = #{fValue}</if>
-			<if test="shutterSpeed != null"> AND shutter_speed = #{shutterSpeed}</if>
-			<if test="iso != null"> AND iso = #{iso}</if>
+			<include refid="photoMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
 		</where>
 	</select>
 
@@ -111,20 +117,9 @@
 			<if test="target.iso != null"> , iso = #{target.iso}</if>
 		</set>
 		<where>
-			<if test="condition.accountNo != null"> AND account_no = #{condition.accountNo}</if>
-			<if test="condition.photoNo != null"> AND photo_no = #{condition.photoNo}</if>
-			<if test="condition.isDeleted != null"> AND is_deleted = #{condition.isDeleted}</if>
-			<if test="condition.photoAt != null"> AND photo_at = #{condition.photoAt}</if>
-			<if test="condition.locationNo != null"> AND location_no = #{condition.locationNo}</if>
-			<if test="condition.imageFilePath != null"> AND image_file_path = #{condition.imageFilePath}</if>
-			<if test="condition.photoJapaneseTitle != null"> AND photo_japanese_title = #{condition.photoJapaneseTitle}</if>
-			<if test="condition.photoEnglishTitle != null"> AND photo_english_title = #{condition.photoEnglishTitle}</if>
-			<if test="condition.caption != null"> AND caption = #{condition.caption}</if>
-			<if test="condition.directionKbn != null"> AND direction_kbn = #{condition.directionKbn}::photo.direction_enum</if>
-			<if test="condition.focalLength != null"> AND focal_length = #{condition.focalLength}</if>
-			<if test="condition.fValue != null"> AND f_value = #{condition.fValue}</if>
-			<if test="condition.shutterSpeed != null"> AND shutter_speed = #{condition.shutterSpeed}</if>
-			<if test="condition.iso != null"> AND iso = #{condition.iso}</if>
+			<include refid="photoMstConditionWhere">
+				<property name="prefix" value="condition."/>
+			</include>
 		</where>
 	</update>
 
