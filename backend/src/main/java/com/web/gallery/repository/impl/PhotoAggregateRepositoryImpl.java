@@ -1,5 +1,7 @@
 package com.web.gallery.repository.impl;
 
+import java.util.List;
+
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
@@ -18,7 +20,6 @@ import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoTagDeleteModel;
-import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.repository.PhotoAggregateRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -124,20 +125,19 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
 	 * @throws	GalleryException	登録に失敗した場合
 	 */
 	private void registTags(Photo photo) throws GalleryException {
-		if (photo.getPhotoTagModelList() == null) {
+		if (photo.getPhotoTagModelList() == null || photo.getPhotoTagModelList().isEmpty()) {
 			return;
 		}
 
-		for (PhotoTagModel photoTagModel : photo.getPhotoTagModelList()) {
-			PhotoTagMst photoTagMst = PhotoTagMst.from(photoTagModel);
-			try {
-				photoTagMstMapper.insert(photoTagMst);
-			}
-			catch (DuplicateKeyException e) {
-				log.warn("PhotoTagMst: Duplicate Key (AccountNo: {}, PhotoNo: {}, TagNo: {})",
-						photoTagModel.getAccountNo().value(), photoTagModel.getPhotoNo().value(), photoTagModel.getTagNo().value(), e);
-				throw ErrorEnum.FAIL_TO_REGIST_PHOTO_TAG.toException();
-			}
+		List<PhotoTagMst> photoTagMstList = photo.getPhotoTagModelList().stream()
+				.map(PhotoTagMst::from)
+				.toList();
+		try {
+			photoTagMstMapper.insertBulk(photoTagMstList);
+		}
+		catch (DuplicateKeyException e) {
+			log.warn("PhotoTagMst: Duplicate Key (AccountNo: {}, PhotoNo: {})", photo.getAccountNo().value(), photo.getPhotoNo().value(), e);
+			throw ErrorEnum.FAIL_TO_REGIST_PHOTO_TAG.toException();
 		}
 	}
 }

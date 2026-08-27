@@ -343,6 +343,53 @@ public class PhotoTagMstMapperTest {
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/mapper/PhotoTagMstMapperTest.sql")
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class insertBulk {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：複数件の一括登録成功")
+		void insertBulk_success() {
+			PhotoTagMst photoTagMst1 = PhotoTagMst.builder()
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(3L)
+					.createdBy(1L)
+					.tagJapaneseName("春")
+					.tagEnglishName("spring")
+					.build();
+			PhotoTagMst photoTagMst2 = PhotoTagMst.builder()
+					.accountNo(1L)
+					.photoNo(1L)
+					.tagNo(4L)
+					.createdBy(1L)
+					.tagJapaneseName("秋")
+					.tagEnglishName("autumn")
+					.build();
+
+			Integer actualCount = photoTagMstMapper.insertBulk(List.of(photoTagMst1, photoTagMst2));
+			assertEquals(2, actualCount);
+
+			List<PhotoTagMst> actualData = jdbcTemplate.query(
+					"SELECT * FROM photo.photo_tag_mst WHERE account_no=1 and photo_no=1 and tag_no IN (3, 4) ORDER BY tag_no", (rs, rowNum) ->
+						PhotoTagMst.builder()
+							.accountNo(rs.getLong("account_no"))
+							.photoNo(rs.getLong("photo_no"))
+							.tagNo(rs.getLong("tag_no"))
+							.createdBy(rs.getLong("created_by"))
+							.createdAt(rs.getObject("created_at", OffsetDateTime.class))
+							.tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+							.tagEnglishName(rs.getObject("tag_english_name").toString())
+							.build());
+			assertEquals(2, actualData.size());
+			assertEquals("春", actualData.get(0).getTagJapaneseName());
+			assertEquals("秋", actualData.get(1).getTagJapaneseName());
+		}
+	}
+
+	@Nested
+	@Order(4)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/mapper/PhotoTagMstMapperTest.sql")
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class delete {
 		private List<PhotoTagMst> getPhotoTagMstList(String condition) {
 			return jdbcTemplate.query(
@@ -469,7 +516,7 @@ public class PhotoTagMstMapperTest {
 	}
 
 	@Nested
-	@Order(4)
+	@Order(5)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/mapper/PhotoTagMstMapperTest.sql")
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
