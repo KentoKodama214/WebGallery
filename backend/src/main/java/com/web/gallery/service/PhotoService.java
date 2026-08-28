@@ -38,6 +38,7 @@ public interface PhotoService {
 	 * @param	accountId				アカウントID
 	 * @param	photoDetailModelList	{@link PhotoDetailModelList}
 	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・許可されていない拡張子のファイルの場合
 	 *                              	・同じファイル名のファイルが既に保存済みの場合
 	 *                              	・登録に失敗した場合
 	 *                              	・更新に失敗した場合
