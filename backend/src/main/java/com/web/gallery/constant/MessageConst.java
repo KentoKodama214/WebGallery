@@ -34,6 +34,7 @@ public final class MessageConst {
 	public static final String ERR_REFRESH_TOKEN_EXPIRED = "リフレッシュトークンの有効期限が切れています。";
 	public static final String ERR_BAD_CREDENTIALS = "アカウントIDまたはパスワードが間違っています。";
 	public static final String ERR_ACCOUNT_LOCKED = "アカウントがロックされています。";
+	public static final String ERR_SYSTEM_ERROR = "システムエラーが発生しました。しばらくしてから再度お試しください。";
 
 	// Admin
 	public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";

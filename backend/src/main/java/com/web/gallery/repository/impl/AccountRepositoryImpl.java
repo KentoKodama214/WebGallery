@@ -88,8 +88,14 @@ public class AccountRepositoryImpl implements AccountRepository {
 		AccountCondition condition = AccountCondition.byAccountNo(accountModel.getAccountNo().value());
 		AccountUpdateTarget target = AccountUpdateTarget.fromForUpdate(accountModel, passwordEncoder);
 
-		if (accountMapper.update(condition, target) < 1) {
-			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
+		try {
+			if (accountMapper.update(condition, target) < 1) {
+				log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
+				throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
+			}
+		}
+		catch (DuplicateKeyException e) {
+			log.warn("Account: Duplicate Key (AccountNo: {})", accountModel.getAccountNo().value(), e);
 			throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
 		}
 	}

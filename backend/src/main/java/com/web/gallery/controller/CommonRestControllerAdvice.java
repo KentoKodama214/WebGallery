@@ -1,5 +1,6 @@
 package com.web.gallery.controller;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -9,13 +10,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import io.swagger.v3.oas.annotations.Hidden;
 import com.web.gallery.controller.response.BadRequestResponse;
 import com.web.gallery.controller.response.ErrorResponse;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.ForbiddenAccountException;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * システム共通のExceptionHandlerを扱うRestControllerAdviceクラス
@@ -24,6 +29,7 @@ import com.web.gallery.exception.UpdateFailureException;
  * @since	1.0.0
 */
 @Hidden
+@Slf4j
 @RestControllerAdvice(assignableTypes = {
 		AccountRestController.class,
 		AdminAccountRestController.class,
@@ -121,5 +127,23 @@ public class CommonRestControllerAdvice {
 		ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.CONFLICT);
 
 		return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.CONFLICT);
+	}
+
+	/**
+	 * 個別のExceptionHandlerで捕捉されない予期しないDBアクセスエラーが発生したときに制御するExceptionHandler
+	 * <p>
+	 * スタックトレース等の内部情報を含まない一般的なエラーレスポンスに変換する安全網として機能する
+	 *
+	 * @param	exception	{@link DataAccessException}
+	 * @return				{@link ErrorResponse}
+	 */
+	@ExceptionHandler(DataAccessException.class)
+	public ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException exception) {
+		log.error("Unexpected data access error occurred.", exception);
+
+		GalleryException systemException = ErrorEnum.SYSTEM_ERROR.toException();
+		ErrorResponse errorResponse = ErrorResponse.of(systemException, HttpStatus.INTERNAL_SERVER_ERROR);
+
+		return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 }
