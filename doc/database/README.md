@@ -52,12 +52,12 @@ docker compose --profile docs run --rm schemaspy
 
 データベースの初期化は `db/init/init-db.sh` によって以下の順序で実行されます。
 
-1. `common/type.sql` - カスタム型定義
+1. `common/common.type.sql` - カスタム型定義
 2. `common/account.sql` - アカウントテーブル
 3. `common/kbn_mst.sql` - 区分マスタテーブル
 4. `common/location_mst.sql` - ロケーションマスタテーブル
 5. `common/refresh_token.sql` - リフレッシュトークンテーブル
-6. `photo/type.sql` - カスタム型定義
+6. `photo/photo.type.sql` - カスタム型定義
 7. `photo/photo_mst.sql` - 写真マスタテーブル
 8. `photo/photo_tag_mst.sql` - 写真タグマスタテーブル
 9. `photo/photo_favorite.sql` - 写真お気に入りテーブル

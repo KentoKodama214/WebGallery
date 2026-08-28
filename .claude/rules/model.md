@@ -9,6 +9,7 @@ paths:
 
 - クラス名サフィックス: `Model`
 - Modelのコレクションを表すクラスのクラス名サフィックス: `ModelList`（例：`AccountModelList`、`PhotoModelList`）
+- 例外：`domain/`配下の値オブジェクトのコレクションを表すクラスは、`Model`を含まない`XxxList`とする（例：`PhotoNoList`）
 
 ## Lombokアノテーション規約
 

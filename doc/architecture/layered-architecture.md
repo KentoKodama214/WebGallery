@@ -16,6 +16,10 @@ graph TB
         SI --> SImpl
     end
 
+    subgraph Aggregate["Aggregate層（書き込みユースケースのみ）"]
+        AGG["集約ルート<br>複数テーブルにまたがる整合性・ライフサイクル管理"]
+    end
+
     subgraph Repository["Repository層"]
         RI["Repository<br>インターフェース"]
         RImpl["RepositoryImpl<br>データアクセスの抽象化"]
@@ -32,7 +36,9 @@ graph TB
 
     Client -- "APIリクエスト" --> REST
     REST -- "Request/Response DTO" --> SI
+    SImpl -- "Modelオブジェクト" --> AGG
     SImpl -- "Modelオブジェクト" --> RI
+    AGG --> RI
     RImpl --> MI
     MX --> DB
 ```
@@ -43,6 +49,7 @@ graph TB
 |----------|------|----------------|
 | Controller | RESTコントローラ（JSON API） | `controller/` |
 | Service | ビジネスロジック・バリデーション | `service/`, `service/impl/` |
+| Aggregate | 書き込みユースケースにおける複数テーブルにまたがる整合性・ライフサイクル管理（Service層とRepository層の間に位置づけ、例：`Photo`集約） | `aggregate/` |
 | Repository | データアクセスの抽象化 | `repository/`, `repository/impl/` |
 | Mapper | MyBatisによるSQL実行 | `mapper/`, `resources/com/web/gallery/mapper/` |
 
