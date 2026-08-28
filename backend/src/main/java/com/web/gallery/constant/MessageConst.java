@@ -34,6 +34,10 @@ public final class MessageConst {
 	public static final String ERR_REFRESH_TOKEN_EXPIRED = "リフレッシュトークンの有効期限が切れています。";
 	public static final String ERR_BAD_CREDENTIALS = "アカウントIDまたはパスワードが間違っています。";
 	public static final String ERR_ACCOUNT_LOCKED = "アカウントがロックされています。";
+	public static final String ERR_IMAGE_FILE_REQUIRED = "新規登録時は画像ファイルの指定が必須です。";
+	public static final String ERR_UNSUPPORTED_IMAGE_CONTENT_TYPE = "許可されていないファイル形式です。";
+	public static final String ERR_INVALID_IMAGE_SIGNATURE = "画像ファイルの内容が不正です。";
+	public static final String ERR_IMAGE_FILE_SIZE_EXCEEDED = "画像ファイルのサイズが上限を超えています。";
 
 	// Admin
 	public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";

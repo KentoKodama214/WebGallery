@@ -434,6 +434,9 @@ public class PhotoServiceImplIntegrationTest {
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/service/PhotoServiceImplIntegrationTest.sql")
 	class savePhotos {
+		/** 新規登録時のバリデーション（Content-Type・マジックバイト）を通過させるための、実際のJPEGファイルの先頭バイト列 */
+		private final byte[] jpegBytes = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x00, 0x10};
+
 		PhotoDetailModel createNewPhotoWithTag() {
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
@@ -453,8 +456,8 @@ public class PhotoServiceImplIntegrationTest {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
 					"DSC21.jpg",
-					"multipart/form-data",
-					"image".getBytes()
+					"image/jpeg",
+					jpegBytes
 			);
 			return PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -473,8 +476,8 @@ public class PhotoServiceImplIntegrationTest {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
 					"DSC22.jpg",
-					"multipart/form-data",
-					"image".getBytes()
+					"image/jpeg",
+					jpegBytes
 				);
 			return PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -827,8 +830,8 @@ public class PhotoServiceImplIntegrationTest {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
 					"DSC11.jpg",
-					"multipart/form-data",
-					"sample image".getBytes()
+					"image/jpeg",
+					jpegBytes
 			);
 			PhotoDetailModel photoDetailModel1 = PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
