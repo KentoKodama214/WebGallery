@@ -26,7 +26,7 @@ import lombok.Value;
 /**
  * アカウント情報を受け渡すためのModelクラス
  * <p>
- * {@code forUnlock}/{@code forLock}/{@code forLoginSuccess}/{@code forLoginFailure}のように
+ * {@code forUnlock}/{@code forLock}/{@code forLoginSuccess}のように
  * ログイン失敗回数等の部分更新専用のファクトリメソッドが存在し、全ファクトリメソッドに共通して
  * 必須となるプロパティが存在しないため、意図的に{@code @NonNull}を付与していない。
  */
@@ -184,20 +184,6 @@ public class AccountModel {
 				.accountNo(accountNo)
 				.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.now(clock)))
 				.loginFailureCount(new LoginFailureCount(0))
-				.build();
-	}
-
-	/**
-	 * 認証失敗時のAccountModelを生成する（ログイン失敗回数を1加算）
-	 *
-	 * @param	accountNo		アカウント番号
-	 * @param	currentCount	現在のログイン失敗回数
-	 * @return					{@link AccountModel}
-	 */
-	public static AccountModel forLoginFailure(AccountNo accountNo, LoginFailureCount currentCount) {
-		return AccountModel.builder()
-				.accountNo(accountNo)
-				.loginFailureCount(new LoginFailureCount(currentCount.value() + 1))
 				.build();
 	}
 }

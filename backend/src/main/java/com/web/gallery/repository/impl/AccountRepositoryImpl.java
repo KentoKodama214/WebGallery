@@ -112,6 +112,20 @@ public class AccountRepositoryImpl implements AccountRepository {
 	}
 
 	/**
+	 * Accountテーブルのログイン失敗回数をSQL側で原子的にインクリメントする
+	 *
+	 * @param	accountNo			アカウント番号
+	 * @throws	GalleryException	更新に失敗した場合
+	 */
+	@Override
+	public void incrementLoginFailureCount(AccountNo accountNo) throws GalleryException {
+		if (accountMapper.incrementLoginFailureCount(accountNo.value()) < 1) {
+			log.warn("Account: Update Failed (AccountNo: {})", accountNo.value());
+			throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
+		}
+	}
+
+	/**
 	 * アカウントIDに該当するアカウントの存在有無をチェックする（新規登録用、除外なし）
 	 *
 	 * @param	accountId	アカウントID

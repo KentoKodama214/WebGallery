@@ -554,9 +554,36 @@ public class AccountRepositoryImplTest {
 			assertEquals(0, targetAccountCapture.getLoginFailureCount());
 		}
 	}
-	
+
 	@Nested
 	@Order(6)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class incrementLoginFailureCount {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：SQL側で原子的にインクリメントすること")
+		void incrementLoginFailureCount_success() throws GalleryException {
+			doReturn(1).when(accountMapper).incrementLoginFailureCount(1L);
+
+			accountRepositoryImpl.incrementLoginFailureCount(new AccountNo(1L));
+
+			verify(accountMapper).incrementLoginFailureCount(1L);
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
+		void incrementLoginFailureCount_UpdateFailureException() {
+			doReturn(0).when(accountMapper).incrementLoginFailureCount(1L);
+
+			assertThrows(UpdateFailureException.class, () -> accountRepositoryImpl.incrementLoginFailureCount(new AccountNo(1L)));
+
+			verify(accountMapper).incrementLoginFailureCount(1L);
+		}
+	}
+
+	@Nested
+	@Order(7)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class delete {
 		@Test
@@ -575,7 +602,7 @@ public class AccountRepositoryImplTest {
 	}
 
 	@Nested
-	@Order(7)
+	@Order(8)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class isExistAccount {
 		@Test
@@ -610,7 +637,7 @@ public class AccountRepositoryImplTest {
 	}
 
 	@Nested
-	@Order(8)
+	@Order(9)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class getAccountList {
 		@Test
