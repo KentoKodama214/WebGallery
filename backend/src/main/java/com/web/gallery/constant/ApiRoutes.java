@@ -13,12 +13,14 @@ public final class ApiRoutes {
 	public static final String ACCOUNT_ID = "{accountId}";
 
 	// 認証関連
+	/** 認証APIプレフィックス */
+	public static final String API_AUTH_PREFIX = API_PREFIX + "/auth";
 	/** 認証ログインAPI */
-	public static final String API_AUTH_LOGIN = API_PREFIX + "/auth/login";
+	public static final String API_AUTH_LOGIN = API_AUTH_PREFIX + "/login";
 	/** 認証リフレッシュAPI */
-	public static final String API_AUTH_REFRESH = API_PREFIX + "/auth/refresh";
+	public static final String API_AUTH_REFRESH = API_AUTH_PREFIX + "/refresh";
 	/** 認証ログアウトAPI */
-	public static final String API_AUTH_LOGOUT = API_PREFIX + "/auth/logout";
+	public static final String API_AUTH_LOGOUT = API_AUTH_PREFIX + "/logout";
 
 	// アカウント関連
 	/** アカウントAPI（POST=登録） */

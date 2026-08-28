@@ -189,7 +189,7 @@ public class AuthRestController {
 				.httpOnly(true)
 				.secure(true)
 				.sameSite("Strict")
-				.path("/api/v1/auth")
+				.path(ApiRoutes.API_AUTH_PREFIX)
 				.maxAge(maxAge)
 				.build();
 	}
