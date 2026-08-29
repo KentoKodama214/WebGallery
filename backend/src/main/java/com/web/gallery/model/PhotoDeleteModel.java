@@ -28,14 +28,16 @@ public class PhotoDeleteModel {
 	private ImageFilePath imageFilePath;
 
 	/**
-	 * 写真削除リクエストからPhotoDeleteModelを生成する
+	 * 写真削除リクエストとログイン中のアカウント番号からPhotoDeleteModelを生成する<p>
+	 * アカウント番号はリクエストボディではなくセッションから取得した値を用いる（他人の写真を操作するIDORを防ぐため）
 	 *
-	 * @param	request	{@link PhotoDeleteRequest}
-	 * @return			{@link PhotoDeleteModel}
+	 * @param	request		{@link PhotoDeleteRequest}
+	 * @param	accountNo	ログイン中のアカウント番号
+	 * @return				{@link PhotoDeleteModel}
 	 */
-	public static PhotoDeleteModel from(PhotoDeleteRequest request) {
+	public static PhotoDeleteModel from(PhotoDeleteRequest request, AccountNo accountNo) {
 		return PhotoDeleteModel.builder()
-				.accountNo(new AccountNo(request.getAccountNo()))
+				.accountNo(accountNo)
 				.photoNo(new PhotoNo(request.getPhotoNo()))
 				.imageFilePath(new ImageFilePath(request.getImageFilePath()))
 				.build();

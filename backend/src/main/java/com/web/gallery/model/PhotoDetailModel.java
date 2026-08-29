@@ -146,19 +146,21 @@ public class PhotoDetailModel {
 	}
 
 	/**
-	 * 写真保存リクエストからPhotoDetailModelを生成する
+	 * 写真保存リクエストとログイン中のアカウント番号からPhotoDetailModelを生成する<p>
+	 * アカウント番号はリクエストボディではなくセッションから取得した値を用いる（他人の写真を操作するIDORを防ぐため）
 	 *
-	 * @param	request	{@link PhotoSaveRequest}
-	 * @return			{@link PhotoDetailModel}
+	 * @param	request		{@link PhotoSaveRequest}
+	 * @param	accountNo	ログイン中のアカウント番号
+	 * @return				{@link PhotoDetailModel}
 	 */
-	public static PhotoDetailModel from(PhotoSaveRequest request) {
+	public static PhotoDetailModel from(PhotoSaveRequest request, AccountNo accountNo) {
 		PhotoTagModelList photoTagModelList = Objects.isNull(request.getPhotoTagRegistRequestList())
 				? PhotoTagModelList.empty()
 				: PhotoTagModelList.of(request.getPhotoTagRegistRequestList().stream()
 						.map(PhotoTagModel::from)
 						.toList());
 		return PhotoDetailModel.builder()
-				.accountNo(new AccountNo(request.getAccountNo()))
+				.accountNo(accountNo)
 				.photoNo(request.getPhotoNo() != null ? new PhotoNo(request.getPhotoNo()) : null)
 				.isFavorite(request.getIsFavorite() != null ? new IsFavorite(request.getIsFavorite()) : null)
 				.photoAt(Optional.ofNullable(request.getPhotoAt())

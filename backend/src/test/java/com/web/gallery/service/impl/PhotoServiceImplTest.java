@@ -679,6 +679,10 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(new ImageFilePath("https://localhost:8080/image/existing.jpg"))
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 
 			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).update(photoCaptor.capture());
@@ -727,6 +731,10 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(new ImageFilePath("https://localhost:8080/image/existing.jpg"))
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 
 			ArgumentCaptor<Photo> photoRegistCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).regist(photoRegistCaptor.capture());
@@ -813,6 +821,10 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(new ImageFilePath("https://localhost:8080/image/existing.jpg"))
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 			doThrow(UpdateFailureException.class).when(photoAggregateRepositoryImpl).update(any(Photo.class));
 
 			// 更新1枚目
@@ -829,8 +841,59 @@ public class PhotoServiceImplTest {
 			verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
 			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
+
+		@Test
+		@Order(8)
+		@DisplayName("異常系：更新対象の写真がDBに存在しない場合、PhotoNotFoundExceptionをthrowする")
+		void savePhotos_updatePhoto_PhotoNotFoundException() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doThrow(PhotoNotFoundException.class).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
+
+			PhotoDetailModel photoDetailModel = createUpdatePhoto();
+			photoDetailModelList.add(photoDetailModel);
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(9)
+		@DisplayName("正常系：更新時にリクエストの画像ファイルパスを信用せず、DB上の既存パスで更新する（ファイルパス汚染防止）")
+		void savePhotos_updatePhoto_ignoresRequestImageFilePath() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			ImageFilePath existingImageFilePath = new ImageFilePath("https://localhost:8080/image/existing.jpg");
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(existingImageFilePath)
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
+
+			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
+			doNothing().when(photoAggregateRepositoryImpl).update(photoCaptor.capture());
+
+			// リクエストには悪意のあるファイルパスが指定されているものとする
+			PhotoDetailModel photoDetailModel = createUpdatePhoto().toBuilder()
+					.imageFilePath(new ImageFilePath("../../../etc/passwd"))
+					.build();
+			photoDetailModelList.add(photoDetailModel);
+
+			photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+
+			assertEquals(existingImageFilePath, photoCaptor.getValue().getImageFilePath());
+		}
 	}
-	
+
 	@Nested
 	@Order(4)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
