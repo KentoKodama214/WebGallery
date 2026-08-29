@@ -265,7 +265,7 @@ public class PhotoRestControllerIntegrationTest {
 					.param("imageFilePath", "")
 					.param("directionKbn", "VERTICAL")
 					.param("photoEnglishTitle", "")
-					.param("photoJapaneseTitle", "")
+					.param("photoJapaneseTitle", "タイトル4")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
@@ -308,7 +308,7 @@ public class PhotoRestControllerIntegrationTest {
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
-			assertEquals("", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
+			assertEquals("タイトル4", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
 			assertEquals("", actualPhotoMst.getFirst().getPhotoEnglishTitle());
 			assertEquals("", actualPhotoMst.getFirst().getCaption());
 			assertEquals(DirectionEnum.VERTICAL, actualPhotoMst.getFirst().getDirectionKbn());
@@ -783,7 +783,7 @@ public class PhotoRestControllerIntegrationTest {
 					.param("imageFilePath", "")
 					.param("directionKbn", "VERTICAL")
 					.param("photoEnglishTitle", "")
-					.param("photoJapaneseTitle", "")
+					.param("photoJapaneseTitle", "タイトル")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
@@ -820,7 +820,7 @@ public class PhotoRestControllerIntegrationTest {
 					.param("imageFilePath", "https://www.xxx.com/DSC99.jpg")
 					.param("directionKbn", "VERTICAL")
 					.param("photoEnglishTitle", "")
-					.param("photoJapaneseTitle", "")
+					.param("photoJapaneseTitle", "タイトル")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
