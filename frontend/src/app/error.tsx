@@ -7,6 +7,10 @@ import { useEffect } from "react";
  *
  * 配下のクライアントコンポーネントで捕捉されない例外が発生した場合に、
  * 画面が真っ白になるのを防ぎ、再試行の導線を表示する。
+ *
+ * `unstable_retry` は Next.js 16 の error.js が提供する現行の復旧 API
+ * （`node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/error.md` 参照）。
+ * 将来のバージョンで名称が変わる可能性があるためアップデート時は確認すること。
  */
 export default function Error({
   error,
