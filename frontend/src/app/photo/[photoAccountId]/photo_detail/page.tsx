@@ -8,6 +8,18 @@ export const metadata: Metadata = {
 };
 
 /**
+ * クエリパラメータを正の整数として解釈する
+ *
+ * @param value クエリパラメータの値
+ * @returns 正の整数。解釈できない場合はnull
+ */
+function parsePositiveInt(value: string | string[] | undefined): number | null {
+  if (typeof value !== "string") return null;
+  const num = Number(value);
+  return Number.isInteger(num) && num > 0 ? num : null;
+}
+
+/**
  * 写真詳細ページ
  */
 export default async function PhotoDetailPage({
@@ -20,14 +32,23 @@ export default async function PhotoDetailPage({
   const { photoAccountId } = await params;
   const { accountNo, photoNo } = await searchParams;
 
+  const parsedAccountNo = parsePositiveInt(accountNo);
+  const parsedPhotoNo = parsePositiveInt(photoNo);
+
   return (
     <>
       <Header />
-      <PhotoDetail
-        photoAccountId={photoAccountId}
-        accountNo={Number(accountNo)}
-        photoNo={Number(photoNo)}
-      />
+      {parsedAccountNo === null || parsedPhotoNo === null ? (
+        <div className="min-h-screen bg-black text-white flex justify-center items-center">
+          <p className="text-red-500">写真が見つかりません</p>
+        </div>
+      ) : (
+        <PhotoDetail
+          photoAccountId={photoAccountId}
+          accountNo={parsedAccountNo}
+          photoNo={parsedPhotoNo}
+        />
+      )}
       <Footer />
     </>
   );

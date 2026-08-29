@@ -10,6 +10,8 @@ const config = {
     ],
   },
   moduleNameMapper: {
+    // CSS / CSS Modules のインポートをスタブ化する
+    "\\.(css|scss|sass|less)$": "<rootDir>/test/styleMock.js",
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   testMatch: ["**/__tests__/**/*.(ts|tsx)", "**/?(*.)+(spec|test).(ts|tsx)"],

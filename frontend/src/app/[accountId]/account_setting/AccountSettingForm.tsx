@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
@@ -9,10 +9,8 @@ import {
   deleteAccount,
   getPrefectures,
 } from "@/lib/api/client";
-import type {
-  AccountDetail,
-  PrefectureGroup,
-} from "@/lib/api/client";
+import type { PrefectureGroup } from "@/lib/api/client";
+import { PASSWORD_PATTERN, clearError, isPastDate } from "@/lib/validation";
 
 interface AccountSettingFormProps {
   accountId: string;
@@ -23,7 +21,10 @@ interface AccountSettingFormProps {
  */
 export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { user, logout, isLoading: authLoading } = useAuth();
+
+  const isAuthenticated = !!user;
+  const isOwner = isAuthenticated && user.accountId === accountId;
 
   const [formAccountId, setFormAccountId] = useState(accountId);
   const [accountName, setAccountName] = useState("");
@@ -46,34 +47,58 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState("");
 
+  const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   /*
-   * 初期表示
+   * 初期表示（本人のページの場合のみデータを取得する。他人のページはガードで弾く）
    */
-  const loadData = useCallback(async () => {
-    try {
-      const [accountData, prefectureData] = await Promise.all([
-        getAccount(accountId),
-        getPrefectures(),
-      ]);
-
-      setFormAccountId(accountData.accountId);
-      setAccountName(accountData.accountName);
-      setBirthdate(accountData.birthdate || "");
-      setSexKbn(accountData.sexKbn || "none");
-      setBirthplacePrefectureKbnCode(accountData.birthplacePrefectureKbnCode || "none");
-      setResidentPrefectureKbnCode(accountData.residentPrefectureKbnCode || "none");
-      setFreeMemo(accountData.freeMemo || "");
-      setPrefectureGroups(prefectureData);
-    } catch {
-      router.push("/login");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [accountId, router]);
-
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (authLoading || !isOwner) return;
+
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const [accountData, prefectureData] = await Promise.all([
+          getAccount(accountId),
+          getPrefectures(),
+        ]);
+        if (cancelled) return;
+        setFormAccountId(accountData.accountId);
+        setAccountName(accountData.accountName);
+        setBirthdate(accountData.birthdate || "");
+        setSexKbn(accountData.sexKbn || "none");
+        setBirthplacePrefectureKbnCode(accountData.birthplacePrefectureKbnCode || "none");
+        setResidentPrefectureKbnCode(accountData.residentPrefectureKbnCode || "none");
+        setFreeMemo(accountData.freeMemo || "");
+        setPrefectureGroups(prefectureData);
+      } catch {
+        if (!cancelled) router.push("/login");
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, isOwner, accountId, router]);
+
+  // 未ログインの場合はログインページへ誘導する
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  // アンマウント時にタイマーを破棄する
+  useEffect(() => {
+    return () => {
+      if (modalTimerRef.current) clearTimeout(modalTimerRef.current);
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   /**
    * バリデーション
@@ -85,17 +110,12 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       newErrors.accountName = "アカウント名を入力してください";
     }
 
-    if (newPassword && !/^[a-zA-Z0-9]{8,}$/.test(newPassword)) {
+    if (newPassword && !PASSWORD_PATTERN.test(newPassword)) {
       newErrors.newPassword = "半角英数字で8文字以上で入力してください";
     }
 
-    if (birthdate) {
-      const birthdateDate = new Date(birthdate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (birthdateDate >= today) {
-        newErrors.birthdate = "過去の日付を入力してください";
-      }
+    if (birthdate && !isPastDate(birthdate)) {
+      newErrors.birthdate = "過去の日付を入力してください";
     }
 
     setErrors(newErrors);
@@ -125,21 +145,23 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
         freeMemo,
       });
 
+      // アカウントIDは変更不可（入力欄はdisabled）だが、バックエンド契約に沿って防御的に扱う
       if (result.isDuplicateAccountId) {
         setDuplicateError("このアカウントIDは既に使われています");
         return;
       }
 
-      if (result.isAccountIdChanged || result.isPasswordChanged) {
+      // パスワード変更時は再ログインが必要
+      if (result.isPasswordChanged) {
         await logout();
         router.push("/login");
         return;
       }
 
       setShowModal(true);
-      setTimeout(() => setShowModal(false), 5000);
-    } catch {
-      setDuplicateError("更新に失敗しました");
+      modalTimerRef.current = setTimeout(() => setShowModal(false), 5000);
+    } catch (err) {
+      setDuplicateError(err instanceof Error ? err.message : "更新に失敗しました");
     } finally {
       setIsSubmitting(false);
     }
@@ -155,21 +177,31 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       await logout();
       setShowDeleteConfirm(false);
       setShowDeleteCompleteModal(true);
-      setTimeout(() => {
+      redirectTimerRef.current = setTimeout(() => {
         router.push("/login");
       }, 3000);
-    } catch {
+    } catch (err) {
       setShowDeleteConfirm(false);
-      setDuplicateError("アカウント削除に失敗しました");
+      setDuplicateError(err instanceof Error ? err.message : "アカウント削除に失敗しました");
     } finally {
       setIsDeleting(false);
     }
   };
 
-  if (isLoading) {
+  // 認証確認中／未ログイン（ログインへ遷移するまで）／本人ページのデータ取得中
+  if (authLoading || !isAuthenticated || (isOwner && isLoading)) {
     return (
       <div className="min-h-screen bg-[whitesmoke] flex items-center justify-center">
         <div className="inline-block w-8 h-8 border-4 border-[#2196F3] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // ログイン済みだが他人のアカウント設定を開こうとした場合
+  if (!isOwner) {
+    return (
+      <div className="min-h-screen bg-[whitesmoke] flex items-center justify-center">
+        <p className="text-red-500">この操作を行う権限がありません</p>
       </div>
     );
   }
@@ -212,10 +244,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
                 if (!accountName.trim()) {
                   setErrors((prev) => ({ ...prev, accountName: "アカウント名を入力してください" }));
                 } else {
-                  setErrors((prev) => {
-                    const { accountName: _, ...rest } = prev;
-                    return rest;
-                  });
+                  setErrors((prev) => clearError(prev, "accountName"));
                 }
               }}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
@@ -230,10 +259,10 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               onBlur={() => {
-                if (newPassword && !/^[a-zA-Z0-9]{8,}$/.test(newPassword)) {
+                if (newPassword && !PASSWORD_PATTERN.test(newPassword)) {
                   setErrors((prev) => ({ ...prev, newPassword: "半角英数字で8文字以上で入力してください" }));
                 } else {
-                  setErrors((prev) => { const { newPassword: _, ...rest } = prev; return rest; });
+                  setErrors((prev) => clearError(prev, "newPassword"));
                 }
               }}
               placeholder="半角英数字で8文字以上"
@@ -250,23 +279,10 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               onChange={(e) => {
                 const value = e.target.value;
                 setBirthdate(value);
-                if (value) {
-                  const inputDate = new Date(value);
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  if (inputDate >= today) {
-                    setErrors((prev) => ({ ...prev, birthdate: "過去の日付を入力してください" }));
-                  } else {
-                    setErrors((prev) => {
-                      const { birthdate: _, ...rest } = prev;
-                      return rest;
-                    });
-                  }
+                if (value && !isPastDate(value)) {
+                  setErrors((prev) => ({ ...prev, birthdate: "過去の日付を入力してください" }));
                 } else {
-                  setErrors((prev) => {
-                    const { birthdate: _, ...rest } = prev;
-                    return rest;
-                  });
+                  setErrors((prev) => clearError(prev, "birthdate"));
                 }
               }}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"

@@ -8,6 +8,41 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 let accessToken: string | null = null;
 
 /**
+ * 当該セッションの認証状態の推定値
+ * - "anonymous" の場合、fetchWithAuthは先読みのリフレッシュを行わない
+ */
+let sessionAuthState: "unknown" | "authenticated" | "anonymous" = "unknown";
+
+/**
+ * レスポンスボディからエラーメッセージを取り出す
+ *
+ * 5xx（サーバー内部エラー）は内部的な例外メッセージが含まれ得るため既定文言を返す。
+ * 4xx（バリデーション・認証エラー等）はユーザー向けのメッセージとして採用する。
+ *
+ * @param response fetchのレスポンス
+ * @param fallback 取り出せなかった場合の既定メッセージ
+ * @returns エラーメッセージ
+ */
+async function readErrorMessage(
+  response: Response,
+  fallback: string
+): Promise<string> {
+  if (response.status >= 500) return fallback;
+  try {
+    const text = await response.text();
+    if (!text) return fallback;
+    try {
+      const body = JSON.parse(text);
+      return body.errorMessage || body.message || fallback;
+    } catch {
+      return fallback;
+    }
+  } catch {
+    return fallback;
+  }
+}
+
+/**
  * アクセストークンを取得する
  */
 export function getAccessToken(): string | null {
@@ -28,20 +63,25 @@ export async function login(
   accountId: string,
   password: string
 ): Promise<{ accessToken: string; expiresIn: number }> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({ accountId, password }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ accountId, password }),
+    });
+  } catch {
+    throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
+  }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "ログインに失敗しました" }));
-    throw new Error(error.message || "ログインに失敗しました");
+    throw new Error(await readErrorMessage(response, "ログインに失敗しました"));
   }
 
   const data = await response.json();
   accessToken = data.accessToken;
+  sessionAuthState = "authenticated";
   return data;
 }
 
@@ -57,14 +97,17 @@ export async function refresh(): Promise<boolean> {
 
     if (!response.ok) {
       accessToken = null;
+      sessionAuthState = "anonymous";
       return false;
     }
 
     const data = await response.json();
     accessToken = data.accessToken;
+    sessionAuthState = "authenticated";
     return true;
   } catch {
     accessToken = null;
+    sessionAuthState = "anonymous";
     return false;
   }
 }
@@ -73,11 +116,16 @@ export async function refresh(): Promise<boolean> {
  * ログアウトAPIを呼び出す
  */
 export async function logout(): Promise<void> {
-  await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
-    method: "POST",
-    credentials: "include",
-  });
+  try {
+    await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // ログアウトAPIの失敗は無視し、クライアント側の状態だけクリアする
+  }
   accessToken = null;
+  sessionAuthState = "anonymous";
 }
 
 /**
@@ -89,7 +137,8 @@ export async function fetchWithAuth(
 ): Promise<Response> {
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
-  if (!accessToken) {
+  // 未ログインが確定している場合は無駄なリフレッシュ試行を行わない
+  if (!accessToken && sessionAuthState !== "anonymous") {
     await refresh();
   }
   if (accessToken) {
@@ -131,7 +180,7 @@ export async function getAccountList(pageNo: number = 1): Promise<AccountListGet
     `${API_BASE_URL}/api/v1/accounts?pageNo=${pageNo}`
   );
   if (!response.ok) {
-    throw new Error("アカウント一覧の取得に失敗しました");
+    throw new Error(await readErrorMessage(response, "アカウント一覧の取得に失敗しました"));
   }
   return response.json();
 }
@@ -142,7 +191,7 @@ export async function getAccountList(pageNo: number = 1): Promise<AccountListGet
 export async function getAccount(accountId: string): Promise<AccountDetail> {
   const response = await fetchWithAuth(`/api/v1/accounts/${accountId}`);
   if (!response.ok) {
-    throw new Error("アカウント情報の取得に失敗しました");
+    throw new Error(await readErrorMessage(response, "アカウント情報の取得に失敗しました"));
   }
   return response.json();
 }
@@ -155,7 +204,7 @@ export async function deleteAccount(accountId: string): Promise<void> {
     method: "DELETE",
   });
   if (!response.ok) {
-    throw new Error("アカウントの削除に失敗しました");
+    throw new Error(await readErrorMessage(response, "アカウントの削除に失敗しました"));
   }
 }
 
@@ -172,7 +221,7 @@ export async function updateAccount(
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    throw new Error("アカウント情報の更新に失敗しました");
+    throw new Error(await readErrorMessage(response, "アカウント情報の更新に失敗しました"));
   }
   return response.json();
 }
@@ -183,7 +232,7 @@ export async function updateAccount(
 export async function getPrefectures(): Promise<PrefectureGroup[]> {
   const response = await fetch(`${API_BASE_URL}/api/v1/prefectures`);
   if (!response.ok) {
-    throw new Error("都道府県一覧の取得に失敗しました");
+    throw new Error(await readErrorMessage(response, "都道府県一覧の取得に失敗しました"));
   }
   return response.json();
 }
@@ -200,7 +249,7 @@ export async function registerAccount(
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    throw new Error("アカウントの登録に失敗しました");
+    throw new Error(await readErrorMessage(response, "アカウントの登録に失敗しました"));
   }
   return response.json();
 }
@@ -370,7 +419,7 @@ export async function getPhotoList(
   const url = `/api/v1/accounts/${photoAccountId}/photos${query ? `?${query}` : ""}`;
   const response = await fetchWithAuth(url);
   if (!response.ok) {
-    throw new Error("写真一覧の取得に失敗しました");
+    throw new Error(await readErrorMessage(response, "写真一覧の取得に失敗しました"));
   }
   return response.json();
 }
@@ -384,7 +433,7 @@ export async function getPhotoUpperLimit(
   const url = `/api/v1/accounts/${photoAccountId}/photos/upper-limit`;
   const response = await fetchWithAuth(url);
   if (!response.ok) {
-    throw new Error("写真登録上限の取得に失敗しました");
+    throw new Error(await readErrorMessage(response, "写真登録上限の取得に失敗しました"));
   }
   return response.json();
 }
@@ -400,7 +449,7 @@ export async function getPhotoDetail(
   const url = `/api/v1/accounts/${photoAccountId}/photos/${photoNo}?accountNo=${accountNo}`;
   const response = await fetchWithAuth(url);
   if (!response.ok) {
-    throw new Error("写真詳細の取得に失敗しました");
+    throw new Error(await readErrorMessage(response, "写真詳細の取得に失敗しました"));
   }
   return response.json();
 }
@@ -421,7 +470,7 @@ export async function deletePhoto(
     }
   );
   if (!response.ok) {
-    throw new Error("写真の削除に失敗しました");
+    throw new Error(await readErrorMessage(response, "写真の削除に失敗しました"));
   }
   return response.json();
 }
@@ -439,7 +488,7 @@ export async function addFavorite(
     body: JSON.stringify({ favoritePhotoAccountNo, favoritePhotoNo }),
   });
   if (!response.ok) {
-    throw new Error("お気に入りの登録に失敗しました");
+    throw new Error(await readErrorMessage(response, "お気に入りの登録に失敗しました"));
   }
   return response.json();
 }
@@ -457,7 +506,7 @@ export async function deleteFavorite(
     body: JSON.stringify({ favoritePhotoAccountNo, favoritePhotoNo }),
   });
   if (!response.ok) {
-    throw new Error("お気に入りの解除に失敗しました");
+    throw new Error(await readErrorMessage(response, "お気に入りの解除に失敗しました"));
   }
   return response.json();
 }
@@ -478,14 +527,7 @@ export async function savePhoto(
     }
   );
   if (!response.ok) {
-    let errorMessage = "写真の保存に失敗しました";
-    try {
-      const errorBody = await response.json();
-      errorMessage = errorBody.errorMessage || errorBody.message || errorMessage;
-    } catch {
-      // レスポンスボディのパースに失敗した場合はデフォルトメッセージを使用
-    }
-    throw new Error(errorMessage);
+    throw new Error(await readErrorMessage(response, "写真の保存に失敗しました"));
   }
   return response.json();
 }
@@ -520,7 +562,7 @@ export interface AdminAccountListGetResponse {
 export async function getAdminAccountList(pageNo: number = 1): Promise<AdminAccountListGetResponse> {
   const response = await fetchWithAuth(`/api/v1/admin/accounts?pageNo=${pageNo}`);
   if (!response.ok) {
-    throw new Error("アカウント一覧の取得に失敗しました");
+    throw new Error(await readErrorMessage(response, "アカウント一覧の取得に失敗しました"));
   }
   return response.json();
 }
@@ -536,7 +578,7 @@ export async function unlockAccount(
     { method: "PUT" }
   );
   if (!response.ok) {
-    throw new Error("アカウントのロック解除に失敗しました");
+    throw new Error(await readErrorMessage(response, "アカウントのロック解除に失敗しました"));
   }
   return response.json();
 }
@@ -552,7 +594,7 @@ export async function lockAccount(
     { method: "PUT" }
   );
   if (!response.ok) {
-    throw new Error("アカウントのロックに失敗しました");
+    throw new Error(await readErrorMessage(response, "アカウントのロックに失敗しました"));
   }
   return response.json();
 }

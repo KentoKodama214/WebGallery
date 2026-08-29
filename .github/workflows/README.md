@@ -18,11 +18,13 @@ architecture-check.yml:
   アーキテクチャチェック ──────────────→ (独立)
 
 test.yml:
+  フロントエンド単体テスト ─────────────→ (独立)
   単体テスト ──→ (成功時のみ) 結合テスト
              └→ (成功時のみ) E2Eテスト
 ```
 
 - Javadocチェック、アーキテクチャチェック、テスト実行は別ワークフローのため、**並列に実行**される
+- フロントエンド単体テストはバックエンドの単体テストとは独立して**並列に実行**される
 - 単体テストが失敗した場合、結合テスト・E2Eテストは**スキップ**される
 - 結合テストとE2Eテストは互いに依存せず**並列に実行**される
 - Javadocチェックの成否はテスト実行に**影響しない**
@@ -49,6 +51,10 @@ Checkstyleを使用して、`src/main/java`配下の全クラス・全メソッ�
 - Controller → Repository の直接参照がないか（スキップ違反）
 - Service → Controller、Repository → Controller/Service の参照がないか（逆方向の依存）
 - Controller同士、Service同士、Repository同士の呼び出しがないか（同レイヤー間の依存）
+
+### フロントエンド単体テスト (`test.yml` - `frontend-unit-test`)
+
+`frontend`ディレクトリで`pnpm lint`（ESLint）と`pnpm test`（Jest）を実行する。バックエンドの単体テストとは独立して並列に実行される。
 
 ### 単体テスト (`test.yml` - `unit-test`)
 

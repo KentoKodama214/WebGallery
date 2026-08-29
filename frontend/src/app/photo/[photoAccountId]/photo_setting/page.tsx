@@ -8,6 +8,20 @@ export const metadata: Metadata = {
 };
 
 /**
+ * クエリパラメータを正の整数として解釈する
+ *
+ * @param value クエリパラメータの値
+ * @returns 正の整数。解釈できない場合はundefined
+ */
+function parsePositiveInt(
+  value: string | string[] | undefined
+): number | undefined {
+  if (typeof value !== "string") return undefined;
+  const num = Number(value);
+  return Number.isInteger(num) && num > 0 ? num : undefined;
+}
+
+/**
  * 写真設定ページ
  */
 export default async function PhotoSettingPage({
@@ -25,8 +39,8 @@ export default async function PhotoSettingPage({
       <Header />
       <PhotoSettingForm
         photoAccountId={photoAccountId}
-        accountNo={accountNo ? Number(accountNo) : undefined}
-        photoNo={photoNo ? Number(photoNo) : undefined}
+        accountNo={parsePositiveInt(accountNo)}
+        photoNo={parsePositiveInt(photoNo)}
       />
       <Footer />
     </>

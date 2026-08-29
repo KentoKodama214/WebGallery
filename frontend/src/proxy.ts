@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * 認証状態に基づくルーティング制御
- * - ルート（/）へのアクセスは/loginへリダイレクト
- * - ログインページ: cookieが存在すれば写真一覧へリダイレクト
- * - 保護ルートへのアクセス時、リフレッシュトークンcookieが無ければ/loginへリダイレクト
+ * ルーティング制御
+ * - ルート（/）へのアクセスは /login へリダイレクトする
+ *
+ * ログイン必須ページのガードはクライアント側（各画面コンポーネント）で行う。
+ * リフレッシュトークンcookieは `Path=/api/v1/auth` で発行されており、
+ * ページルートのリクエストには送信されないため、ミドルウェアでは判定できない。
  */
 export function proxy(request: NextRequest) {
-  const refreshToken = request.cookies.get("refreshToken");
   const { pathname } = request.nextUrl;
 
   // ルートページはログインへリダイレクト
@@ -16,20 +17,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // ログインページにリフレッシュトークンがある場合（認証済み）
-  // → 実際のリダイレクト先はクライアント側のAuthProviderで処理するためそのまま通す
-  // （アカウントIDがcookieに含まれないため、サーバー側では写真一覧URLを構築できない）
-
-  // 保護ルートへのアクセス時にリフレッシュトークンが無い場合はログインへリダイレクト
-  if (!refreshToken && isProtectedRoute(pathname)) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
   return NextResponse.next();
-}
-
-function isProtectedRoute(_pathname: string): boolean {
-  return false;
 }
 
 export const config = {

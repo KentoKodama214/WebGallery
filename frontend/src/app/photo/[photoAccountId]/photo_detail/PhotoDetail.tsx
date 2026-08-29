@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -40,22 +40,30 @@ export function PhotoDetail({
   /**
    * 写真詳細取得
    */
-  const fetchPhoto = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getPhotoDetail(photoAccountId, accountNo, photoNo);
-      setPhoto(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [photoAccountId, accountNo, photoNo]);
-
   useEffect(() => {
-    fetchPhoto();
-  }, [fetchPhoto]);
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const data = await getPhotoDetail(photoAccountId, accountNo, photoNo);
+        if (!cancelled) {
+          setPhoto(data);
+          setError(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "エラーが発生しました");
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [photoAccountId, accountNo, photoNo]);
 
   /**
    * お気に入り登録／解除
@@ -190,40 +198,21 @@ export function PhotoDetail({
           />
         )}
         {isAuthenticated && (
-          <>
-            <img
-              src="/image/heart_on.png"
-              alt="お気に入り解除"
-              onClick={handleFavoriteToggle}
-              data-testid="favorite-button"
-              style={{
-                position: "fixed",
-                top: "2%",
-                right: "90px",
-                width: "25px",
-                height: "25px",
-                cursor: isFavoriteProcessing ? "not-allowed" : "pointer",
-                display: photo.isFavorite ? "block" : "none",
-                zIndex: 50,
-              }}
-            />
-            <img
-              src="/image/heart_off.png"
-              alt="お気に入り登録"
-              onClick={handleFavoriteToggle}
-              data-testid="favorite-button"
-              style={{
-                position: "fixed",
-                top: "2%",
-                right: "90px",
-                width: "25px",
-                height: "25px",
-                cursor: isFavoriteProcessing ? "not-allowed" : "pointer",
-                display: photo.isFavorite ? "none" : "block",
-                zIndex: 50,
-              }}
-            />
-          </>
+          <img
+            src={photo.isFavorite ? "/image/heart_on.png" : "/image/heart_off.png"}
+            alt={photo.isFavorite ? "お気に入り解除" : "お気に入り登録"}
+            onClick={handleFavoriteToggle}
+            data-testid="favorite-button"
+            style={{
+              position: "fixed",
+              top: "2%",
+              right: "90px",
+              width: "25px",
+              height: "25px",
+              cursor: isFavoriteProcessing ? "not-allowed" : "pointer",
+              zIndex: 50,
+            }}
+          />
         )}
       </div>
 

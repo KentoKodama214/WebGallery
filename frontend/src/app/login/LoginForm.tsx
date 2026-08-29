@@ -5,6 +5,19 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 
 /**
+ * リダイレクト先クエリパラメータを検証し、安全な内部パスのみを返す
+ *
+ * @param value redirectクエリパラメータの値
+ * @returns 安全な内部パス。無効な場合はnull
+ */
+function safeRedirectPath(value: string | null): string | null {
+  if (!value) return null;
+  // 先頭が "/" かつ "//"（プロトコル相対URL）でないものだけを許可する
+  if (!value.startsWith("/") || value.startsWith("//")) return null;
+  return value;
+}
+
+/**
  * ログインフォームコンポーネント
  */
 export function LoginForm() {
@@ -25,7 +38,11 @@ export function LoginForm() {
 
     try {
       await login(accountId, password);
-      router.push(`/photo/${accountId}/photo_list`);
+      const redirect =
+        typeof window !== "undefined"
+          ? safeRedirectPath(new URLSearchParams(window.location.search).get("redirect"))
+          : null;
+      router.push(redirect ?? `/photo/${accountId}/photo_list`);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -39,7 +56,7 @@ export function LoginForm() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center bg-fixed m-0 font-['Open_Sans',sans-serif]"
+      className="min-h-screen bg-[#042844] bg-cover bg-center bg-fixed m-0 font-['Open_Sans',sans-serif]"
       style={{
         backgroundImage:
           "url('https://www.kkodama-photo.com/wp/wp-content/uploads/2020/10/DSC15567-scaled.jpg')",
@@ -54,29 +71,42 @@ export function LoginForm() {
             Log in
           </p>
 
+          <label htmlFor="login-account-id" className="sr-only">
+            アカウントID
+          </label>
           <input
+            id="login-account-id"
             type="text"
             name="username"
             placeholder="User ID"
             tabIndex={1}
             autoFocus
+            autoComplete="username"
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             className="block w-full p-[15px_10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] transition-all duration-200 outline-none focus:border-[#2196F3] focus:border-l-[35px]"
           />
 
+          <label htmlFor="login-password" className="sr-only">
+            パスワード
+          </label>
           <input
+            id="login-password"
             type="password"
             name="password"
             placeholder="Password"
             tabIndex={2}
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="block w-full p-[15px_10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] transition-all duration-200 outline-none focus:border-[#2196F3] focus:border-l-[35px]"
           />
 
           {error && (
-            <p className="text-[lightcoral] text-xs font-bold text-left rounded-[5px]">
+            <p
+              role="alert"
+              className="text-[lightcoral] text-xs font-bold text-left rounded-[5px]"
+            >
               {error}
             </p>
           )}

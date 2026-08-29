@@ -24,6 +24,29 @@ interface PhotoListFilter {
   sortBy: string;
 }
 
+const DEFAULT_FILTER: PhotoListFilter = {
+  directionKbn: "",
+  isFavoriteFilter: "",
+  tagList: "",
+  sortBy: "photoAt",
+};
+
+/**
+ * Cookieに保存されたフィルター条件を読み込む
+ *
+ * @returns 保存済みのフィルター条件。無ければ既定値
+ */
+function readStoredFilter(): PhotoListFilter {
+  if (typeof document === "undefined") return DEFAULT_FILTER;
+  const raw = getCookie(COOKIE_NAME);
+  if (!raw) return DEFAULT_FILTER;
+  try {
+    return { ...DEFAULT_FILTER, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_FILTER;
+  }
+}
+
 interface PhotoListProps {
   photoAccountId: string;
 }
@@ -42,19 +65,26 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   const [error, setError] = useState<string | null>(null);
   const [pageNo, setPageNo] = useState(1);
 
-  // フィルター状態
-  const [directionKbn, setDirectionKbn] = useState("");
-  const [isFavoriteFilter, setIsFavoriteFilter] = useState("");
-  const [tagList, setTagList] = useState("");
-  const [sortBy, setSortBy] = useState("photoAt");
+  // フィルター状態（初期値はCookieから復元）
+  const [directionKbn, setDirectionKbn] = useState(() => readStoredFilter().directionKbn);
+  const [isFavoriteFilter, setIsFavoriteFilter] = useState(
+    () => readStoredFilter().isFavoriteFilter
+  );
+  const [tagList, setTagList] = useState(() => readStoredFilter().tagList);
+  const [sortBy, setSortBy] = useState(() => readStoredFilter().sortBy);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const lightboxRef = useRef<InstanceType<typeof import("photoswipe/lightbox").default> | null>(null);
   const photosRef = useRef<PhotoListItem[]>(photos);
-  photosRef.current = photos;
+
+  // お気に入りボタン等のコールバックから最新のphotosを参照できるようにする
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
 
   const isOwner = user?.accountId === photoAccountId;
+  const hasPhotos = photos.length > 0;
 
   const buildParams = (page: number): PhotoListParams => ({
     directionKbn: directionKbn || undefined,
@@ -73,58 +103,43 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
 
   /**
    * 写真一覧取得（初期化時）
-   * Cookieからフィルター条件を復元し、その条件でAPIを呼び出す
+   * Cookieから復元したフィルター条件でAPIを呼び出す
    */
   useEffect(() => {
-    const init = async () => {
-      setIsLoading(true);
-      setError(null);
-      setPageNo(1);
+    let cancelled = false;
 
-      // Cookieからフィルター条件を復元
-      let filter: PhotoListFilter = {
-        directionKbn: "",
-        isFavoriteFilter: "",
-        tagList: "",
-        sortBy: "photoAt",
-      };
-      const cookieValue = getCookie(COOKIE_NAME);
-      if (cookieValue) {
-        try {
-          filter = JSON.parse(cookieValue);
-        } catch {
-          // パース失敗時はデフォルト値を使用
-        }
-      }
+    const filter = readStoredFilter();
+    // Cookieの有効期限をリセット
+    saveFilterToCookie(filter);
 
-      // stateに反映
-      setDirectionKbn(filter.directionKbn);
-      setIsFavoriteFilter(filter.isFavoriteFilter);
-      setTagList(filter.tagList);
-      setSortBy(filter.sortBy);
+    const params: PhotoListParams = {
+      directionKbn: filter.directionKbn || undefined,
+      isFavorite: filter.isFavoriteFilter || undefined,
+      tagList: filter.tagList || undefined,
+      sortBy: filter.sortBy || undefined,
+      pageNo: 1,
+    };
 
-      // Cookieを更新（有効期限リセット）
-      saveFilterToCookie(filter);
-
-      // フィルター条件でAPI呼び出し
-      const params: PhotoListParams = {
-        directionKbn: filter.directionKbn || undefined,
-        isFavorite: filter.isFavoriteFilter || undefined,
-        tagList: filter.tagList || undefined,
-        sortBy: filter.sortBy || undefined,
-        pageNo: 1,
-      };
+    const load = async () => {
       try {
         const data = await getPhotoList(photoAccountId, params);
+        if (cancelled) return;
         setPhotos(data.photoList);
         setIsLast(data.isLast);
+        setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "エラーが発生しました");
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "エラーが発生しました");
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
-    init();
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [photoAccountId, saveFilterToCookie]);
 
   useEffect(() => {
@@ -134,9 +149,11 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       .catch(() => setIsReachedUpperLimit(false));
   }, [isOwner, photoAccountId]);
 
-  // PhotoSwipe初期化（photos変更時に再初期化）
+  // PhotoSwipe初期化
+  // ライトボックスは開くたびにギャラリーDOMを読み直すため、写真の増減では
+  // 再初期化せず、写真の有無と認証状態が変わったときだけ作り直す
   useEffect(() => {
-    if (!galleryRef.current || photos.length === 0) return;
+    if (!galleryRef.current || !hasPhotos) return;
 
     let lightbox: InstanceType<typeof import("photoswipe/lightbox").default> | null = null;
 
@@ -269,7 +286,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       }
       lightboxRef.current = null;
     };
-  }, [photos.length, isAuthenticated]);
+  }, [hasPhotos, isAuthenticated]);
 
   /**
    * +もっと見る

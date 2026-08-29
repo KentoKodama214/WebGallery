@@ -23,17 +23,11 @@ export function AdminAccountManagement() {
   const [pageNo, setPageNo] = useState(1);
 
   const isAdmin = user?.role === "ROLE_ADMIN";
+  const canView = !isAuthLoading && isAuthenticated && isAdmin;
 
-  useEffect(() => {
-    if (isAuthLoading) return;
-    if (!isAuthenticated || !isAdmin) {
-      setIsLoading(false);
-      return;
-    }
-
-    fetchAccounts();
-  }, [isAuthLoading, isAuthenticated, isAdmin]);
-
+  /**
+   * 1ページ目を取得し直す（再読み込みボタン・ロック操作後に使用）
+   */
   const fetchAccounts = async () => {
     setIsLoading(true);
     setError(null);
@@ -48,6 +42,32 @@ export function AdminAccountManagement() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!canView) return;
+
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const data = await getAdminAccountList(1);
+        if (cancelled) return;
+        setAccounts(data.accountList);
+        setIsLast(data.isLast);
+        setError(null);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "エラーが発生しました");
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [canView]);
 
   /**
    * +もっと見る
@@ -93,7 +113,7 @@ export function AdminAccountManagement() {
     }
   };
 
-  if (isAuthLoading || isLoading) {
+  if (isAuthLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
         <p>読み込み中...</p>
@@ -105,6 +125,14 @@ export function AdminAccountManagement() {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
         <p className="text-red-500">管理者権限がありません。</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <p>読み込み中...</p>
       </div>
     );
   }
