@@ -267,7 +267,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：写真が存在しなかった場合")
-		void getPhotoList_not_found() {
+		void getPhotoList_not_found() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			List<String> tags = new ArrayList<String>();
 
@@ -303,7 +303,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：sortByがSEASON以外の場合、フィルタリング・ソート済みのRepositoryの取得結果をそのまま返すこと")
-		void getPhotoList_passThrough_when_sortBy_is_not_season() {
+		void getPhotoList_passThrough_when_sortBy_is_not_season() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
 
@@ -341,7 +341,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(3)
 		@DisplayName("正常系：sortByがSEASONの場合、季節・時期順に並び替えられること")
-		void getPhotoList_sortBy_season() {
+		void getPhotoList_sortBy_season() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
 
@@ -410,8 +410,30 @@ public class PhotoServiceImplTest {
 			assertEquals(new AccountNo(1L), photoGetModel.getPhotoAccountNo());
 			assertEquals(SortPhotoEnum.SEASON, photoGetModel.getSortBy());
 		}
+
+		@Test
+		@Order(4)
+		@DisplayName("異常系：指定のアカウントが存在しない場合、PhotoNotFoundExceptionをthrowすること")
+		void getPhotoList_accountNotFound() {
+			String accountId = "aaaaaaaa";
+
+			doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
+					.accountNo(new AccountNo(2L))
+					.photoAccountId(new AccountId(accountId))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(new ArrayList<String>())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.build();
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoList(photoListGetModel));
+			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+			verify(photoDetailRepositoryImpl, never()).getPhotoList(any(PhotoGetModel.class));
+		}
 	}
-	
+
 	@Nested
 	@Order(2)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -467,8 +489,27 @@ public class PhotoServiceImplTest {
 			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
 			verify(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 		}
+
+		@Test
+		@Order(3)
+		@DisplayName("異常系：指定のアカウントが存在しない場合、PhotoNotFoundExceptionをthrowすること")
+		void getPhotoDetail_accountNotFound() throws GalleryException {
+			String accountId = "aaaaaaaa";
+
+			doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+					.accountNo(new AccountNo(2L))
+					.photoAccountId(new AccountId(accountId))
+					.photoNo(new PhotoNo(1L))
+					.build();
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
+			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+			verify(photoDetailRepositoryImpl, never()).getPhotoDetail(any(PhotoDetailSearchModel.class));
+		}
 	}
-	
+
 	@Nested
 	@Order(3)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)

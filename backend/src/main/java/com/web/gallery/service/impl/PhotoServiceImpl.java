@@ -20,6 +20,7 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoCount;
 import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.event.PhotoRegisteredEvent;
@@ -73,11 +74,15 @@ public class PhotoServiceImpl implements PhotoService {
 	 *
 	 * @param	photoListGetModel	{@link PhotoListGetModel}
 	 * @return						{@link PhotoModelList}
+	 * @throws	GalleryException	指定のアカウントが存在しなかった場合
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel) {
+	public PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId());
+		if (Objects.isNull(accountModel)) {
+			throw ErrorEnum.PHOTO_NOT_FOUND.toException();
+		}
 
 		PhotoModelList photoModelList
 			= photoDetailRepository.getPhotoList(
@@ -94,12 +99,15 @@ public class PhotoServiceImpl implements PhotoService {
 	 *
 	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
 	 * @return						{@link PhotoDetailModel}
-	 * @throws	GalleryException	写真が存在しなかった場合
+	 * @throws	GalleryException	写真、または指定のアカウントが存在しなかった場合
 	 */
 	@Override
 	@Transactional(readOnly = true)
 	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(photoDetailGetModel.getPhotoAccountId());
+		if (Objects.isNull(accountModel)) {
+			throw ErrorEnum.PHOTO_NOT_FOUND.toException();
+		}
 
 		return photoDetailRepository.getPhotoDetail(
 				PhotoDetailSearchModel.of(photoDetailGetModel, accountModel.getAccountNo()));

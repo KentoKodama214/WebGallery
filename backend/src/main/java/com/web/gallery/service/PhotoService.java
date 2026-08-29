@@ -20,15 +20,16 @@ public interface PhotoService {
 	 *
 	 * @param	photoListGetModel	{@link PhotoListGetModel}
 	 * @return						{@link PhotoModelList}
+	 * @throws	GalleryException	指定のアカウントが存在しなかった場合
 	 */
-	PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel);
+	PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel) throws GalleryException;
 	
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する
 	 *
 	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
 	 * @return						{@link PhotoDetailModel}
-	 * @throws	GalleryException	写真が存在しなかった場合
+	 * @throws	GalleryException	写真、または指定のアカウントが存在しなかった場合
 	 */
 	PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException;
 
