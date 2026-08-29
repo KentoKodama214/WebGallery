@@ -4,7 +4,9 @@ import java.io.File;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -124,14 +126,22 @@ public class PhotoServiceImpl implements PhotoService {
 		PhotoNo savedPhotoNo = new PhotoNo(photoNo);
 		String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
 
-		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
-			if(Objects.isNull(photoDetailModel.getPhotoNo())) {
-				registPhoto(photoDetailModel, new PhotoNo(photoNo), filePath);
-				++photoNo;
-			} else {
-				savedPhotoNo = photoDetailModel.getPhotoNo();
-				updatePhoto(photoDetailModel);
+		// ファイルI/OはDBトランザクションの対象外のため、途中の登録失敗でDBがロールバックされても
+		// 書き込み済みのファイルは自動的には戻らない。登録済みファイルを記録しておき、失敗時に補償削除する
+		List<ImageFilePath> registeredImageFilePaths = new ArrayList<>();
+		try {
+			for(PhotoDetailModel photoDetailModel : photoDetailModelList){
+				if(Objects.isNull(photoDetailModel.getPhotoNo())) {
+					registeredImageFilePaths.add(registPhoto(photoDetailModel, new PhotoNo(photoNo), filePath));
+					++photoNo;
+				} else {
+					savedPhotoNo = photoDetailModel.getPhotoNo();
+					updatePhoto(photoDetailModel);
+				}
 			}
+		} catch (GalleryException e) {
+			deleteOrphanedFiles(registeredImageFilePaths);
+			throw e;
 		}
 		return savedPhotoNo;
 	}
@@ -142,16 +152,34 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @param	photoDetailModel	{@link PhotoDetailModel}
 	 * @param	newPhotoNo			新規採番した写真番号
 	 * @param	filePath			写真の保存先ディレクトリパス
+	 * @return						保存した画像ファイルパス
 	 * @throws	GalleryException	以下のいずれかに該当する場合
 	 *                              	・同じファイル名のファイルが既に保存済みの場合
 	 *                              	・登録に失敗した場合
 	 */
-	private void registPhoto(PhotoDetailModel photoDetailModel, PhotoNo newPhotoNo, String filePath) throws GalleryException {
+	private ImageFilePath registPhoto(PhotoDetailModel photoDetailModel, PhotoNo newPhotoNo, String filePath) throws GalleryException {
 		String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
 		Photo photo = Photo.forRegist(photoDetailModel, newPhotoNo, new ImageFilePath(filePath + filename));
 		photoAggregateRepository.regist(photo);
 		fileRepository.save(FileModel.of(photo.getImageFilePath(), photo.getImageFile()));
 		applicationEventPublisher.publishEvent(new PhotoRegisteredEvent(photo.getAccountNo(), photo.getPhotoNo()));
+		return photo.getImageFilePath();
+	}
+
+	/**
+	 * 登録済みだがDBロールバック対象となった孤立ファイルを削除する<p>
+	 * 削除自体の失敗は元の例外の伝播を妨げないよう、ログ出力のみに留める
+	 *
+	 * @param	imageFilePaths	削除対象の画像ファイルパスのリスト
+	 */
+	private void deleteOrphanedFiles(List<ImageFilePath> imageFilePaths) {
+		for(ImageFilePath imageFilePath : imageFilePaths) {
+			try {
+				fileRepository.delete(imageFilePath);
+			} catch (RuntimeException e) {
+				log.warn("Failed to delete orphaned file after registration rollback. (imageFilePath: {})", imageFilePath.value(), e);
+			}
+		}
 	}
 
 	/**

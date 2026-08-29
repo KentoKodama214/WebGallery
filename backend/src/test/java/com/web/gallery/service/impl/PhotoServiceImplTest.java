@@ -829,8 +829,61 @@ public class PhotoServiceImplTest {
 			verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
 			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
+
+		@Test
+		@Order(8)
+		@DisplayName("異常系：複数枚新規登録中にN枚目でDB登録が失敗した場合、書き込み済みファイルを補償削除する")
+		void savePhotos_registPhoto_compensatesOrphanedFileOnFailure() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			// 1枚目のDB登録は成功、2枚目のDB登録で失敗させる
+			doNothing().doThrow(RegistFailureException.class).when(photoAggregateRepositoryImpl).regist(any(Photo.class));
+
+			// 新規登録1枚目（成功する）
+			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
+			photoDetailModelList.add(photoDetailModel1);
+
+			// 新規登録2枚目（DB登録が失敗する）
+			PhotoDetailModel photoDetailModel2 = createNewPhoto();
+			photoDetailModelList.add(photoDetailModel2);
+
+			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
+			verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
+
+			// 1枚目は既にファイル書き込みが成功しているため、DBロールバックとの整合性を保つべく補償削除される
+			ArgumentCaptor<ImageFilePath> deleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
+			verify(fileRepositoryImpl, times(1)).delete(deleteCaptor.capture());
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC111.jpg"), deleteCaptor.getValue());
+		}
+
+		@Test
+		@Order(9)
+		@DisplayName("異常系：補償削除自体が失敗しても、元のGalleryExceptionが伝播する")
+		void savePhotos_registPhoto_deleteFailureDoesNotMaskOriginalException() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doNothing().doThrow(RegistFailureException.class).when(photoAggregateRepositoryImpl).regist(any(Photo.class));
+			doThrow(new RuntimeException("delete failed")).when(fileRepositoryImpl).delete(any(ImageFilePath.class));
+
+			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
+			photoDetailModelList.add(photoDetailModel1);
+			PhotoDetailModel photoDetailModel2 = createNewPhoto();
+			photoDetailModelList.add(photoDetailModel2);
+
+			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+		}
 	}
-	
+
 	@Nested
 	@Order(4)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
