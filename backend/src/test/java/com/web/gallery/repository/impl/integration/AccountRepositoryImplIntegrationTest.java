@@ -661,6 +661,61 @@ public class AccountRepositoryImplIntegrationTest {
 	}
 
 	@Nested
+	@Order(10)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class getAccountListForAdmin {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：limitを十分大きくした場合、削除済みを含む全アカウントを取得できること")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
+		void getAccountListForAdmin_found_some_accounts() {
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(100).offset(0).build();
+			AccountPageModel actual = accountRepositoryImpl.getAccountListForAdmin(accountGetModel);
+			assertEquals(12, actual.getAccountModelList().size());
+			assertTrue(actual.getIsLast());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：アカウントが0件")
+		void getAccountListForAdmin_not_found() {
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(100).offset(0).build();
+			AccountPageModel actual = accountRepositoryImpl.getAccountListForAdmin(accountGetModel);
+			assertEquals(0, actual.getAccountModelList().size());
+			assertTrue(actual.getIsLast());
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("正常系：1ページあたりの表示件数（5件）に切り詰められ、最後のページでないと判定されること（1ページ目）")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
+		void getAccountListForAdmin_pagination_firstPage() {
+			// 1ページあたりの表示件数を5件と仮定し、limitはその1件多い6を指定する
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(6).offset(0).build();
+			AccountPageModel actual = accountRepositoryImpl.getAccountListForAdmin(accountGetModel);
+
+			assertFalse(actual.getIsLast());
+			assertEquals(5, actual.getAccountModelList().size());
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("正常系：残り件数が表示件数未満の場合、最後のページと判定されること（3ページ目）")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
+		void getAccountListForAdmin_pagination_lastPage() {
+			// 12件中、1・2ページ目で10件取得済みのため、3ページ目は残り2件のみ
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(6).offset(10).build();
+			AccountPageModel actual = accountRepositoryImpl.getAccountListForAdmin(accountGetModel);
+
+			assertTrue(actual.getIsLast());
+			assertEquals(2, actual.getAccountModelList().size());
+		}
+	}
+
+	@Nested
 	@Order(9)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")

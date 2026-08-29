@@ -122,11 +122,15 @@ public class AccountCondition {
 	}
 
 	/**
-	 * 管理者用アカウント一覧取得用の抽出条件を生成する（全件取得）
+	 * 管理者用アカウント一覧取得用の抽出条件を生成する（削除済みを含む全アカウントが対象）
 	 *
-	 * @return	{@link AccountCondition}
+	 * @param	accountGetModel	{@link AccountGetModel}
+	 * @return					{@link AccountCondition}
 	 */
-	public static AccountCondition forAdminList() {
-		return AccountCondition.builder().build();
+	public static AccountCondition forAdminList(AccountGetModel accountGetModel) {
+		return AccountCondition.builder()
+				.limit(accountGetModel.getLimit())
+				.offset(accountGetModel.getOffset())
+				.build();
 	}
 }

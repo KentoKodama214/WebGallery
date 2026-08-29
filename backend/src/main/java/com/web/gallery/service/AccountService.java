@@ -5,7 +5,6 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountModelList;
 import com.web.gallery.model.AccountPageModel;
 
 /**
@@ -47,11 +46,12 @@ public interface AccountService {
 	AccountPageModel getAccountList(AccountListGetModel accountListGetModel);
 
 	/**
-	 * 管理者用：削除済みを含む全アカウントの一覧を取得する
+	 * 管理者用：削除済みを含む全アカウントの一覧を、ページング情報に従い取得する
 	 *
-	 * @return	{@link AccountModelList}
+	 * @param	accountListGetModel	{@link AccountListGetModel}
+	 * @return						{@link AccountPageModel}
 	 */
-	AccountModelList getAccountListForAdmin();
+	AccountPageModel getAccountListForAdmin(AccountListGetModel accountListGetModel);
 
 	/**
 	 * 管理者用：アカウントのロックを解除する（ログイン失敗回数を0にリセット）

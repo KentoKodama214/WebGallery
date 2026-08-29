@@ -5,7 +5,6 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountGetModel;
 import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountModelList;
 import com.web.gallery.model.AccountPageModel;
 
 /**
@@ -88,11 +87,12 @@ public interface AccountRepository {
 	AccountPageModel getAccountList(AccountGetModel accountGetModel);
 
 	/**
-	 * 削除済みを含む全アカウントの一覧を取得する
+	 * 管理者用：削除済みを含む全アカウントの一覧を、ページング情報に従い取得する
 	 *
-	 * @return	{@link AccountModelList}
+	 * @param	accountGetModel	{@link AccountGetModel}
+	 * @return					{@link AccountPageModel}
 	 */
-	AccountModelList getAccountListAll();
+	AccountPageModel getAccountListForAdmin(AccountGetModel accountGetModel);
 
 	/**
 	 * Accountテーブルから該当するレコードを物理削除する

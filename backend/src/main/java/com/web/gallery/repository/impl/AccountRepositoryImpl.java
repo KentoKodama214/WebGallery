@@ -175,14 +175,21 @@ public class AccountRepositoryImpl implements AccountRepository {
 	}
 
 	/**
-	 * 削除済みを含む全アカウントの一覧を取得する
+	 * 管理者用：削除済みを含む全アカウントの一覧を、ページング情報に従い取得する<p>
+	 * 最後のページかどうかを判定するため、DBからは1ページあたりの表示件数より1件多く取得し、
+	 * 実際に返す件数が上限を超えていた場合は表示件数分のみに切り詰める
 	 *
-	 * @return	{@link AccountModelList}
+	 * @param	accountGetModel	{@link AccountGetModel}
+	 * @return					{@link AccountPageModel}
 	 */
 	@Override
-	public AccountModelList getAccountListAll() {
-		List<Account> accountList = accountMapper.select(AccountCondition.forAdminList());
-		return AccountModelList.from(accountList);
+	public AccountPageModel getAccountListForAdmin(AccountGetModel accountGetModel) {
+		List<Account> accountList = accountMapper.select(AccountCondition.forAdminList(accountGetModel));
+
+		Boolean isLast = accountList.size() < accountGetModel.getLimit();
+		List<Account> pageAccountList = isLast ? accountList : accountList.subList(0, accountGetModel.getLimit() - 1);
+
+		return AccountPageModel.of(AccountModelList.from(pageAccountList), isLast);
 	}
 
 	/**

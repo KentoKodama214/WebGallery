@@ -380,7 +380,73 @@ public class AccountServiceImplIntegrationTest {
 			assertTrue(actual.getIsLast());
 		}
 	}
-	
+
+	@Nested
+	@Order(6)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class getAccountListForAdmin {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：削除済みを含む全アカウントが存在する場合（1ページ目、5件に切り詰められ最後のページでないこと）")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/service/AccountServiceImplIntegrationTest.sql")
+		void getAccountListForAdmin_found() {
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(1).build();
+			AccountPageModel actual = accountServiceImpl.getAccountListForAdmin(accountListGetModel);
+
+			assertFalse(actual.getIsLast());
+			assertEquals(5, actual.getAccountModelList().size());
+			assertEquals("aaaaaaaa", actual.getAccountModelList().get(0).getAccountId().value());
+			assertEquals("bbbbbbbb", actual.getAccountModelList().get(1).getAccountId().value());
+			assertEquals("cccccccc", actual.getAccountModelList().get(2).getAccountId().value());
+			assertEquals("dddddddd", actual.getAccountModelList().get(3).getAccountId().value());
+			assertEquals("eeeeeeee", actual.getAccountModelList().get(4).getAccountId().value());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：削除済みを含む全アカウントが存在する場合（2ページ目、削除済みアカウントも含まれること）")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/service/AccountServiceImplIntegrationTest.sql")
+		void getAccountListForAdmin_found_secondPage() {
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(2).build();
+			AccountPageModel actual = accountServiceImpl.getAccountListForAdmin(accountListGetModel);
+
+			assertFalse(actual.getIsLast());
+			assertEquals(5, actual.getAccountModelList().size());
+			assertEquals("ffffffff", actual.getAccountModelList().get(0).getAccountId().value());
+			assertEquals("gggggggg", actual.getAccountModelList().get(1).getAccountId().value());
+			assertEquals("hhhhhhhh", actual.getAccountModelList().get(2).getAccountId().value());
+			assertEquals("iiiiiiii", actual.getAccountModelList().get(3).getAccountId().value());
+			assertEquals("jjjjjjjj", actual.getAccountModelList().get(4).getAccountId().value());
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("正常系：削除済みを含む全アカウントが存在する場合（3ページ目、残り2件で最後のページと判定されること）")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/service/AccountServiceImplIntegrationTest.sql")
+		void getAccountListForAdmin_found_lastPage() {
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(3).build();
+			AccountPageModel actual = accountServiceImpl.getAccountListForAdmin(accountListGetModel);
+
+			assertTrue(actual.getIsLast());
+			assertEquals(2, actual.getAccountModelList().size());
+			assertEquals("kkkkkkkk", actual.getAccountModelList().get(0).getAccountId().value());
+			assertEquals("llllllll", actual.getAccountModelList().get(1).getAccountId().value());
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("正常系：アカウントが存在しない場合")
+		void getAccountListForAdmin_not_found() {
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(1).build();
+			AccountPageModel actual = accountServiceImpl.getAccountListForAdmin(accountListGetModel);
+			assertEquals(0, actual.getAccountModelList().size());
+			assertTrue(actual.getIsLast());
+		}
+	}
+
 	@Nested
 	@Order(6)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)

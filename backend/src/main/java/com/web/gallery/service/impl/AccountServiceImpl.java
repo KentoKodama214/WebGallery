@@ -34,7 +34,6 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountGetModel;
 import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountModelList;
 import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.repository.AccountAggregateRepository;
 import com.web.gallery.repository.AccountRepository;
@@ -143,14 +142,17 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	}
 
 	/**
-	 * 管理者用：削除済みを含む全アカウントの一覧を取得する
+	 * 管理者用：削除済みを含む全アカウントの一覧を、ページング情報に従い取得する
 	 *
-	 * @return	{@link AccountModelList}
+	 * @param	accountListGetModel	{@link AccountListGetModel}
+	 * @return						{@link AccountPageModel}
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public AccountModelList getAccountListForAdmin() {
-		return accountRepository.getAccountListAll().sortByAccountId();
+	public AccountPageModel getAccountListForAdmin(AccountListGetModel accountListGetModel) {
+		AccountGetModel accountGetModel = AccountGetModel.of(accountListGetModel, accountConfig.getAccountCountPerPage());
+		AccountPageModel accountPageModel = accountRepository.getAccountListForAdmin(accountGetModel);
+		return AccountPageModel.of(accountPageModel.getAccountModelList().sortByAccountId(), accountPageModel.getIsLast());
 	}
 
 	/**

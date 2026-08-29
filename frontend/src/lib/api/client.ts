@@ -118,37 +118,22 @@ export async function fetchWithAuth(
 }
 
 /** アカウント一覧レスポンス（バックエンドはページング済みの結果を返す） */
-interface AccountListGetResponse {
+export interface AccountListGetResponse {
   isLast: boolean;
   accountList: AccountListItem[];
 }
 
 /**
- * アカウント一覧を取得する
- *
- * バックエンドはDoS対策のためページング（`pageNo`）されたレスポンスを返すため、
- * 既存の呼び出し側（全件を前提としたUI）との互換性を保つため、
- * 最後のページに到達するまで内部的にすべてのページを取得して結合する
+ * アカウント一覧を1ページ分取得する
  */
-export async function getAccountList(): Promise<AccountListItem[]> {
-  const accountList: AccountListItem[] = [];
-  let pageNo = 1;
-  let isLast = false;
-
-  while (!isLast) {
-    const response = await fetch(
-      `${API_BASE_URL}/api/v1/accounts?pageNo=${pageNo}`
-    );
-    if (!response.ok) {
-      throw new Error("アカウント一覧の取得に失敗しました");
-    }
-    const data: AccountListGetResponse = await response.json();
-    accountList.push(...data.accountList);
-    isLast = data.isLast;
-    pageNo += 1;
+export async function getAccountList(pageNo: number = 1): Promise<AccountListGetResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/accounts?pageNo=${pageNo}`
+  );
+  if (!response.ok) {
+    throw new Error("アカウント一覧の取得に失敗しました");
   }
-
-  return accountList;
+  return response.json();
 }
 
 /**
@@ -523,11 +508,17 @@ export interface AdminAccountLockResult {
   message: string;
 }
 
+/** 管理者用アカウント一覧レスポンス（バックエンドはページング済みの結果を返す） */
+export interface AdminAccountListGetResponse {
+  isLast: boolean;
+  accountList: AdminAccountListItem[];
+}
+
 /**
- * 管理者用アカウント一覧を取得する
+ * 管理者用アカウント一覧を1ページ分取得する
  */
-export async function getAdminAccountList(): Promise<AdminAccountListItem[]> {
-  const response = await fetchWithAuth("/api/v1/admin/accounts");
+export async function getAdminAccountList(pageNo: number = 1): Promise<AdminAccountListGetResponse> {
+  const response = await fetchWithAuth(`/api/v1/admin/accounts?pageNo=${pageNo}`);
   if (!response.ok) {
     throw new Error("アカウント一覧の取得に失敗しました");
   }
