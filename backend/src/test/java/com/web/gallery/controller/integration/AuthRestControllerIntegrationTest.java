@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -19,6 +20,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +75,34 @@ public class AuthRestControllerIntegrationTest {
 		@BeforeEach
 		void setUp() {
 			insertTestData();
+
+			// login()内のREQUIRES_NEWによる別コネクションの更新がフィクスチャ行を参照できるよう、
+			// ここまでの投入データ（TRUNCATE・INSERT）を物理コミットしてから新しいテスト用トランザクションを開始する
+			TestTransaction.flagForCommit();
+			TestTransaction.end();
+			TestTransaction.start();
+		}
+
+		@AfterEach
+		void tearDown() {
+			// テスト本体が例外系の場合、現在のテストトランザクションはロールバック専用に
+			// なっている可能性があるため、一度終了・再開してクリーンな状態にしてからTRUNCATEし、
+			// setUp()で物理コミットしたフィクスチャ行が後続の他テストへ残留しないよう明示的に物理コミットする
+			TestTransaction.end();
+			TestTransaction.start();
+			jdbcTemplate.execute("""
+					TRUNCATE TABLE
+						photo.photo_favorite,
+						photo.photo_tag_mst,
+						photo.photo_mst,
+						common.refresh_token,
+						common.location_mst,
+						common.account,
+						common.kbn_mst
+					CASCADE
+					""");
+			TestTransaction.flagForCommit();
+			TestTransaction.end();
 		}
 
 		@Test
