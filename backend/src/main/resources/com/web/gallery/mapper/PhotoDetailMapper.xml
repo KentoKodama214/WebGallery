@@ -109,7 +109,7 @@
 				ORDER BY favoriteCount DESC, photo_mst.photo_no ASC
 			</when>
 			<when test="sortBy == 'SEASON'">
-				ORDER BY TO_CHAR(photo_mst.photo_at AT TIME ZONE 'Asia/Tokyo', 'MMDD') DESC, photo_mst.photo_no ASC
+				ORDER BY TO_CHAR(photo_mst.photo_at AT TIME ZONE 'Asia/Tokyo', 'MMDD') DESC, photo_mst.photo_at DESC, photo_mst.photo_no ASC
 			</when>
 			<otherwise>
 				ORDER BY photo_mst.photo_at DESC, photo_mst.photo_no ASC

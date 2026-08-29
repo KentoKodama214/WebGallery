@@ -300,6 +300,32 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 
 		@Test
 		@Order(10)
+		@DisplayName("正常系：季節・時期順で月日が同じ場合、年の降順に並び替えられること")
+		void getPhotoList_sortBy_season_sameMonthDay_sortedByYearDesc() {
+			// account4の写真は12/25が3件（2021・2022・2023年）と11/20が1件のため、
+			// 季節順では12/25のグループ内が年降順（2023→2022→2021）になり、その後11/20が続くこと
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(4L))
+					.photoAccountNo(new AccountNo(4L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.SEASON)
+					.limit(100)
+					.offset(0)
+					.build();
+
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			assertEquals(4, actual.getPhotoModelList().size());
+			assertEquals(3L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(2L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(1L, actual.getPhotoModelList().get(2).getPhotoNo().value());
+			assertEquals(4L, actual.getPhotoModelList().get(3).getPhotoNo().value());
+		}
+
+		@Test
+		@Order(11)
 		@DisplayName("正常系：取得件数がlimitに達した場合、最後のページでないと判定され、表示件数分に切り詰められること")
 		void getPhotoList_pagination_firstPage() {
 			// 1ページあたりの表示件数を1件と仮定し、limitはその1件多い2を指定する
@@ -322,7 +348,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 		}
 
 		@Test
-		@Order(11)
+		@Order(12)
 		@DisplayName("正常系：残り件数がlimit未満の場合、最後のページと判定されること")
 		void getPhotoList_pagination_lastPage() {
 			// 1ページあたりの表示件数を1件と仮定し、2ページ目（offset=1）を取得する

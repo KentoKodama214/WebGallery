@@ -132,6 +132,27 @@ public class PhotoDetailMapperTest {
 			assertEquals(2L, actual.get(0).getPhotoNo());
 			assertEquals(1L, actual.get(1).getPhotoNo());
 		}
+
+		@Test
+		@Order(5)
+		@DisplayName("正常系：季節・時期順で月日が同じ場合、年の降順に並び替えられること")
+		void getPhotoList_sortBy_season_sameMonthDay_sortedByYearDesc() {
+			// account4の写真は12/25が3件（2021・2022・2023年）と11/20が1件のため、
+			// 季節順では12/25のグループ内が年降順（2023→2022→2021）になり、その後11/20が続くこと
+			PhotoListGetDto photoSelectDto = new PhotoListGetDto();
+			photoSelectDto.setAccountNo(4L);
+			photoSelectDto.setPhotoAccountNo(4L);
+			photoSelectDto.setSortBy("SEASON");
+			photoSelectDto.setLimit(100);
+			photoSelectDto.setOffset(0);
+
+			List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
+			assertEquals(4, actual.size());
+			assertEquals(3L, actual.get(0).getPhotoNo());
+			assertEquals(2L, actual.get(1).getPhotoNo());
+			assertEquals(1L, actual.get(2).getPhotoNo());
+			assertEquals(4L, actual.get(3).getPhotoNo());
+		}
 	}
 
 	@Nested
