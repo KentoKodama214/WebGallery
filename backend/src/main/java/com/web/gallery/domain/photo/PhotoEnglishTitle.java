@@ -14,11 +14,14 @@ public record PhotoEnglishTitle(String value) implements Serializable {
 	/**
 	 * コンパクトコンストラクタ
 	 *
-	 * @throws	IllegalArgumentException	nullの場合
+	 * @throws	IllegalArgumentException	nullまたは100文字を超える場合
 	 */
 	public PhotoEnglishTitle {
 		if (value == null) {
 			throw new IllegalArgumentException("写真タイトル英語名はnullにできません");
+		}
+		if (value.length() > 100) {
+			throw new IllegalArgumentException("写真タイトル英語名は100文字以内である必要があります");
 		}
 	}
 
