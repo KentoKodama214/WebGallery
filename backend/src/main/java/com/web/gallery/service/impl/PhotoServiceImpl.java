@@ -40,7 +40,7 @@ import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
-import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
@@ -77,28 +77,30 @@ public class PhotoServiceImpl implements PhotoService {
 	private final ApplicationEventPublisher applicationEventPublisher;
 
 	/**
-	 * 写真一覧を取得する
+	 * 写真一覧を、ページング情報に従い取得する<p>
+	 * 季節・時期順の場合、DB側でも近似的に月日順で並び替えた上でページング対象を絞り込んでいるが、
+	 * 取得したページ内での厳密な並び順を保証するためアプリケーション層でも並び替えを行う
 	 *
 	 * @param	photoListGetModel	{@link PhotoListGetModel}
-	 * @return						{@link PhotoModelList}
+	 * @return						{@link PhotoPageModel}
 	 * @throws	GalleryException	指定のアカウントが存在しなかった場合
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel) throws GalleryException {
+	public PhotoPageModel getPhotoList(PhotoListGetModel photoListGetModel) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId());
 		if (Objects.isNull(accountModel)) {
 			throw ErrorEnum.PHOTO_NOT_FOUND.toException();
 		}
 
-		PhotoModelList photoModelList
+		PhotoPageModel photoPageModel
 			= photoDetailRepository.getPhotoList(
-					PhotoGetModel.of(photoListGetModel, accountModel.getAccountNo()));
+					PhotoGetModel.of(photoListGetModel, accountModel.getAccountNo(), photoConfig.getPhotoCountPerPage()));
 
 		if(SortPhotoEnum.SEASON.equals(photoListGetModel.getSortBy())) {
-			return photoModelList.sorted(getSeasonComparator());
+			return PhotoPageModel.of(photoPageModel.getPhotoModelList().sorted(getSeasonComparator()), photoPageModel.getIsLast());
 		}
-		return photoModelList;
+		return photoPageModel;
 	}
 
 	/**

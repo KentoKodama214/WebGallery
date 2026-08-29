@@ -29,6 +29,8 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36}.%M:%L - %msg%n"
 
 app:
+  account:
+    accountCountPerPage: 20
   photo:
     photoCountPerPage: 20
     maxFileSizeMb: 5

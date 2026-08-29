@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
+import com.web.gallery.model.AccountGetModel;
 
 import lombok.Builder;
 import lombok.Data;
@@ -62,6 +63,12 @@ public class AccountCondition {
 	/** ログイン失敗回数 */
 	private Integer loginFailureCount;
 
+	/** 取得件数上限 */
+	private Integer limit;
+
+	/** 取得開始位置 */
+	private Integer offset;
+
 	/**
 	 * アカウント番号で検索するための抽出条件を生成する
 	 *
@@ -103,20 +110,27 @@ public class AccountCondition {
 	/**
 	 * アカウント一覧取得用の抽出条件を生成する
 	 *
-	 * @return	{@link AccountCondition}
+	 * @param	accountGetModel	{@link AccountGetModel}
+	 * @return					{@link AccountCondition}
 	 */
-	public static AccountCondition forList() {
+	public static AccountCondition forList(AccountGetModel accountGetModel) {
 		return AccountCondition.builder()
 				.isDeleted(false)
+				.limit(accountGetModel.getLimit())
+				.offset(accountGetModel.getOffset())
 				.build();
 	}
 
 	/**
-	 * 管理者用アカウント一覧取得用の抽出条件を生成する（全件取得）
+	 * 管理者用アカウント一覧取得用の抽出条件を生成する（削除済みを含む全アカウントが対象）
 	 *
-	 * @return	{@link AccountCondition}
+	 * @param	accountGetModel	{@link AccountGetModel}
+	 * @return					{@link AccountCondition}
 	 */
-	public static AccountCondition forAdminList() {
-		return AccountCondition.builder().build();
+	public static AccountCondition forAdminList(AccountGetModel accountGetModel) {
+		return AccountCondition.builder()
+				.limit(accountGetModel.getLimit())
+				.offset(accountGetModel.getOffset())
+				.build();
 	}
 }

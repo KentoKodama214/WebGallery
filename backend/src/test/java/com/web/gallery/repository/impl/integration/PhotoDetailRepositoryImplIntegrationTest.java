@@ -49,7 +49,7 @@ import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
-import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
 
 @ActiveProfiles("test")
@@ -76,9 +76,11 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(List.of())
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(100)
+					.offset(0)
 					.build();
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
-			assertEquals(0, actual.size());
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			assertEquals(0, actual.getPhotoModelList().size());
 		}
 		
 		@Test
@@ -92,17 +94,19 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(List.of())
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(100)
+					.offset(0)
 					.build();
 
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
-			assertEquals(2, actual.size());
-			assertEquals(new AccountNo(2L), actual.get(0).getAccountNo());
-			assertEquals(2L, actual.get(0).getPhotoNo().value());
-			assertEquals(0, actual.get(0).getPhotoTagModelList().size());
-			assertEquals(new AccountNo(2L), actual.get(1).getAccountNo());
-			assertEquals(1L, actual.get(1).getPhotoNo().value());
-			assertEquals(0, actual.get(1).getPhotoTagModelList().size());
+			assertEquals(2, actual.getPhotoModelList().size());
+			assertEquals(new AccountNo(2L), actual.getPhotoModelList().get(0).getAccountNo());
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(0, actual.getPhotoModelList().get(0).getPhotoTagModelList().size());
+			assertEquals(new AccountNo(2L), actual.getPhotoModelList().get(1).getAccountNo());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(0, actual.getPhotoModelList().get(1).getPhotoTagModelList().size());
 		}
 		
 		@Test
@@ -116,44 +120,46 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(List.of())
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(100)
+					.offset(0)
 					.build();
 
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
-			assertEquals(2, actual.size());
+			assertEquals(2, actual.getPhotoModelList().size());
 
-			assertEquals(new AccountNo(1L), actual.get(0).getAccountNo());
-			assertEquals(2L, actual.get(0).getPhotoNo().value());
-			assertEquals(3, actual.get(0).getPhotoTagModelList().size());
-			assertEquals(new AccountNo(1L), actual.get(0).getPhotoTagModelList().get(0).getAccountNo());
-			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(0).getPhotoNo().value());
-			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getTagNo().value());
-			assertEquals("太陽", actual.get(0).getPhotoTagModelList().get(0).getTagJapaneseName().value());
-			assertEquals("sun", actual.get(0).getPhotoTagModelList().get(0).getTagEnglishName().value());
-			assertEquals(new AccountNo(1L), actual.get(0).getPhotoTagModelList().get(1).getAccountNo());
-			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(1).getPhotoNo().value());
-			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(1).getTagNo().value());
-			assertEquals("曇天", actual.get(0).getPhotoTagModelList().get(1).getTagJapaneseName().value());
-			assertEquals("cloudy", actual.get(0).getPhotoTagModelList().get(1).getTagEnglishName().value());
-			assertEquals(new AccountNo(1L), actual.get(0).getPhotoTagModelList().get(2).getAccountNo());
-			assertEquals(2L, actual.get(0).getPhotoTagModelList().get(2).getPhotoNo().value());
-			assertEquals(3L, actual.get(0).getPhotoTagModelList().get(2).getTagNo().value());
-			assertEquals("花", actual.get(0).getPhotoTagModelList().get(2).getTagJapaneseName().value());
-			assertEquals("flower", actual.get(0).getPhotoTagModelList().get(2).getTagEnglishName().value());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(0).getAccountNo());
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(3, actual.getPhotoModelList().get(0).getPhotoTagModelList().size());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(0).getPhotoTagModelList().get(0).getAccountNo());
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoTagModelList().get(0).getPhotoNo().value());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoTagModelList().get(0).getTagNo().value());
+			assertEquals("太陽", actual.getPhotoModelList().get(0).getPhotoTagModelList().get(0).getTagJapaneseName().value());
+			assertEquals("sun", actual.getPhotoModelList().get(0).getPhotoTagModelList().get(0).getTagEnglishName().value());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(0).getPhotoTagModelList().get(1).getAccountNo());
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoTagModelList().get(1).getPhotoNo().value());
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoTagModelList().get(1).getTagNo().value());
+			assertEquals("曇天", actual.getPhotoModelList().get(0).getPhotoTagModelList().get(1).getTagJapaneseName().value());
+			assertEquals("cloudy", actual.getPhotoModelList().get(0).getPhotoTagModelList().get(1).getTagEnglishName().value());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(0).getPhotoTagModelList().get(2).getAccountNo());
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoTagModelList().get(2).getPhotoNo().value());
+			assertEquals(3L, actual.getPhotoModelList().get(0).getPhotoTagModelList().get(2).getTagNo().value());
+			assertEquals("花", actual.getPhotoModelList().get(0).getPhotoTagModelList().get(2).getTagJapaneseName().value());
+			assertEquals("flower", actual.getPhotoModelList().get(0).getPhotoTagModelList().get(2).getTagEnglishName().value());
 
-			assertEquals(new AccountNo(1L), actual.get(1).getAccountNo());
-			assertEquals(1L, actual.get(1).getPhotoNo().value());
-			assertEquals(2, actual.get(1).getPhotoTagModelList().size());
-			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(0).getAccountNo());
-			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(0).getPhotoNo().value());
-			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(0).getTagNo().value());
-			assertEquals("太陽", actual.get(1).getPhotoTagModelList().get(0).getTagJapaneseName().value());
-			assertEquals("sun", actual.get(1).getPhotoTagModelList().get(0).getTagEnglishName().value());
-			assertEquals(new AccountNo(1L), actual.get(1).getPhotoTagModelList().get(1).getAccountNo());
-			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(1).getPhotoNo().value());
-			assertEquals(2L, actual.get(1).getPhotoTagModelList().get(1).getTagNo().value());
-			assertEquals("青空", actual.get(1).getPhotoTagModelList().get(1).getTagJapaneseName().value());
-			assertEquals("bluesky", actual.get(1).getPhotoTagModelList().get(1).getTagEnglishName().value());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(1).getAccountNo());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(2, actual.getPhotoModelList().get(1).getPhotoTagModelList().size());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(1).getPhotoTagModelList().get(0).getAccountNo());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoTagModelList().get(0).getPhotoNo().value());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoTagModelList().get(0).getTagNo().value());
+			assertEquals("太陽", actual.getPhotoModelList().get(1).getPhotoTagModelList().get(0).getTagJapaneseName().value());
+			assertEquals("sun", actual.getPhotoModelList().get(1).getPhotoTagModelList().get(0).getTagEnglishName().value());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(1).getPhotoTagModelList().get(1).getAccountNo());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoTagModelList().get(1).getPhotoNo().value());
+			assertEquals(2L, actual.getPhotoModelList().get(1).getPhotoTagModelList().get(1).getTagNo().value());
+			assertEquals("青空", actual.getPhotoModelList().get(1).getPhotoTagModelList().get(1).getTagJapaneseName().value());
+			assertEquals("bluesky", actual.getPhotoModelList().get(1).getPhotoTagModelList().get(1).getTagEnglishName().value());
 		}
 
 		@Test
@@ -167,13 +173,15 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(List.of())
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(100)
+					.offset(0)
 					.build();
 
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
-			assertEquals(1, actual.size());
-			assertEquals(1L, actual.get(0).getPhotoNo().value());
-			assertEquals(DirectionEnum.VERTICAL, actual.get(0).getDirectionKbn());
+			assertEquals(1, actual.getPhotoModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(DirectionEnum.VERTICAL, actual.getPhotoModelList().get(0).getDirectionKbn());
 		}
 
 		@Test
@@ -187,13 +195,15 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(true))
 					.tagList(List.of())
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(100)
+					.offset(0)
 					.build();
 
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
-			assertEquals(1, actual.size());
-			assertEquals(1L, actual.get(0).getPhotoNo().value());
-			assertTrue(actual.get(0).getIsFavorite().value());
+			assertEquals(1, actual.getPhotoModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertTrue(actual.getPhotoModelList().get(0).getIsFavorite().value());
 		}
 
 		@Test
@@ -207,12 +217,14 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(List.of("太陽", "青空"))
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(100)
+					.offset(0)
 					.build();
 
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
-			assertEquals(1, actual.size());
-			assertEquals(1L, actual.get(0).getPhotoNo().value());
+			assertEquals(1, actual.getPhotoModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoNo().value());
 		}
 
 		@Test
@@ -226,15 +238,17 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(List.of())
 					.sortBy(SortPhotoEnum.FAVORITE)
+					.limit(100)
+					.offset(0)
 					.build();
 
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
-			assertEquals(2, actual.size());
-			assertEquals(1L, actual.get(0).getPhotoNo().value());
-			assertEquals(2, actual.get(0).getFavoriteCount().value());
-			assertEquals(2L, actual.get(1).getPhotoNo().value());
-			assertEquals(1, actual.get(1).getFavoriteCount().value());
+			assertEquals(2, actual.getPhotoModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(2, actual.getPhotoModelList().get(0).getFavoriteCount().value());
+			assertEquals(2L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(1, actual.getPhotoModelList().get(1).getFavoriteCount().value());
 		}
 
 		@Test
@@ -248,15 +262,112 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(List.of())
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(100)
+					.offset(0)
 					.build();
 
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
-			assertEquals(2, actual.size());
-			assertEquals(2L, actual.get(0).getPhotoNo().value());
-			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
-			assertEquals(1L, actual.get(1).getPhotoNo().value());
-			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.get(1).getPhotoAt().value());
+			assertEquals(2, actual.getPhotoModelList().size());
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(0).getPhotoAt().value());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(1).getPhotoAt().value());
+		}
+
+		@Test
+		@Order(9)
+		@DisplayName("正常系：季節・時期順（月日の降順）に並び替えられること")
+		void getPhotoList_sortBy_season() {
+			// account1の写真は1月・2月の撮影のため、季節順（月日降順）では撮影日時降順と同順になること
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.SEASON)
+					.limit(100)
+					.offset(0)
+					.build();
+
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			assertEquals(2, actual.getPhotoModelList().size());
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+		}
+
+		@Test
+		@Order(10)
+		@DisplayName("正常系：季節・時期順で月日が同じ場合、年の降順に並び替えられること")
+		void getPhotoList_sortBy_season_sameMonthDay_sortedByYearDesc() {
+			// account4の写真は12/25が3件（2021・2022・2023年）と11/20が1件のため、
+			// 季節順では12/25のグループ内が年降順（2023→2022→2021）になり、その後11/20が続くこと
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(4L))
+					.photoAccountNo(new AccountNo(4L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.SEASON)
+					.limit(100)
+					.offset(0)
+					.build();
+
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			assertEquals(4, actual.getPhotoModelList().size());
+			assertEquals(3L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(2L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(1L, actual.getPhotoModelList().get(2).getPhotoNo().value());
+			assertEquals(4L, actual.getPhotoModelList().get(3).getPhotoNo().value());
+		}
+
+		@Test
+		@Order(11)
+		@DisplayName("正常系：取得件数がlimitに達した場合、最後のページでないと判定され、表示件数分に切り詰められること")
+		void getPhotoList_pagination_firstPage() {
+			// 1ページあたりの表示件数を1件と仮定し、limitはその1件多い2を指定する
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(2)
+					.offset(0)
+					.build();
+
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			assertFalse(actual.getIsLast());
+			assertEquals(1, actual.getPhotoModelList().size());
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+		}
+
+		@Test
+		@Order(12)
+		@DisplayName("正常系：残り件数がlimit未満の場合、最後のページと判定されること")
+		void getPhotoList_pagination_lastPage() {
+			// 1ページあたりの表示件数を1件と仮定し、2ページ目（offset=1）を取得する
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(2)
+					.offset(1)
+					.build();
+
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			assertTrue(actual.getIsLast());
+			assertEquals(1, actual.getPhotoModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoNo().value());
 		}
 	}
 

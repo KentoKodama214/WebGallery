@@ -65,6 +65,10 @@
 				<property name="prefix" value=""/>
 			</include>
 		</where>
+		<if test="limit != null">
+			ORDER BY account_id ASC
+			LIMIT #{limit} OFFSET #{offset}
+		</if>
 	</select>
 
 	<select id="count" parameterType="com.web.gallery.entity.AccountCondition" resultType="Integer">

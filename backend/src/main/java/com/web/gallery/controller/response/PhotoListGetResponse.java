@@ -2,7 +2,7 @@ package com.web.gallery.controller.response;
 
 import java.util.List;
 
-import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -24,22 +24,19 @@ public class PhotoListGetResponse {
 	private List<PhotoListResponse> photoList;
 
 	/**
-	 * 写真リストとページネーション情報からPhotoListGetResponseを生成する
+	 * PhotoPageModelからPhotoListGetResponseを生成する<p>
+	 * DB側で既にページング済みの結果をそのまま変換する
 	 *
-	 * @param	photoList			{@link PhotoModelList}
-	 * @param	pageNo				ページ番号
-	 * @param	photoCountPerPage	1ページあたりの写真数
-	 * @return						{@link PhotoListGetResponse}
+	 * @param	photoPageModel	{@link PhotoPageModel}
+	 * @return					{@link PhotoListGetResponse}
 	 */
-	public static PhotoListGetResponse from(PhotoModelList photoList, Integer pageNo, Integer photoCountPerPage) {
-		List<PhotoListResponse> photoListResponseList = photoList.stream()
-				.skip((long) (pageNo - 1) * photoCountPerPage)
-				.limit(photoCountPerPage)
+	public static PhotoListGetResponse from(PhotoPageModel photoPageModel) {
+		List<PhotoListResponse> photoListResponseList = photoPageModel.getPhotoModelList().stream()
 				.map(PhotoListResponse::from)
 				.toList();
 
 		return PhotoListGetResponse.builder()
-				.isLast(pageNo * photoCountPerPage >= photoList.size())
+				.isLast(photoPageModel.getIsLast())
 				.photoList(photoListResponseList)
 				.build();
 	}

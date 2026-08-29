@@ -79,6 +79,7 @@ import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.policy.ImageFileValidationPolicy;
@@ -284,9 +285,10 @@ public class PhotoServiceImplTest {
 
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+			doReturn(5).when(photoConfig).getPhotoCountPerPage();
 
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
-			doReturn(PhotoModelList.empty()).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
+			doReturn(PhotoPageModel.of(PhotoModelList.empty(), true)).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
 
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -295,10 +297,12 @@ public class PhotoServiceImplTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(1)
 					.build();
 
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			assertTrue(actual.isEmpty());
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			assertTrue(actual.getPhotoModelList().isEmpty());
+			assertTrue(actual.getIsLast());
 			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
 
@@ -309,6 +313,8 @@ public class PhotoServiceImplTest {
 			assertFalse(photoGetModel.getIsFavoriteOnly().value());
 			assertEquals(tags, photoGetModel.getTagList());
 			assertEquals(SortPhotoEnum.PHOTO_AT, photoGetModel.getSortBy());
+			assertEquals(6, photoGetModel.getLimit());
+			assertEquals(0, photoGetModel.getOffset());
 		}
 
 		@Test
@@ -320,10 +326,11 @@ public class PhotoServiceImplTest {
 
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+			doReturn(5).when(photoConfig).getPhotoCountPerPage();
 
 			PhotoModelList repositoryResult = createPhotoModelList();
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
-			doReturn(repositoryResult).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
+			doReturn(PhotoPageModel.of(repositoryResult, false)).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
 
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -332,10 +339,12 @@ public class PhotoServiceImplTest {
 					.isFavoriteOnly(new IsFavoriteOnly(true))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.FAVORITE)
+					.pageNo(1)
 					.build();
 
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			assertEquals(repositoryResult.toList(), actual.toList());
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			assertEquals(repositoryResult.toList(), actual.getPhotoModelList().toList());
+			assertFalse(actual.getIsLast());
 
 			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
@@ -358,6 +367,7 @@ public class PhotoServiceImplTest {
 
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+			doReturn(5).when(photoConfig).getPhotoCountPerPage();
 
 			// SQL側で絞り込み済みの想定で、季節順とは異なる並びでRepositoryの結果をモックする
 			List<PhotoModel> repositoryResultList = new ArrayList<PhotoModel>();
@@ -396,7 +406,7 @@ public class PhotoServiceImplTest {
 					.build());
 
 			ArgumentCaptor<PhotoGetModel> photoGetModelCaptor = ArgumentCaptor.forClass(PhotoGetModel.class);
-			doReturn(PhotoModelList.of(repositoryResultList)).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
+			doReturn(PhotoPageModel.of(PhotoModelList.of(repositoryResultList), true)).when(photoDetailRepositoryImpl).getPhotoList(photoGetModelCaptor.capture());
 
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -405,13 +415,15 @@ public class PhotoServiceImplTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.SEASON)
+					.pageNo(1)
 					.build();
 
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			assertEquals(3, actual.size());
-			assertEquals(1L, actual.get(0).getPhotoNo().value());
-			assertEquals(2L, actual.get(1).getPhotoNo().value());
-			assertEquals(3L, actual.get(2).getPhotoNo().value());
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			assertEquals(3, actual.getPhotoModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(2L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(3L, actual.getPhotoModelList().get(2).getPhotoNo().value());
+			assertTrue(actual.getIsLast());
 
 			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
 			verify(photoDetailRepositoryImpl).getPhotoList(any(PhotoGetModel.class));
@@ -437,6 +449,7 @@ public class PhotoServiceImplTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(new ArrayList<String>())
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(1)
 					.build();
 
 			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoList(photoListGetModel));

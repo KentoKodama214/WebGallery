@@ -117,11 +117,19 @@ export async function fetchWithAuth(
   return response;
 }
 
+/** アカウント一覧レスポンス（バックエンドはページング済みの結果を返す） */
+export interface AccountListGetResponse {
+  isLast: boolean;
+  accountList: AccountListItem[];
+}
+
 /**
- * アカウント一覧を取得する
+ * アカウント一覧を1ページ分取得する
  */
-export async function getAccountList(): Promise<AccountListItem[]> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/accounts`);
+export async function getAccountList(pageNo: number = 1): Promise<AccountListGetResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/accounts?pageNo=${pageNo}`
+  );
   if (!response.ok) {
     throw new Error("アカウント一覧の取得に失敗しました");
   }
@@ -500,11 +508,17 @@ export interface AdminAccountLockResult {
   message: string;
 }
 
+/** 管理者用アカウント一覧レスポンス（バックエンドはページング済みの結果を返す） */
+export interface AdminAccountListGetResponse {
+  isLast: boolean;
+  accountList: AdminAccountListItem[];
+}
+
 /**
- * 管理者用アカウント一覧を取得する
+ * 管理者用アカウント一覧を1ページ分取得する
  */
-export async function getAdminAccountList(): Promise<AdminAccountListItem[]> {
-  const response = await fetchWithAuth("/api/v1/admin/accounts");
+export async function getAdminAccountList(pageNo: number = 1): Promise<AdminAccountListGetResponse> {
+  const response = await fetchWithAuth(`/api/v1/admin/accounts?pageNo=${pageNo}`);
   if (!response.ok) {
     throw new Error("アカウント一覧の取得に失敗しました");
   }

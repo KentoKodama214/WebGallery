@@ -87,17 +87,18 @@ public class AdminAccountRestControllerIntegrationTest {
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath("$.length()").value(3))
-				.andExpect(jsonPath("$[0].accountId").value("aaaaaaaa"))
-				.andExpect(jsonPath("$[0].accountName").value("AAAAAAAA"))
-				.andExpect(jsonPath("$[0].authorityKbn").value("administrator"))
-				.andExpect(jsonPath("$[0].isDeleted").value(false))
-				.andExpect(jsonPath("$[0].loginFailureCount").value(0))
-				.andExpect(jsonPath("$[1].accountId").value("bbbbbbbb"))
-				.andExpect(jsonPath("$[1].isDeleted").value(false))
-				.andExpect(jsonPath("$[1].loginFailureCount").value(10))
-				.andExpect(jsonPath("$[2].accountId").value("cccccccc"))
-				.andExpect(jsonPath("$[2].isDeleted").value(true));
+				.andExpect(jsonPath("$.isLast").value(true))
+				.andExpect(jsonPath("$.accountList.length()").value(3))
+				.andExpect(jsonPath("$.accountList[0].accountId").value("aaaaaaaa"))
+				.andExpect(jsonPath("$.accountList[0].accountName").value("AAAAAAAA"))
+				.andExpect(jsonPath("$.accountList[0].authorityKbn").value("administrator"))
+				.andExpect(jsonPath("$.accountList[0].isDeleted").value(false))
+				.andExpect(jsonPath("$.accountList[0].loginFailureCount").value(0))
+				.andExpect(jsonPath("$.accountList[1].accountId").value("bbbbbbbb"))
+				.andExpect(jsonPath("$.accountList[1].isDeleted").value(false))
+				.andExpect(jsonPath("$.accountList[1].loginFailureCount").value(10))
+				.andExpect(jsonPath("$.accountList[2].accountId").value("cccccccc"))
+				.andExpect(jsonPath("$.accountList[2].isDeleted").value(true));
 		}
 
 		@Test

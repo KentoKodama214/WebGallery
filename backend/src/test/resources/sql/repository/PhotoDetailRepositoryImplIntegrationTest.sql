@@ -20,6 +20,12 @@ insert into photo.photo_mst values(DEFAULT, 1, 3, 1, '2000-01-01 09:00:00 Asia/T
 insert into photo.photo_mst values(DEFAULT, 2, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2022-01-01 09:00:00 Asia/Tokyo', 4, 'https://www.xxx.com/DSC444.jpg', 'タイトル21', 'title21', 'キャプション21', 'horizontal', 80, 12.0, 5,  800);
 insert into photo.photo_mst values(DEFAULT, 2, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2022-02-01 09:00:00 Asia/Tokyo', 5, 'https://www.xxx.com/DSC555.jpg', 'タイトル22', 'title22', 'キャプション22', 'horizontal', 90, 16.0, 10, 1200);
 
+-- account4：季節・時期順ソートで月日が同じ場合に年降順となることの検証用（同じ12/25で年違い3件 + 比較用の11/20）
+insert into photo.photo_mst values(DEFAULT, 4, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2021-12-25 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC311.jpg', 'タイトル31', 'title31', 'キャプション31', 'horizontal', 24, 8.0, 1, 100);
+insert into photo.photo_mst values(DEFAULT, 4, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2022-12-25 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC312.jpg', 'タイトル32', 'title32', 'キャプション32', 'horizontal', 24, 8.0, 1, 100);
+insert into photo.photo_mst values(DEFAULT, 4, 3, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2023-12-25 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC313.jpg', 'タイトル33', 'title33', 'キャプション33', 'horizontal', 24, 8.0, 1, 100);
+insert into photo.photo_mst values(DEFAULT, 4, 4, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2023-11-20 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC314.jpg', 'タイトル34', 'title34', 'キャプション34', 'horizontal', 24, 8.0, 1, 100);
+
 -- photo.photo_favorite
 insert into photo.photo_favorite values(DEFAULT, 1, 1, 1, 1, now());
 insert into photo.photo_favorite values(DEFAULT, 2, 1, 1, 1, now());

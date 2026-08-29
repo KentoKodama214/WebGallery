@@ -1,9 +1,11 @@
 package com.web.gallery.controller;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,10 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.web.gallery.annotation.RequireAdminAuthority;
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.MessageConst;
-import com.web.gallery.controller.response.AdminAccountListItemResponse;
+import com.web.gallery.controller.request.AccountListRequest;
+import com.web.gallery.controller.response.AdminAccountListGetResponse;
 import com.web.gallery.controller.response.AdminAccountLockResponse;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.model.AccountListGetModel;
+import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.service.AccountService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,10 +29,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 管理者用アカウント管理に関するAPI通信を扱うRestControllerクラス
  */
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "管理者アカウント管理", description = "管理者用アカウント管理に関するAPI")
@@ -37,22 +45,34 @@ public class AdminAccountRestController {
 	/**
 	 * 管理者用アカウント一覧取得
 	 *
-	 * @return	{@link AdminAccountListItemResponse}のリスト
-	 * @throws	GalleryException	管理者権限がない場合
+	 * @param	accountListRequest	{@link AccountListRequest}
+	 * @param	result				バリデーション結果
+	 * @return						{@link AdminAccountListGetResponse}
+	 * @throws	GalleryException	以下のいずれかに該当する場合
+	 *                          	・管理者権限がない場合
+	 *                          	・リクエストパラメータが不正な場合
 	 */
 	@Operation(summary = "管理者用アカウント一覧取得", description = "削除済みを含む全アカウントの一覧を取得する")
 	@ApiResponse(responseCode = "200", description = "取得成功")
+	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
 	@ApiResponse(responseCode = "403", description = "管理者権限がない", content = @Content)
 	@RequireAdminAuthority
 	@GetMapping(ApiRoutes.API_ADMIN_ACCOUNTS)
-	public ResponseEntity<List<AdminAccountListItemResponse>> getAdminAccountList()
-			throws GalleryException {
+	public ResponseEntity<AdminAccountListGetResponse> getAdminAccountList(
+			@ModelAttribute @Validated AccountListRequest accountListRequest,
+			BindingResult result) throws GalleryException {
 
-		List<AdminAccountListItemResponse> responseList = accountService.getAccountListForAdmin().stream()
-				.map(AdminAccountListItemResponse::from)
-				.toList();
+		if(result.hasErrors()) {
+			for(FieldError error : result.getFieldErrors()) {
+				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
+						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
+			}
+			throw ErrorEnum.INVALID_INPUT.toException();
+		}
 
-		return ResponseEntity.ok(responseList);
+		AccountPageModel accountPageModel = accountService.getAccountListForAdmin(AccountListGetModel.from(accountListRequest));
+
+		return ResponseEntity.ok(AdminAccountListGetResponse.from(accountPageModel));
 	}
 
 	/**

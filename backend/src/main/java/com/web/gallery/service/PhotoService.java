@@ -9,20 +9,20 @@ import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 
 /**
  * 写真に関するビジネスロジックを行うServiceクラス
  */
 public interface PhotoService {
 	/**
-	 * 写真一覧を取得する
+	 * 写真一覧を、ページング情報に従い取得する
 	 *
 	 * @param	photoListGetModel	{@link PhotoListGetModel}
-	 * @return						{@link PhotoModelList}
+	 * @return						{@link PhotoPageModel}
 	 * @throws	GalleryException	指定のアカウントが存在しなかった場合
 	 */
-	PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel) throws GalleryException;
+	PhotoPageModel getPhotoList(PhotoListGetModel photoListGetModel) throws GalleryException;
 	
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する

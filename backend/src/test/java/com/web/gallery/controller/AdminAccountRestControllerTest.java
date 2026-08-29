@@ -36,6 +36,7 @@ import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.service.AccountService;
 
 @ActiveProfiles("test")
@@ -90,32 +91,45 @@ public class AdminAccountRestControllerTest {
 							.build()
 			));
 
-			doReturn(accountModels).when(accountService).getAccountListForAdmin();
+			doReturn(AccountPageModel.of(accountModels, false)).when(accountService).getAccountListForAdmin(any());
 
 			mockMvc.perform(get("/api/v1/admin/accounts"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].accountNo").value(1))
-				.andExpect(jsonPath("$[0].accountId").value("aaaaaaaa"))
-				.andExpect(jsonPath("$[0].accountName").value("AAAAAAAA"))
-				.andExpect(jsonPath("$[0].authorityKbn").value("administrator"))
-				.andExpect(jsonPath("$[0].isDeleted").value(false))
-				.andExpect(jsonPath("$[0].loginFailureCount").value(0))
-				.andExpect(jsonPath("$[1].accountNo").value(2))
-				.andExpect(jsonPath("$[1].accountId").value("bbbbbbbb"))
-				.andExpect(jsonPath("$[1].isDeleted").value(true))
-				.andExpect(jsonPath("$[1].loginFailureCount").value(5));
+				.andExpect(jsonPath("$.isLast").value(false))
+				.andExpect(jsonPath("$.accountList[0].accountNo").value(1))
+				.andExpect(jsonPath("$.accountList[0].accountId").value("aaaaaaaa"))
+				.andExpect(jsonPath("$.accountList[0].accountName").value("AAAAAAAA"))
+				.andExpect(jsonPath("$.accountList[0].authorityKbn").value("administrator"))
+				.andExpect(jsonPath("$.accountList[0].isDeleted").value(false))
+				.andExpect(jsonPath("$.accountList[0].loginFailureCount").value(0))
+				.andExpect(jsonPath("$.accountList[1].accountNo").value(2))
+				.andExpect(jsonPath("$.accountList[1].accountId").value("bbbbbbbb"))
+				.andExpect(jsonPath("$.accountList[1].isDeleted").value(true))
+				.andExpect(jsonPath("$.accountList[1].loginFailureCount").value(5));
 		}
 
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが0件の場合は空リストを返すこと")
 		void getAdminAccountList_empty() throws Exception {
-			doReturn(AccountModelList.empty()).when(accountService).getAccountListForAdmin();
+			doReturn(AccountPageModel.of(AccountModelList.empty(), true)).when(accountService).getAccountListForAdmin(any());
 
 			mockMvc.perform(get("/api/v1/admin/accounts"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$").isArray())
-				.andExpect(jsonPath("$").isEmpty());
+				.andExpect(jsonPath("$.isLast").value(true))
+				.andExpect(jsonPath("$.accountList").isArray())
+				.andExpect(jsonPath("$.accountList").isEmpty());
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("異常系：ページ番号が0以下。BadRequestExceptionをthrowする")
+		void getAdminAccountList_BadRequestException_pageNo_not_positive() throws Exception {
+			mockMvc.perform(get("/api/v1/admin/accounts")
+					.param("pageNo", "0"))
+				.andExpect(status().isBadRequest());
+
+			verify(accountService, times(0)).getAccountListForAdmin(any());
 		}
 	}
 

@@ -9,13 +9,17 @@ import { getAccountList, type AccountListItem } from "@/lib/api/client";
  */
 export function AccountList() {
   const [accounts, setAccounts] = useState<AccountListItem[]>([]);
+  const [isLast, setIsLast] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pageNo, setPageNo] = useState(1);
 
   useEffect(() => {
-    getAccountList()
+    getAccountList(1)
       .then((data) => {
-        setAccounts(data);
+        setAccounts(data.accountList);
+        setIsLast(data.isLast);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "エラーが発生しました");
@@ -24,6 +28,24 @@ export function AccountList() {
         setIsLoading(false);
       });
   }, []);
+
+  /**
+   * +もっと見る
+   */
+  const handleLoadMore = async () => {
+    const nextPage = pageNo + 1;
+    setIsLoadingMore(true);
+    try {
+      const data = await getAccountList(nextPage);
+      setAccounts((prev) => [...prev, ...data.accountList]);
+      setIsLast(data.isLast);
+      setPageNo(nextPage);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "エラーが発生しました");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -42,7 +64,7 @@ export function AccountList() {
   }
 
   return (
-    <div className="flex justify-center py-8">
+    <div className="flex flex-col items-center py-8 gap-4">
       <div
         className="w-[650px]"
         style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)" }}
@@ -93,6 +115,17 @@ export function AccountList() {
           </tbody>
         </table>
       </div>
+
+      {!isLast && (
+        <button
+          onClick={handleLoadMore}
+          disabled={isLoadingMore}
+          data-testid="show-more-button"
+          className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+        >
+          {isLoadingMore ? "読み込み中..." : "＋もっと見る"}
+        </button>
+      )}
     </div>
   );
 }

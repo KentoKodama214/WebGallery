@@ -71,7 +71,7 @@ import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.service.impl.PhotoServiceImpl;
@@ -97,7 +97,7 @@ public class PhotoServiceImplIntegrationTest {
 		@DisplayName("正常系：写真が存在しなかった場合")
 		void getPhotoList_not_found() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
-			
+
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountId(new AccountId("dddddddd"))
@@ -105,18 +105,20 @@ public class PhotoServiceImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(1)
 					.build();
-			
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			assertTrue(actual.isEmpty());
+
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+			assertTrue(actual.getPhotoModelList().isEmpty());
+			assertTrue(actual.getIsLast());
 		}
-		
+
 		@Test
 		@Order(2)
-		@DisplayName("正常系：写真が存在した場合で、撮影日順に並び替え")
+		@DisplayName("正常系：写真が存在した場合で、撮影日順に並び替え（1ページ目）")
 		void getPhotoList_sortBy_photoAt() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
-			
+
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountId(new AccountId("aaaaaaaa"))
@@ -124,42 +126,69 @@ public class PhotoServiceImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(1)
 					.build();
-			
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			
-			// List<PhotoModel>の数チェック
-			assertEquals(10, actual.size());
-			
+
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+
+			// List<PhotoModel>の数チェック（1ページあたり5件のうち、10件中の1ページ目）
+			assertEquals(5, actual.getPhotoModelList().size());
+			assertFalse(actual.getIsLast());
+
 			// List<PhotoModel>の並び順チェック
-			assertEquals(9L, actual.get(0).getPhotoNo().value());
-			assertEquals(8L, actual.get(1).getPhotoNo().value());
-			assertEquals(7L, actual.get(2).getPhotoNo().value());
-			assertEquals(6L, actual.get(3).getPhotoNo().value());
-			assertEquals(5L, actual.get(4).getPhotoNo().value());
-			assertEquals(4L, actual.get(5).getPhotoNo().value());
-			assertEquals(10L, actual.get(6).getPhotoNo().value());
-			assertEquals(3L, actual.get(7).getPhotoNo().value());
-			assertEquals(2L, actual.get(8).getPhotoNo().value());
-			assertEquals(1L, actual.get(9).getPhotoNo().value());
-			
+			assertEquals(9L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(8L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(7L, actual.getPhotoModelList().get(2).getPhotoNo().value());
+			assertEquals(6L, actual.getPhotoModelList().get(3).getPhotoNo().value());
+			assertEquals(5L, actual.getPhotoModelList().get(4).getPhotoNo().value());
+
 			// 抜き取りで、PhotoModelのデータチェック
-			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(0, actual.get(0).getFavoriteCount().value());
-			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2023, 9, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
-			assertEquals("https://www.xxx.com/aaaaaaaa/DSC19.jpg", actual.get(0).getImageFilePath().value());
-			assertEquals("キャプション19", actual.get(0).getCaption().value());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
-			assertEquals(0, actual.get(0).getPhotoTagModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getAccountNo().value());
+			assertEquals(0, actual.getPhotoModelList().get(0).getFavoriteCount().value());
+			assertFalse(actual.getPhotoModelList().get(0).getIsFavorite().value());
+			assertEquals(OffsetDateTime.of(2023, 9, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(0).getPhotoAt().value());
+			assertEquals("https://www.xxx.com/aaaaaaaa/DSC19.jpg", actual.getPhotoModelList().get(0).getImageFilePath().value());
+			assertEquals("キャプション19", actual.getPhotoModelList().get(0).getCaption().value());
+			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoModelList().get(0).getDirectionKbn());
+			assertEquals(0, actual.getPhotoModelList().get(0).getPhotoTagModelList().size());
 		}
 
 		@Test
 		@Order(3)
+		@DisplayName("正常系：写真が存在した場合で、撮影日順に並び替え（最終ページ）")
+		void getPhotoList_sortBy_photoAt_lastPage() throws GalleryException {
+			List<String> tags = new ArrayList<String>();
+
+			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountId(new AccountId("aaaaaaaa"))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(tags)
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(2)
+					.build();
+
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+
+			// List<PhotoModel>の数チェック（10件中の残り5件が最終ページとして取得できること）
+			assertEquals(5, actual.getPhotoModelList().size());
+			assertTrue(actual.getIsLast());
+
+			// List<PhotoModel>の並び順チェック
+			assertEquals(4L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(10L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(3L, actual.getPhotoModelList().get(2).getPhotoNo().value());
+			assertEquals(2L, actual.getPhotoModelList().get(3).getPhotoNo().value());
+			assertEquals(1L, actual.getPhotoModelList().get(4).getPhotoNo().value());
+		}
+
+		@Test
+		@Order(4)
 		@DisplayName("正常系：写真が存在した場合で、お気に入り数順に並び替え")
 		void getPhotoList_sortBy_Favorite() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
-			
+
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountId(new AccountId("aaaaaaaa"))
@@ -167,50 +196,47 @@ public class PhotoServiceImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.FAVORITE)
+					.pageNo(1)
 					.build();
-			
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			
-			// List<PhotoModel>の数チェック
-			assertEquals(10, actual.size());
-			
+
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+
+			// List<PhotoModel>の数チェック（1ページあたり5件のうち、10件中の1ページ目）
+			assertEquals(5, actual.getPhotoModelList().size());
+			assertFalse(actual.getIsLast());
+
 			// List<PhotoModel>の並び順チェック
-			assertEquals(2L, actual.get(0).getPhotoNo().value());
-			assertEquals(1L, actual.get(1).getPhotoNo().value());
-			assertEquals(3L, actual.get(2).getPhotoNo().value());
-			assertEquals(4L, actual.get(3).getPhotoNo().value());
-			assertEquals(5L, actual.get(4).getPhotoNo().value());
-			assertEquals(6L, actual.get(5).getPhotoNo().value());
-			assertEquals(7L, actual.get(6).getPhotoNo().value());
-			assertEquals(8L, actual.get(7).getPhotoNo().value());
-			assertEquals(9L, actual.get(8).getPhotoNo().value());
-			assertEquals(10L, actual.get(9).getPhotoNo().value());
-			
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(3L, actual.getPhotoModelList().get(2).getPhotoNo().value());
+			assertEquals(4L, actual.getPhotoModelList().get(3).getPhotoNo().value());
+			assertEquals(5L, actual.getPhotoModelList().get(4).getPhotoNo().value());
+
 			// 抜き取りで、PhotoModelのデータチェック
-			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(4, actual.get(0).getFavoriteCount().value());
-			assertTrue(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
-			assertEquals("https://www.xxx.com/aaaaaaaa/DSC12.jpg", actual.get(0).getImageFilePath().value());
-			assertEquals("キャプション12", actual.get(0).getCaption().value());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
-			assertEquals(3, actual.get(0).getPhotoTagModelList().size());
-			
+			assertEquals(1L, actual.getPhotoModelList().get(0).getAccountNo().value());
+			assertEquals(4, actual.getPhotoModelList().get(0).getFavoriteCount().value());
+			assertTrue(actual.getPhotoModelList().get(0).getIsFavorite().value());
+			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(0).getPhotoAt().value());
+			assertEquals("https://www.xxx.com/aaaaaaaa/DSC12.jpg", actual.getPhotoModelList().get(0).getImageFilePath().value());
+			assertEquals("キャプション12", actual.getPhotoModelList().get(0).getCaption().value());
+			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoModelList().get(0).getDirectionKbn());
+			assertEquals(3, actual.getPhotoModelList().get(0).getPhotoTagModelList().size());
+
 			// 抜き取りで、PhotoTagModelのデータチェック
-			PhotoTagModel actualTag = actual.get(0).getPhotoTagModelList().stream().filter(tag -> tag.getTagNo().value() == 1).toList().getFirst();
+			PhotoTagModel actualTag = actual.getPhotoModelList().get(0).getPhotoTagModelList().stream().filter(tag -> tag.getTagNo().value() == 1).toList().getFirst();
 			assertEquals(1L, actualTag.getAccountNo().value());
 			assertEquals(2L, actualTag.getPhotoNo().value());
 			assertEquals(1L, actualTag.getTagNo().value());
 			assertEquals("太陽", actualTag.getTagJapaneseName().value());
 			assertEquals("sun", actualTag.getTagEnglishName().value());
 		}
-		
+
 		@Test
-		@Order(4)
+		@Order(5)
 		@DisplayName("正常系：写真が存在した場合で、季節・時期順に並び替え")
 		void getPhotoList_sortBy_season() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
-			
+
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountId(new AccountId("aaaaaaaa"))
@@ -218,42 +244,39 @@ public class PhotoServiceImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.SEASON)
+					.pageNo(1)
 					.build();
-			
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			
-			// List<PhotoModel>の数チェック
-			assertEquals(10, actual.size());
-			
+
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+
+			// List<PhotoModel>の数チェック（1ページあたり5件のうち、10件中の1ページ目）
+			assertEquals(5, actual.getPhotoModelList().size());
+			assertFalse(actual.getIsLast());
+
 			// List<PhotoModel>の並び順チェック
-			assertEquals(10L, actual.get(0).getPhotoNo().value());
-			assertEquals(9L, actual.get(1).getPhotoNo().value());
-			assertEquals(8L, actual.get(2).getPhotoNo().value());
-			assertEquals(7L, actual.get(3).getPhotoNo().value());
-			assertEquals(6L, actual.get(4).getPhotoNo().value());
-			assertEquals(5L, actual.get(5).getPhotoNo().value());
-			assertEquals(4L, actual.get(6).getPhotoNo().value());
-			assertEquals(3L, actual.get(7).getPhotoNo().value());
-			assertEquals(2L, actual.get(8).getPhotoNo().value());
-			assertEquals(1L, actual.get(9).getPhotoNo().value());
-			
+			assertEquals(10L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(9L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(8L, actual.getPhotoModelList().get(2).getPhotoNo().value());
+			assertEquals(7L, actual.getPhotoModelList().get(3).getPhotoNo().value());
+			assertEquals(6L, actual.getPhotoModelList().get(4).getPhotoNo().value());
+
 			// 抜き取りで、PhotoModelのデータチェック
-			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(0, actual.get(0).getFavoriteCount().value());
-			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 10, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
-			assertEquals("https://www.xxx.com/aaaaaaaa/DSC20.jpg", actual.get(0).getImageFilePath().value());
-			assertEquals("キャプション20", actual.get(0).getCaption().value());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
-			assertEquals(0, actual.get(0).getPhotoTagModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getAccountNo().value());
+			assertEquals(0, actual.getPhotoModelList().get(0).getFavoriteCount().value());
+			assertFalse(actual.getPhotoModelList().get(0).getIsFavorite().value());
+			assertEquals(OffsetDateTime.of(2021, 10, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(0).getPhotoAt().value());
+			assertEquals("https://www.xxx.com/aaaaaaaa/DSC20.jpg", actual.getPhotoModelList().get(0).getImageFilePath().value());
+			assertEquals("キャプション20", actual.getPhotoModelList().get(0).getCaption().value());
+			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoModelList().get(0).getDirectionKbn());
+			assertEquals(0, actual.getPhotoModelList().get(0).getPhotoTagModelList().size());
 		}
-		
+
 		@Test
-		@Order(5)
+		@Order(6)
 		@DisplayName("正常系：写真が存在した場合で、写真の向きで絞り込み")
 		void getPhotoList_filtering_by_directionKbnCode() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
-			
+
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountId(new AccountId("aaaaaaaa"))
@@ -261,35 +284,37 @@ public class PhotoServiceImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(1)
 					.build();
-			
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			
+
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+
 			// List<PhotoModel>の数チェック
-			assertEquals(3, actual.size());
-			
+			assertEquals(3, actual.getPhotoModelList().size());
+			assertTrue(actual.getIsLast());
+
 			// List<PhotoModel>の並び順チェック
-			assertEquals(8L, actual.get(0).getPhotoNo().value());
-			assertEquals(7L, actual.get(1).getPhotoNo().value());
-			assertEquals(5L, actual.get(2).getPhotoNo().value());
-			
+			assertEquals(8L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(7L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(5L, actual.getPhotoModelList().get(2).getPhotoNo().value());
+
 			// 抜き取りで、PhotoModelのデータチェック
-			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(0, actual.get(0).getFavoriteCount().value());
-			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2023, 8, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
-			assertEquals("https://www.xxx.com/aaaaaaaa/DSC18.jpg", actual.get(0).getImageFilePath().value());
-			assertEquals("キャプション18", actual.get(0).getCaption().value());
-			assertEquals(DirectionEnum.VERTICAL, actual.get(0).getDirectionKbn());
-			assertEquals(0, actual.get(0).getPhotoTagModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getAccountNo().value());
+			assertEquals(0, actual.getPhotoModelList().get(0).getFavoriteCount().value());
+			assertFalse(actual.getPhotoModelList().get(0).getIsFavorite().value());
+			assertEquals(OffsetDateTime.of(2023, 8, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(0).getPhotoAt().value());
+			assertEquals("https://www.xxx.com/aaaaaaaa/DSC18.jpg", actual.getPhotoModelList().get(0).getImageFilePath().value());
+			assertEquals("キャプション18", actual.getPhotoModelList().get(0).getCaption().value());
+			assertEquals(DirectionEnum.VERTICAL, actual.getPhotoModelList().get(0).getDirectionKbn());
+			assertEquals(0, actual.getPhotoModelList().get(0).getPhotoTagModelList().size());
 		}
-		
+
 		@Test
-		@Order(6)
+		@Order(7)
 		@DisplayName("正常系：写真が存在した場合で、お気に入りで絞り込み")
 		void getPhotoList_filtering_by_isFavoriteOnly() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
-			
+
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountId(new AccountId("aaaaaaaa"))
@@ -297,44 +322,46 @@ public class PhotoServiceImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(true))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(1)
 					.build();
-			
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			
+
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+
 			// List<PhotoModel>の数チェック
-			assertEquals(2, actual.size());
-			
+			assertEquals(2, actual.getPhotoModelList().size());
+			assertTrue(actual.getIsLast());
+
 			// List<PhotoModel>の並び順チェック
-			assertEquals(2L, actual.get(0).getPhotoNo().value());
-			assertEquals(1L, actual.get(1).getPhotoNo().value());
-			
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+
 			// 抜き取りで、PhotoModelのデータチェック
-			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(4, actual.get(0).getFavoriteCount().value());
-			assertTrue(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
-			assertEquals("https://www.xxx.com/aaaaaaaa/DSC12.jpg", actual.get(0).getImageFilePath().value());
-			assertEquals("キャプション12", actual.get(0).getCaption().value());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
-			assertEquals(3, actual.get(0).getPhotoTagModelList().size());
-			
+			assertEquals(1L, actual.getPhotoModelList().get(0).getAccountNo().value());
+			assertEquals(4, actual.getPhotoModelList().get(0).getFavoriteCount().value());
+			assertTrue(actual.getPhotoModelList().get(0).getIsFavorite().value());
+			assertEquals(OffsetDateTime.of(2021, 2, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(0).getPhotoAt().value());
+			assertEquals("https://www.xxx.com/aaaaaaaa/DSC12.jpg", actual.getPhotoModelList().get(0).getImageFilePath().value());
+			assertEquals("キャプション12", actual.getPhotoModelList().get(0).getCaption().value());
+			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoModelList().get(0).getDirectionKbn());
+			assertEquals(3, actual.getPhotoModelList().get(0).getPhotoTagModelList().size());
+
 			// 抜き取りで、PhotoTagModelのデータチェック
-			PhotoTagModel actualTag = actual.get(0).getPhotoTagModelList().stream().filter(tag -> tag.getTagNo().value() == 1).toList().getFirst();
+			PhotoTagModel actualTag = actual.getPhotoModelList().get(0).getPhotoTagModelList().stream().filter(tag -> tag.getTagNo().value() == 1).toList().getFirst();
 			assertEquals(1L, actualTag.getAccountNo().value());
 			assertEquals(2L, actualTag.getPhotoNo().value());
 			assertEquals(1L, actualTag.getTagNo().value());
 			assertEquals("太陽", actualTag.getTagJapaneseName().value());
 			assertEquals("sun", actualTag.getTagEnglishName().value());
 		}
-		
+
 		@Test
-		@Order(7)
+		@Order(8)
 		@DisplayName("正常系：写真が存在した場合で、写真タグで絞り込み")
 		void getPhotoList_filtering_by_tags() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
 			tags.add("太陽");
 			tags.add("bluesky");
-			
+
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountId(new AccountId("aaaaaaaa"))
@@ -342,25 +369,27 @@ public class PhotoServiceImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(1)
 					.build();
-			
-			PhotoModelList actual = photoServiceImpl.getPhotoList(photoListGetModel);
-			
+
+			PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+
 			// List<PhotoModel>の数チェック
-			assertEquals(1, actual.size());
-			
+			assertEquals(1, actual.getPhotoModelList().size());
+			assertTrue(actual.getIsLast());
+
 			// 抜き取りで、PhotoModelのデータチェック
-			assertEquals(1L, actual.get(0).getAccountNo().value());
-			assertEquals(3, actual.get(0).getFavoriteCount().value());
-			assertTrue(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
-			assertEquals("https://www.xxx.com/aaaaaaaa/DSC11.jpg", actual.get(0).getImageFilePath().value());
-			assertEquals("キャプション11", actual.get(0).getCaption().value());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.get(0).getDirectionKbn());
-			assertEquals(2, actual.get(0).getPhotoTagModelList().size());
-			
+			assertEquals(1L, actual.getPhotoModelList().get(0).getAccountNo().value());
+			assertEquals(3, actual.getPhotoModelList().get(0).getFavoriteCount().value());
+			assertTrue(actual.getPhotoModelList().get(0).getIsFavorite().value());
+			assertEquals(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(0).getPhotoAt().value());
+			assertEquals("https://www.xxx.com/aaaaaaaa/DSC11.jpg", actual.getPhotoModelList().get(0).getImageFilePath().value());
+			assertEquals("キャプション11", actual.getPhotoModelList().get(0).getCaption().value());
+			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoModelList().get(0).getDirectionKbn());
+			assertEquals(2, actual.getPhotoModelList().get(0).getPhotoTagModelList().size());
+
 			// 抜き取りで、PhotoTagModelのデータチェック
-			PhotoTagModel actualTag = actual.get(0).getPhotoTagModelList().stream().filter(tag -> tag.getTagNo().value() == 1).toList().getFirst();
+			PhotoTagModel actualTag = actual.getPhotoModelList().get(0).getPhotoTagModelList().stream().filter(tag -> tag.getTagNo().value() == 1).toList().getFirst();
 			assertEquals(1L, actualTag.getAccountNo().value());
 			assertEquals(1L, actualTag.getPhotoNo().value());
 			assertEquals(1L, actualTag.getTagNo().value());
@@ -381,6 +410,7 @@ public class PhotoServiceImplIntegrationTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(tags)
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(1)
 					.build();
 
 			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoList(photoListGetModel));

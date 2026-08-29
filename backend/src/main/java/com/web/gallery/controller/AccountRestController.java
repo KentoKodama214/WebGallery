@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,10 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.Consts;
+import com.web.gallery.controller.request.AccountListRequest;
 import com.web.gallery.controller.request.AccountRegistRequest;
 import com.web.gallery.controller.request.AccountUpdateRequest;
 import com.web.gallery.controller.response.AccountDetailResponse;
-import com.web.gallery.controller.response.AccountListItemResponse;
+import com.web.gallery.controller.response.AccountListGetResponse;
 import com.web.gallery.controller.response.AccountRegistResponse;
 import com.web.gallery.controller.response.AccountUpdateResponse;
 import com.web.gallery.domain.account.AccountId;
@@ -27,7 +29,9 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
+import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.service.AccountService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,17 +59,30 @@ public class AccountRestController {
 	/**
 	 * アカウント一覧取得
 	 *
-	 * @return	{@link AccountListItemResponse}のリスト
+	 * @param	accountListRequest	{@link AccountListRequest}
+	 * @param	result				バリデーション結果
+	 * @return						{@link AccountListGetResponse}
+	 * @throws	GalleryException	リクエストパラメータが不正な場合
 	 */
 	@Operation(summary = "アカウント一覧取得", description = "登録されているアカウントの一覧を取得する")
 	@ApiResponse(responseCode = "200", description = "取得成功")
+	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
 	@GetMapping(ApiRoutes.API_ACCOUNTS)
-	public ResponseEntity<List<AccountListItemResponse>> getAccountList() {
-		List<AccountListItemResponse> responseList = accountService.getAccountList().stream()
-				.map(AccountListItemResponse::from)
-				.toList();
+	public ResponseEntity<AccountListGetResponse> getAccountList(
+			@ModelAttribute @Validated AccountListRequest accountListRequest,
+			BindingResult result) throws GalleryException {
 
-		return ResponseEntity.ok(responseList);
+		if(result.hasErrors()) {
+			for(FieldError error : result.getFieldErrors()) {
+				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
+						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
+			}
+			throw ErrorEnum.INVALID_INPUT.toException();
+		}
+
+		AccountPageModel accountPageModel = accountService.getAccountList(AccountListGetModel.from(accountListRequest));
+
+		return ResponseEntity.ok(AccountListGetResponse.from(accountPageModel));
 	}
 
 	/**

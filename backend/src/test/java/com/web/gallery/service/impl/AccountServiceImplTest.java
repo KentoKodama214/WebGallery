@@ -35,6 +35,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.config.AccountConfig;
 import com.web.gallery.config.LoginConfig;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.Consts;
@@ -59,8 +60,11 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.aggregate.Account;
+import com.web.gallery.model.AccountGetModel;
+import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.impl.AccountAggregateRepositoryImpl;
@@ -89,6 +93,9 @@ public class AccountServiceImplTest {
 
 	@Mock
 	private PhotoConfig photoConfig;
+
+	@Mock
+	private AccountConfig accountConfig;
 
 	@Mock
 	private Clock clock;
@@ -277,25 +284,34 @@ public class AccountServiceImplTest {
 					AccountModel.builder().accountId(new AccountId("bbbbbbbb")).build(),
 					AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build()));
 
-			doReturn(accountModelList).when(accountRepositoryImpl).getAccountList();
+			doReturn(5).when(accountConfig).getAccountCountPerPage();
 
-			AccountModelList actual = accountServiceImpl.getAccountList();
-			assertEquals(accountModelList.size(), actual.size());
-			assertEquals(new AccountId("aaaaaaaa"), actual.get(0).getAccountId());
-			assertEquals(new AccountId("bbbbbbbb"), actual.get(1).getAccountId());
-			assertEquals(new AccountId("cccccccc"), actual.get(2).getAccountId());
+			ArgumentCaptor<AccountGetModel> accountGetModelCaptor = ArgumentCaptor.forClass(AccountGetModel.class);
+			doReturn(AccountPageModel.of(accountModelList, true)).when(accountRepositoryImpl).getAccountList(accountGetModelCaptor.capture());
+
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(1).build();
+			AccountPageModel actual = accountServiceImpl.getAccountList(accountListGetModel);
+			assertEquals(accountModelList.size(), actual.getAccountModelList().size());
+			assertEquals(new AccountId("aaaaaaaa"), actual.getAccountModelList().get(0).getAccountId());
+			assertEquals(new AccountId("bbbbbbbb"), actual.getAccountModelList().get(1).getAccountId());
+			assertEquals(new AccountId("cccccccc"), actual.getAccountModelList().get(2).getAccountId());
+			assertTrue(actual.getIsLast());
+
+			AccountGetModel accountGetModel = accountGetModelCaptor.getValue();
+			assertEquals(6, accountGetModel.getLimit());
+			assertEquals(0, accountGetModel.getOffset());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
 		void getAccountList_not_found() {
-			AccountModelList accountModelList = AccountModelList.empty();
+			doReturn(5).when(accountConfig).getAccountCountPerPage();
+			doReturn(AccountPageModel.of(AccountModelList.empty(), true)).when(accountRepositoryImpl).getAccountList(any(AccountGetModel.class));
 
-			doReturn(accountModelList).when(accountRepositoryImpl).getAccountList();
-
-			AccountModelList actual = accountServiceImpl.getAccountList();
-			assertEquals(0, actual.size());
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(1).build();
+			AccountPageModel actual = accountServiceImpl.getAccountList(accountListGetModel);
+			assertEquals(0, actual.getAccountModelList().size());
 		}
 	}
 	
@@ -312,23 +328,34 @@ public class AccountServiceImplTest {
 					AccountModel.builder().accountId(new AccountId("bbbbbbbb")).isDeleted(new IsDeleted(false)).build(),
 					AccountModel.builder().accountId(new AccountId("aaaaaaaa")).isDeleted(new IsDeleted(false)).build()));
 
-			doReturn(accountModelList).when(accountRepositoryImpl).getAccountListAll();
+			doReturn(5).when(accountConfig).getAccountCountPerPage();
 
-			AccountModelList actual = accountServiceImpl.getAccountListForAdmin();
-			assertEquals(3, actual.size());
-			assertEquals(new AccountId("aaaaaaaa"), actual.get(0).getAccountId());
-			assertEquals(new AccountId("bbbbbbbb"), actual.get(1).getAccountId());
-			assertEquals(new AccountId("cccccccc"), actual.get(2).getAccountId());
+			ArgumentCaptor<AccountGetModel> accountGetModelCaptor = ArgumentCaptor.forClass(AccountGetModel.class);
+			doReturn(AccountPageModel.of(accountModelList, true)).when(accountRepositoryImpl).getAccountListForAdmin(accountGetModelCaptor.capture());
+
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(1).build();
+			AccountPageModel actual = accountServiceImpl.getAccountListForAdmin(accountListGetModel);
+			assertEquals(3, actual.getAccountModelList().size());
+			assertEquals(new AccountId("aaaaaaaa"), actual.getAccountModelList().get(0).getAccountId());
+			assertEquals(new AccountId("bbbbbbbb"), actual.getAccountModelList().get(1).getAccountId());
+			assertEquals(new AccountId("cccccccc"), actual.getAccountModelList().get(2).getAccountId());
+			assertTrue(actual.getIsLast());
+
+			AccountGetModel accountGetModel = accountGetModelCaptor.getValue();
+			assertEquals(6, accountGetModel.getLimit());
+			assertEquals(0, accountGetModel.getOffset());
 		}
 
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
 		void getAccountListForAdmin_not_found() {
-			doReturn(AccountModelList.empty()).when(accountRepositoryImpl).getAccountListAll();
+			doReturn(5).when(accountConfig).getAccountCountPerPage();
+			doReturn(AccountPageModel.of(AccountModelList.empty(), true)).when(accountRepositoryImpl).getAccountListForAdmin(any(AccountGetModel.class));
 
-			AccountModelList actual = accountServiceImpl.getAccountListForAdmin();
-			assertEquals(0, actual.size());
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(1).build();
+			AccountPageModel actual = accountServiceImpl.getAccountListForAdmin(accountListGetModel);
+			assertEquals(0, actual.getAccountModelList().size());
 		}
 	}
 

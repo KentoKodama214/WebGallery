@@ -15,9 +15,12 @@ import {
 export function AdminAccountManagement() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [accounts, setAccounts] = useState<AdminAccountListItem[]>([]);
+  const [isLast, setIsLast] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [pageNo, setPageNo] = useState(1);
 
   const isAdmin = user?.role === "ROLE_ADMIN";
 
@@ -34,13 +37,33 @@ export function AdminAccountManagement() {
   const fetchAccounts = async () => {
     setIsLoading(true);
     setError(null);
+    setPageNo(1);
     try {
-      const data = await getAdminAccountList();
-      setAccounts(data);
+      const data = await getAdminAccountList(1);
+      setAccounts(data.accountList);
+      setIsLast(data.isLast);
     } catch (err) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  /**
+   * +もっと見る
+   */
+  const handleLoadMore = async () => {
+    const nextPage = pageNo + 1;
+    setIsLoadingMore(true);
+    try {
+      const data = await getAdminAccountList(nextPage);
+      setAccounts((prev) => [...prev, ...data.accountList]);
+      setIsLast(data.isLast);
+      setPageNo(nextPage);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "エラーが発生しました");
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -193,6 +216,17 @@ export function AdminAccountManagement() {
           </tbody>
         </table>
       </div>
+
+      {!isLast && (
+        <button
+          onClick={handleLoadMore}
+          disabled={isLoadingMore}
+          data-testid="show-more-button"
+          className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+        >
+          {isLoadingMore ? "読み込み中..." : "＋もっと見る"}
+        </button>
+      )}
     </div>
   );
 }

@@ -35,6 +35,12 @@ public class PhotoListGetDto {
 	/** 並び順（"PHOTO_AT" / "FAVORITE" / "SEASON"） */
 	private String sortBy;
 
+	/** 取得件数上限 */
+	private Integer limit;
+
+	/** 取得開始位置 */
+	private Integer offset;
+
 	/**
 	 * PhotoGetModelからPhotoListGetDtoを生成する
 	 *
@@ -49,6 +55,8 @@ public class PhotoListGetDto {
 		dto.setIsFavoriteOnly(Objects.nonNull(model.getIsFavoriteOnly()) && model.getIsFavoriteOnly().value());
 		dto.setTagList(model.getTagList());
 		dto.setSortBy(Objects.nonNull(model.getSortBy()) ? model.getSortBy().name() : null);
+		dto.setLimit(model.getLimit());
+		dto.setOffset(model.getOffset());
 		return dto;
 	}
 }

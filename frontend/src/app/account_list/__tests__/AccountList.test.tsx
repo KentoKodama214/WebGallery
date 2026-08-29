@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { AccountList } from "../AccountList";
 
@@ -23,10 +23,13 @@ describe("AccountList", () => {
   });
 
   it("アカウント一覧が正しく表示されること", async () => {
-    mockGetAccountList.mockResolvedValue([
-      { accountId: "user1", accountName: "ユーザー1" },
-      { accountId: "user2", accountName: "ユーザー2" },
-    ]);
+    mockGetAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [
+        { accountId: "user1", accountName: "ユーザー1" },
+        { accountId: "user2", accountName: "ユーザー2" },
+      ],
+    });
 
     render(<AccountList />);
 
@@ -50,7 +53,7 @@ describe("AccountList", () => {
   });
 
   it("アカウントが0件の場合はテーブルヘッダーのみ表示されること", async () => {
-    mockGetAccountList.mockResolvedValue([]);
+    mockGetAccountList.mockResolvedValue({ isLast: true, accountList: [] });
 
     render(<AccountList />);
 
@@ -75,5 +78,62 @@ describe("AccountList", () => {
         screen.getByText("アカウント一覧の取得に失敗しました")
       ).toBeInTheDocument();
     });
+  });
+
+  it("isLastがfalseのとき「もっと見る」ボタンが表示されること", async () => {
+    mockGetAccountList.mockResolvedValue({
+      isLast: false,
+      accountList: [{ accountId: "user1", accountName: "ユーザー1" }],
+    });
+
+    render(<AccountList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("＋もっと見る")).toBeInTheDocument();
+    });
+  });
+
+  it("isLastがtrueのとき「もっと見る」ボタンが表示されないこと", async () => {
+    mockGetAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [{ accountId: "user1", accountName: "ユーザー1" }],
+    });
+
+    render(<AccountList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText("＋もっと見る")).not.toBeInTheDocument();
+  });
+
+  it("「もっと見る」ボタンをクリックすると追加のアカウントが読み込まれること", async () => {
+    mockGetAccountList
+      .mockResolvedValueOnce({
+        isLast: false,
+        accountList: [{ accountId: "user1", accountName: "ユーザー1" }],
+      })
+      .mockResolvedValueOnce({
+        isLast: true,
+        accountList: [{ accountId: "user2", accountName: "ユーザー2" }],
+      });
+
+    render(<AccountList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("＋もっと見る")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("＋もっと見る"));
+
+    await waitFor(() => {
+      expect(screen.getByText("user2")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("user1")).toBeInTheDocument();
+    expect(mockGetAccountList).toHaveBeenNthCalledWith(1, 1);
+    expect(mockGetAccountList).toHaveBeenNthCalledWith(2, 2);
+    expect(screen.queryByText("＋もっと見る")).not.toBeInTheDocument();
   });
 });

@@ -14,8 +14,10 @@ import com.web.gallery.entity.AccountUpdateTarget;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.AccountMapper;
+import com.web.gallery.model.AccountGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.repository.AccountRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -155,25 +157,39 @@ public class AccountRepositoryImpl implements AccountRepository {
 	}
 
 	/**
-	 * アカウントの一覧を取得する
+	 * アカウントの一覧を、ページング情報に従い取得する<p>
+	 * 最後のページかどうかを判定するため、DBからは1ページあたりの表示件数より1件多く取得し、
+	 * 実際に返す件数が上限を超えていた場合は表示件数分のみに切り詰める
 	 *
-	 * @return	{@link AccountModelList}
+	 * @param	accountGetModel	{@link AccountGetModel}
+	 * @return					{@link AccountPageModel}
 	 */
 	@Override
-	public AccountModelList getAccountList() {
-		List<Account> accountList = accountMapper.select(AccountCondition.forList());
-		return AccountModelList.from(accountList);
+	public AccountPageModel getAccountList(AccountGetModel accountGetModel) {
+		List<Account> accountList = accountMapper.select(AccountCondition.forList(accountGetModel));
+
+		Boolean isLast = accountList.size() < accountGetModel.getLimit();
+		List<Account> pageAccountList = isLast ? accountList : accountList.subList(0, accountGetModel.getLimit() - 1);
+
+		return AccountPageModel.of(AccountModelList.from(pageAccountList), isLast);
 	}
 
 	/**
-	 * 削除済みを含む全アカウントの一覧を取得する
+	 * 管理者用：削除済みを含む全アカウントの一覧を、ページング情報に従い取得する<p>
+	 * 最後のページかどうかを判定するため、DBからは1ページあたりの表示件数より1件多く取得し、
+	 * 実際に返す件数が上限を超えていた場合は表示件数分のみに切り詰める
 	 *
-	 * @return	{@link AccountModelList}
+	 * @param	accountGetModel	{@link AccountGetModel}
+	 * @return					{@link AccountPageModel}
 	 */
 	@Override
-	public AccountModelList getAccountListAll() {
-		List<Account> accountList = accountMapper.select(AccountCondition.forAdminList());
-		return AccountModelList.from(accountList);
+	public AccountPageModel getAccountListForAdmin(AccountGetModel accountGetModel) {
+		List<Account> accountList = accountMapper.select(AccountCondition.forAdminList(accountGetModel));
+
+		Boolean isLast = accountList.size() < accountGetModel.getLimit();
+		List<Account> pageAccountList = isLast ? accountList : accountList.subList(0, accountGetModel.getLimit() - 1);
+
+		return AccountPageModel.of(AccountModelList.from(pageAccountList), isLast);
 	}
 
 	/**

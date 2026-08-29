@@ -61,7 +61,7 @@ import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
-import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -90,6 +90,8 @@ public class PhotoDetailRepositoryImplTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(List.of())
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(6)
+					.offset(0)
 					.build();
 
 			List<PhotoDto> photoDtoList = new ArrayList<PhotoDto>();
@@ -97,9 +99,10 @@ public class PhotoDetailRepositoryImplTest {
 			ArgumentCaptor<PhotoListGetDto> photoListGetDtoCaptor = ArgumentCaptor.forClass(PhotoListGetDto.class);
 			doReturn(photoDtoList).when(photoDetailMapper).getPhotoList(photoListGetDtoCaptor.capture());
 
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
-			assertTrue(actual.isEmpty());
+			assertTrue(actual.getPhotoModelList().isEmpty());
+			assertTrue(actual.getIsLast());
 
 			PhotoListGetDto photoListGetDtoCapture = photoListGetDtoCaptor.getValue();
 			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
@@ -108,6 +111,8 @@ public class PhotoDetailRepositoryImplTest {
 			assertFalse(photoListGetDtoCapture.getIsFavoriteOnly());
 			assertEquals(List.of(), photoListGetDtoCapture.getTagList());
 			assertEquals("PHOTO_AT", photoListGetDtoCapture.getSortBy());
+			assertEquals(6, photoListGetDtoCapture.getLimit());
+			assertEquals(0, photoListGetDtoCapture.getOffset());
 
 			verify(photoTagMstMapper, times(0)).select(any(PhotoTagMstCondition.class));
 		}
@@ -123,8 +128,10 @@ public class PhotoDetailRepositoryImplTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(List.of())
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(6)
+					.offset(0)
 					.build();
-			
+
 			List<PhotoDto> photoDtoList = new ArrayList<PhotoDto>();
 			PhotoDto photoDto1 = new PhotoDto();
 			photoDto1.setAccountNo(1L);
@@ -156,25 +163,26 @@ public class PhotoDetailRepositoryImplTest {
 			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
 			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
 
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			assertTrue(actual.getIsLast());
 
-			assertEquals(new AccountNo(1L), actual.get(0).getAccountNo());
-			assertEquals(1L, actual.get(0).getPhotoNo().value());
-			assertEquals(1, actual.get(0).getFavoriteCount().value());
-			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
-			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.get(0).getImageFilePath().value());
-			assertEquals("キャプション1", actual.get(0).getCaption().value());
-			assertEquals(DirectionEnum.VERTICAL, actual.get(0).getDirectionKbn());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(0).getAccountNo());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(1, actual.getPhotoModelList().get(0).getFavoriteCount().value());
+			assertFalse(actual.getPhotoModelList().get(0).getIsFavorite().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(0).getPhotoAt().value());
+			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.getPhotoModelList().get(0).getImageFilePath().value());
+			assertEquals("キャプション1", actual.getPhotoModelList().get(0).getCaption().value());
+			assertEquals(DirectionEnum.VERTICAL, actual.getPhotoModelList().get(0).getDirectionKbn());
 
-			assertEquals(new AccountNo(1L), actual.get(1).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoNo().value());
-			assertEquals(2, actual.get(1).getFavoriteCount().value());
-			assertTrue(actual.get(1).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2000, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(1).getPhotoAt().value());
-			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC222.jpg", actual.get(1).getImageFilePath().value());
-			assertEquals("キャプション2", actual.get(1).getCaption().value());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.get(1).getDirectionKbn());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(1).getAccountNo());
+			assertEquals(2L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(2, actual.getPhotoModelList().get(1).getFavoriteCount().value());
+			assertTrue(actual.getPhotoModelList().get(1).getIsFavorite().value());
+			assertEquals(OffsetDateTime.of(2000, 2, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(1).getPhotoAt().value());
+			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC222.jpg", actual.getPhotoModelList().get(1).getImageFilePath().value());
+			assertEquals("キャプション2", actual.getPhotoModelList().get(1).getCaption().value());
+			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoModelList().get(1).getDirectionKbn());
 
 			PhotoListGetDto photoListGetDtoCapture = photoListGetDtoCaptor.getValue();
 			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
@@ -200,8 +208,10 @@ public class PhotoDetailRepositoryImplTest {
 					.isFavoriteOnly(new IsFavoriteOnly(false))
 					.tagList(List.of())
 					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(6)
+					.offset(0)
 					.build();
-			
+
 			List<PhotoDto> photoDtoList = new ArrayList<PhotoDto>();
 			PhotoDto photoDto1 = new PhotoDto();
 			photoDto1.setAccountNo(1L);
@@ -247,33 +257,34 @@ public class PhotoDetailRepositoryImplTest {
 			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
 			doReturn(photoTagMstList).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
 
-			PhotoModelList actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+			assertTrue(actual.getIsLast());
 
-			assertEquals(new AccountNo(1L), actual.get(0).getAccountNo());
-			assertEquals(1L, actual.get(0).getPhotoNo().value());
-			assertEquals(1, actual.get(0).getFavoriteCount().value());
-			assertFalse(actual.get(0).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, Consts.JST), actual.get(0).getPhotoAt().value());
-			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.get(0).getImageFilePath().value());
-			assertEquals("キャプション1", actual.get(0).getCaption().value());
-			assertEquals(DirectionEnum.VERTICAL, actual.get(0).getDirectionKbn());
-			assertEquals(1, actual.get(0).getPhotoTagModelList().size());
-			assertEquals(1L, actual.get(0).getPhotoTagModelList().get(0).getTagNo().value());
-			assertEquals("太陽", actual.get(0).getPhotoTagModelList().get(0).getTagJapaneseName().value());
-			assertEquals("sun", actual.get(0).getPhotoTagModelList().get(0).getTagEnglishName().value());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(0).getAccountNo());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(1, actual.getPhotoModelList().get(0).getFavoriteCount().value());
+			assertFalse(actual.getPhotoModelList().get(0).getIsFavorite().value());
+			assertEquals(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(0).getPhotoAt().value());
+			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.getPhotoModelList().get(0).getImageFilePath().value());
+			assertEquals("キャプション1", actual.getPhotoModelList().get(0).getCaption().value());
+			assertEquals(DirectionEnum.VERTICAL, actual.getPhotoModelList().get(0).getDirectionKbn());
+			assertEquals(1, actual.getPhotoModelList().get(0).getPhotoTagModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoTagModelList().get(0).getTagNo().value());
+			assertEquals("太陽", actual.getPhotoModelList().get(0).getPhotoTagModelList().get(0).getTagJapaneseName().value());
+			assertEquals("sun", actual.getPhotoModelList().get(0).getPhotoTagModelList().get(0).getTagEnglishName().value());
 
-			assertEquals(new AccountNo(1L), actual.get(1).getAccountNo());
-			assertEquals(2L, actual.get(1).getPhotoNo().value());
-			assertEquals(2, actual.get(1).getFavoriteCount().value());
-			assertTrue(actual.get(1).getIsFavorite().value());
-			assertEquals(OffsetDateTime.of(2000, 2, 1, 9, 0, 0, 0, Consts.JST), actual.get(1).getPhotoAt().value());
-			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC222.jpg", actual.get(1).getImageFilePath().value());
-			assertEquals("キャプション2", actual.get(1).getCaption().value());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.get(1).getDirectionKbn());
-			assertEquals(1, actual.get(1).getPhotoTagModelList().size());
-			assertEquals(1L, actual.get(1).getPhotoTagModelList().get(0).getTagNo().value());
-			assertEquals("海", actual.get(1).getPhotoTagModelList().get(0).getTagJapaneseName().value());
-			assertEquals("sea", actual.get(1).getPhotoTagModelList().get(0).getTagEnglishName().value());
+			assertEquals(new AccountNo(1L), actual.getPhotoModelList().get(1).getAccountNo());
+			assertEquals(2L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(2, actual.getPhotoModelList().get(1).getFavoriteCount().value());
+			assertTrue(actual.getPhotoModelList().get(1).getIsFavorite().value());
+			assertEquals(OffsetDateTime.of(2000, 2, 1, 9, 0, 0, 0, Consts.JST), actual.getPhotoModelList().get(1).getPhotoAt().value());
+			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC222.jpg", actual.getPhotoModelList().get(1).getImageFilePath().value());
+			assertEquals("キャプション2", actual.getPhotoModelList().get(1).getCaption().value());
+			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoModelList().get(1).getDirectionKbn());
+			assertEquals(1, actual.getPhotoModelList().get(1).getPhotoTagModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoTagModelList().get(0).getTagNo().value());
+			assertEquals("海", actual.getPhotoModelList().get(1).getPhotoTagModelList().get(0).getTagJapaneseName().value());
+			assertEquals("sea", actual.getPhotoModelList().get(1).getPhotoTagModelList().get(0).getTagEnglishName().value());
 
 			PhotoListGetDto photoListGetDtoCapture = photoListGetDtoCaptor.getValue();
 			assertEquals(1L, photoListGetDtoCapture.getAccountNo());
@@ -286,6 +297,62 @@ public class PhotoDetailRepositoryImplTest {
 			PhotoTagMstCondition photoTagMstCapture = photoTagMstCaptor.getValue();
 			assertEquals(1L, photoTagMstCapture.getAccountNo());
 			assertEquals(List.of(1L, 2L), photoTagMstCapture.getPhotoNoList());
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("正常系：取得件数が上限を超える場合、表示件数分に切り詰められ、最後のページでないと判定されること")
+		void getPhotoList_pagination_trims_when_more_results_exist() {
+			// 1ページあたりの表示件数を1件と仮定し、limitはその1件多い2を指定する
+			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountNo(new AccountNo(1L))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(List.of())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.limit(2)
+					.offset(0)
+					.build();
+
+			List<PhotoDto> photoDtoList = new ArrayList<PhotoDto>();
+			PhotoDto photoDto1 = new PhotoDto();
+			photoDto1.setAccountNo(1L);
+			photoDto1.setPhotoNo(1L);
+			photoDto1.setFavoriteCount(0);
+			photoDto1.setIsFavorite(false);
+			photoDto1.setPhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+			photoDto1.setImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg");
+			photoDto1.setCaption("キャプション1");
+			photoDto1.setDirectionKbn(DirectionEnum.VERTICAL);
+			photoDtoList.add(photoDto1);
+
+			PhotoDto photoDto2 = new PhotoDto();
+			photoDto2.setAccountNo(1L);
+			photoDto2.setPhotoNo(2L);
+			photoDto2.setFavoriteCount(0);
+			photoDto2.setIsFavorite(false);
+			photoDto2.setPhotoAt(OffsetDateTime.of(2000, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+			photoDto2.setImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg");
+			photoDto2.setCaption("キャプション2");
+			photoDto2.setDirectionKbn(DirectionEnum.HORIZONTAL);
+			photoDtoList.add(photoDto2);
+
+			doReturn(photoDtoList).when(photoDetailMapper).getPhotoList(any(PhotoListGetDto.class));
+
+			ArgumentCaptor<PhotoTagMstCondition> photoTagMstCaptor = ArgumentCaptor.forClass(PhotoTagMstCondition.class);
+			doReturn(new ArrayList<PhotoTagMst>()).when(photoTagMstMapper).select(photoTagMstCaptor.capture());
+
+			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
+
+			// limit(2)件取得できたため、まだ後続のページが存在すると判定されること
+			assertFalse(actual.getIsLast());
+			// 表示件数（limit - 1 = 1件）に切り詰められること
+			assertEquals(1, actual.getPhotoModelList().size());
+			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+
+			// タグ取得の絞り込み対象も、切り詰め後の写真番号のみになること
+			assertEquals(List.of(1L), photoTagMstCaptor.getValue().getPhotoNoList());
 		}
 	}
 

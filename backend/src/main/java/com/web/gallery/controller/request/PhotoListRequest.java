@@ -1,11 +1,15 @@
 package com.web.gallery.controller.request;
 
+import java.util.Arrays;
+
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
+import com.web.gallery.constant.Consts;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -52,4 +56,22 @@ public class PhotoListRequest {
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
 	private Integer pageNo = 1;
+
+	/**
+	 * タグリストの指定数が上限以下かどうかを検証する<p>
+	 * タグ1件につき絞り込み用の相関サブクエリが1つ追加されるため、大量指定によるクエリ負荷増大を防ぐ
+	 *
+	 * @return	上限以下の場合はtrue
+	 */
+	@Schema(hidden = true)
+	@AssertTrue(message = "{validation.photo.tagList.maxSize}")
+	public boolean isTagListSizeValid() {
+		if (tagList == null || tagList.isBlank()) {
+			return true;
+		}
+		long tagCount = Arrays.stream(tagList.replace(Consts.FULL_SPACE, Consts.HALF_SPACE).split(Consts.HALF_SPACE))
+				.filter(tag -> !tag.isEmpty())
+				.count();
+		return tagCount <= Consts.TAG_LIST_MAX_SIZE;
+	}
 }

@@ -86,13 +86,14 @@ public class AccountRestControllerIntegrationTest {
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath("$.length()").value(3))
-				.andExpect(jsonPath("$[0].accountId").value("aaaaaaaa"))
-				.andExpect(jsonPath("$[0].accountName").value("AAAAAAAA"))
-				.andExpect(jsonPath("$[1].accountId").value("bbbbbbbb"))
-				.andExpect(jsonPath("$[1].accountName").value("BBBBBBBB"))
-				.andExpect(jsonPath("$[2].accountId").value("cccccccc"))
-				.andExpect(jsonPath("$[2].accountName").value("CCCCCCCC"));
+				.andExpect(jsonPath("$.isLast").value(true))
+				.andExpect(jsonPath("$.accountList.length()").value(3))
+				.andExpect(jsonPath("$.accountList[0].accountId").value("aaaaaaaa"))
+				.andExpect(jsonPath("$.accountList[0].accountName").value("AAAAAAAA"))
+				.andExpect(jsonPath("$.accountList[1].accountId").value("bbbbbbbb"))
+				.andExpect(jsonPath("$.accountList[1].accountName").value("BBBBBBBB"))
+				.andExpect(jsonPath("$.accountList[2].accountId").value("cccccccc"))
+				.andExpect(jsonPath("$.accountList[2].accountName").value("CCCCCCCC"));
 		}
 
 		@Test
@@ -105,7 +106,8 @@ public class AccountRestControllerIntegrationTest {
 				)
 				.andExpect(status().isOk())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath("$.length()").value(0));
+				.andExpect(jsonPath("$.isLast").value(true))
+				.andExpect(jsonPath("$.accountList.length()").value(0));
 		}
 	}
 

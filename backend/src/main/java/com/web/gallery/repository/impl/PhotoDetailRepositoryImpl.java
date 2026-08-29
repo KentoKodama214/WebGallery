@@ -19,6 +19,7 @@ import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.repository.PhotoDetailRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -36,27 +37,32 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
 	private final PhotoDetailMapper photoDetailMapper;
 
 	/**
-	 * 該当アカウントの写真の一覧を取得する
+	 * 該当アカウントの写真の一覧を、ページング情報に従い取得する<p>
+	 * 最後のページかどうかを判定するため、DBからは1ページあたりの表示件数より1件多く取得し、
+	 * 実際に返す件数が上限を超えていた場合は表示件数分のみに切り詰める
 	 *
 	 * @param	photoGetModel	{@link PhotoGetModel}
-	 * @return						{@link PhotoModelList}
+	 * @return						{@link PhotoPageModel}
 	 */
 	@Override
-	public PhotoModelList getPhotoList(PhotoGetModel photoGetModel) {
+	public PhotoPageModel getPhotoList(PhotoGetModel photoGetModel) {
 		List<PhotoDto> photoDtoList = photoDetailMapper.getPhotoList(PhotoListGetDto.from(photoGetModel));
 
-		if (photoDtoList.isEmpty()) {
-			return PhotoModelList.empty();
+		Boolean isLast = photoDtoList.size() < photoGetModel.getLimit();
+		List<PhotoDto> pageDtoList = isLast ? photoDtoList : photoDtoList.subList(0, photoGetModel.getLimit() - 1);
+
+		if (pageDtoList.isEmpty()) {
+			return PhotoPageModel.of(PhotoModelList.empty(), isLast);
 		}
 
-		List<Long> photoNoList = photoDtoList.stream()
+		List<Long> photoNoList = pageDtoList.stream()
 				.map(PhotoDto::getPhotoNo)
 				.toList();
 
 		List<PhotoTagMst> photoTagMstList = photoTagMstMapper.select(
 				PhotoTagMstCondition.from(photoGetModel, photoNoList));
 
-		return PhotoModelList.from(photoDtoList, photoTagMstList);
+		return PhotoPageModel.of(PhotoModelList.from(pageDtoList, photoTagMstList), isLast);
 	}
 
 	/**

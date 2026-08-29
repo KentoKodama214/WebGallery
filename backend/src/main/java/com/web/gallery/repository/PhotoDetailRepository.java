@@ -4,19 +4,19 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
-import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 
 /**
  * 写真のメタデータを含めた詳細情報を永続化するRepositoryクラス
  */
 public interface PhotoDetailRepository {
 	/**
-	 * 該当アカウントの写真の一覧を取得する
+	 * 該当アカウントの写真の一覧を、ページング情報に従い取得する
 	 *
 	 * @param	photoGetModel	{@link PhotoGetModel}
-	 * @return						{@link PhotoModelList}
+	 * @return						{@link PhotoPageModel}
 	 */
-	PhotoModelList getPhotoList(PhotoGetModel photoGetModel);
+	PhotoPageModel getPhotoList(PhotoGetModel photoGetModel);
 	
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する

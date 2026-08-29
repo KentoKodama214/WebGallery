@@ -40,7 +40,7 @@ import com.web.gallery.model.PhotoDetailGetModel;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.service.PhotoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -96,9 +96,9 @@ public class PhotoRestController {
 		}
 
 		// 抽出条件に該当する写真の一覧を、指定の並び順で取得する
-		PhotoModelList photoList = photoService.getPhotoList(
+		PhotoPageModel photoPageModel = photoService.getPhotoList(
 				PhotoListGetModel.from(photoListRequest, sessionHelper.getAccountNo(), photoAccountId));
-		return ResponseEntity.ok(PhotoListGetResponse.from(photoList, photoListRequest.getPageNo(), photoConfig.getPhotoCountPerPage()));
+		return ResponseEntity.ok(PhotoListGetResponse.from(photoPageModel));
 	}
 
 	/**
