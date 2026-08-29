@@ -86,28 +86,63 @@ export async function login(
 }
 
 /**
- * リフレッシュトークンを使ってアクセストークンを更新する
+ * 進行中のリフレッシュ処理を共有するためのプロミス
+ * （同時に複数のリクエストがリフレッシュを要求してもAPI呼び出しは1回にまとめる）
  */
-export async function refresh(): Promise<boolean> {
+let refreshInFlight: Promise<boolean> | null = null;
+
+/**
+ * リフレッシュトークンを使ってアクセストークンを更新する
+ *
+ * 同時呼び出しは進行中の1回にまとめる（シングルフライト）。
+ * リフレッシュトークンをローテーションするバックエンドで、並行した複数の
+ * リフレッシュにより後発のリクエストが無効化される競合を避ける。
+ *
+ * セッション状態を "anonymous"（未ログイン確定）へ落とすのは、リフレッシュAPIが
+ * 明確に 401/403 を返した場合のみ。ネットワーク例外や 5xx などの一時的な失敗では
+ * セッション状態を変更せず、次回のリクエストで再試行できるようにする。
+ */
+export function refresh(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = doRefresh().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
+/**
+ * リフレッシュAPIを実際に呼び出す（{@link refresh} からのみ利用する）
+ */
+async function doRefresh(): Promise<boolean> {
+  let response: Response;
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
+    response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
       method: "POST",
       credentials: "include",
     });
+  } catch {
+    // ネットワーク例外は一時的な失敗として扱い、セッション状態は変更しない
+    accessToken = null;
+    return false;
+  }
 
-    if (!response.ok) {
-      accessToken = null;
+  if (!response.ok) {
+    accessToken = null;
+    // 認証エラー（401/403）のみ未ログイン確定とする
+    if (response.status === 401 || response.status === 403) {
       sessionAuthState = "anonymous";
-      return false;
     }
+    return false;
+  }
 
+  try {
     const data = await response.json();
     accessToken = data.accessToken;
     sessionAuthState = "authenticated";
     return true;
   } catch {
     accessToken = null;
-    sessionAuthState = "anonymous";
     return false;
   }
 }

@@ -8,19 +8,30 @@ import { type NextRequest, NextResponse } from "next/server";
  * 個別のルートハンドラー（multipart アップロード等）を握り潰してしまうため、
  * プロキシ処理をこのキャッチオールルートハンドラーに一本化している。
  *
- * - リクエストボディはそのままストリーム転送するため multipart/form-data も扱える
+ * - リクエストボディは一旦バッファリングしてから転送する（multipart/form-data も
+ *   扱えるが、アップロード上限は 6MB のためメモリ影響は限定的）
  * - Cookie（refreshToken 等）とバックエンドの Set-Cookie を双方向に転送する
+ * - クライアントが詐称しうる転送系ヘッダー（X-Forwarded-* 等）は除去する
  */
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
-/** バックエンドへ転送しないリクエストヘッダー（fetch が再設定するもの） */
+/** バックエンドへ転送しないリクエストヘッダー */
 const EXCLUDED_REQUEST_HEADERS = new Set([
+  // fetch が再設定するもの
   "host",
   "connection",
   "content-length",
   "transfer-encoding",
   "accept-encoding",
+  // クライアントによる詐称を防ぐため除去する転送系ヘッダー
+  // （バックエンドが IP ベースでレート制限・監査ログ・ロック判定を行う場合の対策）
+  "x-forwarded-for",
+  "x-forwarded-host",
+  "x-forwarded-proto",
+  "x-forwarded-port",
+  "x-real-ip",
+  "forwarded",
 ]);
 
 /** クライアントへ返さないレスポンスヘッダー */
@@ -73,6 +84,12 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
       responseHeaders.set(key, value);
     }
   });
+
+  // バックエンドの絶対URLを指す Location は内部ホストを露出させるため相対パス化する
+  const location = responseHeaders.get("location");
+  if (location && location.startsWith(BACKEND_URL)) {
+    responseHeaders.set("location", location.slice(BACKEND_URL.length) || "/");
+  }
 
   // Set-Cookie は Headers#forEach で結合されてしまうため個別に転送する
   const setCookie = backendResponse.headers.getSetCookie?.() ?? [];

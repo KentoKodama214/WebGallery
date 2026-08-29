@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { onActivateKey } from "@/lib/a11y";
 import styles from "./Header.module.css";
 
 /**
@@ -35,6 +36,12 @@ export function Header() {
       <div
         className={`${styles.buttonContainer} ${isOpen ? styles.active : ""}`}
         onClick={toggleMenu}
+        onKeyDown={onActivateKey(toggleMenu)}
+        role="button"
+        tabIndex={0}
+        aria-label="メニュー"
+        aria-expanded={isOpen}
+        aria-controls="header-overlay-menu"
         data-testid="hamburger-button"
       >
         <span style={{ top: 0 }}></span>
@@ -44,6 +51,7 @@ export function Header() {
 
       {/* オーバーレイメニュー */}
       <div
+        id="header-overlay-menu"
         className={`${styles.overlay} ${isOpen ? styles.open : ""}`}
         data-testid="overlay-menu"
       >

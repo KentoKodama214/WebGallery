@@ -154,8 +154,8 @@ describe("PhotoDetail", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByAltText("編集")).toBeInTheDocument();
-      expect(screen.getByAltText("削除")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "編集" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
     });
   });
 
@@ -177,8 +177,8 @@ describe("PhotoDetail", () => {
       expect(screen.getByText("テスト写真")).toBeInTheDocument();
     });
 
-    expect(screen.queryByAltText("編集")).not.toBeInTheDocument();
-    expect(screen.queryByAltText("削除")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "編集" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "削除" })).not.toBeInTheDocument();
   });
 
   it("認証済みの場合にお気に入りボタンが表示されること", async () => {
@@ -230,16 +230,48 @@ describe("PhotoDetail", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByAltText("お気に入り登録")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "お気に入り登録" })
+      ).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByTestId("favorite-button"));
 
     await waitFor(() => {
-      expect(screen.getByAltText("お気に入り解除")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "お気に入り解除" })
+      ).toBeInTheDocument();
     });
 
     expect(mockAddFavorite).toHaveBeenCalledWith(1, 10);
+  });
+
+  it("お気に入り操作が失敗しても写真表示は維持され、エラーが通知されること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "other_user", accountNo: 2 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockAddFavorite.mockRejectedValue(new Error("お気に入りの登録に失敗しました"));
+
+    render(<PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("テスト写真")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("favorite-button"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("お気に入りの登録に失敗しました")
+      ).toBeInTheDocument();
+    });
+    // 写真本体は表示されたまま
+    expect(screen.getByText("テスト写真")).toBeInTheDocument();
   });
 
   it("削除確認→削除→リダイレクトが動作すること", async () => {
@@ -258,10 +290,10 @@ describe("PhotoDetail", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByAltText("削除")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByAltText("削除"));
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
 
     expect(screen.getByTestId("delete-confirm-dialog")).toBeInTheDocument();
     expect(

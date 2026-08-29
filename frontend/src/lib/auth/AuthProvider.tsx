@@ -126,7 +126,16 @@ function parseJwt(token: string): JwtPayload | null {
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
         .join("")
     );
-    return JSON.parse(jsonPayload) as JwtPayload;
+    const parsed = JSON.parse(jsonPayload) as Partial<JwtPayload>;
+    // UI 表示に必要な項目が揃っていない場合は不正なトークンとして扱う
+    if (
+      typeof parsed.sub !== "string" ||
+      typeof parsed.accountNo !== "number" ||
+      typeof parsed.role !== "string"
+    ) {
+      return null;
+    }
+    return parsed as JwtPayload;
   } catch {
     return null;
   }

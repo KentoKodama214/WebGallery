@@ -1,20 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 
 /**
  * リダイレクト先クエリパラメータを検証し、安全な内部パスのみを返す
  *
+ * 自オリジン基準でURLとして解決し、オリジンが一致するもののみを許可する。
+ * `//evil.com`（プロトコル相対）や `/\evil.com`（バックスラッシュはブラウザが
+ * `/` へ正規化する）といったオープンリダイレクトのバイパスを防ぐ。
+ *
  * @param value redirectクエリパラメータの値
- * @returns 安全な内部パス。無効な場合はnull
+ * @returns 安全な内部パス（pathname + search + hash）。無効な場合はnull
  */
 function safeRedirectPath(value: string | null): string | null {
   if (!value) return null;
-  // 先頭が "/" かつ "//"（プロトコル相対URL）でないものだけを許可する
-  if (!value.startsWith("/") || value.startsWith("//")) return null;
-  return value;
+  if (typeof window === "undefined") return null;
+  // 先頭が "/" 以外（絶対URL・相対パス）は受け付けない
+  if (!value.startsWith("/")) return null;
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -111,9 +123,9 @@ export function LoginForm() {
             </p>
           )}
 
-          <a href="/register" className="text-[0.8em] text-[#2196F3] no-underline">
+          <Link href="/register" className="text-[0.8em] text-[#2196F3] no-underline">
             Create an account
-          </a>
+          </Link>
 
           <button
             type="submit"

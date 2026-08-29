@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
@@ -46,6 +47,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState("");
+  // 初期データ取得の失敗（ログインへは飛ばさず画面内で通知し、再試行させる）
+  const [loadError, setLoadError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
 
   const modalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -72,8 +76,14 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
         setResidentPrefectureKbnCode(accountData.residentPrefectureKbnCode || "none");
         setFreeMemo(accountData.freeMemo || "");
         setPrefectureGroups(prefectureData);
-      } catch {
-        if (!cancelled) router.push("/login");
+      } catch (err) {
+        // 一時的なサーバーエラーでログインへ飛ばさず、画面内で再試行させる。
+        // 未ログインの場合は別のeffectが/loginへ誘導する。
+        if (!cancelled) {
+          setLoadError(
+            err instanceof Error ? err.message : "情報の取得に失敗しました"
+          );
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -83,7 +93,8 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     return () => {
       cancelled = true;
     };
-  }, [authLoading, isOwner, accountId, router]);
+    // router は再取得のトリガーではないため依存に含めない
+  }, [authLoading, isOwner, accountId, reloadKey]);
 
   // 未ログインの場合はログインページへ誘導する
   useEffect(() => {
@@ -206,15 +217,35 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     );
   }
 
+  // 初期データ取得に失敗した場合は画面内で通知し、再試行させる
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-[whitesmoke] flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoadError("");
+            setIsLoading(true);
+            setReloadKey((k) => k + 1);
+          }}
+          className="px-4 py-2 bg-[#2196F3] text-white rounded-sm cursor-pointer"
+        >
+          再読み込み
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[whitesmoke] font-['Open_Sans',sans-serif]">
       <header>
-        <a
+        <Link
           href={`/photo/${accountId}/photo_list`}
           className="fixed top-[5px] left-[10px] text-xl text-gray-400 z-[1000] no-underline"
         >
           &larr; back
-        </a>
+        </Link>
       </header>
 
       <div className="flex justify-center pt-12 pb-16 px-4">

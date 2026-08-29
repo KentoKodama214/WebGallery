@@ -220,13 +220,24 @@ describe("AccountSettingForm", () => {
     expect(mockUpdateAccount).not.toHaveBeenCalled();
   });
 
-  it("データ取得失敗時にログインページへリダイレクトされること", async () => {
-    mockGetAccount.mockRejectedValue(new Error("Failed"));
+  it("データ取得失敗時はログインへ飛ばさず、画面内でエラーと再読み込みを表示すること", async () => {
+    mockGetAccount.mockRejectedValueOnce(new Error("情報の取得に失敗しました"));
 
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith("/login");
+      expect(screen.getByText("情報の取得に失敗しました")).toBeInTheDocument();
+    });
+    expect(mockPush).not.toHaveBeenCalledWith("/login");
+    expect(screen.getByRole("button", { name: "再読み込み" })).toBeInTheDocument();
+
+    // 再読み込みで成功すればフォームが表示される
+    mockGetAccount.mockResolvedValue(mockAccountData);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "再読み込み" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
     });
   });
 });

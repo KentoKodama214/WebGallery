@@ -265,10 +265,77 @@ describe("PhotoList", () => {
       expect(galleryImages()).toHaveLength(2);
     });
 
-    fireEvent.click(screen.getByAltText("お気に入りではない"));
+    fireEvent.click(screen.getByRole("button", { name: "お気に入りに追加" }));
 
     await waitFor(() => {
       expect(mockAddFavorite).toHaveBeenCalledWith(1, 2);
     });
+  });
+
+  it("お気に入り更新失敗時にエラーが通知され、一覧は維持されること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "other" },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: samplePhotos });
+    mockAddFavorite.mockRejectedValue(new Error("お気に入りの登録に失敗しました"));
+
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(galleryImages()).toHaveLength(2);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "お気に入りに追加" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("お気に入りの登録に失敗しました")
+      ).toBeInTheDocument();
+    });
+    expect(galleryImages()).toHaveLength(2);
+  });
+
+  it("フィルター未適用で閉じた場合、編集値は破棄され「もっと見る」は元の条件で取得すること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1" },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoList.mockResolvedValue({ isLast: false, photoList: samplePhotos });
+
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("+もっと見る")).toBeInTheDocument();
+    });
+
+    // フィルターパネルを開き、並び順を変更するが「絞り込み」は押さない
+    fireEvent.click(screen.getByTestId("filter-trigger"));
+    const selects = screen.getAllByRole("combobox") as HTMLSelectElement[];
+    const orderSelect = selects.find((s) =>
+      Array.from(s.options).some((o) => o.value === "favorite")
+    )!;
+    fireEvent.change(orderSelect, { target: { value: "favorite" } });
+
+    // 適用せずに閉じる
+    fireEvent.click(screen.getByTestId("filter-close-button"));
+
+    mockGetPhotoList.mockClear();
+    mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: [] });
+
+    fireEvent.click(screen.getByText("+もっと見る"));
+
+    await waitFor(() => {
+      expect(mockGetPhotoList).toHaveBeenCalled();
+    });
+    const params = mockGetPhotoList.mock.calls[0][1];
+    // 未適用のためデフォルト（photoAt）のまま
+    expect(params.sortBy).toBe("photoAt");
   });
 });
