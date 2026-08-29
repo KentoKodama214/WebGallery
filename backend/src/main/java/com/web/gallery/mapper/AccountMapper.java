@@ -48,6 +48,14 @@ public interface AccountMapper {
 	public Integer update(@Param("condition") AccountCondition condition, @Param("target") AccountUpdateTarget target);
 
 	/**
+	 * アカウントのログイン失敗回数をSQL側で原子的にインクリメントする
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				更新件数
+	 */
+	public Integer incrementLoginFailureCount(@Param("accountNo") Long accountNo);
+
+	/**
 	 * アカウントを削除する
 	 *
 	 * @param	condition	削除対象の抽出条件
@@ -62,4 +70,12 @@ public interface AccountMapper {
 	 * @return				アカウントの存在有無
 	 */
 	public Boolean isExistAccount(AccountCondition condition);
+
+	/**
+	 * アカウントの行ロックを取得する（排他制御用）
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				ロックしたアカウント番号（存在しない場合はnull）
+	 */
+	public Long lockAccount(@Param("accountNo") Long accountNo);
 }

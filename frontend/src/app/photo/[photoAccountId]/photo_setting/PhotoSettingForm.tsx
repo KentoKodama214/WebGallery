@@ -220,7 +220,6 @@ export function PhotoSettingForm({
 
     try {
       const formData = new FormData();
-      formData.append("accountNo", String(user!.accountNo));
       formData.append("directionKbn", directionKbn);
 
       if (isEditMode && savedPhotoNo) {

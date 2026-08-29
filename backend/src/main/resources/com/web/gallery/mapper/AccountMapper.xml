@@ -148,6 +148,16 @@
 		</where>
 	</update>
 
+	<update id="incrementLoginFailureCount">
+		UPDATE
+			common.account
+		SET
+			login_failure_count = login_failure_count + 1,
+			updated_at = NOW()
+		WHERE
+			account_no = #{accountNo}
+	</update>
+
 	<delete id="delete" parameterType="com.web.gallery.entity.AccountCondition">
 		DELETE FROM
 			common.account
@@ -167,5 +177,15 @@
 			<if test="accountNo != null"> AND account_no &lt;&gt; #{accountNo}</if>
 			<if test="accountId != null"> AND account_id = #{accountId}</if>
 		</where>
+	</select>
+
+	<select id="lockAccount" resultType="Long">
+		SELECT
+			account_no
+		FROM
+			common.account
+		WHERE
+			account_no = #{accountNo}
+		FOR UPDATE
 	</select>
 </mapper>

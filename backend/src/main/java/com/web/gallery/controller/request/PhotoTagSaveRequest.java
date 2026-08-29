@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -35,5 +36,7 @@ public class PhotoTagSaveRequest {
 
 	/** タグ英語名 */
 	@Schema(description = "タグ英語名", example = "landscape")
+	@Size(max = 20, message = "{validation.common.max_length}")
+	@Pattern(regexp = "(?!.*( |　)).*", message = "{validation.common.disable_space}")
 	private String tagEnglishName;
 }
