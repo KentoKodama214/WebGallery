@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.AccountPrincipal;
@@ -212,7 +213,9 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@EventListener
-	@Transactional(rollbackFor = GalleryException.class)
+	// authenticationManager.authenticate()が投げるBadCredentialsExceptionは呼び出し元のlogin()の
+	// トランザクション境界まで伝播しロールバックされるため、REQUIRES_NEWで独立してコミットする
+	@Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = GalleryException.class)
 	public void handle(AuthenticationFailureBadCredentialsEvent event) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(new AccountId(event.getAuthentication().getName()));
 

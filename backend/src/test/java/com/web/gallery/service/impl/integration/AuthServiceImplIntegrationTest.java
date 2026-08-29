@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.OffsetDateTime;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -21,6 +22,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.config.JwtConfig;
@@ -105,6 +107,34 @@ public class AuthServiceImplIntegrationTest {
 		@BeforeEach
 		void setUp() {
 			insertTestData();
+
+			// login()内のREQUIRES_NEWによる別コネクションの更新がフィクスチャ行を参照できるよう、
+			// ここまでの投入データ（TRUNCATE・INSERT）を物理コミットしてから新しいテスト用トランザクションを開始する
+			TestTransaction.flagForCommit();
+			TestTransaction.end();
+			TestTransaction.start();
+		}
+
+		@AfterEach
+		void tearDown() {
+			// テスト本体が例外系の場合、現在のテストトランザクションはロールバック専用に
+			// なっている可能性があるため、一度終了・再開してクリーンな状態にしてからTRUNCATEし、
+			// setUp()で物理コミットしたフィクスチャ行が後続の他テストへ残留しないよう明示的に物理コミットする
+			TestTransaction.end();
+			TestTransaction.start();
+			jdbcTemplate.execute("""
+					TRUNCATE TABLE
+						photo.photo_favorite,
+						photo.photo_tag_mst,
+						photo.photo_mst,
+						common.refresh_token,
+						common.location_mst,
+						common.account,
+						common.kbn_mst
+					CASCADE
+					""");
+			TestTransaction.flagForCommit();
+			TestTransaction.end();
 		}
 
 		@Test
@@ -172,10 +202,43 @@ public class AuthServiceImplIntegrationTest {
 
 		@Test
 		@Order(5)
-		@DisplayName("異常系：アカウントロックの場合、LockedException をthrowする")
+		@DisplayName("異常系：アカウントロックの場合、LockedExceptionをthrowする")
 		void login_locked_account() {
 			assertThrows(LockedException.class,
 				() -> authServiceImpl.login(new AccountId("lockeduser"), new Password(TEST_PASSWORD)));
+		}
+
+		@Test
+		@Order(6)
+		@DisplayName("異常系：パスワード不一致の場合、login()のロールバックとは独立してログイン失敗回数がコミットされる")
+		void login_wrong_password_increments_failure_count() {
+			assertThrows(BadCredentialsException.class,
+				() -> authServiceImpl.login(new AccountId("testuser01"), new Password("wrongpassword")));
+
+			Integer failureCount = jdbcTemplate.queryForObject(
+				"SELECT login_failure_count FROM common.account WHERE account_no = 1", Integer.class);
+			assertEquals(1, failureCount);
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("異常系：ログイン失敗を3回繰り返すとアカウントがロックされる")
+		void login_locks_account_after_reaching_fail_count() {
+			for (int i = 0; i < 3; i++) {
+				assertThrows(BadCredentialsException.class,
+					() -> authServiceImpl.login(new AccountId("testuser01"), new Password("wrongpassword")));
+
+				// login()が投げたBadCredentialsExceptionによりこのテストトランザクションは
+				// 既にロールバック専用になっているためflagForCommit()は使えない。
+				// このトランザクション自身は書き込みを行っておらず（更新は既にコミット済みの
+				// REQUIRES_NEW側で行われる）ロールバックしても実データは失われないため、
+				// MyBatisのセッション単位の1次キャッシュを破棄する目的でロールバック・再開する
+				TestTransaction.end();
+				TestTransaction.start();
+			}
+
+			assertThrows(LockedException.class,
+				() -> authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD)));
 		}
 	}
 

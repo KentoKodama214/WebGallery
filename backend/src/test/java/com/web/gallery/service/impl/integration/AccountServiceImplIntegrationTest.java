@@ -8,6 +8,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -29,6 +31,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.domain.account.AccountId;
@@ -491,6 +494,38 @@ public class AccountServiceImplIntegrationTest {
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/service/AccountServiceImplIntegrationTest.sql")
 	class handleAuthenticationFailureBadCredentials {
+		@BeforeEach
+		void setUp() {
+			// handle()のREQUIRES_NEWによる別コネクションの更新が@Sqlで投入したフィクスチャ行を
+			// 参照できるよう、投入データ（TRUNCATE・INSERT）を物理コミットしてから
+			// 新しいテスト用トランザクションを開始する
+			TestTransaction.flagForCommit();
+			TestTransaction.end();
+			TestTransaction.start();
+		}
+
+		@AfterEach
+		void tearDown() {
+			// テスト本体が例外系の場合、現在のテストトランザクションはロールバック専用に
+			// なっている可能性があるため、一度終了・再開してクリーンな状態にしてからTRUNCATEし、
+			// setUp()で物理コミットしたフィクスチャ行が後続の他テストへ残留しないよう明示的に物理コミットする
+			TestTransaction.end();
+			TestTransaction.start();
+			jdbcTemplate.execute("""
+					TRUNCATE TABLE
+						photo.photo_favorite,
+						photo.photo_tag_mst,
+						photo.photo_mst,
+						common.refresh_token,
+						common.location_mst,
+						common.account,
+						common.kbn_mst
+					CASCADE
+					""");
+			TestTransaction.flagForCommit();
+			TestTransaction.end();
+		}
+
 		@Test
 		@Order(1)
 		@DisplayName("正常系：アカウントが存在する場合")
@@ -507,8 +542,11 @@ public class AccountServiceImplIntegrationTest {
 			
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 
-			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
+			// handle()はREQUIRES_NEWで本メソッドの呼び出しとは別の物理トランザクションで実行されるため、
+			// DBのNOW()ではなくJavaのOffsetDateTime.now()で挟んだ時間範囲でupdatedAtを検証する
+			OffsetDateTime beforeHandle = OffsetDateTime.now();
 			accountServiceImpl.handle(event);
+			OffsetDateTime afterHandle = OffsetDateTime.now();
 
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_id='aaaaaaaa'", (rs, rowNum) ->
@@ -537,7 +575,8 @@ public class AccountServiceImplIntegrationTest {
 			assertEquals(1L, actualData.getFirst().getCreatedBy());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getCreatedAt());
 			assertEquals(1L, actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+			assertFalse(actualData.getFirst().getUpdatedAt().isBefore(beforeHandle));
+			assertFalse(actualData.getFirst().getUpdatedAt().isAfter(afterHandle));
 			assertFalse(actualData.getFirst().getIsDeleted());
 			assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
