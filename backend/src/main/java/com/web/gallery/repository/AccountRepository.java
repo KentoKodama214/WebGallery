@@ -89,4 +89,12 @@ public interface AccountRepository {
 	 * @param	accountNo	アカウント番号
 	 */
 	void delete(AccountNo accountNo);
+
+	/**
+	 * アカウントの行ロックを取得する（排他制御用）<p>
+	 * 写真番号の採番・登録枚数上限チェックなど、アカウント単位で処理を直列化したい場合に使用する
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	void lockForUpdate(AccountNo accountNo);
 }

@@ -62,6 +62,7 @@ import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.event.PhotoRegisteredEvent;
 import com.web.gallery.event.PhotoUpdatedEvent;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -613,6 +614,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 
 			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).regist(photoCaptor.capture());
@@ -631,6 +635,7 @@ public class PhotoServiceImplTest {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(new PhotoNo(5L), actual);
+			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
 			verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
 			verify(fileRepositoryImpl, times(2)).save(any(FileModel.class));
@@ -694,6 +699,9 @@ public class PhotoServiceImplTest {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(new PhotoNo(3L), actual);
+			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
+			verify(accountRepositoryImpl, times(0)).getByAccountNo(any(AccountNo.class));
+			verify(photoMstRepositoryImpl, times(0)).count(any(AccountNo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(2)).update(any(Photo.class));
 			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
@@ -727,6 +735,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 
 			ArgumentCaptor<Photo> photoRegistCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).regist(photoRegistCaptor.capture());
@@ -785,6 +796,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 			doThrow(RegistFailureException.class).when(photoAggregateRepositoryImpl).regist(any(Photo.class));
 
 			// 新規登録1枚目
@@ -829,8 +843,33 @@ public class PhotoServiceImplTest {
 			verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
 			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
+
+		@Test
+		@Order(8)
+		@DisplayName("異常系：登録枚数の上限に達している場合、トランザクション内の再検証でREACHED_REGISTRATION_LIMITをthrowすること")
+		void savePhotos_reachedUpperLimit_throws() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.MINI).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(3).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(photoQuotaPolicy).isReached(AuthorityEnum.MINI, new PhotoCount(3));
+
+			// 新規登録1枚目
+			PhotoDetailModel photoDetailModel1 = createNewPhoto();
+			photoDetailModelList.add(photoDetailModel1);
+
+			assertThrows(PhotoNotAdditableException.class,
+					() -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
 	}
-	
+
 	@Nested
 	@Order(4)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)

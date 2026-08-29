@@ -62,4 +62,12 @@ public interface AccountMapper {
 	 * @return				アカウントの存在有無
 	 */
 	public Boolean isExistAccount(AccountCondition condition);
+
+	/**
+	 * アカウントの行ロックを取得する（排他制御用）
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				ロックしたアカウント番号（存在しない場合はnull）
+	 */
+	public Long lockAccount(@Param("accountNo") Long accountNo);
 }

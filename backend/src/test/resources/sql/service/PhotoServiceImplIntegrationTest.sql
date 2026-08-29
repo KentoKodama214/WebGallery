@@ -1,10 +1,11 @@
 -- common.account
-insert into common.account values(1,  1,  '2000-01-01 09:00:00 Asia/Tokyo', 1,  '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$password1', '1991-02-14', 'none', 'none', 'none', '', 'mini-user', '2002-01-01 09:00:00 Asia/Tokyo', 0);
+insert into common.account values(1,  1,  '2000-01-01 09:00:00 Asia/Tokyo', 1,  '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$password1', '1991-02-14', 'none', 'none', 'none', '', 'normal-user', '2002-01-01 09:00:00 Asia/Tokyo', 0);
 insert into common.account values(2,  2,  '2000-01-02 09:00:00 Asia/Tokyo', 2,  '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1900-01-01', 'man',  'none', 'none', '', 'mini-user', '2002-01-01 09:00:00 Asia/Tokyo', 0);
 insert into common.account values(3,  3,  '2000-01-03 09:00:00 Asia/Tokyo', 3,  '2001-01-03 09:00:00 Asia/Tokyo', false, 'cccccccc', 'CCCCCCCC', '$2a$10$password3', '1900-01-01', 'man',  'none', 'none', '', 'normal-user', '2002-01-01 09:00:00 Asia/Tokyo', 0);
 insert into common.account values(4,  4,  '2000-01-04 09:00:00 Asia/Tokyo', 4,  '2001-01-04 09:00:00 Asia/Tokyo', false, 'dddddddd', 'DDDDDDDD', '$2a$10$password4', '1900-01-01', 'man',  'none', 'none', '', 'normal-user', '2002-01-01 09:00:00 Asia/Tokyo', 0);
 insert into common.account values(5,  5,  '2000-01-05 09:00:00 Asia/Tokyo', 5,  '2001-01-05 09:00:00 Asia/Tokyo', false, 'eeeeeeee', 'EEEEEEEE', '$2a$10$password5', '1900-01-01', 'man',  'none', 'none', '', 'special-user', '2002-01-01 09:00:00 Asia/Tokyo', 0);
 insert into common.account values(6,  6,  '2000-01-06 09:00:00 Asia/Tokyo', 6,  '2001-01-06 09:00:00 Asia/Tokyo', false, 'ffffffff', 'FFFFFFFF', '$2a$10$password6', '1900-01-01', 'man',  'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0);
+insert into common.account values(7,  7,  '2000-01-07 09:00:00 Asia/Tokyo', 7,  '2001-01-07 09:00:00 Asia/Tokyo', false, 'ggggggg1', 'GGGGGGG1', '$2a$10$password7', '1900-01-01', 'man',  'none', 'none', '', 'mini-user', '2002-01-01 09:00:00 Asia/Tokyo', 0);
 
 -- common.location_mst
 insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション1', '住所1', 38.100, 115.100);
@@ -56,6 +57,18 @@ insert into photo.photo_mst values(DEFAULT, 3, 17, 3, '2000-01-01 09:00:00 Asia/
 insert into photo.photo_mst values(DEFAULT, 3, 18, 3, '2000-01-01 09:00:00 Asia/Tokyo', 3, '2000-01-01 09:00:00 Asia/Tokyo', false,   '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC3018.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
 insert into photo.photo_mst values(DEFAULT, 3, 19, 3, '2000-01-01 09:00:00 Asia/Tokyo', 3, '2000-01-01 09:00:00 Asia/Tokyo', false,   '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC3019.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
 insert into photo.photo_mst values(DEFAULT, 3, 20, 3, '2000-01-01 09:00:00 Asia/Tokyo', 3, '2000-01-01 09:00:00 Asia/Tokyo', false,   '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC3020.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
+
+-- mini-userの登録上限チェック（上限到達）用: account_no=7で写真10件（mini-userの上限）を登録済みにする
+insert into photo.photo_mst values(DEFAULT, 7, 1,  7, '2000-01-01 09:00:00 Asia/Tokyo', 7, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC7001.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
+insert into photo.photo_mst values(DEFAULT, 7, 2,  7, '2000-01-01 09:00:00 Asia/Tokyo', 7, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC7002.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
+insert into photo.photo_mst values(DEFAULT, 7, 3,  7, '2000-01-01 09:00:00 Asia/Tokyo', 7, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC7003.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
+insert into photo.photo_mst values(DEFAULT, 7, 4,  7, '2000-01-01 09:00:00 Asia/Tokyo', 7, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC7004.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
+insert into photo.photo_mst values(DEFAULT, 7, 5,  7, '2000-01-01 09:00:00 Asia/Tokyo', 7, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC7005.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
+insert into photo.photo_mst values(DEFAULT, 7, 6,  7, '2000-01-01 09:00:00 Asia/Tokyo', 7, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC7006.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
+insert into photo.photo_mst values(DEFAULT, 7, 7,  7, '2000-01-01 09:00:00 Asia/Tokyo', 7, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC7007.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
+insert into photo.photo_mst values(DEFAULT, 7, 8,  7, '2000-01-01 09:00:00 Asia/Tokyo', 7, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC7008.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
+insert into photo.photo_mst values(DEFAULT, 7, 9,  7, '2000-01-01 09:00:00 Asia/Tokyo', 7, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC7009.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
+insert into photo.photo_mst values(DEFAULT, 7, 10, 7, '2000-01-01 09:00:00 Asia/Tokyo', 7, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC7010.jpg', 'タイトル', 'title', 'キャプション', 'horizontal', 50, 10.0, 3,  400);
 
 -- photo.photo_favorite
 insert into photo.photo_favorite values(DEFAULT, 1, 1, 1, 1, now());
