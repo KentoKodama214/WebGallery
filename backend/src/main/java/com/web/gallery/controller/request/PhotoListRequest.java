@@ -20,8 +20,6 @@ import lombok.Data;
 @Schema(description = "写真一覧リクエスト")
 @Data
 public class PhotoListRequest {
-	/** タグリストで指定できるタグ数の上限 */
-	private static final int TAG_LIST_MAX_SIZE = 20;
 	/**
 	 * 向き区分コード
 	 * <p>
@@ -74,6 +72,6 @@ public class PhotoListRequest {
 		long tagCount = Arrays.stream(tagList.replace(Consts.FULL_SPACE, Consts.HALF_SPACE).split(Consts.HALF_SPACE))
 				.filter(tag -> !tag.isEmpty())
 				.count();
-		return tagCount <= TAG_LIST_MAX_SIZE;
+		return tagCount <= Consts.TAG_LIST_MAX_SIZE;
 	}
 }

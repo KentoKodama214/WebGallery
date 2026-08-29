@@ -41,4 +41,8 @@ public final class Consts {
 
 	// Hash Algorithm
 	public static final String SHA_256 = "SHA-256";
+
+	// Integer
+	/** 写真一覧のタグリストで指定できるタグ数の上限 */
+	public static final Integer TAG_LIST_MAX_SIZE = 20;
 }
