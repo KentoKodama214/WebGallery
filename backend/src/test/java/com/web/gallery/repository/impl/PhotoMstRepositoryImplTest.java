@@ -497,7 +497,7 @@ public class PhotoMstRepositoryImplTest {
 	class isExistPhoto {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：画像ファイルパスに該当する写真がない場合")
+		@DisplayName("正常系：画像ファイル名に該当する写真がない場合")
 		void isExistPhoto_not_found() {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
@@ -518,12 +518,12 @@ public class PhotoMstRepositoryImplTest {
 
 			PhotoMstCondition photoMst = photoMstCaptor.getValue();
 			assertEquals(1L, photoMst.getAccountNo());
-			assertEquals("DSC111.jpg", photoMst.getImageFilePath());
+			assertEquals("DSC111.jpg", photoMst.getImageFileName());
 		}
-		
+
 		@Test
 		@Order(2)
-		@DisplayName("正常系：画像ファイルパスに該当する写真がある場合")
+		@DisplayName("正常系：画像ファイル名に該当する写真がある場合")
 		void isExistPhoto_found() {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
