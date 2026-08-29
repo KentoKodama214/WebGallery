@@ -447,6 +447,41 @@ public class AccountRepositoryImplTest {
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetAccountCapture.getLastLoginDatetime());
 			assertEquals(0, targetAccountCapture.getLoginFailureCount());
 		}
+
+		@Test
+		@Order(4)
+		@DisplayName("異常系：DuplicateKeyException発生時にUpdateFailureExceptionをthrowする")
+		void update_DuplicateKeyException() {
+			AccountModel accountModel = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName("AAAAAAAA"))
+					.build();
+
+			ArgumentCaptor<AccountCondition> cndAccountCaptor = ArgumentCaptor.forClass(AccountCondition.class);
+			ArgumentCaptor<AccountUpdateTarget> targetAccountCaptor = ArgumentCaptor.forClass(AccountUpdateTarget.class);
+			doThrow(DuplicateKeyException.class).when(accountMapper).update(cndAccountCaptor.capture(), targetAccountCaptor.capture());
+
+			assertThrows(UpdateFailureException.class, () -> accountRepositoryImpl.update(accountModel));
+
+			verify(accountMapper).update(any(AccountCondition.class), any(AccountUpdateTarget.class));
+			AccountCondition cndAccountCapture = cndAccountCaptor.getValue();
+			assertEquals(1L, cndAccountCapture.getAccountNo());
+
+			AccountUpdateTarget targetAccountCapture = targetAccountCaptor.getValue();
+			assertEquals(null, targetAccountCapture.getUpdatedBy());
+			assertEquals(null, targetAccountCapture.getIsDeleted());
+			assertEquals("aaaaaaaa", targetAccountCapture.getAccountId());
+			assertEquals("AAAAAAAA", targetAccountCapture.getAccountName());
+			assertEquals(null, targetAccountCapture.getPassword());
+			assertEquals(LocalDate.of(1900, 1, 1), targetAccountCapture.getBirthdate());
+			assertEquals(SexEnum.NONE, targetAccountCapture.getSexKbn());
+			assertEquals("none", targetAccountCapture.getBirthplacePrefectureKbnCode());
+			assertEquals("none", targetAccountCapture.getResidentPrefectureKbnCode());
+			assertEquals("", targetAccountCapture.getFreeMemo());
+			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetAccountCapture.getLastLoginDatetime());
+			assertEquals(0, targetAccountCapture.getLoginFailureCount());
+		}
 	}
 	
 	@Nested

@@ -8,6 +8,7 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
+import com.web.gallery.exception.SystemException;
 import com.web.gallery.exception.UpdateFailureException;
 
 import lombok.Getter;
@@ -206,6 +207,18 @@ public enum ErrorEnum {
 		@Override
 		public GalleryException toException() {
 			return new UpdateFailureException(this);
+		}
+	},
+
+	/**
+	 * エラーコード：E-S-0001
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_SYSTEM_ERROR}
+	 */
+	SYSTEM_ERROR("E-S-0001", MessageConst.ERR_SYSTEM_ERROR) {
+		@Override
+		public GalleryException toException() {
+			return new SystemException(this);
 		}
 	};
 

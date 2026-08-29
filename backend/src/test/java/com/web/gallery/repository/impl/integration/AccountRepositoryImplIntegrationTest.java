@@ -398,7 +398,21 @@ public class AccountRepositoryImplIntegrationTest {
 					.accountId(new AccountId("aaaaaaaa"))
 					.accountName(new AccountName("AAAAAAAA"))
 					.build();
-			
+
+			assertThrows(UpdateFailureException.class, () -> accountRepositoryImpl.update(accountModel));
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("異常系：account_idの一意制約違反（DuplicateKeyException）発生時にUpdateFailureExceptionをthrowする")
+		void update_DuplicateKeyException() {
+			// account_no=2を、既に別アカウント（account_no=1）が使用しているaccount_idに更新しようとする
+			AccountModel accountModel = AccountModel.builder()
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.build();
+
 			assertThrows(UpdateFailureException.class, () -> accountRepositoryImpl.update(accountModel));
 		}
 	}
