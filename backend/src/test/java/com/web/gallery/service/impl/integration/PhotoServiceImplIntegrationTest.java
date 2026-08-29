@@ -62,6 +62,7 @@ import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -881,8 +882,34 @@ public class PhotoServiceImplIntegrationTest {
 			
 			assertThrows(FileDuplicateException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
 		}
+
+		@Test
+		@Order(7)
+		@DisplayName("異常系：mini-userで登録枚数の上限に達している場合、PhotoNotAdditableExceptionをthrowすること")
+		void savePhotos_reachedUpperLimit_throws() {
+			String accountId = "ggggggg1";
+
+			MultipartFile multipartFile = new MockMultipartFile(
+					"file",
+					"DSC7011.jpg",
+					"multipart/form-data",
+					"sample image".getBytes()
+			);
+			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
+					.accountNo(new AccountNo(7L))
+					.imageFile(new ImageFile(multipartFile))
+					.imageFilePath(new ImageFilePath(""))
+					.build();
+
+			assertThrows(PhotoNotAdditableException.class,
+					() -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(List.of(photoDetailModel))));
+
+			Integer photoCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=7", Integer.class);
+			assertEquals(10, photoCount);
+		}
 	}
-	
+
 	@Nested
 	@Order(4)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -1075,7 +1102,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：mini-userで、上限まで登録済みの場合")
 		void isReachedUpperLimit_mini_user_reached() {
-			AccountNo accountNo = new AccountNo(1L);
+			AccountNo accountNo = new AccountNo(7L);
 			assertTrue(photoServiceImpl.isReachedUpperLimit(accountNo));
 		}
 		

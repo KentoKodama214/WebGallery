@@ -64,6 +64,7 @@ import com.web.gallery.event.PhotoRegisteredEvent;
 import com.web.gallery.event.PhotoUpdatedEvent;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -680,6 +681,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
 			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
 			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
@@ -766,6 +770,9 @@ public class PhotoServiceImplTest {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(new PhotoNo(3L), actual);
+			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
+			verify(accountRepositoryImpl, times(0)).getByAccountNo(any(AccountNo.class));
+			verify(photoMstRepositoryImpl, times(0)).count(any(AccountNo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(2)).update(any(Photo.class));
 			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
@@ -799,6 +806,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
 			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
 			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
@@ -861,6 +871,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
 			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
 			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
@@ -912,6 +925,31 @@ public class PhotoServiceImplTest {
 
 		@Test
 		@Order(8)
+		@DisplayName("異常系：登録枚数の上限に達している場合、トランザクション内の再検証でREACHED_REGISTRATION_LIMITをthrowすること")
+		void savePhotos_reachedUpperLimit_throws() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.MINI).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(3).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(photoQuotaPolicy).isReached(AuthorityEnum.MINI, new PhotoCount(3));
+
+			// 新規登録1枚目
+			PhotoDetailModel photoDetailModel1 = createNewPhoto();
+			photoDetailModelList.add(photoDetailModel1);
+
+			assertThrows(PhotoNotAdditableException.class,
+					() -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(9)
 		@DisplayName("異常系：新規登録時に画像ファイルが指定されていない場合、GalleryExceptionをthrowする")
 		void savePhotos_registPhoto_imageFileRequired() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -920,6 +958,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 
 			PhotoDetailModel photoDetailModel = createNewPhoto().toBuilder().imageFile(null).build();
 			photoDetailModelList.add(photoDetailModel);
@@ -934,7 +975,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(9)
+		@Order(10)
 		@DisplayName("正常系：オリジナルファイル名にパストラバーサルを含む場合、ベース名のみを保存パスに使用すること")
 		void savePhotos_newPhoto_sanitizes_path_traversal_filename() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -943,6 +984,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
 			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
 			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
@@ -969,7 +1013,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(10)
+		@Order(11)
 		@DisplayName("異常系：画像ファイルのContent-Typeが許可されていない（偽装された）場合、GalleryExceptionをthrowする")
 		void savePhotos_registPhoto_unsupportedContentType() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -978,6 +1022,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 			doReturn(false).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
 
 			PhotoDetailModel photoDetailModel = createNewPhoto();
@@ -993,7 +1040,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(11)
+		@Order(12)
 		@DisplayName("異常系：画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合、GalleryExceptionをthrowする")
 		void savePhotos_registPhoto_invalidSignature() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -1002,6 +1049,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
 			doReturn(false).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
 
@@ -1018,7 +1068,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(12)
+		@Order(13)
 		@DisplayName("異常系：画像ファイルのサイズが上限を超えている場合、GalleryExceptionをthrowする")
 		void savePhotos_registPhoto_sizeExceeded() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -1027,6 +1077,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
 			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
 			doReturn(true).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
@@ -1044,7 +1097,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(13)
+		@Order(14)
 		@DisplayName("異常系：許可されていない拡張子の場合、BadRequestExceptionをthrowし登録処理を行わないこと")
 		void savePhotos_newPhoto_disallowed_extension() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -1053,6 +1106,9 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
 			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
 			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
 			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));

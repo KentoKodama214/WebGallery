@@ -119,7 +119,9 @@ public class PhotoServiceImpl implements PhotoService {
 	}
 
 	/**
-	 * 写真を登録・更新する
+	 * 写真を登録・更新する<p>
+	 * 新規登録分については、アカウント行のロックにより直列化したうえで登録枚数の上限を
+	 * トランザクション内で再検証し、チェックと登録の間のレースによる上限バイパスを防ぐ
 	 *
 	 * @param	photoDetailModelList	{@link PhotoDetailModelList}
 	 * @throws	GalleryException		以下のいずれかに該当する場合
@@ -129,6 +131,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 *                              	・画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合
 	 *                              	・画像ファイルのサイズが上限を超えている場合
 	 *                              	・同じファイル名のファイルが既に保存済みの場合
+	 *                              	・登録枚数の上限に達している場合
 	 *                              	・登録に失敗した場合
 	 *                              	・更新に失敗した場合
 	 */
@@ -145,9 +148,20 @@ public class PhotoServiceImpl implements PhotoService {
 		PhotoNo savedPhotoNo = new PhotoNo(photoNo);
 		String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
 
+		AccountModel accountModel = null;
+		PhotoCount registeredCount = null;
+
 		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
 			if(Objects.isNull(photoDetailModel.getPhotoNo())) {
+				if(Objects.isNull(accountModel)) {
+					accountModel = accountRepository.getByAccountNo(photoAccountNo);
+					registeredCount = new PhotoCount(photoMstRepository.count(photoAccountNo));
+				}
+				if(photoQuotaPolicy.isReached(accountModel.getAuthorityKbn(), registeredCount)) {
+					throw ErrorEnum.REACHED_REGISTRATION_LIMIT.toException();
+				}
 				registPhoto(photoDetailModel, new PhotoNo(photoNo), filePath);
+				registeredCount = new PhotoCount(registeredCount.value() + 1);
 				++photoNo;
 			} else {
 				savedPhotoNo = photoDetailModel.getPhotoNo();
