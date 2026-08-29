@@ -27,6 +27,11 @@ export function loginUrlWithRedirect(): string {
  * `javascript:` / `data:` / プロトコル相対 URL（`//host`）などを弾き、
  * 蓄積型 XSS やオープンリダイレクトの経路を塞ぐ。
  *
+ * 許可するのは以下のみ。
+ * - アプリ内の絶対パス（`/` 始まり）
+ * - `https:` の絶対 URL（CSP の `img-src` に合わせる。`http:` は不許可）
+ *   ただし認証情報付き URL（`https://user:pass@host/...`）は拒否する
+ *
  * @param url 検証対象の URL
  * @returns 安全と判断できる場合はそのままの文字列。危険・不正な場合は空文字
  */
@@ -40,7 +45,10 @@ export function sanitizeImageUrl(url: string | null | undefined): string {
   if (trimmed.startsWith("/")) return trimmed;
   try {
     const parsed = new URL(trimmed);
-    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+    // 認証情報を埋め込んだ URL は拒否する
+    if (parsed.username || parsed.password) return "";
+    // CSP(img-src)に合わせ https のみ許可する
+    if (parsed.protocol === "https:") {
       return trimmed;
     }
   } catch {

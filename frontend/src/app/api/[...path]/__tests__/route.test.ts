@@ -87,6 +87,39 @@ describe("APIプロキシ route", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("content-length を伴わない過大なボディはストリーム読み取り中に打ち切って413を返す", async () => {
+    const oneMb = new Uint8Array(1024 * 1024);
+    let emitted = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (emitted++ < 8) {
+          controller.enqueue(oneMb);
+        } else {
+          controller.close();
+        }
+      },
+    });
+    const fakeRequest = {
+      method: "POST",
+      headers: new Headers({ "content-type": "application/octet-stream" }),
+      nextUrl: { search: "" },
+      body,
+    } as unknown as NextRequest;
+
+    const res = await POST(fakeRequest, ctx(["v1", "accounts", "foo", "photos"]));
+
+    expect(res.status).toBe(413);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("ドットセグメントを含むパスは中継せず400を返す", async () => {
+    const req = new NextRequest("http://localhost/api/v1/x");
+    const res = await GET(req, ctx(["v1", "..", "actuator"]));
+
+    expect(res.status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("複数の Set-Cookie を個別に転送する", async () => {
     const backendHeaders = new Headers();
     backendHeaders.append("set-cookie", "a=1; Path=/");

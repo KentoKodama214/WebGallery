@@ -14,6 +14,7 @@ import {
   clearError,
   isPastDate,
 } from "@/lib/validation";
+import { ModalDialog } from "@/components/ui/ModalDialog";
 
 /**
  * アカウント登録フォームコンポーネント
@@ -151,9 +152,11 @@ export function RegisterForm() {
               Create an Account
             </p>
 
-            <label className="block text-[#444] text-sm mb-1">アカウントID</label>
+            <label htmlFor="register-account-id" className="block text-[#444] text-sm mb-1">アカウントID</label>
             <input
+              id="register-account-id"
               type="text"
+              autoComplete="username"
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
               onBlur={() => {
@@ -164,14 +167,17 @@ export function RegisterForm() {
                 }
               }}
               placeholder="半角英数字で8〜16文字"
+              aria-invalid={errors.accountId ? true : undefined}
+              aria-describedby={errors.accountId ? "register-account-id-error" : undefined}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.accountId && (
-              <p className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountId}</p>
+              <p id="register-account-id-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountId}</p>
             )}
 
-            <label className="block text-[#444] text-sm mb-1 mt-2">アカウント名</label>
+            <label htmlFor="register-account-name" className="block text-[#444] text-sm mb-1 mt-2">アカウント名</label>
             <input
+              id="register-account-name"
               type="text"
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
@@ -182,15 +188,19 @@ export function RegisterForm() {
                   setErrors((prev) => clearError(prev, "accountName"));
                 }
               }}
+              aria-invalid={errors.accountName ? true : undefined}
+              aria-describedby={errors.accountName ? "register-account-name-error" : undefined}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.accountName && (
-              <p className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountName}</p>
+              <p id="register-account-name-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountName}</p>
             )}
 
-            <label className="block text-[#444] text-sm mb-1 mt-2">パスワード</label>
+            <label htmlFor="register-password" className="block text-[#444] text-sm mb-1 mt-2">パスワード</label>
             <input
+              id="register-password"
               type="password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => {
@@ -201,25 +211,31 @@ export function RegisterForm() {
                 }
               }}
               placeholder="半角英数字で8文字以上"
+              aria-invalid={errors.password ? true : undefined}
+              aria-describedby={errors.password ? "register-password-error" : undefined}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.password && (
-              <p className="text-[lightcoral] text-xs font-bold mb-2">{errors.password}</p>
+              <p id="register-password-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.password}</p>
             )}
 
-            <label className="block text-[#444] text-sm mb-1 mt-2">生年月日</label>
+            <label htmlFor="register-birthdate" className="block text-[#444] text-sm mb-1 mt-2">生年月日</label>
             <input
+              id="register-birthdate"
               type="date"
               value={birthdate}
               onChange={(e) => setBirthdate(e.target.value)}
+              aria-invalid={errors.birthdate ? true : undefined}
+              aria-describedby={errors.birthdate ? "register-birthdate-error" : undefined}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.birthdate && (
-              <p className="text-[lightcoral] text-xs font-bold mb-2">{errors.birthdate}</p>
+              <p id="register-birthdate-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.birthdate}</p>
             )}
 
-            <label className="block text-[#444] text-sm mb-1 mt-2">性別</label>
+            <label htmlFor="register-sex" className="block text-[#444] text-sm mb-1 mt-2">性別</label>
             <select
+              id="register-sex"
               value={sexKbn}
               onChange={(e) => setSexKbn(e.target.value)}
               className="block w-full p-[10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
@@ -229,8 +245,9 @@ export function RegisterForm() {
               <option value="woman">女性</option>
             </select>
 
-            <label className="block text-[#444] text-sm mb-1">出身地</label>
+            <label htmlFor="register-birthplace" className="block text-[#444] text-sm mb-1">出身地</label>
             <select
+              id="register-birthplace"
               value={birthplacePrefectureKbnCode}
               onChange={(e) => setBirthplacePrefectureKbnCode(e.target.value)}
               className="block w-full p-[10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
@@ -247,8 +264,9 @@ export function RegisterForm() {
               ))}
             </select>
 
-            <label className="block text-[#444] text-sm mb-1">居住地</label>
+            <label htmlFor="register-resident" className="block text-[#444] text-sm mb-1">居住地</label>
             <select
+              id="register-resident"
               value={residentPrefectureKbnCode}
               onChange={(e) => setResidentPrefectureKbnCode(e.target.value)}
               className="block w-full p-[10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
@@ -265,8 +283,9 @@ export function RegisterForm() {
               ))}
             </select>
 
-            <label className="block text-[#444] text-sm mb-1">メモ</label>
+            <label htmlFor="register-free-memo" className="block text-[#444] text-sm mb-1">メモ</label>
             <input
+              id="register-free-memo"
               type="text"
               value={freeMemo}
               onChange={(e) => setFreeMemo(e.target.value)}
@@ -293,13 +312,15 @@ export function RegisterForm() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]">
-          <div className="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]">
-            <p className="text-[#444] text-center">
-              アカウントを登録しました。<br />ログインページへ移動します。
-            </p>
-          </div>
-        </div>
+        <ModalDialog
+          label="アカウント登録完了"
+          overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
+          containerClassName="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]"
+        >
+          <p className="text-[#444] text-center">
+            アカウントを登録しました。<br />ログインページへ移動します。
+          </p>
+        </ModalDialog>
       )}
     </div>
   );

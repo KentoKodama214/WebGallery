@@ -13,6 +13,7 @@ import {
 import type { PrefectureGroup } from "@/lib/api/client";
 import { PASSWORD_PATTERN, clearError, isPastDate } from "@/lib/validation";
 import { loginUrlWithRedirect } from "@/lib/url";
+import { ModalDialog } from "@/components/ui/ModalDialog";
 
 interface AccountSettingFormProps {
   accountId: string;
@@ -259,16 +260,18 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               Account Setting
             </p>
 
-            <label className="block text-[#444] text-sm mb-1">アカウントID</label>
+            <label htmlFor="account-setting-id" className="block text-[#444] text-sm mb-1">アカウントID</label>
             <input
+              id="account-setting-id"
               type="text"
               value={formAccountId}
               disabled
               className="block w-full p-[10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] bg-gray-100 cursor-not-allowed"
             />
 
-            <label className="block text-[#444] text-sm mb-1">アカウント名</label>
+            <label htmlFor="account-setting-name" className="block text-[#444] text-sm mb-1">アカウント名</label>
             <input
+              id="account-setting-name"
               type="text"
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
@@ -279,15 +282,19 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
                   setErrors((prev) => clearError(prev, "accountName"));
                 }
               }}
+              aria-invalid={errors.accountName ? true : undefined}
+              aria-describedby={errors.accountName ? "account-setting-name-error" : undefined}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.accountName && (
-              <p className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountName}</p>
+              <p id="account-setting-name-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountName}</p>
             )}
 
-            <label className="block text-[#444] text-sm mb-1 mt-2">新しいパスワード</label>
+            <label htmlFor="account-setting-password" className="block text-[#444] text-sm mb-1 mt-2">新しいパスワード</label>
             <input
+              id="account-setting-password"
               type="password"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               onBlur={() => {
@@ -298,14 +305,17 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
                 }
               }}
               placeholder="半角英数字で8文字以上"
+              aria-invalid={errors.newPassword ? true : undefined}
+              aria-describedby={errors.newPassword ? "account-setting-password-error" : undefined}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.newPassword && (
-              <p className="text-[lightcoral] text-xs font-bold mb-2">{errors.newPassword}</p>
+              <p id="account-setting-password-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.newPassword}</p>
             )}
 
-            <label className="block text-[#444] text-sm mb-1 mt-2">生年月日</label>
+            <label htmlFor="account-setting-birthdate" className="block text-[#444] text-sm mb-1 mt-2">生年月日</label>
             <input
+              id="account-setting-birthdate"
               type="date"
               value={birthdate}
               onChange={(e) => {
@@ -317,14 +327,17 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
                   setErrors((prev) => clearError(prev, "birthdate"));
                 }
               }}
+              aria-invalid={errors.birthdate ? true : undefined}
+              aria-describedby={errors.birthdate ? "account-setting-birthdate-error" : undefined}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.birthdate && (
-              <p className="text-[lightcoral] text-xs font-bold mb-2">{errors.birthdate}</p>
+              <p id="account-setting-birthdate-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.birthdate}</p>
             )}
 
-            <label className="block text-[#444] text-sm mb-1 mt-2">性別</label>
+            <label htmlFor="account-setting-sex" className="block text-[#444] text-sm mb-1 mt-2">性別</label>
             <select
+              id="account-setting-sex"
               value={sexKbn}
               onChange={(e) => setSexKbn(e.target.value)}
               className="block w-full p-[10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
@@ -334,8 +347,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               <option value="woman">女性</option>
             </select>
 
-            <label className="block text-[#444] text-sm mb-1">出身地</label>
+            <label htmlFor="account-setting-birthplace" className="block text-[#444] text-sm mb-1">出身地</label>
             <select
+              id="account-setting-birthplace"
               value={birthplacePrefectureKbnCode}
               onChange={(e) => setBirthplacePrefectureKbnCode(e.target.value)}
               className="block w-full p-[10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
@@ -352,8 +366,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               ))}
             </select>
 
-            <label className="block text-[#444] text-sm mb-1">居住地</label>
+            <label htmlFor="account-setting-resident" className="block text-[#444] text-sm mb-1">居住地</label>
             <select
+              id="account-setting-resident"
               value={residentPrefectureKbnCode}
               onChange={(e) => setResidentPrefectureKbnCode(e.target.value)}
               className="block w-full p-[10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
@@ -370,8 +385,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               ))}
             </select>
 
-            <label className="block text-[#444] text-sm mb-1">メモ</label>
+            <label htmlFor="account-setting-free-memo" className="block text-[#444] text-sm mb-1">メモ</label>
             <input
+              id="account-setting-free-memo"
               type="text"
               value={freeMemo}
               onChange={(e) => setFreeMemo(e.target.value)}
@@ -409,55 +425,70 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       </div>
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]">
-          <div className="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]">
-            <p className="text-[#444] text-center mb-4">
-              登録した写真やお気に入りはすべて削除され、復旧できなくなります。よろしいですか？
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isDeleting}
-                className="flex-1 h-[40px] bg-gray-300 text-[#444] border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                いいえ
-              </button>
-              <button
-                onClick={handleDeleteAccount}
-                disabled={isDeleting}
-                className="flex-1 h-[40px] bg-[#e53935] text-white border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {isDeleting ? (
-                  <span className="inline-block w-5 h-5 border-[3px] border-white border-t-[rgba(255,255,255,0.3)] rounded-full animate-spin" />
-                ) : (
-                  "はい"
-                )}
-              </button>
-            </div>
+        <ModalDialog
+          label="アカウント削除の確認"
+          onClose={() => {
+            if (isDeleting) return;
+            setShowDeleteConfirm(false);
+          }}
+          overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
+          containerClassName="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]"
+        >
+          <p className="text-[#444] text-center mb-4">
+            登録した写真やお気に入りはすべて削除され、復旧できなくなります。よろしいですか？
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={isDeleting}
+              className="flex-1 h-[40px] bg-gray-300 text-[#444] border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              いいえ
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+              className="flex-1 h-[40px] bg-[#e53935] text-white border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isDeleting ? (
+                <span className="inline-block w-5 h-5 border-[3px] border-white border-t-[rgba(255,255,255,0.3)] rounded-full animate-spin" />
+              ) : (
+                "はい"
+              )}
+            </button>
           </div>
-        </div>
+        </ModalDialog>
       )}
 
       {showDeleteCompleteModal && (
-        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]">
-          <div className="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]">
-            <p className="text-[#444] text-center">アカウントを削除しました</p>
-          </div>
-        </div>
+        <ModalDialog
+          label="アカウント削除完了"
+          overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
+          containerClassName="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]"
+        >
+          <p className="text-[#444] text-center">アカウントを削除しました</p>
+        </ModalDialog>
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]">
-          <div className="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]">
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-2 right-3 text-xl text-gray-400 bg-transparent border-none cursor-pointer"
-            >
-              &times;
-            </button>
-            <p className="text-[#444] text-center">アカウントを登録しました</p>
-          </div>
-        </div>
+        <ModalDialog
+          label="アカウント更新完了"
+          onClose={() => setShowModal(false)}
+          overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
+          containerClassName="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]"
+        >
+          <button
+            type="button"
+            aria-label="閉じる"
+            onClick={() => setShowModal(false)}
+            className="absolute top-2 right-3 text-xl text-gray-400 bg-transparent border-none cursor-pointer"
+          >
+            &times;
+          </button>
+          <p className="text-[#444] text-center">アカウントを登録しました</p>
+        </ModalDialog>
       )}
     </div>
   );

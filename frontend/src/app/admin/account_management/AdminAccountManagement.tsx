@@ -9,6 +9,7 @@ import {
   type AdminAccountListItem,
 } from "@/lib/api/client";
 import { LOGIN_FAILURE_LOCK_THRESHOLD } from "@/lib/consts";
+import { ModalDialog } from "@/components/ui/ModalDialog";
 
 /** ロック操作の確認対象 */
 interface PendingLockAction {
@@ -27,6 +28,8 @@ export function AdminAccountManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 追加読み込みの失敗通知（取得済みの一覧は維持したまま表示する）
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pageNo, setPageNo] = useState(1);
   const [pendingAction, setPendingAction] = useState<PendingLockAction | null>(null);
@@ -85,15 +88,19 @@ export function AdminAccountManagement() {
   const handleLoadMore = async () => {
     const nextPage = pageNo + 1;
     setIsLoadingMore(true);
-    // 追加読み込み時は古いロック操作の成功メッセージを消す
+    // 追加読み込み時は古いロック操作の成功メッセージ・失敗通知を消す
     setMessage(null);
+    setLoadMoreError(null);
     try {
       const data = await getAdminAccountList(nextPage);
       setAccounts((prev) => [...prev, ...data.accountList]);
       setIsLast(data.isLast);
       setPageNo(nextPage);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      // 取得済みの一覧は維持し、通知だけ表示する
+      setLoadMoreError(
+        err instanceof Error ? err.message : "エラーが発生しました"
+      );
     } finally {
       setIsLoadingMore(false);
     }
@@ -271,6 +278,12 @@ export function AdminAccountManagement() {
         </table>
       </div>
 
+      {loadMoreError && (
+        <p role="alert" className="text-red-500 text-sm">
+          {loadMoreError}
+        </p>
+      )}
+
       {!isLast && (
         <button
           onClick={handleLoadMore}
@@ -284,38 +297,46 @@ export function AdminAccountManagement() {
 
       {/* ロック操作の確認ダイアログ */}
       {pendingAction && (
-        <div
-          className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
-          data-testid="lock-confirm-dialog"
+        <ModalDialog
+          testId="lock-confirm-dialog"
+          label={
+            pendingAction.type === "unlock"
+              ? "ロック解除の確認"
+              : "強制ロックの確認"
+          }
+          onClose={() => {
+            if (isActionProcessing) return;
+            setPendingAction(null);
+          }}
+          overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
+          containerClassName="bg-white rounded-md p-6 shadow-lg max-w-[320px] w-[90%]"
         >
-          <div className="bg-white rounded-md p-6 shadow-lg max-w-[320px] w-[90%]">
-            <p className="text-[#444] text-center mb-4">
-              {pendingAction.type === "unlock"
-                ? `${pendingAction.accountId} のロックを解除しますか？`
-                : `${pendingAction.accountId} を強制ロックしますか？`}
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setPendingAction(null)}
-                disabled={isActionProcessing}
-                className="flex-1 h-[40px] bg-gray-300 text-[#444] rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                キャンセル
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmAction}
-                disabled={isActionProcessing}
-                className={`flex-1 h-[40px] text-white rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed ${
-                  pendingAction.type === "unlock" ? "bg-green-500" : "bg-red-500"
-                }`}
-              >
-                {isActionProcessing ? "処理中..." : "実行"}
-              </button>
-            </div>
+          <p className="text-[#444] text-center mb-4">
+            {pendingAction.type === "unlock"
+              ? `${pendingAction.accountId} のロックを解除しますか？`
+              : `${pendingAction.accountId} を強制ロックしますか？`}
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setPendingAction(null)}
+              disabled={isActionProcessing}
+              className="flex-1 h-[40px] bg-gray-300 text-[#444] rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              キャンセル
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmAction}
+              disabled={isActionProcessing}
+              className={`flex-1 h-[40px] text-white rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed ${
+                pendingAction.type === "unlock" ? "bg-green-500" : "bg-red-500"
+              }`}
+            >
+              {isActionProcessing ? "処理中..." : "実行"}
+            </button>
           </div>
-        </div>
+        </ModalDialog>
       )}
     </div>
   );
