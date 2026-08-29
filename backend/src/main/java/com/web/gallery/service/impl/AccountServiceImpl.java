@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.aggregate.Account;
 import com.web.gallery.config.LoginConfig;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.MessageConst;
@@ -30,13 +31,9 @@ import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
-import com.web.gallery.model.PhotoNoList;
+import com.web.gallery.repository.AccountAggregateRepository;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
-import com.web.gallery.repository.PhotoFavoriteRepository;
-import com.web.gallery.repository.PhotoMstRepository;
-import com.web.gallery.repository.PhotoTagMstRepository;
-import com.web.gallery.repository.RefreshTokenRepository;
 import com.web.gallery.service.AccountService;
 
 import lombok.RequiredArgsConstructor;
@@ -51,11 +48,8 @@ import lombok.extern.slf4j.Slf4j;
 public class AccountServiceImpl implements UserDetailsService, AccountService {
 
 	private final AccountRepository accountRepository;
+	private final AccountAggregateRepository accountAggregateRepository;
 	private final FileRepository fileRepository;
-	private final PhotoFavoriteRepository photoFavoriteRepository;
-	private final PhotoTagMstRepository photoTagMstRepository;
-	private final PhotoMstRepository photoMstRepository;
-	private final RefreshTokenRepository refreshTokenRepository;
 	private final LoginConfig loginConfig;
 	private final PhotoConfig photoConfig;
 	private final Clock clock;
@@ -185,30 +179,13 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	@Override
 	@Transactional
 	public void deleteAccount(AccountNo accountNo, AccountId accountId) {
-		// 自分が登録したお気に入りを削除
-		photoFavoriteRepository.deleteByAccountNo(accountNo);
-
-		// 自分の写真に対する他人のお気に入りを削除
-		photoFavoriteRepository.deleteByFavoritePhotoAccountNo(accountNo);
-
-		// 写真タグを削除
-		photoTagMstRepository.deleteByAccountNo(accountNo);
-
-		// 写真マスタを物理削除し、削除時点で未削除だった写真番号を取得
-		// SELECTとDELETEの間のTOCTOUギャップを無くすため単一SQLでアトミックに実施し、
-		// 既に論理削除済みだった写真はイベントの重複発行を避けるため対象から除外する
-		PhotoNoList deletedPhotoNoList = photoMstRepository.deleteAndGetUndeletedPhotoNosByAccountNo(accountNo);
-
-		// リフレッシュトークンを失効
-		refreshTokenRepository.revokeAllByAccountNo(accountNo);
-
-		// アカウントを物理削除
-		accountRepository.delete(accountNo);
+		Account account = Account.forDelete(accountNo);
+		accountAggregateRepository.delete(account);
 
 		// 写真ファイルのディレクトリを削除
 		fileRepository.delete(new ImageFilePath(photoConfig.getOutputPath() + accountId.value() + "/"));
 
-		for(PhotoNo photoNo : deletedPhotoNoList) {
+		for(PhotoNo photoNo : account.getDeletedPhotoNoList()) {
 			applicationEventPublisher.publishEvent(new PhotoDeletedEvent(accountNo, photoNo));
 		}
 		applicationEventPublisher.publishEvent(new AccountDeletedEvent(accountNo, accountId));
