@@ -176,7 +176,7 @@ public class AuthRestControllerIntegrationTest {
 
 		@Test
 		@Order(1)
-		@DisplayName("正常系：リフレッシュ成功")
+		@DisplayName("正常系：リフレッシュ成功時、リフレッシュトークンがローテーション（新しいcookieに差し替え）されること")
 		void refresh_success() throws Exception {
 			// まずログインしてリフレッシュトークンを取得
 			MvcResult loginResult = mockMvc.perform(
@@ -191,13 +191,26 @@ public class AuthRestControllerIntegrationTest {
 			assertNotNull(refreshTokenCookie);
 
 			// リフレッシュトークンを使ってアクセストークンを更新
-			mockMvc.perform(
+			MvcResult refreshResult = mockMvc.perform(
 					post("/api/v1/auth/refresh")
 					.cookie(refreshTokenCookie)
 				)
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.accessToken").isNotEmpty())
-				.andExpect(jsonPath("$.expiresIn").isNumber());
+				.andExpect(jsonPath("$.expiresIn").isNumber())
+				.andReturn();
+
+			// 新しいリフレッシュトークンがcookieに設定され、旧トークンとは異なること
+			Cookie rotatedRefreshTokenCookie = refreshResult.getResponse().getCookie("refreshToken");
+			assertNotNull(rotatedRefreshTokenCookie);
+			assertNotEquals(refreshTokenCookie.getValue(), rotatedRefreshTokenCookie.getValue());
+
+			// 無効化済みの旧トークンでのリフレッシュは失敗すること
+			mockMvc.perform(
+					post("/api/v1/auth/refresh")
+					.cookie(refreshTokenCookie)
+				)
+				.andExpect(status().isUnauthorized());
 		}
 
 		@Test

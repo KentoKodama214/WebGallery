@@ -88,8 +88,14 @@ public class AccountRepositoryImpl implements AccountRepository {
 		AccountCondition condition = AccountCondition.byAccountNo(accountModel.getAccountNo().value());
 		AccountUpdateTarget target = AccountUpdateTarget.fromForUpdate(accountModel, passwordEncoder);
 
-		if (accountMapper.update(condition, target) < 1) {
-			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
+		try {
+			if (accountMapper.update(condition, target) < 1) {
+				log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
+				throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
+			}
+		}
+		catch (DuplicateKeyException e) {
+			log.warn("Account: Duplicate Key (AccountNo: {})", accountModel.getAccountNo().value(), e);
 			throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
 		}
 	}
@@ -107,6 +113,20 @@ public class AccountRepositoryImpl implements AccountRepository {
 
 		if (accountMapper.update(condition, target) < 1) {
 			log.warn("Account: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
+			throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
+		}
+	}
+
+	/**
+	 * Accountテーブルのログイン失敗回数をSQL側で原子的にインクリメントする
+	 *
+	 * @param	accountNo			アカウント番号
+	 * @throws	GalleryException	更新に失敗した場合
+	 */
+	@Override
+	public void incrementLoginFailureCount(AccountNo accountNo) throws GalleryException {
+		if (accountMapper.incrementLoginFailureCount(accountNo.value()) < 1) {
+			log.warn("Account: Update Failed (AccountNo: {})", accountNo.value());
 			throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
 		}
 	}

@@ -148,6 +148,16 @@
 		</where>
 	</update>
 
+	<update id="incrementLoginFailureCount">
+		UPDATE
+			common.account
+		SET
+			login_failure_count = login_failure_count + 1,
+			updated_at = NOW()
+		WHERE
+			account_no = #{accountNo}
+	</update>
+
 	<delete id="delete" parameterType="com.web.gallery.entity.AccountCondition">
 		DELETE FROM
 			common.account

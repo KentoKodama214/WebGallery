@@ -20,15 +20,16 @@ public interface PhotoService {
 	 *
 	 * @param	photoListGetModel	{@link PhotoListGetModel}
 	 * @return						{@link PhotoModelList}
+	 * @throws	GalleryException	指定のアカウントが存在しなかった場合
 	 */
-	PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel);
+	PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel) throws GalleryException;
 	
 	/**
 	 * 写真のメタデータを含めた詳細情報を取得する
 	 *
 	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
 	 * @return						{@link PhotoDetailModel}
-	 * @throws	GalleryException	写真が存在しなかった場合
+	 * @throws	GalleryException	写真、または指定のアカウントが存在しなかった場合
 	 */
 	PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException;
 
@@ -38,6 +39,11 @@ public interface PhotoService {
 	 * @param	accountId				アカウントID
 	 * @param	photoDetailModelList	{@link PhotoDetailModelList}
 	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・新規登録時に画像ファイルが指定されていない場合
+	 *                              	・許可されていない拡張子のファイルの場合
+	 *                              	・画像ファイルのContent-Typeが許可されていない場合
+	 *                              	・画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合
+	 *                              	・画像ファイルのサイズが上限を超えている場合
 	 *                              	・同じファイル名のファイルが既に保存済みの場合
 	 *                              	・登録に失敗した場合
 	 *                              	・更新に失敗した場合

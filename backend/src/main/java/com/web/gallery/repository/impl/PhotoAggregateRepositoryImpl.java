@@ -75,7 +75,7 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
 	 */
 	@Override
 	public void update(Photo photo) throws GalleryException {
-		PhotoMstCondition condition = PhotoMstCondition.byAccountAndPhoto(photo.getAccountNo().value(), photo.getPhotoNo().value());
+		PhotoMstCondition condition = PhotoMstCondition.byAccountAndPhotoNotDeleted(photo.getAccountNo().value(), photo.getPhotoNo().value());
 		PhotoMstUpdateTarget target = PhotoMstUpdateTarget.fromForUpdate(photo.getDetail());
 
 		if (photoMstMapper.update(condition, target) < 1) {
@@ -104,7 +104,7 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
 
 		photoTagMstMapper.delete(PhotoTagMstCondition.from(PhotoTagDeleteModel.of(photo.getAccountNo(), photo.getPhotoNo())));
 
-		PhotoMstCondition condition = PhotoMstCondition.byAccountAndPhoto(photo.getAccountNo().value(), photo.getPhotoNo().value());
+		PhotoMstCondition condition = PhotoMstCondition.byAccountAndPhotoNotDeleted(photo.getAccountNo().value(), photo.getPhotoNo().value());
 		PhotoDeleteModel photoDeleteModel = PhotoDeleteModel.builder()
 				.accountNo(photo.getAccountNo())
 				.photoNo(photo.getPhotoNo())

@@ -10,9 +10,11 @@ import com.web.gallery.enumeration.DirectionEnum;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -51,6 +53,7 @@ public class PhotoSaveRequest {
 
 	/** 住所 */
 	@Schema(description = "住所", example = "東京都渋谷区")
+	@Size(max = 255, message = "{validation.common.max_length}")
 	private String address;
 
 	/** 緯度 */
@@ -63,6 +66,7 @@ public class PhotoSaveRequest {
 
 	/** ロケーション名 */
 	@Schema(description = "ロケーション名", example = "渋谷スクランブル交差点")
+	@Size(max = 100, message = "{validation.common.max_length}")
 	private String locationName;
 
 	/** 画像ファイル */
@@ -75,14 +79,18 @@ public class PhotoSaveRequest {
 
 	/** 写真タイトル日本語名 */
 	@Schema(description = "写真タイトル日本語名", example = "東京タワー")
+	@NotBlank(message = "{validation.common.notBlank}")
+	@Size(max = 100, message = "{validation.common.max_length}")
 	private String photoJapaneseTitle;
 
 	/** 写真タイトル英語名 */
 	@Schema(description = "写真タイトル英語名", example = "Tokyo Tower")
+	@Size(max = 100, message = "{validation.common.max_length}")
 	private String photoEnglishTitle;
 
 	/** キャプション */
 	@Schema(description = "キャプション", example = "夕暮れの東京タワー")
+	@Size(max = 1000, message = "{validation.common.max_length}")
 	private String caption;
 
 	/**

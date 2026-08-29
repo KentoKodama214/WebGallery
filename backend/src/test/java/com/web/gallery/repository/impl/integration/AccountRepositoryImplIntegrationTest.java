@@ -398,7 +398,21 @@ public class AccountRepositoryImplIntegrationTest {
 					.accountId(new AccountId("aaaaaaaa"))
 					.accountName(new AccountName("AAAAAAAA"))
 					.build();
-			
+
+			assertThrows(UpdateFailureException.class, () -> accountRepositoryImpl.update(accountModel));
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("異常系：account_idの一意制約違反（DuplicateKeyException）発生時にUpdateFailureExceptionをthrowする")
+		void update_DuplicateKeyException() {
+			// account_no=2を、既に別アカウント（account_no=1）が使用しているaccount_idに更新しようとする
+			AccountModel accountModel = AccountModel.builder()
+					.accountNo(new AccountNo(2L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.accountName(new AccountName("BBBBBBBB"))
+					.build();
+
 			assertThrows(UpdateFailureException.class, () -> accountRepositoryImpl.update(accountModel));
 		}
 	}
@@ -529,9 +543,34 @@ public class AccountRepositoryImplIntegrationTest {
 			assertThrows(UpdateFailureException.class, () -> accountRepositoryImpl.updateLoginFailureCount(accountModel));
 		}
 	}
-	
+
 	@Nested
 	@Order(6)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
+	class incrementLoginFailureCount {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：SQL側で原子的にインクリメントすること")
+		void incrementLoginFailureCount_success() throws GalleryException {
+			accountRepositoryImpl.incrementLoginFailureCount(new AccountNo(1L));
+
+			Integer actual = jdbcTemplate.queryForObject(
+					"SELECT login_failure_count FROM common.account WHERE account_no=1", Integer.class);
+			assertEquals(1, actual);
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
+		void incrementLoginFailureCount_UpdateFailureException() {
+			assertThrows(UpdateFailureException.class, () -> accountRepositoryImpl.incrementLoginFailureCount(new AccountNo(13L)));
+		}
+	}
+
+	@Nested
+	@Order(7)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
@@ -552,7 +591,7 @@ public class AccountRepositoryImplIntegrationTest {
 	}
 	
 	@Nested
-	@Order(7)
+	@Order(8)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	class getAccountList {
 		@Test
@@ -575,7 +614,7 @@ public class AccountRepositoryImplIntegrationTest {
 	}
 
 	@Nested
-	@Order(8)
+	@Order(9)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")

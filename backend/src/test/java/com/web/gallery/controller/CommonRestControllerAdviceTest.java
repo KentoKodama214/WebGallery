@@ -13,6 +13,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -69,6 +70,11 @@ public class CommonRestControllerAdviceTest {
 		@GetMapping("/test/update_failure")
 		public String throwUpdateFailureException() throws UpdateFailureException {
 			throw new UpdateFailureException(ErrorEnum.INVALID_INPUT);
+		}
+
+		@GetMapping("/test/data_access_error")
+		public String throwDataAccessException() {
+			throw new DataIntegrityViolationException("unexpected data access error");
 		}
 	}
 
@@ -167,6 +173,22 @@ public class CommonRestControllerAdviceTest {
 				.andExpect(status().isConflict())
 				.andExpect(jsonPath("$.httpStatus").value(409))
 				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
+		}
+	}
+
+	@Nested
+	@Order(7)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class handleDataAccessException {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：内部情報を含まない汎用エラーレスポンスに変換される")
+		void handleDataAccessException_success() throws Exception {
+			mockMvc.perform(get("/test/data_access_error"))
+				.andExpect(status().isInternalServerError())
+				.andExpect(jsonPath("$.httpStatus").value(500))
+				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.SYSTEM_ERROR.getErrorCode()))
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.SYSTEM_ERROR.getErrorMessage()));
 		}
 	}
 }
