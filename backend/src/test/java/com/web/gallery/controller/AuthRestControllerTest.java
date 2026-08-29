@@ -159,6 +159,7 @@ public class AuthRestControllerTest {
 					.build();
 
 			doReturn(tokenModel).when(authServiceImpl).refresh(new RefreshTokenValue("test-refresh-token"));
+			doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
 
 			mockMvc.perform(
 					post("/api/v1/auth/refresh")
@@ -166,7 +167,8 @@ public class AuthRestControllerTest {
 				)
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.accessToken").value("new-access-token"))
-				.andExpect(jsonPath("$.expiresIn").value(900));
+				.andExpect(jsonPath("$.expiresIn").value(900))
+				.andExpect(header().exists("Set-Cookie"));
 
 			verify(authServiceImpl, times(1)).refresh(new RefreshTokenValue("test-refresh-token"));
 		}
