@@ -192,6 +192,7 @@ public class PhotoAggregateRepositoryImplTest {
 
 			assertEquals(accountNo.value(), conditionCaptor.getValue().getAccountNo());
 			assertEquals(photoNo.value(), conditionCaptor.getValue().getPhotoNo());
+			assertFalse(conditionCaptor.getValue().getIsDeleted());
 
 			assertEquals(accountNo.value(), tagConditionCaptor.getValue().getAccountNo());
 			assertEquals(photoNo.value(), tagConditionCaptor.getValue().getPhotoNo());
@@ -252,6 +253,7 @@ public class PhotoAggregateRepositoryImplTest {
 
 			assertEquals(accountNo.value(), conditionCaptor.getValue().getAccountNo());
 			assertEquals(photoNo.value(), conditionCaptor.getValue().getPhotoNo());
+			assertFalse(conditionCaptor.getValue().getIsDeleted());
 			assertTrue(targetCaptor.getValue().getIsDeleted());
 		}
 

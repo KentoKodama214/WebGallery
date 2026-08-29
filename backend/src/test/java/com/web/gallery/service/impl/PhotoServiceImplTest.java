@@ -57,11 +57,14 @@ import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.event.PhotoRegisteredEvent;
 import com.web.gallery.event.PhotoUpdatedEvent;
+import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -79,6 +82,8 @@ import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.policy.ImageFileValidationPolicy;
+import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 import com.web.gallery.repository.impl.FileRepositoryImpl;
@@ -112,6 +117,12 @@ public class PhotoServiceImplTest {
 
 	@Mock
 	private PhotoQuotaPolicy photoQuotaPolicy;
+
+	@Mock
+	private ImageFileValidationPolicy imageFileValidationPolicy;
+
+	@Mock
+	private PhotoFileExtensionPolicy photoFileExtensionPolicy;
 
 	@Mock
 	private ApplicationEventPublisher applicationEventPublisher;
@@ -268,7 +279,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：写真が存在しなかった場合")
-		void getPhotoList_not_found() {
+		void getPhotoList_not_found() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			List<String> tags = new ArrayList<String>();
 
@@ -309,7 +320,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：sortByがSEASON以外の場合、フィルタリング・ソート済みのRepositoryの取得結果をそのまま返すこと")
-		void getPhotoList_passThrough_when_sortBy_is_not_season() {
+		void getPhotoList_passThrough_when_sortBy_is_not_season() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
 
@@ -350,7 +361,7 @@ public class PhotoServiceImplTest {
 		@Test
 		@Order(3)
 		@DisplayName("正常系：sortByがSEASONの場合、季節・時期順に並び替えられること")
-		void getPhotoList_sortBy_season() {
+		void getPhotoList_sortBy_season() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			List<String> tags = Arrays.asList("太陽", "海");
 
@@ -422,8 +433,31 @@ public class PhotoServiceImplTest {
 			assertEquals(new AccountNo(1L), photoGetModel.getPhotoAccountNo());
 			assertEquals(SortPhotoEnum.SEASON, photoGetModel.getSortBy());
 		}
+
+		@Test
+		@Order(4)
+		@DisplayName("異常系：指定のアカウントが存在しない場合、PhotoNotFoundExceptionをthrowすること")
+		void getPhotoList_accountNotFound() {
+			String accountId = "aaaaaaaa";
+
+			doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
+					.accountNo(new AccountNo(2L))
+					.photoAccountId(new AccountId(accountId))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(new ArrayList<String>())
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(1)
+					.build();
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoList(photoListGetModel));
+			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+			verify(photoDetailRepositoryImpl, never()).getPhotoList(any(PhotoGetModel.class));
+		}
 	}
-	
+
 	@Nested
 	@Order(2)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -479,8 +513,27 @@ public class PhotoServiceImplTest {
 			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
 			verify(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 		}
+
+		@Test
+		@Order(3)
+		@DisplayName("異常系：指定のアカウントが存在しない場合、PhotoNotFoundExceptionをthrowすること")
+		void getPhotoDetail_accountNotFound() throws GalleryException {
+			String accountId = "aaaaaaaa";
+
+			doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+					.accountNo(new AccountNo(2L))
+					.photoAccountId(new AccountId(accountId))
+					.photoNo(new PhotoNo(1L))
+					.build();
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
+			verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+			verify(photoDetailRepositoryImpl, never()).getPhotoDetail(any(PhotoDetailSearchModel.class));
+		}
 	}
-	
+
 	@Nested
 	@Order(3)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -533,7 +586,21 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath(""))
 					.build();
 		}
-		
+
+		PhotoDetailModel createNewPhotoWithFilename(String originalFilename) {
+			MultipartFile multipartFile = new MockMultipartFile(
+					"file",
+					originalFilename,
+					"multipart/form-data",
+					"sample image".getBytes()
+				);
+			return PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFile(new ImageFile(multipartFile))
+					.imageFilePath(new ImageFilePath(""))
+					.build();
+		}
+
 		PhotoDetailModel createUpdatePhotoWithTag() {
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
@@ -596,6 +663,7 @@ public class PhotoServiceImplTest {
 		void savePhotos_photoDetailModelList_is_null() throws GalleryException {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), null);
 			assertNull(actual);
+			verify(accountRepositoryImpl, times(0)).lockForUpdate(any(AccountNo.class));
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
@@ -609,6 +677,7 @@ public class PhotoServiceImplTest {
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), PhotoDetailModelList.of(photoDetailModelList));
 			assertNull(actual);
+			verify(accountRepositoryImpl, times(0)).lockForUpdate(any(AccountNo.class));
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
@@ -625,6 +694,13 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+			doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
 
 			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).regist(photoCaptor.capture());
@@ -643,6 +719,7 @@ public class PhotoServiceImplTest {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(new PhotoNo(5L), actual);
+			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
 			verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
 			verify(fileRepositoryImpl, times(2)).save(any(FileModel.class));
@@ -691,6 +768,10 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(new ImageFilePath("https://localhost:8080/image/existing.jpg"))
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 
 			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).update(photoCaptor.capture());
@@ -706,6 +787,9 @@ public class PhotoServiceImplTest {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(new PhotoNo(3L), actual);
+			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
+			verify(accountRepositoryImpl, times(0)).getByAccountNo(any(AccountNo.class));
+			verify(photoMstRepositoryImpl, times(0)).count(any(AccountNo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(2)).update(any(Photo.class));
 			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
@@ -739,6 +823,17 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(new ImageFilePath("https://localhost:8080/image/existing.jpg"))
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+			doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
 
 			ArgumentCaptor<Photo> photoRegistCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).regist(photoRegistCaptor.capture());
@@ -797,6 +892,13 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+			doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
 			doThrow(RegistFailureException.class).when(photoAggregateRepositoryImpl).regist(any(Photo.class));
 
 			// 新規登録1枚目
@@ -825,6 +927,10 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(new ImageFilePath("https://localhost:8080/image/existing.jpg"))
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 			doThrow(UpdateFailureException.class).when(photoAggregateRepositoryImpl).update(any(Photo.class));
 
 			// 更新1枚目
@@ -841,8 +947,327 @@ public class PhotoServiceImplTest {
 			verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
 			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
+
+		@Test
+		@Order(8)
+		@DisplayName("異常系：更新対象の写真がDBに存在しない場合、PhotoNotFoundExceptionをthrowする")
+		void savePhotos_updatePhoto_PhotoNotFoundException() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doThrow(PhotoNotFoundException.class).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
+
+			PhotoDetailModel photoDetailModel = createUpdatePhoto();
+			photoDetailModelList.add(photoDetailModel);
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(9)
+		@DisplayName("正常系：更新時にリクエストの画像ファイルパスを信用せず、DB上の既存パスで更新する（ファイルパス汚染防止）")
+		void savePhotos_updatePhoto_ignoresRequestImageFilePath() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			ImageFilePath existingImageFilePath = new ImageFilePath("https://localhost:8080/image/existing.jpg");
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(existingImageFilePath)
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
+
+			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
+			doNothing().when(photoAggregateRepositoryImpl).update(photoCaptor.capture());
+
+			// リクエストには悪意のあるファイルパスが指定されているものとする
+			PhotoDetailModel photoDetailModel = createUpdatePhoto().toBuilder()
+					.imageFilePath(new ImageFilePath("../../../etc/passwd"))
+					.build();
+			photoDetailModelList.add(photoDetailModel);
+
+			photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+
+			assertEquals(existingImageFilePath, photoCaptor.getValue().getImageFilePath());
+		}
+
+		@Test
+		@Order(10)
+		@DisplayName("異常系：登録枚数の上限に達している場合、トランザクション内の再検証でREACHED_REGISTRATION_LIMITをthrowすること")
+		void savePhotos_reachedUpperLimit_throws() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.MINI).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(3).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(photoQuotaPolicy).isReached(AuthorityEnum.MINI, new PhotoCount(3));
+
+			// 新規登録1枚目
+			PhotoDetailModel photoDetailModel1 = createNewPhoto();
+			photoDetailModelList.add(photoDetailModel1);
+
+			assertThrows(PhotoNotAdditableException.class,
+					() -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(11)
+		@DisplayName("異常系：新規登録時に画像ファイルが指定されていない場合、GalleryExceptionをthrowする")
+		void savePhotos_registPhoto_imageFileRequired() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+
+			PhotoDetailModel photoDetailModel = createNewPhoto().toBuilder().imageFile(null).build();
+			photoDetailModelList.add(photoDetailModel);
+
+			BadRequestException exception = assertThrows(BadRequestException.class,
+					() -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+			assertEquals(ErrorEnum.IMAGE_FILE_REQUIRED.getErrorCode(), exception.getErrorCode());
+
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(12)
+		@DisplayName("正常系：オリジナルファイル名にパストラバーサルを含む場合、ベース名のみを保存パスに使用すること")
+		void savePhotos_newPhoto_sanitizes_path_traversal_filename() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+			doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
+
+			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
+			doNothing().when(photoAggregateRepositoryImpl).regist(photoCaptor.capture());
+
+			ArgumentCaptor<FileModel> fileModelCaptor = ArgumentCaptor.forClass(FileModel.class);
+			doNothing().when(fileRepositoryImpl).save(fileModelCaptor.capture());
+
+			// クライアントが「../../etc/evil.jpg」のようなオリジナルファイル名を送信した場合を想定
+			PhotoDetailModel photoDetailModel = createNewPhotoWithFilename("../../etc/evil.jpg");
+			photoDetailModelList.add(photoDetailModel);
+
+			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+
+			assertEquals(new PhotoNo(5L), actual);
+			verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
+
+			// ベース名（evil.jpg）のみが保存先パスの末尾に使用され、パストラバーサル部分は除去されていること
+			assertEquals(new ImageFilePath(filePath + accountId + "/evil.jpg"), fileModelCaptor.getValue().getFilePath());
+			assertEquals(new ImageFilePath(filePath + accountId + "/evil.jpg"), photoCaptor.getValue().getImageFilePath());
+		}
+
+		@Test
+		@Order(13)
+		@DisplayName("異常系：画像ファイルのContent-Typeが許可されていない（偽装された）場合、GalleryExceptionをthrowする")
+		void savePhotos_registPhoto_unsupportedContentType() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(false).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+
+			PhotoDetailModel photoDetailModel = createNewPhoto();
+			photoDetailModelList.add(photoDetailModel);
+
+			BadRequestException exception = assertThrows(BadRequestException.class,
+					() -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+			assertEquals(ErrorEnum.UNSUPPORTED_IMAGE_CONTENT_TYPE.getErrorCode(), exception.getErrorCode());
+
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(14)
+		@DisplayName("異常系：画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合、GalleryExceptionをthrowする")
+		void savePhotos_registPhoto_invalidSignature() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+			doReturn(false).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+
+			PhotoDetailModel photoDetailModel = createNewPhoto();
+			photoDetailModelList.add(photoDetailModel);
+
+			BadRequestException exception = assertThrows(BadRequestException.class,
+					() -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+			assertEquals(ErrorEnum.INVALID_IMAGE_SIGNATURE.getErrorCode(), exception.getErrorCode());
+
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(15)
+		@DisplayName("異常系：画像ファイルのサイズが上限を超えている場合、GalleryExceptionをthrowする")
+		void savePhotos_registPhoto_sizeExceeded() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+			doReturn(true).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+
+			PhotoDetailModel photoDetailModel = createNewPhoto();
+			photoDetailModelList.add(photoDetailModel);
+
+			BadRequestException exception = assertThrows(BadRequestException.class,
+					() -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+			assertEquals(ErrorEnum.IMAGE_FILE_SIZE_EXCEEDED.getErrorCode(), exception.getErrorCode());
+
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(16)
+		@DisplayName("異常系：許可されていない拡張子の場合、BadRequestExceptionをthrowし登録処理を行わないこと")
+		void savePhotos_newPhoto_disallowed_extension() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+			doReturn(false).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
+
+			PhotoDetailModel photoDetailModel = createNewPhotoWithFilename("malicious.exe");
+			photoDetailModelList.add(photoDetailModel);
+
+			assertThrows(BadRequestException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(17)
+		@DisplayName("異常系：複数枚新規登録中にN枚目でDB登録が失敗した場合、書き込み済みファイルを補償削除する")
+		void savePhotos_registPhoto_compensatesOrphanedFileOnFailure() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+			doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
+			// 1枚目のDB登録は成功、2枚目のDB登録で失敗させる
+			doNothing().doThrow(RegistFailureException.class).when(photoAggregateRepositoryImpl).regist(any(Photo.class));
+
+			// 新規登録1枚目（成功する）
+			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
+			photoDetailModelList.add(photoDetailModel1);
+
+			// 新規登録2枚目（DB登録が失敗する）
+			PhotoDetailModel photoDetailModel2 = createNewPhoto();
+			photoDetailModelList.add(photoDetailModel2);
+
+			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
+			verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
+
+			// 1枚目は既にファイル書き込みが成功しているため、DBロールバックとの整合性を保つべく補償削除される
+			ArgumentCaptor<ImageFilePath> deleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
+			verify(fileRepositoryImpl, times(1)).delete(deleteCaptor.capture());
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC111.jpg"), deleteCaptor.getValue());
+		}
+
+		@Test
+		@Order(18)
+		@DisplayName("異常系：補償削除自体が失敗しても、元のGalleryExceptionが伝播する")
+		void savePhotos_registPhoto_deleteFailureDoesNotMaskOriginalException() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
+					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+			doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+			doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
+			doNothing().doThrow(RegistFailureException.class).when(photoAggregateRepositoryImpl).regist(any(Photo.class));
+			doThrow(new RuntimeException("delete failed")).when(fileRepositoryImpl).delete(any(ImageFilePath.class));
+
+			PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
+			photoDetailModelList.add(photoDetailModel1);
+			PhotoDetailModel photoDetailModel2 = createNewPhoto();
+			photoDetailModelList.add(photoDetailModel2);
+
+			assertThrows(RegistFailureException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+		}
 	}
-	
+
 	@Nested
 	@Order(4)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)

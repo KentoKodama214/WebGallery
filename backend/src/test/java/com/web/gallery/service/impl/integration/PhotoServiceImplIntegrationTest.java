@@ -62,6 +62,7 @@ import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -94,7 +95,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：写真が存在しなかった場合")
-		void getPhotoList_not_found() {
+		void getPhotoList_not_found() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
 
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
@@ -115,7 +116,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(2)
 		@DisplayName("正常系：写真が存在した場合で、撮影日順に並び替え（1ページ目）")
-		void getPhotoList_sortBy_photoAt() {
+		void getPhotoList_sortBy_photoAt() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
 
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
@@ -155,7 +156,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(3)
 		@DisplayName("正常系：写真が存在した場合で、撮影日順に並び替え（最終ページ）")
-		void getPhotoList_sortBy_photoAt_lastPage() {
+		void getPhotoList_sortBy_photoAt_lastPage() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
 
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
@@ -185,7 +186,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(4)
 		@DisplayName("正常系：写真が存在した場合で、お気に入り数順に並び替え")
-		void getPhotoList_sortBy_Favorite() {
+		void getPhotoList_sortBy_Favorite() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
 
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
@@ -233,7 +234,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(5)
 		@DisplayName("正常系：写真が存在した場合で、季節・時期順に並び替え")
-		void getPhotoList_sortBy_season() {
+		void getPhotoList_sortBy_season() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
 
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
@@ -273,7 +274,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(6)
 		@DisplayName("正常系：写真が存在した場合で、写真の向きで絞り込み")
-		void getPhotoList_filtering_by_directionKbnCode() {
+		void getPhotoList_filtering_by_directionKbnCode() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
 
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
@@ -311,7 +312,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(7)
 		@DisplayName("正常系：写真が存在した場合で、お気に入りで絞り込み")
-		void getPhotoList_filtering_by_isFavoriteOnly() {
+		void getPhotoList_filtering_by_isFavoriteOnly() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
 
 			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
@@ -356,7 +357,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Test
 		@Order(8)
 		@DisplayName("正常系：写真が存在した場合で、写真タグで絞り込み")
-		void getPhotoList_filtering_by_tags() {
+		void getPhotoList_filtering_by_tags() throws GalleryException {
 			List<String> tags = new ArrayList<String>();
 			tags.add("太陽");
 			tags.add("bluesky");
@@ -395,8 +396,27 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals("太陽", actualTag.getTagJapaneseName().value());
 			assertEquals("sun", actualTag.getTagEnglishName().value());
 		}
+
+		@Test
+		@Order(8)
+		@DisplayName("異常系：指定のアカウントが存在しない場合、PhotoNotFoundExceptionをthrowすること")
+		void getPhotoList_accountNotFound() {
+			List<String> tags = new ArrayList<String>();
+
+			PhotoListGetModel photoListGetModel = PhotoListGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountId(new AccountId("zzzzzzzz"))
+					.directionKbn(DirectionEnum.NONE)
+					.isFavoriteOnly(new IsFavoriteOnly(false))
+					.tagList(tags)
+					.sortBy(SortPhotoEnum.PHOTO_AT)
+					.pageNo(1)
+					.build();
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoList(photoListGetModel));
+		}
 	}
-	
+
 	@Nested
 	@Order(2)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -455,14 +475,30 @@ public class PhotoServiceImplIntegrationTest {
 
 			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
 		}
+
+		@Test
+		@Order(3)
+		@DisplayName("異常系：指定のアカウントが存在しない場合、PhotoNotFoundExceptionをthrowすること")
+		void getPhotoDetail_accountNotFound() {
+			PhotoDetailGetModel photoDetailGetModel = PhotoDetailGetModel.builder()
+					.accountNo(new AccountNo(1L))
+					.photoAccountId(new AccountId("zzzzzzzz"))
+					.photoNo(new PhotoNo(1L))
+					.build();
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
+		}
 	}
-	
+
 	@Nested
 	@Order(3)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/service/PhotoServiceImplIntegrationTest.sql")
 	class savePhotos {
+		/** 新規登録時のバリデーション（Content-Type・マジックバイト）を通過させるための、実際のJPEGファイルの先頭バイト列 */
+		private final byte[] jpegBytes = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x00, 0x10};
+
 		PhotoDetailModel createNewPhotoWithTag() {
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
@@ -482,8 +518,8 @@ public class PhotoServiceImplIntegrationTest {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
 					"DSC21.jpg",
-					"multipart/form-data",
-					"image".getBytes()
+					"image/jpeg",
+					jpegBytes
 			);
 			return PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -502,8 +538,8 @@ public class PhotoServiceImplIntegrationTest {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
 					"DSC22.jpg",
-					"multipart/form-data",
-					"image".getBytes()
+					"image/jpeg",
+					jpegBytes
 				);
 			return PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -728,7 +764,8 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(transactionNow, actualData1.getFirst().getUpdatedAt());
 			assertFalse(actualData1.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData1.getFirst().getPhotoAt());
-			assertEquals("https://www.xxx.com/" + accountId + "/DSC222.jpg", actualData1.getFirst().getImageFilePath());
+			// リクエストのimageFilePathは無視され、DB上の既存パスがそのまま維持される（ファイルパス汚染防止）
+			assertEquals("https://www.xxx.com/" + accountId + "/DSC12.jpg", actualData1.getFirst().getImageFilePath());
 			assertEquals(0L, actualData1.getFirst().getLocationNo());
 			assertEquals("タイトル2", actualData1.getFirst().getPhotoJapaneseTitle());
 			assertEquals("title2", actualData1.getFirst().getPhotoEnglishTitle());
@@ -759,7 +796,8 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(transactionNow, actualData2.getFirst().getUpdatedAt());
 			assertFalse(actualData2.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData2.getFirst().getPhotoAt());
-			assertEquals("https://www.xxx.com/" + accountId + "/DSC333.jpg", actualData2.getFirst().getImageFilePath());
+			// リクエストのimageFilePathは無視され、DB上の既存パスがそのまま維持される（ファイルパス汚染防止）
+			assertEquals("https://www.xxx.com/" + accountId + "/DSC13.jpg", actualData2.getFirst().getImageFilePath());
 			assertEquals(0L, actualData2.getFirst().getLocationNo());
 			assertEquals("タイトル3", actualData2.getFirst().getPhotoJapaneseTitle());
 			assertEquals("title3", actualData2.getFirst().getPhotoEnglishTitle());
@@ -831,7 +869,8 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(transactionNow, actualData2.getFirst().getUpdatedAt());
 			assertFalse(actualData2.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData2.getFirst().getPhotoAt());
-			assertEquals("https://www.xxx.com/" + accountId + "/DSC333.jpg", actualData2.getFirst().getImageFilePath());
+			// リクエストのimageFilePathは無視され、DB上の既存パスがそのまま維持される（ファイルパス汚染防止）
+			assertEquals("https://www.xxx.com/" + accountId + "/DSC13.jpg", actualData2.getFirst().getImageFilePath());
 			assertEquals(0L, actualData2.getFirst().getLocationNo());
 			assertEquals("タイトル3", actualData2.getFirst().getPhotoJapaneseTitle());
 			assertEquals("title3", actualData2.getFirst().getPhotoEnglishTitle());
@@ -856,8 +895,8 @@ public class PhotoServiceImplIntegrationTest {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
 					"DSC11.jpg",
-					"multipart/form-data",
-					"sample image".getBytes()
+					"image/jpeg",
+					jpegBytes
 			);
 			PhotoDetailModel photoDetailModel1 = PhotoDetailModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -876,8 +915,34 @@ public class PhotoServiceImplIntegrationTest {
 			
 			assertThrows(FileDuplicateException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
 		}
+
+		@Test
+		@Order(7)
+		@DisplayName("異常系：mini-userで登録枚数の上限に達している場合、PhotoNotAdditableExceptionをthrowすること")
+		void savePhotos_reachedUpperLimit_throws() {
+			String accountId = "ggggggg1";
+
+			MultipartFile multipartFile = new MockMultipartFile(
+					"file",
+					"DSC7011.jpg",
+					"multipart/form-data",
+					"sample image".getBytes()
+			);
+			PhotoDetailModel photoDetailModel = PhotoDetailModel.builder()
+					.accountNo(new AccountNo(7L))
+					.imageFile(new ImageFile(multipartFile))
+					.imageFilePath(new ImageFilePath(""))
+					.build();
+
+			assertThrows(PhotoNotAdditableException.class,
+					() -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(List.of(photoDetailModel))));
+
+			Integer photoCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=7", Integer.class);
+			assertEquals(10, photoCount);
+		}
 	}
-	
+
 	@Nested
 	@Order(4)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -1070,7 +1135,7 @@ public class PhotoServiceImplIntegrationTest {
 		@Order(2)
 		@DisplayName("正常系：mini-userで、上限まで登録済みの場合")
 		void isReachedUpperLimit_mini_user_reached() {
-			AccountNo accountNo = new AccountNo(1L);
+			AccountNo accountNo = new AccountNo(7L);
 			assertTrue(photoServiceImpl.isReachedUpperLimit(accountNo));
 		}
 		

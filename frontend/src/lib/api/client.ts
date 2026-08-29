@@ -425,7 +425,7 @@ export async function getPhotoDetail(
  */
 export async function deletePhoto(
   photoAccountId: string,
-  data: { accountNo: number; photoNo: number; imageFilePath: string }
+  data: { photoNo: number; imageFilePath: string }
 ): Promise<PhotoEditResult> {
   const response = await fetchWithAuth(
     `/api/v1/accounts/${photoAccountId}/photos`,

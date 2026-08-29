@@ -291,6 +291,18 @@ public class AccountRestControllerTest {
 
 		@Test
 		@Order(4)
+		@DisplayName("異常系：accountNameがDBカラム長（50文字）を超える場合、BadRequestExceptionをthrowする")
+		void account_setting_BadRequestException_accountName_too_long() throws Exception {
+			mockMvc.perform(post("/api/v1/accounts")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(readJsonFile("regist_badrequest_accountname_too_long.json")))
+				.andExpect(status().isBadRequest());
+
+			verify(accountService, times(0)).registAccount(any(AccountModel.class));
+		}
+
+		@Test
+		@Order(5)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void account_setting_RegistFailureException() throws Exception {
 			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -513,6 +525,19 @@ public class AccountRestControllerTest {
 
 		@Test
 		@Order(9)
+		@DisplayName("異常系：accountNameがDBカラム長（50文字）を超える場合、BadRequestExceptionをthrowする")
+		void update_BadRequestException_accountName_too_long() throws Exception {
+			mockMvc.perform(put("/api/v1/accounts/aaaaaaaa")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(readJsonFile("update_badrequest_accountname_too_long.json")))
+				.andExpect(status().isBadRequest());
+
+			verify(sessionHelper, times(0)).getAccountNo();
+			verify(accountService, times(0)).updateAccount(any(AccountModel.class));
+		}
+
+		@Test
+		@Order(10)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void update_UpdateFailureException() throws Exception {
 			String accountId = "aaaaaaaa";

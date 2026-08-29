@@ -76,6 +76,22 @@ public class PhotoMstCondition {
 	}
 
 	/**
+	 * アカウント番号・写真番号による抽出条件を生成する（削除済みを除外）<p>
+	 * 更新・削除対象のWHERE句に使用し、削除済みの写真への二重更新・二重削除を防ぐ
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @param	photoNo		写真番号
+	 * @return				{@link PhotoMstCondition}
+	 */
+	public static PhotoMstCondition byAccountAndPhotoNotDeleted(Long accountNo, Long photoNo) {
+		return PhotoMstCondition.builder()
+				.accountNo(accountNo)
+				.photoNo(photoNo)
+				.isDeleted(false)
+				.build();
+	}
+
+	/**
 	 * 写真存在チェック用の抽出条件を生成する
 	 *
 	 * @param	model	{@link PhotoDetailModel}
