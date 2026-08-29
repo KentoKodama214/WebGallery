@@ -30,6 +30,7 @@ import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
@@ -144,6 +145,29 @@ public class PhotoAggregateRepositoryImplIntegrationTest {
 			assertEquals("川", photoTagRows.get(0).get("tag_japanese_name"));
 			assertEquals(1L, ((Number) photoTagRows.get(0).get("tag_no")).longValue());
 		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：削除済みの写真の場合、UpdateFailureExceptionをthrowすること")
+		void update_alreadyDeleted_UpdateFailureException() {
+			jdbcTemplate.update("UPDATE photo.photo_mst SET is_deleted=true WHERE account_no=1 AND photo_no=2");
+
+			AccountNo accountNo = new AccountNo(1L);
+			PhotoNo photoNo = new PhotoNo(2L);
+			PhotoDetailModel requestDetail = PhotoDetailModel.builder()
+					.accountNo(accountNo)
+					.photoNo(photoNo)
+					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC222.jpg"))
+					.photoTagModelList(PhotoTagModelList.empty())
+					.build();
+			Photo photo = Photo.forUpdate(requestDetail);
+
+			assertThrows(UpdateFailureException.class, () -> photoAggregateRepositoryImpl.update(photo));
+
+			Integer tagCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM photo.photo_tag_mst WHERE account_no=1 AND photo_no=2", Integer.class);
+			assertEquals(1, tagCount);
+		}
 	}
 
 	@Nested
@@ -174,6 +198,19 @@ public class PhotoAggregateRepositoryImplIntegrationTest {
 			Integer favoriteCount = jdbcTemplate.queryForObject(
 					"SELECT COUNT(*) FROM photo.photo_favorite WHERE favorite_photo_account_no=1 AND favorite_photo_no=1", Integer.class);
 			assertEquals(0, favoriteCount);
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：既に削除済みの写真を再度削除しようとした場合、UpdateFailureExceptionをthrowすること")
+		void delete_alreadyDeleted_UpdateFailureException() throws GalleryException {
+			AccountNo accountNo = new AccountNo(1L);
+			PhotoNo photoNo = new PhotoNo(1L);
+			Photo photo = Photo.forDelete(accountNo, photoNo, new ImageFilePath("https://www.xxx.com/DSC111.jpg"));
+
+			photoAggregateRepositoryImpl.delete(photo);
+
+			assertThrows(UpdateFailureException.class, () -> photoAggregateRepositoryImpl.delete(photo));
 		}
 	}
 }

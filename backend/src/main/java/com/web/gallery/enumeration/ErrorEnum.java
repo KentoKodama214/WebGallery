@@ -8,6 +8,7 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
+import com.web.gallery.exception.SystemException;
 import com.web.gallery.exception.UpdateFailureException;
 
 import lombok.Getter;
@@ -188,9 +189,9 @@ public enum ErrorEnum {
 	/**
 	 * エラーコード：E-P-0011
 	 * <p>
-	 * エラーメッセージ：{@value MessageConst#ERR_IMAGE_FILE_REQUIRED}
+	 * エラーメッセージ：{@value MessageConst#ERR_INVALID_PHOTO_FILE_EXTENSION}
 	 */
-	IMAGE_FILE_REQUIRED("E-P-0011", MessageConst.ERR_IMAGE_FILE_REQUIRED) {
+	INVALID_PHOTO_FILE_EXTENSION("E-P-0011", MessageConst.ERR_INVALID_PHOTO_FILE_EXTENSION) {
 		@Override
 		public GalleryException toException() {
 			return new BadRequestException(this);
@@ -200,9 +201,9 @@ public enum ErrorEnum {
 	/**
 	 * エラーコード：E-P-0012
 	 * <p>
-	 * エラーメッセージ：{@value MessageConst#ERR_UNSUPPORTED_IMAGE_CONTENT_TYPE}
+	 * エラーメッセージ：{@value MessageConst#ERR_IMAGE_FILE_REQUIRED}
 	 */
-	UNSUPPORTED_IMAGE_CONTENT_TYPE("E-P-0012", MessageConst.ERR_UNSUPPORTED_IMAGE_CONTENT_TYPE) {
+	IMAGE_FILE_REQUIRED("E-P-0012", MessageConst.ERR_IMAGE_FILE_REQUIRED) {
 		@Override
 		public GalleryException toException() {
 			return new BadRequestException(this);
@@ -212,9 +213,9 @@ public enum ErrorEnum {
 	/**
 	 * エラーコード：E-P-0013
 	 * <p>
-	 * エラーメッセージ：{@value MessageConst#ERR_INVALID_IMAGE_SIGNATURE}
+	 * エラーメッセージ：{@value MessageConst#ERR_UNSUPPORTED_IMAGE_CONTENT_TYPE}
 	 */
-	INVALID_IMAGE_SIGNATURE("E-P-0013", MessageConst.ERR_INVALID_IMAGE_SIGNATURE) {
+	UNSUPPORTED_IMAGE_CONTENT_TYPE("E-P-0013", MessageConst.ERR_UNSUPPORTED_IMAGE_CONTENT_TYPE) {
 		@Override
 		public GalleryException toException() {
 			return new BadRequestException(this);
@@ -224,9 +225,21 @@ public enum ErrorEnum {
 	/**
 	 * エラーコード：E-P-0014
 	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_INVALID_IMAGE_SIGNATURE}
+	 */
+	INVALID_IMAGE_SIGNATURE("E-P-0014", MessageConst.ERR_INVALID_IMAGE_SIGNATURE) {
+		@Override
+		public GalleryException toException() {
+			return new BadRequestException(this);
+		}
+	},
+
+	/**
+	 * エラーコード：E-P-0015
+	 * <p>
 	 * エラーメッセージ：{@value MessageConst#ERR_IMAGE_FILE_SIZE_EXCEEDED}
 	 */
-	IMAGE_FILE_SIZE_EXCEEDED("E-P-0014", MessageConst.ERR_IMAGE_FILE_SIZE_EXCEEDED) {
+	IMAGE_FILE_SIZE_EXCEEDED("E-P-0015", MessageConst.ERR_IMAGE_FILE_SIZE_EXCEEDED) {
 		@Override
 		public GalleryException toException() {
 			return new BadRequestException(this);
@@ -254,6 +267,18 @@ public enum ErrorEnum {
 		@Override
 		public GalleryException toException() {
 			return new UpdateFailureException(this);
+		}
+	},
+
+	/**
+	 * エラーコード：E-S-0001
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_SYSTEM_ERROR}
+	 */
+	SYSTEM_ERROR("E-S-0001", MessageConst.ERR_SYSTEM_ERROR) {
+		@Override
+		public GalleryException toException() {
+			return new SystemException(this);
 		}
 	};
 
