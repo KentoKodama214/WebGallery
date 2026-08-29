@@ -23,12 +23,6 @@ import lombok.Data;
 @Schema(description = "写真保存リクエスト")
 @Data
 public class PhotoSaveRequest {
-	/** アカウント番号 */
-	@Schema(description = "アカウント番号", example = "1")
-	@NotNull(message = "{validation.common.notBlank}")
-	@Positive(message = "{validation.common.positive}")
-	private Long accountNo;
-
 	/** 写真番号 */
 	@Schema(description = "写真番号（更新時のみ指定）", example = "1")
 	@Positive(message = "{validation.common.positive}")

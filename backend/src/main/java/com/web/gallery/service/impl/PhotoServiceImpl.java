@@ -228,13 +228,20 @@ public class PhotoServiceImpl implements PhotoService {
 	}
 
 	/**
-	 * 写真を1件更新し、更新イベントを発行する
+	 * 写真を1件更新し、更新イベントを発行する<p>
+	 * 画像ファイルパスはリクエスト値を信用せず、DB上の既存値をそのまま引き継ぐ（クライアント入力によるファイルパス汚染を防ぐため）
 	 *
 	 * @param	photoDetailModel	{@link PhotoDetailModel}
 	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	private void updatePhoto(PhotoDetailModel photoDetailModel) throws GalleryException {
-		Photo photo = Photo.forUpdate(photoDetailModel);
+		PhotoDetailModel existing = photoDetailRepository.getPhotoDetail(PhotoDetailSearchModel.builder()
+				.photoAccountNo(photoDetailModel.getAccountNo())
+				.photoNo(photoDetailModel.getPhotoNo())
+				.build());
+		Photo photo = Photo.forUpdate(photoDetailModel.toBuilder()
+				.imageFilePath(existing.getImageFilePath())
+				.build());
 		photoAggregateRepository.update(photo);
 		applicationEventPublisher.publishEvent(new PhotoUpdatedEvent(photo.getAccountNo(), photo.getPhotoNo()));
 	}

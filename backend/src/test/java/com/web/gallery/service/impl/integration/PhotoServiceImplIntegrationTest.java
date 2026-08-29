@@ -734,7 +734,8 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(transactionNow, actualData1.getFirst().getUpdatedAt());
 			assertFalse(actualData1.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData1.getFirst().getPhotoAt());
-			assertEquals("https://www.xxx.com/" + accountId + "/DSC222.jpg", actualData1.getFirst().getImageFilePath());
+			// リクエストのimageFilePathは無視され、DB上の既存パスがそのまま維持される（ファイルパス汚染防止）
+			assertEquals("https://www.xxx.com/" + accountId + "/DSC12.jpg", actualData1.getFirst().getImageFilePath());
 			assertEquals(0L, actualData1.getFirst().getLocationNo());
 			assertEquals("タイトル2", actualData1.getFirst().getPhotoJapaneseTitle());
 			assertEquals("title2", actualData1.getFirst().getPhotoEnglishTitle());
@@ -765,7 +766,8 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(transactionNow, actualData2.getFirst().getUpdatedAt());
 			assertFalse(actualData2.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData2.getFirst().getPhotoAt());
-			assertEquals("https://www.xxx.com/" + accountId + "/DSC333.jpg", actualData2.getFirst().getImageFilePath());
+			// リクエストのimageFilePathは無視され、DB上の既存パスがそのまま維持される（ファイルパス汚染防止）
+			assertEquals("https://www.xxx.com/" + accountId + "/DSC13.jpg", actualData2.getFirst().getImageFilePath());
 			assertEquals(0L, actualData2.getFirst().getLocationNo());
 			assertEquals("タイトル3", actualData2.getFirst().getPhotoJapaneseTitle());
 			assertEquals("title3", actualData2.getFirst().getPhotoEnglishTitle());
@@ -837,7 +839,8 @@ public class PhotoServiceImplIntegrationTest {
 			assertEquals(transactionNow, actualData2.getFirst().getUpdatedAt());
 			assertFalse(actualData2.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData2.getFirst().getPhotoAt());
-			assertEquals("https://www.xxx.com/" + accountId + "/DSC333.jpg", actualData2.getFirst().getImageFilePath());
+			// リクエストのimageFilePathは無視され、DB上の既存パスがそのまま維持される（ファイルパス汚染防止）
+			assertEquals("https://www.xxx.com/" + accountId + "/DSC13.jpg", actualData2.getFirst().getImageFilePath());
 			assertEquals(0L, actualData2.getFirst().getLocationNo());
 			assertEquals("タイトル3", actualData2.getFirst().getPhotoJapaneseTitle());
 			assertEquals("title3", actualData2.getFirst().getPhotoEnglishTitle());

@@ -263,7 +263,6 @@ public class PhotoRestControllerIntegrationTest {
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.file(multipartFile)
 					.contentType(MediaType.MULTIPART_FORM_DATA)
-					.param("accountNo", "2")
 					.param("caption", "")
 					.param("imageFilePath", "")
 					.param("directionKbn", "VERTICAL")
@@ -362,7 +361,6 @@ public class PhotoRestControllerIntegrationTest {
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.file(multipartFile)
 					.contentType(MediaType.MULTIPART_FORM_DATA)
-					.param("accountNo", "2")
 					.param("caption", "caption111")
 					.param("imageFilePath", "")
 					.param("directionKbn", "VERTICAL")
@@ -460,7 +458,7 @@ public class PhotoRestControllerIntegrationTest {
 		
 		@Test
 		@Order(3)
-		@DisplayName("正常系：更新。写真タグあり、撮影日時あり。Nullパラメータなし")
+		@DisplayName("正常系：更新。写真タグあり、撮影日時あり。Nullパラメータなし。リクエストの画像ファイルパスは無視されDB上の既存パスが維持される")
 		void savePhoto_updatePhoto_with_photoTag_and_photoAt() throws Exception {
 			String photoAccountId = "bbbbbbbb";
 			
@@ -479,10 +477,10 @@ public class PhotoRestControllerIntegrationTest {
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.contentType(MediaType.MULTIPART_FORM_DATA)
-					.param("accountNo", "2")
 					.param("photoNo", "1")
 					.param("caption", "caption111")
-					.param("imageFilePath", "https://www.xxx.com/bbbbbbbb/DSC21.jpg")
+					// リクエストのimageFilePathは攻撃を模した値。DB上の既存パスを信用し、この値は保存に使われないことを検証する
+					.param("imageFilePath", "https://evil.example.com/malicious/path.jpg")
 					.param("directionKbn", "VERTICAL")
 					.param("photoEnglishTitle", "title111")
 					.param("photoJapaneseTitle", "タイトル111")
@@ -540,6 +538,7 @@ public class PhotoRestControllerIntegrationTest {
 			assertFalse(actualPhotoMst.getFirst().getIsDeleted());
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
+			// リクエストの悪意あるimageFilePathは無視され、DB上の既存パスのまま更新されることを検証
 			assertEquals("https://www.xxx.com/bbbbbbbb/DSC21.jpg", actualPhotoMst.getFirst().getImageFilePath());
 			assertEquals("タイトル111", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
 			assertEquals("title111", actualPhotoMst.getFirst().getPhotoEnglishTitle());
@@ -604,7 +603,6 @@ public class PhotoRestControllerIntegrationTest {
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.file(multipartFile)
 					.contentType(MediaType.MULTIPART_FORM_DATA)
-					.param("accountNo", "1")
 					.param("imageFilePath", "")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
@@ -642,7 +640,6 @@ public class PhotoRestControllerIntegrationTest {
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.file(multipartFile)
 					.contentType(MediaType.MULTIPART_FORM_DATA)
-					.param("accountNo", "1")
 					.param("imageFilePath", "")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
@@ -674,7 +671,6 @@ public class PhotoRestControllerIntegrationTest {
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.contentType(MediaType.MULTIPART_FORM_DATA)
-					.param("accountNo", "2")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
@@ -705,7 +701,6 @@ public class PhotoRestControllerIntegrationTest {
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.contentType(MediaType.MULTIPART_FORM_DATA)
-					.param("accountNo", "2")
 					.param("imageFilePath", "")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
@@ -743,8 +738,8 @@ public class PhotoRestControllerIntegrationTest {
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.file(multipartFile)
 					.contentType(MediaType.MULTIPART_FORM_DATA)
-					.param("accountNo", "")
 					.param("imageFilePath", "")
+					.param("focalLength", "-1")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
@@ -781,7 +776,6 @@ public class PhotoRestControllerIntegrationTest {
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.file(multipartFile)
 					.contentType(MediaType.MULTIPART_FORM_DATA)
-					.param("accountNo", "2")
 					.param("caption", "")
 					.param("imageFilePath", "")
 					.param("directionKbn", "VERTICAL")
@@ -799,10 +793,10 @@ public class PhotoRestControllerIntegrationTest {
 		
 		@Test
 		@Order(10)
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void savePhoto_UpdateFailureException() throws Exception {
+		@DisplayName("異常系：存在しない写真番号を指定した場合、PhotoNotFoundExceptionをthrowする")
+		void savePhoto_PhotoNotFoundException() throws Exception {
 			String photoAccountId = "bbbbbbbb";
-			
+
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(2L))
 					.accountId(new AccountId("bbbbbbbb"))
@@ -810,14 +804,13 @@ public class PhotoRestControllerIntegrationTest {
 					.password(new Password("$2a$10$password2"))
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.build();
-			
+
 			AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
 			Authentication authentication = new UsernamePasswordAuthenticationToken(accountPrincipal, null, accountPrincipal.getAuthorities());
-			
+
 			mockMvc.perform(
 					multipart("/api/v1/accounts/" + photoAccountId + "/photos")
 					.contentType(MediaType.MULTIPART_FORM_DATA)
-					.param("accountNo", "2")
 					.param("photoNo", "99")
 					.param("caption", "caption21")
 					.param("imageFilePath", "https://www.xxx.com/DSC99.jpg")
@@ -827,11 +820,11 @@ public class PhotoRestControllerIntegrationTest {
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
-				.andExpect(status().isConflict())
+				.andExpect(status().isNotFound())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
-				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_UPDATE_PHOTO.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_UPDATE_PHOTO.getErrorMessage()));
+				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.NOT_FOUND.value()))
+				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorCode()))
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorMessage()));
 		}
 	}
 	

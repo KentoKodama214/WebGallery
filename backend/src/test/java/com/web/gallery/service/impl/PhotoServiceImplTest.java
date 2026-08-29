@@ -755,6 +755,10 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(new ImageFilePath("https://localhost:8080/image/existing.jpg"))
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 
 			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).update(photoCaptor.capture());
@@ -806,6 +810,10 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(new ImageFilePath("https://localhost:8080/image/existing.jpg"))
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
 					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
 			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
@@ -906,6 +914,10 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(new ImageFilePath("https://localhost:8080/image/existing.jpg"))
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
 			doThrow(UpdateFailureException.class).when(photoAggregateRepositoryImpl).update(any(Photo.class));
 
 			// 更新1枚目
@@ -925,6 +937,57 @@ public class PhotoServiceImplTest {
 
 		@Test
 		@Order(8)
+		@DisplayName("異常系：更新対象の写真がDBに存在しない場合、PhotoNotFoundExceptionをthrowする")
+		void savePhotos_updatePhoto_PhotoNotFoundException() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doThrow(PhotoNotFoundException.class).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
+
+			PhotoDetailModel photoDetailModel = createUpdatePhoto();
+			photoDetailModelList.add(photoDetailModel);
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(9)
+		@DisplayName("正常系：更新時にリクエストの画像ファイルパスを信用せず、DB上の既存パスで更新する（ファイルパス汚染防止）")
+		void savePhotos_updatePhoto_ignoresRequestImageFilePath() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			ImageFilePath existingImageFilePath = new ImageFilePath("https://localhost:8080/image/existing.jpg");
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFilePath(existingImageFilePath)
+					.build()).when(photoDetailRepositoryImpl).getPhotoDetail(any(PhotoDetailSearchModel.class));
+
+			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
+			doNothing().when(photoAggregateRepositoryImpl).update(photoCaptor.capture());
+
+			// リクエストには悪意のあるファイルパスが指定されているものとする
+			PhotoDetailModel photoDetailModel = createUpdatePhoto().toBuilder()
+					.imageFilePath(new ImageFilePath("../../../etc/passwd"))
+					.build();
+			photoDetailModelList.add(photoDetailModel);
+
+			photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+
+			assertEquals(existingImageFilePath, photoCaptor.getValue().getImageFilePath());
+		}
+
+		@Test
+		@Order(10)
 		@DisplayName("異常系：登録枚数の上限に達している場合、トランザクション内の再検証でREACHED_REGISTRATION_LIMITをthrowすること")
 		void savePhotos_reachedUpperLimit_throws() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -949,7 +1012,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(9)
+		@Order(11)
 		@DisplayName("異常系：新規登録時に画像ファイルが指定されていない場合、GalleryExceptionをthrowする")
 		void savePhotos_registPhoto_imageFileRequired() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -975,7 +1038,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(10)
+		@Order(12)
 		@DisplayName("正常系：オリジナルファイル名にパストラバーサルを含む場合、ベース名のみを保存パスに使用すること")
 		void savePhotos_newPhoto_sanitizes_path_traversal_filename() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -1013,7 +1076,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(11)
+		@Order(13)
 		@DisplayName("異常系：画像ファイルのContent-Typeが許可されていない（偽装された）場合、GalleryExceptionをthrowする")
 		void savePhotos_registPhoto_unsupportedContentType() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -1040,7 +1103,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(12)
+		@Order(14)
 		@DisplayName("異常系：画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合、GalleryExceptionをthrowする")
 		void savePhotos_registPhoto_invalidSignature() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -1068,7 +1131,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(13)
+		@Order(15)
 		@DisplayName("異常系：画像ファイルのサイズが上限を超えている場合、GalleryExceptionをthrowする")
 		void savePhotos_registPhoto_sizeExceeded() throws GalleryException {
 			String accountId = "aaaaaaaa";
@@ -1097,7 +1160,7 @@ public class PhotoServiceImplTest {
 		}
 
 		@Test
-		@Order(14)
+		@Order(16)
 		@DisplayName("異常系：許可されていない拡張子の場合、BadRequestExceptionをthrowし登録処理を行わないこと")
 		void savePhotos_newPhoto_disallowed_extension() throws GalleryException {
 			String accountId = "aaaaaaaa";

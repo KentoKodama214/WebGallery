@@ -12,12 +12,6 @@ import lombok.Data;
 @Schema(description = "写真削除リクエスト")
 @Data
 public class PhotoDeleteRequest {
-	/** アカウント番号 */
-	@Schema(description = "アカウント番号", example = "1")
-	@NotNull(message = "{validation.common.notBlank}")
-	@Positive(message = "{validation.common.positive}")
-	private Long accountNo;
-
 	/** 写真番号 */
 	@Schema(description = "写真番号", example = "1")
 	@NotNull(message = "{validation.common.notBlank}")

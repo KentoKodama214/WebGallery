@@ -190,7 +190,8 @@ public class PhotoRestController {
 			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 
-		PhotoDetailModelList photoDetailModelList = PhotoDetailModelList.of(List.of(PhotoDetailModel.from(photoSaveRequest)));
+		PhotoDetailModelList photoDetailModelList = PhotoDetailModelList.of(
+				List.of(PhotoDetailModel.from(photoSaveRequest, new AccountNo(sessionHelper.getAccountNo()))));
 
 		PhotoNo savedPhotoNo = photoService.savePhotos(new AccountId(photoAccountId), photoDetailModelList);
 
@@ -226,12 +227,13 @@ public class PhotoRestController {
 		}
 
 		if(result.hasErrors()) {
-			log.info("Invalid input. (AccountNo: {}, PhotoNo: {}, ImageFilePath: {})",
-					photoDeleteRequest.getAccountNo(), photoDeleteRequest.getPhotoNo(), photoDeleteRequest.getImageFilePath());
+			log.info("Invalid input. (PhotoNo: {}, ImageFilePath: {})",
+					photoDeleteRequest.getPhotoNo(), photoDeleteRequest.getImageFilePath());
 			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 		
-		PhotoDeleteModelList photoDeleteModelList = PhotoDeleteModelList.of(List.of(PhotoDeleteModel.from(photoDeleteRequest)));
+		PhotoDeleteModelList photoDeleteModelList = PhotoDeleteModelList.of(
+				List.of(PhotoDeleteModel.from(photoDeleteRequest, new AccountNo(sessionHelper.getAccountNo()))));
 
 		photoService.deletePhotos(new AccountId(photoAccountId), photoDeleteModelList);
 		

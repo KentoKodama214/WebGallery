@@ -364,7 +364,6 @@ public class PhotoRestControllerTest {
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
-					.param("accountNo", "1")
 					.param("imageFilePath", imageFilePath)
 					.param("photoJapaneseTitle", photoJapaneseTitle)
 					.param("directionKbn", "VERTICAL"))
@@ -417,6 +416,7 @@ public class PhotoRestControllerTest {
 			String caption = "キャプション";
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
@@ -424,7 +424,6 @@ public class PhotoRestControllerTest {
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
-					.param("accountNo", "1")
 					.param("photoNo", "1")
 					.param("isFavorite", "false")
 					.param("photoAt", "2000-12-01T00:00")
@@ -456,7 +455,6 @@ public class PhotoRestControllerTest {
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
 
-			verify(sessionHelper, times(0)).getAccountNo();
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(new AccountNo(1L));
 
 			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
@@ -499,7 +497,6 @@ public class PhotoRestControllerTest {
 			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
-					.param("accountNo", "1")
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isForbidden());
 
@@ -517,7 +514,6 @@ public class PhotoRestControllerTest {
 			doReturn(true).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
-					.param("accountNo", "1")
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isBadRequest());
 
@@ -534,7 +530,6 @@ public class PhotoRestControllerTest {
 			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
-					.param("accountNo", "1")
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isBadRequest());
 
@@ -551,7 +546,6 @@ public class PhotoRestControllerTest {
 			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
-					.param("accountNo", "1")
 					.param("imageFilePath", "")
 					.param("directionKbn", "VERTICAL"))
 				.andExpect(status().isBadRequest());
@@ -569,7 +563,6 @@ public class PhotoRestControllerTest {
 			doReturn(false).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
-					.param("accountNo", "1")
 					.param("imageFilePath", "https://localhost:8080/image/aaaaaaaa/DSC111.jpg")
 					.param("directionKbn", "VERTICAL")
 					.param("focalLength", "-1"))
@@ -592,6 +585,7 @@ public class PhotoRestControllerTest {
 					"sample image".getBytes());
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
@@ -599,7 +593,6 @@ public class PhotoRestControllerTest {
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
-					.param("accountNo", "1")
 					.param("photoNo", "1")
 					.param("imageFilePath", imageFilePath)
 					.param("photoJapaneseTitle", photoJapaneseTitle)
@@ -607,7 +600,6 @@ public class PhotoRestControllerTest {
 				.andExpect(status().isConflict());
 
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(AccountNo.class));
-			verify(sessionHelper, times(0)).getAccountNo();
 
 			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
@@ -649,6 +641,7 @@ public class PhotoRestControllerTest {
 					"sample image".getBytes());
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
@@ -656,7 +649,6 @@ public class PhotoRestControllerTest {
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
-					.param("accountNo", "1")
 					.param("photoNo", "1")
 					.param("imageFilePath", imageFilePath)
 					.param("photoJapaneseTitle", photoJapaneseTitle)
@@ -664,7 +656,6 @@ public class PhotoRestControllerTest {
 				.andExpect(status().isConflict());
 
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(AccountNo.class));
-			verify(sessionHelper, times(0)).getAccountNo();
 
 			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
@@ -706,6 +697,7 @@ public class PhotoRestControllerTest {
 					"sample image".getBytes());
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
@@ -713,7 +705,6 @@ public class PhotoRestControllerTest {
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
-					.param("accountNo", "1")
 					.param("photoNo", "1")
 					.param("imageFilePath", imageFilePath)
 					.param("photoJapaneseTitle", photoJapaneseTitle)
@@ -721,7 +712,6 @@ public class PhotoRestControllerTest {
 				.andExpect(status().isConflict());
 
 			verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(AccountNo.class));
-			verify(sessionHelper, times(0)).getAccountNo();
 
 			PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
 			assertEquals(1, photoDetailModelList.size());
@@ -802,6 +792,7 @@ public class PhotoRestControllerTest {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoDeleteModelList> photoDeleteModelCaptor = ArgumentCaptor.forClass(PhotoDeleteModelList.class);
 			ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
@@ -859,6 +850,7 @@ public class PhotoRestControllerTest {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoDeleteModelList> photoDeleteModelCaptor = ArgumentCaptor.forClass(PhotoDeleteModelList.class);
 			ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);

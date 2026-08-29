@@ -85,7 +85,6 @@ export function PhotoDetail({
     setIsDeleting(true);
     try {
       await deletePhoto(photoAccountId, {
-        accountNo: photo.accountNo,
         photoNo: photo.photoNo,
         imageFilePath: photo.imageFilePath,
       });
