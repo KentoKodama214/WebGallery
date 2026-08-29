@@ -277,9 +277,9 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 
 		@Test
 		@Order(9)
-		@DisplayName("正常系：季節・時期順（月日の昇順）に並び替えられること")
+		@DisplayName("正常系：季節・時期順（月日の降順）に並び替えられること")
 		void getPhotoList_sortBy_season() {
-			// account1の写真は1月・2月の撮影のため、季節順（月日昇順）では撮影日時降順と逆順になること
+			// account1の写真は1月・2月の撮影のため、季節順（月日降順）では撮影日時降順と同順になること
 			PhotoGetModel photoSelectModel = PhotoGetModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoAccountNo(new AccountNo(1L))
@@ -294,8 +294,8 @@ public class PhotoDetailRepositoryImplIntegrationTest {
 			PhotoPageModel actual = photoDetailRepositoryImpl.getPhotoList(photoSelectModel);
 
 			assertEquals(2, actual.getPhotoModelList().size());
-			assertEquals(1L, actual.getPhotoModelList().get(0).getPhotoNo().value());
-			assertEquals(2L, actual.getPhotoModelList().get(1).getPhotoNo().value());
+			assertEquals(2L, actual.getPhotoModelList().get(0).getPhotoNo().value());
+			assertEquals(1L, actual.getPhotoModelList().get(1).getPhotoNo().value());
 		}
 
 		@Test

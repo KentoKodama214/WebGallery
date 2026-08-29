@@ -117,9 +117,9 @@ public class PhotoDetailMapperTest {
 
 		@Test
 		@Order(4)
-		@DisplayName("正常系：季節・時期順（月日の昇順）に並び替えられること")
+		@DisplayName("正常系：季節・時期順（月日の降順）に並び替えられること")
 		void getPhotoList_sortBy_season() {
-			// account1の写真は1月・2月の撮影のため、季節順（月日昇順）では撮影日時降順と逆順になること
+			// account1の写真は1月・2月の撮影のため、季節順（月日降順）では撮影日時降順と同順になること
 			PhotoListGetDto photoSelectDto = new PhotoListGetDto();
 			photoSelectDto.setAccountNo(1L);
 			photoSelectDto.setPhotoAccountNo(1L);
@@ -129,8 +129,8 @@ public class PhotoDetailMapperTest {
 
 			List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
 			assertEquals(2, actual.size());
-			assertEquals(1L, actual.get(0).getPhotoNo());
-			assertEquals(2L, actual.get(1).getPhotoNo());
+			assertEquals(2L, actual.get(0).getPhotoNo());
+			assertEquals(1L, actual.get(1).getPhotoNo());
 		}
 	}
 
