@@ -165,4 +165,14 @@ public class AccountRepositoryImpl implements AccountRepository {
 	public void delete(AccountNo accountNo) {
 		accountMapper.delete(AccountCondition.byAccountNo(accountNo.value()));
 	}
+
+	/**
+	 * アカウントの行ロックを取得する（排他制御用）
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	@Override
+	public void lockForUpdate(AccountNo accountNo) {
+		accountMapper.lockAccount(accountNo.value());
+	}
 }

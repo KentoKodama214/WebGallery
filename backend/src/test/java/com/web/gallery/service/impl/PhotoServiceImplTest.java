@@ -584,6 +584,7 @@ public class PhotoServiceImplTest {
 		void savePhotos_photoDetailModelList_is_null() throws GalleryException {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), null);
 			assertNull(actual);
+			verify(accountRepositoryImpl, times(0)).lockForUpdate(any(AccountNo.class));
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
@@ -597,6 +598,7 @@ public class PhotoServiceImplTest {
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), PhotoDetailModelList.of(photoDetailModelList));
 			assertNull(actual);
+			verify(accountRepositoryImpl, times(0)).lockForUpdate(any(AccountNo.class));
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
@@ -631,6 +633,7 @@ public class PhotoServiceImplTest {
 			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
 			assertEquals(new PhotoNo(5L), actual);
+			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
 			verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
 			verify(fileRepositoryImpl, times(2)).save(any(FileModel.class));

@@ -602,4 +602,18 @@ public class AccountRepositoryImplIntegrationTest {
 			assertEquals(1, otherData.size());
 		}
 	}
+
+	@Nested
+	@Order(9)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
+	class lockForUpdate {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：行ロックを取得できること")
+		void lockForUpdate_success() {
+			assertDoesNotThrow(() -> accountRepositoryImpl.lockForUpdate(new AccountNo(1L)));
+		}
+	}
 }
