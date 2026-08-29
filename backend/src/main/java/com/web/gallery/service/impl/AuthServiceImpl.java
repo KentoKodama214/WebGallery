@@ -103,7 +103,9 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	/**
-	 * リフレッシュトークンを検証し、新しいアクセストークンを発行する
+	 * リフレッシュトークンを検証し、新しいアクセストークンを発行する<p>
+	 * リフレッシュのたびに新しいリフレッシュトークンを発行して旧トークンを無効化する（トークンローテーション）。
+	 * 無効化済みトークンの再利用を検知した場合は盗用の疑いがあるため、該当アカウントの全トークンを失効させる
 	 *
 	 * @param	refreshToken	リフレッシュトークン
 	 * @return					{@link AuthTokenModel}
@@ -111,12 +113,18 @@ public class AuthServiceImpl implements AuthService {
 	 * @throws	LockedException					アカウントがロックされている場合
 	 */
 	@Override
-	@Transactional(readOnly = true)
+	@Transactional
 	public AuthTokenModel refresh(RefreshTokenValue refreshToken) {
 		TokenHash tokenHash = new TokenHash(hashToken(refreshToken.value()));
 		RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
 
-		if (storedToken == null || storedToken.getIsRevoked().value()) {
+		if (storedToken == null) {
+			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
+		}
+
+		if (storedToken.getIsRevoked().value()) {
+			// 無効化済み（ローテーション済み）トークンの再利用は盗用の疑いがあるため、該当アカウントの全トークンを失効させる
+			refreshTokenRepository.revokeAllByAccountNo(storedToken.getAccountNo());
 			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
 		}
 
@@ -139,9 +147,17 @@ public class AuthServiceImpl implements AuthService {
 			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
 		}
 
+		// リフレッシュトークンをローテーション（旧トークンを無効化し、新トークンを発行）
+		refreshTokenRepository.revokeByTokenHash(tokenHash);
+		String newRefreshToken = jwtTokenProvider.generateRefreshToken();
+		refreshTokenRepository.save(RefreshTokenModel.of(
+				storedToken.getAccountNo(),
+				new TokenHash(hashToken(newRefreshToken)),
+				new ExpiresAt(OffsetDateTime.now(clock).plusDays(jwtConfig.getRefreshTokenExpirationDays()))));
+
 		String accessToken = jwtTokenProvider.generateAccessToken(principal);
 
-		return AuthTokenModel.of(accessToken, refreshToken.value(),
+		return AuthTokenModel.of(accessToken, newRefreshToken,
 				(long) jwtConfig.getAccessTokenExpirationMinutes() * 60);
 	}
 

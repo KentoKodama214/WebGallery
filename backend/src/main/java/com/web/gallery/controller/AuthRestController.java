@@ -90,7 +90,8 @@ public class AuthRestController {
 	}
 
 	/**
-	 * アクセストークンのリフレッシュ
+	 * アクセストークンのリフレッシュ<p>
+	 * リフレッシュトークンもローテーションされるため、新しいトークンをcookieに再設定する
 	 *
 	 * @param	refreshToken	リフレッシュトークン（cookieから取得）
 	 * @return					{@link AuthLoginResponse}
@@ -109,9 +110,15 @@ public class AuthRestController {
 
 		AuthTokenModel tokenModel = authService.refresh(new RefreshTokenValue(refreshToken));
 
+		ResponseCookie refreshTokenCookie = createRefreshTokenCookie(
+				tokenModel.getRefreshToken().value(),
+				jwtConfig.getRefreshTokenExpirationDays() * 24 * 60 * 60L);
+
 		AuthLoginResponse response = AuthLoginResponse.from(tokenModel);
 
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok()
+				.header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+				.body(response);
 	}
 
 	/**

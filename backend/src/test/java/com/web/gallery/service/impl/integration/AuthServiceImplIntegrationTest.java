@@ -191,7 +191,7 @@ public class AuthServiceImplIntegrationTest {
 
 		@Test
 		@Order(1)
-		@DisplayName("正常系：リフレッシュ成功")
+		@DisplayName("正常系：リフレッシュ成功時、リフレッシュトークンがローテーション（新規発行）されること")
 		void refresh_success() {
 			// ログインしてリフレッシュトークンを取得
 			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
@@ -201,12 +201,34 @@ public class AuthServiceImplIntegrationTest {
 
 			assertNotNull(refreshResult.getAccessToken().value());
 			assertFalse(refreshResult.getAccessToken().value().isEmpty());
-			assertEquals(loginResult.getRefreshToken().value(), refreshResult.getRefreshToken().value());
+			assertNotEquals(loginResult.getRefreshToken().value(), refreshResult.getRefreshToken().value());
 			assertTrue(refreshResult.getExpiresIn().value() > 0);
 		}
 
 		@Test
 		@Order(2)
+		@DisplayName("異常系：ローテーション済み（無効化済み）トークンを再利用した場合、盗用とみなし該当アカウントの新トークンも無効化されること")
+		void refresh_reuseDetection_revokesAllTokens() {
+			// ログインしてリフレッシュトークンを取得
+			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+			String firstRefreshToken = loginResult.getRefreshToken().value();
+
+			// 1回目のリフレッシュでトークンがローテーションされる
+			AuthTokenModel refreshResult = authServiceImpl.refresh(new RefreshTokenValue(firstRefreshToken));
+			String rotatedRefreshToken = refreshResult.getRefreshToken().value();
+
+			// 無効化済みの旧トークンを再利用（盗用シナリオ）
+			assertThrows(InvalidRefreshTokenException.class,
+				() -> authServiceImpl.refresh(new RefreshTokenValue(firstRefreshToken)));
+
+			// 再利用検知により、ローテーション後の新トークンも失効していること
+			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
+				() -> authServiceImpl.refresh(new RefreshTokenValue(rotatedRefreshToken)));
+			assertEquals(MessageConst.ERR_INVALID_REFRESH_TOKEN, exception.getMessage());
+		}
+
+		@Test
+		@Order(3)
 		@DisplayName("異常系：存在しないリフレッシュトークンの場合、InvalidRefreshTokenExceptionをthrowする")
 		void refresh_invalid_token() {
 			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,
@@ -215,7 +237,7 @@ public class AuthServiceImplIntegrationTest {
 		}
 
 		@Test
-		@Order(3)
+		@Order(4)
 		@DisplayName("異常系：無効化済みリフレッシュトークンの場合、InvalidRefreshTokenExceptionをthrowする")
 		void refresh_revoked_token() throws Exception {
 			// ログインしてリフレッシュトークンを取得
@@ -232,7 +254,7 @@ public class AuthServiceImplIntegrationTest {
 		}
 
 		@Test
-		@Order(4)
+		@Order(5)
 		@DisplayName("異常系：有効期限切れリフレッシュトークンの場合、InvalidRefreshTokenExceptionをthrowする")
 		void refresh_expired_token() throws Exception {
 			// ログインしてリフレッシュトークンを取得
@@ -253,7 +275,7 @@ public class AuthServiceImplIntegrationTest {
 		}
 
 		@Test
-		@Order(5)
+		@Order(6)
 		@DisplayName("異常系：発行後にアカウントがロックされた場合、LockedExceptionをthrowする")
 		void refresh_account_locked_after_token_issued() {
 			// ログインしてリフレッシュトークンを取得
@@ -271,7 +293,7 @@ public class AuthServiceImplIntegrationTest {
 		}
 
 		@Test
-		@Order(6)
+		@Order(7)
 		@DisplayName("異常系：アカウント削除後のリフレッシュトークンの場合、NPEではなくInvalidRefreshTokenExceptionをthrowする")
 		void refresh_after_account_deleted() {
 			// ログインしてリフレッシュトークンを取得
@@ -289,7 +311,7 @@ public class AuthServiceImplIntegrationTest {
 		}
 
 		@Test
-		@Order(7)
+		@Order(8)
 		@DisplayName("異常系：アカウント削除によりリフレッシュトークンが失効し、リフレッシュに失敗する")
 		void refresh_fails_after_delete_account() {
 			// ログインしてリフレッシュトークンを取得
