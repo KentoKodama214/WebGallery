@@ -1,5 +1,6 @@
 package com.web.gallery.entity;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -49,6 +50,9 @@ public class PhotoMst {
 	/** 画像ファイルパス */
 	private String imageFilePath;
 
+	/** 画像ファイル名 */
+	private String imageFileName;
+
 	/** 写真タイトル日本語名 */
 	private String photoJapaneseTitle;
 
@@ -95,6 +99,7 @@ public class PhotoMst {
 				.photoAt(model.getPhotoAt() != null ? model.getPhotoAt().value() : Consts.MIN_OFFSET_DATE_TIME)
 				.locationNo(model.getLocationNo() != null ? model.getLocationNo().value() : 0L)
 				.imageFilePath(filePath)
+				.imageFileName(new File(filePath).getName())
 				.photoJapaneseTitle(model.getPhotoJapaneseTitle() != null ? model.getPhotoJapaneseTitle().value() : Consts.STRING_EMPTY)
 				.photoEnglishTitle(model.getPhotoEnglishTitle() != null ? model.getPhotoEnglishTitle().value() : Consts.STRING_EMPTY)
 				.caption(model.getCaption() != null ? model.getCaption().value() : Consts.STRING_EMPTY)

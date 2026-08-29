@@ -466,7 +466,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 	class isExistPhoto {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：画像ファイルパスに該当する写真が1つある場合")
+		@DisplayName("正常系：画像ファイル名に該当する写真が1つある場合")
 		void isExistPhoto_photo_found() {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
@@ -486,7 +486,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 		
 		@Test
 		@Order(2)
-		@DisplayName("正常系：画像ファイルパスに該当する写真が複数ある場合")
+		@DisplayName("正常系：画像ファイル名に該当する写真が複数ある場合")
 		void isExistPhoto_photos_found() {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
@@ -506,7 +506,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 		
 		@Test
 		@Order(3)
-		@DisplayName("正常系：画像ファイルパスに該当する写真があるが、削除済みの場合")
+		@DisplayName("正常系：画像ファイル名に該当する写真があるが、削除済みの場合")
 		void isExistPhoto_found_is_deleted() {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
@@ -526,7 +526,7 @@ public class PhotoMstRepositoryImplIntegrationTest {
 		
 		@Test
 		@Order(4)
-		@DisplayName("正常系：画像ファイルパスに該当する写真がない場合")
+		@DisplayName("正常系：画像ファイル名に該当する写真がない場合")
 		void isExistPhoto_not_found() {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
@@ -546,8 +546,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
 
 		@Test
 		@Order(5)
-		@DisplayName("正常系：画像ファイル名にLIKE検索のワイルドカード文字（_）を含むが、リテラルとして扱われ該当する写真がない場合")
-		void isExistPhoto_wildcard_underscore_is_escaped() {
+		@DisplayName("正常系：画像ファイル名にSQLワイルドカード文字（_）を含むが、等価検索のためリテラルとして扱われ該当する写真がない場合")
+		void isExistPhoto_underscore_is_treated_as_literal() {
 			MultipartFile multipartFile = new MockMultipartFile(
 					"file",
 					"DSC1_.jpg",

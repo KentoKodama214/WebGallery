@@ -49,7 +49,7 @@ public interface PhotoMstMapper {
 	public Long getMaxPhotoNo(Long accountNo);
 
 	/**
-	 * ファイル名から登録済みの写真家判定する
+	 * ファイル名から登録済みの写真か判定する
 	 *
 	 * @param	condition	{@link PhotoMstCondition}
 	 * @return				登録有無

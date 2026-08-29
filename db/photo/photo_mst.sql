@@ -27,6 +27,8 @@ CREATE TABLE photo.photo_mst
 	location_no bigint NOT NULL,
 	-- 画像ファイルパス: 空文字不可
 	image_file_path text NOT NULL,
+	-- 画像ファイル名: 空文字不可、image_file_pathの末尾のファイル名部分。存在チェックの等価検索用
+	image_file_name text NOT NULL,
 	-- 写真タイトル日本語名: 空文字不可
 	photo_japanese_title varchar(100) NOT NULL,
 	-- 写真タイトル英語名
@@ -62,6 +64,10 @@ ALTER TABLE photo.photo_mst
 ;
 
 
+/* Create Indexes */
+CREATE INDEX idx_photo_mst_account_no_image_file_name ON photo.photo_mst (account_no, image_file_name);
+
+
 /* Comments */
 COMMENT ON TABLE photo.photo_mst IS '写真マスタ';
 COMMENT ON COLUMN photo.photo_mst.id IS 'ID';
@@ -75,6 +81,7 @@ COMMENT ON COLUMN photo.photo_mst.is_deleted IS '削除フラグ';
 COMMENT ON COLUMN photo.photo_mst.photo_at IS '撮影日時';
 COMMENT ON COLUMN photo.photo_mst.location_no IS 'ロケーション番号';
 COMMENT ON COLUMN photo.photo_mst.image_file_path IS '画像ファイルパス : 空文字不可';
+COMMENT ON COLUMN photo.photo_mst.image_file_name IS '画像ファイル名 : 空文字不可、image_file_pathの末尾のファイル名部分。存在チェックの等価検索用';
 COMMENT ON COLUMN photo.photo_mst.photo_japanese_title IS '写真タイトル日本語名 : 空文字不可';
 COMMENT ON COLUMN photo.photo_mst.photo_english_title IS '写真タイトル英語名';
 COMMENT ON COLUMN photo.photo_mst.caption IS 'キャプション';

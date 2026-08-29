@@ -227,6 +227,7 @@ public class PhotoMstMapperTest {
 					.photoAt(OffsetDateTime.of(2000, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(9)))
 					.locationNo(6L)
 					.imageFilePath("https://www.xxx.com/DSC666.jpg")
+					.imageFileName("DSC666.jpg")
 					.photoJapaneseTitle("")
 					.photoEnglishTitle("")
 					.caption("")
@@ -254,6 +255,7 @@ public class PhotoMstMapperTest {
 							.photoAt(rs.getObject("photo_at", OffsetDateTime.class))
 							.locationNo(rs.getLong("location_no"))
 							.imageFilePath(rs.getString("image_file_path"))
+							.imageFileName(rs.getString("image_file_name"))
 							.photoJapaneseTitle(rs.getString("photo_japanese_title"))
 							.photoEnglishTitle(rs.getString("photo_english_title"))
 							.caption(rs.getString("caption"))
@@ -263,7 +265,7 @@ public class PhotoMstMapperTest {
 							.shutterSpeed(rs.getBigDecimal("shutter_speed"))
 							.iso(rs.getInt("iso"))
 							.build());
-			
+
 			assertEquals(1, actualData.size());
 			assertEquals(1L, actualData.getFirst().getAccountNo());
 			assertEquals(4L, actualData.getFirst().getPhotoNo());
@@ -275,6 +277,7 @@ public class PhotoMstMapperTest {
 			assertEquals(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getPhotoAt());
 			assertEquals(6L, actualData.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/DSC666.jpg", actualData.getFirst().getImageFilePath());
+			assertEquals("DSC666.jpg", actualData.getFirst().getImageFileName());
 			assertEquals("", actualData.getFirst().getPhotoJapaneseTitle());
 			assertEquals("", actualData.getFirst().getPhotoEnglishTitle());
 			assertEquals("", actualData.getFirst().getCaption());
@@ -878,44 +881,44 @@ public class PhotoMstMapperTest {
 	class isExistPhoto {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：画像ファイルパスに該当する写真が1つある場合")
+		@DisplayName("正常系：画像ファイル名に該当する写真が1つある場合")
 		void isExistPhoto_photo_found() {
 			PhotoMstCondition photoMst = PhotoMstCondition.builder()
 					.accountNo(1L)
-					.imageFilePath("DSC111.jpg")
+					.imageFileName("DSC111.jpg")
 					.build();
 			assertTrue(photoMstMapper.isExistPhoto(photoMst));
 		}
-		
+
 		@Test
 		@Order(2)
-		@DisplayName("正常系：画像ファイルパスに該当する写真が複数ある場合")
+		@DisplayName("正常系：画像ファイル名に該当する写真が複数ある場合")
 		void isExistPhoto_photos_found() {
 			PhotoMstCondition photoMst = PhotoMstCondition.builder()
 					.accountNo(2L)
-					.imageFilePath("DSC555.jpg")
+					.imageFileName("DSC555.jpg")
 					.build();
 			assertTrue(photoMstMapper.isExistPhoto(photoMst));
 		}
-		
+
 		@Test
 		@Order(3)
-		@DisplayName("正常系：画像ファイルパスに該当する写真があるが、削除済みの場合")
+		@DisplayName("正常系：画像ファイル名に該当する写真があるが、削除済みの場合")
 		void isExistPhoto_found_is_deleted() {
 			PhotoMstCondition photoMst = PhotoMstCondition.builder()
 					.accountNo(1L)
-					.imageFilePath("DSC333.jpg")
+					.imageFileName("DSC333.jpg")
 					.build();
 			assertFalse(photoMstMapper.isExistPhoto(photoMst));
 		}
-		
+
 		@Test
 		@Order(4)
-		@DisplayName("正常系：画像ファイルパスに該当する写真がない場合")
+		@DisplayName("正常系：画像ファイル名に該当する写真がない場合")
 		void isExistPhoto_not_found() {
 			PhotoMstCondition photoMst = PhotoMstCondition.builder()
 					.accountNo(1L)
-					.imageFilePath("DSC999.jpg")
+					.imageFileName("DSC999.jpg")
 					.build();
 			assertFalse(photoMstMapper.isExistPhoto(photoMst));
 		}

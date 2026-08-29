@@ -13,6 +13,7 @@
 		<result property="photoAt" column="photo_at"/>
 		<result property="locationNo" column="location_no"/>
 		<result property="imageFilePath" column="image_file_path"/>
+		<result property="imageFileName" column="image_file_name"/>
 		<result property="photoJapaneseTitle" column="photo_japanese_title"/>
 		<result property="photoEnglishTitle" column="photo_english_title"/>
 		<result property="caption" column="caption"/>
@@ -30,6 +31,7 @@
 		<if test="${prefix}photoAt != null"> AND photo_at = #{${prefix}photoAt}</if>
 		<if test="${prefix}locationNo != null"> AND location_no = #{${prefix}locationNo}</if>
 		<if test="${prefix}imageFilePath != null"> AND image_file_path = #{${prefix}imageFilePath}</if>
+		<if test="${prefix}imageFileName != null"> AND image_file_name = #{${prefix}imageFileName}</if>
 		<if test="${prefix}photoJapaneseTitle != null"> AND photo_japanese_title = #{${prefix}photoJapaneseTitle}</if>
 		<if test="${prefix}photoEnglishTitle != null"> AND photo_english_title = #{${prefix}photoEnglishTitle}</if>
 		<if test="${prefix}caption != null"> AND caption = #{${prefix}caption}</if>
@@ -65,6 +67,7 @@
 				photo_at,
 				location_no,
 				image_file_path,
+				image_file_name,
 				photo_japanese_title,
 				photo_english_title,
 				caption,
@@ -86,6 +89,7 @@
 				#{photoAt},
 				#{locationNo},
 				#{imageFilePath},
+				#{imageFileName},
 				#{photoJapaneseTitle},
 				#{photoEnglishTitle},
 				#{caption},
@@ -107,6 +111,7 @@
 			<if test="target.photoAt != null"> , photo_at = #{target.photoAt}</if>
 			<if test="target.locationNo != null"> , location_no = #{target.locationNo}</if>
 			<if test="target.imageFilePath != null"> , image_file_path = #{target.imageFilePath}</if>
+			<if test="target.imageFileName != null"> , image_file_name = #{target.imageFileName}</if>
 			<if test="target.photoJapaneseTitle != null"> , photo_japanese_title = #{target.photoJapaneseTitle}</if>
 			<if test="target.photoEnglishTitle != null"> , photo_english_title = #{target.photoEnglishTitle}</if>
 			<if test="target.caption != null"> , caption = #{target.caption}</if>
@@ -139,7 +144,7 @@
 			photo.photo_mst
 		WHERE
 			account_no = #{accountNo}
-		AND image_file_path LIKE CONCAT('%', #{imageFilePath}) ESCAPE '\'
+		AND image_file_name = #{imageFileName}
 		AND is_deleted = false
 	</select>
 

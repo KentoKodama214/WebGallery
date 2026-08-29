@@ -1,5 +1,6 @@
 package com.web.gallery.entity;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -32,6 +33,9 @@ public class PhotoMstCondition {
 
 	/** 画像ファイルパス */
 	private String imageFilePath;
+
+	/** 画像ファイル名 */
+	private String imageFileName;
 
 	/** 写真タイトル日本語名 */
 	private String photoJapaneseTitle;
@@ -100,18 +104,8 @@ public class PhotoMstCondition {
 	public static PhotoMstCondition forExistCheck(PhotoDetailModel model) {
 		return PhotoMstCondition.builder()
 				.accountNo(model.getAccountNo().value())
-				.imageFilePath(escapeLike(model.getImageFile().value().getOriginalFilename()))
+				.imageFileName(new File(model.getImageFile().value().getOriginalFilename()).getName())
 				.build();
-	}
-
-	/**
-	 * LIKE検索のワイルドカード文字（{@code \}・{@code %}・{@code _}）をエスケープする
-	 *
-	 * @param	value	エスケープ対象の文字列
-	 * @return			エスケープ後の文字列
-	 */
-	private static String escapeLike(String value) {
-		return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
 	}
 
 	/**
