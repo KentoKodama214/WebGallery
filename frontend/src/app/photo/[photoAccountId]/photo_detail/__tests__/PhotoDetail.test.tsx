@@ -110,10 +110,7 @@ describe("PhotoDetail", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("50mm")).toBeInTheDocument();
-      expect(screen.getByText("F1.8")).toBeInTheDocument();
-      expect(screen.getByText("0.01秒")).toBeInTheDocument();
-      expect(screen.getByText("400")).toBeInTheDocument();
+      expect(screen.getByText("50mm F1.8 0.01sec iso400")).toBeInTheDocument();
     });
   });
 
@@ -138,7 +135,7 @@ describe("PhotoDetail", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("東京タワー")).toBeInTheDocument();
+      expect(screen.getByText(/東京タワー/)).toBeInTheDocument();
     });
   });
 
@@ -157,8 +154,8 @@ describe("PhotoDetail", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("編集")).toBeInTheDocument();
-      expect(screen.getByText("削除")).toBeInTheDocument();
+      expect(screen.getByAltText("編集")).toBeInTheDocument();
+      expect(screen.getByAltText("削除")).toBeInTheDocument();
     });
   });
 
@@ -180,8 +177,8 @@ describe("PhotoDetail", () => {
       expect(screen.getByText("テスト写真")).toBeInTheDocument();
     });
 
-    expect(screen.queryByText("編集")).not.toBeInTheDocument();
-    expect(screen.queryByText("削除")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("編集")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("削除")).not.toBeInTheDocument();
   });
 
   it("認証済みの場合にお気に入りボタンが表示されること", async () => {
@@ -233,17 +230,13 @@ describe("PhotoDetail", () => {
     );
 
     await waitFor(() => {
-      expect(
-        screen.getByText("☆ お気に入り登録")
-      ).toBeInTheDocument();
+      expect(screen.getByAltText("お気に入り登録")).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByTestId("favorite-button"));
 
     await waitFor(() => {
-      expect(
-        screen.getByText("★ お気に入り解除")
-      ).toBeInTheDocument();
+      expect(screen.getByAltText("お気に入り解除")).toBeInTheDocument();
     });
 
     expect(mockAddFavorite).toHaveBeenCalledWith(1, 10);
@@ -265,19 +258,20 @@ describe("PhotoDetail", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("削除")).toBeInTheDocument();
+      expect(screen.getByAltText("削除")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText("削除"));
+    fireEvent.click(screen.getByAltText("削除"));
 
     expect(screen.getByTestId("delete-confirm-dialog")).toBeInTheDocument();
-    expect(screen.getByText("この写真を削除しますか？")).toBeInTheDocument();
+    expect(
+      screen.getByText("写真を削除してもよろしいですか？")
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("削除する"));
 
     await waitFor(() => {
       expect(mockDeletePhoto).toHaveBeenCalledWith("user1", {
-        accountNo: 1,
         photoNo: 10,
         imageFilePath: "/photos/test.jpg",
       });

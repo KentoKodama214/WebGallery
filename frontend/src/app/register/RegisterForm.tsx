@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   registerAccount,
   getPrefectures,
 } from "@/lib/api/client";
 import type { PrefectureGroup } from "@/lib/api/client";
+import {
+  ACCOUNT_ID_PATTERN,
+  PASSWORD_PATTERN,
+  clearError,
+  isPastDate,
+} from "@/lib/validation";
 
 /**
  * アカウント登録フォームコンポーネント
@@ -31,6 +37,8 @@ export function RegisterForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
 
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     getPrefectures()
       .then((data) => setPrefectureGroups(data))
@@ -40,13 +48,20 @@ export function RegisterForm() {
       .finally(() => setIsLoading(false));
   }, []);
 
+  // アンマウント時に遷移タイマーを破棄する
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
+
   /**
    * バリデーション
    */
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!accountId || !/^[a-zA-Z0-9]{8,16}$/.test(accountId)) {
+    if (!ACCOUNT_ID_PATTERN.test(accountId)) {
       newErrors.accountId = "半角英数字で8〜16文字で入力してください";
     }
 
@@ -54,17 +69,12 @@ export function RegisterForm() {
       newErrors.accountName = "アカウント名を入力してください";
     }
 
-    if (!password || !/^[a-zA-Z0-9]{8,}$/.test(password)) {
+    if (!PASSWORD_PATTERN.test(password)) {
       newErrors.password = "半角英数字で8文字以上で入力してください";
     }
 
-    if (birthdate) {
-      const birthdateDate = new Date(birthdate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (birthdateDate >= today) {
-        newErrors.birthdate = "過去の日付を入力してください";
-      }
+    if (birthdate && !isPastDate(birthdate)) {
+      newErrors.birthdate = "過去の日付を入力してください";
     }
 
     setErrors(newErrors);
@@ -95,16 +105,17 @@ export function RegisterForm() {
       });
 
       if (!result.isSuccess) {
-        setSubmitError("このアカウントIDは既に使われています");
+        // バックエンドは登録失敗時（アカウントID重複）にmessageを返さないため既定文言を使う
+        setSubmitError(result.message || "このアカウントIDは既に使われています");
         return;
       }
 
       setShowModal(true);
-      setTimeout(() => {
+      redirectTimerRef.current = setTimeout(() => {
         router.push("/login");
       }, 5000);
-    } catch {
-      setSubmitError("登録に失敗しました");
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "登録に失敗しました");
     } finally {
       setIsSubmitting(false);
     }
@@ -145,10 +156,10 @@ export function RegisterForm() {
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
               onBlur={() => {
-                if (!accountId || !/^[a-zA-Z0-9]{8,16}$/.test(accountId)) {
+                if (!ACCOUNT_ID_PATTERN.test(accountId)) {
                   setErrors((prev) => ({ ...prev, accountId: "半角英数字で8〜16文字で入力してください" }));
                 } else {
-                  setErrors((prev) => { const { accountId: _, ...rest } = prev; return rest; });
+                  setErrors((prev) => clearError(prev, "accountId"));
                 }
               }}
               placeholder="半角英数字で8〜16文字"
@@ -167,7 +178,7 @@ export function RegisterForm() {
                 if (!accountName.trim()) {
                   setErrors((prev) => ({ ...prev, accountName: "アカウント名を入力してください" }));
                 } else {
-                  setErrors((prev) => { const { accountName: _, ...rest } = prev; return rest; });
+                  setErrors((prev) => clearError(prev, "accountName"));
                 }
               }}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
@@ -182,10 +193,10 @@ export function RegisterForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => {
-                if (!password || !/^[a-zA-Z0-9]{8,}$/.test(password)) {
+                if (!PASSWORD_PATTERN.test(password)) {
                   setErrors((prev) => ({ ...prev, password: "半角英数字で8文字以上で入力してください" }));
                 } else {
-                  setErrors((prev) => { const { password: _, ...rest } = prev; return rest; });
+                  setErrors((prev) => clearError(prev, "password"));
                 }
               }}
               placeholder="半角英数字で8文字以上"

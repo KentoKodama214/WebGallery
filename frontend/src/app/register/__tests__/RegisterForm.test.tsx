@@ -226,7 +226,7 @@ describe("RegisterForm", () => {
   });
 
   it("API呼び出し失敗時にエラーメッセージが表示されること", async () => {
-    mockRegisterAccount.mockRejectedValue(new Error("Failed"));
+    mockRegisterAccount.mockRejectedValue(new Error("アカウントの登録に失敗しました"));
 
     const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     render(<RegisterForm />);
@@ -244,7 +244,9 @@ describe("RegisterForm", () => {
     await user.click(screen.getByRole("button", { name: "登録" }));
 
     await waitFor(() => {
-      expect(screen.getByText("登録に失敗しました")).toBeInTheDocument();
+      expect(
+        screen.getByText("アカウントの登録に失敗しました")
+      ).toBeInTheDocument();
     });
   });
 });

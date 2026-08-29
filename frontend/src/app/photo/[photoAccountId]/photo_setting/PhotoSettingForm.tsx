@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
@@ -14,6 +14,9 @@ interface TagEntry {
   tagJapaneseName: string;
   tagEnglishName: string;
 }
+
+/** アップロード可能な画像ファイルの最大サイズ（5MB） */
+const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024;
 
 interface PhotoSettingFormProps {
   photoAccountId: string;
@@ -59,79 +62,90 @@ export function PhotoSettingForm({
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  /**
-   * 初期表示
-   */
-  const loadPhotoData = useCallback(async () => {
-    if (!isEditMode || !accountNo || !photoNo) return;
-    setIsDataLoading(true);
-    try {
-      const data: PhotoDetailResponse = await getPhotoDetail(
-        photoAccountId,
-        accountNo,
-        photoNo
-      );
-      setPhotoJapaneseTitle(data.photoJapaneseTitle || "");
-      setPhotoEnglishTitle(data.photoEnglishTitle || "");
-      setCaption(data.caption || "");
-      setDirectionKbn(data.directionKbn || "horizontal");
-      setFocalLength(data.focalLength != null ? String(data.focalLength) : "");
-      setFValue(data.fValue != null ? String(data.fValue) : "");
-      setShutterSpeed(
-        data.shutterSpeed != null ? String(data.shutterSpeed) : ""
-      );
-      setIso(data.iso != null ? String(data.iso) : "");
-      setExistingImageFilePath(data.imageFilePath);
-      setImagePreview(data.imageFilePath);
-
-      if (data.photoAt) {
-        const date = new Date(data.photoAt);
-        const local = new Date(
-          date.getTime() - date.getTimezoneOffset() * 60000
-        );
-        setPhotoAt(local.toISOString().slice(0, 16));
-      }
-
-      if (data.photoTagList && data.photoTagList.length > 0) {
-        const tagEntries = data.photoTagList.map((t) => ({
-          tagNo: t.tagNo,
-          tagJapaneseName: t.tagJapaneseName,
-          tagEnglishName: t.tagEnglishName,
-        }));
-        setTags(tagEntries);
-        const maxTagNo = Math.max(...tagEntries.map((t) => t.tagNo));
-        setNextTagNo(maxTagNo + 1);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
-    } finally {
-      setIsDataLoading(false);
-    }
-  }, [isEditMode, photoAccountId, accountNo, photoNo]);
-
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push("/login");
     }
   }, [authLoading, isAuthenticated, router]);
 
+  /**
+   * 初期表示（編集モード時に既存データを読み込む）
+   */
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      loadPhotoData();
-    }
-  }, [authLoading, isAuthenticated, loadPhotoData]);
+    if (authLoading || !isAuthenticated) return;
+    if (!isEditMode || !accountNo || !photoNo) return;
+
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const data: PhotoDetailResponse = await getPhotoDetail(
+          photoAccountId,
+          accountNo,
+          photoNo
+        );
+        if (cancelled) return;
+        setPhotoJapaneseTitle(data.photoJapaneseTitle || "");
+        setPhotoEnglishTitle(data.photoEnglishTitle || "");
+        setCaption(data.caption || "");
+        setDirectionKbn(data.directionKbn || "horizontal");
+        setFocalLength(data.focalLength != null ? String(data.focalLength) : "");
+        setFValue(data.fValue != null ? String(data.fValue) : "");
+        setShutterSpeed(
+          data.shutterSpeed != null ? String(data.shutterSpeed) : ""
+        );
+        setIso(data.iso != null ? String(data.iso) : "");
+        setExistingImageFilePath(data.imageFilePath);
+        setImagePreview(data.imageFilePath);
+
+        if (data.photoAt) {
+          const date = new Date(data.photoAt);
+          const local = new Date(
+            date.getTime() - date.getTimezoneOffset() * 60000
+          );
+          setPhotoAt(local.toISOString().slice(0, 16));
+        }
+
+        if (data.photoTagList && data.photoTagList.length > 0) {
+          const tagEntries = data.photoTagList.map((t) => ({
+            tagNo: t.tagNo,
+            tagJapaneseName: t.tagJapaneseName,
+            tagEnglishName: t.tagEnglishName,
+          }));
+          setTags(tagEntries);
+          const maxTagNo = Math.max(...tagEntries.map((t) => t.tagNo));
+          setNextTagNo(maxTagNo + 1);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "エラーが発生しました");
+        }
+      } finally {
+        if (!cancelled) setIsDataLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, isAuthenticated, isEditMode, photoAccountId, accountNo, photoNo]);
 
   /**
    * 画像選択
    */
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onload = () => setImagePreview(reader.result as string);
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setValidationErrors(["画像ファイルは5MB以下にしてください"]);
+      e.target.value = "";
+      return;
     }
+    setValidationErrors([]);
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   /**
@@ -172,6 +186,9 @@ export function PhotoSettingForm({
     const errors: string[] = [];
     if (!isEditMode && !imageFile) {
       errors.push("画像ファイルを選択してください");
+    }
+    if (imageFile && imageFile.size > MAX_IMAGE_FILE_SIZE) {
+      errors.push("画像ファイルは5MB以下にしてください");
     }
     if (photoAt) {
       const photoDate = new Date(photoAt);

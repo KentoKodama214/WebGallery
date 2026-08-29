@@ -37,15 +37,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // マウント時にリフレッシュを試行し、既存セッションを復元
     const initAuth = async () => {
-      const success = await apiClient.refresh();
-      if (success) {
-        const token = apiClient.getAccessToken();
-        if (token) {
-          const payload = parseJwt(token);
-          setUser({ accountId: payload.sub, accountNo: payload.accountNo, role: payload.role });
+      try {
+        const success = await apiClient.refresh();
+        if (success) {
+          const token = apiClient.getAccessToken();
+          const payload = token ? parseJwt(token) : null;
+          if (payload) {
+            setUser({
+              accountId: payload.sub,
+              accountNo: payload.accountNo,
+              role: payload.role,
+            });
+          }
         }
+      } catch {
+        // セッション復元に失敗しても未認証として続行する
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
     initAuth();
   }, []);
@@ -53,8 +63,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = useCallback(async (accountId: string, password: string) => {
     await apiClient.login(accountId, password);
     const token = apiClient.getAccessToken();
-    if (token) {
-      const payload = parseJwt(token);
+    const payload = token ? parseJwt(token) : null;
+    if (payload) {
       setUser({ accountId, accountNo: payload.accountNo, role: payload.role });
     }
   }, []);
@@ -87,17 +97,37 @@ export function useAuth(): AuthContextType {
   return context;
 }
 
+interface JwtPayload {
+  sub: string;
+  accountNo: number;
+  accountName: string;
+  role: string;
+}
+
 /**
  * JWTのペイロードをパースする
+ *
+ * 署名の検証は行わないため、ここで得られる情報（role等）はUI表示の出し分けにのみ
+ * 使用し、認可の判断に用いてはならない。認可は必ずバックエンドで行われる。
+ *
+ * @param token JWTアクセストークン
+ * @returns パース済みペイロード。不正なトークンの場合はnull
  */
-function parseJwt(token: string): { sub: string; accountNo: number; accountName: string; role: string } {
-  const base64Url = token.split(".")[1];
-  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-  const jsonPayload = decodeURIComponent(
-    atob(base64)
-      .split("")
-      .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-      .join("")
-  );
-  return JSON.parse(jsonPayload);
+function parseJwt(token: string): JwtPayload | null {
+  try {
+    const base64Url = token.split(".")[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    // base64urlはパディングが省略されるため補完する
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+    const jsonPayload = decodeURIComponent(
+      atob(padded)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload) as JwtPayload;
+  } catch {
+    return null;
+  }
 }

@@ -6,6 +6,35 @@ on:
       - main
 
 jobs:
+  frontend-unit-test:
+    name: フロントエンド単体テスト
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: pnpmセットアップ
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.15'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: 依存パッケージインストール
+        run: cd frontend && pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: cd frontend && pnpm lint
+
+      - name: 単体テスト実行
+        run: cd frontend && pnpm test
+
   unit-test:
     name: 単体テスト
     runs-on: ubuntu-latest

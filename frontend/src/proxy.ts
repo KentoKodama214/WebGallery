@@ -4,8 +4,11 @@ import type { NextRequest } from "next/server";
 /**
  * 認証状態に基づくルーティング制御
  * - ルート（/）へのアクセスは/loginへリダイレクト
- * - ログインページ: cookieが存在すれば写真一覧へリダイレクト
  * - 保護ルートへのアクセス時、リフレッシュトークンcookieが無ければ/loginへリダイレクト
+ *
+ * ログイン済みかどうかの最終判定はバックエンドのJWT検証で行う。
+ * ここでのcookieチェックは未ログインユーザーに保護ページの骨組みを
+ * 表示させないための第一段のガードに過ぎない。
  */
 export function proxy(request: NextRequest) {
   const refreshToken = request.cookies.get("refreshToken");
@@ -16,20 +19,34 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // ログインページにリフレッシュトークンがある場合（認証済み）
-  // → 実際のリダイレクト先はクライアント側のAuthProviderで処理するためそのまま通す
-  // （アカウントIDがcookieに含まれないため、サーバー側では写真一覧URLを構築できない）
-
   // 保護ルートへのアクセス時にリフレッシュトークンが無い場合はログインへリダイレクト
   if (!refreshToken && isProtectedRoute(pathname)) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
 }
 
-function isProtectedRoute(_pathname: string): boolean {
-  return false;
+/** ログインが必須のルートのパターン */
+const PROTECTED_ROUTE_PATTERNS: RegExp[] = [
+  // 管理者用ページ
+  /^\/admin(\/|$)/,
+  // アカウント設定（/{accountId}/account_setting）
+  /^\/[^/]+\/account_setting$/,
+  // 写真登録・編集（/photo/{photoAccountId}/photo_setting）
+  /^\/photo\/[^/]+\/photo_setting$/,
+];
+
+/**
+ * 指定されたパスがログイン必須の保護ルートかどうかを判定する
+ *
+ * @param pathname 判定対象のパス
+ * @returns 保護ルートの場合true
+ */
+function isProtectedRoute(pathname: string): boolean {
+  return PROTECTED_ROUTE_PATTERNS.some((pattern) => pattern.test(pathname));
 }
 
 export const config = {
