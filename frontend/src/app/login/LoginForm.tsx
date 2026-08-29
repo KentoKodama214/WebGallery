@@ -70,8 +70,9 @@ export function LoginForm() {
     <div
       className="min-h-screen bg-[#042844] bg-cover bg-center bg-fixed m-0 font-['Open_Sans',sans-serif]"
       style={{
-        backgroundImage:
-          "url('https://www.kkodama-photo.com/wp/wp-content/uploads/2020/10/DSC15567-scaled.jpg')",
+        // 背景画像はセルフホストする（外部ホスト依存による可用性・Referer 経由の
+        // アクセス情報漏れを避ける）。読み込み前・失敗時は bg-[#042844] を表示する
+        backgroundImage: "url('/image/login-bg.jpg')",
       }}
     >
       <div className="flex items-center justify-center min-h-screen w-full p-5 bg-[rgba(4,40,68,0.50)]">
