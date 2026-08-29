@@ -240,8 +240,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 		AccountModel accountModel = accountRepository.getByAccountId(new AccountId(event.getAuthentication().getName()));
 
 		if(!Objects.isNull(accountModel)) {
-			accountRepository.updateLoginFailureCount(
-					AccountModel.forLoginFailure(accountModel.getAccountNo(), accountModel.getLoginFailureCount()));
+			accountRepository.incrementLoginFailureCount(accountModel.getAccountNo());
 		}
 	}
 }

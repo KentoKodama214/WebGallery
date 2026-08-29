@@ -567,86 +567,60 @@ public class AccountServiceImplTest {
 			
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(new LoginFailureCount(1)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
-			
-			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(accountModelCaptor.capture());
-			
+
+			doNothing().when(accountRepositoryImpl).incrementLoginFailureCount(new AccountNo(1L));
+
 			accountServiceImpl.handle(event);
-			
-			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
-			assertNull(accountModel.getAccountId());
-			assertNull(accountModel.getAccountName());
-			assertNull(accountModel.getPassword());
-			assertNull(accountModel.getBirthdate());
-			assertNull(accountModel.getSexKbn());
-			assertNull(accountModel.getBirthplacePrefectureKbnCode());
-			assertNull(accountModel.getResidentPrefectureKbnCode());
-			assertNull(accountModel.getFreeMemo());
-			assertNull(accountModel.getAuthorityKbn());
-			assertNull(accountModel.getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(2), accountModel.getLoginFailureCount());
+
+			verify(accountRepositoryImpl).incrementLoginFailureCount(new AccountNo(1L));
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
 		void handle_account_not_found() throws GalleryException {
 			String username = "aaaaaaaa";
 			String password = "AAAAAAAA";
-			
+
 			List<GrantedAuthority> authorities = new ArrayList<>();
 			authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
-			
+
 			String message = "Invalid username or password";
 			BadCredentialsException exception = new BadCredentialsException(message);
-			
+
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
-			
+
 			doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
-			
+
 			accountServiceImpl.handle(event);
-			verify(accountRepositoryImpl, times(0)).updateLoginFailureCount(any(AccountModel.class));
+			verify(accountRepositoryImpl, times(0)).incrementLoginFailureCount(any(AccountNo.class));
 		}
-		
+
 		@Test
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void handle_UpdateFailureException() throws GalleryException {
 			String username = "aaaaaaaa";
 			String password = "AAAAAAAA";
-			
+
 			List<GrantedAuthority> authorities = new ArrayList<>();
 			authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
-			
+
 			String message = "Invalid username or password";
 			BadCredentialsException exception = new BadCredentialsException(message);
-			
+
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
-			
+
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(new LoginFailureCount(1)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
-			
-			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).updateLoginFailureCount(accountModelCaptor.capture());
-			
+
+			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).incrementLoginFailureCount(new AccountNo(1L));
+
 			assertThrows(UpdateFailureException.class, () ->accountServiceImpl.handle(event));
-			
-			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
-			assertNull(accountModel.getAccountId());
-			assertNull(accountModel.getAccountName());
-			assertNull(accountModel.getPassword());
-			assertNull(accountModel.getBirthdate());
-			assertNull(accountModel.getSexKbn());
-			assertNull(accountModel.getBirthplacePrefectureKbnCode());
-			assertNull(accountModel.getResidentPrefectureKbnCode());
-			assertNull(accountModel.getFreeMemo());
-			assertNull(accountModel.getAuthorityKbn());
-			assertNull(accountModel.getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(2), accountModel.getLoginFailureCount());
+
+			verify(accountRepositoryImpl).incrementLoginFailureCount(new AccountNo(1L));
 		}
 	}
 }
