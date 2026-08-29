@@ -18,8 +18,10 @@ import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.PhotoCount;
 import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.event.PhotoRegisteredEvent;
@@ -40,6 +42,8 @@ import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.policy.ImageFileValidationPolicy;
+import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
@@ -66,6 +70,8 @@ public class PhotoServiceImpl implements PhotoService {
 	private final FileRepository fileRepository;
 	private final PhotoConfig photoConfig;
 	private final PhotoQuotaPolicy photoQuotaPolicy;
+	private final ImageFileValidationPolicy imageFileValidationPolicy;
+	private final PhotoFileExtensionPolicy photoFileExtensionPolicy;
 	private final ApplicationEventPublisher applicationEventPublisher;
 
 	/**
@@ -73,11 +79,15 @@ public class PhotoServiceImpl implements PhotoService {
 	 *
 	 * @param	photoListGetModel	{@link PhotoListGetModel}
 	 * @return						{@link PhotoModelList}
+	 * @throws	GalleryException	指定のアカウントが存在しなかった場合
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel) {
+	public PhotoModelList getPhotoList(PhotoListGetModel photoListGetModel) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(photoListGetModel.getPhotoAccountId());
+		if (Objects.isNull(accountModel)) {
+			throw ErrorEnum.PHOTO_NOT_FOUND.toException();
+		}
 
 		PhotoModelList photoModelList
 			= photoDetailRepository.getPhotoList(
@@ -94,23 +104,34 @@ public class PhotoServiceImpl implements PhotoService {
 	 *
 	 * @param	photoDetailGetModel	{@link PhotoDetailGetModel}
 	 * @return						{@link PhotoDetailModel}
-	 * @throws	GalleryException	写真が存在しなかった場合
+	 * @throws	GalleryException	写真、または指定のアカウントが存在しなかった場合
 	 */
 	@Override
 	@Transactional(readOnly = true)
 	public PhotoDetailModel getPhotoDetail(PhotoDetailGetModel photoDetailGetModel) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(photoDetailGetModel.getPhotoAccountId());
+		if (Objects.isNull(accountModel)) {
+			throw ErrorEnum.PHOTO_NOT_FOUND.toException();
+		}
 
 		return photoDetailRepository.getPhotoDetail(
 				PhotoDetailSearchModel.of(photoDetailGetModel, accountModel.getAccountNo()));
 	}
 
 	/**
-	 * 写真を登録・更新する
+	 * 写真を登録・更新する<p>
+	 * 新規登録分については、アカウント行のロックにより直列化したうえで登録枚数の上限を
+	 * トランザクション内で再検証し、チェックと登録の間のレースによる上限バイパスを防ぐ
 	 *
 	 * @param	photoDetailModelList	{@link PhotoDetailModelList}
 	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・新規登録時に画像ファイルが指定されていない場合
+	 *                              	・許可されていない拡張子のファイルの場合
+	 *                              	・画像ファイルのContent-Typeが許可されていない場合
+	 *                              	・画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合
+	 *                              	・画像ファイルのサイズが上限を超えている場合
 	 *                              	・同じファイル名のファイルが既に保存済みの場合
+	 *                              	・登録枚数の上限に達している場合
 	 *                              	・登録に失敗した場合
 	 *                              	・更新に失敗した場合
 	 */
@@ -120,13 +141,27 @@ public class PhotoServiceImpl implements PhotoService {
 		if(Objects.isNull(photoDetailModelList)) return null;
 		if(photoDetailModelList.isEmpty()) return null;
 
-		Long photoNo = photoMstRepository.getNewPhotoNo(photoDetailModelList.getFirst().getAccountNo()).value();
+		AccountNo photoAccountNo = photoDetailModelList.getFirst().getAccountNo();
+		accountRepository.lockForUpdate(photoAccountNo);
+
+		Long photoNo = photoMstRepository.getNewPhotoNo(photoAccountNo).value();
 		PhotoNo savedPhotoNo = new PhotoNo(photoNo);
 		String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
 
+		AccountModel accountModel = null;
+		PhotoCount registeredCount = null;
+
 		for(PhotoDetailModel photoDetailModel : photoDetailModelList){
 			if(Objects.isNull(photoDetailModel.getPhotoNo())) {
+				if(Objects.isNull(accountModel)) {
+					accountModel = accountRepository.getByAccountNo(photoAccountNo);
+					registeredCount = new PhotoCount(photoMstRepository.count(photoAccountNo));
+				}
+				if(photoQuotaPolicy.isReached(accountModel.getAuthorityKbn(), registeredCount)) {
+					throw ErrorEnum.REACHED_REGISTRATION_LIMIT.toException();
+				}
 				registPhoto(photoDetailModel, new PhotoNo(photoNo), filePath);
+				registeredCount = new PhotoCount(registeredCount.value() + 1);
 				++photoNo;
 			} else {
 				savedPhotoNo = photoDetailModel.getPhotoNo();
@@ -143,15 +178,53 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @param	newPhotoNo			新規採番した写真番号
 	 * @param	filePath			写真の保存先ディレクトリパス
 	 * @throws	GalleryException	以下のいずれかに該当する場合
+	 *                              	・画像ファイルが指定されていない場合
+	 *                              	・許可されていない拡張子のファイルの場合
+	 *                              	・画像ファイルのContent-Typeが許可されていない場合
+	 *                              	・画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合
+	 *                              	・画像ファイルのサイズが上限を超えている場合
 	 *                              	・同じファイル名のファイルが既に保存済みの場合
 	 *                              	・登録に失敗した場合
 	 */
 	private void registPhoto(PhotoDetailModel photoDetailModel, PhotoNo newPhotoNo, String filePath) throws GalleryException {
-		String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
+		validateImageFile(photoDetailModel.getImageFile());
+
+		if(!photoFileExtensionPolicy.isAllowedExtension(photoDetailModel.getImageFile())) {
+			throw ErrorEnum.INVALID_PHOTO_FILE_EXTENSION.toException();
+		}
+
+		// クライアント送信値であるオリジナルファイル名からパストラバーサル対策としてベース名のみを抽出する
+		String filename = new File(photoDetailModel.getImageFile().value().getOriginalFilename()).getName();
 		Photo photo = Photo.forRegist(photoDetailModel, newPhotoNo, new ImageFilePath(filePath + filename));
 		photoAggregateRepository.regist(photo);
 		fileRepository.save(FileModel.of(photo.getImageFilePath(), photo.getImageFile()));
 		applicationEventPublisher.publishEvent(new PhotoRegisteredEvent(photo.getAccountNo(), photo.getPhotoNo()));
+	}
+
+	/**
+	 * 新規登録時の画像ファイルの実効性を検証する（Content-Type・マジックバイト・サイズ）<p>
+	 * 新規登録時は画像ファイルの指定が必須であり、拡張子やContent-Typeの偽装を見破るため実際のバイナリ内容も検証する
+	 *
+	 * @param	imageFile			{@link ImageFile}
+	 * @throws	GalleryException	以下のいずれかに該当する場合
+	 *                              	・画像ファイルが指定されていない場合
+	 *                              	・画像ファイルのContent-Typeが許可されていない場合
+	 *                              	・画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合
+	 *                              	・画像ファイルのサイズが上限を超えている場合
+	 */
+	private void validateImageFile(ImageFile imageFile) throws GalleryException {
+		if(Objects.isNull(imageFile)) {
+			throw ErrorEnum.IMAGE_FILE_REQUIRED.toException();
+		}
+		if(!imageFileValidationPolicy.isAllowedContentType(imageFile)) {
+			throw ErrorEnum.UNSUPPORTED_IMAGE_CONTENT_TYPE.toException();
+		}
+		if(!imageFileValidationPolicy.isValidSignature(imageFile)) {
+			throw ErrorEnum.INVALID_IMAGE_SIGNATURE.toException();
+		}
+		if(imageFileValidationPolicy.isSizeExceeded(imageFile)) {
+			throw ErrorEnum.IMAGE_FILE_SIZE_EXCEEDED.toException();
+		}
 	}
 
 	/**

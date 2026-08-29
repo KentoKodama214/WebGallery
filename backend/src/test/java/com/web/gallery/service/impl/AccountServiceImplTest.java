@@ -58,14 +58,12 @@ import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.aggregate.Account;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
 import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.FileRepository;
-import com.web.gallery.repository.PhotoFavoriteRepository;
-import com.web.gallery.repository.PhotoMstRepository;
-import com.web.gallery.repository.PhotoTagMstRepository;
-import com.web.gallery.repository.RefreshTokenRepository;
+import com.web.gallery.repository.impl.AccountAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 
 @ActiveProfiles("test")
@@ -78,19 +76,10 @@ public class AccountServiceImplTest {
 	private AccountRepositoryImpl accountRepositoryImpl;
 
 	@Mock
+	private AccountAggregateRepositoryImpl accountAggregateRepositoryImpl;
+
+	@Mock
 	private FileRepository fileRepository;
-
-	@Mock
-	private PhotoFavoriteRepository photoFavoriteRepository;
-
-	@Mock
-	private PhotoTagMstRepository photoTagMstRepository;
-
-	@Mock
-	private PhotoMstRepository photoMstRepository;
-
-	@Mock
-	private RefreshTokenRepository refreshTokenRepository;
 
 	@Mock
 	private AccountPrincipal accountPrincipal;
@@ -420,30 +409,22 @@ public class AccountServiceImplTest {
 			Long accountNo = 1L;
 			String accountId = "aaaaaaaa";
 
-			doNothing().when(photoFavoriteRepository).deleteByAccountNo(any(AccountNo.class));
-			doNothing().when(photoFavoriteRepository).deleteByFavoritePhotoAccountNo(any(AccountNo.class));
-			doNothing().when(photoTagMstRepository).deleteByAccountNo(any(AccountNo.class));
-			doReturn(PhotoNoList.of(List.of(new PhotoNo(1L), new PhotoNo(2L))))
-					.when(photoMstRepository).deleteAndGetUndeletedPhotoNosByAccountNo(any(AccountNo.class));
-			doNothing().when(refreshTokenRepository).revokeAllByAccountNo(any(AccountNo.class));
-			doNothing().when(accountRepositoryImpl).delete(new AccountNo(accountNo));
+			doAnswer(invocation -> {
+				Account account = invocation.getArgument(0);
+				account.recordDeletedPhotoNos(PhotoNoList.of(List.of(new PhotoNo(1L), new PhotoNo(2L))));
+				return null;
+			}).when(accountAggregateRepositoryImpl).delete(any(Account.class));
+
 			doReturn("/output/").when(photoConfig).getOutputPath();
 			doNothing().when(fileRepository).delete(new ImageFilePath("/output/" + accountId + "/"));
 
 			accountServiceImpl.deleteAccount(new AccountNo(accountNo), new AccountId(accountId));
 
-			ArgumentCaptor<AccountNo> favoriteCaptor = ArgumentCaptor.forClass(AccountNo.class);
-			verify(photoFavoriteRepository, times(1)).deleteByAccountNo(favoriteCaptor.capture());
-			assertEquals(new AccountNo(accountNo), favoriteCaptor.getValue());
+			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+			verify(accountAggregateRepositoryImpl, times(1)).delete(accountCaptor.capture());
+			assertEquals(new AccountNo(accountNo), accountCaptor.getValue().getAccountNo());
+			assertTrue(accountCaptor.getValue().isDeleted());
 
-			ArgumentCaptor<AccountNo> favoritePhotoCaptor = ArgumentCaptor.forClass(AccountNo.class);
-			verify(photoFavoriteRepository, times(1)).deleteByFavoritePhotoAccountNo(favoritePhotoCaptor.capture());
-			assertEquals(new AccountNo(accountNo), favoritePhotoCaptor.getValue());
-
-			verify(photoTagMstRepository, times(1)).deleteByAccountNo(new AccountNo(accountNo));
-			verify(photoMstRepository, times(1)).deleteAndGetUndeletedPhotoNosByAccountNo(new AccountNo(accountNo));
-			verify(refreshTokenRepository, times(1)).revokeAllByAccountNo(new AccountNo(accountNo));
-			verify(accountRepositoryImpl, times(1)).delete(new AccountNo(accountNo));
 			verify(fileRepository, times(1)).delete(new ImageFilePath("/output/" + accountId + "/"));
 
 			ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
@@ -567,86 +548,60 @@ public class AccountServiceImplTest {
 			
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(new LoginFailureCount(1)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
-			
-			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(accountModelCaptor.capture());
-			
+
+			doNothing().when(accountRepositoryImpl).incrementLoginFailureCount(new AccountNo(1L));
+
 			accountServiceImpl.handle(event);
-			
-			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
-			assertNull(accountModel.getAccountId());
-			assertNull(accountModel.getAccountName());
-			assertNull(accountModel.getPassword());
-			assertNull(accountModel.getBirthdate());
-			assertNull(accountModel.getSexKbn());
-			assertNull(accountModel.getBirthplacePrefectureKbnCode());
-			assertNull(accountModel.getResidentPrefectureKbnCode());
-			assertNull(accountModel.getFreeMemo());
-			assertNull(accountModel.getAuthorityKbn());
-			assertNull(accountModel.getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(2), accountModel.getLoginFailureCount());
+
+			verify(accountRepositoryImpl).incrementLoginFailureCount(new AccountNo(1L));
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが存在しない場合")
 		void handle_account_not_found() throws GalleryException {
 			String username = "aaaaaaaa";
 			String password = "AAAAAAAA";
-			
+
 			List<GrantedAuthority> authorities = new ArrayList<>();
 			authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
-			
+
 			String message = "Invalid username or password";
 			BadCredentialsException exception = new BadCredentialsException(message);
-			
+
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
-			
+
 			doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
-			
+
 			accountServiceImpl.handle(event);
-			verify(accountRepositoryImpl, times(0)).updateLoginFailureCount(any(AccountModel.class));
+			verify(accountRepositoryImpl, times(0)).incrementLoginFailureCount(any(AccountNo.class));
 		}
-		
+
 		@Test
 		@Order(3)
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void handle_UpdateFailureException() throws GalleryException {
 			String username = "aaaaaaaa";
 			String password = "AAAAAAAA";
-			
+
 			List<GrantedAuthority> authorities = new ArrayList<>();
 			authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
 			Authentication authentication = new UsernamePasswordAuthenticationToken(username, password, authorities);
-			
+
 			String message = "Invalid username or password";
 			BadCredentialsException exception = new BadCredentialsException(message);
-			
+
 			AuthenticationFailureBadCredentialsEvent event = new AuthenticationFailureBadCredentialsEvent(authentication, exception);
-			
+
 			AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).loginFailureCount(new LoginFailureCount(1)).build();
 			doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
-			
-			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).updateLoginFailureCount(accountModelCaptor.capture());
-			
+
+			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).incrementLoginFailureCount(new AccountNo(1L));
+
 			assertThrows(UpdateFailureException.class, () ->accountServiceImpl.handle(event));
-			
-			AccountModel accountModel = accountModelCaptor.getValue();
-			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
-			assertNull(accountModel.getAccountId());
-			assertNull(accountModel.getAccountName());
-			assertNull(accountModel.getPassword());
-			assertNull(accountModel.getBirthdate());
-			assertNull(accountModel.getSexKbn());
-			assertNull(accountModel.getBirthplacePrefectureKbnCode());
-			assertNull(accountModel.getResidentPrefectureKbnCode());
-			assertNull(accountModel.getFreeMemo());
-			assertNull(accountModel.getAuthorityKbn());
-			assertNull(accountModel.getLastLoginDatetime());
-			assertEquals(new LoginFailureCount(2), accountModel.getLoginFailureCount());
+
+			verify(accountRepositoryImpl).incrementLoginFailureCount(new AccountNo(1L));
 		}
 	}
 }

@@ -37,6 +37,7 @@ public class AccountRegistRequest {
 	 */
 	@Schema(description = "アカウント名", example = "テストユーザー")
 	@NotBlank(message = "{validation.common.notBlank}")
+	@Size(max = 50, message = "{validation.common.max_length}")
 	@Pattern(regexp = "[^　]+", message = "{validation.common.all_space}")
 	private String accountName;
 

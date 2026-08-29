@@ -76,9 +76,12 @@ import com.web.gallery.enumeration.ErrorEnum;
 @Transactional
 @AutoConfigureMockMvc
 public class PhotoRestControllerIntegrationTest {
+	/** 新規登録時のバリデーション（Content-Type・マジックバイト）を通過させるための、実際のJPEGファイルの先頭バイト列 */
+	private static final byte[] JPEG_BYTES = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x00, 0x10};
+
 	@Autowired
 	private MockMvc mockMvc;
-	
+
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
@@ -241,8 +244,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC111.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -264,7 +267,7 @@ public class PhotoRestControllerIntegrationTest {
 					.param("imageFilePath", "")
 					.param("directionKbn", "VERTICAL")
 					.param("photoEnglishTitle", "")
-					.param("photoJapaneseTitle", "")
+					.param("photoJapaneseTitle", "タイトル4")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
@@ -307,7 +310,7 @@ public class PhotoRestControllerIntegrationTest {
 			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
 			assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
 			assertEquals("https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
-			assertEquals("", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
+			assertEquals("タイトル4", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
 			assertEquals("", actualPhotoMst.getFirst().getPhotoEnglishTitle());
 			assertEquals("", actualPhotoMst.getFirst().getCaption());
 			assertEquals(DirectionEnum.VERTICAL, actualPhotoMst.getFirst().getDirectionKbn());
@@ -339,8 +342,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC111.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -582,8 +585,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC111.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -619,8 +622,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC111.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -717,8 +720,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC111.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -755,8 +758,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC21.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -777,7 +780,7 @@ public class PhotoRestControllerIntegrationTest {
 					.param("imageFilePath", "")
 					.param("directionKbn", "VERTICAL")
 					.param("photoEnglishTitle", "")
-					.param("photoJapaneseTitle", "")
+					.param("photoJapaneseTitle", "タイトル")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
@@ -813,7 +816,7 @@ public class PhotoRestControllerIntegrationTest {
 					.param("imageFilePath", "https://www.xxx.com/DSC99.jpg")
 					.param("directionKbn", "VERTICAL")
 					.param("photoEnglishTitle", "")
-					.param("photoJapaneseTitle", "")
+					.param("photoJapaneseTitle", "タイトル")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)

@@ -142,7 +142,7 @@ class AuthServiceImplTest {
 	class Refresh {
 
 		@Test
-		@DisplayName("正常系: リフレッシュトークンが有効な場合、新しいアクセストークンが返されること")
+		@DisplayName("正常系: リフレッシュトークンが有効な場合、新しいアクセストークンとリフレッシュトークンが返され、旧トークンが無効化されること")
 		void refresh_success() {
 			String refreshToken = "valid-refresh-token";
 			RefreshTokenModel storedToken = RefreshTokenModel.builder()
@@ -165,13 +165,24 @@ class AuthServiceImplTest {
 			when(principal.isEnabled()).thenReturn(true);
 			when(userDetailsService.loadUserByUsername("testuser1")).thenReturn(principal);
 			when(jwtTokenProvider.generateAccessToken(principal)).thenReturn("new-access-token");
+			when(jwtTokenProvider.generateRefreshToken()).thenReturn("new-refresh-token");
 			when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
+			when(jwtConfig.getRefreshTokenExpirationDays()).thenReturn(7);
 
 			AuthTokenModel result = authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
 
 			assertNotNull(result);
 			assertEquals("new-access-token", result.getAccessToken().value());
+			assertEquals("new-refresh-token", result.getRefreshToken().value());
 			assertEquals(900L, result.getExpiresIn().value());
+
+			verify(refreshTokenRepository).revokeByTokenHash(any(TokenHash.class));
+			verify(refreshTokenRepository, times(0)).revokeAllByAccountNo(any(AccountNo.class));
+
+			ArgumentCaptor<RefreshTokenModel> refreshTokenModelCaptor = ArgumentCaptor.forClass(RefreshTokenModel.class);
+			verify(refreshTokenRepository).save(refreshTokenModelCaptor.capture());
+			assertEquals(new AccountNo(1L), refreshTokenModelCaptor.getValue().getAccountNo());
+			assertEquals(OffsetDateTime.now(clock).plusDays(7), refreshTokenModelCaptor.getValue().getExpiresAt().value());
 		}
 
 		@Test
@@ -232,7 +243,7 @@ class AuthServiceImplTest {
 		}
 
 		@Test
-		@DisplayName("異常系: リフレッシュトークンが無効化されている場合は例外がスローされること")
+		@DisplayName("異常系: 無効化済み（ローテーション済み）トークンが再利用された場合、盗用とみなし該当アカウントの全トークンを失効させたうえで例外がスローされること")
 		void refresh_revokedToken() {
 			RefreshTokenModel storedToken = RefreshTokenModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -246,6 +257,9 @@ class AuthServiceImplTest {
 			assertThrows(InvalidRefreshTokenException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue("revoked-token"));
 			});
+
+			verify(refreshTokenRepository).revokeAllByAccountNo(new AccountNo(1L));
+			verify(refreshTokenRepository, times(0)).save(any(RefreshTokenModel.class));
 		}
 
 		@Test

@@ -53,6 +53,14 @@ public interface AccountRepository {
 	void updateLoginFailureCount(AccountModel accountModel) throws GalleryException;
 
 	/**
+	 * Accountテーブルのログイン失敗回数をSQL側で原子的にインクリメントする
+	 *
+	 * @param	accountNo			アカウント番号
+	 * @throws	GalleryException	更新に失敗した場合
+	 */
+	void incrementLoginFailureCount(AccountNo accountNo) throws GalleryException;
+
+	/**
 	 * アカウントIDに該当するアカウントの存在有無をチェックする（新規登録用、除外なし）
 	 *
 	 * @param	accountId	アカウントID
@@ -89,4 +97,12 @@ public interface AccountRepository {
 	 * @param	accountNo	アカウント番号
 	 */
 	void delete(AccountNo accountNo);
+
+	/**
+	 * アカウントの行ロックを取得する（排他制御用）<p>
+	 * 写真番号の採番・登録枚数上限チェックなど、アカウント単位で処理を直列化したい場合に使用する
+	 *
+	 * @param	accountNo	アカウント番号
+	 */
+	void lockForUpdate(AccountNo accountNo);
 }
