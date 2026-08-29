@@ -41,6 +41,7 @@ import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
@@ -67,6 +68,7 @@ public class PhotoServiceImpl implements PhotoService {
 	private final FileRepository fileRepository;
 	private final PhotoConfig photoConfig;
 	private final PhotoQuotaPolicy photoQuotaPolicy;
+	private final PhotoFileExtensionPolicy photoFileExtensionPolicy;
 	private final ApplicationEventPublisher applicationEventPublisher;
 
 	/**
@@ -118,6 +120,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 *
 	 * @param	photoDetailModelList	{@link PhotoDetailModelList}
 	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・許可されていない拡張子のファイルの場合
 	 *                              	・同じファイル名のファイルが既に保存済みの場合
 	 *                              	・登録に失敗した場合
 	 *                              	・更新に失敗した場合
@@ -154,11 +157,17 @@ public class PhotoServiceImpl implements PhotoService {
 	 * @param	newPhotoNo			新規採番した写真番号
 	 * @param	filePath			写真の保存先ディレクトリパス
 	 * @throws	GalleryException	以下のいずれかに該当する場合
+	 *                              	・許可されていない拡張子のファイルの場合
 	 *                              	・同じファイル名のファイルが既に保存済みの場合
 	 *                              	・登録に失敗した場合
 	 */
 	private void registPhoto(PhotoDetailModel photoDetailModel, PhotoNo newPhotoNo, String filePath) throws GalleryException {
-		String filename = photoDetailModel.getImageFile().value().getOriginalFilename();
+		if(!photoFileExtensionPolicy.isAllowedExtension(photoDetailModel.getImageFile())) {
+			throw ErrorEnum.INVALID_PHOTO_FILE_EXTENSION.toException();
+		}
+
+		// クライアント送信値であるオリジナルファイル名からパストラバーサル対策としてベース名のみを抽出する
+		String filename = new File(photoDetailModel.getImageFile().value().getOriginalFilename()).getName();
 		Photo photo = Photo.forRegist(photoDetailModel, newPhotoNo, new ImageFilePath(filePath + filename));
 		photoAggregateRepository.regist(photo);
 		fileRepository.save(FileModel.of(photo.getImageFilePath(), photo.getImageFile()));

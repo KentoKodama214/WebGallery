@@ -28,6 +28,7 @@ public final class MessageConst {
 	public static final String ERR_DUPLICATE_PHOTO_FILE = "写真登録でエラーが発生しました。（既に同じファイル名でアップロード済みです）";
 	public static final String ERR_PHOTO_NOT_FOUND = "写真が存在しません。";
 	public static final String ERR_REACHED_REGISTRATION_LIMIT = "写真の登録枚数が上限に達しています。";
+	public static final String ERR_INVALID_PHOTO_FILE_EXTENSION = "許可されていないファイル形式です。（アップロード可能な拡張子：jpg, jpeg, png, gif, webp）";
 	public static final String ERR_NOT_AUTHORIZED_TO_ADMIN = "管理者権限がありません。";
 	public static final String ERR_FAIL_TO_DELETE_ACCOUNT = "アカウント削除でエラーが発生しました。削除をやり直してください。";
 	public static final String ERR_INVALID_REFRESH_TOKEN = "無効なリフレッシュトークンです。";

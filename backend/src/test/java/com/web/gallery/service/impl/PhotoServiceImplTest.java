@@ -78,6 +78,8 @@ import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.exception.BadRequestException;
+import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 import com.web.gallery.repository.impl.FileRepositoryImpl;
@@ -111,6 +113,9 @@ public class PhotoServiceImplTest {
 
 	@Mock
 	private PhotoQuotaPolicy photoQuotaPolicy;
+
+	@Mock
+	private PhotoFileExtensionPolicy photoFileExtensionPolicy;
 
 	@Mock
 	private ApplicationEventPublisher applicationEventPublisher;
@@ -562,7 +567,21 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath(""))
 					.build();
 		}
-		
+
+		PhotoDetailModel createNewPhotoWithFilename(String originalFilename) {
+			MultipartFile multipartFile = new MockMultipartFile(
+					"file",
+					originalFilename,
+					"multipart/form-data",
+					"sample image".getBytes()
+				);
+			return PhotoDetailModel.builder()
+					.accountNo(new AccountNo(1L))
+					.imageFile(new ImageFile(multipartFile))
+					.imageFilePath(new ImageFilePath(""))
+					.build();
+		}
+
 		PhotoDetailModel createUpdatePhotoWithTag() {
 			List<PhotoTagModel> photoTagModelList = new ArrayList<PhotoTagModel>();
 			photoTagModelList.add(PhotoTagModel.builder()
@@ -656,6 +675,7 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
 
 			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).regist(photoCaptor.capture());
@@ -771,6 +791,7 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
 
 			ArgumentCaptor<Photo> photoRegistCaptor = ArgumentCaptor.forClass(Photo.class);
 			doNothing().when(photoAggregateRepositoryImpl).regist(photoRegistCaptor.capture());
@@ -829,6 +850,7 @@ public class PhotoServiceImplTest {
 
 			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
 			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
 			doThrow(RegistFailureException.class).when(photoAggregateRepositoryImpl).regist(any(Photo.class));
 
 			// 新規登録1枚目
@@ -873,8 +895,62 @@ public class PhotoServiceImplTest {
 			verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
 			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
+
+		@Test
+		@Order(8)
+		@DisplayName("正常系：オリジナルファイル名にパストラバーサルを含む場合、ベース名のみを保存パスに使用すること")
+		void savePhotos_newPhoto_sanitizes_path_traversal_filename() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
+
+			ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
+			doNothing().when(photoAggregateRepositoryImpl).regist(photoCaptor.capture());
+
+			ArgumentCaptor<FileModel> fileModelCaptor = ArgumentCaptor.forClass(FileModel.class);
+			doNothing().when(fileRepositoryImpl).save(fileModelCaptor.capture());
+
+			// クライアントが「../../etc/evil.jpg」のようなオリジナルファイル名を送信した場合を想定
+			PhotoDetailModel photoDetailModel = createNewPhotoWithFilename("../../etc/evil.jpg");
+			photoDetailModelList.add(photoDetailModel);
+
+			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+
+			assertEquals(new PhotoNo(5L), actual);
+			verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
+
+			// ベース名（evil.jpg）のみが保存先パスの末尾に使用され、パストラバーサル部分は除去されていること
+			assertEquals(new ImageFilePath(filePath + accountId + "/evil.jpg"), fileModelCaptor.getValue().getFilePath());
+			assertEquals(new ImageFilePath(filePath + accountId + "/evil.jpg"), photoCaptor.getValue().getImageFilePath());
+		}
+
+		@Test
+		@Order(9)
+		@DisplayName("異常系：許可されていない拡張子の場合、BadRequestExceptionをthrowし登録処理を行わないこと")
+		void savePhotos_newPhoto_disallowed_extension() throws GalleryException {
+			String accountId = "aaaaaaaa";
+			String filePath = "https://localhost:8080/image/";
+			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+			doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+			doReturn(filePath).when(photoConfig).getOutputPath();
+			doReturn(false).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
+
+			PhotoDetailModel photoDetailModel = createNewPhotoWithFilename("malicious.exe");
+			photoDetailModelList.add(photoDetailModel);
+
+			assertThrows(BadRequestException.class, () -> photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+			verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+			verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
 	}
-	
+
 	@Nested
 	@Order(4)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)

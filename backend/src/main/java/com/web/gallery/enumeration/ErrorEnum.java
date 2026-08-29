@@ -187,6 +187,18 @@ public enum ErrorEnum {
 	},
 
 	/**
+	 * エラーコード：E-P-0011
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_INVALID_PHOTO_FILE_EXTENSION}
+	 */
+	INVALID_PHOTO_FILE_EXTENSION("E-P-0011", MessageConst.ERR_INVALID_PHOTO_FILE_EXTENSION) {
+		@Override
+		public GalleryException toException() {
+			return new BadRequestException(this);
+		}
+	},
+
+	/**
 	 * エラーコード：E-A-0001
 	 * <p>
 	 * エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_ADMIN}
