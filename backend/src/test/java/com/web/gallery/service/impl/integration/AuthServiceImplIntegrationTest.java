@@ -172,10 +172,35 @@ public class AuthServiceImplIntegrationTest {
 
 		@Test
 		@Order(5)
-		@DisplayName("異常系：アカウントロックの場合、LockedException をthrowする")
+		@DisplayName("異常系：アカウントロックの場合、LockedExceptionをthrowする")
 		void login_locked_account() {
 			assertThrows(LockedException.class,
 				() -> authServiceImpl.login(new AccountId("lockeduser"), new Password(TEST_PASSWORD)));
+		}
+
+		@Test
+		@Order(6)
+		@DisplayName("異常系：パスワード不一致の場合、login()のロールバックとは独立してログイン失敗回数がコミットされる")
+		void login_wrong_password_increments_failure_count() {
+			assertThrows(BadCredentialsException.class,
+				() -> authServiceImpl.login(new AccountId("testuser01"), new Password("wrongpassword")));
+
+			Integer failureCount = jdbcTemplate.queryForObject(
+				"SELECT login_failure_count FROM common.account WHERE account_no = 1", Integer.class);
+			assertEquals(1, failureCount);
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("異常系：ログイン失敗を3回繰り返すとアカウントがロックされる")
+		void login_locks_account_after_reaching_fail_count() {
+			for (int i = 0; i < 3; i++) {
+				assertThrows(BadCredentialsException.class,
+					() -> authServiceImpl.login(new AccountId("testuser01"), new Password("wrongpassword")));
+			}
+
+			assertThrows(LockedException.class,
+				() -> authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD)));
 		}
 	}
 
