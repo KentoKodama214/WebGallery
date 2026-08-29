@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.config.AccountConfig;
 import com.web.gallery.config.LoginConfig;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.MessageConst;
@@ -28,8 +29,11 @@ import com.web.gallery.event.AccountUnlockedEvent;
 import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.model.AccountGetModel;
+import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
@@ -58,6 +62,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final LoginConfig loginConfig;
 	private final PhotoConfig photoConfig;
+	private final AccountConfig accountConfig;
 	private final Clock clock;
 	private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -129,14 +134,17 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	}
 
 	/**
-	 * アカウントの一覧を取得する
+	 * アカウントの一覧を、ページング情報に従い取得する
 	 *
-	 * @return	{@link AccountModelList}
+	 * @param	accountListGetModel	{@link AccountListGetModel}
+	 * @return						{@link AccountPageModel}
 	 */
 	@Override
 	@Transactional(readOnly = true)
-	public AccountModelList getAccountList() {
-		return accountRepository.getAccountList().sortByAccountId();
+	public AccountPageModel getAccountList(AccountListGetModel accountListGetModel) {
+		AccountGetModel accountGetModel = AccountGetModel.of(accountListGetModel, accountConfig.getAccountCountPerPage());
+		AccountPageModel accountPageModel = accountRepository.getAccountList(accountGetModel);
+		return AccountPageModel.of(accountPageModel.getAccountModelList().sortByAccountId(), accountPageModel.getIsLast());
 	}
 
 	/**

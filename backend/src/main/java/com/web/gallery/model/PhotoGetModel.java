@@ -47,14 +47,23 @@ public class PhotoGetModel {
 	@NonNull
 	private SortPhotoEnum sortBy;
 
+	/** 取得件数上限（最後のページかどうかの判定用に、1ページあたりの表示件数より1件多く取得する） */
+	@NonNull
+	private Integer limit;
+
+	/** 取得開始位置（0始まり） */
+	@NonNull
+	private Integer offset;
+
 	/**
-	 * PhotoListGetModelと写真のアカウント番号からPhotoGetModelを生成する
+	 * PhotoListGetModelと写真のアカウント番号、1ページあたりの表示件数からPhotoGetModelを生成する
 	 *
 	 * @param	photoListGetModel	{@link PhotoListGetModel}
 	 * @param	photoAccountNo		写真のアカウントNo
+	 * @param	photoCountPerPage	1ページあたりの表示件数
 	 * @return						{@link PhotoGetModel}
 	 */
-	public static PhotoGetModel of(PhotoListGetModel photoListGetModel, AccountNo photoAccountNo) {
+	public static PhotoGetModel of(PhotoListGetModel photoListGetModel, AccountNo photoAccountNo, Integer photoCountPerPage) {
 		return PhotoGetModel.builder()
 				.accountNo(photoListGetModel.getAccountNo())
 				.photoAccountNo(photoAccountNo)
@@ -62,6 +71,8 @@ public class PhotoGetModel {
 				.isFavoriteOnly(photoListGetModel.getIsFavoriteOnly())
 				.tagList(photoListGetModel.getTagList())
 				.sortBy(photoListGetModel.getSortBy())
+				.limit(photoCountPerPage + 1)
+				.offset((photoListGetModel.getPageNo() - 1) * photoCountPerPage)
 				.build();
 	}
 }

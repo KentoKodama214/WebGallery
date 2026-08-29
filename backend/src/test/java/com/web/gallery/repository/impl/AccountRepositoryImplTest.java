@@ -50,8 +50,10 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.AccountMapper;
+import com.web.gallery.model.AccountGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.AccountPageModel;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -663,10 +665,15 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<AccountCondition> accountCaptor = ArgumentCaptor.forClass(AccountCondition.class);
 			doReturn(accountList).when(accountMapper).select(accountCaptor.capture());
 
-			AccountModelList actual = accountRepositoryImpl.getAccountList();
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(100).offset(0).build();
+			AccountPageModel actualPage = accountRepositoryImpl.getAccountList(accountGetModel);
+			AccountModelList actual = actualPage.getAccountModelList();
+			assertTrue(actualPage.getIsLast());
 
 			AccountCondition account = accountCaptor.getValue();
 			assertFalse(account.getIsDeleted());
+			assertEquals(100, account.getLimit());
+			assertEquals(0, account.getOffset());
 
 			AccountModel actualAccountModel1 = actual.stream().sorted(Comparator.comparing(m -> m.getAccountNo().value())).toList().getFirst();
 			assertEquals(new AccountNo(1L), actualAccountModel1.getAccountNo());
@@ -706,11 +713,59 @@ public class AccountRepositoryImplTest {
 			ArgumentCaptor<AccountCondition> accountCaptor = ArgumentCaptor.forClass(AccountCondition.class);
 			doReturn(expected).when(accountMapper).select(accountCaptor.capture());
 
-			AccountModelList actual = accountRepositoryImpl.getAccountList();
-			assertEquals(expected.size(), actual.size());
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(100).offset(0).build();
+			AccountPageModel actualPage = accountRepositoryImpl.getAccountList(accountGetModel);
+			assertEquals(expected.size(), actualPage.getAccountModelList().size());
+			assertTrue(actualPage.getIsLast());
 
 			AccountCondition account = accountCaptor.getValue();
 			assertFalse(account.getIsDeleted());
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("正常系：取得件数が上限に達した場合、最後のページでないと判定され、表示件数分に切り詰められること")
+		void getAccountList_pagination_trims_when_more_results_exist() {
+			Account account1 = Account.builder()
+					.accountNo(1L)
+					.accountId("aaaaaaaa")
+					.accountName("AAAAAAAA")
+					.password("$2a$10$password1")
+					.isDeleted(false)
+					.sexKbn(SexEnum.NONE)
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
+					.authorityKbn(AuthorityEnum.MINI)
+					.loginFailureCount(0)
+					.build();
+			Account account2 = Account.builder()
+					.accountNo(2L)
+					.accountId("bbbbbbbb")
+					.accountName("BBBBBBBB")
+					.password("$2a$10$password2")
+					.isDeleted(false)
+					.sexKbn(SexEnum.NONE)
+					.birthplacePrefectureKbnCode("none")
+					.residentPrefectureKbnCode("none")
+					.freeMemo("")
+					.authorityKbn(AuthorityEnum.MINI)
+					.loginFailureCount(0)
+					.build();
+
+			List<Account> accountList = new ArrayList<Account>();
+			accountList.add(account1);
+			accountList.add(account2);
+
+			doReturn(accountList).when(accountMapper).select(any(AccountCondition.class));
+
+			// 1ページあたりの表示件数を1件と仮定し、limitはその1件多い2を指定する
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(2).offset(0).build();
+			AccountPageModel actual = accountRepositoryImpl.getAccountList(accountGetModel);
+
+			assertFalse(actual.getIsLast());
+			assertEquals(1, actual.getAccountModelList().size());
+			assertEquals(new AccountId("aaaaaaaa"), actual.getAccountModelList().get(0).getAccountId());
 		}
 	}
 }

@@ -52,6 +52,10 @@ public class PhotoListGetModel {
 	@NonNull
 	private SortPhotoEnum sortBy;
 
+	/** ページ番号 */
+	@NonNull
+	private Integer pageNo;
+
 	/**
 	 * 写真一覧リクエストからPhotoListGetModelを生成する
 	 *
@@ -73,6 +77,7 @@ public class PhotoListGetModel {
 				.isFavoriteOnly(new IsFavoriteOnly(Optional.ofNullable(request.getIsFavorite()).orElse(Boolean.FALSE)))
 				.tagList(tagList)
 				.sortBy(request.getSortBy())
+				.pageNo(request.getPageNo())
 				.build();
 	}
 }

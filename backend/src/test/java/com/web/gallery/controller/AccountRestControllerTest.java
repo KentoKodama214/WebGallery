@@ -48,6 +48,7 @@ import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.service.AccountService;
 
 @ActiveProfiles("test")
@@ -95,26 +96,39 @@ public class AccountRestControllerTest {
 					AccountModel.builder().accountId(new AccountId("bbbbbbbb")).accountName(new AccountName("BBBBBBBB")).build()
 			));
 
-			doReturn(accountModels).when(accountService).getAccountList();
+			doReturn(AccountPageModel.of(accountModels, false)).when(accountService).getAccountList(any());
 
 			mockMvc.perform(get("/api/v1/accounts"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].accountId").value("aaaaaaaa"))
-				.andExpect(jsonPath("$[0].accountName").value("AAAAAAAA"))
-				.andExpect(jsonPath("$[1].accountId").value("bbbbbbbb"))
-				.andExpect(jsonPath("$[1].accountName").value("BBBBBBBB"));
+				.andExpect(jsonPath("$.isLast").value(false))
+				.andExpect(jsonPath("$.accountList[0].accountId").value("aaaaaaaa"))
+				.andExpect(jsonPath("$.accountList[0].accountName").value("AAAAAAAA"))
+				.andExpect(jsonPath("$.accountList[1].accountId").value("bbbbbbbb"))
+				.andExpect(jsonPath("$.accountList[1].accountName").value("BBBBBBBB"));
 		}
 
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが0件の場合は空リストを返すこと")
 		void getAccountList_empty() throws Exception {
-			doReturn(AccountModelList.empty()).when(accountService).getAccountList();
+			doReturn(AccountPageModel.of(AccountModelList.empty(), true)).when(accountService).getAccountList(any());
 
 			mockMvc.perform(get("/api/v1/accounts"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$").isArray())
-				.andExpect(jsonPath("$").isEmpty());
+				.andExpect(jsonPath("$.isLast").value(true))
+				.andExpect(jsonPath("$.accountList").isArray())
+				.andExpect(jsonPath("$.accountList").isEmpty());
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("異常系：ページ番号が0以下。BadRequestExceptionをthrowする")
+		void getAccountList_BadRequestException_pageNo_not_positive() throws Exception {
+			mockMvc.perform(get("/api/v1/accounts")
+					.param("pageNo", "0"))
+				.andExpect(status().isBadRequest());
+
+			verify(accountService, times(0)).getAccountList(any());
 		}
 	}
 

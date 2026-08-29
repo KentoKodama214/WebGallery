@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -59,6 +60,7 @@ import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
+import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.service.impl.PhotoServiceImpl;
 
@@ -185,11 +187,10 @@ public class PhotoRestControllerTest {
 		void getPhotoList_with_null_parameter() throws Exception {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 
-			PhotoModelList photoList = createPhotoModelList();
+			// DB側で既にページング済みの結果を想定してモックする
+			PhotoModelList photoList = PhotoModelList.of(createPhotoModelList().toList().subList(0, 3));
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
-			doReturn(photoList).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
-
-			doReturn(3).when(photoConfig).getPhotoCountPerPage();
+			doReturn(PhotoPageModel.of(photoList, false)).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
 
 			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos"))
 				.andExpect(status().isOk())
@@ -221,6 +222,7 @@ public class PhotoRestControllerTest {
 			assertFalse(photoListGetModel.getIsFavoriteOnly().value());
 			assertEquals(new ArrayList<String>(), photoListGetModel.getTagList());
 			assertEquals(SortPhotoEnum.PHOTO_AT, photoListGetModel.getSortBy());
+			assertEquals(1, photoListGetModel.getPageNo());
 		}
 
 		@Test
@@ -229,11 +231,9 @@ public class PhotoRestControllerTest {
 		void getPhotoList_with_halfspace_tag() throws Exception {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 
-			PhotoModelList photoList = PhotoModelList.of(createPhotoModelList().toList().subList(0, 4));
+			PhotoModelList photoList = PhotoModelList.of(createPhotoModelList().toList().subList(3, 4));
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
-			doReturn(photoList).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
-
-			doReturn(3).when(photoConfig).getPhotoCountPerPage();
+			doReturn(PhotoPageModel.of(photoList, true)).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
 
 			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos")
 					.param("directionKbn", "VERTICAL")
@@ -259,6 +259,7 @@ public class PhotoRestControllerTest {
 			assertEquals("太陽", photoListGetModel.getTagList().get(0));
 			assertEquals("海", photoListGetModel.getTagList().get(1));
 			assertEquals(SortPhotoEnum.SEASON, photoListGetModel.getSortBy());
+			assertEquals(2, photoListGetModel.getPageNo());
 		}
 
 		@Test
@@ -267,11 +268,9 @@ public class PhotoRestControllerTest {
 		void getPhotoList_with_fullspace_tag() throws Exception {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 
-			PhotoModelList photoList = PhotoModelList.of(createPhotoModelList().toList().subList(0, 4));
+			PhotoModelList photoList = PhotoModelList.of(createPhotoModelList().toList().subList(3, 4));
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
-			doReturn(photoList).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
-
-			doReturn(3).when(photoConfig).getPhotoCountPerPage();
+			doReturn(PhotoPageModel.of(photoList, true)).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
 
 			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos")
 					.param("directionKbn", "VERTICAL")
@@ -305,11 +304,8 @@ public class PhotoRestControllerTest {
 		void getPhotoList_not_found_photo() throws Exception {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 
-			PhotoModelList photoList = PhotoModelList.empty();
 			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
-			doReturn(photoList).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
-
-			doReturn(3).when(photoConfig).getPhotoCountPerPage();
+			doReturn(PhotoPageModel.of(PhotoModelList.empty(), true)).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
 
 			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos"))
 				.andExpect(status().isOk())
@@ -331,6 +327,19 @@ public class PhotoRestControllerTest {
 		void getPhotoList_BadRequestException_pageNo_not_positive() throws Exception {
 			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos")
 					.param("pageNo", "0"))
+				.andExpect(status().isBadRequest());
+
+			verify(photoServiceImpl, times(0)).getPhotoList(any(PhotoListGetModel.class));
+		}
+
+		@Test
+		@Order(6)
+		@DisplayName("異常系：タグの指定数が上限（20件）を超える場合。BadRequestExceptionをthrowする")
+		void getPhotoList_BadRequestException_tagList_exceeds_maxSize() throws Exception {
+			String tooManyTags = String.join(" ", Collections.nCopies(21, "tag"));
+
+			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos")
+					.param("tagList", tooManyTags))
 				.andExpect(status().isBadRequest());
 
 			verify(photoServiceImpl, times(0)).getPhotoList(any(PhotoListGetModel.class));
@@ -919,32 +928,13 @@ public class PhotoRestControllerTest {
 
 		@Test
 		@Order(1)
-		@DisplayName("正常系：ページ番号が1で、2ページに到達しない")
-		void createPhotoListGetResponse_pageNo_1_lastPage() {
-			Integer pageNo = 1;
-			Integer photoCountPerPage = 3;
-			PhotoModelList photoList = PhotoModelList.of(createPhotoList().toList().subList(0, 1));
+		@DisplayName("正常系：DB側で絞り込み済みの写真一覧・isLastをそのままレスポンスに変換すること")
+		void createPhotoListGetResponse_passThrough() {
+			PhotoModelList photoList = PhotoModelList.of(createPhotoList().toList().subList(0, 3));
+			PhotoPageModel photoPageModel = PhotoPageModel.of(photoList, false);
 
-			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
-			assertEquals(1, actual.getPhotoList().size());
-			assertEquals(1L, actual.getPhotoList().getFirst().getAccountNo());
-			assertEquals(1L, actual.getPhotoList().getFirst().getPhotoNo());
-			assertFalse(actual.getPhotoList().getFirst().getIsFavorite());
-			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.getPhotoList().getFirst().getImageFilePath());
-			assertEquals("キャプション1", actual.getPhotoList().getFirst().getCaption());
-			assertEquals(DirectionEnum.VERTICAL, actual.getPhotoList().getFirst().getDirectionKbn());
-			assertTrue(actual.getIsLast());
-		}
-
-		@Test
-		@Order(2)
-		@DisplayName("正常系：ページ番号が1で、2ページに到達する")
-		void createPhotoListGetResponse_pageNo_1() {
-			Integer pageNo = 1;
-			Integer photoCountPerPage = 3;
-			PhotoModelList photoList = PhotoModelList.of(createPhotoList().toList().subList(0, 4));
-
-			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
+			PhotoListGetResponse actual = PhotoListGetResponse.from(photoPageModel);
+			assertFalse(actual.getIsLast());
 			assertEquals(3, actual.getPhotoList().size());
 			assertEquals(1L, actual.getPhotoList().get(0).getAccountNo());
 			assertEquals(1L, actual.getPhotoList().get(0).getPhotoNo());
@@ -964,57 +954,29 @@ public class PhotoRestControllerTest {
 			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC333.jpg", actual.getPhotoList().get(2).getImageFilePath());
 			assertEquals("キャプション3", actual.getPhotoList().get(2).getCaption());
 			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(2).getDirectionKbn());
-			assertFalse(actual.getIsLast());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：isLastがtrueの場合、そのままtrueとして変換されること")
+		void createPhotoListGetResponse_isLast_true() {
+			PhotoModelList photoList = PhotoModelList.of(createPhotoList().toList().subList(0, 1));
+			PhotoPageModel photoPageModel = PhotoPageModel.of(photoList, true);
+
+			PhotoListGetResponse actual = PhotoListGetResponse.from(photoPageModel);
+			assertTrue(actual.getIsLast());
+			assertEquals(1, actual.getPhotoList().size());
 		}
 
 		@Test
 		@Order(3)
-		@DisplayName("正常系：ページ番号が2で、3ページに到達しない")
-		void createPhotoListGetResponse_pageNo_2_lastPage() {
-			Integer pageNo = 2;
-			Integer photoCountPerPage = 3;
-			PhotoModelList photoList = PhotoModelList.of(createPhotoList().toList().subList(0, 4));
+		@DisplayName("正常系：写真が0件の場合、空リストに変換されること")
+		void createPhotoListGetResponse_empty() {
+			PhotoPageModel photoPageModel = PhotoPageModel.of(PhotoModelList.empty(), true);
 
-			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
-			assertEquals(1, actual.getPhotoList().size());
-			assertEquals(1L, actual.getPhotoList().get(0).getAccountNo());
-			assertEquals(4L, actual.getPhotoList().get(0).getPhotoNo());
-			assertTrue(actual.getPhotoList().get(0).getIsFavorite());
-			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC444.jpg", actual.getPhotoList().get(0).getImageFilePath());
-			assertEquals("キャプション4", actual.getPhotoList().get(0).getCaption());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(0).getDirectionKbn());
+			PhotoListGetResponse actual = PhotoListGetResponse.from(photoPageModel);
 			assertTrue(actual.getIsLast());
-		}
-
-		@Test
-		@Order(4)
-		@DisplayName("正常系：ページ番号が2で、3ページに到達する")
-		void createPhotoListGetResponse_pageNo_2() {
-			Integer pageNo = 2;
-			Integer photoCountPerPage = 3;
-			PhotoModelList photoList = createPhotoList();
-
-			PhotoListGetResponse actual = PhotoListGetResponse.from(photoList, pageNo, photoCountPerPage);
-			assertEquals(3, actual.getPhotoList().size());
-			assertEquals(1L, actual.getPhotoList().get(0).getAccountNo());
-			assertEquals(4L, actual.getPhotoList().get(0).getPhotoNo());
-			assertTrue(actual.getPhotoList().get(0).getIsFavorite());
-			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC444.jpg", actual.getPhotoList().get(0).getImageFilePath());
-			assertEquals("キャプション4", actual.getPhotoList().get(0).getCaption());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(0).getDirectionKbn());
-			assertEquals(1L, actual.getPhotoList().get(1).getAccountNo());
-			assertEquals(5L, actual.getPhotoList().get(1).getPhotoNo());
-			assertTrue(actual.getPhotoList().get(1).getIsFavorite());
-			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC555.jpg", actual.getPhotoList().get(1).getImageFilePath());
-			assertEquals("キャプション5", actual.getPhotoList().get(1).getCaption());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(1).getDirectionKbn());
-			assertEquals(1L, actual.getPhotoList().get(2).getAccountNo());
-			assertEquals(6L, actual.getPhotoList().get(2).getPhotoNo());
-			assertTrue(actual.getPhotoList().get(2).getIsFavorite());
-			assertEquals("https://localhost:8080/image/aaaaaaaa/DSC666.jpg", actual.getPhotoList().get(2).getImageFilePath());
-			assertEquals("キャプション6", actual.getPhotoList().get(2).getCaption());
-			assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(2).getDirectionKbn());
-			assertFalse(actual.getIsLast());
+			assertTrue(actual.getPhotoList().isEmpty());
 		}
 	}
 

@@ -117,15 +117,38 @@ export async function fetchWithAuth(
   return response;
 }
 
+/** アカウント一覧レスポンス（バックエンドはページング済みの結果を返す） */
+interface AccountListGetResponse {
+  isLast: boolean;
+  accountList: AccountListItem[];
+}
+
 /**
  * アカウント一覧を取得する
+ *
+ * バックエンドはDoS対策のためページング（`pageNo`）されたレスポンスを返すため、
+ * 既存の呼び出し側（全件を前提としたUI）との互換性を保つため、
+ * 最後のページに到達するまで内部的にすべてのページを取得して結合する
  */
 export async function getAccountList(): Promise<AccountListItem[]> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/accounts`);
-  if (!response.ok) {
-    throw new Error("アカウント一覧の取得に失敗しました");
+  const accountList: AccountListItem[] = [];
+  let pageNo = 1;
+  let isLast = false;
+
+  while (!isLast) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/accounts?pageNo=${pageNo}`
+    );
+    if (!response.ok) {
+      throw new Error("アカウント一覧の取得に失敗しました");
+    }
+    const data: AccountListGetResponse = await response.json();
+    accountList.push(...data.accountList);
+    isLast = data.isLast;
+    pageNo += 1;
   }
-  return response.json();
+
+  return accountList;
 }
 
 /**

@@ -47,6 +47,8 @@ public class PhotoDetailMapperTest {
 			PhotoListGetDto photoSelectDto = new PhotoListGetDto();
 			photoSelectDto.setAccountNo(1L);
 			photoSelectDto.setPhotoAccountNo(1L);
+			photoSelectDto.setLimit(100);
+			photoSelectDto.setOffset(0);
 
 			List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
 
@@ -78,9 +80,57 @@ public class PhotoDetailMapperTest {
 			PhotoListGetDto photoSelectDto = new PhotoListGetDto();
 			photoSelectDto.setAccountNo(1L);
 			photoSelectDto.setPhotoAccountNo(3L);
+			photoSelectDto.setLimit(100);
+			photoSelectDto.setOffset(0);
 
 			List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
 			assertEquals(new ArrayList<PhotoDto>(), actual);
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("正常系：limit・offsetで取得件数・取得開始位置が絞り込まれること")
+		void getPhotoList_limit_offset() {
+			// account1の写真は2件（photo_no 1, 2）のため、limit=1で1件のみ取得できること
+			PhotoListGetDto firstPageDto = new PhotoListGetDto();
+			firstPageDto.setAccountNo(1L);
+			firstPageDto.setPhotoAccountNo(1L);
+			firstPageDto.setLimit(1);
+			firstPageDto.setOffset(0);
+
+			List<PhotoDto> firstPageActual = photoDetailMapper.getPhotoList(firstPageDto);
+			assertEquals(1, firstPageActual.size());
+			// デフォルト（撮影日時降順）のため、先頭は撮影日時が新しいphoto_no=2であること
+			assertEquals(2L, firstPageActual.getFirst().getPhotoNo());
+
+			// offset=1を指定すると、残りの1件（photo_no=1）が取得できること
+			PhotoListGetDto secondPageDto = new PhotoListGetDto();
+			secondPageDto.setAccountNo(1L);
+			secondPageDto.setPhotoAccountNo(1L);
+			secondPageDto.setLimit(1);
+			secondPageDto.setOffset(1);
+
+			List<PhotoDto> secondPageActual = photoDetailMapper.getPhotoList(secondPageDto);
+			assertEquals(1, secondPageActual.size());
+			assertEquals(1L, secondPageActual.getFirst().getPhotoNo());
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("正常系：季節・時期順（月日の昇順）に並び替えられること")
+		void getPhotoList_sortBy_season() {
+			// account1の写真は1月・2月の撮影のため、季節順（月日昇順）では撮影日時降順と逆順になること
+			PhotoListGetDto photoSelectDto = new PhotoListGetDto();
+			photoSelectDto.setAccountNo(1L);
+			photoSelectDto.setPhotoAccountNo(1L);
+			photoSelectDto.setSortBy("SEASON");
+			photoSelectDto.setLimit(100);
+			photoSelectDto.setOffset(0);
+
+			List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
+			assertEquals(2, actual.size());
+			assertEquals(1L, actual.get(0).getPhotoNo());
+			assertEquals(2L, actual.get(1).getPhotoNo());
 		}
 	}
 

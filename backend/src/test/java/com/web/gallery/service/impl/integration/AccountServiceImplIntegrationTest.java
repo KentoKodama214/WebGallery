@@ -51,8 +51,9 @@ import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.service.impl.AccountServiceImpl;
 
 @ActiveProfiles("test")
@@ -318,32 +319,62 @@ public class AccountServiceImplIntegrationTest {
 	class getAccountList {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：アカウントが存在する場合")
+		@DisplayName("正常系：アカウントが存在する場合（1ページ目、5件に切り詰められ最後のページでないこと）")
 		@Sql("/sql/common/cleanup.sql")
 		@Sql("/sql/service/AccountServiceImplIntegrationTest.sql")
 		void getAccountList_found() {
-			AccountModelList actual = accountServiceImpl.getAccountList();
-			
-			assertEquals(11, actual.size());
-			assertEquals("aaaaaaaa", actual.get(0).getAccountId().value());
-			assertEquals("bbbbbbbb", actual.get(1).getAccountId().value());
-			assertEquals("cccccccc", actual.get(2).getAccountId().value());
-			assertEquals("dddddddd", actual.get(3).getAccountId().value());
-			assertEquals("eeeeeeee", actual.get(4).getAccountId().value());
-			assertEquals("ffffffff", actual.get(5).getAccountId().value());
-			assertEquals("gggggggg", actual.get(6).getAccountId().value());
-			assertEquals("hhhhhhhh", actual.get(7).getAccountId().value());
-			assertEquals("jjjjjjjj", actual.get(8).getAccountId().value());
-			assertEquals("kkkkkkkk", actual.get(9).getAccountId().value());
-			assertEquals("llllllll", actual.get(10).getAccountId().value());
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(1).build();
+			AccountPageModel actual = accountServiceImpl.getAccountList(accountListGetModel);
+
+			assertFalse(actual.getIsLast());
+			assertEquals(5, actual.getAccountModelList().size());
+			assertEquals("aaaaaaaa", actual.getAccountModelList().get(0).getAccountId().value());
+			assertEquals("bbbbbbbb", actual.getAccountModelList().get(1).getAccountId().value());
+			assertEquals("cccccccc", actual.getAccountModelList().get(2).getAccountId().value());
+			assertEquals("dddddddd", actual.getAccountModelList().get(3).getAccountId().value());
+			assertEquals("eeeeeeee", actual.getAccountModelList().get(4).getAccountId().value());
 		}
-		
+
 		@Test
 		@Order(2)
+		@DisplayName("正常系：アカウントが存在する場合（2ページ目、まだ最後のページでないこと）")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/service/AccountServiceImplIntegrationTest.sql")
+		void getAccountList_found_secondPage() {
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(2).build();
+			AccountPageModel actual = accountServiceImpl.getAccountList(accountListGetModel);
+
+			assertFalse(actual.getIsLast());
+			assertEquals(5, actual.getAccountModelList().size());
+			assertEquals("ffffffff", actual.getAccountModelList().get(0).getAccountId().value());
+			assertEquals("gggggggg", actual.getAccountModelList().get(1).getAccountId().value());
+			assertEquals("hhhhhhhh", actual.getAccountModelList().get(2).getAccountId().value());
+			assertEquals("jjjjjjjj", actual.getAccountModelList().get(3).getAccountId().value());
+			assertEquals("kkkkkkkk", actual.getAccountModelList().get(4).getAccountId().value());
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("正常系：アカウントが存在する場合（3ページ目、残り1件で最後のページと判定されること）")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/service/AccountServiceImplIntegrationTest.sql")
+		void getAccountList_found_lastPage() {
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(3).build();
+			AccountPageModel actual = accountServiceImpl.getAccountList(accountListGetModel);
+
+			assertTrue(actual.getIsLast());
+			assertEquals(1, actual.getAccountModelList().size());
+			assertEquals("llllllll", actual.getAccountModelList().get(0).getAccountId().value());
+		}
+
+		@Test
+		@Order(4)
 		@DisplayName("正常系：アカウントが存在しない場合")
 		void getAccountList_not_found() {
-			AccountModelList actual = accountServiceImpl.getAccountList();
-			assertEquals(0, actual.size());
+			AccountListGetModel accountListGetModel = AccountListGetModel.builder().pageNo(1).build();
+			AccountPageModel actual = accountServiceImpl.getAccountList(accountListGetModel);
+			assertEquals(0, actual.getAccountModelList().size());
+			assertTrue(actual.getIsLast());
 		}
 	}
 	

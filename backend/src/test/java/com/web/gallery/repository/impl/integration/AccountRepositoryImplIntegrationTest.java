@@ -42,8 +42,10 @@ import com.web.gallery.enumeration.SexEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.model.AccountGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 
 @ActiveProfiles("test")
@@ -557,20 +559,65 @@ public class AccountRepositoryImplIntegrationTest {
 	class getAccountList {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：アカウントを2件以上取得")
+		@DisplayName("正常系：limitを十分大きくした場合、アカウントを全件取得できること")
 		@Sql("/sql/common/cleanup.sql")
 		@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
 		void getAccountList_found_some_accounts() {
-			AccountModelList actual = accountRepositoryImpl.getAccountList();
-			assertEquals(11, actual.size());
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(100).offset(0).build();
+			AccountPageModel actual = accountRepositoryImpl.getAccountList(accountGetModel);
+			assertEquals(11, actual.getAccountModelList().size());
+			assertTrue(actual.getIsLast());
 		}
-		
+
 		@Test
 		@Order(2)
 		@DisplayName("正常系：アカウントが0件")
 		void getAccountList_not_found() {
-			AccountModelList actual = accountRepositoryImpl.getAccountList();
-			assertEquals(0, actual.size());
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(100).offset(0).build();
+			AccountPageModel actual = accountRepositoryImpl.getAccountList(accountGetModel);
+			assertEquals(0, actual.getAccountModelList().size());
+			assertTrue(actual.getIsLast());
+		}
+
+		@Test
+		@Order(3)
+		@DisplayName("正常系：1ページあたりの表示件数（5件）に切り詰められ、最後のページでないと判定されること（1ページ目）")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
+		void getAccountList_pagination_firstPage() {
+			// 1ページあたりの表示件数を5件と仮定し、limitはその1件多い6を指定する
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(6).offset(0).build();
+			AccountPageModel actual = accountRepositoryImpl.getAccountList(accountGetModel);
+
+			assertFalse(actual.getIsLast());
+			assertEquals(5, actual.getAccountModelList().size());
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("正常系：2ページ目も表示件数分取得でき、まだ最後のページでないと判定されること")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
+		void getAccountList_pagination_secondPage() {
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(6).offset(5).build();
+			AccountPageModel actual = accountRepositoryImpl.getAccountList(accountGetModel);
+
+			assertFalse(actual.getIsLast());
+			assertEquals(5, actual.getAccountModelList().size());
+		}
+
+		@Test
+		@Order(5)
+		@DisplayName("正常系：残り件数が表示件数未満の場合、最後のページと判定されること（3ページ目）")
+		@Sql("/sql/common/cleanup.sql")
+		@Sql("/sql/repository/AccountRepositoryImplIntegrationTest.sql")
+		void getAccountList_pagination_lastPage() {
+			// 11件中、1・2ページ目で10件取得済みのため、3ページ目は残り1件のみ
+			AccountGetModel accountGetModel = AccountGetModel.builder().limit(6).offset(10).build();
+			AccountPageModel actual = accountRepositoryImpl.getAccountList(accountGetModel);
+
+			assertTrue(actual.getIsLast());
+			assertEquals(1, actual.getAccountModelList().size());
 		}
 	}
 

@@ -3,8 +3,10 @@ package com.web.gallery.repository;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.model.AccountGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
+import com.web.gallery.model.AccountPageModel;
 
 /**
  * アカウントデータを永続化するRepositoryクラス
@@ -70,11 +72,12 @@ public interface AccountRepository {
 	Boolean isExistAccount(AccountNo accountNo, AccountId accountId);
 
 	/**
-	 * アカウントの一覧を取得する
+	 * アカウントの一覧を、ページング情報に従い取得する
 	 *
-	 * @return	{@link AccountModelList}
+	 * @param	accountGetModel	{@link AccountGetModel}
+	 * @return					{@link AccountPageModel}
 	 */
-	AccountModelList getAccountList();
+	AccountPageModel getAccountList(AccountGetModel accountGetModel);
 
 	/**
 	 * 削除済みを含む全アカウントの一覧を取得する
