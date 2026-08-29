@@ -12,6 +12,7 @@ import {
 } from "@/lib/api/client";
 import type { PrefectureGroup } from "@/lib/api/client";
 import { PASSWORD_PATTERN, clearError, isPastDate } from "@/lib/validation";
+import { loginUrlWithRedirect } from "@/lib/url";
 
 interface AccountSettingFormProps {
   accountId: string;
@@ -96,10 +97,10 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     // router は再取得のトリガーではないため依存に含めない
   }, [authLoading, isOwner, accountId, reloadKey]);
 
-  // 未ログインの場合はログインページへ誘導する
+  // 未ログインの場合はログインページへ誘導する（再ログイン後に戻れるよう redirect を付与）
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push("/login");
+      router.push(loginUrlWithRedirect());
     }
   }, [authLoading, isAuthenticated, router]);
 

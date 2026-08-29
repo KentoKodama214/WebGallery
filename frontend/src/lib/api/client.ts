@@ -43,6 +43,25 @@ async function readErrorMessage(
 }
 
 /**
+ * レスポンスボディを JSON として読み取る
+ *
+ * 2xx でも本文が空・非 JSON の場合に生の SyntaxError がそのまま UI に
+ * 表示されるのを防ぎ、既定文言へフォールバックする。
+ *
+ * @param response fetch のレスポンス
+ * @returns パース済み JSON
+ */
+async function readJson<T>(response: Response): Promise<T> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new Error(
+      "サーバーからの応答を解釈できませんでした。時間をおいて再度お試しください"
+    );
+  }
+}
+
+/**
  * アクセストークンを取得する
  */
 export function getAccessToken(): string | null {
@@ -79,7 +98,9 @@ export async function login(
     throw new Error(await readErrorMessage(response, "ログインに失敗しました"));
   }
 
-  const data = await response.json();
+  const data = await readJson<{ accessToken: string; expiresIn: number }>(
+    response
+  );
   accessToken = data.accessToken;
   sessionAuthState = "authenticated";
   return data;
@@ -217,7 +238,7 @@ export async function getAccountList(pageNo: number = 1): Promise<AccountListGet
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "アカウント一覧の取得に失敗しました"));
   }
-  return response.json();
+  return readJson<AccountListGetResponse>(response);
 }
 
 /**
@@ -228,7 +249,7 @@ export async function getAccount(accountId: string): Promise<AccountDetail> {
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "アカウント情報の取得に失敗しました"));
   }
-  return response.json();
+  return readJson<AccountDetail>(response);
 }
 
 /**
@@ -258,7 +279,7 @@ export async function updateAccount(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "アカウント情報の更新に失敗しました"));
   }
-  return response.json();
+  return readJson<AccountUpdateResult>(response);
 }
 
 /**
@@ -269,7 +290,7 @@ export async function getPrefectures(): Promise<PrefectureGroup[]> {
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "都道府県一覧の取得に失敗しました"));
   }
-  return response.json();
+  return readJson<PrefectureGroup[]>(response);
 }
 
 /**
@@ -286,7 +307,7 @@ export async function registerAccount(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "アカウントの登録に失敗しました"));
   }
-  return response.json();
+  return readJson<AccountRegistResult>(response);
 }
 
 /** アカウント一覧アイテム */
@@ -456,7 +477,7 @@ export async function getPhotoList(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真一覧の取得に失敗しました"));
   }
-  return response.json();
+  return readJson<PhotoListResponse>(response);
 }
 
 /**
@@ -470,7 +491,7 @@ export async function getPhotoUpperLimit(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真登録上限の取得に失敗しました"));
   }
-  return response.json();
+  return readJson<PhotoUpperLimitResponse>(response);
 }
 
 /**
@@ -486,7 +507,7 @@ export async function getPhotoDetail(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真詳細の取得に失敗しました"));
   }
-  return response.json();
+  return readJson<PhotoDetailResponse>(response);
 }
 
 /**
@@ -507,7 +528,7 @@ export async function deletePhoto(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真の削除に失敗しました"));
   }
-  return response.json();
+  return readJson<PhotoEditResult>(response);
 }
 
 /**
@@ -525,7 +546,7 @@ export async function addFavorite(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "お気に入りの登録に失敗しました"));
   }
-  return response.json();
+  return readJson<PhotoFavoriteResult>(response);
 }
 
 /**
@@ -543,7 +564,7 @@ export async function deleteFavorite(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "お気に入りの解除に失敗しました"));
   }
-  return response.json();
+  return readJson<PhotoFavoriteResult>(response);
 }
 
 /**
@@ -564,7 +585,7 @@ export async function savePhoto(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真の保存に失敗しました"));
   }
-  return response.json();
+  return readJson<PhotoEditResult>(response);
 }
 
 /** 管理者用アカウント一覧アイテム */
@@ -599,7 +620,7 @@ export async function getAdminAccountList(pageNo: number = 1): Promise<AdminAcco
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "アカウント一覧の取得に失敗しました"));
   }
-  return response.json();
+  return readJson<AdminAccountListGetResponse>(response);
 }
 
 /**
@@ -615,7 +636,7 @@ export async function unlockAccount(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "アカウントのロック解除に失敗しました"));
   }
-  return response.json();
+  return readJson<AdminAccountLockResult>(response);
 }
 
 /**
@@ -631,5 +652,5 @@ export async function lockAccount(
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "アカウントのロックに失敗しました"));
   }
-  return response.json();
+  return readJson<AdminAccountLockResult>(response);
 }

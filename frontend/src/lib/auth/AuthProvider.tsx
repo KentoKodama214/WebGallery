@@ -64,9 +64,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await apiClient.login(accountId, password);
     const token = apiClient.getAccessToken();
     const payload = token ? parseJwt(token) : null;
-    if (payload) {
-      setUser({ accountId, accountNo: payload.accountNo, role: payload.role });
+    if (!payload) {
+      // 発行されたトークンを解釈できない場合はログイン失敗として扱う
+      apiClient.setAccessToken(null);
+      throw new Error("ログインに失敗しました");
     }
+    // アカウントIDは入力値ではなくトークンの sub を採用し、セッション復元経路と揃える
+    setUser({
+      accountId: payload.sub,
+      accountNo: payload.accountNo,
+      role: payload.role,
+    });
   }, []);
 
   const logout = useCallback(async () => {

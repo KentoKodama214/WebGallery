@@ -73,6 +73,20 @@ describe("APIプロキシ route", () => {
     expect(body.message).toContain("バックエンド");
   });
 
+  it("content-length が上限を超えるリクエストは413を返し、転送しない", async () => {
+    const req = new NextRequest(
+      "http://localhost/api/v1/accounts/foo/photos",
+      {
+        method: "POST",
+        headers: { "content-length": String(7 * 1024 * 1024) },
+      }
+    );
+    const res = await POST(req, ctx(["v1", "accounts", "foo", "photos"]));
+
+    expect(res.status).toBe(413);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("複数の Set-Cookie を個別に転送する", async () => {
     const backendHeaders = new Headers();
     backendHeaders.append("set-cookie", "a=1; Path=/");

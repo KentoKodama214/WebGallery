@@ -91,7 +91,6 @@ export function LoginForm() {
             type="text"
             name="username"
             placeholder="User ID"
-            tabIndex={1}
             autoFocus
             autoComplete="username"
             value={accountId}
@@ -107,7 +106,6 @@ export function LoginForm() {
             type="password"
             name="password"
             placeholder="Password"
-            tabIndex={2}
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -129,7 +127,6 @@ export function LoginForm() {
 
           <button
             type="submit"
-            tabIndex={3}
             disabled={isLoading}
             className="absolute left-0 bottom-0 w-full h-[60px] max-h-[60px] bg-[#2196F3] text-white border-none border-b-[7px] border-b-[rgba(0,0,0,0.1)] rounded-b-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#2196F3] focus:border-b-[4px] disabled:opacity-70 disabled:cursor-not-allowed"
           >

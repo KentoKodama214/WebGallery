@@ -22,7 +22,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // 静的ファイルとAPIを除外
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)",
+    // API・Next内部アセット・静的ファイルを除外し、ページ遷移だけを対象にする
+    "/((?!api|_next/static|_next/image|_next/data|favicon.ico|.*\\.(?:png|jpe?g|gif|svg|webp|avif|ico|css|js|map|woff2?|ttf)$).*)",
   ],
 };

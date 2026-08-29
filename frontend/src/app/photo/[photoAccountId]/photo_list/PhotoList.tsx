@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/client";
 import { getCookie, setCookie } from "@/lib/cookie";
 import { onActivateKey } from "@/lib/a11y";
+import { sanitizeImageUrl } from "@/lib/url";
 import styles from "./PhotoList.module.css";
 
 const COOKIE_NAME = "photoListFilter";
@@ -234,7 +235,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                 const cancelBtn = document.querySelector(".pswp__button--cancel-favorite-button") as HTMLElement | null;
                 if (addBtn) addBtn.style.display = "none";
                 if (cancelBtn) cancelBtn.style.display = "block";
-              }).catch(() => {});
+              }).catch(() => {
+                setActionError("お気に入りの更新に失敗しました");
+              });
             },
           });
 
@@ -267,7 +270,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                 const cancelBtn = document.querySelector(".pswp__button--cancel-favorite-button") as HTMLElement | null;
                 if (addBtn) addBtn.style.display = "block";
                 if (cancelBtn) cancelBtn.style.display = "none";
-              }).catch(() => {});
+              }).catch(() => {
+                setActionError("お気に入りの更新に失敗しました");
+              });
             },
           });
         }
@@ -579,21 +584,23 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             ref={galleryRef}
             style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", gap: "10px", margin: "0 auto" }}
           >
-            {photos.map((photo) => (
+            {photos.map((photo) => {
+              const imageSrc = sanitizeImageUrl(photo.imageFilePath);
+              return (
               <div
                 key={`${photo.accountNo}-${photo.photoNo}`}
                 className={`${styles.photo} group`}
               >
                 <div className="pswp-gallery__item">
                   <a
-                    href={photo.imageFilePath}
+                    href={imageSrc}
                     data-pswp-width="1600"
                     data-pswp-height="1200"
                     target="_blank"
                     rel="noreferrer"
                   >
                     <img
-                      src={photo.imageFilePath}
+                      src={imageSrc}
                       alt={photo.caption || "写真"}
                       className={styles.picture}
                       onLoad={handleImageLoad}
@@ -636,7 +643,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                   </button>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
