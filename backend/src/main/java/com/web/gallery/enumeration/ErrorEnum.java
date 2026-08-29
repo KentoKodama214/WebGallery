@@ -199,6 +199,54 @@ public enum ErrorEnum {
 	},
 
 	/**
+	 * エラーコード：E-P-0012
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_IMAGE_FILE_REQUIRED}
+	 */
+	IMAGE_FILE_REQUIRED("E-P-0012", MessageConst.ERR_IMAGE_FILE_REQUIRED) {
+		@Override
+		public GalleryException toException() {
+			return new BadRequestException(this);
+		}
+	},
+
+	/**
+	 * エラーコード：E-P-0013
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_UNSUPPORTED_IMAGE_CONTENT_TYPE}
+	 */
+	UNSUPPORTED_IMAGE_CONTENT_TYPE("E-P-0013", MessageConst.ERR_UNSUPPORTED_IMAGE_CONTENT_TYPE) {
+		@Override
+		public GalleryException toException() {
+			return new BadRequestException(this);
+		}
+	},
+
+	/**
+	 * エラーコード：E-P-0014
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_INVALID_IMAGE_SIGNATURE}
+	 */
+	INVALID_IMAGE_SIGNATURE("E-P-0014", MessageConst.ERR_INVALID_IMAGE_SIGNATURE) {
+		@Override
+		public GalleryException toException() {
+			return new BadRequestException(this);
+		}
+	},
+
+	/**
+	 * エラーコード：E-P-0015
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_IMAGE_FILE_SIZE_EXCEEDED}
+	 */
+	IMAGE_FILE_SIZE_EXCEEDED("E-P-0015", MessageConst.ERR_IMAGE_FILE_SIZE_EXCEEDED) {
+		@Override
+		public GalleryException toException() {
+			return new BadRequestException(this);
+		}
+	},
+
+	/**
 	 * エラーコード：E-A-0001
 	 * <p>
 	 * エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_ADMIN}

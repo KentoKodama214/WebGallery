@@ -76,9 +76,12 @@ import com.web.gallery.enumeration.ErrorEnum;
 @Transactional
 @AutoConfigureMockMvc
 public class PhotoRestControllerIntegrationTest {
+	/** 新規登録時のバリデーション（Content-Type・マジックバイト）を通過させるための、実際のJPEGファイルの先頭バイト列 */
+	private static final byte[] JPEG_BYTES = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x00, 0x10};
+
 	@Autowired
 	private MockMvc mockMvc;
-	
+
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
@@ -241,8 +244,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC111.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -340,8 +343,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC111.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -583,8 +586,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC111.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -621,8 +624,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC111.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -722,8 +725,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC111.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(2L))
@@ -760,8 +763,8 @@ public class PhotoRestControllerIntegrationTest {
 			MockMultipartFile multipartFile = new MockMultipartFile(
 					"imageFile",
 					"DSC21.jpg",
-					MediaType.MULTIPART_FORM_DATA_VALUE,
-					"sample image".getBytes());
+					MediaType.IMAGE_JPEG_VALUE,
+					JPEG_BYTES);
 			
 			AccountModel sessionAccount = AccountModel.builder()
 					.accountNo(new AccountNo(2L))
