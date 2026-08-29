@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   registerAccount,
@@ -132,12 +133,12 @@ export function RegisterForm() {
   return (
     <div className="min-h-screen bg-[whitesmoke] font-['Open_Sans',sans-serif]">
       <header>
-        <a
+        <Link
           href="/login"
           className="fixed top-[5px] left-[10px] text-xl text-gray-400 z-[1000] no-underline"
         >
           &larr; back
-        </a>
+        </Link>
       </header>
 
       <div className="flex justify-center pt-12 pb-16 px-4">

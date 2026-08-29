@@ -30,7 +30,9 @@ export function PhotoDetail({
   const { isAuthenticated, user } = useAuth();
   const [photo, setPhoto] = useState<PhotoDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // error: 初期ロード失敗（写真を表示できない）。actionError: 操作失敗（写真表示は維持）
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFavoriteProcessing, setIsFavoriteProcessing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -71,6 +73,7 @@ export function PhotoDetail({
   const handleFavoriteToggle = async () => {
     if (!photo || isFavoriteProcessing) return;
     setIsFavoriteProcessing(true);
+    setActionError(null);
     try {
       if (photo.isFavorite) {
         await deleteFavorite(photo.accountNo, photo.photoNo);
@@ -79,7 +82,8 @@ export function PhotoDetail({
       }
       setPhoto({ ...photo, isFavorite: !photo.isFavorite });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      // 操作失敗は写真表示を維持したまま通知する
+      setActionError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
       setIsFavoriteProcessing(false);
     }
@@ -91,6 +95,7 @@ export function PhotoDetail({
   const handleDelete = async () => {
     if (!photo || isDeleting) return;
     setIsDeleting(true);
+    setActionError(null);
     try {
       await deletePhoto(photoAccountId, {
         photoNo: photo.photoNo,
@@ -98,21 +103,24 @@ export function PhotoDetail({
       });
       router.push(`/photo/${photoAccountId}/photo_list`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      // 削除失敗時は確認ダイアログを開いたままエラーを通知する
+      setActionError(err instanceof Error ? err.message : "エラーが発生しました");
       setIsDeleting(false);
     }
   };
 
+  /**
+   * 撮影日時を表示用に整形する
+   *
+   * `photoAt` は「撮影された壁時計時刻」を表すため、閲覧者のタイムゾーンへ変換せず
+   * ISO 文字列の日時部分をそのまま整形する。
+   */
   const formatPhotoAt = (photoAt: string | null): string => {
     if (!photoAt) return "";
-    const date = new Date(photoAt);
-    return date.toLocaleString("ja-JP", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(photoAt);
+    if (!match) return "";
+    const [, year, month, day, hour, minute] = match;
+    return `${year}/${month}/${day} ${hour}:${minute}`;
   };
 
   if (isLoading) {
@@ -163,12 +171,51 @@ export function PhotoDetail({
         </Link>
       </header>
 
+      {/* 操作失敗の通知（写真表示は維持したまま表示する） */}
+      {actionError && (
+        <div
+          role="alert"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 200,
+            background: "#dc2626",
+            color: "#fff",
+            padding: "10px 16px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "12px",
+          }}
+        >
+          <span>{actionError}</span>
+          <button
+            type="button"
+            onClick={() => setActionError(null)}
+            aria-label="閉じる"
+            style={{
+              background: "none",
+              border: "none",
+              color: "#fff",
+              cursor: "pointer",
+              fontSize: "18px",
+              lineHeight: 1,
+              padding: 0,
+            }}
+          >
+            &times;
+          </button>
+        </div>
+      )}
+
       {/* 右上アイコン群 */}
       <div>
         {isOwner && (
-          <img
-            src="/image/edit.png"
-            alt="編集"
+          <button
+            type="button"
+            aria-label="編集"
             onClick={() => router.push(`/photo/${photoAccountId}/photo_setting?accountNo=${photo.accountNo}&photoNo=${photo.photoNo}`)}
             style={{
               position: "fixed",
@@ -178,13 +225,18 @@ export function PhotoDetail({
               height: "25px",
               cursor: "pointer",
               zIndex: 50,
+              padding: 0,
+              border: "none",
+              background: "none",
             }}
-          />
+          >
+            <img src="/image/edit.png" alt="" style={{ width: "100%", height: "100%", display: "block" }} />
+          </button>
         )}
         {isOwner && (
-          <img
-            src="/image/trash.png"
-            alt="削除"
+          <button
+            type="button"
+            aria-label="削除"
             onClick={() => setShowDeleteConfirm(true)}
             style={{
               position: "fixed",
@@ -194,14 +246,21 @@ export function PhotoDetail({
               height: "25px",
               cursor: "pointer",
               zIndex: 50,
+              padding: 0,
+              border: "none",
+              background: "none",
             }}
-          />
+          >
+            <img src="/image/trash.png" alt="" style={{ width: "100%", height: "100%", display: "block" }} />
+          </button>
         )}
         {isAuthenticated && (
-          <img
-            src={photo.isFavorite ? "/image/heart_on.png" : "/image/heart_off.png"}
-            alt={photo.isFavorite ? "お気に入り解除" : "お気に入り登録"}
+          <button
+            type="button"
+            aria-label={photo.isFavorite ? "お気に入り解除" : "お気に入り登録"}
+            aria-pressed={photo.isFavorite}
             onClick={handleFavoriteToggle}
+            disabled={isFavoriteProcessing}
             data-testid="favorite-button"
             style={{
               position: "fixed",
@@ -211,8 +270,17 @@ export function PhotoDetail({
               height: "25px",
               cursor: isFavoriteProcessing ? "not-allowed" : "pointer",
               zIndex: 50,
+              padding: 0,
+              border: "none",
+              background: "none",
             }}
-          />
+          >
+            <img
+              src={photo.isFavorite ? "/image/heart_on.png" : "/image/heart_off.png"}
+              alt=""
+              style={{ width: "100%", height: "100%", display: "block" }}
+            />
+          </button>
         )}
       </div>
 
@@ -319,8 +387,13 @@ export function PhotoDetail({
             maxWidth: "500px",
             width: "90%",
           }}>
-            <div
-              onClick={() => setShowDeleteConfirm(false)}
+            <button
+              type="button"
+              aria-label="閉じる"
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                setActionError(null);
+              }}
               style={{
                 position: "absolute",
                 display: "flex",
@@ -332,12 +405,13 @@ export function PhotoDetail({
                 height: "30px",
                 color: "#fff",
                 background: "#000",
+                border: "none",
                 borderRadius: "50%",
                 cursor: "pointer",
               }}
             >
               &times;
-            </div>
+            </button>
             <div style={{
               background: "#fff",
               textAlign: "center",
@@ -345,9 +419,17 @@ export function PhotoDetail({
               padding: "20px",
             }}>
               <p style={{ color: "#000", margin: "1em 0" }}>写真を削除してもよろしいですか？</p>
+              {actionError && (
+                <p role="alert" style={{ color: "#dc2626", margin: "0 0 1em 0", fontSize: "14px" }}>
+                  {actionError}
+                </p>
+              )}
               <div style={{ display: "flex", justifyContent: "center", gap: "12px" }}>
                 <button
-                  onClick={() => setShowDeleteConfirm(false)}
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setActionError(null);
+                  }}
                   style={{
                     background: "#4b5563",
                     color: "#fff",

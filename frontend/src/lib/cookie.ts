@@ -5,7 +5,7 @@
  * @param maxAgeSeconds 有効期限（秒）
  */
 export function setCookie(name: string, value: string, maxAgeSeconds: number): void {
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}`;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax`;
 }
 
 /**

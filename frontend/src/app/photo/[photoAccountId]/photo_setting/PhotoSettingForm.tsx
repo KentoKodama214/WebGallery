@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
@@ -98,11 +99,11 @@ export function PhotoSettingForm({
         setImagePreview(data.imageFilePath);
 
         if (data.photoAt) {
-          const date = new Date(data.photoAt);
-          const local = new Date(
-            date.getTime() - date.getTimezoneOffset() * 60000
-          );
-          setPhotoAt(local.toISOString().slice(0, 16));
+          // photoAt は「撮影された壁時計時刻」（バックエンドは LocalDateTime で受け取る）。
+          // タイムゾーン変換をせず ISO 文字列の日時部分をそのまま datetime-local へ渡す。
+          // （閲覧端末のTZに依存して往復のたびにずれる不具合を防ぐ）
+          const match = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.exec(data.photoAt);
+          if (match) setPhotoAt(match[0]);
         }
 
         if (data.photoTagList && data.photoTagList.length > 0) {
@@ -332,12 +333,12 @@ export function PhotoSettingForm({
   return (
     <div className="min-h-screen bg-black text-white pb-10">
       <header>
-        <a
+        <Link
           href={`/photo/${photoAccountId}/photo_list`}
           className="fixed top-[5px] left-[10px] text-xl text-gray-400 z-[1000] no-underline"
         >
           &larr; back
-        </a>
+        </Link>
       </header>
       <div className="max-w-2xl mx-auto px-4 pt-8">
         <h1 className="text-xl font-bold mb-6 text-center">

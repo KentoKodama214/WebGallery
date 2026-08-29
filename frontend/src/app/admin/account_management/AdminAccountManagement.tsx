@@ -8,6 +8,14 @@ import {
   lockAccount,
   type AdminAccountListItem,
 } from "@/lib/api/client";
+import { LOGIN_FAILURE_LOCK_THRESHOLD } from "@/lib/consts";
+
+/** ロック操作の確認対象 */
+interface PendingLockAction {
+  type: "lock" | "unlock";
+  accountNo: number;
+  accountId: string;
+}
 
 /**
  * 管理者用アカウント管理コンポーネント
@@ -21,6 +29,8 @@ export function AdminAccountManagement() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pageNo, setPageNo] = useState(1);
+  const [pendingAction, setPendingAction] = useState<PendingLockAction | null>(null);
+  const [isActionProcessing, setIsActionProcessing] = useState(false);
 
   const isAdmin = user?.role === "ROLE_ADMIN";
   const canView = !isAuthLoading && isAuthenticated && isAdmin;
@@ -87,29 +97,27 @@ export function AdminAccountManagement() {
     }
   };
 
-  const handleUnlock = async (accountNo: number, accountId: string) => {
-    if (!confirm(`${accountId} のロックを解除しますか？`)) return;
+  /**
+   * 確認ダイアログで「実行」が押されたときの処理
+   */
+  const handleConfirmAction = async () => {
+    if (!pendingAction || isActionProcessing) return;
+    setIsActionProcessing(true);
     setMessage(null);
     setError(null);
     try {
-      const result = await unlockAccount(accountNo);
+      const result =
+        pendingAction.type === "unlock"
+          ? await unlockAccount(pendingAction.accountNo)
+          : await lockAccount(pendingAction.accountNo);
       setMessage(result.message);
+      setPendingAction(null);
       await fetchAccounts();
     } catch (err) {
       setError(err instanceof Error ? err.message : "エラーが発生しました");
-    }
-  };
-
-  const handleLock = async (accountNo: number, accountId: string) => {
-    if (!confirm(`${accountId} を強制ロックしますか？`)) return;
-    setMessage(null);
-    setError(null);
-    try {
-      const result = await lockAccount(accountNo);
-      setMessage(result.message);
-      await fetchAccounts();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      setPendingAction(null);
+    } finally {
+      setIsActionProcessing(false);
     }
   };
 
@@ -154,7 +162,8 @@ export function AdminAccountManagement() {
   const formatDatetime = (datetime: string | null): string => {
     if (!datetime) return "-";
     const date = new Date(datetime);
-    if (date.getFullYear() <= 1900) return "-";
+    // 未ログイン（バックエンドの最小日時センチネル）や不正な値は "-" で表示
+    if (Number.isNaN(date.getTime()) || date.getFullYear() <= 1900) return "-";
     return date.toLocaleString("ja-JP");
   };
 
@@ -213,7 +222,7 @@ export function AdminAccountManagement() {
                 <td className="py-3 px-4 border border-gray-300">
                   {account.isDeleted ? (
                     <span className="text-gray-500">削除済み</span>
-                  ) : account.loginFailureCount >= 10 ? (
+                  ) : account.loginFailureCount >= LOGIN_FAILURE_LOCK_THRESHOLD ? (
                     <span className="text-red-500 font-bold">ロック中</span>
                   ) : (
                     <span className="text-green-600">有効</span>
@@ -224,16 +233,28 @@ export function AdminAccountManagement() {
                 <td className="py-3 px-4 border border-gray-300">
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleUnlock(account.accountNo, account.accountId)}
+                      onClick={() =>
+                        setPendingAction({
+                          type: "unlock",
+                          accountNo: account.accountNo,
+                          accountId: account.accountId,
+                        })
+                      }
                       className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
                       disabled={account.loginFailureCount === 0}
                     >
                       ロック解除
                     </button>
                     <button
-                      onClick={() => handleLock(account.accountNo, account.accountId)}
+                      onClick={() =>
+                        setPendingAction({
+                          type: "lock",
+                          accountNo: account.accountNo,
+                          accountId: account.accountId,
+                        })
+                      }
                       className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-                      disabled={account.loginFailureCount >= 10}
+                      disabled={account.loginFailureCount >= LOGIN_FAILURE_LOCK_THRESHOLD}
                     >
                       強制ロック
                     </button>
@@ -254,6 +275,42 @@ export function AdminAccountManagement() {
         >
           {isLoadingMore ? "読み込み中..." : "＋もっと見る"}
         </button>
+      )}
+
+      {/* ロック操作の確認ダイアログ */}
+      {pendingAction && (
+        <div
+          className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
+          data-testid="lock-confirm-dialog"
+        >
+          <div className="bg-white rounded-md p-6 shadow-lg max-w-[320px] w-[90%]">
+            <p className="text-[#444] text-center mb-4">
+              {pendingAction.type === "unlock"
+                ? `${pendingAction.accountId} のロックを解除しますか？`
+                : `${pendingAction.accountId} を強制ロックしますか？`}
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingAction(null)}
+                disabled={isActionProcessing}
+                className="flex-1 h-[40px] bg-gray-300 text-[#444] rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmAction}
+                disabled={isActionProcessing}
+                className={`flex-1 h-[40px] text-white rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed ${
+                  pendingAction.type === "unlock" ? "bg-green-500" : "bg-red-500"
+                }`}
+              >
+                {isActionProcessing ? "処理中..." : "実行"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

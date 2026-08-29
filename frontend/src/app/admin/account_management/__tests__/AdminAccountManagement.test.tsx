@@ -116,4 +116,57 @@ describe("AdminAccountManagement", () => {
     expect(mockGetAdminAccountList).toHaveBeenNthCalledWith(2, 2);
     expect(screen.queryByText("＋もっと見る")).not.toBeInTheDocument();
   });
+
+  it("強制ロックは確認ダイアログを経てAPIが呼ばれること", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [{ ...sampleAccount, loginFailureCount: 3 }],
+    });
+    mockLockAccount.mockResolvedValue({
+      httpStatus: 200,
+      isSuccess: true,
+      message: "ロックしました",
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "強制ロック" }));
+
+    // ネイティブconfirmではなくダイアログが表示される
+    expect(screen.getByTestId("lock-confirm-dialog")).toBeInTheDocument();
+    expect(mockLockAccount).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "実行" }));
+
+    await waitFor(() => {
+      expect(mockLockAccount).toHaveBeenCalledWith(1);
+      expect(screen.getByText("ロックしました")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("lock-confirm-dialog")).not.toBeInTheDocument();
+  });
+
+  it("確認ダイアログをキャンセルするとAPIは呼ばれないこと", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [{ ...sampleAccount, loginFailureCount: 3 }],
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "ロック解除" }));
+    expect(screen.getByTestId("lock-confirm-dialog")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+
+    expect(screen.queryByTestId("lock-confirm-dialog")).not.toBeInTheDocument();
+    expect(mockUnlockAccount).not.toHaveBeenCalled();
+  });
 });
