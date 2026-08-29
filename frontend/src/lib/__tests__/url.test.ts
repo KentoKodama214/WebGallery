@@ -1,13 +1,18 @@
 import { sanitizeImageUrl, loginUrlWithRedirect } from "../url";
 
 describe("sanitizeImageUrl", () => {
-  it("http(s) の絶対URLはそのまま通す", () => {
+  it("https の絶対URLはそのまま通す", () => {
     expect(sanitizeImageUrl("https://cdn.example.com/a.jpg")).toBe(
       "https://cdn.example.com/a.jpg"
     );
-    expect(sanitizeImageUrl("http://example.com/a.jpg")).toBe(
-      "http://example.com/a.jpg"
-    );
+  });
+
+  it("http（非https）の絶対URLは空文字にする", () => {
+    expect(sanitizeImageUrl("http://example.com/a.jpg")).toBe("");
+  });
+
+  it("認証情報付きURLは空文字にする", () => {
+    expect(sanitizeImageUrl("https://user:pass@evil.com/a.jpg")).toBe("");
   });
 
   it("アプリ内の絶対パスは通す", () => {

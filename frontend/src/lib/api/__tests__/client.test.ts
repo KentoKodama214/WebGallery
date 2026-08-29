@@ -136,6 +136,39 @@ describe("api/client", () => {
     });
   });
 
+  describe("マウント時 refresh とログインの競合", () => {
+    it("進行中の refresh が 401 で返っても、その間に成立したログインの状態を上書きしない", async () => {
+      // マウント時の refresh を開始（応答は保留）
+      const d = deferred<Response>();
+      fetchMock.mockReturnValueOnce(d.promise);
+      const refreshPromise = client.refresh();
+
+      // refresh 応答が返る前にログイン成功
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ accessToken: "login-token", expiresIn: 3600 })
+      );
+      await client.login("user", "pass");
+      expect(client.getAccessToken()).toBe("login-token");
+
+      // 遅れて refresh が 401 で返る（古い世代なので状態を書き換えない）
+      d.resolve(makeResponse({ errorMessage: "unauthorized" }, { status: 401 }));
+      expect(await refreshPromise).toBe(false);
+
+      // ログインのトークンが維持されている
+      expect(client.getAccessToken()).toBe("login-token");
+
+      // sessionAuthState が anonymous に落ちていない（＝ fetchWithAuth が
+      // 先読み refresh を試みることはあっても、ログイン済みとして振る舞える）
+      fetchMock.mockResolvedValueOnce(makeResponse({ ok: true }));
+      const res = await client.fetchWithAuth("/api/v1/accounts/me");
+      expect(res.ok).toBe(true);
+      const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
+      expect((lastCall[1].headers as Headers).get("Authorization")).toBe(
+        "Bearer login-token"
+      );
+    });
+  });
+
   describe("fetchWithAuth", () => {
     it("401受信時にリフレッシュしてリトライする", async () => {
       // ログイン済みにしておく

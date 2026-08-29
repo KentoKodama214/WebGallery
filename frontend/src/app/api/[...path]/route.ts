@@ -9,9 +9,13 @@ import { type NextRequest, NextResponse } from "next/server";
  * プロキシ処理をこのキャッチオールルートハンドラーに一本化している。
  *
  * - リクエストボディは一旦バッファリングしてから転送する（multipart/form-data も
- *   扱える）。過大なボディでメモリを消費しないよう、content-length が上限を
- *   超えるリクエストは転送せず 413 を返す（併せて next.config.ts の
- *   experimental.proxyClientMaxBodySize でもバッファ上限を設定している）
+ *   扱える）。過大なボディでメモリを消費しないよう、
+ *   1. content-length ヘッダーが上限を超えるリクエストは即座に 413 を返す
+ *   2. content-length を詐称・省略したリクエストに備え、ボディを読み取りながら
+ *      累積バイト数を数え、上限を超えた時点で読み取りを打ち切って 413 を返す
+ *   （このキャッチオールルートは proxy の matcher 対象外のため
+ *   next.config.ts の experimental.proxyClientMaxBodySize は適用されない。
+ *   メモリ上限の担保はこのハンドラー自身で行う）
  * - Cookie（refreshToken 等）とバックエンドの Set-Cookie を双方向に転送する
  * - クライアントが詐称しうる転送系ヘッダー（X-Forwarded-* 等）は除去する。
  *   これはあくまで詐称防止であり、バックエンドは現状クライアント IP に依存した
@@ -51,6 +55,52 @@ const EXCLUDED_RESPONSE_HEADERS = new Set([
 ]);
 
 /**
+ * リクエストボディを上限付きで読み取る
+ *
+ * content-length を信頼せず、実際に届いたバイト数を数えながらバッファリングする。
+ * 上限を超えた時点でストリームの読み取りを打ち切るため、過大なボディを送られても
+ * メモリ使用量は「上限 + 最後に読んだチャンク1個分」に収まる。
+ *
+ * @param request 受信したリクエスト
+ * @param limit   許容する最大バイト数
+ * @returns 読み取ったボディ。上限を超えた場合は null
+ */
+async function readBodyWithLimit(
+  request: NextRequest,
+  limit: number
+): Promise<ArrayBuffer | null> {
+  if (!request.body) return new ArrayBuffer(0);
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      total += value.byteLength;
+      if (total > limit) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const merged = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return merged.buffer;
+}
+
+/**
  * リクエストをバックエンドへ中継する
  *
  * @param request 受信したリクエスト
@@ -58,6 +108,16 @@ const EXCLUDED_RESPONSE_HEADERS = new Set([
  * @returns バックエンドのレスポンスを引き継いだレスポンス
  */
 async function proxy(request: NextRequest, path: string[]): Promise<NextResponse> {
+  // パストラバーサル対策：ドットセグメント・空セグメントは拒否する
+  // （encodeURIComponent は "." や ".." をエスケープしないため、
+  //   バックエンドの URL 解決で `/api` プレフィックス外へ抜けるのを防ぐ）
+  if (path.some((seg) => seg === "" || seg === "." || seg === "..")) {
+    return NextResponse.json(
+      { message: "不正なリクエストパスです" },
+      { status: 400 }
+    );
+  }
+
   const search = request.nextUrl.search;
   const url = `${BACKEND_URL}/api/${path.map(encodeURIComponent).join("/")}${search}`;
 
@@ -70,6 +130,8 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
 
+  let body: ArrayBuffer | undefined;
+
   if (hasBody) {
     const contentLength = Number(request.headers.get("content-length"));
     if (Number.isFinite(contentLength) && contentLength > MAX_BODY_SIZE) {
@@ -78,15 +140,15 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
         { status: 413 }
       );
     }
-  }
 
-  const body = hasBody ? await request.arrayBuffer() : undefined;
-
-  if (body !== undefined && body.byteLength > MAX_BODY_SIZE) {
-    return NextResponse.json(
-      { message: "リクエストサイズが大きすぎます" },
-      { status: 413 }
-    );
+    const buffered = await readBodyWithLimit(request, MAX_BODY_SIZE);
+    if (buffered === null) {
+      return NextResponse.json(
+        { message: "リクエストサイズが大きすぎます" },
+        { status: 413 }
+      );
+    }
+    body = buffered;
   }
 
   let backendResponse: Response;

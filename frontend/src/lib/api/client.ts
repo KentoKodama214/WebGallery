@@ -14,6 +14,16 @@ let accessToken: string | null = null;
 let sessionAuthState: "unknown" | "authenticated" | "anonymous" = "unknown";
 
 /**
+ * 認証状態の世代番号
+ *
+ * login / logout のたびにインクリメントする。進行中のリフレッシュ処理は開始時点の
+ * 世代を記憶し、応答適用前に世代が変わっていたら結果を破棄する。これにより
+ * 「マウント時の先読みリフレッシュ応答が、その後に成立したログインのトークンや
+ * セッション状態を上書きする」競合を防ぐ。
+ */
+let authEpoch = 0;
+
+/**
  * レスポンスボディからエラーメッセージを取り出す
  *
  * 5xx（サーバー内部エラー）は内部的な例外メッセージが含まれ得るため既定文言を返す。
@@ -101,8 +111,11 @@ export async function login(
   const data = await readJson<{ accessToken: string; expiresIn: number }>(
     response
   );
+  // 先にトークンを確定させてから世代を進める。これ以降、開始済みのリフレッシュ
+  // 応答は世代不一致で破棄され、このログイン結果を上書きできない。
   accessToken = data.accessToken;
   sessionAuthState = "authenticated";
+  authEpoch++;
   return data;
 }
 
@@ -136,6 +149,11 @@ export function refresh(): Promise<boolean> {
  * リフレッシュAPIを実際に呼び出す（{@link refresh} からのみ利用する）
  */
 async function doRefresh(): Promise<boolean> {
+  // このリフレッシュ処理の開始時点の世代。応答適用前に login/logout が
+  // 起きていたら（世代不一致）グローバルな状態は書き換えない。
+  const epoch = authEpoch;
+  const isStale = () => authEpoch !== epoch;
+
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
@@ -144,11 +162,12 @@ async function doRefresh(): Promise<boolean> {
     });
   } catch {
     // ネットワーク例外は一時的な失敗として扱い、セッション状態は変更しない
-    accessToken = null;
+    if (!isStale()) accessToken = null;
     return false;
   }
 
   if (!response.ok) {
+    if (isStale()) return false;
     accessToken = null;
     // 認証エラー（401/403）のみ未ログイン確定とする
     if (response.status === 401 || response.status === 403) {
@@ -159,11 +178,12 @@ async function doRefresh(): Promise<boolean> {
 
   try {
     const data = await response.json();
+    if (isStale()) return false;
     accessToken = data.accessToken;
     sessionAuthState = "authenticated";
     return true;
   } catch {
-    accessToken = null;
+    if (!isStale()) accessToken = null;
     return false;
   }
 }
@@ -182,6 +202,8 @@ export async function logout(): Promise<void> {
   }
   accessToken = null;
   sessionAuthState = "anonymous";
+  // 進行中のリフレッシュ応答がログアウト後の状態を上書きしないよう世代を進める
+  authEpoch++;
 }
 
 /**

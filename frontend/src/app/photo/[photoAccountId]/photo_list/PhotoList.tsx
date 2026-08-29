@@ -43,7 +43,19 @@ function readStoredFilter(): PhotoListFilter {
   const raw = getCookie(COOKIE_NAME);
   if (!raw) return DEFAULT_FILTER;
   try {
-    return { ...DEFAULT_FILTER, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    // 各キーは文字列のときだけ採用する（細工・破損した cookie で
+    // select の value がオブジェクトになる等の破綻を防ぐ）
+    const pick = (key: keyof PhotoListFilter): string =>
+      typeof parsed[key] === "string"
+        ? (parsed[key] as string)
+        : DEFAULT_FILTER[key];
+    return {
+      directionKbn: pick("directionKbn"),
+      isFavoriteFilter: pick("isFavoriteFilter"),
+      tagList: pick("tagList"),
+      sortBy: pick("sortBy"),
+    };
   } catch {
     return DEFAULT_FILTER;
   }
@@ -89,6 +101,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   const galleryRef = useRef<HTMLDivElement>(null);
   const lightboxRef = useRef<InstanceType<typeof import("photoswipe/lightbox").default> | null>(null);
   const photosRef = useRef<PhotoListItem[]>(photos);
+  // 一覧取得リクエストの世代。初期ロード・絞り込み・もっと見るは開始時に
+  // 採番し、自分が最新でなければ結果を破棄する（後着の初期ロードが
+  // 絞り込み結果やページ追加を上書きする競合を防ぐ）
+  const loadSeqRef = useRef(0);
 
   // お気に入りボタン等のコールバックから最新のphotosを参照できるようにする
   useEffect(() => {
@@ -143,19 +159,20 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       pageNo: 1,
     };
 
+    const seq = ++loadSeqRef.current;
     const load = async () => {
       try {
         const data = await getPhotoList(photoAccountId, params);
-        if (cancelled) return;
+        if (cancelled || loadSeqRef.current !== seq) return;
         setPhotos(data.photoList);
         setIsLast(data.isLast);
         setError(null);
       } catch (err) {
-        if (!cancelled) {
+        if (!cancelled && loadSeqRef.current === seq) {
           setError(err instanceof Error ? err.message : "エラーが発生しました");
         }
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && loadSeqRef.current === seq) setIsLoading(false);
       }
     };
 
@@ -213,6 +230,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             isButton: true,
             html: "",
             onInit: (el) => {
+              el.setAttribute("aria-label", "お気に入りに追加");
+              el.setAttribute("title", "お気に入りに追加");
               lightbox!.pswp!.on("change", () => {
                 const idx = lightbox!.pswp!.currIndex;
                 const photo = photosRef.current[idx];
@@ -248,6 +267,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             isButton: true,
             html: "",
             onInit: (el) => {
+              el.setAttribute("aria-label", "お気に入りから外す");
+              el.setAttribute("title", "お気に入りから外す");
               lightbox!.pswp!.on("change", () => {
                 const idx = lightbox!.pswp!.currIndex;
                 const photo = photosRef.current[idx];
@@ -335,20 +356,27 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
    */
   const handleLoadMore = async () => {
     const nextPage = pageNo + 1;
+    const seq = ++loadSeqRef.current;
     setIsLoadingMore(true);
+    setActionError(null);
     try {
       // 編集中の値ではなく、適用済みフィルターでページを取得する
       const data = await getPhotoList(
         photoAccountId,
         buildParams(appliedFilter, nextPage)
       );
+      if (loadSeqRef.current !== seq) return;
       setPhotos((prev) => [...prev, ...data.photoList]);
       setIsLast(data.isLast);
       setPageNo(nextPage);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      if (loadSeqRef.current !== seq) return;
+      // 追加読み込みの失敗では取得済みの一覧を維持し、通知だけ表示する
+      setActionError(
+        err instanceof Error ? err.message : "エラーが発生しました"
+      );
     } finally {
-      setIsLoadingMore(false);
+      if (loadSeqRef.current === seq) setIsLoadingMore(false);
     }
   };
 
@@ -356,9 +384,11 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
    * 絞り込み
    */
   const handleFilter = async () => {
+    const seq = ++loadSeqRef.current;
     setIsFilterOpen(false);
     setIsLoading(true);
     setError(null);
+    setActionError(null);
     setPageNo(1);
 
     const nextFilter: PhotoListFilter = {
@@ -376,12 +406,14 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         photoAccountId,
         buildParams(nextFilter, 1)
       );
+      if (loadSeqRef.current !== seq) return;
       setPhotos(data.photoList);
       setIsLast(data.isLast);
     } catch (err) {
+      if (loadSeqRef.current !== seq) return;
       setError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
-      setIsLoading(false);
+      if (loadSeqRef.current === seq) setIsLoading(false);
     }
   };
 
