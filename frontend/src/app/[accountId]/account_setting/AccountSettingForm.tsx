@@ -23,7 +23,8 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   const router = useRouter();
   const { user, logout, isLoading: authLoading } = useAuth();
 
-  const isOwner = !!user && user.accountId === accountId;
+  const isAuthenticated = !!user;
+  const isOwner = isAuthenticated && user.accountId === accountId;
 
   const [formAccountId, setFormAccountId] = useState(accountId);
   const [accountName, setAccountName] = useState("");
@@ -83,6 +84,13 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       cancelled = true;
     };
   }, [authLoading, isOwner, accountId, router]);
+
+  // 未ログインの場合はログインページへ誘導する
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   // アンマウント時にタイマーを破棄する
   useEffect(() => {
@@ -180,7 +188,8 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     }
   };
 
-  if (authLoading || (isOwner && isLoading)) {
+  // 認証確認中／未ログイン（ログインへ遷移するまで）／本人ページのデータ取得中
+  if (authLoading || !isAuthenticated || (isOwner && isLoading)) {
     return (
       <div className="min-h-screen bg-[whitesmoke] flex items-center justify-center">
         <div className="inline-block w-8 h-8 border-4 border-[#2196F3] border-t-transparent rounded-full animate-spin" />
@@ -188,6 +197,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     );
   }
 
+  // ログイン済みだが他人のアカウント設定を開こうとした場合
   if (!isOwner) {
     return (
       <div className="min-h-screen bg-[whitesmoke] flex items-center justify-center">
