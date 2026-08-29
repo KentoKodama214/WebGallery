@@ -16,6 +16,9 @@ let sessionAuthState: "unknown" | "authenticated" | "anonymous" = "unknown";
 /**
  * レスポンスボディからエラーメッセージを取り出す
  *
+ * 5xx（サーバー内部エラー）は内部的な例外メッセージが含まれ得るため既定文言を返す。
+ * 4xx（バリデーション・認証エラー等）はユーザー向けのメッセージとして採用する。
+ *
  * @param response fetchのレスポンス
  * @param fallback 取り出せなかった場合の既定メッセージ
  * @returns エラーメッセージ
@@ -24,6 +27,7 @@ async function readErrorMessage(
   response: Response,
   fallback: string
 ): Promise<string> {
+  if (response.status >= 500) return fallback;
   try {
     const text = await response.text();
     if (!text) return fallback;
