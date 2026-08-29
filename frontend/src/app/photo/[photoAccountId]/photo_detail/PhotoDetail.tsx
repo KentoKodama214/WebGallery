@@ -11,6 +11,7 @@ import {
   deleteFavorite,
   type PhotoDetailResponse,
 } from "@/lib/api/client";
+import { sanitizeImageUrl } from "@/lib/url";
 
 interface PhotoDetailProps {
   photoAccountId: string;
@@ -289,7 +290,7 @@ export function PhotoDetail({
         {/* 画像 */}
         <div>
           <img
-            src={photo.imageFilePath}
+            src={sanitizeImageUrl(photo.imageFilePath)}
             alt={photo.photoJapaneseTitle || photo.photoEnglishTitle || "写真"}
             style={{
               display: "block",

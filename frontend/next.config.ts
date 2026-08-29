@@ -53,6 +53,12 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  experimental: {
+    // proxy（旧 middleware）使用時、Next.js はリクエストボディをメモリへ
+    // バッファリングする。バックエンドのアップロード上限（サーブレット 6MB）に
+    // 合わせて上限を設定し、過大なボディでメモリを消費しないようにする。
+    proxyClientMaxBodySize: "6mb",
+  },
   async headers() {
     return [
       {

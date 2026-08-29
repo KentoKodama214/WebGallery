@@ -85,6 +85,8 @@ export function AdminAccountManagement() {
   const handleLoadMore = async () => {
     const nextPage = pageNo + 1;
     setIsLoadingMore(true);
+    // 追加読み込み時は古いロック操作の成功メッセージを消す
+    setMessage(null);
     try {
       const data = await getAdminAccountList(nextPage);
       setAccounts((prev) => [...prev, ...data.accountList]);
@@ -241,7 +243,7 @@ export function AdminAccountManagement() {
                         })
                       }
                       className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
-                      disabled={account.loginFailureCount === 0}
+                      disabled={account.isDeleted || account.loginFailureCount === 0}
                     >
                       ロック解除
                     </button>
@@ -254,7 +256,10 @@ export function AdminAccountManagement() {
                         })
                       }
                       className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
-                      disabled={account.loginFailureCount >= LOGIN_FAILURE_LOCK_THRESHOLD}
+                      disabled={
+                        account.isDeleted ||
+                        account.loginFailureCount >= LOGIN_FAILURE_LOCK_THRESHOLD
+                      }
                     >
                       強制ロック
                     </button>

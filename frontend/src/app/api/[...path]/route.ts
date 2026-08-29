@@ -9,12 +9,20 @@ import { type NextRequest, NextResponse } from "next/server";
  * プロキシ処理をこのキャッチオールルートハンドラーに一本化している。
  *
  * - リクエストボディは一旦バッファリングしてから転送する（multipart/form-data も
- *   扱えるが、アップロード上限は 6MB のためメモリ影響は限定的）
+ *   扱える）。過大なボディでメモリを消費しないよう、content-length が上限を
+ *   超えるリクエストは転送せず 413 を返す（併せて next.config.ts の
+ *   experimental.proxyClientMaxBodySize でもバッファ上限を設定している）
  * - Cookie（refreshToken 等）とバックエンドの Set-Cookie を双方向に転送する
- * - クライアントが詐称しうる転送系ヘッダー（X-Forwarded-* 等）は除去する
+ * - クライアントが詐称しうる転送系ヘッダー（X-Forwarded-* 等）は除去する。
+ *   これはあくまで詐称防止であり、バックエンドは現状クライアント IP に依存した
+ *   判定（ロックはアカウント単位）を行っていない。IP ベースのレート制限等を
+ *   導入する場合は、信頼できる送信元 IP を別途載せ直す必要がある。
  */
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
+
+/** 転送を許可するリクエストボディの最大サイズ（サーブレット上限に合わせて 6MB） */
+const MAX_BODY_SIZE = 6 * 1024 * 1024;
 
 /** バックエンドへ転送しないリクエストヘッダー */
 const EXCLUDED_REQUEST_HEADERS = new Set([
@@ -61,7 +69,25 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
   });
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
+
+  if (hasBody) {
+    const contentLength = Number(request.headers.get("content-length"));
+    if (Number.isFinite(contentLength) && contentLength > MAX_BODY_SIZE) {
+      return NextResponse.json(
+        { message: "リクエストサイズが大きすぎます" },
+        { status: 413 }
+      );
+    }
+  }
+
   const body = hasBody ? await request.arrayBuffer() : undefined;
+
+  if (body !== undefined && body.byteLength > MAX_BODY_SIZE) {
+    return NextResponse.json(
+      { message: "リクエストサイズが大きすぎます" },
+      { status: 413 }
+    );
+  }
 
   let backendResponse: Response;
   try {

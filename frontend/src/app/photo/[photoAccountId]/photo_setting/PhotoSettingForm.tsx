@@ -9,6 +9,7 @@ import {
   savePhoto,
   type PhotoDetailResponse,
 } from "@/lib/api/client";
+import { loginUrlWithRedirect, sanitizeImageUrl } from "@/lib/url";
 
 interface TagEntry {
   tagNo: number;
@@ -65,7 +66,7 @@ export function PhotoSettingForm({
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push("/login");
+      router.push(loginUrlWithRedirect());
     }
   }, [authLoading, isAuthenticated, router]);
 
@@ -197,17 +198,18 @@ export function PhotoSettingForm({
         errors.push("撮影日時は過去の日時を指定してください");
       }
     }
-    if (focalLength && Number(focalLength) <= 0) {
-      errors.push("焦点距離は正の値を入力してください");
-    }
-    if (fValue && Number(fValue) <= 0) {
-      errors.push("F値は正の値を入力してください");
-    }
-    if (shutterSpeed && Number(shutterSpeed) <= 0) {
-      errors.push("シャッタースピードは正の値を入力してください");
-    }
-    if (iso && Number(iso) <= 0) {
-      errors.push("ISOは正の値を入力してください");
+    const positiveNumberChecks: { value: string; label: string }[] = [
+      { value: focalLength, label: "焦点距離" },
+      { value: fValue, label: "F値" },
+      { value: shutterSpeed, label: "シャッタースピード" },
+      { value: iso, label: "ISO" },
+    ];
+    for (const { value, label } of positiveNumberChecks) {
+      if (!value) continue;
+      const num = Number(value);
+      if (!Number.isFinite(num) || num <= 0) {
+        errors.push(`${label}は正の数値を入力してください`);
+      }
     }
     for (const tag of tags) {
       if (!tag.tagJapaneseName.trim()) {
@@ -382,7 +384,7 @@ export function PhotoSettingForm({
                 onClick={() => fileInputRef.current?.click()}
               >
                 <img
-                  src={imagePreview}
+                  src={imageFile ? imagePreview : sanitizeImageUrl(imagePreview)}
                   alt="プレビュー"
                   className="max-w-full max-h-[300px]"
                   style={{ objectFit: "contain" }}
