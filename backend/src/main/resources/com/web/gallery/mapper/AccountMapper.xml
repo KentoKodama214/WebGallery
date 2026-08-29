@@ -178,4 +178,14 @@
 			<if test="accountId != null"> AND account_id = #{accountId}</if>
 		</where>
 	</select>
+
+	<select id="lockAccount" resultType="Long">
+		SELECT
+			account_no
+		FROM
+			common.account
+		WHERE
+			account_no = #{accountNo}
+		FOR UPDATE
+	</select>
 </mapper>

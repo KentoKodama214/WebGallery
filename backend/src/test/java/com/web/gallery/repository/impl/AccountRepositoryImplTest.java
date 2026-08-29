@@ -775,4 +775,20 @@ public class AccountRepositoryImplTest {
 			assertFalse(account.getIsDeleted());
 		}
 	}
+
+	@Nested
+	@Order(9)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class lockForUpdate {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：行ロックを取得すること")
+		void lockForUpdate_success() {
+			doReturn(1L).when(accountMapper).lockAccount(1L);
+
+			accountRepositoryImpl.lockForUpdate(new AccountNo(1L));
+
+			verify(accountMapper).lockAccount(1L);
+		}
+	}
 }
