@@ -35,20 +35,76 @@ describe("LoginForm", () => {
     expect(screen.getByText("Create an account")).toBeInTheDocument();
   });
 
-  it("ログイン成功時にリダイレクトされること", async () => {
-    mockLogin.mockResolvedValueOnce(undefined);
+  it("ログイン成功時にトークン由来のアカウントIDでリダイレクトされること", async () => {
+    // 入力値は "TestUser1" だが、遷移先はトークンの sub（"testuser1"）を採用する
+    mockLogin.mockResolvedValueOnce({
+      accountId: "testuser1",
+      accountNo: 1,
+      role: "ROLE_USER",
+    });
     const user = userEvent.setup();
 
     render(<LoginForm />);
 
-    await user.type(screen.getByPlaceholderText("User ID"), "testuser1");
+    await user.type(screen.getByPlaceholderText("User ID"), "TestUser1");
     await user.type(screen.getByPlaceholderText("Password"), "password1");
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith("testuser1", "password1");
+      expect(mockLogin).toHaveBeenCalledWith("TestUser1", "password1");
       expect(mockPush).toHaveBeenCalledWith("/photo/testuser1/photo_list");
     });
+  });
+
+  it("安全な redirect クエリがある場合はそのパスへ遷移する", async () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/login?redirect=%2Faaaa1111%2Faccount_setting"
+    );
+    mockLogin.mockResolvedValueOnce({
+      accountId: "aaaa1111",
+      accountNo: 1,
+      role: "ROLE_USER",
+    });
+    const user = userEvent.setup();
+
+    render(<LoginForm />);
+
+    await user.type(screen.getByPlaceholderText("User ID"), "aaaa1111");
+    await user.type(screen.getByPlaceholderText("Password"), "password1");
+    await user.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/aaaa1111/account_setting");
+    });
+    window.history.replaceState({}, "", "/login");
+  });
+
+  it("オープンリダイレクトを狙う redirect クエリは無視して既定の遷移先へ向かう", async () => {
+    window.history.replaceState(
+      {},
+      "",
+      "/login?redirect=" + encodeURIComponent("/..//evil.com")
+    );
+    mockLogin.mockResolvedValueOnce({
+      accountId: "aaaa1111",
+      accountNo: 1,
+      role: "ROLE_USER",
+    });
+    const user = userEvent.setup();
+
+    render(<LoginForm />);
+
+    await user.type(screen.getByPlaceholderText("User ID"), "aaaa1111");
+    await user.type(screen.getByPlaceholderText("Password"), "password1");
+    await user.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/photo/aaaa1111/photo_list");
+    });
+    expect(mockPush).not.toHaveBeenCalledWith("//evil.com");
+    window.history.replaceState({}, "", "/login");
   });
 
   it("ログイン失敗時にエラーメッセージが表示されること", async () => {

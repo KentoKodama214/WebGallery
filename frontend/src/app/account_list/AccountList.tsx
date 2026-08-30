@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getAccountList, type AccountListItem } from "@/lib/api/client";
 
@@ -13,37 +13,71 @@ export function AccountList() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 追加読み込みの失敗通知（取得済みの一覧は維持したまま表示する）
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [pageNo, setPageNo] = useState(1);
+  // インクリメントで 1 ページ目の再取得をトリガーする（再読み込みボタン用）
+  const [reloadKey, setReloadKey] = useState(0);
+  // 取得リクエストの世代。初期ロード・再読み込み・もっと見るは開始時に採番し、
+  // 自分が最新でなければ結果を破棄する（後着レスポンスが新しい一覧を上書きする競合を防ぐ）
+  const loadSeqRef = useRef(0);
 
   useEffect(() => {
+    let cancelled = false;
+    const seq = ++loadSeqRef.current;
     getAccountList(1)
       .then((data) => {
+        if (cancelled || loadSeqRef.current !== seq) return;
         setAccounts(data.accountList);
         setIsLast(data.isLast);
       })
       .catch((err) => {
+        if (cancelled || loadSeqRef.current !== seq) return;
         setError(err instanceof Error ? err.message : "エラーが発生しました");
       })
       .finally(() => {
-        setIsLoading(false);
+        if (!cancelled && loadSeqRef.current === seq) setIsLoading(false);
       });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
+
+  /**
+   * エラー画面からの再読み込み
+   */
+  const handleReload = () => {
+    setError(null);
+    setLoadMoreError(null);
+    setIsLoading(true);
+    setPageNo(1);
+    setAccounts([]);
+    setReloadKey((k) => k + 1);
+  };
 
   /**
    * +もっと見る
    */
   const handleLoadMore = async () => {
     const nextPage = pageNo + 1;
+    const seq = ++loadSeqRef.current;
     setIsLoadingMore(true);
+    setLoadMoreError(null);
     try {
       const data = await getAccountList(nextPage);
+      // 再読み込み等で世代が変わっていたら、古いページを継ぎ足さない
+      if (loadSeqRef.current !== seq) return;
       setAccounts((prev) => [...prev, ...data.accountList]);
       setIsLast(data.isLast);
       setPageNo(nextPage);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      if (loadSeqRef.current !== seq) return;
+      // 取得済みの一覧は維持し、通知だけ表示する
+      setLoadMoreError(
+        err instanceof Error ? err.message : "エラーが発生しました"
+      );
     } finally {
-      setIsLoadingMore(false);
+      if (loadSeqRef.current === seq) setIsLoadingMore(false);
     }
   };
 
@@ -57,8 +91,15 @@ export function AccountList() {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
+      <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
         <p className="text-red-500">{error}</p>
+        <button
+          type="button"
+          onClick={handleReload}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          再読み込み
+        </button>
       </div>
     );
   }
@@ -115,6 +156,12 @@ export function AccountList() {
           </tbody>
         </table>
       </div>
+
+      {loadMoreError && (
+        <p role="alert" className="text-red-500 text-sm">
+          {loadMoreError}
+        </p>
+      )}
 
       {!isLast && (
         <button

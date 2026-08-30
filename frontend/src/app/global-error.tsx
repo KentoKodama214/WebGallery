@@ -7,6 +7,8 @@ import { useEffect } from "react";
  *
  * `app/error.tsx` では捕捉できないルートレイアウト自体のエラーに対応する。
  * 独自の `<html>` / `<body>` を持つ必要がある。
+ *
+ * `unstable_retry` は Next.js 16 の現行 API（詳細は `app/error.tsx` のコメント参照）。
  */
 export default function GlobalError({
   error,

@@ -4,6 +4,14 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
+/**
+ * パスセグメントを URL エンコードする
+ *
+ * 経路上の `app/api/[...path]/route.ts` でもドットセグメント等は拒否されるが、
+ * 多層防御としてクライアント側でもパスパラメータをエスケープする。
+ */
+const seg = (value: string | number): string => encodeURIComponent(String(value));
+
 /** メモリ上にアクセストークンを保持 */
 let accessToken: string | null = null;
 
@@ -12,6 +20,16 @@ let accessToken: string | null = null;
  * - "anonymous" の場合、fetchWithAuthは先読みのリフレッシュを行わない
  */
 let sessionAuthState: "unknown" | "authenticated" | "anonymous" = "unknown";
+
+/**
+ * 認証状態の世代番号
+ *
+ * login / logout のたびにインクリメントする。進行中のリフレッシュ処理は開始時点の
+ * 世代を記憶し、応答適用前に世代が変わっていたら結果を破棄する。これにより
+ * 「マウント時の先読みリフレッシュ応答が、その後に成立したログインのトークンや
+ * セッション状態を上書きする」競合を防ぐ。
+ */
+let authEpoch = 0;
 
 /**
  * レスポンスボディからエラーメッセージを取り出す
@@ -76,6 +94,20 @@ export function setAccessToken(token: string | null): void {
 }
 
 /**
+ * 認証状態を未ログイン確定へ完全にリセットする
+ *
+ * `accessToken` だけでなく `sessionAuthState` と `authEpoch` もまとめて更新する。
+ * `login()` が途中まで進んだ後にトークン解釈へ失敗した場合など、
+ * 「トークンは null だがセッション状態は authenticated のまま」という不整合を防ぐ。
+ * 進行中のリフレッシュ応答は世代不一致で破棄される。
+ */
+export function clearAuthState(): void {
+  accessToken = null;
+  sessionAuthState = "anonymous";
+  authEpoch++;
+}
+
+/**
  * ログインAPIを呼び出す
  */
 export async function login(
@@ -101,8 +133,11 @@ export async function login(
   const data = await readJson<{ accessToken: string; expiresIn: number }>(
     response
   );
+  // 先にトークンを確定させてから世代を進める。これ以降、開始済みのリフレッシュ
+  // 応答は世代不一致で破棄され、このログイン結果を上書きできない。
   accessToken = data.accessToken;
   sessionAuthState = "authenticated";
+  authEpoch++;
   return data;
 }
 
@@ -136,6 +171,11 @@ export function refresh(): Promise<boolean> {
  * リフレッシュAPIを実際に呼び出す（{@link refresh} からのみ利用する）
  */
 async function doRefresh(): Promise<boolean> {
+  // このリフレッシュ処理の開始時点の世代。応答適用前に login/logout が
+  // 起きていたら（世代不一致）グローバルな状態は書き換えない。
+  const epoch = authEpoch;
+  const isStale = () => authEpoch !== epoch;
+
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
@@ -144,11 +184,12 @@ async function doRefresh(): Promise<boolean> {
     });
   } catch {
     // ネットワーク例外は一時的な失敗として扱い、セッション状態は変更しない
-    accessToken = null;
+    if (!isStale()) accessToken = null;
     return false;
   }
 
   if (!response.ok) {
+    if (isStale()) return false;
     accessToken = null;
     // 認証エラー（401/403）のみ未ログイン確定とする
     if (response.status === 401 || response.status === 403) {
@@ -159,11 +200,12 @@ async function doRefresh(): Promise<boolean> {
 
   try {
     const data = await response.json();
+    if (isStale()) return false;
     accessToken = data.accessToken;
     sessionAuthState = "authenticated";
     return true;
   } catch {
-    accessToken = null;
+    if (!isStale()) accessToken = null;
     return false;
   }
 }
@@ -182,6 +224,8 @@ export async function logout(): Promise<void> {
   }
   accessToken = null;
   sessionAuthState = "anonymous";
+  // 進行中のリフレッシュ応答がログアウト後の状態を上書きしないよう世代を進める
+  authEpoch++;
 }
 
 /**
@@ -245,7 +289,7 @@ export async function getAccountList(pageNo: number = 1): Promise<AccountListGet
  * アカウント詳細情報を取得する
  */
 export async function getAccount(accountId: string): Promise<AccountDetail> {
-  const response = await fetchWithAuth(`/api/v1/accounts/${accountId}`);
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}`);
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "アカウント情報の取得に失敗しました"));
   }
@@ -256,7 +300,7 @@ export async function getAccount(accountId: string): Promise<AccountDetail> {
  * アカウントを削除する
  */
 export async function deleteAccount(accountId: string): Promise<void> {
-  const response = await fetchWithAuth(`/api/v1/accounts/${accountId}`, {
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}`, {
     method: "DELETE",
   });
   if (!response.ok) {
@@ -271,7 +315,7 @@ export async function updateAccount(
   accountId: string,
   data: AccountUpdateData
 ): Promise<AccountUpdateResult> {
-  const response = await fetchWithAuth(`/api/v1/accounts/${accountId}`, {
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -472,7 +516,7 @@ export async function getPhotoList(
   if (params.pageNo !== undefined) searchParams.set("pageNo", String(params.pageNo));
 
   const query = searchParams.toString();
-  const url = `/api/v1/accounts/${photoAccountId}/photos${query ? `?${query}` : ""}`;
+  const url = `/api/v1/accounts/${seg(photoAccountId)}/photos${query ? `?${query}` : ""}`;
   const response = await fetchWithAuth(url);
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真一覧の取得に失敗しました"));
@@ -486,7 +530,7 @@ export async function getPhotoList(
 export async function getPhotoUpperLimit(
   photoAccountId: string
 ): Promise<PhotoUpperLimitResponse> {
-  const url = `/api/v1/accounts/${photoAccountId}/photos/upper-limit`;
+  const url = `/api/v1/accounts/${seg(photoAccountId)}/photos/upper-limit`;
   const response = await fetchWithAuth(url);
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真登録上限の取得に失敗しました"));
@@ -502,7 +546,7 @@ export async function getPhotoDetail(
   accountNo: number,
   photoNo: number
 ): Promise<PhotoDetailResponse> {
-  const url = `/api/v1/accounts/${photoAccountId}/photos/${photoNo}?accountNo=${accountNo}`;
+  const url = `/api/v1/accounts/${seg(photoAccountId)}/photos/${seg(photoNo)}?accountNo=${seg(accountNo)}`;
   const response = await fetchWithAuth(url);
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真詳細の取得に失敗しました"));
@@ -518,7 +562,7 @@ export async function deletePhoto(
   data: { photoNo: number; imageFilePath: string }
 ): Promise<PhotoEditResult> {
   const response = await fetchWithAuth(
-    `/api/v1/accounts/${photoAccountId}/photos`,
+    `/api/v1/accounts/${seg(photoAccountId)}/photos`,
     {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -576,7 +620,7 @@ export async function savePhoto(
   isUpdate: boolean
 ): Promise<PhotoEditResult> {
   const response = await fetchWithAuth(
-    `/api/v1/accounts/${photoAccountId}/photos`,
+    `/api/v1/accounts/${seg(photoAccountId)}/photos`,
     {
       method: isUpdate ? "PUT" : "POST",
       body: formData,
@@ -630,7 +674,7 @@ export async function unlockAccount(
   accountNo: number
 ): Promise<AdminAccountLockResult> {
   const response = await fetchWithAuth(
-    `/api/v1/admin/accounts/${accountNo}/unlock`,
+    `/api/v1/admin/accounts/${seg(accountNo)}/unlock`,
     { method: "PUT" }
   );
   if (!response.ok) {
@@ -646,7 +690,7 @@ export async function lockAccount(
   accountNo: number
 ): Promise<AdminAccountLockResult> {
   const response = await fetchWithAuth(
-    `/api/v1/admin/accounts/${accountNo}/lock`,
+    `/api/v1/admin/accounts/${seg(accountNo)}/lock`,
     { method: "PUT" }
   );
   if (!response.ok) {

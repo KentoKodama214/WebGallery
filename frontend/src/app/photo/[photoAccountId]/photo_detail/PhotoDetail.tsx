@@ -12,6 +12,7 @@ import {
   type PhotoDetailResponse,
 } from "@/lib/api/client";
 import { sanitizeImageUrl } from "@/lib/url";
+import { ModalDialog } from "@/components/ui/ModalDialog";
 
 interface PhotoDetailProps {
   photoAccountId: string;
@@ -364,8 +365,15 @@ export function PhotoDetail({
 
       {/* 削除確認ダイアログ */}
       {showDeleteConfirm && (
-        <div
-          style={{
+        <ModalDialog
+          testId="delete-confirm-dialog"
+          label="写真の削除確認"
+          onClose={() => {
+            if (isDeleting) return;
+            setShowDeleteConfirm(false);
+            setActionError(null);
+          }}
+          overlayStyle={{
             position: "fixed",
             top: 0,
             left: 0,
@@ -380,85 +388,83 @@ export function PhotoDetail({
             alignItems: "center",
             justifyContent: "center",
           }}
-          data-testid="delete-confirm-dialog"
-        >
-          <div style={{
+          containerStyle={{
             position: "relative",
             display: "inline-block",
             maxWidth: "500px",
             width: "90%",
+          }}
+        >
+          <button
+            type="button"
+            aria-label="閉じる"
+            onClick={() => {
+              setShowDeleteConfirm(false);
+              setActionError(null);
+            }}
+            style={{
+              position: "absolute",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              top: "-15px",
+              right: "-15px",
+              width: "30px",
+              height: "30px",
+              color: "#fff",
+              background: "#000",
+              border: "none",
+              borderRadius: "50%",
+              cursor: "pointer",
+            }}
+          >
+            &times;
+          </button>
+          <div style={{
+            background: "#fff",
+            textAlign: "center",
+            lineHeight: 1.8,
+            padding: "20px",
           }}>
-            <button
-              type="button"
-              aria-label="閉じる"
-              onClick={() => {
-                setShowDeleteConfirm(false);
-                setActionError(null);
-              }}
-              style={{
-                position: "absolute",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                top: "-15px",
-                right: "-15px",
-                width: "30px",
-                height: "30px",
-                color: "#fff",
-                background: "#000",
-                border: "none",
-                borderRadius: "50%",
-                cursor: "pointer",
-              }}
-            >
-              &times;
-            </button>
-            <div style={{
-              background: "#fff",
-              textAlign: "center",
-              lineHeight: 1.8,
-              padding: "20px",
-            }}>
-              <p style={{ color: "#000", margin: "1em 0" }}>写真を削除してもよろしいですか？</p>
-              {actionError && (
-                <p role="alert" style={{ color: "#dc2626", margin: "0 0 1em 0", fontSize: "14px" }}>
-                  {actionError}
-                </p>
-              )}
-              <div style={{ display: "flex", justifyContent: "center", gap: "12px" }}>
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setActionError(null);
-                  }}
-                  style={{
-                    background: "#4b5563",
-                    color: "#fff",
-                    padding: "8px 16px",
-                    border: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  style={{
-                    background: "#dc2626",
-                    color: "#fff",
-                    padding: "8px 16px",
-                    border: "none",
-                    cursor: isDeleting ? "not-allowed" : "pointer",
-                    opacity: isDeleting ? 0.5 : 1,
-                  }}
-                >
-                  {isDeleting ? "削除中..." : "削除する"}
-                </button>
-              </div>
+            <p style={{ color: "#000", margin: "1em 0" }}>写真を削除してもよろしいですか？</p>
+            {actionError && (
+              <p role="alert" style={{ color: "#dc2626", margin: "0 0 1em 0", fontSize: "14px" }}>
+                {actionError}
+              </p>
+            )}
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px" }}>
+              <button
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setActionError(null);
+                }}
+                style={{
+                  background: "#4b5563",
+                  color: "#fff",
+                  padding: "8px 16px",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                style={{
+                  background: "#dc2626",
+                  color: "#fff",
+                  padding: "8px 16px",
+                  border: "none",
+                  cursor: isDeleting ? "not-allowed" : "pointer",
+                  opacity: isDeleting ? 0.5 : 1,
+                }}
+              >
+                {isDeleting ? "削除中..." : "削除する"}
+              </button>
             </div>
           </div>
-        </div>
+        </ModalDialog>
       )}
     </div>
   );

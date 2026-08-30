@@ -4,30 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
-
-/**
- * リダイレクト先クエリパラメータを検証し、安全な内部パスのみを返す
- *
- * 自オリジン基準でURLとして解決し、オリジンが一致するもののみを許可する。
- * `//evil.com`（プロトコル相対）や `/\evil.com`（バックスラッシュはブラウザが
- * `/` へ正規化する）といったオープンリダイレクトのバイパスを防ぐ。
- *
- * @param value redirectクエリパラメータの値
- * @returns 安全な内部パス（pathname + search + hash）。無効な場合はnull
- */
-function safeRedirectPath(value: string | null): string | null {
-  if (!value) return null;
-  if (typeof window === "undefined") return null;
-  // 先頭が "/" 以外（絶対URL・相対パス）は受け付けない
-  if (!value.startsWith("/")) return null;
-  try {
-    const url = new URL(value, window.location.origin);
-    if (url.origin !== window.location.origin) return null;
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return null;
-  }
-}
+import { safeRedirectPath } from "@/lib/url";
 
 /**
  * ログインフォームコンポーネント
@@ -49,12 +26,15 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      await login(accountId, password);
+      // ログイン後の遷移先アカウントIDは入力値ではなくトークンの sub を採用し、
+      // セッション復元経路（AuthProvider）と揃える
+      const loggedInUser = await login(accountId, password);
+      const targetAccountId = loggedInUser?.accountId ?? accountId;
       const redirect =
         typeof window !== "undefined"
           ? safeRedirectPath(new URLSearchParams(window.location.search).get("redirect"))
           : null;
-      router.push(redirect ?? `/photo/${accountId}/photo_list`);
+      router.push(redirect ?? `/photo/${targetAccountId}/photo_list`);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -70,8 +50,9 @@ export function LoginForm() {
     <div
       className="min-h-screen bg-[#042844] bg-cover bg-center bg-fixed m-0 font-['Open_Sans',sans-serif]"
       style={{
-        backgroundImage:
-          "url('https://www.kkodama-photo.com/wp/wp-content/uploads/2020/10/DSC15567-scaled.jpg')",
+        // 背景画像はセルフホストする（外部ホスト依存による可用性・Referer 経由の
+        // アクセス情報漏れを避ける）。読み込み前・失敗時は bg-[#042844] を表示する
+        backgroundImage: "url('/image/login-bg.jpg')",
       }}
     >
       <div className="flex items-center justify-center min-h-screen w-full p-5 bg-[rgba(4,40,68,0.50)]">

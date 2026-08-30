@@ -10,6 +10,7 @@ import {
   type PhotoDetailResponse,
 } from "@/lib/api/client";
 import { loginUrlWithRedirect, sanitizeImageUrl } from "@/lib/url";
+import { ModalDialog } from "@/components/ui/ModalDialog";
 
 interface TagEntry {
   tagNo: number;
@@ -38,6 +39,8 @@ export function PhotoSettingForm({
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [savedPhotoNo, setSavedPhotoNo] = useState<number | undefined>(photoNo);
   const isEditMode = savedPhotoNo !== undefined;
+  // 既存データの読み込みは accountNo / photoNo の両方が URL から渡された場合のみ行う
+  const shouldLoadExisting = accountNo !== undefined && photoNo !== undefined;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,7 +61,7 @@ export function PhotoSettingForm({
   const [nextTagNo, setNextTagNo] = useState(1);
 
   // UI状態
-  const [isDataLoading, setIsDataLoading] = useState(isEditMode);
+  const [isDataLoading, setIsDataLoading] = useState(shouldLoadExisting);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -75,7 +78,7 @@ export function PhotoSettingForm({
    */
   useEffect(() => {
     if (authLoading || !isAuthenticated) return;
-    if (!isEditMode || !accountNo || !photoNo) return;
+    if (!shouldLoadExisting || !accountNo || !photoNo) return;
 
     let cancelled = false;
     const load = async () => {
@@ -130,7 +133,7 @@ export function PhotoSettingForm({
     return () => {
       cancelled = true;
     };
-  }, [authLoading, isAuthenticated, isEditMode, photoAccountId, accountNo, photoNo]);
+  }, [authLoading, isAuthenticated, shouldLoadExisting, photoAccountId, accountNo, photoNo]);
 
   /**
    * 画像選択
@@ -229,6 +232,11 @@ export function PhotoSettingForm({
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // 送信中のセッション失効に備えた防御的チェック（通常はガードで弾かれる）
+    if (!user) {
+      setError("セッションが切れました。お手数ですが再度ログインしてください");
+      return;
+    }
     const errors = validate();
     if (errors.length > 0) {
       setValidationErrors(errors);
@@ -279,7 +287,7 @@ export function PhotoSettingForm({
       tags.forEach((tag, index) => {
         formData.append(
           `photoTagRegistRequestList[${index}].accountNo`,
-          String(user!.accountNo)
+          String(user.accountNo)
         );
         if (isEditMode && savedPhotoNo) {
           formData.append(
@@ -601,20 +609,23 @@ export function PhotoSettingForm({
 
       {/* 成功モーダル */}
       {showSuccessModal && (
-        <div
-          className="fixed inset-0 bg-black/70 flex justify-center items-center z-50"
-          data-testid="success-modal"
+        <ModalDialog
+          testId="success-modal"
+          label="保存完了"
+          onClose={() => setShowSuccessModal(false)}
+          overlayClassName="fixed inset-0 bg-black/70 flex justify-center items-center z-50"
+          containerClassName="bg-gray-900 border border-gray-700 p-6 max-w-sm w-full mx-4 text-center relative"
         >
-          <div className="bg-gray-900 border border-gray-700 p-6 max-w-sm w-full mx-4 text-center relative">
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="absolute top-2 right-3 text-xl text-gray-400 bg-transparent border-none cursor-pointer"
-            >
-              &times;
-            </button>
-            <p className="text-white">写真を保存しました</p>
-          </div>
-        </div>
+          <button
+            type="button"
+            aria-label="閉じる"
+            onClick={() => setShowSuccessModal(false)}
+            className="absolute top-2 right-3 text-xl text-gray-400 bg-transparent border-none cursor-pointer"
+          >
+            &times;
+          </button>
+          <p className="text-white">写真を保存しました</p>
+        </ModalDialog>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
   getAdminAccountList,
@@ -9,6 +9,7 @@ import {
   type AdminAccountListItem,
 } from "@/lib/api/client";
 import { LOGIN_FAILURE_LOCK_THRESHOLD } from "@/lib/consts";
+import { ModalDialog } from "@/components/ui/ModalDialog";
 
 /** ロック操作の確認対象 */
 interface PendingLockAction {
@@ -27,10 +28,15 @@ export function AdminAccountManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 追加読み込みの失敗通知（取得済みの一覧は維持したまま表示する）
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pageNo, setPageNo] = useState(1);
   const [pendingAction, setPendingAction] = useState<PendingLockAction | null>(null);
   const [isActionProcessing, setIsActionProcessing] = useState(false);
+  // 取得リクエストの世代。初期ロード・再取得・もっと見るは開始時に採番し、
+  // 自分が最新でなければ結果を破棄する（後着レスポンスが新しい一覧を上書きする競合を防ぐ）
+  const loadSeqRef = useRef(0);
 
   const isAdmin = user?.role === "ROLE_ADMIN";
   const canView = !isAuthLoading && isAuthenticated && isAdmin;
@@ -39,17 +45,20 @@ export function AdminAccountManagement() {
    * 1ページ目を取得し直す（再読み込みボタン・ロック操作後に使用）
    */
   const fetchAccounts = async () => {
+    const seq = ++loadSeqRef.current;
     setIsLoading(true);
     setError(null);
     setPageNo(1);
     try {
       const data = await getAdminAccountList(1);
+      if (loadSeqRef.current !== seq) return;
       setAccounts(data.accountList);
       setIsLast(data.isLast);
     } catch (err) {
+      if (loadSeqRef.current !== seq) return;
       setError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
-      setIsLoading(false);
+      if (loadSeqRef.current === seq) setIsLoading(false);
     }
   };
 
@@ -57,19 +66,19 @@ export function AdminAccountManagement() {
     if (!canView) return;
 
     let cancelled = false;
+    const seq = ++loadSeqRef.current;
     const load = async () => {
       try {
         const data = await getAdminAccountList(1);
-        if (cancelled) return;
+        if (cancelled || loadSeqRef.current !== seq) return;
         setAccounts(data.accountList);
         setIsLast(data.isLast);
         setError(null);
       } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "エラーが発生しました");
-        }
+        if (cancelled || loadSeqRef.current !== seq) return;
+        setError(err instanceof Error ? err.message : "エラーが発生しました");
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && loadSeqRef.current === seq) setIsLoading(false);
       }
     };
 
@@ -84,18 +93,26 @@ export function AdminAccountManagement() {
    */
   const handleLoadMore = async () => {
     const nextPage = pageNo + 1;
+    const seq = ++loadSeqRef.current;
     setIsLoadingMore(true);
-    // 追加読み込み時は古いロック操作の成功メッセージを消す
+    // 追加読み込み時は古いロック操作の成功メッセージ・失敗通知を消す
     setMessage(null);
+    setLoadMoreError(null);
     try {
       const data = await getAdminAccountList(nextPage);
+      // 再取得等で世代が変わっていたら、古いページを継ぎ足さない
+      if (loadSeqRef.current !== seq) return;
       setAccounts((prev) => [...prev, ...data.accountList]);
       setIsLast(data.isLast);
       setPageNo(nextPage);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      if (loadSeqRef.current !== seq) return;
+      // 取得済みの一覧は維持し、通知だけ表示する
+      setLoadMoreError(
+        err instanceof Error ? err.message : "エラーが発生しました"
+      );
     } finally {
-      setIsLoadingMore(false);
+      if (loadSeqRef.current === seq) setIsLoadingMore(false);
     }
   };
 
@@ -271,6 +288,12 @@ export function AdminAccountManagement() {
         </table>
       </div>
 
+      {loadMoreError && (
+        <p role="alert" className="text-red-500 text-sm">
+          {loadMoreError}
+        </p>
+      )}
+
       {!isLast && (
         <button
           onClick={handleLoadMore}
@@ -284,38 +307,46 @@ export function AdminAccountManagement() {
 
       {/* ロック操作の確認ダイアログ */}
       {pendingAction && (
-        <div
-          className="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
-          data-testid="lock-confirm-dialog"
+        <ModalDialog
+          testId="lock-confirm-dialog"
+          label={
+            pendingAction.type === "unlock"
+              ? "ロック解除の確認"
+              : "強制ロックの確認"
+          }
+          onClose={() => {
+            if (isActionProcessing) return;
+            setPendingAction(null);
+          }}
+          overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
+          containerClassName="bg-white rounded-md p-6 shadow-lg max-w-[320px] w-[90%]"
         >
-          <div className="bg-white rounded-md p-6 shadow-lg max-w-[320px] w-[90%]">
-            <p className="text-[#444] text-center mb-4">
-              {pendingAction.type === "unlock"
-                ? `${pendingAction.accountId} のロックを解除しますか？`
-                : `${pendingAction.accountId} を強制ロックしますか？`}
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setPendingAction(null)}
-                disabled={isActionProcessing}
-                className="flex-1 h-[40px] bg-gray-300 text-[#444] rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                キャンセル
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmAction}
-                disabled={isActionProcessing}
-                className={`flex-1 h-[40px] text-white rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed ${
-                  pendingAction.type === "unlock" ? "bg-green-500" : "bg-red-500"
-                }`}
-              >
-                {isActionProcessing ? "処理中..." : "実行"}
-              </button>
-            </div>
+          <p className="text-[#444] text-center mb-4">
+            {pendingAction.type === "unlock"
+              ? `${pendingAction.accountId} のロックを解除しますか？`
+              : `${pendingAction.accountId} を強制ロックしますか？`}
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setPendingAction(null)}
+              disabled={isActionProcessing}
+              className="flex-1 h-[40px] bg-gray-300 text-[#444] rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              キャンセル
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmAction}
+              disabled={isActionProcessing}
+              className={`flex-1 h-[40px] text-white rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed ${
+                pendingAction.type === "unlock" ? "bg-green-500" : "bg-red-500"
+              }`}
+            >
+              {isActionProcessing ? "処理中..." : "実行"}
+            </button>
           </div>
-        </div>
+        </ModalDialog>
       )}
     </div>
   );
