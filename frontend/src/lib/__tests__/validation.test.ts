@@ -3,6 +3,7 @@ import {
   PASSWORD_PATTERN,
   clearError,
   isPastDate,
+  isValidAccountId,
 } from "../validation";
 
 describe("validation", () => {
@@ -17,6 +18,17 @@ describe("validation", () => {
       expect(ACCOUNT_ID_PATTERN.test("a".repeat(17))).toBe(false);
       expect(ACCOUNT_ID_PATTERN.test("abcd-123")).toBe(false);
       expect(ACCOUNT_ID_PATTERN.test("ａｂｃｄ１２３４")).toBe(false);
+    });
+  });
+
+  describe("isValidAccountId", () => {
+    it("アカウントID形式の文字列のみ true", () => {
+      expect(isValidAccountId("aaaa1111")).toBe(true);
+      expect(isValidAccountId("abc123")).toBe(false);
+      expect(isValidAccountId("aaaa1111; Path=/")).toBe(false);
+      expect(isValidAccountId("aaaa 1111")).toBe(false);
+      expect(isValidAccountId(null)).toBe(false);
+      expect(isValidAccountId(undefined)).toBe(false);
     });
   });
 

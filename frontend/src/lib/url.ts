@@ -80,9 +80,12 @@ function allowedImageOrigin(): string | null {
  *
  * 許可するのは以下のみ。
  * - アプリ内の絶対パス（`/` 始まり。ただし `//` `/\` は除く）
- * - `https:` の絶対 URL（`http:` は不許可）。
- *   `NEXT_PUBLIC_IMAGE_BASE_URL` 設定時はそのオリジンに限定する。
- *   認証情報付き URL（`https://user:pass@host/...`）は常に拒否する。
+ * - `https:` の絶対 URL（`http:` は不許可、認証情報付き URL は常に拒否）で、
+ *   **かつ `NEXT_PUBLIC_IMAGE_BASE_URL` が設定されており、そのオリジンと一致するもの**。
+ *   `NEXT_PUBLIC_IMAGE_BASE_URL` 未設定時は外部の絶対 URL をすべて拒否する
+ *   （CSP の `img-src` フォールバックと歩調を合わせ、XSS 時に任意の外部ホストへ
+ *   画像リクエストでデータを持ち出す経路を塞ぐ。外部の画像配信元を使う構成では
+ *   必ず `NEXT_PUBLIC_IMAGE_BASE_URL` を設定すること）。
  *
  * @param url 検証対象の URL
  * @returns 安全と判断できる場合はそのままの文字列。危険・不正な場合は空文字
@@ -102,7 +105,8 @@ export function sanitizeImageUrl(url: string | null | undefined): string {
     // CSP(img-src)に合わせ https のみ許可する
     if (parsed.protocol === "https:") {
       const allowed = allowedImageOrigin();
-      if (allowed && parsed.origin !== allowed) return "";
+      // 許可オリジンが未設定なら外部の絶対 URL は一切通さない（フェイルクローズ）
+      if (!allowed || parsed.origin !== allowed) return "";
       return trimmed;
     }
   } catch {

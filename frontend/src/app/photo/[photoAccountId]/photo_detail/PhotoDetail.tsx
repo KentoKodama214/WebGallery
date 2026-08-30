@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -38,6 +38,9 @@ export function PhotoDetail({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFavoriteProcessing, setIsFavoriteProcessing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // お気に入り操作の多重実行防止（setState 反映前の連打・キーリピート対策。
+  // PhotoList と同じく ref で即時に弾く）
+  const favoriteInFlightRef = useRef(false);
 
   // owner 判定は URL パスだけでなく、表示中の写真の実所有者（photo.accountNo）が
   // ログインユーザー自身であることまで確認する。細工 URL
@@ -80,20 +83,24 @@ export function PhotoDetail({
    * お気に入り登録／解除
    */
   const handleFavoriteToggle = async () => {
-    if (!photo || isFavoriteProcessing) return;
+    if (!photo || favoriteInFlightRef.current) return;
+    favoriteInFlightRef.current = true;
     setIsFavoriteProcessing(true);
     setActionError(null);
+    // 実行するアクションに対応した絶対値で更新する（相対トグルの二重反転を避ける）
+    const nextFavorite = !photo.isFavorite;
     try {
       if (photo.isFavorite) {
         await deleteFavorite(photo.accountNo, photo.photoNo);
       } else {
         await addFavorite(photo.accountNo, photo.photoNo);
       }
-      setPhoto({ ...photo, isFavorite: !photo.isFavorite });
+      setPhoto((prev) => (prev ? { ...prev, isFavorite: nextFavorite } : prev));
     } catch (err) {
       // 操作失敗は写真表示を維持したまま通知する
       setActionError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
+      favoriteInFlightRef.current = false;
       setIsFavoriteProcessing(false);
     }
   };

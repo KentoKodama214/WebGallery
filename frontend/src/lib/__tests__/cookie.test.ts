@@ -34,6 +34,23 @@ describe("cookie", () => {
     expect(getCookie("missing")).toBeNull();
   });
 
+  it("不正なCookie名（`;`・空白・`=` を含む）は例外を投げ、書き込まない", () => {
+    const proto = Object.getPrototypeOf(document);
+    const spy = jest.spyOn(proto, "cookie", "set").mockImplementation(() => {});
+
+    expect(() => setCookie("evil; Path=/", "x", 100)).toThrow("不正なCookie名");
+    expect(() => setCookie("a b", "x", 100)).toThrow();
+    expect(() => setCookie("k=v", "x", 100)).toThrow();
+    expect(spy).not.toHaveBeenCalled();
+
+    spy.mockRestore();
+  });
+
+  it("英数字・`_`・`-` のみの名前は許可される", () => {
+    setCookie("photoListFilter_aaaa1111", "1", 100);
+    expect(getCookie("photoListFilter_aaaa1111")).toBe("1");
+  });
+
   it("deleteCookieで取得できなくなる", () => {
     setCookie("temp", "1", 100);
     expect(getCookie("temp")).toBe("1");

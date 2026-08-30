@@ -132,6 +132,16 @@ docker-compose up -d
 
 デフォルト値でもアプリケーションの起動は可能ですが、必要に応じて環境変数を設定してください。
 
+#### フロントエンドの環境変数
+
+フロントエンド（`frontend/`）は以下の環境変数を参照する（`frontend/.env.local` 等に設定。未設定でも起動は可能）。
+
+| 変数名 | 用途 | 未設定時の挙動 |
+| --- | --- | --- |
+| `BACKEND_URL` | APIプロキシ（`/api/*`）の転送先バックエンドオリジン | `http://localhost:8080` |
+| `NEXT_PUBLIC_API_BASE_URL` | 別オリジンのバックエンドを直接叩く場合のベースURL | 同一オリジンの `/api` プロキシを使用 |
+| `NEXT_PUBLIC_IMAGE_BASE_URL` | 写真の配信元オリジン（例: `https://cdn.example.com/`）。CSP の `img-src` と `sanitizeImageUrl` の許可オリジンに反映される | **外部ホストからの画像読み込みを一切許可しない**（`img-src 'self' data: blob:`）。外部の画像配信元を使う構成では必ず設定すること |
+
 ### 3. フロントエンドのセットアップ
 
 ```bash

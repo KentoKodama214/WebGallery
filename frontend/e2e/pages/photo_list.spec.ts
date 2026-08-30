@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("写真一覧ページ", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/photo/e2e-test-account/photo_list");
+    await page.goto("/photo/e2etestaccount/photo_list");
   });
 
   test("ページタイトルが正しいこと", async ({ page }) => {
@@ -27,5 +27,14 @@ test.describe("写真一覧ページ", () => {
     const empty = page.getByText("写真がありません");
     const error = page.getByText("写真一覧の取得に失敗しました");
     await expect(empty.or(error)).toBeVisible({ timeout: 10000 });
+  });
+
+  test("アカウントID形式でない photoAccountId は『ギャラリーが見つかりません』を表示する", async ({
+    page,
+  }) => {
+    // `;` を含む細工されたセグメント（Cookie名インジェクション対策の検証）
+    await page.goto("/photo/aaaa1111%3B%20x/photo_list");
+    await expect(page.getByText("ギャラリーが見つかりません")).toBeVisible();
+    await expect(page.getByTestId("filter-trigger")).toHaveCount(0);
   });
 });

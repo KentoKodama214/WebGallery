@@ -32,6 +32,17 @@ let sessionAuthState: "unknown" | "authenticated" | "anonymous" = "unknown";
 let authEpoch = 0;
 
 /**
+ * 直近でリフレッシュが「一時的な失敗」（ネットワーク例外・5xx）で終わった時刻。
+ * バックエンド断・オフライン時に画面遷移のたびリフレッシュ要求が飛ぶのを防ぐため、
+ * この時刻から {@link REFRESH_RETRY_COOLDOWN_MS} の間は再試行をスキップする。
+ * 明確な認証エラー（401/403）や成功・login/logout ではリセットされる。
+ */
+let lastRefreshTransientFailureAt = 0;
+
+/** 一時的な失敗後にリフレッシュ再試行を抑止するクールダウン（ミリ秒） */
+const REFRESH_RETRY_COOLDOWN_MS = 5_000;
+
+/**
  * レスポンスボディからエラーメッセージを取り出す
  *
  * 5xx（サーバー内部エラー）は内部的な例外メッセージが含まれ得るため既定文言を返す。
@@ -104,6 +115,7 @@ export function setAccessToken(token: string | null): void {
 export function clearAuthState(): void {
   accessToken = null;
   sessionAuthState = "anonymous";
+  lastRefreshTransientFailureAt = 0;
   authEpoch++;
 }
 
@@ -144,6 +156,7 @@ export async function login(
   // 応答は世代不一致で破棄され、このログイン結果を上書きできない。
   accessToken = data.accessToken;
   sessionAuthState = "authenticated";
+  lastRefreshTransientFailureAt = 0;
   authEpoch++;
   return data;
 }
@@ -166,6 +179,14 @@ let refreshInFlight: Promise<boolean> | null = null;
  * セッション状態を変更せず、次回のリクエストで再試行できるようにする。
  */
 export function refresh(): Promise<boolean> {
+  // 直近の一時的な失敗から日が浅い場合は、無駄な再試行でバックエンドを叩かない
+  if (
+    !refreshInFlight &&
+    lastRefreshTransientFailureAt !== 0 &&
+    Date.now() - lastRefreshTransientFailureAt < REFRESH_RETRY_COOLDOWN_MS
+  ) {
+    return Promise.resolve(false);
+  }
   if (!refreshInFlight) {
     refreshInFlight = doRefresh().finally(() => {
       refreshInFlight = null;
@@ -191,16 +212,23 @@ async function doRefresh(): Promise<boolean> {
     });
   } catch {
     // ネットワーク例外は一時的な失敗として扱い、セッション状態は変更しない
-    if (!isStale()) accessToken = null;
+    if (!isStale()) {
+      accessToken = null;
+      lastRefreshTransientFailureAt = Date.now();
+    }
     return false;
   }
 
   if (!response.ok) {
     if (isStale()) return false;
     accessToken = null;
-    // 認証エラー（401/403）のみ未ログイン確定とする
+    // 認証エラー（401/403）のみ未ログイン確定とする。5xx 等は一時的失敗として
+    // クールダウンを設定し、次回以降の即時再試行を抑止する。
     if (response.status === 401 || response.status === 403) {
       sessionAuthState = "anonymous";
+      lastRefreshTransientFailureAt = 0;
+    } else {
+      lastRefreshTransientFailureAt = Date.now();
     }
     return false;
   }
@@ -217,6 +245,7 @@ async function doRefresh(): Promise<boolean> {
     }
     accessToken = data.accessToken;
     sessionAuthState = "authenticated";
+    lastRefreshTransientFailureAt = 0;
     return true;
   } catch {
     if (!isStale()) accessToken = null;
@@ -238,6 +267,7 @@ export async function logout(): Promise<void> {
   }
   accessToken = null;
   sessionAuthState = "anonymous";
+  lastRefreshTransientFailureAt = 0;
   // 進行中のリフレッシュ応答がログアウト後の状態を上書きしないよう世代を進める
   authEpoch++;
 }
@@ -267,8 +297,11 @@ export async function fetchWithAuth(
 
   if (response.status === 401) {
     const refreshed = await refresh();
-    if (refreshed) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
+    // await 後に別コンテキストの logout/clearAuthState でトークンが消えている
+    // 可能性があるため、グローバルではなくこの時点の値を控えて使う（`Bearer null` 送出防止）
+    const refreshedToken = accessToken;
+    if (refreshed && refreshedToken) {
+      headers.set("Authorization", `Bearer ${refreshedToken}`);
       response = await fetch(`${API_BASE_URL}${url}`, {
         ...options,
         headers,

@@ -1,10 +1,8 @@
 import { sanitizeImageUrl, loginUrlWithRedirect, safeRedirectPath } from "../url";
 
 describe("sanitizeImageUrl", () => {
-  it("https の絶対URLはそのまま通す", () => {
-    expect(sanitizeImageUrl("https://cdn.example.com/a.jpg")).toBe(
-      "https://cdn.example.com/a.jpg"
-    );
+  it("NEXT_PUBLIC_IMAGE_BASE_URL 未設定時は外部の https 絶対URLも空文字にする（フェイルクローズ）", () => {
+    expect(sanitizeImageUrl("https://cdn.example.com/a.jpg")).toBe("");
   });
 
   it("http（非https）の絶対URLは空文字にする", () => {
