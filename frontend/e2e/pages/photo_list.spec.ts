@@ -25,7 +25,8 @@ test.describe("写真一覧ページ", () => {
 
   test("写真一覧が表示されるか、取得エラーが表示されること", async ({ page }) => {
     const empty = page.getByText("写真がありません");
-    const error = page.getByText("写真一覧の取得に失敗しました");
+    // バックエンドの「写真が存在しません。」またはフロントの既定文言のいずれか
+    const error = page.getByText(/写真が存在しません|写真一覧の取得に失敗しました/);
     await expect(empty.or(error)).toBeVisible({ timeout: 10000 });
   });
 
