@@ -4,8 +4,13 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import com.web.gallery.controller.response.BadRequestResponse;
@@ -130,6 +135,27 @@ public class CommonRestControllerAdvice {
 	}
 
 	/**
+	 * リクエストボディのバインド・バリデーション・パースに失敗したときに制御するExceptionHandler<p>
+	 * （{@code @Valid}付きボディの検証失敗、不正なJSON、必須パラメータ欠落、型不一致、アップロードサイズ超過）
+	 *
+	 * @param	exception	発生した例外
+	 * @return				{@link BadRequestResponse}
+	 */
+	@ExceptionHandler({
+			MethodArgumentNotValidException.class,
+			HttpMessageNotReadableException.class,
+			MissingServletRequestParameterException.class,
+			MethodArgumentTypeMismatchException.class,
+			MaxUploadSizeExceededException.class
+	})
+	public ResponseEntity<BadRequestResponse> handleRequestBindingException(Exception exception) {
+		log.info("Invalid request. ({}: {})", exception.getClass().getSimpleName(), exception.getMessage());
+
+		BadRequestException badRequestException = (BadRequestException) ErrorEnum.INVALID_INPUT.toException();
+		return new ResponseEntity<BadRequestResponse>(BadRequestResponse.of(badRequestException), HttpStatus.BAD_REQUEST);
+	}
+
+	/**
 	 * 個別のExceptionHandlerで捕捉されない予期しないDBアクセスエラーが発生したときに制御するExceptionHandler
 	 * <p>
 	 * スタックトレース等の内部情報を含まない一般的なエラーレスポンスに変換する安全網として機能する
@@ -140,6 +166,38 @@ public class CommonRestControllerAdvice {
 	@ExceptionHandler(DataAccessException.class)
 	public ResponseEntity<ErrorResponse> handleDataAccessException(DataAccessException exception) {
 		log.error("Unexpected data access error occurred.", exception);
+
+		GalleryException systemException = ErrorEnum.SYSTEM_ERROR.toException();
+		ErrorResponse errorResponse = ErrorResponse.of(systemException, HttpStatus.INTERNAL_SERVER_ERROR);
+
+		return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	/**
+	 * 個別のExceptionHandlerで捕捉されないアプリケーション例外の安全網<p>
+	 * 主に{@link com.web.gallery.exception.SystemException}を想定し、内部情報を含まない一般的なエラーレスポンスに変換する
+	 *
+	 * @param	exception	{@link GalleryException}
+	 * @return				{@link ErrorResponse}
+	 */
+	@ExceptionHandler(GalleryException.class)
+	public ResponseEntity<ErrorResponse> handleGalleryException(GalleryException exception) {
+		log.error("Unhandled application error occurred.", exception);
+
+		ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.INTERNAL_SERVER_ERROR);
+		return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	/**
+	 * 上記いずれのExceptionHandlerでも捕捉されない予期しない例外が発生したときに制御するExceptionHandler<p>
+	 * スタックトレース等の内部情報を含まない一般的なエラーレスポンスに変換する最終的な安全網として機能する
+	 *
+	 * @param	exception	{@link Exception}
+	 * @return				{@link ErrorResponse}
+	 */
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception exception) {
+		log.error("Unexpected error occurred.", exception);
 
 		GalleryException systemException = ErrorEnum.SYSTEM_ERROR.toException();
 		ErrorResponse errorResponse = ErrorResponse.of(systemException, HttpStatus.INTERNAL_SERVER_ERROR);

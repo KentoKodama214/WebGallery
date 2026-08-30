@@ -48,7 +48,6 @@ class JwtTokenProviderTest {
 		void generateAccessToken_success() {
 			when(principal.getUsername()).thenReturn("testuser1");
 			when(principal.getAccountNo()).thenReturn(1L);
-			when(principal.getAccountName()).thenReturn("テストユーザー");
 			doReturn(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")))
 					.when(principal).getAuthorities();
 
@@ -63,7 +62,6 @@ class JwtTokenProviderTest {
 		void generateAccessToken_containsAccountId() {
 			when(principal.getUsername()).thenReturn("testuser1");
 			when(principal.getAccountNo()).thenReturn(1L);
-			when(principal.getAccountName()).thenReturn("テストユーザー");
 			doReturn(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")))
 					.when(principal).getAuthorities();
 
@@ -106,7 +104,6 @@ class JwtTokenProviderTest {
 		void validateAccessToken_success() {
 			when(principal.getUsername()).thenReturn("testuser1");
 			when(principal.getAccountNo()).thenReturn(1L);
-			when(principal.getAccountName()).thenReturn("テストユーザー");
 			doReturn(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")))
 					.when(principal).getAuthorities();
 
@@ -114,8 +111,10 @@ class JwtTokenProviderTest {
 			Claims claims = jwtTokenProvider.validateAccessToken(token);
 
 			assertEquals("testuser1", claims.getSubject());
+			assertEquals("web-gallery", claims.getIssuer());
 			assertEquals(1, claims.get("accountNo", Integer.class));
-			assertEquals("テストユーザー", claims.get("accountName", String.class));
+			// 氏名等のPIIはクレームに含めない
+			assertNull(claims.get("accountName", String.class));
 			assertEquals("ROLE_USER", claims.get("role", String.class));
 		}
 
@@ -137,7 +136,6 @@ class JwtTokenProviderTest {
 		void isTokenValid_validToken() {
 			when(principal.getUsername()).thenReturn("testuser1");
 			when(principal.getAccountNo()).thenReturn(1L);
-			when(principal.getAccountName()).thenReturn("テストユーザー");
 			doReturn(Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")))
 					.when(principal).getAuthorities();
 

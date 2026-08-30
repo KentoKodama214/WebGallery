@@ -80,10 +80,11 @@ public class PhotoFavoriteServiceImplIntegrationTest {
 		@Order(2)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void addFavorite_RegistFailureException() throws GalleryException {
+			// 既に登録済みのお気に入り（account_no=2, favorite_photo_account_no=1, favorite_photo_no=2）を再登録する
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(new AccountNo(1L))
+					.accountNo(new AccountNo(2L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(new PhotoNo(1L))
+					.favoritePhotoNo(new PhotoNo(2L))
 					.build();
 
 			assertThrows(RegistFailureException.class, () -> photoFavoriteServiceImpl.addFavorite(photoFavoriteModel));

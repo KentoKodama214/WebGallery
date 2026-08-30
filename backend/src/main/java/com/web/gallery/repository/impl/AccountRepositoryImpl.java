@@ -166,7 +166,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public AccountPageModel getAccountList(AccountGetModel accountGetModel) {
-		List<Account> accountList = accountMapper.select(AccountCondition.forList(accountGetModel));
+		List<Account> accountList = accountMapper.selectList(AccountCondition.forList(accountGetModel));
 
 		Boolean isLast = accountList.size() < accountGetModel.getLimit();
 		List<Account> pageAccountList = isLast ? accountList : accountList.subList(0, accountGetModel.getLimit() - 1);
@@ -184,7 +184,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 	 */
 	@Override
 	public AccountPageModel getAccountListForAdmin(AccountGetModel accountGetModel) {
-		List<Account> accountList = accountMapper.select(AccountCondition.forAdminList(accountGetModel));
+		List<Account> accountList = accountMapper.selectList(AccountCondition.forAdminList(accountGetModel));
 
 		Boolean isLast = accountList.size() < accountGetModel.getLimit();
 		List<Account> pageAccountList = isLast ? accountList : accountList.subList(0, accountGetModel.getLimit() - 1);
@@ -210,5 +210,15 @@ public class AccountRepositoryImpl implements AccountRepository {
 	@Override
 	public void lockForUpdate(AccountNo accountNo) {
 		accountMapper.lockAccount(accountNo.value());
+	}
+
+	/**
+	 * ログイン試行を同一アカウントIDで直列化するためのトランザクションレベルのアドバイザリロックを取得する
+	 *
+	 * @param	accountId	アカウントID
+	 */
+	@Override
+	public void lockForLoginAttempt(AccountId accountId) {
+		accountMapper.lockForLoginAttempt(accountId.value());
 	}
 }

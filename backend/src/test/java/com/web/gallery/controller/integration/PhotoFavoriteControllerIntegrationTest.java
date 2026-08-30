@@ -62,11 +62,15 @@ public class PhotoFavoriteControllerIntegrationTest {
 	}
 
 	private Authentication createAuthentication() {
+		return createAuthentication(1L, "aaaaaaaa", "$2a$10$password1");
+	}
+
+	private Authentication createAuthentication(Long accountNo, String accountId, String password) {
 		AccountModel sessionAccount = AccountModel.builder()
-				.accountNo(new AccountNo(1L))
-				.accountId(new AccountId("aaaaaaaa"))
+				.accountNo(new AccountNo(accountNo))
+				.accountId(new AccountId(accountId))
 				.accountName(new AccountName("AAAAAAAA"))
-				.password(new Password("$2a$10$password1"))
+				.password(new Password(password))
 				.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 				.isDeleted(new IsDeleted(false))
 				.loginFailureCount(new LoginFailureCount(0))
@@ -143,7 +147,8 @@ public class PhotoFavoriteControllerIntegrationTest {
 		@Order(3)
 		@DisplayName("異常系：RegistFailureExceptionをthrowする")
 		void addFavorite_RegistFailureException() throws Exception {
-			Authentication authentication = createAuthentication();
+			// 既に登録済みのお気に入り（account_no=2, favorite_photo_account_no=1, favorite_photo_no=2）を再登録する
+			Authentication authentication = createAuthentication(2L, "bbbbbbbb", "$2a$10$password2");
 
 			mockMvc.perform(
 					post("/api/v1/photos/favorites")

@@ -22,13 +22,13 @@ public class SessionHelper {
 
 		Authentication authentication =
 				SecurityContextHolder.getContext().getAuthentication();
-		
-		if (authentication.getPrincipal() instanceof AccountPrincipal) {
+
+		if (authentication != null && authentication.getPrincipal() instanceof AccountPrincipal) {
 			AccountPrincipal accountPrincipal =
 					AccountPrincipal.class.cast(authentication.getPrincipal());
 			accountNo = accountPrincipal.getAccountNo();
 		}
-		
+
 		return accountNo;
 	}
 	
@@ -43,7 +43,7 @@ public class SessionHelper {
 		Authentication authentication =
 				SecurityContextHolder.getContext().getAuthentication();
 
-		if (authentication.getPrincipal() instanceof AccountPrincipal) {
+		if (authentication != null && authentication.getPrincipal() instanceof AccountPrincipal) {
 			AccountPrincipal accountPrincipal =
 					AccountPrincipal.class.cast(authentication.getPrincipal());
 			accountId = accountPrincipal.getUsername();
@@ -63,7 +63,7 @@ public class SessionHelper {
 		Authentication authentication =
 				SecurityContextHolder.getContext().getAuthentication();
 
-		if (authentication.getPrincipal() instanceof AccountPrincipal) {
+		if (authentication != null && authentication.getPrincipal() instanceof AccountPrincipal) {
 			AccountPrincipal accountPrincipal =
 					AccountPrincipal.class.cast(authentication.getPrincipal());
 			authorityKbn = accountPrincipal.getAuthorityKbn();

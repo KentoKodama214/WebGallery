@@ -91,7 +91,8 @@ public class AccountModel {
 				.accountNo(new AccountNo(entity.getAccountNo()))
 				.accountId(new AccountId(entity.getAccountId()))
 				.accountName(new AccountName(entity.getAccountName()))
-				.password(new Password(entity.getPassword()))
+				// 一覧取得などパスワードを射影しないクエリ経由の場合はnullを許容する
+				.password(entity.getPassword() != null ? new Password(entity.getPassword()) : null)
 				.birthdate(entity.getBirthdate() != null ? new BirthDate(entity.getBirthdate()) : null)
 				.sexKbn(entity.getSexKbn())
 				.birthplacePrefectureKbnCode(entity.getBirthplacePrefectureKbnCode() != null ? new BirthplacePrefectureKbnCode(entity.getBirthplacePrefectureKbnCode()) : null)

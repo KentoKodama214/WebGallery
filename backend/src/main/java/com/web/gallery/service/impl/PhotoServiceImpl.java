@@ -246,14 +246,15 @@ public class PhotoServiceImpl implements PhotoService {
 		if(Objects.isNull(imageFile)) {
 			throw ErrorEnum.IMAGE_FILE_REQUIRED.toException();
 		}
+		// サイズ超過はバイナリ内容を読む前に弾く（大きなファイルの読み込みコストを避ける）
+		if(imageFileValidationPolicy.isSizeExceeded(imageFile)) {
+			throw ErrorEnum.IMAGE_FILE_SIZE_EXCEEDED.toException();
+		}
 		if(!imageFileValidationPolicy.isAllowedContentType(imageFile)) {
 			throw ErrorEnum.UNSUPPORTED_IMAGE_CONTENT_TYPE.toException();
 		}
 		if(!imageFileValidationPolicy.isValidSignature(imageFile)) {
 			throw ErrorEnum.INVALID_IMAGE_SIGNATURE.toException();
-		}
-		if(imageFileValidationPolicy.isSizeExceeded(imageFile)) {
-			throw ErrorEnum.IMAGE_FILE_SIZE_EXCEEDED.toException();
 		}
 	}
 

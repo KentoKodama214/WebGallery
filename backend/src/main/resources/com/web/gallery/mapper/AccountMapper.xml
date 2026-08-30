@@ -71,6 +71,39 @@
 		</if>
 	</select>
 
+	<select id="selectList" parameterType="com.web.gallery.entity.AccountCondition" resultMap="AccountMap">
+		SELECT
+			account_no AS accountNo,
+			created_by AS createdBy,
+			created_at AS createdAt,
+			updated_by AS updatedBy,
+			updated_at AS updatedAt,
+			is_deleted AS isDeleted,
+			account_id AS accountId,
+			account_name AS accountName,
+			-- 一覧表示ではパスワードハッシュを取得しない（NULL固定で射影する）
+			CAST(NULL AS text) AS password,
+			birthdate,
+			sex_kbn AS sexKbn,
+			birthplace_prefecture_kbn_code AS birthplacePrefectureKbnCode,
+			resident_prefecture_kbn_code AS residentPrefectureKbnCode,
+			free_memo AS freeMemo,
+			authority_kbn AS authorityKbn,
+			last_login_datetime AS lastLoginDatetime,
+			login_failure_count AS loginFailureCount
+		FROM
+			common.account
+		<where>
+			<include refid="accountConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+		<if test="limit != null">
+			ORDER BY account_id ASC
+			LIMIT #{limit} OFFSET #{offset}
+		</if>
+	</select>
+
 	<select id="count" parameterType="com.web.gallery.entity.AccountCondition" resultType="Integer">
 		SELECT
 			COUNT(*)
@@ -191,5 +224,12 @@
 		WHERE
 			account_no = #{accountNo}
 		FOR UPDATE
+	</select>
+
+	<select id="lockForLoginAttempt" resultType="java.lang.Integer">
+		WITH advisory_lock AS (
+			SELECT pg_advisory_xact_lock(hashtext(#{accountId})::bigint)
+		)
+		SELECT 1 FROM advisory_lock
 	</select>
 </mapper>

@@ -27,6 +27,15 @@ public interface RefreshTokenRepository {
 	RefreshTokenModel findByTokenHash(TokenHash tokenHash);
 
 	/**
+	 * トークンハッシュに該当するリフレッシュトークンを行ロック付きで取得する<p>
+	 * リフレッシュトークンのローテーション処理で、同一トークンによる同時リクエストを直列化するために使用する
+	 *
+	 * @param	tokenHash	トークンハッシュ
+	 * @return				{@link RefreshTokenModel}、取得できない場合はnull
+	 */
+	RefreshTokenModel findByTokenHashForUpdate(TokenHash tokenHash);
+
+	/**
 	 * アカウント番号に該当するリフレッシュトークンをすべて無効化する
 	 *
 	 * @param	accountNo	アカウント番号

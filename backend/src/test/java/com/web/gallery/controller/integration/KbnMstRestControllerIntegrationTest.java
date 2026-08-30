@@ -5,10 +5,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.util.NoSuchElementException;
-
-import jakarta.servlet.ServletException;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -23,6 +19,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.web.gallery.enumeration.ErrorEnum;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -100,16 +98,18 @@ public class KbnMstRestControllerIntegrationTest {
 		
 		@Test
 		@Order(3)
-		@DisplayName("異常系：都道府県が0件の場合はNoSuchElementExceptionが発生する")
+		@DisplayName("異常系：都道府県が0件の場合はシステムエラー（500）が返る")
 		@Sql("/sql/common/cleanup.sql")
 		void getPrefectures_empty() throws Exception {
-			ServletException exception = assertThrows(ServletException.class, () ->
-					mockMvc.perform(
-							get("/api/v1/prefectures")
-									.with(csrf())
-					)
-			);
-			assertInstanceOf(NoSuchElementException.class, exception.getCause());
+			mockMvc.perform(
+					get("/api/v1/prefectures")
+							.with(csrf())
+				)
+				.andExpect(status().isInternalServerError())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.SYSTEM_ERROR.getErrorCode()))
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.SYSTEM_ERROR.getErrorMessage()))
+				.andExpect(jsonPath("$.httpStatus").value(500));
 		}
 	}
 }

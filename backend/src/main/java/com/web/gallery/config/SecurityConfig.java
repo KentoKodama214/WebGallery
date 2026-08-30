@@ -2,8 +2,11 @@ package com.web.gallery.config;
 
 import java.util.List;
 
+import jakarta.servlet.DispatcherType;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -37,6 +40,8 @@ public class SecurityConfig {
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
 	private final CorsConfig corsConfig;
+
+	private final RestAccessDeniedHandler restAccessDeniedHandler;
 
 	/**
 	 * bcryptアルゴリズムでハッシュ化を行うエンコーダのオブジェクトを生成します
@@ -75,13 +80,16 @@ public class SecurityConfig {
 	}
 
 	/**
-	 * OpenAPIドキュメント用のSecurityFilterChainを生成します
+	 * OpenAPIドキュメント用のSecurityFilterChainを生成します<p>
+	 * API仕様の露出を避けるため、本番プロファイル（prod）では登録せず、
+	 * デフォルトのSecurityFilterChainにより拒否される
 	 * @param	http	HTTPセキュリティオブジェクト
 	 * @return			SecurityFilterChainオブジェクト
 	 * @throws Exception
 	 */
 	@Bean
 	@Order(0)
+	@Profile("!prod")
 	SecurityFilterChain openApiSecurityFilterChain(HttpSecurity http) throws Exception {
 		http.securityMatcher("/v3/api-docs/**", "/scalar/**")
 			.authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
@@ -116,10 +124,34 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTO_DETAIL).permitAll()
 				// 都道府県一覧は公開
 				.requestMatchers(ApiRoutes.API_PREFECTURES).permitAll()
+				// 管理者APIはADMINロール必須（AOPアスペクトに加えた多層防御）
+				.requestMatchers(ApiRoutes.API_ADMIN_PREFIX + "/**").hasRole("ADMIN")
 				// それ以外は認証必須
 				.anyRequest().authenticated())
+			.exceptionHandling(exceptionHandling -> exceptionHandling
+				.accessDeniedHandler(restAccessDeniedHandler))
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
+		return http.build();
+	}
+
+	/**
+	 * どのSecurityFilterChainにもマッチしないリクエスト用のデフォルトSecurityFilterChainを生成します<p>
+	 * マッチするチェーンが無いとリクエストがセキュリティ処理を経ずに通過するため、
+	 * 明示的にすべて拒否する（{@code /error}等のディスパッチは通す）
+	 * @param	http	HTTPセキュリティオブジェクト
+	 * @return			SecurityFilterChainオブジェクト
+	 * @throws Exception
+	 */
+	@Bean
+	@Order(Integer.MAX_VALUE)
+	SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+		http.csrf(csrf -> csrf.disable())
+			.sessionManagement(session -> session
+				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.authorizeHttpRequests(authorize -> authorize
+				.dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.ASYNC, DispatcherType.FORWARD).permitAll()
+				.anyRequest().denyAll());
 		return http.build();
 	}
 

@@ -52,8 +52,10 @@ public final class ApiRoutes {
 	// 管理者関連
 	/** アカウント番号 */
 	public static final String ACCOUNT_NO = "{accountNo}";
+	/** 管理者APIプレフィックス */
+	public static final String API_ADMIN_PREFIX = API_PREFIX + "/admin";
 	/** 管理者用アカウント一覧API */
-	public static final String API_ADMIN_ACCOUNTS = API_PREFIX + "/admin/accounts";
+	public static final String API_ADMIN_ACCOUNTS = API_ADMIN_PREFIX + "/accounts";
 	/** 管理者用アカウントロック解除API */
 	public static final String API_ADMIN_ACCOUNT_UNLOCK = API_ADMIN_ACCOUNTS + "/" + ACCOUNT_NO + "/unlock";
 	/** 管理者用アカウント強制ロックAPI */
