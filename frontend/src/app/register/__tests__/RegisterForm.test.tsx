@@ -142,7 +142,10 @@ describe("RegisterForm", () => {
     const accountNameInput = screen.getAllByRole("textbox")[1];
     await user.type(screen.getByPlaceholderText("半角英数字で8〜16文字"), "testuser1");
     await user.type(accountNameInput, "テストユーザー");
-    await user.type(screen.getByPlaceholderText("半角英数字で8文字以上"), "password1");
+    await user.type(
+      screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"),
+      "password1"
+    );
 
     const submitButton = screen.getByRole("button", { name: "登録" });
     await user.click(submitButton);
