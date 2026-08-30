@@ -11,7 +11,13 @@ import {
   getPrefectures,
 } from "@/lib/api/client";
 import type { PrefectureGroup } from "@/lib/api/client";
-import { PASSWORD_PATTERN, clearError, isPastDate } from "@/lib/validation";
+import {
+  PASSWORD_PATTERN,
+  PASSWORD_ERROR_MESSAGE,
+  PASSWORD_PLACEHOLDER,
+  clearError,
+  isPastDate,
+} from "@/lib/validation";
 import { loginUrlWithRedirect } from "@/lib/url";
 
 interface AccountSettingFormProps {
@@ -123,7 +129,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     }
 
     if (newPassword && !PASSWORD_PATTERN.test(newPassword)) {
-      newErrors.newPassword = "半角英数字で8文字以上で入力してください";
+      newErrors.newPassword = PASSWORD_ERROR_MESSAGE;
     }
 
     if (birthdate && !isPastDate(birthdate)) {
@@ -292,12 +298,12 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               onChange={(e) => setNewPassword(e.target.value)}
               onBlur={() => {
                 if (newPassword && !PASSWORD_PATTERN.test(newPassword)) {
-                  setErrors((prev) => ({ ...prev, newPassword: "半角英数字で8文字以上で入力してください" }));
+                  setErrors((prev) => ({ ...prev, newPassword: PASSWORD_ERROR_MESSAGE }));
                 } else {
                   setErrors((prev) => clearError(prev, "newPassword"));
                 }
               }}
-              placeholder="半角英数字で8文字以上"
+              placeholder={PASSWORD_PLACEHOLDER}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.newPassword && (

@@ -140,7 +140,7 @@ describe("AccountSettingForm", () => {
       expect(screen.getByText("Account Setting")).toBeInTheDocument();
     });
 
-    const passwordInput = screen.getByPlaceholderText("半角英数字で8文字以上");
+    const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
     await user.type(passwordInput, "newpassword1");
     await user.click(screen.getByRole("button", { name: "登録" }));
 
@@ -207,13 +207,13 @@ describe("AccountSettingForm", () => {
       expect(screen.getByText("Account Setting")).toBeInTheDocument();
     });
 
-    const passwordInput = screen.getByPlaceholderText("半角英数字で8文字以上");
+    const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
     await user.type(passwordInput, "short");
     await user.click(screen.getByRole("button", { name: "登録" }));
 
     await waitFor(() => {
       expect(
-        screen.getByText("半角英数字で8文字以上で入力してください")
+        screen.getByText("英字と数字を含む半角8〜72文字で入力してください")
       ).toBeInTheDocument();
     });
 
