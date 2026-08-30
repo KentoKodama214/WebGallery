@@ -30,6 +30,16 @@ public interface RefreshTokenMapper {
 	public RefreshToken selectByTokenHash(@Param("tokenHash") String tokenHash);
 
 	/**
+	 * トークンハッシュに該当するリフレッシュトークンを行ロック付きで取得する<p>
+	 * リフレッシュトークンのローテーション時に、同一トークンによる同時リクエストを直列化し、
+	 * 「無効化チェック → ローテーション」間の競合による多重セッション発行・盗用検知の回避を防ぐ
+	 *
+	 * @param	tokenHash	トークンハッシュ
+	 * @return				{@link RefreshToken}
+	 */
+	public RefreshToken selectByTokenHashForUpdate(@Param("tokenHash") String tokenHash);
+
+	/**
 	 * アカウント番号に該当するリフレッシュトークンをすべて無効化する
 	 *
 	 * @param	accountNo	アカウント番号

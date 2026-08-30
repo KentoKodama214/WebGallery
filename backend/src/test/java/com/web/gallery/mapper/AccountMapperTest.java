@@ -609,6 +609,50 @@ public class AccountMapperTest {
 	}
 
 	@Nested
+	@Order(1)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	@Sql("/sql/common/cleanup.sql")
+	@Sql("/sql/mapper/AccountMapperTest.sql")
+	class selectList {
+		@Test
+		@Order(1)
+		@DisplayName("正常系：一覧取得ではパスワードハッシュを射影せず、is_deleted・limit・offsetが適用されること")
+		void selectList_excludes_password_and_applies_paging() {
+			AccountCondition condition = AccountCondition.builder()
+					.isDeleted(false)
+					.limit(2)
+					.offset(0)
+					.build();
+
+			List<Account> actual = accountMapper.selectList(condition);
+
+			assertEquals(2, actual.size());
+			// パスワードハッシュはDBから取得しない
+			assertNull(actual.get(0).getPassword());
+			assertNull(actual.get(1).getPassword());
+			// account_id ASC でソートされ、offset/limit が適用される
+			assertEquals("aaaaaaaa", actual.get(0).getAccountId());
+			assertEquals("bbbbbbbb", actual.get(1).getAccountId());
+			// 削除済みアカウントは含まれない
+			assertFalse(actual.get(0).getIsDeleted());
+			assertFalse(actual.get(1).getIsDeleted());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：該当0件の場合は空リストを返すこと")
+		void selectList_not_found() {
+			AccountCondition condition = AccountCondition.builder()
+					.accountNo(99L)
+					.limit(5)
+					.offset(0)
+					.build();
+
+			assertEquals(0, accountMapper.selectList(condition).size());
+		}
+	}
+
+	@Nested
 	@Order(2)
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")

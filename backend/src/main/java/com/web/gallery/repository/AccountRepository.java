@@ -108,4 +108,14 @@ public interface AccountRepository {
 	 * @param	accountNo	アカウント番号
 	 */
 	void lockForUpdate(AccountNo accountNo);
+
+	/**
+	 * ログイン試行を同一アカウントIDで直列化するためのトランザクションレベルのアドバイザリロックを取得する<p>
+	 * トランザクション終了時に自動解放される。ロックアウト判定と失敗回数加算の間の競合による
+	 * ログイン失敗回数上限のバイパスを防ぐために使用する。行ロックではないため、
+	 * 別トランザクションでの失敗回数加算（UPDATE）をブロックしない
+	 *
+	 * @param	accountId	アカウントID
+	 */
+	void lockForLoginAttempt(AccountId accountId);
 }

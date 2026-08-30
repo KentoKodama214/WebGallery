@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.JwtConfig;
+import com.web.gallery.config.LoginConfig;
 import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.helper.JwtTokenProvider;
 import com.web.gallery.model.AccountModel;
@@ -48,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
 	private final AuthenticationManager authenticationManager;
 	private final JwtTokenProvider jwtTokenProvider;
 	private final JwtConfig jwtConfig;
+	private final LoginConfig loginConfig;
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final AccountRepository accountRepository;
 	private final UserDetailsService userDetailsService;
@@ -57,6 +59,7 @@ public class AuthServiceImpl implements AuthService {
 			@Lazy AuthenticationManager authenticationManager,
 			JwtTokenProvider jwtTokenProvider,
 			JwtConfig jwtConfig,
+			LoginConfig loginConfig,
 			RefreshTokenRepository refreshTokenRepository,
 			AccountRepository accountRepository,
 			@Lazy UserDetailsService userDetailsService,
@@ -64,6 +67,7 @@ public class AuthServiceImpl implements AuthService {
 		this.authenticationManager = authenticationManager;
 		this.jwtTokenProvider = jwtTokenProvider;
 		this.jwtConfig = jwtConfig;
+		this.loginConfig = loginConfig;
 		this.refreshTokenRepository = refreshTokenRepository;
 		this.accountRepository = accountRepository;
 		this.userDetailsService = userDetailsService;
@@ -80,6 +84,17 @@ public class AuthServiceImpl implements AuthService {
 	@Override
 	@Transactional
 	public AuthTokenModel login(AccountId accountId, Password password) {
+		// 同一アカウントIDへのログイン試行をDBレベルで直列化し、
+		// 「ロックアウト判定 → 失敗回数加算」の間の競合による失敗回数上限のバイパスを防ぐ
+		accountRepository.lockForLoginAttempt(accountId);
+
+		AccountModel lockCheckModel = accountRepository.getByAccountId(accountId);
+		if (lockCheckModel != null
+				&& lockCheckModel.getLoginFailureCount() != null
+				&& lockCheckModel.getLoginFailureCount().value() >= loginConfig.getFailCount()) {
+			throw new LockedException(MessageConst.ERR_ACCOUNT_LOCKED);
+		}
+
 		Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(accountId.value(), password.value()));
 
@@ -116,7 +131,9 @@ public class AuthServiceImpl implements AuthService {
 	@Transactional
 	public AuthTokenModel refresh(RefreshTokenValue refreshToken) {
 		TokenHash tokenHash = new TokenHash(hashToken(refreshToken.value()));
-		RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHash(tokenHash);
+		// 同一リフレッシュトークンによる同時リクエストを行ロックで直列化し、
+		// 「無効化チェック → ローテーション」間の競合による多重セッション発行を防ぐ
+		RefreshTokenModel storedToken = refreshTokenRepository.findByTokenHashForUpdate(tokenHash);
 
 		if (storedToken == null) {
 			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
@@ -170,6 +187,15 @@ public class AuthServiceImpl implements AuthService {
 	@Transactional
 	public void logout(RefreshTokenValue refreshToken) {
 		refreshTokenRepository.revokeByTokenHash(new TokenHash(hashToken(refreshToken.value())));
+	}
+
+	/**
+	 * 有効期限切れのリフレッシュトークンをDBから削除する
+	 */
+	@Override
+	@Transactional
+	public void purgeExpiredRefreshTokens() {
+		refreshTokenRepository.deleteExpired();
 	}
 
 	/**

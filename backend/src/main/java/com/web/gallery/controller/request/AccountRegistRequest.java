@@ -44,12 +44,12 @@ public class AccountRegistRequest {
 	/**
 	 * パスワード
 	 * <p>
-	 * 半角英数8桁以上、ブランクなし
+	 * 8〜72文字、半角記号を含む英数字で、英字と数字をそれぞれ1文字以上含む
 	 */
-	@Schema(description = "パスワード（半角英数8桁以上）", example = "password01")
+	@Schema(description = "パスワード（8〜72文字、英字と数字を各1文字以上、半角記号可）", example = "password01")
 	@NotBlank(message = "{validation.common.notBlank}")
-	@Size(min = 8, message = "{validation.common.min_length}")
-	@Pattern(regexp = "[a-zA-Z0-9]{8,}", message = "{validation.common.pattern}")
+	@Size(min = 8, max = 72, message = "{validation.common.min_max_length}")
+	@Pattern(regexp = "(?=.*[A-Za-z])(?=.*\\d)[\\x21-\\x7E]{8,72}", message = "{validation.account.password}")
 	private String password;
 
 	/**
@@ -72,13 +72,16 @@ public class AccountRegistRequest {
 
 	/** 出身都道府県区分コード */
 	@Schema(description = "出身都道府県区分コード", example = "Hokkaido")
+	@Size(max = 50, message = "{validation.common.max_length}")
 	private String birthplacePrefectureKbnCode;
 
 	/** 在住都道府県区分コード */
 	@Schema(description = "在住都道府県区分コード", example = "Tokyo")
+	@Size(max = 50, message = "{validation.common.max_length}")
 	private String residentPrefectureKbnCode;
 
 	/** フリーメモ */
 	@Schema(description = "フリーメモ", example = "よろしくお願いします")
+	@Size(max = 1000, message = "{validation.common.max_length}")
 	private String freeMemo;
 }

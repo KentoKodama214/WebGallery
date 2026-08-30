@@ -57,12 +57,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			if (SecurityContextHolder.getContext().getAuthentication() == null) {
 				UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountId);
 
-				UsernamePasswordAuthenticationToken authToken =
-						new UsernamePasswordAuthenticationToken(
-								userDetails, null, userDetails.getAuthorities());
-				authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+				// アクセストークン自体は失効まで有効だが、その間に管理者ロック・アカウント削除が
+				// 行われた場合は即座に認証を無効化する（トークン署名・有効期限だけを信頼しない）
+				if (userDetails.isEnabled() && userDetails.isAccountNonLocked()
+						&& userDetails.isAccountNonExpired() && userDetails.isCredentialsNonExpired()) {
+					UsernamePasswordAuthenticationToken authToken =
+							new UsernamePasswordAuthenticationToken(
+									userDetails, null, userDetails.getAuthorities());
+					authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-				SecurityContextHolder.getContext().setAuthentication(authToken);
+					SecurityContextHolder.getContext().setAuthentication(authToken);
+				}
 			}
 		}
 
