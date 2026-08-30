@@ -1,6 +1,8 @@
 package com.web.gallery.policy;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
@@ -43,6 +45,9 @@ public class ImageFileValidationPolicy {
 	/** WebPのマジックバイトのオフセット（"RIFF"の4バイト＋ファイルサイズの4バイトの後） */
 	private static final int WEBP_SIGNATURE_OFFSET = 8;
 
+	/** シグネチャ判定に読み込む先頭バイト数（WebP判定の最大オフセット＋シグネチャ長） */
+	private static final int SIGNATURE_HEADER_LENGTH = WEBP_SIGNATURE_OFFSET + 4;
+
 	/** 1MBあたりのバイト数 */
 	private static final long BYTES_PER_MB = 1024 * 1024;
 
@@ -65,12 +70,18 @@ public class ImageFileValidationPolicy {
 	 * @return				既知の画像フォーマットのシグネチャと一致する場合、true
 	 */
 	public Boolean isValidSignature(ImageFile imageFile) {
-		byte[] header;
-		try {
-			header = imageFile.value().getBytes();
+		// 判定に必要な先頭バイトのみを読み込む（ファイル全体をヒープに載せない）
+		byte[] buffer = new byte[SIGNATURE_HEADER_LENGTH];
+		int read;
+		try (InputStream inputStream = imageFile.value().getInputStream()) {
+			read = inputStream.readNBytes(buffer, 0, buffer.length);
 		} catch (IOException e) {
 			return false;
 		}
+		if (read <= 0) {
+			return false;
+		}
+		byte[] header = read == buffer.length ? buffer : Arrays.copyOf(buffer, read);
 
 		return matchesAt(header, 0, JPEG_SIGNATURE)
 				|| matchesAt(header, 0, PNG_SIGNATURE)

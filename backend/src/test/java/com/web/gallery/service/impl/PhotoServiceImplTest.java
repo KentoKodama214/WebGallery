@@ -1156,8 +1156,6 @@ public class PhotoServiceImplTest {
 			doReturn(AccountModel.builder().accountNo(new AccountNo(1L)).authorityKbn(AuthorityEnum.NORMAL).build())
 					.when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
 			doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
-			doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
-			doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
 			doReturn(true).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
 
 			PhotoDetailModel photoDetailModel = createNewPhoto();

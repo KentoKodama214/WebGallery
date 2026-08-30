@@ -29,6 +29,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.JwtConfig;
+import com.web.gallery.config.LoginConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
@@ -59,6 +60,9 @@ class AuthServiceImplTest {
 
 	@Mock
 	private JwtConfig jwtConfig;
+
+	@Mock
+	private LoginConfig loginConfig;
 
 	@Mock
 	private RefreshTokenRepository refreshTokenRepository;
@@ -152,7 +156,7 @@ class AuthServiceImplTest {
 					.isRevoked(new IsRevoked(false))
 					.build();
 
-			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
+			when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class))).thenReturn(storedToken);
 
 			AccountModel account = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -196,7 +200,7 @@ class AuthServiceImplTest {
 					.isRevoked(new IsRevoked(false))
 					.build();
 
-			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
+			when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class))).thenReturn(storedToken);
 
 			AccountModel account = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -224,7 +228,7 @@ class AuthServiceImplTest {
 					.isRevoked(new IsRevoked(false))
 					.build();
 
-			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
+			when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class))).thenReturn(storedToken);
 
 			AccountModel account = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -252,7 +256,7 @@ class AuthServiceImplTest {
 					.isRevoked(new IsRevoked(true))
 					.build();
 
-			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
+			when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class))).thenReturn(storedToken);
 
 			assertThrows(InvalidRefreshTokenException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue("revoked-token"));
@@ -272,7 +276,7 @@ class AuthServiceImplTest {
 					.isRevoked(new IsRevoked(false))
 					.build();
 
-			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
+			when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class))).thenReturn(storedToken);
 
 			assertThrows(InvalidRefreshTokenException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue("expired-token"));
@@ -282,7 +286,7 @@ class AuthServiceImplTest {
 		@Test
 		@DisplayName("異常系: リフレッシュトークンが存在しない場合は例外がスローされること")
 		void refresh_tokenNotFound() {
-			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(null);
+			when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class))).thenReturn(null);
 
 			assertThrows(InvalidRefreshTokenException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue("nonexistent-token"));
@@ -299,7 +303,7 @@ class AuthServiceImplTest {
 					.isRevoked(new IsRevoked(false))
 					.build();
 
-			when(refreshTokenRepository.findByTokenHash(any(TokenHash.class))).thenReturn(storedToken);
+			when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class))).thenReturn(storedToken);
 			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(null);
 
 			assertThrows(InvalidRefreshTokenException.class, () -> {

@@ -35,4 +35,10 @@ public interface AuthService {
 	 * @param	refreshToken	リフレッシュトークン
 	 */
 	void logout(RefreshTokenValue refreshToken);
+
+	/**
+	 * 有効期限切れのリフレッシュトークンをDBから削除する<p>
+	 * 無効化済み・期限切れのレコードが蓄積してテーブルが肥大化するのを防ぐため、定期的に実行される
+	 */
+	void purgeExpiredRefreshTokens();
 }

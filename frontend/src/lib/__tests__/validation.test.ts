@@ -21,14 +21,19 @@ describe("validation", () => {
   });
 
   describe("PASSWORD_PATTERN", () => {
-    it("半角英数字8文字以上を許可する", () => {
+    it("英字と数字を各1文字以上含む半角8〜72文字を許可する（記号可）", () => {
       expect(PASSWORD_PATTERN.test("abcd1234")).toBe(true);
-      expect(PASSWORD_PATTERN.test("a".repeat(100))).toBe(true);
+      expect(PASSWORD_PATTERN.test("abcd123!")).toBe(true);
+      expect(PASSWORD_PATTERN.test("a1" + "x".repeat(70))).toBe(true);
     });
 
-    it("7文字以下・記号を含むものは拒否する", () => {
-      expect(PASSWORD_PATTERN.test("abc123")).toBe(false);
-      expect(PASSWORD_PATTERN.test("abcd123!")).toBe(false);
+    it("7文字以下・73文字以上・英字のみ・数字のみ・全角・空白を含むものは拒否する", () => {
+      expect(PASSWORD_PATTERN.test("abc1234")).toBe(false);
+      expect(PASSWORD_PATTERN.test("a1" + "x".repeat(71))).toBe(false);
+      expect(PASSWORD_PATTERN.test("abcdefgh")).toBe(false);
+      expect(PASSWORD_PATTERN.test("12345678")).toBe(false);
+      expect(PASSWORD_PATTERN.test("ａｂｃｄ１２３４")).toBe(false);
+      expect(PASSWORD_PATTERN.test("abcd 1234")).toBe(false);
     });
   });
 

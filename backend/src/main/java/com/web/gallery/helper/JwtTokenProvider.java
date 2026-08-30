@@ -8,6 +8,8 @@ import javax.crypto.SecretKey;
 
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
+
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.JwtConfig;
 
@@ -26,7 +28,28 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProvider {
+	/** トークンの発行者（issuerクレーム）。発行・検証の双方で一致を要求する */
+	private static final String ISSUER = "web-gallery";
+
+	/** HS256で必要となるシークレットキーの最小バイト長（256bit） */
+	private static final int MIN_SECRET_BYTE_LENGTH = 32;
+
 	private final JwtConfig jwtConfig;
+
+	/**
+	 * 起動時にJWTシークレットキーの長さを検証する<p>
+	 * HS256では256bit以上の鍵長が必須であり、短い鍵だと総当たりで署名偽造が可能になる
+	 *
+	 * @throws	IllegalStateException	シークレットキーが未設定または短すぎる場合
+	 */
+	@PostConstruct
+	void validateSecret() {
+		String secret = jwtConfig.getSecret();
+		if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_BYTE_LENGTH) {
+			throw new IllegalStateException(
+					"JWTシークレットキー（app.jwt.secret）は256bit（32バイト）以上である必要があります");
+		}
+	}
 
 	/**
 	 * アクセストークンを���成する
@@ -38,10 +61,11 @@ public class JwtTokenProvider {
 		Date now = new Date();
 		Date expiry = new Date(now.getTime() + jwtConfig.getAccessTokenExpirationMinutes() * 60 * 1000L);
 
+		// クライアント保存されるトークンに含める情報は最小限に留める（氏名等のPIIは載せない）
 		return Jwts.builder()
+				.issuer(ISSUER)
 				.subject(principal.getUsername())
 				.claim("accountNo", principal.getAccountNo())
-				.claim("accountName", principal.getAccountName())
 				.claim("role", principal.getAuthorities().iterator().next().getAuthority())
 				.issuedAt(now)
 				.expiration(expiry)
@@ -68,6 +92,7 @@ public class JwtTokenProvider {
 	public Claims validateAccessToken(String token) {
 		return Jwts.parser()
 				.verifyWith(getSigningKey())
+				.requireIssuer(ISSUER)
 				.build()
 				.parseSignedClaims(token)
 				.getPayload();

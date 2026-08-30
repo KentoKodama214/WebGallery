@@ -725,7 +725,7 @@ public class AccountRepositoryImplTest {
 			accountList.add(account2);
 
 			ArgumentCaptor<AccountCondition> accountCaptor = ArgumentCaptor.forClass(AccountCondition.class);
-			doReturn(accountList).when(accountMapper).select(accountCaptor.capture());
+			doReturn(accountList).when(accountMapper).selectList(accountCaptor.capture());
 
 			AccountGetModel accountGetModel = AccountGetModel.builder().limit(100).offset(0).build();
 			AccountPageModel actualPage = accountRepositoryImpl.getAccountList(accountGetModel);
@@ -773,7 +773,7 @@ public class AccountRepositoryImplTest {
 			List<Account> expected = new ArrayList<Account>();
 
 			ArgumentCaptor<AccountCondition> accountCaptor = ArgumentCaptor.forClass(AccountCondition.class);
-			doReturn(expected).when(accountMapper).select(accountCaptor.capture());
+			doReturn(expected).when(accountMapper).selectList(accountCaptor.capture());
 
 			AccountGetModel accountGetModel = AccountGetModel.builder().limit(100).offset(0).build();
 			AccountPageModel actualPage = accountRepositoryImpl.getAccountList(accountGetModel);
@@ -819,7 +819,7 @@ public class AccountRepositoryImplTest {
 			accountList.add(account1);
 			accountList.add(account2);
 
-			doReturn(accountList).when(accountMapper).select(any(AccountCondition.class));
+			doReturn(accountList).when(accountMapper).selectList(any(AccountCondition.class));
 
 			// 1ページあたりの表示件数を1件と仮定し、limitはその1件多い2を指定する
 			AccountGetModel accountGetModel = AccountGetModel.builder().limit(2).offset(0).build();
@@ -871,7 +871,7 @@ public class AccountRepositoryImplTest {
 			accountList.add(account2);
 
 			ArgumentCaptor<AccountCondition> accountCaptor = ArgumentCaptor.forClass(AccountCondition.class);
-			doReturn(accountList).when(accountMapper).select(accountCaptor.capture());
+			doReturn(accountList).when(accountMapper).selectList(accountCaptor.capture());
 
 			AccountGetModel accountGetModel = AccountGetModel.builder().limit(100).offset(0).build();
 			AccountPageModel actualPage = accountRepositoryImpl.getAccountListForAdmin(accountGetModel);
@@ -919,7 +919,7 @@ public class AccountRepositoryImplTest {
 			accountList.add(account1);
 			accountList.add(account2);
 
-			doReturn(accountList).when(accountMapper).select(any(AccountCondition.class));
+			doReturn(accountList).when(accountMapper).selectList(any(AccountCondition.class));
 
 			// 1ページあたりの表示件数を1件と仮定し、limitはその1件多い2を指定する
 			AccountGetModel accountGetModel = AccountGetModel.builder().limit(2).offset(0).build();

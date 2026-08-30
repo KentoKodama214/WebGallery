@@ -23,6 +23,14 @@ public interface AccountMapper {
 	public List<Account> select(AccountCondition condition);
 
 	/**
+	 * 条件に該当するアカウントの一覧を取得する（パスワードハッシュを射影しない一覧表示専用）
+	 *
+	 * @param	condition	抽出条件
+	 * @return				{@link Account}
+	 */
+	public List<Account> selectList(AccountCondition condition);
+
+	/**
 	 * 条件に該当するアカウントの件数を取得する
 	 *
 	 * @param	condition	カウント条件
@@ -78,4 +86,13 @@ public interface AccountMapper {
 	 * @return				ロックしたアカウント番号（存在しない場合はnull）
 	 */
 	public Long lockAccount(@Param("accountNo") Long accountNo);
+
+	/**
+	 * ログイン試行を直列化するためのトランザクションレベルのアドバイザリロックを取得する<p>
+	 * アカウントが存在しない場合でもキー（アカウントID）に基づいてロックする
+	 *
+	 * @param	accountId	アカウントID
+	 * @return				常に1（ロック取得の完了を表す）
+	 */
+	public Integer lockForLoginAttempt(@Param("accountId") String accountId);
 }

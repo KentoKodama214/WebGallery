@@ -209,10 +209,15 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	 * @throws	GalleryException	更新に失敗した場合
 	 */
 	@EventListener
+	// ログイン成功時は呼び出し元login()のトランザクションに参加する。
+	// 認証失敗イベントと異なり、成功時はlogin()がロールバックされないため独立トランザクションは不要
 	@Transactional(rollbackFor = GalleryException.class)
 	public void handle(AuthenticationSuccessEvent event) throws GalleryException {
 		AccountModel accountModel = accountRepository.getByAccountId(new AccountId(event.getAuthentication().getName()));
 
+		if (Objects.isNull(accountModel)) {
+			return;
+		}
 		accountRepository.updateLoginFailureCount(AccountModel.forLoginSuccess(accountModel.getAccountNo(), clock));
 	}
 

@@ -10,6 +10,7 @@ import com.web.gallery.enumeration.SortPhotoEnum;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -55,6 +56,7 @@ public class PhotoListRequest {
 	@JsonSetter(nulls = Nulls.SKIP)
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
+	@Max(value = 100000, message = "{validation.common.max}")
 	private Integer pageNo = 1;
 
 	/**

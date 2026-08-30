@@ -116,7 +116,7 @@ public class ImageFileValidationPolicyTest {
 	@DisplayName("異常系：ファイルの読み込みに失敗した場合、falseを返すこと")
 	void isValidSignature_ioException() throws IOException {
 		MultipartFile multipartFile = mock(MultipartFile.class);
-		doThrow(new IOException("read error")).when(multipartFile).getBytes();
+		doThrow(new IOException("read error")).when(multipartFile).getInputStream();
 
 		ImageFile imageFile = new ImageFile(multipartFile);
 		assertFalse(imageFileValidationPolicy.isValidSignature(imageFile));

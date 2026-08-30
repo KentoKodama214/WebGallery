@@ -38,6 +38,15 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
 	}
 
 	@Override
+	public RefreshTokenModel findByTokenHashForUpdate(TokenHash tokenHash) {
+		RefreshToken refreshToken = refreshTokenMapper.selectByTokenHashForUpdate(tokenHash.value());
+		if (refreshToken == null) {
+			return null;
+		}
+		return RefreshTokenModel.from(refreshToken);
+	}
+
+	@Override
 	public void revokeAllByAccountNo(AccountNo accountNo) {
 		refreshTokenMapper.revokeAllByAccountNo(accountNo.value(), accountNo.value());
 	}

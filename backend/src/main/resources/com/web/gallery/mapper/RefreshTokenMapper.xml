@@ -51,6 +51,23 @@
 			token_hash = #{tokenHash}
 	</select>
 
+	<select id="selectByTokenHashForUpdate" parameterType="String" resultMap="RefreshTokenMap">
+		SELECT
+			token_id AS tokenId,
+			account_no AS accountNo,
+			token_hash AS tokenHash,
+			expires_at AS expiresAt,
+			created_at AS createdAt,
+			updated_by AS updatedBy,
+			updated_at AS updatedAt,
+			is_revoked AS isRevoked
+		FROM
+			common.refresh_token
+		WHERE
+			token_hash = #{tokenHash}
+		FOR UPDATE
+	</select>
+
 	<update id="revokeAllByAccountNo">
 		UPDATE common.refresh_token
 		SET is_revoked = TRUE,

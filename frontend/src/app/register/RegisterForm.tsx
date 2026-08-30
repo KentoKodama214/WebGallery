@@ -11,6 +11,8 @@ import type { PrefectureGroup } from "@/lib/api/client";
 import {
   ACCOUNT_ID_PATTERN,
   PASSWORD_PATTERN,
+  PASSWORD_ERROR_MESSAGE,
+  PASSWORD_PLACEHOLDER,
   clearError,
   isPastDate,
 } from "@/lib/validation";
@@ -74,7 +76,7 @@ export function RegisterForm() {
     }
 
     if (!PASSWORD_PATTERN.test(password)) {
-      newErrors.password = "半角英数字で8文字以上で入力してください";
+      newErrors.password = PASSWORD_ERROR_MESSAGE;
     }
 
     if (birthdate && !isPastDate(birthdate)) {
@@ -210,12 +212,12 @@ export function RegisterForm() {
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => {
                 if (!PASSWORD_PATTERN.test(password)) {
-                  setErrors((prev) => ({ ...prev, password: "半角英数字で8文字以上で入力してください" }));
+                  setErrors((prev) => ({ ...prev, password: PASSWORD_ERROR_MESSAGE }));
                 } else {
                   setErrors((prev) => clearError(prev, "password"));
                 }
               }}
-              placeholder="半角英数字で8文字以上"
+              placeholder={PASSWORD_PLACEHOLDER}
               aria-invalid={errors.password ? true : undefined}
               aria-describedby={errors.password ? "register-password-error" : undefined}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
