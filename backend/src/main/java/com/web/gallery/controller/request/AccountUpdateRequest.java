@@ -22,12 +22,12 @@ public class AccountUpdateRequest {
 	/**
 	 * アカウントID
 	 * <p>
-	 * 半角英数8〜16桁、ブランクなし
+	 * 半角英数8〜20桁、ブランクなし
 	 */
-	@Schema(description = "アカウントID（半角英数8〜16桁）", example = "testuser01")
+	@Schema(description = "アカウントID（半角英数8〜20桁）", example = "testuser01")
 	@NotBlank(message = "{validation.common.notBlank}")
-	@Size(min = 8, max = 16, message = "{validation.common.min_max_length}")
-	@Pattern(regexp = "[a-zA-Z0-9]{8,16}", message = "{validation.common.pattern}")
+	@Size(min = 8, max = 20, message = "{validation.common.min_max_length}")
+	@Pattern(regexp = "[a-zA-Z0-9]{8,20}", message = "{validation.common.pattern}")
 	private String accountId;
 
 	/**

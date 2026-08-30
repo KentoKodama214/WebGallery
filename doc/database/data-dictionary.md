@@ -6,7 +6,7 @@
 
 | No | 物理名 | 論理名 | データ型 | デフォルト値 | コメント | 使用テーブル |
 |----|--------|--------|----------|-------------|----------|-------------|
-| 1 | account_id | アカウントID | varchar(16) | - | 8〜16文字の英数字。ログイン時に使用する一意の識別子 | account |
+| 1 | account_id | アカウントID | varchar(20) | - | 8〜20文字の英数字。ログイン時に使用する一意の識別子 | account |
 | 2 | account_name | アカウント名 | varchar(50) | - | ユーザーの表示名 | account |
 | 3 | account_no | アカウント番号 | bigserial / bigint | (自動採番) / - | アカウントを一意に特定するための番号。accountテーブルではPK（自動採番）、他テーブルではFK | account, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite |
 | 4 | address | 住所 | text | '' | 撮影場所の住所 | location_mst |

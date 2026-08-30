@@ -17,8 +17,8 @@ CREATE TABLE common.account
 	updated_at timestamp with time zone NOT NULL,
 	-- 削除フラグ
 	is_deleted boolean DEFAULT 'false' NOT NULL,
-	-- アカウントID: 8文字以上16文字以下、半角英数字
-	account_id varchar(16) NOT NULL UNIQUE,
+	-- アカウントID: 8文字以上20文字以下、半角英数字
+	account_id varchar(20) NOT NULL UNIQUE,
 	-- アカウント名
 	account_name varchar(50) NOT NULL,
 	-- パスワード
@@ -62,7 +62,7 @@ COMMENT ON COLUMN common.account.created_at IS '作成日時';
 COMMENT ON COLUMN common.account.updated_by IS '更新者';
 COMMENT ON COLUMN common.account.updated_at IS '更新日時';
 COMMENT ON COLUMN common.account.is_deleted IS '削除フラグ';
-COMMENT ON COLUMN common.account.account_id IS 'アカウントID : 8文字以上16文字以下、半角英数字';
+COMMENT ON COLUMN common.account.account_id IS 'アカウントID : 8文字以上20文字以下、半角英数字';
 COMMENT ON COLUMN common.account.account_name IS 'アカウント名';
 COMMENT ON COLUMN common.account.password IS 'パスワード';
 COMMENT ON COLUMN common.account.birthdate IS '生年月日 : 個人情報管理の観点で、必須入力なし、かつ年月まで。データ登録時にすべて1日に変換する';

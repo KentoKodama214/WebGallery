@@ -50,7 +50,7 @@ describe("RegisterForm", () => {
       expect(screen.getByText("Create an Account")).toBeInTheDocument();
     });
 
-    expect(screen.getByPlaceholderText("半角英数字で8〜16文字")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("半角英数字で8〜20文字")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "登録" })).toBeInTheDocument();
     expect(screen.getByText("← back")).toBeInTheDocument();
@@ -88,7 +88,7 @@ describe("RegisterForm", () => {
       expect(screen.getByText("Create an Account")).toBeInTheDocument();
     });
 
-    const accountIdInput = screen.getByPlaceholderText("半角英数字で8〜16文字");
+    const accountIdInput = screen.getByPlaceholderText("半角英数字で8〜20文字");
     expect(accountIdInput).not.toBeDisabled();
     await user.type(accountIdInput, "testuser1");
     expect(accountIdInput).toHaveValue("testuser1");
@@ -111,7 +111,7 @@ describe("RegisterForm", () => {
     const textInputs = screen.getAllByRole("textbox");
     const accountNameInput = textInputs[1]; // 2番目のテキスト入力がアカウント名
 
-    await user.type(screen.getByPlaceholderText("半角英数字で8〜16文字"), "testuser1");
+    await user.type(screen.getByPlaceholderText("半角英数字で8〜20文字"), "testuser1");
     await user.type(accountNameInput, "テストユーザー");
     await user.type(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"), "password1");
     await user.click(screen.getByRole("button", { name: "登録" }));
@@ -140,7 +140,7 @@ describe("RegisterForm", () => {
     });
 
     const accountNameInput = screen.getAllByRole("textbox")[1];
-    await user.type(screen.getByPlaceholderText("半角英数字で8〜16文字"), "testuser1");
+    await user.type(screen.getByPlaceholderText("半角英数字で8〜20文字"), "testuser1");
     await user.type(accountNameInput, "テストユーザー");
     await user.type(
       screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"),
@@ -178,7 +178,7 @@ describe("RegisterForm", () => {
     const textInputs = screen.getAllByRole("textbox");
     const accountNameInput = textInputs[1];
 
-    await user.type(screen.getByPlaceholderText("半角英数字で8〜16文字"), "testuser1");
+    await user.type(screen.getByPlaceholderText("半角英数字で8〜20文字"), "testuser1");
     await user.type(accountNameInput, "テストユーザー");
     await user.type(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"), "password1");
     await user.click(screen.getByRole("button", { name: "登録" }));
@@ -201,14 +201,14 @@ describe("RegisterForm", () => {
     const textInputs = screen.getAllByRole("textbox");
     const accountNameInput = textInputs[1];
 
-    await user.type(screen.getByPlaceholderText("半角英数字で8〜16文字"), "short");
+    await user.type(screen.getByPlaceholderText("半角英数字で8〜20文字"), "short");
     await user.type(accountNameInput, "テスト");
     await user.type(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"), "password1");
     await user.click(screen.getByRole("button", { name: "登録" }));
 
     await waitFor(() => {
       expect(
-        screen.getByText("半角英数字で8〜16文字で入力してください")
+        screen.getByText("半角英数字で8〜20文字で入力してください")
       ).toBeInTheDocument();
     });
 
@@ -223,7 +223,7 @@ describe("RegisterForm", () => {
       expect(screen.getByText("Create an Account")).toBeInTheDocument();
     });
 
-    await user.type(screen.getByPlaceholderText("半角英数字で8〜16文字"), "testuser1");
+    await user.type(screen.getByPlaceholderText("半角英数字で8〜20文字"), "testuser1");
     await user.type(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"), "password1");
     await user.click(screen.getByRole("button", { name: "登録" }));
 
@@ -247,7 +247,7 @@ describe("RegisterForm", () => {
     const textInputs = screen.getAllByRole("textbox");
     const accountNameInput = textInputs[1];
 
-    await user.type(screen.getByPlaceholderText("半角英数字で8〜16文字"), "testuser1");
+    await user.type(screen.getByPlaceholderText("半角英数字で8〜20文字"), "testuser1");
     await user.type(accountNameInput, "テスト");
     await user.type(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"), "short");
     await user.click(screen.getByRole("button", { name: "登録" }));
@@ -274,7 +274,7 @@ describe("RegisterForm", () => {
     const textInputs = screen.getAllByRole("textbox");
     const accountNameInput = textInputs[1];
 
-    await user.type(screen.getByPlaceholderText("半角英数字で8〜16文字"), "testuser1");
+    await user.type(screen.getByPlaceholderText("半角英数字で8〜20文字"), "testuser1");
     await user.type(accountNameInput, "テストユーザー");
     await user.type(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"), "password1");
     await user.click(screen.getByRole("button", { name: "登録" }));
