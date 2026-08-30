@@ -75,9 +75,9 @@ public class AuthServiceImplIntegrationTest {
 			hashedPassword
 		);
 
-		// ロック状態のアカウント（ログイン失敗回数3）
+		// ロック状態のアカウント（ログイン失敗回数3・直近にロックされたばかりの想定で更新日時を現在時刻にする）
 		jdbcTemplate.update(
-			"INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 3)",
+			"INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 3)",
 			hashedPassword
 		);
 
@@ -345,9 +345,9 @@ public class AuthServiceImplIntegrationTest {
 			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
 			String refreshToken = loginResult.getRefreshToken().value();
 
-			// 管理者によるアカウントロックを模擬（ログイン失敗回数を上限に更新）
+			// 管理者によるアカウントロックを模擬（ログイン失敗回数を上限に更新し、更新日時も現在時刻にする）
 			jdbcTemplate.update(
-				"UPDATE common.account SET login_failure_count = 3 WHERE account_no = 1"
+				"UPDATE common.account SET login_failure_count = 3, updated_at = NOW() WHERE account_no = 1"
 			);
 
 			// ロック後のリフレッシュはLockedExceptionをthrowする

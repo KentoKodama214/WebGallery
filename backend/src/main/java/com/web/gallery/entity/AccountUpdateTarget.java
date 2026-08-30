@@ -5,7 +5,6 @@ import java.time.OffsetDateTime;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.web.gallery.constant.Consts;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 import com.web.gallery.model.AccountModel;
@@ -74,16 +73,20 @@ public class AccountUpdateTarget {
 	 * @return					{@link AccountUpdateTarget}
 	 */
 	public static AccountUpdateTarget fromForUpdate(AccountModel model, PasswordEncoder passwordEncoder) {
+		// Modelに値がある項目だけを更新対象に含める（AccountMapper.xmlのUPDATEは target.xxx != null の項目のみSET句に出す）。
+		// 未指定項目をセンチネル値で埋めると、プロフィール更新のたびに last_login_datetime や
+		// login_failure_count まで書き換わり、監査情報の破壊やロックカウンタの意図しないリセットを招くため、
+		// null は「変更なし」としてそのまま渡す。
 		AccountUpdateTarget target = AccountUpdateTarget.builder()
 				.accountId(model.getAccountId() != null ? model.getAccountId().value() : null)
 				.accountName(model.getAccountName() != null ? model.getAccountName().value() : null)
-				.birthdate(model.getBirthdate() != null ? model.getBirthdate().value() : Consts.MIN_LOCAL_DATE)
-				.sexKbn(SexEnum.getOrDefault(model.getSexKbn()))
-				.birthplacePrefectureKbnCode(model.getBirthplacePrefectureKbnCode() != null ? model.getBirthplacePrefectureKbnCode().value() : Consts.STRING_NONE)
-				.residentPrefectureKbnCode(model.getResidentPrefectureKbnCode() != null ? model.getResidentPrefectureKbnCode().value() : Consts.STRING_NONE)
-				.freeMemo(model.getFreeMemo() != null ? model.getFreeMemo().value() : Consts.STRING_EMPTY)
-				.lastLoginDatetime(model.getLastLoginDatetime() != null ? model.getLastLoginDatetime().value() : Consts.MIN_OFFSET_DATE_TIME)
-				.loginFailureCount(model.getLoginFailureCount() != null ? model.getLoginFailureCount().value() : 0)
+				.birthdate(model.getBirthdate() != null ? model.getBirthdate().value() : null)
+				.sexKbn(model.getSexKbn())
+				.birthplacePrefectureKbnCode(model.getBirthplacePrefectureKbnCode() != null ? model.getBirthplacePrefectureKbnCode().value() : null)
+				.residentPrefectureKbnCode(model.getResidentPrefectureKbnCode() != null ? model.getResidentPrefectureKbnCode().value() : null)
+				.freeMemo(model.getFreeMemo() != null ? model.getFreeMemo().value() : null)
+				.lastLoginDatetime(model.getLastLoginDatetime() != null ? model.getLastLoginDatetime().value() : null)
+				.loginFailureCount(model.getLoginFailureCount() != null ? model.getLoginFailureCount().value() : null)
 				.build();
 
 		if (model.getPassword() != null) {

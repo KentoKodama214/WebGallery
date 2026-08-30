@@ -344,6 +344,27 @@ public class PhotoRestControllerTest {
 
 			verify(photoServiceImpl, times(0)).getPhotoList(any(PhotoListGetModel.class));
 		}
+
+		@Test
+		@Order(7)
+		@DisplayName("正常系：タグに連続した空白が含まれていても、空文字トークンは除去されて渡される")
+		void getPhotoList_tagList_ignores_blank_tokens() throws Exception {
+			doReturn(1L).when(sessionHelper).getAccountNo();
+
+			ArgumentCaptor<PhotoListGetModel> photoListGetModelCaptor = ArgumentCaptor.forClass(PhotoListGetModel.class);
+			doReturn(PhotoPageModel.of(PhotoModelList.empty(), true)).when(photoServiceImpl).getPhotoList(photoListGetModelCaptor.capture());
+
+			// 「太陽」＋全角スペース20個＋「海」。バリデーションは非空トークン2件として通過するが、
+			// 旧実装ではモデルのタグリストに空文字が20個以上残り、SQLの相関サブクエリを無制限に増やせた
+			String tagListParam = "太陽" + "　".repeat(20) + "海";
+
+			mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos")
+					.param("tagList", tagListParam))
+				.andExpect(status().isOk());
+
+			List<String> actualTagList = photoListGetModelCaptor.getValue().getTagList();
+			assertEquals(List.of("太陽", "海"), actualTagList);
+		}
 	}
 
 	@Nested

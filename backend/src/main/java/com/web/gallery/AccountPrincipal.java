@@ -117,7 +117,9 @@ public class AccountPrincipal implements UserDetails {
 	}
 
 	/***
-	 * アカウントの有効／無効を返す
+	 * アカウントの有効／無効を返す<p>
+	 * 現状アカウントは物理削除のみで {@code is_deleted} が true になる経路はないが、
+	 * 将来的な論理削除の導入に備えて削除フラグを判定に含めている
 	 *
 	 * @return 有効な場合、trueを返す
 	 */

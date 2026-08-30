@@ -12,6 +12,7 @@ spring:
 auth:
   login:
     failCount: 3
+    lockDurationMinutes: 30
 
 app:
   account:

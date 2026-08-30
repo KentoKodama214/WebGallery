@@ -45,4 +45,10 @@ public final class Consts {
 	// Integer
 	/** 写真一覧のタグリストで指定できるタグ数の上限 */
 	public static final Integer TAG_LIST_MAX_SIZE = 20;
+
+	/** 1枚の写真に登録できるタグ数の上限（アノテーション属性で参照するためint型で定義する） */
+	public static final int PHOTO_TAG_MAX_SIZE = 20;
+
+	/** タグ名（日本語・英語）の最大文字数（DBの varchar(20) に合わせる） */
+	public static final int TAG_NAME_MAX_LENGTH = 20;
 }

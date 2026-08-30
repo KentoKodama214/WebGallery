@@ -16,6 +16,7 @@ import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.entity.Account;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
@@ -77,6 +78,9 @@ public class AccountModel {
 	/** ログイン失敗回数 */
 	private LoginFailureCount loginFailureCount;
 
+	/** 更新日時（アカウントロックの自動解除判定に使用する。エンティティ由来の取得時のみ設定される） */
+	private UpdatedAt updatedAt;
+
 	/** 削除フラグ */
 	private IsDeleted isDeleted;
 
@@ -101,6 +105,7 @@ public class AccountModel {
 				.authorityKbn(entity.getAuthorityKbn())
 				.lastLoginDatetime(entity.getLastLoginDatetime() != null ? new LastLoginDatetime(entity.getLastLoginDatetime()) : null)
 				.loginFailureCount(entity.getLoginFailureCount() != null ? new LoginFailureCount(entity.getLoginFailureCount()) : null)
+				.updatedAt(entity.getUpdatedAt() != null ? new UpdatedAt(entity.getUpdatedAt()) : null)
 				.isDeleted(new IsDeleted(entity.getIsDeleted()))
 				.build();
 	}
