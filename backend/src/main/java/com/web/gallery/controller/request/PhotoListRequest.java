@@ -56,7 +56,8 @@ public class PhotoListRequest {
 	@JsonSetter(nulls = Nulls.SKIP)
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
-	@Max(value = 100000, message = "{validation.common.max}")
+	// 深いオフセットページングによる負荷増大を抑えるための上限（20件/ページ換算で20万件相当）
+	@Max(value = 10000, message = "{validation.common.max}")
 	private Integer pageNo = 1;
 
 	/**

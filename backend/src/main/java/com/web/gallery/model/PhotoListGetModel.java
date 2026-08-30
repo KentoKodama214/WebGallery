@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoListRequest;
@@ -66,9 +67,15 @@ public class PhotoListGetModel {
 	 */
 	public static PhotoListGetModel from(PhotoListRequest request, Long accountNo, String photoAccountId) {
 		Optional<String> tagsOpt = Optional.ofNullable(request.getTagList());
-		List<String> tagList = tagsOpt.map(tag ->
-				new ArrayList<String>(Arrays.asList(tag.replace(Consts.FULL_SPACE, Consts.HALF_SPACE).split(Consts.HALF_SPACE))))
-				.orElse(new ArrayList<String>());
+		// 空文字トークンを除外し、件数上限を強制する。
+		// （バリデーション側 PhotoListRequest#isTagListSizeValid は空文字を除外して数えるため、
+		//   ここで除外しないと「全角スペースの大量指定」で相関サブクエリを無制限に増やせてしまう）
+		List<String> tagList = tagsOpt.map(tag -> Arrays.stream(
+						tag.replace(Consts.FULL_SPACE, Consts.HALF_SPACE).split(Consts.HALF_SPACE))
+				.filter(t -> !t.isEmpty())
+				.limit(Consts.TAG_LIST_MAX_SIZE)
+				.collect(Collectors.toCollection(ArrayList::new)))
+				.orElseGet(ArrayList::new);
 
 		return PhotoListGetModel.builder()
 				.accountNo(accountNo != null ? new AccountNo(accountNo) : null)

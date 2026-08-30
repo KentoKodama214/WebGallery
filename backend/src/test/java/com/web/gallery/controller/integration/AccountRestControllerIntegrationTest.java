@@ -417,13 +417,14 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
 			assertEquals("$2a$10$password1", actual.getFirst().getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate());
+			// プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
+			assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
 			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode());
 			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode());
 			assertEquals("", actual.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime());
 			assertEquals(0, actual.getFirst().getLoginFailureCount());
 		}
 
@@ -472,13 +473,14 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
 			assertEquals("$2a$10$password1", actual.getFirst().getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate());
+			// プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
+			assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
 			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode());
 			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode());
 			assertEquals("", actual.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime());
 			assertEquals(0, actual.getFirst().getLoginFailureCount());
 		}
 
@@ -527,13 +529,14 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
 			assertNotEquals("$2a$10$password1", actual.getFirst().getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate());
+			// プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
+			assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
 			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode());
 			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode());
 			assertEquals("", actual.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime());
 			assertEquals(0, actual.getFirst().getLoginFailureCount());
 		}
 
@@ -582,13 +585,14 @@ public class AccountRestControllerIntegrationTest {
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
 			assertNotEquals("$2a$10$password1", actual.getFirst().getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), actual.getFirst().getBirthdate());
+			// プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
+			assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
 			assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode());
 			assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode());
 			assertEquals("", actual.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actual.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime().plusHours(9));
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actual.getFirst().getLastLoginDatetime());
 			assertEquals(0, actual.getFirst().getLoginFailureCount());
 		}
 

@@ -214,13 +214,14 @@ public class AccountServiceImplIntegrationTest {
 			assertEquals("zzzzzzzz", actualData.getFirst().getAccountId());
 			assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
 			assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
+			// 更新リクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
+			assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
 			assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
 			assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
 			assertEquals("", actualData.getFirst().getFreeMemo());
 			assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime().plusHours(9));
+			assertEquals(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), actualData.getFirst().getLastLoginDatetime());
 			assertEquals(0, actualData.getFirst().getLoginFailureCount());
 		}
 

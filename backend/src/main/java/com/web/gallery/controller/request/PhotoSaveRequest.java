@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import com.web.gallery.constant.Consts;
 import com.web.gallery.enumeration.DirectionEnum;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -119,5 +120,6 @@ public class PhotoSaveRequest {
 	/** 写真タグリスト */
 	@Schema(description = "写真タグリスト")
 	@Valid
+	@Size(max = Consts.PHOTO_TAG_MAX_SIZE, message = "{validation.photo.photoTag.maxSize}")
 	private List<PhotoTagSaveRequest> photoTagRegistRequestList;
 }

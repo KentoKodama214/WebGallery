@@ -42,3 +42,4 @@ app:
 auth:
   login:
     failCount: 3
+    lockDurationMinutes: 30

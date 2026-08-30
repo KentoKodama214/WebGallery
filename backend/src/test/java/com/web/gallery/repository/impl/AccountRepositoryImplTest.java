@@ -362,13 +362,14 @@ public class AccountRepositoryImplTest {
 			assertEquals("aaaaaaaa", targetAccountCapture.getAccountId());
 			assertEquals("AAAAAAAA", targetAccountCapture.getAccountName());
 			assertEquals(null, targetAccountCapture.getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), targetAccountCapture.getBirthdate());
-			assertEquals(SexEnum.NONE, targetAccountCapture.getSexKbn());
-			assertEquals("none", targetAccountCapture.getBirthplacePrefectureKbnCode());
-			assertEquals("none", targetAccountCapture.getResidentPrefectureKbnCode());
-			assertEquals("", targetAccountCapture.getFreeMemo());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetAccountCapture.getLastLoginDatetime());
-			assertEquals(0, targetAccountCapture.getLoginFailureCount());
+			// 未指定項目は「変更なし」としてnullが渡る（センチネル値で上書きしない）
+			assertEquals(null, targetAccountCapture.getBirthdate());
+			assertEquals(null, targetAccountCapture.getSexKbn());
+			assertEquals(null, targetAccountCapture.getBirthplacePrefectureKbnCode());
+			assertEquals(null, targetAccountCapture.getResidentPrefectureKbnCode());
+			assertEquals(null, targetAccountCapture.getFreeMemo());
+			assertEquals(null, targetAccountCapture.getLastLoginDatetime());
+			assertEquals(null, targetAccountCapture.getLoginFailureCount());
 		}
 
 		@Test
@@ -441,13 +442,14 @@ public class AccountRepositoryImplTest {
 			assertEquals("aaaaaaaa", targetAccountCapture.getAccountId());
 			assertEquals("AAAAAAAA", targetAccountCapture.getAccountName());
 			assertEquals(null, targetAccountCapture.getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), targetAccountCapture.getBirthdate());
-			assertEquals(SexEnum.NONE, targetAccountCapture.getSexKbn());
-			assertEquals("none", targetAccountCapture.getBirthplacePrefectureKbnCode());
-			assertEquals("none", targetAccountCapture.getResidentPrefectureKbnCode());
-			assertEquals("", targetAccountCapture.getFreeMemo());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetAccountCapture.getLastLoginDatetime());
-			assertEquals(0, targetAccountCapture.getLoginFailureCount());
+			// 未指定項目は「変更なし」としてnullが渡る（センチネル値で上書きしない）
+			assertEquals(null, targetAccountCapture.getBirthdate());
+			assertEquals(null, targetAccountCapture.getSexKbn());
+			assertEquals(null, targetAccountCapture.getBirthplacePrefectureKbnCode());
+			assertEquals(null, targetAccountCapture.getResidentPrefectureKbnCode());
+			assertEquals(null, targetAccountCapture.getFreeMemo());
+			assertEquals(null, targetAccountCapture.getLastLoginDatetime());
+			assertEquals(null, targetAccountCapture.getLoginFailureCount());
 		}
 
 		@Test
@@ -476,13 +478,14 @@ public class AccountRepositoryImplTest {
 			assertEquals("aaaaaaaa", targetAccountCapture.getAccountId());
 			assertEquals("AAAAAAAA", targetAccountCapture.getAccountName());
 			assertEquals(null, targetAccountCapture.getPassword());
-			assertEquals(LocalDate.of(1900, 1, 1), targetAccountCapture.getBirthdate());
-			assertEquals(SexEnum.NONE, targetAccountCapture.getSexKbn());
-			assertEquals("none", targetAccountCapture.getBirthplacePrefectureKbnCode());
-			assertEquals("none", targetAccountCapture.getResidentPrefectureKbnCode());
-			assertEquals("", targetAccountCapture.getFreeMemo());
-			assertEquals(OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), targetAccountCapture.getLastLoginDatetime());
-			assertEquals(0, targetAccountCapture.getLoginFailureCount());
+			// 未指定項目は「変更なし」としてnullが渡る（センチネル値で上書きしない）
+			assertEquals(null, targetAccountCapture.getBirthdate());
+			assertEquals(null, targetAccountCapture.getSexKbn());
+			assertEquals(null, targetAccountCapture.getBirthplacePrefectureKbnCode());
+			assertEquals(null, targetAccountCapture.getResidentPrefectureKbnCode());
+			assertEquals(null, targetAccountCapture.getFreeMemo());
+			assertEquals(null, targetAccountCapture.getLastLoginDatetime());
+			assertEquals(null, targetAccountCapture.getLoginFailureCount());
 		}
 	}
 	

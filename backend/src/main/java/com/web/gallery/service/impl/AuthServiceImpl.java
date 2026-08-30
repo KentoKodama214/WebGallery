@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.JwtConfig;
 import com.web.gallery.config.LoginConfig;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.helper.JwtTokenProvider;
 import com.web.gallery.model.AccountModel;
@@ -37,6 +38,8 @@ import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.RefreshTokenRepository;
 import com.web.gallery.service.AuthService;
 
+import lombok.extern.slf4j.Slf4j;
+
 
 /**
  * JWT認証に関するビジネスロジックを行うServiceの実装クラス
@@ -44,6 +47,7 @@ import com.web.gallery.service.AuthService;
  * @version	1.0.0
  * @since	1.0.0
  */
+@Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
 	private final AuthenticationManager authenticationManager;
@@ -89,10 +93,13 @@ public class AuthServiceImpl implements AuthService {
 		accountRepository.lockForLoginAttempt(accountId);
 
 		AccountModel lockCheckModel = accountRepository.getByAccountId(accountId);
-		if (lockCheckModel != null
-				&& lockCheckModel.getLoginFailureCount() != null
-				&& lockCheckModel.getLoginFailureCount().value() >= loginConfig.getFailCount()) {
-			throw new LockedException(MessageConst.ERR_ACCOUNT_LOCKED);
+		if (isLocked(lockCheckModel)) {
+			if (isLockDurationElapsed(lockCheckModel)) {
+				// 最終失敗から一定時間が経過していればロックを自動解除する（総当たり攻撃中は失敗のたびに更新時刻が進むため解除されない）
+				releaseLock(lockCheckModel);
+			} else {
+				throw new LockedException(MessageConst.ERR_ACCOUNT_LOCKED);
+			}
 		}
 
 		Authentication authentication = authenticationManager.authenticate(
@@ -158,7 +165,11 @@ public class AuthServiceImpl implements AuthService {
 		AccountPrincipal principal = (AccountPrincipal) userDetails;
 
 		if (!principal.isAccountNonLocked()) {
-			throw new LockedException(MessageConst.ERR_ACCOUNT_LOCKED);
+			if (isLockDurationElapsed(accountModel)) {
+				releaseLock(accountModel);
+			} else {
+				throw new LockedException(MessageConst.ERR_ACCOUNT_LOCKED);
+			}
 		}
 		if (!principal.isEnabled()) {
 			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
@@ -196,6 +207,48 @@ public class AuthServiceImpl implements AuthService {
 	@Transactional
 	public void purgeExpiredRefreshTokens() {
 		refreshTokenRepository.deleteExpired();
+	}
+
+	/**
+	 * アカウントがログイン失敗回数の上限に達している（ロック状態である）かどうかを判定する
+	 *
+	 * @param	accountModel	{@link AccountModel}（null可）
+	 * @return					ロック状態の場合true
+	 */
+	private boolean isLocked(AccountModel accountModel) {
+		return accountModel != null
+				&& accountModel.getLoginFailureCount() != null
+				&& accountModel.getLoginFailureCount().value() >= loginConfig.getFailCount();
+	}
+
+	/**
+	 * アカウントの最終更新（＝直近のログイン失敗）から、ロック自動解除までの時間が経過しているかどうかを判定する
+	 *
+	 * @param	accountModel	{@link AccountModel}（null可）
+	 * @return					自動解除可能な場合true
+	 */
+	private boolean isLockDurationElapsed(AccountModel accountModel) {
+		if (accountModel == null || accountModel.getUpdatedAt() == null) {
+			return false;
+		}
+		return accountModel.getUpdatedAt().value()
+				.plusMinutes(loginConfig.getLockDurationMinutes())
+				.isBefore(OffsetDateTime.now(clock));
+	}
+
+	/**
+	 * アカウントロックを解除する（ログイン失敗回数を0にリセットする）<p>
+	 * 解除対象の行は直前に取得済みで必ず存在するため通常は失敗しないが、
+	 * 万一失敗しても認証処理は継続する（次回試行で再度解除を試みる）
+	 *
+	 * @param	accountModel	{@link AccountModel}
+	 */
+	private void releaseLock(AccountModel accountModel) {
+		try {
+			accountRepository.updateLoginFailureCount(AccountModel.forUnlock(accountModel.getAccountNo().value()));
+		} catch (GalleryException e) {
+			log.warn("Failed to auto-release account lock. (accountNo: {})", accountModel.getAccountNo().value(), e);
+		}
 	}
 
 	/**
