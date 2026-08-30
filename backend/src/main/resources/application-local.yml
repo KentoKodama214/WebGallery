@@ -14,7 +14,9 @@ app:
     normalUserUpperLimit: ${NORMAL_USER_UPPER_LIMIT:1000}
     outputPath: ${OUTPUT_PATH:https://localhost:8080/image/}
   jwt:
-    secret: ${JWT_SECRET:default-dev-secret-must-be-at-least-256-bits-long-for-hs256}
+    # デフォルト値は設けない。既知のシークレットが混入するとJWT偽造が可能になるため、
+    # ローカル実行でも環境変数 JWT_SECRET（256bit以上）の設定を必須とする
+    secret: ${JWT_SECRET}
   cors:
     allowed-origins:
       - ${FRONTEND_ORIGIN:http://localhost:3000}

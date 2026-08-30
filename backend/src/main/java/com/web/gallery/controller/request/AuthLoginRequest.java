@@ -17,7 +17,7 @@ public class AuthLoginRequest {
 	/** アカウントID */
 	@Schema(description = "アカウントID", example = "testuser01")
 	@NotBlank(message = "{validation.common.notBlank}")
-	@Size(max = 16, message = "{validation.common.max_length}")
+	@Size(max = 20, message = "{validation.common.max_length}")
 	private String accountId;
 
 	/** パスワード */

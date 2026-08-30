@@ -68,7 +68,7 @@ export function RegisterForm() {
     const newErrors: Record<string, string> = {};
 
     if (!ACCOUNT_ID_PATTERN.test(accountId)) {
-      newErrors.accountId = "半角英数字で8〜16文字で入力してください";
+      newErrors.accountId = "半角英数字で8〜20文字で入力してください";
     }
 
     if (!accountName.trim()) {
@@ -168,12 +168,12 @@ export function RegisterForm() {
               onChange={(e) => setAccountId(e.target.value)}
               onBlur={() => {
                 if (!ACCOUNT_ID_PATTERN.test(accountId)) {
-                  setErrors((prev) => ({ ...prev, accountId: "半角英数字で8〜16文字で入力してください" }));
+                  setErrors((prev) => ({ ...prev, accountId: "半角英数字で8〜20文字で入力してください" }));
                 } else {
                   setErrors((prev) => clearError(prev, "accountId"));
                 }
               }}
-              placeholder="半角英数字で8〜16文字"
+              placeholder="半角英数字で8〜20文字"
               aria-invalid={errors.accountId ? true : undefined}
               aria-describedby={errors.accountId ? "register-account-id-error" : undefined}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"

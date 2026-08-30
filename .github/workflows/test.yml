@@ -220,6 +220,9 @@ jobs:
           done
 
       - name: バックエンドをバックグラウンドで起動
+        env:
+          # application-local.yml は JWT_SECRET のデフォルト値を持たないため、CI用の値を明示する（本番用ではない）
+          JWT_SECRET: e2e-only-secret-not-for-production-must-be-256-bits-long
         run: |
           SPRING_PROFILES_ACTIVE=local nohup ./backend/gradlew -p backend bootRun --no-daemon > backend-e2e.log 2>&1 &
 

@@ -22,12 +22,12 @@ public class AccountUpdateRequest {
 	/**
 	 * アカウントID
 	 * <p>
-	 * 半角英数8〜16桁、ブランクなし
+	 * 半角英数8〜20桁、ブランクなし
 	 */
-	@Schema(description = "アカウントID（半角英数8〜16桁）", example = "testuser01")
+	@Schema(description = "アカウントID（半角英数8〜20桁）", example = "testuser01")
 	@NotBlank(message = "{validation.common.notBlank}")
-	@Size(min = 8, max = 16, message = "{validation.common.min_max_length}")
-	@Pattern(regexp = "[a-zA-Z0-9]{8,16}", message = "{validation.common.pattern}")
+	@Size(min = 8, max = 20, message = "{validation.common.min_max_length}")
+	@Pattern(regexp = "[a-zA-Z0-9]{8,20}", message = "{validation.common.pattern}")
 	private String accountId;
 
 	/**
@@ -72,12 +72,14 @@ public class AccountUpdateRequest {
 
 	/** 出身都道府県区分コード */
 	@Schema(description = "出身都道府県区分コード", example = "Hokkaido")
-	@Size(max = 50, message = "{validation.common.max_length}")
+	@Size(max = 20, message = "{validation.common.max_length}")
+	@Pattern(regexp = "[a-zA-Z0-9]*", message = "{validation.common.pattern}")
 	private String birthplacePrefectureKbnCode;
 
 	/** 在住都道府県区分コード */
 	@Schema(description = "在住都道府県区分コード", example = "Tokyo")
-	@Size(max = 50, message = "{validation.common.max_length}")
+	@Size(max = 20, message = "{validation.common.max_length}")
+	@Pattern(regexp = "[a-zA-Z0-9]*", message = "{validation.common.pattern}")
 	private String residentPrefectureKbnCode;
 
 	/** フリーメモ */

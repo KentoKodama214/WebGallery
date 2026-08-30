@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="WebGalleryApplication (local)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="false">
+    <!--
+      ローカル開発用の共有実行構成。
+      application-local.yml は JWT_SECRET のデフォルト値を持たないため、ここで明示的に渡す。
+      この値はローカル開発専用であり、本番・検証環境では使用しないこと。
+    -->
+    <option name="ACTIVE_PROFILES" value="local" />
+    <envs>
+      <env name="JWT_SECRET" value="local-development-only-jwt-secret-not-for-production-256bits" />
+    </envs>
+    <module name="WebGallery.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.web.gallery.WebGalleryApplication" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

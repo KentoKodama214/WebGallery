@@ -36,11 +36,15 @@ else
   echo "バックエンドを起動します (SPRING_PROFILES_ACTIVE=local)"
   # docker-compose.ymlのpostgres-db設定に合わせて明示的に指定する
   # （シェルの環境変数でDB_URL等が上書きされていても、E2E実行時はdocker-composeのDBに接続する）
+  # E2E実行時限りのJWTシークレット（本番用ではない）。application-local.ymlは
+  # デフォルト値を持たないため、ここで明示的に与える
+  E2E_JWT_SECRET="${JWT_SECRET:-e2e-only-secret-not-for-production-must-be-256-bits-long}"
   set -m
   SPRING_PROFILES_ACTIVE=local \
   DB_URL="jdbc:postgresql://localhost:5432/web_gallery" \
   DB_USERNAME="postgres" \
   DB_PASSWORD="postgres" \
+  JWT_SECRET="$E2E_JWT_SECRET" \
     ./backend/gradlew -p backend bootRun --no-daemon \
     >"$BACKEND_LOG" 2>&1 &
   BACKEND_PID=$!

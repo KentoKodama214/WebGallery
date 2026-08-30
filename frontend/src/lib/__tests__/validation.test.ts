@@ -8,14 +8,14 @@ import {
 
 describe("validation", () => {
   describe("ACCOUNT_ID_PATTERN", () => {
-    it("半角英数字8〜16文字を許可する", () => {
+    it("半角英数字8〜20文字を許可する", () => {
       expect(ACCOUNT_ID_PATTERN.test("abcd1234")).toBe(true);
-      expect(ACCOUNT_ID_PATTERN.test("a".repeat(16))).toBe(true);
+      expect(ACCOUNT_ID_PATTERN.test("a".repeat(20))).toBe(true);
     });
 
-    it("7文字以下・17文字以上・記号・全角は拒否する", () => {
+    it("7文字以下・21文字以上・記号・全角は拒否する", () => {
       expect(ACCOUNT_ID_PATTERN.test("abc123")).toBe(false);
-      expect(ACCOUNT_ID_PATTERN.test("a".repeat(17))).toBe(false);
+      expect(ACCOUNT_ID_PATTERN.test("a".repeat(21))).toBe(false);
       expect(ACCOUNT_ID_PATTERN.test("abcd-123")).toBe(false);
       expect(ACCOUNT_ID_PATTERN.test("ａｂｃｄ１２３４")).toBe(false);
     });

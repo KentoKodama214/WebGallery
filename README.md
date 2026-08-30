@@ -130,7 +130,22 @@ docker-compose up -d
 ./backend/set-env.sh
 ```
 
-デフォルト値でもアプリケーションの起動は可能ですが、必要に応じて環境変数を設定してください。
+このスクリプトはシェルの設定ファイル（`~/.zshrc` / `~/.bashrc`）に `export` 文を追記します。設定後はシェルを再起動するか `source` してください。
+
+#### バックエンドの環境変数
+
+バックエンドは以下の環境変数を参照します。`local` プロファイルでは DB 接続情報などにデフォルト値がありますが、**`JWT_SECRET` はデフォルト値を持たず、未設定だと起動に失敗します**（既知のシークレットが混入すると JWT を偽造できるため）。`set-env.sh` は未入力時に安全なランダム値を生成して設定します。
+
+| 変数名 | 用途 | `local` での挙動 |
+| --- | --- | --- |
+| `JWT_SECRET` | JWT アクセストークンの署名鍵（**256bit / 32バイト以上必須**） | **必須。未設定なら起動失敗** |
+| `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | DB 接続情報 | `jdbc:postgresql://localhost:5432/web_gallery` / `postgres` / `postgres` |
+| `OUTPUT_PATH` | 写真の出力先パス | `https://localhost:8080/image/` |
+| `MINI_USER_UPPER_LIMIT` / `NORMAL_USER_UPPER_LIMIT` | 権限別の写真登録上限 | `10` / `1000` |
+| `FRONTEND_ORIGIN` | CORS 許可オリジン | `http://localhost:3000` |
+
+> **IntelliJ IDEA で起動する場合**
+> Dock やランチャーから起動した IntelliJ はシェルの `export` を引き継がないため、`JWT_SECRET` を渡す必要があります。共有の実行構成 `backend/.run/WebGalleryApplication_local.run.xml`（実行構成名「WebGalleryApplication (local)」、プロファイル `local` ＋ ローカル用 `JWT_SECRET` を設定済み）を選択して実行してください。独自の実行構成を使う場合は「Environment variables」に `JWT_SECRET` を追加してください。
 
 #### フロントエンドの環境変数
 

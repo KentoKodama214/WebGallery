@@ -157,7 +157,7 @@ public class PhotoDetailModel {
 		PhotoTagModelList photoTagModelList = Objects.isNull(request.getPhotoTagRegistRequestList())
 				? PhotoTagModelList.empty()
 				: PhotoTagModelList.of(request.getPhotoTagRegistRequestList().stream()
-						.map(PhotoTagModel::from)
+						.map(tagRequest -> PhotoTagModel.from(tagRequest, accountNo))
 						.toList());
 		return PhotoDetailModel.builder()
 				.accountNo(accountNo)

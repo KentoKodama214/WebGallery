@@ -39,8 +39,10 @@ read -p "OUTPUT_PATH [https://localhost:8080/image/]: " OUTPUT_PATH
 OUTPUT_PATH=${OUTPUT_PATH:-https://localhost:8080/image/}
 
 # JWT設定
-read -p "JWT_SECRET [default-dev-secret-must-be-at-least-256-bits-long-for-hs256]: " JWT_SECRET
-JWT_SECRET=${JWT_SECRET:-default-dev-secret-must-be-at-least-256-bits-long-for-hs256}
+# 既知の固定文字列をデフォルトにするとJWT偽造のリスクがあるため、未入力時はランダム生成する
+DEFAULT_JWT_SECRET=$(openssl rand -base64 48 2>/dev/null || head -c 48 /dev/urandom | base64)
+read -p "JWT_SECRET [ランダム生成]: " JWT_SECRET
+JWT_SECRET=${JWT_SECRET:-$DEFAULT_JWT_SECRET}
 
 # rcファイルに書き込み
 {

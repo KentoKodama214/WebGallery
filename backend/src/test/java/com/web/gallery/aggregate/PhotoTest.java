@@ -72,6 +72,25 @@ public class PhotoTest {
 			assertEquals(new PhotoNo(10L), photo.getPhotoTagModelList().get(0).getPhotoNo());
 			assertEquals(new TagNo(2L), photo.getPhotoTagModelList().get(1).getTagNo());
 		}
+
+		@Test
+		@Order(2)
+		@DisplayName("セキュリティ：タグのアカウント番号は入力値ではなく写真所有者の値に強制されること")
+		void forRegist_forces_owner_account_no_on_tags() {
+			AccountNo ownerAccountNo = new AccountNo(1L);
+			AccountNo attackerSuppliedAccountNo = new AccountNo(999L);
+			PhotoTagModelList tags = PhotoTagModelList.of(List.of(
+					buildTag(attackerSuppliedAccountNo, new PhotoNo(1L), 1L, "太陽"),
+					buildTag(attackerSuppliedAccountNo, new PhotoNo(1L), 2L, "海")));
+			PhotoDetailModel requestDetail = buildDetail(ownerAccountNo, null, tags);
+
+			Photo photo = Photo.forRegist(requestDetail, new PhotoNo(10L), new ImageFilePath("/path/to/file.jpg"));
+
+			assertEquals(ownerAccountNo, photo.getPhotoTagModelList().get(0).getAccountNo());
+			assertEquals(ownerAccountNo, photo.getPhotoTagModelList().get(1).getAccountNo());
+			assertEquals(new PhotoNo(10L), photo.getPhotoTagModelList().get(0).getPhotoNo());
+			assertEquals(new PhotoNo(10L), photo.getPhotoTagModelList().get(1).getPhotoNo());
+		}
 	}
 
 	@Nested
