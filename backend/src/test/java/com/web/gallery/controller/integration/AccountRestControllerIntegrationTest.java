@@ -209,6 +209,20 @@ public class AccountRestControllerIntegrationTest {
 				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT.getErrorCode()))
 				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT.getErrorMessage()));
 		}
+
+		@Test
+		@Order(4)
+		@DisplayName("異常系：未認証の場合は403ではなく401で共通JSONエラーを返す")
+		void getAccount_unauthenticated() throws Exception {
+			mockMvc.perform(
+					get("/api/v1/accounts/aaaaaaaa")
+				)
+				.andExpect(status().isUnauthorized())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()))
+				.andExpect(jsonPath("$.errorCode").value("E-A-0002"))
+				.andExpect(jsonPath("$.errorMessage").isNotEmpty());
+		}
 	}
 
 	@Nested

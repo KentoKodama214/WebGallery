@@ -137,7 +137,7 @@ public class AccountModel {
 				.accountNo(new AccountNo(accountNo))
 				.accountId(new AccountId(request.getAccountId()))
 				.accountName(new AccountName(request.getAccountName()))
-				.password(request.getNewPassword().isEmpty() ? null : new Password(request.getNewPassword()))
+				.password(request.getNewPassword() == null || request.getNewPassword().isEmpty() ? null : new Password(request.getNewPassword()))
 				.birthdate(request.getBirthdate() != null ? new BirthDate(request.getBirthdate()) : null)
 				.sexKbn(request.getSexKbn())
 				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode() != null ? new BirthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode()) : null)

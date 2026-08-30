@@ -558,6 +558,27 @@ public class AccountRestControllerTest {
 			assertEquals("AAAAAAAA", accountModel.getAccountName().value());
 			assertEquals("password01", accountModel.getPassword().value());
 		}
+
+		@Test
+		@Order(11)
+		@DisplayName("正常系：newPasswordフィールド自体を省略（null）した場合も、パスワード変更なしとして扱われること")
+		void update_no_password_field() throws Exception {
+			String accountId = "aaaaaaaa";
+
+			doReturn(1L).when(sessionHelper).getAccountNo();
+			doReturn(accountId).when(sessionHelper).getAccountId();
+
+			ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
+			doReturn(false).when(accountService).updateAccount(accountModelCaptor.capture());
+
+			mockMvc.perform(put("/api/v1/accounts/" + accountId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(readJsonFile("update_no_password_field.json")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.isPasswordChanged").value(false));
+
+			assertNull(accountModelCaptor.getValue().getPassword());
+		}
 	}
 
 	@Nested

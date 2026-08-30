@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -141,6 +142,22 @@ public class AuthRestControllerTest {
 				)
 				.andExpect(status().is(423))
 				.andExpect(jsonPath("$.message").value("アカウントがロックされています。"));
+		}
+
+		@Test
+		@Order(6)
+		@DisplayName("異常系：その他の認証例外（DisabledException等）の場合、401を返す")
+		void login_other_authentication_exception() throws Exception {
+			doThrow(new DisabledException("Account is disabled"))
+				.when(authServiceImpl).login(new AccountId("testuser"), new Password("password123"));
+
+			mockMvc.perform(
+					post("/api/v1/auth/login")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("{\"accountId\":\"testuser\",\"password\":\"password123\"}")
+				)
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.message").value("アカウントIDまたはパスワードが間違っています。"));
 		}
 	}
 
