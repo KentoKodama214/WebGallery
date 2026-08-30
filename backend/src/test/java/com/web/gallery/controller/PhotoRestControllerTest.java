@@ -509,10 +509,14 @@ public class PhotoRestControllerTest {
 			assertEquals(0, BigDecimal.valueOf(0.001).compareTo(photoDetailModelList.getFirst().getExifData().shutterSpeed().value()));
 			assertEquals(100, photoDetailModelList.getFirst().getExifData().iso().value());
 
-			assertEquals(1L, photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getTagNo().value());
+			// アカウント番号・写真番号・タグ番号はリクエスト値を採用せず、集約側で採番・振り直しされるためこの時点ではnull（accountNoはセッション値）
+			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getAccountNo());
+			assertNull(photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getTagNo());
+			assertNull(photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getPhotoNo());
 			assertEquals("太陽", photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getTagJapaneseName().value());
 			assertEquals("sun", photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getTagEnglishName().value());
-			assertEquals(2L, photoDetailModelList.getFirst().getPhotoTagModelList().get(1).getTagNo().value());
+			assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getPhotoTagModelList().get(1).getAccountNo());
+			assertNull(photoDetailModelList.getFirst().getPhotoTagModelList().get(1).getTagNo());
 			assertEquals("海", photoDetailModelList.getFirst().getPhotoTagModelList().get(1).getTagJapaneseName().value());
 			assertEquals("", photoDetailModelList.getFirst().getPhotoTagModelList().get(1).getTagEnglishName().value());
 

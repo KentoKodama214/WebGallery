@@ -56,16 +56,19 @@ public class PhotoTagModel {
 	}
 
 	/**
-	 * タグ登録用にphotoNoとtagNoを差し替えたPhotoTagModelを生成する
+	 * タグ登録用にaccountNo・photoNo・tagNoを差し替えたPhotoTagModelを生成する<p>
+	 * アカウント番号は元のPhotoTagModelの値ではなく、集約ルート（＝写真の所有者）の値を必ず採用する
+	 * （元の値はクライアント入力由来のため、他人の写真へのタグ注入を防ぐ）
 	 *
-	 * @param	source	元のPhotoTagModel
-	 * @param	photoNo	写真番号
-	 * @param	tagNo	タグ番号
-	 * @return			{@link PhotoTagModel}
+	 * @param	source		元のPhotoTagModel
+	 * @param	accountNo	写真所有者のアカウント番号
+	 * @param	photoNo		写真番号
+	 * @param	tagNo		タグ番号
+	 * @return				{@link PhotoTagModel}
 	 */
-	public static PhotoTagModel forRegist(PhotoTagModel source, PhotoNo photoNo, TagNo tagNo) {
+	public static PhotoTagModel forRegist(PhotoTagModel source, AccountNo accountNo, PhotoNo photoNo, TagNo tagNo) {
 		return PhotoTagModel.builder()
-				.accountNo(source.getAccountNo())
+				.accountNo(accountNo)
 				.photoNo(photoNo)
 				.tagNo(tagNo)
 				.tagJapaneseName(source.getTagJapaneseName())
@@ -74,16 +77,17 @@ public class PhotoTagModel {
 	}
 
 	/**
-	 * 写真タグ保存リクエストからPhotoTagModelを生成する
+	 * 写真タグ保存リクエストとログイン中のアカウント番号からPhotoTagModelを生成する<p>
+	 * アカウント番号はリクエストボディではなくセッションから取得した値を用いる（他人の写真へタグを注入するIDORを防ぐため）。
+	 * 写真番号・タグ番号は登録時にサーバ側で採番するためここでは設定しない
 	 *
-	 * @param	request	{@link PhotoTagSaveRequest}
-	 * @return			{@link PhotoTagModel}
+	 * @param	request		{@link PhotoTagSaveRequest}
+	 * @param	accountNo	ログイン中のアカウント番号
+	 * @return				{@link PhotoTagModel}
 	 */
-	public static PhotoTagModel from(PhotoTagSaveRequest request) {
+	public static PhotoTagModel from(PhotoTagSaveRequest request, AccountNo accountNo) {
 		return PhotoTagModel.builder()
-				.accountNo(new AccountNo(request.getAccountNo()))
-				.photoNo(request.getPhotoNo() != null ? new PhotoNo(request.getPhotoNo()) : null)
-				.tagNo(request.getTagNo() != null ? new TagNo(request.getTagNo()) : null)
+				.accountNo(accountNo)
 				.tagJapaneseName(new TagJapaneseName(Optional.ofNullable(request.getTagJapaneseName()).orElse(Consts.STRING_EMPTY)))
 				.tagEnglishName(new TagEnglishName(Optional.ofNullable(request.getTagEnglishName()).orElse(Consts.STRING_EMPTY)))
 				.build();

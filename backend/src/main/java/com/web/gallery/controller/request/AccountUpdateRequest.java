@@ -72,12 +72,14 @@ public class AccountUpdateRequest {
 
 	/** 出身都道府県区分コード */
 	@Schema(description = "出身都道府県区分コード", example = "Hokkaido")
-	@Size(max = 50, message = "{validation.common.max_length}")
+	@Size(max = 20, message = "{validation.common.max_length}")
+	@Pattern(regexp = "[a-zA-Z0-9]*", message = "{validation.common.pattern}")
 	private String birthplacePrefectureKbnCode;
 
 	/** 在住都道府県区分コード */
 	@Schema(description = "在住都道府県区分コード", example = "Tokyo")
-	@Size(max = 50, message = "{validation.common.max_length}")
+	@Size(max = 20, message = "{validation.common.max_length}")
+	@Pattern(regexp = "[a-zA-Z0-9]*", message = "{validation.common.pattern}")
 	private String residentPrefectureKbnCode;
 
 	/** フリーメモ */

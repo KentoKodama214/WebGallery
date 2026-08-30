@@ -94,7 +94,7 @@ public class Photo {
 	 */
 	public void updateTags(PhotoTagModelList newTags) {
 		this.detail = this.detail.toBuilder()
-				.photoTagModelList(renumberTags(newTags, this.photoNo))
+				.photoTagModelList(renumberTags(newTags, this.accountNo, this.photoNo))
 				.build();
 	}
 
@@ -182,13 +182,15 @@ public class Photo {
 	}
 
 	/**
-	 * 写真タグのタグ番号を1からの連番に振り直す
+	 * 写真タグのアカウント番号・写真番号を集約ルートの値に統一し、タグ番号を1からの連番に振り直す<p>
+	 * アカウント番号はクライアント入力を信用せず、必ず写真の所有者の値に上書きする（他人の写真へのタグ注入を防ぐ）
 	 *
-	 * @param	source	振り直し前の{@link PhotoTagModelList}
-	 * @param	photoNo	振り直し後の写真番号
-	 * @return			{@link PhotoTagModelList}
+	 * @param	source		振り直し前の{@link PhotoTagModelList}
+	 * @param	accountNo	写真所有者のアカウント番号
+	 * @param	photoNo		振り直し後の写真番号
+	 * @return				{@link PhotoTagModelList}
 	 */
-	private static PhotoTagModelList renumberTags(PhotoTagModelList source, PhotoNo photoNo) {
+	private static PhotoTagModelList renumberTags(PhotoTagModelList source, AccountNo accountNo, PhotoNo photoNo) {
 		if (Objects.isNull(source)) {
 			return null;
 		}
@@ -196,7 +198,7 @@ public class Photo {
 		List<PhotoTagModel> renumbered = new ArrayList<>();
 		int tagNo = 1;
 		for (PhotoTagModel tag : source) {
-			renumbered.add(PhotoTagModel.forRegist(tag, photoNo, new TagNo((long) tagNo)));
+			renumbered.add(PhotoTagModel.forRegist(tag, accountNo, photoNo, new TagNo((long) tagNo)));
 			++tagNo;
 		}
 		return PhotoTagModelList.of(renumbered);

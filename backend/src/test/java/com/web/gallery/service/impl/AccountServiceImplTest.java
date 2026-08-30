@@ -69,6 +69,7 @@ import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.impl.AccountAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
+import com.web.gallery.repository.impl.RefreshTokenRepositoryImpl;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -84,6 +85,9 @@ public class AccountServiceImplTest {
 
 	@Mock
 	private FileRepository fileRepository;
+
+	@Mock
+	private RefreshTokenRepositoryImpl refreshTokenRepositoryImpl;
 
 	@Mock
 	private AccountPrincipal accountPrincipal;
@@ -223,6 +227,36 @@ public class AccountServiceImplTest {
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).update(accountModel);
 			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel));
 			verify(applicationEventPublisher, times(0)).publishEvent(any());
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("正常系：パスワード変更時はリフレッシュトークンを全失効する")
+		void updateAccount_revokes_refresh_tokens_on_password_change() throws GalleryException {
+			AccountModel accountModel = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.password(new Password("newpassword01"))
+					.build();
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
+			doNothing().when(accountRepositoryImpl).update(accountModel);
+
+			assertFalse(accountServiceImpl.updateAccount(accountModel));
+
+			verify(refreshTokenRepositoryImpl, times(1)).revokeAllByAccountNo(new AccountNo(1L));
+		}
+
+		@Test
+		@Order(5)
+		@DisplayName("正常系：パスワード未変更時はリフレッシュトークンを失効しない")
+		void updateAccount_does_not_revoke_refresh_tokens_without_password_change() throws GalleryException {
+			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
+			doNothing().when(accountRepositoryImpl).update(accountModel);
+
+			assertFalse(accountServiceImpl.updateAccount(accountModel));
+
+			verify(refreshTokenRepositoryImpl, times(0)).revokeAllByAccountNo(any());
 		}
 	}
 	

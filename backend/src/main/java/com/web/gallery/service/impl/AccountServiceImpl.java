@@ -40,6 +40,7 @@ import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.repository.AccountAggregateRepository;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
+import com.web.gallery.repository.RefreshTokenRepository;
 import com.web.gallery.service.AccountService;
 
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	private final AccountRepository accountRepository;
 	private final AccountAggregateRepository accountAggregateRepository;
 	private final FileRepository fileRepository;
+	private final RefreshTokenRepository refreshTokenRepository;
 	private final LoginConfig loginConfig;
 	private final PhotoConfig photoConfig;
 	private final AccountConfig accountConfig;
@@ -100,7 +102,9 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	}
 
 	/**
-	 * アカウントを更新する
+	 * アカウントを更新する<p>
+	 * パスワードが変更された場合は、当該アカウントのリフレッシュトークンをすべて失効させ、
+	 * 全セッションでの再認証を強制する（トークン漏洩時の被害を限定するため）
 	 *
 	 * @param	accountModel		{@link AccountModel}
 	 * @return						アカウントIDが重複しており更新をスキップした場合、true
@@ -112,6 +116,9 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
 		if(!isExist) {
 			accountRepository.update(accountModel);
+			if (accountModel.getPassword() != null) {
+				refreshTokenRepository.revokeAllByAccountNo(accountModel.getAccountNo());
+			}
 			applicationEventPublisher.publishEvent(new AccountUpdatedEvent(accountModel.getAccountNo(), accountModel.getAccountId()));
 		}
 		return isExist;
