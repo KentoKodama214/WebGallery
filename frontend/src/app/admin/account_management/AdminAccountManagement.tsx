@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
   getAdminAccountList,
@@ -34,6 +34,9 @@ export function AdminAccountManagement() {
   const [pageNo, setPageNo] = useState(1);
   const [pendingAction, setPendingAction] = useState<PendingLockAction | null>(null);
   const [isActionProcessing, setIsActionProcessing] = useState(false);
+  // 取得リクエストの世代。初期ロード・再取得・もっと見るは開始時に採番し、
+  // 自分が最新でなければ結果を破棄する（後着レスポンスが新しい一覧を上書きする競合を防ぐ）
+  const loadSeqRef = useRef(0);
 
   const isAdmin = user?.role === "ROLE_ADMIN";
   const canView = !isAuthLoading && isAuthenticated && isAdmin;
@@ -42,17 +45,20 @@ export function AdminAccountManagement() {
    * 1ページ目を取得し直す（再読み込みボタン・ロック操作後に使用）
    */
   const fetchAccounts = async () => {
+    const seq = ++loadSeqRef.current;
     setIsLoading(true);
     setError(null);
     setPageNo(1);
     try {
       const data = await getAdminAccountList(1);
+      if (loadSeqRef.current !== seq) return;
       setAccounts(data.accountList);
       setIsLast(data.isLast);
     } catch (err) {
+      if (loadSeqRef.current !== seq) return;
       setError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
-      setIsLoading(false);
+      if (loadSeqRef.current === seq) setIsLoading(false);
     }
   };
 
@@ -60,19 +66,19 @@ export function AdminAccountManagement() {
     if (!canView) return;
 
     let cancelled = false;
+    const seq = ++loadSeqRef.current;
     const load = async () => {
       try {
         const data = await getAdminAccountList(1);
-        if (cancelled) return;
+        if (cancelled || loadSeqRef.current !== seq) return;
         setAccounts(data.accountList);
         setIsLast(data.isLast);
         setError(null);
       } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "エラーが発生しました");
-        }
+        if (cancelled || loadSeqRef.current !== seq) return;
+        setError(err instanceof Error ? err.message : "エラーが発生しました");
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && loadSeqRef.current === seq) setIsLoading(false);
       }
     };
 
@@ -87,22 +93,26 @@ export function AdminAccountManagement() {
    */
   const handleLoadMore = async () => {
     const nextPage = pageNo + 1;
+    const seq = ++loadSeqRef.current;
     setIsLoadingMore(true);
     // 追加読み込み時は古いロック操作の成功メッセージ・失敗通知を消す
     setMessage(null);
     setLoadMoreError(null);
     try {
       const data = await getAdminAccountList(nextPage);
+      // 再取得等で世代が変わっていたら、古いページを継ぎ足さない
+      if (loadSeqRef.current !== seq) return;
       setAccounts((prev) => [...prev, ...data.accountList]);
       setIsLast(data.isLast);
       setPageNo(nextPage);
     } catch (err) {
+      if (loadSeqRef.current !== seq) return;
       // 取得済みの一覧は維持し、通知だけ表示する
       setLoadMoreError(
         err instanceof Error ? err.message : "エラーが発生しました"
       );
     } finally {
-      setIsLoadingMore(false);
+      if (loadSeqRef.current === seq) setIsLoadingMore(false);
     }
   };
 

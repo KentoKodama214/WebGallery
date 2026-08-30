@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -15,14 +15,57 @@ export function Header() {
   const { isAuthenticated, user, logout } = useAuth();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const toggleMenu = () => {
-    setIsOpen(!isOpen);
+    setIsOpen((prev) => !prev);
   };
 
   const closeMenu = () => {
     setIsOpen(false);
   };
+
+  // メニュー展開中は Escape で閉じ、Tab フォーカスをメニュー内で循環させる。
+  // 閉じたときはトグルボタンへフォーカスを戻す。
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const menu = menuRef.current;
+    // トグルボタンは Header がマウントされている間は同一 DOM ノードのため、
+    // effect 実行時に控えてクリーンアップ（＝メニューを閉じた時）のフォーカス復帰に使う
+    const toggleButton = buttonRef.current;
+    const focusables = menu
+      ? Array.from(
+          menu.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')
+        )
+      : [];
+    focusables[0]?.focus();
+
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setIsOpen(false);
+        return;
+      }
+      if (e.key !== "Tab" || focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+      toggleButton?.focus();
+    };
+  }, [isOpen]);
 
   const handleLogout = async () => {
     closeMenu();
@@ -34,6 +77,7 @@ export function Header() {
     <header>
       {/* ハンバーガーボタン */}
       <div
+        ref={buttonRef}
         className={`${styles.buttonContainer} ${isOpen ? styles.active : ""}`}
         onClick={toggleMenu}
         onKeyDown={onActivateKey(toggleMenu)}
@@ -51,6 +95,7 @@ export function Header() {
 
       {/* オーバーレイメニュー */}
       <div
+        ref={menuRef}
         id="header-overlay-menu"
         className={`${styles.overlay} ${isOpen ? styles.open : ""}`}
         data-testid="overlay-menu"

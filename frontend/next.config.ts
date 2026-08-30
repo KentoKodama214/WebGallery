@@ -3,19 +3,36 @@ import type { NextConfig } from "next";
 const isDev = process.env.NODE_ENV === "development";
 
 /**
+ * 写真の配信元オリジン（`NEXT_PUBLIC_IMAGE_BASE_URL` 例: `https://cdn.example.com/`）。
+ * 設定されていれば CSP の `img-src` をそのオリジンに限定し、
+ * XSS 時に任意の外部ホストへ画像リクエストでデータを持ち出す経路を塞ぐ。
+ * 未設定の場合は後方互換のため従来どおり `https:` 全体を許可する。
+ */
+const imageBaseOrigin = (() => {
+  const base = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
+  if (!base) return null;
+  try {
+    return new URL(base).origin;
+  } catch {
+    return null;
+  }
+})();
+
+/**
  * Content-Security-Policy
  *
  * - `script-src` に `'unsafe-inline'` を含むのは Next.js のハイドレーション用
  *   インラインスクリプトのため（nonce 運用に移行する場合はここを見直す）
  * - 開発時は React Fast Refresh（eval）と HMR（WebSocket）を許可する
- * - 写真は外部ホスト（CDN 等）から配信されうるため `img-src` に `https:` を許可
+ * - 写真は外部ホスト（CDN 等）から配信されうるため `img-src` に配信元を許可する。
+ *   `NEXT_PUBLIC_IMAGE_BASE_URL` 設定時はそのオリジンに限定、未設定時は `https:` 全体
  */
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   // Google Fonts のスタイルシート（Header.module.css の @import）を許可
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https:",
+  `img-src 'self' data: blob: ${imageBaseOrigin ?? "https:"}`,
   "font-src 'self' data: https://fonts.gstatic.com",
   `connect-src 'self'${isDev ? " ws:" : ""}`,
   "worker-src 'self' blob:",

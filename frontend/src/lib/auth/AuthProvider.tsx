@@ -20,7 +20,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (accountId: string, password: string) => Promise<void>;
+  login: (accountId: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
 }
 
@@ -60,21 +60,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initAuth();
   }, []);
 
-  const login = useCallback(async (accountId: string, password: string) => {
+  const login = useCallback(async (accountId: string, password: string): Promise<User> => {
     await apiClient.login(accountId, password);
     const token = apiClient.getAccessToken();
     const payload = token ? parseJwt(token) : null;
     if (!payload) {
-      // 発行されたトークンを解釈できない場合はログイン失敗として扱う
-      apiClient.setAccessToken(null);
+      // 発行されたトークンを解釈できない場合はログイン失敗として扱う。
+      // apiClient.login が立てた認証状態（accessToken / sessionAuthState / epoch）も
+      // まとめてクリアし、「画面は未ログインなのに API だけ認証済み」の不整合を防ぐ。
+      apiClient.clearAuthState();
       throw new Error("ログインに失敗しました");
     }
     // アカウントIDは入力値ではなくトークンの sub を採用し、セッション復元経路と揃える
-    setUser({
+    const nextUser: User = {
       accountId: payload.sub,
       accountNo: payload.accountNo,
       role: payload.role,
-    });
+    };
+    setUser(nextUser);
+    return nextUser;
   }, []);
 
   const logout = useCallback(async () => {

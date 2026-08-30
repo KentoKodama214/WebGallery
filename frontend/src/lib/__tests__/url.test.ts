@@ -1,4 +1,4 @@
-import { sanitizeImageUrl, loginUrlWithRedirect } from "../url";
+import { sanitizeImageUrl, loginUrlWithRedirect, safeRedirectPath } from "../url";
 
 describe("sanitizeImageUrl", () => {
   it("https の絶対URLはそのまま通す", () => {
@@ -37,6 +37,51 @@ describe("sanitizeImageUrl", () => {
     expect(sanitizeImageUrl("")).toBe("");
     expect(sanitizeImageUrl(null)).toBe("");
     expect(sanitizeImageUrl(undefined)).toBe("");
+  });
+
+  it("バックスラッシュ始まり（/\\host）は空文字にする", () => {
+    expect(sanitizeImageUrl("/\\evil.com/a.jpg")).toBe("");
+  });
+
+  describe("NEXT_PUBLIC_IMAGE_BASE_URL 設定時", () => {
+    const original = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
+    afterEach(() => {
+      if (original === undefined) delete process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
+      else process.env.NEXT_PUBLIC_IMAGE_BASE_URL = original;
+    });
+
+    it("許可オリジンの https URL のみ通し、他オリジンは空文字にする", () => {
+      process.env.NEXT_PUBLIC_IMAGE_BASE_URL = "https://cdn.example.com/";
+      expect(sanitizeImageUrl("https://cdn.example.com/a.jpg")).toBe(
+        "https://cdn.example.com/a.jpg"
+      );
+      expect(sanitizeImageUrl("https://evil.com/a.jpg")).toBe("");
+    });
+  });
+});
+
+describe("safeRedirectPath", () => {
+  it("同一オリジンの内部パスはそのまま返す", () => {
+    expect(safeRedirectPath("/aaaa1111/account_setting?tab=1")).toBe(
+      "/aaaa1111/account_setting?tab=1"
+    );
+  });
+
+  it("null・空・先頭スラッシュ以外は null", () => {
+    expect(safeRedirectPath(null)).toBeNull();
+    expect(safeRedirectPath("")).toBeNull();
+    expect(safeRedirectPath("photo_list")).toBeNull();
+    expect(safeRedirectPath("https://evil.com")).toBeNull();
+  });
+
+  it("プロトコル相対・バックスラッシュ始まりは null", () => {
+    expect(safeRedirectPath("//evil.com")).toBeNull();
+    expect(safeRedirectPath("/\\evil.com")).toBeNull();
+  });
+
+  it("解決後にプロトコル相対になるバイパス（/..//evil.com）を弾く", () => {
+    expect(safeRedirectPath("/..//evil.com")).toBeNull();
+    expect(safeRedirectPath("/foo/..//evil.com")).toBeNull();
   });
 });
 
