@@ -20,6 +20,7 @@ public class AccountListRequest {
 	@JsonSetter(nulls = Nulls.SKIP)
 	@NotNull(message = "{validation.common.notBlank}")
 	@Positive(message = "{validation.common.positive}")
-	@Max(value = 100000, message = "{validation.common.max}")
+	// 深いオフセットページングによる負荷増大を抑えるための上限（未認証で叩ける一覧APIのため写真一覧と同値に統一）
+	@Max(value = 10000, message = "{validation.common.max}")
 	private Integer pageNo = 1;
 }
