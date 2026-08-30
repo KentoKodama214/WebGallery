@@ -129,6 +129,16 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
   const isStateChanging =
     request.method !== "GET" && request.method !== "HEAD";
   if (isStateChanging) {
+    // 多層防御：ブラウザが付与する Fetch Metadata で cross-site を明示的に拒否する
+    // （Origin 検証と独立して機能し、Origin を欠く一部のクロスサイト経路も塞ぐ）
+    const fetchSite = request.headers.get("sec-fetch-site");
+    if (fetchSite === "cross-site") {
+      return NextResponse.json(
+        { message: "リクエスト元が不正です" },
+        { status: 403 }
+      );
+    }
+
     const origin = request.headers.get("origin");
     if (origin) {
       let originHost: string | null = null;
@@ -214,10 +224,22 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
     }
   });
 
-  // バックエンドの絶対URLを指す Location は内部ホストを露出させるため相対パス化する
+  // Location ヘッダーの正規化
+  // - バックエンドの絶対URLを指す場合は内部ホストを露出させないよう相対パス化する
+  // - 自オリジン内の相対パスはそのまま通す
+  // - それ以外（外部の絶対URL・プロトコル相対）は、バックエンド応答を起点とした
+  //   反射型オープンリダイレクトを防ぐため削除する
   const location = responseHeaders.get("location");
-  if (location && location.startsWith(BACKEND_URL)) {
-    responseHeaders.set("location", location.slice(BACKEND_URL.length) || "/");
+  if (location) {
+    if (location.startsWith(BACKEND_URL)) {
+      responseHeaders.set("location", location.slice(BACKEND_URL.length) || "/");
+    } else if (
+      !location.startsWith("/") ||
+      location.startsWith("//") ||
+      location.startsWith("/\\")
+    ) {
+      responseHeaders.delete("location");
+    }
   }
 
   // Set-Cookie は Headers#forEach で結合されてしまうため個別に転送する

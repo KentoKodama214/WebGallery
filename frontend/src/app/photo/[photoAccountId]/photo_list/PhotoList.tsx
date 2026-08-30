@@ -37,10 +37,14 @@ const DEFAULT_FILTER: PhotoListFilter = {
  *
  * 単一キーで全ギャラリー・全ユーザー共有にすると、別ユーザーのギャラリー閲覧時に
  * 前回条件が漏れて適用されるため、`photoAccountId` を含めて分離する。
- * `photoAccountId` は半角英数字（バリデーション済み）なので Cookie 名として安全。
+ *
+ * `photoAccountId` は URL の動的セグメント由来で細工可能なため、ページ側
+ * （`photo_list/page.tsx`）で `isValidAccountId` により半角英数字であることを
+ * 検証済み。さらにここでも英数字以外を除去し、`setCookie` 側の Cookie 名検証と
+ * 合わせて多層で `document.cookie` への属性インジェクションを防ぐ。
  */
 function filterCookieName(photoAccountId: string): string {
-  return `photoListFilter_${photoAccountId}`;
+  return `photoListFilter_${photoAccountId.replace(/[^A-Za-z0-9]/g, "")}`;
 }
 
 /**

@@ -6,7 +6,8 @@ const isDev = process.env.NODE_ENV === "development";
  * 写真の配信元オリジン（`NEXT_PUBLIC_IMAGE_BASE_URL` 例: `https://cdn.example.com/`）。
  * 設定されていれば CSP の `img-src` をそのオリジンに限定し、
  * XSS 時に任意の外部ホストへ画像リクエストでデータを持ち出す経路を塞ぐ。
- * 未設定の場合は後方互換のため従来どおり `https:` 全体を許可する。
+ * 未設定の場合は外部ホストを一切許可しない（`'self' data: blob:` のみ）。
+ * 外部の画像配信元（バックエンドの `/image/` や CDN 等）を使う構成では必ず設定すること。
  */
 const imageBaseOrigin = (() => {
   const base = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
@@ -42,7 +43,7 @@ const apiBaseOrigin = (() => {
  *   インラインスクリプトのため（nonce 運用に移行する場合はここを見直す）
  * - 開発時は React Fast Refresh（eval）と HMR（WebSocket）を許可する
  * - 写真は外部ホスト（CDN 等）から配信されうるため `img-src` に配信元を許可する。
- *   `NEXT_PUBLIC_IMAGE_BASE_URL` 設定時はそのオリジンに限定、未設定時は `https:` 全体
+ *   `NEXT_PUBLIC_IMAGE_BASE_URL` 設定時はそのオリジンに限定、未設定時は外部ホスト不許可
  * - Web フォントは `next/font`（ビルド時セルフホスト）で配信するため外部ホスト許可は不要
  * - `NEXT_PUBLIC_API_BASE_URL` で別オリジンの API を指す場合は `connect-src` に追加する
  */
@@ -50,7 +51,7 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${imageBaseOrigin ?? "https:"}`,
+  `img-src 'self' data: blob:${imageBaseOrigin ? ` ${imageBaseOrigin}` : ""}`,
   "font-src 'self' data:",
   `connect-src 'self'${apiBaseOrigin ? ` ${apiBaseOrigin}` : ""}${isDev ? " ws:" : ""}`,
   "worker-src 'self' blob:",

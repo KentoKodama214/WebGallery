@@ -100,23 +100,33 @@ describe("api/client", () => {
   });
 
   describe("refresh の失敗時のセッション状態", () => {
-    it("ネットワーク例外では未ログイン確定にせず、次回も再試行する", async () => {
-      // 1回目: refresh がネットワーク例外
+    it("ネットワーク例外では未ログイン確定にせず、クールダウン経過後に再試行する", async () => {
+      const nowSpy = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
+
+      // 1回目: refresh がネットワーク例外 → クールダウン開始
       fetchMock.mockRejectedValueOnce(new Error("network"));
       expect(await client.refresh()).toBe(false);
 
-      // 2回目: fetchWithAuth が再度 refresh を試みる（anonymousに固定されていない）
-      fetchMock.mockResolvedValueOnce(
-        makeResponse({ accessToken: "recovered" })
-      );
+      // クールダウン中: fetchWithAuth は refresh を再試行しない（本リクエストのみ）
       fetchMock.mockResolvedValueOnce(makeResponse({ ok: true }));
+      await client.fetchWithAuth("/api/v1/accounts/me");
+      let refreshCalls = fetchMock.mock.calls.filter((c) =>
+        String(c[0]).includes("/api/v1/auth/refresh")
+      );
+      expect(refreshCalls.length).toBe(1);
 
+      // クールダウン（5秒）経過後: 再試行され、回復できる（anonymousに固定されていない）
+      nowSpy.mockReturnValue(1_000_000 + 6_000);
+      fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "recovered" }));
+      fetchMock.mockResolvedValueOnce(makeResponse({ ok: true }));
       await client.fetchWithAuth("/api/v1/accounts/me");
 
-      const refreshCalls = fetchMock.mock.calls.filter((c) =>
+      refreshCalls = fetchMock.mock.calls.filter((c) =>
         String(c[0]).includes("/api/v1/auth/refresh")
       );
       expect(refreshCalls.length).toBe(2);
+
+      nowSpy.mockRestore();
     });
 
     it("401が返った場合は未ログイン確定とし、以降のfetchWithAuthはrefreshしない", async () => {

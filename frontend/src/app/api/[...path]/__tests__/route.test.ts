@@ -177,6 +177,30 @@ describe("APIプロキシ route", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("Sec-Fetch-Site: cross-site の状態変更メソッドは403を返し中継しない", async () => {
+    const req = new NextRequest("http://localhost/api/v1/auth/logout", {
+      method: "POST",
+      headers: { "sec-fetch-site": "cross-site" },
+    });
+    const res = await POST(req, ctx(["v1", "auth", "logout"]));
+
+    expect(res.status).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("Sec-Fetch-Site: same-origin の状態変更メソッドは中継する", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const req = new NextRequest("http://localhost/api/v1/auth/logout", {
+      method: "POST",
+      headers: { "sec-fetch-site": "same-origin", origin: "http://localhost" },
+    });
+    const res = await POST(req, ctx(["v1", "auth", "logout"]));
+
+    expect(res.status).toBe(204);
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
   it("Origin ヘッダーが無い状態変更メソッドは素通しする", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
 
@@ -201,5 +225,29 @@ describe("APIプロキシ route", () => {
     const res = await GET(req, ctx(["v1", "redirect"]));
 
     expect(res.headers.get("location")).toBe("/api/v1/foo");
+  });
+
+  it("外部の絶対URLを指す Location は反射型オープンリダイレクト防止のため削除する", async () => {
+    const headers = new Headers({ location: "https://evil.example/steal" });
+    fetchMock.mockResolvedValueOnce(
+      new Response(null, { status: 302, headers })
+    );
+
+    const req = new NextRequest("http://localhost/api/v1/redirect");
+    const res = await GET(req, ctx(["v1", "redirect"]));
+
+    expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("自オリジン内の相対パスの Location はそのまま通す", async () => {
+    const headers = new Headers({ location: "/login" });
+    fetchMock.mockResolvedValueOnce(
+      new Response(null, { status: 302, headers })
+    );
+
+    const req = new NextRequest("http://localhost/api/v1/redirect");
+    const res = await GET(req, ctx(["v1", "redirect"]));
+
+    expect(res.headers.get("location")).toBe("/login");
   });
 });

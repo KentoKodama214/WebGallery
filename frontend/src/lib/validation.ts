@@ -6,6 +6,19 @@
 export const ACCOUNT_ID_PATTERN = /^[a-zA-Z0-9]{8,16}$/;
 
 /**
+ * 値がアカウントIDの形式（半角英数字8〜16文字）を満たすか判定する
+ *
+ * URL の動的セグメント（`photoAccountId` / `accountId`）は利用者が自由に細工できるため、
+ * Cookie 名・API パス・画面表示に用いる前にこの関数で形式を確認する。
+ *
+ * @param value 検証対象（通常は URL パスパラメータ）
+ * @returns 形式を満たす場合 true
+ */
+export function isValidAccountId(value: string | null | undefined): value is string {
+  return typeof value === "string" && ACCOUNT_ID_PATTERN.test(value);
+}
+
+/**
  * パスワードの形式（半角8〜72文字、英字と数字を各1文字以上含む、記号可）
  *
  * バックエンドの制約（AccountRegistRequest / AccountUpdateRequest）と一致させること。

@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("写真詳細ページ", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(
-      "/photo/e2e-test-account/photo_detail?accountNo=999999999&photoNo=999999999"
+      "/photo/e2etestaccount/photo_detail?accountNo=999999999&photoNo=999999999"
     );
   });
 
@@ -16,8 +16,9 @@ test.describe("写真詳細ページ", () => {
   });
 
   test("存在しない写真の場合はエラーが表示されること", async ({ page }) => {
+    // バックエンドの「写真が存在しません。」またはフロントの既定文言のいずれか
     await expect(
-      page.getByText("写真詳細の取得に失敗しました")
+      page.getByText(/写真が存在しません|写真が見つかりません|写真詳細の取得に失敗しました/)
     ).toBeVisible({ timeout: 10000 });
   });
 });

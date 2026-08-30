@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { isValidAccountId } from "@/lib/validation";
 import { PhotoList } from "./PhotoList";
 import "./photo-list-page.css";
 
@@ -21,7 +22,23 @@ export default async function PhotoListPage({
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
       <Header />
-      <PhotoList photoAccountId={photoAccountId} />
+      {/* photoAccountId はURLの動的セグメントで細工可能なため、
+          Cookie名・APIパスに使う前にアカウントID形式を検証する */}
+      {isValidAccountId(photoAccountId) ? (
+        <PhotoList photoAccountId={photoAccountId} />
+      ) : (
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            color: "#9ca3af",
+          }}
+        >
+          <p>ギャラリーが見つかりません</p>
+        </div>
+      )}
       <Footer />
     </div>
   );
