@@ -159,6 +159,27 @@ describe("PhotoDetail", () => {
     });
   });
 
+  it("パスは自分でも写真の所有者が別人なら編集・削除ボタンは表示されないこと", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    // 細工 URL: /photo/user1/photo_detail?accountNo=2&photoNo=10
+    mockGetPhotoDetail.mockResolvedValue({ ...samplePhoto, accountNo: 2 });
+
+    render(<PhotoDetail photoAccountId="user1" accountNo={2} photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("テスト写真")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole("button", { name: "編集" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "削除" })).not.toBeInTheDocument();
+  });
+
   it("非オーナーの場合に編集・削除ボタンが表示されないこと", async () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,

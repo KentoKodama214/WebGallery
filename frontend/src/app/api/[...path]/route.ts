@@ -122,6 +122,35 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
     );
   }
 
+  // CSRF 対策：状態を変更するメソッド（POST/PUT/DELETE/PATCH）は、Origin
+  // ヘッダーが存在する場合に自サイトと一致することを要求する。クロスサイトの
+  // <form>/fetch からクッキーだけで実行される攻撃（強制ログアウト等）を塞ぐ。
+  // Origin を送出しないクライアント（サーバー間通信・一部ツール）は素通しする。
+  const isStateChanging =
+    request.method !== "GET" && request.method !== "HEAD";
+  if (isStateChanging) {
+    const origin = request.headers.get("origin");
+    if (origin) {
+      let originHost: string | null = null;
+      try {
+        originHost = new URL(origin).host;
+      } catch {
+        originHost = null;
+      }
+      // 自ホスト（リクエスト URL 由来 / Host ヘッダー）のいずれかと一致すれば許可
+      const selfHosts = [
+        request.nextUrl.host,
+        request.headers.get("host"),
+      ].filter((h): h is string => !!h);
+      if (!originHost || !selfHosts.includes(originHost)) {
+        return NextResponse.json(
+          { message: "リクエスト元が不正です" },
+          { status: 403 }
+        );
+      }
+    }
+  }
+
   const search = request.nextUrl.search;
   const url = `${BACKEND_URL}/api/${path.map(encodeURIComponent).join("/")}${search}`;
 

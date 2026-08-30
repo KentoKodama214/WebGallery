@@ -193,5 +193,43 @@ describe("api/client", () => {
       const headers = retryCall[1].headers as Headers;
       expect(headers.get("Authorization")).toBe("Bearer new-token");
     });
+
+    it("リフレッシュ後の再リクエストも401なら認証状態をクリアする", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "old-token" }));
+      await client.login("user", "pass");
+
+      // 本リクエスト: 401 → refresh 成功 → リトライも 401
+      fetchMock.mockResolvedValueOnce(makeResponse({}, { status: 401 }));
+      fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "new-token" }));
+      fetchMock.mockResolvedValueOnce(makeResponse({}, { status: 401 }));
+
+      const res = await client.fetchWithAuth("/api/v1/accounts/me");
+      expect(res.status).toBe(401);
+      // 認証状態がクリアされ、以降の fetchWithAuth は先読みリフレッシュしない
+      expect(client.getAccessToken()).toBeNull();
+
+      const callsBefore = fetchMock.mock.calls.length;
+      fetchMock.mockResolvedValueOnce(makeResponse({ ok: true }));
+      await client.fetchWithAuth("/api/v1/accounts/me");
+      // 追加のリクエストは本リクエスト1回のみ（先読みリフレッシュが走らない）
+      const newCalls = fetchMock.mock.calls.slice(callsBefore);
+      expect(newCalls).toHaveLength(1);
+      expect(String(newCalls[0][0])).toContain("/api/v1/accounts/me");
+    });
+  });
+
+  describe("不正なトークン応答の扱い", () => {
+    it("login 応答に文字列 accessToken が無ければ失敗として扱う", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ expiresIn: 3600 }));
+      await expect(client.login("user", "pass")).rejects.toThrow();
+      expect(client.getAccessToken()).toBeNull();
+    });
+
+    it("refresh 応答に文字列 accessToken が無ければ false を返す", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({}));
+      const ok = await client.refresh();
+      expect(ok).toBe(false);
+      expect(client.getAccessToken()).toBeNull();
+    });
   });
 });

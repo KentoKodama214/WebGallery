@@ -1,6 +1,7 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { PhotoList } from "../PhotoList";
+import { getCookie, setCookie } from "@/lib/cookie";
 
 const mockGetPhotoList = jest.fn();
 const mockGetPhotoUpperLimit = jest.fn();
@@ -13,6 +14,9 @@ jest.mock("@/lib/api/client", () => ({
   addFavorite: (...args: unknown[]) => mockAddFavorite(...args),
   deleteFavorite: (...args: unknown[]) => mockDeleteFavorite(...args),
 }));
+
+const mockGetCookie = getCookie as jest.Mock;
+const mockSetCookie = setCookie as jest.Mock;
 
 const mockUseAuth = jest.fn();
 jest.mock("@/lib/auth/AuthProvider", () => ({
@@ -70,6 +74,7 @@ function galleryImages(): HTMLElement[] {
 describe("PhotoList", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetCookie.mockReturnValue(null);
     mockUseAuth.mockReturnValue({
       isAuthenticated: false,
       user: null,
@@ -337,5 +342,88 @@ describe("PhotoList", () => {
     const params = mockGetPhotoList.mock.calls[0][1];
     // 未適用のためデフォルト（photoAt）のまま
     expect(params.sortBy).toBe("photoAt");
+  });
+
+  it("フィルター Cookie はギャラリー（photoAccountId）単位のキーで保存されること", async () => {
+    mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: samplePhotos });
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(mockSetCookie).toHaveBeenCalled();
+    });
+    expect(mockSetCookie.mock.calls[0][0]).toBe("photoListFilter_user1");
+  });
+
+  it("未認証ではお気に入り絞り込み条件をリクエストに含めないこと", async () => {
+    mockGetCookie.mockReturnValue(
+      JSON.stringify({
+        directionKbn: "",
+        isFavoriteFilter: "true",
+        tagList: "",
+        sortBy: "photoAt",
+      })
+    );
+    mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: samplePhotos });
+
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(mockGetPhotoList).toHaveBeenCalled();
+    });
+    expect(mockGetPhotoList.mock.calls[0][1].isFavorite).toBeUndefined();
+  });
+
+  it("非オーナーには向き（縦/横）絞り込み条件をリクエストに含めないこと", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "other", accountNo: 99 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetCookie.mockReturnValue(
+      JSON.stringify({
+        directionKbn: "vertical",
+        isFavoriteFilter: "",
+        tagList: "",
+        sortBy: "photoAt",
+      })
+    );
+    mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: samplePhotos });
+
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(mockGetPhotoList).toHaveBeenCalled();
+    });
+    expect(mockGetPhotoList.mock.calls[0][1].directionKbn).toBeUndefined();
+  });
+
+  it("お気に入りアイコンの連打でも登録APIは1回だけ呼ばれること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "other", accountNo: 99 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: samplePhotos });
+    // 解決しないプロミスで「進行中」を保持する
+    mockAddFavorite.mockReturnValue(new Promise(() => {}));
+
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(galleryImages()).toHaveLength(2);
+    });
+
+    const btn = screen.getByRole("button", { name: "お気に入りに追加" });
+    fireEvent.click(btn);
+    fireEvent.click(btn);
+    fireEvent.click(btn);
+
+    await waitFor(() => {
+      expect(mockAddFavorite).toHaveBeenCalledTimes(1);
+    });
   });
 });
