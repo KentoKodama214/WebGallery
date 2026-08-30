@@ -718,20 +718,38 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                 className={`${styles.photo} group`}
               >
                 <div className="pswp-gallery__item">
-                  <a
-                    href={imageSrc}
-                    data-pswp-width="1600"
-                    data-pswp-height="1200"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <img
-                      src={imageSrc}
-                      alt={photo.caption || "写真"}
+                  {imageSrc ? (
+                    <a
+                      href={imageSrc}
+                      data-pswp-width="1600"
+                      data-pswp-height="1200"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <img
+                        src={imageSrc}
+                        alt={photo.caption || "写真"}
+                        className={styles.picture}
+                        onLoad={handleImageLoad}
+                      />
+                    </a>
+                  ) : (
+                    /* imageFilePath が許可されない URL（サニタイズで空）になった場合は
+                       リンク化せず、壊れた <a href=""> でページ自身が新規タブで開くのを防ぐ */
+                    <div
                       className={styles.picture}
-                      onLoad={handleImageLoad}
-                    />
-                  </a>
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#9ca3af",
+                        fontSize: "12px",
+                        background: "#1f2937",
+                      }}
+                    >
+                      画像を表示できません
+                    </div>
+                  )}
                   <div className="hidden-caption-content" style={{ display: "none" }}>
                     <p className="caption_content">{photo.caption || ""}</p>
                     <p className="show_detail">

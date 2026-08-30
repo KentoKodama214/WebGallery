@@ -175,6 +175,18 @@ export function PhotoDetail({
     return parts.join(" ");
   };
 
+  // 表示画像の src。サニタイズで空（＝許可されない URL）の場合は代替表示にして、
+  // <img src=""> でページ自身が再取得されるのを避ける
+  const imageSrc = sanitizeImageUrl(photo.imageFilePath);
+  const imageStyle = {
+    display: "block",
+    margin: "auto",
+    width: "100%",
+    maxWidth: "1000px",
+    maxHeight: "600px",
+    objectFit: "contain",
+  } as const;
+
   return (
     <div style={{ backgroundColor: "#000", color: "#fff", minHeight: "100vh" }}>
       {/* 戻るリンク */}
@@ -304,18 +316,27 @@ export function PhotoDetail({
       <div style={{ padding: "70px 5% 5% 5%", overflow: "auto" }}>
         {/* 画像 */}
         <div>
-          <img
-            src={sanitizeImageUrl(photo.imageFilePath)}
-            alt={photo.photoJapaneseTitle || photo.photoEnglishTitle || "写真"}
-            style={{
-              display: "block",
-              margin: "auto",
-              width: "100%",
-              maxWidth: "1000px",
-              maxHeight: "600px",
-              objectFit: "contain",
-            }}
-          />
+          {imageSrc ? (
+            <img
+              src={imageSrc}
+              alt={photo.photoJapaneseTitle || photo.photoEnglishTitle || "写真"}
+              style={imageStyle}
+            />
+          ) : (
+            <div
+              style={{
+                ...imageStyle,
+                height: "300px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#9ca3af",
+                background: "#1f2937",
+              }}
+            >
+              画像を表示できません
+            </div>
+          )}
         </div>
 
         {/* 詳細情報 */}
@@ -382,6 +403,7 @@ export function PhotoDetail({
         <ModalDialog
           testId="delete-confirm-dialog"
           label="写真の削除確認"
+          initialFocusSelector="[data-dialog-initial-focus]"
           onClose={() => {
             if (isDeleting) return;
             setShowDeleteConfirm(false);
@@ -448,6 +470,7 @@ export function PhotoDetail({
             )}
             <div style={{ display: "flex", justifyContent: "center", gap: "12px" }}>
               <button
+                data-dialog-initial-focus
                 onClick={() => {
                   setShowDeleteConfirm(false);
                   setActionError(null);

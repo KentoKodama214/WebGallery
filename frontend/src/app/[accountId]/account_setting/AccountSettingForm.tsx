@@ -433,6 +433,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       {showDeleteConfirm && (
         <ModalDialog
           label="アカウント削除の確認"
+          initialFocusSelector="[data-dialog-initial-focus]"
           onClose={() => {
             if (isDeleting) return;
             setShowDeleteConfirm(false);
@@ -446,6 +447,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
           <div className="flex gap-3">
             <button
               type="button"
+              data-dialog-initial-focus
               onClick={() => setShowDeleteConfirm(false)}
               disabled={isDeleting}
               className="flex-1 h-[40px] bg-gray-300 text-[#444] border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"

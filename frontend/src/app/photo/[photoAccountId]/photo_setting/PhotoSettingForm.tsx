@@ -360,6 +360,12 @@ export function PhotoSettingForm({
     );
   }
 
+  // プレビュー画像の src。ローカル選択ファイルは data URL、既存写真はサニタイズ済み URL。
+  // サニタイズで空になる（＝許可されない URL）場合は null にしてプレビューを出さない。
+  const previewSrc = imageFile
+    ? imagePreview
+    : sanitizeImageUrl(imagePreview) || null;
+
   return (
     <div className="min-h-screen bg-black text-white pb-10">
       <header>
@@ -406,13 +412,13 @@ export function PhotoSettingForm({
               className="hidden"
               data-testid="image-input"
             />
-            {imagePreview ? (
+            {previewSrc ? (
               <div
                 className="mt-2 flex flex-col items-center cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <img
-                  src={imageFile ? imagePreview : sanitizeImageUrl(imagePreview)}
+                  src={previewSrc}
                   alt="プレビュー"
                   className="max-w-full max-h-[300px]"
                   style={{ objectFit: "contain" }}

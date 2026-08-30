@@ -102,6 +102,22 @@ describe("PhotoDetail", () => {
     expect(screen.getByRole("img")).toHaveAttribute("src", "/photos/test.jpg");
   });
 
+  it("許可されない画像URLの場合は img を出さず代替表示になること", async () => {
+    mockGetPhotoDetail.mockResolvedValue({
+      ...samplePhoto,
+      imageFilePath: "http://insecure.example/x.jpg",
+    });
+
+    render(
+      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("画像を表示できません")).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
   it("EXIF情報が表示されること", async () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 

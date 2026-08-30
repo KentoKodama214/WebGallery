@@ -250,4 +250,32 @@ describe("APIプロキシ route", () => {
 
     expect(res.headers.get("location")).toBe("/login");
   });
+
+  it("BACKEND_URL をプレフィックスに持つだけのホスト詐称 Location は削除する", async () => {
+    const headers = new Headers({
+      location: "http://localhost:8080.evil.example/steal",
+    });
+    fetchMock.mockResolvedValueOnce(
+      new Response(null, { status: 302, headers })
+    );
+
+    const req = new NextRequest("http://localhost/api/v1/redirect");
+    const res = await GET(req, ctx(["v1", "redirect"]));
+
+    expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("相対パス化した結果がプロトコル相対（//host）になる Location は削除する", async () => {
+    const headers = new Headers({
+      location: "http://localhost:8080//evil.example/steal",
+    });
+    fetchMock.mockResolvedValueOnce(
+      new Response(null, { status: 302, headers })
+    );
+
+    const req = new NextRequest("http://localhost/api/v1/redirect");
+    const res = await GET(req, ctx(["v1", "redirect"]));
+
+    expect(res.headers.get("location")).toBeNull();
+  });
 });

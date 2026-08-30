@@ -142,6 +142,22 @@ docker-compose up -d
 | `NEXT_PUBLIC_API_BASE_URL` | 別オリジンのバックエンドを直接叩く場合のベースURL | 同一オリジンの `/api` プロキシを使用 |
 | `NEXT_PUBLIC_IMAGE_BASE_URL` | 写真の配信元オリジン（例: `https://cdn.example.com/`）。CSP の `img-src` と `sanitizeImageUrl` の許可オリジンに反映される | **外部ホストからの画像読み込みを一切許可しない**（`img-src 'self' data: blob:`）。外部の画像配信元を使う構成では必ず設定すること |
 
+##### 構成上の注意
+
+- **アップロード写真の配信経路**: フロントの API プロキシ（`src/app/api/[...path]/route.ts`）が中継するのは `/api/*` のみで、
+  バックエンドの画像配信パス（`/image/*`、`app.photo.outputPath`）は中継しない。`public/image/` には UI アセットのみが置かれる。
+  したがって実写真を表示するには次のいずれかが必要:
+  - `NEXT_PUBLIC_IMAGE_BASE_URL` に画像配信元オリジンを設定する（推奨。CDN / バックエンドの `/image/` 等）。
+  - フロントの前段のリバースプロキシ（nginx 等）で `/image/*` をバックエンドへルーティングする。
+  ローカル開発では backend の `application-local.yml` が `app.photo.outputPath: https://localhost:8080/image/` を使うため、
+  `NEXT_PUBLIC_IMAGE_BASE_URL=https://localhost:8080/` を `frontend/.env.local` に設定する。
+- **アップロードのボディサイズ / 同時接続**: `/api/*` プロキシはリクエストボディを最大 6MB までメモリにバッファしてから
+  バックエンドへ転送する（1 リクエストあたりは 6MB で頭打ちだが同時実行数の上限は持たない）。本番では前段の
+  リバースプロキシで `client_max_body_size`（6MB 程度）と同時接続数の制限をかけること。
+- **CSRF 対策のスコープ**: `/api/*` プロキシの Origin / `Sec-Fetch-Site` 検証は同一オリジンプロキシ経由でのみ機能する。
+  `NEXT_PUBLIC_API_BASE_URL` で別オリジンのバックエンドを直接叩く構成にした場合、この検証はバイパスされるため、
+  バックエンド側の CSRF 対策（SameSite Cookie 等）に完全に依存する。
+
 ### 3. フロントエンドのセットアップ
 
 ```bash

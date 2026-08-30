@@ -5,7 +5,7 @@ import "@testing-library/jest-dom";
 import { ModalDialog } from "../ModalDialog";
 
 /** 開閉できるダイアログを持つテスト用ホスト */
-function Host() {
+function Host({ initialFocusSelector }: { initialFocusSelector?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div>
@@ -18,9 +18,12 @@ function Host() {
           onClose={() => setOpen(false)}
           overlayClassName="overlay"
           containerClassName="container"
+          initialFocusSelector={initialFocusSelector}
         >
           <button type="button">最初</button>
-          <button type="button">最後</button>
+          <button type="button" data-dialog-initial-focus>
+            最後
+          </button>
         </ModalDialog>
       )}
     </div>
@@ -44,6 +47,14 @@ describe("ModalDialog", () => {
     await user.click(screen.getByRole("button", { name: "開く" }));
 
     expect(screen.getByRole("button", { name: "最初" })).toHaveFocus();
+  });
+
+  it("initialFocusSelector を指定すると開いたときにその要素へフォーカスする", async () => {
+    const user = userEvent.setup();
+    render(<Host initialFocusSelector="[data-dialog-initial-focus]" />);
+    await user.click(screen.getByRole("button", { name: "開く" }));
+
+    expect(screen.getByRole("button", { name: "最後" })).toHaveFocus();
   });
 
   it("Escape キーで onClose が呼ばれ、フォーカスが開いた要素へ戻る", async () => {

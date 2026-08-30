@@ -91,6 +91,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
   }, []);
 
+  // アクセストークンの有効期限が近づいたら先読みでリフレッシュする。
+  // これにより「期限切れ後の最初の API 呼び出しで 401 → リフレッシュ」の往復を減らす。
+  // exp を持たないトークン（テスト用など）では何もしない。
+  //
+  // リフレッシュが失敗した場合はここでは状態を変えない（一時的な 5xx / オフラインを
+  // 未ログイン扱いにしないため）。失効の確定は従来どおり `fetchWithAuth` の
+  // 401 → refresh → `clearAuthState` 経路に委ねる。
+  useEffect(() => {
+    if (!user) return;
+    const token = apiClient.getAccessToken();
+    const payload = token ? parseJwt(token) : null;
+    if (!payload?.exp) return;
+
+    // 期限の 30 秒前（最短でも 5 秒後）に実行する
+    const leadMs = 30_000;
+    const delay = Math.max(payload.exp * 1000 - Date.now() - leadMs, 5_000);
+
+    const timer = setTimeout(async () => {
+      try {
+        const refreshed = await apiClient.refresh();
+        if (!refreshed) return;
+        const nextToken = apiClient.getAccessToken();
+        const nextPayload = nextToken ? parseJwt(nextToken) : null;
+        if (nextPayload) {
+          setUser({
+            accountId: nextPayload.sub,
+            accountNo: nextPayload.accountNo,
+            role: nextPayload.role,
+          });
+        }
+      } catch {
+        // 先読みリフレッシュの失敗は無視する（次の API 呼び出しで扱う）
+      }
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [user]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -119,6 +157,8 @@ interface JwtPayload {
   accountNo: number;
   accountName: string;
   role: string;
+  /** 有効期限（UNIX 秒）。標準的な JWT には含まれる */
+  exp?: number;
 }
 
 /**
@@ -127,8 +167,12 @@ interface JwtPayload {
  * 署名の検証は行わないため、ここで得られる情報（role等）はUI表示の出し分けにのみ
  * 使用し、認可の判断に用いてはならない。認可は必ずバックエンドで行われる。
  *
+ * `exp` が含まれ、かつ既に期限切れのトークンは無効（null）として扱う。
+ * リフレッシュ／ログイン直後は必ず有効期限が先のトークンが得られるため、
+ * これにより「期限切れトークンで画面だけログイン状態」を防ぐ。
+ *
  * @param token JWTアクセストークン
- * @returns パース済みペイロード。不正なトークンの場合はnull
+ * @returns パース済みペイロード。不正・期限切れのトークンの場合はnull
  */
 function parseJwt(token: string): JwtPayload | null {
   try {
@@ -151,6 +195,12 @@ function parseJwt(token: string): JwtPayload | null {
       typeof parsed.role !== "string"
     ) {
       return null;
+    }
+    // exp を持つ場合は数値であることと、既に期限切れでないことを確認する
+    if (parsed.exp !== undefined) {
+      if (typeof parsed.exp !== "number" || parsed.exp * 1000 <= Date.now()) {
+        return null;
+      }
     }
     return parsed as JwtPayload;
   } catch {
