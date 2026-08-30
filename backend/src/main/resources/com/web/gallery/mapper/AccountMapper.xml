@@ -227,8 +227,10 @@
 	</select>
 
 	<select id="lockForLoginAttempt" resultType="java.lang.Integer">
+		<!-- hashtext は int4 のためキー衝突で無関係なアカウントが直列化されうる。
+		     64bit 空間にハッシュする hashtextextended を用いて衝突確率を大幅に下げる -->
 		WITH advisory_lock AS (
-			SELECT pg_advisory_xact_lock(hashtext(#{accountId})::bigint)
+			SELECT pg_advisory_xact_lock(hashtextextended(#{accountId}, 0))
 		)
 		SELECT 1 FROM advisory_lock
 	</select>

@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestControllerAdvice(assignableTypes = {
 		AccountRestController.class,
 		AdminAccountRestController.class,
+		AuthRestController.class,
 		KbnMstRestController.class,
 		PhotoFavoriteController.class,
 		PhotoRestController.class

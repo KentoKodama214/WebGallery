@@ -40,6 +40,7 @@ public final class MessageConst {
 	public static final String ERR_INVALID_IMAGE_SIGNATURE = "画像ファイルの内容が不正です。";
 	public static final String ERR_IMAGE_FILE_SIZE_EXCEEDED = "画像ファイルのサイズが上限を超えています。";
 	public static final String ERR_SYSTEM_ERROR = "システムエラーが発生しました。しばらくしてから再度お試しください。";
+	public static final String ERR_UNAUTHENTICATED = "認証が必要です。ログインしてください。";
 
 	// Admin
 	public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";

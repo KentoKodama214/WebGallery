@@ -43,6 +43,8 @@ public class SecurityConfig {
 
 	private final RestAccessDeniedHandler restAccessDeniedHandler;
 
+	private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+
 	/**
 	 * bcryptアルゴリズムでハッシュ化を行うエンコーダのオブジェクトを生成します
 	 * @return PasswordEncoderオブジェクト
@@ -129,6 +131,7 @@ public class SecurityConfig {
 				// それ以外は認証必須
 				.anyRequest().authenticated())
 			.exceptionHandling(exceptionHandling -> exceptionHandling
+				.authenticationEntryPoint(restAuthenticationEntryPoint)
 				.accessDeniedHandler(restAccessDeniedHandler))
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

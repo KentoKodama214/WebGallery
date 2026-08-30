@@ -6,6 +6,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -182,6 +183,24 @@ public class AuthRestController {
 		log.info("Invalid refresh token: {}", exception.getMessage());
 		return ResponseEntity.status(401)
 				.body(AuthErrorResponse.of(MessageConst.ERR_INVALID_REFRESH_TOKEN));
+	}
+
+	/**
+	 * 上記以外の認証系例外（{@link org.springframework.security.authentication.DisabledException}、
+	 * {@link org.springframework.security.authentication.CredentialsExpiredException} 等）の
+	 * ExceptionHandler<p>
+	 * より具体的な{@link BadCredentialsException}・{@link LockedException}のハンドラが優先されるため、
+	 * ここに到達するのはそれ以外の{@link AuthenticationException}のみ。
+	 * アカウント状態の詳細を秘匿するため、認証失敗として一律401を返す
+	 *
+	 * @param	exception	{@link AuthenticationException}
+	 * @return				401 Unauthorized
+	 */
+	@ExceptionHandler(AuthenticationException.class)
+	public ResponseEntity<AuthErrorResponse> handleAuthentication(AuthenticationException exception) {
+		log.info("Authentication failed: {}", exception.getMessage());
+		return ResponseEntity.status(401)
+				.body(AuthErrorResponse.of(MessageConst.ERR_BAD_CREDENTIALS));
 	}
 
 	/**

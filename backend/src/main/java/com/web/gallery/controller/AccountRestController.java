@@ -1,6 +1,7 @@
 package com.web.gallery.controller;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -167,6 +168,9 @@ public class AccountRestController {
 			@RequestBody @Validated AccountUpdateRequest accountUpdateRequest,
 			BindingResult result) throws GalleryException {
 
+		// 新しいパスワードは未指定（JSONでnull）でも空文字と同様に「変更なし」として扱う
+		String newPassword = Objects.requireNonNullElse(accountUpdateRequest.getNewPassword(), Consts.STRING_EMPTY);
+
 		if(result.hasErrors()) {
 			for(FieldError error : result.getFieldErrors()) {
 				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
@@ -178,21 +182,21 @@ public class AccountRestController {
 
 			if(!(fieldList.size() == 1 &&
 					"newPassword".equals(fieldList.getFirst()) &&
-				accountUpdateRequest.getNewPassword().isEmpty())) {
+				newPassword.isEmpty())) {
 					// 新しいパスワードが空欄で他にパラメータ不正がない場合は、スキップ
 					// 新しいパスワード以外や新しいパスワードの入力に不正がある場合は、例外
 					throw ErrorEnum.INVALID_INPUT.toException();
 			}
 		}
-		
+
 		AccountModel accountModel = AccountModel.from(accountUpdateRequest, sessionHelper.getAccountNo());
-		
+
 		Boolean isDuplicateAccountId = accountService.updateAccount(accountModel);
-		
+
 		return ResponseEntity.ok(AccountUpdateResponse.of(
 					isDuplicateAccountId,
 					!accountUpdateRequest.getAccountId().equals(sessionHelper.getAccountId()),
-					!accountUpdateRequest.getNewPassword().isEmpty(),
+					!newPassword.isEmpty(),
 					Consts.STRING_EMPTY));
 	}
 	

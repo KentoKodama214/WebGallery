@@ -13,6 +13,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.aggregate.Account;
@@ -193,13 +195,47 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 		Account account = Account.forDelete(accountNo);
 		accountAggregateRepository.delete(account);
 
-		// 写真ファイルのディレクトリを削除
-		fileRepository.delete(new ImageFilePath(photoConfig.getOutputPath() + accountId.value() + "/"));
+		// 写真ファイルのディレクトリ削除はDBコミット確定後に行う（ロールバック時の不整合を防ぐ）
+		deletePhotoDirectoryAfterCommit(new ImageFilePath(photoConfig.getOutputPath() + accountId.value() + "/"));
 
 		for(PhotoNo photoNo : account.getDeletedPhotoNoList()) {
 			applicationEventPublisher.publishEvent(new PhotoDeletedEvent(accountNo, photoNo));
 		}
 		applicationEventPublisher.publishEvent(new AccountDeletedEvent(accountNo, accountId));
+	}
+
+	/**
+	 * 写真ファイルディレクトリの物理削除をトランザクションのコミット後に遅延実行する<p>
+	 * トランザクション内で先にファイルを消すと、後続処理の失敗でDBがロールバックされたときに
+	 * 「アカウント・写真レコードはあるが実体ファイルが無い」不整合が残る。
+	 * 削除自体の失敗はログ出力に留める。トランザクションが無い場合は即時削除する
+	 *
+	 * @param	directoryPath	削除対象の写真ディレクトリパス
+	 */
+	private void deletePhotoDirectoryAfterCommit(ImageFilePath directoryPath) {
+		if (TransactionSynchronizationManager.isSynchronizationActive()) {
+			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+				@Override
+				public void afterCommit() {
+					deleteQuietly(directoryPath);
+				}
+			});
+		} else {
+			deleteQuietly(directoryPath);
+		}
+	}
+
+	/**
+	 * 写真ファイル（ディレクトリ）を削除する。失敗しても例外を伝播させずログ出力に留める
+	 *
+	 * @param	directoryPath	削除対象の写真ディレクトリパス
+	 */
+	private void deleteQuietly(ImageFilePath directoryPath) {
+		try {
+			fileRepository.delete(directoryPath);
+		} catch (RuntimeException e) {
+			log.warn("Failed to delete photo directory after commit. (directoryPath: {})", directoryPath.value(), e);
+		}
 	}
 
 	/**

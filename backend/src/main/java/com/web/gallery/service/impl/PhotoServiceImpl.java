@@ -12,6 +12,8 @@ import java.util.Objects;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 
 import com.web.gallery.aggregate.Photo;
@@ -179,6 +181,11 @@ public class PhotoServiceImpl implements PhotoService {
 		} catch (GalleryException e) {
 			deleteOrphanedFiles(registeredImageFilePaths);
 			throw e;
+		} catch (RuntimeException e) {
+			// GalleryException 以外（DBアクセスエラー等）でトランザクションがロールバックされる場合も、
+			// 書き込み済みのファイルは自動的には戻らないため補償削除する
+			deleteOrphanedFiles(registeredImageFilePaths);
+			throw e;
 		}
 		return savedPhotoNo;
 	}
@@ -207,7 +214,8 @@ public class PhotoServiceImpl implements PhotoService {
 		}
 
 		// クライアント送信値であるオリジナルファイル名からパストラバーサル対策としてベース名のみを抽出する
-		String filename = new File(photoDetailModel.getImageFile().value().getOriginalFilename()).getName();
+		// （Linux では '\\' がパス区切りとして扱われないため、先に '/' へ正規化してから抽出する）
+		String filename = new File(photoDetailModel.getImageFile().value().getOriginalFilename().replace('\\', '/')).getName();
 		Photo photo = Photo.forRegist(photoDetailModel, newPhotoNo, new ImageFilePath(filePath + filename));
 		photoAggregateRepository.regist(photo);
 		fileRepository.save(FileModel.of(photo.getImageFilePath(), photo.getImageFile()));
@@ -227,6 +235,47 @@ public class PhotoServiceImpl implements PhotoService {
 				fileRepository.delete(imageFilePath);
 			} catch (RuntimeException e) {
 				log.warn("Failed to delete orphaned file after registration rollback. (imageFilePath: {})", imageFilePath.value(), e);
+			}
+		}
+	}
+
+	/**
+	 * 画像ファイルの物理削除をトランザクションのコミット後に遅延実行する<p>
+	 * トランザクション内で先にファイルを消すと、後続処理の失敗でDBがロールバックされたときに
+	 * 「レコードはあるが実体ファイルが無い」不整合が残る。コミット確定後に削除することでこれを防ぐ。
+	 * 削除自体の失敗はログ出力に留め、削除漏れは後続のクリーンアップに委ねる。
+	 * トランザクションが無い場合（単体実行等）は即時削除する
+	 *
+	 * @param	imageFilePaths	削除対象の画像ファイルパスのリスト
+	 */
+	private void deleteFilesAfterCommit(List<ImageFilePath> imageFilePaths) {
+		if (imageFilePaths.isEmpty()) {
+			return;
+		}
+		List<ImageFilePath> targets = List.copyOf(imageFilePaths);
+		if (TransactionSynchronizationManager.isSynchronizationActive()) {
+			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+				@Override
+				public void afterCommit() {
+					deleteFilesQuietly(targets);
+				}
+			});
+		} else {
+			deleteFilesQuietly(targets);
+		}
+	}
+
+	/**
+	 * 画像ファイルを削除する。失敗しても例外を伝播させずログ出力に留める
+	 *
+	 * @param	imageFilePaths	削除対象の画像ファイルパスのリスト
+	 */
+	private void deleteFilesQuietly(List<ImageFilePath> imageFilePaths) {
+		for (ImageFilePath imageFilePath : imageFilePaths) {
+			try {
+				fileRepository.delete(imageFilePath);
+			} catch (RuntimeException e) {
+				log.warn("Failed to delete image file after commit. (imageFilePath: {})", imageFilePath.value(), e);
 			}
 		}
 	}
@@ -289,14 +338,19 @@ public class PhotoServiceImpl implements PhotoService {
 	public void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList) throws GalleryException {
 		String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
 
+		List<ImageFilePath> deletedImageFilePaths = new ArrayList<>();
 		for(PhotoDeleteModel photoDeleteModel : photoDeleteModelList) {
-			String fileName = new File(photoDeleteModel.getImageFilePath().value()).getName();
+			// クライアント送信値のファイルパスからベース名のみを抽出する（'\\' を '/' へ正規化してから）
+			String fileName = new File(photoDeleteModel.getImageFilePath().value().replace('\\', '/')).getName();
 			ImageFilePath imageFilePathForDelete = new ImageFilePath(filePath + fileName);
 			Photo photo = Photo.forDelete(photoDeleteModel.getAccountNo(), photoDeleteModel.getPhotoNo(), imageFilePathForDelete);
 			photoAggregateRepository.delete(photo);
-			fileRepository.delete(imageFilePathForDelete);
+			deletedImageFilePaths.add(imageFilePathForDelete);
 			applicationEventPublisher.publishEvent(new PhotoDeletedEvent(photo.getAccountNo(), photo.getPhotoNo()));
 		}
+
+		// ファイルの物理削除はDBコミット確定後に行う（ロールバック時の不整合を防ぐ）
+		deleteFilesAfterCommit(deletedImageFilePaths);
 	}
 
 	/**
