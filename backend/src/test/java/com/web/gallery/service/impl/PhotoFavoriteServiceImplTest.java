@@ -18,7 +18,6 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
@@ -47,11 +46,11 @@ public class PhotoFavoriteServiceImplTest {
 	class addFavorite {
 		@Test
 		@Order(1)
-		@DisplayName("正常系")
+		@DisplayName("正常系（自分自身の写真へのお気に入り登録も許可される）")
 		void addFavorite_success() throws GalleryException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
-					.favoritePhotoAccountNo(new AccountNo(2L))
+					.favoritePhotoAccountNo(new AccountNo(1L))
 					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			when(photoDetailRepositoryImpl.getPhotoDetail(any(PhotoDetailSearchModel.class)))
@@ -66,7 +65,7 @@ public class PhotoFavoriteServiceImplTest {
 		void addFavorite_RegistFailureException() throws GalleryException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
-					.favoritePhotoAccountNo(new AccountNo(2L))
+					.favoritePhotoAccountNo(new AccountNo(1L))
 					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			when(photoDetailRepositoryImpl.getPhotoDetail(any(PhotoDetailSearchModel.class)))
@@ -77,19 +76,6 @@ public class PhotoFavoriteServiceImplTest {
 
 		@Test
 		@Order(3)
-		@DisplayName("異常系：自分自身の写真をお気に入り登録しようとした場合はBadRequestExceptionをthrowする")
-		void addFavorite_selfFavorite() {
-			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
-					.accountNo(new AccountNo(1L))
-					.favoritePhotoAccountNo(new AccountNo(1L))
-					.favoritePhotoNo(new PhotoNo(1L))
-					.build();
-			assertThrows(BadRequestException.class, () -> photoFavoriteServiceImpl.addFavorite(photoFavoriteModel));
-			verifyNoInteractions(photoFavoriteRepositoryImpl);
-		}
-
-		@Test
-		@Order(4)
 		@DisplayName("異常系：対象の写真が存在しない場合はPhotoNotFoundExceptionをthrowする")
 		void addFavorite_photoNotFound() throws GalleryException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
