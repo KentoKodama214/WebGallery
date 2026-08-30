@@ -39,6 +39,8 @@ export function PhotoSettingForm({
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [savedPhotoNo, setSavedPhotoNo] = useState<number | undefined>(photoNo);
   const isEditMode = savedPhotoNo !== undefined;
+  // 既存データの読み込みは accountNo / photoNo の両方が URL から渡された場合のみ行う
+  const shouldLoadExisting = accountNo !== undefined && photoNo !== undefined;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,7 +61,7 @@ export function PhotoSettingForm({
   const [nextTagNo, setNextTagNo] = useState(1);
 
   // UI状態
-  const [isDataLoading, setIsDataLoading] = useState(isEditMode);
+  const [isDataLoading, setIsDataLoading] = useState(shouldLoadExisting);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -76,7 +78,7 @@ export function PhotoSettingForm({
    */
   useEffect(() => {
     if (authLoading || !isAuthenticated) return;
-    if (!isEditMode || !accountNo || !photoNo) return;
+    if (!shouldLoadExisting || !accountNo || !photoNo) return;
 
     let cancelled = false;
     const load = async () => {
@@ -131,7 +133,7 @@ export function PhotoSettingForm({
     return () => {
       cancelled = true;
     };
-  }, [authLoading, isAuthenticated, isEditMode, photoAccountId, accountNo, photoNo]);
+  }, [authLoading, isAuthenticated, shouldLoadExisting, photoAccountId, accountNo, photoNo]);
 
   /**
    * 画像選択

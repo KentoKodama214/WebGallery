@@ -34,14 +34,28 @@ export default async function PhotoSettingPage({
   const { photoAccountId } = await params;
   const { accountNo, photoNo } = await searchParams;
 
+  const parsedAccountNo = parsePositiveInt(accountNo);
+  const parsedPhotoNo = parsePositiveInt(photoNo);
+
+  // 編集は accountNo / photoNo の両方が必要。片方だけ指定された URL は不正扱いにする
+  // （新規登録は両方とも無し）
+  const isPartialEditParams =
+    (parsedAccountNo === undefined) !== (parsedPhotoNo === undefined);
+
   return (
     <>
       <Header />
-      <PhotoSettingForm
-        photoAccountId={photoAccountId}
-        accountNo={parsePositiveInt(accountNo)}
-        photoNo={parsePositiveInt(photoNo)}
-      />
+      {isPartialEditParams ? (
+        <div className="min-h-screen bg-black text-white flex justify-center items-center">
+          <p className="text-red-500">写真が見つかりません</p>
+        </div>
+      ) : (
+        <PhotoSettingForm
+          photoAccountId={photoAccountId}
+          accountNo={parsedAccountNo}
+          photoNo={parsedPhotoNo}
+        />
+      )}
       <Footer />
     </>
   );

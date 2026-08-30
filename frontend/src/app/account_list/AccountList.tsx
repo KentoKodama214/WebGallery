@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getAccountList, type AccountListItem } from "@/lib/api/client";
 
@@ -18,22 +18,25 @@ export function AccountList() {
   const [pageNo, setPageNo] = useState(1);
   // インクリメントで 1 ページ目の再取得をトリガーする（再読み込みボタン用）
   const [reloadKey, setReloadKey] = useState(0);
+  // 取得リクエストの世代。初期ロード・再読み込み・もっと見るは開始時に採番し、
+  // 自分が最新でなければ結果を破棄する（後着レスポンスが新しい一覧を上書きする競合を防ぐ）
+  const loadSeqRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
+    const seq = ++loadSeqRef.current;
     getAccountList(1)
       .then((data) => {
-        if (cancelled) return;
+        if (cancelled || loadSeqRef.current !== seq) return;
         setAccounts(data.accountList);
         setIsLast(data.isLast);
       })
       .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "エラーが発生しました");
-        }
+        if (cancelled || loadSeqRef.current !== seq) return;
+        setError(err instanceof Error ? err.message : "エラーが発生しました");
       })
       .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && loadSeqRef.current === seq) setIsLoading(false);
       });
     return () => {
       cancelled = true;
@@ -57,20 +60,24 @@ export function AccountList() {
    */
   const handleLoadMore = async () => {
     const nextPage = pageNo + 1;
+    const seq = ++loadSeqRef.current;
     setIsLoadingMore(true);
     setLoadMoreError(null);
     try {
       const data = await getAccountList(nextPage);
+      // 再読み込み等で世代が変わっていたら、古いページを継ぎ足さない
+      if (loadSeqRef.current !== seq) return;
       setAccounts((prev) => [...prev, ...data.accountList]);
       setIsLast(data.isLast);
       setPageNo(nextPage);
     } catch (err) {
+      if (loadSeqRef.current !== seq) return;
       // 取得済みの一覧は維持し、通知だけ表示する
       setLoadMoreError(
         err instanceof Error ? err.message : "エラーが発生しました"
       );
     } finally {
-      setIsLoadingMore(false);
+      if (loadSeqRef.current === seq) setIsLoadingMore(false);
     }
   };
 

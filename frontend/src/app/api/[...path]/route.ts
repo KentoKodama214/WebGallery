@@ -16,6 +16,7 @@ import { type NextRequest, NextResponse } from "next/server";
  *   （このキャッチオールルートは proxy の matcher 対象外のため
  *   next.config.ts の experimental.proxyClientMaxBodySize は適用されない。
  *   メモリ上限の担保はこのハンドラー自身で行う）
+ * - バックエンドへの中継には 30 秒のタイムアウトを設け、応答が無い場合は 504 を返す
  * - Cookie（refreshToken 等）とバックエンドの Set-Cookie を双方向に転送する
  * - クライアントが詐称しうる転送系ヘッダー（X-Forwarded-* 等）は除去する。
  *   これはあくまで詐称防止であり、バックエンドは現状クライアント IP に依存した
@@ -27,6 +28,9 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
 /** 転送を許可するリクエストボディの最大サイズ（サーブレット上限に合わせて 6MB） */
 const MAX_BODY_SIZE = 6 * 1024 * 1024;
+
+/** バックエンドへの中継リクエストのタイムアウト（ミリ秒） */
+const BACKEND_TIMEOUT_MS = 30_000;
 
 /** バックエンドへ転送しないリクエストヘッダー */
 const EXCLUDED_REQUEST_HEADERS = new Set([
@@ -158,8 +162,16 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
       headers,
       body,
       redirect: "manual",
+      // スロー応答・ハングでコネクションが滞留しないようタイムアウトを設ける
+      signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
     });
-  } catch {
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "TimeoutError") {
+      return NextResponse.json(
+        { message: "バックエンドの応答がありませんでした" },
+        { status: 504 }
+      );
+    }
     return NextResponse.json(
       { message: "バックエンドとの通信に失敗しました" },
       { status: 502 }

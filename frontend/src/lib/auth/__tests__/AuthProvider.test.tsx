@@ -10,6 +10,7 @@ jest.mock("@/lib/api/client", () => ({
   refresh: jest.fn(),
   getAccessToken: jest.fn(),
   setAccessToken: jest.fn(),
+  clearAuthState: jest.fn(),
 }));
 
 import * as apiClient from "@/lib/api/client";
@@ -33,7 +34,9 @@ function TestComponent() {
       <p data-testid="loading">{isLoading.toString()}</p>
       <p data-testid="authenticated">{isAuthenticated.toString()}</p>
       <p data-testid="user">{user?.accountId || "null"}</p>
-      <button onClick={() => login("testuser1", "password1")}>Login</button>
+      <button onClick={() => login("testuser1", "password1").catch(() => {})}>
+        Login
+      </button>
       <button onClick={() => logout()}>Logout</button>
     </div>
   );
@@ -100,6 +103,35 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
       expect(screen.getByTestId("user")).toHaveTextContent("testuser1");
     });
+  });
+
+  it("発行トークンを解釈できない場合はログイン失敗となり認証状態がクリアされること", async () => {
+    mockedApiClient.refresh.mockResolvedValue(false);
+    mockedApiClient.login.mockResolvedValue({
+      accessToken: "not-a-jwt",
+      expiresIn: 900,
+    });
+    mockedApiClient.getAccessToken.mockReturnValue("not-a-jwt");
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+    });
+
+    await user.click(screen.getByText("Login"));
+
+    await waitFor(() => {
+      expect(mockedApiClient.clearAuthState).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
+    expect(screen.getByTestId("user")).toHaveTextContent("null");
   });
 
   it("ログアウト時にユーザー情報がクリアされること", async () => {

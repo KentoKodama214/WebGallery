@@ -73,6 +73,19 @@ describe("APIプロキシ route", () => {
     expect(body.message).toContain("バックエンド");
   });
 
+  it("バックエンド応答がタイムアウトした場合は504を返す", async () => {
+    fetchMock.mockRejectedValueOnce(
+      new DOMException("The operation timed out.", "TimeoutError")
+    );
+
+    const req = new NextRequest("http://localhost/api/v1/accounts");
+    const res = await GET(req, ctx(["v1", "accounts"]));
+
+    expect(res.status).toBe(504);
+    const body = await res.json();
+    expect(body.message).toContain("応答");
+  });
+
   it("content-length が上限を超えるリクエストは413を返し、転送しない", async () => {
     const req = new NextRequest(
       "http://localhost/api/v1/accounts/foo/photos",
