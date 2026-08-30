@@ -153,6 +153,44 @@ describe("APIプロキシ route", () => {
     ]);
   });
 
+  it("状態変更メソッドで Origin が自サイトと一致すれば中継する", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const req = new NextRequest("http://localhost/api/v1/auth/logout", {
+      method: "POST",
+      headers: { origin: "http://localhost" },
+    });
+    const res = await POST(req, ctx(["v1", "auth", "logout"]));
+
+    expect(res.status).toBe(204);
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it("状態変更メソッドで Origin が別サイトなら403を返し中継しない", async () => {
+    const req = new NextRequest("http://localhost/api/v1/auth/logout", {
+      method: "POST",
+      headers: { origin: "https://evil.example" },
+    });
+    const res = await POST(req, ctx(["v1", "auth", "logout"]));
+
+    expect(res.status).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("Origin ヘッダーが無い状態変更メソッドは素通しする", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const req = new NextRequest("http://localhost/api/v1/accounts", {
+      method: "POST",
+      body: JSON.stringify({ a: 1 }),
+      headers: { "content-type": "application/json" },
+    });
+    const res = await POST(req, ctx(["v1", "accounts"]));
+
+    expect(res.status).toBe(204);
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
   it("バックエンド絶対URLの Location を相対パスへ書き換える", async () => {
     const headers = new Headers({ location: "http://localhost:8080/api/v1/foo" });
     fetchMock.mockResolvedValueOnce(

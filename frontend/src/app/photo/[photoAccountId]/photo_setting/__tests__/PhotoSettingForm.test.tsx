@@ -197,4 +197,58 @@ describe("PhotoSettingForm", () => {
       ).toBeInTheDocument();
     });
   });
+
+  it("読み込んだ写真の所有者がログインユーザーでない場合は権限エラーになること", async () => {
+    // パスは自分（user1）だが、返ってきた写真は別アカウント（accountNo=2）のもの
+    mockGetPhotoDetail.mockResolvedValue({ ...samplePhoto, accountNo: 2 });
+
+    render(
+      <PhotoSettingForm photoAccountId="user1" accountNo={2} photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("この操作を行う権限がありません")
+      ).toBeInTheDocument();
+    });
+    expect(mockSavePhoto).not.toHaveBeenCalled();
+  });
+
+  it("新規追加タグは tagNo を送信せず、既存タグは送信すること", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockSavePhoto.mockResolvedValue({
+      isSuccess: true,
+      photoNo: 10,
+      imageFilePath: "/photos/test.jpg",
+    });
+
+    render(
+      <PhotoSettingForm photoAccountId="user1" accountNo={1} photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("add-tag-button")).toBeInTheDocument();
+    });
+
+    // 新規タグを1つ追加（既存タグ tagNo=1 の次なので tagNo=2 が採番される）
+    fireEvent.click(screen.getByTestId("add-tag-button"));
+    fireEvent.change(screen.getByTestId("tag-japanese-2"), {
+      target: { value: "新規タグ" },
+    });
+
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(mockSavePhoto).toHaveBeenCalled();
+    });
+
+    const formData = mockSavePhoto.mock.calls[0][1] as FormData;
+    // 既存タグ（index 0）は実タグ番号を送る
+    expect(formData.get("photoTagRegistRequestList[0].tagNo")).toBe("1");
+    // 新規タグ（index 1）は tagNo を送らない
+    expect(formData.get("photoTagRegistRequestList[1].tagNo")).toBeNull();
+    expect(formData.get("photoTagRegistRequestList[1].tagJapaneseName")).toBe(
+      "新規タグ"
+    );
+  });
 });

@@ -48,6 +48,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
               accountNo: payload.accountNo,
               role: payload.role,
             });
+          } else {
+            // リフレッシュは成功したがトークンを解釈できない場合は、
+            // 「API は認証済みだが画面は未ログイン」の不整合を避けるため
+            // 認証状態をまとめてクリアする
+            apiClient.clearAuthState();
           }
         }
       } catch {

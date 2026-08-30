@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
@@ -16,7 +16,6 @@ import { onActivateKey } from "@/lib/a11y";
 import { sanitizeImageUrl } from "@/lib/url";
 import styles from "./PhotoList.module.css";
 
-const COOKIE_NAME = "photoListFilter";
 const COOKIE_MAX_AGE = 1800; // 30分
 
 interface PhotoListFilter {
@@ -34,13 +33,25 @@ const DEFAULT_FILTER: PhotoListFilter = {
 };
 
 /**
+ * フィルター条件 Cookie 名（ギャラリー単位でスコープする）
+ *
+ * 単一キーで全ギャラリー・全ユーザー共有にすると、別ユーザーのギャラリー閲覧時に
+ * 前回条件が漏れて適用されるため、`photoAccountId` を含めて分離する。
+ * `photoAccountId` は半角英数字（バリデーション済み）なので Cookie 名として安全。
+ */
+function filterCookieName(photoAccountId: string): string {
+  return `photoListFilter_${photoAccountId}`;
+}
+
+/**
  * Cookieに保存されたフィルター条件を読み込む
  *
+ * @param photoAccountId 対象ギャラリーのアカウントID
  * @returns 保存済みのフィルター条件。無ければ既定値
  */
-function readStoredFilter(): PhotoListFilter {
+function readStoredFilter(photoAccountId: string): PhotoListFilter {
   if (typeof document === "undefined") return DEFAULT_FILTER;
-  const raw = getCookie(COOKIE_NAME);
+  const raw = getCookie(filterCookieName(photoAccountId));
   if (!raw) return DEFAULT_FILTER;
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -61,6 +72,31 @@ function readStoredFilter(): PhotoListFilter {
   }
 }
 
+/**
+ * 閲覧者の権限で許可されないフィルター条件を取り除く
+ *
+ * - お気に入り絞り込みは認証済みユーザーのみ
+ * - 向き（縦/横）絞り込みはギャラリー所有者のみ
+ *
+ * Cookie に保存済みの条件が、ログアウト後や他人のギャラリー閲覧時に
+ * そのままリクエストへ付与されるのを防ぐ。
+ */
+function sanitizeFilterForViewer(
+  filter: PhotoListFilter,
+  opts: { isAuthenticated: boolean; isOwner: boolean }
+): PhotoListFilter {
+  return {
+    ...filter,
+    isFavoriteFilter: opts.isAuthenticated ? filter.isFavoriteFilter : "",
+    directionKbn: opts.isOwner ? filter.directionKbn : "",
+  };
+}
+
+/** お気に入り操作の進行中管理に使うキー */
+function favoriteKey(accountNo: number, photoNo: number): string {
+  return `${accountNo}-${photoNo}`;
+}
+
 interface PhotoListProps {
   photoAccountId: string;
 }
@@ -70,7 +106,12 @@ interface PhotoListProps {
  * フィルター・グリッド表示・ページネーションを提供
  */
 export function PhotoList({ photoAccountId }: PhotoListProps) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  // マウント時に一度だけ Cookie を読む（従来は 5 回パースしていた）
+  const initialFilter = useMemo(
+    () => readStoredFilter(photoAccountId),
+    [photoAccountId]
+  );
   const [photos, setPhotos] = useState<PhotoListItem[]>([]);
   const [isLast, setIsLast] = useState(true);
   // 写真追加ボタンの表示可否。上限チェックが成功し、かつ上限未達のときだけ true。
@@ -84,19 +125,18 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   const [pageNo, setPageNo] = useState(1);
 
   // フィルター編集状態（パネル内の入力値。初期値はCookieから復元）
-  const [directionKbn, setDirectionKbn] = useState(() => readStoredFilter().directionKbn);
+  const [directionKbn, setDirectionKbn] = useState(initialFilter.directionKbn);
   const [isFavoriteFilter, setIsFavoriteFilter] = useState(
-    () => readStoredFilter().isFavoriteFilter
+    initialFilter.isFavoriteFilter
   );
-  const [tagList, setTagList] = useState(() => readStoredFilter().tagList);
-  const [sortBy, setSortBy] = useState(() => readStoredFilter().sortBy);
+  const [tagList, setTagList] = useState(initialFilter.tagList);
+  const [sortBy, setSortBy] = useState(initialFilter.sortBy);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // 実際に一覧へ適用されているフィルター条件（「絞り込み」実行時に確定する）。
   // ページネーション（+もっと見る）は編集中の値ではなくこちらを使う。
-  const [appliedFilter, setAppliedFilter] = useState<PhotoListFilter>(
-    () => readStoredFilter()
-  );
+  const [appliedFilter, setAppliedFilter] =
+    useState<PhotoListFilter>(initialFilter);
 
   const galleryRef = useRef<HTMLDivElement>(null);
   const lightboxRef = useRef<InstanceType<typeof import("photoswipe/lightbox").default> | null>(null);
@@ -105,6 +145,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   // 採番し、自分が最新でなければ結果を破棄する（後着の初期ロードが
   // 絞り込み結果やページ追加を上書きする競合を防ぐ）
   const loadSeqRef = useRef(0);
+  // 「+もっと見る」の再入防止（isLoadingMore の setState 反映前の連打対策）
+  const isLoadingMoreRef = useRef(false);
+  // お気に入り操作の多重実行防止（(accountNo-photoNo) 単位で進行中を管理）
+  const favoriteInFlightRef = useRef<Set<string>>(new Set());
 
   // お気に入りボタン等のコールバックから最新のphotosを参照できるようにする
   useEffect(() => {
@@ -114,13 +158,20 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   const isOwner = user?.accountId === photoAccountId;
   const hasPhotos = photos.length > 0;
 
-  const buildParams = (filter: PhotoListFilter, page: number): PhotoListParams => ({
-    directionKbn: filter.directionKbn || undefined,
-    isFavorite: filter.isFavoriteFilter || undefined,
-    tagList: filter.tagList || undefined,
-    sortBy: filter.sortBy || undefined,
-    pageNo: page,
-  });
+  const buildParams = (
+    filter: PhotoListFilter,
+    page: number
+  ): PhotoListParams => {
+    // リクエスト直前に、閲覧者権限で許可されない条件を最終的に取り除く（多層防御）
+    const safe = sanitizeFilterForViewer(filter, { isAuthenticated, isOwner });
+    return {
+      directionKbn: safe.directionKbn || undefined,
+      isFavorite: safe.isFavoriteFilter || undefined,
+      tagList: safe.tagList || undefined,
+      sortBy: safe.sortBy || undefined,
+      pageNo: page,
+    };
+  };
 
   /**
    * フィルターパネルの編集値を適用済みの値に戻す（絞り込みを実行せず閉じる場合）
@@ -135,21 +186,35 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   /**
    * フィルター条件をCookieに保存する
    */
-  const saveFilterToCookie = useCallback((filter: PhotoListFilter) => {
-    setCookie(COOKIE_NAME, JSON.stringify(filter), COOKIE_MAX_AGE);
-  }, []);
+  const saveFilterToCookie = useCallback(
+    (filter: PhotoListFilter) => {
+      setCookie(
+        filterCookieName(photoAccountId),
+        JSON.stringify(filter),
+        COOKIE_MAX_AGE
+      );
+    },
+    [photoAccountId]
+  );
 
   /**
    * 写真一覧取得（初期化時）
    * Cookieから復元したフィルター条件でAPIを呼び出す
    */
   useEffect(() => {
+    // 認証状態が確定してから読み込む（未確定のまま実行すると、閲覧者権限に
+    // 応じたフィルターのサニタイズ・お気に入り状態の判定が正しく行えない）
+    if (authLoading) return;
+
     let cancelled = false;
 
-    const filter = readStoredFilter();
-    // Cookieの有効期限をリセット
+    // 保存済み条件のうち、現在の閲覧者権限で許可されないものを取り除く
+    const filter = sanitizeFilterForViewer(readStoredFilter(photoAccountId), {
+      isAuthenticated,
+      isOwner,
+    });
+    // サニタイズ後の条件で Cookie を上書きし、有効期限もリセットする
     saveFilterToCookie(filter);
-    // appliedFilter の初期値は同じ readStoredFilter() 由来のため、ここでの再設定は不要
 
     const params: PhotoListParams = {
       directionKbn: filter.directionKbn || undefined,
@@ -166,6 +231,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         if (cancelled || loadSeqRef.current !== seq) return;
         setPhotos(data.photoList);
         setIsLast(data.isLast);
+        setPageNo(1);
+        setAppliedFilter(filter);
         setError(null);
       } catch (err) {
         if (!cancelled && loadSeqRef.current === seq) {
@@ -180,7 +247,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     return () => {
       cancelled = true;
     };
-  }, [photoAccountId, saveFilterToCookie]);
+  }, [photoAccountId, saveFilterToCookie, authLoading, isAuthenticated, isOwner]);
 
   useEffect(() => {
     if (!isOwner) return;
@@ -242,6 +309,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
               const idx = lightbox!.pswp!.currIndex;
               const photo = photosRef.current[idx];
               if (!photo || photo.isFavorite) return;
+              const key = favoriteKey(photo.accountNo, photo.photoNo);
+              if (favoriteInFlightRef.current.has(key)) return;
+              favoriteInFlightRef.current.add(key);
               addFavorite(photo.accountNo, photo.photoNo).then(() => {
                 setPhotos((prev) =>
                   prev.map((p) =>
@@ -256,6 +326,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                 if (cancelBtn) cancelBtn.style.display = "block";
               }).catch(() => {
                 setActionError("お気に入りの更新に失敗しました");
+              }).finally(() => {
+                favoriteInFlightRef.current.delete(key);
               });
             },
           });
@@ -279,6 +351,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
               const idx = lightbox!.pswp!.currIndex;
               const photo = photosRef.current[idx];
               if (!photo || !photo.isFavorite) return;
+              const key = favoriteKey(photo.accountNo, photo.photoNo);
+              if (favoriteInFlightRef.current.has(key)) return;
+              favoriteInFlightRef.current.add(key);
               deleteFavorite(photo.accountNo, photo.photoNo).then(() => {
                 setPhotos((prev) =>
                   prev.map((p) =>
@@ -293,6 +368,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                 if (cancelBtn) cancelBtn.style.display = "none";
               }).catch(() => {
                 setActionError("お気に入りの更新に失敗しました");
+              }).finally(() => {
+                favoriteInFlightRef.current.delete(key);
               });
             },
           });
@@ -355,6 +432,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
    * +もっと見る
    */
   const handleLoadMore = async () => {
+    // setState 反映前の連打で同一ページを二重取得しないよう ref で再入を防ぐ
+    if (isLoadingMoreRef.current) return;
+    isLoadingMoreRef.current = true;
     const nextPage = pageNo + 1;
     const seq = ++loadSeqRef.current;
     setIsLoadingMore(true);
@@ -376,6 +456,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         err instanceof Error ? err.message : "エラーが発生しました"
       );
     } finally {
+      isLoadingMoreRef.current = false;
       if (loadSeqRef.current === seq) setIsLoadingMore(false);
     }
   };
@@ -423,7 +504,14 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   const handleToggleFavorite = async (e: React.MouseEvent, photo: PhotoListItem) => {
     e.preventDefault();
     e.stopPropagation();
+    const key = favoriteKey(photo.accountNo, photo.photoNo);
+    // 同一写真への操作が進行中なら無視する（連打による重複リクエスト・
+    // 楽観更新の二重反転で UI とサーバ状態が食い違うのを防ぐ）
+    if (favoriteInFlightRef.current.has(key)) return;
+    favoriteInFlightRef.current.add(key);
     setActionError(null);
+    // 相対トグルではなく、実行するアクションに対応した絶対値で更新する
+    const nextFavorite = !photo.isFavorite;
     try {
       if (photo.isFavorite) {
         await deleteFavorite(photo.accountNo, photo.photoNo);
@@ -433,7 +521,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       setPhotos((prev) =>
         prev.map((p) =>
           p.accountNo === photo.accountNo && p.photoNo === photo.photoNo
-            ? { ...p, isFavorite: !p.isFavorite }
+            ? { ...p, isFavorite: nextFavorite }
             : p
         )
       );
@@ -441,6 +529,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       setActionError(
         err instanceof Error ? err.message : "お気に入りの更新に失敗しました"
       );
+    } finally {
+      favoriteInFlightRef.current.delete(key);
     }
   };
 

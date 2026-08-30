@@ -21,6 +21,8 @@ export function AccountList() {
   // 取得リクエストの世代。初期ロード・再読み込み・もっと見るは開始時に採番し、
   // 自分が最新でなければ結果を破棄する（後着レスポンスが新しい一覧を上書きする競合を防ぐ）
   const loadSeqRef = useRef(0);
+  // 「+もっと見る」の再入防止（isLoadingMore の setState 反映前の連打対策）
+  const isLoadingMoreRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +61,9 @@ export function AccountList() {
    * +もっと見る
    */
   const handleLoadMore = async () => {
+    // setState 反映前の連打で同一ページを二重取得しないよう ref で再入を防ぐ
+    if (isLoadingMoreRef.current) return;
+    isLoadingMoreRef.current = true;
     const nextPage = pageNo + 1;
     const seq = ++loadSeqRef.current;
     setIsLoadingMore(true);
@@ -77,6 +82,7 @@ export function AccountList() {
         err instanceof Error ? err.message : "エラーが発生しました"
       );
     } finally {
+      isLoadingMoreRef.current = false;
       if (loadSeqRef.current === seq) setIsLoadingMore(false);
     }
   };

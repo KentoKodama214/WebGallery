@@ -39,7 +39,14 @@ export function PhotoDetail({
   const [isFavoriteProcessing, setIsFavoriteProcessing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const isOwner = user?.accountId === photoAccountId;
+  // owner 判定は URL パスだけでなく、表示中の写真の実所有者（photo.accountNo）が
+  // ログインユーザー自身であることまで確認する。細工 URL
+  // （/photo/<自分>/photo_detail?accountNo=<他人>&photoNo=<他人の写真>）で
+  // 編集・削除 UI が出るのを防ぐ（多層防御。認可はバックエンドでも実施）。
+  const isOwner =
+    !!user &&
+    user.accountId === photoAccountId &&
+    (photo === null || photo.accountNo === user.accountNo);
 
   /**
    * 写真詳細取得

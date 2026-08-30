@@ -3,9 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import localFont from "next/font/local";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { onActivateKey } from "@/lib/a11y";
 import styles from "./Header.module.css";
+
+/**
+ * ナビゲーション見出しのフォント（Vollkorn 400・latin サブセット）
+ *
+ * フォントファイルはリポジトリに同梱してセルフホストする。Google Fonts への
+ * ランタイム／ビルド時リクエスト（可用性・プライバシー・オフラインビルド上の
+ * 懸念）を一切発生させない。ナビの表記は英字のみのため latin サブセットで足りる。
+ */
+const navFont = localFont({
+  src: "./fonts/vollkorn-latin-400.woff2",
+  weight: "400",
+  display: "swap",
+  fallback: ["serif"],
+});
 
 /**
  * ヘッダーコンポーネント
@@ -100,7 +115,7 @@ export function Header() {
         className={`${styles.overlay} ${isOpen ? styles.open : ""}`}
         data-testid="overlay-menu"
       >
-        <nav className={styles.nav}>
+        <nav className={`${styles.nav} ${navFont.className}`}>
           {isAuthenticated && user ? (
             <ul className={styles.menu}>
               <li className={styles.menuItem}>

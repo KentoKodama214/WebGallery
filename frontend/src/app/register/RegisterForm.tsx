@@ -37,6 +37,8 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  // 登録完了後はログインページへ遷移するまでフォームの再送信を禁止する
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
@@ -90,6 +92,8 @@ export function RegisterForm() {
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // 登録完了後（遷移待ち）の二重送信を防ぐ
+    if (isSubmitting || isCompleted) return;
     setSubmitError("");
 
     if (!validate()) return;
@@ -114,6 +118,7 @@ export function RegisterForm() {
         return;
       }
 
+      setIsCompleted(true);
       setShowModal(true);
       redirectTimerRef.current = setTimeout(() => {
         router.push("/login");
@@ -300,7 +305,7 @@ export function RegisterForm() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isCompleted}
               className="w-full h-[50px] bg-[#2196F3] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#2196F3] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
             >
               {isSubmitting ? (

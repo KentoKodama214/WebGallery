@@ -19,6 +19,23 @@ const imageBaseOrigin = (() => {
 })();
 
 /**
+ * バックエンド API のオリジン（`NEXT_PUBLIC_API_BASE_URL` 例: `https://api.example.com`）。
+ * 別オリジンを指定した場合、`connect-src 'self'` のままだとブラウザの CSP で
+ * すべての API 通信がブロックされるため、そのオリジンを `connect-src` に追加する。
+ * 未設定（＝同一オリジンの `/api` プロキシ経由）の場合は追加不要。
+ */
+const apiBaseOrigin = (() => {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!base) return null;
+  try {
+    const origin = new URL(base).origin;
+    return origin === "null" ? null : origin;
+  } catch {
+    return null;
+  }
+})();
+
+/**
  * Content-Security-Policy
  *
  * - `script-src` に `'unsafe-inline'` を含むのは Next.js のハイドレーション用
@@ -26,15 +43,16 @@ const imageBaseOrigin = (() => {
  * - 開発時は React Fast Refresh（eval）と HMR（WebSocket）を許可する
  * - 写真は外部ホスト（CDN 等）から配信されうるため `img-src` に配信元を許可する。
  *   `NEXT_PUBLIC_IMAGE_BASE_URL` 設定時はそのオリジンに限定、未設定時は `https:` 全体
+ * - Web フォントは `next/font`（ビルド時セルフホスト）で配信するため外部ホスト許可は不要
+ * - `NEXT_PUBLIC_API_BASE_URL` で別オリジンの API を指す場合は `connect-src` に追加する
  */
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
-  // Google Fonts のスタイルシート（Header.module.css の @import）を許可
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${imageBaseOrigin ?? "https:"}`,
-  "font-src 'self' data: https://fonts.gstatic.com",
-  `connect-src 'self'${isDev ? " ws:" : ""}`,
+  "font-src 'self' data:",
+  `connect-src 'self'${apiBaseOrigin ? ` ${apiBaseOrigin}` : ""}${isDev ? " ws:" : ""}`,
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",

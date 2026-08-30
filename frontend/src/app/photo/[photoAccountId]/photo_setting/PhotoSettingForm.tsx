@@ -13,7 +13,10 @@ import { loginUrlWithRedirect, sanitizeImageUrl } from "@/lib/url";
 import { ModalDialog } from "@/components/ui/ModalDialog";
 
 interface TagEntry {
+  /** 一覧の React key 兼、既存タグの場合はバックエンドのタグ番号 */
   tagNo: number;
+  /** この画面で新規追加されたタグ（サーバー未登録）かどうか */
+  isNew: boolean;
   tagJapaneseName: string;
   tagEnglishName: string;
 }
@@ -66,6 +69,8 @@ export function PhotoSettingForm({
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  // 読み込んだ写真の所有者がログインユーザーでない場合（細工 URL 等）
+  const [isForbidden, setIsForbidden] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -89,6 +94,15 @@ export function PhotoSettingForm({
           photoNo
         );
         if (cancelled) return;
+        // URL パス（photoAccountId）は自分でも、クエリで他人の写真番号を
+        // 指した細工 URL では他人の写真が返りうる。所有者一致を確認する。
+        if (
+          user?.accountNo !== undefined &&
+          data.accountNo !== user.accountNo
+        ) {
+          setIsForbidden(true);
+          return;
+        }
         setPhotoJapaneseTitle(data.photoJapaneseTitle || "");
         setPhotoEnglishTitle(data.photoEnglishTitle || "");
         setCaption(data.caption || "");
@@ -113,6 +127,7 @@ export function PhotoSettingForm({
         if (data.photoTagList && data.photoTagList.length > 0) {
           const tagEntries = data.photoTagList.map((t) => ({
             tagNo: t.tagNo,
+            isNew: false,
             tagJapaneseName: t.tagJapaneseName,
             tagEnglishName: t.tagEnglishName,
           }));
@@ -133,7 +148,7 @@ export function PhotoSettingForm({
     return () => {
       cancelled = true;
     };
-  }, [authLoading, isAuthenticated, shouldLoadExisting, photoAccountId, accountNo, photoNo]);
+  }, [authLoading, isAuthenticated, shouldLoadExisting, photoAccountId, accountNo, photoNo, user?.accountNo]);
 
   /**
    * 画像選択
@@ -159,7 +174,7 @@ export function PhotoSettingForm({
   const handleAddTag = () => {
     setTags([
       ...tags,
-      { tagNo: nextTagNo, tagJapaneseName: "", tagEnglishName: "" },
+      { tagNo: nextTagNo, isNew: true, tagJapaneseName: "", tagEnglishName: "" },
     ]);
     setNextTagNo(nextTagNo + 1);
   };
@@ -295,10 +310,15 @@ export function PhotoSettingForm({
             String(savedPhotoNo)
           );
         }
-        formData.append(
-          `photoTagRegistRequestList[${index}].tagNo`,
-          String(tag.tagNo)
-        );
+        // 新規タグはクライアント採番値を送らない（バックエンドは保存時に
+        // タグ番号を 1..N へ振り直すため、既存レコードの主キーと解釈されうる
+        // 値を送るのを避ける）。既存タグは実タグ番号をそのまま送る。
+        if (!tag.isNew) {
+          formData.append(
+            `photoTagRegistRequestList[${index}].tagNo`,
+            String(tag.tagNo)
+          );
+        }
         formData.append(
           `photoTagRegistRequestList[${index}].tagJapaneseName`,
           tag.tagJapaneseName
@@ -332,7 +352,7 @@ export function PhotoSettingForm({
     return null;
   }
 
-  if (user?.accountId !== photoAccountId) {
+  if (user?.accountId !== photoAccountId || isForbidden) {
     return (
       <div className="min-h-screen bg-black text-white flex justify-center items-center">
         <p className="text-red-500">この操作を行う権限がありません</p>

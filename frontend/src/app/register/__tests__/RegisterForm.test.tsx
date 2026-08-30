@@ -125,6 +125,42 @@ describe("RegisterForm", () => {
     expect(mockPush).toHaveBeenCalledWith("/login");
   });
 
+  it("登録成功後は遷移までフォームを再送信できないこと", async () => {
+    mockRegisterAccount.mockResolvedValue({
+      httpStatus: 200,
+      isSuccess: true,
+      message: "",
+    });
+
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    render(<RegisterForm />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Create an Account")).toBeInTheDocument();
+    });
+
+    const accountNameInput = screen.getAllByRole("textbox")[1];
+    await user.type(screen.getByPlaceholderText("半角英数字で8〜16文字"), "testuser1");
+    await user.type(accountNameInput, "テストユーザー");
+    await user.type(
+      screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"),
+      "password1"
+    );
+
+    const submitButton = screen.getByRole("button", { name: "登録" });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("アカウントを登録しました。ログインページへ移動します。")
+      ).toBeInTheDocument();
+    });
+
+    expect(submitButton).toBeDisabled();
+    await user.click(submitButton);
+    expect(mockRegisterAccount).toHaveBeenCalledTimes(1);
+  });
+
   it("アカウントID重複時にエラーメッセージが表示されること", async () => {
     mockRegisterAccount.mockResolvedValue({
       httpStatus: 200,

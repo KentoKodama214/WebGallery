@@ -133,6 +133,13 @@ export async function login(
   const data = await readJson<{ accessToken: string; expiresIn: number }>(
     response
   );
+  // 応答に文字列のアクセストークンが含まれない場合はログイン失敗として扱う
+  // （壊れた応答で「認証済みだがトークン無し」状態に陥るのを防ぐ）
+  if (typeof data.accessToken !== "string" || data.accessToken === "") {
+    throw new Error(
+      "サーバーからの応答を解釈できませんでした。時間をおいて再度お試しください"
+    );
+  }
   // 先にトークンを確定させてから世代を進める。これ以降、開始済みのリフレッシュ
   // 応答は世代不一致で破棄され、このログイン結果を上書きできない。
   accessToken = data.accessToken;
@@ -201,6 +208,13 @@ async function doRefresh(): Promise<boolean> {
   try {
     const data = await response.json();
     if (isStale()) return false;
+    // 文字列のアクセストークンが得られない応答は失敗扱いにする
+    // （`sessionAuthState="authenticated"` かつトークン無しでリフレッシュが
+    //   永久にスキップされる不整合を防ぐ）
+    if (typeof data?.accessToken !== "string" || data.accessToken === "") {
+      accessToken = null;
+      return false;
+    }
     accessToken = data.accessToken;
     sessionAuthState = "authenticated";
     return true;
@@ -260,6 +274,12 @@ export async function fetchWithAuth(
         headers,
         credentials: "include",
       });
+      // リフレッシュ直後の再リクエストも 401 の場合、認証は実効的に失効している。
+      // 認証状態を未ログイン確定へ倒し、以降のガード付きページで /login へ
+      // 誘導できるようにする（汎用エラーのまま袋小路になるのを防ぐ）。
+      if (response.status === 401) {
+        clearAuthState();
+      }
     }
   }
 
