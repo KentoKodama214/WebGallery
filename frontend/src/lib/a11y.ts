@@ -76,13 +76,18 @@ const FOCUSABLE_SELECTOR = [
  * コンテナ要素には `tabIndex={-1}` を付与しておくこと。
  *
  * @param onClose Escape キー押下時に呼ぶハンドラ（省略可）
+ * @param options.initialFocusSelector 開いた瞬間にフォーカスする要素のセレクタ。
+ *   破壊的操作の確認ダイアログで「キャンセル」ボタンなど安全側の要素を明示するために使う。
+ *   一致する要素が無ければ従来どおり最初のフォーカス可能要素へフォーカスする。
  * @returns ダイアログのコンテナ要素へ渡す ref
  */
 export function useDialog<T extends HTMLElement = HTMLDivElement>(
-  onClose?: () => void
+  onClose?: () => void,
+  options?: { initialFocusSelector?: string }
 ) {
   const containerRef = useRef<T>(null);
   const onCloseRef = useRef(onClose);
+  const initialFocusSelector = options?.initialFocusSelector;
 
   // 最新の onClose を ref に保持する（keydown ハンドラは発火時点の値を参照する）
   useEffect(() => {
@@ -98,9 +103,15 @@ export function useDialog<T extends HTMLElement = HTMLDivElement>(
     const overlay = container?.parentElement ?? null;
     const restoreInert = overlay ? markBackgroundInert(overlay) : () => {};
 
-    // 初期フォーカスをダイアログ内へ移す
+    // 初期フォーカスをダイアログ内へ移す。
+    // 明示指定（initialFocusSelector）があればそれを優先し、無ければ最初のフォーカス可能要素へ。
+    const preferredTarget = initialFocusSelector
+      ? container?.querySelector<HTMLElement>(initialFocusSelector) ?? null
+      : null;
     const initialTarget =
-      container?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR) ?? container;
+      preferredTarget ??
+      container?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR) ??
+      container;
     initialTarget?.focus();
 
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
@@ -148,7 +159,8 @@ export function useDialog<T extends HTMLElement = HTMLDivElement>(
       restoreInert();
       previouslyFocused?.focus?.();
     };
-  }, []);
+    // initialFocusSelector はダイアログのマウント時に一度だけ参照する（実運用では不変）
+  }, [initialFocusSelector]);
 
   return containerRef;
 }

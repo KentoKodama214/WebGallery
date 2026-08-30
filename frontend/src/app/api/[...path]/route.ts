@@ -231,8 +231,25 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
   //   反射型オープンリダイレクトを防ぐため削除する
   const location = responseHeaders.get("location");
   if (location) {
-    if (location.startsWith(BACKEND_URL)) {
-      responseHeaders.set("location", location.slice(BACKEND_URL.length) || "/");
+    // `BACKEND_URL` の「オリジン境界」で一致した場合のみ相対パス化する。
+    // 単純な startsWith だと `https://backend.example.com.evil.com/…` のような
+    // ホスト詐称も一致してしまうため、直後が `/` であること（またはURL全体が
+    // `BACKEND_URL` そのもの）を要求する。
+    const isBackendAbsolute =
+      location === BACKEND_URL || location.startsWith(`${BACKEND_URL}/`);
+    if (isBackendAbsolute) {
+      const relative = location.slice(BACKEND_URL.length) || "/";
+      // slice 結果が `//host` / `/\host`（プロトコル相対）になっていないか再確認する。
+      // 例: バックエンドが `${BACKEND_URL}//evil.com/x` を返したケース。
+      if (
+        relative.startsWith("/") &&
+        !relative.startsWith("//") &&
+        !relative.startsWith("/\\")
+      ) {
+        responseHeaders.set("location", relative);
+      } else {
+        responseHeaders.delete("location");
+      }
     } else if (
       !location.startsWith("/") ||
       location.startsWith("//") ||

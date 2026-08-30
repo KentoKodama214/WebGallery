@@ -18,10 +18,16 @@ import * as apiClient from "@/lib/api/client";
 const mockedApiClient = apiClient as jest.Mocked<typeof apiClient>;
 
 // テスト用JWTトークンを生成（ペイロード: { sub: "testuser1", accountNo: 1, accountName: "Test", role: "USER" }）
-function createTestJwt(sub: string, accountNo: number): string {
+function createTestJwt(sub: string, accountNo: number, exp?: number): string {
   const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const payload = btoa(
-    JSON.stringify({ sub, accountNo, accountName: "Test", role: "USER" })
+    JSON.stringify({
+      sub,
+      accountNo,
+      accountName: "Test",
+      role: "USER",
+      ...(exp !== undefined ? { exp } : {}),
+    })
   );
   return `${header}.${payload}.signature`;
 }
@@ -132,6 +138,72 @@ describe("AuthProvider", () => {
     });
     expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
     expect(screen.getByTestId("user")).toHaveTextContent("null");
+  });
+
+  it("期限切れ(exp)のアクセストークンでログインすると失敗扱いになり認証状態がクリアされること", async () => {
+    mockedApiClient.refresh.mockResolvedValue(false);
+    const expiredToken = createTestJwt(
+      "testuser1",
+      1,
+      Math.floor(Date.now() / 1000) - 60
+    );
+    mockedApiClient.login.mockResolvedValue({
+      accessToken: expiredToken,
+      expiresIn: 900,
+    });
+    mockedApiClient.getAccessToken.mockReturnValue(expiredToken);
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+    });
+
+    await user.click(screen.getByText("Login"));
+
+    await waitFor(() => {
+      expect(mockedApiClient.clearAuthState).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
+  });
+
+  it("有効期限(exp)が先のトークンでログインすると認証済みになること", async () => {
+    mockedApiClient.refresh.mockResolvedValue(false);
+    const validToken = createTestJwt(
+      "testuser1",
+      1,
+      Math.floor(Date.now() / 1000) + 900
+    );
+    mockedApiClient.login.mockResolvedValue({
+      accessToken: validToken,
+      expiresIn: 900,
+    });
+    mockedApiClient.getAccessToken.mockReturnValue(validToken);
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+    });
+
+    await user.click(screen.getByText("Login"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
+      expect(screen.getByTestId("user")).toHaveTextContent("testuser1");
+    });
   });
 
   it("ログアウト時にユーザー情報がクリアされること", async () => {

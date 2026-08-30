@@ -103,6 +103,31 @@ describe("PhotoList", () => {
     expect(images[1]).toHaveAttribute("src", "/photos/photo2.jpg");
   });
 
+  it("許可されない画像URLの写真はリンク化されず代替表示になること", async () => {
+    mockGetPhotoList.mockResolvedValue({
+      isLast: true,
+      photoList: [
+        {
+          accountNo: 1,
+          photoNo: 9,
+          isFavorite: false,
+          imageFilePath: "//evil.example/x.jpg",
+          caption: "危険な写真",
+          directionKbn: "horizontal",
+        },
+      ],
+    });
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("画像を表示できません")).toBeInTheDocument();
+    });
+    // 壊れた <a href=""> が生成されていないこと
+    expect(
+      document.querySelector('a[href=""]')
+    ).toBeNull();
+  });
+
   it("写真が0件の場合にメッセージが表示されること", async () => {
     mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: [] });
     render(<PhotoList photoAccountId="user1" />);

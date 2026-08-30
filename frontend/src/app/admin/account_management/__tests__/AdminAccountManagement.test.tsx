@@ -120,7 +120,7 @@ describe("AdminAccountManagement", () => {
   it("強制ロックは確認ダイアログを経てAPIが呼ばれること", async () => {
     mockGetAdminAccountList.mockResolvedValue({
       isLast: true,
-      accountList: [{ ...sampleAccount, loginFailureCount: 3 }],
+      accountList: [{ ...sampleAccount, loginFailureCount: 2 }],
     });
     mockLockAccount.mockResolvedValue({
       httpStatus: 200,
@@ -152,7 +152,7 @@ describe("AdminAccountManagement", () => {
   it("確認ダイアログをキャンセルするとAPIは呼ばれないこと", async () => {
     mockGetAdminAccountList.mockResolvedValue({
       isLast: true,
-      accountList: [{ ...sampleAccount, loginFailureCount: 3 }],
+      accountList: [{ ...sampleAccount, loginFailureCount: 2 }],
     });
 
     render(<AdminAccountManagement />);
@@ -168,5 +168,41 @@ describe("AdminAccountManagement", () => {
 
     expect(screen.queryByTestId("lock-confirm-dialog")).not.toBeInTheDocument();
     expect(mockUnlockAccount).not.toHaveBeenCalled();
+  });
+
+  it("ログイン失敗回数がしきい値（3）以上のアカウントはロック中と表示され強制ロックボタンが無効になること", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [{ ...sampleAccount, loginFailureCount: 3 }],
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("ロック中")).toBeInTheDocument();
+    expect(screen.queryByText("有効")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "強制ロック" })).toBeDisabled();
+    // ロック解除は失敗回数 > 0 なら可能
+    expect(screen.getByRole("button", { name: "ロック解除" })).toBeEnabled();
+  });
+
+  it("ログイン失敗回数がしきい値未満のアカウントは有効と表示されること", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [{ ...sampleAccount, loginFailureCount: 2 }],
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("有効")).toBeInTheDocument();
+    expect(screen.queryByText("ロック中")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "強制ロック" })).toBeEnabled();
   });
 });

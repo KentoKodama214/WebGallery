@@ -320,6 +320,7 @@ export function AdminAccountManagement() {
               ? "ロック解除の確認"
               : "強制ロックの確認"
           }
+          initialFocusSelector="[data-dialog-initial-focus]"
           onClose={() => {
             if (isActionProcessing) return;
             setPendingAction(null);
@@ -335,6 +336,7 @@ export function AdminAccountManagement() {
           <div className="flex gap-3">
             <button
               type="button"
+              data-dialog-initial-focus
               onClick={() => setPendingAction(null)}
               disabled={isActionProcessing}
               className="flex-1 h-[40px] bg-gray-300 text-[#444] rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"

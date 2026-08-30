@@ -21,6 +21,12 @@ interface ModalDialogProps {
   containerStyle?: CSSProperties;
   /** オーバーレイに付与する data-testid */
   testId?: string;
+  /**
+   * 開いた瞬間にフォーカスする要素のセレクタ（ダイアログ内の要素を対象とする）。
+   * 破壊的操作の確認ダイアログでは、`data-dialog-initial-focus` を付けた
+   * 「キャンセル」ボタンなどを指定して安全側にフォーカスを当てる。
+   */
+  initialFocusSelector?: string;
 }
 
 /**
@@ -44,8 +50,9 @@ export function ModalDialog({
   containerClassName,
   containerStyle,
   testId,
+  initialFocusSelector,
 }: ModalDialogProps) {
-  const dialogRef = useDialog<HTMLDivElement>(onClose);
+  const dialogRef = useDialog<HTMLDivElement>(onClose, { initialFocusSelector });
 
   return (
     <div
