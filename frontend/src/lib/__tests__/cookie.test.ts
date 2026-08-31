@@ -25,6 +25,22 @@ describe("cookie", () => {
     expect(writes[0]).toContain("max-age=100");
   });
 
+  it("http（既定の jsdom 環境）では Secure 属性を付けない", () => {
+    // https 環境で Secure が付くことは cookie.secure.test.ts で検証する
+    const proto = Object.getPrototypeOf(document);
+    let written = "";
+    const spy = jest
+      .spyOn(proto, "cookie", "set")
+      .mockImplementation((value) => {
+        written = String(value);
+      });
+
+    setCookie("foo", "bar", 100);
+
+    spy.mockRestore();
+    expect(written).not.toContain("Secure");
+  });
+
   it("setCookie / getCookie で値を往復でき、URLエンコードされる", () => {
     setCookie("j", JSON.stringify({ a: 1, b: "x;y" }), 100);
     expect(getCookie("j")).toBe('{"a":1,"b":"x;y"}');

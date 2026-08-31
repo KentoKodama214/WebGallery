@@ -46,10 +46,13 @@ export function PhotoDetail({
   // ログインユーザー自身であることまで確認する。細工 URL
   // （/photo/<自分>/photo_detail?accountNo=<他人>&photoNo=<他人の写真>）で
   // 編集・削除 UI が出るのを防ぐ（多層防御。認可はバックエンドでも実施）。
+  // 写真ロード完了前（photo === null）は所有者を確定できないため false 扱いとし、
+  // 細工 URL で操作ボタンが一瞬表示されるのを防ぐ。
   const isOwner =
     !!user &&
+    !!photo &&
     user.accountId === photoAccountId &&
-    (photo === null || photo.accountNo === user.accountNo);
+    photo.accountNo === user.accountNo;
 
   /**
    * 写真詳細取得

@@ -56,7 +56,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         }
       } catch {
-        // セッション復元に失敗しても未認証として続行する
+        // apiClient.refresh() はネットワーク例外・5xx を内部で握って false を返すため
+        // 通常ここには到達しない。parseJwt / setUser 等が想定外に投げた場合の保険として、
+        // セッション復元に失敗しても未認証で続行する。
         setUser(null);
       } finally {
         setIsLoading(false);
