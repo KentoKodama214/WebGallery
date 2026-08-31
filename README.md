@@ -333,11 +333,14 @@ WebGallery/
 │   ├── public/
 │   │   └── image/                  # 静的画像（アイコン等）
 │   └── src/
-│       ├── proxy.ts                     # 認証状態に基づくルーティング制御（ミドルウェア）
+│       ├── proxy.ts                     # ルーティング制御（Next.js proxy。`/` を `/login` へリダイレクト）
+│       ├── __tests__/                   # proxy.ts のJestテスト
 │       ├── app/
 │       │   ├── favicon.ico              # ファビコン
 │       │   ├── globals.css              # グローバルCSS
 │       │   ├── layout.tsx               # ルートレイアウト
+│       │   ├── error.tsx                # ページ単位のエラーバウンダリ
+│       │   ├── global-error.tsx         # ルートレイアウトのエラーバウンダリ
 │       │   ├── page.tsx                 # トップページ
 │       │   ├── login/                   # ログインページ（__tests__/にJestテスト）
 │       │   ├── register/               # アカウント登録ページ（__tests__/にJestテスト）
@@ -349,22 +352,29 @@ WebGallery/
 │       │   │   ├── photo_detail/       # 写真詳細ページ（__tests__/にJestテスト）
 │       │   │   └── photo_setting/      # 写真設定ページ（__tests__/にJestテスト）
 │       │   ├── admin/
-│       │   │   └── account_management/ # 管理者アカウント管理ページ
-│       │   └── api/v1/accounts/[photoAccountId]/photos/
-│       │       └── route.ts            # 写真保存APIのプロキシ（multipart/form-data、Next.js rewritesでは非対応のため個別実装）
+│       │   │   └── account_management/ # 管理者アカウント管理ページ（__tests__/にJestテスト）
+│       │   └── api/[...path]/
+│       │       ├── route.ts            # `/api/*` をバックエンドへ中継するプロキシ（CSRF検証・ボディ上限・multipart対応）
+│       │       └── __tests__/          # Jestテスト
 │       ├── components/
-│       │   └── layout/                  # 共通レイアウト
-│       │       ├── Header.tsx
-│       │       ├── Header.module.css
-│       │       ├── Footer.tsx
-│       │       └── Navigation.tsx
+│       │   ├── layout/                  # 共通レイアウト
+│       │   │   ├── Header.tsx
+│       │   │   ├── Header.module.css
+│       │   │   ├── Footer.tsx
+│       │   │   └── fonts/               # セルフホストフォント（woff2）
+│       │   └── ui/                      # 汎用UIコンポーネント
+│       │       └── ModalDialog.tsx      # モーダルダイアログ（__tests__/にJestテスト）
 │       └── lib/
 │           ├── api/
-│           │   └── client.ts            # APIクライアント
+│           │   └── client.ts            # APIクライアント（__tests__/にJestテスト）
 │           ├── auth/
 │           │   ├── AuthProvider.tsx      # 認証プロバイダー
 │           │   └── __tests__/            # Jestテスト
-│           └── cookie.ts                # Cookie操作ユーティリティ
+│           ├── a11y.ts                  # アクセシビリティユーティリティ
+│           ├── consts.ts                # フロントエンド共有定数（バックエンドの値と同期）
+│           ├── cookie.ts                # Cookie操作ユーティリティ（__tests__/にJestテスト）
+│           ├── url.ts                   # URL操作ユーティリティ（__tests__/にJestテスト）
+│           └── validation.ts            # 入力バリデーション（__tests__/にJestテスト）
 ├── backend/                        # バックエンド（Spring Boot）
 │   ├── build.gradle
 │   ├── settings.gradle
@@ -397,6 +407,7 @@ WebGallery/
 │       │   │   ├── policy/             # ドメインサービス（単一のビジネスルールを判定）
 │       │   │   ├── repository/         # リポジトリ
 │       │   │   │   └── impl/
+│       │   │   ├── scheduler/          # 定期実行タスク（期限切れリフレッシュトークンの削除等）
 │       │   │   ├── service/            # サービス
 │       │   │   │   └── impl/
 │       │   │   └── type_handler/       # MyBatis型ハンドラ

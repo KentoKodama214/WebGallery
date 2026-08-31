@@ -48,7 +48,7 @@ just e2e
 3. **Repository層** (`repository/` + `repository/impl/`) - データベースアクセス。`/model/`でService層と、`/entity/`や`/dto/`でMapper層と転送する
 4. **MyBatis Mapper層** (`mapper/`) - SQLは`resources/com/web/gallery/mapper/*.xml`のXMLファイルで定義
 
-上記に加え、`domain/`にはプロパティ単位の値オブジェクト（`record`）が定義されており、Model・Repository・Serviceのメソッド引数・返り値として利用される。単一のビジネスルールを判定するドメインサービスは`policy/`に配置し、Service層からのみ利用する。また、管理者権限チェックには`annotation/`のカスタムアノテーションと`aspect/`のAOPを使用する。写真登録・削除などのドメインイベントとそのリスナーは`event/`に配置し、通知やログ集計等の副次的な処理をService層のビジネスロジックから疎結合にする。
+上記に加え、`domain/`にはプロパティ単位の値オブジェクト（`record`）が定義されており、Model・Repository・Serviceのメソッド引数・返り値として利用される。単一のビジネスルールを判定するドメインサービスは`policy/`に配置し、Service層からのみ利用する。また、管理者権限チェックには`annotation/`のカスタムアノテーションと`aspect/`のAOPを使用する。写真登録・削除などのドメインイベントとそのリスナーは`event/`に配置し、通知やログ集計等の副次的な処理をService層のビジネスロジックから疎結合にする。`@Scheduled`による定期実行タスク（期限切れリフレッシュトークンの削除等）は`scheduler/`に配置し、Service層のメソッドを呼び出す（有効化は`config/SchedulingConfig`）。JWT生成・検証やセッション取得などの技術的ユーティリティは`helper/`に配置する。
 
 書き込みユースケース（登録・更新・削除）で複数テーブルにまたがる整合性・ライフサイクルの管理が必要な場合、`aggregate/`に集約ルートクラスを定義し、Service層とRepository層の間に位置づける（例：`Photo`集約）。詳細は`.claude/rules/aggregate.md`を参照。
 
@@ -137,7 +137,7 @@ just e2e
 
 ### 重要事項
 
-- ファイルアップロード上限は1ファイルあたり5MB（サーブレットレベルでは6MB）
-- 写真の出力パスは`backend/src/main/resources/application.yml`の`app.photo.outputPath`で設定可能
+- ファイルアップロード上限は1ファイルあたり5MB（`application.yml`の`app.photo.maxFileSizeMb`。サーブレットレベルの`spring.servlet.multipart`は6MB）
+- 写真の出力パスは各プロファイルの`application-{profile}.yml`（例：`application-local.yml`）の`app.photo.outputPath`（環境変数`OUTPUT_PATH`）で設定する
 - プロジェクトはTomcatデプロイ用のWARパッケージング（実行可能JARではない）
 - `backend/build.gradle`のgroupは`com.official`、ベースパッケージは`com.web.gallery`
