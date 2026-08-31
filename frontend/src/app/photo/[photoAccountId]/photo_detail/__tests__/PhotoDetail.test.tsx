@@ -80,7 +80,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockReturnValue(new Promise(() => {}));
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     expect(screen.getByText("読み込み中...")).toBeInTheDocument();
@@ -90,7 +90,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -109,7 +109,7 @@ describe("PhotoDetail", () => {
     });
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -122,7 +122,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -134,7 +134,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -147,7 +147,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -166,7 +166,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -183,10 +183,10 @@ describe("PhotoDetail", () => {
       login: jest.fn(),
       logout: jest.fn(),
     });
-    // 細工 URL: /photo/user1/photo_detail?accountNo=2&photoNo=10
+    // 細工 URL: /photo/user1/photo_detail?photoNo=10
     mockGetPhotoDetail.mockResolvedValue({ ...samplePhoto, accountNo: 2 });
 
-    render(<PhotoDetail photoAccountId="user1" accountNo={2} photoNo={10} />);
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
 
     await waitFor(() => {
       expect(screen.getByText("テスト写真")).toBeInTheDocument();
@@ -207,7 +207,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -229,7 +229,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -241,7 +241,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -263,7 +263,7 @@ describe("PhotoDetail", () => {
     mockAddFavorite.mockResolvedValue({ isSuccess: true });
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -294,7 +294,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
     mockAddFavorite.mockRejectedValue(new Error("お気に入りの登録に失敗しました"));
 
-    render(<PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />);
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
 
     await waitFor(() => {
       expect(screen.getByText("テスト写真")).toBeInTheDocument();
@@ -323,7 +323,7 @@ describe("PhotoDetail", () => {
     mockDeletePhoto.mockResolvedValue({ isSuccess: true });
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {
@@ -354,7 +354,7 @@ describe("PhotoDetail", () => {
     );
 
     render(
-      <PhotoDetail photoAccountId="user1" accountNo={1} photoNo={10} />
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
     );
 
     await waitFor(() => {

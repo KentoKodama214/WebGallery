@@ -8,11 +8,11 @@ import { type NextRequest, NextResponse } from "next/server";
  * 個別のルートハンドラー（multipart アップロード等）を握り潰してしまうため、
  * プロキシ処理をこのキャッチオールルートハンドラーに一本化している。
  *
- * - リクエストボディは一旦バッファリングしてから転送する（multipart/form-data も
- *   扱える）。過大なボディでメモリを消費しないよう、
+ * - リクエストボディはバッファせず、ReadableStream のままバックエンドへ中継する
+ *   （multipart/form-data も扱える）。過大なボディでメモリを消費しないよう、
  *   1. content-length ヘッダーが上限を超えるリクエストは即座に 413 を返す
- *   2. content-length を詐称・省略したリクエストに備え、ボディを読み取りながら
- *      累積バイト数を数え、上限を超えた時点で読み取りを打ち切って 413 を返す
+ *   2. content-length を詐称・省略したリクエストに備え、中継ストリームで累積バイト数を
+ *      数え、上限を超えた時点でストリームをエラーにして 413 を返す
  *   （このキャッチオールルートは proxy の matcher 対象外のため
  *   next.config.ts の experimental.proxyClientMaxBodySize は適用されない。
  *   メモリ上限の担保はこのハンドラー自身で行う）
@@ -58,50 +58,62 @@ const EXCLUDED_RESPONSE_HEADERS = new Set([
   "connection",
 ]);
 
+/** リクエストボディが上限を超えたことを表すエラー */
+class BodyTooLargeError extends Error {
+  constructor() {
+    super("request body exceeds the size limit");
+    this.name = "BodyTooLargeError";
+  }
+}
+
 /**
- * リクエストボディを上限付きで読み取る
- *
- * content-length を信頼せず、実際に届いたバイト数を数えながらバッファリングする。
- * 上限を超えた時点でストリームの読み取りを打ち切るため、過大なボディを送られても
- * メモリ使用量は「上限 + 最後に読んだチャンク1個分」に収まる。
- *
- * @param request 受信したリクエスト
- * @param limit   許容する最大バイト数
- * @returns 読み取ったボディ。上限を超えた場合は null
+ * 発生した例外（および `fetch` がラップした `cause`）が {@link BodyTooLargeError} かを判定する
  */
-async function readBodyWithLimit(
-  request: NextRequest,
+function isBodyTooLargeError(err: unknown): boolean {
+  return (
+    err instanceof BodyTooLargeError ||
+    (err instanceof Error && err.cause instanceof BodyTooLargeError)
+  );
+}
+
+/**
+ * リクエストボディを、上限バイト数を超えたらエラーにする ReadableStream でラップする
+ *
+ * content-length を信頼せず、実際に届いたバイト数を数えながら**バッファせずに**
+ * バックエンドへ中継する。上限を超えた時点でストリームをエラーにして読み取り元も
+ * キャンセルするため、メモリ使用量は「最後に読んだチャンク1個分」に収まる。
+ * ストリームがエラーになると中継中の `fetch` が reject するため、呼び出し側で
+ * {@link isBodyTooLargeError} を見て 413 を返す。
+ *
+ * @param source 受信したリクエストボディ
+ * @param limit  許容する最大バイト数
+ * @returns 上限付きの ReadableStream
+ */
+function limitedBodyStream(
+  source: ReadableStream<Uint8Array>,
   limit: number
-): Promise<ArrayBuffer | null> {
-  if (!request.body) return new ArrayBuffer(0);
-
-  const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
+): ReadableStream<Uint8Array> {
+  const reader = source.getReader();
   let total = 0;
-
-  try {
-    for (;;) {
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
       const { done, value } = await reader.read();
-      if (done) break;
-      if (!value) continue;
+      if (done) {
+        controller.close();
+        return;
+      }
       total += value.byteLength;
       if (total > limit) {
-        await reader.cancel();
-        return null;
+        controller.error(new BodyTooLargeError());
+        await reader.cancel().catch(() => {});
+        return;
       }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-
-  const merged = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return merged.buffer;
+      controller.enqueue(value);
+    },
+    cancel(reason) {
+      return reader.cancel(reason);
+    },
+  });
 }
 
 /**
@@ -122,15 +134,16 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
     );
   }
 
-  // CSRF 対策：状態を変更するメソッド（POST/PUT/DELETE/PATCH）は、Origin
-  // ヘッダーが存在する場合に自サイトと一致することを要求する。クロスサイトの
-  // <form>/fetch からクッキーだけで実行される攻撃（強制ログアウト等）を塞ぐ。
-  // Origin を送出しないクライアント（サーバー間通信・一部ツール）は素通しする。
+  // CSRF 対策：状態を変更するメソッド（POST/PUT/DELETE/PATCH）は、リクエスト元が
+  // 自サイトであることを Origin もしくは Referer で必ず検証する。どちらのヘッダーも
+  // 無い場合は検証不能として拒否する（クロスサイトの <form>/fetch からクッキーだけで
+  // 実行される攻撃 ―― 強制ログアウト等 ―― を塞ぐ）。
+  // このルートハンドラーはブラウザからのみ呼ばれるため、Origin/Referer を欠く
+  // 正当なクライアントは存在しない。
   const isStateChanging =
     request.method !== "GET" && request.method !== "HEAD";
   if (isStateChanging) {
     // 多層防御：ブラウザが付与する Fetch Metadata で cross-site を明示的に拒否する
-    // （Origin 検証と独立して機能し、Origin を欠く一部のクロスサイト経路も塞ぐ）
     const fetchSite = request.headers.get("sec-fetch-site");
     if (fetchSite === "cross-site") {
       return NextResponse.json(
@@ -139,25 +152,33 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
       );
     }
 
-    const origin = request.headers.get("origin");
-    if (origin) {
-      let originHost: string | null = null;
+    // 自ホスト（リクエスト URL 由来 / Host ヘッダー）
+    const selfHosts = [
+      request.nextUrl.host,
+      request.headers.get("host"),
+    ].filter((h): h is string => !!h);
+
+    /** ヘッダー値（絶対 URL）のホストが自ホストと一致するか。値が無い場合は null */
+    const hostMatches = (value: string | null): boolean | null => {
+      if (!value) return null;
       try {
-        originHost = new URL(origin).host;
+        return selfHosts.includes(new URL(value).host);
       } catch {
-        originHost = null;
+        return false;
       }
-      // 自ホスト（リクエスト URL 由来 / Host ヘッダー）のいずれかと一致すれば許可
-      const selfHosts = [
-        request.nextUrl.host,
-        request.headers.get("host"),
-      ].filter((h): h is string => !!h);
-      if (!originHost || !selfHosts.includes(originHost)) {
-        return NextResponse.json(
-          { message: "リクエスト元が不正です" },
-          { status: 403 }
-        );
-      }
+    };
+
+    const originResult = hostMatches(request.headers.get("origin"));
+    const refererResult =
+      originResult === null ? hostMatches(request.headers.get("referer")) : null;
+
+    // Origin と Referer のどちらも無い（両方 null）＝検証不能、または一致しない ⇒ 拒否
+    const verified = originResult === true || refererResult === true;
+    if (!verified) {
+      return NextResponse.json(
+        { message: "リクエスト元が不正です" },
+        { status: 403 }
+      );
     }
   }
 
@@ -173,7 +194,7 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
 
-  let body: ArrayBuffer | undefined;
+  let body: ReadableStream<Uint8Array> | undefined;
 
   if (hasBody) {
     const contentLength = Number(request.headers.get("content-length"));
@@ -184,14 +205,9 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
       );
     }
 
-    const buffered = await readBodyWithLimit(request, MAX_BODY_SIZE);
-    if (buffered === null) {
-      return NextResponse.json(
-        { message: "リクエストサイズが大きすぎます" },
-        { status: 413 }
-      );
+    if (request.body) {
+      body = limitedBodyStream(request.body, MAX_BODY_SIZE);
     }
-    body = buffered;
   }
 
   let backendResponse: Response;
@@ -200,11 +216,20 @@ async function proxy(request: NextRequest, path: string[]): Promise<NextResponse
       method: request.method,
       headers,
       body,
+      // ストリームボディの送信には duplex 指定が必須（Node/undici）
+      ...(body ? { duplex: "half" } : {}),
       redirect: "manual",
       // スロー応答・ハングでコネクションが滞留しないようタイムアウトを設ける
       signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
-    });
+    } as RequestInit & { duplex?: "half" });
   } catch (err) {
+    // 中継ストリームが上限超過でエラーになった場合は 413 を返す
+    if (isBodyTooLargeError(err)) {
+      return NextResponse.json(
+        { message: "リクエストサイズが大きすぎます" },
+        { status: 413 }
+      );
+    }
     if (err instanceof DOMException && err.name === "TimeoutError") {
       return NextResponse.json(
         { message: "バックエンドの応答がありませんでした" },

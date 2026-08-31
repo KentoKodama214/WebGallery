@@ -64,7 +64,7 @@ describe("APIプロキシ route", () => {
     const req = new NextRequest("http://localhost/api/v1/accounts", {
       method: "POST",
       body: JSON.stringify({ a: 1 }),
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", origin: "http://localhost" },
     });
     const res = await POST(req, ctx(["v1", "accounts"]));
 
@@ -91,7 +91,10 @@ describe("APIプロキシ route", () => {
       "http://localhost/api/v1/accounts/foo/photos",
       {
         method: "POST",
-        headers: { "content-length": String(7 * 1024 * 1024) },
+        headers: {
+          "content-length": String(7 * 1024 * 1024),
+          origin: "http://localhost",
+        },
       }
     );
     const res = await POST(req, ctx(["v1", "accounts", "foo", "photos"]));
@@ -100,7 +103,7 @@ describe("APIプロキシ route", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("content-length を伴わない過大なボディはストリーム読み取り中に打ち切って413を返す", async () => {
+  it("content-length を伴わない過大なボディはストリーム中継中に打ち切って413を返す", async () => {
     const oneMb = new Uint8Array(1024 * 1024);
     let emitted = 0;
     const body = new ReadableStream<Uint8Array>({
@@ -114,15 +117,29 @@ describe("APIプロキシ route", () => {
     });
     const fakeRequest = {
       method: "POST",
-      headers: new Headers({ "content-type": "application/octet-stream" }),
-      nextUrl: { search: "" },
+      headers: new Headers({
+        "content-type": "application/octet-stream",
+        origin: "http://localhost",
+        host: "localhost",
+      }),
+      nextUrl: { search: "", host: "localhost" },
       body,
     } as unknown as NextRequest;
+
+    // バックエンドがボディ（中継ストリーム）を読み進めると、上限超過で
+    // ストリームがエラーになり fetch が reject する
+    fetchMock.mockImplementationOnce(async (_url, init) => {
+      const reader = (init.body as ReadableStream<Uint8Array>).getReader();
+      for (;;) {
+        const { done } = await reader.read();
+        if (done) break;
+      }
+      return new Response(null, { status: 200 });
+    });
 
     const res = await POST(fakeRequest, ctx(["v1", "accounts", "foo", "photos"]));
 
     expect(res.status).toBe(413);
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("ドットセグメントを含むパスは中継せず400を返す", async () => {
@@ -143,6 +160,7 @@ describe("APIプロキシ route", () => {
 
     const req = new NextRequest("http://localhost/api/v1/auth/login", {
       method: "POST",
+      headers: { origin: "http://localhost" },
     });
     const res = await POST(req, ctx(["v1", "auth", "login"]));
 
@@ -201,9 +219,7 @@ describe("APIプロキシ route", () => {
     expect(fetchMock).toHaveBeenCalled();
   });
 
-  it("Origin ヘッダーが無い状態変更メソッドは素通しする", async () => {
-    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
-
+  it("Origin も Referer も無い状態変更メソッドは検証不能として403を返す", async () => {
     const req = new NextRequest("http://localhost/api/v1/accounts", {
       method: "POST",
       body: JSON.stringify({ a: 1 }),
@@ -211,8 +227,32 @@ describe("APIプロキシ route", () => {
     });
     const res = await POST(req, ctx(["v1", "accounts"]));
 
+    expect(res.status).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("Origin は無いが Referer が自サイトなら中継する", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const req = new NextRequest("http://localhost/api/v1/auth/logout", {
+      method: "POST",
+      headers: { referer: "http://localhost/photo/user1/photo_list" },
+    });
+    const res = await POST(req, ctx(["v1", "auth", "logout"]));
+
     expect(res.status).toBe(204);
     expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it("Referer が別サイトなら403を返し中継しない", async () => {
+    const req = new NextRequest("http://localhost/api/v1/auth/logout", {
+      method: "POST",
+      headers: { referer: "https://evil.example/x" },
+    });
+    const res = await POST(req, ctx(["v1", "auth", "logout"]));
+
+    expect(res.status).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("バックエンド絶対URLの Location を相対パスへ書き換える", async () => {

@@ -658,7 +658,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
           <span>
             <img
               className={styles.filterIconImg}
-              src="/image/filter.png"
+              src="/ui/filter.png"
               alt=""
             />
           </span>
@@ -753,7 +753,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                   <div className="hidden-caption-content" style={{ display: "none" }}>
                     <p className="caption_content">{photo.caption || ""}</p>
                     <p className="show_detail">
-                      <a href={`/photo/${photoAccountId}/photo_detail?accountNo=${photo.accountNo}&photoNo=${photo.photoNo}`}>
+                      <a href={`/photo/${photoAccountId}/photo_detail?photoNo=${photo.photoNo}`}>
                         詳細
                       </a>
                     </p>
@@ -780,7 +780,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                     }}
                   >
                     <img
-                      src={photo.isFavorite ? "/image/heart_on.png" : "/image/heart_off.png"}
+                      src={photo.isFavorite ? "/ui/heart_on.png" : "/ui/heart_off.png"}
                       alt=""
                       style={{ width: "100%", height: "100%", display: "block" }}
                     />

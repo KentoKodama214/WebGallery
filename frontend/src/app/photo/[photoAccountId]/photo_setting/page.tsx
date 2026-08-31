@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { AuthGuard } from "@/lib/auth/AuthGuard";
 import { isValidAccountId } from "@/lib/validation";
 import { PhotoSettingForm } from "./PhotoSettingForm";
 
@@ -57,11 +58,13 @@ export default async function PhotoSettingPage({
           <p className="text-red-500">写真が見つかりません</p>
         </div>
       ) : (
-        <PhotoSettingForm
-          photoAccountId={photoAccountId}
-          accountNo={parsedAccountNo}
-          photoNo={parsedPhotoNo}
-        />
+        <AuthGuard>
+          <PhotoSettingForm
+            photoAccountId={photoAccountId}
+            accountNo={parsedAccountNo}
+            photoNo={parsedPhotoNo}
+          />
+        </AuthGuard>
       )}
       <Footer />
     </>

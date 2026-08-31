@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("写真詳細ページ", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(
-      "/photo/e2etestaccount/photo_detail?accountNo=999999999&photoNo=999999999"
+      "/photo/e2etestaccount/photo_detail?photoNo=999999999"
     );
   });
 

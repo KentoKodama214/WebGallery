@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AccountSettingForm } from "./AccountSettingForm";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { AuthGuard } from "@/lib/auth/AuthGuard";
 import { isValidAccountId } from "@/lib/validation";
 
 export const metadata: Metadata = {
@@ -25,7 +26,9 @@ export default async function AccountSettingPage({
           APIパス・画面表示に使う前にアカウントID形式を検証する
           （他の動的セグメントページ（photo_list 等）と揃える多層防御） */}
       {isValidAccountId(accountId) ? (
-        <AccountSettingForm accountId={accountId} />
+        <AuthGuard>
+          <AccountSettingForm accountId={accountId} />
+        </AuthGuard>
       ) : (
         <div className="min-h-screen bg-[whitesmoke] flex items-center justify-center">
           <p className="text-red-500">ページが見つかりません</p>
