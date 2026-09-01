@@ -64,7 +64,6 @@ import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
-import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
@@ -1105,16 +1104,16 @@ public class PhotoServiceImplIntegrationTest {
 		
 		@Test
 		@Order(3)
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void deletePhotos_UpdateFailureException() throws GalleryException {
+		@DisplayName("異常系：対象写真が存在しない場合、PhotoNotFoundExceptionをthrowする")
+		void deletePhotos_PhotoNotFoundException() throws GalleryException {
 			List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
 			photoDeleteModelList.add(PhotoDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.photoNo(new PhotoNo(99L))
 					.imageFilePath(new ImageFilePath("DSC99.jpg"))
 					.build());
-			
-			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
+
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
 		}
 	}
 	

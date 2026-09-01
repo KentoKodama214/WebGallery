@@ -113,8 +113,9 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
 		PhotoMstUpdateTarget target = PhotoMstUpdateTarget.forDelete(photoDeleteModel);
 
 		if (photoMstMapper.update(condition, target) < 1) {
-			log.warn("PhotoMst: Delete Failed (AccountNo: {}, PhotoNo: {})", photo.getAccountNo().value(), photo.getPhotoNo().value());
-			throw ErrorEnum.FAIL_TO_DELETE_PHOTO.toException();
+			// 対象写真が存在しない（未登録・既に削除済み）＝404。競合ではないため409は返さない
+			log.warn("PhotoMst: Not Found for delete (AccountNo: {}, PhotoNo: {})", photo.getAccountNo().value(), photo.getPhotoNo().value());
+			throw ErrorEnum.PHOTO_NOT_FOUND.toException();
 		}
 	}
 

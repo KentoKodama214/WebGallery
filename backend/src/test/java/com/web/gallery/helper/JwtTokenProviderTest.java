@@ -32,10 +32,11 @@ class JwtTokenProviderTest {
 	private static final String SECRET = "test-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm";
 	private static final Integer ACCESS_TOKEN_EXPIRATION_MINUTES = 15;
 	private static final Integer REFRESH_TOKEN_EXPIRATION_DAYS = 7;
+	private static final Integer REFRESH_TOKEN_REUSE_GRACE_SECONDS = 30;
 
 	@BeforeEach
 	void setUp() {
-		JwtConfig jwtConfig = new JwtConfig(SECRET, ACCESS_TOKEN_EXPIRATION_MINUTES, REFRESH_TOKEN_EXPIRATION_DAYS);
+		JwtConfig jwtConfig = new JwtConfig(SECRET, ACCESS_TOKEN_EXPIRATION_MINUTES, REFRESH_TOKEN_EXPIRATION_DAYS, REFRESH_TOKEN_REUSE_GRACE_SECONDS);
 		jwtTokenProvider = new JwtTokenProvider(jwtConfig);
 	}
 

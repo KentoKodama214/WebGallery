@@ -1333,10 +1333,10 @@ public class PhotoServiceImplTest {
 
 		@Test
 		@Order(3)
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void deletePhotos_UpdateFailureException() throws GalleryException {
+		@DisplayName("異常系：対象写真が存在しない場合、PhotoNotFoundExceptionをthrowする")
+		void deletePhotos_PhotoNotFoundException() throws GalleryException {
 			doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
-			doThrow(UpdateFailureException.class).when(photoAggregateRepositoryImpl).delete(any(Photo.class));
+			doThrow(PhotoNotFoundException.class).when(photoAggregateRepositoryImpl).delete(any(Photo.class));
 
 			List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
 			photoDeleteModelList.add(PhotoDeleteModel.builder()
@@ -1345,7 +1345,7 @@ public class PhotoServiceImplTest {
 					.imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
 					.build());
 
-			assertThrows(UpdateFailureException.class, () -> photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
+			assertThrows(PhotoNotFoundException.class, () -> photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
 
 			verify(photoAggregateRepositoryImpl, times(1)).delete(any(Photo.class));
 			verify(fileRepositoryImpl, times(0)).delete(any(ImageFilePath.class));

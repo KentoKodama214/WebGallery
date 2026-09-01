@@ -24,9 +24,9 @@ import com.web.gallery.domain.common.CreatedAt;
 import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
+import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoFavoriteModel;
 import com.web.gallery.repository.impl.PhotoFavoriteRepositoryImpl;
@@ -134,15 +134,15 @@ public class PhotoFavoriteRepositoryImplIntegrationTest {
 		
 		@Test
 		@Order(2)
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void delete_UpdateFailureException() throws GalleryException {
+		@DisplayName("異常系：対象のお気に入りが存在しない場合、FavoriteNotFoundExceptionをthrowする")
+		void delete_FavoriteNotFoundException() throws GalleryException {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(3L))
 					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
-			
-			assertThrows(UpdateFailureException.class, () -> photoFavoriteRepositoryImpl.delete(favoriteDeleteModel));
+
+			assertThrows(FavoriteNotFoundException.class, () -> photoFavoriteRepositoryImpl.delete(favoriteDeleteModel));
 		}
 	}
 	

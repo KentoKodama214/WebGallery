@@ -30,6 +30,7 @@ import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoTagModel;
@@ -202,15 +203,15 @@ public class PhotoAggregateRepositoryImplIntegrationTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("異常系：既に削除済みの写真を再度削除しようとした場合、UpdateFailureExceptionをthrowすること")
-		void delete_alreadyDeleted_UpdateFailureException() throws GalleryException {
+		@DisplayName("異常系：既に削除済みの写真を再度削除しようとした場合、PhotoNotFoundExceptionをthrowすること")
+		void delete_alreadyDeleted_PhotoNotFoundException() throws GalleryException {
 			AccountNo accountNo = new AccountNo(1L);
 			PhotoNo photoNo = new PhotoNo(1L);
 			Photo photo = Photo.forDelete(accountNo, photoNo, new ImageFilePath("https://www.xxx.com/DSC111.jpg"));
 
 			photoAggregateRepositoryImpl.delete(photo);
 
-			assertThrows(UpdateFailureException.class, () -> photoAggregateRepositoryImpl.delete(photo));
+			assertThrows(PhotoNotFoundException.class, () -> photoAggregateRepositoryImpl.delete(photo));
 		}
 	}
 }

@@ -20,8 +20,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,7 +54,6 @@ public class AuthServiceImpl implements AuthService {
 	private final LoginConfig loginConfig;
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final AccountRepository accountRepository;
-	private final UserDetailsService userDetailsService;
 	private final Clock clock;
 
 	public AuthServiceImpl(
@@ -66,7 +63,6 @@ public class AuthServiceImpl implements AuthService {
 			LoginConfig loginConfig,
 			RefreshTokenRepository refreshTokenRepository,
 			AccountRepository accountRepository,
-			@Lazy UserDetailsService userDetailsService,
 			Clock clock) {
 		this.authenticationManager = authenticationManager;
 		this.jwtTokenProvider = jwtTokenProvider;
@@ -74,7 +70,6 @@ public class AuthServiceImpl implements AuthService {
 		this.loginConfig = loginConfig;
 		this.refreshTokenRepository = refreshTokenRepository;
 		this.accountRepository = accountRepository;
-		this.userDetailsService = userDetailsService;
 		this.clock = clock;
 	}
 
@@ -147,7 +142,16 @@ public class AuthServiceImpl implements AuthService {
 		}
 
 		if (storedToken.getIsRevoked().value()) {
-			// 無効化済み（ローテーション済み）トークンの再利用は盗用の疑いがあるため、該当アカウントの全トークンを失効させる
+			if (isWithinReuseGracePeriod(storedToken)) {
+				// ローテーション直後の猶予期間内の再送は、複数タブ・ネットワーク瞬断による
+				// 正常系のリトライとみなす。全セッション失効はせず、このリクエストのみ拒否する
+				// （正しい最新トークンは既にクライアントへ発行済みのため、次回リクエストで通る）
+				log.info("Revoked refresh token reused within grace period. Treated as a benign retry. (accountNo: {})",
+						storedToken.getAccountNo().value());
+				throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
+			}
+			// 猶予期間を超えた無効化済み（ローテーション済み）トークンの再利用は
+			// 盗用の疑いがあるため、該当アカウントの全トークンを失効させる
 			refreshTokenRepository.revokeAllByAccountNo(storedToken.getAccountNo());
 			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
 		}
@@ -161,8 +165,8 @@ public class AuthServiceImpl implements AuthService {
 		if (accountModel == null) {
 			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
 		}
-		UserDetails userDetails = userDetailsService.loadUserByUsername(accountModel.getAccountId().value());
-		AccountPrincipal principal = (AccountPrincipal) userDetails;
+		// 取得済みのアカウント情報からそのままPrincipalを組み立てる（アカウントの二重取得を避ける）
+		AccountPrincipal principal = new AccountPrincipal(accountModel, loginConfig.getFailCount());
 
 		if (!principal.isAccountNonLocked()) {
 			if (isLockDurationElapsed(accountModel)) {
@@ -219,6 +223,24 @@ public class AuthServiceImpl implements AuthService {
 		return accountModel != null
 				&& accountModel.getLoginFailureCount() != null
 				&& accountModel.getLoginFailureCount().value() >= loginConfig.getFailCount();
+	}
+
+	/**
+	 * 無効化済みリフレッシュトークンの再送が、ローテーション直後の猶予期間内かどうかを判定する<p>
+	 * {@code updated_at}（＝ローテーションで無効化した時刻）から
+	 * {@code app.jwt.refreshTokenReuseGraceSeconds} 秒以内であれば正常系のリトライとみなす。
+	 * 更新日時が取得できない場合は猶予対象外（盗用対応を優先）とする。
+	 *
+	 * @param	storedToken	DBから取得した{@link RefreshTokenModel}
+	 * @return				猶予期間内の場合true
+	 */
+	private boolean isWithinReuseGracePeriod(RefreshTokenModel storedToken) {
+		if (storedToken.getUpdatedAt() == null) {
+			return false;
+		}
+		return storedToken.getUpdatedAt().value()
+				.plusSeconds(jwtConfig.getRefreshTokenReuseGraceSeconds())
+				.isAfter(OffsetDateTime.now(clock));
 	}
 
 	/**

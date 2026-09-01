@@ -2,6 +2,7 @@ package com.web.gallery.enumeration;
 
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.exception.BadRequestException;
+import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
@@ -243,6 +244,18 @@ public enum ErrorEnum {
 		@Override
 		public GalleryException toException() {
 			return new BadRequestException(this);
+		}
+	},
+
+	/**
+	 * エラーコード：E-P-0016
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_FAVORITE_NOT_FOUND}
+	 */
+	FAVORITE_NOT_FOUND("E-P-0016", MessageConst.ERR_FAVORITE_NOT_FOUND) {
+		@Override
+		public GalleryException toException() {
+			return new FavoriteNotFoundException(this);
 		}
 	},
 

@@ -50,6 +50,7 @@ import com.web.gallery.controller.response.PhotoListGetResponse;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.FileDuplicateException;
+import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
@@ -879,8 +880,8 @@ public class PhotoRestControllerTest {
 		@Test
 		@Order(4)
 		@SuppressWarnings("unchecked")
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void deletePhoto_UpdateFailureException() throws Exception {
+		@DisplayName("異常系：対象写真が存在しない場合、404を返す")
+		void deletePhoto_PhotoNotFoundException() throws Exception {
 			String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
@@ -888,12 +889,12 @@ public class PhotoRestControllerTest {
 
 			ArgumentCaptor<PhotoDeleteModelList> photoDeleteModelCaptor = ArgumentCaptor.forClass(PhotoDeleteModelList.class);
 			ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
-			doThrow(UpdateFailureException.class).when(photoServiceImpl).deletePhotos(photoAcountIdCaptor.capture(), photoDeleteModelCaptor.capture());
+			doThrow(PhotoNotFoundException.class).when(photoServiceImpl).deletePhotos(photoAcountIdCaptor.capture(), photoDeleteModelCaptor.capture());
 
 			mockMvc.perform(delete("/api/v1/accounts/aaaaaaaa/photos")
 					.contentType("application/json")
 					.content(readJsonFile("delete_photo.json")))
-				.andExpect(status().isConflict());
+				.andExpect(status().isNotFound());
 
 			PhotoDeleteModelList photoDeleteModelList = photoDeleteModelCaptor.getValue();
 			assertEquals(1, photoDeleteModelList.size());

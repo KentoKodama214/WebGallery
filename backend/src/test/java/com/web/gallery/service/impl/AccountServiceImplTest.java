@@ -69,6 +69,7 @@ import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.impl.AccountAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
+import com.web.gallery.repository.impl.KbnMstRepositoryImpl;
 import com.web.gallery.repository.impl.RefreshTokenRepositoryImpl;
 
 @ActiveProfiles("test")
@@ -88,6 +89,9 @@ public class AccountServiceImplTest {
 
 	@Mock
 	private RefreshTokenRepositoryImpl refreshTokenRepositoryImpl;
+
+	@Mock
+	private KbnMstRepositoryImpl kbnMstRepositoryImpl;
 
 	@Mock
 	private AccountPrincipal accountPrincipal;

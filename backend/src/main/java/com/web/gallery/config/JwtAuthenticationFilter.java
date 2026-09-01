@@ -4,13 +4,14 @@ import java.io.IOException;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import org.springframework.context.annotation.Lazy;
 
+import com.web.gallery.AccountPrincipal;
+import com.web.gallery.helper.AuthenticatedUserCache;
 import com.web.gallery.helper.JwtTokenProvider;
 import com.web.gallery.service.impl.AccountServiceImpl;
 
@@ -32,10 +33,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtTokenProvider jwtTokenProvider;
 	private final AccountServiceImpl accountServiceImpl;
+	private final AuthenticatedUserCache authenticatedUserCache;
 
-	public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, @Lazy AccountServiceImpl accountServiceImpl) {
+	public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, @Lazy AccountServiceImpl accountServiceImpl,
+			AuthenticatedUserCache authenticatedUserCache) {
 		this.jwtTokenProvider = jwtTokenProvider;
 		this.accountServiceImpl = accountServiceImpl;
+		this.authenticatedUserCache = authenticatedUserCache;
 	}
 
 	@Override
@@ -55,7 +59,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			String accountId = jwtTokenProvider.getAccountIdFromToken(token);
 
 			if (SecurityContextHolder.getContext().getAuthentication() == null) {
-				UserDetails userDetails = accountServiceImpl.loadUserByUsername(accountId);
+				// 毎リクエストのDB参照を間引くためごく短時間キャッシュする
+				// （ロック・削除の反映は最大でキャッシュTTL（既定10秒）ぶん遅延する）
+				AccountPrincipal userDetails = authenticatedUserCache.get(accountId,
+						() -> (AccountPrincipal) accountServiceImpl.loadUserByUsername(accountId));
 
 				// アクセストークン自体は失効まで有効だが、その間に管理者ロック・アカウント削除が
 				// 行われた場合は即座に認証を無効化する（トークン署名・有効期限だけを信頼しない）

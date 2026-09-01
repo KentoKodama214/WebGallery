@@ -38,8 +38,12 @@ app:
     secret: ${JWT_SECRET}
     accessTokenExpirationMinutes: 15
     refreshTokenExpirationDays: 7
+    # ローテーション済みトークンの再送をこの秒数以内なら正常系リトライとみなす（全セッション失効しない）
+    refreshTokenReuseGraceSeconds: 30
 
 auth:
   login:
     failCount: 3
     lockDurationMinutes: 30
+  # JWT認証フィルタのアカウント情報キャッシュTTL（ミリ秒）。0以下でキャッシュ無効
+  principal-cache-ttl-millis: 10000
