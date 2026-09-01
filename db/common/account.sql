@@ -50,6 +50,8 @@ CREATE TABLE common.account
 	last_login_datetime timestamp with time zone NOT NULL,
 	-- ログイン失敗回数
 	login_failure_count smallint DEFAULT 0 NOT NULL,
+	-- 管理者ロックフラグ: 管理者が強制ロックした場合にtrue。ログイン失敗回数による自動ロック解除の対象外
+	is_admin_locked boolean DEFAULT 'false' NOT NULL,
 	PRIMARY KEY (account_no)
 ) WITHOUT OIDS;
 
@@ -72,3 +74,5 @@ COMMENT ON COLUMN common.account.resident_prefecture_kbn_code IS '在住都道�
 COMMENT ON COLUMN common.account.free_memo IS 'フリーメモ';
 COMMENT ON COLUMN common.account.authority_kbn IS '権限区分: mini-user(サイトを閲覧したり、サービスを利用する人。写真登録の上限は10枚（上限50MB）)、normal-user(サイトを閲覧したり、サービスを利用する人。写真登録の上限は1000枚（上限5GB）)、special-user(サイトを閲覧したり、サービスを利用する人。写真登録の上限は無制限)、administrator(サイトを管理・運営する人。写真登録の上限は無制限)';
 COMMENT ON COLUMN common.account.last_login_datetime IS '最終ログイン日時';
+COMMENT ON COLUMN common.account.login_failure_count IS 'ログイン失敗回数: 連続ログイン失敗回数。ログイン成功時にリセット';
+COMMENT ON COLUMN common.account.is_admin_locked IS '管理者ロックフラグ: 管理者が強制ロックした場合にtrue。ログイン失敗回数による自動ロック解除の対象外';

@@ -78,6 +78,9 @@ public class Account {
 	/** ログイン失敗回数 */
 	private Integer loginFailureCount;
 
+	/** 管理者ロックフラグ */
+	private Boolean isAdminLocked;
+
 	/**
 	 * アカウント登録用のAccountModelからAccountエンティティを生成する
 	 *
@@ -100,6 +103,7 @@ public class Account {
 				.authorityKbn(AuthorityEnum.MINI)
 				.lastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME)
 				.loginFailureCount(0)
+				.isAdminLocked(false)
 				.build();
 	}
 }

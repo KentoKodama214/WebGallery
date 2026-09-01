@@ -44,6 +44,7 @@ import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.FreeMemo;
+import com.web.gallery.domain.account.IsAdminLocked;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
@@ -403,7 +404,7 @@ public class AccountServiceImplTest {
 	class unlockAccountTest {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：ログイン失敗回数が0にリセットされること")
+		@DisplayName("正常系：管理者ロックとログイン失敗回数の両方が解除されること")
 		void unlockAccount_success() throws GalleryException {
 			ArgumentCaptor<AccountModel> captor = ArgumentCaptor.forClass(AccountModel.class);
 			doNothing().when(accountRepositoryImpl).updateLoginFailureCount(captor.capture());
@@ -413,6 +414,7 @@ public class AccountServiceImplTest {
 			AccountModel accountModel = captor.getValue();
 			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
 			assertEquals(new LoginFailureCount(0), accountModel.getLoginFailureCount());
+			assertEquals(new IsAdminLocked(false), accountModel.getIsAdminLocked());
 			assertNull(accountModel.getLastLoginDatetime());
 
 			ArgumentCaptor<AccountUnlockedEvent> eventCaptor = ArgumentCaptor.forClass(AccountUnlockedEvent.class);
@@ -435,7 +437,7 @@ public class AccountServiceImplTest {
 	class lockAccountTest {
 		@Test
 		@Order(1)
-		@DisplayName("正常系：ログイン失敗回数が上限値に設定されること")
+		@DisplayName("正常系：管理者ロックフラグが立てられ、ログイン失敗回数も上限値に設定されること")
 		void lockAccount_success() throws GalleryException {
 			doReturn(10).when(loginConfig).getFailCount();
 
@@ -446,6 +448,7 @@ public class AccountServiceImplTest {
 
 			AccountModel accountModel = captor.getValue();
 			assertEquals(new AccountNo(1L), accountModel.getAccountNo());
+			assertEquals(new IsAdminLocked(true), accountModel.getIsAdminLocked());
 			assertEquals(new LoginFailureCount(10), accountModel.getLoginFailureCount());
 
 			ArgumentCaptor<AccountLockedEvent> eventCaptor = ArgumentCaptor.forClass(AccountLockedEvent.class);

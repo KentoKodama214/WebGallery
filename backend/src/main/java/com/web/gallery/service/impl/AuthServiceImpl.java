@@ -214,15 +214,30 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	/**
-	 * アカウントがログイン失敗回数の上限に達している（ロック状態である）かどうかを判定する
+	 * アカウントがロック状態（管理者ロック、またはログイン失敗回数の上限到達）かどうかを判定する
 	 *
 	 * @param	accountModel	{@link AccountModel}（null可）
 	 * @return					ロック状態の場合true
 	 */
 	private boolean isLocked(AccountModel accountModel) {
+		if (accountModel == null) {
+			return false;
+		}
+		return isAdminLocked(accountModel)
+				|| (accountModel.getLoginFailureCount() != null
+						&& accountModel.getLoginFailureCount().value() >= loginConfig.getFailCount());
+	}
+
+	/**
+	 * アカウントが管理者により強制ロックされているかどうかを判定する
+	 *
+	 * @param	accountModel	{@link AccountModel}（null可）
+	 * @return					管理者ロックされている場合true
+	 */
+	private boolean isAdminLocked(AccountModel accountModel) {
 		return accountModel != null
-				&& accountModel.getLoginFailureCount() != null
-				&& accountModel.getLoginFailureCount().value() >= loginConfig.getFailCount();
+				&& accountModel.getIsAdminLocked() != null
+				&& Boolean.TRUE.equals(accountModel.getIsAdminLocked().value());
 	}
 
 	/**
@@ -244,13 +259,14 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	/**
-	 * アカウントの最終更新（＝直近のログイン失敗）から、ロック自動解除までの時間が経過しているかどうかを判定する
+	 * アカウントの最終更新（＝直近のログイン失敗）から、ロック自動解除までの時間が経過しているかどうかを判定する<p>
+	 * 管理者による強制ロックは自動解除の対象外（管理者による解除のみで解ける）
 	 *
 	 * @param	accountModel	{@link AccountModel}（null可）
 	 * @return					自動解除可能な場合true
 	 */
 	private boolean isLockDurationElapsed(AccountModel accountModel) {
-		if (accountModel == null || accountModel.getUpdatedAt() == null) {
+		if (accountModel == null || accountModel.getUpdatedAt() == null || isAdminLocked(accountModel)) {
 			return false;
 		}
 		return accountModel.getUpdatedAt().value()

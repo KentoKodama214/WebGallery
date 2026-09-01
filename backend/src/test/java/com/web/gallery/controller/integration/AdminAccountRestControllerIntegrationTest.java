@@ -143,6 +143,10 @@ public class AdminAccountRestControllerIntegrationTest {
 					"SELECT login_failure_count FROM common.account WHERE account_no = 2",
 					Integer.class);
 			assertEquals(0, loginFailureCount);
+			Boolean isAdminLocked = jdbcTemplate.queryForObject(
+					"SELECT is_admin_locked FROM common.account WHERE account_no = 2",
+					Boolean.class);
+			assertFalse(isAdminLocked);
 		}
 
 		@Test
@@ -196,6 +200,10 @@ public class AdminAccountRestControllerIntegrationTest {
 				.andExpect(jsonPath("$.isSuccess").value(true))
 				.andExpect(jsonPath("$.message").value(MessageConst.LOCK_ACCOUNT));
 
+			Boolean isAdminLocked = jdbcTemplate.queryForObject(
+					"SELECT is_admin_locked FROM common.account WHERE account_no = 1",
+					Boolean.class);
+			assertTrue(isAdminLocked);
 			Integer loginFailureCount = jdbcTemplate.queryForObject(
 					"SELECT login_failure_count FROM common.account WHERE account_no = 1",
 					Integer.class);

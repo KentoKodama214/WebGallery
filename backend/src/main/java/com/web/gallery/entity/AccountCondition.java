@@ -63,6 +63,9 @@ public class AccountCondition {
 	/** ログイン失敗回数 */
 	private Integer loginFailureCount;
 
+	/** 管理者ロックフラグ */
+	private Boolean isAdminLocked;
+
 	/** 取得件数上限 */
 	private Integer limit;
 
