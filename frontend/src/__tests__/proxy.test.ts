@@ -10,6 +10,7 @@ function makeRequest(pathname: string): NextRequest {
   return {
     nextUrl: new URL(url),
     url,
+    headers: new Headers(),
   } as unknown as NextRequest;
 }
 
@@ -31,5 +32,38 @@ describe("proxy (ルーティング制御)", () => {
       ? config.matcher[0]
       : config.matcher;
     expect(matcher).toContain("?!api");
+  });
+});
+
+describe("proxy (Content-Security-Policy)", () => {
+  it("ページレスポンスに nonce 付き CSP を付与する", () => {
+    const res = proxy(makeRequest("/login"));
+    const csp = res.headers.get("content-security-policy");
+    expect(csp).toBeTruthy();
+    // script-src から 'unsafe-inline' を排除し、nonce + strict-dynamic を使う
+    expect(csp).toMatch(/script-src [^;]*'nonce-[^']+'/);
+    expect(csp).toMatch(/script-src [^;]*'strict-dynamic'/);
+    expect(csp).not.toMatch(/script-src [^;]*'unsafe-inline'/);
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("frame-ancestors 'none'");
+  });
+
+  it("リクエストごとに異なる nonce を生成する", () => {
+    const csp1 = proxy(makeRequest("/login")).headers.get(
+      "content-security-policy"
+    );
+    const csp2 = proxy(makeRequest("/login")).headers.get(
+      "content-security-policy"
+    );
+    const nonce1 = csp1?.match(/'nonce-([^']+)'/)?.[1];
+    const nonce2 = csp2?.match(/'nonce-([^']+)'/)?.[1];
+    expect(nonce1).toBeTruthy();
+    expect(nonce2).toBeTruthy();
+    expect(nonce1).not.toBe(nonce2);
+  });
+
+  it("リダイレクトレスポンスにも CSP を付与する", () => {
+    const res = proxy(makeRequest("/"));
+    expect(res.headers.get("content-security-policy")).toBeTruthy();
   });
 });

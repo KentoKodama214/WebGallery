@@ -126,6 +126,8 @@ export async function login(
   accountId: string,
   password: string
 ): Promise<{ accessToken: string; expiresIn: number }> {
+  // 認証の起点となる呼び出しのため、意図的に生 fetch を使う
+  // （fetchWithAuth はトークン前提でリフレッシュを試みてしまう）
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
@@ -329,9 +331,9 @@ export interface AccountListGetResponse {
  * アカウント一覧を1ページ分取得する
  */
 export async function getAccountList(pageNo: number = 1): Promise<AccountListGetResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/accounts?pageNo=${pageNo}`
-  );
+  // 現状この一覧は公開 API だが、将来保護 API 化しても静かに壊れないよう
+  // 認証付き fetch を通す（未ログイン時も追加のリフレッシュ試行が走るだけで害はない）
+  const response = await fetchWithAuth(`/api/v1/accounts?pageNo=${pageNo}`);
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "アカウント一覧の取得に失敗しました"));
   }
@@ -383,7 +385,8 @@ export async function updateAccount(
  * 都道府県一覧を取得する
  */
 export async function getPrefectures(): Promise<PrefectureGroup[]> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/prefectures`);
+  // 認証済み画面（アカウント設定）からも呼ばれる。将来の保護 API 化に備え認証付き fetch を通す
+  const response = await fetchWithAuth(`/api/v1/prefectures`);
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "都道府県一覧の取得に失敗しました"));
   }
@@ -396,6 +399,7 @@ export async function getPrefectures(): Promise<PrefectureGroup[]> {
 export async function registerAccount(
   data: AccountRegistData
 ): Promise<AccountRegistResult> {
+  // 未ログインのユーザーが行う登録のため、意図的に生 fetch を使う（認証不要）
   const response = await fetch(`${API_BASE_URL}/api/v1/accounts`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -596,10 +600,12 @@ export async function getPhotoUpperLimit(
  */
 export async function getPhotoDetail(
   photoAccountId: string,
-  accountNo: number,
   photoNo: number
 ): Promise<PhotoDetailResponse> {
-  const url = `/api/v1/accounts/${seg(photoAccountId)}/photos/${seg(photoNo)}?accountNo=${seg(accountNo)}`;
+  // バックエンドは写真の所有者を photoAccountId（パス）で解決する。
+  // お気に入り判定に使うアカウント番号はセッション（JWT）から取得されるため、
+  // クライアントからアカウント番号を渡す必要はない
+  const url = `/api/v1/accounts/${seg(photoAccountId)}/photos/${seg(photoNo)}`;
   const response = await fetchWithAuth(url);
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真詳細の取得に失敗しました"));

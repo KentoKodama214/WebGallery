@@ -2,14 +2,14 @@
 
 /* PhotoSwipe カスタムスタイル */
 button.pswp__button--add-favorite-button {
-  background: url(/image/heart_off.png) !important;
+  background: url(/ui/heart_off.png) !important;
   background-size: 30px 30px !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
 }
 
 button.pswp__button--cancel-favorite-button {
-  background: url(/image/heart_on.png) !important;
+  background: url(/ui/heart_on.png) !important;
   background-size: 30px 30px !important;
   background-repeat: no-repeat !important;
   background-position: center !important;

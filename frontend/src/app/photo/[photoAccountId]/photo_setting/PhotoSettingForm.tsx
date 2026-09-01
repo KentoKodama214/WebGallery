@@ -90,7 +90,6 @@ export function PhotoSettingForm({
       try {
         const data: PhotoDetailResponse = await getPhotoDetail(
           photoAccountId,
-          accountNo,
           photoNo
         );
         if (cancelled) return;

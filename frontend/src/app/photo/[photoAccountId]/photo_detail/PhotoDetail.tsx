@@ -16,7 +16,6 @@ import { ModalDialog } from "@/components/ui/ModalDialog";
 
 interface PhotoDetailProps {
   photoAccountId: string;
-  accountNo: number;
   photoNo: number;
 }
 
@@ -25,7 +24,6 @@ interface PhotoDetailProps {
  */
 export function PhotoDetail({
   photoAccountId,
-  accountNo,
   photoNo,
 }: PhotoDetailProps) {
   const router = useRouter();
@@ -44,7 +42,7 @@ export function PhotoDetail({
 
   // owner 判定は URL パスだけでなく、表示中の写真の実所有者（photo.accountNo）が
   // ログインユーザー自身であることまで確認する。細工 URL
-  // （/photo/<自分>/photo_detail?accountNo=<他人>&photoNo=<他人の写真>）で
+  // （/photo/<自分>/photo_detail?photoNo=<他人の写真>）で
   // 編集・削除 UI が出るのを防ぐ（多層防御。認可はバックエンドでも実施）。
   // 写真ロード完了前（photo === null）は所有者を確定できないため false 扱いとし、
   // 細工 URL で操作ボタンが一瞬表示されるのを防ぐ。
@@ -62,7 +60,7 @@ export function PhotoDetail({
 
     const load = async () => {
       try {
-        const data = await getPhotoDetail(photoAccountId, accountNo, photoNo);
+        const data = await getPhotoDetail(photoAccountId, photoNo);
         if (!cancelled) {
           setPhoto(data);
           setError(null);
@@ -80,7 +78,7 @@ export function PhotoDetail({
     return () => {
       cancelled = true;
     };
-  }, [photoAccountId, accountNo, photoNo]);
+  }, [photoAccountId, photoNo]);
 
   /**
    * お気に入り登録／解除
@@ -261,7 +259,7 @@ export function PhotoDetail({
               background: "none",
             }}
           >
-            <img src="/image/edit.png" alt="" style={{ width: "100%", height: "100%", display: "block" }} />
+            <img src="/ui/edit.png" alt="" style={{ width: "100%", height: "100%", display: "block" }} />
           </button>
         )}
         {isOwner && (
@@ -282,7 +280,7 @@ export function PhotoDetail({
               background: "none",
             }}
           >
-            <img src="/image/trash.png" alt="" style={{ width: "100%", height: "100%", display: "block" }} />
+            <img src="/ui/trash.png" alt="" style={{ width: "100%", height: "100%", display: "block" }} />
           </button>
         )}
         {isAuthenticated && (
@@ -307,7 +305,7 @@ export function PhotoDetail({
             }}
           >
             <img
-              src={photo.isFavorite ? "/image/heart_on.png" : "/image/heart_off.png"}
+              src={photo.isFavorite ? "/ui/heart_on.png" : "/ui/heart_off.png"}
               alt=""
               style={{ width: "100%", height: "100%", display: "block" }}
             />

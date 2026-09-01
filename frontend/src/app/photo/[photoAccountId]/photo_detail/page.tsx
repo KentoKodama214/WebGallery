@@ -34,27 +34,21 @@ export default async function PhotoDetailPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { photoAccountId } = await params;
-  const { accountNo, photoNo } = await searchParams;
+  const { photoNo } = await searchParams;
 
-  const parsedAccountNo = parsePositiveInt(accountNo);
   const parsedPhotoNo = parsePositiveInt(photoNo);
 
   return (
     <>
       <Header />
-      {/* photoAccountId はURLの動的セグメントで細工可能なため、APIパスに使う前に形式を検証する */}
-      {!isValidAccountId(photoAccountId) ||
-      parsedAccountNo === null ||
-      parsedPhotoNo === null ? (
+      {/* photoAccountId はURLの動的セグメントで細工可能なため、APIパスに使う前に形式を検証する。
+          写真の所有者は photoAccountId（パス）で解決するため accountNo クエリは参照しない */}
+      {!isValidAccountId(photoAccountId) || parsedPhotoNo === null ? (
         <div className="min-h-screen bg-black text-white flex justify-center items-center">
           <p className="text-red-500">写真が見つかりません</p>
         </div>
       ) : (
-        <PhotoDetail
-          photoAccountId={photoAccountId}
-          accountNo={parsedAccountNo}
-          photoNo={parsedPhotoNo}
-        />
+        <PhotoDetail photoAccountId={photoAccountId} photoNo={parsedPhotoNo} />
       )}
       <Footer />
     </>
