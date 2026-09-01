@@ -17,6 +17,7 @@ import com.web.gallery.controller.response.BadRequestResponse;
 import com.web.gallery.controller.response.ErrorResponse;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
+import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
@@ -117,6 +118,19 @@ public class CommonRestControllerAdvice {
 	 */
 	@ExceptionHandler(PhotoNotFoundException.class)
 	public ResponseEntity<ErrorResponse> handlePhotoNotFoundException(PhotoNotFoundException exception) {
+		ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.NOT_FOUND);
+
+		return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.NOT_FOUND);
+	}
+
+	/**
+	 * 解除対象のお気に入りが存在しないときに制御するExceptionHandler
+	 *
+	 * @param	exception	{@link FavoriteNotFoundException}
+	 * @return				{@link ErrorResponse}
+	 */
+	@ExceptionHandler(FavoriteNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleFavoriteNotFoundException(FavoriteNotFoundException exception) {
 		ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.NOT_FOUND);
 
 		return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.NOT_FOUND);

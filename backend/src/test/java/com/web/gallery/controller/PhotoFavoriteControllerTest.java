@@ -27,8 +27,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoFavoriteModel;
 import com.web.gallery.service.impl.PhotoFavoriteServiceImpl;
@@ -163,17 +163,17 @@ public class PhotoFavoriteControllerTest {
 
 		@Test
 		@Order(3)
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void deleteFavorite_UpdateFailureException() throws Exception {
+		@DisplayName("異常系：対象のお気に入りが存在しない場合、404を返す")
+		void deleteFavorite_FavoriteNotFoundException() throws Exception {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 
 			ArgumentCaptor<PhotoFavoriteModel> photoFavoriteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteModel.class);
-			doThrow(UpdateFailureException.class).when(photoFavoriteServiceImpl).deleteFavorite(photoFavoriteModelCaptor.capture());
+			doThrow(FavoriteNotFoundException.class).when(photoFavoriteServiceImpl).deleteFavorite(photoFavoriteModelCaptor.capture());
 
 			mockMvc.perform(delete("/api/v1/photos/favorites")
 					.contentType(MediaType.APPLICATION_JSON)
 					.content(readJsonFile("delete_favorite.json")))
-				.andExpect(status().isConflict());
+				.andExpect(status().isNotFound());
 
 			PhotoFavoriteModel photoFavoriteModel = photoFavoriteModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoFavoriteModel.getAccountNo());

@@ -240,8 +240,8 @@ public class PhotoFavoriteControllerIntegrationTest {
 
 		@Test
 		@Order(3)
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void deleteFavorite_UpdateFailureException() throws Exception {
+		@DisplayName("異常系：対象のお気に入りが存在しない場合、404を返す")
+		void deleteFavorite_FavoriteNotFoundException() throws Exception {
 			Authentication authentication = createAuthentication();
 
 			mockMvc.perform(
@@ -251,11 +251,11 @@ public class PhotoFavoriteControllerIntegrationTest {
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
-				.andExpect(status().isConflict())
+				.andExpect(status().isNotFound())
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath("$.httpStatus").value(409))
-				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_CANCEL_FAVORITE.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_CANCEL_FAVORITE.getErrorMessage()));
+				.andExpect(jsonPath("$.httpStatus").value(404))
+				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAVORITE_NOT_FOUND.getErrorCode()))
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAVORITE_NOT_FOUND.getErrorMessage()));
 		}
 	}
 }

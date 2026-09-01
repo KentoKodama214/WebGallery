@@ -57,10 +57,11 @@ public class PhotoFavoriteRepositoryImpl implements PhotoFavoriteRepository{
 		PhotoFavoriteCondition condition = PhotoFavoriteCondition.from(favoriteDeleteModel);
 
 		if (photoFavoriteMapper.delete(condition) < 1) {
-			log.warn("PhotoFavorite: Delete Failed (AccountNo: {}, FavoritePhotoAccountNo: {}, FavoritePhotoNo: {})",
+			// 対象のお気に入りが存在しない（未登録・既に解除済み）＝404。競合ではないため409は返さない
+			log.warn("PhotoFavorite: Not Found (AccountNo: {}, FavoritePhotoAccountNo: {}, FavoritePhotoNo: {})",
 					favoriteDeleteModel.getAccountNo() != null ? favoriteDeleteModel.getAccountNo().value() : null,
 					favoriteDeleteModel.getFavoritePhotoAccountNo().value(), favoriteDeleteModel.getFavoritePhotoNo().value());
-			throw ErrorEnum.FAIL_TO_CANCEL_FAVORITE.toException();
+			throw ErrorEnum.FAVORITE_NOT_FOUND.toException();
 		}
 	}
 

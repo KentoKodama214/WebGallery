@@ -23,9 +23,9 @@ import com.web.gallery.domain.common.CreatedBy;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.entity.PhotoFavoriteCondition;
+import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoFavoriteModel;
@@ -120,8 +120,8 @@ public class PhotoFavoriteRepositoryImplTest {
 		
 		@Test
 		@Order(2)
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void delete_UpdateFailureException() throws GalleryException {
+		@DisplayName("異常系：対象のお気に入りが存在しない場合、FavoriteNotFoundExceptionをthrowする")
+		void delete_FavoriteNotFoundException() throws GalleryException {
 			PhotoFavoriteDeleteModel favoriteDeleteModel = PhotoFavoriteDeleteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
@@ -131,7 +131,7 @@ public class PhotoFavoriteRepositoryImplTest {
 			ArgumentCaptor<PhotoFavoriteCondition> photoFavoriteCaptor = ArgumentCaptor.forClass(PhotoFavoriteCondition.class);
 			doReturn(0).when(photoFavoriteMapper).delete(photoFavoriteCaptor.capture());
 			
-			assertThrows(UpdateFailureException.class, () -> photoFavoriteRepositoryImpl.delete(favoriteDeleteModel));
+			assertThrows(FavoriteNotFoundException.class, () -> photoFavoriteRepositoryImpl.delete(favoriteDeleteModel));
 			
 			verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
 			PhotoFavoriteCondition photoFavorite = photoFavoriteCaptor.getValue();

@@ -25,6 +25,7 @@ public final class MessageConst {
 	public static final String ERR_FAIL_TO_REGIST_PHOTO_TAG = "写真タグ登録でエラー発生しました。登録をやり直してください。";
 	public static final String ERR_FAIL_TO_REGIST_FAVORITE = "お気に入り登録でエラー発生しました。登録をやり直してください。";
 	public static final String ERR_FAIL_TO_CANCEL_FAVORITE = "お気に入り解除でエラー発生しました。解除をやり直してください。";
+	public static final String ERR_FAVORITE_NOT_FOUND = "お気に入りに登録されていません。";
 	public static final String ERR_DUPLICATE_PHOTO_FILE = "写真登録でエラーが発生しました。（既に同じファイル名でアップロード済みです）";
 	public static final String ERR_PHOTO_NOT_FOUND = "写真が存在しません。";
 	public static final String ERR_REACHED_REGISTRATION_LIMIT = "写真の登録枚数が上限に達しています。";

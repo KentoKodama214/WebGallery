@@ -37,6 +37,7 @@ import com.web.gallery.entity.PhotoTagMst;
 import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
@@ -259,8 +260,8 @@ public class PhotoAggregateRepositoryImplTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("異常系：写真マスタの更新件数が0件の場合、UpdateFailureExceptionをthrowすること")
-		void delete_UpdateFailureException() {
+		@DisplayName("異常系：写真マスタの更新件数が0件（対象写真が存在しない）の場合、PhotoNotFoundExceptionをthrowすること")
+		void delete_PhotoNotFoundException() {
 			AccountNo accountNo = new AccountNo(1L);
 			PhotoNo photoNo = new PhotoNo(5L);
 			Photo photo = Photo.forDelete(accountNo, photoNo, new ImageFilePath("/path/DSC111.jpg"));
@@ -269,7 +270,7 @@ public class PhotoAggregateRepositoryImplTest {
 			doReturn(1).when(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
 			doReturn(0).when(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
 
-			assertThrows(UpdateFailureException.class, () -> photoAggregateRepositoryImpl.delete(photo));
+			assertThrows(PhotoNotFoundException.class, () -> photoAggregateRepositoryImpl.delete(photo));
 		}
 	}
 }

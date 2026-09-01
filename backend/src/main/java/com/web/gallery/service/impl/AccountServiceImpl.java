@@ -21,9 +21,11 @@ import com.web.gallery.aggregate.Account;
 import com.web.gallery.config.AccountConfig;
 import com.web.gallery.config.LoginConfig;
 import com.web.gallery.config.PhotoConfig;
+import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.event.AccountDeletedEvent;
@@ -32,14 +34,17 @@ import com.web.gallery.event.AccountRegisteredEvent;
 import com.web.gallery.event.AccountUnlockedEvent;
 import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.event.PhotoDeletedEvent;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountGetModel;
 import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.model.KbnMstModelList;
 import com.web.gallery.repository.AccountAggregateRepository;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
+import com.web.gallery.repository.KbnMstRepository;
 import com.web.gallery.repository.RefreshTokenRepository;
 import com.web.gallery.service.AccountService;
 
@@ -58,6 +63,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	private final AccountAggregateRepository accountAggregateRepository;
 	private final FileRepository fileRepository;
 	private final RefreshTokenRepository refreshTokenRepository;
+	private final KbnMstRepository kbnMstRepository;
 	private final LoginConfig loginConfig;
 	private final PhotoConfig photoConfig;
 	private final AccountConfig accountConfig;
@@ -93,6 +99,8 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	@Override
 	@Transactional(rollbackFor = GalleryException.class)
 	public Boolean registAccount(AccountModel accountModel) throws GalleryException {
+		validatePrefectureCodes(accountModel);
+
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountId());
 		if(!isExist) {
 			accountRepository.regist(accountModel);
@@ -113,6 +121,8 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	@Override
 	@Transactional(rollbackFor = GalleryException.class)
 	public Boolean updateAccount(AccountModel accountModel) throws GalleryException {
+		validatePrefectureCodes(accountModel);
+
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
 		if(!isExist) {
 			accountRepository.update(accountModel);
@@ -209,6 +219,46 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 			applicationEventPublisher.publishEvent(new PhotoDeletedEvent(accountNo, photoNo));
 		}
 		applicationEventPublisher.publishEvent(new AccountDeletedEvent(accountNo, accountId));
+	}
+
+	/**
+	 * 出身・在住の都道府県区分コードが、区分マスタに実在する（または未設定）ことを検証する<p>
+	 * リクエストDTOでは形式（英数字20文字以内）しか検証できず、存在しないコードを保存すると
+	 * 一覧・詳細画面での表示崩れやデータ不整合を招くため、Service層で実在チェックを行う。
+	 * どちらのコードも未指定（＝変更なし）の場合は区分マスタを参照しない。
+	 *
+	 * @param	accountModel		{@link AccountModel}
+	 * @throws	GalleryException	いずれかのコードが実在しない場合
+	 */
+	private void validatePrefectureCodes(AccountModel accountModel) throws GalleryException {
+		String birthplaceCode = accountModel.getBirthplacePrefectureKbnCode() != null
+				? accountModel.getBirthplacePrefectureKbnCode().value() : null;
+		String residentCode = accountModel.getResidentPrefectureKbnCode() != null
+				? accountModel.getResidentPrefectureKbnCode().value() : null;
+		if (birthplaceCode == null && residentCode == null) {
+			return;
+		}
+
+		KbnMstModelList prefectureList = kbnMstRepository.get(new KbnClassCode(Consts.PREFECTURE));
+		if (!isValidPrefectureCode(prefectureList, birthplaceCode)
+				|| !isValidPrefectureCode(prefectureList, residentCode)) {
+			throw ErrorEnum.INVALID_INPUT.toException();
+		}
+	}
+
+	/**
+	 * 都道府県区分コードが有効（null・未設定「none」・区分マスタに実在）かどうかを判定する
+	 *
+	 * @param	prefectureList	区分マスタから取得した都道府県の一覧
+	 * @param	code			検証対象の都道府県区分コード（null可）
+	 * @return					有効な場合true
+	 */
+	private boolean isValidPrefectureCode(KbnMstModelList prefectureList, String code) {
+		if (code == null || Consts.STRING_NONE.equals(code)) {
+			return true;
+		}
+		return prefectureList.stream()
+				.anyMatch(kbnMstModel -> kbnMstModel.getKbnCode().value().equals(code));
 	}
 
 	/**

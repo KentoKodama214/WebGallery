@@ -987,8 +987,8 @@ public class PhotoRestControllerIntegrationTest {
 		
 		@Test
 		@Order(4)
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void deletePhoto_UpdateFailureException() throws Exception {
+		@DisplayName("異常系：対象写真が存在しない場合、404を返す")
+		void deletePhoto_PhotoNotFoundException() throws Exception {
 			String photoAccountId = "aaaaaaaa";
 			String loginAccountId = "aaaaaaaa";
 
@@ -1010,10 +1010,10 @@ public class PhotoRestControllerIntegrationTest {
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
-				.andExpect(status().isConflict())
-				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
-				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_DELETE_PHOTO.getErrorCode()))
-				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_DELETE_PHOTO.getErrorMessage()));
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.NOT_FOUND.value()))
+				.andExpect(jsonPath("$.errorCode").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorCode()))
+				.andExpect(jsonPath("$.errorMessage").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorMessage()));
 		}
 	}
 

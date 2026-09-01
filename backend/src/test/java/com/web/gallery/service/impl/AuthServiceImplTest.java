@@ -25,7 +25,6 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetailsService;
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.JwtConfig;
@@ -37,9 +36,11 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.ExpiresAt;
+import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.common.IsRevoked;
 import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.domain.common.UpdatedAt;
+import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.helper.JwtTokenProvider;
 import com.web.gallery.model.AccountModel;
@@ -71,9 +72,6 @@ class AuthServiceImplTest {
 
 	@Mock
 	private AccountRepository accountRepository;
-
-	@Mock
-	private UserDetailsService userDetailsService;
 
 	@Mock
 	private Clock clock;
@@ -214,14 +212,14 @@ class AuthServiceImplTest {
 			AccountModel account = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId("testuser1"))
+					.loginFailureCount(new LoginFailureCount(0))
+					.isDeleted(new IsDeleted(false))
+					.authorityKbn(AuthorityEnum.MINI)
 					.build();
 			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
+			when(loginConfig.getFailCount()).thenReturn(3);
 
-			AccountPrincipal principal = mock(AccountPrincipal.class);
-			when(principal.isAccountNonLocked()).thenReturn(true);
-			when(principal.isEnabled()).thenReturn(true);
-			when(userDetailsService.loadUserByUsername("testuser1")).thenReturn(principal);
-			when(jwtTokenProvider.generateAccessToken(principal)).thenReturn("new-access-token");
+			when(jwtTokenProvider.generateAccessToken(any(AccountPrincipal.class))).thenReturn("new-access-token");
 			when(jwtTokenProvider.generateRefreshToken()).thenReturn("new-refresh-token");
 			when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
 			when(jwtConfig.getRefreshTokenExpirationDays()).thenReturn(7);
@@ -258,12 +256,12 @@ class AuthServiceImplTest {
 			AccountModel account = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId("testuser1"))
+					.loginFailureCount(new LoginFailureCount(3))
+					.isDeleted(new IsDeleted(false))
+					.authorityKbn(AuthorityEnum.MINI)
 					.build();
 			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
-
-			AccountPrincipal principal = mock(AccountPrincipal.class);
-			when(principal.isAccountNonLocked()).thenReturn(false);
-			when(userDetailsService.loadUserByUsername("testuser1")).thenReturn(principal);
+			when(loginConfig.getFailCount()).thenReturn(3);
 
 			assertThrows(LockedException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
@@ -286,15 +284,15 @@ class AuthServiceImplTest {
 			AccountModel account = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId("testuser1"))
+					.loginFailureCount(new LoginFailureCount(3))
+					.isDeleted(new IsDeleted(false))
+					.authorityKbn(AuthorityEnum.MINI)
 					.updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(31)))
 					.build();
 			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
+			when(loginConfig.getFailCount()).thenReturn(3);
 
-			AccountPrincipal principal = mock(AccountPrincipal.class);
-			when(principal.isAccountNonLocked()).thenReturn(false);
-			when(principal.isEnabled()).thenReturn(true);
-			when(userDetailsService.loadUserByUsername("testuser1")).thenReturn(principal);
-			when(jwtTokenProvider.generateAccessToken(principal)).thenReturn("new-access-token");
+			when(jwtTokenProvider.generateAccessToken(any(AccountPrincipal.class))).thenReturn("new-access-token");
 			when(jwtTokenProvider.generateRefreshToken()).thenReturn("new-refresh-token");
 			when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
 			when(jwtConfig.getRefreshTokenExpirationDays()).thenReturn(7);
@@ -323,13 +321,12 @@ class AuthServiceImplTest {
 			AccountModel account = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId("testuser1"))
+					.loginFailureCount(new LoginFailureCount(0))
+					.isDeleted(new IsDeleted(true))
+					.authorityKbn(AuthorityEnum.MINI)
 					.build();
 			when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
-
-			AccountPrincipal principal = mock(AccountPrincipal.class);
-			when(principal.isAccountNonLocked()).thenReturn(true);
-			when(principal.isEnabled()).thenReturn(false);
-			when(userDetailsService.loadUserByUsername("testuser1")).thenReturn(principal);
+			when(loginConfig.getFailCount()).thenReturn(3);
 
 			assertThrows(InvalidRefreshTokenException.class, () -> {
 				authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
@@ -353,6 +350,29 @@ class AuthServiceImplTest {
 			});
 
 			verify(refreshTokenRepository).revokeAllByAccountNo(new AccountNo(1L));
+			verify(refreshTokenRepository, times(0)).save(any(RefreshTokenModel.class));
+		}
+
+		@Test
+		@DisplayName("正常系: ローテーション直後の猶予期間内に無効化済みトークンが再送された場合は、正常系のリトライとみなし全トークンは失効させずに拒否のみ行うこと")
+		void refresh_revokedToken_withinGracePeriod() {
+			when(jwtConfig.getRefreshTokenReuseGraceSeconds()).thenReturn(30);
+
+			RefreshTokenModel storedToken = RefreshTokenModel.builder()
+					.accountNo(new AccountNo(1L))
+					.tokenHash(new TokenHash("hashed-token"))
+					.expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
+					.isRevoked(new IsRevoked(true))
+					.updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusSeconds(5)))
+					.build();
+
+			when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class))).thenReturn(storedToken);
+
+			assertThrows(InvalidRefreshTokenException.class, () -> {
+				authServiceImpl.refresh(new RefreshTokenValue("rotated-token"));
+			});
+
+			verify(refreshTokenRepository, times(0)).revokeAllByAccountNo(any(AccountNo.class));
 			verify(refreshTokenRepository, times(0)).save(any(RefreshTokenModel.class));
 		}
 

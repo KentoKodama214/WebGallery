@@ -230,6 +230,7 @@ public class AccountRestControllerIntegrationTest {
 	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 	@Sql("/sql/common/cleanup.sql")
 	@Sql("/sql/controller/AccountRestControllerIntegrationTest.sql")
+	@Sql("/sql/common/PrefectureKbnMst.sql")
 	class register {
 		private List<Account> getAccountList(String accountId) {
 			return jdbcTemplate.query(
@@ -339,6 +340,22 @@ public class AccountRestControllerIntegrationTest {
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
 				.andExpect(jsonPath("$.isSuccess").value(false))
 				.andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("異常系：区分マスタに存在しない都道府県コードの場合、400を返す")
+		void register_badrequest_invalid_prefecture() throws Exception {
+			mockMvc.perform(
+					post("/api/v1/accounts")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(readJsonFile("register_badrequest_invalid_prefecture.json"))
+					.with(csrf())
+				)
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
+
+			assertEquals(0, getAccountList("dddddddd").size());
 		}
 	}
 

@@ -106,7 +106,9 @@ public class AuthRestController {
 			@CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
 
 		if (refreshToken == null || refreshToken.isEmpty()) {
-			return ResponseEntity.status(401).build();
+			// 他の認証エラーと同じJSON形式（AuthErrorResponse）に揃えるため、
+			// 空ボディの401を直接返さず例外ハンドラに委譲する
+			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
 		}
 
 		AuthTokenModel tokenModel = authService.refresh(new RefreshTokenValue(refreshToken));

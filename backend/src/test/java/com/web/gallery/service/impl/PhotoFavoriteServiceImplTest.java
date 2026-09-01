@@ -18,10 +18,10 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoFavoriteDeleteModel;
 import com.web.gallery.model.PhotoFavoriteModel;
@@ -116,17 +116,17 @@ public class PhotoFavoriteServiceImplTest {
 		
 		@Test
 		@Order(2)
-		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
-		void deleteFavorite_UpdateFailureException() throws GalleryException {
+		@DisplayName("異常系：対象のお気に入りが存在しない場合、FavoriteNotFoundExceptionをthrowする")
+		void deleteFavorite_FavoriteNotFoundException() throws GalleryException {
 			PhotoFavoriteModel photoFavoriteModel = PhotoFavoriteModel.builder()
 					.accountNo(new AccountNo(1L))
 					.favoritePhotoAccountNo(new AccountNo(1L))
 					.favoritePhotoNo(new PhotoNo(1L))
 					.build();
 			ArgumentCaptor<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptor = ArgumentCaptor.forClass(PhotoFavoriteDeleteModel.class);
-			doThrow(UpdateFailureException.class).when(photoFavoriteRepositoryImpl).delete(photoFavoriteDeleteModelCaptor.capture());
-			
-			assertThrows(UpdateFailureException.class, () ->photoFavoriteServiceImpl.deleteFavorite(photoFavoriteModel));
+			doThrow(FavoriteNotFoundException.class).when(photoFavoriteRepositoryImpl).delete(photoFavoriteDeleteModelCaptor.capture());
+
+			assertThrows(FavoriteNotFoundException.class, () ->photoFavoriteServiceImpl.deleteFavorite(photoFavoriteModel));
 			
 			PhotoFavoriteDeleteModel photoFavoriteDeleteModel = photoFavoriteDeleteModelCaptor.getValue();
 			assertEquals(new AccountNo(1L), photoFavoriteDeleteModel.getAccountNo());

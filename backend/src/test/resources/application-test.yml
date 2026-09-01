@@ -25,6 +25,11 @@ app:
     outputPath: https://www.xxx.com/
   jwt:
     secret: test-secret-must-be-at-least-256-bits-long-for-hs256-algorithm
+    # テストでは盗用検知の猶予期間を無効化し、ローテーション済みトークンの再利用を即座に盗用とみなす
+    refreshTokenReuseGraceSeconds: 0
+  auth:
+    # テストではアカウント状態の変化を即時反映させるためPrincipalキャッシュを無効化する
+    principal-cache-ttl-millis: 0
   cors:
     allowed-origins:
       - http://localhost:3000
