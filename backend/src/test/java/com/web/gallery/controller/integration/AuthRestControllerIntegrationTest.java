@@ -54,17 +54,23 @@ public class AuthRestControllerIntegrationTest {
 
 		// 正常なアカウント（ログイン失敗回数0）
 		jdbcTemplate.update(
-			"INSERT INTO common.account VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'testuser01', 'テストユーザー01', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0)",
+			"INSERT INTO common.account VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'testuser01', 'テストユーザー01', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, false)",
 			hashedPassword
 		);
 
 		// ロック状態のアカウント（ログイン失敗回数3・直近にロックされたばかりの想定で更新日時を現在時刻にする）
 		jdbcTemplate.update(
-			"INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 3)",
+			"INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 3, false)",
 			hashedPassword
 		);
 
-		jdbcTemplate.update("ALTER SEQUENCE common.account_account_no_seq RESTART 3");
+		// 管理者に強制ロックされたアカウント（更新日時は十分過去だが、is_admin_locked のため自動解除されない）
+		jdbcTemplate.update(
+			"INSERT INTO common.account VALUES(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'adminlocked', '管理者ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, true)",
+			hashedPassword
+		);
+
+		jdbcTemplate.update("ALTER SEQUENCE common.account_account_no_seq RESTART 4");
 	}
 
 	@Nested
@@ -167,6 +173,23 @@ public class AuthRestControllerIntegrationTest {
 				)
 				.andExpect(status().is(423))
 				.andExpect(jsonPath("$.message").value("アカウントがロックされています。"));
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("異常系：管理者に強制ロックされたアカウントは、更新日時が十分過去でも自動解除されず423を返す")
+		void login_admin_locked_account_not_auto_released() throws Exception {
+			mockMvc.perform(
+					post("/api/v1/auth/login")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("{\"accountId\":\"adminlocked\",\"password\":\"" + TEST_PASSWORD + "\"}")
+				)
+				.andExpect(status().is(423))
+				.andExpect(jsonPath("$.message").value("アカウントがロックされています。"));
+
+			Boolean isAdminLocked = jdbcTemplate.queryForObject(
+					"SELECT is_admin_locked FROM common.account WHERE account_id = 'adminlocked'", Boolean.class);
+			assertTrue(isAdminLocked);
 		}
 
 		@Test

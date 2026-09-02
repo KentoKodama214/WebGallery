@@ -65,6 +65,9 @@ public class AccountUpdateTarget {
 	/** ログイン失敗回数 */
 	private Integer loginFailureCount;
 
+	/** 管理者ロックフラグ */
+	private Boolean isAdminLocked;
+
 	/**
 	 * アカウント更新用のAccountModelから更新対象を生成する
 	 *
@@ -106,6 +109,7 @@ public class AccountUpdateTarget {
 		return AccountUpdateTarget.builder()
 				.lastLoginDatetime(model.getLastLoginDatetime() != null ? model.getLastLoginDatetime().value() : null)
 				.loginFailureCount(model.getLoginFailureCount() != null ? model.getLoginFailureCount().value() : 0)
+				.isAdminLocked(model.getIsAdminLocked() != null ? model.getIsAdminLocked().value() : null)
 				.build();
 	}
 }

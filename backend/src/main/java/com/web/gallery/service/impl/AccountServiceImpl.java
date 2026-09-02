@@ -175,7 +175,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	}
 
 	/**
-	 * 管理者用：アカウントのロックを解除する（ログイン失敗回数を0にリセット）
+	 * 管理者用：アカウントのロックを解除する（管理者ロックフラグを解除し、ログイン失敗回数も0にリセット）
 	 *
 	 * @param	accountNo			アカウント番号
 	 * @throws	GalleryException	更新に失敗した場合
@@ -183,12 +183,15 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	@Override
 	@Transactional(rollbackFor = GalleryException.class)
 	public void unlockAccount(AccountNo accountNo) throws GalleryException {
-		accountRepository.updateLoginFailureCount(AccountModel.forUnlock(accountNo.value()));
+		// 管理者ロックとログイン失敗回数の両方を解除する
+		accountRepository.updateLoginFailureCount(AccountModel.forAdminUnlock(accountNo.value()));
 		applicationEventPublisher.publishEvent(new AccountUnlockedEvent(accountNo));
 	}
 
 	/**
-	 * 管理者用：アカウントを強制ロックする（ログイン失敗回数を上限超過に設定）
+	 * 管理者用：アカウントを強制ロックする<p>
+	 * 管理者ロックフラグを立てる（ログイン失敗回数による自動解除の対象外）。
+	 * あわせてログイン失敗回数も上限値に設定する（管理画面の表示・判定と整合させるため）
 	 *
 	 * @param	accountNo			アカウント番号
 	 * @throws	GalleryException	更新に失敗した場合

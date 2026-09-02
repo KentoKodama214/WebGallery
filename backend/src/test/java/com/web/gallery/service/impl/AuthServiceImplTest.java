@@ -32,6 +32,7 @@ import com.web.gallery.config.LoginConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.IsAdminLocked;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.auth.RefreshTokenValue;
@@ -189,6 +190,25 @@ class AuthServiceImplTest {
 			ArgumentCaptor<AccountModel> unlockCaptor = ArgumentCaptor.forClass(AccountModel.class);
 			verify(accountRepository).updateLoginFailureCount(unlockCaptor.capture());
 			assertEquals(0, unlockCaptor.getValue().getLoginFailureCount().value());
+		}
+
+		@Test
+		@DisplayName("異常系: 管理者ロックされている場合は、最終更新から自動解除時間が経過していても解除されず例外がスローされること")
+		void login_adminLocked_notAutoReleased() throws Exception {
+			AccountModel adminLockedModel = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.loginFailureCount(new LoginFailureCount(0))
+					.isAdminLocked(new IsAdminLocked(true))
+					.updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(999)))
+					.build();
+			when(accountRepository.getByAccountId(new AccountId("testuser1"))).thenReturn(adminLockedModel);
+
+			assertThrows(LockedException.class, () -> {
+				authServiceImpl.login(new AccountId("testuser1"), new Password("password1"));
+			});
+
+			verify(authenticationManager, times(0)).authenticate(any(UsernamePasswordAuthenticationToken.class));
+			verify(accountRepository, times(0)).updateLoginFailureCount(any(AccountModel.class));
 		}
 	}
 

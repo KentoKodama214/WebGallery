@@ -11,6 +11,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.BirthDate;
 import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.FreeMemo;
+import com.web.gallery.domain.account.IsAdminLocked;
 import com.web.gallery.domain.account.LastLoginDatetime;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
@@ -27,8 +28,8 @@ import lombok.Value;
 /**
  * アカウント情報を受け渡すためのModelクラス
  * <p>
- * {@code forUnlock}/{@code forLock}/{@code forLoginSuccess}のように
- * ログイン失敗回数等の部分更新専用のファクトリメソッドが存在し、全ファクトリメソッドに共通して
+ * {@code forUnlock}/{@code forAdminUnlock}/{@code forLock}/{@code forLoginSuccess}のように
+ * ログイン失敗回数・管理者ロック等の部分更新専用のファクトリメソッドが存在し、全ファクトリメソッドに共通して
  * 必須となるプロパティが存在しないため、意図的に{@code @NonNull}を付与していない。
  */
 @Value
@@ -78,6 +79,9 @@ public class AccountModel {
 	/** ログイン失敗回数 */
 	private LoginFailureCount loginFailureCount;
 
+	/** 管理者ロックフラグ（エンティティ由来の取得時、および強制ロック・解除の部分更新時のみ設定される） */
+	private IsAdminLocked isAdminLocked;
+
 	/** 更新日時（アカウントロックの自動解除判定に使用する。エンティティ由来の取得時のみ設定される） */
 	private UpdatedAt updatedAt;
 
@@ -105,6 +109,7 @@ public class AccountModel {
 				.authorityKbn(entity.getAuthorityKbn())
 				.lastLoginDatetime(entity.getLastLoginDatetime() != null ? new LastLoginDatetime(entity.getLastLoginDatetime()) : null)
 				.loginFailureCount(entity.getLoginFailureCount() != null ? new LoginFailureCount(entity.getLoginFailureCount()) : null)
+				.isAdminLocked(entity.getIsAdminLocked() != null ? new IsAdminLocked(entity.getIsAdminLocked()) : null)
 				.updatedAt(entity.getUpdatedAt() != null ? new UpdatedAt(entity.getUpdatedAt()) : null)
 				.isDeleted(new IsDeleted(entity.getIsDeleted()))
 				.build();
@@ -152,7 +157,8 @@ public class AccountModel {
 	}
 
 	/**
-	 * アカウントロック解除用のAccountModelを生成する（ログイン失敗回数を0にリセット）
+	 * ログイン失敗回数によるロックの自動解除用のAccountModelを生成する（ログイン失敗回数を0にリセット）<p>
+	 * 管理者ロックフラグには触れない（管理者ロックは管理者による解除のみで解ける）
 	 *
 	 * @param	accountNo	アカウント番号
 	 * @return				{@link AccountModel}
@@ -165,7 +171,24 @@ public class AccountModel {
 	}
 
 	/**
-	 * アカウント強制ロック用のAccountModelを生成する（ログイン失敗回数を上限値に設定）
+	 * 管理者によるアカウントロック解除用のAccountModelを生成する（管理者ロックを解除し、ログイン失敗回数も0にリセット）
+	 *
+	 * @param	accountNo	アカウント番号
+	 * @return				{@link AccountModel}
+	 */
+	public static AccountModel forAdminUnlock(Long accountNo) {
+		return AccountModel.builder()
+				.accountNo(new AccountNo(accountNo))
+				.loginFailureCount(new LoginFailureCount(0))
+				.isAdminLocked(new IsAdminLocked(false))
+				.build();
+	}
+
+	/**
+	 * 管理者によるアカウント強制ロック用のAccountModelを生成する<p>
+	 * 管理者ロックフラグを立てる（ログイン失敗回数による自動解除の対象外）。
+	 * あわせてログイン失敗回数も上限値に設定し、管理画面でのロック状態表示・
+	 * 判定（失敗回数ベース）と整合させる。
 	 *
 	 * @param	accountNo	アカウント番号
 	 * @param	failCount	ログイン失敗回数の上限値
@@ -175,6 +198,7 @@ public class AccountModel {
 		return AccountModel.builder()
 				.accountNo(new AccountNo(accountNo))
 				.loginFailureCount(new LoginFailureCount(failCount))
+				.isAdminLocked(new IsAdminLocked(true))
 				.build();
 	}
 

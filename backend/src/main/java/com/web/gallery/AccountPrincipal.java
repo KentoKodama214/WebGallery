@@ -99,11 +99,13 @@ public class AccountPrincipal implements UserDetails {
 	/***
 	 * アカウントがロックされていないかどうかを返す
 	 *
-	 * @return ログイン失敗回数が一定数を超えていなければtrueを返す
+	 * @return 管理者ロックされておらず、かつログイン失敗回数が一定数を超えていなければtrueを返す
 	 */
 	@Override
 	public boolean isAccountNonLocked() {
-		return accountModel.getLoginFailureCount().value() < maxFailCount;
+		boolean adminLocked = accountModel.getIsAdminLocked() != null
+				&& Boolean.TRUE.equals(accountModel.getIsAdminLocked().value());
+		return !adminLocked && accountModel.getLoginFailureCount().value() < maxFailCount;
 	}
 
 	/***

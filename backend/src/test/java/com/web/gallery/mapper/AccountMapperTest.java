@@ -83,6 +83,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -117,6 +118,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.SPECIAL)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -151,6 +153,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -185,6 +188,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -219,6 +223,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -253,6 +258,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -287,6 +293,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -321,6 +328,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -355,6 +363,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -389,6 +398,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -423,6 +433,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.MINI)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -457,6 +468,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -491,6 +503,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(2)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -537,6 +550,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.SPECIAL)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			Account expectedAccount2 = Account.builder()
@@ -557,6 +571,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.SPECIAL)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -598,6 +613,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.NORMAL)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
 					.loginFailureCount(3)
+					.isAdminLocked(false)
 					.build();
 			
 			List<Account> expected = new ArrayList<Account>();
@@ -839,6 +855,7 @@ public class AccountMapperTest {
 					.authorityKbn(AuthorityEnum.ADMINISTRATOR)
 					.lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(9)))
 					.loginFailureCount(0)
+					.isAdminLocked(false)
 					.build();
 			
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
@@ -865,6 +882,7 @@ public class AccountMapperTest {
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
 							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
 							.loginFailureCount(rs.getInt("login_failure_count"))
+							.isAdminLocked(rs.getBoolean("is_admin_locked"))
 							.build());
 			
 			assertEquals(1, actualData.size());
@@ -915,6 +933,7 @@ public class AccountMapperTest {
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
 							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
 							.loginFailureCount(rs.getInt("login_failure_count"))
+							.isAdminLocked(rs.getBoolean("is_admin_locked"))
 							.build());
 		}
 		
@@ -1450,6 +1469,7 @@ public class AccountMapperTest {
 							.authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
 							.lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
 							.loginFailureCount(rs.getInt("login_failure_count"))
+							.isAdminLocked(rs.getBoolean("is_admin_locked"))
 							.build());
 		}
 		

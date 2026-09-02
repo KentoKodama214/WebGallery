@@ -21,6 +21,7 @@
 		<result property="authorityKbn" column="authority_kbn" typeHandler="com.web.gallery.type_handler.AuthorityEnumTypeHandler"/>
 		<result property="lastLoginDatetime" column="last_login_datetime"/>
 		<result property="loginFailureCount" column="login_failure_count"/>
+		<result property="isAdminLocked" column="is_admin_locked"/>
 	</resultMap>
 
 	<sql id="accountConditionWhere">
@@ -37,6 +38,7 @@
 		<if test="${prefix}authorityKbn != null"> AND authority_kbn = #{${prefix}authorityKbn}::common.authority_enum</if>
 		<if test="${prefix}lastLoginDatetime != null"> AND last_login_datetime = #{${prefix}lastLoginDatetime}</if>
 		<if test="${prefix}loginFailureCount != null"> AND login_failure_count = #{${prefix}loginFailureCount}</if>
+		<if test="${prefix}isAdminLocked != null"> AND is_admin_locked = #{${prefix}isAdminLocked}</if>
 	</sql>
 
 	<select id="select" parameterType="com.web.gallery.entity.AccountCondition" resultMap="AccountMap">
@@ -57,7 +59,8 @@
 			free_memo AS freeMemo,
 			authority_kbn AS authorityKbn,
 			last_login_datetime AS lastLoginDatetime,
-			login_failure_count AS loginFailureCount
+			login_failure_count AS loginFailureCount,
+			is_admin_locked AS isAdminLocked
 		FROM
 			common.account
 		<where>
@@ -90,7 +93,8 @@
 			free_memo AS freeMemo,
 			authority_kbn AS authorityKbn,
 			last_login_datetime AS lastLoginDatetime,
-			login_failure_count AS loginFailureCount
+			login_failure_count AS loginFailureCount,
+			is_admin_locked AS isAdminLocked
 		FROM
 			common.account
 		<where>
@@ -135,7 +139,8 @@
 				free_memo,
 				authority_kbn,
 				last_login_datetime,
-				login_failure_count
+				login_failure_count,
+				is_admin_locked
 			)
 		VALUES
 			(
@@ -155,7 +160,8 @@
 				#{freeMemo},
 				#{authorityKbn}::common.authority_enum,
 				#{lastLoginDatetime},
-				#{loginFailureCount}
+				#{loginFailureCount},
+				COALESCE(#{isAdminLocked}, false)
 			)
 	</insert>
 
@@ -177,6 +183,7 @@
 			<if test="target.authorityKbn != null"> , authority_kbn = #{target.authorityKbn}::common.authority_enum</if>
 			<if test="target.lastLoginDatetime != null"> , last_login_datetime = #{target.lastLoginDatetime}</if>
 			<if test="target.loginFailureCount != null"> , login_failure_count = #{target.loginFailureCount}</if>
+			<if test="target.isAdminLocked != null"> , is_admin_locked = #{target.isAdminLocked}</if>
 		</set>
 		<where>
 			<include refid="accountConditionWhere">
