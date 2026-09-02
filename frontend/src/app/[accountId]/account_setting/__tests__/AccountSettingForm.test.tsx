@@ -24,11 +24,13 @@ jest.mock("@/lib/auth/AuthProvider", () => ({
 const mockGetAccount = jest.fn();
 const mockUpdateAccount = jest.fn();
 const mockGetPrefectures = jest.fn();
+const mockDeleteAccount = jest.fn();
 
 jest.mock("@/lib/api/client", () => ({
   getAccount: (...args: unknown[]) => mockGetAccount(...args),
   updateAccount: (...args: unknown[]) => mockUpdateAccount(...args),
   getPrefectures: (...args: unknown[]) => mockGetPrefectures(...args),
+  deleteAccount: (...args: unknown[]) => mockDeleteAccount(...args),
 }));
 
 const mockAccountData = {
@@ -142,11 +144,63 @@ describe("AccountSettingForm", () => {
 
     const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
     await user.type(passwordInput, "newpassword1");
+    await user.type(screen.getByLabelText("現在のパスワード"), "oldpassword1");
     await user.click(screen.getByRole("button", { name: "登録" }));
 
     await waitFor(() => {
       expect(mockLogout).toHaveBeenCalled();
       expect(mockPush).toHaveBeenCalledWith("/login");
+    });
+    expect(mockUpdateAccount).toHaveBeenCalledWith(
+      "testuser1",
+      expect.objectContaining({ newPassword: "newpassword1", currentPassword: "oldpassword1" })
+    );
+  });
+
+  it("新しいパスワード入力時に現在のパスワードが未入力だとエラーになり送信されないこと", async () => {
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    await user.type(
+      screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"),
+      "newpassword1"
+    );
+    await user.click(screen.getByRole("button", { name: "登録" }));
+
+    expect(
+      await screen.findByText("現在のパスワードを入力してください")
+    ).toBeInTheDocument();
+    expect(mockUpdateAccount).not.toHaveBeenCalled();
+  });
+
+  it("アカウント削除は現在のパスワード入力後に実行され、ログアウトされること", async () => {
+    mockDeleteAccount.mockResolvedValue(undefined);
+
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "アカウント削除" }));
+    // パスワード未入力で「はい」を押すとエラーになり、削除は呼ばれない
+    await user.click(screen.getByRole("button", { name: "はい" }));
+    expect(
+      await screen.findByText("現在のパスワードを入力してください")
+    ).toBeInTheDocument();
+    expect(mockDeleteAccount).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText("現在のパスワード"), "mypassword1");
+    await user.click(screen.getByRole("button", { name: "はい" }));
+
+    await waitFor(() => {
+      expect(mockDeleteAccount).toHaveBeenCalledWith("testuser1", "mypassword1");
+      expect(mockLogout).toHaveBeenCalled();
     });
   });
 

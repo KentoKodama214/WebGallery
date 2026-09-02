@@ -32,6 +32,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.TokenHash;
+import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.model.RefreshTokenModel;
@@ -376,13 +377,13 @@ public class AuthServiceImplIntegrationTest {
 		@Test
 		@Order(8)
 		@DisplayName("異常系：アカウント削除によりリフレッシュトークンが失効し、リフレッシュに失敗する")
-		void refresh_fails_after_delete_account() {
+		void refresh_fails_after_delete_account() throws GalleryException {
 			// ログインしてリフレッシュトークンを取得
 			AuthTokenModel loginResult = authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
 			String refreshToken = loginResult.getRefreshToken().value();
 
 			// アカウントを削除（deleteAccount内でリフレッシュトークンも失効される）
-			accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("testuser01"));
+			accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("testuser01"), new Password(TEST_PASSWORD));
 
 			// 削除済みアカウントのリフレッシュトークンでリフレッシュ
 			InvalidRefreshTokenException exception = assertThrows(InvalidRefreshTokenException.class,

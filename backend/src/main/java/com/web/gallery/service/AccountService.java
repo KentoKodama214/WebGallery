@@ -2,6 +2,7 @@ package com.web.gallery.service;
 
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.Password;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
@@ -21,13 +22,16 @@ public interface AccountService {
 	Boolean registAccount(AccountModel accountModel) throws GalleryException;
 
 	/**
-	 * アカウントを更新する
+	 * アカウントを更新する<p>
+	 * パスワードを変更する場合（{@code accountModel.getPassword()}が非null）は、
+	 * {@code currentPassword}による本人確認（再認証）を行う
 	 *
 	 * @param	accountModel		{@link AccountModel}
+	 * @param	currentPassword		現在のパスワード（パスワード変更時のみ必須、それ以外はnull可）
 	 * @return						アカウントIDが重複しており更新をスキップした場合、true
-	 * @throws	GalleryException	更新に失敗した場合
+	 * @throws	GalleryException	更新に失敗した場合、または現在のパスワードが一致しない場合
 	 */
-	Boolean updateAccount(AccountModel accountModel) throws GalleryException;
+	Boolean updateAccount(AccountModel accountModel, Password currentPassword) throws GalleryException;
 
 	/**
 	 * アカウントIDからアカウント情報を取得する
@@ -70,10 +74,13 @@ public interface AccountService {
 	void lockAccount(AccountNo accountNo) throws GalleryException;
 
 	/**
-	 * アカウントを削除する
+	 * アカウントを削除する<p>
+	 * {@code currentPassword}による本人確認（再認証）を行う
 	 *
-	 * @param	accountNo	アカウント番号
-	 * @param	accountId	アカウントID
+	 * @param	accountNo			アカウント番号
+	 * @param	accountId			アカウントID
+	 * @param	currentPassword		現在のパスワード
+	 * @throws	GalleryException	現在のパスワードが一致しない場合
 	 */
-	void deleteAccount(AccountNo accountNo, AccountId accountId);
+	void deleteAccount(AccountNo accountNo, AccountId accountId, Password currentPassword) throws GalleryException;
 }

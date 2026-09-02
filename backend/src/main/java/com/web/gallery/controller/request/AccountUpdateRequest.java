@@ -53,6 +53,15 @@ public class AccountUpdateRequest {
 	private String newPassword;
 
 	/**
+	 * 現在のパスワード
+	 * <p>
+	 * パスワードを変更する場合のみ必須。本人確認（再認証）に用いる
+	 */
+	@Schema(description = "現在のパスワード（パスワード変更時のみ必須）", example = "password01")
+	@Size(max = 72, message = "{validation.common.max_length}")
+	private String currentPassword;
+
+	/**
 	 * 生年月日
 	 * <p>
 	 * yyyy-mm-ddで、過去日付

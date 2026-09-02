@@ -59,6 +59,11 @@ import com.web.gallery.model.AccountModel;
 @Transactional
 @AutoConfigureMockMvc
 public class AccountRestControllerIntegrationTest {
+	/** account_no=1（aaaaaaaa）のフィクスチャのパスワード平文と、そのBCryptハッシュ */
+	private static final String ACCOUNT1_PASSWORD = "password01";
+	private static final String ACCOUNT1_PASSWORD_HASH =
+			"$2a$10$k19cLX6F2brrOLYp74GstejFJfeGjm52TMk..ELwoJeTcBcUnBVM2";
+
 	@Autowired
 	private MockMvc mockMvc;
 
@@ -433,7 +438,7 @@ public class AccountRestControllerIntegrationTest {
 			assertFalse(actual.getFirst().getIsDeleted());
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
-			assertEquals("$2a$10$password1", actual.getFirst().getPassword());
+			assertEquals(ACCOUNT1_PASSWORD_HASH, actual.getFirst().getPassword());
 			// プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
 			assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
@@ -489,7 +494,7 @@ public class AccountRestControllerIntegrationTest {
 			assertFalse(actual.getFirst().getIsDeleted());
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
-			assertEquals("$2a$10$password1", actual.getFirst().getPassword());
+			assertEquals(ACCOUNT1_PASSWORD_HASH, actual.getFirst().getPassword());
 			// プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
 			assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
@@ -545,7 +550,7 @@ public class AccountRestControllerIntegrationTest {
 			assertFalse(actual.getFirst().getIsDeleted());
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
-			assertNotEquals("$2a$10$password1", actual.getFirst().getPassword());
+			assertNotEquals(ACCOUNT1_PASSWORD_HASH, actual.getFirst().getPassword());
 			// プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
 			assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
@@ -601,7 +606,7 @@ public class AccountRestControllerIntegrationTest {
 			assertFalse(actual.getFirst().getIsDeleted());
 			assertEquals(accountId, actual.getFirst().getAccountId());
 			assertEquals(accountName, actual.getFirst().getAccountName());
-			assertNotEquals("$2a$10$password1", actual.getFirst().getPassword());
+			assertNotEquals(ACCOUNT1_PASSWORD_HASH, actual.getFirst().getPassword());
 			// プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
 			assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
 			assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
@@ -787,6 +792,8 @@ public class AccountRestControllerIntegrationTest {
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + accountId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("{\"currentPassword\":\"" + ACCOUNT1_PASSWORD + "\"}")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
@@ -838,6 +845,8 @@ public class AccountRestControllerIntegrationTest {
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + accountId)
+					.contentType(MediaType.APPLICATION_JSON)
+					.content("{\"currentPassword\":\"" + ACCOUNT1_PASSWORD + "\"}")
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)

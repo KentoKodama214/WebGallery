@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.Consts;
+import com.web.gallery.controller.request.AccountDeleteRequest;
 import com.web.gallery.controller.request.AccountListRequest;
 import com.web.gallery.controller.request.AccountRegistRequest;
 import com.web.gallery.controller.request.AccountUpdateRequest;
@@ -27,6 +28,7 @@ import com.web.gallery.controller.response.AccountRegistResponse;
 import com.web.gallery.controller.response.AccountUpdateResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.Password;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
@@ -156,10 +158,10 @@ public class AccountRestController {
 	 *                              	・リクエストパラメータが不正の場合
 	 *                              	・更新に失敗した場合
 	 */
-	@Operation(summary = "アカウント更新", description = "アカウント情報を更新する")
+	@Operation(summary = "アカウント更新", description = "アカウント情報を更新する（パスワード変更時は現在のパスワードによる再認証が必要）")
 	@ApiResponse(responseCode = "200", description = "更新成功")
 	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
-	@ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
+	@ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定、または現在のパスワード不一致", content = @Content)
 	@ApiResponse(responseCode = "409", description = "変更後のアカウントIDが既に使用されている", content = @Content)
 	@SecurityRequirement(name = "Bearer")
 	@PutMapping(ApiRoutes.API_ACCOUNT)
@@ -170,6 +172,7 @@ public class AccountRestController {
 
 		// 新しいパスワードは未指定（JSONでnull）でも空文字と同様に「変更なし」として扱う
 		String newPassword = Objects.requireNonNullElse(accountUpdateRequest.getNewPassword(), Consts.STRING_EMPTY);
+		String currentPassword = Objects.requireNonNullElse(accountUpdateRequest.getCurrentPassword(), Consts.STRING_EMPTY);
 
 		if(result.hasErrors()) {
 			for(FieldError error : result.getFieldErrors()) {
@@ -189,9 +192,16 @@ public class AccountRestController {
 			}
 		}
 
+		// パスワードを変更する場合は現在のパスワードの入力を必須とする（本人確認はService層で実施）
+		if(!newPassword.isEmpty() && currentPassword.isEmpty()) {
+			throw ErrorEnum.INVALID_INPUT.toException();
+		}
+
 		AccountModel accountModel = AccountModel.from(accountUpdateRequest, sessionHelper.getAccountNo());
 
-		Boolean isDuplicateAccountId = accountService.updateAccount(accountModel);
+		Boolean isDuplicateAccountId = accountService.updateAccount(
+				accountModel,
+				currentPassword.isEmpty() ? null : new Password(currentPassword));
 
 		return ResponseEntity.ok(AccountUpdateResponse.of(
 					isDuplicateAccountId,
@@ -204,22 +214,37 @@ public class AccountRestController {
 	 * アカウント削除
 	 *
 	 * @param	accountId				アカウントID
+	 * @param	accountDeleteRequest	{@link AccountDeleteRequest}
+	 * @param	result					AccountDeleteRequestのバインディング結果
 	 * @return							{@link ResponseEntity}
-	 * @throws	GalleryException		認証ユーザーと異なるアカウントIDの場合
+	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・認証ユーザーと異なるアカウントIDの場合
+	 *                              	・リクエストパラメータが不正の場合
+	 *                              	・現在のパスワードが一致しない場合
 	 */
-	@Operation(summary = "アカウント削除", description = "アカウントと関連データをすべて物理削除する")
+	@Operation(summary = "アカウント削除", description = "現在のパスワードによる再認証のうえ、アカウントと関連データをすべて物理削除する")
 	@ApiResponse(responseCode = "200", description = "削除成功")
-	@ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
+	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+	@ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定、または現在のパスワード不一致", content = @Content)
 	@SecurityRequirement(name = "Bearer")
 	@DeleteMapping(ApiRoutes.API_ACCOUNT)
 	public ResponseEntity<Void> deleteAccount(
-			@PathVariable String accountId) throws GalleryException {
+			@PathVariable String accountId,
+			@RequestBody @Validated AccountDeleteRequest accountDeleteRequest,
+			BindingResult result) throws GalleryException {
 
 		if (!accountId.equals(sessionHelper.getAccountId())) {
 			throw ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT.toException();
 		}
 
-		accountService.deleteAccount(new AccountNo(sessionHelper.getAccountNo()), new AccountId(accountId));
+		if (result.hasErrors()) {
+			throw ErrorEnum.INVALID_INPUT.toException();
+		}
+
+		accountService.deleteAccount(
+				new AccountNo(sessionHelper.getAccountNo()),
+				new AccountId(accountId),
+				new Password(accountDeleteRequest.getCurrentPassword()));
 
 		return ResponseEntity.ok().build();
 	}
