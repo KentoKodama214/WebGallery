@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -59,21 +60,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			String accountId = jwtTokenProvider.getAccountIdFromToken(token);
 
 			if (SecurityContextHolder.getContext().getAuthentication() == null) {
-				// 毎リクエストのDB参照を間引くためごく短時間キャッシュする
-				// （ロック・削除の反映は最大でキャッシュTTL（既定10秒）ぶん遅延する）
-				AccountPrincipal userDetails = authenticatedUserCache.get(accountId,
-						() -> (AccountPrincipal) accountServiceImpl.loadUserByUsername(accountId));
+				try {
+					// 毎リクエストのDB参照を間引くためごく短時間キャッシュする
+					// （ロック・削除の反映は最大でキャッシュTTL（既定10秒）ぶん遅延する）
+					AccountPrincipal userDetails = authenticatedUserCache.get(accountId,
+							() -> (AccountPrincipal) accountServiceImpl.loadUserByUsername(accountId));
 
-				// アクセストークン自体は失効まで有効だが、その間に管理者ロック・アカウント削除が
-				// 行われた場合は即座に認証を無効化する（トークン署名・有効期限だけを信頼しない）
-				if (userDetails.isEnabled() && userDetails.isAccountNonLocked()
-						&& userDetails.isAccountNonExpired() && userDetails.isCredentialsNonExpired()) {
-					UsernamePasswordAuthenticationToken authToken =
-							new UsernamePasswordAuthenticationToken(
-									userDetails, null, userDetails.getAuthorities());
-					authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+					// アクセストークン自体は失効まで有効だが、その間に管理者ロック・アカウント削除が
+					// 行われた場合は即座に認証を無効化する（トークン署名・有効期限だけを信頼しない）
+					if (userDetails.isEnabled() && userDetails.isAccountNonLocked()
+							&& userDetails.isAccountNonExpired() && userDetails.isCredentialsNonExpired()) {
+						UsernamePasswordAuthenticationToken authToken =
+								new UsernamePasswordAuthenticationToken(
+										userDetails, null, userDetails.getAuthorities());
+						authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-					SecurityContextHolder.getContext().setAuthentication(authToken);
+						SecurityContextHolder.getContext().setAuthentication(authToken);
+					}
+				} catch (UsernameNotFoundException e) {
+					// 署名・有効期限は正当だが、subject（アカウントID）が既に存在しない
+					// （本人によるアカウント削除、アカウントID変更後の旧トークン等）。
+					// 認証情報を設定せずに処理を継続し、後段のエントリポイントで401を返す
+					// （フィルタ内で例外を伝播させるとSecurityの401変換に乗らず500になるため）。
+					logger.debug("JWT subject was not found; proceeding as unauthenticated.");
 				}
 			}
 		}

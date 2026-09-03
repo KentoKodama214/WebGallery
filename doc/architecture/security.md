@@ -45,6 +45,41 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 `currentPassword` による本人確認を必須とする（トークン漏洩・共有端末・誤操作時の被害を限定するため）。
 不一致の場合は 403 を返す。
 
+再認証の失敗回数は `ReauthenticationThrottle`（アカウント単位のインメモリカウンタ）で数え、
+上限（`auth.reauth.max-failures`、既定5）に達したアカウントは一定時間
+（`auth.reauth.lockout-minutes`、既定15分）ロックアウトして本人確認を通さない
+（アクセストークンを盗んだ攻撃者が `currentPassword` をオンラインで総当たりするのを防ぐ。
+BCrypt 照合律速のため総当たり自体も低速）。加えて、ログイン失敗回数の上限到達
+（`auth.login.failCount`）または管理者ロック中のアカウントも本人確認を通さない。
+再認証に成功するとカウンタはリセットされる。カウンタはプロセスローカルで再起動により消える。
+
+> ログイン失敗回数カラム（`login_failure_count`）への相乗り加算は採用していない。
+> パスワード変更・削除処理が例外でロールバックする文脈で失敗回数を永続化するには
+> 独立トランザクションの書き込みが必要になり、`common.account` を排他ロックする統合テスト
+> フィクスチャ（`@Sql` の `TRUNCATE`）とデッドロックするため。
+
+なお `DELETE /api/v1/accounts/{id}` は本人確認情報をリクエストボディで受け取るため、
+DELETE のボディを破棄する中継経路（一部の CDN・リバースプロキシ・WAF）を挟む場合は、
+ボディが透過されることをデプロイ時に確認する必要がある。
+
+### トークン失効とアカウントの整合
+
+- パスワード変更時、およびアカウントID変更時は、当該アカウントの全リフレッシュトークンを失効させる
+  （アカウントID変更後にアクセストークンの `sub` が解決不能になり続けるのを防ぐ）。
+- 署名・有効期限は正当だが `sub`（アカウントID）が既に存在しないアクセストークン
+  （本人によるアカウント削除、アカウントID変更後の旧トークン等）は、認証フィルタが
+  認証情報を設定せずに処理を継続し、後段で 401 を返す（フィルタ内で例外を伝播させると
+  500 になるため明示的に握る）。
+- 認証フィルタは検証済みアクセストークンのアカウント情報を短時間（`app.auth.principal-cache-ttl-millis`、
+  既定10秒）キャッシュして毎リクエストの DB 参照を間引く。アカウントの更新・削除・ロック・
+  ロック解除の確定時にはキャッシュを全消去し、古い権限・ロック状態が参照され続けないようにする。
+
+### バリデーションエラーのログ
+
+リクエストのバリデーション失敗をログ出力する際、機微フィールド（`password` /
+`newPassword` / `currentPassword`）の入力値は `***` にマスクする
+（`helper/ValidationErrorLogger`）。ログ集約基盤に平文の資格情報を残さないため。
+
 ## フロントエンド（API プロキシ）側の防御
 
 フロントエンド（`frontend/`）は既定で同一オリジンの `/api/*` プロキシ（`src/app/api/[...path]/route.ts`）
@@ -62,3 +97,16 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 
 しきい値等の定数（例: アカウントロックのログイン失敗回数 = 3）は `frontend/src/lib/consts.ts` で
 バックエンドの `application.yml` と一致させて管理している。
+
+### CSP（Content-Security-Policy）
+
+`src/proxy.ts` がリクエストごとに nonce を生成し、`script-src 'self' 'nonce-...' 'strict-dynamic'`
+（`'unsafe-inline'` 排除）を付与する。`style-src` は React の `style={{...}}` インライン属性を
+多用するため `'unsafe-inline'` を維持しつつ、本番では `style-src-elem 'self' 'nonce-...'` を併記して
+`<style>`／`<link>` 要素側だけは注入を防ぐ（`style-src-elem` 非対応ブラウザは `style-src` に
+フォールバック）。
+
+nonce 方式は SSR 時にリクエストヘッダーから nonce を読むため、**全ページの動的レンダリングが必須**
+（`app/layout.tsx` の `export const dynamic = "force-dynamic"`）。これは nonce 方式 CSP に内在する
+制約であり、静的生成・ISR・CDN エッジキャッシュは使えない。トレードオフを見直す場合は
+nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ移行する必要がある。

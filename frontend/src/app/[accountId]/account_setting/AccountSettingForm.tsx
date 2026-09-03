@@ -9,6 +9,7 @@ import {
   updateAccount,
   deleteAccount,
   getPrefectures,
+  ApiError,
 } from "@/lib/api/client";
 import type { PrefectureGroup } from "@/lib/api/client";
 import {
@@ -18,8 +19,12 @@ import {
   clearError,
   isPastDate,
 } from "@/lib/validation";
-import { loginUrlWithRedirect } from "@/lib/url";
 import { ModalDialog } from "@/components/ui/ModalDialog";
+
+/** 再認証（現在のパスワード）に連続して失敗した場合に操作を一時停止する回数 */
+const REAUTH_MAX_ATTEMPTS = 3;
+/** 再認証の一時停止時間（ミリ秒）。バックエンドのロックとは別のクライアント側の連打抑止 */
+const REAUTH_COOLDOWN_MS = 60_000;
 
 interface AccountSettingFormProps {
   accountId: string;
@@ -60,6 +65,11 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState("");
+  // 再認証（現在のパスワード）の連続失敗によるクライアント側の一時停止
+  const reauthFailCountRef = useRef(0);
+  const [reauthCooldownUntil, setReauthCooldownUntil] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+  const isReauthCoolingDown = now < reauthCooldownUntil;
   // 初期データ取得の失敗（ログインへは飛ばさず画面内で通知し、再試行させる）
   const [loadError, setLoadError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
@@ -109,12 +119,14 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     // router は再取得のトリガーではないため依存に含めない
   }, [authLoading, isOwner, accountId, reloadKey]);
 
-  // 未ログインの場合はログインページへ誘導する（再ログイン後に戻れるよう redirect を付与）
+  // 未ログイン時の /login への誘導は、このコンポーネントをラップする <AuthGuard> が行う。
+
+  // 再認証クールダウンの残り時間表示を更新し、期限が来たら解除するためのタイマー
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push(loginUrlWithRedirect());
-    }
-  }, [authLoading, isAuthenticated, router]);
+    if (!isReauthCoolingDown) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [isReauthCoolingDown]);
 
   // アンマウント時にタイマーを破棄する
   useEffect(() => {
@@ -151,6 +163,27 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     return Object.keys(newErrors).length === 0;
   };
 
+  const reauthCooldownMessage =
+    "現在のパスワードの確認に連続して失敗しました。しばらく待ってから再度お試しください。";
+
+  /**
+   * 再認証（現在のパスワード）失敗を記録し、上限に達したらクライアント側で操作を一時停止する
+   * （バックエンドのアカウントロックとは別の、連打抑止のための多層防御）
+   */
+  const recordReauthFailure = () => {
+    reauthFailCountRef.current += 1;
+    if (reauthFailCountRef.current >= REAUTH_MAX_ATTEMPTS) {
+      setReauthCooldownUntil(Date.now() + REAUTH_COOLDOWN_MS);
+      setNow(Date.now());
+    }
+  };
+
+  /** 再認証成功時にクライアント側の失敗カウンタ・クールダウンをリセットする */
+  const resetReauthState = () => {
+    reauthFailCountRef.current = 0;
+    setReauthCooldownUntil(0);
+  };
+
   /**
    * 登録する
    */
@@ -159,6 +192,12 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     setDuplicateError("");
 
     if (!validate()) return;
+
+    // パスワード変更（＝再認証が必要）で連続失敗中は、クールダウンが明けるまで送信しない
+    if (newPassword && isReauthCoolingDown) {
+      setDuplicateError(reauthCooldownMessage);
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -176,10 +215,14 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       });
 
       // アカウントIDは変更不可（入力欄はdisabled）だが、バックエンド契約に沿って防御的に扱う
+      // （この経路ではバックエンドが本人確認を行わずに返すため、再認証カウンタはリセットしない）
       if (result.isDuplicateAccountId) {
         setDuplicateError("このアカウントIDは既に使われています");
         return;
       }
+
+      // ここまで来れば更新成功。再認証の失敗カウンタをリセットする
+      resetReauthState();
 
       // パスワード変更時は再ログインが必要
       if (result.isPasswordChanged) {
@@ -191,6 +234,10 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       setShowModal(true);
       modalTimerRef.current = setTimeout(() => setShowModal(false), 5000);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 403) {
+        // 現在のパスワード不一致・ロック。連打抑止のため失敗を記録する
+        recordReauthFailure();
+      }
       setDuplicateError(err instanceof Error ? err.message : "更新に失敗しました");
     } finally {
       setIsSubmitting(false);
@@ -206,10 +253,16 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       setDeleteError("現在のパスワードを入力してください");
       return;
     }
+    // 再認証に連続失敗中は、クールダウンが明けるまで削除を実行しない
+    if (isReauthCoolingDown) {
+      setDeleteError(reauthCooldownMessage);
+      return;
+    }
     setIsDeleting(true);
     setDeleteError("");
     try {
       await deleteAccount(accountId, deletePassword);
+      resetReauthState();
       await logout();
       setShowDeleteConfirm(false);
       setShowDeleteCompleteModal(true);
@@ -217,6 +270,10 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
         router.push("/login");
       }, 3000);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 403) {
+        // 現在のパスワード不一致・ロック。連打抑止のため失敗を記録する
+        recordReauthFailure();
+      }
       // 削除失敗（パスワード不一致等）はダイアログを開いたまま通知する
       setDeleteError(err instanceof Error ? err.message : "アカウント削除に失敗しました");
     } finally {
@@ -224,8 +281,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     }
   };
 
-  // 認証確認中／未ログイン（ログインへ遷移するまで）／本人ページのデータ取得中
-  if (authLoading || !isAuthenticated || (isOwner && isLoading)) {
+  // 認証状態の確定と未ログイン時の /login 誘導は <AuthGuard> が担う。
+  // ここでは本人ページの初期データ取得中のみスピナーを表示する
+  if (authLoading || (isOwner && isLoading)) {
     return (
       <div className="min-h-screen bg-[whitesmoke] flex items-center justify-center">
         <div className="inline-block w-8 h-8 border-4 border-[#2196F3] border-t-transparent rounded-full animate-spin" />
@@ -449,9 +507,15 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               <p className="text-[lightcoral] text-xs font-bold mb-2">{duplicateError}</p>
             )}
 
+            {isReauthCoolingDown && (
+              <p role="alert" className="text-[lightcoral] text-xs font-bold mb-2">
+                {reauthCooldownMessage}（約{Math.ceil((reauthCooldownUntil - now) / 1000)}秒）
+              </p>
+            )}
+
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (!!newPassword && isReauthCoolingDown)}
               className="w-full h-[50px] bg-[#2196F3] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#2196F3] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
             >
               {isSubmitting ? (
@@ -525,7 +589,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             <button
               type="button"
               onClick={handleDeleteAccount}
-              disabled={isDeleting}
+              disabled={isDeleting || isReauthCoolingDown}
               className="flex-1 h-[40px] bg-[#e53935] text-white border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isDeleting ? (

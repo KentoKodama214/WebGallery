@@ -95,20 +95,20 @@ public class AuthRestController {
 	 * リフレッシュトークンもローテーションされるため、新しいトークンをcookieに再設定する
 	 *
 	 * @param	refreshToken	リフレッシュトークン（cookieから取得）
-	 * @return					{@link AuthLoginResponse}
+	 * @return					{@link AuthLoginResponse}、またはトークン不正時の{@link AuthErrorResponse}
 	 */
 	@Operation(summary = "トークンリフレッシュ", description = "リフレッシュトークン（cookie）を使用してアクセストークンを再発行する")
 	@ApiResponse(responseCode = "200", description = "リフレッシュ成功")
 	@ApiResponse(responseCode = "401", description = "リフレッシュトークンが無効", content = @Content)
 	@ApiResponse(responseCode = "423", description = "アカウントロック", content = @Content)
 	@PostMapping(ApiRoutes.API_AUTH_REFRESH)
-	public ResponseEntity<AuthLoginResponse> refresh(
+	public ResponseEntity<?> refresh(
 			@CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
 
 		if (refreshToken == null || refreshToken.isEmpty()) {
-			// 他の認証エラーと同じJSON形式（AuthErrorResponse）に揃えるため、
-			// 空ボディの401を直接返さず例外ハンドラに委譲する
-			throw new InvalidRefreshTokenException(MessageConst.ERR_INVALID_REFRESH_TOKEN);
+			// cookieが無いのは未ログインの正常な状態。例外ハンドラ（INFOログ出力）を経由せず、
+			// 他の認証エラーと同じJSON形式（AuthErrorResponse）で401を返す
+			return ResponseEntity.status(401).body(AuthErrorResponse.of(MessageConst.ERR_INVALID_REFRESH_TOKEN));
 		}
 
 		AuthTokenModel tokenModel = authService.refresh(new RefreshTokenValue(refreshToken));

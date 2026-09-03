@@ -20,9 +20,15 @@ import type { NextRequest } from "next/server";
  * この方式は全ページの動的レンダリングを要求する（`app/layout.tsx` の
  * `export const dynamic = "force-dynamic"` で担保）。
  *
- * `style-src` は `'unsafe-inline'` を維持する。本アプリは要素の `style` 属性
- * （React の `style={{...}}`）を多用しており、これは nonce では許可できないため。
- * スタイル起因の攻撃はスクリプト実行に比べ影響が限定的である点を許容する。
+ * `style-src` の扱い（多層防御）：
+ * - `style-src`（フォールバック）は `'unsafe-inline'` を維持する。本アプリは要素の
+ *   `style` 属性（React の `style={{...}}`）を多用しており、これは nonce では許可できないため。
+ * - 本番では加えて `style-src-elem 'self' 'nonce-...'` を指定し、`<style>`／`<link>` 要素は
+ *   nonce（Next.js が自身の生成タグへ自動付与）または自オリジンのみに限定する。これにより
+ *   XSS で注入された `<style>`（CSS による情報窃取・UI 偽装）を対応ブラウザでブロックする。
+ *   `style-src-elem` 非対応の古いブラウザは `style-src` にフォールバックし、従来どおり動作する。
+ * - インライン `style` 属性は引き続き許可される（`style-src-attr` は指定せず `style-src` に委ねる）。
+ *   属性の完全排除には全コンポーネントの `style={{}}` 撤去が必要なため、段階対応とする。
  */
 
 const isDev = process.env.NODE_ENV === "development";
@@ -70,8 +76,10 @@ function buildCsp(nonce: string): string {
     // ハイドレーション用インラインスクリプトは nonce で個別許可し、そこから読み込まれる
     // スクリプトは 'strict-dynamic' で許可する。開発時は React の eval を許可する
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""}`,
-    // style 属性（React の style={{...}}）を多用するため 'unsafe-inline' を維持する
+    // style 属性（React の style={{...}}）を多用するため 'unsafe-inline' を維持する（フォールバック）
     "style-src 'self' 'unsafe-inline'",
+    // 本番のみ：<style>/<link> 要素は nonce または自オリジンに限定し、注入された <style> を防ぐ
+    ...(isDev ? [] : [`style-src-elem 'self' 'nonce-${nonce}'`]),
     `img-src 'self' data: blob:${imageBaseOrigin ? ` ${imageBaseOrigin}` : ""}`,
     "font-src 'self' data:",
     `connect-src 'self'${apiBaseOrigin ? ` ${apiBaseOrigin}` : ""}${isDev ? " ws:" : ""}`,

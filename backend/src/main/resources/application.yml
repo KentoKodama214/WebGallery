@@ -45,5 +45,10 @@ auth:
   login:
     failCount: 3
     lockDurationMinutes: 30
+  reauth:
+    # 現在のパスワードによる本人確認（再認証）の連続失敗をアカウント単位でインメモリに数え、
+    # この回数に達したら lockout-minutes 分ロックアウトする（0以下で無効）
+    max-failures: 5
+    lockout-minutes: 15
   # JWT認証フィルタのアカウント情報キャッシュTTL（ミリ秒）。0以下でキャッシュ無効
   principal-cache-ttl-millis: 10000

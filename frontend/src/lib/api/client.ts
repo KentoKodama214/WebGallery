@@ -5,6 +5,21 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 /**
+ * API 呼び出しが HTTP エラーを返したことを表すエラー
+ *
+ * 呼び出し側が HTTP ステータスに応じて分岐（例：403 の再認証失敗を数える）できるよう、
+ * メッセージに加えて `status` を保持する。
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+/**
  * パスセグメントを URL エンコードする
  *
  * 経路上の `app/api/[...path]/route.ts` でもドットセグメント等は拒否されるが、
@@ -283,6 +298,12 @@ export async function fetchWithAuth(
 ): Promise<Response> {
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
+  // AuthProvider のマウント時に開始されたセッション復元リフレッシュが進行中なら、
+  // その結果（accessToken / sessionAuthState）を先に反映させてから判断する。
+  // これにより sessionAuthState が "unknown" のまま独自にもう一度 refresh を呼ぶ二重処理を避ける。
+  if (refreshInFlight) {
+    await refreshInFlight;
+  }
   // 未ログインが確定している場合は無駄なリフレッシュ試行を行わない
   if (!accessToken && sessionAuthState !== "anonymous") {
     await refresh();
@@ -353,6 +374,11 @@ export async function getAccount(accountId: string): Promise<AccountDetail> {
 
 /**
  * アカウントを削除する
+ *
+ * 本人確認のため現在のパスワードをリクエストボディ（JSON）で送る。DELETE にボディを
+ * 付けるのは RFC 9110 上許容されるが、一部の CDN・リバースプロキシ・WAF は DELETE の
+ * ボディを破棄することがある。破棄されるとバックエンドで currentPassword 未入力として
+ * 400 になるため、本番の中継経路が DELETE ボディを透過することをデプロイ時に確認すること。
  */
 export async function deleteAccount(
   accountId: string,
@@ -364,7 +390,10 @@ export async function deleteAccount(
     body: JSON.stringify({ currentPassword }),
   });
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "アカウントの削除に失敗しました"));
+    throw new ApiError(
+      await readErrorMessage(response, "アカウントの削除に失敗しました"),
+      response.status
+    );
   }
 }
 
@@ -381,7 +410,10 @@ export async function updateAccount(
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "アカウント情報の更新に失敗しました"));
+    throw new ApiError(
+      await readErrorMessage(response, "アカウント情報の更新に失敗しました"),
+      response.status
+    );
   }
   return readJson<AccountUpdateResult>(response);
 }

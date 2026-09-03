@@ -38,6 +38,7 @@ import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.helper.ReauthenticationThrottle;
 import com.web.gallery.model.AccountGetModel;
 import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
@@ -67,6 +68,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final KbnMstRepository kbnMstRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final ReauthenticationThrottle reauthenticationThrottle;
 	private final LoginConfig loginConfig;
 	private final PhotoConfig photoConfig;
 	private final AccountConfig accountConfig;
@@ -114,9 +116,10 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 
 	/**
 	 * アカウントを更新する<p>
-	 * パスワードを変更する場合は、{@code currentPassword}による本人確認を行ったうえで、
-	 * 当該アカウントのリフレッシュトークンをすべて失効させ、全セッションでの再認証を強制する
-	 * （トークン漏洩時の被害を限定するため）
+	 * パスワードまたはアカウントIDを変更する場合は、当該アカウントのリフレッシュトークンをすべて失効させ、
+	 * 全セッションでの再認証を強制する（トークン漏洩時の被害を限定し、アカウントID変更後に
+	 * アクセストークンのsubjectが宙に浮くのを防ぐため）。
+	 * パスワード変更時は、失効に先立って{@code currentPassword}による本人確認を行う。
 	 *
 	 * @param	accountModel		{@link AccountModel}
 	 * @param	currentPassword		現在のパスワード（パスワード変更時のみ必須）
@@ -128,20 +131,32 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	public Boolean updateAccount(AccountModel accountModel, Password currentPassword) throws GalleryException {
 		validatePrefectureCodes(accountModel);
 
-		// パスワード変更時は本人確認（再認証）を行う
-		if (accountModel.getPassword() != null) {
-			verifyCurrentPassword(accountModel.getAccountNo(), currentPassword);
+		// 変更後のアカウントIDが他アカウントと重複する場合は更新をスキップする。
+		// この判定を先に行い、重複時は本人確認（BCrypt照合）を行わない
+		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
+		if (isExist) {
+			return true;
 		}
 
-		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
-		if(!isExist) {
-			accountRepository.update(accountModel);
-			if (accountModel.getPassword() != null) {
-				refreshTokenRepository.revokeAllByAccountNo(accountModel.getAccountNo());
-			}
-			applicationEventPublisher.publishEvent(new AccountUpdatedEvent(accountModel.getAccountNo(), accountModel.getAccountId()));
+		AccountModel currentAccount = accountRepository.getByAccountNo(accountModel.getAccountNo());
+
+		// パスワード変更時は本人確認（再認証）を行う
+		boolean isPasswordChange = accountModel.getPassword() != null;
+		if (isPasswordChange) {
+			verifyCurrentPassword(accountModel.getAccountNo(), currentAccount, currentPassword);
 		}
-		return isExist;
+
+		// アカウントIDが変わると既存のアクセストークンのsubjectが解決不能になるため検知する
+		boolean isAccountIdChanged = currentAccount != null
+				&& currentAccount.getAccountId() != null
+				&& !currentAccount.getAccountId().value().equals(accountModel.getAccountId().value());
+
+		accountRepository.update(accountModel);
+		if (isPasswordChange || isAccountIdChanged) {
+			refreshTokenRepository.revokeAllByAccountNo(accountModel.getAccountNo());
+		}
+		applicationEventPublisher.publishEvent(new AccountUpdatedEvent(accountModel.getAccountNo(), accountModel.getAccountId()));
+		return false;
 	}
 
 	/**
@@ -225,7 +240,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	@Override
 	@Transactional(rollbackFor = GalleryException.class)
 	public void deleteAccount(AccountNo accountNo, AccountId accountId, Password currentPassword) throws GalleryException {
-		verifyCurrentPassword(accountNo, currentPassword);
+		verifyCurrentPassword(accountNo, accountRepository.getByAccountNo(accountNo), currentPassword);
 
 		Account account = Account.forDelete(accountNo);
 		accountAggregateRepository.delete(account);
@@ -244,21 +259,48 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	 * パスワード変更・アカウント削除といった機微な操作の前に呼び出し、
 	 * アクセストークンの有効性だけでなく現在のパスワードの入力を要求することで、
 	 * トークン漏洩・共有端末・誤操作による被害を限定する。
+	 * <p>
+	 * アクセストークン漏洩時のオンライン総当たりを防ぐため、再認証の失敗回数を
+	 * {@link ReauthenticationThrottle}（アカウント単位のインメモリカウンタ）で数え、
+	 * 上限に達したアカウントは一定時間ロックアウトする。加えて、ログイン失敗回数の上限到達
+	 * （{@code auth.login.failCount}）または管理者ロック中のアカウントも本人確認を通さない。
+	 * 本人確認に成功したら失敗カウンタをリセットする。
 	 *
 	 * @param	accountNo			アカウント番号
+	 * @param	accountModel		当該アカウントの{@link AccountModel}（取得済み。null可・nullは不一致として扱う）
 	 * @param	currentPassword		入力された現在のパスワード（null可。nullは不一致として扱う）
-	 * @throws	GalleryException	現在のパスワードが未入力、またはハッシュと一致しない場合
+	 * @throws	GalleryException	現在のパスワードが未入力・不一致、またはロック中の場合
 	 */
-	private void verifyCurrentPassword(AccountNo accountNo, Password currentPassword) throws GalleryException {
-		if (currentPassword == null) {
+	private void verifyCurrentPassword(AccountNo accountNo, AccountModel accountModel, Password currentPassword)
+			throws GalleryException {
+		if (reauthenticationThrottle.isLockedOut(accountNo.value())
+				|| (accountModel != null && isReauthLocked(accountModel))) {
+			log.info("Re-authentication blocked because the account is locked out. (accountNo: {})", accountNo.value());
 			throw ErrorEnum.CURRENT_PASSWORD_MISMATCH.toException();
 		}
-		AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
-		if (accountModel == null || accountModel.getPassword() == null
+
+		if (currentPassword == null || accountModel == null || accountModel.getPassword() == null
 				|| !passwordEncoder.matches(currentPassword.value(), accountModel.getPassword().value())) {
+			reauthenticationThrottle.recordFailure(accountNo.value());
 			log.info("Current password verification failed. (accountNo: {})", accountNo.value());
 			throw ErrorEnum.CURRENT_PASSWORD_MISMATCH.toException();
 		}
+
+		reauthenticationThrottle.reset(accountNo.value());
+	}
+
+	/**
+	 * アカウントが再認証を通せないロック状態（ログイン失敗回数の上限到達、または管理者ロック）かどうかを判定する
+	 *
+	 * @param	accountModel	{@link AccountModel}
+	 * @return					ロック状態の場合true
+	 */
+	private boolean isReauthLocked(AccountModel accountModel) {
+		boolean adminLocked = accountModel.getIsAdminLocked() != null
+				&& Boolean.TRUE.equals(accountModel.getIsAdminLocked().value());
+		boolean failCountLocked = accountModel.getLoginFailureCount() != null
+				&& accountModel.getLoginFailureCount().value() >= loginConfig.getFailCount();
+		return adminLocked || failCountLocked;
 	}
 
 	/**

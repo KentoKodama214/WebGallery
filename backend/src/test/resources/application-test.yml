@@ -13,6 +13,11 @@ auth:
   login:
     failCount: 3
     lockDurationMinutes: 30
+  reauth:
+    # 再認証スロットルはプロセスローカルのため統合テスト間で状態が持ち越される。
+    # テストでは無効化し、スロットル単体の挙動は ReauthenticationThrottleTest で検証する
+    max-failures: 0
+    lockout-minutes: 15
 
 app:
   account:
