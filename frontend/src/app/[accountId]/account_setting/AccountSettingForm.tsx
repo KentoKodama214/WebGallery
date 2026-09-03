@@ -38,6 +38,8 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   const [formAccountId, setFormAccountId] = useState(accountId);
   const [accountName, setAccountName] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  // パスワード変更時の本人確認用（現在のパスワード）
+  const [currentPassword, setCurrentPassword] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [sexKbn, setSexKbn] = useState("none");
   const [birthplacePrefectureKbnCode, setBirthplacePrefectureKbnCode] = useState("none");
@@ -52,6 +54,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteCompleteModal, setShowDeleteCompleteModal] = useState(false);
+  // アカウント削除時の本人確認用（現在のパスワード）
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState("");
@@ -133,6 +138,11 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       newErrors.newPassword = PASSWORD_ERROR_MESSAGE;
     }
 
+    // パスワードを変更する場合は現在のパスワードの入力を必須とする
+    if (newPassword && !currentPassword) {
+      newErrors.currentPassword = "現在のパスワードを入力してください";
+    }
+
     if (birthdate && !isPastDate(birthdate)) {
       newErrors.birthdate = "過去の日付を入力してください";
     }
@@ -157,6 +167,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
         accountId: formAccountId,
         accountName,
         newPassword,
+        currentPassword: newPassword ? currentPassword : "",
         birthdate: birthdate || null,
         sexKbn,
         birthplacePrefectureKbnCode,
@@ -190,9 +201,15 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
    * アカウント削除
    */
   const handleDeleteAccount = async () => {
+    // 削除には現在のパスワードによる本人確認が必要
+    if (!deletePassword) {
+      setDeleteError("現在のパスワードを入力してください");
+      return;
+    }
     setIsDeleting(true);
+    setDeleteError("");
     try {
-      await deleteAccount(accountId);
+      await deleteAccount(accountId, deletePassword);
       await logout();
       setShowDeleteConfirm(false);
       setShowDeleteCompleteModal(true);
@@ -200,8 +217,8 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
         router.push("/login");
       }, 3000);
     } catch (err) {
-      setShowDeleteConfirm(false);
-      setDuplicateError(err instanceof Error ? err.message : "アカウント削除に失敗しました");
+      // 削除失敗（パスワード不一致等）はダイアログを開いたまま通知する
+      setDeleteError(err instanceof Error ? err.message : "アカウント削除に失敗しました");
     } finally {
       setIsDeleting(false);
     }
@@ -294,6 +311,34 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             />
             {errors.accountName && (
               <p id="account-setting-name-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountName}</p>
+            )}
+
+            <label htmlFor="account-setting-current-password" className="block text-[#444] text-sm mb-1 mt-2">
+              現在のパスワード
+            </label>
+            <input
+              id="account-setting-current-password"
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+                setErrors((prev) => clearError(prev, "currentPassword"));
+              }}
+              onBlur={() => {
+                if (newPassword && !currentPassword) {
+                  setErrors((prev) => ({ ...prev, currentPassword: "現在のパスワードを入力してください" }));
+                } else {
+                  setErrors((prev) => clearError(prev, "currentPassword"));
+                }
+              }}
+              placeholder="パスワードを変更する場合のみ入力してください"
+              aria-invalid={errors.currentPassword ? true : undefined}
+              aria-describedby={errors.currentPassword ? "account-setting-current-password-error" : undefined}
+              className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
+            />
+            {errors.currentPassword && (
+              <p id="account-setting-current-password-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.currentPassword}</p>
             )}
 
             <label htmlFor="account-setting-password" className="block text-[#444] text-sm mb-1 mt-2">新しいパスワード</label>
@@ -437,6 +482,8 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
           onClose={() => {
             if (isDeleting) return;
             setShowDeleteConfirm(false);
+            setDeletePassword("");
+            setDeleteError("");
           }}
           overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
           containerClassName="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]"
@@ -444,11 +491,32 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
           <p className="text-[#444] text-center mb-4">
             登録した写真やお気に入りはすべて削除され、復旧できなくなります。よろしいですか？
           </p>
+          <label htmlFor="account-delete-password" className="block text-[#444] text-sm mb-1">
+            現在のパスワード
+          </label>
+          <input
+            id="account-delete-password"
+            type="password"
+            autoComplete="current-password"
+            value={deletePassword}
+            onChange={(e) => {
+              setDeletePassword(e.target.value);
+              setDeleteError("");
+            }}
+            className="block w-full p-[10px] mb-2 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
+          />
+          {deleteError && (
+            <p role="alert" className="text-[lightcoral] text-xs font-bold mb-2">{deleteError}</p>
+          )}
           <div className="flex gap-3">
             <button
               type="button"
               data-dialog-initial-focus
-              onClick={() => setShowDeleteConfirm(false)}
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                setDeletePassword("");
+                setDeleteError("");
+              }}
               disabled={isDeleting}
               className="flex-1 h-[40px] bg-gray-300 text-[#444] border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
             >

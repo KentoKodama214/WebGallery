@@ -32,6 +32,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.AccountPrincipal;
@@ -57,6 +58,7 @@ import com.web.gallery.event.AccountRegisteredEvent;
 import com.web.gallery.event.AccountUnlockedEvent;
 import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.event.PhotoDeletedEvent;
+import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -93,6 +95,9 @@ public class AccountServiceImplTest {
 
 	@Mock
 	private KbnMstRepositoryImpl kbnMstRepositoryImpl;
+
+	@Mock
+	private PasswordEncoder passwordEncoder;
 
 	@Mock
 	private AccountPrincipal accountPrincipal;
@@ -204,7 +209,7 @@ public class AccountServiceImplTest {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doNothing().when(accountRepositoryImpl).update(accountModel);
-			assertFalse(accountServiceImpl.updateAccount(accountModel));
+			assertFalse(accountServiceImpl.updateAccount(accountModel, null));
 
 			ArgumentCaptor<AccountUpdatedEvent> accountUpdatedEventCaptor = ArgumentCaptor.forClass(AccountUpdatedEvent.class);
 			verify(applicationEventPublisher, times(1)).publishEvent(accountUpdatedEventCaptor.capture());
@@ -219,7 +224,7 @@ public class AccountServiceImplTest {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(true).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			verify(accountRepositoryImpl,times(0)).update(accountModel);
-			assertTrue(accountServiceImpl.updateAccount(accountModel));
+			assertTrue(accountServiceImpl.updateAccount(accountModel, null));
 			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 
@@ -230,25 +235,54 @@ public class AccountServiceImplTest {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doThrow(UpdateFailureException.class).when(accountRepositoryImpl).update(accountModel);
-			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel));
+			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel, null));
 			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 
 		@Test
 		@Order(4)
-		@DisplayName("正常系：パスワード変更時はリフレッシュトークンを全失効する")
+		@DisplayName("正常系：パスワード変更時は現在のパスワードで再認証し、リフレッシュトークンを全失効する")
 		void updateAccount_revokes_refresh_tokens_on_password_change() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
 					.accountId(new AccountId("aaaaaaaa"))
 					.password(new Password("newpassword01"))
 					.build();
+			AccountModel storedAccount = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.password(new Password("stored-hash"))
+					.build();
+			doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(true).when(passwordEncoder).matches("oldpassword01", "stored-hash");
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doNothing().when(accountRepositoryImpl).update(accountModel);
 
-			assertFalse(accountServiceImpl.updateAccount(accountModel));
+			assertFalse(accountServiceImpl.updateAccount(accountModel, new Password("oldpassword01")));
 
 			verify(refreshTokenRepositoryImpl, times(1)).revokeAllByAccountNo(new AccountNo(1L));
+		}
+
+		@Test
+		@Order(6)
+		@DisplayName("異常系：パスワード変更時に現在のパスワードが一致しない場合はForbiddenAccountExceptionをthrowし、更新しない")
+		void updateAccount_currentPassword_mismatch() throws GalleryException {
+			AccountModel accountModel = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.password(new Password("newpassword01"))
+					.build();
+			AccountModel storedAccount = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.password(new Password("stored-hash"))
+					.build();
+			doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(false).when(passwordEncoder).matches("wrongpassword", "stored-hash");
+
+			assertThrows(ForbiddenAccountException.class,
+					() -> accountServiceImpl.updateAccount(accountModel, new Password("wrongpassword")));
+
+			verify(accountRepositoryImpl, times(0)).update(any());
+			verify(refreshTokenRepositoryImpl, times(0)).revokeAllByAccountNo(any());
 		}
 
 		@Test
@@ -259,7 +293,7 @@ public class AccountServiceImplTest {
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doNothing().when(accountRepositoryImpl).update(accountModel);
 
-			assertFalse(accountServiceImpl.updateAccount(accountModel));
+			assertFalse(accountServiceImpl.updateAccount(accountModel, null));
 
 			verify(refreshTokenRepositoryImpl, times(0)).revokeAllByAccountNo(any());
 		}
@@ -473,9 +507,16 @@ public class AccountServiceImplTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：アカウントを削除する")
-		void deleteAccount_success() {
+		void deleteAccount_success() throws GalleryException {
 			Long accountNo = 1L;
 			String accountId = "aaaaaaaa";
+
+			AccountModel storedAccount = AccountModel.builder()
+					.accountNo(new AccountNo(accountNo))
+					.password(new Password("stored-hash"))
+					.build();
+			doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(accountNo));
+			doReturn(true).when(passwordEncoder).matches("password01", "stored-hash");
 
 			doAnswer(invocation -> {
 				Account account = invocation.getArgument(0);
@@ -486,7 +527,7 @@ public class AccountServiceImplTest {
 			doReturn("/output/").when(photoConfig).getOutputPath();
 			doNothing().when(fileRepository).delete(new ImageFilePath("/output/" + accountId + "/"));
 
-			accountServiceImpl.deleteAccount(new AccountNo(accountNo), new AccountId(accountId));
+			accountServiceImpl.deleteAccount(new AccountNo(accountNo), new AccountId(accountId), new Password("password01"));
 
 			ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
 			verify(accountAggregateRepositoryImpl, times(1)).delete(accountCaptor.capture());
@@ -514,6 +555,24 @@ public class AccountServiceImplTest {
 			assertEquals(1, accountDeletedEvents.size());
 			assertEquals(new AccountNo(accountNo), accountDeletedEvents.get(0).accountNo());
 			assertEquals(new AccountId(accountId), accountDeletedEvents.get(0).accountId());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：現在のパスワードが一致しない場合はForbiddenAccountExceptionをthrowし、削除しない")
+		void deleteAccount_currentPassword_mismatch() {
+			AccountModel storedAccount = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.password(new Password("stored-hash"))
+					.build();
+			doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(false).when(passwordEncoder).matches("wrongpassword", "stored-hash");
+
+			assertThrows(ForbiddenAccountException.class,
+					() -> accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("wrongpassword")));
+
+			verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 	}
 

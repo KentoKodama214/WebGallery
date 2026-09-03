@@ -284,6 +284,18 @@ public enum ErrorEnum {
 	},
 
 	/**
+	 * エラーコード：E-C-0005
+	 * <p>
+	 * エラーメッセージ：{@value MessageConst#ERR_CURRENT_PASSWORD_MISMATCH}
+	 */
+	CURRENT_PASSWORD_MISMATCH("E-C-0005", MessageConst.ERR_CURRENT_PASSWORD_MISMATCH) {
+		@Override
+		public GalleryException toException() {
+			return new ForbiddenAccountException(this);
+		}
+	},
+
+	/**
 	 * エラーコード：E-S-0001
 	 * <p>
 	 * エラーメッセージ：{@value MessageConst#ERR_SYSTEM_ERROR}

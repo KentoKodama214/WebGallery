@@ -354,9 +354,14 @@ export async function getAccount(accountId: string): Promise<AccountDetail> {
 /**
  * アカウントを削除する
  */
-export async function deleteAccount(accountId: string): Promise<void> {
+export async function deleteAccount(
+  accountId: string,
+  currentPassword: string
+): Promise<void> {
   const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}`, {
     method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword }),
   });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "アカウントの削除に失敗しました"));
@@ -452,6 +457,8 @@ export interface AccountUpdateData {
   accountId: string;
   accountName: string;
   newPassword: string;
+  /** 現在のパスワード（パスワード変更時のみ必須。それ以外は空文字） */
+  currentPassword: string;
   birthdate: string | null;
   sexKbn: string;
   birthplacePrefectureKbnCode: string;

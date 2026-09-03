@@ -10,6 +10,7 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
@@ -64,6 +66,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	private final FileRepository fileRepository;
 	private final RefreshTokenRepository refreshTokenRepository;
 	private final KbnMstRepository kbnMstRepository;
+	private final PasswordEncoder passwordEncoder;
 	private final LoginConfig loginConfig;
 	private final PhotoConfig photoConfig;
 	private final AccountConfig accountConfig;
@@ -111,17 +114,24 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 
 	/**
 	 * アカウントを更新する<p>
-	 * パスワードが変更された場合は、当該アカウントのリフレッシュトークンをすべて失効させ、
-	 * 全セッションでの再認証を強制する（トークン漏洩時の被害を限定するため）
+	 * パスワードを変更する場合は、{@code currentPassword}による本人確認を行ったうえで、
+	 * 当該アカウントのリフレッシュトークンをすべて失効させ、全セッションでの再認証を強制する
+	 * （トークン漏洩時の被害を限定するため）
 	 *
 	 * @param	accountModel		{@link AccountModel}
+	 * @param	currentPassword		現在のパスワード（パスワード変更時のみ必須）
 	 * @return						アカウントIDが重複しており更新をスキップした場合、true
-	 * @throws GalleryException	更新に失敗した場合
+	 * @throws GalleryException	更新に失敗した場合、または現在のパスワードが一致しない場合
 	 */
 	@Override
 	@Transactional(rollbackFor = GalleryException.class)
-	public Boolean updateAccount(AccountModel accountModel) throws GalleryException {
+	public Boolean updateAccount(AccountModel accountModel, Password currentPassword) throws GalleryException {
 		validatePrefectureCodes(accountModel);
+
+		// パスワード変更時は本人確認（再認証）を行う
+		if (accountModel.getPassword() != null) {
+			verifyCurrentPassword(accountModel.getAccountNo(), currentPassword);
+		}
 
 		Boolean isExist = accountRepository.isExistAccount(accountModel.getAccountNo(), accountModel.getAccountId());
 		if(!isExist) {
@@ -204,14 +214,19 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	}
 
 	/**
-	 * アカウントを削除する
+	 * アカウントを削除する<p>
+	 * {@code currentPassword}による本人確認（再認証）を行ったうえで物理削除する
 	 *
-	 * @param	accountNo	アカウント番号
-	 * @param	accountId	アカウントID
+	 * @param	accountNo			アカウント番号
+	 * @param	accountId			アカウントID
+	 * @param	currentPassword		現在のパスワード
+	 * @throws	GalleryException	現在のパスワードが一致しない場合
 	 */
 	@Override
-	@Transactional
-	public void deleteAccount(AccountNo accountNo, AccountId accountId) {
+	@Transactional(rollbackFor = GalleryException.class)
+	public void deleteAccount(AccountNo accountNo, AccountId accountId, Password currentPassword) throws GalleryException {
+		verifyCurrentPassword(accountNo, currentPassword);
+
 		Account account = Account.forDelete(accountNo);
 		accountAggregateRepository.delete(account);
 
@@ -222,6 +237,28 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 			applicationEventPublisher.publishEvent(new PhotoDeletedEvent(accountNo, photoNo));
 		}
 		applicationEventPublisher.publishEvent(new AccountDeletedEvent(accountNo, accountId));
+	}
+
+	/**
+	 * 現在のパスワードによる本人確認（再認証）を行う<p>
+	 * パスワード変更・アカウント削除といった機微な操作の前に呼び出し、
+	 * アクセストークンの有効性だけでなく現在のパスワードの入力を要求することで、
+	 * トークン漏洩・共有端末・誤操作による被害を限定する。
+	 *
+	 * @param	accountNo			アカウント番号
+	 * @param	currentPassword		入力された現在のパスワード（null可。nullは不一致として扱う）
+	 * @throws	GalleryException	現在のパスワードが未入力、またはハッシュと一致しない場合
+	 */
+	private void verifyCurrentPassword(AccountNo accountNo, Password currentPassword) throws GalleryException {
+		if (currentPassword == null) {
+			throw ErrorEnum.CURRENT_PASSWORD_MISMATCH.toException();
+		}
+		AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
+		if (accountModel == null || accountModel.getPassword() == null
+				|| !passwordEncoder.matches(currentPassword.value(), accountModel.getPassword().value())) {
+			log.info("Current password verification failed. (accountNo: {})", accountNo.value());
+			throw ErrorEnum.CURRENT_PASSWORD_MISMATCH.toException();
+		}
 	}
 
 	/**

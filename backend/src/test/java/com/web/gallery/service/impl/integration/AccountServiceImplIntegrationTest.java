@@ -52,6 +52,7 @@ import com.web.gallery.domain.common.UpdatedBy;
 import com.web.gallery.entity.Account;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
+import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountListGetModel;
@@ -180,7 +181,7 @@ public class AccountServiceImplIntegrationTest {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("zzzzzzzz")).build();
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			assertFalse(accountServiceImpl.updateAccount(accountModel));
+			assertFalse(accountServiceImpl.updateAccount(accountModel, null));
 
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
@@ -230,7 +231,7 @@ public class AccountServiceImplIntegrationTest {
 		@DisplayName("正常系：アカウントが既に存在する")
 		void updateAccount_account_already_exist() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("bbbbbbbb")).build();
-			assertTrue(accountServiceImpl.updateAccount(accountModel));
+			assertTrue(accountServiceImpl.updateAccount(accountModel, null));
 
 			List<Account> actualData = jdbcTemplate.query(
 					"SELECT * FROM common.account where account_no=1", (rs, rowNum) ->
@@ -279,7 +280,7 @@ public class AccountServiceImplIntegrationTest {
 		@DisplayName("異常系：UpdateFailureExceptionをthrowする")
 		void updateAccount_UpdateFailureException() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(99L)).accountId(new AccountId("zzzzzzzz")).build();
-			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel));
+			assertThrows(UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel, null));
 		}
 	}
 	
@@ -457,8 +458,8 @@ public class AccountServiceImplIntegrationTest {
 		@Test
 		@Order(1)
 		@DisplayName("正常系：アカウントと関連データがすべて物理削除されること")
-		void deleteAccount_success() {
-			accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
+		void deleteAccount_success() throws GalleryException {
+			accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01"));
 
 			// アカウントが削除されたことを確認
 			List<Account> accountData = jdbcTemplate.query(
@@ -515,6 +516,18 @@ public class AccountServiceImplIntegrationTest {
 			Integer otherRefreshTokenCount = jdbcTemplate.queryForObject(
 					"SELECT COUNT(*) FROM common.refresh_token where account_no=2 and is_revoked=false", Integer.class);
 			assertEquals(1, otherRefreshTokenCount);
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("異常系：現在のパスワードが一致しない場合は削除されずForbiddenAccountExceptionをthrowする")
+		void deleteAccount_currentPassword_mismatch() {
+			assertThrows(ForbiddenAccountException.class,
+					() -> accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("wrongpassword")));
+
+			Integer accountCount = jdbcTemplate.queryForObject(
+					"SELECT COUNT(*) FROM common.account where account_no=1", Integer.class);
+			assertEquals(1, accountCount);
 		}
 	}
 
