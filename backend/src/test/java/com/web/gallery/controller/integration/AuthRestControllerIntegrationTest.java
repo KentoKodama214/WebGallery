@@ -268,12 +268,14 @@ public class AuthRestControllerIntegrationTest {
 
 		@Test
 		@Order(2)
-		@DisplayName("異常系：refreshTokenがない場合、401を返す")
+		@DisplayName("異常系：refreshTokenがない場合、401を共通のJSONエラー形式で返す")
 		void refresh_no_cookie() throws Exception {
 			mockMvc.perform(
 					post("/api/v1/auth/refresh")
 				)
-				.andExpect(status().isUnauthorized());
+				.andExpect(status().isUnauthorized())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.message").value("無効なリフレッシュトークンです。"));
 		}
 
 		@Test

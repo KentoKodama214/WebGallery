@@ -100,6 +100,9 @@ public class AccountServiceImplTest {
 	private PasswordEncoder passwordEncoder;
 
 	@Mock
+	private com.web.gallery.helper.ReauthenticationThrottle reauthenticationThrottle;
+
+	@Mock
 	private AccountPrincipal accountPrincipal;
 
 	@Mock
@@ -275,6 +278,7 @@ public class AccountServiceImplTest {
 					.accountNo(new AccountNo(1L))
 					.password(new Password("stored-hash"))
 					.build();
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
 			doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
 			doReturn(false).when(passwordEncoder).matches("wrongpassword", "stored-hash");
 
@@ -283,6 +287,8 @@ public class AccountServiceImplTest {
 
 			verify(accountRepositoryImpl, times(0)).update(any());
 			verify(refreshTokenRepositoryImpl, times(0)).revokeAllByAccountNo(any());
+			// 再認証失敗はインメモリのスロットルに記録される
+			verify(reauthenticationThrottle, times(1)).recordFailure(1L);
 		}
 
 		@Test
@@ -290,12 +296,64 @@ public class AccountServiceImplTest {
 		@DisplayName("正常系：パスワード未変更時はリフレッシュトークンを失効しない")
 		void updateAccount_does_not_revoke_refresh_tokens_without_password_change() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder().accountNo(new AccountNo(1L)).accountId(new AccountId("aaaaaaaa")).build();
+			AccountModel storedAccount = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.build();
 			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
+			doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
 			doNothing().when(accountRepositoryImpl).update(accountModel);
 
 			assertFalse(accountServiceImpl.updateAccount(accountModel, null));
 
 			verify(refreshTokenRepositoryImpl, times(0)).revokeAllByAccountNo(any());
+		}
+
+		@Test
+		@Order(7)
+		@DisplayName("正常系：アカウントID変更時はパスワード未変更でもリフレッシュトークンを全失効する")
+		void updateAccount_revokes_refresh_tokens_on_account_id_change() throws GalleryException {
+			AccountModel accountModel = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("newaccountid"))
+					.build();
+			AccountModel storedAccount = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("oldaccountid"))
+					.build();
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("newaccountid"));
+			doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doNothing().when(accountRepositoryImpl).update(accountModel);
+
+			assertFalse(accountServiceImpl.updateAccount(accountModel, null));
+
+			verify(refreshTokenRepositoryImpl, times(1)).revokeAllByAccountNo(new AccountNo(1L));
+		}
+
+		@Test
+		@Order(8)
+		@DisplayName("異常系：ログイン失敗回数が上限に達したアカウントは本人確認を通さず更新しない")
+		void updateAccount_blocked_when_account_locked() throws GalleryException {
+			AccountModel accountModel = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.password(new Password("newpassword01"))
+					.build();
+			AccountModel storedAccount = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.password(new Password("stored-hash"))
+					.loginFailureCount(new LoginFailureCount(3))
+					.build();
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
+			doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(3).when(loginConfig).getFailCount();
+
+			assertThrows(ForbiddenAccountException.class,
+					() -> accountServiceImpl.updateAccount(accountModel, new Password("stored-hash")));
+
+			verify(accountRepositoryImpl, times(0)).update(any());
+			verify(passwordEncoder, times(0)).matches(any(), any());
+			verify(applicationEventPublisher, times(0)).publishEvent(any());
 		}
 	}
 	
@@ -573,6 +631,8 @@ public class AccountServiceImplTest {
 
 			verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
 			verify(applicationEventPublisher, times(0)).publishEvent(any());
+			// 再認証失敗はインメモリのスロットルに記録される
+			verify(reauthenticationThrottle, times(1)).recordFailure(1L);
 		}
 	}
 
@@ -729,6 +789,60 @@ public class AccountServiceImplTest {
 			assertThrows(UpdateFailureException.class, () ->accountServiceImpl.handle(event));
 
 			verify(accountRepositoryImpl).incrementLoginFailureCount(new AccountNo(1L));
+		}
+	}
+
+	@Nested
+	@Order(12)
+	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+	class reauthenticationThrottling {
+		@Test
+		@Order(1)
+		@DisplayName("異常系：スロットルがロックアウト中なら本人確認を通さず、パスワード照合もしない")
+		void reauth_blocked_when_throttled() throws GalleryException {
+			AccountModel accountModel = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.password(new Password("newpassword01"))
+					.build();
+			AccountModel storedAccount = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.password(new Password("stored-hash"))
+					.build();
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
+			doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(true).when(reauthenticationThrottle).isLockedOut(1L);
+
+			assertThrows(ForbiddenAccountException.class,
+					() -> accountServiceImpl.updateAccount(accountModel, new Password("stored-hash")));
+
+			verify(passwordEncoder, times(0)).matches(any(), any());
+			verify(accountRepositoryImpl, times(0)).update(any());
+			verify(reauthenticationThrottle, times(0)).recordFailure(anyLong());
+		}
+
+		@Test
+		@Order(2)
+		@DisplayName("正常系：本人確認に成功するとスロットルの失敗カウンタをリセットする")
+		void reauth_success_resets_throttle() throws GalleryException {
+			AccountModel accountModel = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.password(new Password("newpassword01"))
+					.build();
+			AccountModel storedAccount = AccountModel.builder()
+					.accountNo(new AccountNo(1L))
+					.accountId(new AccountId("aaaaaaaa"))
+					.password(new Password("stored-hash"))
+					.build();
+			doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
+			doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+			doReturn(true).when(passwordEncoder).matches("oldpassword01", "stored-hash");
+			doNothing().when(accountRepositoryImpl).update(accountModel);
+
+			accountServiceImpl.updateAccount(accountModel, new Password("oldpassword01"));
+
+			verify(reauthenticationThrottle, times(1)).reset(1L);
 		}
 	}
 }

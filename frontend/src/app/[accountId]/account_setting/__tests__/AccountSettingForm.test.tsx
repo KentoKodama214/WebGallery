@@ -26,12 +26,28 @@ const mockUpdateAccount = jest.fn();
 const mockGetPrefectures = jest.fn();
 const mockDeleteAccount = jest.fn();
 
-jest.mock("@/lib/api/client", () => ({
-  getAccount: (...args: unknown[]) => mockGetAccount(...args),
-  updateAccount: (...args: unknown[]) => mockUpdateAccount(...args),
-  getPrefectures: (...args: unknown[]) => mockGetPrefectures(...args),
-  deleteAccount: (...args: unknown[]) => mockDeleteAccount(...args),
-}));
+jest.mock("@/lib/api/client", () => {
+  class ApiError extends Error {
+    status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.name = "ApiError";
+      this.status = status;
+    }
+  }
+  return {
+    ApiError,
+    getAccount: (...args: unknown[]) => mockGetAccount(...args),
+    updateAccount: (...args: unknown[]) => mockUpdateAccount(...args),
+    getPrefectures: (...args: unknown[]) => mockGetPrefectures(...args),
+    deleteAccount: (...args: unknown[]) => mockDeleteAccount(...args),
+  };
+});
+
+// テストからも同じ形の ApiError を投げられるように再取得する
+const { ApiError } = jest.requireMock("@/lib/api/client") as {
+  ApiError: new (message: string, status: number) => Error;
+};
 
 const mockAccountData = {
   accountId: "testuser1",
@@ -228,6 +244,44 @@ describe("AccountSettingForm", () => {
         screen.getByText("このアカウントIDは既に使われています")
       ).toBeInTheDocument();
     });
+  });
+
+  it("現在のパスワードの確認に連続失敗するとクールダウン表示になり、以降の送信が止まること", async () => {
+    mockUpdateAccount.mockRejectedValue(
+      new ApiError("現在のパスワードが正しくありません", 403)
+    );
+
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
+    const currentInput = screen.getByLabelText("現在のパスワード");
+
+    for (let i = 0; i < 3; i++) {
+      await user.clear(passwordInput);
+      await user.type(passwordInput, "newpassword1");
+      await user.clear(currentInput);
+      await user.type(currentInput, "wrongpass1");
+      await user.click(screen.getByRole("button", { name: "登録" }));
+      await waitFor(() => {
+        expect(
+          screen.getByText("現在のパスワードが正しくありません")
+        ).toBeInTheDocument();
+      });
+    }
+
+    expect(mockUpdateAccount).toHaveBeenCalledTimes(3);
+    expect(
+      await screen.findByText(/しばらく待ってから再度お試しください/)
+    ).toBeInTheDocument();
+
+    // クールダウン中は送信ボタンが無効化され、API は呼ばれない
+    await user.click(screen.getByRole("button", { name: "登録" }));
+    expect(mockUpdateAccount).toHaveBeenCalledTimes(3);
   });
 
   it("アカウント名が空の場合にバリデーションエラーが表示されること", async () => {

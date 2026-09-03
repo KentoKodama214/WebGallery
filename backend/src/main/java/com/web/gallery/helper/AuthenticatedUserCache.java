@@ -6,8 +6,14 @@ import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.event.AccountDeletedEvent;
+import com.web.gallery.event.AccountLockedEvent;
+import com.web.gallery.event.AccountUnlockedEvent;
+import com.web.gallery.event.AccountUpdatedEvent;
 
 /**
  * アクセストークン検証後のアカウント情報（{@link AccountPrincipal}）を短時間キャッシュするヘルパークラス<p>
@@ -65,5 +71,55 @@ public class AuthenticatedUserCache {
 			cache.put(accountId, new Entry(loaded, now + ttlMillis));
 		}
 		return loaded;
+	}
+
+	/**
+	 * キャッシュを全消去する<p>
+	 * アカウントの更新・削除・ロック・ロック解除が確定したときに呼び出し、
+	 * 古い{@link AccountPrincipal}（アカウントID変更前・ロック前など）が最大TTLぶん
+	 * 参照され続けるのを防ぐ。これらのイベントは低頻度のため全消去のコストは無視できる。
+	 */
+	public void clear() {
+		cache.clear();
+	}
+
+	/**
+	 * アカウント更新（アカウントID・パスワード・プロフィール変更）の確定時にキャッシュを消去する
+	 *
+	 * @param	event	{@link AccountUpdatedEvent}
+	 */
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void onAccountUpdated(AccountUpdatedEvent event) {
+		clear();
+	}
+
+	/**
+	 * アカウント削除の確定時にキャッシュを消去する
+	 *
+	 * @param	event	{@link AccountDeletedEvent}
+	 */
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void onAccountDeleted(AccountDeletedEvent event) {
+		clear();
+	}
+
+	/**
+	 * 管理者によるアカウント強制ロックの確定時にキャッシュを消去する（ロックを即時反映する）
+	 *
+	 * @param	event	{@link AccountLockedEvent}
+	 */
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void onAccountLocked(AccountLockedEvent event) {
+		clear();
+	}
+
+	/**
+	 * 管理者によるアカウントロック解除の確定時にキャッシュを消去する
+	 *
+	 * @param	event	{@link AccountUnlockedEvent}
+	 */
+	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+	public void onAccountUnlocked(AccountUnlockedEvent event) {
+		clear();
 	}
 }

@@ -228,6 +228,48 @@ describe("api/client", () => {
     });
   });
 
+  describe("updateAccount / deleteAccount のエラー", () => {
+    beforeEach(async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
+      await client.login("user", "pass");
+    });
+
+    it("updateAccount は HTTP エラー時に status 付きの ApiError を投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ errorMessage: "現在のパスワードが正しくありません" }, { status: 403 })
+      );
+
+      const err = await client
+        .updateAccount("me", {
+          accountId: "me",
+          accountName: "n",
+          newPassword: "newpassword1",
+          currentPassword: "wrong",
+          birthdate: null,
+          sexKbn: "none",
+          birthplacePrefectureKbnCode: "none",
+          residentPrefectureKbnCode: "none",
+          freeMemo: "",
+        })
+        .catch((e) => e);
+
+      expect(err).toBeInstanceOf(client.ApiError);
+      expect(err.status).toBe(403);
+      expect(err.message).toBe("現在のパスワードが正しくありません");
+    });
+
+    it("deleteAccount は HTTP エラー時に status 付きの ApiError を投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ errorMessage: "現在のパスワードが正しくありません" }, { status: 403 })
+      );
+
+      const err = await client.deleteAccount("me", "wrong").catch((e) => e);
+
+      expect(err).toBeInstanceOf(client.ApiError);
+      expect(err.status).toBe(403);
+    });
+  });
+
   describe("不正なトークン応答の扱い", () => {
     it("login 応答に文字列 accessToken が無ければ失敗として扱う", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ expiresIn: 3600 }));

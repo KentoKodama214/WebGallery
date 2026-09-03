@@ -70,6 +70,9 @@ public class AccountRestControllerIntegrationTest {
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
+	@Autowired
+	private com.web.gallery.helper.JwtTokenProvider jwtTokenProvider;
+
 	private String readJsonFile(String fileName) throws Exception {
 		return new String(
 				new ClassPathResource("json/controller/integration/AccountRestControllerIntegrationTest/" + fileName).getInputStream().readAllBytes(),
@@ -227,6 +230,27 @@ public class AccountRestControllerIntegrationTest {
 				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()))
 				.andExpect(jsonPath("$.errorCode").value("E-A-0002"))
 				.andExpect(jsonPath("$.errorMessage").isNotEmpty());
+		}
+
+		@Test
+		@Order(5)
+		@DisplayName("異常系：署名は正当だがsubjectのアカウントが存在しないトークンは500ではなく401を返す")
+		void getAccount_token_subject_not_found() throws Exception {
+			// アカウントID変更後の旧トークンや、本人によるアカウント削除後のトークンを想定
+			AccountModel ghost = AccountModel.builder()
+					.accountNo(new AccountNo(9999L))
+					.accountId(new AccountId("ghostuser01"))
+					.authorityKbn(AuthorityEnum.NORMAL)
+					.build();
+			String token = jwtTokenProvider.generateAccessToken(new AccountPrincipal(ghost, 3));
+
+			mockMvc.perform(
+					get("/api/v1/accounts/ghostuser01")
+					.header("Authorization", "Bearer " + token)
+				)
+				.andExpect(status().isUnauthorized())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()));
 		}
 	}
 

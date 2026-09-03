@@ -48,6 +48,16 @@ describe("proxy (Content-Security-Policy)", () => {
     expect(csp).toContain("frame-ancestors 'none'");
   });
 
+  it("style-src-elem で <style>/<link> 要素を nonce または自オリジンに限定する", () => {
+    const res = proxy(makeRequest("/login"));
+    const csp = res.headers.get("content-security-policy");
+    // <style> 要素側は 'unsafe-inline' を含めない（注入された <style> を防ぐ）
+    expect(csp).toMatch(/style-src-elem 'self' 'nonce-[^']+'/);
+    expect(csp).not.toMatch(/style-src-elem [^;]*'unsafe-inline'/);
+    // style 属性（React の style={{}}）向けのフォールバックは維持する
+    expect(csp).toMatch(/style-src 'self' 'unsafe-inline'/);
+  });
+
   it("リクエストごとに異なる nonce を生成する", () => {
     const csp1 = proxy(makeRequest("/login")).headers.get(
       "content-security-policy"

@@ -32,6 +32,7 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
+import com.web.gallery.helper.ValidationErrorLogger;
 import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountPageModel;
@@ -76,10 +77,7 @@ public class AccountRestController {
 			BindingResult result) throws GalleryException {
 
 		if(result.hasErrors()) {
-			for(FieldError error : result.getFieldErrors()) {
-				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
-						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
-			}
+			ValidationErrorLogger.logFieldErrors(log, result);
 			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 
@@ -134,13 +132,10 @@ public class AccountRestController {
 			BindingResult result) throws GalleryException {
 
 		if(result.hasErrors()) {
-			for(FieldError error : result.getFieldErrors()) {
-				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
-						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
-			}
+			ValidationErrorLogger.logFieldErrors(log, result);
 			throw ErrorEnum.INVALID_INPUT.toException();
 		}
-		
+
 		AccountModel accountModel = AccountModel.from(accountRegistRequest);
 		
 		Boolean isSuccess = accountService.registAccount(accountModel);
@@ -175,10 +170,7 @@ public class AccountRestController {
 		String currentPassword = Objects.requireNonNullElse(accountUpdateRequest.getCurrentPassword(), Consts.STRING_EMPTY);
 
 		if(result.hasErrors()) {
-			for(FieldError error : result.getFieldErrors()) {
-				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
-						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
-			}
+			ValidationErrorLogger.logFieldErrors(log, result);
 
 			List<String> fieldList
 				= result.getFieldErrors().stream().map(FieldError::getField).distinct().toList();

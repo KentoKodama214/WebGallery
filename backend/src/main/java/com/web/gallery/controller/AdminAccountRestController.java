@@ -2,7 +2,6 @@ package com.web.gallery.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -19,6 +18,7 @@ import com.web.gallery.controller.response.AdminAccountLockResponse;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.helper.ValidationErrorLogger;
 import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.service.AccountService;
@@ -63,10 +63,7 @@ public class AdminAccountRestController {
 			BindingResult result) throws GalleryException {
 
 		if(result.hasErrors()) {
-			for(FieldError error : result.getFieldErrors()) {
-				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
-						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
-			}
+			ValidationErrorLogger.logFieldErrors(log, result);
 			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 

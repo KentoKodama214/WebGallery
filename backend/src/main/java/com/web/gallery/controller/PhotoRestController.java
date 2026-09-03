@@ -6,7 +6,6 @@ import java.util.Objects;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +33,7 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
+import com.web.gallery.helper.ValidationErrorLogger;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
@@ -88,10 +88,7 @@ public class PhotoRestController {
 			BindingResult result) throws GalleryException {
 
 		if(result.hasErrors()) {
-			for(FieldError error : result.getFieldErrors()) {
-				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
-						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
-			}
+			ValidationErrorLogger.logFieldErrors(log, result);
 			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 
@@ -183,10 +180,7 @@ public class PhotoRestController {
 		}
 
 		if(result.hasErrors()) {
-			for(FieldError error : result.getFieldErrors()) {
-				log.info("Invalid input. (Field: {}, Value: {}, Message: {})",
-						error.getField(), error.getRejectedValue(), error.getDefaultMessage());
-			}
+			ValidationErrorLogger.logFieldErrors(log, result);
 			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 
