@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import { AccountSettingForm } from "../AccountSettingForm";
@@ -188,15 +188,16 @@ describe("AccountSettingForm", () => {
     });
 
     await user.click(screen.getByRole("button", { name: "アカウント削除" }));
+    const dialog = within(screen.getByRole("dialog"));
     // パスワード未入力で「はい」を押すとエラーになり、削除は呼ばれない
-    await user.click(screen.getByRole("button", { name: "はい" }));
+    await user.click(dialog.getByRole("button", { name: "はい" }));
     expect(
-      await screen.findByText("現在のパスワードを入力してください")
+      await dialog.findByText("現在のパスワードを入力してください")
     ).toBeInTheDocument();
     expect(mockDeleteAccount).not.toHaveBeenCalled();
 
-    await user.type(screen.getByLabelText("現在のパスワード"), "mypassword1");
-    await user.click(screen.getByRole("button", { name: "はい" }));
+    await user.type(dialog.getByLabelText("現在のパスワード"), "mypassword1");
+    await user.click(dialog.getByRole("button", { name: "はい" }));
 
     await waitFor(() => {
       expect(mockDeleteAccount).toHaveBeenCalledWith("testuser1", "mypassword1");

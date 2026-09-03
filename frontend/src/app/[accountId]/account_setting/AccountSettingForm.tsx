@@ -313,6 +313,34 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               <p id="account-setting-name-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountName}</p>
             )}
 
+            <label htmlFor="account-setting-current-password" className="block text-[#444] text-sm mb-1 mt-2">
+              現在のパスワード
+            </label>
+            <input
+              id="account-setting-current-password"
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+                setErrors((prev) => clearError(prev, "currentPassword"));
+              }}
+              onBlur={() => {
+                if (newPassword && !currentPassword) {
+                  setErrors((prev) => ({ ...prev, currentPassword: "現在のパスワードを入力してください" }));
+                } else {
+                  setErrors((prev) => clearError(prev, "currentPassword"));
+                }
+              }}
+              placeholder="パスワードを変更する場合のみ入力してください"
+              aria-invalid={errors.currentPassword ? true : undefined}
+              aria-describedby={errors.currentPassword ? "account-setting-current-password-error" : undefined}
+              className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
+            />
+            {errors.currentPassword && (
+              <p id="account-setting-current-password-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.currentPassword}</p>
+            )}
+
             <label htmlFor="account-setting-password" className="block text-[#444] text-sm mb-1 mt-2">新しいパスワード</label>
             <input
               id="account-setting-password"
@@ -334,35 +362,6 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             />
             {errors.newPassword && (
               <p id="account-setting-password-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.newPassword}</p>
-            )}
-
-            {newPassword && (
-              <>
-                <label htmlFor="account-setting-current-password" className="block text-[#444] text-sm mb-1 mt-2">
-                  現在のパスワード
-                </label>
-                <input
-                  id="account-setting-current-password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  onBlur={() => {
-                    if (!currentPassword) {
-                      setErrors((prev) => ({ ...prev, currentPassword: "現在のパスワードを入力してください" }));
-                    } else {
-                      setErrors((prev) => clearError(prev, "currentPassword"));
-                    }
-                  }}
-                  placeholder="パスワード変更には現在のパスワードが必要です"
-                  aria-invalid={errors.currentPassword ? true : undefined}
-                  aria-describedby={errors.currentPassword ? "account-setting-current-password-error" : undefined}
-                  className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
-                />
-                {errors.currentPassword && (
-                  <p id="account-setting-current-password-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.currentPassword}</p>
-                )}
-              </>
             )}
 
             <label htmlFor="account-setting-birthdate" className="block text-[#444] text-sm mb-1 mt-2">生年月日</label>
