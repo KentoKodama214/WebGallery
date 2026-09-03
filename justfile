@@ -20,3 +20,7 @@ lint:
 # E2Eテスト実行（DB・バックエンドを未起動の場合は自動起動）
 e2e:
     ./scripts/e2e.sh
+
+# 本番ビルドに対するCSPスモークテスト（next build + next start）
+e2e-prod:
+    cd frontend && mise exec -- pnpm test:e2e:prod

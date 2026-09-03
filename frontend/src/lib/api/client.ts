@@ -375,10 +375,9 @@ export async function getAccount(accountId: string): Promise<AccountDetail> {
 /**
  * アカウントを削除する
  *
- * 本人確認のため現在のパスワードをリクエストボディ（JSON）で送る。DELETE にボディを
- * 付けるのは RFC 9110 上許容されるが、一部の CDN・リバースプロキシ・WAF は DELETE の
- * ボディを破棄することがある。破棄されるとバックエンドで currentPassword 未入力として
- * 400 になるため、本番の中継経路が DELETE ボディを透過することをデプロイ時に確認すること。
+ * 本人確認のための現在のパスワードは `X-Reauth-Password` ヘッダーで送る。DELETE のボディは
+ * 一部の CDN・リバースプロキシ・WAF で破棄されることがあり、破棄されるとバックエンドで
+ * currentPassword 未入力として 400 になるため、確実に透過するヘッダーを用いる。
  */
 export async function deleteAccount(
   accountId: string,
@@ -386,8 +385,7 @@ export async function deleteAccount(
 ): Promise<void> {
   const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}`, {
     method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ currentPassword }),
+    headers: { "X-Reauth-Password": currentPassword },
   });
   if (!response.ok) {
     throw new ApiError(

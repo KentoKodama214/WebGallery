@@ -19,6 +19,7 @@ architecture-check.yml:
 
 test.yml:
   フロントエンド単体テスト ─────────────→ (独立)
+  本番CSPスモークテスト ────────────────→ (独立)
   単体テスト ──→ (成功時のみ) 結合テスト
              └→ (成功時のみ) E2Eテスト
 ```
@@ -67,3 +68,9 @@ PostgreSQLサービスコンテナを起動し、`./gradlew integrationTest`を�
 ### E2Eテスト (`test.yml` - `e2e-test`)
 
 PostgreSQLサービスコンテナを起動し、バックエンド（`bootRun`）をバックグラウンドで起動した状態でフロントエンドのPlaywright E2Eテスト（`frontend/e2e/`）を実行する。単体テストが成功した場合のみ実行される。失敗時はバックエンドログとPlaywrightレポートがアーティファクトとしてアップロードされる。
+
+E2Eテストは `next dev` で起動するため、本番でのみ付与されるCSPディレクティブ（`src/proxy.ts` の `style-src-elem` 等）は検証されない。その検証は下記「本番CSPスモークテスト」で行う。
+
+### 本番CSPスモークテスト (`test.yml` - `e2e-prod-smoke`)
+
+`next build` + `next start` で本番ビルドを起動し、`frontend/e2e/prod-smoke/` のPlaywrightテスト（`playwright.prod.config.ts`）を実行する。公開ページでCSP違反が発生しないこと・Tailwindのスタイルが適用されることを確認する。バックエンド・DBは不要で、他ジョブと独立して並列実行される。

@@ -37,6 +37,9 @@ just lint
 
 # E2Eテスト一括実行（DB・backendを自動起動）
 just e2e
+
+# 本番ビルドに対するCSPスモークテスト（next build + next start）
+just e2e-prod
 ```
 
 ## アーキテクチャ

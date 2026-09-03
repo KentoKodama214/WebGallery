@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.event.AccountDeletedEvent;
 import com.web.gallery.event.AccountLockedEvent;
@@ -72,11 +73,10 @@ public class AuthenticatedUserCacheTest {
 	@DisplayName("イベントによる全消去")
 	class ClearOnEvent {
 		@Test
-		@DisplayName("アカウント更新・削除・ロック・ロック解除の各イベントでキャッシュが消える")
+		@DisplayName("アカウント削除・ロック・ロック解除の各イベントでキャッシュが全消去される")
 		void clears_on_account_events() {
 			AccountNo accountNo = new AccountNo(1L);
 
-			assertCleared(cache -> cache.onAccountUpdated(new AccountUpdatedEvent(accountNo, null)));
 			assertCleared(cache -> cache.onAccountDeleted(new AccountDeletedEvent(accountNo, null)));
 			assertCleared(cache -> cache.onAccountLocked(new AccountLockedEvent(accountNo)));
 			assertCleared(cache -> cache.onAccountUnlocked(new AccountUnlockedEvent(accountNo)));
@@ -91,10 +91,62 @@ public class AuthenticatedUserCacheTest {
 			};
 
 			cache.get("aaaaaaaa", loader);
+			cache.get("bbbbbbbb", loader);
 			fireEvent.accept(cache);
 			cache.get("aaaaaaaa", loader);
+			cache.get("bbbbbbbb", loader);
 
-			assertEquals(2, calls.get(), "イベント後はキャッシュが消え、loaderが再度呼ばれる");
+			assertEquals(4, calls.get(), "イベント後はキャッシュが全消去され、loaderが再度呼ばれる");
+		}
+	}
+
+	@Nested
+	@DisplayName("アカウント更新イベントによる個別失効")
+	class EvictOnAccountUpdated {
+		@Test
+		@DisplayName("更新されたアカウントのエントリだけが失効し、他アカウントのキャッシュは保持される")
+		void evicts_only_updated_account() {
+			AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
+			AtomicInteger calls = new AtomicInteger();
+			Supplier<AccountPrincipal> loader = () -> {
+				calls.incrementAndGet();
+				return principal();
+			};
+
+			cache.get("aaaaaaaa", loader);
+			cache.get("bbbbbbbb", loader);
+			assertEquals(2, calls.get());
+
+			cache.onAccountUpdated(new AccountUpdatedEvent(
+					new AccountNo(1L), new AccountId("aaaaaaaa"), new AccountId("aaaaaaaa")));
+
+			cache.get("aaaaaaaa", loader);
+			cache.get("bbbbbbbb", loader);
+
+			assertEquals(3, calls.get(), "更新アカウントのみloaderが再度呼ばれ、他アカウントはキャッシュヒットする");
+		}
+
+		@Test
+		@DisplayName("アカウントID変更時は新旧どちらのエントリも失効する")
+		void evicts_both_old_and_new_account_id() {
+			AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
+			AtomicInteger calls = new AtomicInteger();
+			Supplier<AccountPrincipal> loader = () -> {
+				calls.incrementAndGet();
+				return principal();
+			};
+
+			cache.get("oldid000", loader);
+			cache.get("newid000", loader);
+			assertEquals(2, calls.get());
+
+			cache.onAccountUpdated(new AccountUpdatedEvent(
+					new AccountNo(1L), new AccountId("newid000"), new AccountId("oldid000")));
+
+			cache.get("oldid000", loader);
+			cache.get("newid000", loader);
+
+			assertEquals(4, calls.get(), "新旧どちらのアカウントIDのエントリも失効している");
 		}
 	}
 }

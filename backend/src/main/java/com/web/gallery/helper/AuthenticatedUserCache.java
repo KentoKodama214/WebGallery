@@ -75,22 +75,36 @@ public class AuthenticatedUserCache {
 
 	/**
 	 * キャッシュを全消去する<p>
-	 * アカウントの更新・削除・ロック・ロック解除が確定したときに呼び出し、
-	 * 古い{@link AccountPrincipal}（アカウントID変更前・ロック前など）が最大TTLぶん
-	 * 参照され続けるのを防ぐ。これらのイベントは低頻度のため全消去のコストは無視できる。
+	 * アカウントの削除・ロック・ロック解除（いずれも低頻度）が確定したときに呼び出し、
+	 * 古い{@link AccountPrincipal}が最大TTLぶん参照され続けるのを防ぐ。
 	 */
 	public void clear() {
 		cache.clear();
 	}
 
 	/**
-	 * アカウント更新（アカウントID・パスワード・プロフィール変更）の確定時にキャッシュを消去する
+	 * 指定したアカウントIDのキャッシュエントリだけを消去する
+	 *
+	 * @param	accountId	消去対象のアカウントID（nullは無視する）
+	 */
+	public void evict(String accountId) {
+		if (accountId != null) {
+			cache.remove(accountId);
+		}
+	}
+
+	/**
+	 * アカウント更新（アカウントID・パスワード・プロフィール変更）の確定時にキャッシュを消去する<p>
+	 * プロフィール項目のみの更新でも発行されるイベントのため、全消去せず当該アカウントの
+	 * エントリ（新旧アカウントID）だけを個別に失効させる。これにより、あるユーザーの軽微な
+	 * プロフィール編集で認証ホットパスのキャッシュ全体が飛ぶのを防ぐ。
 	 *
 	 * @param	event	{@link AccountUpdatedEvent}
 	 */
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void onAccountUpdated(AccountUpdatedEvent event) {
-		clear();
+		evict(event.accountId() != null ? event.accountId().value() : null);
+		evict(event.previousAccountId() != null ? event.previousAccountId().value() : null);
 	}
 
 	/**

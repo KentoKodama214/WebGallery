@@ -798,7 +798,7 @@ public class AccountServiceImplTest {
 	class reauthenticationThrottling {
 		@Test
 		@Order(1)
-		@DisplayName("異常系：スロットルがロックアウト中なら本人確認を通さず、パスワード照合もしない")
+		@DisplayName("異常系：スロットルがロックアウト中なら本人確認を通さずパスワード照合もせず、失敗を記録してロックアウトを延長する")
 		void reauth_blocked_when_throttled() throws GalleryException {
 			AccountModel accountModel = AccountModel.builder()
 					.accountNo(new AccountNo(1L))
@@ -818,7 +818,8 @@ public class AccountServiceImplTest {
 
 			verify(passwordEncoder, times(0)).matches(any(), any());
 			verify(accountRepositoryImpl, times(0)).update(any());
-			verify(reauthenticationThrottle, times(0)).recordFailure(anyLong());
+			// ロックアウト中の試行でも直近失敗時刻を更新する（スライディングウィンドウ）
+			verify(reauthenticationThrottle, times(1)).recordFailure(1L);
 		}
 
 		@Test

@@ -25,6 +25,50 @@ import { ModalDialog } from "@/components/ui/ModalDialog";
 const REAUTH_MAX_ATTEMPTS = 3;
 /** 再認証の一時停止時間（ミリ秒）。バックエンドのロックとは別のクライアント側の連打抑止 */
 const REAUTH_COOLDOWN_MS = 60_000;
+/** 再認証クールダウン状態を保存する sessionStorage キーの接頭辞 */
+const REAUTH_STATE_KEY_PREFIX = "webgallery.reauthCooldown.";
+
+/** クライアント側の再認証クールダウン状態 */
+type ReauthState = { failCount: number; cooldownUntil: number };
+
+const EMPTY_REAUTH_STATE: ReauthState = { failCount: 0, cooldownUntil: 0 };
+
+/**
+ * sessionStorage から再認証クールダウン状態を読み出す
+ *
+ * 画面遷移・再マウント・リロードをまたいで連打抑止を維持するため、タブ単位で永続化する
+ * （タブを閉じると消える。実効的なブルートフォース防御はバックエンドの ReauthenticationThrottle）。
+ */
+function loadReauthState(accountId: string): ReauthState {
+  if (typeof window === "undefined") return EMPTY_REAUTH_STATE;
+  try {
+    const raw = window.sessionStorage.getItem(REAUTH_STATE_KEY_PREFIX + accountId);
+    if (!raw) return EMPTY_REAUTH_STATE;
+    const parsed = JSON.parse(raw) as Partial<ReauthState>;
+    return {
+      failCount: typeof parsed.failCount === "number" ? parsed.failCount : 0,
+      cooldownUntil:
+        typeof parsed.cooldownUntil === "number" ? parsed.cooldownUntil : 0,
+    };
+  } catch {
+    return EMPTY_REAUTH_STATE;
+  }
+}
+
+/** sessionStorage へ再認証クールダウン状態を保存する（空状態なら削除する） */
+function saveReauthState(accountId: string, state: ReauthState): void {
+  if (typeof window === "undefined") return;
+  try {
+    const key = REAUTH_STATE_KEY_PREFIX + accountId;
+    if (state.failCount === 0 && state.cooldownUntil === 0) {
+      window.sessionStorage.removeItem(key);
+    } else {
+      window.sessionStorage.setItem(key, JSON.stringify(state));
+    }
+  } catch {
+    // sessionStorage が使えない環境（プライベートモード等）では連打抑止はベストエフォート
+  }
+}
 
 interface AccountSettingFormProps {
   accountId: string;
@@ -65,9 +109,15 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [duplicateError, setDuplicateError] = useState("");
-  // 再認証（現在のパスワード）の連続失敗によるクライアント側の一時停止
-  const reauthFailCountRef = useRef(0);
-  const [reauthCooldownUntil, setReauthCooldownUntil] = useState(0);
+  // 再認証（現在のパスワード）の連続失敗によるクライアント側の一時停止。
+  // sessionStorage で再マウント・画面遷移をまたいで維持する。
+  // このコンポーネントは <AuthGuard> 配下で常にクライアント側でのみ初回レンダリングされるため、
+  // 初期値を sessionStorage から読んでもハイドレーション不整合は起きない。
+  const [reauthState, setReauthState] = useState<ReauthState>(() => {
+    const saved = loadReauthState(accountId);
+    return saved.cooldownUntil > Date.now() ? saved : EMPTY_REAUTH_STATE;
+  });
+  const reauthCooldownUntil = reauthState.cooldownUntil;
   const [now, setNow] = useState(() => Date.now());
   const isReauthCoolingDown = now < reauthCooldownUntil;
   // 初期データ取得の失敗（ログインへは飛ばさず画面内で通知し、再試行させる）
@@ -171,17 +221,19 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
    * （バックエンドのアカウントロックとは別の、連打抑止のための多層防御）
    */
   const recordReauthFailure = () => {
-    reauthFailCountRef.current += 1;
-    if (reauthFailCountRef.current >= REAUTH_MAX_ATTEMPTS) {
-      setReauthCooldownUntil(Date.now() + REAUTH_COOLDOWN_MS);
-      setNow(Date.now());
-    }
+    const failCount = reauthState.failCount + 1;
+    const cooldownUntil =
+      failCount >= REAUTH_MAX_ATTEMPTS ? Date.now() + REAUTH_COOLDOWN_MS : 0;
+    const next: ReauthState = { failCount, cooldownUntil };
+    saveReauthState(accountId, next);
+    setReauthState(next);
+    if (cooldownUntil) setNow(Date.now());
   };
 
   /** 再認証成功時にクライアント側の失敗カウンタ・クールダウンをリセットする */
   const resetReauthState = () => {
-    reauthFailCountRef.current = 0;
-    setReauthCooldownUntil(0);
+    saveReauthState(accountId, EMPTY_REAUTH_STATE);
+    setReauthState(EMPTY_REAUTH_STATE);
   };
 
   /**

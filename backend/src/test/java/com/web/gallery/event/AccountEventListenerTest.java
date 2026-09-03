@@ -28,7 +28,7 @@ public class AccountEventListenerTest {
 	@Test
 	@DisplayName("正常系：AccountUpdatedEventを受け取っても例外が発生しないこと")
 	void handle_accountUpdatedEvent_success() {
-		AccountUpdatedEvent event = new AccountUpdatedEvent(new AccountNo(1L), new AccountId("aaaaaaaa"));
+		AccountUpdatedEvent event = new AccountUpdatedEvent(new AccountNo(1L), new AccountId("aaaaaaaa"), new AccountId("aaaaaaaa"));
 		assertDoesNotThrow(() -> accountEventListener.handle(event));
 	}
 

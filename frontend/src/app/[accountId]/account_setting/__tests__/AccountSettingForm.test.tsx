@@ -76,6 +76,7 @@ const mockPrefectureData = [
 describe("AccountSettingForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    window.sessionStorage.clear();
     mockGetAccount.mockResolvedValue(mockAccountData);
     mockGetPrefectures.mockResolvedValue(mockPrefectureData);
   });
@@ -282,6 +283,51 @@ describe("AccountSettingForm", () => {
     // クールダウン中は送信ボタンが無効化され、API は呼ばれない
     await user.click(screen.getByRole("button", { name: "登録" }));
     expect(mockUpdateAccount).toHaveBeenCalledTimes(3);
+  });
+
+  it("再認証クールダウンは sessionStorage に保存され、再マウント後も維持されること", async () => {
+    mockUpdateAccount.mockRejectedValue(
+      new ApiError("現在のパスワードが正しくありません", 403)
+    );
+
+    const user = userEvent.setup();
+    const { unmount } = render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
+    const currentInput = screen.getByLabelText("現在のパスワード");
+
+    for (let i = 0; i < 3; i++) {
+      await user.clear(passwordInput);
+      await user.type(passwordInput, "newpassword1");
+      await user.clear(currentInput);
+      await user.type(currentInput, "wrongpass1");
+      await user.click(screen.getByRole("button", { name: "登録" }));
+      await waitFor(() => {
+        expect(
+          screen.getByText("現在のパスワードが正しくありません")
+        ).toBeInTheDocument();
+      });
+    }
+
+    expect(
+      await screen.findByText(/しばらく待ってから再度お試しください/)
+    ).toBeInTheDocument();
+
+    // 別のインスタンスとして再マウントしてもクールダウン表示が復元される
+    unmount();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    expect(
+      await screen.findByText(/しばらく待ってから再度お試しください/)
+    ).toBeInTheDocument();
   });
 
   it("アカウント名が空の場合にバリデーションエラーが表示されること", async () => {
