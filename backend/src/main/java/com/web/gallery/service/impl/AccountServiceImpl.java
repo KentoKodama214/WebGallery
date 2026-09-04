@@ -155,9 +155,10 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 		if (isPasswordChange || isAccountIdChanged) {
 			refreshTokenRepository.revokeAllByAccountNo(accountModel.getAccountNo());
 		}
+		// 更新前のアカウントIDが取得できない場合はnull（リスナー側でキャッシュ全消去にフォールバックさせる）
 		AccountId previousAccountId = currentAccount != null && currentAccount.getAccountId() != null
 				? currentAccount.getAccountId()
-				: accountModel.getAccountId();
+				: null;
 		applicationEventPublisher.publishEvent(
 				new AccountUpdatedEvent(accountModel.getAccountNo(), accountModel.getAccountId(), previousAccountId));
 		return false;

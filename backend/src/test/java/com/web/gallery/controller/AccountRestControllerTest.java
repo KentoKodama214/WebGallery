@@ -596,8 +596,9 @@ public class AccountRestControllerTest {
 			doReturn(1L).when(sessionHelper).getAccountNo();
 			doNothing().when(accountService).deleteAccount(eq(new AccountNo(1L)), eq(new AccountId(accountId)), any(Password.class));
 
-			mockMvc.perform(delete("/api/v1/accounts/" + accountId)
-					.header("X-Reauth-Password", "password01"))
+			mockMvc.perform(post("/api/v1/accounts/" + accountId + "/deletion")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(readJsonFile("delete_success.json")))
 				.andExpect(status().isOk());
 
 			verify(accountService, times(1)).deleteAccount(eq(new AccountNo(1L)), eq(new AccountId(accountId)), any(Password.class));
@@ -609,8 +610,9 @@ public class AccountRestControllerTest {
 		void deleteAccount_forbidden() throws Exception {
 			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
-			mockMvc.perform(delete("/api/v1/accounts/aaaaaaaa")
-					.header("X-Reauth-Password", "password01"))
+			mockMvc.perform(post("/api/v1/accounts/aaaaaaaa/deletion")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(readJsonFile("delete_success.json")))
 				.andExpect(status().isForbidden());
 
 			verify(accountService, times(0)).deleteAccount(any(AccountNo.class), any(AccountId.class), any(Password.class));
@@ -618,12 +620,13 @@ public class AccountRestControllerTest {
 
 		@Test
 		@Order(3)
-		@DisplayName("異常系：現在のパスワードヘッダーが空の場合は400を返すこと")
+		@DisplayName("異常系：現在のパスワードが空の場合は400を返すこと")
 		void deleteAccount_blank_currentPassword() throws Exception {
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			mockMvc.perform(delete("/api/v1/accounts/aaaaaaaa")
-					.header("X-Reauth-Password", ""))
+			mockMvc.perform(post("/api/v1/accounts/aaaaaaaa/deletion")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(readJsonFile("delete_badrequest_blank_current_password.json")))
 				.andExpect(status().isBadRequest());
 
 			verify(accountService, times(0)).deleteAccount(any(AccountNo.class), any(AccountId.class), any(Password.class));
@@ -631,11 +634,13 @@ public class AccountRestControllerTest {
 
 		@Test
 		@Order(4)
-		@DisplayName("異常系：現在のパスワードヘッダーが無い場合は400を返すこと")
-		void deleteAccount_missing_currentPassword_header() throws Exception {
+		@DisplayName("異常系：現在のパスワードが未指定の場合は400を返すこと")
+		void deleteAccount_missing_currentPassword() throws Exception {
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
-			mockMvc.perform(delete("/api/v1/accounts/aaaaaaaa"))
+			mockMvc.perform(post("/api/v1/accounts/aaaaaaaa/deletion")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(readJsonFile("delete_badrequest_missing_current_password.json")))
 				.andExpect(status().isBadRequest());
 
 			verify(accountService, times(0)).deleteAccount(any(AccountNo.class), any(AccountId.class), any(Password.class));

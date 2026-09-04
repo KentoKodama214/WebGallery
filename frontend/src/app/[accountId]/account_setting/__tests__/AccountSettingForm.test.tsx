@@ -330,6 +330,50 @@ describe("AccountSettingForm", () => {
     ).toBeInTheDocument();
   });
 
+  it("クールダウン未満の失敗カウントも再マウントをまたいで維持されること", async () => {
+    mockUpdateAccount.mockRejectedValue(
+      new ApiError("現在のパスワードが正しくありません", 403)
+    );
+
+    const user = userEvent.setup();
+    const submitWrongPassword = async () => {
+      await user.clear(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"));
+      await user.type(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"), "newpassword1");
+      await user.clear(screen.getByLabelText("現在のパスワード"));
+      await user.type(screen.getByLabelText("現在のパスワード"), "wrongpass1");
+      await user.click(screen.getByRole("button", { name: "登録" }));
+      await waitFor(() => {
+        expect(
+          screen.getByText("現在のパスワードが正しくありません")
+        ).toBeInTheDocument();
+      });
+    };
+
+    const { unmount } = render(<AccountSettingForm accountId="testuser1" />);
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    // 2回失敗（クールダウン上限=3 には未達なのでクールダウン表示は出ない）
+    await submitWrongPassword();
+    await submitWrongPassword();
+    expect(
+      screen.queryByText(/しばらく待ってから再度お試しください/)
+    ).not.toBeInTheDocument();
+
+    // 再マウント後の1回でクールダウンに入る＝失敗カウント(2)が復元されている
+    unmount();
+    render(<AccountSettingForm accountId="testuser1" />);
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+    await submitWrongPassword();
+
+    expect(
+      await screen.findByText(/しばらく待ってから再度お試しください/)
+    ).toBeInTheDocument();
+  });
+
   it("アカウント名が空の場合にバリデーションエラーが表示されること", async () => {
     mockGetAccount.mockResolvedValue({
       ...mockAccountData,

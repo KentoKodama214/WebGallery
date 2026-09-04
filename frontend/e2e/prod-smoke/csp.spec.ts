@@ -30,14 +30,17 @@ for (const path of PUBLIC_PATHS) {
       if (CSP_VIOLATION_PATTERN.test(err.message)) violations.push(err.message);
     });
 
-    await page.goto(path, { waitUntil: "networkidle" });
+    // networkidle は AuthProvider がバックエンド不在の refresh をリトライする分だけ遅延しうるため
+    // load を待ち、CSS/スクリプト評価が落ち着くよう短く待機してから検証する
+    await page.goto(path, { waitUntil: "load" });
+    await page.waitForTimeout(500);
 
     expect(violations, `CSP 違反:\n${violations.join("\n")}`).toEqual([]);
   });
 }
 
 test("ログインページで Tailwind のスタイルが適用されること", async ({ page }) => {
-  await page.goto("/login", { waitUntil: "networkidle" });
+  await page.goto("/login", { waitUntil: "load" });
 
   const button = page.getByRole("button", { name: "Log in" });
   await expect(button).toBeVisible();

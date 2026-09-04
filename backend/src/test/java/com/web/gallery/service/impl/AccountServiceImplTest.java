@@ -218,6 +218,8 @@ public class AccountServiceImplTest {
 			verify(applicationEventPublisher, times(1)).publishEvent(accountUpdatedEventCaptor.capture());
 			assertEquals(new AccountNo(1L), accountUpdatedEventCaptor.getValue().accountNo());
 			assertEquals(new AccountId("aaaaaaaa"), accountUpdatedEventCaptor.getValue().accountId());
+			// 更新前アカウントが取得できない場合、previousAccountId は null（リスナー側で全消去にフォールバック）
+			assertNull(accountUpdatedEventCaptor.getValue().previousAccountId());
 		}
 
 		@Test
@@ -328,6 +330,12 @@ public class AccountServiceImplTest {
 			assertFalse(accountServiceImpl.updateAccount(accountModel, null));
 
 			verify(refreshTokenRepositoryImpl, times(1)).revokeAllByAccountNo(new AccountNo(1L));
+
+			// アカウントID変更時は新旧IDを載せ、リスナー側で新旧エントリを個別失効させる
+			ArgumentCaptor<AccountUpdatedEvent> eventCaptor = ArgumentCaptor.forClass(AccountUpdatedEvent.class);
+			verify(applicationEventPublisher, times(1)).publishEvent(eventCaptor.capture());
+			assertEquals(new AccountId("newaccountid"), eventCaptor.getValue().accountId());
+			assertEquals(new AccountId("oldaccountid"), eventCaptor.getValue().previousAccountId());
 		}
 
 		@Test

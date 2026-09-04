@@ -98,13 +98,20 @@ public class AuthenticatedUserCache {
 	 * プロフィール項目のみの更新でも発行されるイベントのため、全消去せず当該アカウントの
 	 * エントリ（新旧アカウントID）だけを個別に失効させる。これにより、あるユーザーの軽微な
 	 * プロフィール編集で認証ホットパスのキャッシュ全体が飛ぶのを防ぐ。
+	 * <p>
+	 * ただし更新前のアカウントIDが取得できなかった場合（{@code previousAccountId} がnull）は、
+	 * 旧IDのエントリを個別に失効させられないため、安全側に倒して全消去する。
 	 *
 	 * @param	event	{@link AccountUpdatedEvent}
 	 */
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void onAccountUpdated(AccountUpdatedEvent event) {
+		if (event.previousAccountId() == null) {
+			clear();
+			return;
+		}
 		evict(event.accountId() != null ? event.accountId().value() : null);
-		evict(event.previousAccountId() != null ? event.previousAccountId().value() : null);
+		evict(event.previousAccountId().value());
 	}
 
 	/**

@@ -7,18 +7,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.Consts;
+import com.web.gallery.controller.request.AccountDeleteRequest;
 import com.web.gallery.controller.request.AccountListRequest;
 import com.web.gallery.controller.request.AccountRegistRequest;
 import com.web.gallery.controller.request.AccountUpdateRequest;
@@ -57,16 +56,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Tag(name = "アカウント", description = "アカウント管理に関するAPI")
 public class AccountRestController {
-
-	/**
-	 * アカウント削除の本人確認に用いる「現在のパスワード」を受け取るリクエストヘッダー名<p>
-	 * DELETEリクエストのボディは一部のCDN・リバースプロキシ・WAFで破棄されることがあるため、
-	 * ボディではなくヘッダーで受け取る。
-	 */
-	private static final String REAUTH_PASSWORD_HEADER = "X-Reauth-Password";
-
-	/** 「現在のパスワード」の最大文字数（登録時のパスワード上限に合わせる） */
-	private static final int CURRENT_PASSWORD_MAX_LENGTH = 72;
 
 	private final AccountService accountService;
 	private final SessionHelper sessionHelper;
@@ -215,41 +204,44 @@ public class AccountRestController {
 	
 	/**
 	 * アカウント削除<p>
-	 * 本人確認に用いる「現在のパスワード」は、DELETEボディが中継経路で破棄されうるため
-	 * {@code X-Reauth-Password} ヘッダーで受け取る。
+	 * 本人確認に用いる「現在のパスワード」はリクエストボディ（JSON）で受け取る。
+	 * DELETEのボディは一部の中継経路で破棄されうること、および現在のパスワードのような機微情報を
+	 * アクセスログ・APM・WAF等に記録されやすいカスタムヘッダーに載せないことの両方を満たすため、
+	 * DELETEではなく {@code POST /api/v1/accounts/{accountId}/deletion} のサブリソースとして提供する。
 	 *
-	 * @param	accountId			アカウントID
-	 * @param	currentPassword		現在のパスワード（{@code X-Reauth-Password} ヘッダー）
-	 * @return						{@link ResponseEntity}
-	 * @throws	GalleryException	以下のいずれかに該当する場合
-	 *                          	・認証ユーザーと異なるアカウントIDの場合
-	 *                          	・現在のパスワードが未入力・上限超過の場合
-	 *                          	・現在のパスワードが一致しない場合
+	 * @param	accountId				アカウントID
+	 * @param	accountDeleteRequest	{@link AccountDeleteRequest}
+	 * @param	result					AccountDeleteRequestのバインディング結果
+	 * @return							{@link ResponseEntity}
+	 * @throws	GalleryException		以下のいずれかに該当する場合
+	 *                              	・認証ユーザーと異なるアカウントIDの場合
+	 *                              	・現在のパスワードが未入力・上限超過の場合
+	 *                              	・現在のパスワードが一致しない場合
 	 */
 	@Operation(summary = "アカウント削除", description = "現在のパスワードによる再認証のうえ、アカウントと関連データをすべて物理削除する")
 	@ApiResponse(responseCode = "200", description = "削除成功")
 	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
 	@ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定、または現在のパスワード不一致", content = @Content)
 	@SecurityRequirement(name = "Bearer")
-	@DeleteMapping(ApiRoutes.API_ACCOUNT)
+	@PostMapping(ApiRoutes.API_ACCOUNT_DELETION)
 	public ResponseEntity<Void> deleteAccount(
 			@PathVariable String accountId,
-			@RequestHeader(value = REAUTH_PASSWORD_HEADER, required = false) String currentPassword)
-			throws GalleryException {
+			@RequestBody @Validated AccountDeleteRequest accountDeleteRequest,
+			BindingResult result) throws GalleryException {
 
 		if (!accountId.equals(sessionHelper.getAccountId())) {
 			throw ErrorEnum.NOT_AUTHORIZED_TO_EDIT_ACCOUNT.toException();
 		}
 
-		if (currentPassword == null || currentPassword.isBlank()
-				|| currentPassword.length() > CURRENT_PASSWORD_MAX_LENGTH) {
+		if (result.hasErrors()) {
+			ValidationErrorLogger.logFieldErrors(log, result);
 			throw ErrorEnum.INVALID_INPUT.toException();
 		}
 
 		accountService.deleteAccount(
 				new AccountNo(sessionHelper.getAccountNo()),
 				new AccountId(accountId),
-				new Password(currentPassword));
+				new Password(accountDeleteRequest.getCurrentPassword()));
 
 		return ResponseEntity.ok().build();
 	}
