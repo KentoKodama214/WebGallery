@@ -816,8 +816,7 @@ public class AccountRestControllerIntegrationTest {
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + accountId)
-					.contentType(MediaType.APPLICATION_JSON)
-					.content("{\"currentPassword\":\"" + ACCOUNT1_PASSWORD + "\"}")
+					.header("X-Reauth-Password", ACCOUNT1_PASSWORD)
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
@@ -869,8 +868,7 @@ public class AccountRestControllerIntegrationTest {
 
 			mockMvc.perform(
 					delete("/api/v1/accounts/" + accountId)
-					.contentType(MediaType.APPLICATION_JSON)
-					.content("{\"currentPassword\":\"" + ACCOUNT1_PASSWORD + "\"}")
+					.header("X-Reauth-Password", ACCOUNT1_PASSWORD)
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)

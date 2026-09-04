@@ -268,6 +268,17 @@ describe("api/client", () => {
       expect(err).toBeInstanceOf(client.ApiError);
       expect(err.status).toBe(403);
     });
+
+    it("deleteAccount は現在のパスワードを X-Reauth-Password ヘッダーで送り、ボディは付けない", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({}, { status: 200 }));
+
+      await client.deleteAccount("me", "password01");
+
+      const [, init] = fetchMock.mock.calls.at(-1)!;
+      expect(init?.method).toBe("DELETE");
+      expect(new Headers(init?.headers).get("X-Reauth-Password")).toBe("password01");
+      expect(init?.body).toBeUndefined();
+    });
   });
 
   describe("不正なトークン応答の扱い", () => {

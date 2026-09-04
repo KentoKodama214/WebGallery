@@ -155,7 +155,11 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 		if (isPasswordChange || isAccountIdChanged) {
 			refreshTokenRepository.revokeAllByAccountNo(accountModel.getAccountNo());
 		}
-		applicationEventPublisher.publishEvent(new AccountUpdatedEvent(accountModel.getAccountNo(), accountModel.getAccountId()));
+		AccountId previousAccountId = currentAccount != null && currentAccount.getAccountId() != null
+				? currentAccount.getAccountId()
+				: accountModel.getAccountId();
+		applicationEventPublisher.publishEvent(
+				new AccountUpdatedEvent(accountModel.getAccountNo(), accountModel.getAccountId(), previousAccountId));
 		return false;
 	}
 
@@ -273,8 +277,13 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	 */
 	private void verifyCurrentPassword(AccountNo accountNo, AccountModel accountModel, Password currentPassword)
 			throws GalleryException {
-		if (reauthenticationThrottle.isLockedOut(accountNo.value())
-				|| (accountModel != null && isReauthLocked(accountModel))) {
+		boolean throttleLockedOut = reauthenticationThrottle.isLockedOut(accountNo.value());
+		if (throttleLockedOut || (accountModel != null && isReauthLocked(accountModel))) {
+			if (throttleLockedOut) {
+				// ロックアウト中の試行でも直近失敗時刻を更新し、ロックアウトをスライディングウィンドウにする
+				// （攻撃者がロックアウト中に叩き続けても解除時刻が伸びないのを防ぐ）
+				reauthenticationThrottle.recordFailure(accountNo.value());
+			}
 			log.info("Re-authentication blocked because the account is locked out. (accountNo: {})", accountNo.value());
 			throw ErrorEnum.CURRENT_PASSWORD_MISMATCH.toException();
 		}
@@ -290,7 +299,11 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 	}
 
 	/**
-	 * アカウントが再認証を通せないロック状態（ログイン失敗回数の上限到達、または管理者ロック）かどうかを判定する
+	 * アカウントが再認証を通せないロック状態（ログイン失敗回数の上限到達、または管理者ロック）かどうかを判定する<p>
+	 * 管理者ロック済み・ログイン不能のアカウントは、通常は{@link com.web.gallery.config.JwtAuthenticationFilter}が
+	 * アクセストークン検証時点で認証を拒否するため、この経路には到達しない。ただしフィルタの
+	 * プリンシパルキャッシュ（{@code app.auth.principal-cache-ttl-millis}）の反映猶予中や、ロック直前に
+	 * 発行され失効前のアクセストークンが残っているケースに備えた保険として、ここでも明示的に弾く。
 	 *
 	 * @param	accountModel	{@link AccountModel}
 	 * @return					ロック状態の場合true

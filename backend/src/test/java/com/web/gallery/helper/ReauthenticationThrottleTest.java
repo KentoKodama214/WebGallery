@@ -135,4 +135,42 @@ public class ReauthenticationThrottleTest {
 		// 直前の2回は失効しているため、まだロックアウトされない
 		assertFalse(throttle.isLockedOut(1L));
 	}
+
+	@Test
+	@DisplayName("ロックアウト中の試行を記録するとロックアウトが延長される（スライディングウィンドウ）")
+	void lockout_extends_on_attempt_during_lockout() {
+		ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+		throttle.recordFailure(1L);
+		throttle.recordFailure(1L);
+		throttle.recordFailure(1L);
+		assertTrue(throttle.isLockedOut(1L));
+
+		// ロックアウト中に10分後、さらに試行して失敗を記録する
+		clock.advanceMinutes(10);
+		throttle.recordFailure(1L);
+
+		// 最初の3回から15分経過してもなお、直近失敗から15分経っていないためロックアウト継続
+		clock.advanceMinutes(6);
+		assertTrue(throttle.isLockedOut(1L));
+
+		// 直近失敗から15分経過すると解除される
+		clock.advanceMinutes(9);
+		assertFalse(throttle.isLockedOut(1L));
+	}
+
+	@Test
+	@DisplayName("あるアカウントのロックアウトは他アカウントの失敗記録に影響されない")
+	void lockout_is_isolated_per_account() {
+		ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+		throttle.recordFailure(1L);
+		throttle.recordFailure(1L);
+		throttle.recordFailure(1L);
+		assertTrue(throttle.isLockedOut(1L));
+
+		for (int i = 0; i < 50; i++) {
+			throttle.recordFailure(100L + i);
+		}
+
+		assertTrue(throttle.isLockedOut(1L));
+	}
 }

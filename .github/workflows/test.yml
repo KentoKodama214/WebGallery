@@ -256,3 +256,40 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 7
+
+  e2e-prod-smoke:
+    name: 本番CSPスモークテスト
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: pnpmセットアップ
+        uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.15'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: フロントエンド依存パッケージインストール
+        run: cd frontend && pnpm install --frozen-lockfile
+
+      - name: Playwrightブラウザインストール
+        run: cd frontend && pnpm exec playwright install --with-deps chromium
+
+      - name: 本番ビルドに対するCSPスモークテスト実行
+        run: cd frontend && pnpm test:e2e:prod
+
+      - name: Playwrightレポートアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-prod-smoke
+          path: frontend/playwright-report/
+          retention-days: 7

@@ -597,8 +597,7 @@ public class AccountRestControllerTest {
 			doNothing().when(accountService).deleteAccount(eq(new AccountNo(1L)), eq(new AccountId(accountId)), any(Password.class));
 
 			mockMvc.perform(delete("/api/v1/accounts/" + accountId)
-					.contentType(MediaType.APPLICATION_JSON)
-					.content("{\"currentPassword\":\"password01\"}"))
+					.header("X-Reauth-Password", "password01"))
 				.andExpect(status().isOk());
 
 			verify(accountService, times(1)).deleteAccount(eq(new AccountNo(1L)), eq(new AccountId(accountId)), any(Password.class));
@@ -611,8 +610,7 @@ public class AccountRestControllerTest {
 			doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
 			mockMvc.perform(delete("/api/v1/accounts/aaaaaaaa")
-					.contentType(MediaType.APPLICATION_JSON)
-					.content("{\"currentPassword\":\"password01\"}"))
+					.header("X-Reauth-Password", "password01"))
 				.andExpect(status().isForbidden());
 
 			verify(accountService, times(0)).deleteAccount(any(AccountNo.class), any(AccountId.class), any(Password.class));
@@ -620,13 +618,24 @@ public class AccountRestControllerTest {
 
 		@Test
 		@Order(3)
-		@DisplayName("異常系：現在のパスワードが空欄の場合は400を返すこと")
+		@DisplayName("異常系：現在のパスワードヘッダーが空の場合は400を返すこと")
 		void deleteAccount_blank_currentPassword() throws Exception {
 			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
 			mockMvc.perform(delete("/api/v1/accounts/aaaaaaaa")
-					.contentType(MediaType.APPLICATION_JSON)
-					.content("{\"currentPassword\":\"\"}"))
+					.header("X-Reauth-Password", ""))
+				.andExpect(status().isBadRequest());
+
+			verify(accountService, times(0)).deleteAccount(any(AccountNo.class), any(AccountId.class), any(Password.class));
+		}
+
+		@Test
+		@Order(4)
+		@DisplayName("異常系：現在のパスワードヘッダーが無い場合は400を返すこと")
+		void deleteAccount_missing_currentPassword_header() throws Exception {
+			doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+
+			mockMvc.perform(delete("/api/v1/accounts/aaaaaaaa"))
 				.andExpect(status().isBadRequest());
 
 			verify(accountService, times(0)).deleteAccount(any(AccountNo.class), any(AccountId.class), any(Password.class));
