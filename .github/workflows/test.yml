@@ -69,6 +69,13 @@ jobs:
           name: unit-test-results
           path: backend/build/reports/tests/test/
 
+      - name: カバレッジ実行データアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-exec-unit
+          path: backend/build/jacoco/test.exec
+
   integration-test:
     name: 結合テスト
     needs: unit-test
@@ -139,6 +146,13 @@ jobs:
         with:
           name: integration-test-results
           path: backend/build/reports/tests/integrationTest/
+
+      - name: カバレッジ実行データアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-exec-integration
+          path: backend/build/jacoco/integrationTest.exec
 
   e2e-test:
     name: E2Eテスト
@@ -293,3 +307,52 @@ jobs:
           name: playwright-report-prod-smoke
           path: frontend/playwright-report/
           retention-days: 7
+
+  coverage-report:
+    name: カバレッジレポート
+    needs: [unit-test, integration-test]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: JDK 21 セットアップ
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Gradleキャッシュ
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: カバレッジ実行データダウンロード
+        uses: actions/download-artifact@v4
+        with:
+          pattern: jacoco-exec-*
+          path: backend/build/jacoco
+          merge-multiple: true
+
+      - name: 集約カバレッジレポート生成
+        run: ./backend/gradlew -p backend jacocoAggregateReport
+
+      - name: PRにカバレッジをコメント
+        uses: madrapps/jacoco-report@v1.8.0
+        with:
+          paths: backend/build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: バックエンドカバレッジ（単体＋結合）
+          update-comment: true
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
