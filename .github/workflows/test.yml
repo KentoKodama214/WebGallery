@@ -347,32 +347,27 @@ jobs:
       - name: カバレッジレポート生成（単体 / 結合 / 集約）
         run: ./backend/gradlew -p backend jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
-      - name: PRにカバレッジをコメント（単体）
-        uses: madrapps/jacoco-report@v1.8.0
-        with:
-          paths: backend/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: バックエンドカバレッジ（単体テスト）
-          update-comment: true
-          min-coverage-overall: 0
-          min-coverage-changed-files: 0
+      - name: カバレッジ集計表を生成
+        run: |
+          python3 .github/scripts/jacoco_coverage_table.py \
+            "単体＋結合=backend/build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml" \
+            "単体テスト=backend/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml" \
+            "結合テスト=backend/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml" \
+            > coverage-table.md
+          cat coverage-table.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: PRにカバレッジをコメント（結合）
-        uses: madrapps/jacoco-report@v1.8.0
-        with:
-          paths: backend/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: バックエンドカバレッジ（結合テスト）
-          update-comment: true
-          min-coverage-overall: 0
-          min-coverage-changed-files: 0
-
-      - name: PRにカバレッジをコメント（単体＋結合）
-        uses: madrapps/jacoco-report@v1.8.0
-        with:
-          paths: backend/build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: バックエンドカバレッジ（単体＋結合）
-          update-comment: true
-          min-coverage-overall: 0
-          min-coverage-changed-files: 0
+      - name: PRにカバレッジを単一コメントで投稿
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          MARKER: "<!-- jacoco-coverage-report -->"
+        run: |
+          { echo "$MARKER"; cat coverage-table.md; } > coverage-comment.md
+          COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq "map(select(.body | startswith(\"${MARKER}\"))) | (last | .id) // empty" | tail -n 1)
+          if [ -n "$COMMENT_ID" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${COMMENT_ID}" -F body=@coverage-comment.md
+          else
+            gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -F body=@coverage-comment.md
+          fi

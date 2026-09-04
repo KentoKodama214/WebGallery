@@ -80,12 +80,14 @@ E2Eテストは `next dev` で起動するため、本番でのみ付与され�
 
 ### カバレッジレポート (`test.yml` - `coverage-report`)
 
-単体テスト・結合テストの各ジョブがアップロードしたJaCoCoの実行データ（`test.exec` / `integrationTest.exec`）をダウンロードし、以下の3種類のレポートを生成する。
+単体テスト・結合テストの各ジョブがアップロードしたJaCoCoの実行データ（`test.exec` / `integrationTest.exec`）をダウンロードし、以下の3種類のレポート（XML/HTML）を生成する。
 
-| レポート | Gradleタスク | 対象 | PRコメントのタイトル |
-|---|---|---|---|
-| 単体テスト | `jacocoUnitReport` | `test.exec` のみ | バックエンドカバレッジ（単体テスト） |
-| 結合テスト | `jacocoIntegrationReport` | `integrationTest.exec` のみ | バックエンドカバレッジ（結合テスト） |
-| 単体＋結合 | `jacocoAggregateReport` | `build/jacoco/*.exec` 全体 | バックエンドカバレッジ（単体＋結合） |
+| レポート | Gradleタスク | 対象 |
+|---|---|---|
+| 単体テスト | `jacocoUnitReport` | `test.exec` のみ |
+| 結合テスト | `jacocoIntegrationReport` | `integrationTest.exec` のみ |
+| 単体＋結合 | `jacocoAggregateReport` | `build/jacoco/*.exec` 全体 |
 
-各レポートのXMLを `madrapps/jacoco-report` に渡し、それぞれ独立したコメントとしてPRに投稿する（`title` ごとに既存コメントを更新）。単体テストと結合テストの両方が成功した場合のみ実行される。しきい値による失敗は設定していない（可視化のみ）。
+生成した3つのXMLを `.github/scripts/jacoco_coverage_table.py` で解析し、3行（単体＋結合／単体／結合）×各カバレッジ指標（命令・分岐・行・メソッド・クラス）のMarkdown表を作成する。その表を **1つのPRコメント**として投稿し（`<!-- jacoco-coverage-report -->` マーカーで既存コメントを検索し、あればGitHub API経由で更新、なければ新規作成）、同じ内容をジョブサマリーにも出力する。
+
+単体テストと結合テストの両方が成功した場合のみ実行される。しきい値による失敗は設定していない（可視化のみ）。外部Actionは使用せず、`gh` CLI と Python 標準ライブラリのみで完結する。
