@@ -80,4 +80,12 @@ E2Eテストは `next dev` で起動するため、本番でのみ付与され�
 
 ### カバレッジレポート (`test.yml` - `coverage-report`)
 
-単体テスト・結合テストの各ジョブがアップロードしたJaCoCoの実行データ（`test.exec` / `integrationTest.exec`）をダウンロードし、`./gradlew jacocoAggregateReport` で1つのレポートに集約する。生成したXMLを `madrapps/jacoco-report` に渡し、バックエンド全体および変更ファイルのカバレッジ率をPRにコメントする（同一PR内では既存コメントを更新）。単体テストと結合テストの両方が成功した場合のみ実行される。しきい値による失敗は設定していない（可視化のみ）。
+単体テスト・結合テストの各ジョブがアップロードしたJaCoCoの実行データ（`test.exec` / `integrationTest.exec`）をダウンロードし、以下の3種類のレポートを生成する。
+
+| レポート | Gradleタスク | 対象 | PRコメントのタイトル |
+|---|---|---|---|
+| 単体テスト | `jacocoUnitReport` | `test.exec` のみ | バックエンドカバレッジ（単体テスト） |
+| 結合テスト | `jacocoIntegrationReport` | `integrationTest.exec` のみ | バックエンドカバレッジ（結合テスト） |
+| 単体＋結合 | `jacocoAggregateReport` | `build/jacoco/*.exec` 全体 | バックエンドカバレッジ（単体＋結合） |
+
+各レポートのXMLを `madrapps/jacoco-report` に渡し、それぞれ独立したコメントとしてPRに投稿する（`title` ごとに既存コメントを更新）。単体テストと結合テストの両方が成功した場合のみ実行される。しきい値による失敗は設定していない（可視化のみ）。

@@ -99,26 +99,31 @@ tasks.register('generateModulithDocs', Test) {
 	include '**/ModulithDocumentationTest*'
 }
 
-// 単体テスト（test）と結合テスト（integrationTest）のカバレッジ実行データ（*.exec）を
-// まとめて1つのレポートに集約する。CIでは各テストジョブが生成した .exec を
-// build/jacoco/ に集めてからこのタスクを実行する。
-tasks.register('jacocoAggregateReport', JacocoReport) {
-	description = '単体テストと結合テストのカバレッジを集約してレポートを生成する'
-	group = 'verification'
-	dependsOn 'classes'
-	// テストは実行を強制しない（CIでは各ジョブが生成した .exec を配置してから実行するため）。
-	// ただし同一ビルド内でテストと同時に指定された場合は必ずテストの後に実行する。
-	mustRunAfter tasks.withType(Test)
+// build/jacoco/ 配下のカバレッジ実行データ（*.exec）からカバレッジレポート（XML/HTML）を
+// 生成するタスクを登録する。CIでは各テストジョブが生成した .exec を build/jacoco/ に集めてから
+// これらのタスクを実行するため、テスト自体の実行は強制しない（同一ビルド内で同時指定された
+// 場合のみ mustRunAfter で順序を保証する）。存在しない .exec は空として扱う。
+def registerJacocoReport = { String name, String desc, String execPattern ->
+	tasks.register(name, JacocoReport) {
+		description = desc
+		group = 'verification'
+		dependsOn 'classes'
+		mustRunAfter tasks.withType(Test)
 
-	executionData.setFrom(fileTree(layout.buildDirectory).include('jacoco/*.exec'))
-	sourceDirectories.setFrom(files(sourceSets.main.java.srcDirs))
-	classDirectories.setFrom(files(sourceSets.main.output))
+		executionData.setFrom(fileTree(layout.buildDirectory).include(execPattern))
+		sourceDirectories.setFrom(files(sourceSets.main.java.srcDirs))
+		classDirectories.setFrom(files(sourceSets.main.output))
 
-	reports {
-		xml.required = true
-		html.required = true
+		reports {
+			xml.required = true
+			html.required = true
+		}
 	}
 }
+
+registerJacocoReport('jacocoUnitReport', '単体テストのみのカバレッジレポートを生成する', 'jacoco/test.exec')
+registerJacocoReport('jacocoIntegrationReport', '結合テストのみのカバレッジレポートを生成する', 'jacoco/integrationTest.exec')
+registerJacocoReport('jacocoAggregateReport', '単体テストと結合テストのカバレッジを集約してレポートを生成する', 'jacoco/*.exec')
 
 jig {
 	modelPattern = 'com\\.web\\.gallery\\..*'

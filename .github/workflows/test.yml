@@ -344,10 +344,30 @@ jobs:
           path: backend/build/jacoco
           merge-multiple: true
 
-      - name: 集約カバレッジレポート生成
-        run: ./backend/gradlew -p backend jacocoAggregateReport
+      - name: カバレッジレポート生成（単体 / 結合 / 集約）
+        run: ./backend/gradlew -p backend jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
-      - name: PRにカバレッジをコメント
+      - name: PRにカバレッジをコメント（単体）
+        uses: madrapps/jacoco-report@v1.8.0
+        with:
+          paths: backend/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: バックエンドカバレッジ（単体テスト）
+          update-comment: true
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
+
+      - name: PRにカバレッジをコメント（結合）
+        uses: madrapps/jacoco-report@v1.8.0
+        with:
+          paths: backend/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: バックエンドカバレッジ（結合テスト）
+          update-comment: true
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
+
+      - name: PRにカバレッジをコメント（単体＋結合）
         uses: madrapps/jacoco-report@v1.8.0
         with:
           paths: backend/build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml
