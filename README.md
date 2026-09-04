@@ -211,6 +211,12 @@ just dev
 # 全テストの実行（要Docker）
 ./backend/gradlew -p backend allTest
 
+# カバレッジレポートの生成（要Docker）
+#   単体のみ:   build/reports/jacoco/jacocoUnitReport/html/index.html
+#   結合のみ:   build/reports/jacoco/jacocoIntegrationReport/html/index.html
+#   単体＋結合: build/reports/jacoco/jacocoAggregateReport/html/index.html
+./backend/gradlew -p backend test integrationTest jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
+
 # WARファイルの生成
 ./backend/gradlew -p backend war
 
@@ -299,7 +305,7 @@ WebGallery/
 │   └── workflows
 │       ├── architecture-check.yml  # アーキテクチャチェックのGithub Action
 │       ├── checkstyle.yml          # CheckstyleによるJavadocチェックのGithub Action
-│       └── test.yml                # テスト実行のGithub Action
+│       └── test.yml                # テスト実行・カバレッジレポート（JaCoCo）のGithub Action
 ├── docker-compose.yml
 ├── docker/
 │   ├── db/                        # DBイメージ用Dockerfile

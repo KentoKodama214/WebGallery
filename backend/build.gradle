@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'war'
 	id 'checkstyle'
+	id 'jacoco'
 	id 'org.springframework.boot' version '4.0.6'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'org.dddjava.jig-gradle-plugin' version '2026.5.4'
@@ -10,6 +11,10 @@ plugins {
 checkstyle {
 	toolVersion = '10.21.4'
 	configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+}
+
+jacoco {
+	toolVersion = '0.8.13'
 }
 
 checkstyleTest.enabled = false
@@ -93,6 +98,32 @@ tasks.register('generateModulithDocs', Test) {
 	useJUnitPlatform()
 	include '**/ModulithDocumentationTest*'
 }
+
+// build/jacoco/ 配下のカバレッジ実行データ（*.exec）からカバレッジレポート（XML/HTML）を
+// 生成するタスクを登録する。CIでは各テストジョブが生成した .exec を build/jacoco/ に集めてから
+// これらのタスクを実行するため、テスト自体の実行は強制しない（同一ビルド内で同時指定された
+// 場合のみ mustRunAfter で順序を保証する）。存在しない .exec は空として扱う。
+def registerJacocoReport = { String name, String desc, String execPattern ->
+	tasks.register(name, JacocoReport) {
+		description = desc
+		group = 'verification'
+		dependsOn 'classes'
+		mustRunAfter tasks.withType(Test)
+
+		executionData.setFrom(fileTree(layout.buildDirectory).include(execPattern))
+		sourceDirectories.setFrom(files(sourceSets.main.java.srcDirs))
+		classDirectories.setFrom(files(sourceSets.main.output))
+
+		reports {
+			xml.required = true
+			html.required = true
+		}
+	}
+}
+
+registerJacocoReport('jacocoUnitReport', '単体テストのみのカバレッジレポートを生成する', 'jacoco/test.exec')
+registerJacocoReport('jacocoIntegrationReport', '結合テストのみのカバレッジレポートを生成する', 'jacoco/integrationTest.exec')
+registerJacocoReport('jacocoAggregateReport', '単体テストと結合テストのカバレッジを集約してレポートを生成する', 'jacoco/*.exec')
 
 jig {
 	modelPattern = 'com\\.web\\.gallery\\..*'

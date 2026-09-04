@@ -69,6 +69,13 @@ jobs:
           name: unit-test-results
           path: backend/build/reports/tests/test/
 
+      - name: カバレッジ実行データアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-exec-unit
+          path: backend/build/jacoco/test.exec
+
   integration-test:
     name: 結合テスト
     needs: unit-test
@@ -139,6 +146,13 @@ jobs:
         with:
           name: integration-test-results
           path: backend/build/reports/tests/integrationTest/
+
+      - name: カバレッジ実行データアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-exec-integration
+          path: backend/build/jacoco/integrationTest.exec
 
   e2e-test:
     name: E2Eテスト
@@ -293,3 +307,67 @@ jobs:
           name: playwright-report-prod-smoke
           path: frontend/playwright-report/
           retention-days: 7
+
+  coverage-report:
+    name: カバレッジレポート
+    needs: [unit-test, integration-test]
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+
+      - name: JDK 21 セットアップ
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Gradleキャッシュ
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: カバレッジ実行データダウンロード
+        uses: actions/download-artifact@v4
+        with:
+          pattern: jacoco-exec-*
+          path: backend/build/jacoco
+          merge-multiple: true
+
+      - name: カバレッジレポート生成（単体 / 結合 / 集約）
+        run: ./backend/gradlew -p backend jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
+
+      - name: カバレッジ集計表を生成
+        run: |
+          python3 .github/scripts/jacoco_coverage_table.py \
+            "単体＋結合=backend/build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml" \
+            "単体テスト=backend/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml" \
+            "結合テスト=backend/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml" \
+            > coverage-table.md
+          cat coverage-table.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: PRにカバレッジを単一コメントで投稿
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          MARKER: "<!-- jacoco-coverage-report -->"
+        run: |
+          { echo "$MARKER"; cat coverage-table.md; } > coverage-comment.md
+          COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq "map(select(.body | startswith(\"${MARKER}\"))) | (last | .id) // empty" | tail -n 1)
+          if [ -n "$COMMENT_ID" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${COMMENT_ID}" -F body=@coverage-comment.md
+          else
+            gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -F body=@coverage-comment.md
+          fi
