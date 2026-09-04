@@ -31,9 +31,9 @@ for (const path of PUBLIC_PATHS) {
     });
 
     // networkidle は AuthProvider がバックエンド不在の refresh をリトライする分だけ遅延しうるため
-    // load を待ち、CSS/スクリプト評価が落ち着くよう短く待機してから検証する
+    // load を待ち、フォームの描画完了（＝CSS/スクリプトの評価が一巡した決定的なシグナル）を待ってから検証する
     await page.goto(path, { waitUntil: "load" });
-    await page.waitForTimeout(500);
+    await page.locator("form").first().waitFor({ state: "visible" });
 
     expect(violations, `CSP 違反:\n${violations.join("\n")}`).toEqual([]);
   });

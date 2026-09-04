@@ -173,4 +173,27 @@ public class ReauthenticationThrottleTest {
 
 		assertTrue(throttle.isLockedOut(1L));
 	}
+
+	@Test
+	@DisplayName("エントリ数が上限に達しても間引きは例外なく完了し、ロックアウト中のアカウントは巻き添えにしない")
+	void eviction_over_capacity_completes_without_error_and_keeps_locked_out_entries() {
+		ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+
+		// 被害者アカウントを先にロックアウト状態にしておく
+		throttle.recordFailure(999_999L);
+		throttle.recordFailure(999_999L);
+		throttle.recordFailure(999_999L);
+		assertTrue(throttle.isLockedOut(999_999L));
+
+		// エントリ数の上限（10万）を超えるまで新規アカウントの失敗を積む。
+		// 間引き（全走査＋スナップショットソート）が Comparator 契約違反の例外を出さずに完了すること。
+		assertDoesNotThrow(() -> {
+			for (long accountNo = 1L; accountNo <= 100_005L; accountNo++) {
+				throttle.recordFailure(accountNo);
+			}
+		});
+
+		// 間引きが起きても、ロックアウト中の被害者アカウントは削除されない
+		assertTrue(throttle.isLockedOut(999_999L));
+	}
 }

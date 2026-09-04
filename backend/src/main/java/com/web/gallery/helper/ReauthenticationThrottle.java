@@ -59,6 +59,19 @@ public class ReauthenticationThrottle {
 	}
 
 	/**
+	 * 間引き対象を並べ替えるためのイミュータブルなスナップショット<p>
+	 * {@link Attempt} の可変フィールドをソート中に直接読むと、別スレッドの更新で比較結果が
+	 * 揺れて {@code Comparator} 契約違反（{@code TimSort} の例外）になりうるため、
+	 * 並べ替えに必要な値をモニタ下で1度だけ写し取ってからソートする。
+	 *
+	 * @param	accountNo			アカウント番号
+	 * @param	lockedOutOrder		ロックアウト中なら1、そうでなければ0（0を先に間引く）
+	 * @param	lastFailureAtMillis	直近失敗時刻（エポックミリ秒）
+	 */
+	private record EvictionCandidate(long accountNo, int lockedOutOrder, long lastFailureAtMillis) {
+	}
+
+	/**
 	 * コンストラクタ
 	 *
 	 * @param	maxFailures		ロックアウトする失敗回数の上限（0以下で機能無効）
@@ -102,6 +115,9 @@ public class ReauthenticationThrottle {
 	/**
 	 * 再認証の失敗を1回記録する<p>
 	 * ロックアウト中の試行に対しても呼び出してよい（直近失敗時刻が更新され、ロックアウトが延長される）。
+	 * <p>
+	 * エントリ数が上限に達しており、かつ間引きが追いついていない場合は、既存アカウントの失敗のみ
+	 * 数え、新規アカウントのエントリは追加しない（上限を実質的なハードリミットとして守る）。
 	 *
 	 * @param	accountNo	アカウント番号
 	 */
@@ -110,7 +126,15 @@ public class ReauthenticationThrottle {
 			return;
 		}
 		evictIfOverCapacity();
-		Attempt attempt = attempts.computeIfAbsent(accountNo, key -> new Attempt());
+		Attempt attempt = attempts.get(accountNo);
+		if (attempt == null) {
+			if (attempts.size() >= MAX_ENTRIES) {
+				// 上限超過中は新規エントリを追加しない。入口の login_failure_count / 管理者ロック判定と
+				// BCrypt 照合律速が引き続き総当たりを抑止する。
+				return;
+			}
+			attempt = attempts.computeIfAbsent(accountNo, key -> new Attempt());
+		}
 		synchronized (attempt) {
 			long current = now();
 			// 前回失敗からロックアウト時間以上あいていれば、カウントをリセットして数え直す
@@ -141,7 +165,8 @@ public class ReauthenticationThrottle {
 	 * 全消去は行わない（上限到達の瞬間にロックアウト中の全アカウントが一斉解除されるのを防ぐため）。
 	 * <p>
 	 * 上限到達時に多数のスレッドが同時に入っても全走査＋ソートは
-	 * {@code EVICTION_MIN_INTERVAL_MILLIS} に1回だけ実行する。
+	 * {@code EVICTION_MIN_INTERVAL_MILLIS} に1回だけ実行する。間引きが追いつかない間は
+	 * {@code recordFailure} が新規エントリの追加を見送るため、エントリ数は上限付近で頭打ちになる。
 	 */
 	private void evictIfOverCapacity() {
 		if (attempts.size() < MAX_ENTRIES) {
@@ -168,37 +193,19 @@ public class ReauthenticationThrottle {
 		if (evictCount <= 0) {
 			return;
 		}
+		// ソート中に別スレッドが Attempt を更新しても Comparator 契約違反にならないよう、
+		// 並べ替えキーをモニタ下で1度だけスナップショットしてからソートする
 		attempts.entrySet().stream()
-				.sorted(Comparator
-						.comparingInt((Map.Entry<Long, Attempt> entry) -> isLockedOutEntry(entry.getValue()) ? 1 : 0)
-						.thenComparingLong(entry -> lastFailureAt(entry.getValue())))
+				.map(entry -> {
+					synchronized (entry.getValue()) {
+						int order = entry.getValue().count >= maxFailures && !isExpired(entry.getValue()) ? 1 : 0;
+						return new EvictionCandidate(entry.getKey(), order, entry.getValue().lastFailureAtMillis);
+					}
+				})
+				.sorted(Comparator.comparingInt(EvictionCandidate::lockedOutOrder)
+						.thenComparingLong(EvictionCandidate::lastFailureAtMillis))
 				.limit(evictCount)
-				.map(Map.Entry::getKey)
-				.forEach(attempts::remove);
-	}
-
-	/**
-	 * エントリの直近失敗時刻をモニタ下で読み取る
-	 *
-	 * @param	attempt	{@link Attempt}
-	 * @return			直近失敗時刻（エポックミリ秒）
-	 */
-	private long lastFailureAt(Attempt attempt) {
-		synchronized (attempt) {
-			return attempt.lastFailureAtMillis;
-		}
-	}
-
-	/**
-	 * エントリが現在ロックアウト中（失敗回数が上限以上かつ未期限切れ）かどうかをモニタ下で判定する
-	 *
-	 * @param	attempt	{@link Attempt}
-	 * @return			ロックアウト中の場合true
-	 */
-	private boolean isLockedOutEntry(Attempt attempt) {
-		synchronized (attempt) {
-			return attempt.count >= maxFailures && !isExpired(attempt);
-		}
+				.forEach(candidate -> attempts.remove(candidate.accountNo()));
 	}
 
 	/**

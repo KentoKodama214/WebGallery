@@ -20,10 +20,11 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "pnpm build && pnpm start",
+    // CI では事前ステップで `pnpm build` 済みのため起動のみ。ローカルはビルドから行う。
+    command: process.env.CI ? "pnpm start" : "pnpm build && pnpm start",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
-    // CI のコールドビルド（next build）は数分かかることがあるため長めに取る
+    // ローカルのコールドビルド（next build）を含めても足りるよう長めに取る
     timeout: 300_000,
   },
 });
