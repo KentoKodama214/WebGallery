@@ -36,11 +36,21 @@ public class ReauthenticationThrottle {
 	private static final int EVICTION_KEEP_RATIO_NUMERATOR = 9;
 	private static final int EVICTION_KEEP_RATIO_DENOMINATOR = 10;
 
+	/**
+	 * 間引き処理（全走査＋ソート）の最短実行間隔（ミリ秒）<p>
+	 * 上限到達時に多数のスレッドが同時に {@code recordFailure} へ入っても、
+	 * 全走査＋ソートを1回だけ行い、残りのスレッドはスキップさせる（thundering herd 対策）。
+	 */
+	private static final long EVICTION_MIN_INTERVAL_MILLIS = 1_000L;
+
 	private final int maxFailures;
 	private final long lockoutMillis;
 	private final Clock clock;
 
 	private final Map<Long, Attempt> attempts = new ConcurrentHashMap<>();
+
+	/** 直近に間引き処理を実行した時刻（エポックミリ秒）。0は未実行 */
+	private volatile long lastEvictionAtMillis;
 
 	/** アカウント単位の失敗記録（失敗回数と、直近の失敗時刻） */
 	private static final class Attempt {
@@ -123,14 +133,27 @@ public class ReauthenticationThrottle {
 
 	/**
 	 * エントリ数が上限に達している場合、まず期限切れエントリを掃き出し、
-	 * それでも上限のままなら直近失敗時刻が古い順に間引く<p>
-	 * 全消去は行わない（全消去すると、上限到達の瞬間にロックアウト中の全アカウントが
-	 * 一斉に解除され、失敗枠を意図的に膨らませてロックアウトを流す増幅経路になるため）。
+	 * それでも上限のままなら間引く<p>
+	 * 間引きの順序は「ロックアウト中でないエントリを、直近失敗時刻が古い順に」優先する。
+	 * ロックアウト中（{@code count >= maxFailures} かつ未期限切れ）のエントリは、
+	 * 他に間引ける候補が尽きた場合の最後の手段としてのみ対象にする
+	 * （攻撃者が大量アカウントの失敗枠を膨らませて被害者のロックアウトを流すのを防ぐ）。
+	 * 全消去は行わない（上限到達の瞬間にロックアウト中の全アカウントが一斉解除されるのを防ぐため）。
+	 * <p>
+	 * 上限到達時に多数のスレッドが同時に入っても全走査＋ソートは
+	 * {@code EVICTION_MIN_INTERVAL_MILLIS} に1回だけ実行する。
 	 */
 	private void evictIfOverCapacity() {
 		if (attempts.size() < MAX_ENTRIES) {
 			return;
 		}
+		long current = now();
+		if (current - lastEvictionAtMillis < EVICTION_MIN_INTERVAL_MILLIS) {
+			// 直近で間引き済み。多数スレッドの同時流入時は1回に集約する
+			return;
+		}
+		lastEvictionAtMillis = current;
+
 		// まず期限切れを掃除する
 		attempts.forEach((key, attempt) -> {
 			synchronized (attempt) {
@@ -139,14 +162,16 @@ public class ReauthenticationThrottle {
 				}
 			}
 		});
-		// なお上限を超えるなら、直近失敗が古い順に一定数を間引く
+		// なお上限を超えるなら、ロックアウト中でないものを古い順に間引く（足りなければロックアウト中も対象）
 		int keepCount = MAX_ENTRIES / EVICTION_KEEP_RATIO_DENOMINATOR * EVICTION_KEEP_RATIO_NUMERATOR;
 		int evictCount = attempts.size() - keepCount;
 		if (evictCount <= 0) {
 			return;
 		}
 		attempts.entrySet().stream()
-				.sorted(Comparator.comparingLong((Map.Entry<Long, Attempt> entry) -> lastFailureAt(entry.getValue())))
+				.sorted(Comparator
+						.comparingInt((Map.Entry<Long, Attempt> entry) -> isLockedOutEntry(entry.getValue()) ? 1 : 0)
+						.thenComparingLong(entry -> lastFailureAt(entry.getValue())))
 				.limit(evictCount)
 				.map(Map.Entry::getKey)
 				.forEach(attempts::remove);
@@ -161,6 +186,18 @@ public class ReauthenticationThrottle {
 	private long lastFailureAt(Attempt attempt) {
 		synchronized (attempt) {
 			return attempt.lastFailureAtMillis;
+		}
+	}
+
+	/**
+	 * エントリが現在ロックアウト中（失敗回数が上限以上かつ未期限切れ）かどうかをモニタ下で判定する
+	 *
+	 * @param	attempt	{@link Attempt}
+	 * @return			ロックアウト中の場合true
+	 */
+	private boolean isLockedOutEntry(Attempt attempt) {
+		synchronized (attempt) {
+			return attempt.count >= maxFailures && !isExpired(attempt);
 		}
 	}
 

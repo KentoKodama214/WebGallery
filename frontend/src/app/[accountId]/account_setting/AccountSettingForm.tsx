@@ -115,7 +115,12 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   // 初期値を sessionStorage から読んでもハイドレーション不整合は起きない。
   const [reauthState, setReauthState] = useState<ReauthState>(() => {
     const saved = loadReauthState(accountId);
-    return saved.cooldownUntil > Date.now() ? saved : EMPTY_REAUTH_STATE;
+    // 期限切れのクールダウンは 0 に戻すが、失敗カウント自体は保持する
+    // （再マウント・画面遷移をまたいでも「あと何回で一時停止か」を維持する）
+    return {
+      failCount: saved.failCount,
+      cooldownUntil: saved.cooldownUntil > Date.now() ? saved.cooldownUntil : 0,
+    };
   });
   const reauthCooldownUntil = reauthState.cooldownUntil;
   const [now, setNow] = useState(() => Date.now());
@@ -221,20 +226,26 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
    * （バックエンドのアカウントロックとは別の、連打抑止のための多層防御）
    */
   const recordReauthFailure = () => {
-    const failCount = reauthState.failCount + 1;
-    const cooldownUntil =
-      failCount >= REAUTH_MAX_ATTEMPTS ? Date.now() + REAUTH_COOLDOWN_MS : 0;
-    const next: ReauthState = { failCount, cooldownUntil };
-    saveReauthState(accountId, next);
-    setReauthState(next);
-    if (cooldownUntil) setNow(Date.now());
+    setReauthState((prev) => {
+      const failCount = prev.failCount + 1;
+      // 上限に達したらクールダウンを設定し、失敗カウントは 0 に戻す
+      // （クールダウン明けは再び上限回数まで試行でき、「単発失敗ごとに即クールダウン」にならない）
+      return failCount >= REAUTH_MAX_ATTEMPTS
+        ? { failCount: 0, cooldownUntil: Date.now() + REAUTH_COOLDOWN_MS }
+        : { failCount, cooldownUntil: 0 };
+    });
+    setNow(Date.now());
   };
 
   /** 再認証成功時にクライアント側の失敗カウンタ・クールダウンをリセットする */
   const resetReauthState = () => {
-    saveReauthState(accountId, EMPTY_REAUTH_STATE);
     setReauthState(EMPTY_REAUTH_STATE);
   };
+
+  // 再認証クールダウン状態の変化を sessionStorage へ書き戻す（再マウント・画面遷移をまたいで維持する）
+  useEffect(() => {
+    saveReauthState(accountId, reauthState);
+  }, [accountId, reauthState]);
 
   /**
    * 登録する

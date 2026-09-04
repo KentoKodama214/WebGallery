@@ -375,18 +375,23 @@ export async function getAccount(accountId: string): Promise<AccountDetail> {
 /**
  * アカウントを削除する
  *
- * 本人確認のための現在のパスワードは `X-Reauth-Password` ヘッダーで送る。DELETE のボディは
- * 一部の CDN・リバースプロキシ・WAF で破棄されることがあり、破棄されるとバックエンドで
- * currentPassword 未入力として 400 になるため、確実に透過するヘッダーを用いる。
+ * 本人確認のための現在のパスワードはリクエストボディ（JSON）で送る。
+ * DELETE のボディは一部の CDN・リバースプロキシ・WAF で破棄されうること、および
+ * 現在のパスワードのような機微情報をアクセスログ等に記録されやすいカスタムヘッダーに
+ * 載せないことの両方を満たすため、`POST /api/v1/accounts/{id}/deletion` を呼び出す。
  */
 export async function deleteAccount(
   accountId: string,
   currentPassword: string
 ): Promise<void> {
-  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}`, {
-    method: "DELETE",
-    headers: { "X-Reauth-Password": currentPassword },
-  });
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/deletion`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword }),
+    }
+  );
   if (!response.ok) {
     throw new ApiError(
       await readErrorMessage(response, "アカウントの削除に失敗しました"),

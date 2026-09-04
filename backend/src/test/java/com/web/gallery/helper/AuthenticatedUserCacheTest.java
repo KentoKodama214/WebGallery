@@ -148,5 +148,28 @@ public class AuthenticatedUserCacheTest {
 
 			assertEquals(4, calls.get(), "新旧どちらのアカウントIDのエントリも失効している");
 		}
+
+		@Test
+		@DisplayName("更新前アカウントIDが不明（previousAccountId=null）の場合は安全側に倒して全消去する")
+		void clears_all_when_previous_account_id_unknown() {
+			AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
+			AtomicInteger calls = new AtomicInteger();
+			Supplier<AccountPrincipal> loader = () -> {
+				calls.incrementAndGet();
+				return principal();
+			};
+
+			cache.get("aaaaaaaa", loader);
+			cache.get("bbbbbbbb", loader);
+			assertEquals(2, calls.get());
+
+			cache.onAccountUpdated(new AccountUpdatedEvent(
+					new AccountNo(1L), new AccountId("aaaaaaaa"), null));
+
+			cache.get("aaaaaaaa", loader);
+			cache.get("bbbbbbbb", loader);
+
+			assertEquals(4, calls.get(), "旧IDを個別失効できないため全消去され、両アカウントで loader が再度呼ばれる");
+		}
 	}
 }

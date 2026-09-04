@@ -269,15 +269,16 @@ describe("api/client", () => {
       expect(err.status).toBe(403);
     });
 
-    it("deleteAccount は現在のパスワードを X-Reauth-Password ヘッダーで送り、ボディは付けない", async () => {
+    it("deleteAccount は POST /deletion で現在のパスワードを JSON ボディで送る", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({}, { status: 200 }));
 
       await client.deleteAccount("me", "password01");
 
-      const [, init] = fetchMock.mock.calls.at(-1)!;
-      expect(init?.method).toBe("DELETE");
-      expect(new Headers(init?.headers).get("X-Reauth-Password")).toBe("password01");
-      expect(init?.body).toBeUndefined();
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/deletion");
+      expect(init?.method).toBe("POST");
+      expect(new Headers(init?.headers).get("Content-Type")).toBe("application/json");
+      expect(JSON.parse(init?.body as string)).toEqual({ currentPassword: "password01" });
     });
   });
 

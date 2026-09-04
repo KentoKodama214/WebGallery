@@ -815,8 +815,9 @@ public class AccountRestControllerIntegrationTest {
 					accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
-					delete("/api/v1/accounts/" + accountId)
-					.header("X-Reauth-Password", ACCOUNT1_PASSWORD)
+					post("/api/v1/accounts/" + accountId + "/deletion")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(readJsonFile("delete_account.json"))
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)
@@ -867,8 +868,9 @@ public class AccountRestControllerIntegrationTest {
 					accountPrincipal, null, accountPrincipal.getAuthorities());
 
 			mockMvc.perform(
-					delete("/api/v1/accounts/" + accountId)
-					.header("X-Reauth-Password", ACCOUNT1_PASSWORD)
+					post("/api/v1/accounts/" + accountId + "/deletion")
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(readJsonFile("delete_account.json"))
 					.with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
 					.with(csrf())
 				)

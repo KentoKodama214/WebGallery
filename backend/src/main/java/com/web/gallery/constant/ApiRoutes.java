@@ -27,6 +27,13 @@ public final class ApiRoutes {
 	public static final String API_ACCOUNTS = API_PREFIX + "/accounts";
 	/** 個別アカウントAPI（PUT=更新） */
 	public static final String API_ACCOUNT = API_ACCOUNTS + "/" + ACCOUNT_ID;
+	/**
+	 * アカウント削除API（POST=現在のパスワードによる再認証のうえ物理削除）<p>
+	 * 本人確認情報をリクエストボディで安全に受け取れるよう、DELETEではなくPOSTのサブリソースとする
+	 * （DELETEのボディは一部の中継経路で破棄されうるため。カスタムヘッダーはアクセスログ等に
+	 * 記録されやすいため用いない）
+	 */
+	public static final String API_ACCOUNT_DELETION = API_ACCOUNT + "/deletion";
 
 	/** 写真アカウントID */
 	public static final String PHOTO_ACCOUNT_ID = "{photoAccountId}";
