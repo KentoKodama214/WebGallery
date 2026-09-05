@@ -55,7 +55,7 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 	compileOnly 'org.projectlombok:lombok:1.18.42'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools:4.0.6'
-	runtimeOnly 'org.postgresql:postgresql:42.7.11'
+	runtimeOnly 'org.postgresql:postgresql:42.7.13'
 	annotationProcessor 'org.projectlombok:lombok:1.18.42'
 	providedRuntime 'org.apache.tomcat.embed:tomcat-embed-core:11.0.21'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test:4.0.6'
