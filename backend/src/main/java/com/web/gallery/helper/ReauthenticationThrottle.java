@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -49,8 +50,13 @@ public class ReauthenticationThrottle {
 
 	private final Map<Long, Attempt> attempts = new ConcurrentHashMap<>();
 
-	/** 直近に間引き処理を実行した時刻（エポックミリ秒）。0は未実行 */
-	private volatile long lastEvictionAtMillis;
+	/**
+	 * 直近に間引き処理を実行した時刻（エポックミリ秒）。0は未実行<p>
+	 * 読み取り→判定→書き込みを{@code compareAndSet}で不可分に行い、上限到達時に多数のスレッドが
+	 * 同時に入っても間引き実行権を1スレッドだけに与える（{@code volatile long}の read-then-write では
+	 * 複数スレッドが同時にゲートを通過しうるため{@link AtomicLong}を用いる）。
+	 */
+	private final AtomicLong lastEvictionAtMillis = new AtomicLong(0L);
 
 	/** アカウント単位の失敗記録（失敗回数と、直近の失敗時刻） */
 	private static final class Attempt {
@@ -164,20 +170,25 @@ public class ReauthenticationThrottle {
 	 * （攻撃者が大量アカウントの失敗枠を膨らませて被害者のロックアウトを流すのを防ぐ）。
 	 * 全消去は行わない（上限到達の瞬間にロックアウト中の全アカウントが一斉解除されるのを防ぐため）。
 	 * <p>
-	 * 上限到達時に多数のスレッドが同時に入っても全走査＋ソートは
-	 * {@code EVICTION_MIN_INTERVAL_MILLIS} に1回だけ実行する。間引きが追いつかない間は
-	 * {@code recordFailure} が新規エントリの追加を見送るため、エントリ数は上限付近で頭打ちになる。
+	 * 上限到達時に多数のスレッドが同時に入っても、間引き実行権の獲得を{@code compareAndSet}で
+	 * 不可分に行うため、全走査＋ソートは{@code EVICTION_MIN_INTERVAL_MILLIS}に1回だけ実行される
+	 * （獲得できなかったスレッドは即座に戻る）。間引きが追いつかない間は{@code recordFailure}が
+	 * 新規エントリの追加を見送るため、エントリ数は上限付近で頭打ちになる。
 	 */
 	private void evictIfOverCapacity() {
 		if (attempts.size() < MAX_ENTRIES) {
 			return;
 		}
 		long current = now();
-		if (current - lastEvictionAtMillis < EVICTION_MIN_INTERVAL_MILLIS) {
+		long previous = lastEvictionAtMillis.get();
+		if (current - previous < EVICTION_MIN_INTERVAL_MILLIS) {
 			// 直近で間引き済み。多数スレッドの同時流入時は1回に集約する
 			return;
 		}
-		lastEvictionAtMillis = current;
+		if (!lastEvictionAtMillis.compareAndSet(previous, current)) {
+			// 他スレッドが同時に間引き実行権を獲得した（このスレッドは何もしない）
+			return;
+		}
 
 		// まず期限切れを掃除する
 		attempts.forEach((key, attempt) -> {
