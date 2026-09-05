@@ -11,28 +11,29 @@ WebGalleryは、Spring Bootで構築されたフォトギャラリーWebアプ�
 ## ビルド・実行コマンド
 
 ```bash
-# PostgreSQLデータベースの起動（アプリ実行前に必要）
-docker-compose up -d
+# PostgreSQLデータベースの起動・停止（アプリ実行前に必要）
+just db-up
+just db-down
 
 # backendのビルド
-./backend/gradlew -p backend build
+just backend-build
 
-# backendのテストのみ実行
-./backend/gradlew -p backend test
+# backendの単体テスト実行
+just backend-unitTest
 
 # backendアプリケーションの実行
-./backend/gradlew -p backend bootRun --args='--spring.profiles.active=local'
+just backend-run
 
 # WARファイルのビルド
 ./backend/gradlew -p backend war
 
 # クリーンビルド
-./backend/gradlew -p backend clean build
+just backend-clean-build
 
 # frontendの依存パッケージインストール・開発サーバー起動・ビルド・lint（just経由）
-just setup
-just dev
-just build
+just front-setup
+just front-run
+just front-build
 just lint
 
 # E2Eテスト一括実行（DB・backendを自動起動）
@@ -82,14 +83,14 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 ### テスト実行
 
 ```bash
-# backendの全テスト実行
-./backend/gradlew -p backend test
+# backendの単体テスト実行
+just backend-unitTest
 
 # backendの特定のテストクラスを実行
-./backend/gradlew -p backend test --tests "com.web.gallery.service.impl.PhotoServiceImplTest"
+./backend/gradlew -p backend unitTest --tests "com.web.gallery.service.impl.PhotoServiceImplTest"
 
 # frontendの単体テスト（Jest）
-cd frontend && pnpm test
+just front-test
 
 # frontendのE2Eテスト（Playwright、DB・backendを自動起動）
 just e2e

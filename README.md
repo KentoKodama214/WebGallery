@@ -119,7 +119,7 @@ mise trust
 ### 1. データベースの起動
 
 ```bash
-docker-compose up -d
+just db-up
 ```
 
 開発用データベース（`web_gallery`、ポート5432）とテスト用データベース（`web_gallery_test`、ポート5433）が起動します。データベースの初期化は `db/` 配下のSQLスクリプトにより自動的に行われます。
@@ -176,7 +176,7 @@ docker-compose up -d
 ### 3. フロントエンドのセットアップ
 
 ```bash
-just setup
+just front-setup
 ```
 
 このコマンドで以下が実行されます:
@@ -188,10 +188,10 @@ just setup
 
 ```bash
 # バックエンド
-./backend/gradlew -p backend bootRun
+just backend-run
 
 # フロントエンド
-just dev
+just front-run
 ```
 
 バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000` でアクセスできます。
@@ -200,39 +200,39 @@ just dev
 
 ```bash
 # ビルド
-./backend/gradlew -p backend build
+just backend-build
 
 # 単体テストの実行
-./backend/gradlew -p backend test
+just backend-unitTest
 
 # 統合テストの実行（要Docker）
-./backend/gradlew -p backend integrationTest
+just backend-integrationTest
 
 # 全テストの実行（要Docker）
-./backend/gradlew -p backend allTest
+just backend-allTest
 
 # カバレッジレポートの生成（要Docker）
 #   単体のみ:   build/reports/jacoco/jacocoUnitReport/html/index.html
 #   結合のみ:   build/reports/jacoco/jacocoIntegrationReport/html/index.html
 #   単体＋結合: build/reports/jacoco/jacocoAggregateReport/html/index.html
-./backend/gradlew -p backend test integrationTest jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
+./backend/gradlew -p backend unitTest integrationTest jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
 # WARファイルの生成
 ./backend/gradlew -p backend war
 
 # クリーンビルド
-./backend/gradlew -p backend clean build
+just backend-clean-build
 ```
 
 ```bash
 # フロントエンドのビルド
-just build
+just front-build
 
 # フロントエンドのlint
 just lint
 
 # フロントエンドの単体テスト（Jest）
-cd frontend && pnpm test
+just front-test
 ```
 
 ### E2Eテストの実行（要Docker）
@@ -261,7 +261,7 @@ cd frontend && pnpm test:e2e
 
 ```bash
 # DBが起動している状態で実行
-docker compose --profile docs run --rm schemaspy
+just db-doc
 ```
 
 生成後、`doc/database/common/index.html`（commonスキーマ）と`doc/database/photo/index.html`（photoスキーマ）をブラウザで開いてください。
@@ -271,7 +271,7 @@ docker compose --profile docs run --rm schemaspy
 [JIG（Java Integration Graph）](https://github.com/dddjava/jig)によるコード構造のドキュメントを自動生成できます。パッケージ関連図・ユースケース図・ドメインモデルなどが出力されます。
 
 ```bash
-./backend/gradlew -p backend jigReports
+just jig
 ```
 
 生成後、`backend/build/jig/index.html` をブラウザで開いてください。
@@ -279,7 +279,7 @@ docker compose --profile docs run --rm schemaspy
 また、Spring Modulithによるモジュール構成図（PlantUML）とモジュールキャンバス（AsciiDoc）を生成できます。
 
 ```bash
-./backend/gradlew -p backend generateModulithDocs
+just modulith-doc
 ```
 
 生成後、`doc/modulith/` 配下のファイルを参照してください。

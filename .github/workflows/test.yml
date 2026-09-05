@@ -60,21 +60,21 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: 単体テスト実行
-        run: ./backend/gradlew -p backend test
+        run: ./backend/gradlew -p backend unitTest
 
       - name: テスト結果アップロード
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-results
-          path: backend/build/reports/tests/test/
+          path: backend/build/reports/tests/unitTest/
 
       - name: カバレッジ実行データアップロード
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-exec-unit
-          path: backend/build/jacoco/test.exec
+          path: backend/build/jacoco/unitTest.exec
 
   integration-test:
     name: 結合テスト
