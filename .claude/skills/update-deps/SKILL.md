@@ -27,7 +27,7 @@ description: Next.js (pnpm/npm) と Java Spring Boot (Gradle) の依存ライブ
    - 編集: `build.gradle` のバージョン記述を更新。
    - 検証:
      - `./gradlew compileJava`
-     - `./gradlew test` を実行。
+     - `./gradlew unitTest` を実行。
 
 4. 失敗時の回復処理（Self-Correction）
    - テストやビルドが失敗した場合:

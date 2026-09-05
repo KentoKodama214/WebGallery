@@ -71,10 +71,20 @@ dependencies {
 }
 
 tasks.named('test') {
+	enabled = false
+}
+
+tasks.register('unitTest', Test) {
+	description = '単体テストのみを実行する'
+	group = 'verification'
 	useJUnitPlatform()
 	exclude '**/*IntegrationTest*'
 	exclude '**/mapper/*Test*'
 	exclude '**/ModulithDocumentationTest*'
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('unitTest')
 }
 
 tasks.register('integrationTest', Test) {
@@ -121,7 +131,7 @@ def registerJacocoReport = { String name, String desc, String execPattern ->
 	}
 }
 
-registerJacocoReport('jacocoUnitReport', '単体テストのみのカバレッジレポートを生成する', 'jacoco/test.exec')
+registerJacocoReport('jacocoUnitReport', '単体テストのみのカバレッジレポートを生成する', 'jacoco/unitTest.exec')
 registerJacocoReport('jacocoIntegrationReport', '結合テストのみのカバレッジレポートを生成する', 'jacoco/integrationTest.exec')
 registerJacocoReport('jacocoAggregateReport', '単体テストと結合テストのカバレッジを集約してレポートを生成する', 'jacoco/*.exec')
 

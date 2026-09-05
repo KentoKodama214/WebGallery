@@ -62,7 +62,7 @@ Checkstyleを使用して、`src/main/java`配下の全クラス・全メソッ�
 
 ### 単体テスト (`test.yml` - `unit-test`)
 
-`./gradlew test`を実行し、結合テスト(`*IntegrationTest*`)とMapperテスト(`mapper/*Test*`)を除く単体テストを実行する。
+`./gradlew unitTest`を実行し、結合テスト(`*IntegrationTest*`)とMapperテスト(`mapper/*Test*`)を除く単体テストを実行する。
 
 ### 結合テスト (`test.yml` - `integration-test`)
 
@@ -80,11 +80,11 @@ E2Eテストは `next dev` で起動するため、本番でのみ付与され�
 
 ### カバレッジレポート (`test.yml` - `coverage-report`)
 
-単体テスト・結合テストの各ジョブがアップロードしたJaCoCoの実行データ（`test.exec` / `integrationTest.exec`）をダウンロードし、以下の3種類のレポート（XML/HTML）を生成する。
+単体テスト・結合テストの各ジョブがアップロードしたJaCoCoの実行データ（`unitTest.exec` / `integrationTest.exec`）をダウンロードし、以下の3種類のレポート（XML/HTML）を生成する。
 
 | レポート | Gradleタスク | 対象 |
 |---|---|---|
-| 単体テスト | `jacocoUnitReport` | `test.exec` のみ |
+| 単体テスト | `jacocoUnitReport` | `unitTest.exec` のみ |
 | 結合テスト | `jacocoIntegrationReport` | `integrationTest.exec` のみ |
 | 単体＋結合 | `jacocoAggregateReport` | `build/jacoco/*.exec` 全体 |
 
