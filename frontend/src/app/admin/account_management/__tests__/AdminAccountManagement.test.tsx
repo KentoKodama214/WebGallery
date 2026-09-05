@@ -149,6 +149,31 @@ describe("AdminAccountManagement", () => {
     expect(screen.queryByTestId("lock-confirm-dialog")).not.toBeInTheDocument();
   });
 
+  it("ロック操作が失敗しても一覧は維持され、操作失敗の通知のみ表示されること", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [{ ...sampleAccount, loginFailureCount: 2 }],
+    });
+    mockLockAccount.mockRejectedValue(new Error("ロックに失敗しました"));
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "強制ロック" }));
+    fireEvent.click(screen.getByRole("button", { name: "実行" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("ロックに失敗しました");
+    });
+
+    // 一覧取得の全体エラー画面（再読み込みボタン）ではなく、一覧が維持されていること
+    expect(screen.getByText("user1")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "再読み込み" })).not.toBeInTheDocument();
+  });
+
   it("確認ダイアログをキャンセルするとAPIは呼ばれないこと", async () => {
     mockGetAdminAccountList.mockResolvedValue({
       isLast: true,

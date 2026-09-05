@@ -30,6 +30,8 @@ export function AdminAccountManagement() {
   const [error, setError] = useState<string | null>(null);
   // 追加読み込みの失敗通知（取得済みの一覧は維持したまま表示する）
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  // ロック/ロック解除操作の失敗通知（取得済みの一覧は維持したまま表示する）
+  const [actionError, setActionError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pageNo, setPageNo] = useState(1);
   const [pendingAction, setPendingAction] = useState<PendingLockAction | null>(null);
@@ -129,7 +131,7 @@ export function AdminAccountManagement() {
     if (!pendingAction || isActionProcessing) return;
     setIsActionProcessing(true);
     setMessage(null);
-    setError(null);
+    setActionError(null);
     try {
       const result =
         pendingAction.type === "unlock"
@@ -139,7 +141,8 @@ export function AdminAccountManagement() {
       setPendingAction(null);
       await fetchAccounts();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      // 一覧取得失敗（error）とは区別し、取得済みの一覧は維持したまま通知のみ行う
+      setActionError(err instanceof Error ? err.message : "エラーが発生しました");
       setPendingAction(null);
     } finally {
       setIsActionProcessing(false);
@@ -208,6 +211,12 @@ export function AdminAccountManagement() {
 
       {message && (
         <p className="text-green-600 font-medium">{message}</p>
+      )}
+
+      {actionError && (
+        <p role="alert" className="text-red-500 text-sm">
+          {actionError}
+        </p>
       )}
 
       <div

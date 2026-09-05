@@ -200,8 +200,8 @@ export function PhotoDetail({
         </Link>
       </header>
 
-      {/* 操作失敗の通知（写真表示は維持したまま表示する） */}
-      {actionError && (
+      {/* 操作失敗の通知（写真表示は維持したまま表示する）。削除確認ダイアログ表示中はダイアログ内表示と二重通知になるため抑制する */}
+      {actionError && !showDeleteConfirm && (
         <div
           role="alert"
           style={{
