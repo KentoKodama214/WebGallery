@@ -246,6 +246,7 @@ export function PhotoSettingForm({
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSaving) return;
     // 送信中のセッション失効に備えた防御的チェック（通常はガードで弾かれる）
     if (!user) {
       setError("セッションが切れました。お手数ですが再度ログインしてください");
@@ -381,7 +382,7 @@ export function PhotoSettingForm({
         </h1>
 
         {error && (
-          <div className="mb-4 p-3 border border-red-500 text-red-500">
+          <div className="mb-4 p-3 border border-red-500 text-red-500" role="alert">
             {error}
           </div>
         )}
@@ -390,6 +391,7 @@ export function PhotoSettingForm({
           <div
             className="mb-4 p-3 border border-red-500 text-red-500"
             data-testid="validation-errors"
+            role="alert"
           >
             {validationErrors.map((err, i) => (
               <p key={i}>{err}</p>

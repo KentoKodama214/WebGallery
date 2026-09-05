@@ -43,6 +43,7 @@ import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoPageModel;
+import com.web.gallery.model.PhotoSaveResultModel;
 import com.web.gallery.model.PhotoTagDeleteModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
@@ -143,7 +144,7 @@ public class PhotoServiceImpl implements PhotoService {
 	 */
 	@Override
 	@Transactional(rollbackFor = GalleryException.class)
-	public PhotoNo savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws GalleryException {
+	public PhotoSaveResultModel savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws GalleryException {
 		if(Objects.isNull(photoDetailModelList)) return null;
 		if(photoDetailModelList.isEmpty()) return null;
 
@@ -152,6 +153,7 @@ public class PhotoServiceImpl implements PhotoService {
 
 		Long photoNo = photoMstRepository.getNewPhotoNo(photoAccountNo).value();
 		PhotoNo savedPhotoNo = new PhotoNo(photoNo);
+		ImageFilePath savedImageFilePath = null;
 		String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
 
 		// ファイルI/OはDBトランザクションの対象外のため、途中の登録失敗でDBがロールバックされても
@@ -170,7 +172,8 @@ public class PhotoServiceImpl implements PhotoService {
 					if(photoQuotaPolicy.isReached(accountModel.getAuthorityKbn(), registeredCount)) {
 						throw ErrorEnum.REACHED_REGISTRATION_LIMIT.toException();
 					}
-					registeredImageFilePaths.add(registPhoto(photoDetailModel, new PhotoNo(photoNo), filePath));
+					savedImageFilePath = registPhoto(photoDetailModel, new PhotoNo(photoNo), filePath);
+					registeredImageFilePaths.add(savedImageFilePath);
 					registeredCount = new PhotoCount(registeredCount.value() + 1);
 					++photoNo;
 				} else {
@@ -187,7 +190,10 @@ public class PhotoServiceImpl implements PhotoService {
 			deleteOrphanedFiles(registeredImageFilePaths);
 			throw e;
 		}
-		return savedPhotoNo;
+		return PhotoSaveResultModel.builder()
+				.photoNo(savedPhotoNo)
+				.imageFilePath(savedImageFilePath)
+				.build();
 	}
 
 	/**

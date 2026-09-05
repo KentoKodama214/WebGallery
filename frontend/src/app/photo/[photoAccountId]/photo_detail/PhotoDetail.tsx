@@ -266,7 +266,10 @@ export function PhotoDetail({
           <button
             type="button"
             aria-label="削除"
-            onClick={() => setShowDeleteConfirm(true)}
+            onClick={() => {
+              setActionError(null);
+              setShowDeleteConfirm(true);
+            }}
             style={{
               position: "fixed",
               top: "2%",

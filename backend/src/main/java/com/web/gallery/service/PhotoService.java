@@ -2,7 +2,6 @@ package com.web.gallery.service;
 
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailGetModel;
@@ -10,6 +9,7 @@ import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoPageModel;
+import com.web.gallery.model.PhotoSaveResultModel;
 
 /**
  * 写真に関するビジネスロジックを行うServiceクラス
@@ -47,9 +47,9 @@ public interface PhotoService {
 	 *                              	・同じファイル名のファイルが既に保存済みの場合
 	 *                              	・登録に失敗した場合
 	 *                              	・更新に失敗した場合
-	 * @return							登録・更新した写真番号
+	 * @return							{@link PhotoSaveResultModel}
 	 */
-	PhotoNo savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws GalleryException;
+	PhotoSaveResultModel savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList) throws GalleryException;
 
 	/**
 	 * 写真を削除する

@@ -111,6 +111,67 @@ describe("PhotoSettingForm", () => {
         screen.getByText("画像ファイルを選択してください")
       ).toBeInTheDocument();
     });
+    // スクリーンリーダーに通知されるようrole="alert"が付与されていること
+    expect(screen.getByTestId("validation-errors")).toHaveAttribute(
+      "role",
+      "alert"
+    );
+  });
+
+  it("保存失敗時のエラーメッセージにrole=alertが付与されること", async () => {
+    mockSavePhoto.mockRejectedValue(new Error("保存に失敗しました"));
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(screen.getByText("保存に失敗しました")).toBeInTheDocument();
+    });
+    expect(screen.getByText("保存に失敗しました")).toHaveAttribute(
+      "role",
+      "alert"
+    );
+  });
+
+  it("保存処理中に連打しても多重送信されないこと", async () => {
+    let resolveSavePhoto: (value: { photoNo: number; imageFilePath: string }) => void;
+    mockSavePhoto.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSavePhoto = resolve;
+      })
+    );
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+
+    fireEvent.click(screen.getByTestId("submit-button"));
+    fireEvent.click(screen.getByTestId("submit-button"));
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    expect(mockSavePhoto).toHaveBeenCalledTimes(1);
+
+    resolveSavePhoto!({ photoNo: 1, imageFilePath: "/photos/test.jpg" });
+    await waitFor(() => {
+      expect(screen.getByTestId("success-modal")).toBeInTheDocument();
+    });
   });
 
   it("タグの追加・削除ができること", async () => {

@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.request.PhotoSaveRequest;
+import com.web.gallery.model.PhotoSaveResultModel;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -60,22 +61,18 @@ public class PhotoEditResponse {
 
 	/**
 	 * 写真保存の成功レスポンスを生成する<p>
-	 * 新規登録でファイルアップロードされた場合は保存先のファイルパスを、それ以外の場合はリクエストの画像ファイルパスを設定する
+	 * 新規登録でファイルアップロードされた場合は実際に保存されたファイルパス（パストラバーサル対策済み）を、
+	 * それ以外の場合はリクエストの画像ファイルパスを設定する
 	 *
-	 * @param	photoNo				写真番号
-	 * @param	photoAccountId		写真所有者のアカウントID
-	 * @param	outputPath			写真の出力先パス
-	 * @param	photoSaveRequest	{@link PhotoSaveRequest}
-	 * @return						{@link PhotoEditResponse}
+	 * @param	photoSaveResultModel	{@link PhotoSaveResultModel}
+	 * @param	photoSaveRequest		{@link PhotoSaveRequest}
+	 * @return							{@link PhotoEditResponse}
 	 */
-	public static PhotoEditResponse of(Long photoNo, String photoAccountId, String outputPath, PhotoSaveRequest photoSaveRequest) {
-		String savedImageFilePath;
-		if (Objects.isNull(photoSaveRequest.getPhotoNo()) && !Objects.isNull(photoSaveRequest.getImageFile())) {
-			savedImageFilePath = outputPath + photoAccountId + "/" + photoSaveRequest.getImageFile().getOriginalFilename();
-		} else {
-			savedImageFilePath = Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse(Consts.STRING_EMPTY);
-		}
+	public static PhotoEditResponse of(PhotoSaveResultModel photoSaveResultModel, PhotoSaveRequest photoSaveRequest) {
+		String savedImageFilePath = Objects.nonNull(photoSaveResultModel.getImageFilePath())
+				? photoSaveResultModel.getImageFilePath().value()
+				: Optional.ofNullable(photoSaveRequest.getImageFilePath()).orElse(Consts.STRING_EMPTY);
 
-		return of(MessageConst.REGIST_PHOTO, photoNo, savedImageFilePath);
+		return of(MessageConst.REGIST_PHOTO, photoSaveResultModel.getPhotoNo().value(), savedImageFilePath);
 	}
 }

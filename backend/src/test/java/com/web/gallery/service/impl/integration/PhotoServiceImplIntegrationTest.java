@@ -71,6 +71,7 @@ import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoPageModel;
+import com.web.gallery.model.PhotoSaveResultModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.service.impl.PhotoServiceImpl;
@@ -648,7 +649,7 @@ public class PhotoServiceImplIntegrationTest {
 		void savePhotos_photoDetailModelList_is_null() throws GalleryException {
 			String accountId = "aaaaaaaa";
 			List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), null);
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId(accountId), null);
 			assertNull(actual);
 			List<PhotoMst> afterData = getPhotoMstData(accountId);
 			assertEquals(beforeSaveData.size(), afterData.size());
@@ -661,7 +662,7 @@ public class PhotoServiceImplIntegrationTest {
 			String accountId = "aaaaaaaa";
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 			List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 			assertNull(actual);
 			List<PhotoMst> afterData = getPhotoMstData(accountId);
 			assertEquals(beforeSaveData.size(), afterData.size());
@@ -682,9 +683,10 @@ public class PhotoServiceImplIntegrationTest {
 			photoDetailModelList.add(photoDetailModel2);
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
-			assertEquals(new PhotoNo(11L), actual);
+			assertEquals(new PhotoNo(11L), actual.getPhotoNo());
+			assertEquals(new ImageFilePath("https://www.xxx.com/" + accountId + "/DSC22.jpg"), actual.getImageFilePath());
 			List<PhotoMst> actualData = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo() > 10).toList();
 			assertEquals(2, actualData.size());
 
@@ -752,9 +754,10 @@ public class PhotoServiceImplIntegrationTest {
 			photoDetailModelList.add(photoDetailModel2);
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
-			assertEquals(new PhotoNo(3L), actual);
+			assertEquals(new PhotoNo(3L), actual.getPhotoNo());
+			assertNull(actual.getImageFilePath());
 			List<PhotoMst> actualData1 = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo()==2).toList();
 			assertEquals(1, actualData1.size());
 			assertEquals(1L, actualData1.getFirst().getAccountNo());
@@ -825,9 +828,10 @@ public class PhotoServiceImplIntegrationTest {
 			photoDetailModelList.add(photoDetailModel2);
 
 			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
-			assertEquals(new PhotoNo(3L), actual);
+			assertEquals(new PhotoNo(3L), actual.getPhotoNo());
+			assertEquals(new ImageFilePath("https://www.xxx.com/" + accountId + "/DSC21.jpg"), actual.getImageFilePath());
 			List<PhotoMst> actualData = getPhotoMstData(accountId).stream().filter(photoMst -> photoMst.getPhotoNo() > 10).toList();
 			assertEquals(1, actualData.size());
 
