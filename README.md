@@ -303,7 +303,6 @@ WebGallery/
 │   │   ├── テストissue.md          # テスト用Issueのテンプレート
 │   │   └── 開発issue.md            # 開発用Issueのテンプレート
 │   └── workflows
-│       ├── architecture-check.yml  # アーキテクチャチェックのGithub Action
 │       ├── checkstyle.yml          # CheckstyleによるJavadocチェックのGithub Action
 │       └── test.yml                # テスト実行・カバレッジレポート（JaCoCo）のGithub Action
 ├── docker-compose.yml
@@ -320,7 +319,6 @@ WebGallery/
 │   ├── modulith/                   # モジュールドキュメント（Spring Modulith自動生成）
 │   └── view/                       # 画面設計書
 ├── scripts/
-│   ├── check-architecture.sh       # アーキテクチャチェックスクリプト
 │   └── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド自動起動）
 ├── frontend/                       # フロントエンド（Next.js）
 │   ├── package.json

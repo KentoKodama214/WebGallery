@@ -73,10 +73,6 @@ jig:
 modulith-doc:
     ./backend/gradlew -p backend generateModulithDocs
 
-# レイヤードアーキテクチャ違反チェック
-check-arch:
-    bash scripts/check-architecture.sh backend
-
 # backendのコードフォーマットチェック（Spotless）
 format-check:
     ./backend/gradlew -p backend spotlessCheck
