@@ -341,7 +341,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: カバレッジ実行データダウンロード
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: jacoco-exec-*
           path: backend/build/jacoco
