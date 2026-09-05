@@ -12,16 +12,16 @@ jobs:
 
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: JDK 21 セットアップ
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
 
       - name: Gradleキャッシュ
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.gradle/caches
@@ -35,7 +35,7 @@ jobs:
 
       - name: チェック結果アップロード
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: checkstyle-report
           path: backend/build/reports/checkstyle/

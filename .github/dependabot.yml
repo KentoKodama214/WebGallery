@@ -10,6 +10,10 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     open-pull-requests-limit: 10
+    groups:
+      backend-dependencies:
+        patterns:
+          - "*"
 
   # frontend（pnpm）
   - package-ecosystem: "npm"
@@ -21,6 +25,10 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     open-pull-requests-limit: 10
+    groups:
+      frontend-dependencies:
+        patterns:
+          - "*"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -32,3 +40,7 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     open-pull-requests-limit: 10
+    groups:
+      github-actions-dependencies:
+        patterns:
+          - "*"
