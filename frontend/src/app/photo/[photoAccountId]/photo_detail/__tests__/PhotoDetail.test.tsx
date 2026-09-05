@@ -348,6 +348,35 @@ describe("PhotoDetail", () => {
     });
   });
 
+  it("削除失敗時、確認ダイアログ内にのみエラーが表示され上部バナーと二重表示にならないこと", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockDeletePhoto.mockRejectedValue(new Error("削除に失敗しました"));
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    fireEvent.click(screen.getByText("削除する"));
+
+    await waitFor(() => {
+      expect(screen.getByText("削除に失敗しました")).toBeInTheDocument();
+    });
+
+    // 確認ダイアログは開いたままで、通知は1箇所のみ（上部固定バナーとの二重表示なし）
+    expect(screen.getByTestId("delete-confirm-dialog")).toBeInTheDocument();
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+  });
+
   it("エラー時にエラーメッセージが表示されること", async () => {
     mockGetPhotoDetail.mockRejectedValue(
       new Error("写真詳細の取得に失敗しました")
