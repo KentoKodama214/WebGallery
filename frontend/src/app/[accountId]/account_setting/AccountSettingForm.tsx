@@ -122,6 +122,8 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       cooldownUntil: saved.cooldownUntil > Date.now() ? saved.cooldownUntil : 0,
     };
   });
+  // sessionStorage への書き戻しキーとして扱っている accountId。accountId 切替時のズレを防ぐ。
+  const reauthAccountIdRef = useRef(accountId);
   const reauthCooldownUntil = reauthState.cooldownUntil;
   const [now, setNow] = useState(() => Date.now());
   const isReauthCoolingDown = now < reauthCooldownUntil;
@@ -244,8 +246,22 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
 
   // 再認証クールダウン状態の変化を sessionStorage へ書き戻す（再マウント・画面遷移をまたいで維持する）
   useEffect(() => {
+    // accountId 切替直後の1回は、下の再初期化 effect が状態を読み直すまで書き戻さない
+    // （前アカウントの状態を新しい accountId キーへ書き込まないため）
+    if (reauthAccountIdRef.current !== accountId) return;
     saveReauthState(accountId, reauthState);
   }, [accountId, reauthState]);
+
+  // accountId が切り替わったら、その accountId のクールダウン状態を読み直す
+  useEffect(() => {
+    if (reauthAccountIdRef.current === accountId) return;
+    reauthAccountIdRef.current = accountId;
+    const saved = loadReauthState(accountId);
+    setReauthState({
+      failCount: saved.failCount,
+      cooldownUntil: saved.cooldownUntil > Date.now() ? saved.cooldownUntil : 0,
+    });
+  }, [accountId]);
 
   /**
    * 登録する
@@ -297,8 +313,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       setShowModal(true);
       modalTimerRef.current = setTimeout(() => setShowModal(false), 5000);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 403) {
-        // 現在のパスワード不一致・ロック。連打抑止のため失敗を記録する
+      // 再認証を伴う操作（パスワード変更）での 403 のみ連打抑止の対象にする。
+      // プロフィールのみ更新時の 403（セッション失効等）は再認証失敗ではないため数えない。
+      if (newPassword && err instanceof ApiError && err.status === 403) {
         recordReauthFailure();
       }
       setDuplicateError(err instanceof Error ? err.message : "更新に失敗しました");
@@ -323,15 +340,12 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     }
     setIsDeleting(true);
     setDeleteError("");
+
+    let deleted = false;
     try {
       await deleteAccount(accountId, deletePassword);
+      deleted = true;
       resetReauthState();
-      await logout();
-      setShowDeleteConfirm(false);
-      setShowDeleteCompleteModal(true);
-      redirectTimerRef.current = setTimeout(() => {
-        router.push("/login");
-      }, 3000);
     } catch (err) {
       if (err instanceof ApiError && err.status === 403) {
         // 現在のパスワード不一致・ロック。連打抑止のため失敗を記録する
@@ -339,9 +353,24 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       }
       // 削除失敗（パスワード不一致等）はダイアログを開いたまま通知する
       setDeleteError(err instanceof Error ? err.message : "アカウント削除に失敗しました");
-    } finally {
-      setIsDeleting(false);
     }
+
+    if (deleted) {
+      // 削除は確定済み。以降の logout の通信失敗で完了フロー（完了モーダル・/login への遷移）を止めない。
+      // ローカルのトークン破棄は logout 内で行われ、サーバー側のリフレッシュトークンは削除済み。
+      try {
+        await logout();
+      } catch {
+        // no-op
+      }
+      setShowDeleteConfirm(false);
+      setShowDeleteCompleteModal(true);
+      redirectTimerRef.current = setTimeout(() => {
+        router.push("/login");
+      }, 3000);
+    }
+
+    setIsDeleting(false);
   };
 
   // 認証状態の確定と未ログイン時の /login 誘導は <AuthGuard> が担う。
@@ -571,8 +600,13 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             )}
 
             {isReauthCoolingDown && (
-              <p role="alert" className="text-[lightcoral] text-xs font-bold mb-2">
-                {reauthCooldownMessage}（約{Math.ceil((reauthCooldownUntil - now) / 1000)}秒）
+              <p className="text-[lightcoral] text-xs font-bold mb-2">
+                {/* メッセージ本文だけを1度告知する。毎秒変わる残り秒数はライブリージョン外に置き、
+                    スクリーンリーダーが毎秒読み上げないようにする */}
+                <span role="alert">{reauthCooldownMessage}</span>
+                <span aria-hidden="true">
+                  （約{Math.ceil((reauthCooldownUntil - now) / 1000)}秒）
+                </span>
               </p>
             )}
 
@@ -618,50 +652,56 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
           <p className="text-[#444] text-center mb-4">
             登録した写真やお気に入りはすべて削除され、復旧できなくなります。よろしいですか？
           </p>
-          <label htmlFor="account-delete-password" className="block text-[#444] text-sm mb-1">
-            現在のパスワード
-          </label>
-          <input
-            id="account-delete-password"
-            type="password"
-            autoComplete="current-password"
-            value={deletePassword}
-            onChange={(e) => {
-              setDeletePassword(e.target.value);
-              setDeleteError("");
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleDeleteAccount();
             }}
-            className="block w-full p-[10px] mb-2 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
-          />
-          {deleteError && (
-            <p role="alert" className="text-[lightcoral] text-xs font-bold mb-2">{deleteError}</p>
-          )}
-          <div className="flex gap-3">
-            <button
-              type="button"
-              data-dialog-initial-focus
-              onClick={() => {
-                setShowDeleteConfirm(false);
-                setDeletePassword("");
+          >
+            <label htmlFor="account-delete-password" className="block text-[#444] text-sm mb-1">
+              現在のパスワード
+            </label>
+            <input
+              id="account-delete-password"
+              type="password"
+              autoComplete="current-password"
+              value={deletePassword}
+              onChange={(e) => {
+                setDeletePassword(e.target.value);
                 setDeleteError("");
               }}
-              disabled={isDeleting}
-              className="flex-1 h-[40px] bg-gray-300 text-[#444] border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              いいえ
-            </button>
-            <button
-              type="button"
-              onClick={handleDeleteAccount}
-              disabled={isDeleting || isReauthCoolingDown}
-              className="flex-1 h-[40px] bg-[#e53935] text-white border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {isDeleting ? (
-                <span className="inline-block w-5 h-5 border-[3px] border-white border-t-[rgba(255,255,255,0.3)] rounded-full animate-spin" />
-              ) : (
-                "はい"
-              )}
-            </button>
-          </div>
+              className="block w-full p-[10px] mb-2 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
+            />
+            {deleteError && (
+              <p role="alert" className="text-[lightcoral] text-xs font-bold mb-2">{deleteError}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                data-dialog-initial-focus
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeletePassword("");
+                  setDeleteError("");
+                }}
+                disabled={isDeleting}
+                className="flex-1 h-[40px] bg-gray-300 text-[#444] border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                いいえ
+              </button>
+              <button
+                type="submit"
+                disabled={isDeleting || isReauthCoolingDown}
+                className="flex-1 h-[40px] bg-[#e53935] text-white border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? (
+                  <span className="inline-block w-5 h-5 border-[3px] border-white border-t-[rgba(255,255,255,0.3)] rounded-full animate-spin" />
+                ) : (
+                  "はい"
+                )}
+              </button>
+            </div>
+          </form>
         </ModalDialog>
       )}
 

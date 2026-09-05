@@ -642,6 +642,21 @@ public class AccountServiceImplTest {
 			// 再認証失敗はインメモリのスロットルに記録される
 			verify(reauthenticationThrottle, times(1)).recordFailure(1L);
 		}
+
+		@Test
+		@Order(3)
+		@DisplayName("異常系：対象アカウントが取得できない場合でもBCrypt照合を1回行い（応答時間一定化）、失敗を記録して削除しない")
+		void deleteAccount_account_not_found_still_runs_password_match() {
+			doReturn(null).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+
+			assertThrows(ForbiddenAccountException.class,
+					() -> accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01")));
+
+			// 早期returnせず、ダミーハッシュに対して照合を1回行う
+			verify(passwordEncoder, times(1)).matches(eq("password01"), anyString());
+			verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
+			verify(reauthenticationThrottle, times(1)).recordFailure(1L);
+		}
 	}
 
 	@Nested

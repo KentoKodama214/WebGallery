@@ -297,6 +297,9 @@ jobs:
       - name: Playwrightブラウザインストール
         run: cd frontend && pnpm exec playwright install --with-deps chromium
 
+      - name: 本番ビルド
+        run: cd frontend && pnpm build
+
       - name: 本番ビルドに対するCSPスモークテスト実行
         run: cd frontend && pnpm test:e2e:prod
 

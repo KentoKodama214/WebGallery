@@ -62,6 +62,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class AccountServiceImpl implements UserDetailsService, AccountService {
 
+	/**
+	 * 現在のパスワード照合で、アカウント不在・パスワード未設定時にもBCrypt照合1回分の
+	 * 応答時間を保つためのダミーハッシュ（照合結果は使用しない）。<p>
+	 * accountNoは常に呼び出し元自身のセッション由来のため他人の列挙には使えないが、
+	 * 応答時間からレコード整合性の破損を推測される余地もなくすための保険。
+	 * 値は公開されているBCryptのテストベクタ（平文 {@code "password"}）。
+	 */
+	private static final String DUMMY_PASSWORD_HASH =
+			"$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
 	private final AccountRepository accountRepository;
 	private final AccountAggregateRepository accountAggregateRepository;
 	private final FileRepository fileRepository;
@@ -155,7 +165,9 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 		if (isPasswordChange || isAccountIdChanged) {
 			refreshTokenRepository.revokeAllByAccountNo(accountModel.getAccountNo());
 		}
-		// 更新前のアカウントIDが取得できない場合はnull（リスナー側でキャッシュ全消去にフォールバックさせる）
+		// 通常、認証済みユーザーのアカウントは必ず取得できるため previousAccountId は非null。
+		// DB不整合等で更新前のアカウントIDが取得できない場合のみ null とし、
+		// リスナー側でキャッシュ全消去にフォールバックさせる（旧IDのエントリを取り残さないため）。
 		AccountId previousAccountId = currentAccount != null && currentAccount.getAccountId() != null
 				? currentAccount.getAccountId()
 				: null;
@@ -289,8 +301,16 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 			throw ErrorEnum.CURRENT_PASSWORD_MISMATCH.toException();
 		}
 
-		if (currentPassword == null || accountModel == null || accountModel.getPassword() == null
-				|| !passwordEncoder.matches(currentPassword.value(), accountModel.getPassword().value())) {
+		// アカウント不在・パスワード未設定でも早期returnせず、BCrypt照合1回分のコストを必ず払う
+		// （応答時間を一定に保ち、タイミングによる推測を防ぐ）
+		boolean matches;
+		if (currentPassword == null || accountModel == null || accountModel.getPassword() == null) {
+			passwordEncoder.matches(currentPassword != null ? currentPassword.value() : "", DUMMY_PASSWORD_HASH);
+			matches = false;
+		} else {
+			matches = passwordEncoder.matches(currentPassword.value(), accountModel.getPassword().value());
+		}
+		if (!matches) {
 			reauthenticationThrottle.recordFailure(accountNo.value());
 			log.info("Current password verification failed. (accountNo: {})", accountNo.value());
 			throw ErrorEnum.CURRENT_PASSWORD_MISMATCH.toException();
