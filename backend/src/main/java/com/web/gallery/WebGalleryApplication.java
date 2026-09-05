@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class WebGalleryApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(WebGalleryApplication.class, args);
-	}
+  public static void main(String[] args) {
+    SpringApplication.run(WebGalleryApplication.class, args);
+  }
 }

@@ -1,66 +1,68 @@
 package com.web.gallery.mapper;
 
+import com.web.gallery.entity.RefreshToken;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.web.gallery.entity.RefreshToken;
-
 /**
  * リフレッシュトーク��テーブルのMapperクラス
- * @author	Kento Kodama
- * @version	1.0.0
- * @since	1.0.0
+ *
+ * @author Kento Kodama
+ * @version 1.0.0
+ * @since 1.0.0
  */
 @Mapper
 public interface RefreshTokenMapper {
-	/**
-	 * リフレッシュトークンを登録する
-	 *
-	 * @param	refreshToken	{@link RefreshToken}
-	 * @return					登録件数
-	 */
-	public Integer insert(RefreshToken refreshToken);
+  /**
+   * リフレッシュトークンを登録する
+   *
+   * @param refreshToken {@link RefreshToken}
+   * @return 登録件数
+   */
+  public Integer insert(RefreshToken refreshToken);
 
-	/**
-	 * トークンハッシュに該当するリフレッシュトークンを取得する
-	 *
-	 * @param	tokenHash	トーク��ハッシュ
-	 * @return				{@link RefreshToken}
-	 */
-	public RefreshToken selectByTokenHash(@Param("tokenHash") String tokenHash);
+  /**
+   * トークンハッシュに該当するリフレッシュトークンを取得する
+   *
+   * @param tokenHash トーク��ハッシュ
+   * @return {@link RefreshToken}
+   */
+  public RefreshToken selectByTokenHash(@Param("tokenHash") String tokenHash);
 
-	/**
-	 * トークンハッシュに該当するリフレッシュトークンを行ロック付きで取得する<p>
-	 * リフレッシュトークンのローテーション時に、同一トークンによる同時リクエストを直列化し、
-	 * 「無効化チェック → ローテーション」間の競合による多重セッション発行・盗用検知の回避を防ぐ
-	 *
-	 * @param	tokenHash	トークンハッシュ
-	 * @return				{@link RefreshToken}
-	 */
-	public RefreshToken selectByTokenHashForUpdate(@Param("tokenHash") String tokenHash);
+  /**
+   * トークンハッシュに該当するリフレッシュトークンを行ロック付きで取得する
+   *
+   * <p>リフレッシュトークンのローテーション時に、同一トークンによる同時リクエストを直列化し、 「無効化チェック → ローテーション」間の競合による多重セッション発行・盗用検知の回避を防ぐ
+   *
+   * @param tokenHash トークンハッシュ
+   * @return {@link RefreshToken}
+   */
+  public RefreshToken selectByTokenHashForUpdate(@Param("tokenHash") String tokenHash);
 
-	/**
-	 * アカウント番号に該当するリフレッシュトークンをすべて無効化する
-	 *
-	 * @param	accountNo	アカウント番号
-	 * @param	updatedBy	更新者
-	 * @return				更新件数
-	 */
-	public Integer revokeAllByAccountNo(@Param("accountNo") Long accountNo, @Param("updatedBy") Long updatedBy);
+  /**
+   * アカウント番号に該当するリフレッシュトークンをすべて無効化する
+   *
+   * @param accountNo アカウント番号
+   * @param updatedBy 更新者
+   * @return 更新件数
+   */
+  public Integer revokeAllByAccountNo(
+      @Param("accountNo") Long accountNo, @Param("updatedBy") Long updatedBy);
 
-	/**
-	 * トークンハッシュに該当するリフレッシュトークンを無効化する
-	 *
-	 * @param	tokenHash	トークンハッシュ
-	 * @param	updatedBy	更新者
-	 * @return				更新件数
-	 */
-	public Integer revokeByTokenHash(@Param("tokenHash") String tokenHash, @Param("updatedBy") Long updatedBy);
+  /**
+   * トークンハッシュに該当するリフレッシュトークンを無効化する
+   *
+   * @param tokenHash トークンハッシュ
+   * @param updatedBy 更新者
+   * @return 更新件数
+   */
+  public Integer revokeByTokenHash(
+      @Param("tokenHash") String tokenHash, @Param("updatedBy") Long updatedBy);
 
-	/**
-	 * 有効期限切れのリフレッシュトークンを削除する
-	 *
-	 * @return	削除件数
-	 */
-	public Integer deleteExpired();
+  /**
+   * 有効期限切れのリフレッシュトークンを削除する
+   *
+   * @return 削除件数
+   */
+  public Integer deleteExpired();
 }

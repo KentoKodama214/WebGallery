@@ -1,124 +1,123 @@
 package com.web.gallery.model;
 
+import com.web.gallery.dto.PhotoDto;
+import com.web.gallery.entity.PhotoTagMst;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import com.web.gallery.dto.PhotoDto;
-import com.web.gallery.entity.PhotoTagMst;
-
 /**
  * PhotoModelのコレクションを表すクラス
  *
- * @param	photoModelList	{@link PhotoModel}のリスト
+ * @param photoModelList {@link PhotoModel}のリスト
  */
 public record PhotoModelList(List<PhotoModel> photoModelList) implements Iterable<PhotoModel> {
 
-	public PhotoModelList {
-		Objects.requireNonNull(photoModelList);
-	}
+  public PhotoModelList {
+    Objects.requireNonNull(photoModelList);
+  }
 
-	/**
-	 * PhotoModelのリストからPhotoModelListを生成する
-	 *
-	 * @param	photoModelList	{@link PhotoModel}のリスト
-	 * @return					{@link PhotoModelList}
-	 */
-	public static PhotoModelList of(List<PhotoModel> photoModelList) {
-		return new PhotoModelList(photoModelList);
-	}
+  /**
+   * PhotoModelのリストからPhotoModelListを生成する
+   *
+   * @param photoModelList {@link PhotoModel}のリスト
+   * @return {@link PhotoModelList}
+   */
+  public static PhotoModelList of(List<PhotoModel> photoModelList) {
+    return new PhotoModelList(photoModelList);
+  }
 
-	/**
-	 * 空のPhotoModelListを生成する
-	 *
-	 * @return	{@link PhotoModelList}
-	 */
-	public static PhotoModelList empty() {
-		return PhotoModelList.of(List.of());
-	}
+  /**
+   * 空のPhotoModelListを生成する
+   *
+   * @return {@link PhotoModelList}
+   */
+  public static PhotoModelList empty() {
+    return PhotoModelList.of(List.of());
+  }
 
-	/**
-	 * PhotoDtoのリストとタグエンティティリストからPhotoModelListを生成する
-	 *
-	 * @param	photoDtoList	{@link PhotoDto}のリスト
-	 * @param	photoTagMstList	全タグエンティティリスト（内部で該当写真のタグをフィルタリングする）
-	 * @return					{@link PhotoModelList}
-	 */
-	public static PhotoModelList from(List<PhotoDto> photoDtoList, List<PhotoTagMst> photoTagMstList) {
-		return PhotoModelList.of(photoDtoList.stream()
-				.map(photoDto -> PhotoModel.from(photoDto, photoTagMstList))
-				.toList());
-	}
+  /**
+   * PhotoDtoのリストとタグエンティティリストからPhotoModelListを生成する
+   *
+   * @param photoDtoList {@link PhotoDto}のリスト
+   * @param photoTagMstList 全タグエンティティリスト（内部で該当写真のタグをフィルタリングする）
+   * @return {@link PhotoModelList}
+   */
+  public static PhotoModelList from(
+      List<PhotoDto> photoDtoList, List<PhotoTagMst> photoTagMstList) {
+    return PhotoModelList.of(
+        photoDtoList.stream().map(photoDto -> PhotoModel.from(photoDto, photoTagMstList)).toList());
+  }
 
-	/**
-	 * 指定のComparatorでソートしたPhotoModelListを生成する
-	 *
-	 * @param	comparator	ソート条件のComparator
-	 * @return				{@link PhotoModelList}
-	 */
-	public PhotoModelList sorted(Comparator<PhotoModel> comparator) {
-		return PhotoModelList.of(photoModelList.stream().sorted(comparator).toList());
-	}
+  /**
+   * 指定のComparatorでソートしたPhotoModelListを生成する
+   *
+   * @param comparator ソート条件のComparator
+   * @return {@link PhotoModelList}
+   */
+  public PhotoModelList sorted(Comparator<PhotoModel> comparator) {
+    return PhotoModelList.of(photoModelList.stream().sorted(comparator).toList());
+  }
 
-	/**
-	 * 要素数を取得する
-	 *
-	 * @return	要素数
-	 */
-	public Integer size() {
-		return photoModelList.size();
-	}
+  /**
+   * 要素数を取得する
+   *
+   * @return 要素数
+   */
+  public Integer size() {
+    return photoModelList.size();
+  }
 
-	/**
-	 * 要素が空かどうかを取得する
-	 *
-	 * @return	要素が空の場合はtrue
-	 */
-	public Boolean isEmpty() {
-		return photoModelList.isEmpty();
-	}
+  /**
+   * 要素が空かどうかを取得する
+   *
+   * @return 要素が空の場合はtrue
+   */
+  public Boolean isEmpty() {
+    return photoModelList.isEmpty();
+  }
 
-	/**
-	 * 指定インデックスの要素を取得する
-	 *
-	 * @param	index	インデックス
-	 * @return			{@link PhotoModel}
-	 */
-	public PhotoModel get(int index) {
-		return photoModelList.get(index);
-	}
+  /**
+   * 指定インデックスの要素を取得する
+   *
+   * @param index インデックス
+   * @return {@link PhotoModel}
+   */
+  public PhotoModel get(int index) {
+    return photoModelList.get(index);
+  }
 
-	/**
-	 * 先頭の要素を取得する
-	 *
-	 * @return	{@link PhotoModel}
-	 */
-	public PhotoModel getFirst() {
-		return photoModelList.getFirst();
-	}
+  /**
+   * 先頭の要素を取得する
+   *
+   * @return {@link PhotoModel}
+   */
+  public PhotoModel getFirst() {
+    return photoModelList.getFirst();
+  }
 
-	/**
-	 * Streamに変換する
-	 *
-	 * @return	{@link PhotoModel}のStream
-	 */
-	public Stream<PhotoModel> stream() {
-		return photoModelList.stream();
-	}
+  /**
+   * Streamに変換する
+   *
+   * @return {@link PhotoModel}のStream
+   */
+  public Stream<PhotoModel> stream() {
+    return photoModelList.stream();
+  }
 
-	/**
-	 * Listに変換する
-	 *
-	 * @return	{@link PhotoModel}のList
-	 */
-	public List<PhotoModel> toList() {
-		return photoModelList;
-	}
+  /**
+   * Listに変換する
+   *
+   * @return {@link PhotoModel}のList
+   */
+  public List<PhotoModel> toList() {
+    return photoModelList;
+  }
 
-	@Override
-	public Iterator<PhotoModel> iterator() {
-		return photoModelList.iterator();
-	}
+  @Override
+  public Iterator<PhotoModel> iterator() {
+    return photoModelList.iterator();
+  }
 }

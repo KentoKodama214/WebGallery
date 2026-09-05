@@ -2,10 +2,15 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.ExpiresAt;
+import com.web.gallery.domain.common.TokenHash;
+import com.web.gallery.entity.RefreshToken;
+import com.web.gallery.model.RefreshTokenModel;
+import com.web.gallery.repository.impl.RefreshTokenRepositoryImpl;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -20,235 +25,239 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.ExpiresAt;
-import com.web.gallery.domain.common.TokenHash;
-import com.web.gallery.entity.RefreshToken;
-import com.web.gallery.model.RefreshTokenModel;
-import com.web.gallery.repository.impl.RefreshTokenRepositoryImpl;
-
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
 @Transactional
 public class RefreshTokenRepositoryImplIntegrationTest {
-	@Autowired
-	private RefreshTokenRepositoryImpl refreshTokenRepositoryImpl;
+  @Autowired private RefreshTokenRepositoryImpl refreshTokenRepositoryImpl;
 
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
-	private List<RefreshToken> getRefreshTokenData(String tokenHash) {
-		return jdbcTemplate.query(
-			"SELECT * FROM common.refresh_token WHERE token_hash = ?",
-			(rs, rowNum) -> RefreshToken.builder()
-				.tokenId(rs.getLong("token_id"))
-				.accountNo(rs.getLong("account_no"))
-				.tokenHash(rs.getString("token_hash"))
-				.expiresAt(rs.getObject("expires_at", OffsetDateTime.class))
-				.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-				.updatedBy(rs.getLong("updated_by"))
-				.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-				.isRevoked(rs.getBoolean("is_revoked"))
-				.build(),
-			tokenHash
-		);
-	}
+  private List<RefreshToken> getRefreshTokenData(String tokenHash) {
+    return jdbcTemplate.query(
+        "SELECT * FROM common.refresh_token WHERE token_hash = ?",
+        (rs, rowNum) ->
+            RefreshToken.builder()
+                .tokenId(rs.getLong("token_id"))
+                .accountNo(rs.getLong("account_no"))
+                .tokenHash(rs.getString("token_hash"))
+                .expiresAt(rs.getObject("expires_at", OffsetDateTime.class))
+                .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                .updatedBy(rs.getLong("updated_by"))
+                .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                .isRevoked(rs.getBoolean("is_revoked"))
+                .build(),
+        tokenHash);
+  }
 
-	private List<RefreshToken> getRefreshTokensByAccountNo(Long accountNo) {
-		return jdbcTemplate.query(
-			"SELECT * FROM common.refresh_token WHERE account_no = ?",
-			(rs, rowNum) -> RefreshToken.builder()
-				.tokenId(rs.getLong("token_id"))
-				.accountNo(rs.getLong("account_no"))
-				.tokenHash(rs.getString("token_hash"))
-				.expiresAt(rs.getObject("expires_at", OffsetDateTime.class))
-				.createdAt(rs.getObject("created_at", OffsetDateTime.class))
-				.updatedBy(rs.getLong("updated_by"))
-				.updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-				.isRevoked(rs.getBoolean("is_revoked"))
-				.build(),
-			accountNo
-		);
-	}
+  private List<RefreshToken> getRefreshTokensByAccountNo(Long accountNo) {
+    return jdbcTemplate.query(
+        "SELECT * FROM common.refresh_token WHERE account_no = ?",
+        (rs, rowNum) ->
+            RefreshToken.builder()
+                .tokenId(rs.getLong("token_id"))
+                .accountNo(rs.getLong("account_no"))
+                .tokenHash(rs.getString("token_hash"))
+                .expiresAt(rs.getObject("expires_at", OffsetDateTime.class))
+                .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                .updatedBy(rs.getLong("updated_by"))
+                .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                .isRevoked(rs.getBoolean("is_revoked"))
+                .build(),
+        accountNo);
+  }
 
-	private Integer countAllRefreshTokens() {
-		return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM common.refresh_token", Integer.class);
-	}
+  private Integer countAllRefreshTokens() {
+    return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM common.refresh_token", Integer.class);
+  }
 
-	@Nested
-	@Order(1)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	@Sql("/sql/common/cleanup.sql")
-	@Sql("/sql/repository/RefreshTokenRepositoryImplIntegrationTest.sql")
-	class save {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：リフレッシュトークンを保存する")
-		void save_success() {
-			// PostgreSQLのtimestamp with time zone型はマイクロ秒精度までしか保持しないため、ナノ秒精度を切り捨てて比較値を揃える
-			OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MICROS);
-			RefreshTokenModel refreshToken = RefreshTokenModel.builder()
-					.accountNo(new AccountNo(1L))
-					.tokenHash(new TokenHash("new_token_hash"))
-					.expiresAt(new ExpiresAt(expiresAt))
-					.build();
+  @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/repository/RefreshTokenRepositoryImplIntegrationTest.sql")
+  class save {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：リフレッシュトークンを保存する")
+    void save_success() {
+      // PostgreSQLのtimestamp with time zone型はマイクロ秒精度までしか保持しないため、ナノ秒精度を切り捨てて比較値を揃える
+      OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MICROS);
+      RefreshTokenModel refreshToken =
+          RefreshTokenModel.builder()
+              .accountNo(new AccountNo(1L))
+              .tokenHash(new TokenHash("new_token_hash"))
+              .expiresAt(new ExpiresAt(expiresAt))
+              .build();
 
-			OffsetDateTime transactionNow = jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-			refreshTokenRepositoryImpl.save(refreshToken);
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
+      refreshTokenRepositoryImpl.save(refreshToken);
 
-			List<RefreshToken> actualData = getRefreshTokenData("new_token_hash");
-			assertEquals(1, actualData.size());
-			assertEquals(1L, actualData.getFirst().getAccountNo());
-			assertEquals("new_token_hash", actualData.getFirst().getTokenHash());
-			assertFalse(actualData.getFirst().getIsRevoked());
-			assertEquals(transactionNow, actualData.getFirst().getCreatedAt());
-			assertEquals(1L, actualData.getFirst().getUpdatedBy());
-			assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
-			assertTrue(expiresAt.isEqual(actualData.getFirst().getExpiresAt()));
-		}
-	}
+      List<RefreshToken> actualData = getRefreshTokenData("new_token_hash");
+      assertEquals(1, actualData.size());
+      assertEquals(1L, actualData.getFirst().getAccountNo());
+      assertEquals("new_token_hash", actualData.getFirst().getTokenHash());
+      assertFalse(actualData.getFirst().getIsRevoked());
+      assertEquals(transactionNow, actualData.getFirst().getCreatedAt());
+      assertEquals(1L, actualData.getFirst().getUpdatedBy());
+      assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+      assertTrue(expiresAt.isEqual(actualData.getFirst().getExpiresAt()));
+    }
+  }
 
-	@Nested
-	@Order(2)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	@Sql("/sql/common/cleanup.sql")
-	@Sql("/sql/repository/RefreshTokenRepositoryImplIntegrationTest.sql")
-	class findByTokenHash {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：トークンハッシュに該当するリフレッシュトークンを取得する")
-		void findByTokenHash_success() {
-			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
+  @Nested
+  @Order(2)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/repository/RefreshTokenRepositoryImplIntegrationTest.sql")
+  class findByTokenHash {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：トークンハッシュに該当するリフレッシュトークンを取得する")
+    void findByTokenHash_success() {
+      RefreshTokenModel actual =
+          refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
 
-			assertNotNull(actual);
-			assertEquals(new AccountNo(1L), actual.getAccountNo());
-			assertEquals(new TokenHash("valid_token_hash_1"), actual.getTokenHash());
-			assertFalse(actual.getIsRevoked().value());
-		}
+      assertNotNull(actual);
+      assertEquals(new AccountNo(1L), actual.getAccountNo());
+      assertEquals(new TokenHash("valid_token_hash_1"), actual.getTokenHash());
+      assertFalse(actual.getIsRevoked().value());
+    }
 
-		@Test
-		@Order(2)
-		@DisplayName("正常系：無効化済みのトークンも取得できる")
-		void findByTokenHash_revoked() {
-			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("revoked_token_hash_1"));
+    @Test
+    @Order(2)
+    @DisplayName("正常系：無効化済みのトークンも取得できる")
+    void findByTokenHash_revoked() {
+      RefreshTokenModel actual =
+          refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("revoked_token_hash_1"));
 
-			assertNotNull(actual);
-			assertTrue(actual.getIsRevoked().value());
-		}
+      assertNotNull(actual);
+      assertTrue(actual.getIsRevoked().value());
+    }
 
-		@Test
-		@Order(3)
-		@DisplayName("正常系：該当するトークンが存在しない場合、nullを返す")
-		void findByTokenHash_not_found() {
-			RefreshTokenModel actual = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("nonexistent_hash"));
+    @Test
+    @Order(3)
+    @DisplayName("正常系：該当するトークンが存在しない場合、nullを返す")
+    void findByTokenHash_not_found() {
+      RefreshTokenModel actual =
+          refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("nonexistent_hash"));
 
-			assertNull(actual);
-		}
-	}
+      assertNull(actual);
+    }
+  }
 
-	@Nested
-	@Order(3)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	@Sql("/sql/common/cleanup.sql")
-	@Sql("/sql/repository/RefreshTokenRepositoryImplIntegrationTest.sql")
-	class revokeAllByAccountNo {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：アカウント番号に該当する有効なリフレッシュトークンをすべて無効化する")
-		void revokeAllByAccountNo_success() {
-			// アカウント1の有効なトークンが2件（token_id=1,5）、無効化済み1件（token_id=2）、期限切れ1件（token_id=3）
-			refreshTokenRepositoryImpl.revokeAllByAccountNo(new AccountNo(1L));
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/repository/RefreshTokenRepositoryImplIntegrationTest.sql")
+  class revokeAllByAccountNo {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウント番号に該当する有効なリフレッシュトークンをすべて無効化する")
+    void revokeAllByAccountNo_success() {
+      // アカウント1の有効なトークンが2件（token_id=1,5）、無効化済み1件（token_id=2）、期限切れ1件（token_id=3）
+      refreshTokenRepositoryImpl.revokeAllByAccountNo(new AccountNo(1L));
 
-			List<RefreshToken> account1Tokens = getRefreshTokensByAccountNo(1L);
-			// アカウント1のトークンはすべて無効化されている
-			for (RefreshToken token : account1Tokens) {
-				assertTrue(token.getIsRevoked());
-			}
+      List<RefreshToken> account1Tokens = getRefreshTokensByAccountNo(1L);
+      // アカウント1のトークンはすべて無効化されている
+      for (RefreshToken token : account1Tokens) {
+        assertTrue(token.getIsRevoked());
+      }
 
-			// 無効化されたトークンの更新者・更新日時が記録されている
-			RefreshToken revokedToken = getRefreshTokenData("valid_token_hash_1").getFirst();
-			assertEquals(1L, revokedToken.getUpdatedBy());
-			assertNotNull(revokedToken.getUpdatedAt());
+      // 無効化されたトークンの更新者・更新日時が記録されている
+      RefreshToken revokedToken = getRefreshTokenData("valid_token_hash_1").getFirst();
+      assertEquals(1L, revokedToken.getUpdatedBy());
+      assertNotNull(revokedToken.getUpdatedAt());
 
-			// アカウント2のトークンは影響を受けない
-			RefreshTokenModel account2Token = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_2"));
-			assertNotNull(account2Token);
-			assertFalse(account2Token.getIsRevoked().value());
-		}
+      // アカウント2のトークンは影響を受けない
+      RefreshTokenModel account2Token =
+          refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_2"));
+      assertNotNull(account2Token);
+      assertFalse(account2Token.getIsRevoked().value());
+    }
 
-		@Test
-		@Order(2)
-		@DisplayName("正常系：該当するトークンが存在しない場合もエラーにならない")
-		void revokeAllByAccountNo_no_tokens() {
-			assertDoesNotThrow(() -> refreshTokenRepositoryImpl.revokeAllByAccountNo(new AccountNo(999L)));
-		}
-	}
+    @Test
+    @Order(2)
+    @DisplayName("正常系：該当するトークンが存在しない場合もエラーにならない")
+    void revokeAllByAccountNo_no_tokens() {
+      assertDoesNotThrow(
+          () -> refreshTokenRepositoryImpl.revokeAllByAccountNo(new AccountNo(999L)));
+    }
+  }
 
-	@Nested
-	@Order(4)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	@Sql("/sql/common/cleanup.sql")
-	@Sql("/sql/repository/RefreshTokenRepositoryImplIntegrationTest.sql")
-	class revokeByTokenHash {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：トークンハッシュに該当するリフレッシュトークンを無効化する")
-		void revokeByTokenHash_success() {
-			// 無効化前は有効
-			RefreshTokenModel before = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
-			assertFalse(before.getIsRevoked().value());
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/repository/RefreshTokenRepositoryImplIntegrationTest.sql")
+  class revokeByTokenHash {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：トークンハッシュに該当するリフレッシュトークンを無効化する")
+    void revokeByTokenHash_success() {
+      // 無効化前は有効
+      RefreshTokenModel before =
+          refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
+      assertFalse(before.getIsRevoked().value());
 
-			refreshTokenRepositoryImpl.revokeByTokenHash(new TokenHash("valid_token_hash_1"));
+      refreshTokenRepositoryImpl.revokeByTokenHash(new TokenHash("valid_token_hash_1"));
 
-			// 無効化後はis_revoked=true
-			RefreshTokenModel after = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
-			assertTrue(after.getIsRevoked().value());
+      // 無効化後はis_revoked=true
+      RefreshTokenModel after =
+          refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
+      assertTrue(after.getIsRevoked().value());
 
-			// 無効化されたトークンの更新者・更新日時が記録されている（account_no=1のトークンのためupdated_by=1）
-			RefreshToken revokedToken = getRefreshTokenData("valid_token_hash_1").getFirst();
-			assertEquals(1L, revokedToken.getUpdatedBy());
-			assertNotNull(revokedToken.getUpdatedAt());
+      // 無効化されたトークンの更新者・更新日時が記録されている（account_no=1のトークンのためupdated_by=1）
+      RefreshToken revokedToken = getRefreshTokenData("valid_token_hash_1").getFirst();
+      assertEquals(1L, revokedToken.getUpdatedBy());
+      assertNotNull(revokedToken.getUpdatedAt());
 
-			// 他のトークンは影響を受けない
-			RefreshTokenModel otherToken = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1b"));
-			assertFalse(otherToken.getIsRevoked().value());
-		}
+      // 他のトークンは影響を受けない
+      RefreshTokenModel otherToken =
+          refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1b"));
+      assertFalse(otherToken.getIsRevoked().value());
+    }
 
-		@Test
-		@Order(2)
-		@DisplayName("正常系：該当するトークンが存在しない場合もエラーにならない")
-		void revokeByTokenHash_not_found() {
-			assertDoesNotThrow(() -> refreshTokenRepositoryImpl.revokeByTokenHash(new TokenHash("nonexistent_hash")));
-		}
-	}
+    @Test
+    @Order(2)
+    @DisplayName("正常系：該当するトークンが存在しない場合もエラーにならない")
+    void revokeByTokenHash_not_found() {
+      assertDoesNotThrow(
+          () -> refreshTokenRepositoryImpl.revokeByTokenHash(new TokenHash("nonexistent_hash")));
+    }
+  }
 
-	@Nested
-	@Order(5)
-	@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-	@Sql("/sql/common/cleanup.sql")
-	@Sql("/sql/repository/RefreshTokenRepositoryImplIntegrationTest.sql")
-	class deleteExpired {
-		@Test
-		@Order(1)
-		@DisplayName("正常系：有効期限切れのリフレッシュトークンを削除する")
-		void deleteExpired_success() {
-			// 削除前は5件（うち期限切れ1件: token_id=3）
-			Integer beforeCount = countAllRefreshTokens();
-			assertEquals(5, beforeCount);
+  @Nested
+  @Order(5)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/repository/RefreshTokenRepositoryImplIntegrationTest.sql")
+  class deleteExpired {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：有効期限切れのリフレッシュトークンを削除する")
+    void deleteExpired_success() {
+      // 削除前は5件（うち期限切れ1件: token_id=3）
+      Integer beforeCount = countAllRefreshTokens();
+      assertEquals(5, beforeCount);
 
-			refreshTokenRepositoryImpl.deleteExpired();
+      refreshTokenRepositoryImpl.deleteExpired();
 
-			// 期限切れトークンが削除されている
-			Integer afterCount = countAllRefreshTokens();
-			assertEquals(4, afterCount);
+      // 期限切れトークンが削除されている
+      Integer afterCount = countAllRefreshTokens();
+      assertEquals(4, afterCount);
 
-			// 期限切れトークン（token_id=3）が削除されていることを検証
-			RefreshTokenModel deletedToken = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("expired_token_hash_1"));
-			assertNull(deletedToken);
+      // 期限切れトークン（token_id=3）が削除されていることを検証
+      RefreshTokenModel deletedToken =
+          refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("expired_token_hash_1"));
+      assertNull(deletedToken);
 
-			// 有効なトークンは残っている
-			RefreshTokenModel validToken = refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
-			assertNotNull(validToken);
-		}
-	}
+      // 有効なトークンは残っている
+      RefreshTokenModel validToken =
+          refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("valid_token_hash_1"));
+      assertNotNull(validToken);
+    }
+  }
 }

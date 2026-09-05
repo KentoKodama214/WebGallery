@@ -5,18 +5,18 @@ import java.io.Serializable;
 /**
  * アクセストークンの値オブジェクト
  *
- * @param	value	アクセストークン
+ * @param value アクセストークン
  */
 public record AccessToken(String value) implements Serializable {
 
-	/**
-	 * コンパクトコンストラクタ
-	 *
-	 * @throws	IllegalArgumentException	nullの場合
-	 */
-	public AccessToken {
-		if (value == null) {
-			throw new IllegalArgumentException("アクセストークンはnullにできません");
-		}
-	}
+  /**
+   * コンパクトコンストラクタ
+   *
+   * @throws IllegalArgumentException nullの場合
+   */
+  public AccessToken {
+    if (value == null) {
+      throw new IllegalArgumentException("アクセストークンはnullにできません");
+    }
+  }
 }

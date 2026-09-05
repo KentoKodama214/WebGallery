@@ -30,6 +30,10 @@ just backend-run
 # クリーンビルド
 just backend-clean-build
 
+# backendのコードフォーマットチェック・整形（Spotless + Google Java Format）
+just format-check
+just format
+
 # frontendの依存パッケージインストール・開発サーバー起動・ビルド・lint（just経由）
 just front-setup
 just front-run

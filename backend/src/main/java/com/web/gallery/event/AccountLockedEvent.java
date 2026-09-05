@@ -5,7 +5,6 @@ import com.web.gallery.domain.account.AccountNo;
 /**
  * アカウントの強制ロック時に発行されるドメインイベント
  *
- * @param	accountNo	アカウント番号
+ * @param accountNo アカウント番号
  */
-public record AccountLockedEvent(AccountNo accountNo) {
-}
+public record AccountLockedEvent(AccountNo accountNo) {}

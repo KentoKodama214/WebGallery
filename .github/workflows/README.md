@@ -5,6 +5,7 @@
 | ワークフロー | ファイル | トリガー |
 |---|---|---|
 | Javadocチェック | `checkstyle.yml` | `main`へのPR |
+| フォーマットチェック | `spotless.yml` | `main`へのPR |
 | アーキテクチャチェック | `architecture-check.yml` | `main`へのPR |
 | テスト実行 | `test.yml` | `main`へのPR |
 | カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `main`へのPR |
@@ -14,6 +15,9 @@
 ```
 checkstyle.yml:
   Javadocチェック ──────────────────────→ (独立)
+
+spotless.yml:
+  フォーマットチェック ──────────────────→ (独立)
 
 architecture-check.yml:
   アーキテクチャチェック ──────────────→ (独立)
@@ -26,7 +30,7 @@ test.yml:
              └───────────────────────────┴→ (両方成功時) カバレッジレポート
 ```
 
-- Javadocチェック、アーキテクチャチェック、テスト実行は別ワークフローのため、**並列に実行**される
+- Javadocチェック、フォーマットチェック、アーキテクチャチェック、テスト実行は別ワークフローのため、**並列に実行**される
 - フロントエンド単体テストはバックエンドの単体テストとは独立して**並列に実行**される
 - 単体テストが失敗した場合、結合テスト・E2Eテストは**スキップ**される
 - 結合テストとE2Eテストは互いに依存せず**並列に実行**される
@@ -46,6 +50,15 @@ Checkstyleを使用して、`src/main/java`配下の全クラス・全メソッ�
 - Javadocの説明文が空でないか
 
 **失敗時:** チェック結果レポートがアーティファクトとしてアップロードされる
+
+### フォーマットチェック (`spotless.yml`)
+
+Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/java`配下の全Javaファイルが整形済みかをチェックする（`spotlessCheck`）。未整形の場合はローカルで`./backend/gradlew -p backend spotlessApply`（または`just format`）を実行して修正する。
+
+**チェック内容:**
+- Google Java Formatによるコードスタイル（インデント・改行位置等）
+- 未使用importの削除、import順序
+- 行末の余分な空白、ファイル末尾の改行
 
 ### アーキテクチャチェック (`architecture-check.yml`)
 

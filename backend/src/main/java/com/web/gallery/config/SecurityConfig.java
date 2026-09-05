@@ -1,16 +1,16 @@
 package com.web.gallery.config;
 
-import java.util.List;
-
+import com.web.gallery.constant.ApiRoutes;
 import jakarta.servlet.DispatcherType;
-
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -22,140 +22,162 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import com.web.gallery.constant.ApiRoutes;
-
-import lombok.RequiredArgsConstructor;
-
 /**
  * Spring Securityで必要なオブジェクトを生成するConfigクラス
- * @author	Kento Kodama
- * @version	1.0.0
- * @since	1.0.0
+ *
+ * @author Kento Kodama
+ * @version 1.0.0
+ * @since 1.0.0
  */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-	private final CorsConfig corsConfig;
+  private final CorsConfig corsConfig;
 
-	private final RestAccessDeniedHandler restAccessDeniedHandler;
+  private final RestAccessDeniedHandler restAccessDeniedHandler;
 
-	private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+  private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 
-	/**
-	 * bcryptアルゴリズムでハッシュ化を行うエンコーダのオブジェクトを生成します
-	 * @return PasswordEncoderオブジェクト
-	 */
-	@Bean
-	PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+  /**
+   * bcryptアルゴリズムでハッシュ化を行うエンコーダのオブジェクトを生成します
+   *
+   * @return PasswordEncoderオブジェクト
+   */
+  @Bean
+  PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-	/**
-	 * AuthenticationManagerのBeanを公開します
-	 * @param	authenticationConfiguration	認証設定
-	 * @return		AuthenticationManagerオブジェクト
-	 * @throws Exception
-	 */
-	@Bean
-	AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-		return authenticationConfiguration.getAuthenticationManager();
-	}
+  /**
+   * AuthenticationManagerのBeanを公開します
+   *
+   * @param authenticationConfiguration 認証設定
+   * @return AuthenticationManagerオブジェクト
+   * @throws Exception
+   */
+  @Bean
+  AuthenticationManager authenticationManager(
+      AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    return authenticationConfiguration.getAuthenticationManager();
+  }
 
-	/**
-	 * CORS設定を定義します
-	 * @return	CorsConfigurationSourceオブジェクト
-	 */
-	@Bean
-	CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedOrigins(corsConfig.getAllowedOrigins());
-		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-		config.setAllowedHeaders(List.of("*"));
-		config.setAllowCredentials(true);
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", config);
-		return source;
-	}
+  /**
+   * CORS設定を定義します
+   *
+   * @return CorsConfigurationSourceオブジェクト
+   */
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedOrigins(corsConfig.getAllowedOrigins());
+    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    config.setAllowedHeaders(List.of("*"));
+    config.setAllowCredentials(true);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+  }
 
-	/**
-	 * OpenAPIドキュメント用のSecurityFilterChainを生成します<p>
-	 * API仕様の露出を避けるため、本番プロファイル（prod）では登録せず、
-	 * デフォルトのSecurityFilterChainにより拒否される
-	 * @param	http	HTTPセキュリティオブジェクト
-	 * @return			SecurityFilterChainオブジェクト
-	 * @throws Exception
-	 */
-	@Bean
-	@Order(0)
-	@Profile("!prod")
-	SecurityFilterChain openApiSecurityFilterChain(HttpSecurity http) throws Exception {
-		http.securityMatcher("/v3/api-docs/**", "/scalar/**")
-			.authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
-			.csrf(csrf -> csrf.disable());
-		return http.build();
-	}
+  /**
+   * OpenAPIドキュメント用のSecurityFilterChainを生成します
+   *
+   * <p>API仕様の露出を避けるため、本番プロファイル（prod）では登録せず、 デフォルトのSecurityFilterChainにより拒否される
+   *
+   * @param http HTTPセキュリティオブジェクト
+   * @return SecurityFilterChainオブジェクト
+   * @throws Exception
+   */
+  @Bean
+  @Order(0)
+  @Profile("!prod")
+  SecurityFilterChain openApiSecurityFilterChain(HttpSecurity http) throws Exception {
+    http.securityMatcher("/v3/api-docs/**", "/scalar/**")
+        .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
+        .csrf(csrf -> csrf.disable());
+    return http.build();
+  }
 
-	/**
-	 * API用のSecurityFilterChainを生成します（JWT認証、ステートレス）
-	 * @param	http	HTTPセキュリティオブジェクト
-	 * @return			SecurityFilterChainオブジェクト
-	 * @throws Exception
-	 */
-	@Bean
-	@Order(1)
-	SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
-		http.securityMatcher("/api/**")
-			.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-			.csrf(csrf -> csrf.disable())
-			.sessionManagement(session -> session
-				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-				// 認証API
-				.requestMatchers(ApiRoutes.API_AUTH_LOGIN).permitAll()
-				.requestMatchers(ApiRoutes.API_AUTH_REFRESH).permitAll()
-				.requestMatchers(ApiRoutes.API_AUTH_LOGOUT).permitAll()
-				// アカウント登録（POST）とアカウント一覧（GET）は公開
-				.requestMatchers(HttpMethod.GET, ApiRoutes.API_ACCOUNTS).permitAll()
-				.requestMatchers(HttpMethod.POST, ApiRoutes.API_ACCOUNTS).permitAll()
-				// 写真一覧・詳細の閲覧（GET）は公開
-				.requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTOS).permitAll()
-				.requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTO_DETAIL).permitAll()
-				// 都道府県一覧は公開
-				.requestMatchers(ApiRoutes.API_PREFECTURES).permitAll()
-				// 管理者APIはADMINロール必須（AOPアスペクトに加えた多層防御）
-				.requestMatchers(ApiRoutes.API_ADMIN_PREFIX + "/**").hasRole("ADMIN")
-				// それ以外は認証必須
-				.anyRequest().authenticated())
-			.exceptionHandling(exceptionHandling -> exceptionHandling
-				.authenticationEntryPoint(restAuthenticationEntryPoint)
-				.accessDeniedHandler(restAccessDeniedHandler))
-			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+  /**
+   * API用のSecurityFilterChainを生成します（JWT認証、ステートレス）
+   *
+   * @param http HTTPセキュリティオブジェクト
+   * @return SecurityFilterChainオブジェクト
+   * @throws Exception
+   */
+  @Bean
+  @Order(1)
+  SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+    http.securityMatcher("/api/**")
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(
+            authorizeRequests ->
+                authorizeRequests
+                    // 認証API
+                    .requestMatchers(ApiRoutes.API_AUTH_LOGIN)
+                    .permitAll()
+                    .requestMatchers(ApiRoutes.API_AUTH_REFRESH)
+                    .permitAll()
+                    .requestMatchers(ApiRoutes.API_AUTH_LOGOUT)
+                    .permitAll()
+                    // アカウント登録（POST）とアカウント一覧（GET）は公開
+                    .requestMatchers(HttpMethod.GET, ApiRoutes.API_ACCOUNTS)
+                    .permitAll()
+                    .requestMatchers(HttpMethod.POST, ApiRoutes.API_ACCOUNTS)
+                    .permitAll()
+                    // 写真一覧・詳細の閲覧（GET）は公開
+                    .requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTOS)
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTO_DETAIL)
+                    .permitAll()
+                    // 都道府県一覧は公開
+                    .requestMatchers(ApiRoutes.API_PREFECTURES)
+                    .permitAll()
+                    // 管理者APIはADMINロール必須（AOPアスペクトに加えた多層防御）
+                    .requestMatchers(ApiRoutes.API_ADMIN_PREFIX + "/**")
+                    .hasRole("ADMIN")
+                    // それ以外は認証必須
+                    .anyRequest()
+                    .authenticated())
+        .exceptionHandling(
+            exceptionHandling ->
+                exceptionHandling
+                    .authenticationEntryPoint(restAuthenticationEntryPoint)
+                    .accessDeniedHandler(restAccessDeniedHandler))
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-		return http.build();
-	}
+    return http.build();
+  }
 
-	/**
-	 * どのSecurityFilterChainにもマッチしないリクエスト用のデフォルトSecurityFilterChainを生成します<p>
-	 * マッチするチェーンが無いとリクエストがセキュリティ処理を経ずに通過するため、
-	 * 明示的にすべて拒否する（{@code /error}等のディスパッチは通す）
-	 * @param	http	HTTPセキュリティオブジェクト
-	 * @return			SecurityFilterChainオブジェクト
-	 * @throws Exception
-	 */
-	@Bean
-	@Order(Integer.MAX_VALUE)
-	SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-		http.csrf(csrf -> csrf.disable())
-			.sessionManagement(session -> session
-				.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			.authorizeHttpRequests(authorize -> authorize
-				.dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.ASYNC, DispatcherType.FORWARD).permitAll()
-				.anyRequest().denyAll());
-		return http.build();
-	}
-
+  /**
+   * どのSecurityFilterChainにもマッチしないリクエスト用のデフォルトSecurityFilterChainを生成します
+   *
+   * <p>マッチするチェーンが無いとリクエストがセキュリティ処理を経ずに通過するため、 明示的にすべて拒否する（{@code /error}等のディスパッチは通す）
+   *
+   * @param http HTTPセキュリティオブジェクト
+   * @return SecurityFilterChainオブジェクト
+   * @throws Exception
+   */
+  @Bean
+  @Order(Integer.MAX_VALUE)
+  SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+    http.csrf(csrf -> csrf.disable())
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(
+            authorize ->
+                authorize
+                    .dispatcherTypeMatchers(
+                        DispatcherType.ERROR, DispatcherType.ASYNC, DispatcherType.FORWARD)
+                    .permitAll()
+                    .anyRequest()
+                    .denyAll());
+    return http.build();
+  }
 }

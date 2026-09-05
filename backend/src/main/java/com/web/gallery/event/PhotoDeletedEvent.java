@@ -6,8 +6,7 @@ import com.web.gallery.domain.photo.PhotoNo;
 /**
  * 写真の削除時に発行されるドメインイベント
  *
- * @param	accountNo	アカウント番号
- * @param	photoNo		写真番号
+ * @param accountNo アカウント番号
+ * @param photoNo 写真番号
  */
-public record PhotoDeletedEvent(AccountNo accountNo, PhotoNo photoNo) {
-}
+public record PhotoDeletedEvent(AccountNo accountNo, PhotoNo photoNo) {}

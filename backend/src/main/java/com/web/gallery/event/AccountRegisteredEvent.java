@@ -5,7 +5,6 @@ import com.web.gallery.domain.account.AccountId;
 /**
  * アカウントの新規登録時に発行されるドメインイベント
  *
- * @param	accountId	アカウントID
+ * @param accountId アカウントID
  */
-public record AccountRegisteredEvent(AccountId accountId) {
-}
+public record AccountRegisteredEvent(AccountId accountId) {}

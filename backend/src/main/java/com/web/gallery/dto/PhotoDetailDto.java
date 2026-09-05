@@ -1,72 +1,68 @@
 package com.web.gallery.dto;
 
+import com.web.gallery.enumeration.DirectionEnum;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-
-import com.web.gallery.enumeration.DirectionEnum;
-
 import lombok.Data;
 
-/**
- * 写真のメタデータを含めた詳細情報を保持するDtoクラス
- */
+/** 写真のメタデータを含めた詳細情報を保持するDtoクラス */
 @Data
 public class PhotoDetailDto {
-	/** アカウントNo */
-	private Long accountNo;
+  /** アカウントNo */
+  private Long accountNo;
 
-	/** 写真番号 */
-	private Long photoNo;
+  /** 写真番号 */
+  private Long photoNo;
 
-	/** お気に入り */
-	private Boolean isFavorite;
+  /** お気に入り */
+  private Boolean isFavorite;
 
-	/** 撮影日時 */
-	private OffsetDateTime photoAt;
+  /** 撮影日時 */
+  private OffsetDateTime photoAt;
 
-	/** ロケーション番号 */
-	private Long locationNo;
+  /** ロケーション番号 */
+  private Long locationNo;
 
-	/** 住所 */
-	private String address;
+  /** 住所 */
+  private String address;
 
-	/** 緯度 */
-	private BigDecimal latitude;
+  /** 緯度 */
+  private BigDecimal latitude;
 
-	/** 経度 */
-	private BigDecimal longitude;
+  /** 経度 */
+  private BigDecimal longitude;
 
-	/** ロケーション名 */
-	private String locationName;
+  /** ロケーション名 */
+  private String locationName;
 
-	/** 画像ファイルパス */
-	private String imageFilePath;
+  /** 画像ファイルパス */
+  private String imageFilePath;
 
-	/** 写真タイトル日本語名 */
-	private String photoJapaneseTitle;
+  /** 写真タイトル日本語名 */
+  private String photoJapaneseTitle;
 
-	/** 写真タイトル英語名 */
-	private String photoEnglishTitle;
+  /** 写真タイトル英語名 */
+  private String photoEnglishTitle;
 
-	/** キャプション */
-	private String caption;
+  /** キャプション */
+  private String caption;
 
-	/**
-	 * 向き区分
-	 * <p>
-	 * {@link DirectionEnum}
-	 */
-	private DirectionEnum directionKbn;
+  /**
+   * 向き区分
+   *
+   * <p>{@link DirectionEnum}
+   */
+  private DirectionEnum directionKbn;
 
-	/** 焦点距離 */
-	private Integer focalLength;
+  /** 焦点距離 */
+  private Integer focalLength;
 
-	/** F値 */
-	private BigDecimal fValue;
+  /** F値 */
+  private BigDecimal fValue;
 
-	/** シャッタースピード */
-	private BigDecimal shutterSpeed;
+  /** シャッタースピード */
+  private BigDecimal shutterSpeed;
 
-	/** ISO */
-	private Integer iso;
+  /** ISO */
+  private Integer iso;
 }
