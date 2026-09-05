@@ -4,7 +4,9 @@ updates:
   - package-ecosystem: "gradle"
     directory: "/backend"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+      time: "07:00"
+      timezone: "Asia/Tokyo"
     commit-message:
       prefix: "chore(deps)"
     open-pull-requests-limit: 10
@@ -13,7 +15,9 @@ updates:
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+      time: "07:00"
+      timezone: "Asia/Tokyo"
     commit-message:
       prefix: "chore(deps)"
     open-pull-requests-limit: 10
@@ -22,7 +26,9 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+      time: "07:00"
+      timezone: "Asia/Tokyo"
     commit-message:
       prefix: "chore(deps)"
     open-pull-requests-limit: 10
