@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: pnpmセットアップ
         uses: pnpm/action-setup@v6
@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: JDK 21 セットアップ
         uses: actions/setup-java@v6
@@ -98,7 +98,7 @@ jobs:
 
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: JDK 21 セットアップ
         uses: actions/setup-java@v6
@@ -176,7 +176,7 @@ jobs:
 
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: JDK 21 セットアップ
         uses: actions/setup-java@v6
@@ -277,7 +277,7 @@ jobs:
 
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: pnpmセットアップ
         uses: pnpm/action-setup@v6
@@ -322,7 +322,7 @@ jobs:
 
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: JDK 21 セットアップ
         uses: actions/setup-java@v6
