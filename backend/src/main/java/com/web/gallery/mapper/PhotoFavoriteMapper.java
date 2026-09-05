@@ -1,28 +1,25 @@
 package com.web.gallery.mapper;
 
-import org.apache.ibatis.annotations.Mapper;
-
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.entity.PhotoFavoriteCondition;
+import org.apache.ibatis.annotations.Mapper;
 
-/**
- * 写真お気に入りテーブルのMapperクラス
- */
+/** 写真お気に入りテーブルのMapperクラス */
 @Mapper
 public interface PhotoFavoriteMapper {
-	/**
-	 * 写真お気に入りを登録する
-	 *
-	 * @param	photoFavorite	{@link PhotoFavorite}
-	 * @return					登録件数
-	 */
-	public Integer insert(PhotoFavorite photoFavorite);
+  /**
+   * 写真お気に入りを登録する
+   *
+   * @param photoFavorite {@link PhotoFavorite}
+   * @return 登録件数
+   */
+  public Integer insert(PhotoFavorite photoFavorite);
 
-	/**
-	 * 写真お気に入りを削除する
-	 *
-	 * @param	condition	削除対象の抽出条件
-	 * @return				削除件数
-	 */
-	public Integer delete(PhotoFavoriteCondition condition);
+  /**
+   * 写真お気に入りを削除する
+   *
+   * @param condition 削除対象の抽出条件
+   * @return 削除件数
+   */
+  public Integer delete(PhotoFavoriteCondition condition);
 }

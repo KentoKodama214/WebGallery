@@ -1,6 +1,26 @@
 package com.web.gallery.controller;
 
+import com.web.gallery.config.JwtConfig;
+import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.Consts;
+import com.web.gallery.constant.MessageConst;
+import com.web.gallery.controller.request.AuthLoginRequest;
+import com.web.gallery.controller.response.AuthErrorResponse;
+import com.web.gallery.controller.response.AuthLoginResponse;
+import com.web.gallery.domain.account.AccountId;
+import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.auth.RefreshTokenValue;
+import com.web.gallery.enumeration.ErrorEnum;
+import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.InvalidRefreshTokenException;
+import com.web.gallery.model.AuthTokenModel;
+import com.web.gallery.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -15,210 +35,191 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.web.gallery.config.JwtConfig;
-import com.web.gallery.constant.ApiRoutes;
-import com.web.gallery.constant.MessageConst;
-import com.web.gallery.controller.request.AuthLoginRequest;
-import com.web.gallery.controller.response.AuthErrorResponse;
-import com.web.gallery.controller.response.AuthLoginResponse;
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.Password;
-import com.web.gallery.domain.auth.RefreshTokenValue;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
-import com.web.gallery.exception.InvalidRefreshTokenException;
-import com.web.gallery.model.AuthTokenModel;
-import com.web.gallery.service.AuthService;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * JWT認証に関するAPI通信を扱うRestControllerクラス
- * @author	Kento Kodama
- * @version	1.0.0
- * @since	1.0.0
+ *
+ * @author Kento Kodama
+ * @version 1.0.0
+ * @since 1.0.0
  */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "認証", description = "JWT認証に関するAPI")
 public class AuthRestController {
-	private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
+  private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
-	private final AuthService authService;
-	private final JwtConfig jwtConfig;
+  private final AuthService authService;
+  private final JwtConfig jwtConfig;
 
-	/**
-	 * ログイン認証
-	 *
-	 * @param	authLoginRequest	{@link AuthLoginRequest}
-	 * @param	result				AuthLoginRequestのバインディング結果
-	 * @return						{@link AuthLoginResponse}
-	 * @throws	GalleryException	リクエストパラメータが不正の場合
-	 */
-	@Operation(summary = "ログイン", description = "アカウントIDとパスワードで認証し、JWTトークンを発行する")
-	@ApiResponse(responseCode = "200", description = "認証成功")
-	@ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
-	@ApiResponse(responseCode = "401", description = "認証失敗（アカウントIDまたはパスワードが不正）", content = @Content)
-	@ApiResponse(responseCode = "423", description = "アカウントロック", content = @Content)
-	@PostMapping(ApiRoutes.API_AUTH_LOGIN)
-	public ResponseEntity<AuthLoginResponse> login(
-			@RequestBody @Validated AuthLoginRequest authLoginRequest,
-			BindingResult result) throws GalleryException {
+  /**
+   * ログイン認証
+   *
+   * @param authLoginRequest {@link AuthLoginRequest}
+   * @param result AuthLoginRequestのバインディング結果
+   * @return {@link AuthLoginResponse}
+   * @throws GalleryException リクエストパラメータが不正の場合
+   */
+  @Operation(summary = "ログイン", description = "アカウントIDとパスワードで認証し、JWTトークンを発行する")
+  @ApiResponse(responseCode = "200", description = "認証成功")
+  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+  @ApiResponse(responseCode = "401", description = "認証失敗（アカウントIDまたはパスワードが不正）", content = @Content)
+  @ApiResponse(responseCode = "423", description = "アカウントロック", content = @Content)
+  @PostMapping(ApiRoutes.API_AUTH_LOGIN)
+  public ResponseEntity<AuthLoginResponse> login(
+      @RequestBody @Validated AuthLoginRequest authLoginRequest, BindingResult result)
+      throws GalleryException {
 
-		if (result.hasErrors()) {
-			throw ErrorEnum.INVALID_INPUT.toException();
-		}
+    if (result.hasErrors()) {
+      throw ErrorEnum.INVALID_INPUT.toException();
+    }
 
-		AuthTokenModel tokenModel = authService.login(
-				new AccountId(authLoginRequest.getAccountId()),
-				new Password(authLoginRequest.getPassword()));
+    AuthTokenModel tokenModel =
+        authService.login(
+            new AccountId(authLoginRequest.getAccountId()),
+            new Password(authLoginRequest.getPassword()));
 
-		ResponseCookie refreshTokenCookie = createRefreshTokenCookie(
-				tokenModel.getRefreshToken().value(),
-				jwtConfig.getRefreshTokenExpirationDays() * 24 * 60 * 60L);
+    ResponseCookie refreshTokenCookie =
+        createRefreshTokenCookie(
+            tokenModel.getRefreshToken().value(),
+            jwtConfig.getRefreshTokenExpirationDays() * 24 * 60 * 60L);
 
-		AuthLoginResponse response = AuthLoginResponse.from(tokenModel);
+    AuthLoginResponse response = AuthLoginResponse.from(tokenModel);
 
-		return ResponseEntity.ok()
-				.header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
-				.body(response);
-	}
+    return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+        .body(response);
+  }
 
-	/**
-	 * アクセストークンのリフレッシュ<p>
-	 * リフレッシュトークンもローテーションされるため、新しいトークンをcookieに再設定する
-	 *
-	 * @param	refreshToken	リフレッシュトークン（cookieから取得）
-	 * @return					{@link AuthLoginResponse}、またはトークン不正時の{@link AuthErrorResponse}
-	 */
-	@Operation(summary = "トークンリフレッシュ", description = "リフレッシュトークン（cookie）を使用してアクセストークンを再発行する")
-	@ApiResponse(responseCode = "200", description = "リフレッシュ成功")
-	@ApiResponse(responseCode = "401", description = "リフレッシュトークンが無効", content = @Content)
-	@ApiResponse(responseCode = "423", description = "アカウントロック", content = @Content)
-	@PostMapping(ApiRoutes.API_AUTH_REFRESH)
-	public ResponseEntity<?> refresh(
-			@CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
+  /**
+   * アクセストークンのリフレッシュ
+   *
+   * <p>リフレッシュトークンもローテーションされるため、新しいトークンをcookieに再設定する
+   *
+   * @param refreshToken リフレッシュトークン（cookieから取得）
+   * @return {@link AuthLoginResponse}、またはトークン不正時の{@link AuthErrorResponse}
+   */
+  @Operation(summary = "トークンリフレッシュ", description = "リフレッシュトークン（cookie）を使用してアクセストークンを再発行する")
+  @ApiResponse(responseCode = "200", description = "リフレッシュ成功")
+  @ApiResponse(responseCode = "401", description = "リフレッシュトークンが無効", content = @Content)
+  @ApiResponse(responseCode = "423", description = "アカウントロック", content = @Content)
+  @PostMapping(ApiRoutes.API_AUTH_REFRESH)
+  public ResponseEntity<?> refresh(
+      @CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
 
-		if (refreshToken == null || refreshToken.isEmpty()) {
-			// cookieが無いのは未ログインの正常な状態。例外ハンドラ（INFOログ出力）を経由せず、
-			// 他の認証エラーと同じJSON形式（AuthErrorResponse）で401を返す
-			return ResponseEntity.status(401).body(AuthErrorResponse.of(MessageConst.ERR_INVALID_REFRESH_TOKEN));
-		}
+    if (refreshToken == null || refreshToken.isEmpty()) {
+      // cookieが無いのは未ログインの正常な状態。例外ハンドラ（INFOログ出力）を経由せず、
+      // 他の認証エラーと同じJSON形式（AuthErrorResponse）で401を返す
+      return ResponseEntity.status(401)
+          .body(AuthErrorResponse.of(MessageConst.ERR_INVALID_REFRESH_TOKEN));
+    }
 
-		AuthTokenModel tokenModel = authService.refresh(new RefreshTokenValue(refreshToken));
+    AuthTokenModel tokenModel = authService.refresh(new RefreshTokenValue(refreshToken));
 
-		ResponseCookie refreshTokenCookie = createRefreshTokenCookie(
-				tokenModel.getRefreshToken().value(),
-				jwtConfig.getRefreshTokenExpirationDays() * 24 * 60 * 60L);
+    ResponseCookie refreshTokenCookie =
+        createRefreshTokenCookie(
+            tokenModel.getRefreshToken().value(),
+            jwtConfig.getRefreshTokenExpirationDays() * 24 * 60 * 60L);
 
-		AuthLoginResponse response = AuthLoginResponse.from(tokenModel);
+    AuthLoginResponse response = AuthLoginResponse.from(tokenModel);
 
-		return ResponseEntity.ok()
-				.header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
-				.body(response);
-	}
+    return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+        .body(response);
+  }
 
-	/**
-	 * ログアウト
-	 *
-	 * @param	refreshToken	リフレッシュトークン（cookieから取得）
-	 * @return					204 No Content
-	 */
-	@Operation(summary = "ログアウト", description = "リフレッシュトークンを無効化し、cookieを削除する")
-	@ApiResponse(responseCode = "204", description = "ログアウト成功")
-	@PostMapping(ApiRoutes.API_AUTH_LOGOUT)
-	public ResponseEntity<Void> logout(
-			@CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
+  /**
+   * ログアウト
+   *
+   * @param refreshToken リフレッシュトークン（cookieから取得）
+   * @return 204 No Content
+   */
+  @Operation(summary = "ログアウト", description = "リフレッシュトークンを無効化し、cookieを削除する")
+  @ApiResponse(responseCode = "204", description = "ログアウト成功")
+  @PostMapping(ApiRoutes.API_AUTH_LOGOUT)
+  public ResponseEntity<Void> logout(
+      @CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
 
-		if (refreshToken != null && !refreshToken.isEmpty()) {
-			authService.logout(new RefreshTokenValue(refreshToken));
-		}
+    if (refreshToken != null && !refreshToken.isEmpty()) {
+      authService.logout(new RefreshTokenValue(refreshToken));
+    }
 
-		// リフレッシュトークンcookieを削除
-		ResponseCookie clearCookie = createRefreshTokenCookie(Consts.STRING_EMPTY, 0);
+    // リフレッシュトークンcookieを削除
+    ResponseCookie clearCookie = createRefreshTokenCookie(Consts.STRING_EMPTY, 0);
 
-		return ResponseEntity.noContent()
-				.header(HttpHeaders.SET_COOKIE, clearCookie.toString())
-				.build();
-	}
+    return ResponseEntity.noContent()
+        .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
+        .build();
+  }
 
-	/**
-	 * 認証失敗（パスワード不一致）のExceptionHandler
-	 *
-	 * @param	exception	{@link BadCredentialsException}
-	 * @return				401 Unauthorized
-	 */
-	@ExceptionHandler(BadCredentialsException.class)
-	public ResponseEntity<AuthErrorResponse> handleBadCredentials(BadCredentialsException exception) {
-		log.info("Authentication failed: {}", exception.getMessage());
-		return ResponseEntity.status(401)
-				.body(AuthErrorResponse.of(MessageConst.ERR_BAD_CREDENTIALS));
-	}
+  /**
+   * 認証失敗（パスワード不一致）のExceptionHandler
+   *
+   * @param exception {@link BadCredentialsException}
+   * @return 401 Unauthorized
+   */
+  @ExceptionHandler(BadCredentialsException.class)
+  public ResponseEntity<AuthErrorResponse> handleBadCredentials(BadCredentialsException exception) {
+    log.info("Authentication failed: {}", exception.getMessage());
+    return ResponseEntity.status(401).body(AuthErrorResponse.of(MessageConst.ERR_BAD_CREDENTIALS));
+  }
 
-	/**
-	 * アカウントロック時のExceptionHandler
-	 *
-	 * @param	exception	{@link LockedException}
-	 * @return				423 Locked
-	 */
-	@ExceptionHandler(LockedException.class)
-	public ResponseEntity<AuthErrorResponse> handleLocked(LockedException exception) {
-		log.info("Account locked: {}", exception.getMessage());
-		return ResponseEntity.status(423)
-				.body(AuthErrorResponse.of(MessageConst.ERR_ACCOUNT_LOCKED));
-	}
+  /**
+   * アカウントロック時のExceptionHandler
+   *
+   * @param exception {@link LockedException}
+   * @return 423 Locked
+   */
+  @ExceptionHandler(LockedException.class)
+  public ResponseEntity<AuthErrorResponse> handleLocked(LockedException exception) {
+    log.info("Account locked: {}", exception.getMessage());
+    return ResponseEntity.status(423).body(AuthErrorResponse.of(MessageConst.ERR_ACCOUNT_LOCKED));
+  }
 
-	/**
-	 * リフレッシュトークン無効時のExceptionHandler
-	 *
-	 * @param	exception	{@link InvalidRefreshTokenException}
-	 * @return				401 Unauthorized
-	 */
-	@ExceptionHandler(InvalidRefreshTokenException.class)
-	public ResponseEntity<AuthErrorResponse> handleInvalidToken(InvalidRefreshTokenException exception) {
-		log.info("Invalid refresh token: {}", exception.getMessage());
-		return ResponseEntity.status(401)
-				.body(AuthErrorResponse.of(MessageConst.ERR_INVALID_REFRESH_TOKEN));
-	}
+  /**
+   * リフレッシュトークン無効時のExceptionHandler
+   *
+   * @param exception {@link InvalidRefreshTokenException}
+   * @return 401 Unauthorized
+   */
+  @ExceptionHandler(InvalidRefreshTokenException.class)
+  public ResponseEntity<AuthErrorResponse> handleInvalidToken(
+      InvalidRefreshTokenException exception) {
+    log.info("Invalid refresh token: {}", exception.getMessage());
+    return ResponseEntity.status(401)
+        .body(AuthErrorResponse.of(MessageConst.ERR_INVALID_REFRESH_TOKEN));
+  }
 
-	/**
-	 * 上記以外の認証系例外（{@link org.springframework.security.authentication.DisabledException}、
-	 * {@link org.springframework.security.authentication.CredentialsExpiredException} 等）の
-	 * ExceptionHandler<p>
-	 * より具体的な{@link BadCredentialsException}・{@link LockedException}のハンドラが優先されるため、
-	 * ここに到達するのはそれ以外の{@link AuthenticationException}のみ。
-	 * アカウント状態の詳細を秘匿するため、認証失敗として一律401を返す
-	 *
-	 * @param	exception	{@link AuthenticationException}
-	 * @return				401 Unauthorized
-	 */
-	@ExceptionHandler(AuthenticationException.class)
-	public ResponseEntity<AuthErrorResponse> handleAuthentication(AuthenticationException exception) {
-		log.info("Authentication failed: {}", exception.getMessage());
-		return ResponseEntity.status(401)
-				.body(AuthErrorResponse.of(MessageConst.ERR_BAD_CREDENTIALS));
-	}
+  /**
+   * 上記以外の認証系例外（{@link org.springframework.security.authentication.DisabledException}、 {@link
+   * org.springframework.security.authentication.CredentialsExpiredException} 等）の ExceptionHandler
+   *
+   * <p>より具体的な{@link BadCredentialsException}・{@link LockedException}のハンドラが優先されるため、
+   * ここに到達するのはそれ以外の{@link AuthenticationException}のみ。 アカウント状態の詳細を秘匿するため、認証失敗として一律401を返す
+   *
+   * @param exception {@link AuthenticationException}
+   * @return 401 Unauthorized
+   */
+  @ExceptionHandler(AuthenticationException.class)
+  public ResponseEntity<AuthErrorResponse> handleAuthentication(AuthenticationException exception) {
+    log.info("Authentication failed: {}", exception.getMessage());
+    return ResponseEntity.status(401).body(AuthErrorResponse.of(MessageConst.ERR_BAD_CREDENTIALS));
+  }
 
-	/**
-	 * リフレッシュトークンのcookieを作成する
-	 *
-	 * @param	value		cookie値
-	 * @param	maxAge		有効期限（秒）
-	 * @return				{@link ResponseCookie}
-	 */
-	private ResponseCookie createRefreshTokenCookie(String value, long maxAge) {
-		return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, value)
-				.httpOnly(true)
-				.secure(true)
-				.sameSite("Strict")
-				.path(ApiRoutes.API_AUTH_PREFIX)
-				.maxAge(maxAge)
-				.build();
-	}
+  /**
+   * リフレッシュトークンのcookieを作成する
+   *
+   * @param value cookie値
+   * @param maxAge 有効期限（秒）
+   * @return {@link ResponseCookie}
+   */
+  private ResponseCookie createRefreshTokenCookie(String value, long maxAge) {
+    return ResponseCookie.from(REFRESH_TOKEN_COOKIE_NAME, value)
+        .httpOnly(true)
+        .secure(true)
+        .sameSite("Strict")
+        .path(ApiRoutes.API_AUTH_PREFIX)
+        .maxAge(maxAge)
+        .build();
+  }
 }

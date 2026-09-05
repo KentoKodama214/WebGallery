@@ -6,20 +6,18 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
-/**
- * 写真削除時のリクエストパラメータを保持するクラス
- */
+/** 写真削除時のリクエストパラメータを保持するクラス */
 @Schema(description = "写真削除リクエスト")
 @Data
 public class PhotoDeleteRequest {
-	/** 写真番号 */
-	@Schema(description = "写真番号", example = "1")
-	@NotNull(message = "{validation.common.notBlank}")
-	@Positive(message = "{validation.common.positive}")
-	private Long photoNo;
+  /** 写真番号 */
+  @Schema(description = "写真番号", example = "1")
+  @NotNull(message = "{validation.common.notBlank}")
+  @Positive(message = "{validation.common.positive}")
+  private Long photoNo;
 
-	/** 画像ファイルパス */
-	@Schema(description = "画像ファイルパス", example = "/photos/testuser01/photo1.jpg")
-	@NotBlank(message = "{validation.common.notBlank}")
-	private String imageFilePath;
+  /** 画像ファイルパス */
+  @Schema(description = "画像ファイルパス", example = "/photos/testuser01/photo1.jpg")
+  @NotBlank(message = "{validation.common.notBlank}")
+  private String imageFilePath;
 }

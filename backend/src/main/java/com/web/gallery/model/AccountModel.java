@@ -1,8 +1,5 @@
 package com.web.gallery.model;
 
-import java.time.Clock;
-import java.time.OffsetDateTime;
-
 import com.web.gallery.controller.request.AccountRegistRequest;
 import com.web.gallery.controller.request.AccountUpdateRequest;
 import com.web.gallery.domain.account.AccountId;
@@ -21,199 +18,228 @@ import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.entity.Account;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
-
+import java.time.Clock;
+import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.Value;
 
 /**
  * アカウント情報を受け渡すためのModelクラス
- * <p>
- * {@code forUnlock}/{@code forAdminUnlock}/{@code forLock}/{@code forLoginSuccess}のように
+ *
+ * <p>{@code forUnlock}/{@code forAdminUnlock}/{@code forLock}/{@code forLoginSuccess}のように
  * ログイン失敗回数・管理者ロック等の部分更新専用のファクトリメソッドが存在し、全ファクトリメソッドに共通して
  * 必須となるプロパティが存在しないため、意図的に{@code @NonNull}を付与していない。
  */
 @Value
 @Builder
 public class AccountModel {
-	/** アカウント番号 */
-	private AccountNo accountNo;
+  /** アカウント番号 */
+  private AccountNo accountNo;
 
-	/** アカウントID */
-	private AccountId accountId;
+  /** アカウントID */
+  private AccountId accountId;
 
-	/** アカウント名 */
-	private AccountName accountName;
+  /** アカウント名 */
+  private AccountName accountName;
 
-	/** パスワード */
-	private Password password;
+  /** パスワード */
+  private Password password;
 
-	/** 生年月日 */
-	private BirthDate birthdate;
+  /** 生年月日 */
+  private BirthDate birthdate;
 
-	/**
-	 * 性別区分
-	 * <p>
-	 * {@link SexEnum}
-	 */
-	private SexEnum sexKbn;
+  /**
+   * 性別区分
+   *
+   * <p>{@link SexEnum}
+   */
+  private SexEnum sexKbn;
 
-	/** 出身都道府県区分コード */
-	private BirthplacePrefectureKbnCode birthplacePrefectureKbnCode;
+  /** 出身都道府県区分コード */
+  private BirthplacePrefectureKbnCode birthplacePrefectureKbnCode;
 
-	/** 在住都道府県区分コード */
-	private ResidentPrefectureKbnCode residentPrefectureKbnCode;
+  /** 在住都道府県区分コード */
+  private ResidentPrefectureKbnCode residentPrefectureKbnCode;
 
-	/** フリーメモ */
-	private FreeMemo freeMemo;
+  /** フリーメモ */
+  private FreeMemo freeMemo;
 
-	/**
-	 * 権限区分
-	 * <p>
-	 * {@link AuthorityEnum}
-	 */
-	private AuthorityEnum authorityKbn;
+  /**
+   * 権限区分
+   *
+   * <p>{@link AuthorityEnum}
+   */
+  private AuthorityEnum authorityKbn;
 
-	/** 最終ログイン日時 */
-	private LastLoginDatetime lastLoginDatetime;
+  /** 最終ログイン日時 */
+  private LastLoginDatetime lastLoginDatetime;
 
-	/** ログイン失敗回数 */
-	private LoginFailureCount loginFailureCount;
+  /** ログイン失敗回数 */
+  private LoginFailureCount loginFailureCount;
 
-	/** 管理者ロックフラグ（エンティティ由来の取得時、および強制ロック・解除の部分更新時のみ設定される） */
-	private IsAdminLocked isAdminLocked;
+  /** 管理者ロックフラグ（エンティティ由来の取得時、および強制ロック・解除の部分更新時のみ設定される） */
+  private IsAdminLocked isAdminLocked;
 
-	/** 更新日時（アカウントロックの自動解除判定に使用する。エンティティ由来の取得時のみ設定される） */
-	private UpdatedAt updatedAt;
+  /** 更新日時（アカウントロックの自動解除判定に使用する。エンティティ由来の取得時のみ設定される） */
+  private UpdatedAt updatedAt;
 
-	/** 削除フラグ */
-	private IsDeleted isDeleted;
+  /** 削除フラグ */
+  private IsDeleted isDeleted;
 
-	/**
-	 * AccountエンティティからAccountModelを生成する
-	 *
-	 * @param	entity	{@link Account}
-	 * @return			{@link AccountModel}
-	 */
-	public static AccountModel from(Account entity) {
-		return AccountModel.builder()
-				.accountNo(new AccountNo(entity.getAccountNo()))
-				.accountId(new AccountId(entity.getAccountId()))
-				.accountName(new AccountName(entity.getAccountName()))
-				// 一覧取得などパスワードを射影しないクエリ経由の場合はnullを許容する
-				.password(entity.getPassword() != null ? new Password(entity.getPassword()) : null)
-				.birthdate(entity.getBirthdate() != null ? new BirthDate(entity.getBirthdate()) : null)
-				.sexKbn(entity.getSexKbn())
-				.birthplacePrefectureKbnCode(entity.getBirthplacePrefectureKbnCode() != null ? new BirthplacePrefectureKbnCode(entity.getBirthplacePrefectureKbnCode()) : null)
-				.residentPrefectureKbnCode(entity.getResidentPrefectureKbnCode() != null ? new ResidentPrefectureKbnCode(entity.getResidentPrefectureKbnCode()) : null)
-				.freeMemo(entity.getFreeMemo() != null ? new FreeMemo(entity.getFreeMemo()) : null)
-				.authorityKbn(entity.getAuthorityKbn())
-				.lastLoginDatetime(entity.getLastLoginDatetime() != null ? new LastLoginDatetime(entity.getLastLoginDatetime()) : null)
-				.loginFailureCount(entity.getLoginFailureCount() != null ? new LoginFailureCount(entity.getLoginFailureCount()) : null)
-				.isAdminLocked(entity.getIsAdminLocked() != null ? new IsAdminLocked(entity.getIsAdminLocked()) : null)
-				.updatedAt(entity.getUpdatedAt() != null ? new UpdatedAt(entity.getUpdatedAt()) : null)
-				.isDeleted(new IsDeleted(entity.getIsDeleted()))
-				.build();
-	}
+  /**
+   * AccountエンティティからAccountModelを生成する
+   *
+   * @param entity {@link Account}
+   * @return {@link AccountModel}
+   */
+  public static AccountModel from(Account entity) {
+    return AccountModel.builder()
+        .accountNo(new AccountNo(entity.getAccountNo()))
+        .accountId(new AccountId(entity.getAccountId()))
+        .accountName(new AccountName(entity.getAccountName()))
+        // 一覧取得などパスワードを射影しないクエリ経由の場合はnullを許容する
+        .password(entity.getPassword() != null ? new Password(entity.getPassword()) : null)
+        .birthdate(entity.getBirthdate() != null ? new BirthDate(entity.getBirthdate()) : null)
+        .sexKbn(entity.getSexKbn())
+        .birthplacePrefectureKbnCode(
+            entity.getBirthplacePrefectureKbnCode() != null
+                ? new BirthplacePrefectureKbnCode(entity.getBirthplacePrefectureKbnCode())
+                : null)
+        .residentPrefectureKbnCode(
+            entity.getResidentPrefectureKbnCode() != null
+                ? new ResidentPrefectureKbnCode(entity.getResidentPrefectureKbnCode())
+                : null)
+        .freeMemo(entity.getFreeMemo() != null ? new FreeMemo(entity.getFreeMemo()) : null)
+        .authorityKbn(entity.getAuthorityKbn())
+        .lastLoginDatetime(
+            entity.getLastLoginDatetime() != null
+                ? new LastLoginDatetime(entity.getLastLoginDatetime())
+                : null)
+        .loginFailureCount(
+            entity.getLoginFailureCount() != null
+                ? new LoginFailureCount(entity.getLoginFailureCount())
+                : null)
+        .isAdminLocked(
+            entity.getIsAdminLocked() != null ? new IsAdminLocked(entity.getIsAdminLocked()) : null)
+        .updatedAt(entity.getUpdatedAt() != null ? new UpdatedAt(entity.getUpdatedAt()) : null)
+        .isDeleted(new IsDeleted(entity.getIsDeleted()))
+        .build();
+  }
 
-	/**
-	 * アカウント登録リクエストからAccountModelを生成する
-	 *
-	 * @param	request	{@link AccountRegistRequest}
-	 * @return			{@link AccountModel}
-	 */
-	public static AccountModel from(AccountRegistRequest request) {
-		return AccountModel.builder()
-				.accountId(new AccountId(request.getAccountId()))
-				.accountName(new AccountName(request.getAccountName()))
-				.password(new Password(request.getPassword()))
-				.birthdate(request.getBirthdate() != null ? new BirthDate(request.getBirthdate()) : null)
-				.sexKbn(request.getSexKbn())
-				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode() != null ? new BirthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode()) : null)
-				.residentPrefectureKbnCode(request.getResidentPrefectureKbnCode() != null ? new ResidentPrefectureKbnCode(request.getResidentPrefectureKbnCode()) : null)
-				.freeMemo(request.getFreeMemo() != null ? new FreeMemo(request.getFreeMemo()) : null)
-				.loginFailureCount(new LoginFailureCount(0))
-				.build();
-	}
+  /**
+   * アカウント登録リクエストからAccountModelを生成する
+   *
+   * @param request {@link AccountRegistRequest}
+   * @return {@link AccountModel}
+   */
+  public static AccountModel from(AccountRegistRequest request) {
+    return AccountModel.builder()
+        .accountId(new AccountId(request.getAccountId()))
+        .accountName(new AccountName(request.getAccountName()))
+        .password(new Password(request.getPassword()))
+        .birthdate(request.getBirthdate() != null ? new BirthDate(request.getBirthdate()) : null)
+        .sexKbn(request.getSexKbn())
+        .birthplacePrefectureKbnCode(
+            request.getBirthplacePrefectureKbnCode() != null
+                ? new BirthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode())
+                : null)
+        .residentPrefectureKbnCode(
+            request.getResidentPrefectureKbnCode() != null
+                ? new ResidentPrefectureKbnCode(request.getResidentPrefectureKbnCode())
+                : null)
+        .freeMemo(request.getFreeMemo() != null ? new FreeMemo(request.getFreeMemo()) : null)
+        .loginFailureCount(new LoginFailureCount(0))
+        .build();
+  }
 
-	/**
-	 * アカウント更新リクエストからAccountModelを生成する
-	 *
-	 * @param	request		{@link AccountUpdateRequest}
-	 * @param	accountNo	アカウント番号
-	 * @return				{@link AccountModel}
-	 */
-	public static AccountModel from(AccountUpdateRequest request, Long accountNo) {
-		return AccountModel.builder()
-				.accountNo(new AccountNo(accountNo))
-				.accountId(new AccountId(request.getAccountId()))
-				.accountName(new AccountName(request.getAccountName()))
-				.password(request.getNewPassword() == null || request.getNewPassword().isEmpty() ? null : new Password(request.getNewPassword()))
-				.birthdate(request.getBirthdate() != null ? new BirthDate(request.getBirthdate()) : null)
-				.sexKbn(request.getSexKbn())
-				.birthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode() != null ? new BirthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode()) : null)
-				.residentPrefectureKbnCode(request.getResidentPrefectureKbnCode() != null ? new ResidentPrefectureKbnCode(request.getResidentPrefectureKbnCode()) : null)
-				.freeMemo(request.getFreeMemo() != null ? new FreeMemo(request.getFreeMemo()) : null)
-				.build();
-	}
+  /**
+   * アカウント更新リクエストからAccountModelを生成する
+   *
+   * @param request {@link AccountUpdateRequest}
+   * @param accountNo アカウント番号
+   * @return {@link AccountModel}
+   */
+  public static AccountModel from(AccountUpdateRequest request, Long accountNo) {
+    return AccountModel.builder()
+        .accountNo(new AccountNo(accountNo))
+        .accountId(new AccountId(request.getAccountId()))
+        .accountName(new AccountName(request.getAccountName()))
+        .password(
+            request.getNewPassword() == null || request.getNewPassword().isEmpty()
+                ? null
+                : new Password(request.getNewPassword()))
+        .birthdate(request.getBirthdate() != null ? new BirthDate(request.getBirthdate()) : null)
+        .sexKbn(request.getSexKbn())
+        .birthplacePrefectureKbnCode(
+            request.getBirthplacePrefectureKbnCode() != null
+                ? new BirthplacePrefectureKbnCode(request.getBirthplacePrefectureKbnCode())
+                : null)
+        .residentPrefectureKbnCode(
+            request.getResidentPrefectureKbnCode() != null
+                ? new ResidentPrefectureKbnCode(request.getResidentPrefectureKbnCode())
+                : null)
+        .freeMemo(request.getFreeMemo() != null ? new FreeMemo(request.getFreeMemo()) : null)
+        .build();
+  }
 
-	/**
-	 * ログイン失敗回数によるロックの自動解除用のAccountModelを生成する（ログイン失敗回数を0にリセット）<p>
-	 * 管理者ロックフラグには触れない（管理者ロックは管理者による解除のみで解ける）
-	 *
-	 * @param	accountNo	アカウント番号
-	 * @return				{@link AccountModel}
-	 */
-	public static AccountModel forUnlock(Long accountNo) {
-		return AccountModel.builder()
-				.accountNo(new AccountNo(accountNo))
-				.loginFailureCount(new LoginFailureCount(0))
-				.build();
-	}
+  /**
+   * ログイン失敗回数によるロックの自動解除用のAccountModelを生成する（ログイン失敗回数を0にリセット）
+   *
+   * <p>管理者ロックフラグには触れない（管理者ロックは管理者による解除のみで解ける）
+   *
+   * @param accountNo アカウント番号
+   * @return {@link AccountModel}
+   */
+  public static AccountModel forUnlock(Long accountNo) {
+    return AccountModel.builder()
+        .accountNo(new AccountNo(accountNo))
+        .loginFailureCount(new LoginFailureCount(0))
+        .build();
+  }
 
-	/**
-	 * 管理者によるアカウントロック解除用のAccountModelを生成する（管理者ロックを解除し、ログイン失敗回数も0にリセット）
-	 *
-	 * @param	accountNo	アカウント番号
-	 * @return				{@link AccountModel}
-	 */
-	public static AccountModel forAdminUnlock(Long accountNo) {
-		return AccountModel.builder()
-				.accountNo(new AccountNo(accountNo))
-				.loginFailureCount(new LoginFailureCount(0))
-				.isAdminLocked(new IsAdminLocked(false))
-				.build();
-	}
+  /**
+   * 管理者によるアカウントロック解除用のAccountModelを生成する（管理者ロックを解除し、ログイン失敗回数も0にリセット）
+   *
+   * @param accountNo アカウント番号
+   * @return {@link AccountModel}
+   */
+  public static AccountModel forAdminUnlock(Long accountNo) {
+    return AccountModel.builder()
+        .accountNo(new AccountNo(accountNo))
+        .loginFailureCount(new LoginFailureCount(0))
+        .isAdminLocked(new IsAdminLocked(false))
+        .build();
+  }
 
-	/**
-	 * 管理者によるアカウント強制ロック用のAccountModelを生成する<p>
-	 * 管理者ロックフラグを立てる（ログイン失敗回数による自動解除の対象外）。
-	 * あわせてログイン失敗回数も上限値に設定し、管理画面でのロック状態表示・
-	 * 判定（失敗回数ベース）と整合させる。
-	 *
-	 * @param	accountNo	アカウント番号
-	 * @param	failCount	ログイン失敗回数の上限値
-	 * @return				{@link AccountModel}
-	 */
-	public static AccountModel forLock(Long accountNo, Integer failCount) {
-		return AccountModel.builder()
-				.accountNo(new AccountNo(accountNo))
-				.loginFailureCount(new LoginFailureCount(failCount))
-				.isAdminLocked(new IsAdminLocked(true))
-				.build();
-	}
+  /**
+   * 管理者によるアカウント強制ロック用のAccountModelを生成する
+   *
+   * <p>管理者ロックフラグを立てる（ログイン失敗回数による自動解除の対象外）。 あわせてログイン失敗回数も上限値に設定し、管理画面でのロック状態表示・ 判定（失敗回数ベース）と整合させる。
+   *
+   * @param accountNo アカウント番号
+   * @param failCount ログイン失敗回数の上限値
+   * @return {@link AccountModel}
+   */
+  public static AccountModel forLock(Long accountNo, Integer failCount) {
+    return AccountModel.builder()
+        .accountNo(new AccountNo(accountNo))
+        .loginFailureCount(new LoginFailureCount(failCount))
+        .isAdminLocked(new IsAdminLocked(true))
+        .build();
+  }
 
-	/**
-	 * 認証成功時のAccountModelを生成する（最終ログイン日時を現在時刻に設定し、ログイン失敗回数を0にリセット）
-	 *
-	 * @param	accountNo	アカウント番号
-	 * @param	clock		現在時刻取得用の{@link Clock}
-	 * @return				{@link AccountModel}
-	 */
-	public static AccountModel forLoginSuccess(AccountNo accountNo, Clock clock) {
-		return AccountModel.builder()
-				.accountNo(accountNo)
-				.lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.now(clock)))
-				.loginFailureCount(new LoginFailureCount(0))
-				.build();
-	}
+  /**
+   * 認証成功時のAccountModelを生成する（最終ログイン日時を現在時刻に設定し、ログイン失敗回数を0にリセット）
+   *
+   * @param accountNo アカウント番号
+   * @param clock 現在時刻取得用の{@link Clock}
+   * @return {@link AccountModel}
+   */
+  public static AccountModel forLoginSuccess(AccountNo accountNo, Clock clock) {
+    return AccountModel.builder()
+        .accountNo(accountNo)
+        .lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.now(clock)))
+        .loginFailureCount(new LoginFailureCount(0))
+        .build();
+  }
 }

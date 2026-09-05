@@ -76,3 +76,11 @@ modulith-doc:
 # レイヤードアーキテクチャ違反チェック
 check-arch:
     bash scripts/check-architecture.sh backend
+
+# backendのコードフォーマットチェック（Spotless）
+format-check:
+    ./backend/gradlew -p backend spotlessCheck
+
+# backendのコードフォーマット整形（Spotless）
+format:
+    ./backend/gradlew -p backend spotlessApply
