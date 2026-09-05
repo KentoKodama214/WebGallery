@@ -377,6 +377,39 @@ describe("PhotoDetail", () => {
     expect(screen.getAllByRole("alert")).toHaveLength(1);
   });
 
+  it("お気に入り操作失敗後に削除確認ダイアログを開くと、無関係な旧エラーが表示されないこと", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockAddFavorite.mockRejectedValue(new Error("お気に入りの登録に失敗しました"));
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("favorite-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("favorite-button"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("お気に入りの登録に失敗しました")
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+
+    expect(screen.getByTestId("delete-confirm-dialog")).toBeInTheDocument();
+    expect(
+      screen.queryByText("お気に入りの登録に失敗しました")
+    ).not.toBeInTheDocument();
+  });
+
   it("エラー時にエラーメッセージが表示されること", async () => {
     mockGetPhotoDetail.mockRejectedValue(
       new Error("写真詳細の取得に失敗しました")

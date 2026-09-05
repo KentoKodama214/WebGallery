@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
@@ -29,7 +28,6 @@ import com.web.gallery.controller.response.PhotoListGetResponse;
 import com.web.gallery.controller.response.PhotoUpperLimitResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
@@ -41,6 +39,7 @@ import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoPageModel;
+import com.web.gallery.model.PhotoSaveResultModel;
 import com.web.gallery.service.PhotoService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -66,8 +65,7 @@ public class PhotoRestController {
 	
 	private final PhotoService photoService;
 	private final SessionHelper sessionHelper;
-	private final PhotoConfig photoConfig;
-	
+
 	/**
 	 * 写真一覧の写真取得<p>
 	 * リクエストの抽出条件に該当する写真を、指定の並び順で取得する
@@ -187,9 +185,9 @@ public class PhotoRestController {
 		PhotoDetailModelList photoDetailModelList = PhotoDetailModelList.of(
 				List.of(PhotoDetailModel.from(photoSaveRequest, new AccountNo(sessionHelper.getAccountNo()))));
 
-		PhotoNo savedPhotoNo = photoService.savePhotos(new AccountId(photoAccountId), photoDetailModelList);
+		PhotoSaveResultModel photoSaveResultModel = photoService.savePhotos(new AccountId(photoAccountId), photoDetailModelList);
 
-		return ResponseEntity.ok(PhotoEditResponse.of(savedPhotoNo.value(), photoAccountId, photoConfig.getOutputPath(), photoSaveRequest));
+		return ResponseEntity.ok(PhotoEditResponse.of(photoSaveResultModel, photoSaveRequest));
 	}
 	
 	/**

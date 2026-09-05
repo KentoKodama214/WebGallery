@@ -80,6 +80,7 @@ import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoPageModel;
+import com.web.gallery.model.PhotoSaveResultModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.policy.ImageFileValidationPolicy;
@@ -661,7 +662,7 @@ public class PhotoServiceImplTest {
 		@Order(1)
 		@DisplayName("正常系：photoDetailModelListがnullの場合、終了")
 		void savePhotos_photoDetailModelList_is_null() throws GalleryException {
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), null);
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), null);
 			assertNull(actual);
 			verify(accountRepositoryImpl, times(0)).lockForUpdate(any(AccountNo.class));
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
@@ -675,7 +676,7 @@ public class PhotoServiceImplTest {
 		@DisplayName("正常系：photoDetailModelListがemptyの場合、終了")
 		void savePhotos_photoDetailModelList_is_empty() throws GalleryException {
 			List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), PhotoDetailModelList.of(photoDetailModelList));
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), PhotoDetailModelList.of(photoDetailModelList));
 			assertNull(actual);
 			verify(accountRepositoryImpl, times(0)).lockForUpdate(any(AccountNo.class));
 			verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
@@ -716,9 +717,10 @@ public class PhotoServiceImplTest {
 			PhotoDetailModel photoDetailModel2 = createNewPhoto();
 			photoDetailModelList.add(photoDetailModel2);
 
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
-			assertEquals(new PhotoNo(5L), actual);
+			assertEquals(new PhotoNo(5L), actual.getPhotoNo());
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC222.jpg"), actual.getImageFilePath());
 			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
 			verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
@@ -784,9 +786,10 @@ public class PhotoServiceImplTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
-			assertEquals(new PhotoNo(3L), actual);
+			assertEquals(new PhotoNo(3L), actual.getPhotoNo());
+			assertNull(actual.getImageFilePath());
 			verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
 			verify(accountRepositoryImpl, times(0)).getByAccountNo(any(AccountNo.class));
 			verify(photoMstRepositoryImpl, times(0)).count(any(AccountNo.class));
@@ -852,9 +855,10 @@ public class PhotoServiceImplTest {
 			PhotoDetailModel photoDetailModel2 = createUpdatePhoto();
 			photoDetailModelList.add(photoDetailModel2);
 
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
-			assertEquals(new PhotoNo(3L), actual);
+			assertEquals(new PhotoNo(3L), actual.getPhotoNo());
+			assertEquals(new ImageFilePath(filePath + accountId + "/DSC111.jpg"), actual.getImageFilePath());
 			verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
 			verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
 			verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
@@ -1078,14 +1082,16 @@ public class PhotoServiceImplTest {
 			PhotoDetailModel photoDetailModel = createNewPhotoWithFilename("../../etc/evil.jpg");
 			photoDetailModelList.add(photoDetailModel);
 
-			PhotoNo actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+			PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
-			assertEquals(new PhotoNo(5L), actual);
+			assertEquals(new PhotoNo(5L), actual.getPhotoNo());
 			verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
 
 			// ベース名（evil.jpg）のみが保存先パスの末尾に使用され、パストラバーサル部分は除去されていること
 			assertEquals(new ImageFilePath(filePath + accountId + "/evil.jpg"), fileModelCaptor.getValue().getFilePath());
 			assertEquals(new ImageFilePath(filePath + accountId + "/evil.jpg"), photoCaptor.getValue().getImageFilePath());
+			// 戻り値の画像ファイルパスもサニタイズ済みの値であり、レスポンスに生のオリジナルファイル名が漏れないこと
+			assertEquals(new ImageFilePath(filePath + accountId + "/evil.jpg"), actual.getImageFilePath());
 		}
 
 		@Test

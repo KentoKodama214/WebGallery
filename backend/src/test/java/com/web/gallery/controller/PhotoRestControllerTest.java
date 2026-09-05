@@ -62,6 +62,7 @@ import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoPageModel;
+import com.web.gallery.model.PhotoSaveResultModel;
 import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.service.impl.PhotoServiceImpl;
 
@@ -391,7 +392,8 @@ public class PhotoRestControllerTest {
 
 			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
-			doReturn(new PhotoNo(1L)).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+			doReturn(PhotoSaveResultModel.builder().photoNo(new PhotoNo(1L)).imageFilePath(new ImageFilePath(imageFilePath)).build())
+					.when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
@@ -451,7 +453,8 @@ public class PhotoRestControllerTest {
 
 			ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor = ArgumentCaptor.forClass(PhotoDetailModelList.class);
 			ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
-			doReturn(new PhotoNo(1L)).when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+			doReturn(PhotoSaveResultModel.builder().photoNo(new PhotoNo(1L)).build())
+					.when(photoServiceImpl).savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
 			mockMvc.perform(multipart("/api/v1/accounts/aaaaaaaa/photos")
 					.file(multipartFile)
