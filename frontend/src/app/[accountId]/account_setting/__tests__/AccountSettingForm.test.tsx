@@ -222,7 +222,7 @@ describe("AccountSettingForm", () => {
     });
   });
 
-  it("アカウントID重複時にエラーメッセージが表示されること", async () => {
+  it("アカウントID重複時にエラーメッセージがrole=alertで表示されること", async () => {
     mockUpdateAccount.mockResolvedValue({
       httpStatus: 200,
       isDuplicateAccountId: true,
@@ -241,9 +241,37 @@ describe("AccountSettingForm", () => {
     await user.click(screen.getByRole("button", { name: "登録" }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText("このアカウントIDは既に使われています")
-      ).toBeInTheDocument();
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "このアカウントIDは既に使われています"
+      );
+    });
+  });
+
+  it("同一のエラーメッセージが連続発生しても通知要素が再マウントされ、スクリーンリーダーへ再通知されること", async () => {
+    mockUpdateAccount.mockResolvedValue({
+      httpStatus: 200,
+      isDuplicateAccountId: true,
+      isAccountIdChanged: true,
+      isPasswordChanged: false,
+      message: "",
+    });
+
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "登録" }));
+    const firstAlert = await waitFor(() => screen.getByRole("alert"));
+    expect(firstAlert).toHaveTextContent("このアカウントIDは既に使われています");
+
+    // 同一の文言のエラーを再度発生させる。React が同一文字列のテキストノード更新を
+    // 省略しても、DOM 要素自体が再マウントされる（= key が変わる）ことを確認する
+    await user.click(screen.getByRole("button", { name: "登録" }));
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).not.toBe(firstAlert);
     });
   });
 

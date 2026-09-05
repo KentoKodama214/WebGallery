@@ -105,10 +105,25 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   const [showDeleteCompleteModal, setShowDeleteCompleteModal] = useState(false);
   // アカウント削除時の本人確認用（現在のパスワード）
   const [deletePassword, setDeletePassword] = useState("");
-  const [deleteError, setDeleteError] = useState("");
+  const [deleteError, setDeleteErrorState] = useState("");
+  // deleteError を表示する要素の React key。エラーメッセージ本体をセットする箇所でのみ
+  // インクリメントする（クリア時は変えない）。同一文言のエラーが連続しても要素を
+  // 再マウントさせ、role="alert" がスクリーンリーダーへ確実に再通知されるようにする
+  // （React は同一文字列の再セットではテキストノードを更新せず、変化なしとみなすため）。
+  const [deleteErrorSeq, setDeleteErrorSeq] = useState(0);
+  const setDeleteError = (message: string) => {
+    setDeleteErrorState(message);
+    if (message) setDeleteErrorSeq((seq) => seq + 1);
+  };
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [duplicateError, setDuplicateError] = useState("");
+  const [duplicateError, setDuplicateErrorState] = useState("");
+  // duplicateError 版。理由は deleteErrorSeq と同じ
+  const [duplicateErrorSeq, setDuplicateErrorSeq] = useState(0);
+  const setDuplicateError = (message: string) => {
+    setDuplicateErrorState(message);
+    if (message) setDuplicateErrorSeq((seq) => seq + 1);
+  };
   // 再認証（現在のパスワード）の連続失敗によるクライアント側の一時停止。
   // sessionStorage で再マウント・画面遷移をまたいで維持する。
   // このコンポーネントは <AuthGuard> 配下で常にクライアント側でのみ初回レンダリングされるため、
@@ -596,7 +611,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             />
 
             {duplicateError && (
-              <p className="text-[lightcoral] text-xs font-bold mb-2">{duplicateError}</p>
+              <p key={duplicateErrorSeq} role="alert" className="text-[lightcoral] text-xs font-bold mb-2">{duplicateError}</p>
             )}
 
             {isReauthCoolingDown && (
@@ -673,7 +688,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               className="block w-full p-[10px] mb-2 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {deleteError && (
-              <p role="alert" className="text-[lightcoral] text-xs font-bold mb-2">{deleteError}</p>
+              <p key={deleteErrorSeq} role="alert" className="text-[lightcoral] text-xs font-bold mb-2">{deleteError}</p>
             )}
             <div className="flex gap-3">
               <button
