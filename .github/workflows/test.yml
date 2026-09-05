@@ -20,7 +20,7 @@ jobs:
           package_json_file: frontend/package.json
 
       - name: Node.js セットアップ
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22.15'
           cache: 'pnpm'
@@ -200,7 +200,7 @@ jobs:
           package_json_file: frontend/package.json
 
       - name: Node.js セットアップ
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22.15'
           cache: 'pnpm'
@@ -285,7 +285,7 @@ jobs:
           package_json_file: frontend/package.json
 
       - name: Node.js セットアップ
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22.15'
           cache: 'pnpm'
