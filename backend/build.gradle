@@ -80,6 +80,7 @@ dependencies {
 	testImplementation 'org.mockito:mockito-junit-jupiter:5.23.0'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.1.3'
 	testImplementation 'org.springframework.modulith:spring-modulith-docs'
+	testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.0'
 }
 
 tasks.named('test') {
@@ -89,6 +90,8 @@ tasks.named('test') {
 tasks.register('unitTest', Test) {
 	description = '単体テストのみを実行する'
 	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
 	useJUnitPlatform()
 	exclude '**/*IntegrationTest*'
 	exclude '**/mapper/*Test*'
@@ -103,6 +106,8 @@ tasks.named('check') {
 tasks.register('integrationTest', Test) {
 	description = '統合テストのみを実行する'
 	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
 	useJUnitPlatform()
 	include '**/*IntegrationTest*'
 	include '**/mapper/*Test*'
@@ -111,6 +116,8 @@ tasks.register('integrationTest', Test) {
 tasks.register('allTest', Test) {
 	description = '単体テストと統合テストをすべて実行する'
 	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
 	useJUnitPlatform()
 	exclude '**/ModulithDocumentationTest*'
 }
@@ -118,6 +125,8 @@ tasks.register('allTest', Test) {
 tasks.register('generateModulithDocs', Test) {
 	description = 'Spring Modulithのドキュメントを生成する'
 	group = 'documentation'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
 	useJUnitPlatform()
 	include '**/ModulithDocumentationTest*'
 }

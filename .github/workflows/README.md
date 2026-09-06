@@ -6,7 +6,6 @@
 |---|---|---|
 | Javadocチェック | `checkstyle.yml` | `main`へのPR |
 | フォーマットチェック | `spotless.yml` | `main`へのPR |
-| アーキテクチャチェック | `architecture-check.yml` | `main`へのPR |
 | テスト実行 | `test.yml` | `main`へのPR |
 | カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `main`へのPR |
 
@@ -21,9 +20,6 @@ checkstyle.yml:
 spotless.yml:
   フォーマットチェック ──────────────────→ (独立)
 
-architecture-check.yml:
-  アーキテクチャチェック ──────────────→ (独立)
-
 test.yml:
   フロントエンド単体テスト ─────────────→ (独立)
   本番CSPスモークテスト ────────────────→ (独立)
@@ -32,7 +28,7 @@ test.yml:
              └───────────────────────────┴→ (両方成功時) カバレッジレポート
 ```
 
-- Javadocチェック、フォーマットチェック、アーキテクチャチェック、テスト実行は別ワークフローのため、**並列に実行**される
+- Javadocチェック、フォーマットチェック、テスト実行は別ワークフローのため、**並列に実行**される
 - フロントエンド単体テストはバックエンドの単体テストとは独立して**並列に実行**される
 - 単体テストが失敗した場合、結合テスト・E2Eテストは**スキップ**される
 - 結合テストとE2Eテストは互いに依存せず**並列に実行**される
@@ -62,15 +58,6 @@ Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/ja
 - 未使用importの削除、import順序
 - 行末の余分な空白、ファイル末尾の改行
 
-### アーキテクチャチェック (`architecture-check.yml`)
-
-`scripts/check-architecture.sh`を実行し、レイヤードアーキテクチャ（Controller → Service → Repository → Mapper）に違反する依存関係がないかをチェックする。
-
-**チェック内容:**
-- Controller → Repository の直接参照がないか（スキップ違反）
-- Service → Controller、Repository → Controller/Service の参照がないか（逆方向の依存）
-- Controller同士、Service同士、Repository同士の呼び出しがないか（同レイヤー間の依存）
-
 ### フロントエンド単体テスト (`test.yml` - `frontend-unit-test`)
 
 `frontend`ディレクトリで`pnpm lint`（ESLint）と`pnpm test`（Jest）を実行する。バックエンドの単体テストとは独立して並列に実行される。
@@ -78,6 +65,8 @@ Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/ja
 ### 単体テスト (`test.yml` - `unit-test`)
 
 `./gradlew unitTest`を実行し、結合テスト(`*IntegrationTest*`)とMapperテスト(`mapper/*Test*`)を除く単体テストを実行する。
+
+レイヤードアーキテクチャ（Controller → Service → Repository → Mapper）の依存方向違反は、`ArchitectureTest`（ArchUnit）としてこの単体テストの一部で検証される。
 
 ### 結合テスト (`test.yml` - `integration-test`)
 
