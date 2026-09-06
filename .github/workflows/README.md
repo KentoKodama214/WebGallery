@@ -9,7 +9,8 @@
 | アーキテクチャチェック | `architecture-check.yml` | `main`へのPR |
 | テスト実行 | `test.yml` | `main`へのPR |
 | カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `main`へのPR |
-| セキュリティレビュー | `security-review.yml` | `main`へのPR |
+
+セキュリティレビューはAnthropic APIの従量課金コストがかかるため、CIワークフロー化はせず、Claude Codeの`/security-review`スキルでローカルから都度実行する運用とする。
 
 ## 実行順序と依存関係
 
@@ -23,9 +24,6 @@ spotless.yml:
 architecture-check.yml:
   アーキテクチャチェック ──────────────→ (独立)
 
-security-review.yml:
-  セキュリティレビュー ────────────────→ (独立)
-
 test.yml:
   フロントエンド単体テスト ─────────────→ (独立)
   本番CSPスモークテスト ────────────────→ (独立)
@@ -34,7 +32,7 @@ test.yml:
              └───────────────────────────┴→ (両方成功時) カバレッジレポート
 ```
 
-- Javadocチェック、フォーマットチェック、アーキテクチャチェック、セキュリティレビュー、テスト実行は別ワークフローのため、**並列に実行**される
+- Javadocチェック、フォーマットチェック、アーキテクチャチェック、テスト実行は別ワークフローのため、**並列に実行**される
 - フロントエンド単体テストはバックエンドの単体テストとは独立して**並列に実行**される
 - 単体テストが失敗した場合、結合テスト・E2Eテストは**スキップ**される
 - 結合テストとE2Eテストは互いに依存せず**並列に実行**される
@@ -72,19 +70,6 @@ Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/ja
 - Controller → Repository の直接参照がないか（スキップ違反）
 - Service → Controller、Repository → Controller/Service の参照がないか（逆方向の依存）
 - Controller同士、Service同士、Repository同士の呼び出しがないか（同レイヤー間の依存）
-
-### セキュリティレビュー (`security-review.yml`)
-
-[`anthropics/claude-code-security-review`](https://github.com/anthropics/claude-code-security-review)を使用し、Claude CodeによるAIセキュリティレビューをPRの差分に対して実行する。パターンマッチングではなくコードの意味を理解した診断を行い、インジェクション・認証/認可・機密情報漏洩・暗号化・入力検証・ビジネスロジック不備などの脆弱性を検出する。
-
-**チェック内容:**
-- PRで変更された差分ファイルのみを対象に診断（diff-aware）
-- 検出結果は該当行へのPRレビューコメントとして自動投稿
-- 誤検知（DoS・レート制限・汎用的な入力検証等）はフィルタリングして除外
-
-**必要な設定:**
-- リポジトリの`Settings > Secrets and variables > Actions`に、Claude API/Claude Code利用が有効なAnthropic APIキーを`CLAUDE_API_KEY`として登録する
-- 本アクションはプロンプトインジェクション対策がされていないため、信頼できるPRのみを対象とする。フォークからのPRを扱う場合は、リポジトリ設定で「Require approval for all external contributors」を有効にすることを推奨
 
 ### フロントエンド単体テスト (`test.yml` - `frontend-unit-test`)
 
