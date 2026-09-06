@@ -125,3 +125,18 @@ nonce 方式は SSR 時にリクエストヘッダーから nonce を読むた�
 （`app/layout.tsx` の `export const dynamic = "force-dynamic"`）。これは nonce 方式 CSP に内在する
 制約であり、静的生成・ISR・CDN エッジキャッシュは使えない。トレードオフを見直す場合は
 nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ移行する必要がある。
+
+### 画像ストレージと署名付きURL
+
+写真の実体は S3（ローカル/E2E は docker-compose の MinIO）に保存し、DB の `photo_mst.image_file_path`
+にはオブジェクトキー（`{accountId}/{ファイル名}`）のみを保持する。写真一覧・詳細 API は、
+Service 層（`PhotoServiceImpl`）が `FileRepository.getPresignedUrl` で**有効期限付きの署名付き URL**
+（pre-signed GET URL、既定 15 分。`app.s3.presign-expiry-seconds`）を発行してレスポンスに載せ、
+ブラウザがストレージから直接画像を取得する。アプリサーバーは画像バイト列を中継しない。
+
+- 署名付き URL はオブジェクト単位・GET のみ・短命。発行時点のキーに対してのみ有効で、バケットは非公開のまま。
+- 削除時は、クライアント送信の `imageFilePath` を信用せず、写真番号で DB から実キーを引いて削除対象を決める
+  （パス汚染・他オブジェクトの巻き込み削除の防止）。
+- フロントの `sanitizeImageUrl`（`src/lib/url.ts`）と CSP `img-src` は、本番では `https:` かつ
+  `NEXT_PUBLIC_IMAGE_BASE_URL` のオリジンに一致する URL のみ許可する（フェイルクローズ）。
+  **開発環境（`next dev`）に限り** `http://localhost:9000`（MinIO）を追加で許可し、本番ビルドでは無効。

@@ -35,8 +35,8 @@ MINI_USER_UPPER_LIMIT=${MINI_USER_UPPER_LIMIT:-10}
 read -p "NORMAL_USER_UPPER_LIMIT [1000]: " NORMAL_USER_UPPER_LIMIT
 NORMAL_USER_UPPER_LIMIT=${NORMAL_USER_UPPER_LIMIT:-1000}
 
-read -p "OUTPUT_PATH [https://localhost:8080/image/]: " OUTPUT_PATH
-OUTPUT_PATH=${OUTPUT_PATH:-https://localhost:8080/image/}
+# 画像ストレージ（S3 / MinIO）は local プロファイルで docker-compose の MinIO を指す
+# デフォルト値を持つため、通常はここで設定不要（別のバケット等を使う場合のみ APP_S3_* を export する）
 
 # JWT設定
 # 既知の固定文字列をデフォルトにするとJWT偽造のリスクがあるため、未入力時はランダム生成する
@@ -53,7 +53,6 @@ JWT_SECRET=${JWT_SECRET:-$DEFAULT_JWT_SECRET}
   echo "export DB_PASSWORD=\"$DB_PASSWORD\""
   echo "export MINI_USER_UPPER_LIMIT=\"$MINI_USER_UPPER_LIMIT\""
   echo "export NORMAL_USER_UPPER_LIMIT=\"$NORMAL_USER_UPPER_LIMIT\""
-  echo "export OUTPUT_PATH=\"$OUTPUT_PATH\""
   echo "export JWT_SECRET=\"$JWT_SECRET\""
 } >> "$RC_FILE"
 

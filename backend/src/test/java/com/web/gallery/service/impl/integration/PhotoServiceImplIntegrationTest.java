@@ -1,6 +1,8 @@
 package com.web.gallery.service.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
@@ -40,12 +42,14 @@ import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoSaveResultModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.repository.FileRepository;
 import com.web.gallery.service.impl.PhotoServiceImpl;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -58,6 +62,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -69,6 +74,16 @@ public class PhotoServiceImplIntegrationTest {
   @Autowired private PhotoServiceImpl photoServiceImpl;
 
   @Autowired private JdbcTemplate jdbcTemplate;
+
+  /** S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない）。 署名付きURL発行は渡されたオブジェクトキーをそのまま返し、キーベースのアサーションを維持する。 */
+  @MockitoBean private FileRepository fileRepository;
+
+  @BeforeEach
+  void setUpFileRepositoryStub() {
+    lenient()
+        .when(fileRepository.getPresignedUrl(any(ImageFilePath.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+  }
 
   @Nested
   @Order(1)
@@ -743,9 +758,7 @@ public class PhotoServiceImplIntegrationTest {
               new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(11L), actual.getPhotoNo());
-      assertEquals(
-          new ImageFilePath("https://www.xxx.com/" + accountId + "/DSC22.jpg"),
-          actual.getImageFilePath());
+      assertEquals(new ImageFilePath(accountId + "/DSC22.jpg"), actual.getImageFilePath());
       List<PhotoMst> actualData =
           getPhotoMstData(accountId).stream()
               .filter(photoMst -> photoMst.getPhotoNo() > 10)
@@ -760,8 +773,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(0).getPhotoAt());
-      assertEquals(
-          "https://www.xxx.com/" + accountId + "/DSC21.jpg", actualData.get(0).getImageFilePath());
+      assertEquals(accountId + "/DSC21.jpg", actualData.get(0).getImageFilePath());
       assertEquals(0L, actualData.get(0).getLocationNo());
       assertEquals("タイトル21", actualData.get(0).getPhotoJapaneseTitle());
       assertEquals("title21", actualData.get(0).getPhotoEnglishTitle());
@@ -779,8 +791,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(1).getPhotoAt().plusHours(9));
-      assertEquals(
-          "https://www.xxx.com/" + accountId + "/DSC22.jpg", actualData.get(1).getImageFilePath());
+      assertEquals(accountId + "/DSC22.jpg", actualData.get(1).getImageFilePath());
       assertEquals(0L, actualData.get(1).getLocationNo());
       assertEquals("", actualData.get(1).getPhotoJapaneseTitle());
       assertEquals("", actualData.get(1).getPhotoEnglishTitle());
@@ -923,9 +934,7 @@ public class PhotoServiceImplIntegrationTest {
               new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(3L), actual.getPhotoNo());
-      assertEquals(
-          new ImageFilePath("https://www.xxx.com/" + accountId + "/DSC21.jpg"),
-          actual.getImageFilePath());
+      assertEquals(new ImageFilePath(accountId + "/DSC21.jpg"), actual.getImageFilePath());
       List<PhotoMst> actualData =
           getPhotoMstData(accountId).stream()
               .filter(photoMst -> photoMst.getPhotoNo() > 10)
@@ -940,8 +949,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(0).getPhotoAt());
-      assertEquals(
-          "https://www.xxx.com/" + accountId + "/DSC21.jpg", actualData.get(0).getImageFilePath());
+      assertEquals(accountId + "/DSC21.jpg", actualData.get(0).getImageFilePath());
       assertEquals(0L, actualData.get(0).getLocationNo());
       assertEquals("タイトル21", actualData.get(0).getPhotoJapaneseTitle());
       assertEquals("title21", actualData.get(0).getPhotoEnglishTitle());

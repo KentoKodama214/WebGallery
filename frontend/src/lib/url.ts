@@ -86,6 +86,9 @@ function allowedImageOrigin(): string | null {
  *   （CSP の `img-src` フォールバックと歩調を合わせ、XSS 時に任意の外部ホストへ
  *   画像リクエストでデータを持ち出す経路を塞ぐ。外部の画像配信元を使う構成では
  *   必ず `NEXT_PUBLIC_IMAGE_BASE_URL` を設定すること）。
+ * - **開発環境（`NODE_ENV === "development"`）に限り**、`http:` かつホストが
+ *   `localhost` / `127.0.0.1`（ポート任意）の絶対 URL。ローカルの MinIO が発行する
+ *   署名付き URL（`http://localhost:9000/...`）を表示するための緩和で、本番ビルドでは無効。
  *
  * @param url 検証対象の URL
  * @returns 安全と判断できる場合はそのままの文字列。危険・不正な場合は空文字
@@ -107,6 +110,14 @@ export function sanitizeImageUrl(url: string | null | undefined): string {
       const allowed = allowedImageOrigin();
       // 許可オリジンが未設定なら外部の絶対 URL は一切通さない（フェイルクローズ）
       if (!allowed || parsed.origin !== allowed) return "";
+      return trimmed;
+    }
+    // 開発環境限定で、ローカルホストの http（MinIO の署名付き URL）を許可する
+    if (
+      process.env.NODE_ENV === "development" &&
+      parsed.protocol === "http:" &&
+      (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1")
+    ) {
       return trimmed;
     }
   } catch {

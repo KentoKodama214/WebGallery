@@ -73,6 +73,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -113,6 +114,18 @@ public class PhotoServiceImplTest {
   @Mock private PhotoFileExtensionPolicy photoFileExtensionPolicy;
 
   @Mock private ApplicationEventPublisher applicationEventPublisher;
+
+  /**
+   * 署名付きURL発行のスタブ。渡されたS3オブジェクトキーをそのまま返すことで、 URL差し替え後もキーベースのアサーションを維持できるようにする（実際のURL生成は {@code
+   * FileRepositoryImplTest} で検証する）。
+   */
+  @BeforeEach
+  void setUpPresignedUrlStub() {
+    lenient()
+        .doAnswer(invocation -> invocation.getArgument(0))
+        .when(fileRepositoryImpl)
+        .getPresignedUrl(any(ImageFilePath.class));
+  }
 
   @Nested
   @Order(1)
@@ -731,11 +744,10 @@ public class PhotoServiceImplTest {
     @DisplayName("正常系：新規登録のみ")
     void savePhotos_newPhoto() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               AccountModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -832,11 +844,10 @@ public class PhotoServiceImplTest {
     @DisplayName("正常系：更新のみ")
     void savePhotos_updatePhoto() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               PhotoDetailModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -896,11 +907,10 @@ public class PhotoServiceImplTest {
     @DisplayName("正常系：新規登録＋更新")
     void savePhotos_newPhoto_and_updatePhoto() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               PhotoDetailModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -983,11 +993,10 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：写真登録でGalleryExceptionをthrowする（写真は複数枚）")
     void savePhotos_registPhoto_GalleryException() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               AccountModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1029,11 +1038,10 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：写真更新でGalleryExceptionをthrowする（写真は複数枚）")
     void savePhotos_updatePhoto_GalleryException() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               PhotoDetailModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1069,11 +1077,10 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：更新対象の写真がDBに存在しない場合、PhotoNotFoundExceptionをthrowする")
     void savePhotos_updatePhoto_PhotoNotFoundException() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doThrow(PhotoNotFoundException.class)
           .when(photoDetailRepositoryImpl)
           .getPhotoDetail(any(PhotoDetailSearchModel.class));
@@ -1096,13 +1103,12 @@ public class PhotoServiceImplTest {
     @DisplayName("正常系：更新時にリクエストの画像ファイルパスを信用せず、DB上の既存パスで更新する（ファイルパス汚染防止）")
     void savePhotos_updatePhoto_ignoresRequestImageFilePath() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       ImageFilePath existingImageFilePath =
           new ImageFilePath("https://localhost:8080/image/existing.jpg");
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               PhotoDetailModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1165,11 +1171,10 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：新規登録時に画像ファイルが指定されていない場合、GalleryExceptionをthrowする")
     void savePhotos_registPhoto_imageFileRequired() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               AccountModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1200,11 +1205,10 @@ public class PhotoServiceImplTest {
     @DisplayName("正常系：オリジナルファイル名にパストラバーサルを含む場合、ベース名のみを保存パスに使用すること")
     void savePhotos_newPhoto_sanitizes_path_traversal_filename() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               AccountModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1252,11 +1256,10 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：画像ファイルのContent-Typeが許可されていない（偽装された）場合、GalleryExceptionをthrowする")
     void savePhotos_registPhoto_unsupportedContentType() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               AccountModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1289,11 +1292,10 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合、GalleryExceptionをthrowする")
     void savePhotos_registPhoto_invalidSignature() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               AccountModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1326,11 +1328,10 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：画像ファイルのサイズが上限を超えている場合、GalleryExceptionをthrowする")
     void savePhotos_registPhoto_sizeExceeded() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               AccountModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1362,11 +1363,10 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：許可されていない拡張子の場合、BadRequestExceptionをthrowし登録処理を行わないこと")
     void savePhotos_newPhoto_disallowed_extension() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               AccountModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1399,11 +1399,10 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：複数枚新規登録中にN枚目でDB登録が失敗した場合、書き込み済みファイルを補償削除する")
     void savePhotos_registPhoto_compensatesOrphanedFileOnFailure() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               AccountModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1452,11 +1451,10 @@ public class PhotoServiceImplTest {
     void savePhotos_registPhoto_deleteFailureDoesNotMaskOriginalException()
         throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "https://localhost:8080/image/";
+      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
-      doReturn(filePath).when(photoConfig).getOutputPath();
       doReturn(
               AccountModel.builder()
                   .accountNo(new AccountNo(1L))
@@ -1498,7 +1496,6 @@ public class PhotoServiceImplTest {
     @Order(1)
     @DisplayName("正常系：photoDeleteModelListが0件の場合、終了")
     void deletePhotos_photoDeleteModelList_empty() throws GalleryException {
-      doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
 
       photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.empty());
       verify(photoAggregateRepositoryImpl, times(0)).delete(any(Photo.class));
@@ -1509,7 +1506,6 @@ public class PhotoServiceImplTest {
     @Order(2)
     @DisplayName("正常系：photoDetailModelListが2件以上の場合")
     void deletePhotos_success() throws GalleryException {
-      doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
 
       ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
       doNothing().when(photoAggregateRepositoryImpl).delete(photoCaptor.capture());
@@ -1517,18 +1513,32 @@ public class PhotoServiceImplTest {
       ArgumentCaptor<ImageFilePath> fileDeleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
       doNothing().when(fileRepositoryImpl).delete(fileDeleteCaptor.capture());
 
+      // 削除対象のS3オブジェクトキーはリクエスト値ではなくDB上の値（写真番号で引く）を用いる
+      doAnswer(
+              invocation -> {
+                PhotoDetailSearchModel searchModel = invocation.getArgument(0);
+                long photoNo = searchModel.getPhotoNo().value();
+                return PhotoDetailModel.builder()
+                    .accountNo(searchModel.getPhotoAccountNo())
+                    .photoNo(searchModel.getPhotoNo())
+                    .imageFilePath(new ImageFilePath("aaaaaaaa/DSC" + photoNo + ".jpg"))
+                    .build();
+              })
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
+
       List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
       photoDeleteModelList.add(
           PhotoDeleteModel.builder()
               .accountNo(new AccountNo(1L))
               .photoNo(new PhotoNo(1L))
-              .imageFilePath(new ImageFilePath("DSC111.jpg"))
+              .imageFilePath(new ImageFilePath("クライアント送信値は無視される"))
               .build());
       photoDeleteModelList.add(
           PhotoDeleteModel.builder()
               .accountNo(new AccountNo(1L))
               .photoNo(new PhotoNo(2L))
-              .imageFilePath(new ImageFilePath("DSC222.jpg"))
+              .imageFilePath(new ImageFilePath("クライアント送信値は無視される"))
               .build());
 
       photoServiceImpl.deletePhotos(
@@ -1537,24 +1547,20 @@ public class PhotoServiceImplTest {
       verify(fileRepositoryImpl, times(2)).delete(any(ImageFilePath.class));
 
       List<ImageFilePath> fileDeleteCaptureList = fileDeleteCaptor.getAllValues();
-      assertEquals(
-          new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"),
-          fileDeleteCaptureList.get(0));
-      assertEquals(
-          new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"),
-          fileDeleteCaptureList.get(1));
+      assertEquals(new ImageFilePath("aaaaaaaa/DSC1.jpg"), fileDeleteCaptureList.get(0));
+      assertEquals(new ImageFilePath("aaaaaaaa/DSC2.jpg"), fileDeleteCaptureList.get(1));
 
       List<Photo> photoCaptureList = photoCaptor.getAllValues();
       assertEquals(new AccountNo(1L), photoCaptureList.get(0).getAccountNo());
       assertEquals(1L, photoCaptureList.get(0).getPhotoNo().value());
       assertTrue(photoCaptureList.get(0).isDeleted());
       assertEquals(
-          new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"),
+          new ImageFilePath("aaaaaaaa/DSC1.jpg"),
           photoCaptureList.get(0).getImageFilePathForDelete());
       assertEquals(new AccountNo(1L), photoCaptureList.get(1).getAccountNo());
       assertEquals(2L, photoCaptureList.get(1).getPhotoNo().value());
       assertEquals(
-          new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"),
+          new ImageFilePath("aaaaaaaa/DSC2.jpg"),
           photoCaptureList.get(1).getImageFilePathForDelete());
 
       ArgumentCaptor<PhotoDeletedEvent> photoDeletedEventCaptor =
@@ -1571,17 +1577,16 @@ public class PhotoServiceImplTest {
     @Order(3)
     @DisplayName("異常系：対象写真が存在しない場合、PhotoNotFoundExceptionをthrowする")
     void deletePhotos_PhotoNotFoundException() throws GalleryException {
-      doReturn("https://localhost:8080/image/").when(photoConfig).getOutputPath();
       doThrow(PhotoNotFoundException.class)
-          .when(photoAggregateRepositoryImpl)
-          .delete(any(Photo.class));
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
 
       List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
       photoDeleteModelList.add(
           PhotoDeleteModel.builder()
               .accountNo(new AccountNo(1L))
               .photoNo(new PhotoNo(1L))
-              .imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
+              .imageFilePath(new ImageFilePath("クライアント送信値は無視される"))
               .build());
 
       assertThrows(
@@ -1590,7 +1595,7 @@ public class PhotoServiceImplTest {
               photoServiceImpl.deletePhotos(
                   new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
 
-      verify(photoAggregateRepositoryImpl, times(1)).delete(any(Photo.class));
+      verify(photoAggregateRepositoryImpl, times(0)).delete(any(Photo.class));
       verify(fileRepositoryImpl, times(0)).delete(any(ImageFilePath.class));
       verify(applicationEventPublisher, times(0)).publishEvent(any());
     }

@@ -26,6 +26,7 @@ import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
+import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoSaveResultModel;
 import com.web.gallery.policy.ImageFileValidationPolicy;
@@ -95,12 +96,31 @@ public class PhotoServiceImpl implements PhotoService {
                 accountModel.getAccountNo(),
                 photoConfig.getPhotoCountPerPage()));
 
+    PhotoModelList photoModelList = toPresignedUrls(photoPageModel.getPhotoModelList());
+
     if (SortPhotoEnum.SEASON.equals(photoListGetModel.getSortBy())) {
       return PhotoPageModel.of(
-          photoPageModel.getPhotoModelList().sorted(getSeasonComparator()),
-          photoPageModel.getIsLast());
+          photoModelList.sorted(getSeasonComparator()), photoPageModel.getIsLast());
     }
-    return photoPageModel;
+    return PhotoPageModel.of(photoModelList, photoPageModel.getIsLast());
+  }
+
+  /**
+   * 写真一覧の各要素の画像ファイルパス（S3オブジェクトキー）を、有効期限付きの署名付きURLへ差し替える
+   *
+   * @param photoModelList 差し替え前の{@link PhotoModelList}
+   * @return 差し替え後の{@link PhotoModelList}
+   */
+  private PhotoModelList toPresignedUrls(PhotoModelList photoModelList) {
+    return PhotoModelList.of(
+        photoModelList.stream()
+            .map(
+                photoModel ->
+                    photoModel.toBuilder()
+                        .imageFilePath(
+                            fileRepository.getPresignedUrl(photoModel.getImageFilePath()))
+                        .build())
+            .toList());
   }
 
   /**
@@ -120,8 +140,12 @@ public class PhotoServiceImpl implements PhotoService {
       throw ErrorEnum.PHOTO_NOT_FOUND.toException();
     }
 
-    return photoDetailRepository.getPhotoDetail(
-        PhotoDetailSearchModel.of(photoDetailGetModel, accountModel.getAccountNo()));
+    PhotoDetailModel photoDetailModel =
+        photoDetailRepository.getPhotoDetail(
+            PhotoDetailSearchModel.of(photoDetailGetModel, accountModel.getAccountNo()));
+    return photoDetailModel.toBuilder()
+        .imageFilePath(fileRepository.getPresignedUrl(photoDetailModel.getImageFilePath()))
+        .build();
   }
 
   /**
@@ -147,7 +171,8 @@ public class PhotoServiceImpl implements PhotoService {
     Long photoNo = photoMstRepository.getNewPhotoNo(photoAccountNo).value();
     PhotoNo savedPhotoNo = new PhotoNo(photoNo);
     ImageFilePath savedImageFilePath = null;
-    String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
+    // DBおよびS3には「{accountId}/{ファイル名}」形式のオブジェクトキーを保存する
+    String filePath = accountId.value() + "/";
 
     // ファイルI/OはDBトランザクションの対象外のため、途中の登録失敗でDBがロールバックされても
     // 書き込み済みのファイルは自動的には戻らない。登録済みファイルを記録しておき、失敗時に補償削除する
@@ -183,9 +208,14 @@ public class PhotoServiceImpl implements PhotoService {
       deleteOrphanedFiles(registeredImageFilePaths);
       throw e;
     }
+    // 新規登録があった場合、フロントのアップロード後プレビュー用に署名付きURLを返す
+    ImageFilePath savedImageUrl =
+        Objects.nonNull(savedImageFilePath)
+            ? fileRepository.getPresignedUrl(savedImageFilePath)
+            : null;
     return PhotoSaveResultModel.builder()
         .photoNo(savedPhotoNo)
-        .imageFilePath(savedImageFilePath)
+        .imageFilePath(savedImageUrl)
         .build();
   }
 
@@ -338,22 +368,27 @@ public class PhotoServiceImpl implements PhotoService {
   /**
    * 写真を削除する
    *
+   * <p>削除対象のS3オブジェクトキーはクライアント送信値を信用せず、写真番号をキーにDB上の値を取得して用いる
+   * （クライアント入力によるファイルパス汚染・他オブジェクトの巻き込み削除を防ぐため）
+   *
    * @param accountId アカウントID
    * @param photoDeleteModelList {@link PhotoDeleteModelList}
-   * @throws GalleryException 削除に失敗した場合
+   * @throws GalleryException 写真が存在しない場合、または削除に失敗した場合
    */
   @Override
   @Transactional(rollbackFor = GalleryException.class)
   public void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList)
       throws GalleryException {
-    String filePath = photoConfig.getOutputPath() + accountId.value() + "/";
-
     List<ImageFilePath> deletedImageFilePaths = new ArrayList<>();
     for (PhotoDeleteModel photoDeleteModel : photoDeleteModelList) {
-      // クライアント送信値のファイルパスからベース名のみを抽出する（'\\' を '/' へ正規化してから）
-      String fileName =
-          new File(photoDeleteModel.getImageFilePath().value().replace('\\', '/')).getName();
-      ImageFilePath imageFilePathForDelete = new ImageFilePath(filePath + fileName);
+      // 画像ファイルパス（S3オブジェクトキー）はリクエスト値を信用せず、DB上の既存値を用いる
+      PhotoDetailModel existing =
+          photoDetailRepository.getPhotoDetail(
+              PhotoDetailSearchModel.builder()
+                  .photoAccountNo(photoDeleteModel.getAccountNo())
+                  .photoNo(photoDeleteModel.getPhotoNo())
+                  .build());
+      ImageFilePath imageFilePathForDelete = existing.getImageFilePath();
       Photo photo =
           Photo.forDelete(
               photoDeleteModel.getAccountNo(),

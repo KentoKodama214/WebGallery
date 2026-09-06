@@ -4,7 +4,6 @@ import com.web.gallery.AccountPrincipal;
 import com.web.gallery.aggregate.Account;
 import com.web.gallery.config.AccountConfig;
 import com.web.gallery.config.LoginConfig;
-import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
@@ -74,7 +73,6 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
   private final PasswordEncoder passwordEncoder;
   private final ReauthenticationThrottle reauthenticationThrottle;
   private final LoginConfig loginConfig;
-  private final PhotoConfig photoConfig;
   private final AccountConfig accountConfig;
   private final Clock clock;
   private final ApplicationEventPublisher applicationEventPublisher;
@@ -270,8 +268,8 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
     accountAggregateRepository.delete(account);
 
     // 写真ファイルのディレクトリ削除はDBコミット確定後に行う（ロールバック時の不整合を防ぐ）
-    deletePhotoDirectoryAfterCommit(
-        new ImageFilePath(photoConfig.getOutputPath() + accountId.value() + "/"));
+    // S3上は「{accountId}/」プレフィックス配下を一括削除する
+    deletePhotoDirectoryAfterCommit(new ImageFilePath(accountId.value() + "/"));
 
     for (PhotoNo photoNo : account.getDeletedPhotoNoList()) {
       applicationEventPublisher.publishEvent(new PhotoDeletedEvent(accountNo, photoNo));
@@ -424,7 +422,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
    */
   private void deleteQuietly(ImageFilePath directoryPath) {
     try {
-      fileRepository.delete(directoryPath);
+      fileRepository.deleteByPrefix(directoryPath);
     } catch (RuntimeException e) {
       log.warn(
           "Failed to delete photo directory after commit. (directoryPath: {})",

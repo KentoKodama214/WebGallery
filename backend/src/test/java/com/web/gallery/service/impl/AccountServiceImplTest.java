@@ -8,7 +8,6 @@ import com.web.gallery.AccountPrincipal;
 import com.web.gallery.aggregate.Account;
 import com.web.gallery.config.AccountConfig;
 import com.web.gallery.config.LoginConfig;
-import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
@@ -95,8 +94,6 @@ public class AccountServiceImplTest {
   @Mock private AccountPrincipal accountPrincipal;
 
   @Mock private LoginConfig loginConfig;
-
-  @Mock private PhotoConfig photoConfig;
 
   @Mock private AccountConfig accountConfig;
 
@@ -668,8 +665,7 @@ public class AccountServiceImplTest {
           .when(accountAggregateRepositoryImpl)
           .delete(any(Account.class));
 
-      doReturn("/output/").when(photoConfig).getOutputPath();
-      doNothing().when(fileRepository).delete(new ImageFilePath("/output/" + accountId + "/"));
+      doNothing().when(fileRepository).deleteByPrefix(new ImageFilePath(accountId + "/"));
 
       accountServiceImpl.deleteAccount(
           new AccountNo(accountNo), new AccountId(accountId), new Password("password01"));
@@ -679,7 +675,7 @@ public class AccountServiceImplTest {
       assertEquals(new AccountNo(accountNo), accountCaptor.getValue().getAccountNo());
       assertTrue(accountCaptor.getValue().isDeleted());
 
-      verify(fileRepository, times(1)).delete(new ImageFilePath("/output/" + accountId + "/"));
+      verify(fileRepository, times(1)).deleteByPrefix(new ImageFilePath(accountId + "/"));
 
       ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
       verify(applicationEventPublisher, times(3)).publishEvent(eventCaptor.capture());
