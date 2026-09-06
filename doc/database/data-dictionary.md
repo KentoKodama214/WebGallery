@@ -26,7 +26,7 @@
 | 18 | free_memo | フリーメモ | text | '""' | ユーザーが自由に入力できるメモ欄 | account |
 | 19 | id | ID | bigserial | (自動採番) | サロゲートキー（自動採番） | location_mst, photo_mst, photo_tag_mst, photo_favorite |
 | 20 | image_file_name | 画像ファイル名 | text | - | 画像ファイルパスの末尾のファイル名部分。写真登録時の重複存在チェックの等価検索に使用 | photo_mst |
-| 21 | image_file_path | 画像ファイルパス | text | - | サーバー上の画像ファイルの保存パス | photo_mst |
+| 21 | image_file_path | 画像ファイルパス | text | - | S3オブジェクトキー（`{accountId}/{ファイル名}`）。閲覧時はこのキーから署名付きURLを発行する | photo_mst |
 | 22 | is_admin_locked | 管理者ロックフラグ | boolean | false | 管理者が強制ロックした場合にtrue。ログイン失敗回数による自動ロック解除の対象外 | account |
 | 23 | is_deleted | 削除フラグ | boolean | false | 論理削除フラグ。trueの場合は削除済み | account, location_mst, photo_mst |
 | 24 | is_revoked | 無効化フラグ | boolean | false | リフレッシュトークンの無効化フラグ。ログアウト時やトークンローテーション時にtrueに設定 | refresh_token |

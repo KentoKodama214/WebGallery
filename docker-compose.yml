@@ -47,3 +47,39 @@ services:
       - ./db/common:/docker-entrypoint-initdb.d/common
       - ./db/photo:/docker-entrypoint-initdb.d/photo
       - ./db/init/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh
+
+  # 画像ストレージ（S3互換）のローカル環境。コンソール: http://localhost:9001
+  minio:
+    image: minio/minio:latest
+    container_name: web-gallery-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - 9000:9000
+      - 9001:9001
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # バケットを作成する一度きりのセットアップコンテナ（作成後に終了する）
+  minio-setup:
+    image: minio/mc:latest
+    container_name: web-gallery-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      mc mb --ignore-existing local/web-gallery-local
+      "
+
+volumes:
+  minio-data:

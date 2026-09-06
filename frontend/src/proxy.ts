@@ -80,7 +80,8 @@ function buildCsp(nonce: string): string {
     "style-src 'self' 'unsafe-inline'",
     // 本番のみ：<style>/<link> 要素は nonce または自オリジンに限定し、注入された <style> を防ぐ
     ...(isDev ? [] : [`style-src-elem 'self' 'nonce-${nonce}'`]),
-    `img-src 'self' data: blob:${imageBaseOrigin ? ` ${imageBaseOrigin}` : ""}`,
+    // 開発時はローカルの MinIO（署名付き URL）を許可する。本番は imageBaseOrigin のみ
+    `img-src 'self' data: blob:${imageBaseOrigin ? ` ${imageBaseOrigin}` : ""}${isDev ? " http://localhost:9000 http://127.0.0.1:9000" : ""}`,
     "font-src 'self' data:",
     `connect-src 'self'${apiBaseOrigin ? ` ${apiBaseOrigin}` : ""}${isDev ? " ws:" : ""}`,
     "worker-src 'self' blob:",

@@ -56,6 +56,29 @@ describe("sanitizeImageUrl", () => {
       expect(sanitizeImageUrl("https://evil.com/a.jpg")).toBe("");
     });
   });
+
+  describe("開発環境（NODE_ENV=development）", () => {
+    const original = process.env.NODE_ENV;
+    beforeEach(() => {
+      (process.env as { NODE_ENV?: string }).NODE_ENV = "development";
+    });
+    afterEach(() => {
+      (process.env as { NODE_ENV?: string }).NODE_ENV = original;
+    });
+
+    it("localhost / 127.0.0.1 の http URL（MinIO 署名付き URL）を通す", () => {
+      expect(
+        sanitizeImageUrl("http://localhost:9000/web-gallery-local/aaaa/DSC1.jpg?X-Amz-Signature=x")
+      ).toBe("http://localhost:9000/web-gallery-local/aaaa/DSC1.jpg?X-Amz-Signature=x");
+      expect(sanitizeImageUrl("http://127.0.0.1:9000/bucket/key.jpg")).toBe(
+        "http://127.0.0.1:9000/bucket/key.jpg"
+      );
+    });
+
+    it("localhost 以外の http URL は開発環境でも空文字にする", () => {
+      expect(sanitizeImageUrl("http://evil.example.com/a.jpg")).toBe("");
+    });
+  });
 });
 
 describe("safeRedirectPath", () => {

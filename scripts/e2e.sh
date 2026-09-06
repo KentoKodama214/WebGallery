@@ -19,12 +19,20 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "PostgreSQLコンテナを起動します"
-docker compose up -d postgres-db
+echo "PostgreSQL・MinIOコンテナを起動します"
+docker compose up -d postgres-db minio minio-setup
 
 echo "PostgreSQLの起動を待機します"
 for _ in $(seq 1 30); do
   if docker compose exec -T postgres-db pg_isready -U postgres >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+echo "MinIOのバケット作成を待機します"
+for _ in $(seq 1 30); do
+  if [ "$(docker inspect -f '{{.State.Status}}' web-gallery-minio-setup 2>/dev/null)" = "exited" ]; then
     break
   fi
   sleep 1

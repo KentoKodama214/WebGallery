@@ -27,7 +27,16 @@ app:
     maxFileSizeMb: 5
     miniUserUpperLimit: 10
     normalUserUpperLimit: 20
-    outputPath: https://www.xxx.com/
+  s3:
+    # 統合テストでは FileRepository をモックするため S3 へは接続しない。Bean生成用のダミー値
+    endpoint: http://localhost:9000
+    bucket: test-bucket
+    region: ap-northeast-1
+    access-key: test
+    secret-key: test
+    path-style-access: true
+    presign-expiry-seconds: 900
+    public-base-url: ""
   jwt:
     secret: test-secret-must-be-at-least-256-bits-long-for-hs256-algorithm
     # テストでは盗用検知の猶予期間を無効化し、ローテーション済みトークンの再利用を即座に盗用とみなす

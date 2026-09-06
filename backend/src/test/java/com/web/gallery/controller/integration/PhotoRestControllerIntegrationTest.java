@@ -1,6 +1,8 @@
 package com.web.gallery.controller.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -10,6 +12,7 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.entity.PhotoFavorite;
 import com.web.gallery.entity.PhotoMst;
 import com.web.gallery.entity.PhotoTagMst;
@@ -17,6 +20,7 @@ import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.model.AccountModel;
+import com.web.gallery.repository.FileRepository;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -24,6 +28,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -42,6 +47,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -63,6 +69,16 @@ public class PhotoRestControllerIntegrationTest {
   @Autowired private MockMvc mockMvc;
 
   @Autowired private JdbcTemplate jdbcTemplate;
+
+  /** S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない）。 署名付きURL発行は渡されたオブジェクトキーをそのまま返し、キーベースのアサーションを維持する。 */
+  @MockitoBean private FileRepository fileRepository;
+
+  @BeforeEach
+  void setUpFileRepositoryStub() {
+    lenient()
+        .when(fileRepository.getPresignedUrl(any(ImageFilePath.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+  }
 
   private String readJsonFile(String fileName) throws Exception {
     return new String(
@@ -317,8 +333,7 @@ public class PhotoRestControllerIntegrationTest {
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
       assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
-      assertEquals(
-          "https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
+      assertEquals("bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
       assertEquals("タイトル4", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
       assertEquals("", actualPhotoMst.getFirst().getPhotoEnglishTitle());
       assertEquals("", actualPhotoMst.getFirst().getCaption());
@@ -437,8 +452,7 @@ public class PhotoRestControllerIntegrationTest {
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
       assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
-      assertEquals(
-          "https://www.xxx.com/bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
+      assertEquals("bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
       assertEquals("タイトル111", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
       assertEquals("title111", actualPhotoMst.getFirst().getPhotoEnglishTitle());
       assertEquals("caption111", actualPhotoMst.getFirst().getCaption());

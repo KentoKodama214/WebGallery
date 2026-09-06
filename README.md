@@ -14,7 +14,7 @@
   - [前提条件](#前提条件)
   - [セットアップ](#セットアップ)
     - [0. miseの信頼](#0-miseの信頼)
-    - [1. データベースの起動](#1-データベースの起動)
+    - [1. データベース・画像ストレージの起動](#1-データベース画像ストレージの起動)
     - [2. 環境変数の設定](#2-環境変数の設定)
     - [3. フロントエンドのセットアップ](#3-フロントエンドのセットアップ)
     - [4. アプリケーションの起動](#4-アプリケーションの起動)
@@ -116,13 +116,13 @@ mise trust
 ```
 
 
-### 1. データベースの起動
+### 1. データベース・画像ストレージの起動
 
 ```bash
 just db-up
 ```
 
-開発用データベース（`web_gallery`、ポート5432）とテスト用データベース（`web_gallery_test`、ポート5433）が起動します。データベースの初期化は `db/` 配下のSQLスクリプトにより自動的に行われます。
+開発用データベース（`web_gallery`、ポート5432）とテスト用データベース（`web_gallery_test`、ポート5433）、および画像ストレージの MinIO（S3 互換、API ポート9000／コンソール http://localhost:9001 、認証情報 `minioadmin` / `minioadmin`）が起動します。データベースの初期化は `db/` 配下のSQLスクリプトにより、MinIO のバケット（`web-gallery-local`）作成は `minio-setup` コンテナにより自動的に行われます。
 
 ### 2. 環境変数の設定
 
@@ -140,7 +140,13 @@ just db-up
 | --- | --- | --- |
 | `JWT_SECRET` | JWT アクセストークンの署名鍵（**256bit / 32バイト以上必須**） | **必須。未設定なら起動失敗** |
 | `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | DB 接続情報 | `jdbc:postgresql://localhost:5432/web_gallery` / `postgres` / `postgres` |
-| `OUTPUT_PATH` | 写真の出力先パス | `https://localhost:8080/image/` |
+| `APP_S3_ENDPOINT` | 画像ストレージ（S3 互換）のエンドポイント。AWS S3 を使う場合は空 | `http://localhost:9000`（docker-compose の MinIO） |
+| `APP_S3_BUCKET` | 画像の保存先バケット名 | `web-gallery-local` |
+| `APP_S3_ACCESS_KEY` / `APP_S3_SECRET_KEY` | ストレージの認証情報 | `minioadmin` / `minioadmin` |
+| `AWS_REGION` | リージョン | `ap-northeast-1`（東京） |
+| `APP_S3_PATH_STYLE_ACCESS` | パススタイルアクセス（MinIO は `true`） | `true` |
+| `APP_S3_PUBLIC_BASE_URL` | 署名付き URL のホストをブラウザ到達可能なものへ差し替える場合に指定 | `http://localhost:9000` |
+| `APP_S3_PRESIGN_EXPIRY_SECONDS` | 署名付き URL の有効期限（秒） | `900` |
 | `MINI_USER_UPPER_LIMIT` / `NORMAL_USER_UPPER_LIMIT` | 権限別の写真登録上限 | `10` / `1000` |
 | `FRONTEND_ORIGIN` | CORS 許可オリジン | `http://localhost:3000` |
 
@@ -155,17 +161,18 @@ just db-up
 | --- | --- | --- |
 | `BACKEND_URL` | APIプロキシ（`/api/*`）の転送先バックエンドオリジン | `http://localhost:8080` |
 | `NEXT_PUBLIC_API_BASE_URL` | 別オリジンのバックエンドを直接叩く場合のベースURL | 同一オリジンの `/api` プロキシを使用 |
-| `NEXT_PUBLIC_IMAGE_BASE_URL` | 写真の配信元オリジン（例: `https://cdn.example.com/`）。CSP の `img-src` と `sanitizeImageUrl` の許可オリジンに反映される | **外部ホストからの画像読み込みを一切許可しない**（`img-src 'self' data: blob:`）。外部の画像配信元を使う構成では必ず設定すること |
+| `NEXT_PUBLIC_IMAGE_BASE_URL` | 写真の配信元オリジン（例: `https://cdn.example.com/`）。CSP の `img-src` と `sanitizeImageUrl` の許可オリジンに反映される | **外部ホストからの画像読み込みを一切許可しない**（`img-src 'self' data: blob:`）。本番/検証環境で S3・CloudFront から画像を配信する場合は必ず設定すること。**開発環境（`next dev`）では `http://localhost:9000`（MinIO）が自動許可されるため設定不要** |
 
 ##### 構成上の注意
 
-- **アップロード写真の配信経路**: フロントの API プロキシ（`src/app/api/[...path]/route.ts`）が中継するのは `/api/*` のみで、
-  バックエンドの画像配信パス（`/image/*`、`app.photo.outputPath`）は中継しない。`public/image/` には UI アセットのみが置かれる。
-  したがって実写真を表示するには次のいずれかが必要:
-  - `NEXT_PUBLIC_IMAGE_BASE_URL` に画像配信元オリジンを設定する（推奨。CDN / バックエンドの `/image/` 等）。
-  - フロントの前段のリバースプロキシ（nginx 等）で `/image/*` をバックエンドへルーティングする。
-  ローカル開発では backend の `application-local.yml` が `app.photo.outputPath: https://localhost:8080/image/` を使うため、
-  `NEXT_PUBLIC_IMAGE_BASE_URL=https://localhost:8080/` を `frontend/.env.local` に設定する。
+- **アップロード写真の配信経路**: 画像の実体は S3（ローカルは docker-compose の MinIO）に保存し、DB には
+  オブジェクトキー（`{accountId}/{ファイル名}`）のみを保持する。写真一覧・詳細 API はバックエンドが
+  有効期限付きの**署名付き URL（pre-signed GET URL）**を発行して返し、ブラウザがストレージから直接取得する。
+  フロントの API プロキシ（`src/app/api/[...path]/route.ts`）が中継するのは `/api/*` のみ。
+  - 開発環境: MinIO が `http://localhost:9000/...` の署名付き URL を発行する。`sanitizeImageUrl` と CSP `img-src`
+    は開発時のみこのオリジンを許可する（本番ビルドでは無効）。
+  - 本番/検証環境: `APP_S3_*`（バックエンド）で実 S3 を指し、フロントの `NEXT_PUBLIC_IMAGE_BASE_URL` に
+    署名付き URL のオリジン（S3 または CloudFront）を設定する。
 - **アップロードのボディサイズ / 同時接続**: `/api/*` プロキシはリクエストボディを最大 6MB までメモリにバッファしてから
   バックエンドへ転送する（1 リクエストあたりは 6MB で頭打ちだが同時実行数の上限は持たない）。本番では前段の
   リバースプロキシで `client_max_body_size`（6MB 程度）と同時接続数の制限をかけること。

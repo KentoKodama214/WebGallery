@@ -18,7 +18,7 @@ import lombok.Value;
 
 /** 写真の情報を受け渡すためのModelクラス */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class PhotoModel {
   /** アカウント番号 */
   @NonNull private AccountNo accountNo;

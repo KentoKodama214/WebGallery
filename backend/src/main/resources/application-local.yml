@@ -12,7 +12,14 @@ app:
   photo:
     miniUserUpperLimit: ${MINI_USER_UPPER_LIMIT:10}
     normalUserUpperLimit: ${NORMAL_USER_UPPER_LIMIT:1000}
-    outputPath: ${OUTPUT_PATH:https://localhost:8080/image/}
+  s3:
+    # ローカルは docker-compose の MinIO（just db-up で起動、コンソール http://localhost:9001）
+    endpoint: ${APP_S3_ENDPOINT:http://localhost:9000}
+    bucket: ${APP_S3_BUCKET:web-gallery-local}
+    access-key: ${APP_S3_ACCESS_KEY:minioadmin}
+    secret-key: ${APP_S3_SECRET_KEY:minioadmin}
+    path-style-access: ${APP_S3_PATH_STYLE_ACCESS:true}
+    public-base-url: ${APP_S3_PUBLIC_BASE_URL:http://localhost:9000}
   jwt:
     # デフォルト値は設けない。既知のシークレットが混入するとJWT偽造が可能になるため、
     # ローカル実行でも環境変数 JWT_SECRET（256bit以上）の設定を必須とする

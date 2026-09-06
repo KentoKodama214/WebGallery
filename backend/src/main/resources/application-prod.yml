@@ -12,7 +12,14 @@ app:
   photo:
     miniUserUpperLimit: ${MINI_USER_UPPER_LIMIT}
     normalUserUpperLimit: ${NORMAL_USER_UPPER_LIMIT}
-    outputPath: ${OUTPUT_PATH}
+  s3:
+    endpoint: ${APP_S3_ENDPOINT:}
+    bucket: ${APP_S3_BUCKET}
+    region: ${AWS_REGION:ap-northeast-1}
+    access-key: ${APP_S3_ACCESS_KEY}
+    secret-key: ${APP_S3_SECRET_KEY}
+    path-style-access: ${APP_S3_PATH_STYLE_ACCESS:false}
+    public-base-url: ${APP_S3_PUBLIC_BASE_URL:}
   cors:
     allowed-origins:
       - ${FRONTEND_ORIGIN}
