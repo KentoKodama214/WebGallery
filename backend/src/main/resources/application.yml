@@ -36,7 +36,7 @@ app:
     maxFileSizeMb: 5
   s3:
     # 画像ストレージ（S3 / MinIO）。プロファイルごとに endpoint / bucket / 認証情報を上書きする
-    region: ${AWS_REGION:us-east-1}
+    region: ${AWS_REGION:ap-northeast-1}
     path-style-access: ${APP_S3_PATH_STYLE_ACCESS:false}
     presign-expiry-seconds: ${APP_S3_PRESIGN_EXPIRY_SECONDS:900}
   jwt:

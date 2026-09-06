@@ -143,7 +143,7 @@ just db-up
 | `APP_S3_ENDPOINT` | 画像ストレージ（S3 互換）のエンドポイント。AWS S3 を使う場合は空 | `http://localhost:9000`（docker-compose の MinIO） |
 | `APP_S3_BUCKET` | 画像の保存先バケット名 | `web-gallery-local` |
 | `APP_S3_ACCESS_KEY` / `APP_S3_SECRET_KEY` | ストレージの認証情報 | `minioadmin` / `minioadmin` |
-| `AWS_REGION` | リージョン | `us-east-1` |
+| `AWS_REGION` | リージョン | `ap-northeast-1`（東京） |
 | `APP_S3_PATH_STYLE_ACCESS` | パススタイルアクセス（MinIO は `true`） | `true` |
 | `APP_S3_PUBLIC_BASE_URL` | 署名付き URL のホストをブラウザ到達可能なものへ差し替える場合に指定 | `http://localhost:9000` |
 | `APP_S3_PRESIGN_EXPIRY_SECONDS` | 署名付き URL の有効期限（秒） | `900` |
