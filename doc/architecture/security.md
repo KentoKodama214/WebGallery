@@ -214,12 +214,17 @@ nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ�
 ### 画像ストレージと署名付きURL
 
 写真の実体は S3（ローカル/E2E は docker-compose の MinIO）に保存し、DB の `photo_mst.image_file_path`
-にはオブジェクトキー（`{accountId}/{ファイル名}`）のみを保持する。写真一覧・詳細 API は、
-Service 層（`PhotoServiceImpl`）が `FileRepository.getPresignedUrl` で**有効期限付きの署名付き URL**
-（pre-signed GET URL、既定 15 分。`app.s3.presign-expiry-seconds`）を発行してレスポンスに載せ、
-ブラウザがストレージから直接画像を取得する。アプリサーバーは画像バイト列を中継しない。
+には**サーバ生成の不透明オブジェクトキー**（`{accountId}/{写真番号}-{ランダム32桁}.{検証済み拡張子}`）のみを
+保持する。写真一覧・詳細 API は、Service 層（`PhotoServiceImpl`）が `FileRepository.getPresignedUrl` で
+**有効期限付きの署名付き URL**（pre-signed GET URL、既定 15 分。`app.s3.presign-expiry-seconds`）を
+発行してレスポンスに載せ、ブラウザがストレージから直接画像を取得する。アプリサーバーは画像バイト列を中継しない。
 
 - 署名付き URL はオブジェクト単位・GET のみ・短命。発行時点のキーに対してのみ有効で、バケットは非公開のまま。
+- **オブジェクトキーにクライアント送信のファイル名を一切含めない**（パストラバーサル・特殊文字混入・
+  キー衝突・他ユーザーのキー推測を防ぐ）。表示・重複判定用の元ファイル名は `photo_mst.image_file_name`
+  に別途保持する。画像は登録後に不変のため、写真の編集では `image_file_path` / `image_file_name` を更新しない。
+- PUT 時に `Content-Type` は検証済み拡張子から確定した値を設定し（クライアント申告値は使わない）、
+  `Content-Disposition: inline` を明示する。
 - 削除時は、クライアント送信の `imageFilePath` を信用せず、写真番号で DB から実キーを引いて削除対象を決める
   （パス汚染・他オブジェクトの巻き込み削除の防止）。
 - フロントの `sanitizeImageUrl`（`src/lib/url.ts`）と CSP `img-src` は、本番では `https:` かつ

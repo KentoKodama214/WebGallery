@@ -4,7 +4,6 @@ import com.web.gallery.constant.Consts;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailModel;
-import java.io.File;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import lombok.Builder;
@@ -74,8 +73,9 @@ public class PhotoMstUpdateTarget {
         .photoAt(
             model.getPhotoAt() != null ? model.getPhotoAt().value() : Consts.MIN_OFFSET_DATE_TIME)
         .locationNo(model.getLocationNo() != null ? model.getLocationNo().value() : 0L)
-        .imageFilePath(model.getImageFilePath().value())
-        .imageFileName(new File(model.getImageFilePath().value()).getName())
+        // 画像ファイル（image_file_path / image_file_name）は登録後に不変のため更新対象に含めない。
+        // 不透明キーから元ファイル名を復元できないため、更新時に image_file_name を書き換えると
+        // 重複判定（PhotoMstMapper.isExistPhoto）が壊れる
         .photoJapaneseTitle(
             model.getPhotoJapaneseTitle() != null
                 ? model.getPhotoJapaneseTitle().value()

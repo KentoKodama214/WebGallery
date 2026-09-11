@@ -173,7 +173,7 @@ just db-up
 ##### 構成上の注意
 
 - **アップロード写真の配信経路**: 画像の実体は S3（ローカルは docker-compose の MinIO）に保存し、DB には
-  オブジェクトキー（`{accountId}/{ファイル名}`）のみを保持する。写真一覧・詳細 API はバックエンドが
+  サーバ生成の不透明オブジェクトキー（`{accountId}/{写真番号}-{ランダム}.{拡張子}`）のみを保持する。写真一覧・詳細 API はバックエンドが
   有効期限付きの**署名付き URL（pre-signed GET URL）**を発行して返し、ブラウザがストレージから直接取得する。
   フロントの API プロキシ（`src/app/api/[...path]/route.ts`）が中継するのは `/api/*` のみ。
   - 開発環境: MinIO が `http://localhost:9000/...` の署名付き URL を発行する。`sanitizeImageUrl` と CSP `img-src`

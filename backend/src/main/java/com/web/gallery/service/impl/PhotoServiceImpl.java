@@ -38,14 +38,15 @@ import com.web.gallery.repository.PhotoAggregateRepository;
 import com.web.gallery.repository.PhotoDetailRepository;
 import com.web.gallery.repository.PhotoMstRepository;
 import com.web.gallery.service.PhotoService;
-import java.io.File;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -171,7 +172,9 @@ public class PhotoServiceImpl implements PhotoService {
     Long photoNo = photoMstRepository.getNewPhotoNo(photoAccountNo).value();
     PhotoNo savedPhotoNo = new PhotoNo(photoNo);
     ImageFilePath savedImageFilePath = null;
-    // DBおよびS3には「{accountId}/{ファイル名}」形式のオブジェクトキーを保存する
+    // DBおよびS3には「{accountId}/{写真番号}-{ランダム}.{拡張子}」形式のオブジェクトキーを保存する。
+    // クライアント送信のファイル名はキーに含めない（パストラバーサル・特殊文字混入・衝突・列挙の防止）。
+    // 表示名としての元ファイル名は photo_mst.image_file_name に別途保持する
     String filePath = accountId.value() + "/";
 
     // ファイルI/OはDBトランザクションの対象外のため、途中の登録失敗でDBがロールバックされても
@@ -239,18 +242,38 @@ public class PhotoServiceImpl implements PhotoService {
       throw ErrorEnum.INVALID_PHOTO_FILE_EXTENSION.toException();
     }
 
-    // クライアント送信値であるオリジナルファイル名からパストラバーサル対策としてベース名のみを抽出する
-    // （Linux では '\\' がパス区切りとして扱われないため、先に '/' へ正規化してから抽出する）
-    String filename =
-        new File(photoDetailModel.getImageFile().value().getOriginalFilename().replace('\\', '/'))
-            .getName();
-    Photo photo =
-        Photo.forRegist(photoDetailModel, newPhotoNo, new ImageFilePath(filePath + filename));
+    // オブジェクトキーはサーバ側で生成する。クライアント送信のファイル名は一切キーに含めない
+    // （写真番号はアカウント内で一意、ランダム値で推測・列挙を防止、拡張子は検証済みのものを用いる）
+    String objectKey =
+        filePath
+            + newPhotoNo.value()
+            + "-"
+            + UUID.randomUUID().toString().replace("-", "")
+            + "."
+            + resolveExtension(photoDetailModel.getImageFile());
+    Photo photo = Photo.forRegist(photoDetailModel, newPhotoNo, new ImageFilePath(objectKey));
     photoAggregateRepository.regist(photo);
     fileRepository.save(FileModel.of(photo.getImageFilePath(), photo.getImageFile()));
     applicationEventPublisher.publishEvent(
         new PhotoRegisteredEvent(photo.getAccountNo(), photo.getPhotoNo()));
     return photo.getImageFilePath();
+  }
+
+  /**
+   * 画像ファイルの拡張子（小文字）を返す
+   *
+   * <p>呼び出し前に {@code photoFileExtensionPolicy.isAllowedExtension} で許可拡張子であることを検証済みの前提。
+   * 生成するオブジェクトキーの末尾に付与し、Content-Type の決定にも用いる。
+   *
+   * @param imageFile {@link ImageFile}
+   * @return 拡張子（小文字。ドットは含まない）
+   */
+  private String resolveExtension(ImageFile imageFile) {
+    String originalFilename = imageFile.value().getOriginalFilename();
+    int lastDotIndex = originalFilename == null ? -1 : originalFilename.lastIndexOf('.');
+    return originalFilename == null || lastDotIndex < 0
+        ? "bin"
+        : originalFilename.substring(lastDotIndex + 1).toLowerCase(Locale.ROOT);
   }
 
   /**

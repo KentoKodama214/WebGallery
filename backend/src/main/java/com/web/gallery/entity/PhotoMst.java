@@ -95,8 +95,10 @@ public class PhotoMst {
         .photoAt(
             model.getPhotoAt() != null ? model.getPhotoAt().value() : Consts.MIN_OFFSET_DATE_TIME)
         .locationNo(model.getLocationNo() != null ? model.getLocationNo().value() : 0L)
+        // image_file_path はサーバ生成の不透明オブジェクトキー。表示・重複判定に使う元ファイル名は
+        // image_file_name に別途保持する（PhotoMstCondition.forExistCheck と同じ抽出方法で揃える）
         .imageFilePath(filePath)
-        .imageFileName(new File(filePath).getName())
+        .imageFileName(resolveImageFileName(model, filePath))
         .photoJapaneseTitle(
             model.getPhotoJapaneseTitle() != null
                 ? model.getPhotoJapaneseTitle().value()
@@ -113,5 +115,24 @@ public class PhotoMst {
             exifData.shutterSpeed() != null ? exifData.shutterSpeed().value() : BigDecimal.ZERO)
         .iso(exifData.iso() != null ? exifData.iso().value() : 0)
         .build();
+  }
+
+  /**
+   * 表示・重複判定に用いる元ファイル名（ベース名）を決定する
+   *
+   * <p>アップロードされた画像ファイルのクライアント送信ファイル名から抽出する（{@link PhotoMstCondition#forExistCheck}
+   * と同一の抽出方法で揃える）。画像ファイルが設定されていない場合は、後方互換として オブジェクトキーの末尾を用いる。
+   *
+   * @param model {@link PhotoDetailModel}
+   * @param filePath オブジェクトキー
+   * @return 元ファイル名（ベース名）
+   */
+  private static String resolveImageFileName(PhotoDetailModel model, String filePath) {
+    if (model.getImageFile() != null
+        && model.getImageFile().value() != null
+        && model.getImageFile().value().getOriginalFilename() != null) {
+      return new File(model.getImageFile().value().getOriginalFilename()).getName();
+    }
+    return new File(filePath).getName();
   }
 }

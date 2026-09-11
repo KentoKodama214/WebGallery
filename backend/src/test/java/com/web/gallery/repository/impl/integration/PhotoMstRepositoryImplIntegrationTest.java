@@ -286,7 +286,9 @@ public class PhotoMstRepositoryImplIntegrationTest {
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getPhotoAt().plusHours(9));
       assertEquals(0L, actualData.getFirst().getLocationNo());
-      assertEquals("https://www.xxx.com/DSC111.jpg", actualData.getFirst().getImageFilePath());
+      // 画像は登録後に不変のため、更新では image_file_path / image_file_name を書き換えない
+      // （フィクスチャの値がそのまま残る）
+      assertEquals("https://www.xxx.com/DSC11.jpg", actualData.getFirst().getImageFilePath());
       assertEquals("", actualData.getFirst().getPhotoJapaneseTitle());
       assertEquals("", actualData.getFirst().getPhotoEnglishTitle());
       assertEquals("", actualData.getFirst().getCaption());
@@ -366,7 +368,9 @@ public class PhotoMstRepositoryImplIntegrationTest {
           OffsetDateTime.of(2000, 12, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getPhotoAt().plusHours(9));
       assertEquals(1L, actualData.getFirst().getLocationNo());
-      assertEquals("https://www.xxx.com/DSC111.jpg", actualData.getFirst().getImageFilePath());
+      // 画像は登録後に不変のため、更新では image_file_path / image_file_name を書き換えない
+      // （フィクスチャの値がそのまま残る）
+      assertEquals("https://www.xxx.com/DSC11.jpg", actualData.getFirst().getImageFilePath());
       assertEquals("タイトル111", actualData.getFirst().getPhotoJapaneseTitle());
       assertEquals("title111", actualData.getFirst().getPhotoEnglishTitle());
       assertEquals("キャプション111", actualData.getFirst().getCaption());

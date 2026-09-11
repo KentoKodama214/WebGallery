@@ -49,17 +49,17 @@ class FileRepositoryImplTest {
   @DisplayName("save")
   class Save {
     @Test
-    @DisplayName("正常系：バケット・キー・Content-Typeを指定してputObjectを呼び出す")
+    @DisplayName("正常系：Content-Typeは検証済み拡張子から確定し、Content-Disposition: inline を付与してputObjectを呼び出す")
     void save_putsObject() throws IOException {
       MultipartFile multipartFile = mock(MultipartFile.class);
-      doReturn("image/jpeg").when(multipartFile).getContentType();
+      // クライアント申告値（意図的に不一致）は使わず、キーの拡張子から Content-Type を決める
       doReturn(6L).when(multipartFile).getSize();
       doReturn(new java.io.ByteArrayInputStream(new byte[] {1, 2, 3, 4, 5, 6}))
           .when(multipartFile)
           .getInputStream();
 
       FileModel fileModel =
-          FileModel.of(new ImageFilePath("aaaaaaaa/DSC11.jpg"), new ImageFile(multipartFile));
+          FileModel.of(new ImageFilePath("aaaaaaaa/5-abc123.jpg"), new ImageFile(multipartFile));
 
       newRepository("").save(fileModel);
 
@@ -67,8 +67,47 @@ class FileRepositoryImplTest {
       verify(s3Client)
           .putObject(captor.capture(), any(software.amazon.awssdk.core.sync.RequestBody.class));
       assertEquals(BUCKET, captor.getValue().bucket());
-      assertEquals("aaaaaaaa/DSC11.jpg", captor.getValue().key());
+      assertEquals("aaaaaaaa/5-abc123.jpg", captor.getValue().key());
       assertEquals("image/jpeg", captor.getValue().contentType());
+      assertEquals("inline", captor.getValue().contentDisposition());
+    }
+
+    @Test
+    @DisplayName("正常系：png拡張子のキーは Content-Type: image/png を設定する（大文字拡張子も許容）")
+    void save_resolvesContentTypeFromExtension() throws IOException {
+      MultipartFile multipartFile = mock(MultipartFile.class);
+      doReturn(1L).when(multipartFile).getSize();
+      doReturn(new java.io.ByteArrayInputStream(new byte[] {1}))
+          .when(multipartFile)
+          .getInputStream();
+
+      newRepository("")
+          .save(FileModel.of(new ImageFilePath("aaaaaaaa/9-x.PNG"), new ImageFile(multipartFile)));
+
+      ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
+      verify(s3Client)
+          .putObject(captor.capture(), any(software.amazon.awssdk.core.sync.RequestBody.class));
+      assertEquals("image/png", captor.getValue().contentType());
+    }
+
+    @Test
+    @DisplayName("正常系：未知の拡張子はフォールバックとしてMultipartFileの申告値を用いる")
+    void save_fallsBackToDeclaredContentType() throws IOException {
+      MultipartFile multipartFile = mock(MultipartFile.class);
+      doReturn("application/octet-stream").when(multipartFile).getContentType();
+      doReturn(1L).when(multipartFile).getSize();
+      doReturn(new java.io.ByteArrayInputStream(new byte[] {1}))
+          .when(multipartFile)
+          .getInputStream();
+
+      newRepository("")
+          .save(
+              FileModel.of(new ImageFilePath("aaaaaaaa/legacy-key"), new ImageFile(multipartFile)));
+
+      ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
+      verify(s3Client)
+          .putObject(captor.capture(), any(software.amazon.awssdk.core.sync.RequestBody.class));
+      assertEquals("application/octet-stream", captor.getValue().contentType());
     }
 
     @Test

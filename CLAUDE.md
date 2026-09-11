@@ -146,6 +146,6 @@ just e2e
 ### 重要事項
 
 - ファイルアップロード上限は1ファイルあたり5MB（`application.yml`の`app.photo.maxFileSizeMb`。サーブレットレベルの`spring.servlet.multipart`は6MB）
-- 写真の実体はS3（ローカル/E2Eはdocker-composeのMinIO）に保存し、DBの`photo_mst.image_file_path`にはオブジェクトキー（`{accountId}/{ファイル名}`）のみを保持する。閲覧時はService層が署名付きURL（pre-signed GET URL）を発行して返す。ストレージ設定は各プロファイルの`application-{profile}.yml`の`app.s3.*`（環境変数`APP_S3_*` / `AWS_REGION`）で行う
+- 写真の実体はS3（ローカル/E2Eはdocker-composeのMinIO）に保存し、DBの`photo_mst.image_file_path`にはサーバ生成の不透明オブジェクトキー（`{accountId}/{写真番号}-{ランダム}.{拡張子}`）のみを保持する。クライアント送信のファイル名はキーに含めず、表示・重複判定用に`photo_mst.image_file_name`へ別途保持する。閲覧時はService層が署名付きURL（pre-signed GET URL）を発行して返す。ストレージ設定は各プロファイルの`application-{profile}.yml`の`app.s3.*`（環境変数`APP_S3_*` / `AWS_REGION`）で行う
 - プロジェクトはTomcatデプロイ用のWARパッケージング（実行可能JARではない）
 - `backend/build.gradle`のgroupは`com.official`、ベースパッケージは`com.web.gallery`

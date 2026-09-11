@@ -93,6 +93,24 @@ import org.springframework.web.multipart.MultipartFile;
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 public class PhotoServiceImplTest {
+
+  /**
+   * サーバ生成の不透明オブジェクトキー（{@code {accountId}/{写真番号}-{ランダム32桁}.{拡張子}}）であることを検証する
+   *
+   * @param actual 実際のキー（{@link ImageFilePath} または文字列）
+   * @param accountId アカウントID
+   * @param photoNo 写真番号
+   * @param extension 拡張子（ドットなし）
+   */
+  private static void assertOpaqueObjectKey(
+      Object actual, String accountId, long photoNo, String extension) {
+    String key = actual instanceof ImageFilePath path ? path.value() : String.valueOf(actual);
+    String expectedPattern = "^" + accountId + "/" + photoNo + "-[0-9a-f]{32}\\." + extension + "$";
+    assertTrue(
+        key.matches(expectedPattern),
+        "オブジェクトキーが不正です。expected pattern: " + expectedPattern + ", actual: " + key);
+  }
+
   @InjectMocks private PhotoServiceImpl photoServiceImpl;
 
   @Mock private PhotoDetailRepositoryImpl photoDetailRepositoryImpl;
@@ -780,29 +798,22 @@ public class PhotoServiceImplTest {
               new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(5L), actual.getPhotoNo());
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/DSC222.jpg"), actual.getImageFilePath());
+      assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 6L, "jpg");
       verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
       verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
       verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
       verify(fileRepositoryImpl, times(2)).save(any(FileModel.class));
 
       List<FileModel> fileModelCaptureList = fileModelCaptor.getAllValues();
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/DSC111.jpg"),
-          fileModelCaptureList.get(0).getFilePath());
+      assertOpaqueObjectKey(fileModelCaptureList.get(0).getFilePath(), accountId, 5L, "jpg");
       assertEquals(photoDetailModel1.getImageFile(), fileModelCaptureList.get(0).getImageFile());
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/DSC222.jpg"),
-          fileModelCaptureList.get(1).getFilePath());
+      assertOpaqueObjectKey(fileModelCaptureList.get(1).getFilePath(), accountId, 6L, "jpg");
       assertEquals(photoDetailModel2.getImageFile(), fileModelCaptureList.get(1).getImageFile());
 
       List<Photo> photoCaptureList = photoCaptor.getAllValues();
       assertEquals(new AccountNo(1L), photoCaptureList.get(0).getAccountNo());
       assertEquals(new PhotoNo(5L), photoCaptureList.get(0).getPhotoNo());
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/DSC111.jpg"),
-          photoCaptureList.get(0).getImageFilePath());
+      assertOpaqueObjectKey(photoCaptureList.get(0).getImageFilePath(), accountId, 5L, "jpg");
       assertEquals(2, photoCaptureList.get(0).getPhotoTagModelList().size());
       assertEquals(
           new AccountNo(1L), photoCaptureList.get(0).getPhotoTagModelList().get(0).getAccountNo());
@@ -823,9 +834,7 @@ public class PhotoServiceImplTest {
 
       assertEquals(new AccountNo(1L), photoCaptureList.get(1).getAccountNo());
       assertEquals(new PhotoNo(6L), photoCaptureList.get(1).getPhotoNo());
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/DSC222.jpg"),
-          photoCaptureList.get(1).getImageFilePath());
+      assertOpaqueObjectKey(photoCaptureList.get(1).getImageFilePath(), accountId, 6L, "jpg");
 
       ArgumentCaptor<PhotoRegisteredEvent> photoRegisteredEventCaptor =
           ArgumentCaptor.forClass(PhotoRegisteredEvent.class);
@@ -953,22 +962,18 @@ public class PhotoServiceImplTest {
               new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(3L), actual.getPhotoNo());
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/DSC111.jpg"), actual.getImageFilePath());
+      assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 5L, "jpg");
       verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
       verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
       verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
 
       FileModel fileModelCapture = fileModelCaptor.getValue();
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/DSC111.jpg"), fileModelCapture.getFilePath());
+      assertOpaqueObjectKey(fileModelCapture.getFilePath(), accountId, 5L, "jpg");
       assertEquals(photoDetailModel1.getImageFile(), fileModelCapture.getImageFile());
 
       Photo registeredPhoto = photoRegistCaptor.getValue();
       assertEquals(new PhotoNo(5L), registeredPhoto.getPhotoNo());
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/DSC111.jpg"),
-          registeredPhoto.getImageFilePath());
+      assertOpaqueObjectKey(registeredPhoto.getImageFilePath(), accountId, 5L, "jpg");
       assertEquals(2, registeredPhoto.getPhotoTagModelList().size());
 
       Photo updatedPhoto = photoUpdateCaptor.getValue();
@@ -1202,10 +1207,9 @@ public class PhotoServiceImplTest {
 
     @Test
     @Order(12)
-    @DisplayName("正常系：オリジナルファイル名にパストラバーサルを含む場合、ベース名のみを保存パスに使用すること")
+    @DisplayName("正常系：オリジナルファイル名にパストラバーサルを含んでも、オブジェクトキーには一切反映されないこと")
     void savePhotos_newPhoto_sanitizes_path_traversal_filename() throws GalleryException {
       String accountId = "aaaaaaaa";
-      String filePath = "";
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
 
       doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
@@ -1239,16 +1243,17 @@ public class PhotoServiceImplTest {
       assertEquals(new PhotoNo(5L), actual.getPhotoNo());
       verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
 
-      // ベース名（evil.jpg）のみが保存先パスの末尾に使用され、パストラバーサル部分は除去されていること
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/evil.jpg"),
-          fileModelCaptor.getValue().getFilePath());
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/evil.jpg"),
-          photoCaptor.getValue().getImageFilePath());
-      // 戻り値の画像ファイルパスもサニタイズ済みの値であり、レスポンスに生のオリジナルファイル名が漏れないこと
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/evil.jpg"), actual.getImageFilePath());
+      // オブジェクトキーはサーバ生成の不透明値であり、クライアント送信ファイル名（../ / etc / evil）を一切含まない
+      for (String key :
+          List.of(
+              fileModelCaptor.getValue().getFilePath().value(),
+              photoCaptor.getValue().getImageFilePath().value(),
+              actual.getImageFilePath().value())) {
+        assertOpaqueObjectKey(key, accountId, 5L, "jpg");
+        assertFalse(key.contains(".."));
+        assertFalse(key.contains("etc"));
+        assertFalse(key.contains("evil"));
+      }
     }
 
     @Test
@@ -1441,8 +1446,7 @@ public class PhotoServiceImplTest {
       // 1枚目は既にファイル書き込みが成功しているため、DBロールバックとの整合性を保つべく補償削除される
       ArgumentCaptor<ImageFilePath> deleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
       verify(fileRepositoryImpl, times(1)).delete(deleteCaptor.capture());
-      assertEquals(
-          new ImageFilePath(filePath + accountId + "/DSC111.jpg"), deleteCaptor.getValue());
+      assertOpaqueObjectKey(deleteCaptor.getValue(), accountId, 5L, "jpg");
     }
 
     @Test

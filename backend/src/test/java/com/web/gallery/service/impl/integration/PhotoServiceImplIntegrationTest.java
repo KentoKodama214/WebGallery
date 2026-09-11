@@ -75,6 +75,23 @@ public class PhotoServiceImplIntegrationTest {
 
   @Autowired private JdbcTemplate jdbcTemplate;
 
+  /**
+   * サーバ生成の不透明オブジェクトキー（{@code {accountId}/{写真番号}-{ランダム32桁}.{拡張子}}）であることを検証する
+   *
+   * @param actual 実際のキー（{@link ImageFilePath} または文字列）
+   * @param accountId アカウントID
+   * @param photoNo 写真番号
+   * @param extension 拡張子（ドットなし）
+   */
+  private static void assertOpaqueObjectKey(
+      Object actual, String accountId, long photoNo, String extension) {
+    String key = actual instanceof ImageFilePath path ? path.value() : String.valueOf(actual);
+    String expectedPattern = "^" + accountId + "/" + photoNo + "-[0-9a-f]{32}\\." + extension + "$";
+    assertTrue(
+        key.matches(expectedPattern),
+        "オブジェクトキーが不正です。expected pattern: " + expectedPattern + ", actual: " + key);
+  }
+
   /** S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない）。 署名付きURL発行は渡されたオブジェクトキーをそのまま返し、キーベースのアサーションを維持する。 */
   @MockitoBean private FileRepository fileRepository;
 
@@ -758,7 +775,18 @@ public class PhotoServiceImplIntegrationTest {
               new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(11L), actual.getPhotoNo());
-      assertEquals(new ImageFilePath(accountId + "/DSC22.jpg"), actual.getImageFilePath());
+      assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 12L, "jpg");
+      // 元ファイル名は image_file_name に別途保持される
+      assertEquals(
+          "DSC21.jpg",
+          jdbcTemplate.queryForObject(
+              "SELECT image_file_name FROM photo.photo_mst WHERE account_no=1 AND photo_no=11",
+              String.class));
+      assertEquals(
+          "DSC22.jpg",
+          jdbcTemplate.queryForObject(
+              "SELECT image_file_name FROM photo.photo_mst WHERE account_no=1 AND photo_no=12",
+              String.class));
       List<PhotoMst> actualData =
           getPhotoMstData(accountId).stream()
               .filter(photoMst -> photoMst.getPhotoNo() > 10)
@@ -773,7 +801,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(0).getPhotoAt());
-      assertEquals(accountId + "/DSC21.jpg", actualData.get(0).getImageFilePath());
+      assertOpaqueObjectKey(actualData.get(0).getImageFilePath(), accountId, 11L, "jpg");
       assertEquals(0L, actualData.get(0).getLocationNo());
       assertEquals("タイトル21", actualData.get(0).getPhotoJapaneseTitle());
       assertEquals("title21", actualData.get(0).getPhotoEnglishTitle());
@@ -791,7 +819,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(1).getPhotoAt().plusHours(9));
-      assertEquals(accountId + "/DSC22.jpg", actualData.get(1).getImageFilePath());
+      assertOpaqueObjectKey(actualData.get(1).getImageFilePath(), accountId, 12L, "jpg");
       assertEquals(0L, actualData.get(1).getLocationNo());
       assertEquals("", actualData.get(1).getPhotoJapaneseTitle());
       assertEquals("", actualData.get(1).getPhotoEnglishTitle());
@@ -934,7 +962,7 @@ public class PhotoServiceImplIntegrationTest {
               new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(3L), actual.getPhotoNo());
-      assertEquals(new ImageFilePath(accountId + "/DSC21.jpg"), actual.getImageFilePath());
+      assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 11L, "jpg");
       List<PhotoMst> actualData =
           getPhotoMstData(accountId).stream()
               .filter(photoMst -> photoMst.getPhotoNo() > 10)
@@ -949,7 +977,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(0).getPhotoAt());
-      assertEquals(accountId + "/DSC21.jpg", actualData.get(0).getImageFilePath());
+      assertOpaqueObjectKey(actualData.get(0).getImageFilePath(), accountId, 11L, "jpg");
       assertEquals(0L, actualData.get(0).getLocationNo());
       assertEquals("タイトル21", actualData.get(0).getPhotoJapaneseTitle());
       assertEquals("title21", actualData.get(0).getPhotoEnglishTitle());
