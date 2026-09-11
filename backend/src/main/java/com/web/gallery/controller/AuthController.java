@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * JWT認証に関するAPI通信を扱うRestControllerクラス
+ * JWT認証に関するAPI通信を扱うControllerクラス
  *
  * @author Kento Kodama
  * @version 1.0.0
@@ -46,7 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "認証", description = "JWT認証に関するAPI")
-public class AuthRestController {
+public class AuthController {
   private static final String REFRESH_TOKEN_COOKIE_NAME = "refreshToken";
 
   private final AuthService authService;

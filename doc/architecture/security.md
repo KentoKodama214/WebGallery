@@ -32,13 +32,43 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 |----------|--------------|
 | 認証API（`/api/v1/auth/**`） | 公開 |
 | アカウント登録（`POST /api/v1/accounts`） | 公開 |
-| アカウント一覧（`GET /api/v1/accounts`） | 公開 |
+| アカウント一覧（`GET /api/v1/accounts`） | 公開（アカウント名のみ表示。詳細は下記） |
 | 写真の閲覧（`GET /api/v1/accounts/{id}/photos/**`） | 公開 |
 | 都道府県一覧（`GET /api/v1/prefectures`） | 公開 |
 | 写真の登録・編集・削除 | 認証必須（本人のみ） |
 | お気に入り登録・解除 | 認証必須 |
 | アカウント詳細取得・更新 | 認証必須（本人のみ） |
 | パスワード変更・アカウント削除 | 認証必須（本人のみ）＋ 現在のパスワードによる再認証 |
+
+### レート制限（`RateLimitFilter`）
+
+送信元 IP アドレスごとに、エンドポイントのカテゴリ別リクエスト数を固定ウィンドウで数え、上限を
+超えたリクエストを `429 Too Many Requests`（`Retry-After` 付き）で拒否する。認証・認可より前に
+実行する。前段の WAF / ロードバランサのレート制限に加えたアプリ側の多層防御。
+
+| カテゴリ | 対象 | 既定しきい値 | 環境変数 |
+|---|---|---|---|
+| `AUTH` | `POST /api/v1/auth/login` | 30 回 / 60 秒 | `RATE_LIMIT_AUTH_*` |
+| `REGISTER` | `POST /api/v1/accounts` | 10 回 / 3600 秒 | `RATE_LIMIT_REGISTER_*` |
+| `GENERAL` | 上記以外の `/api/**`（リフレッシュ・アップロード等） | 300 回 / 60 秒 | `RATE_LIMIT_GENERAL_*` |
+
+- 送信元 IP は `HttpServletRequest#getRemoteAddr()`（Tomcat `RemoteIpValve` が `X-Forwarded-For` を
+  解決した後の値）。フロントの `/api` プロキシが前段プロキシ付与の実クライアント IP を
+  `X-Forwarded-For` に載せ直し、バックエンドは `TRUSTED_PROXIES` の範囲でのみそれを信頼する。
+- カウンタは `RateLimiter`（プロセスローカルの `ConcurrentHashMap`、エントリ上限 20 万・定期間引き）。
+  複数インスタンス構成では実効しきい値がインスタンス数倍になる。
+- IP 単位のため共有 NAT（CGNAT・社内 NAT）配下では誤検知しうる。厳密な制御は前段の WAF に委ね、
+  アカウント単位のロック（ログイン失敗 3 回）と併せた多層防御と位置づける。
+- `app.rate-limit.enabled=false`（`RATE_LIMIT_ENABLED`）で無効化できる（`test` プロファイル・E2E は無効）。
+
+### アカウントID（ログインID）の露出抑制
+
+アカウント一覧画面（`/account_list`）では**アカウント名のみを表示**し、アカウントID（ログインID）は
+画面に表示しない。他ユーザーのログインIDを一覧で機械的に収集され、クレデンシャルスタッフィングや
+標的型のアカウントロックに悪用されるのを避けるため。
+
+> 現状、ギャラリーへのリンク URL（`/photo/{accountId}/photo_list`）には引き続きアカウントID が含まれる。
+> URL からの完全な秘匿には、ルーティングを内部の不透明 ID へ移行する必要がある（別対応）。
 
 パスワード変更（`PUT /api/v1/accounts/{id}` で新しいパスワードを指定）とアカウント削除
 （`POST /api/v1/accounts/{id}/deletion`）は、アクセストークンの有効性に加えてリクエストボディ（JSON）の
@@ -95,6 +125,55 @@ APM に記録されやすく（`Authorization` と違い）マスク対象から
 `newPassword` / `currentPassword`）の入力値は `***` にマスクする
 （`helper/ValidationErrorLogger`）。ログ集約基盤に平文の資格情報を残さないため。
 
+### 信頼するプロキシと発信元IPの復元
+
+`server.tomcat.remoteip` で `X-Forwarded-For` / `X-Forwarded-Proto` から発信元 IP・プロトコルを
+復元する。信頼する「直前の送信元 IP」の範囲は `server.tomcat.remoteip.internal-proxies`
+（環境変数 `TRUSTED_PROXIES`）で制御し、範囲外から届いた `X-Forwarded-For` は無視して TCP 接続の
+実 IP を使う（クライアントによる IP 詐称の防止）。既定値はループバック＋RFC1918（Tomcat 既定と同等）で、
+**本番では前段の ALB／リバースプロキシが存在するサブネットの CIDR だけに狭める**こと。加えて、
+アプリコンテナはネットワーク的に ALB 経由でしか到達できない構成にする。
+
+### バックエンドのレスポンスヘッダーと CORS
+
+`SecurityConfig#applyApiResponseHeaders` が API・デフォルトの両 `SecurityFilterChain` に対して
+以下を付与する（フロントのページレスポンスへの付与は `next.config.ts` / `src/proxy.ts` が担うが、
+バックエンドを直接叩く経路に備えた多層防御）。
+
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains`（HTTPS リクエストのみ送出）
+- `Referrer-Policy: no-referrer`
+- `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`（API は JSON のみ返すため最小）
+- `X-Frame-Options: DENY`、`X-Content-Type-Options: nosniff`（Spring Security 既定）
+
+CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api` プロキシ経由）では発動しないが、
+`NEXT_PUBLIC_API_BASE_URL` で別オリジンのバックエンドを直接叩く構成に備え、許可オリジンを
+`FRONTEND_ORIGIN` に限定し、許可メソッドを `GET/POST/PUT/DELETE`、許可ヘッダーを
+`Authorization` / `Content-Type` のみに絞る。`app.cors.allowed-origins` の形式は
+`CorsConfig#validateAllowedOrigins`（全プロファイル）で、`https://` 限定・ワイルドカード禁止は
+`ProdConfigValidationRunner`（`prod` のみ）で起動時に検証する。
+
+### エラーレスポンスからの内部情報の抑止
+
+`application.yml` で `server.error.*` をすべて `never` / `false` に固定し、エラーレスポンスに
+例外メッセージ・スタックトレース・バインドエラー詳細・例外クラス名・ホワイトラベルページを
+一切含めない。`CommonControllerAdvice` は `@RestControllerAdvice(assignableTypes = {...})`
+で列挙した Controller の例外のみを汎用レスポンスへ変換するため、認証フィルタやレートリミット等
+**フィルタ内で発生した例外**が `/error` ディスパッチに落ちたときの多層防御として設定している。
+併せて `spring.mvc.log-resolved-exception: false` で、処理済み例外のスタックトレース重複ログを抑止する。
+
+### 本番プロファイルの起動時設定検証
+
+`config/ProdConfigValidationRunner`（`@Profile("prod")`）が起動完了時に本番設定を検証し、
+危険な構成を検出したら `IllegalStateException` を投げて**起動自体を失敗させる**（フェイルクローズ）。
+
+- `app.cors.allowed-origins`（環境変数 `FRONTEND_ORIGIN`）が 1 件以上・すべて `https://` の
+  絶対オリジン・ワイルドカード（`*`）やパス・クエリを含まないこと
+- `app.s3.endpoint` / `app.s3.public-base-url` が設定されている場合、`https://` であること（平文通信の禁止）
+
+`JWT_SECRET` の 256bit 長チェックは `helper/JwtTokenProvider` の `@PostConstruct` で全プロファイル共通に行う。
+`prod` プロファイルでは OpenAPI ドキュメント（`/scalar`・`/v3/api-docs`）用の `SecurityFilterChain` を
+登録しないため、デフォルトの `denyAll` チェーンにより拒否される。
+
 ### 撮影場所（位置情報）の公開制御
 
 写真ごとに `photo_mst.is_location_public`（位置情報公開フラグ）を持つ。写真詳細 API
@@ -118,8 +197,14 @@ APM に記録されやすく（`Authorization` と違い）マスク対象から
   `Origin` の自サイト一致検証（CSRF 多層防御。バックエンドの SameSite Cookie と併用）
 - パストラバーサル（`.` / `..` / 空セグメント）の拒否、リクエストボディの上限（6MB）、
   バックエンドへの中継タイムアウト（30 秒）、リダイレクト追従の無効化（`redirect: "manual"`）
-- クライアント由来の転送系ヘッダー（`X-Forwarded-*` 等）の除去、`Location` の正規化
-  （バックエンド絶対 URL は相対化、外部 URL・プロトコル相対は削除）
+- クライアント由来の転送系ヘッダー（`X-Forwarded-Host` / `X-Forwarded-Proto` / `Forwarded` /
+  `X-Real-IP`）の除去。バックエンドのレート制限が使う `X-Forwarded-For` だけは、前段プロキシ
+  （ALB / CloudFront）が付与した値の左端＝実クライアント IP に載せ直してから中継する
+- `Location` の正規化（バックエンド絶対 URL は相対化、外部 URL・プロトコル相対は削除）
+- バックエンドへ同時に中継するリクエスト数の上限（`PROXY_MAX_CONCURRENCY`、既定 100）。
+  超過分は待たせず `503`＋`Retry-After` で突き放す（ロードシェディング。最大 6MB を
+  バッファしうるアップロードの同時多発で Node プロセスが枯渇するのを防ぐ。前段の
+  WAF・ロードバランサのレート制限／同時接続数制限と併せた多層防御）
 
 > **注意**: `NEXT_PUBLIC_API_BASE_URL` を設定して別オリジンのバックエンドを直接叩く構成にした場合、
 > 上記プロキシの CSRF 検証はバイパスされる。その構成ではバックエンド側の CSRF 対策に完全に依存する。
@@ -143,12 +228,17 @@ nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ�
 ### 画像ストレージと署名付きURL
 
 写真の実体は S3（ローカル/E2E は docker-compose の MinIO）に保存し、DB の `photo_mst.image_file_path`
-にはオブジェクトキー（`{accountId}/{ファイル名}`）のみを保持する。写真一覧・詳細 API は、
-Service 層（`PhotoServiceImpl`）が `FileRepository.getPresignedUrl` で**有効期限付きの署名付き URL**
-（pre-signed GET URL、既定 15 分。`app.s3.presign-expiry-seconds`）を発行してレスポンスに載せ、
-ブラウザがストレージから直接画像を取得する。アプリサーバーは画像バイト列を中継しない。
+には**サーバ生成の不透明オブジェクトキー**（`{accountId}/{写真番号}-{ランダム32桁}.{検証済み拡張子}`）のみを
+保持する。写真一覧・詳細 API は、Service 層（`PhotoServiceImpl`）が `FileRepository.getPresignedUrl` で
+**有効期限付きの署名付き URL**（pre-signed GET URL、既定 15 分。`app.s3.presign-expiry-seconds`）を
+発行してレスポンスに載せ、ブラウザがストレージから直接画像を取得する。アプリサーバーは画像バイト列を中継しない。
 
 - 署名付き URL はオブジェクト単位・GET のみ・短命。発行時点のキーに対してのみ有効で、バケットは非公開のまま。
+- **オブジェクトキーにクライアント送信のファイル名を一切含めない**（パストラバーサル・特殊文字混入・
+  キー衝突・他ユーザーのキー推測を防ぐ）。表示・重複判定用の元ファイル名は `photo_mst.image_file_name`
+  に別途保持する。画像は登録後に不変のため、写真の編集では `image_file_path` / `image_file_name` を更新しない。
+- PUT 時に `Content-Type` は検証済み拡張子から確定した値を設定し（クライアント申告値は使わない）、
+  `Content-Disposition: inline` を明示する。
 - 削除時は、クライアント送信の `imageFilePath` を信用せず、写真番号で DB から実キーを引いて削除対象を決める
   （パス汚染・他オブジェクトの巻き込み削除の防止）。
 - フロントの `sanitizeImageUrl`（`src/lib/url.ts`）と CSP `img-src` は、本番では `https:` かつ

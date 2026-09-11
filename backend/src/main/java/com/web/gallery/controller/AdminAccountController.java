@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -29,13 +30,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** 管理者用アカウント管理に関するAPI通信を扱うRestControllerクラス */
+/** 管理者用アカウント管理に関するAPI通信を扱うControllerクラス */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "管理者アカウント管理", description = "管理者用アカウント管理に関するAPI")
 @SecurityRequirement(name = "Bearer")
-public class AdminAccountRestController {
+public class AdminAccountController {
   private final AccountService accountService;
 
   /**
@@ -53,7 +54,8 @@ public class AdminAccountRestController {
   @RequireAdminAuthority
   @GetMapping(ApiRoutes.API_ADMIN_ACCOUNTS)
   public ResponseEntity<AdminAccountListGetResponse> getAdminAccountList(
-      @ModelAttribute @Validated AccountListRequest accountListRequest, BindingResult result)
+      @ParameterObject @ModelAttribute @Validated AccountListRequest accountListRequest,
+      BindingResult result)
       throws GalleryException {
 
     if (result.hasErrors()) {

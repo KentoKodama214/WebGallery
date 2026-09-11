@@ -41,6 +41,19 @@ app:
     secret: test-secret-must-be-at-least-256-bits-long-for-hs256-algorithm
     # テストでは盗用検知の猶予期間を無効化し、ローテーション済みトークンの再利用を即座に盗用とみなす
     refreshTokenReuseGraceSeconds: 0
+  rate-limit:
+    # レート制限のカウンタはプロセスローカルで統合テスト間に状態が持ち越されるため無効化する。
+    # RateLimiter / RateLimitFilter 単体の挙動は各 *Test で検証する
+    enabled: false
+    auth:
+      capacity: 10
+      window-seconds: 60
+    register:
+      capacity: 5
+      window-seconds: 3600
+    general:
+      capacity: 240
+      window-seconds: 60
   auth:
     # テストではアカウント状態の変化を即時反映させるためPrincipalキャッシュを無効化する
     principal-cache-ttl-millis: 0

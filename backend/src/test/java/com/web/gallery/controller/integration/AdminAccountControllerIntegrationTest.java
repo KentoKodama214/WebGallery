@@ -38,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
-public class AdminAccountRestControllerIntegrationTest {
+public class AdminAccountControllerIntegrationTest {
   @Autowired private MockMvc mockMvc;
 
   @Autowired private JdbcTemplate jdbcTemplate;
@@ -75,7 +75,7 @@ public class AdminAccountRestControllerIntegrationTest {
   @Order(1)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/AdminAccountRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/AdminAccountControllerIntegrationTest.sql")
   class getAdminAccountList {
     @Test
     @Order(1)
@@ -130,7 +130,7 @@ public class AdminAccountRestControllerIntegrationTest {
   @Order(2)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/AdminAccountRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/AdminAccountControllerIntegrationTest.sql")
   class unlockAccountTest {
     @Test
     @Order(1)
@@ -197,7 +197,7 @@ public class AdminAccountRestControllerIntegrationTest {
   @Order(3)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/AdminAccountRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/AdminAccountControllerIntegrationTest.sql")
   class lockAccountTest {
     @Test
     @Order(1)

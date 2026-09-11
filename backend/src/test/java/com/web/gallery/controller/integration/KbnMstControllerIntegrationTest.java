@@ -25,14 +25,14 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
-public class KbnMstRestControllerIntegrationTest {
+public class KbnMstControllerIntegrationTest {
   @Autowired private MockMvc mockMvc;
 
   @Nested
   @Order(1)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/KbnMstRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/KbnMstControllerIntegrationTest.sql")
   class getPrefectures {
     @Test
     @Order(1)

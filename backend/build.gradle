@@ -56,32 +56,37 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-aspectj:4.1.1'
-	implementation 'org.springframework.boot:spring-boot-starter-validation:4.1.1'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc:4.1.1'
+	// Spring Boot / Spring Security / Tomcat / JUnit / Mockito / PostgreSQL ドライバのバージョンは
+	// org.springframework.boot プラグイン（4.1.1）＋ io.spring.dependency-management が提供する
+	// BOM に一元管理させ、ここでは明示しない（バージョンの二重管理・不整合を防ぐ）。
+	// BOM 管理外のサードパーティ依存（jjwt / modelmapper / springdoc / mybatis-spring-boot-starter /
+	// archunit / lombok）のみバージョンを明示する。
+	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.1.0'
-	implementation 'org.springframework.boot:spring-boot-starter-security:4.1.1'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.modelmapper:modelmapper:3.2.6'
 	implementation 'software.amazon.awssdk:s3'
 	implementation 'software.amazon.awssdk:url-connection-client'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.1.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.1.1'
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 	compileOnly 'org.projectlombok:lombok:1.18.48'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools:4.1.1'
-	runtimeOnly 'org.postgresql:postgresql:42.7.13'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok:1.18.48'
-	providedRuntime 'org.apache.tomcat.embed:tomcat-embed-core:11.0.25'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test:4.1.1'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test:4.1.1'
-	testImplementation 'org.springframework.boot:spring-boot-jdbc-test:4.1.1'
-	testImplementation 'org.springframework.security:spring-security-test:7.1.1'
+	providedRuntime 'org.apache.tomcat.embed:tomcat-embed-core'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-jdbc-test'
+	testImplementation 'org.springframework.security:spring-security-test'
 	testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:4.1.0'
-	testImplementation 'org.junit.jupiter:junit-jupiter:6.1.3'
-	testImplementation 'org.mockito:mockito-core:5.23.0'
-	testImplementation 'org.mockito:mockito-junit-jupiter:5.23.0'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.1.3'
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testImplementation 'org.mockito:mockito-core'
+	testImplementation 'org.mockito:mockito-junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.springframework.modulith:spring-modulith-docs'
 	testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.0'
 }

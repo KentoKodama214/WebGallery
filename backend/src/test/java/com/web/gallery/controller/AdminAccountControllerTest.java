@@ -39,8 +39,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-public class AdminAccountRestControllerTest {
-  @InjectMocks private AdminAccountRestController adminAccountRestController;
+public class AdminAccountControllerTest {
+  @InjectMocks private AdminAccountController adminAccountController;
 
   @Mock private AccountService accountService;
 
@@ -53,9 +53,9 @@ public class AdminAccountRestControllerTest {
     JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter(jsonMapper);
 
     mockMvc =
-        MockMvcBuilders.standaloneSetup(adminAccountRestController)
+        MockMvcBuilders.standaloneSetup(adminAccountController)
             .setMessageConverters(converter)
-            .setControllerAdvice(new CommonRestControllerAdvice())
+            .setControllerAdvice(new CommonControllerAdvice())
             .build();
   }
 

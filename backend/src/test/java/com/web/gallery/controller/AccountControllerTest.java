@@ -50,8 +50,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-public class AccountRestControllerTest {
-  @InjectMocks private AccountRestController accountRestController;
+public class AccountControllerTest {
+  @InjectMocks private AccountController accountController;
 
   @Mock private AccountService accountService;
 
@@ -66,15 +66,15 @@ public class AccountRestControllerTest {
     JacksonJsonHttpMessageConverter converter = new JacksonJsonHttpMessageConverter(jsonMapper);
 
     mockMvc =
-        MockMvcBuilders.standaloneSetup(accountRestController)
+        MockMvcBuilders.standaloneSetup(accountController)
             .setMessageConverters(converter)
-            .setControllerAdvice(new CommonRestControllerAdvice())
+            .setControllerAdvice(new CommonControllerAdvice())
             .build();
   }
 
   private String readJsonFile(String fileName) throws Exception {
     return new String(
-        new ClassPathResource("json/controller/AccountRestControllerTest/" + fileName)
+        new ClassPathResource("json/controller/AccountControllerTest/" + fileName)
             .getInputStream()
             .readAllBytes(),
         StandardCharsets.UTF_8);

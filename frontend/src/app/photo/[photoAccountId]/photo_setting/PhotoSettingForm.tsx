@@ -154,6 +154,9 @@ export function PhotoSettingForm({
 
   /**
    * 画像選択
+   *
+   * 画像ファイルは登録後に差し替えできない（バックエンドが更新時はDB上の既存パスを維持し、
+   * アップロードされたファイルを無視する仕様のため）。編集モードでは呼び出されない
    */
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -271,7 +274,9 @@ export function PhotoSettingForm({
       if (isEditMode && savedPhotoNo) {
         formData.append("photoNo", String(savedPhotoNo));
       }
-      if (imageFile) {
+      // 画像ファイルは新規登録時のみ送信する（編集モードではUI上選択不可のため imageFile は
+      // 常にnullのはずだが、バックエンド仕様との整合を明示するため念のためガードする）
+      if (!isEditMode && imageFile) {
         formData.append("imageFile", imageFile);
       }
       if (existingImageFilePath) {
@@ -409,18 +414,28 @@ export function PhotoSettingForm({
             <label className="block text-sm text-gray-400 mb-1">
               画像ファイル{!isEditMode && " *"}
             </label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-              data-testid="image-input"
-            />
+            {/* 画像ファイルは登録後は差し替え不可（バックエンド仕様）。編集モードでは
+                選択操作自体をUI上から無くし、既存画像のプレビュー表示のみを行う */}
+            {!isEditMode && (
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+                data-testid="image-input"
+              />
+            )}
             {previewSrc ? (
               <div
-                className="mt-2 flex flex-col items-center cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
+                className={
+                  isEditMode
+                    ? "mt-2 flex flex-col items-center"
+                    : "mt-2 flex flex-col items-center cursor-pointer"
+                }
+                onClick={
+                  isEditMode ? undefined : () => fileInputRef.current?.click()
+                }
               >
                 <img
                   src={previewSrc}
@@ -431,6 +446,11 @@ export function PhotoSettingForm({
                 />
                 {imageFile && (
                   <p className="text-sm text-gray-400 mt-1">{imageFile.name}</p>
+                )}
+                {isEditMode && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    画像ファイルは登録後に変更できません
+                  </p>
                 )}
               </div>
             ) : (

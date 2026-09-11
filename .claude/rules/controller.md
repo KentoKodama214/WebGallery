@@ -7,7 +7,7 @@ paths:
 
 ## 命名規則
 
-- クラス名サフィックス: `Controller` または `RestController` または `RestControllerAdvice`
+- クラス名サフィックス: `Controller` または `ControllerAdvice`
 
 ## APIルートの一元管理
 

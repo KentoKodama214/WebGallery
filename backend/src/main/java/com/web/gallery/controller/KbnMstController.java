@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 区分マスタに関するAPI通信を扱うRestControllerクラス
+ * 区分マスタに関するAPI通信を扱うControllerクラス
  *
  * @author Kento Kodama
  * @version 1.0.0
@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "都道府県", description = "都道府県マスタに関するAPI")
-public class KbnMstRestController {
+public class KbnMstController {
   private final KbnMstService kbnMstService;
   private final KbnHelper kbnHelper;
 

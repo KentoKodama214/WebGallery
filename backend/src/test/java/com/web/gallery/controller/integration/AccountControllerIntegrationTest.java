@@ -45,7 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
-public class AccountRestControllerIntegrationTest {
+public class AccountControllerIntegrationTest {
   /** account_no=1（aaaaaaaa）のフィクスチャのパスワード平文と、そのBCryptハッシュ */
   private static final String ACCOUNT1_PASSWORD = "password01";
 
@@ -61,7 +61,7 @@ public class AccountRestControllerIntegrationTest {
   private String readJsonFile(String fileName) throws Exception {
     return new String(
         new ClassPathResource(
-                "json/controller/integration/AccountRestControllerIntegrationTest/" + fileName)
+                "json/controller/integration/AccountControllerIntegrationTest/" + fileName)
             .getInputStream()
             .readAllBytes(),
         StandardCharsets.UTF_8);
@@ -71,7 +71,7 @@ public class AccountRestControllerIntegrationTest {
   @Order(1)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/AccountRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/AccountControllerIntegrationTest.sql")
   class getAccountList {
     @Test
     @Order(1)
@@ -109,7 +109,7 @@ public class AccountRestControllerIntegrationTest {
   @Order(2)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/AccountRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/AccountControllerIntegrationTest.sql")
   class getAccount {
     @Test
     @Order(1)
@@ -255,7 +255,7 @@ public class AccountRestControllerIntegrationTest {
   @Order(3)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/AccountRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/AccountControllerIntegrationTest.sql")
   @Sql("/sql/common/PrefectureKbnMst.sql")
   class register {
     private List<Account> getAccountList(String accountId) {
@@ -394,7 +394,7 @@ public class AccountRestControllerIntegrationTest {
   @Order(4)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/AccountRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/AccountControllerIntegrationTest.sql")
   class update {
     private List<Account> getAccountList(String accountId) {
       return jdbcTemplate.query(
@@ -845,7 +845,7 @@ public class AccountRestControllerIntegrationTest {
   @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/AccountRestControllerDeleteAccountIntegrationTest.sql")
+  @Sql("/sql/controller/AccountControllerDeleteAccountIntegrationTest.sql")
   class deleteAccount {
     @Test
     @Order(1)

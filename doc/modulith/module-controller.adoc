@@ -5,15 +5,15 @@
 |Spring components
 |_Controllers_
 
-* `c.w.g.c.AccountRestController`
-* `c.w.g.c.AuthRestController`
-* `c.w.g.c.KbnMstRestController`
+* `c.w.g.c.AccountController`
+* `c.w.g.c.AuthController`
+* `c.w.g.c.KbnMstController`
 * `c.w.g.c.PhotoFavoriteController`
-* `c.w.g.c.PhotoRestController`
+* `c.w.g.c.PhotoController`
 
 _Others_
 
-* `c.w.g.c.CommonRestControllerAdvice`
+* `c.w.g.c.CommonControllerAdvice`
 |Bean references
 |* `c.w.g.s.impl.AccountServiceImpl` (in Service)
 * `c.w.g.h.SessionHelper` (in Helper)

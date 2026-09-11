@@ -5,12 +5,33 @@ spring:
     multipart:
       max-file-size: 6MB
       max-request-size: 6MB
+  mvc:
+    # CommonControllerAdviceで処理済みの例外を、フレームワークが重ねてスタックトレース付きで
+    # WARNログ出力するのを抑止する（ログ集約基盤へ内部情報を残さない）
+    log-resolved-exception: false
 
 server:
+  # X-Forwarded-* を信頼して発信元IP・プロトコルを復元する処理はTomcatのRemoteIpValveに委ねる
+  forward-headers-strategy: native
   tomcat:
     remoteip:
       remote-ip-header: "x-forwarded-for"
       protocol-header: "x-forwarded-proto"
+      # X-Forwarded-For を信頼する「直前の送信元IP」の範囲。この範囲外から届いた X-Forwarded-For は
+      # 無視され、TCP接続の実IPが使われる（クライアントによるIP詐称の防止）。
+      # 既定値はループバック + RFC1918（Tomcat既定と同等）。本番では前段のALB/リバースプロキシが
+      # 存在するサブネットのCIDRだけに狭めること（環境変数 TRUSTED_PROXIES で上書き）。
+      internal-proxies: '${TRUSTED_PROXIES:127\.\d{1,3}\.\d{1,3}\.\d{1,3}|::1|0:0:0:0:0:0:0:1|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.1[6-9]\.\d{1,3}\.\d{1,3}|172\.2\d\.\d{1,3}\.\d{1,3}|172\.3[01]\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}}'
+  # エラーレスポンスから内部情報（例外メッセージ・スタックトレース・バインドエラー詳細・例外クラス名）を
+  # 一切出さない。フィルタ内で発生しCommonControllerAdviceで捕捉されない例外（認証フィルタ・
+  # レートリミット等）が /error ディスパッチに落ちても内部構造を推測されないようにするための多層防御。
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    include-exception: false
+    whitelabel:
+      enabled: false
 
 springdoc:
   api-docs:
@@ -45,6 +66,23 @@ app:
     refreshTokenExpirationDays: 7
     # ローテーション済みトークンの再送をこの秒数以内なら正常系リトライとみなす（全セッション失効しない）
     refreshTokenReuseGraceSeconds: 30
+  rate-limit:
+    # 送信元IPごとのエンドポイント別レート制限（前段WAF/LBのレート制限に加えた多層防御）。
+    # プロセスローカルのカウンタのため、複数インスタンス構成では実効しきい値がインスタンス数倍になる。
+    # IP単位のため共有NAT配下では誤検知しうる。しきい値は環境に応じて調整すること。
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    # ログイン（総当たり対策で低め。アカウント単位のロックと併用）
+    auth:
+      capacity: ${RATE_LIMIT_AUTH_CAPACITY:30}
+      window-seconds: ${RATE_LIMIT_AUTH_WINDOW_SECONDS:60}
+    # アカウント登録（スパム対策で低め）
+    register:
+      capacity: ${RATE_LIMIT_REGISTER_CAPACITY:10}
+      window-seconds: ${RATE_LIMIT_REGISTER_WINDOW_SECONDS:3600}
+    # 上記以外の /api/** リクエスト（トークンリフレッシュ・写真アップロード等を含む）
+    general:
+      capacity: ${RATE_LIMIT_GENERAL_CAPACITY:300}
+      window-seconds: ${RATE_LIMIT_GENERAL_WINDOW_SECONDS:60}
 
 auth:
   login:

@@ -256,7 +256,9 @@ public class PhotoMstRepositoryImplTest {
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)),
           targetPhotoMst.getPhotoAt());
       assertEquals(0L, targetPhotoMst.getLocationNo());
-      assertEquals(imageFilePath, targetPhotoMst.getImageFilePath());
+      // 画像は登録後に不変のため、更新対象に image_file_path / image_file_name は含めない
+      assertNull(targetPhotoMst.getImageFilePath());
+      assertNull(targetPhotoMst.getImageFileName());
       assertEquals("", targetPhotoMst.getPhotoJapaneseTitle());
       assertEquals("", targetPhotoMst.getPhotoEnglishTitle());
       assertEquals("", targetPhotoMst.getCaption());
@@ -328,7 +330,9 @@ public class PhotoMstRepositoryImplTest {
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           targetPhotoMst.getPhotoAt());
       assertEquals(1L, targetPhotoMst.getLocationNo());
-      assertEquals(imageFilePath, targetPhotoMst.getImageFilePath());
+      // 画像は登録後に不変のため、更新対象に image_file_path / image_file_name は含めない
+      assertNull(targetPhotoMst.getImageFilePath());
+      assertNull(targetPhotoMst.getImageFileName());
       assertEquals("タイトル1", targetPhotoMst.getPhotoJapaneseTitle());
       assertEquals("title1", targetPhotoMst.getPhotoEnglishTitle());
       assertEquals("キャプション1", targetPhotoMst.getCaption());
@@ -388,7 +392,9 @@ public class PhotoMstRepositoryImplTest {
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)),
           targetPhotoMst.getPhotoAt());
       assertEquals(0L, targetPhotoMst.getLocationNo());
-      assertEquals(imageFilePath, targetPhotoMst.getImageFilePath());
+      // 画像は登録後に不変のため、更新対象に image_file_path / image_file_name は含めない
+      assertNull(targetPhotoMst.getImageFilePath());
+      assertNull(targetPhotoMst.getImageFileName());
       assertEquals("", targetPhotoMst.getPhotoJapaneseTitle());
       assertEquals("", targetPhotoMst.getPhotoEnglishTitle());
       assertEquals("", targetPhotoMst.getCaption());

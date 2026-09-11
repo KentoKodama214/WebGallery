@@ -29,14 +29,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-public class CommonRestControllerAdviceTest {
-  @InjectMocks private CommonRestControllerAdvice commonRestControllerAdvice;
+public class CommonControllerAdviceTest {
+  @InjectMocks private CommonControllerAdvice commonControllerAdvice;
 
   private MockMvc mockMvc;
 
   @RestController
-  static class TestRestController extends PhotoFavoriteController {
-    TestRestController() {
+  static class TestController extends PhotoFavoriteController {
+    TestController() {
       super(null, null);
     }
 
@@ -79,8 +79,8 @@ public class CommonRestControllerAdviceTest {
   @BeforeEach
   void setUp() {
     mockMvc =
-        MockMvcBuilders.standaloneSetup(new TestRestController())
-            .setControllerAdvice(commonRestControllerAdvice)
+        MockMvcBuilders.standaloneSetup(new TestController())
+            .setControllerAdvice(commonControllerAdvice)
             .build();
   }
 

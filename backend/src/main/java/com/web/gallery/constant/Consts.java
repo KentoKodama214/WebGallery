@@ -37,6 +37,9 @@ public final class Consts {
   // ZoneOffset
   public static final ZoneOffset JST = ZoneOffset.ofHours(9);
 
+  /** タイムゾーンID（日本標準時）。{@code @Scheduled} の zone 属性等で使用する */
+  public static final String ZONE_ID_ASIA_TOKYO = "Asia/Tokyo";
+
   // LocalDate
   /** 1900-01-01 */
   public static final LocalDate MIN_LOCAL_DATE = LocalDate.of(1900, 1, 1);

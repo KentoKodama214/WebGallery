@@ -59,8 +59,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-public class PhotoRestControllerTest {
-  @InjectMocks private PhotoRestController photoRestController;
+public class PhotoControllerTest {
+  @InjectMocks private PhotoController photoController;
 
   @Mock private PhotoServiceImpl photoServiceImpl;
 
@@ -73,14 +73,14 @@ public class PhotoRestControllerTest {
   @BeforeEach
   void setUp() {
     mockMvc =
-        MockMvcBuilders.standaloneSetup(photoRestController)
-            .setControllerAdvice(new CommonRestControllerAdvice())
+        MockMvcBuilders.standaloneSetup(photoController)
+            .setControllerAdvice(new CommonControllerAdvice())
             .build();
   }
 
   private String readJsonFile(String fileName) throws Exception {
     return new String(
-        new ClassPathResource("json/controller/PhotoRestControllerTest/" + fileName)
+        new ClassPathResource("json/controller/PhotoControllerTest/" + fileName)
             .getInputStream()
             .readAllBytes(),
         StandardCharsets.UTF_8);

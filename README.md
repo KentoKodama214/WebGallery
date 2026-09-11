@@ -54,14 +54,14 @@
 |----------------|------|
 | 言語 | Java 21 |
 | ビルドツール | Gradle 8.14 |
-| フレームワーク | Spring Boot 4.0.6 |
-| セキュリティ | Spring Security 7.0.5（BCrypt + JWT） |
+| フレームワーク | Spring Boot 4.1.1 |
+| セキュリティ | Spring Security 7.1.1（BCrypt + JWT） |
 | ORM | MyBatis 4.0.1 |
-| データベース | PostgreSQL（ドライバ 42.7.11） |
+| データベース | PostgreSQL（ドライバ 42.7.13） |
 | コード生成 | Lombok 1.18.42 |
 | オブジェクトマッピング | ModelMapper 3.2.6 |
 | JWT | jjwt 0.13.0 |
-| テスト | JUnit Jupiter 6.0.3 / Mockito 5.20.0 |
+| テスト | JUnit Jupiter 6.0.3 / Mockito 5.23.0 |
 | パッケージング | WAR（Tomcatデプロイ） |
 
 ### フロントエンド
@@ -149,6 +149,12 @@ just db-up
 | `APP_S3_PRESIGN_EXPIRY_SECONDS` | 署名付き URL の有効期限（秒） | `900` |
 | `MINI_USER_UPPER_LIMIT` / `NORMAL_USER_UPPER_LIMIT` | 権限別の写真登録上限 | `10` / `1000` |
 | `FRONTEND_ORIGIN` | CORS 許可オリジン | `http://localhost:3000` |
+| `RATE_LIMIT_ENABLED` | 送信元IP別レート制限の有効化（`test`・E2E は無効） | `true` |
+| `RATE_LIMIT_AUTH_CAPACITY` / `RATE_LIMIT_AUTH_WINDOW_SECONDS` | ログインのしきい値（回数 / ウィンドウ秒） | `30` / `60` |
+| `RATE_LIMIT_REGISTER_CAPACITY` / `RATE_LIMIT_REGISTER_WINDOW_SECONDS` | アカウント登録のしきい値 | `10` / `3600` |
+| `RATE_LIMIT_GENERAL_CAPACITY` / `RATE_LIMIT_GENERAL_WINDOW_SECONDS` | その他 `/api/**` のしきい値 | `300` / `60` |
+| `FRONTEND_ORIGIN` | CORS 許可オリジン（1 値のみ。`prod` では `https://` 必須） | `http://localhost:3000` |
+| `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現。**本番では ALB のサブネット CIDR に狭める** | ループバック＋RFC1918（Tomcat 既定と同等） |
 
 > **IntelliJ IDEA で起動する場合**
 > Dock やランチャーから起動した IntelliJ はシェルの `export` を引き継がないため、`JWT_SECRET` を渡す必要があります。共有の実行構成 `backend/.run/WebGalleryApplication_local.run.xml`（実行構成名「WebGalleryApplication (local)」、プロファイル `local` ＋ ローカル用 `JWT_SECRET` を設定済み）を選択して実行してください。独自の実行構成を使う場合は「Environment variables」に `JWT_SECRET` を追加してください。
@@ -162,11 +168,12 @@ just db-up
 | `BACKEND_URL` | APIプロキシ（`/api/*`）の転送先バックエンドオリジン | `http://localhost:8080` |
 | `NEXT_PUBLIC_API_BASE_URL` | 別オリジンのバックエンドを直接叩く場合のベースURL | 同一オリジンの `/api` プロキシを使用 |
 | `NEXT_PUBLIC_IMAGE_BASE_URL` | 写真の配信元オリジン（例: `https://cdn.example.com/`）。CSP の `img-src` と `sanitizeImageUrl` の許可オリジンに反映される | **外部ホストからの画像読み込みを一切許可しない**（`img-src 'self' data: blob:`）。本番/検証環境で S3・CloudFront から画像を配信する場合は必ず設定すること。**開発環境（`next dev`）では `http://localhost:9000`（MinIO）が自動許可されるため設定不要** |
+| `PROXY_MAX_CONCURRENCY` | `/api/*` プロキシがバックエンドへ同時中継するリクエスト数の上限。超過分は `503`＋`Retry-After` で即時応答（ロードシェディング） | `100` |
 
 ##### 構成上の注意
 
 - **アップロード写真の配信経路**: 画像の実体は S3（ローカルは docker-compose の MinIO）に保存し、DB には
-  オブジェクトキー（`{accountId}/{ファイル名}`）のみを保持する。写真一覧・詳細 API はバックエンドが
+  サーバ生成の不透明オブジェクトキー（`{accountId}/{写真番号}-{ランダム}.{拡張子}`）のみを保持する。写真一覧・詳細 API はバックエンドが
   有効期限付きの**署名付き URL（pre-signed GET URL）**を発行して返し、ブラウザがストレージから直接取得する。
   フロントの API プロキシ（`src/app/api/[...path]/route.ts`）が中継するのは `/api/*` のみ。
   - 開発環境: MinIO が `http://localhost:9000/...` の署名付き URL を発行する。`sanitizeImageUrl` と CSP `img-src`
@@ -174,8 +181,9 @@ just db-up
   - 本番/検証環境: `APP_S3_*`（バックエンド）で実 S3 を指し、フロントの `NEXT_PUBLIC_IMAGE_BASE_URL` に
     署名付き URL のオリジン（S3 または CloudFront）を設定する。
 - **アップロードのボディサイズ / 同時接続**: `/api/*` プロキシはリクエストボディを最大 6MB までメモリにバッファしてから
-  バックエンドへ転送する（1 リクエストあたりは 6MB で頭打ちだが同時実行数の上限は持たない）。本番では前段の
-  リバースプロキシで `client_max_body_size`（6MB 程度）と同時接続数の制限をかけること。
+  バックエンドへ転送する。同時にバックエンドへ中継するリクエスト数は `PROXY_MAX_CONCURRENCY`（既定 100）で頭打ちにし、
+  超過分は `503` で突き放す。あわせて本番では前段のリバースプロキシ／ロードバランサで `client_max_body_size`
+  （6MB 程度）と同時接続数・レート制限をかけること。
 - **CSRF 対策のスコープ**: `/api/*` プロキシの Origin / `Sec-Fetch-Site` 検証は同一オリジンプロキシ経由でのみ機能する。
   `NEXT_PUBLIC_API_BASE_URL` で別オリジンのバックエンドを直接叩く構成にした場合、この検証はバイパスされるため、
   バックエンド側の CSRF 対策（SameSite Cookie 等）に完全に依存する。

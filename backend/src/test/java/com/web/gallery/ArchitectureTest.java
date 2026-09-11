@@ -69,7 +69,7 @@ class ArchitectureTest {
           .resideInAPackage(SERVICE_PKG + "..")
           .as("Repositoryはserviceパッケージに依存してはいけない（逆方向の依存）");
 
-  // CommonRestControllerAdviceは@RestControllerAdvice(assignableTypes = {...})で
+  // CommonControllerAdviceは@RestControllerAdvice(assignableTypes = {...})で
   // 横断的関心事として全Controllerクラスを列挙しており、
   // 本ルールが禁止したい「Controllerが他Controllerの機能を呼び出す」設計とは性質が異なるため対象外とする
   @ArchTest

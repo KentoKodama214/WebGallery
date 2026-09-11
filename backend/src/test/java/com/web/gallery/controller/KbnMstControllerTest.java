@@ -39,8 +39,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-public class KbnMstRestControllerTest {
-  @InjectMocks private KbnMstRestController kbnMstRestController;
+public class KbnMstControllerTest {
+  @InjectMocks private KbnMstController kbnMstController;
 
   @Mock private KbnMstService kbnMstService;
 
@@ -50,7 +50,7 @@ public class KbnMstRestControllerTest {
 
   @BeforeEach
   void setUp() {
-    mockMvc = MockMvcBuilders.standaloneSetup(kbnMstRestController).build();
+    mockMvc = MockMvcBuilders.standaloneSetup(kbnMstController).build();
   }
 
   @Nested

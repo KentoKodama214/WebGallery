@@ -8,6 +8,7 @@ import java.io.UncheckedIOException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -27,8 +28,8 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 /**
  * ファイルをS3（互換）ストレージへ永続化するRepositoryの実装クラス
  *
- * <p>画像の実体はS3に保存し、DBにはオブジェクトキー（{@code {accountId}/{ファイル名}}）のみを保持する。 閲覧時は {@link #getPresignedUrl}
- * で有効期限付きの署名付きURLを発行し、ブラウザがS3から直接取得する。
+ * <p>画像の実体はS3に保存し、DBにはサーバ生成の不透明オブジェクトキー（{@code {accountId}/{写真番号}-{ランダム}.{拡張子}}）のみを保持する。 閲覧時は
+ * {@link #getPresignedUrl} で有効期限付きの署名付きURLを発行し、ブラウザがS3から直接取得する。
  */
 @Slf4j
 @Repository
@@ -71,12 +72,41 @@ public class FileRepositoryImpl implements FileRepository {
           PutObjectRequest.builder()
               .bucket(bucket)
               .key(key)
-              .contentType(multipartFile.getContentType())
+              // Content-Type はクライアント申告値ではなく、検証済み拡張子から確定した値を用いる。
+              // Content-Disposition: inline を明示し、配信時にダウンロード誘導・型の曖昧さを残さない
+              .contentType(resolveContentType(key, multipartFile))
+              .contentDisposition("inline")
               .build(),
           RequestBody.fromInputStream(multipartFile.getInputStream(), multipartFile.getSize()));
     } catch (IOException e) {
       throw new UncheckedIOException("画像ファイルの読み込みに失敗しました。(key: " + key + ")", e);
     }
+  }
+
+  /**
+   * オブジェクトキーの拡張子から Content-Type を決定する
+   *
+   * <p>キーの拡張子はアップロード時に許可拡張子として検証済み。想定外の拡張子の場合のみ、フォールバックとして MultipartFile の申告値を用いる。
+   *
+   * @param key オブジェクトキー
+   * @param multipartFile アップロードされたファイル
+   * @return Content-Type
+   */
+  private static String resolveContentType(String key, MultipartFile multipartFile) {
+    String lowerKey = key.toLowerCase(Locale.ROOT);
+    if (lowerKey.endsWith(".jpg") || lowerKey.endsWith(".jpeg")) {
+      return "image/jpeg";
+    }
+    if (lowerKey.endsWith(".png")) {
+      return "image/png";
+    }
+    if (lowerKey.endsWith(".gif")) {
+      return "image/gif";
+    }
+    if (lowerKey.endsWith(".webp")) {
+      return "image/webp";
+    }
+    return multipartFile.getContentType();
   }
 
   @Override

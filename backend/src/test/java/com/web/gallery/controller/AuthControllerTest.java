@@ -35,8 +35,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-public class AuthRestControllerTest {
-  @InjectMocks private AuthRestController authRestController;
+public class AuthControllerTest {
+  @InjectMocks private AuthController authController;
 
   @Mock private AuthServiceImpl authServiceImpl;
 
@@ -46,7 +46,7 @@ public class AuthRestControllerTest {
 
   @BeforeEach
   void setUp() {
-    mockMvc = MockMvcBuilders.standaloneSetup(authRestController).build();
+    mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
   }
 
   @Nested

@@ -38,13 +38,13 @@ describe("APIプロキシ route", () => {
     expect((init.headers as Headers).get("cookie")).toBe("refreshToken=abc");
   });
 
-  it("クライアント由来の X-Forwarded-* / X-Real-IP を除去する", async () => {
+  it("クライアント由来の X-Forwarded-Host / X-Forwarded-Proto / Forwarded / X-Real-IP を除去する", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     const req = new NextRequest("http://localhost/api/v1/accounts", {
       headers: {
-        "x-forwarded-for": "1.2.3.4",
         "x-forwarded-host": "evil.example",
+        "x-forwarded-proto": "http",
         "x-real-ip": "1.2.3.4",
         forwarded: "for=1.2.3.4",
       },
@@ -52,10 +52,35 @@ describe("APIプロキシ route", () => {
     await GET(req, ctx(["v1", "accounts"]));
 
     const headers = fetchMock.mock.calls[0][1].headers as Headers;
-    expect(headers.get("x-forwarded-for")).toBeNull();
     expect(headers.get("x-forwarded-host")).toBeNull();
+    expect(headers.get("x-forwarded-proto")).toBeNull();
     expect(headers.get("x-real-ip")).toBeNull();
     expect(headers.get("forwarded")).toBeNull();
+  });
+
+  it("前段プロキシが付与した X-Forwarded-For の左端を実クライアント IP として載せ直す", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const req = new NextRequest("http://localhost/api/v1/accounts", {
+      headers: {
+        // 左端＝ALB が記録した実クライアント IP、以降＝中継プロキシ
+        "x-forwarded-for": "203.0.113.9, 10.0.1.5",
+      },
+    });
+    await GET(req, ctx(["v1", "accounts"]));
+
+    const headers = fetchMock.mock.calls[0][1].headers as Headers;
+    expect(headers.get("x-forwarded-for")).toBe("203.0.113.9");
+  });
+
+  it("X-Forwarded-For が無ければバックエンドへも付与しない", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const req = new NextRequest("http://localhost/api/v1/accounts");
+    await GET(req, ctx(["v1", "accounts"]));
+
+    const headers = fetchMock.mock.calls[0][1].headers as Headers;
+    expect(headers.get("x-forwarded-for")).toBeNull();
   });
 
   it("バックエンド未到達時は502を返す", async () => {
@@ -317,5 +342,36 @@ describe("APIプロキシ route", () => {
     const res = await GET(req, ctx(["v1", "redirect"]));
 
     expect(res.headers.get("location")).toBeNull();
+  });
+
+  it("同時中継数が上限に達している間は 503 を返し、バックエンドへ中継しない", async () => {
+    jest.resetModules();
+    process.env.PROXY_MAX_CONCURRENCY = "2";
+
+    let releaseBackend: () => void = () => {};
+    const pending = new Promise<Response>((resolve) => {
+      releaseBackend = () => resolve(new Response(null, { status: 204 }));
+    });
+    const gatedFetch = jest.fn().mockReturnValue(pending);
+    global.fetch = gatedFetch as unknown as typeof fetch;
+
+    const route = await import("../route");
+    const makeReq = () => new NextRequest("http://localhost/api/v1/accounts");
+
+    // 上限（2）まではバックエンドへ中継され、応答待ちで滞留する
+    const inflight1 = route.GET(makeReq(), ctx(["v1", "accounts"]));
+    const inflight2 = route.GET(makeReq(), ctx(["v1", "accounts"]));
+
+    // 3件目は上限超過で即座に 503（fetch は呼ばれない）
+    const shed = await route.GET(makeReq(), ctx(["v1", "accounts"]));
+    expect(shed.status).toBe(503);
+    expect(shed.headers.get("retry-after")).toBe("5");
+    expect(gatedFetch).toHaveBeenCalledTimes(2);
+
+    releaseBackend();
+    await Promise.all([inflight1, inflight2]);
+
+    delete process.env.PROXY_MAX_CONCURRENCY;
+    jest.resetModules();
   });
 });

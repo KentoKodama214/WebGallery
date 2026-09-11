@@ -60,7 +60,7 @@ import tools.jackson.databind.ObjectMapper;
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
-public class PhotoRestControllerIntegrationTest {
+public class PhotoControllerIntegrationTest {
   /** 新規登録時のバリデーション（Content-Type・マジックバイト）を通過させるための、実際のJPEGファイルの先頭バイト列 */
   private static final byte[] JPEG_BYTES = {
     (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x00, 0x10
@@ -69,6 +69,22 @@ public class PhotoRestControllerIntegrationTest {
   @Autowired private MockMvc mockMvc;
 
   @Autowired private JdbcTemplate jdbcTemplate;
+
+  /**
+   * サーバ生成の不透明オブジェクトキー（{@code {accountId}/{写真番号}-{ランダム32桁}.{拡張子}}）であることを検証する
+   *
+   * @param key 実際のキー
+   * @param accountId アカウントID
+   * @param photoNo 写真番号
+   * @param extension 拡張子（ドットなし）
+   */
+  private static void assertOpaqueObjectKey(
+      String key, String accountId, long photoNo, String extension) {
+    String expectedPattern = "^" + accountId + "/" + photoNo + "-[0-9a-f]{32}\\." + extension + "$";
+    assertTrue(
+        key.matches(expectedPattern),
+        "オブジェクトキーが不正です。expected pattern: " + expectedPattern + ", actual: " + key);
+  }
 
   /** S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない）。 署名付きURL発行は渡されたオブジェクトキーをそのまま返し、キーベースのアサーションを維持する。 */
   @MockitoBean private FileRepository fileRepository;
@@ -83,7 +99,7 @@ public class PhotoRestControllerIntegrationTest {
   private String readJsonFile(String fileName) throws Exception {
     return new String(
         new ClassPathResource(
-                "json/controller/integration/PhotoRestControllerIntegrationTest/" + fileName)
+                "json/controller/integration/PhotoControllerIntegrationTest/" + fileName)
             .getInputStream()
             .readAllBytes(),
         StandardCharsets.UTF_8);
@@ -93,7 +109,7 @@ public class PhotoRestControllerIntegrationTest {
   @Order(1)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/PhotoRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")
   class getPhotoList {
     @Test
     @Order(1)
@@ -253,7 +269,7 @@ public class PhotoRestControllerIntegrationTest {
   @Order(2)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/PhotoRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")
   class savePhoto {
     @Test
     @Order(1)
@@ -333,7 +349,12 @@ public class PhotoRestControllerIntegrationTest {
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
       assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
-      assertEquals("bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
+      assertOpaqueObjectKey(actualPhotoMst.getFirst().getImageFilePath(), "bbbbbbbb", 4L, "jpg");
+      assertEquals(
+          "DSC111.jpg",
+          jdbcTemplate.queryForObject(
+              "SELECT image_file_name FROM photo.photo_mst WHERE account_no=2 AND photo_no=4",
+              String.class));
       assertEquals("タイトル4", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
       assertEquals("", actualPhotoMst.getFirst().getPhotoEnglishTitle());
       assertEquals("", actualPhotoMst.getFirst().getCaption());
@@ -452,7 +473,12 @@ public class PhotoRestControllerIntegrationTest {
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
       assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
-      assertEquals("bbbbbbbb/DSC111.jpg", actualPhotoMst.getFirst().getImageFilePath());
+      assertOpaqueObjectKey(actualPhotoMst.getFirst().getImageFilePath(), "bbbbbbbb", 4L, "jpg");
+      assertEquals(
+          "DSC111.jpg",
+          jdbcTemplate.queryForObject(
+              "SELECT image_file_name FROM photo.photo_mst WHERE account_no=2 AND photo_no=4",
+              String.class));
       assertEquals("タイトル111", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
       assertEquals("title111", actualPhotoMst.getFirst().getPhotoEnglishTitle());
       assertEquals("caption111", actualPhotoMst.getFirst().getCaption());
@@ -902,7 +928,7 @@ public class PhotoRestControllerIntegrationTest {
   @Order(3)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/PhotoRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")
   class deletePhoto {
     @Test
     @Order(1)
@@ -1114,7 +1140,7 @@ public class PhotoRestControllerIntegrationTest {
   @Order(4)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  @Sql("/sql/controller/PhotoRestControllerIntegrationTest.sql")
+  @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")
   class getPhotoUpperLimit {
     @Test
     @Order(1)

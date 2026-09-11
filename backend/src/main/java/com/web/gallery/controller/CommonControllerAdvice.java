@@ -27,7 +27,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
- * システム共通のExceptionHandlerを扱うRestControllerAdviceクラス
+ * システム共通のExceptionHandlerを扱うControllerAdviceクラス
  *
  * @author Kento Kodama
  * @version 1.0.0
@@ -37,15 +37,15 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 @Slf4j
 @RestControllerAdvice(
     assignableTypes = {
-      AccountRestController.class,
-      AdminAccountRestController.class,
-      AuthRestController.class,
-      KbnMstRestController.class,
+      AccountController.class,
+      AdminAccountController.class,
+      AuthController.class,
+      KbnMstController.class,
       PhotoFavoriteController.class,
-      PhotoRestController.class
+      PhotoController.class
     })
 @Component
-public class CommonRestControllerAdvice {
+public class CommonControllerAdvice {
 
   /**
    * リクエストパラメータが不正のときに制御するExceptionHandler

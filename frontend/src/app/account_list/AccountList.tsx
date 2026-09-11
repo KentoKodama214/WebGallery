@@ -120,9 +120,6 @@ export function AccountList() {
           <thead>
             <tr style={{ backgroundColor: "#2196F3" }}>
               <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
-                ID
-              </th>
-              <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
                 アカウント名
               </th>
               <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
@@ -143,9 +140,6 @@ export function AccountList() {
                   (e.currentTarget.style.backgroundColor = "white")
                 }
               >
-                <td className="py-3 px-4 border border-gray-300">
-                  {account.accountId}
-                </td>
                 <td className="py-3 px-4 border border-gray-300">
                   {account.accountName}
                 </td>

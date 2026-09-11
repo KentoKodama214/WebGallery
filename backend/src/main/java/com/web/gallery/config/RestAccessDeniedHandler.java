@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
  * 認可エラー（403 Forbidden）発生時に、アプリケーション共通のJSONエラーレスポンスを返すハンドラクラス
  *
  * <p>Spring Securityの認可（{@code hasRole}等）で拒否された場合でも、 {@link
- * com.web.gallery.controller.CommonRestControllerAdvice}経由の場合と同一のレスポンス形式に揃える
+ * com.web.gallery.controller.CommonControllerAdvice}経由の場合と同一のレスポンス形式に揃える
  *
  * @author Kento Kodama
  * @version 1.0.0

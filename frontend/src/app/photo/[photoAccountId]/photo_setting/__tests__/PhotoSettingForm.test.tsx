@@ -97,6 +97,24 @@ describe("PhotoSettingForm", () => {
     expect(screen.getByTestId("image-preview")).toBeInTheDocument();
   });
 
+  it("編集モードでは画像ファイルの差し替えができないこと", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+
+    render(
+      <PhotoSettingForm photoAccountId="user1" accountNo={1} photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("image-preview")).toBeInTheDocument();
+    });
+
+    // バックエンドが更新時に画像ファイルを無視する仕様のため、選択UI自体が存在しないこと
+    expect(screen.queryByTestId("image-input")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("画像ファイルは登録後に変更できません")
+    ).toBeInTheDocument();
+  });
+
   it("新規モードで画像なしの場合にバリデーションエラーが表示されること", async () => {
     render(<PhotoSettingForm photoAccountId="user1" />);
 

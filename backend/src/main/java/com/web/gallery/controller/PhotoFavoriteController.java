@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 写真のお気に入りの登録・解除を扱うRestControllerクラス
+ * 写真のお気に入りの登録・解除を扱うControllerクラス
  *
  * @author Kento Kodama
  * @version 1.0.0

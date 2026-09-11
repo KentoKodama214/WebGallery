@@ -34,11 +34,12 @@ describe("AccountList", () => {
     render(<AccountList />);
 
     await waitFor(() => {
-      expect(screen.getByText("user1")).toBeInTheDocument();
       expect(screen.getByText("ユーザー1")).toBeInTheDocument();
-      expect(screen.getByText("user2")).toBeInTheDocument();
       expect(screen.getByText("ユーザー2")).toBeInTheDocument();
     });
+    // アカウントID（ログインID）は一覧に表示しない（他ユーザーの列挙防止）
+    expect(screen.queryByText("user1")).not.toBeInTheDocument();
+    expect(screen.queryByText("user2")).not.toBeInTheDocument();
 
     const links = screen.getAllByText("ギャラリーを見る");
     expect(links).toHaveLength(2);
@@ -58,7 +59,6 @@ describe("AccountList", () => {
     render(<AccountList />);
 
     await waitFor(() => {
-      expect(screen.getByText("ID")).toBeInTheDocument();
       expect(screen.getByText("アカウント名")).toBeInTheDocument();
       expect(screen.getByText("ギャラリー")).toBeInTheDocument();
     });
@@ -102,7 +102,7 @@ describe("AccountList", () => {
     render(<AccountList />);
 
     await waitFor(() => {
-      expect(screen.getByText("user1")).toBeInTheDocument();
+      expect(screen.getByText("ユーザー1")).toBeInTheDocument();
     });
 
     expect(screen.queryByText("＋もっと見る")).not.toBeInTheDocument();
@@ -128,10 +128,10 @@ describe("AccountList", () => {
     fireEvent.click(screen.getByText("＋もっと見る"));
 
     await waitFor(() => {
-      expect(screen.getByText("user2")).toBeInTheDocument();
+      expect(screen.getByText("ユーザー2")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("user1")).toBeInTheDocument();
+    expect(screen.getByText("ユーザー1")).toBeInTheDocument();
     expect(mockGetAccountList).toHaveBeenNthCalledWith(1, 1);
     expect(mockGetAccountList).toHaveBeenNthCalledWith(2, 2);
     expect(screen.queryByText("＋もっと見る")).not.toBeInTheDocument();

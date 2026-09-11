@@ -42,6 +42,7 @@ public final class MessageConst {
   public static final String ERR_IMAGE_FILE_SIZE_EXCEEDED = "画像ファイルのサイズが上限を超えています。";
   public static final String ERR_SYSTEM_ERROR = "システムエラーが発生しました。しばらくしてから再度お試しください。";
   public static final String ERR_UNAUTHENTICATED = "認証が必要です。ログインしてください。";
+  public static final String ERR_TOO_MANY_REQUESTS = "リクエストが多すぎます。しばらくしてから再度お試しください。";
 
   // Admin
   public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";

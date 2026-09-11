@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -47,7 +48,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 写真に関するAPI通信を扱うRestControllerクラス
+ * 写真に関するAPI通信を扱うControllerクラス
  *
  * @author Kento Kodama
  * @version 1.0.0
@@ -57,7 +58,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "写真", description = "写真管理に関するAPI")
-public class PhotoRestController {
+public class PhotoController {
 
   private final PhotoService photoService;
   private final SessionHelper sessionHelper;
@@ -79,7 +80,7 @@ public class PhotoRestController {
   @GetMapping(ApiRoutes.API_PHOTOS)
   public ResponseEntity<PhotoListGetResponse> getPhotoList(
       @PathVariable String photoAccountId,
-      @ModelAttribute @Validated PhotoListRequest photoListRequest,
+      @ParameterObject @ModelAttribute @Validated PhotoListRequest photoListRequest,
       BindingResult result)
       throws GalleryException {
 

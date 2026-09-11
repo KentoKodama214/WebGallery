@@ -46,7 +46,7 @@ public class PhotoFavoriteControllerTest {
   void setUp() {
     mockMvc =
         MockMvcBuilders.standaloneSetup(photoFavoriteController)
-            .setControllerAdvice(new CommonRestControllerAdvice())
+            .setControllerAdvice(new CommonControllerAdvice())
             .build();
   }
 
