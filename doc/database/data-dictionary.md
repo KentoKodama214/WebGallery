@@ -29,7 +29,7 @@
 | 21 | image_file_path | 画像ファイルパス | text | - | S3オブジェクトキー（サーバ生成の不透明値 `{accountId}/{写真番号}-{ランダム}.{拡張子}`）。閲覧時はこのキーから署名付きURLを発行する | photo_mst |
 | 22 | is_admin_locked | 管理者ロックフラグ | boolean | false | 管理者が強制ロックした場合にtrue。ログイン失敗回数による自動ロック解除の対象外 | account |
 | 23 | is_deleted | 削除フラグ | boolean | false | 論理削除フラグ。trueの場合は削除済み | account, location_mst, photo_mst |
-| 24 | is_location_public | 位置情報公開フラグ | boolean | true | trueなら撮影場所（緯度経度・住所・ロケーション名）を写真所有者以外にも公開する。falseの場合、写真詳細APIは所有者以外へこれらを返さない | photo_mst |
+| 24 | is_location_public | 位置情報公開フラグ | boolean | false | trueなら撮影場所（緯度経度・住所・ロケーション名）を写真所有者以外にも公開する。falseの場合、写真詳細APIは所有者以外へこれらを返さない | photo_mst |
 | 25 | is_revoked | 無効化フラグ | boolean | false | リフレッシュトークンの無効化フラグ。ログアウト時やトークンローテーション時にtrueに設定 | refresh_token |
 | 26 | iso | ISO感度 | int | - | EXIF情報から取得したISO感度 | photo_mst |
 | 27 | kbn_class_code | 区分分類コード | varchar(20) | - | 区分の大分類コード（例: prefecture） | kbn_mst |

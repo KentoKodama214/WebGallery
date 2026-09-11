@@ -51,7 +51,7 @@ CREATE TABLE photo.photo_mst
 	-- ISO
 	iso int NOT NULL,
 	-- 位置情報公開フラグ: trueなら撮影場所（緯度経度・住所・ロケーション名）を本人以外にも公開する
-	is_location_public boolean DEFAULT 'true' NOT NULL,
+	is_location_public boolean DEFAULT 'false' NOT NULL,
 	PRIMARY KEY (id),
 	CONSTRAINT photo_no_unique UNIQUE (account_no, photo_no)
 ) WITHOUT OIDS;
