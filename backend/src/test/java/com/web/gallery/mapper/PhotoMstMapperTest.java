@@ -222,6 +222,7 @@ public class PhotoMstMapperTest {
               .fValue(BigDecimal.valueOf(2.8))
               .shutterSpeed(BigDecimal.valueOf(0.01))
               .iso(200)
+              .isLocationPublic(false)
               .build();
 
       OffsetDateTime transactionNow =
@@ -253,6 +254,7 @@ public class PhotoMstMapperTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -277,6 +279,7 @@ public class PhotoMstMapperTest {
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(200, actualData.getFirst().getIso());
+      assertFalse(actualData.getFirst().getIsLocationPublic());
     }
   }
 

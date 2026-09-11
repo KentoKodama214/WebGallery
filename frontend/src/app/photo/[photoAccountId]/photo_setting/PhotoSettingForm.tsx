@@ -60,6 +60,8 @@ export function PhotoSettingForm({
   const [fValue, setFValue] = useState("");
   const [shutterSpeed, setShutterSpeed] = useState("");
   const [iso, setIso] = useState("");
+  // 位置情報公開フラグ。新規登録時は安全側に倒して「公開しない」を既定とする
+  const [isLocationPublic, setIsLocationPublic] = useState(false);
   const [tags, setTags] = useState<TagEntry[]>([]);
   const [nextTagNo, setNextTagNo] = useState(1);
 
@@ -112,6 +114,7 @@ export function PhotoSettingForm({
           data.shutterSpeed != null ? String(data.shutterSpeed) : ""
         );
         setIso(data.iso != null ? String(data.iso) : "");
+        setIsLocationPublic(data.isLocationPublic ?? false);
         setExistingImageFilePath(data.imageFilePath);
         setImagePreview(data.imageFilePath);
 
@@ -303,6 +306,7 @@ export function PhotoSettingForm({
       if (iso) {
         formData.append("iso", iso);
       }
+      formData.append("isLocationPublic", String(isLocationPublic));
 
       tags.forEach((tag, index) => {
         formData.append(
@@ -564,6 +568,22 @@ export function PhotoSettingForm({
                 data-testid="iso-input"
               />
             </div>
+          </div>
+
+          {/* 位置情報の公開設定 */}
+          <div className="mb-4">
+            <label className="flex items-center gap-2 text-sm text-gray-400">
+              <input
+                type="checkbox"
+                checked={isLocationPublic}
+                onChange={(e) => setIsLocationPublic(e.target.checked)}
+                data-testid="location-public-checkbox"
+              />
+              撮影場所（緯度経度・住所・ロケーション名）を他のユーザーにも公開する
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              オフの場合、撮影場所は本人にのみ表示されます。
+            </p>
           </div>
 
           {/* キャプション */}

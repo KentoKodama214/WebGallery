@@ -33,6 +33,7 @@ const samplePhoto = {
   latitude: null,
   longitude: null,
   locationName: null,
+  isLocationPublic: true,
   imageFilePath: "/photos/test.jpg",
   photoJapaneseTitle: "テスト写真",
   photoEnglishTitle: "Test Photo",
@@ -241,6 +242,56 @@ describe("PhotoSettingForm", () => {
       expect(screen.getByTestId("success-modal")).toBeInTheDocument();
       expect(screen.getByText("写真を保存しました")).toBeInTheDocument();
     });
+  });
+
+  it("新規モードでは位置情報公開チェックボックスが未チェックで、送信時に isLocationPublic=false を送ること", async () => {
+    mockSavePhoto.mockResolvedValue({ isSuccess: true });
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const checkbox = screen.getByTestId(
+      "location-public-checkbox"
+    ) as HTMLInputElement;
+    expect(checkbox.checked).toBe(false);
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(mockSavePhoto).toHaveBeenCalled();
+    });
+    const formData = mockSavePhoto.mock.calls[0][1] as FormData;
+    expect(formData.get("isLocationPublic")).toBe("false");
+  });
+
+  it("位置情報公開チェックを入れて送信すると isLocationPublic=true を送ること", async () => {
+    mockSavePhoto.mockResolvedValue({ isSuccess: true });
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-public-checkbox"));
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(mockSavePhoto).toHaveBeenCalled();
+    });
+    const formData = mockSavePhoto.mock.calls[0][1] as FormData;
+    expect(formData.get("isLocationPublic")).toBe("true");
   });
 
   it("未認証の場合にログインページへリダイレクトされること", async () => {

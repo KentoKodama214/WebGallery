@@ -22,6 +22,7 @@
 		<result property="fValue" column="f_value"/>
 		<result property="shutterSpeed" column="shutter_speed"/>
 		<result property="iso" column="iso"/>
+		<result property="isLocationPublic" column="is_location_public"/>
 	</resultMap>
 
 	<sql id="photoMstConditionWhere">
@@ -75,7 +76,8 @@
 				focal_length,
 				f_value,
 				shutter_speed,
-				iso
+				iso,
+				is_location_public
 			)
 		VALUES
 			(
@@ -97,7 +99,8 @@
 				#{focalLength},
 				#{fValue},
 				#{shutterSpeed},
-				#{iso}
+				#{iso},
+				#{isLocationPublic}
 			)
 	</insert>
 
@@ -120,6 +123,7 @@
 			<if test="target.fValue != null"> , f_value = #{target.fValue}</if>
 			<if test="target.shutterSpeed != null"> , shutter_speed = #{target.shutterSpeed}</if>
 			<if test="target.iso != null"> , iso = #{target.iso}</if>
+			<if test="target.isLocationPublic != null"> , is_location_public = #{target.isLocationPublic}</if>
 		</set>
 		<where>
 			<include refid="photoMstConditionWhere">

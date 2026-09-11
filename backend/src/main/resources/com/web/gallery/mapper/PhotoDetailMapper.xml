@@ -32,6 +32,7 @@
 		<result column="fValue" property="fValue"/>
 		<result column="shutterSpeed" property="shutterSpeed"/>
 		<result column="iso" property="iso"/>
+		<result column="isLocationPublic" property="isLocationPublic"/>
 	</resultMap>
 
 	<select id="getPhotoList" parameterType="com.web.gallery.dto.PhotoListGetDto" resultMap="PhotoDtoResultMap">
@@ -146,7 +147,8 @@
 			photo_mst.focal_length AS focalLength,
 			photo_mst.f_value AS fValue,
 			photo_mst.shutter_speed AS shutterSpeed,
-			photo_mst.iso AS iso
+			photo_mst.iso AS iso,
+			photo_mst.is_location_public AS isLocationPublic
 		FROM
 			photo.photo_mst photo_mst
 		LEFT JOIN common.location_mst location_mst ON

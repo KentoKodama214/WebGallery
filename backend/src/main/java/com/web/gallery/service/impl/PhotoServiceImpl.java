@@ -5,6 +5,7 @@ import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoCount;
@@ -144,9 +145,41 @@ public class PhotoServiceImpl implements PhotoService {
     PhotoDetailModel photoDetailModel =
         photoDetailRepository.getPhotoDetail(
             PhotoDetailSearchModel.of(photoDetailGetModel, accountModel.getAccountNo()));
-    return photoDetailModel.toBuilder()
-        .imageFilePath(fileRepository.getPresignedUrl(photoDetailModel.getImageFilePath()))
-        .build();
+
+    var builder =
+        photoDetailModel.toBuilder()
+            .imageFilePath(fileRepository.getPresignedUrl(photoDetailModel.getImageFilePath()));
+
+    // 位置情報が非公開の写真は、閲覧者が本人でない限り撮影場所（ロケーション番号・住所・緯度経度・
+    // ロケーション名）を返さない（撮影場所からの個人特定を防ぐ）
+    if (isLocationHiddenFor(photoDetailModel, photoDetailGetModel, accountModel.getAccountNo())) {
+      builder.locationNo(null).geoLocation(GeoLocation.empty()).locationName(null);
+    }
+    return builder.build();
+  }
+
+  /**
+   * この写真詳細の閲覧要求に対して、位置情報を秘匿すべきかどうかを判定する
+   *
+   * @param photoDetailModel 取得した写真詳細
+   * @param photoDetailGetModel 取得要求（閲覧者のアカウント番号を含む。未認証なら null）
+   * @param ownerAccountNo 写真所有者のアカウント番号
+   * @return 位置情報を秘匿すべき場合 true
+   */
+  private boolean isLocationHiddenFor(
+      PhotoDetailModel photoDetailModel,
+      PhotoDetailGetModel photoDetailGetModel,
+      AccountNo ownerAccountNo) {
+    boolean isLocationPublic =
+        photoDetailModel.getIsLocationPublic() != null
+            && photoDetailModel.getIsLocationPublic().value();
+    if (isLocationPublic) {
+      return false;
+    }
+    AccountNo viewerAccountNo = photoDetailGetModel.getAccountNo();
+    boolean isOwner =
+        viewerAccountNo != null && viewerAccountNo.value().equals(ownerAccountNo.value());
+    return !isOwner;
   }
 
   /**

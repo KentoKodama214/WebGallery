@@ -77,6 +77,9 @@ public class PhotoMst {
   /** ISO */
   private Integer iso;
 
+  /** 位置情報公開フラグ */
+  private Boolean isLocationPublic;
+
   /**
    * 写真登録用のPhotoDetailModelからPhotoMstエンティティを生成する
    *
@@ -114,6 +117,9 @@ public class PhotoMst {
         .shutterSpeed(
             exifData.shutterSpeed() != null ? exifData.shutterSpeed().value() : BigDecimal.ZERO)
         .iso(exifData.iso() != null ? exifData.iso().value() : 0)
+        // 未指定の新規登録は安全側に倒し、位置情報を非公開（false）で保存する
+        .isLocationPublic(
+            model.getIsLocationPublic() != null && model.getIsLocationPublic().value())
         .build();
   }
 

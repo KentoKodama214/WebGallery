@@ -15,6 +15,7 @@ import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.IsFavorite;
+import com.web.gallery.domain.photo.IsLocationPublic;
 import com.web.gallery.domain.photo.Iso;
 import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.domain.photo.PhotoAt;
@@ -57,6 +58,9 @@ public class PhotoDetailModel {
 
   /** ロケーション名 */
   private LocationName locationName;
+
+  /** 位置情報公開フラグ */
+  private IsLocationPublic isLocationPublic;
 
   /** 画像ファイル */
   private ImageFile imageFile;
@@ -129,6 +133,10 @@ public class PhotoDetailModel {
                 dto.getLongitude() != null ? new Longitude(dto.getLongitude()) : null))
         .locationName(
             dto.getLocationName() != null ? new LocationName(dto.getLocationName()) : null)
+        .isLocationPublic(
+            dto.getIsLocationPublic() != null
+                ? new IsLocationPublic(dto.getIsLocationPublic())
+                : null)
         .imageFilePath(new ImageFilePath(dto.getImageFilePath()))
         .photoJapaneseTitle(
             dto.getPhotoJapaneseTitle() != null
@@ -192,6 +200,10 @@ public class PhotoDetailModel {
                 request.getLongitude() != null ? new Longitude(request.getLongitude()) : null))
         .locationName(
             request.getLocationName() != null ? new LocationName(request.getLocationName()) : null)
+        .isLocationPublic(
+            request.getIsLocationPublic() != null
+                ? new IsLocationPublic(request.getIsLocationPublic())
+                : null)
         .imageFile(request.getImageFile() != null ? new ImageFile(request.getImageFile()) : null)
         .imageFilePath(
             new ImageFilePath(

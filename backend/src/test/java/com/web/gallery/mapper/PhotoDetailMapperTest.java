@@ -193,6 +193,7 @@ public class PhotoDetailMapperTest {
       assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actual.getFValue()));
       assertEquals(0, BigDecimal.valueOf(1).compareTo(actual.getShutterSpeed()));
       assertEquals(100, actual.getIso());
+      assertEquals(true, actual.getIsLocationPublic());
     }
 
     @Test

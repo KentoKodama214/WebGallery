@@ -59,6 +59,10 @@ public class PhotoSaveRequest {
   @Size(max = 100, message = "{validation.common.max_length}")
   private String locationName;
 
+  /** 位置情報公開フラグ（撮影場所を本人以外にも公開するか。未指定は非公開扱い） */
+  @Schema(description = "位置情報公開フラグ（撮影場所を本人以外にも公開するか）", example = "false")
+  private Boolean isLocationPublic;
+
   /** 画像ファイル */
   @Schema(description = "画像ファイル（新規登録時）")
   private MultipartFile imageFile;

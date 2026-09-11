@@ -59,6 +59,9 @@ public class PhotoMstUpdateTarget {
   /** ISO */
   private Integer iso;
 
+  /** 位置情報公開フラグ */
+  private Boolean isLocationPublic;
+
   /**
    * 写真更新用のPhotoDetailModelから更新対象を生成する
    *
@@ -91,6 +94,9 @@ public class PhotoMstUpdateTarget {
         .shutterSpeed(
             exifData.shutterSpeed() != null ? exifData.shutterSpeed().value() : BigDecimal.ZERO)
         .iso(exifData.iso() != null ? exifData.iso().value() : 0)
+        // 未指定の場合は安全側に倒して非公開（false）にする
+        .isLocationPublic(
+            model.getIsLocationPublic() != null && model.getIsLocationPublic().value())
         .build();
   }
 

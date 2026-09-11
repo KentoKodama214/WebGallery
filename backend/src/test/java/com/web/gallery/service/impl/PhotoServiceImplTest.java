@@ -8,6 +8,11 @@ import com.web.gallery.aggregate.Photo;
 import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.Address;
+import com.web.gallery.domain.common.GeoLocation;
+import com.web.gallery.domain.common.Latitude;
+import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FValue;
@@ -17,7 +22,9 @@ import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.IsFavorite;
 import com.web.gallery.domain.photo.IsFavoriteOnly;
+import com.web.gallery.domain.photo.IsLocationPublic;
 import com.web.gallery.domain.photo.Iso;
+import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.domain.photo.PhotoAt;
 import com.web.gallery.domain.photo.PhotoCount;
 import com.web.gallery.domain.photo.PhotoEnglishTitle;
@@ -598,6 +605,115 @@ public class PhotoServiceImplTest {
           PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
       verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
       verify(photoDetailRepositoryImpl, never()).getPhotoDetail(any(PhotoDetailSearchModel.class));
+    }
+
+    /**
+     * 位置情報を持つ写真詳細モデルを組み立てる
+     *
+     * @param ownerAccountNo 写真所有者のアカウント番号
+     * @param isLocationPublic 位置情報公開フラグ
+     * @return {@link PhotoDetailModel}
+     */
+    private PhotoDetailModel photoWithLocation(long ownerAccountNo, boolean isLocationPublic) {
+      return PhotoDetailModel.builder()
+          .accountNo(new AccountNo(ownerAccountNo))
+          .photoNo(new PhotoNo(1L))
+          .imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
+          .locationNo(new LocationNo(9L))
+          .geoLocation(
+              new GeoLocation(
+                  new Address("東京都渋谷区"),
+                  new Latitude(BigDecimal.valueOf(35.6812)),
+                  new Longitude(BigDecimal.valueOf(139.7671))))
+          .locationName(new LocationName("渋谷"))
+          .isLocationPublic(new IsLocationPublic(isLocationPublic))
+          .build();
+    }
+
+    private void stubDetail(long ownerAccountNo, PhotoDetailModel model) throws GalleryException {
+      doReturn(AccountModel.builder().accountNo(new AccountNo(ownerAccountNo)).build())
+          .when(accountRepositoryImpl)
+          .getByAccountId(new AccountId("aaaaaaaa"));
+      doReturn(model)
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("位置情報が非公開で閲覧者が本人でない場合、撮影場所を返さない")
+    void getPhotoDetail_hidesLocation_whenPrivateAndNotOwner() throws GalleryException {
+      PhotoDetailModel model = photoWithLocation(1L, false);
+      stubDetail(1L, model);
+
+      PhotoDetailModel actual =
+          photoServiceImpl.getPhotoDetail(
+              PhotoDetailGetModel.builder()
+                  .accountNo(new AccountNo(2L))
+                  .photoAccountId(new AccountId("aaaaaaaa"))
+                  .photoNo(new PhotoNo(1L))
+                  .build());
+
+      assertNull(actual.getLocationNo());
+      assertNull(actual.getLocationName());
+      assertNull(actual.getGeoLocation().address());
+      assertNull(actual.getGeoLocation().latitude());
+      assertNull(actual.getGeoLocation().longitude());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("位置情報が非公開でも閲覧者が本人なら撮影場所を返す")
+    void getPhotoDetail_keepsLocation_whenPrivateAndOwner() throws GalleryException {
+      PhotoDetailModel model = photoWithLocation(1L, false);
+      stubDetail(1L, model);
+
+      PhotoDetailModel actual =
+          photoServiceImpl.getPhotoDetail(
+              PhotoDetailGetModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .photoAccountId(new AccountId("aaaaaaaa"))
+                  .photoNo(new PhotoNo(1L))
+                  .build());
+
+      assertEquals(9L, actual.getLocationNo().value());
+      assertEquals("東京都渋谷区", actual.getGeoLocation().address().value());
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("位置情報が公開なら閲覧者が本人でなくても撮影場所を返す")
+    void getPhotoDetail_keepsLocation_whenPublic() throws GalleryException {
+      PhotoDetailModel model = photoWithLocation(1L, true);
+      stubDetail(1L, model);
+
+      PhotoDetailModel actual =
+          photoServiceImpl.getPhotoDetail(
+              PhotoDetailGetModel.builder()
+                  .accountNo(new AccountNo(2L))
+                  .photoAccountId(new AccountId("aaaaaaaa"))
+                  .photoNo(new PhotoNo(1L))
+                  .build());
+
+      assertEquals("東京都渋谷区", actual.getGeoLocation().address().value());
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("未認証（閲覧者アカウント番号なし）で非公開なら撮影場所を返さない")
+    void getPhotoDetail_hidesLocation_whenAnonymousAndPrivate() throws GalleryException {
+      PhotoDetailModel model = photoWithLocation(1L, false);
+      stubDetail(1L, model);
+
+      PhotoDetailModel actual =
+          photoServiceImpl.getPhotoDetail(
+              PhotoDetailGetModel.builder()
+                  .photoAccountId(new AccountId("aaaaaaaa"))
+                  .photoNo(new PhotoNo(1L))
+                  .build());
+
+      assertNull(actual.getLocationNo());
+      assertNull(actual.getGeoLocation().address());
     }
   }
 

@@ -37,6 +37,7 @@ const samplePhoto = {
   latitude: null,
   longitude: null,
   locationName: "東京タワー",
+  isLocationPublic: true,
   imageFilePath: "/photos/test.jpg",
   photoJapaneseTitle: "テスト写真",
   photoEnglishTitle: "Test Photo",
@@ -173,6 +174,49 @@ describe("PhotoDetail", () => {
       expect(screen.getByRole("button", { name: "編集" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
     });
+  });
+
+  it("位置情報が非公開の写真でも、オーナーに「撮影場所は非公開」という文言は表示されないこと", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue({
+      ...samplePhoto,
+      isLocationPublic: false,
+    });
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("テスト写真")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("（撮影場所は非公開）")).not.toBeInTheDocument();
+  });
+
+  it("位置情報が非公開でも、閲覧者が別人なら「撮影場所は非公開」は表示されないこと", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "other_user", accountNo: 2 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue({
+      ...samplePhoto,
+      isLocationPublic: false,
+      locationName: null,
+    });
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("テスト写真")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("（撮影場所は非公開）")).not.toBeInTheDocument();
   });
 
   it("パスは自分でも写真の所有者が別人なら編集・削除ボタンは表示されないこと", async () => {

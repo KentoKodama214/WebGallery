@@ -542,6 +542,8 @@ export interface PhotoDetailResponse {
   latitude: number | null;
   longitude: number | null;
   locationName: string | null;
+  /** 位置情報公開フラグ（非公開かつ閲覧者が本人でない場合、上記の位置情報系フィールドは null で返る） */
+  isLocationPublic: boolean | null;
   imageFilePath: string;
   photoJapaneseTitle: string | null;
   photoEnglishTitle: string | null;

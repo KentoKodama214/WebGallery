@@ -54,6 +54,10 @@ public class PhotoDetailGetResponse {
   @Schema(description = "ロケーション名")
   private String locationName;
 
+  /** 位置情報公開フラグ（非公開かつ閲覧者が本人でない場合、上記の位置情報系フィールドはnullで返る） */
+  @Schema(description = "位置情報公開フラグ")
+  private Boolean isLocationPublic;
+
   /** 画像ファイルパス */
   @Schema(description = "画像ファイルパス")
   private String imageFilePath;
@@ -126,6 +130,8 @@ public class PhotoDetailGetResponse {
         .latitude(geoLocation.latitude() != null ? geoLocation.latitude().value() : null)
         .longitude(geoLocation.longitude() != null ? geoLocation.longitude().value() : null)
         .locationName(model.getLocationName() != null ? model.getLocationName().value() : null)
+        .isLocationPublic(
+            model.getIsLocationPublic() != null ? model.getIsLocationPublic().value() : null)
         .imageFilePath(model.getImageFilePath().value())
         .photoJapaneseTitle(
             model.getPhotoJapaneseTitle() != null ? model.getPhotoJapaneseTitle().value() : null)

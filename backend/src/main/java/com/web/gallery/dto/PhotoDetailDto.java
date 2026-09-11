@@ -65,4 +65,7 @@ public class PhotoDetailDto {
 
   /** ISO */
   private Integer iso;
+
+  /** 位置情報公開フラグ */
+  private Boolean isLocationPublic;
 }
