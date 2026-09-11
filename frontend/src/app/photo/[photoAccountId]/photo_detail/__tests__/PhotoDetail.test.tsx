@@ -176,7 +176,7 @@ describe("PhotoDetail", () => {
     });
   });
 
-  it("位置情報が非公開の写真では、オーナーに「撮影場所は非公開」と表示されること", async () => {
+  it("位置情報が非公開の写真でも、オーナーに「撮影場所は非公開」という文言は表示されないこと", async () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       user: { accountId: "user1", accountNo: 1 },
@@ -192,8 +192,9 @@ describe("PhotoDetail", () => {
     render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
 
     await waitFor(() => {
-      expect(screen.getByText("（撮影場所は非公開）")).toBeInTheDocument();
+      expect(screen.getByText("テスト写真")).toBeInTheDocument();
     });
+    expect(screen.queryByText("（撮影場所は非公開）")).not.toBeInTheDocument();
   });
 
   it("位置情報が非公開でも、閲覧者が別人なら「撮影場所は非公開」は表示されないこと", async () => {

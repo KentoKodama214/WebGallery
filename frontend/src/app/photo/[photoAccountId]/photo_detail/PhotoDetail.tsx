@@ -371,9 +371,6 @@ export function PhotoDetail({
 
           <p style={{ fontSize: "12px", textAlign: "center", margin: "1px 0" }}>
             {formatPhotoAt(photo.photoAt)} {photo.locationName || ""}
-            {isOwner && photo.isLocationPublic === false && (
-              <span style={{ color: "#999" }}>（撮影場所は非公開）</span>
-            )}
           </p>
 
           {buildSettingText() && (
