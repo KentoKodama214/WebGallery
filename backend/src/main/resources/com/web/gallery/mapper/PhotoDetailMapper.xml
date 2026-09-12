@@ -35,88 +35,153 @@
 		<result column="isLocationPublic" property="isLocationPublic"/>
 	</resultMap>
 
-	<select id="getPhotoList" parameterType="com.web.gallery.dto.PhotoListGetDto" resultMap="PhotoDtoResultMap">
-		WITH isFavorite AS (
-			SELECT
-				favorite_photo_account_no,
-				favorite_photo_no
-			FROM
-				photo.photo_favorite
-			WHERE
-				account_no = #{accountNo}
-		),
-		countOfFavorite AS (
-			SELECT
-				favorite_photo_account_no,
-				favorite_photo_no,
-				count(*) as favoriteCount
-			FROM
-				photo.photo_favorite
-			WHERE
-				favorite_photo_account_no = #{photoAccountNo}
-			GROUP BY
-				favorite_photo_account_no,
-				favorite_photo_no
-		)
+	<sql id="photoListFilterWhere">
+		photo_mst.account_no = #{photoAccountNo} AND
+		photo_mst.is_deleted = false
+		<if test="directionKbn != null">
+			AND photo_mst.direction_kbn = #{directionKbn}::photo.direction_enum
+		</if>
+		<if test="isFavoriteOnly != null and isFavoriteOnly">
+			AND EXISTS (
+				SELECT
+					1
+				FROM
+					photo.photo_favorite
+				WHERE
+					account_no = #{accountNo} AND
+					favorite_photo_account_no = photo_mst.account_no AND
+					favorite_photo_no = photo_mst.photo_no
+			)
+		</if>
+		<if test="tagList != null and !tagList.isEmpty() and tagList[0] != ''">
+			<foreach item="tag" collection="tagList">
+				AND EXISTS (
+					SELECT
+						1
+					FROM
+						photo.photo_tag_mst photo_tag_mst
+					WHERE
+						photo_tag_mst.account_no = photo_mst.account_no AND
+						photo_tag_mst.photo_no = photo_mst.photo_no AND
+						(photo_tag_mst.tag_japanese_name = #{tag} OR photo_tag_mst.tag_english_name = #{tag})
+				)
+			</foreach>
+		</if>
+	</sql>
 
-		SELECT
-			photo_mst.account_no AS accountNo,
-			photo_mst.photo_no AS photoNo,
-			CASE WHEN
-				countOfFavorite.favoriteCount > 0 THEN countOfFavorite.favoriteCount
-				ELSE 0
-			END AS favoriteCount,
-			CASE WHEN
-				isFavorite.favorite_photo_account_no IS NOT NULL THEN true
-				ELSE false
-			END AS isFavorite,
-			photo_mst.photo_at AS photoAt,
-			photo_mst.image_file_path AS imageFilePath,
-			photo_mst.caption AS caption,
-			photo_mst.direction_kbn AS directionKbn
-		FROM
-			photo.photo_mst photo_mst
-		LEFT JOIN isFavorite ON
-			photo_mst.account_no = isFavorite.favorite_photo_account_no AND
- 			photo_mst.photo_no = isFavorite.favorite_photo_no
-		LEFT JOIN countOfFavorite ON
-			photo_mst.account_no = countOfFavorite.favorite_photo_account_no AND
-			photo_mst.photo_no = countOfFavorite.favorite_photo_no
-		WHERE
-			photo_mst.account_no = #{photoAccountNo} AND
-			photo_mst.is_deleted = false
-			<if test="directionKbn != null">
-				AND photo_mst.direction_kbn = #{directionKbn}::photo.direction_enum
-			</if>
-			<if test="isFavoriteOnly != null and isFavoriteOnly">
-				AND isFavorite.favorite_photo_account_no IS NOT NULL
-			</if>
-			<if test="tagList != null and !tagList.isEmpty() and tagList[0] != ''">
-				<foreach item="tag" collection="tagList">
-					AND EXISTS (
+	<sql id="photoListOrderBy">
+		<choose>
+			<when test="sortBy == 'SEASON'">
+				ORDER BY TO_CHAR(${alias}.photo_at AT TIME ZONE 'Asia/Tokyo', 'MMDD') DESC, ${alias}.photo_at DESC, ${alias}.photo_no ASC
+			</when>
+			<otherwise>
+				ORDER BY ${alias}.photo_at DESC, ${alias}.photo_no ASC
+			</otherwise>
+		</choose>
+	</sql>
+
+	<select id="getPhotoList" parameterType="com.web.gallery.dto.PhotoListGetDto" resultMap="PhotoDtoResultMap">
+		<choose>
+			<when test="sortBy == 'FAVORITE'">
+				<!-- お気に入り数がソートキーになるため、対象アカウントの全写真分のお気に入り数を先に集計する -->
+				WITH countOfFavorite AS (
+					SELECT
+						favorite_photo_account_no,
+						favorite_photo_no,
+						count(*) as favoriteCount
+					FROM
+						photo.photo_favorite
+					WHERE
+						favorite_photo_account_no = #{photoAccountNo}
+					GROUP BY
+						favorite_photo_account_no,
+						favorite_photo_no
+				)
+				SELECT
+					photo_mst.account_no AS accountNo,
+					photo_mst.photo_no AS photoNo,
+					CASE WHEN
+						countOfFavorite.favoriteCount > 0 THEN countOfFavorite.favoriteCount
+						ELSE 0
+					END AS favoriteCount,
+					EXISTS (
 						SELECT
 							1
 						FROM
-							photo.photo_tag_mst photo_tag_mst
+							photo.photo_favorite
 						WHERE
-							photo_tag_mst.account_no = photo_mst.account_no AND
-							photo_tag_mst.photo_no = photo_mst.photo_no AND
-							(photo_tag_mst.tag_japanese_name = #{tag} OR photo_tag_mst.tag_english_name = #{tag})
-					)
-				</foreach>
-			</if>
-		<choose>
-			<when test="sortBy == 'FAVORITE'">
+							account_no = #{accountNo} AND
+							favorite_photo_account_no = photo_mst.account_no AND
+							favorite_photo_no = photo_mst.photo_no
+					) AS isFavorite,
+					photo_mst.photo_at AS photoAt,
+					photo_mst.image_file_path AS imageFilePath,
+					photo_mst.caption AS caption,
+					photo_mst.direction_kbn AS directionKbn
+				FROM
+					photo.photo_mst photo_mst
+				LEFT JOIN countOfFavorite ON
+					photo_mst.account_no = countOfFavorite.favorite_photo_account_no AND
+					photo_mst.photo_no = countOfFavorite.favorite_photo_no
+				<where>
+					<include refid="photoListFilterWhere"/>
+				</where>
 				ORDER BY favoriteCount DESC, photo_mst.photo_no ASC
-			</when>
-			<when test="sortBy == 'SEASON'">
-				ORDER BY TO_CHAR(photo_mst.photo_at AT TIME ZONE 'Asia/Tokyo', 'MMDD') DESC, photo_mst.photo_at DESC, photo_mst.photo_no ASC
+				LIMIT #{limit} OFFSET #{offset}
 			</when>
 			<otherwise>
-				ORDER BY photo_mst.photo_at DESC, photo_mst.photo_no ASC
+				<!-- お気に入り数はソートに使わないため、ページング後の行だけを対象に集計する -->
+				WITH pagedPhotos AS (
+					SELECT
+						photo_mst.account_no,
+						photo_mst.photo_no,
+						photo_mst.photo_at,
+						photo_mst.image_file_path,
+						photo_mst.caption,
+						photo_mst.direction_kbn
+					FROM
+						photo.photo_mst photo_mst
+					<where>
+						<include refid="photoListFilterWhere"/>
+					</where>
+					<include refid="photoListOrderBy">
+						<property name="alias" value="photo_mst"/>
+					</include>
+					LIMIT #{limit} OFFSET #{offset}
+				)
+				SELECT
+					pagedPhotos.account_no AS accountNo,
+					pagedPhotos.photo_no AS photoNo,
+					(
+						SELECT
+							COUNT(*)
+						FROM
+							photo.photo_favorite
+						WHERE
+							favorite_photo_account_no = pagedPhotos.account_no AND
+							favorite_photo_no = pagedPhotos.photo_no
+					) AS favoriteCount,
+					EXISTS (
+						SELECT
+							1
+						FROM
+							photo.photo_favorite
+						WHERE
+							account_no = #{accountNo} AND
+							favorite_photo_account_no = pagedPhotos.account_no AND
+							favorite_photo_no = pagedPhotos.photo_no
+					) AS isFavorite,
+					pagedPhotos.photo_at AS photoAt,
+					pagedPhotos.image_file_path AS imageFilePath,
+					pagedPhotos.caption AS caption,
+					pagedPhotos.direction_kbn AS directionKbn
+				FROM
+					pagedPhotos
+				<include refid="photoListOrderBy">
+					<property name="alias" value="pagedPhotos"/>
+				</include>
 			</otherwise>
 		</choose>
-		LIMIT #{limit} OFFSET #{offset}
 	</select>
 
 	<select id="getPhotoDetail" parameterType="com.web.gallery.dto.PhotoDetailGetDto" resultMap="PhotoDetailDtoResultMap">
