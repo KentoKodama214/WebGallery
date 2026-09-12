@@ -3,7 +3,7 @@ package com.web.gallery.helper;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.enumeration.SchedulerLockName;
+import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import com.web.gallery.repository.impl.SchedulerLockRepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -34,10 +34,10 @@ public class SchedulerLockTest {
     void runIfLocked_acquired() {
       doReturn(true)
           .when(schedulerLockRepositoryImpl)
-          .tryLock(SchedulerLockName.REFRESH_TOKEN_CLEANUP);
+          .tryLock(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP);
       Runnable task = mock(Runnable.class);
 
-      schedulerLock.runIfLocked(SchedulerLockName.REFRESH_TOKEN_CLEANUP, task);
+      schedulerLock.runIfLocked(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP, task);
 
       verify(task, times(1)).run();
     }
@@ -48,10 +48,10 @@ public class SchedulerLockTest {
     void runIfLocked_notAcquired() {
       doReturn(false)
           .when(schedulerLockRepositoryImpl)
-          .tryLock(SchedulerLockName.REFRESH_TOKEN_CLEANUP);
+          .tryLock(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP);
       Runnable task = mock(Runnable.class);
 
-      schedulerLock.runIfLocked(SchedulerLockName.REFRESH_TOKEN_CLEANUP, task);
+      schedulerLock.runIfLocked(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP, task);
 
       verify(task, never()).run();
     }
@@ -62,7 +62,7 @@ public class SchedulerLockTest {
     void runIfLocked_taskThrows() {
       doReturn(true)
           .when(schedulerLockRepositoryImpl)
-          .tryLock(SchedulerLockName.REFRESH_TOKEN_CLEANUP);
+          .tryLock(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP);
       RuntimeException cause = new RuntimeException("処理失敗");
       Runnable task =
           () -> {
@@ -72,7 +72,7 @@ public class SchedulerLockTest {
       RuntimeException actual =
           assertThrows(
               RuntimeException.class,
-              () -> schedulerLock.runIfLocked(SchedulerLockName.REFRESH_TOKEN_CLEANUP, task));
+              () -> schedulerLock.runIfLocked(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP, task));
 
       assertSame(cause, actual);
     }

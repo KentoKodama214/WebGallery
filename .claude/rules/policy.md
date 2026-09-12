@@ -26,3 +26,7 @@ paths:
 - 永続化されたデータの取得は行わず、呼び出し元（Service層）から渡された値のみで判定を行う（DBアクセスを行わない）
 - 引数の型は、ドメインクラス（値オブジェクト）、Enumのみとする
 - 返り値の型は、ドメインクラス（値オブジェクト）、Boolean、Integer（件数を返す時のみ）のみとする
+
+## 検証
+
+本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/PolicyArchitectureTest.java`のArchUnitテストで機械的に検証される。

@@ -16,3 +16,7 @@ paths:
 
 - リクエストクラスのプロパティにはバリデーションアノテーション（`@NotNull`、`@NotBlank`、`@Size`等）を付与すること
 - バリデーションアノテーションが一つも存在しないRequestクラスは違反
+
+## 検証
+
+本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/RequestArchitectureTest.java`のArchUnitテストで機械的に検証される。

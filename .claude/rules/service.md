@@ -32,3 +32,7 @@ paths:
 - 引数の型は、ドメインクラス（値オブジェクト）、Modelクラス、集約クラス（`aggregate/`）のみとする（可読性と安全性の担保のため）
 - 返り値の型は、ドメインクラス（値オブジェクト）、Modelクラス、集約クラス（`aggregate/`）、Boolean、Integer（ただし、件数を返す時のみ）、voidのみとする
 - 引数が4つ以上になるなら、別途専用のModelクラスを定義する
+
+## 検証
+
+本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/ServiceArchitectureTest.java`のArchUnitテストで機械的に検証される。メソッドシグネチャの検証は`Service`インターフェースのメソッドを対象とし、`UserDetailsService`等の外部インターフェースの実装やSpringの`@EventListener`ハンドラなど、`ServiceImpl`が独自interfaceの契約外に持つメソッドは対象としない。

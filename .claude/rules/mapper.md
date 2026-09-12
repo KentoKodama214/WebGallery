@@ -13,3 +13,7 @@ paths:
 
 - Mapperインターフェースに対応するXMLファイルが`backend/src/main/resources/com/web/gallery/mapper/`に存在すること
 - XMLファイルが存在しないMapperインターフェースは違反
+
+## 検証
+
+本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/MapperArchitectureTest.java`のArchUnitテストで機械的に検証される。

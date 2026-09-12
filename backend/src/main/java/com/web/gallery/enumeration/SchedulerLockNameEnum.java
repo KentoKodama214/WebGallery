@@ -15,7 +15,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum SchedulerLockName {
+public enum SchedulerLockNameEnum {
   /** 有効期限切れリフレッシュトークンの削除処理 */
   REFRESH_TOKEN_CLEANUP(4_001L, "有効期限切れリフレッシュトークンの削除");
 

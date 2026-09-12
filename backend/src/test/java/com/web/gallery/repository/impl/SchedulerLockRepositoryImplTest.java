@@ -3,7 +3,7 @@ package com.web.gallery.repository.impl;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.enumeration.SchedulerLockName;
+import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import com.web.gallery.mapper.SchedulerLockMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -34,13 +34,14 @@ public class SchedulerLockRepositoryImplTest {
     void tryLock_acquired() {
       doReturn(Boolean.TRUE)
           .when(schedulerLockMapper)
-          .tryAdvisoryXactLock(SchedulerLockName.REFRESH_TOKEN_CLEANUP.getLockKey());
+          .tryAdvisoryXactLock(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP.getLockKey());
 
-      boolean actual = schedulerLockRepositoryImpl.tryLock(SchedulerLockName.REFRESH_TOKEN_CLEANUP);
+      boolean actual =
+          schedulerLockRepositoryImpl.tryLock(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP);
 
       assertTrue(actual);
       verify(schedulerLockMapper, times(1))
-          .tryAdvisoryXactLock(SchedulerLockName.REFRESH_TOKEN_CLEANUP.getLockKey());
+          .tryAdvisoryXactLock(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP.getLockKey());
     }
 
     @Test
@@ -49,9 +50,10 @@ public class SchedulerLockRepositoryImplTest {
     void tryLock_notAcquired() {
       doReturn(Boolean.FALSE)
           .when(schedulerLockMapper)
-          .tryAdvisoryXactLock(SchedulerLockName.REFRESH_TOKEN_CLEANUP.getLockKey());
+          .tryAdvisoryXactLock(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP.getLockKey());
 
-      boolean actual = schedulerLockRepositoryImpl.tryLock(SchedulerLockName.REFRESH_TOKEN_CLEANUP);
+      boolean actual =
+          schedulerLockRepositoryImpl.tryLock(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP);
 
       assertFalse(actual);
     }
@@ -62,9 +64,10 @@ public class SchedulerLockRepositoryImplTest {
     void tryLock_null() {
       doReturn(null)
           .when(schedulerLockMapper)
-          .tryAdvisoryXactLock(SchedulerLockName.REFRESH_TOKEN_CLEANUP.getLockKey());
+          .tryAdvisoryXactLock(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP.getLockKey());
 
-      boolean actual = schedulerLockRepositoryImpl.tryLock(SchedulerLockName.REFRESH_TOKEN_CLEANUP);
+      boolean actual =
+          schedulerLockRepositoryImpl.tryLock(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP);
 
       assertFalse(actual);
     }

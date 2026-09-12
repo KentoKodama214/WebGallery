@@ -26,3 +26,7 @@ paths:
 - 抽出条件クラス: `<Entity名>Condition`（例: `PhotoMstCondition`, `AccountCondition`）
 - 更新対象クラス: `<Entity名>UpdateTarget`（例: `PhotoMstUpdateTarget`, `AccountUpdateTarget`）
 - UPDATE操作を持たないEntityの場合、更新対象クラスは作成せず抽出条件クラスのみを分離する
+
+## 検証
+
+プロパティにドメインクラス・Modelクラス・Dtoクラスを使用していないことは`backend/src/test/java/com/web/gallery/architecture/EntityArchitectureTest.java`のArchUnitテストで機械的に検証される。ただし`@Data`/`@Builder`のLombokアノテーション規約は、コンパイラが`RetentionPolicy.SOURCE`で完全に除去しバイトコードに一切残らないため、バイトコード解析であるArchUnitでは原理的に検証不可能であり、`backend-architecture-checker`によるレビューで担保する。

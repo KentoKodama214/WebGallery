@@ -1,6 +1,6 @@
 package com.web.gallery.repository;
 
-import com.web.gallery.enumeration.SchedulerLockName;
+import com.web.gallery.enumeration.SchedulerLockNameEnum;
 
 /**
  * スケジューラの多重実行防止用ロックを管理するRepositoryクラス
@@ -18,5 +18,5 @@ public interface SchedulerLockRepository {
    * @param lockName ロック名
    * @return ロックを取得できた場合true、他インスタンスが保持中で取得できなかった場合false
    */
-  boolean tryLock(SchedulerLockName lockName);
+  boolean tryLock(SchedulerLockNameEnum lockName);
 }

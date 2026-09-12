@@ -2,7 +2,7 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.enumeration.SchedulerLockName;
+import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -30,7 +30,7 @@ public class SchedulerLockMapperTest {
     void tryAdvisoryXactLock_acquired() {
       Boolean actual =
           schedulerLockMapper.tryAdvisoryXactLock(
-              SchedulerLockName.REFRESH_TOKEN_CLEANUP.getLockKey());
+              SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP.getLockKey());
 
       assertEquals(Boolean.TRUE, actual);
     }
@@ -39,7 +39,7 @@ public class SchedulerLockMapperTest {
     @Order(2)
     @DisplayName("正常系：同一トランザクションからの再取得もtrueを返す（再入可能）")
     void tryAdvisoryXactLock_reentrant() {
-      long lockKey = SchedulerLockName.REFRESH_TOKEN_CLEANUP.getLockKey();
+      long lockKey = SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP.getLockKey();
 
       assertEquals(Boolean.TRUE, schedulerLockMapper.tryAdvisoryXactLock(lockKey));
       assertEquals(Boolean.TRUE, schedulerLockMapper.tryAdvisoryXactLock(lockKey));
