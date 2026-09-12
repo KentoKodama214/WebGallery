@@ -51,11 +51,11 @@ AWS等で複数インスタンスを稼働させると、全インスタンス�
 @Scheduled(cron = "0 0 4 * * *", zone = Consts.ZONE_ID_ASIA_TOKYO)
 public void purgeExpiredRefreshTokens() {
   schedulerLock.runIfLocked(
-      SchedulerLockName.REFRESH_TOKEN_CLEANUP, authService::purgeExpiredRefreshTokens);
+      SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP, authService::purgeExpiredRefreshTokens);
 }
 ```
 
-### ロック名（`enumeration/SchedulerLockName`）
+### ロック名（`enumeration/SchedulerLockNameEnum`）
 
 - 定期実行処理ごとに要素を1つ追加する
 - `lockKey`（`bigint`）はインスタンス間・再起動をまたいで安定させる必要があるため、
@@ -72,5 +72,13 @@ public void purgeExpiredRefreshTokens() {
 ## テスト
 
 - 単体テスト（`@ExtendWith(MockitoExtension.class)`）を `scheduler/` パッケージに配置する
-- `SchedulerLock` をモックし、`SchedulerLockName` の正しい要素とともに対象の Service層メソッドへ
+- `SchedulerLock` をモックし、`SchedulerLockNameEnum` の正しい要素とともに対象の Service層メソッドへ
   委譲していることを検証する
+
+## 検証
+
+命名規則、`@Component` 付与、`@Scheduled` の `zone`、`@ConditionalOnProperty` の `prefix`、禁止importは
+`backend/src/test/java/com/web/gallery/architecture/SchedulerArchitectureTest.java` の ArchUnit テストで機械的に検証される。
+ただし `@RequiredArgsConstructor` の Lombok アノテーション規約は、コンパイラが `RetentionPolicy.SOURCE` で完全に除去し
+バイトコードに一切残らないため、バイトコード解析である ArchUnit では原理的に検証不可能であり、`backend-architecture-checker`
+によるレビューで担保する。

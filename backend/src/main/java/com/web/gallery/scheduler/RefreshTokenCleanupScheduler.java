@@ -1,7 +1,7 @@
 package com.web.gallery.scheduler;
 
 import com.web.gallery.constant.Consts;
-import com.web.gallery.enumeration.SchedulerLockName;
+import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import com.web.gallery.helper.SchedulerLock;
 import com.web.gallery.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +38,6 @@ public class RefreshTokenCleanupScheduler {
   @Scheduled(cron = "0 0 4 * * *", zone = Consts.ZONE_ID_ASIA_TOKYO)
   public void purgeExpiredRefreshTokens() {
     schedulerLock.runIfLocked(
-        SchedulerLockName.REFRESH_TOKEN_CLEANUP, authService::purgeExpiredRefreshTokens);
+        SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP, authService::purgeExpiredRefreshTokens);
   }
 }

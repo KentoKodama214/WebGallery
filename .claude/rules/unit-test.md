@@ -5,6 +5,7 @@ paths:
   - "!backend/src/test/java/com/web/gallery/WebGalleryApplicationTests.java"
   - "!backend/src/test/java/com/web/gallery/ArchitectureTest.java"
   - "!backend/src/test/java/com/web/gallery/ModulithDocumentationTest.java"
+  - "!backend/src/test/java/com/web/gallery/architecture/**"
 ---
 
 # ユニットテストのアーキテクチャルール
@@ -20,5 +21,5 @@ paths:
 ## 対象外
 
 - `WebGalleryApplicationTests`はSpring Boot標準生成のアプリケーションコンテキストロード確認テストであり、本ルールの対象外とする
-- `ArchitectureTest`はArchUnitによるクラスパス解析ベースのアーキテクチャ検証テストであり、Mockitoによるモック化を前提としないため本ルールの対象外とする
+- `ArchitectureTest`、および`architecture/`パッケージ配下の`*ArchitectureTest`はArchUnitによるクラスパス解析ベースのアーキテクチャ検証テストであり、Mockitoによるモック化を前提としないため本ルールの対象外とする
 - `ModulithDocumentationTest`はSpring Modulithによるドキュメント生成テストであり、Mockitoによるモック化を前提としないため本ルールの対象外とする

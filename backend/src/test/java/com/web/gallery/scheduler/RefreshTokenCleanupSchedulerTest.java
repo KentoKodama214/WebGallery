@@ -2,7 +2,7 @@ package com.web.gallery.scheduler;
 
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.enumeration.SchedulerLockName;
+import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import com.web.gallery.helper.SchedulerLock;
 import com.web.gallery.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
@@ -40,12 +40,12 @@ public class RefreshTokenCleanupSchedulerTest {
                 return null;
               })
           .when(schedulerLock)
-          .runIfLocked(eq(SchedulerLockName.REFRESH_TOKEN_CLEANUP), any(Runnable.class));
+          .runIfLocked(eq(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP), any(Runnable.class));
 
       refreshTokenCleanupScheduler.purgeExpiredRefreshTokens();
 
       verify(schedulerLock, times(1))
-          .runIfLocked(eq(SchedulerLockName.REFRESH_TOKEN_CLEANUP), any(Runnable.class));
+          .runIfLocked(eq(SchedulerLockNameEnum.REFRESH_TOKEN_CLEANUP), any(Runnable.class));
       verify(authService, times(1)).purgeExpiredRefreshTokens();
     }
 

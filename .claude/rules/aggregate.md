@@ -24,3 +24,7 @@ paths:
 ## 命名規則
 
 - 集約ルートクラス名: 対象概念そのもの（例: `Photo`）。サフィックスは付与しない
+
+## 検証
+
+コンストラクタのprivate化、publicなsetterの非公開、禁止importは`backend/src/test/java/com/web/gallery/architecture/AggregateArchitectureTest.java`のArchUnitテストで機械的に検証される。

@@ -1,6 +1,6 @@
 package com.web.gallery.repository.impl;
 
-import com.web.gallery.enumeration.SchedulerLockName;
+import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import com.web.gallery.mapper.SchedulerLockMapper;
 import com.web.gallery.repository.SchedulerLockRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ public class SchedulerLockRepositoryImpl implements SchedulerLockRepository {
   private final SchedulerLockMapper schedulerLockMapper;
 
   @Override
-  public boolean tryLock(SchedulerLockName lockName) {
+  public boolean tryLock(SchedulerLockNameEnum lockName) {
     return Boolean.TRUE.equals(schedulerLockMapper.tryAdvisoryXactLock(lockName.getLockKey()));
   }
 }

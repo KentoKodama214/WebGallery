@@ -1,6 +1,6 @@
 package com.web.gallery.helper;
 
-import com.web.gallery.enumeration.SchedulerLockName;
+import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import com.web.gallery.repository.SchedulerLockRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,7 @@ public class SchedulerLock {
    * @param task ロック取得時に実行する処理
    */
   @Transactional
-  public void runIfLocked(SchedulerLockName lockName, Runnable task) {
+  public void runIfLocked(SchedulerLockNameEnum lockName, Runnable task) {
     String name = lockName.getDisplayName();
     if (!schedulerLockRepository.tryLock(lockName)) {
       log.info("{} {} スキップ（他インスタンスが実行中）", LOG_PREFIX, name);

@@ -26,3 +26,7 @@ paths:
 
 - **許可するimport**: `domain/`
 - **禁止するimport**: `controller/`、`repository/`、`mapper/`、`entity/`、`dto/`、`service/`への依存
+
+## 検証
+
+本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/EventArchitectureTest.java`のArchUnitテストで機械的に検証される。
