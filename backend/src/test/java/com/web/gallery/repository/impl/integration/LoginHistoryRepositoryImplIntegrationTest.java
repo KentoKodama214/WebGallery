@@ -6,7 +6,6 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Country;
 import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.IpGeoLocation;
-import com.web.gallery.domain.common.IsSuccess;
 import com.web.gallery.domain.common.Region;
 import com.web.gallery.entity.LoginHistory;
 import com.web.gallery.model.LoginHistoryModel;
@@ -42,7 +41,6 @@ public class LoginHistoryRepositoryImplIntegrationTest {
             LoginHistory.builder()
                 .loginHistoryNo(rs.getLong("login_history_no"))
                 .accountNo(rs.getLong("account_no"))
-                .isSuccess(rs.getBoolean("is_success"))
                 .ipAddress(rs.getString("ip_address"))
                 .country(rs.getString("country"))
                 .region(rs.getString("region"))
@@ -65,7 +63,6 @@ public class LoginHistoryRepositoryImplIntegrationTest {
       LoginHistoryModel model =
           LoginHistoryModel.of(
               new AccountNo(1L),
-              new IsSuccess(true),
               new IpAddress("203.0.113.1"),
               new IpGeoLocation(new Country("JP"), new Region("Tokyo")));
 
@@ -73,7 +70,6 @@ public class LoginHistoryRepositoryImplIntegrationTest {
 
       List<LoginHistory> actual = getLoginHistoryByAccountNo(1L);
       assertEquals(1, actual.size());
-      assertTrue(actual.getFirst().getIsSuccess());
       assertEquals("203.0.113.1", actual.getFirst().getIpAddress());
       assertEquals("JP", actual.getFirst().getCountry());
       assertEquals("Tokyo", actual.getFirst().getRegion());
@@ -88,16 +84,12 @@ public class LoginHistoryRepositoryImplIntegrationTest {
     void save_success_with_empty_geo() {
       LoginHistoryModel model =
           LoginHistoryModel.of(
-              new AccountNo(1L),
-              new IsSuccess(false),
-              new IpAddress("198.51.100.99"),
-              IpGeoLocation.empty());
+              new AccountNo(1L), new IpAddress("198.51.100.99"), IpGeoLocation.empty());
 
       loginHistoryRepositoryImpl.save(model);
 
       List<LoginHistory> actual = getLoginHistoryByAccountNo(1L);
       assertEquals(1, actual.size());
-      assertFalse(actual.getFirst().getIsSuccess());
       assertEquals("", actual.getFirst().getCountry());
       assertEquals("", actual.getFirst().getRegion());
     }

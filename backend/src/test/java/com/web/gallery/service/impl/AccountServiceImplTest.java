@@ -858,7 +858,6 @@ public class AccountServiceImplTest {
       verify(loginHistoryRepositoryImpl).save(loginHistoryModelCaptor.capture());
       LoginHistoryModel loginHistoryModel = loginHistoryModelCaptor.getValue();
       assertEquals(new AccountNo(1L), loginHistoryModel.getAccountNo());
-      assertTrue(loginHistoryModel.getIsSuccess().value());
       assertEquals(ipAddress, loginHistoryModel.getIpAddress());
     }
 
@@ -978,8 +977,8 @@ public class AccountServiceImplTest {
 
     @Test
     @Order(4)
-    @DisplayName("正常系：認証情報にIPアドレスが設定されている場合、ログイン履歴が記録されること")
-    void handle_recordsLoginHistory() throws GalleryException {
+    @DisplayName("正常系：ログイン失敗時はログイン履歴が記録されないこと")
+    void handle_doesNotRecordLoginHistory() throws GalleryException {
       String username = "aaaaaaaa";
       String password = "AAAAAAAA";
       IpAddress ipAddress = new IpAddress("203.0.113.1");
@@ -1000,18 +999,9 @@ public class AccountServiceImplTest {
               .build();
       doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
 
-      IpGeoLocation geoLocation = IpGeoLocation.empty();
-      doReturn(geoLocation).when(geoIpResolver).resolve(ipAddress);
-
       accountServiceImpl.handle(event);
 
-      ArgumentCaptor<LoginHistoryModel> loginHistoryModelCaptor =
-          ArgumentCaptor.forClass(LoginHistoryModel.class);
-      verify(loginHistoryRepositoryImpl).save(loginHistoryModelCaptor.capture());
-      LoginHistoryModel loginHistoryModel = loginHistoryModelCaptor.getValue();
-      assertEquals(new AccountNo(1L), loginHistoryModel.getAccountNo());
-      assertFalse(loginHistoryModel.getIsSuccess().value());
-      assertEquals(ipAddress, loginHistoryModel.getIpAddress());
+      verifyNoInteractions(loginHistoryRepositoryImpl);
     }
   }
 

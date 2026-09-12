@@ -11,7 +11,6 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.IpGeoLocation;
-import com.web.gallery.domain.common.IsSuccess;
 import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
@@ -459,7 +458,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
     }
     accountRepository.updateLoginFailureCount(
         AccountModel.forLoginSuccess(accountModel.getAccountNo(), clock));
-    recordLoginHistory(event.getAuthentication(), accountModel.getAccountNo(), true);
+    recordLoginHistory(event.getAuthentication(), accountModel.getAccountNo());
   }
 
   /**
@@ -478,27 +477,23 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 
     if (!Objects.isNull(accountModel)) {
       accountRepository.incrementLoginFailureCount(accountModel.getAccountNo());
-      recordLoginHistory(event.getAuthentication(), accountModel.getAccountNo(), false);
     }
   }
 
   /**
-   * ログイン履歴を記録する
+   * ログイン履歴を記録する（ログイン成功時のみ）
    *
    * <p>存在しないアカウントIDへのログイン試行は対象外（呼び出し元でaccountModelがnullでないことを確認済み）。
    * IPアドレスはAuthServiceImpl#loginがAuthenticationのdetailsに設定したものを取り出す
    *
-   * @param authentication 認証結果（成功・失敗いずれも{@link IpAddress}をdetailsに保持する）
+   * @param authentication 認証結果（{@link IpAddress}をdetailsに保持する）
    * @param accountNo アカウント番号
-   * @param isSuccess ログイン成功フラグ
    */
-  private void recordLoginHistory(
-      Authentication authentication, AccountNo accountNo, boolean isSuccess) {
+  private void recordLoginHistory(Authentication authentication, AccountNo accountNo) {
     if (!(authentication.getDetails() instanceof IpAddress ipAddress)) {
       return;
     }
     IpGeoLocation geoLocation = geoIpResolver.resolve(ipAddress);
-    loginHistoryRepository.save(
-        LoginHistoryModel.of(accountNo, new IsSuccess(isSuccess), ipAddress, geoLocation));
+    loginHistoryRepository.save(LoginHistoryModel.of(accountNo, ipAddress, geoLocation));
   }
 }

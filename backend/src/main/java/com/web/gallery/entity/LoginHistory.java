@@ -21,9 +21,6 @@ public class LoginHistory {
   /** アカウント番号 */
   private Long accountNo;
 
-  /** ログイン成功フラグ */
-  private Boolean isSuccess;
-
   /** 送信元IPアドレス */
   private String ipAddress;
 
@@ -48,7 +45,6 @@ public class LoginHistory {
   public static LoginHistory from(LoginHistoryModel model) {
     return LoginHistory.builder()
         .accountNo(model.getAccountNo().value())
-        .isSuccess(model.getIsSuccess().value())
         .ipAddress(model.getIpAddress().value())
         .country(
             model.getGeoLocation().country() != null
