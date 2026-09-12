@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.web.gallery.helper.ClientIpResolver;
 import com.web.gallery.helper.RateLimiter;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,7 @@ class RateLimitFilterTest {
 
   @BeforeEach
   void setUp() {
-    rateLimitFilter = new RateLimitFilter(config(true), rateLimiter);
+    rateLimitFilter = new RateLimitFilter(config(true), rateLimiter, new ClientIpResolver());
   }
 
   private MockHttpServletRequest request(String method, String uri) {
@@ -117,7 +118,7 @@ class RateLimitFilterTest {
   @Test
   @DisplayName("無効化されている場合はカウントせず素通しする")
   void skipsWhenDisabled() throws Exception {
-    rateLimitFilter = new RateLimitFilter(config(false), rateLimiter);
+    rateLimitFilter = new RateLimitFilter(config(false), rateLimiter, new ClientIpResolver());
     MockHttpServletResponse response = new MockHttpServletResponse();
 
     rateLimitFilter.doFilter(

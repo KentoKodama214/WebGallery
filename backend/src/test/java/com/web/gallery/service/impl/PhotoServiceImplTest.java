@@ -10,9 +10,12 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Address;
 import com.web.gallery.domain.common.GeoLocation;
+import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.common.IpGeoLocation;
 import com.web.gallery.domain.common.Latitude;
 import com.web.gallery.domain.common.LocationName;
 import com.web.gallery.domain.common.Longitude;
+import com.web.gallery.domain.common.Referer;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FValue;
@@ -47,6 +50,7 @@ import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.helper.GeoIpResolver;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -70,7 +74,9 @@ import com.web.gallery.repository.impl.AccountRepositoryImpl;
 import com.web.gallery.repository.impl.FileRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
+import com.web.gallery.repository.impl.PhotoListFilterLogRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoMstRepositoryImpl;
+import com.web.gallery.repository.impl.PhotoViewLogRepositoryImpl;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -130,6 +136,12 @@ public class PhotoServiceImplTest {
 
   @Mock private FileRepositoryImpl fileRepositoryImpl;
 
+  @Mock private PhotoListFilterLogRepositoryImpl photoListFilterLogRepositoryImpl;
+
+  @Mock private PhotoViewLogRepositoryImpl photoViewLogRepositoryImpl;
+
+  @Mock private GeoIpResolver geoIpResolver;
+
   @Mock private PhotoConfig photoConfig;
 
   @Mock private PhotoQuotaPolicy photoQuotaPolicy;
@@ -150,6 +162,7 @@ public class PhotoServiceImplTest {
         .doAnswer(invocation -> invocation.getArgument(0))
         .when(fileRepositoryImpl)
         .getPresignedUrl(any(ImageFilePath.class));
+    lenient().when(geoIpResolver.resolve(any(IpAddress.class))).thenReturn(IpGeoLocation.empty());
   }
 
   @Nested
@@ -347,6 +360,8 @@ public class PhotoServiceImplTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -393,6 +408,8 @@ public class PhotoServiceImplTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.FAVORITE)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -479,6 +496,8 @@ public class PhotoServiceImplTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.SEASON)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -514,6 +533,8 @@ public class PhotoServiceImplTest {
               .tagList(new ArrayList<String>())
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertThrows(
@@ -555,6 +576,8 @@ public class PhotoServiceImplTest {
               .accountNo(new AccountNo(2L))
               .photoAccountId(new AccountId(accountId))
               .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertEquals(actual, photoServiceImpl.getPhotoDetail(photoDetailGetModel));
@@ -579,6 +602,8 @@ public class PhotoServiceImplTest {
               .accountNo(new AccountNo(2L))
               .photoAccountId(new AccountId(accountId))
               .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertThrows(
@@ -599,6 +624,8 @@ public class PhotoServiceImplTest {
               .accountNo(new AccountNo(2L))
               .photoAccountId(new AccountId(accountId))
               .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertThrows(
@@ -652,6 +679,8 @@ public class PhotoServiceImplTest {
                   .accountNo(new AccountNo(2L))
                   .photoAccountId(new AccountId("aaaaaaaa"))
                   .photoNo(new PhotoNo(1L))
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
                   .build());
 
       assertNull(actual.getLocationNo());
@@ -674,6 +703,8 @@ public class PhotoServiceImplTest {
                   .accountNo(new AccountNo(1L))
                   .photoAccountId(new AccountId("aaaaaaaa"))
                   .photoNo(new PhotoNo(1L))
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
                   .build());
 
       assertEquals(9L, actual.getLocationNo().value());
@@ -693,6 +724,8 @@ public class PhotoServiceImplTest {
                   .accountNo(new AccountNo(2L))
                   .photoAccountId(new AccountId("aaaaaaaa"))
                   .photoNo(new PhotoNo(1L))
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
                   .build());
 
       assertEquals("東京都渋谷区", actual.getGeoLocation().address().value());
@@ -710,6 +743,8 @@ public class PhotoServiceImplTest {
               PhotoDetailGetModel.builder()
                   .photoAccountId(new AccountId("aaaaaaaa"))
                   .photoNo(new PhotoNo(1L))
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
                   .build());
 
       assertNull(actual.getLocationNo());

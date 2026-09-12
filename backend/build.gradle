@@ -60,7 +60,7 @@ dependencies {
 	// org.springframework.boot プラグイン（4.1.1）＋ io.spring.dependency-management が提供する
 	// BOM に一元管理させ、ここでは明示しない（バージョンの二重管理・不整合を防ぐ）。
 	// BOM 管理外のサードパーティ依存（jjwt / modelmapper / springdoc / mybatis-spring-boot-starter /
-	// archunit / lombok）のみバージョンを明示する。
+	// archunit / lombok / geoip2）のみバージョンを明示する。
 	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
@@ -71,6 +71,8 @@ dependencies {
 	implementation 'software.amazon.awssdk:url-connection-client'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.1.1'
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+	// IPアドレスから国・地域を解決するGeoLite2（MaxMind）用リーダー
+	implementation 'com.maxmind.geoip2:geoip2:4.2.1'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 	compileOnly 'org.projectlombok:lombok:1.18.48'

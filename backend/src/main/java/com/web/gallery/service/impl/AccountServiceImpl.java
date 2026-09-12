@@ -9,6 +9,9 @@ import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.common.IpGeoLocation;
+import com.web.gallery.domain.common.IsSuccess;
 import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
@@ -20,16 +23,19 @@ import com.web.gallery.event.AccountUnlockedEvent;
 import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.helper.GeoIpResolver;
 import com.web.gallery.helper.ReauthenticationThrottle;
 import com.web.gallery.model.AccountGetModel;
 import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountPageModel;
 import com.web.gallery.model.KbnMstModelList;
+import com.web.gallery.model.LoginHistoryModel;
 import com.web.gallery.repository.AccountAggregateRepository;
 import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.KbnMstRepository;
+import com.web.gallery.repository.LoginHistoryRepository;
 import com.web.gallery.repository.RefreshTokenRepository;
 import com.web.gallery.service.AccountService;
 import java.time.Clock;
@@ -40,6 +46,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -69,9 +76,11 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
   private final AccountAggregateRepository accountAggregateRepository;
   private final FileRepository fileRepository;
   private final RefreshTokenRepository refreshTokenRepository;
+  private final LoginHistoryRepository loginHistoryRepository;
   private final KbnMstRepository kbnMstRepository;
   private final PasswordEncoder passwordEncoder;
   private final ReauthenticationThrottle reauthenticationThrottle;
+  private final GeoIpResolver geoIpResolver;
   private final LoginConfig loginConfig;
   private final AccountConfig accountConfig;
   private final Clock clock;
@@ -450,6 +459,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
     }
     accountRepository.updateLoginFailureCount(
         AccountModel.forLoginSuccess(accountModel.getAccountNo(), clock));
+    recordLoginHistory(event.getAuthentication(), accountModel.getAccountNo(), true);
   }
 
   /**
@@ -468,6 +478,27 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
 
     if (!Objects.isNull(accountModel)) {
       accountRepository.incrementLoginFailureCount(accountModel.getAccountNo());
+      recordLoginHistory(event.getAuthentication(), accountModel.getAccountNo(), false);
     }
+  }
+
+  /**
+   * ログイン履歴を記録する
+   *
+   * <p>存在しないアカウントIDへのログイン試行は対象外（呼び出し元でaccountModelがnullでないことを確認済み）。
+   * IPアドレスはAuthServiceImpl#loginがAuthenticationのdetailsに設定したものを取り出す
+   *
+   * @param authentication 認証結果（成功・失敗いずれも{@link IpAddress}をdetailsに保持する）
+   * @param accountNo アカウント番号
+   * @param isSuccess ログイン成功フラグ
+   */
+  private void recordLoginHistory(
+      Authentication authentication, AccountNo accountNo, boolean isSuccess) {
+    if (!(authentication.getDetails() instanceof IpAddress ipAddress)) {
+      return;
+    }
+    IpGeoLocation geoLocation = geoIpResolver.resolve(ipAddress);
+    loginHistoryRepository.save(
+        LoginHistoryModel.of(accountNo, new IsSuccess(isSuccess), ipAddress, geoLocation));
   }
 }

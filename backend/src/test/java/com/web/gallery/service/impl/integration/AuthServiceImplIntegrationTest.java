@@ -8,6 +8,7 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.RefreshTokenValue;
+import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.InvalidRefreshTokenException;
@@ -55,6 +56,8 @@ public class AuthServiceImplIntegrationTest {
   @Autowired private JwtConfig jwtConfig;
 
   private static final String TEST_PASSWORD = "password123";
+
+  private static final IpAddress TEST_IP_ADDRESS = new IpAddress("203.0.113.1");
 
   /** テストデータ投入 */
   private void insertTestData() {
@@ -131,7 +134,8 @@ public class AuthServiceImplIntegrationTest {
     void login_success() throws Exception {
       OffsetDateTime beforeLogin = OffsetDateTime.now();
       AuthTokenModel result =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       OffsetDateTime afterLogin = OffsetDateTime.now();
 
       assertNotNull(result.getAccessToken().value());
@@ -165,12 +169,14 @@ public class AuthServiceImplIntegrationTest {
     void login_revokes_existing_tokens() throws Exception {
       // 1回目のログイン
       AuthTokenModel firstResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       String firstTokenHash = hashToken(firstResult.getRefreshToken().value());
 
       // 2回目のログイン
       AuthTokenModel secondResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       String secondTokenHash = hashToken(secondResult.getRefreshToken().value());
 
       // 1回目のトークンが無効化されていることを検証
@@ -192,7 +198,9 @@ public class AuthServiceImplIntegrationTest {
     void login_wrong_password() {
       assertThrows(
           BadCredentialsException.class,
-          () -> authServiceImpl.login(new AccountId("testuser01"), new Password("wrongpassword")));
+          () ->
+              authServiceImpl.login(
+                  new AccountId("testuser01"), new Password("wrongpassword"), TEST_IP_ADDRESS));
     }
 
     @Test
@@ -201,7 +209,9 @@ public class AuthServiceImplIntegrationTest {
     void login_account_not_found() {
       assertThrows(
           BadCredentialsException.class,
-          () -> authServiceImpl.login(new AccountId("notexists"), new Password(TEST_PASSWORD)));
+          () ->
+              authServiceImpl.login(
+                  new AccountId("notexists"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS));
     }
 
     @Test
@@ -210,7 +220,9 @@ public class AuthServiceImplIntegrationTest {
     void login_locked_account() {
       assertThrows(
           LockedException.class,
-          () -> authServiceImpl.login(new AccountId("lockeduser"), new Password(TEST_PASSWORD)));
+          () ->
+              authServiceImpl.login(
+                  new AccountId("lockeduser"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS));
     }
 
     @Test
@@ -219,7 +231,9 @@ public class AuthServiceImplIntegrationTest {
     void login_wrong_password_increments_failure_count() {
       assertThrows(
           BadCredentialsException.class,
-          () -> authServiceImpl.login(new AccountId("testuser01"), new Password("wrongpassword")));
+          () ->
+              authServiceImpl.login(
+                  new AccountId("testuser01"), new Password("wrongpassword"), TEST_IP_ADDRESS));
 
       Integer failureCount =
           jdbcTemplate.queryForObject(
@@ -235,7 +249,8 @@ public class AuthServiceImplIntegrationTest {
         assertThrows(
             BadCredentialsException.class,
             () ->
-                authServiceImpl.login(new AccountId("testuser01"), new Password("wrongpassword")));
+                authServiceImpl.login(
+                    new AccountId("testuser01"), new Password("wrongpassword"), TEST_IP_ADDRESS));
 
         // login()が投げたBadCredentialsExceptionによりこのテストトランザクションは
         // 既にロールバック専用になっているためflagForCommit()は使えない。
@@ -248,7 +263,9 @@ public class AuthServiceImplIntegrationTest {
 
       assertThrows(
           LockedException.class,
-          () -> authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD)));
+          () ->
+              authServiceImpl.login(
+                  new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS));
     }
   }
 
@@ -268,7 +285,8 @@ public class AuthServiceImplIntegrationTest {
     void refresh_success() {
       // ログインしてリフレッシュトークンを取得
       AuthTokenModel loginResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
 
       // リフレッシュ
       AuthTokenModel refreshResult = authServiceImpl.refresh(loginResult.getRefreshToken());
@@ -286,7 +304,8 @@ public class AuthServiceImplIntegrationTest {
     void refresh_reuseDetection_revokesAllTokens() {
       // ログインしてリフレッシュトークンを取得
       AuthTokenModel loginResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       String firstRefreshToken = loginResult.getRefreshToken().value();
 
       // 1回目のリフレッシュでトークンがローテーションされる
@@ -324,7 +343,8 @@ public class AuthServiceImplIntegrationTest {
     void refresh_revoked_token() throws Exception {
       // ログインしてリフレッシュトークンを取得
       AuthTokenModel loginResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       String refreshToken = loginResult.getRefreshToken().value();
 
       // トークンを無効化
@@ -344,7 +364,8 @@ public class AuthServiceImplIntegrationTest {
     void refresh_expired_token() throws Exception {
       // ログインしてリフレッシュトークンを取得
       AuthTokenModel loginResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       String refreshToken = loginResult.getRefreshToken().value();
 
       // 有効期限を過去に設定
@@ -368,7 +389,8 @@ public class AuthServiceImplIntegrationTest {
     void refresh_account_locked_after_token_issued() {
       // ログインしてリフレッシュトークンを取得
       AuthTokenModel loginResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       String refreshToken = loginResult.getRefreshToken().value();
 
       // 管理者によるアカウントロックを模擬（ログイン失敗回数を上限に更新し、更新日時も現在時刻にする）
@@ -387,7 +409,8 @@ public class AuthServiceImplIntegrationTest {
     void refresh_after_account_deleted() {
       // ログインしてリフレッシュトークンを取得
       AuthTokenModel loginResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       String refreshToken = loginResult.getRefreshToken().value();
 
       // アカウントを削除（本来はdeleteAccount内でリフレッシュトークンも失効するが、
@@ -408,7 +431,8 @@ public class AuthServiceImplIntegrationTest {
     void refresh_fails_after_delete_account() throws GalleryException {
       // ログインしてリフレッシュトークンを取得
       AuthTokenModel loginResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       String refreshToken = loginResult.getRefreshToken().value();
 
       // アカウントを削除（deleteAccount内でリフレッシュトークンも失効される）
@@ -440,7 +464,8 @@ public class AuthServiceImplIntegrationTest {
     void logout_success() throws Exception {
       // ログインしてリフレッシュトークンを取得
       AuthTokenModel loginResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       String refreshToken = loginResult.getRefreshToken().value();
       String tokenHash = hashToken(refreshToken);
 
@@ -473,7 +498,8 @@ public class AuthServiceImplIntegrationTest {
     void logout_then_refresh_fails() {
       // ログイン
       AuthTokenModel loginResult =
-          authServiceImpl.login(new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
       String refreshToken = loginResult.getRefreshToken().value();
 
       // ログアウト
