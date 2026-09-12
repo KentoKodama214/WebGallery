@@ -414,7 +414,10 @@ public class AuthServiceImplIntegrationTest {
       String refreshToken = loginResult.getRefreshToken().value();
 
       // アカウントを削除（本来はdeleteAccount内でリフレッシュトークンも失効するが、
-      // 失効漏れがあった場合の防御的なnullチェックを検証するため直接アカウントのみ削除する）
+      // 失効漏れがあった場合の防御的なnullチェックを検証するため直接アカウントのみ削除する）。
+      // 直前のlogin()でlogin_historyへの外部キー制約付き行が作られているため、
+      // アプリの削除フロー同様に先に削除しておく
+      jdbcTemplate.update("DELETE FROM common.login_history WHERE account_no = ?", 1L);
       jdbcTemplate.update("DELETE FROM common.account WHERE account_no = ?", 1L);
 
       // 削除済みアカウントのリフレッシュトークンでリフレッシュ

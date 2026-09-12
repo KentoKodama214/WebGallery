@@ -19,10 +19,10 @@
 			created_at
 		) VALUES (
 			#{photoAccountNo},
-			#{directionKbn, typeHandler=com.web.gallery.type_handler.DirectionEnumTypeHandler},
+			#{directionKbn, typeHandler=com.web.gallery.type_handler.DirectionEnumTypeHandler}::photo.direction_enum,
 			#{isFavorite},
 			COALESCE(#{tagList}, ''),
-			#{sortBy, typeHandler=com.web.gallery.type_handler.SortPhotoEnumTypeHandler},
+			#{sortBy, typeHandler=com.web.gallery.type_handler.SortPhotoEnumTypeHandler}::photo.sort_photo_enum,
 			COALESCE(#{referer}, ''),
 			#{ipAddress},
 			COALESCE(#{country}, ''),

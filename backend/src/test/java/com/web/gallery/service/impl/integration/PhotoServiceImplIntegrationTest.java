@@ -7,6 +7,8 @@ import static org.mockito.Mockito.lenient;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.common.Referer;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FValue;
@@ -123,6 +125,8 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -145,6 +149,8 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -190,6 +196,8 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(2)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -221,6 +229,8 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.FAVORITE)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -278,6 +288,8 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.SEASON)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -323,6 +335,8 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -366,6 +380,8 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -422,6 +438,8 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -472,6 +490,8 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertThrows(
@@ -494,6 +514,8 @@ public class PhotoServiceImplIntegrationTest {
               .accountNo(new AccountNo(1L))
               .photoAccountId(new AccountId("aaaaaaaa"))
               .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
@@ -538,6 +560,8 @@ public class PhotoServiceImplIntegrationTest {
               .accountNo(new AccountNo(1L))
               .photoAccountId(new AccountId("aaaaaaaa"))
               .photoNo(new PhotoNo(11L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertThrows(
@@ -553,6 +577,8 @@ public class PhotoServiceImplIntegrationTest {
               .accountNo(new AccountNo(1L))
               .photoAccountId(new AccountId("zzzzzzzz"))
               .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertThrows(
