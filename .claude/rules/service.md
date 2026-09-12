@@ -14,6 +14,7 @@ paths:
 
 - `service/impl/`の実装クラスには`@Service`アノテーションを付与すること
 - `service/impl/`の実装クラスのpublicメソッドには、`@Transactional`アノテーションを付与すること
+- `@Transactional(readOnly = true)`はリードレプリカへルーティングされうる（`config/DataSourceConfig`）。直前の書き込みトランザクションの結果を同一フロー内で即座に読み戻す必要がある処理には`readOnly = true`を付与しないこと（詳細: `doc/architecture/datasource.md`）
 
 ## レイヤー間依存関係
 

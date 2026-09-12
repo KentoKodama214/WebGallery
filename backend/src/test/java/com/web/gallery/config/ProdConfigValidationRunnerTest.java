@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
@@ -23,6 +24,10 @@ class ProdConfigValidationRunnerTest {
   @Mock private CorsConfig corsConfig;
 
   @Mock private S3Config s3Config;
+
+  @Mock private DataSourceProperties dataSourceProperties;
+
+  @Mock private DataSourceReplicaConfig dataSourceReplicaConfig;
 
   @Nested
   @DisplayName("CORS許可オリジンの検証")
@@ -121,6 +126,61 @@ class ProdConfigValidationRunnerTest {
           .thenReturn(List.of("https://gallery.example.com"));
       lenient().when(s3Config.getEndpoint()).thenReturn("https://s3.ap-northeast-1.amazonaws.com");
       lenient().when(s3Config.getPublicBaseUrl()).thenReturn("https://cdn.example.com");
+
+      assertDoesNotThrow(() -> prodConfigValidationRunner.validate());
+    }
+  }
+
+  @Nested
+  @DisplayName("リードレプリカ接続URLの検証")
+  class ReplicaUrl {
+
+    @Test
+    @DisplayName("未設定なら検証を通過する")
+    void notConfigured() {
+      lenient()
+          .when(corsConfig.getAllowedOrigins())
+          .thenReturn(List.of("https://gallery.example.com"));
+      lenient().when(dataSourceReplicaConfig.getUrl()).thenReturn(null);
+
+      assertDoesNotThrow(() -> prodConfigValidationRunner.validate());
+    }
+
+    @Test
+    @DisplayName("jdbc:postgresql:// で始まらないURLは起動失敗する")
+    void notPostgresqlUrl() {
+      lenient()
+          .when(corsConfig.getAllowedOrigins())
+          .thenReturn(List.of("https://gallery.example.com"));
+      lenient().when(dataSourceReplicaConfig.getUrl()).thenReturn("jdbc:mysql://replica:3306/db");
+
+      assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+    }
+
+    @Test
+    @DisplayName("プライマリと同一URLは起動失敗する")
+    void sameAsPrimary() {
+      lenient()
+          .when(corsConfig.getAllowedOrigins())
+          .thenReturn(List.of("https://gallery.example.com"));
+      lenient().when(dataSourceProperties.getUrl()).thenReturn("jdbc:postgresql://primary:5432/db");
+      lenient()
+          .when(dataSourceReplicaConfig.getUrl())
+          .thenReturn("jdbc:postgresql://primary:5432/db");
+
+      assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+    }
+
+    @Test
+    @DisplayName("プライマリと異なるPostgreSQL接続URLなら検証を通過する")
+    void validReplicaUrl() {
+      lenient()
+          .when(corsConfig.getAllowedOrigins())
+          .thenReturn(List.of("https://gallery.example.com"));
+      lenient().when(dataSourceProperties.getUrl()).thenReturn("jdbc:postgresql://primary:5432/db");
+      lenient()
+          .when(dataSourceReplicaConfig.getUrl())
+          .thenReturn("jdbc:postgresql://replica:5432/db");
 
       assertDoesNotThrow(() -> prodConfigValidationRunner.validate());
     }

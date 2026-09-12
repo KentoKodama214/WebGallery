@@ -8,6 +8,7 @@ WebGalleryは、Spring Bootベースのレイヤード・アーキテクチャ�
 
 - [レイヤード・アーキテクチャ](./layered-architecture.md)
 - [セキュリティ](./security.md)
+- [データソース構成（プライマリ／リードレプリカ）](./datasource.md)
 - [モジュール構成・依存関係（Spring Modulith）](../modulith/components.png)
 
 ## Spring Modulithドキュメントの図を生成する手順
