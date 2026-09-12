@@ -6,6 +6,10 @@ db-up:
 db-down:
     docker-compose down
 
+# ローカル動作確認用のダミーデータ（アカウント3件・写真10枚・タグ・お気に入り）をDB・MinIOへ投入
+seed-local:
+    ./scripts/seed-local-data.sh
+
 # フロントエンドの初期セットアップ（mise + corepack + pnpm install）
 front-setup:
     mise install
