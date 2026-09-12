@@ -1,13 +1,15 @@
 #!/bin/bash
 # ローカル動作確認用のダミーデータ投入スクリプト
 #
-# 以下を新規作成する（既存データは削除しない。account_id が重複する場合のみ再作成する）
+# 【注意】実行するとローカルDB・MinIOの写真関連データを完全にリセットする
+#   - account、location_mst、refresh_token、photo_mst、photo_tag_mst、photo_favorite を全件削除
+#     （外部キー制約上、account を削除するには location_mst・refresh_token も連鎖して削除する必要がある）
+#   - MinIO（web-gallery-local バケット）内の画像ファイルも全件削除
+# その上で、以下を新規作成する
 #   - アカウント3件（localuser01: normal-user, localuser02: mini-user, localuser03: administrator）
 #   - localuser01 の写真10枚（縦6枚・横4枚）とロケーション・タグ
 #   - localuser01 の写真に対する localuser01/02/03 からのお気に入り（お気に入り数順ソートの検証用に件数を分散）
-#   - ダミー画像（ImageMagickで生成）をMinIO（web-gallery-local バケット）へアップロード
-#
-# 再実行しても安全（localuser01/02/03 に紐づく既存データ・画像は投入前に削除する）
+#   - ダミー画像（ImageMagickで生成）をMinIOへアップロード
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -36,6 +38,24 @@ done
 
 NETWORK=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' "$MINIO_CONTAINER")
 echo "MinIOのDockerネットワーク: $NETWORK"
+
+echo "既存のアカウント・写真関連データを全件削除します（account, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite）"
+docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 <<'SQL'
+TRUNCATE TABLE
+  photo.photo_favorite,
+  photo.photo_tag_mst,
+  photo.photo_mst,
+  common.location_mst,
+  common.refresh_token,
+  common.account
+RESTART IDENTITY CASCADE;
+SQL
+
+echo "既存のアップロード済み画像を全件削除します（バケット: ${BUCKET}）"
+docker run --rm --network "$NETWORK" --entrypoint /bin/sh minio/mc:latest -c "
+  mc alias set local http://minio:9000 minioadmin minioadmin >/dev/null &&
+  mc rm --recursive --force --dangerous local/${BUCKET}/ >/dev/null 2>&1 || true
+"
 
 PASSWORD_HASH=$(htpasswd -bnBC 10 "" "$PASSWORD_PLAIN" | cut -d: -f2)
 
@@ -114,32 +134,9 @@ for i in $(seq 0 $((PHOTO_COUNT - 1))); do
     "$TMP_DIR/$file_name"
 done
 
-echo "既存の localuser01/02/03 データを削除します（再実行対応）"
-docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 <<SQL
-DELETE FROM photo.photo_favorite
-  WHERE account_no IN (SELECT account_no FROM common.account WHERE account_id IN ('${ACCOUNT_IDS[0]}', '${ACCOUNT_IDS[1]}', '${ACCOUNT_IDS[2]}'))
-     OR favorite_photo_account_no IN (SELECT account_no FROM common.account WHERE account_id IN ('${ACCOUNT_IDS[0]}', '${ACCOUNT_IDS[1]}', '${ACCOUNT_IDS[2]}'));
-DELETE FROM photo.photo_tag_mst
-  WHERE account_no IN (SELECT account_no FROM common.account WHERE account_id IN ('${ACCOUNT_IDS[0]}', '${ACCOUNT_IDS[1]}', '${ACCOUNT_IDS[2]}'));
-DELETE FROM photo.photo_mst
-  WHERE account_no IN (SELECT account_no FROM common.account WHERE account_id IN ('${ACCOUNT_IDS[0]}', '${ACCOUNT_IDS[1]}', '${ACCOUNT_IDS[2]}'));
-DELETE FROM common.location_mst
-  WHERE account_no IN (SELECT account_no FROM common.account WHERE account_id IN ('${ACCOUNT_IDS[0]}', '${ACCOUNT_IDS[1]}', '${ACCOUNT_IDS[2]}'));
-DELETE FROM common.account
-  WHERE account_id IN ('${ACCOUNT_IDS[0]}', '${ACCOUNT_IDS[1]}', '${ACCOUNT_IDS[2]}');
-SQL
-
-echo "既存のアップロード済み画像を削除します（再実行対応）"
-for account_id in "${ACCOUNT_IDS[@]}"; do
-  docker run --rm --network "$NETWORK" --entrypoint /bin/sh minio/mc:latest -c "
-    mc alias set local http://minio:9000 minioadmin minioadmin >/dev/null &&
-    mc rm --recursive --force local/${BUCKET}/${account_id}/ >/dev/null 2>&1 || true
-  "
-done
-
 echo "投入用SQLを生成します"
 {
-  # created_by/updated_by は既存の管理者アカウント(account_no=1)を監査用の作成者として使う
+  # created_by/updated_by は監査用の作成者IDとして1を使う（全件クリア直後のためlocaluser01自身のaccount_noと一致する）
   cat <<SQL
 INSERT INTO common.account VALUES (DEFAULT, 1, now(), 1, now(), false, '${ACCOUNT_IDS[0]}', 'ローカル太郎', '${PASSWORD_HASH}', '1900-01-01', 'none', 'none', 'none', '', 'normal-user', now(), 0, false) RETURNING account_no \gset u1_
 INSERT INTO common.account VALUES (DEFAULT, 1, now(), 1, now(), false, '${ACCOUNT_IDS[1]}', 'ローカル花子', '${PASSWORD_HASH}', '1900-01-01', 'none', 'none', 'none', '', 'mini-user', now(), 0, false) RETURNING account_no \gset u2_
