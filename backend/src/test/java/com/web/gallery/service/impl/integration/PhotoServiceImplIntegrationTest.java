@@ -51,6 +51,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -66,6 +67,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -102,6 +104,41 @@ public class PhotoServiceImplIntegrationTest {
     lenient()
         .when(fileRepository.getPresignedUrl(any(ImageFilePath.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
+  }
+
+  /**
+   * 写真一覧・詳細の絞り込み・閲覧ログはREQUIRES_NEWで独立した別コネクションのトランザクションとして書き込むため、
+   * フィクスチャ（{@code @Sql}）で投入したaccount・photo_mst行が本テストのトランザクション内で未コミットのままだと、
+   * 外部キー制約の検証がその行のコミットを待ち続けて自己デッドロックする。 そのため、フィクスチャ投入後にここで一度物理コミットしてから新しいテスト用トランザクションを開始する
+   */
+  @BeforeEach
+  void commitFixtures() {
+    TestTransaction.flagForCommit();
+    TestTransaction.end();
+    TestTransaction.start();
+  }
+
+  /**
+   * commitFixturesで物理コミットしたフィクスチャ・テスト結果が他のテストクラスへ残留しないよう、 テスト終了後に明示的にTRUNCATE（CASCADE）して物理コミットする
+   */
+  @AfterEach
+  void cleanUpCommittedFixtures() {
+    TestTransaction.end();
+    TestTransaction.start();
+    jdbcTemplate.execute(
+        """
+					TRUNCATE TABLE
+						photo.photo_favorite,
+						photo.photo_tag_mst,
+						photo.photo_mst,
+						common.refresh_token,
+						common.location_mst,
+						common.account,
+						common.kbn_mst
+					CASCADE
+					""");
+    TestTransaction.flagForCommit();
+    TestTransaction.end();
   }
 
   @Nested

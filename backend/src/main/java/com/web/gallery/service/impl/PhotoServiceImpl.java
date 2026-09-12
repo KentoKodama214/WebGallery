@@ -142,42 +142,61 @@ public class PhotoServiceImpl implements PhotoService {
   /**
    * 写真一覧の絞り込み・並び替え条件の利用状況ログを記録する
    *
+   * <p>このメソッド自体は{@code getPhotoList}の{@code readOnly = true}トランザクション内で実行されるが、 実際の書き込みは{@link
+   * PhotoListFilterLogRepository#save}がREQUIRES_NEWで独立したトランザクションとして行う。
+   * ログ記録に失敗しても写真一覧の取得という主機能を妨げないよう、例外は握りつぶす
+   *
    * @param photoListGetModel {@link PhotoListGetModel}
    * @param photoAccountNo 写真アカウント番号（閲覧対象ギャラリーの所有者）
    */
   private void recordPhotoListFilterLog(
       PhotoListGetModel photoListGetModel, AccountNo photoAccountNo) {
-    IpGeoLocation geoLocation = geoIpResolver.resolve(photoListGetModel.getIpAddress());
-    photoListFilterLogRepository.save(
-        PhotoListFilterLogModel.builder()
-            .photoAccountNo(photoAccountNo)
-            .directionKbn(photoListGetModel.getDirectionKbn())
-            .isFavoriteOnly(photoListGetModel.getIsFavoriteOnly())
-            .tagList(String.join(",", photoListGetModel.getTagList()))
-            .sortBy(photoListGetModel.getSortBy())
-            .referer(photoListGetModel.getReferer())
-            .ipAddress(photoListGetModel.getIpAddress())
-            .geoLocation(geoLocation)
-            .build());
+    try {
+      IpGeoLocation geoLocation = geoIpResolver.resolve(photoListGetModel.getIpAddress());
+      photoListFilterLogRepository.save(
+          PhotoListFilterLogModel.builder()
+              .photoAccountNo(photoAccountNo)
+              .directionKbn(photoListGetModel.getDirectionKbn())
+              .isFavoriteOnly(photoListGetModel.getIsFavoriteOnly())
+              .tagList(String.join(",", photoListGetModel.getTagList()))
+              .sortBy(photoListGetModel.getSortBy())
+              .referer(photoListGetModel.getReferer())
+              .ipAddress(photoListGetModel.getIpAddress())
+              .geoLocation(geoLocation)
+              .build());
+    } catch (RuntimeException e) {
+      log.warn(
+          "Failed to record photo list filter log. (photoAccountNo: {})",
+          photoAccountNo.value(),
+          e);
+    }
   }
 
   /**
    * 写真詳細閲覧ログを記録する
+   *
+   * <p>このメソッド自体は{@code getPhotoDetail}の{@code readOnly = true}トランザクション内で実行されるが、 実際の書き込みは{@link
+   * PhotoViewLogRepository#save}がREQUIRES_NEWで独立したトランザクションとして行う。
+   * ログ記録に失敗しても写真詳細の取得という主機能を妨げないよう、例外は握りつぶす
    *
    * @param photoDetailGetModel {@link PhotoDetailGetModel}
    * @param photoAccountNo 写真アカウント番号
    */
   private void recordPhotoViewLog(
       PhotoDetailGetModel photoDetailGetModel, AccountNo photoAccountNo) {
-    IpGeoLocation geoLocation = geoIpResolver.resolve(photoDetailGetModel.getIpAddress());
-    photoViewLogRepository.save(
-        PhotoViewLogModel.builder()
-            .photoAccountNo(photoAccountNo)
-            .photoNo(photoDetailGetModel.getPhotoNo())
-            .referer(photoDetailGetModel.getReferer())
-            .ipAddress(photoDetailGetModel.getIpAddress())
-            .geoLocation(geoLocation)
-            .build());
+    try {
+      IpGeoLocation geoLocation = geoIpResolver.resolve(photoDetailGetModel.getIpAddress());
+      photoViewLogRepository.save(
+          PhotoViewLogModel.builder()
+              .photoAccountNo(photoAccountNo)
+              .photoNo(photoDetailGetModel.getPhotoNo())
+              .referer(photoDetailGetModel.getReferer())
+              .ipAddress(photoDetailGetModel.getIpAddress())
+              .geoLocation(geoLocation)
+              .build());
+    } catch (RuntimeException e) {
+      log.warn("Failed to record photo view log. (photoAccountNo: {})", photoAccountNo.value(), e);
+    }
   }
 
   /**

@@ -60,6 +60,7 @@ import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
+import com.web.gallery.model.PhotoListFilterLogModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
@@ -67,6 +68,7 @@ import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoSaveResultModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.model.PhotoViewLogModel;
 import com.web.gallery.policy.ImageFileValidationPolicy;
 import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
@@ -379,6 +381,13 @@ public class PhotoServiceImplTest {
       assertEquals(SortPhotoEnum.PHOTO_AT, photoGetModel.getSortBy());
       assertEquals(6, photoGetModel.getLimit());
       assertEquals(0, photoGetModel.getOffset());
+
+      // pageNo=1のため、絞り込み・並び替えログが記録され、対象アカウントはphoto_account_no（=1）であること
+      ArgumentCaptor<PhotoListFilterLogModel> filterLogCaptor =
+          ArgumentCaptor.forClass(PhotoListFilterLogModel.class);
+      verify(photoListFilterLogRepositoryImpl).save(filterLogCaptor.capture());
+      assertEquals(new AccountNo(1L), filterLogCaptor.getValue().getPhotoAccountNo());
+      assertEquals(DirectionEnum.NONE, filterLogCaptor.getValue().getDirectionKbn());
     }
 
     @Test
@@ -582,6 +591,13 @@ public class PhotoServiceImplTest {
 
       assertEquals(actual, photoServiceImpl.getPhotoDetail(photoDetailGetModel));
       verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+      // 写真の存在確認後は、閲覧ログが記録され、対象アカウントはphoto_account_no（=1）であること
+      ArgumentCaptor<PhotoViewLogModel> viewLogCaptor =
+          ArgumentCaptor.forClass(PhotoViewLogModel.class);
+      verify(photoViewLogRepositoryImpl).save(viewLogCaptor.capture());
+      assertEquals(new AccountNo(1L), viewLogCaptor.getValue().getPhotoAccountNo());
+      assertEquals(new PhotoNo(1L), viewLogCaptor.getValue().getPhotoNo());
     }
 
     @Test

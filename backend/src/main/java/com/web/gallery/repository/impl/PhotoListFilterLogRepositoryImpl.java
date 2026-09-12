@@ -8,6 +8,8 @@ import com.web.gallery.model.PhotoListFilterLogModel;
 import com.web.gallery.repository.PhotoListFilterLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 写真一覧絞り込みログデータを永続化するRepositoryの実装クラス
@@ -21,7 +23,13 @@ import org.springframework.stereotype.Repository;
 public class PhotoListFilterLogRepositoryImpl implements PhotoListFilterLogRepository {
   private final PhotoListFilterLogMapper photoListFilterLogMapper;
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>呼び出し元（写真一覧取得）は{@code readOnly = true}のトランザクションで実行されるため、 REQUIRES_NEWで独立した書き込みトランザクションとして保存する
+   */
   @Override
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void save(PhotoListFilterLogModel photoListFilterLogModel) {
     PhotoListFilterLog photoListFilterLog = PhotoListFilterLog.from(photoListFilterLogModel);
     photoListFilterLogMapper.insert(photoListFilterLog);
