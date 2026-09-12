@@ -18,6 +18,7 @@
     - [2. 環境変数の設定](#2-環境変数の設定)
     - [3. フロントエンドのセットアップ](#3-フロントエンドのセットアップ)
     - [4. アプリケーションの起動](#4-アプリケーションの起動)
+  - [ローカル動作確認用のダミーデータ投入（任意）](#ローカル動作確認用のダミーデータ投入任意)
   - [ビルド・テスト](#ビルドテスト)
     - [E2Eテストの実行（要Docker）](#e2eテストの実行要docker)
   - [アーキテクチャ](#アーキテクチャ)
@@ -211,6 +212,23 @@ just front-run
 
 バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000` でアクセスできます。
 
+## ローカル動作確認用のダミーデータ投入（任意）
+
+画面での動作確認用に、アカウント・写真・タグ・お気に入りのダミーデータを一括投入できます。
+
+```bash
+./scripts/seed-local-data.sh
+```
+
+実行には `just db-up` でDB・MinIOが起動していることに加え、`convert`（ImageMagick）・`htpasswd`・`openssl` コマンドが必要です（`brew install imagemagick httpd` 等でインストールしてください）。
+
+> **【注意】** 実行するとローカルDB・MinIOの写真関連データ（`account`、`location_mst`、`refresh_token`、`photo_mst`、`photo_tag_mst`、`photo_favorite` および MinIOの `web-gallery-local` バケット内の画像）を全件削除したうえで、以下を新規作成します。
+
+- アカウント3件（`localuser01`: normal-user、`localuser02`: mini-user、`localuser03`: administrator。パスワードは全アカウント共通で `password01`）
+- `localuser01` の写真10枚（縦6枚・横4枚）とロケーション・タグ
+- `localuser01` の写真に対する各アカウントからのお気に入り（お気に入り数順ソートの検証用に件数を分散）
+- ダミー画像（ImageMagickで生成）のMinIOへのアップロード
+
 ## ビルド・テスト
 
 ```bash
@@ -334,7 +352,8 @@ WebGallery/
 │   ├── modulith/                   # モジュールドキュメント（Spring Modulith自動生成）
 │   └── view/                       # 画面設計書
 ├── scripts/
-│   └── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド自動起動）
+│   ├── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド自動起動）
+│   └── seed-local-data.sh          # ローカル動作確認用のダミーデータ投入スクリプト
 ├── frontend/                       # フロントエンド（Next.js）
 │   ├── package.json
 │   ├── pnpm-lock.yaml
