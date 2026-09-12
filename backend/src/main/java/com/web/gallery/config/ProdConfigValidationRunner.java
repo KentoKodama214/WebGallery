@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -34,6 +35,10 @@ public class ProdConfigValidationRunner implements ApplicationRunner {
 
   private final S3Config s3Config;
 
+  private final DataSourceProperties dataSourceProperties;
+
+  private final DataSourceReplicaConfig dataSourceReplicaConfig;
+
   /**
    * 起動完了時に本番設定の検証を実行する
    *
@@ -54,6 +59,7 @@ public class ProdConfigValidationRunner implements ApplicationRunner {
     validateCorsAllowedOrigins(corsConfig.getAllowedOrigins());
     validateHttpsUrl("app.s3.endpoint", s3Config.getEndpoint());
     validateHttpsUrl("app.s3.public-base-url", s3Config.getPublicBaseUrl());
+    validateReplicaUrl(dataSourceReplicaConfig.getUrl());
   }
 
   /**
@@ -107,6 +113,28 @@ public class ProdConfigValidationRunner implements ApplicationRunner {
     if (!"https".equalsIgnoreCase(uri.getScheme())) {
       throw new IllegalStateException(
           "本番プロファイルの " + propertyName + " は https:// である必要があります（平文通信の禁止）: " + value);
+    }
+  }
+
+  /**
+   * リードレプリカの接続URLが設定されている場合に、プライマリと異なるPostgreSQL接続URLであることを検証する（未設定は許容）
+   *
+   * @param replicaUrl {@code app.datasource.replica.url}（環境変数 {@code APP_DATASOURCE_REPLICA_URL}）の値
+   * @throws IllegalStateException 値が設定されているのに不正な場合
+   */
+  private void validateReplicaUrl(String replicaUrl) {
+    if (!StringUtils.hasText(replicaUrl)) {
+      return;
+    }
+    if (!replicaUrl.startsWith("jdbc:postgresql://")) {
+      throw new IllegalStateException(
+          "app.datasource.replica.url（環境変数 APP_DATASOURCE_REPLICA_URL）は jdbc:postgresql:// 形式である必要があります: "
+              + replicaUrl);
+    }
+    if (replicaUrl.equals(dataSourceProperties.getUrl())) {
+      throw new IllegalStateException(
+          "app.datasource.replica.url が spring.datasource.url（DB_URL）と同一です。誤設定の疑いがあります: "
+              + replicaUrl);
     }
   }
 

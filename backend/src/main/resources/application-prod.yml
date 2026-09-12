@@ -3,6 +3,10 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    # リードレプリカ（AWS RDS）を使う場合、このファイルにキーを追加せず、インフラ側で環境変数
+    # APP_DATASOURCE_REPLICA_URL のみを設定すること。${APP_DATASOURCE_REPLICA_URL:} のように
+    # 空文字デフォルトをYAMLへ書くと、未設定環境でも app.datasource.replica.url キー自体は存在してしまい、
+    # 意図せずリードレプリカ用DataSourceが生成されてしまう（詳細: doc/architecture/datasource.md）
 
 logging:
   level:
