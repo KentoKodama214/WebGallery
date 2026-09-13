@@ -189,6 +189,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   const isLoadingMoreRef = useRef(false);
   // お気に入り操作の多重実行防止（(accountNo-photoNo) 単位で進行中を管理）
   const favoriteInFlightRef = useRef<Set<string>>(new Set());
+  // 初回ロードが完了済みかどうか。ログアウト等でauthLoading/isAuthenticated/isOwnerが
+  // 変化して初期ロードeffectが再実行されても、logInitialViewの判定は本当の初回ロード時の
+  // 一度きりに限定するために使う（詳細は下記effectのコメント参照）
+  const initialLoadCompletedRef = useRef(false);
 
   // お気に入りボタン等のコールバックから最新のphotosを参照できるようにする
   useEffect(() => {
@@ -249,10 +253,14 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
    *
    * 「このギャラリーを見た」事実はタブセッション中1回だけ記録すれば十分なため、sessionStorage
    * （hasLoggedViewThisSession/markViewLoggedThisSession）で判定・記録する。これにより、写真詳細
-   * ページからの戻りで本effectが再実行されても再送されず、また本effectはauthLoading/
-   * isAuthenticated/isOwnerにも依存しログアウト等の認証状態変化でも再実行されるが、その場合も
-   * sessionStorageで「既に記録済み」と判定されるため、ログアウトしただけで未ログイン状態の絞り込み
-   * ログが誤って記録されることもない
+   * ページからの戻りで本effectが再実行されても再送されない。
+   *
+   * 本effectはauthLoading/isAuthenticated/isOwnerにも依存しており、ログアウト等で認証状態が
+   * 変化すると（ページ遷移前でも）再実行される。この時isOwnerは「ログアウト後」の値（常にfalse）
+   * になるため、自分自身のギャラリーを見ている最中にログアウトすると、sessionStorageのみの判定
+   * では「未ログインで別アカウントのギャラリーを初めて見た」と誤判定してしまう
+   * （isOwnerがtrue→falseに変わるため、自分自身のギャラリーでは一度もsessionStorageに記録して
+   * いない）。initialLoadCompletedRefで「本当の初回ロード」の一度だけに限定することでこれを防ぐ
    */
   useEffect(() => {
     // 認証状態が確定してから読み込む（未確定のまま実行すると、閲覧者権限に
@@ -275,11 +283,15 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       tagList: filter.tagList || undefined,
       sortBy: filter.sortBy || undefined,
       pageNo: 1,
-      // logInitialView: 自分以外のギャラリーを、このタブセッションでまだ記録していない場合のみ
-      // trueを送り、「このギャラリーを見た」事実を分析ログに記録してもらう。自分自身のギャラリー
-      // （ログイン直後の初期表示・My Gallery経由）は対象外
+      // logInitialView: 本当の初回ロード（initialLoadCompletedRefがfalse）で、かつ自分以外の
+      // ギャラリーを、このタブセッションでまだ記録していない場合のみtrueを送り、「このギャラリーを
+      // 見た」事実を分析ログに記録してもらう。自分自身のギャラリー（ログイン直後の初期表示・
+      // My Gallery経由）や、初回ロード後の再実行（ログアウト等）は対象外
       logInitialView:
-        (!isOwner && !hasLoggedViewThisSession(photoAccountId)) || undefined,
+        (!initialLoadCompletedRef.current &&
+          !isOwner &&
+          !hasLoggedViewThisSession(photoAccountId)) ||
+        undefined,
       referer: document.referrer || undefined,
     };
     const shouldMarkViewLogged = Boolean(params.logInitialView);
@@ -289,6 +301,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       try {
         const data = await getPhotoList(photoAccountId, params, controller.signal);
         if (loadSeqRef.current !== seq) return;
+        initialLoadCompletedRef.current = true;
         if (shouldMarkViewLogged) markViewLoggedThisSession(photoAccountId);
         setPhotos(data.photoList);
         setIsLast(data.isLast);
