@@ -45,11 +45,11 @@ describe("AccountList", () => {
     expect(links).toHaveLength(2);
     expect(links[0].closest("a")).toHaveAttribute(
       "href",
-      "/photo/user1/photo_list?fromAccountList=true"
+      "/photo/user1/photo_list"
     );
     expect(links[1].closest("a")).toHaveAttribute(
       "href",
-      "/photo/user2/photo_list?fromAccountList=true"
+      "/photo/user2/photo_list"
     );
   });
 

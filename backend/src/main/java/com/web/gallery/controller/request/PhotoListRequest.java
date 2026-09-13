@@ -79,16 +79,18 @@ public class PhotoListRequest {
   private String referer;
 
   /**
-   * アカウント一覧から開いたかどうか（分析ログ記録の判定に使用）
+   * 「別アカウントのギャラリーを見た」事実を初回表示時に記録する対象かどうか（分析ログ記録の判定に使用）
    *
-   * <p>フロントエンドがアカウント一覧ページのリンクから遷移する場合のみtrueを送る。ログイン直後の 自分自身のギャラリーへの遷移（ログインリダイレクト・ヘッダーの「My
-   * Gallery」）ではfalse （既定値）のままとする。「別のアカウントのギャラリーを見た」という事実を分析ログ（{@code
-   * photo_list_filter_log}）に残す目的のフラグであり、絞り込み・並び替えパネルの利用状況を表す{@link #searchExecuted}とは独立して判定に使用する
+   * <p>フロントエンドが、写真一覧ページを新たに開いた際（アカウント一覧経由・URL直接アクセスいずれも含む）、
+   * かつ同一ブラウザセッション内でそのギャラリーの記録が未実施の場合にtrueを送る。写真詳細ページからの
+   * 戻り等でこのページが再取得される場合はfalse（既定値）のままとする。閲覧対象が自分自身のギャラリーの 場合は、このフラグがtrueでもサーバー側で記録しない（{@link
+   * com.web.gallery.service.impl.PhotoServiceImpl}参照）。絞り込み・並び替えパネルの利用状況を表す{@link
+   * #searchExecuted}とは独立して判定に使用する
    */
-  @Schema(description = "アカウント一覧から開いたかどうか（分析ログ記録の判定に使用）", example = "false")
+  @Schema(description = "初回表示時のギャラリー閲覧ログ記録対象かどうか（分析ログ記録の判定に使用）", example = "false")
   @JsonSetter(nulls = Nulls.SKIP)
   @NotNull(message = "{validation.common.notBlank}")
-  private Boolean fromAccountList = Boolean.FALSE;
+  private Boolean logInitialView = Boolean.FALSE;
 
   /**
    * タグリストの指定数が上限以下かどうかを検証する

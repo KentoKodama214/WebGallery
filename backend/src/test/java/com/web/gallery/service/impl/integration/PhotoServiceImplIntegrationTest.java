@@ -163,7 +163,7 @@ public class PhotoServiceImplIntegrationTest {
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
               .searchExecuted(false)
-              .fromAccountList(false)
+              .logInitialView(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -189,7 +189,7 @@ public class PhotoServiceImplIntegrationTest {
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
               .searchExecuted(false)
-              .fromAccountList(false)
+              .logInitialView(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -238,7 +238,7 @@ public class PhotoServiceImplIntegrationTest {
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(2)
               .searchExecuted(false)
-              .fromAccountList(false)
+              .logInitialView(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -273,7 +273,7 @@ public class PhotoServiceImplIntegrationTest {
               .sortBy(SortPhotoEnum.FAVORITE)
               .pageNo(1)
               .searchExecuted(false)
-              .fromAccountList(false)
+              .logInitialView(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -334,7 +334,7 @@ public class PhotoServiceImplIntegrationTest {
               .sortBy(SortPhotoEnum.SEASON)
               .pageNo(1)
               .searchExecuted(false)
-              .fromAccountList(false)
+              .logInitialView(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -383,7 +383,7 @@ public class PhotoServiceImplIntegrationTest {
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
               .searchExecuted(false)
-              .fromAccountList(false)
+              .logInitialView(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -430,7 +430,7 @@ public class PhotoServiceImplIntegrationTest {
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
               .searchExecuted(false)
-              .fromAccountList(false)
+              .logInitialView(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -490,7 +490,7 @@ public class PhotoServiceImplIntegrationTest {
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
               .searchExecuted(false)
-              .fromAccountList(false)
+              .logInitialView(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -544,7 +544,7 @@ public class PhotoServiceImplIntegrationTest {
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
               .searchExecuted(false)
-              .fromAccountList(false)
+              .logInitialView(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();

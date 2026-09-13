@@ -103,21 +103,49 @@ function favoriteKey(accountNo: number, photoNo: number): string {
 
 interface PhotoListProps {
   photoAccountId: string;
-  /**
-   * アカウント一覧ページのリンクから開いたかどうか
-   *
-   * trueの場合、初回表示（pageNo=1）を「別のアカウントのギャラリーを見た」事実として
-   * 分析ログ（photo_list_filter_log）に記録する。ログイン直後の自分自身のギャラリーへの
-   * 遷移ではfalse
-   */
-  fromAccountList?: boolean;
+}
+
+/**
+ * 「別アカウントのギャラリーを見た」事実を、このブラウザタブのセッション内で
+ * 既に記録済みかどうかを判定するためのsessionStorageキー
+ *
+ * 写真詳細ページからの戻り等でこのページが再取得されても再送しないよう、
+ * ギャラリー単位（photoAccountId単位）でタブセッション中1回だけ記録する
+ */
+function viewLoggedSessionKey(photoAccountId: string): string {
+  return `photoListViewLogged_${photoAccountId}`;
+}
+
+/**
+ * このブラウザタブのセッション内で、指定ギャラリーの閲覧を記録済みかどうかを取得する
+ *
+ * sessionStorageが利用できない環境（プライベートモード等）でもエラーにならないよう
+ * try/catchで握りつぶし、その場合は「未記録」として扱う
+ */
+function hasLoggedViewThisSession(photoAccountId: string): boolean {
+  try {
+    return sessionStorage.getItem(viewLoggedSessionKey(photoAccountId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * このブラウザタブのセッション内で、指定ギャラリーの閲覧を記録済みとしてマークする
+ */
+function markViewLoggedThisSession(photoAccountId: string): void {
+  try {
+    sessionStorage.setItem(viewLoggedSessionKey(photoAccountId), "1");
+  } catch {
+    // 記録できなくても致命的ではないため無視する（次回アクセス時に再送されるだけ）
+  }
 }
 
 /**
  * 写真一覧コンポーネント
  * フィルター・グリッド表示・ページネーションを提供
  */
-export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
+export function PhotoList({ photoAccountId }: PhotoListProps) {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   // マウント時に一度だけ Cookie を読む（従来は 5 回パースしていた）
   const initialFilter = useMemo(
@@ -161,10 +189,6 @@ export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
   const isLoadingMoreRef = useRef(false);
   // お気に入り操作の多重実行防止（(accountNo-photoNo) 単位で進行中を管理）
   const favoriteInFlightRef = useRef<Set<string>>(new Set());
-  // 初回ロードが完了済みかどうか。ログアウト等でauthLoading/isAuthenticated/isOwnerが
-  // 変化して初期ロードeffectが再実行されても、fromAccountListによる分析ログ記録は
-  // 本当の初回ロード時のみに限定するために使う（詳細は下記effectのコメント参照）
-  const initialLoadCompletedRef = useRef(false);
 
   // お気に入りボタン等のコールバックから最新のphotosを参照できるようにする
   useEffect(() => {
@@ -217,17 +241,18 @@ export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
    * 写真一覧取得（初期化時）
    * Cookieから復元したフィルター条件でAPIを呼び出す
    *
-   * fromAccountList（アカウント一覧から開いた場合）はバックエンドで絞り込み・並び替えログが
-   * 1件記録されるため、開発時のReact Strict Modeによるeffectの二重実行（mount→cleanup→mount）で
-   * 実リクエストが2回送信されログも2件になるのを防ぐ目的で、cleanup時にAbortControllerで実際の
-   * fetchそのものを中断する（cancelledフラグだけではstate更新は防げてもリクエスト自体は止まらず、
-   * ログの重複が残ってしまう）
+   * logInitialView（自分以外のギャラリーを初めて開いた場合）はバックエンドで絞り込み・並び替え
+   * ログが1件記録されるため、開発時のReact Strict Modeによるeffectの二重実行
+   * （mount→cleanup→mount）で実リクエストが2回送信されログも2件になるのを防ぐ目的で、cleanup時に
+   * AbortControllerで実際のfetchそのものを中断する（cancelledフラグだけではstate更新は防げても
+   * リクエスト自体は止まらず、ログの重複が残ってしまう）
    *
-   * このeffectはauthLoading/isAuthenticated/isOwnerにも依存しており、ログアウト等で認証状態が
-   * 変化すると（ページ遷移前でも）再実行される。initialLoadCompletedRefで「本当の初回ロード」
-   * だけを判定し、2回目以降の再実行ではfromAccountListを送らないようにする（そうしないと、
-   * アカウント一覧から開いたページに滞在したままログアウトしただけで、未ログイン状態の
-   * 絞り込みログが誤って記録されてしまう）
+   * 「このギャラリーを見た」事実はタブセッション中1回だけ記録すれば十分なため、sessionStorage
+   * （hasLoggedViewThisSession/markViewLoggedThisSession）で判定・記録する。これにより、写真詳細
+   * ページからの戻りで本effectが再実行されても再送されず、また本effectはauthLoading/
+   * isAuthenticated/isOwnerにも依存しログアウト等の認証状態変化でも再実行されるが、その場合も
+   * sessionStorageで「既に記録済み」と判定されるため、ログアウトしただけで未ログイン状態の絞り込み
+   * ログが誤って記録されることもない
    */
   useEffect(() => {
     // 認証状態が確定してから読み込む（未確定のまま実行すると、閲覧者権限に
@@ -250,20 +275,21 @@ export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
       tagList: filter.tagList || undefined,
       sortBy: filter.sortBy || undefined,
       pageNo: 1,
-      // fromAccountList: アカウント一覧のリンクから開いたことをバックエンドへ伝え、
-      // 「別のアカウントのギャラリーを見た」事実を分析ログに記録してもらう。
-      // 本当の初回ロード（initialLoadCompletedRefがfalse）のときのみ送る
-      fromAccountList:
-        (!initialLoadCompletedRef.current && fromAccountList) || undefined,
+      // logInitialView: 自分以外のギャラリーを、このタブセッションでまだ記録していない場合のみ
+      // trueを送り、「このギャラリーを見た」事実を分析ログに記録してもらう。自分自身のギャラリー
+      // （ログイン直後の初期表示・My Gallery経由）は対象外
+      logInitialView:
+        (!isOwner && !hasLoggedViewThisSession(photoAccountId)) || undefined,
       referer: document.referrer || undefined,
     };
+    const shouldMarkViewLogged = Boolean(params.logInitialView);
 
     const seq = ++loadSeqRef.current;
     const load = async () => {
       try {
         const data = await getPhotoList(photoAccountId, params, controller.signal);
         if (loadSeqRef.current !== seq) return;
-        initialLoadCompletedRef.current = true;
+        if (shouldMarkViewLogged) markViewLoggedThisSession(photoAccountId);
         setPhotos(data.photoList);
         setIsLast(data.isLast);
         setPageNo(1);
@@ -283,14 +309,7 @@ export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
     return () => {
       controller.abort();
     };
-  }, [
-    photoAccountId,
-    saveFilterToCookie,
-    authLoading,
-    isAuthenticated,
-    isOwner,
-    fromAccountList,
-  ]);
+  }, [photoAccountId, saveFilterToCookie, authLoading, isAuthenticated, isOwner]);
 
   useEffect(() => {
     if (!isOwner) return;

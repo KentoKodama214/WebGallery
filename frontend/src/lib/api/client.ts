@@ -612,10 +612,12 @@ export interface PhotoListParams {
    */
   referer?: string;
   /**
-   * アカウント一覧ページのリンクから開いたかどうか（バックエンドの分析ログ記録の判定に使用）。
-   * ログイン直後の自分自身のギャラリーへの遷移では指定しない
+   * 「別アカウントのギャラリーを見た」事実を記録する対象かどうか（バックエンドの分析ログ記録の判定に使用）。
+   * 写真一覧ページを新たに開いた際、かつ同一ブラウザセッション内でそのギャラリーの記録が未実施の場合に
+   * 指定する。写真詳細ページからの戻り等の再取得では指定しない。閲覧対象が自分自身のギャラリーの場合は
+   * バックエンド側で除外される
    */
-  fromAccountList?: boolean;
+  logInitialView?: boolean;
 }
 
 /**
@@ -634,7 +636,7 @@ export async function getPhotoList(
   if (params.pageNo !== undefined) searchParams.set("pageNo", String(params.pageNo));
   if (params.searchExecuted) searchParams.set("searchExecuted", "true");
   if (params.referer) searchParams.set("referer", params.referer);
-  if (params.fromAccountList) searchParams.set("fromAccountList", "true");
+  if (params.logInitialView) searchParams.set("logInitialView", "true");
 
   const query = searchParams.toString();
   const url = `/api/v1/accounts/${seg(photoAccountId)}/photos${query ? `?${query}` : ""}`;

@@ -14,13 +14,10 @@ export const metadata: Metadata = {
  */
 export default async function PhotoListPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ photoAccountId: string }>;
-  searchParams: Promise<{ fromAccountList?: string }>;
 }) {
   const { photoAccountId } = await params;
-  const { fromAccountList } = await searchParams;
 
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
@@ -28,10 +25,7 @@ export default async function PhotoListPage({
       {/* photoAccountId はURLの動的セグメントで細工可能なため、
           Cookie名・APIパスに使う前にアカウントID形式を検証する */}
       {isValidAccountId(photoAccountId) ? (
-        <PhotoList
-          photoAccountId={photoAccountId}
-          fromAccountList={fromAccountList === "true"}
-        />
+        <PhotoList photoAccountId={photoAccountId} />
       ) : (
         <div
           style={{
