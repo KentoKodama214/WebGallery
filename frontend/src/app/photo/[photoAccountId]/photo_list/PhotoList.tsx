@@ -204,13 +204,18 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   /**
    * 写真一覧取得（初期化時）
    * Cookieから復元したフィルター条件でAPIを呼び出す
+   *
+   * 初回検索（pageNo=1）はバックエンドで絞り込み・並び替えログが1件記録されるため、開発時のReact
+   * Strict Modeによるeffectの二重実行（mount→cleanup→mount）で実リクエストが2回送信されログも
+   * 2件になるのを防ぐ目的で、cleanup時にAbortControllerで実際のfetchそのものを中断する
+   * （cancelledフラグだけではstate更新は防げてもリクエスト自体は止まらず、ログの重複が残ってしまう）
    */
   useEffect(() => {
     // 認証状態が確定してから読み込む（未確定のまま実行すると、閲覧者権限に
     // 応じたフィルターのサニタイズ・お気に入り状態の判定が正しく行えない）
     if (authLoading) return;
 
-    let cancelled = false;
+    const controller = new AbortController();
 
     // 保存済み条件のうち、現在の閲覧者権限で許可されないものを取り除く
     const filter = sanitizeFilterForViewer(readStoredFilter(photoAccountId), {
@@ -231,25 +236,26 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     const seq = ++loadSeqRef.current;
     const load = async () => {
       try {
-        const data = await getPhotoList(photoAccountId, params);
-        if (cancelled || loadSeqRef.current !== seq) return;
+        const data = await getPhotoList(photoAccountId, params, controller.signal);
+        if (loadSeqRef.current !== seq) return;
         setPhotos(data.photoList);
         setIsLast(data.isLast);
         setPageNo(1);
         setAppliedFilter(filter);
         setError(null);
       } catch (err) {
-        if (!cancelled && loadSeqRef.current === seq) {
+        if (err && typeof err === "object" && "name" in err && err.name === "AbortError") return;
+        if (loadSeqRef.current === seq) {
           setError(err instanceof Error ? err.message : "エラーが発生しました");
         }
       } finally {
-        if (!cancelled && loadSeqRef.current === seq) setIsLoading(false);
+        if (loadSeqRef.current === seq && !controller.signal.aborted) setIsLoading(false);
       }
     };
 
     load();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [photoAccountId, saveFilterToCookie, authLoading, isAuthenticated, isOwner]);
 

@@ -607,7 +607,8 @@ export interface PhotoListParams {
  */
 export async function getPhotoList(
   photoAccountId: string,
-  params: PhotoListParams = {}
+  params: PhotoListParams = {},
+  signal?: AbortSignal
 ): Promise<PhotoListResponse> {
   const searchParams = new URLSearchParams();
   if (params.directionKbn) searchParams.set("directionKbn", params.directionKbn);
@@ -618,7 +619,7 @@ export async function getPhotoList(
 
   const query = searchParams.toString();
   const url = `/api/v1/accounts/${seg(photoAccountId)}/photos${query ? `?${query}` : ""}`;
-  const response = await fetchWithAuth(url);
+  const response = await fetchWithAuth(url, { signal });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真一覧の取得に失敗しました"));
   }
@@ -644,13 +645,14 @@ export async function getPhotoUpperLimit(
  */
 export async function getPhotoDetail(
   photoAccountId: string,
-  photoNo: number
+  photoNo: number,
+  signal?: AbortSignal
 ): Promise<PhotoDetailResponse> {
   // バックエンドは写真の所有者を photoAccountId（パス）で解決する。
   // お気に入り判定に使うアカウント番号はセッション（JWT）から取得されるため、
   // クライアントからアカウント番号を渡す必要はない
   const url = `/api/v1/accounts/${seg(photoAccountId)}/photos/${seg(photoNo)}`;
-  const response = await fetchWithAuth(url);
+  const response = await fetchWithAuth(url, { signal });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真詳細の取得に失敗しました"));
   }

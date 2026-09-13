@@ -54,29 +54,31 @@ export function PhotoDetail({
 
   /**
    * 写真詳細取得
+   *
+   * 取得成功時にバックエンドで閲覧ログが1件記録されるため、開発時のReact Strict Modeによる
+   * effectの二重実行（mount→cleanup→mount）で実リクエストが2回送信されログも2件になるのを防ぐ
+   * 目的で、cleanup時にAbortControllerで実際のfetchそのものを中断する（cancelledフラグだけでは
+   * state更新は防げてもリクエスト自体は止まらず、ログの重複が残ってしまう）
    */
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     const load = async () => {
       try {
-        const data = await getPhotoDetail(photoAccountId, photoNo);
-        if (!cancelled) {
-          setPhoto(data);
-          setError(null);
-        }
+        const data = await getPhotoDetail(photoAccountId, photoNo, controller.signal);
+        setPhoto(data);
+        setError(null);
       } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "エラーが発生しました");
-        }
+        if (err && typeof err === "object" && "name" in err && err.name === "AbortError") return;
+        setError(err instanceof Error ? err.message : "エラーが発生しました");
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
 
     load();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [photoAccountId, photoNo]);
 
