@@ -4,10 +4,10 @@
 
 | ワークフロー | ファイル | トリガー |
 |---|---|---|
-| Javadocチェック | `checkstyle.yml` | `main`へのPR |
-| フォーマットチェック | `spotless.yml` | `main`へのPR |
-| テスト実行 | `test.yml` | `main`へのPR |
-| カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `main`へのPR |
+| Javadocチェック | `checkstyle.yml` | `development`・`staging`・`master`へのPR |
+| フォーマットチェック | `spotless.yml` | `development`・`staging`・`master`へのPR |
+| テスト実行 | `test.yml` | `development`・`staging`・`master`へのPR |
+| カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `development`・`staging`・`master`へのPR |
 
 セキュリティレビューはAnthropic APIの従量課金コストがかかるため、CIワークフロー化はせず、Claude Codeの`/security-review`スキルでローカルから都度実行する運用とする。
 

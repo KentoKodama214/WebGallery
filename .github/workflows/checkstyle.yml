@@ -3,7 +3,9 @@ name: Javadocチェック
 on:
   pull_request:
     branches:
-      - main
+      - development
+      - staging
+      - master
 
 jobs:
   checkstyle:

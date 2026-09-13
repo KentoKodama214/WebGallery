@@ -3,7 +3,9 @@ name: テスト実行
 on:
   pull_request:
     branches:
-      - main
+      - development
+      - staging
+      - master
 
 jobs:
   frontend-unit-test:
