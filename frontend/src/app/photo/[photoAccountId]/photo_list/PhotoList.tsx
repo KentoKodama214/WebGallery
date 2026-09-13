@@ -493,10 +493,12 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     saveFilterToCookie(nextFilter);
 
     try {
-      const data = await getPhotoList(
-        photoAccountId,
-        buildParams(nextFilter, 1)
-      );
+      // searchExecuted: ユーザーが絞り込みパネルから明示的に検索を実行したことをバックエンドへ伝え、
+      // 分析ログ（絞り込み・並び替えの利用状況）に記録してもらう
+      const data = await getPhotoList(photoAccountId, {
+        ...buildParams(nextFilter, 1),
+        searchExecuted: true,
+      });
       if (loadSeqRef.current !== seq) return;
       setPhotos(data.photoList);
       setIsLast(data.isLast);

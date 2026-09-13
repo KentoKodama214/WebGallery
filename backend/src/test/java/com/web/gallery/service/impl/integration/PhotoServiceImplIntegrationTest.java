@@ -162,6 +162,7 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .searchExecuted(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -186,6 +187,7 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .searchExecuted(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -233,6 +235,7 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(2)
+              .searchExecuted(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -266,6 +269,7 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.FAVORITE)
               .pageNo(1)
+              .searchExecuted(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -325,6 +329,7 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.SEASON)
               .pageNo(1)
+              .searchExecuted(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -372,6 +377,7 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .searchExecuted(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -417,6 +423,7 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .searchExecuted(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -475,6 +482,7 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .searchExecuted(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();
@@ -527,6 +535,7 @@ public class PhotoServiceImplIntegrationTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .searchExecuted(false)
               .ipAddress(new IpAddress("203.0.113.1"))
               .referer(new Referer(""))
               .build();

@@ -51,6 +51,13 @@ public class PhotoListGetModel {
   /** ページ番号 */
   @NonNull private Integer pageNo;
 
+  /**
+   * 絞り込み・並び替えの利用状況ログ記録対象かどうか
+   *
+   * <p>ユーザーが絞り込みパネルから明示的に検索を実行した場合のみtrue。 ログイン直後の初期表示や写真詳細ページからの戻り等の自動取得ではfalse
+   */
+  @NonNull private Boolean searchExecuted;
+
   /** 送信元IPアドレス（絞り込み・並び替えログ記録用） */
   @NonNull private IpAddress ipAddress;
 
@@ -98,6 +105,7 @@ public class PhotoListGetModel {
         .tagList(tagList)
         .sortBy(request.getSortBy())
         .pageNo(request.getPageNo())
+        .searchExecuted(Optional.ofNullable(request.getSearchExecuted()).orElse(Boolean.FALSE))
         .ipAddress(ipAddress)
         .referer(referer)
         .build();

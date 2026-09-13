@@ -57,6 +57,17 @@ public class PhotoListRequest {
   private Integer pageNo = 1;
 
   /**
+   * 絞り込み・並び替えの利用状況ログ記録対象かどうか
+   *
+   * <p>フロントエンドがユーザーによる絞り込みパネルの「適用」操作から呼び出す場合のみtrueを送る。 ログイン直後の初期表示・写真詳細ページからの戻り・「もっと見る」等、ユーザーが明示的に
+   * 絞り込み・並び替えを実行したわけではない自動取得ではfalse（既定値）のままとし、 分析ログ（{@code photo_list_filter_log}）には記録しない
+   */
+  @Schema(description = "絞り込みパネルからの明示的な検索実行かどうか（分析ログ記録の判定に使用）", example = "false")
+  @JsonSetter(nulls = Nulls.SKIP)
+  @NotNull(message = "{validation.common.notBlank}")
+  private Boolean searchExecuted = Boolean.FALSE;
+
+  /**
    * タグリストの指定数が上限以下かどうかを検証する
    *
    * <p>タグ1件につき絞り込み用の相関サブクエリが1つ追加されるため、大量指定によるクエリ負荷増大を防ぐ

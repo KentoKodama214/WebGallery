@@ -600,6 +600,11 @@ export interface PhotoListParams {
   tagList?: string;
   sortBy?: string;
   pageNo?: number;
+  /**
+   * 絞り込みパネルからの明示的な検索実行かどうか（バックエンドの分析ログ記録の判定に使用）。
+   * ログイン直後の初期表示・写真詳細ページからの戻り・「もっと見る」では指定しない
+   */
+  searchExecuted?: boolean;
 }
 
 /**
@@ -616,6 +621,7 @@ export async function getPhotoList(
   if (params.tagList) searchParams.set("tagList", params.tagList);
   if (params.sortBy) searchParams.set("sortBy", params.sortBy);
   if (params.pageNo !== undefined) searchParams.set("pageNo", String(params.pageNo));
+  if (params.searchExecuted) searchParams.set("searchExecuted", "true");
 
   const query = searchParams.toString();
   const url = `/api/v1/accounts/${seg(photoAccountId)}/photos${query ? `?${query}` : ""}`;
