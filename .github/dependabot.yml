@@ -29,6 +29,12 @@ updates:
       frontend-dependencies:
         patterns:
           - "*"
+    ignore:
+      # TypeScript 7系はプログラマティックAPIを提供しておらず、
+      # typescript-eslintが未対応のためLintが失敗する（TS 7.1での対応を待つ）
+      # https://github.com/typescript-eslint/typescript-eslint/issues/12518
+      - dependency-name: "typescript"
+        versions: [">=7.0.0"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
