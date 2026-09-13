@@ -161,6 +161,10 @@ export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
   const isLoadingMoreRef = useRef(false);
   // お気に入り操作の多重実行防止（(accountNo-photoNo) 単位で進行中を管理）
   const favoriteInFlightRef = useRef<Set<string>>(new Set());
+  // 初回ロードが完了済みかどうか。ログアウト等でauthLoading/isAuthenticated/isOwnerが
+  // 変化して初期ロードeffectが再実行されても、fromAccountListによる分析ログ記録は
+  // 本当の初回ロード時のみに限定するために使う（詳細は下記effectのコメント参照）
+  const initialLoadCompletedRef = useRef(false);
 
   // お気に入りボタン等のコールバックから最新のphotosを参照できるようにする
   useEffect(() => {
@@ -218,6 +222,12 @@ export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
    * 実リクエストが2回送信されログも2件になるのを防ぐ目的で、cleanup時にAbortControllerで実際の
    * fetchそのものを中断する（cancelledフラグだけではstate更新は防げてもリクエスト自体は止まらず、
    * ログの重複が残ってしまう）
+   *
+   * このeffectはauthLoading/isAuthenticated/isOwnerにも依存しており、ログアウト等で認証状態が
+   * 変化すると（ページ遷移前でも）再実行される。initialLoadCompletedRefで「本当の初回ロード」
+   * だけを判定し、2回目以降の再実行ではfromAccountListを送らないようにする（そうしないと、
+   * アカウント一覧から開いたページに滞在したままログアウトしただけで、未ログイン状態の
+   * 絞り込みログが誤って記録されてしまう）
    */
   useEffect(() => {
     // 認証状態が確定してから読み込む（未確定のまま実行すると、閲覧者権限に
@@ -241,8 +251,10 @@ export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
       sortBy: filter.sortBy || undefined,
       pageNo: 1,
       // fromAccountList: アカウント一覧のリンクから開いたことをバックエンドへ伝え、
-      // 「別のアカウントのギャラリーを見た」事実を分析ログに記録してもらう
-      fromAccountList: fromAccountList || undefined,
+      // 「別のアカウントのギャラリーを見た」事実を分析ログに記録してもらう。
+      // 本当の初回ロード（initialLoadCompletedRefがfalse）のときのみ送る
+      fromAccountList:
+        (!initialLoadCompletedRef.current && fromAccountList) || undefined,
       referer: document.referrer || undefined,
     };
 
@@ -251,6 +263,7 @@ export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
       try {
         const data = await getPhotoList(photoAccountId, params, controller.signal);
         if (loadSeqRef.current !== seq) return;
+        initialLoadCompletedRef.current = true;
         setPhotos(data.photoList);
         setIsLast(data.isLast);
         setPageNo(1);
