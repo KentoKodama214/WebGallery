@@ -71,6 +71,14 @@ jmeter -n -t scripts/perf/photo-list-page.jmx -l scripts/perf/result.jtl -e -o s
 - `-l` : 生の結果を`.jtl`に出力
 - `-e -o` : 実行後にHTMLレポートを`report/`ディレクトリへ生成
 
+`-l`の出力先ファイルと`-o`の出力先ディレクトリは、どちらも既に存在する（空でない）とエラーになる。再実行する際は、前回の結果を削除してから実行する。
+
+```bash
+rm -f scripts/perf/result.jtl
+rm -rf scripts/perf/report
+jmeter -n -t scripts/perf/photo-list-page.jmx -l scripts/perf/result.jtl -e -o scripts/perf/report
+```
+
 ### 結果の確認
 
 ```bash
