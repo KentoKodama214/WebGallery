@@ -1,0 +1,10 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.scheduler`
+|Spring components
+|* `c.w.g.s.RefreshTokenCleanupScheduler`
+|Bean references
+|* `c.w.g.h.SchedulerLock` (in Helper)
+* `c.w.g.s.AuthService` (in Service)
+|===

@@ -1,6 +1,18 @@
 == WebGalleryApplication
 plantuml::components.puml[,,format=svg]
 
+== Aggregate
+plantuml::module-aggregate.puml[,,format=svg]
+include::module-aggregate.adoc[]
+
+== Annotation
+plantuml::module-annotation.puml[,,format=svg]
+include::module-annotation.adoc[]
+
+== Aspect
+plantuml::module-aspect.puml[,,format=svg]
+include::module-aspect.adoc[]
+
 == Config
 plantuml::module-config.puml[,,format=svg]
 include::module-config.adoc[]
@@ -13,6 +25,10 @@ include::module-constant.adoc[]
 plantuml::module-controller.puml[,,format=svg]
 include::module-controller.adoc[]
 
+== Domain
+plantuml::module-domain.puml[,,format=svg]
+include::module-domain.adoc[]
+
 == Dto
 plantuml::module-dto.puml[,,format=svg]
 include::module-dto.adoc[]
@@ -24,6 +40,10 @@ include::module-entity.adoc[]
 == Enumeration
 plantuml::module-enumeration.puml[,,format=svg]
 include::module-enumeration.adoc[]
+
+== Event
+plantuml::module-event.puml[,,format=svg]
+include::module-event.adoc[]
 
 == Exception
 plantuml::module-exception.puml[,,format=svg]
@@ -41,9 +61,17 @@ include::module-mapper.adoc[]
 plantuml::module-model.puml[,,format=svg]
 include::module-model.adoc[]
 
+== Policy
+plantuml::module-policy.puml[,,format=svg]
+include::module-policy.adoc[]
+
 == Repository
 plantuml::module-repository.puml[,,format=svg]
 include::module-repository.adoc[]
+
+== Scheduler
+plantuml::module-scheduler.puml[,,format=svg]
+include::module-scheduler.adoc[]
 
 == Service
 plantuml::module-service.puml[,,format=svg]

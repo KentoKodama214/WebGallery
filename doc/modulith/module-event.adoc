@@ -1,0 +1,19 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.event`
+|Spring components
+|_Event listeners_
+
+* `c.w.g.e.AccountEventListener`
+* `c.w.g.e.PhotoEventListener`
+|Events listened to
+|* `c.w.g.e.AccountUnlockedEvent` 
+* `c.w.g.e.AccountRegisteredEvent` 
+* `c.w.g.e.AccountUpdatedEvent` 
+* `c.w.g.e.AccountDeletedEvent` 
+* `c.w.g.e.AccountLockedEvent` 
+* `c.w.g.e.PhotoDeletedEvent` 
+* `c.w.g.e.PhotoRegisteredEvent` 
+* `c.w.g.e.PhotoUpdatedEvent` 
+|===

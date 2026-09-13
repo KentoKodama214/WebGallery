@@ -19,11 +19,18 @@ System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags
   Container_Boundary("WebGalleryApplication.WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
     Component(WebGalleryApplication.WebGalleryApplication.Dto, "Dto", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Enumeration, "Enumeration", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Model, "Model", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Domain, "Domain", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
 
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Domain, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Model, WebGalleryApplication.WebGalleryApplication.Dto, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Dto, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Dto, WebGalleryApplication.WebGalleryApplication.Model, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Dto, WebGalleryApplication.WebGalleryApplication.Domain, "depends on", $techn="", $tags="", $link="")
 
 SHOW_LEGEND(true)
 hide stereotypes

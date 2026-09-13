@@ -1,0 +1,11 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.policy`
+|Spring components
+|* `c.w.g.p.ImageFileValidationPolicy`
+* `c.w.g.p.PhotoFileExtensionPolicy`
+* `c.w.g.p.PhotoQuotaPolicy`
+|Bean references
+|* `c.w.g.c.PhotoConfig` (in Config)
+|===

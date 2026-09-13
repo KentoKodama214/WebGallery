@@ -1,5 +1,5 @@
 @startuml
-title <size:24>Enumeration</size>
+title <size:24>Aspect</size>
 
 set separator none
 top to bottom direction
@@ -19,12 +19,18 @@ System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags
   Container_Boundary("WebGalleryApplication.WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
     Component(WebGalleryApplication.WebGalleryApplication.Enumeration, "Enumeration", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Exception, "Exception", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Helper, "Helper", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Aspect, "Aspect", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
 
+Rel(WebGalleryApplication.WebGalleryApplication.Helper, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Enumeration, WebGalleryApplication.WebGalleryApplication.Exception, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Exception, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Aspect, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Aspect, WebGalleryApplication.WebGalleryApplication.Exception, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Aspect, WebGalleryApplication.WebGalleryApplication.Helper, "uses", $techn="", $tags="", $link="")
 
 SHOW_LEGEND(true)
 hide stereotypes

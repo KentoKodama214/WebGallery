@@ -1,0 +1,9 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.aspect`
+|Spring components
+|* `c.w.g.a.AdminAuthorityAspect`
+|Bean references
+|* `c.w.g.h.SessionHelper` (in Helper)
+|===
