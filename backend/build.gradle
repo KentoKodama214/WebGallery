@@ -47,7 +47,7 @@ configurations {
 dependencyManagement {
 	imports {
 		mavenBom 'org.springframework.modulith:spring-modulith-bom:2.1.1'
-		mavenBom 'software.amazon.awssdk:bom:2.54.13'
+		mavenBom 'software.amazon.awssdk:bom:2.54.15'
 	}
 }
 
@@ -73,7 +73,7 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.1.1'
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 	// IPアドレスから国・地域を解決するGeoLite2（MaxMind）用リーダー
-	implementation 'com.maxmind.geoip2:geoip2:4.2.1'
+	implementation 'com.maxmind.geoip2:geoip2:5.2.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 	compileOnly 'org.projectlombok:lombok:1.18.48'
