@@ -61,6 +61,7 @@ dependencies {
 	// BOM に一元管理させ、ここでは明示しない（バージョンの二重管理・不整合を防ぐ）。
 	// BOM 管理外のサードパーティ依存（jjwt / modelmapper / springdoc / mybatis-spring-boot-starter /
 	// archunit / lombok / geoip2）のみバージョンを明示する。
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'

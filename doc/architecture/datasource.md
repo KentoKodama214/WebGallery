@@ -36,6 +36,17 @@ username/passwordはプライマリと共用する（RDSリードレプリカは
 
 本番プロファイルでは`config/ProdConfigValidationRunner`が起動時にリードレプリカURLの妥当性（PostgreSQL接続URL形式であること、プライマリと同一URLでないこと）を検証し、不正な場合は起動を失敗させる。
 
+## コネクションプール（HikariCP）の設定
+
+プライマリ・リードレプリカは基本的に同じ`spring.datasource.hikari.*`（`application.yml`）を共有する。`DataSourceConfig`が独自に`DataSource`を構築しているため、このプロパティはSpring Boot標準の自動バインドではなく`Binder`で手動バインドしている（`spring.datasource.hikari.*`というプロパティキー自体は標準のものと同じ）。
+
+リードレプリカのみプールサイズ（最大接続数・最小アイドル接続数）を個別に変えたい場合は、以下の環境変数で上書きできる（`url`と同様、いずれの`application-*.yml`にもキーを追加しない運用とする）。未設定時はプライマリと同じ`spring.datasource.hikari.*`の値が使われる。
+
+- `APP_DATASOURCE_REPLICA_MAXIMUM_POOL_SIZE`
+- `APP_DATASOURCE_REPLICA_MINIMUM_IDLE`
+
+各`HikariDataSource`には`primary`/`replica`の`poolName`を設定し、Micrometer（`MeterRegistry`）にも明示的に紐付けている。Actuatorで`hikaricp.connections.*`系メトリクスを`pool`タグ（`primary`/`replica`）で確認できる（`/actuator/metrics`はADMIN権限必須。`SecurityConfig`参照）。
+
 ## レプリケーション遅延の運用ルール
 
 リードレプリカへの反映は非同期のため、書き込み直後に自分自身が書いた内容を同一フロー内で即座に読み戻す必要がある処理には`@Transactional(readOnly = true)`を付与しないこと（プライマリに固定される）。

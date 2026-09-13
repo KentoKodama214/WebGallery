@@ -1,6 +1,16 @@
 spring:
   application:
     name: WebGallery
+  datasource:
+    hikari:
+      # RDS/NAT/LB等のアイドルタイムアウトより短く設定し、サーバー側で無効化されたコネクションを
+      # アプリ側が掴み続けないようにする（切断されたコネクションの再利用によるエラーを防ぐ）
+      max-lifetime: 1200000
+      # ファイアウォール等による無通信切断を防ぐための生存確認間隔（max-lifetimeより短い必要がある）
+      keepalive-time: 300000
+      validation-timeout: 5000
+      # 60秒以上借用されたままのコネクションを警告ログに出す（コネクションリークの早期検知）
+      leak-detection-threshold: 60000
   servlet:
     multipart:
       max-file-size: 6MB
@@ -44,6 +54,11 @@ mybatis:
 
 management:
   add-application-context-header: false
+  endpoints:
+    web:
+      exposure:
+        # healthのみ公開・metricsは内部情報（コネクション数等）を含むためADMIN権限必須（SecurityConfigで制御）
+        include: health, metrics
 
 logging:
   pattern:
