@@ -494,10 +494,13 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
 
     try {
       // searchExecuted: ユーザーが絞り込みパネルから明示的に検索を実行したことをバックエンドへ伝え、
-      // 分析ログ（絞り込み・並び替えの利用状況）に記録してもらう
+      // 分析ログ（絞り込み・並び替えの利用状況）に記録してもらう。
+      // referer: document.referrer はSPA内のクライアントサイド遷移では変化しないため、
+      // ここで送信しても本来の外部流入元（ページの初回ロード元）を正しく反映できる
       const data = await getPhotoList(photoAccountId, {
         ...buildParams(nextFilter, 1),
         searchExecuted: true,
+        referer: document.referrer,
       });
       if (loadSeqRef.current !== seq) return;
       setPhotos(data.photoList);

@@ -65,7 +65,12 @@ export function PhotoDetail({
 
     const load = async () => {
       try {
-        const data = await getPhotoDetail(photoAccountId, photoNo, controller.signal);
+        const data = await getPhotoDetail(
+          photoAccountId,
+          photoNo,
+          document.referrer,
+          controller.signal
+        );
         setPhoto(data);
         setError(null);
       } catch (err) {

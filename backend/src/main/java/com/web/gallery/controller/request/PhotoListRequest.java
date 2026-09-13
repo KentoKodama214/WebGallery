@@ -10,6 +10,7 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.util.Arrays;
 import lombok.Data;
 
@@ -66,6 +67,16 @@ public class PhotoListRequest {
   @JsonSetter(nulls = Nulls.SKIP)
   @NotNull(message = "{validation.common.notBlank}")
   private Boolean searchExecuted = Boolean.FALSE;
+
+  /**
+   * クライアント（ブラウザ）が取得した遷移元URL（{@code document.referrer}）
+   *
+   * <p>サーバーが受け取るHTTPリクエストのRefererヘッダーは、SPAの同一ページからのAPI呼び出しである以上常に自ページの
+   * URLになってしまい、外部サイトからの本来の流入元を表さない。そのためフロントエンドが{@code document.referrer}を このパラメータとして明示的に送信する
+   */
+  @Schema(description = "クライアントが取得した遷移元URL（document.referrer）", example = "https://example.com/")
+  @Size(max = 2048, message = "{validation.common.max_length}")
+  private String referer;
 
   /**
    * タグリストの指定数が上限以下かどうかを検証する
