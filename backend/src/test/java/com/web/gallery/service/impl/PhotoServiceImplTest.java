@@ -827,7 +827,7 @@ public class PhotoServiceImplTest {
 
     @Test
     @Order(5)
-    @DisplayName("位置情報が非公開でも閲覧者が本人なら撮影場所を返す")
+    @DisplayName("位置情報が非公開でも閲覧者が本人なら撮影場所を返し、かつ閲覧ログは記録しないこと（自分自身の写真のため）")
     void getPhotoDetail_keepsLocation_whenPrivateAndOwner() throws GalleryException {
       PhotoDetailModel model = photoWithLocation(1L, false);
       stubDetail(1L, model);
@@ -844,6 +844,7 @@ public class PhotoServiceImplTest {
 
       assertEquals(9L, actual.getLocationNo().value());
       assertEquals("東京都渋谷区", actual.getGeoLocation().address().value());
+      verifyNoInteractions(photoViewLogRepositoryImpl);
     }
 
     @Test

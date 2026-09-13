@@ -233,8 +233,14 @@ public class PhotoServiceImpl implements PhotoService {
         photoDetailRepository.getPhotoDetail(
             PhotoDetailSearchModel.of(photoDetailGetModel, accountModel.getAccountNo()));
 
-    // 写真詳細閲覧ログ（写真の存在確認が通った場合のみ記録する）
-    recordPhotoViewLog(photoDetailGetModel, accountModel.getAccountNo());
+    // 写真詳細閲覧ログ（写真の存在確認が通った場合のみ記録する）。ただし閲覧者が写真の所有者
+    // 本人の場合は対象外とする（自分自身の写真を見ただけでは記録しない）
+    boolean isOwnPhoto =
+        photoDetailGetModel.getAccountNo() != null
+            && photoDetailGetModel.getAccountNo().equals(accountModel.getAccountNo());
+    if (!isOwnPhoto) {
+      recordPhotoViewLog(photoDetailGetModel, accountModel.getAccountNo());
+    }
 
     var builder =
         photoDetailModel.toBuilder()
