@@ -27,3 +27,8 @@ gradle-app.setting
 # SchemaSpy generated documentation
 doc/database/common/
 doc/database/photo/
+
+# JMeterパフォーマンス検証の実行結果
+scripts/perf/*.jtl
+scripts/perf/report/
+jmeter.log
