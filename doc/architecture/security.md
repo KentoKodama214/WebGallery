@@ -39,6 +39,8 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 | お気に入り登録・解除 | 認証必須 |
 | アカウント詳細取得・更新 | 認証必須（本人のみ） |
 | パスワード変更・アカウント削除 | 認証必須（本人のみ）＋ 現在のパスワードによる再認証 |
+| Actuatorヘルスチェック（`GET /actuator/health`） | 公開 |
+| Actuatorメトリクス（`GET /actuator/metrics/**`） | 認証必須（ADMINロール。コネクション数等の内部情報を含むため） |
 
 ### レート制限（`RateLimitFilter`）
 
@@ -136,7 +138,7 @@ APM に記録されやすく（`Authorization` と違い）マスク対象から
 
 ### バックエンドのレスポンスヘッダーと CORS
 
-`SecurityConfig#applyApiResponseHeaders` が API・デフォルトの両 `SecurityFilterChain` に対して
+`SecurityConfig#applyApiResponseHeaders` が API・Actuator・デフォルトの3つの `SecurityFilterChain` に対して
 以下を付与する（フロントのページレスポンスへの付与は `next.config.ts` / `src/proxy.ts` が担うが、
 バックエンドを直接叩く経路に備えた多層防御）。
 

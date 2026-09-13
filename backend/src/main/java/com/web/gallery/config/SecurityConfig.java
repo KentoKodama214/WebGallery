@@ -132,7 +132,9 @@ public class SecurityConfig {
   }
 
   /**
-   * API用のSecurityFilterChainを生成します（JWT認証、ステートレス）
+   * Actuator用のSecurityFilterChainを生成します（JWT認証、ステートレス）
+   *
+   * <p>{@code health}はヘルスチェック用途で公開し、{@code metrics}はコネクションプール数等の内部情報を含むためADMIN権限必須とする。
    *
    * @param http HTTPセキュリティオブジェクト
    * @return SecurityFilterChainオブジェクト
@@ -140,6 +142,33 @@ public class SecurityConfig {
    */
   @Bean
   @Order(1)
+  SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) throws Exception {
+    http.securityMatcher("/actuator/**")
+        .csrf(csrf -> csrf.disable())
+        .headers(SecurityConfig::applyApiResponseHeaders)
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(
+            authorize ->
+                authorize
+                    .requestMatchers("/actuator/health", "/actuator/health/**")
+                    .permitAll()
+                    .anyRequest()
+                    .hasRole("ADMIN"))
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+  }
+
+  /**
+   * API用のSecurityFilterChainを生成します（JWT認証、ステートレス）
+   *
+   * @param http HTTPセキュリティオブジェクト
+   * @return SecurityFilterChainオブジェクト
+   * @throws Exception
+   */
+  @Bean
+  @Order(2)
   SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
     http.securityMatcher("/api/**")
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
