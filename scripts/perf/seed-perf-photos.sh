@@ -26,25 +26,29 @@ if [ "$(docker inspect -f '{{.State.Running}}' "$DB_CONTAINER" 2>/dev/null || tr
   exit 1
 fi
 
+if ! [[ "$PHOTO_COUNT" =~ ^[0-9]+$ ]]; then
+  echo "PHOTO_COUNT は正の整数で指定してください: ${PHOTO_COUNT}" >&2
+  exit 1
+fi
+
 echo "アカウント ${ACCOUNT_ID} に写真 ${PHOTO_COUNT} 件を投入します"
 
-docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 \
-  -v account_id="'${ACCOUNT_ID}'" -v photo_count="${PHOTO_COUNT}" <<'SQL'
+# DO $$ ... $$ ブロック内ではpsqlのクライアント側変数展開（:variable）が効かないため、
+# 存在確認はせず、対象アカウントに紐づくデータを無条件に削除するだけにする（存在しなければ0件削除で正常終了）
+docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 <<SQL
 -- 既存の同名テストアカウントがあれば、紐づくデータごと削除して作り直す（再実行時の冪等性のため）
-DO $$
-DECLARE
-  existing_account_no bigint;
-BEGIN
-  SELECT account_no INTO existing_account_no FROM common.account WHERE account_id = :account_id;
-  IF existing_account_no IS NOT NULL THEN
-    DELETE FROM photo.photo_favorite WHERE account_no = existing_account_no OR photo_account_no = existing_account_no;
-    DELETE FROM photo.photo_tag_mst WHERE account_no = existing_account_no;
-    DELETE FROM photo.photo_mst WHERE account_no = existing_account_no;
-    DELETE FROM common.location_mst WHERE account_no = existing_account_no;
-    DELETE FROM common.refresh_token WHERE account_no = existing_account_no;
-    DELETE FROM common.account WHERE account_no = existing_account_no;
-  END IF;
-END $$;
+DELETE FROM photo.photo_favorite
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}')
+     OR favorite_photo_account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+DELETE FROM photo.photo_tag_mst
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+DELETE FROM photo.photo_mst
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+DELETE FROM common.location_mst
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+DELETE FROM common.refresh_token
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+DELETE FROM common.account WHERE account_id = '${ACCOUNT_ID}';
 
 -- テスト専用アカウントを作成（ログインしない前提なのでパスワードはダミー値）
 INSERT INTO common.account
@@ -52,7 +56,7 @@ INSERT INTO common.account
    account_id, account_name, password, authority_kbn, last_login_datetime)
 VALUES
   (DEFAULT, 1, now(), 1, now(), false,
-   :account_id, 'パフォーマンステスト用アカウント', 'no-login-dummy-hash', 'normal-user', now())
+   '${ACCOUNT_ID}', 'パフォーマンステスト用アカウント', 'no-login-dummy-hash', 'normal-user', now())
 RETURNING account_no \gset target_
 
 -- 写真の紐付け先ロケーションを1件だけ用意（全写真で共用）
@@ -80,7 +84,7 @@ SELECT
   -- 撮影日時を過去へ分散させ、既定ソート（photo_at DESC）に意味を持たせる
   now() - (gs || ' minutes')::interval,
   1,
-  :account_id || '/' || gs || '-dummy.jpg',
+  '${ACCOUNT_ID}' || '/' || gs || '-dummy.jpg',
   gs || '-dummy.jpg',
   'パフォーマンステスト写真 No.' || gs,
   'Perf Test Photo No.' || gs,
@@ -91,7 +95,7 @@ SELECT
   0.01,
   100,
   false
-FROM generate_series(1, :photo_count) AS gs;
+FROM generate_series(1, ${PHOTO_COUNT}) AS gs;
 SQL
 
 echo "投入完了: アカウント ${ACCOUNT_ID} に写真 ${PHOTO_COUNT} 件"
