@@ -23,6 +23,7 @@ System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags
 
 }
 
+Rel(WebGalleryApplication.WebGalleryApplication.Enumeration, WebGalleryApplication.WebGalleryApplication.Exception, "depends on", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Exception, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
 
 SHOW_LEGEND(true)

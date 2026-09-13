@@ -3,9 +3,26 @@
 |Base package
 |`com.web.gallery.helper`
 |Spring components
-|* `c.w.g.h.JwtTokenProvider`
+|_Event listeners_
+
+* `c.w.g.h.AuthenticatedUserCache`
+
+_Others_
+
+* `c.w.g.h.ClientIpResolver`
+* `c.w.g.h.GeoIpResolver`
+* `c.w.g.h.JwtTokenProvider`
 * `c.w.g.h.KbnHelper`
+* `c.w.g.h.RateLimiter`
+* `c.w.g.h.ReauthenticationThrottle`
+* `c.w.g.h.SchedulerLock`
 * `c.w.g.h.SessionHelper`
 |Bean references
 |* `c.w.g.c.JwtConfig` (in Config)
+* `c.w.g.r.SchedulerLockRepository` (in Repository)
+|Events listened to
+|* `c.w.g.e.AccountDeletedEvent` 
+* `c.w.g.e.AccountLockedEvent` 
+* `c.w.g.e.AccountUnlockedEvent` 
+* `c.w.g.e.AccountUpdatedEvent` 
 |===

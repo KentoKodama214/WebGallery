@@ -17,8 +17,8 @@ top to bottom direction
 
 System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
   Container_Boundary("WebGalleryApplication.WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
-    Component(WebGalleryApplication.WebGalleryApplication.Type_handler, "Type_handler", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Enumeration, "Enumeration", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Type_handler, "Type_handler", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }

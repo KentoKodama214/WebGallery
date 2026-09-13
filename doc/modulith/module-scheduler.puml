@@ -1,0 +1,37 @@
+@startuml
+title <size:24>Scheduler</size>
+
+set separator none
+top to bottom direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Component>
+
+System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
+  Container_Boundary("WebGalleryApplication.WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
+    Component(WebGalleryApplication.WebGalleryApplication.Enumeration, "Enumeration", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Helper, "Helper", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Scheduler, "Scheduler", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Service, "Service", $techn="Module", $descr="", $tags="", $link="")
+  }
+
+}
+
+Rel(WebGalleryApplication.WebGalleryApplication.Helper, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Service, WebGalleryApplication.WebGalleryApplication.Helper, "uses", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Scheduler, WebGalleryApplication.WebGalleryApplication.Enumeration, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Scheduler, WebGalleryApplication.WebGalleryApplication.Helper, "uses", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Scheduler, WebGalleryApplication.WebGalleryApplication.Service, "uses", $techn="", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml
