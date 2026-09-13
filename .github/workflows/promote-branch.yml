@@ -23,7 +23,7 @@ jobs:
           esac
 
       - name: リポジトリをチェックアウト
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: 既存のオープンPRを確認
         id: check
