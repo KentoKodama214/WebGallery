@@ -145,7 +145,7 @@ export function AccountList() {
                 </td>
                 <td className="py-3 px-4 border border-gray-300">
                   <Link
-                    href={`/photo/${account.accountId}/photo_list`}
+                    href={`/photo/${account.accountId}/photo_list?fromAccountList=true`}
                     className="text-blue-600 hover:underline"
                   >
                     ギャラリーを見る

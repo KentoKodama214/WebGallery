@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.web.gallery.mapper.LoginHistoryMapper">
+
+	<insert id="insert" parameterType="com.web.gallery.entity.LoginHistory">
+		INSERT INTO common.login_history (
+			account_no,
+			ip_address,
+			country,
+			region,
+			created_by,
+			created_at
+		) VALUES (
+			#{accountNo},
+			#{ipAddress},
+			COALESCE(#{country}, ''),
+			COALESCE(#{region}, ''),
+			#{createdBy},
+			COALESCE(#{createdAt}, NOW())
+		)
+	</insert>
+
+	<delete id="delete" parameterType="com.web.gallery.entity.LoginHistoryCondition">
+		DELETE FROM
+			common.login_history
+		<where>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+		</where>
+	</delete>
+
+</mapper>

@@ -10,6 +10,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.ExpiresAt;
+import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.InvalidRefreshTokenException;
@@ -74,11 +75,12 @@ public class AuthServiceImpl implements AuthService {
    *
    * @param accountId アカウントID
    * @param password パスワード
+   * @param ipAddress 送信元IPアドレス（ログイン履歴に記録するため、認証結果に伝播させる）
    * @return {@link AuthTokenModel}
    */
   @Override
   @Transactional
-  public AuthTokenModel login(AccountId accountId, Password password) {
+  public AuthTokenModel login(AccountId accountId, Password password, IpAddress ipAddress) {
     // 同一アカウントIDへのログイン試行をDBレベルで直列化し、
     // 「ロックアウト判定 → 失敗回数加算」の間の競合による失敗回数上限のバイパスを防ぐ
     accountRepository.lockForLoginAttempt(accountId);
@@ -93,9 +95,11 @@ public class AuthServiceImpl implements AuthService {
       }
     }
 
-    Authentication authentication =
-        authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(accountId.value(), password.value()));
+    // IPアドレスをdetailsに載せて認証イベント（成功/失敗）に伝播させ、ログイン履歴の記録（AccountServiceImpl）で使用する
+    UsernamePasswordAuthenticationToken authRequest =
+        new UsernamePasswordAuthenticationToken(accountId.value(), password.value());
+    authRequest.setDetails(ipAddress);
+    Authentication authentication = authenticationManager.authenticate(authRequest);
 
     AccountPrincipal principal = (AccountPrincipal) authentication.getPrincipal();
 

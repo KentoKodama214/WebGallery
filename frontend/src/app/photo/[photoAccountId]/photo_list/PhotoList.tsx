@@ -103,13 +103,21 @@ function favoriteKey(accountNo: number, photoNo: number): string {
 
 interface PhotoListProps {
   photoAccountId: string;
+  /**
+   * アカウント一覧ページのリンクから開いたかどうか
+   *
+   * trueの場合、初回表示（pageNo=1）を「別のアカウントのギャラリーを見た」事実として
+   * 分析ログ（photo_list_filter_log）に記録する。ログイン直後の自分自身のギャラリーへの
+   * 遷移ではfalse
+   */
+  fromAccountList?: boolean;
 }
 
 /**
  * 写真一覧コンポーネント
  * フィルター・グリッド表示・ページネーションを提供
  */
-export function PhotoList({ photoAccountId }: PhotoListProps) {
+export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   // マウント時に一度だけ Cookie を読む（従来は 5 回パースしていた）
   const initialFilter = useMemo(
@@ -153,6 +161,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   const isLoadingMoreRef = useRef(false);
   // お気に入り操作の多重実行防止（(accountNo-photoNo) 単位で進行中を管理）
   const favoriteInFlightRef = useRef<Set<string>>(new Set());
+  // 初回ロードが完了済みかどうか。ログアウト等でauthLoading/isAuthenticated/isOwnerが
+  // 変化して初期ロードeffectが再実行されても、fromAccountListによる分析ログ記録は
+  // 本当の初回ロード時のみに限定するために使う（詳細は下記effectのコメント参照）
+  const initialLoadCompletedRef = useRef(false);
 
   // お気に入りボタン等のコールバックから最新のphotosを参照できるようにする
   useEffect(() => {
@@ -204,13 +216,25 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   /**
    * 写真一覧取得（初期化時）
    * Cookieから復元したフィルター条件でAPIを呼び出す
+   *
+   * fromAccountList（アカウント一覧から開いた場合）はバックエンドで絞り込み・並び替えログが
+   * 1件記録されるため、開発時のReact Strict Modeによるeffectの二重実行（mount→cleanup→mount）で
+   * 実リクエストが2回送信されログも2件になるのを防ぐ目的で、cleanup時にAbortControllerで実際の
+   * fetchそのものを中断する（cancelledフラグだけではstate更新は防げてもリクエスト自体は止まらず、
+   * ログの重複が残ってしまう）
+   *
+   * このeffectはauthLoading/isAuthenticated/isOwnerにも依存しており、ログアウト等で認証状態が
+   * 変化すると（ページ遷移前でも）再実行される。initialLoadCompletedRefで「本当の初回ロード」
+   * だけを判定し、2回目以降の再実行ではfromAccountListを送らないようにする（そうしないと、
+   * アカウント一覧から開いたページに滞在したままログアウトしただけで、未ログイン状態の
+   * 絞り込みログが誤って記録されてしまう）
    */
   useEffect(() => {
     // 認証状態が確定してから読み込む（未確定のまま実行すると、閲覧者権限に
     // 応じたフィルターのサニタイズ・お気に入り状態の判定が正しく行えない）
     if (authLoading) return;
 
-    let cancelled = false;
+    const controller = new AbortController();
 
     // 保存済み条件のうち、現在の閲覧者権限で許可されないものを取り除く
     const filter = sanitizeFilterForViewer(readStoredFilter(photoAccountId), {
@@ -226,32 +250,47 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       tagList: filter.tagList || undefined,
       sortBy: filter.sortBy || undefined,
       pageNo: 1,
+      // fromAccountList: アカウント一覧のリンクから開いたことをバックエンドへ伝え、
+      // 「別のアカウントのギャラリーを見た」事実を分析ログに記録してもらう。
+      // 本当の初回ロード（initialLoadCompletedRefがfalse）のときのみ送る
+      fromAccountList:
+        (!initialLoadCompletedRef.current && fromAccountList) || undefined,
+      referer: document.referrer || undefined,
     };
 
     const seq = ++loadSeqRef.current;
     const load = async () => {
       try {
-        const data = await getPhotoList(photoAccountId, params);
-        if (cancelled || loadSeqRef.current !== seq) return;
+        const data = await getPhotoList(photoAccountId, params, controller.signal);
+        if (loadSeqRef.current !== seq) return;
+        initialLoadCompletedRef.current = true;
         setPhotos(data.photoList);
         setIsLast(data.isLast);
         setPageNo(1);
         setAppliedFilter(filter);
         setError(null);
       } catch (err) {
-        if (!cancelled && loadSeqRef.current === seq) {
+        if (err && typeof err === "object" && "name" in err && err.name === "AbortError") return;
+        if (loadSeqRef.current === seq) {
           setError(err instanceof Error ? err.message : "エラーが発生しました");
         }
       } finally {
-        if (!cancelled && loadSeqRef.current === seq) setIsLoading(false);
+        if (loadSeqRef.current === seq && !controller.signal.aborted) setIsLoading(false);
       }
     };
 
     load();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [photoAccountId, saveFilterToCookie, authLoading, isAuthenticated, isOwner]);
+  }, [
+    photoAccountId,
+    saveFilterToCookie,
+    authLoading,
+    isAuthenticated,
+    isOwner,
+    fromAccountList,
+  ]);
 
   useEffect(() => {
     if (!isOwner) return;
@@ -487,10 +526,15 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     saveFilterToCookie(nextFilter);
 
     try {
-      const data = await getPhotoList(
-        photoAccountId,
-        buildParams(nextFilter, 1)
-      );
+      // searchExecuted: ユーザーが絞り込みパネルから明示的に検索を実行したことをバックエンドへ伝え、
+      // 分析ログ（絞り込み・並び替えの利用状況）に記録してもらう。
+      // referer: document.referrer はSPA内のクライアントサイド遷移では変化しないため、
+      // ここで送信しても本来の外部流入元（ページの初回ロード元）を正しく反映できる
+      const data = await getPhotoList(photoAccountId, {
+        ...buildParams(nextFilter, 1),
+        searchExecuted: true,
+        referer: document.referrer,
+      });
       if (loadSeqRef.current !== seq) return;
       setPhotos(data.photoList);
       setIsLast(data.isLast);

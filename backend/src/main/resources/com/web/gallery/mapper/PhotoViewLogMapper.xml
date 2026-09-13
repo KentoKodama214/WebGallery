@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.web.gallery.mapper.PhotoViewLogMapper">
+
+	<insert id="insert" parameterType="com.web.gallery.entity.PhotoViewLog">
+		INSERT INTO photo.photo_view_log (
+			photo_account_no,
+			account_no,
+			photo_no,
+			referer,
+			ip_address,
+			country,
+			region,
+			created_by,
+			created_at
+		) VALUES (
+			#{photoAccountNo},
+			#{accountNo},
+			#{photoNo},
+			COALESCE(#{referer}, ''),
+			#{ipAddress},
+			COALESCE(#{country}, ''),
+			COALESCE(#{region}, ''),
+			#{createdBy},
+			COALESCE(#{createdAt}, NOW())
+		)
+	</insert>
+
+	<delete id="delete" parameterType="com.web.gallery.entity.PhotoViewLogCondition">
+		DELETE FROM
+			photo.photo_view_log
+		<where>
+			<if test="photoAccountNo != null"> AND photo_account_no = #{photoAccountNo}</if>
+		</where>
+	</delete>
+
+</mapper>

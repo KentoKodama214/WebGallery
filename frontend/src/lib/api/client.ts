@@ -600,6 +600,22 @@ export interface PhotoListParams {
   tagList?: string;
   sortBy?: string;
   pageNo?: number;
+  /**
+   * 絞り込みパネルからの明示的な検索実行かどうか（バックエンドの分析ログ記録の判定に使用）。
+   * ログイン直後の初期表示・写真詳細ページからの戻り・「もっと見る」では指定しない
+   */
+  searchExecuted?: boolean;
+  /**
+   * 遷移元URL（{@code document.referrer}）。バックエンドの分析ログ記録に使用する。
+   * HTTPリクエストのRefererヘッダーは同一ページからのAPI呼び出しのため自ページURLになってしまい、
+   * 外部サイトからの本来の流入元を表せないため、クライアントが明示的に送信する
+   */
+  referer?: string;
+  /**
+   * アカウント一覧ページのリンクから開いたかどうか（バックエンドの分析ログ記録の判定に使用）。
+   * ログイン直後の自分自身のギャラリーへの遷移では指定しない
+   */
+  fromAccountList?: boolean;
 }
 
 /**
@@ -607,7 +623,8 @@ export interface PhotoListParams {
  */
 export async function getPhotoList(
   photoAccountId: string,
-  params: PhotoListParams = {}
+  params: PhotoListParams = {},
+  signal?: AbortSignal
 ): Promise<PhotoListResponse> {
   const searchParams = new URLSearchParams();
   if (params.directionKbn) searchParams.set("directionKbn", params.directionKbn);
@@ -615,10 +632,13 @@ export async function getPhotoList(
   if (params.tagList) searchParams.set("tagList", params.tagList);
   if (params.sortBy) searchParams.set("sortBy", params.sortBy);
   if (params.pageNo !== undefined) searchParams.set("pageNo", String(params.pageNo));
+  if (params.searchExecuted) searchParams.set("searchExecuted", "true");
+  if (params.referer) searchParams.set("referer", params.referer);
+  if (params.fromAccountList) searchParams.set("fromAccountList", "true");
 
   const query = searchParams.toString();
   const url = `/api/v1/accounts/${seg(photoAccountId)}/photos${query ? `?${query}` : ""}`;
-  const response = await fetchWithAuth(url);
+  const response = await fetchWithAuth(url, { signal });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真一覧の取得に失敗しました"));
   }
@@ -641,16 +661,23 @@ export async function getPhotoUpperLimit(
 
 /**
  * 写真詳細を取得する
+ *
+ * @param referer 遷移元URL（{@code document.referrer}）。バックエンドの閲覧ログ記録に使用する
  */
 export async function getPhotoDetail(
   photoAccountId: string,
-  photoNo: number
+  photoNo: number,
+  referer?: string,
+  signal?: AbortSignal
 ): Promise<PhotoDetailResponse> {
   // バックエンドは写真の所有者を photoAccountId（パス）で解決する。
   // お気に入り判定に使うアカウント番号はセッション（JWT）から取得されるため、
   // クライアントからアカウント番号を渡す必要はない
-  const url = `/api/v1/accounts/${seg(photoAccountId)}/photos/${seg(photoNo)}`;
-  const response = await fetchWithAuth(url);
+  const searchParams = new URLSearchParams();
+  if (referer) searchParams.set("referer", referer);
+  const query = searchParams.toString();
+  const url = `/api/v1/accounts/${seg(photoAccountId)}/photos/${seg(photoNo)}${query ? `?${query}` : ""}`;
+  const response = await fetchWithAuth(url, { signal });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response, "写真詳細の取得に失敗しました"));
   }

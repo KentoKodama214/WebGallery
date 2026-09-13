@@ -10,6 +10,7 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.util.Arrays;
 import lombok.Data;
 
@@ -55,6 +56,39 @@ public class PhotoListRequest {
   // 深いオフセットページングによる負荷増大を抑えるための上限（20件/ページ換算で20万件相当）
   @Max(value = 10000, message = "{validation.common.max}")
   private Integer pageNo = 1;
+
+  /**
+   * 絞り込み・並び替えの利用状況ログ記録対象かどうか
+   *
+   * <p>フロントエンドがユーザーによる絞り込みパネルの「適用」操作から呼び出す場合のみtrueを送る。 ログイン直後の初期表示・写真詳細ページからの戻り・「もっと見る」等、ユーザーが明示的に
+   * 絞り込み・並び替えを実行したわけではない自動取得ではfalse（既定値）のままとし、 分析ログ（{@code photo_list_filter_log}）には記録しない
+   */
+  @Schema(description = "絞り込みパネルからの明示的な検索実行かどうか（分析ログ記録の判定に使用）", example = "false")
+  @JsonSetter(nulls = Nulls.SKIP)
+  @NotNull(message = "{validation.common.notBlank}")
+  private Boolean searchExecuted = Boolean.FALSE;
+
+  /**
+   * クライアント（ブラウザ）が取得した遷移元URL（{@code document.referrer}）
+   *
+   * <p>サーバーが受け取るHTTPリクエストのRefererヘッダーは、SPAの同一ページからのAPI呼び出しである以上常に自ページの
+   * URLになってしまい、外部サイトからの本来の流入元を表さない。そのためフロントエンドが{@code document.referrer}を このパラメータとして明示的に送信する
+   */
+  @Schema(description = "クライアントが取得した遷移元URL（document.referrer）", example = "https://example.com/")
+  @Size(max = 2048, message = "{validation.common.max_length}")
+  private String referer;
+
+  /**
+   * アカウント一覧から開いたかどうか（分析ログ記録の判定に使用）
+   *
+   * <p>フロントエンドがアカウント一覧ページのリンクから遷移する場合のみtrueを送る。ログイン直後の 自分自身のギャラリーへの遷移（ログインリダイレクト・ヘッダーの「My
+   * Gallery」）ではfalse （既定値）のままとする。「別のアカウントのギャラリーを見た」という事実を分析ログ（{@code
+   * photo_list_filter_log}）に残す目的のフラグであり、絞り込み・並び替えパネルの利用状況を表す{@link #searchExecuted}とは独立して判定に使用する
+   */
+  @Schema(description = "アカウント一覧から開いたかどうか（分析ログ記録の判定に使用）", example = "false")
+  @JsonSetter(nulls = Nulls.SKIP)
+  @NotNull(message = "{validation.common.notBlank}")
+  private Boolean fromAccountList = Boolean.FALSE;
 
   /**
    * タグリストの指定数が上限以下かどうかを検証する

@@ -10,9 +10,12 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Address;
 import com.web.gallery.domain.common.GeoLocation;
+import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.common.IpGeoLocation;
 import com.web.gallery.domain.common.Latitude;
 import com.web.gallery.domain.common.LocationName;
 import com.web.gallery.domain.common.Longitude;
+import com.web.gallery.domain.common.Referer;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FValue;
@@ -47,6 +50,7 @@ import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.helper.GeoIpResolver;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -56,6 +60,7 @@ import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
+import com.web.gallery.model.PhotoListFilterLogModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
@@ -63,6 +68,7 @@ import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoSaveResultModel;
 import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.model.PhotoViewLogModel;
 import com.web.gallery.policy.ImageFileValidationPolicy;
 import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
@@ -70,7 +76,9 @@ import com.web.gallery.repository.impl.AccountRepositoryImpl;
 import com.web.gallery.repository.impl.FileRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
+import com.web.gallery.repository.impl.PhotoListFilterLogRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoMstRepositoryImpl;
+import com.web.gallery.repository.impl.PhotoViewLogRepositoryImpl;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -130,6 +138,12 @@ public class PhotoServiceImplTest {
 
   @Mock private FileRepositoryImpl fileRepositoryImpl;
 
+  @Mock private PhotoListFilterLogRepositoryImpl photoListFilterLogRepositoryImpl;
+
+  @Mock private PhotoViewLogRepositoryImpl photoViewLogRepositoryImpl;
+
+  @Mock private GeoIpResolver geoIpResolver;
+
   @Mock private PhotoConfig photoConfig;
 
   @Mock private PhotoQuotaPolicy photoQuotaPolicy;
@@ -150,6 +164,7 @@ public class PhotoServiceImplTest {
         .doAnswer(invocation -> invocation.getArgument(0))
         .when(fileRepositoryImpl)
         .getPresignedUrl(any(ImageFilePath.class));
+    lenient().when(geoIpResolver.resolve(any(IpAddress.class))).thenReturn(IpGeoLocation.empty());
   }
 
   @Nested
@@ -347,6 +362,10 @@ public class PhotoServiceImplTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .searchExecuted(true)
+              .fromAccountList(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -364,10 +383,90 @@ public class PhotoServiceImplTest {
       assertEquals(SortPhotoEnum.PHOTO_AT, photoGetModel.getSortBy());
       assertEquals(6, photoGetModel.getLimit());
       assertEquals(0, photoGetModel.getOffset());
+
+      // pageNo=1かつsearchExecuted=trueのため、絞り込み・並び替えログが記録され、
+      // 対象アカウントはphoto_account_no（=1）であること
+      ArgumentCaptor<PhotoListFilterLogModel> filterLogCaptor =
+          ArgumentCaptor.forClass(PhotoListFilterLogModel.class);
+      verify(photoListFilterLogRepositoryImpl).save(filterLogCaptor.capture());
+      assertEquals(new AccountNo(1L), filterLogCaptor.getValue().getPhotoAccountNo());
+      assertEquals(DirectionEnum.NONE, filterLogCaptor.getValue().getDirectionKbn());
+      // ログイン中の閲覧者のアカウント番号
+      assertEquals(new AccountNo(2L), filterLogCaptor.getValue().getAccountNo());
     }
 
     @Test
     @Order(2)
+    @DisplayName("正常系：pageNo=1でもsearchExecutedがfalseの場合、絞り込みログを記録しないこと（ログイン直後の初期表示・写真詳細からの戻り等）")
+    void getPhotoList_doesNotRecordFilterLog_whenSearchNotExecuted() throws GalleryException {
+      String accountId = "aaaaaaaa";
+
+      AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+      doReturn(5).when(photoConfig).getPhotoCountPerPage();
+      doReturn(PhotoPageModel.of(PhotoModelList.empty(), true))
+          .when(photoDetailRepositoryImpl)
+          .getPhotoList(any(PhotoGetModel.class));
+
+      PhotoListGetModel photoListGetModel =
+          PhotoListGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId(accountId))
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList(new ArrayList<String>())
+              .sortBy(SortPhotoEnum.PHOTO_AT)
+              .pageNo(1)
+              .searchExecuted(false)
+              .fromAccountList(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      photoServiceImpl.getPhotoList(photoListGetModel);
+
+      verifyNoInteractions(photoListFilterLogRepositoryImpl);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName(
+        "正常系：pageNo=1でsearchExecutedがfalseでも、fromAccountListがtrueの場合は絞り込みログを記録すること（アカウント一覧から別アカウントのギャラリーを開いた場合）")
+    void getPhotoList_recordsFilterLog_whenFromAccountList() throws GalleryException {
+      String accountId = "aaaaaaaa";
+
+      AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+      doReturn(5).when(photoConfig).getPhotoCountPerPage();
+      doReturn(PhotoPageModel.of(PhotoModelList.empty(), true))
+          .when(photoDetailRepositoryImpl)
+          .getPhotoList(any(PhotoGetModel.class));
+
+      PhotoListGetModel photoListGetModel =
+          PhotoListGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId(accountId))
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList(new ArrayList<String>())
+              .sortBy(SortPhotoEnum.PHOTO_AT)
+              .pageNo(1)
+              .searchExecuted(false)
+              .fromAccountList(true)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      photoServiceImpl.getPhotoList(photoListGetModel);
+
+      ArgumentCaptor<PhotoListFilterLogModel> filterLogCaptor =
+          ArgumentCaptor.forClass(PhotoListFilterLogModel.class);
+      verify(photoListFilterLogRepositoryImpl).save(filterLogCaptor.capture());
+      assertEquals(new AccountNo(1L), filterLogCaptor.getValue().getPhotoAccountNo());
+    }
+
+    @Test
+    @Order(4)
     @DisplayName("正常系：sortByがSEASON以外の場合、フィルタリング・ソート済みのRepositoryの取得結果をそのまま返すこと")
     void getPhotoList_passThrough_when_sortBy_is_not_season() throws GalleryException {
       String accountId = "aaaaaaaa";
@@ -393,6 +492,10 @@ public class PhotoServiceImplTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.FAVORITE)
               .pageNo(1)
+              .searchExecuted(false)
+              .fromAccountList(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -412,7 +515,7 @@ public class PhotoServiceImplTest {
     }
 
     @Test
-    @Order(3)
+    @Order(5)
     @DisplayName("正常系：sortByがSEASONの場合、季節・時期順に並び替えられること")
     void getPhotoList_sortBy_season() throws GalleryException {
       String accountId = "aaaaaaaa";
@@ -479,6 +582,10 @@ public class PhotoServiceImplTest {
               .tagList(tags)
               .sortBy(SortPhotoEnum.SEASON)
               .pageNo(1)
+              .searchExecuted(false)
+              .fromAccountList(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
@@ -498,7 +605,7 @@ public class PhotoServiceImplTest {
     }
 
     @Test
-    @Order(4)
+    @Order(6)
     @DisplayName("異常系：指定のアカウントが存在しない場合、PhotoNotFoundExceptionをthrowすること")
     void getPhotoList_accountNotFound() {
       String accountId = "aaaaaaaa";
@@ -514,6 +621,10 @@ public class PhotoServiceImplTest {
               .tagList(new ArrayList<String>())
               .sortBy(SortPhotoEnum.PHOTO_AT)
               .pageNo(1)
+              .searchExecuted(false)
+              .fromAccountList(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertThrows(
@@ -555,10 +666,21 @@ public class PhotoServiceImplTest {
               .accountNo(new AccountNo(2L))
               .photoAccountId(new AccountId(accountId))
               .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertEquals(actual, photoServiceImpl.getPhotoDetail(photoDetailGetModel));
       verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+      // 写真の存在確認後は、閲覧ログが記録され、対象アカウントはphoto_account_no（=1）であること
+      ArgumentCaptor<PhotoViewLogModel> viewLogCaptor =
+          ArgumentCaptor.forClass(PhotoViewLogModel.class);
+      verify(photoViewLogRepositoryImpl).save(viewLogCaptor.capture());
+      assertEquals(new AccountNo(1L), viewLogCaptor.getValue().getPhotoAccountNo());
+      assertEquals(new PhotoNo(1L), viewLogCaptor.getValue().getPhotoNo());
+      // ログイン中の閲覧者のアカウント番号
+      assertEquals(new AccountNo(2L), viewLogCaptor.getValue().getAccountNo());
     }
 
     @Test
@@ -579,6 +701,8 @@ public class PhotoServiceImplTest {
               .accountNo(new AccountNo(2L))
               .photoAccountId(new AccountId(accountId))
               .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertThrows(
@@ -599,6 +723,8 @@ public class PhotoServiceImplTest {
               .accountNo(new AccountNo(2L))
               .photoAccountId(new AccountId(accountId))
               .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
               .build();
 
       assertThrows(
@@ -652,6 +778,8 @@ public class PhotoServiceImplTest {
                   .accountNo(new AccountNo(2L))
                   .photoAccountId(new AccountId("aaaaaaaa"))
                   .photoNo(new PhotoNo(1L))
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
                   .build());
 
       assertNull(actual.getLocationNo());
@@ -674,6 +802,8 @@ public class PhotoServiceImplTest {
                   .accountNo(new AccountNo(1L))
                   .photoAccountId(new AccountId("aaaaaaaa"))
                   .photoNo(new PhotoNo(1L))
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
                   .build());
 
       assertEquals(9L, actual.getLocationNo().value());
@@ -693,6 +823,8 @@ public class PhotoServiceImplTest {
                   .accountNo(new AccountNo(2L))
                   .photoAccountId(new AccountId("aaaaaaaa"))
                   .photoNo(new PhotoNo(1L))
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
                   .build());
 
       assertEquals("東京都渋谷区", actual.getGeoLocation().address().value());
@@ -710,10 +842,19 @@ public class PhotoServiceImplTest {
               PhotoDetailGetModel.builder()
                   .photoAccountId(new AccountId("aaaaaaaa"))
                   .photoNo(new PhotoNo(1L))
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
                   .build());
 
       assertNull(actual.getLocationNo());
       assertNull(actual.getGeoLocation().address());
+
+      // 未ログイン（accountNoがnull）でも閲覧ログは記録され、閲覧者のアカウント番号はnullのまま
+      // 渡されること（永続化時の0変換はEntity層で行う）
+      ArgumentCaptor<PhotoViewLogModel> viewLogCaptor =
+          ArgumentCaptor.forClass(PhotoViewLogModel.class);
+      verify(photoViewLogRepositoryImpl).save(viewLogCaptor.capture());
+      assertNull(viewLogCaptor.getValue().getAccountNo());
     }
   }
 

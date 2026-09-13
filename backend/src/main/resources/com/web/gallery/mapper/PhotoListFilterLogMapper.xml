@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.web.gallery.mapper.PhotoListFilterLogMapper">
+
+	<insert id="insert" parameterType="com.web.gallery.entity.PhotoListFilterLog">
+		INSERT INTO photo.photo_list_filter_log (
+			photo_account_no,
+			account_no,
+			direction_kbn,
+			is_favorite,
+			tag_list,
+			sort_by,
+			referer,
+			ip_address,
+			country,
+			region,
+			created_by,
+			created_at
+		) VALUES (
+			#{photoAccountNo},
+			#{accountNo},
+			#{directionKbn, typeHandler=com.web.gallery.type_handler.DirectionEnumTypeHandler}::photo.direction_enum,
+			#{isFavorite},
+			COALESCE(#{tagList}, ''),
+			#{sortBy, typeHandler=com.web.gallery.type_handler.SortPhotoEnumTypeHandler}::photo.sort_photo_enum,
+			COALESCE(#{referer}, ''),
+			#{ipAddress},
+			COALESCE(#{country}, ''),
+			COALESCE(#{region}, ''),
+			#{createdBy},
+			COALESCE(#{createdAt}, NOW())
+		)
+	</insert>
+
+	<delete id="delete" parameterType="com.web.gallery.entity.PhotoListFilterLogCondition">
+		DELETE FROM
+			photo.photo_list_filter_log
+		<where>
+			<if test="photoAccountNo != null"> AND photo_account_no = #{photoAccountNo}</if>
+		</where>
+	</delete>
+
+</mapper>

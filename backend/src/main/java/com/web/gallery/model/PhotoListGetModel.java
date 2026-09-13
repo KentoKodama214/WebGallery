@@ -4,6 +4,8 @@ import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoListRequest;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.common.Referer;
 import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
@@ -50,15 +52,41 @@ public class PhotoListGetModel {
   @NonNull private Integer pageNo;
 
   /**
+   * 絞り込み・並び替えの利用状況ログ記録対象かどうか
+   *
+   * <p>ユーザーが絞り込みパネルから明示的に検索を実行した場合のみtrue。 ログイン直後の初期表示や写真詳細ページからの戻り等の自動取得ではfalse
+   */
+  @NonNull private Boolean searchExecuted;
+
+  /**
+   * アカウント一覧から開いたかどうか
+   *
+   * <p>trueの場合、「別のアカウントのギャラリーを見た」事実を残す目的で絞り込み・並び替えログに記録する。 ログイン直後の自分自身のギャラリーへの遷移ではfalse
+   */
+  @NonNull private Boolean fromAccountList;
+
+  /** 送信元IPアドレス（絞り込み・並び替えログ記録用） */
+  @NonNull private IpAddress ipAddress;
+
+  /** リファラ（絞り込み・並び替えログ記録用） */
+  @NonNull private Referer referer;
+
+  /**
    * 写真一覧リクエストからPhotoListGetModelを生成する
    *
    * @param request {@link PhotoListRequest}
    * @param accountNo ログイン中のアカウントNo
    * @param photoAccountId 写真のアカウントID
+   * @param ipAddress 送信元IPアドレス
+   * @param referer リファラ
    * @return {@link PhotoListGetModel}
    */
   public static PhotoListGetModel from(
-      PhotoListRequest request, Long accountNo, String photoAccountId) {
+      PhotoListRequest request,
+      Long accountNo,
+      String photoAccountId,
+      IpAddress ipAddress,
+      Referer referer) {
     Optional<String> tagsOpt = Optional.ofNullable(request.getTagList());
     // 空文字トークンを除外し、件数上限を強制する。
     // （バリデーション側 PhotoListRequest#isTagListSizeValid は空文字を除外して数えるため、
@@ -84,6 +112,10 @@ public class PhotoListGetModel {
         .tagList(tagList)
         .sortBy(request.getSortBy())
         .pageNo(request.getPageNo())
+        .searchExecuted(Optional.ofNullable(request.getSearchExecuted()).orElse(Boolean.FALSE))
+        .fromAccountList(Optional.ofNullable(request.getFromAccountList()).orElse(Boolean.FALSE))
+        .ipAddress(ipAddress)
+        .referer(referer)
         .build();
   }
 }

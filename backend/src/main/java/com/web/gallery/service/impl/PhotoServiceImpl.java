@@ -6,6 +6,7 @@ import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.GeoLocation;
+import com.web.gallery.domain.common.IpGeoLocation;
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoCount;
@@ -16,6 +17,7 @@ import com.web.gallery.event.PhotoDeletedEvent;
 import com.web.gallery.event.PhotoRegisteredEvent;
 import com.web.gallery.event.PhotoUpdatedEvent;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.helper.GeoIpResolver;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.FileModel;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -25,11 +27,13 @@ import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoDetailSearchModel;
 import com.web.gallery.model.PhotoGetModel;
+import com.web.gallery.model.PhotoListFilterLogModel;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoSaveResultModel;
+import com.web.gallery.model.PhotoViewLogModel;
 import com.web.gallery.policy.ImageFileValidationPolicy;
 import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
@@ -37,7 +41,9 @@ import com.web.gallery.repository.AccountRepository;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.PhotoAggregateRepository;
 import com.web.gallery.repository.PhotoDetailRepository;
+import com.web.gallery.repository.PhotoListFilterLogRepository;
 import com.web.gallery.repository.PhotoMstRepository;
+import com.web.gallery.repository.PhotoViewLogRepository;
 import com.web.gallery.service.PhotoService;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -67,6 +73,9 @@ public class PhotoServiceImpl implements PhotoService {
   private final PhotoAggregateRepository photoAggregateRepository;
   private final AccountRepository accountRepository;
   private final FileRepository fileRepository;
+  private final PhotoListFilterLogRepository photoListFilterLogRepository;
+  private final PhotoViewLogRepository photoViewLogRepository;
+  private final GeoIpResolver geoIpResolver;
   private final PhotoConfig photoConfig;
   private final PhotoQuotaPolicy photoQuotaPolicy;
   private final ImageFileValidationPolicy imageFileValidationPolicy;
@@ -98,6 +107,17 @@ public class PhotoServiceImpl implements PhotoService {
                 accountModel.getAccountNo(),
                 photoConfig.getPhotoCountPerPage()));
 
+    // 絞り込み・並び替え条件の利用状況ログ。以下のいずれかの場合のみ記録する
+    // ・ユーザーが絞り込みパネルから明示的に検索を実行した場合
+    // ・アカウント一覧から別アカウントのギャラリーを開いた場合（「見た」事実を残す目的）
+    // ログイン直後の自分自身のギャラリーへの初期表示・写真詳細ページからの戻り・「もっと見る」に
+    // よるページ送り等の自動取得は対象外とする
+    if (photoListGetModel.getPageNo() == 1
+        && (Boolean.TRUE.equals(photoListGetModel.getSearchExecuted())
+            || Boolean.TRUE.equals(photoListGetModel.getFromAccountList()))) {
+      recordPhotoListFilterLog(photoListGetModel, accountModel.getAccountNo());
+    }
+
     PhotoModelList photoModelList = toPresignedUrls(photoPageModel.getPhotoModelList());
 
     if (SortPhotoEnum.SEASON.equals(photoListGetModel.getSortBy())) {
@@ -126,6 +146,68 @@ public class PhotoServiceImpl implements PhotoService {
   }
 
   /**
+   * 写真一覧の絞り込み・並び替え条件の利用状況ログを記録する
+   *
+   * <p>このメソッド自体は{@code getPhotoList}の{@code readOnly = true}トランザクション内で実行されるが、 実際の書き込みは{@link
+   * PhotoListFilterLogRepository#save}がREQUIRES_NEWで独立したトランザクションとして行う。
+   * ログ記録に失敗しても写真一覧の取得という主機能を妨げないよう、例外は握りつぶす
+   *
+   * @param photoListGetModel {@link PhotoListGetModel}
+   * @param photoAccountNo 写真アカウント番号（閲覧対象ギャラリーの所有者）
+   */
+  private void recordPhotoListFilterLog(
+      PhotoListGetModel photoListGetModel, AccountNo photoAccountNo) {
+    try {
+      IpGeoLocation geoLocation = geoIpResolver.resolve(photoListGetModel.getIpAddress());
+      photoListFilterLogRepository.save(
+          PhotoListFilterLogModel.builder()
+              .photoAccountNo(photoAccountNo)
+              .accountNo(photoListGetModel.getAccountNo())
+              .directionKbn(photoListGetModel.getDirectionKbn())
+              .isFavoriteOnly(photoListGetModel.getIsFavoriteOnly())
+              .tagList(String.join(",", photoListGetModel.getTagList()))
+              .sortBy(photoListGetModel.getSortBy())
+              .referer(photoListGetModel.getReferer())
+              .ipAddress(photoListGetModel.getIpAddress())
+              .geoLocation(geoLocation)
+              .build());
+    } catch (RuntimeException e) {
+      log.warn(
+          "Failed to record photo list filter log. (photoAccountNo: {})",
+          photoAccountNo.value(),
+          e);
+    }
+  }
+
+  /**
+   * 写真詳細閲覧ログを記録する
+   *
+   * <p>このメソッド自体は{@code getPhotoDetail}の{@code readOnly = true}トランザクション内で実行されるが、 実際の書き込みは{@link
+   * PhotoViewLogRepository#save}がREQUIRES_NEWで独立したトランザクションとして行う。
+   * ログ記録に失敗しても写真詳細の取得という主機能を妨げないよう、例外は握りつぶす
+   *
+   * @param photoDetailGetModel {@link PhotoDetailGetModel}
+   * @param photoAccountNo 写真アカウント番号
+   */
+  private void recordPhotoViewLog(
+      PhotoDetailGetModel photoDetailGetModel, AccountNo photoAccountNo) {
+    try {
+      IpGeoLocation geoLocation = geoIpResolver.resolve(photoDetailGetModel.getIpAddress());
+      photoViewLogRepository.save(
+          PhotoViewLogModel.builder()
+              .photoAccountNo(photoAccountNo)
+              .accountNo(photoDetailGetModel.getAccountNo())
+              .photoNo(photoDetailGetModel.getPhotoNo())
+              .referer(photoDetailGetModel.getReferer())
+              .ipAddress(photoDetailGetModel.getIpAddress())
+              .geoLocation(geoLocation)
+              .build());
+    } catch (RuntimeException e) {
+      log.warn("Failed to record photo view log. (photoAccountNo: {})", photoAccountNo.value(), e);
+    }
+  }
+
+  /**
    * 写真のメタデータを含めた詳細情報を取得する
    *
    * @param photoDetailGetModel {@link PhotoDetailGetModel}
@@ -145,6 +227,9 @@ public class PhotoServiceImpl implements PhotoService {
     PhotoDetailModel photoDetailModel =
         photoDetailRepository.getPhotoDetail(
             PhotoDetailSearchModel.of(photoDetailGetModel, accountModel.getAccountNo()));
+
+    // 写真詳細閲覧ログ（写真の存在確認が通った場合のみ記録する）
+    recordPhotoViewLog(photoDetailGetModel, accountModel.getAccountNo());
 
     var builder =
         photoDetailModel.toBuilder()

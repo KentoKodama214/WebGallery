@@ -4,6 +4,7 @@ import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.request.PhotoDeleteRequest;
+import com.web.gallery.controller.request.PhotoDetailRequest;
 import com.web.gallery.controller.request.PhotoListRequest;
 import com.web.gallery.controller.request.PhotoSaveRequest;
 import com.web.gallery.controller.response.PhotoDetailGetResponse;
@@ -12,8 +13,10 @@ import com.web.gallery.controller.response.PhotoListGetResponse;
 import com.web.gallery.controller.response.PhotoUpperLimitResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.Referer;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.helper.ClientIpResolver;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.helper.ValidationErrorLogger;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -30,8 +33,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
@@ -62,6 +67,20 @@ public class PhotoController {
 
   private final PhotoService photoService;
   private final SessionHelper sessionHelper;
+  private final ClientIpResolver clientIpResolver;
+
+  /**
+   * クライアントから送信されたリファラを{@link Referer}に変換する（取得できない場合は空文字）
+   *
+   * <p>HTTPリクエストのRefererヘッダーは、SPAの同一ページからのAPI呼び出しである以上常に自ページのURLになって
+   * しまい、外部サイトからの本来の流入元を表さない。そのためフロントエンドが{@code document.referrer}を リクエストパラメータとして明示的に送信した値を使用する
+   *
+   * @param referer クライアントから送信されたリファラ
+   * @return {@link Referer}
+   */
+  private Referer refererOf(String referer) {
+    return new Referer(Optional.ofNullable(referer).orElse(""));
+  }
 
   /**
    * 写真一覧の写真取得
@@ -71,6 +90,7 @@ public class PhotoController {
    * @param photoAccountId ページ所有者のアカウントID
    * @param photoListRequest {@link PhotoListRequest}
    * @param result バリデーション結果
+   * @param request リクエスト（絞り込み・並び替えログ記録用の送信元IPアドレス・リファラ取得に使用）
    * @return {@link PhotoListGetResponse}
    * @throws GalleryException リクエストパラメータが不正な場合
    */
@@ -81,7 +101,8 @@ public class PhotoController {
   public ResponseEntity<PhotoListGetResponse> getPhotoList(
       @PathVariable String photoAccountId,
       @ParameterObject @ModelAttribute @Validated PhotoListRequest photoListRequest,
-      BindingResult result)
+      BindingResult result,
+      HttpServletRequest request)
       throws GalleryException {
 
     if (result.hasErrors()) {
@@ -92,7 +113,12 @@ public class PhotoController {
     // 抽出条件に該当する写真の一覧を、指定の並び順で取得する
     PhotoPageModel photoPageModel =
         photoService.getPhotoList(
-            PhotoListGetModel.from(photoListRequest, sessionHelper.getAccountNo(), photoAccountId));
+            PhotoListGetModel.from(
+                photoListRequest,
+                sessionHelper.getAccountNo(),
+                photoAccountId,
+                clientIpResolver.resolve(request),
+                refererOf(photoListRequest.getReferer())));
     return ResponseEntity.ok(PhotoListGetResponse.from(photoPageModel));
   }
 
@@ -122,19 +148,38 @@ public class PhotoController {
    *
    * @param photoAccountId 写真所有者のアカウントID
    * @param photoNo 写真番号
+   * @param photoDetailRequest {@link PhotoDetailRequest}
+   * @param result バリデーション結果
+   * @param request リクエスト（閲覧ログ記録用の送信元IPアドレス取得に使用）
    * @return {@link PhotoDetailGetResponse}
-   * @throws GalleryException 写真が存在しない場合
+   * @throws GalleryException 以下のいずれかに該当する場合 ・リクエストパラメータが不正な場合 ・写真が存在しない場合
    */
   @Operation(summary = "写真詳細取得", description = "写真の詳細情報（EXIF・タグを含む）を取得する")
   @ApiResponse(responseCode = "200", description = "取得成功")
+  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
   @ApiResponse(responseCode = "404", description = "写真が存在しない", content = @Content)
   @GetMapping(ApiRoutes.API_PHOTO_DETAIL)
   public ResponseEntity<PhotoDetailGetResponse> getPhotoDetail(
-      @PathVariable String photoAccountId, @PathVariable Long photoNo) throws GalleryException {
+      @PathVariable String photoAccountId,
+      @PathVariable Long photoNo,
+      @ParameterObject @ModelAttribute @Validated PhotoDetailRequest photoDetailRequest,
+      BindingResult result,
+      HttpServletRequest request)
+      throws GalleryException {
+
+    if (result.hasErrors()) {
+      ValidationErrorLogger.logFieldErrors(log, result);
+      throw ErrorEnum.INVALID_INPUT.toException();
+    }
 
     PhotoDetailModel photoDetailModel =
         photoService.getPhotoDetail(
-            PhotoDetailGetModel.from(sessionHelper.getAccountNo(), photoAccountId, photoNo));
+            PhotoDetailGetModel.from(
+                sessionHelper.getAccountNo(),
+                photoAccountId,
+                photoNo,
+                clientIpResolver.resolve(request),
+                refererOf(photoDetailRequest.getReferer())));
 
     return ResponseEntity.ok(PhotoDetailGetResponse.from(photoDetailModel));
   }
