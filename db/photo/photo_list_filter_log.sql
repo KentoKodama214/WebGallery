@@ -9,6 +9,8 @@ CREATE TABLE photo.photo_list_filter_log
 	photo_list_filter_log_no bigserial NOT NULL,
 	-- 写真アカウント番号（閲覧対象ギャラリーの所有者）
 	photo_account_no bigint NOT NULL,
+	-- 閲覧者のアカウント番号（ログイン中の場合のみ設定。未ログインの場合は0。センチネル値のため外部キー制約なし）
+	account_no bigint NOT NULL,
 	-- 向き区分コード
 	direction_kbn photo.direction_enum NOT NULL,
 	-- お気に入り写真のみ絞り込みフラグ
@@ -51,6 +53,7 @@ CREATE INDEX idx_photo_list_filter_log_account ON photo.photo_list_filter_log (p
 COMMENT ON TABLE photo.photo_list_filter_log IS '写真一覧絞り込みログ（「もっと見る」による追加取得は対象外、初回検索のみ記録）';
 COMMENT ON COLUMN photo.photo_list_filter_log.photo_list_filter_log_no IS '写真一覧絞り込みログNo';
 COMMENT ON COLUMN photo.photo_list_filter_log.photo_account_no IS '写真アカウント番号（閲覧対象ギャラリーの所有者）';
+COMMENT ON COLUMN photo.photo_list_filter_log.account_no IS '閲覧者のアカウント番号（ログイン中の場合のみ設定。未ログインの場合は0。センチネル値のため外部キー制約なし）';
 COMMENT ON COLUMN photo.photo_list_filter_log.direction_kbn IS '向き区分: vertical(縦)、horizontal(横)、square(正方形)、none(未設定)';
 COMMENT ON COLUMN photo.photo_list_filter_log.is_favorite IS 'お気に入り写真のみ絞り込みフラグ';
 COMMENT ON COLUMN photo.photo_list_filter_log.tag_list IS 'タグリスト（リクエストされた生文字列、空文字可）';

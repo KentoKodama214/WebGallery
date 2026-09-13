@@ -22,6 +22,9 @@ public class PhotoViewLogModel {
   /** 写真アカウント番号 */
   @NonNull private AccountNo photoAccountNo;
 
+  /** 閲覧者のアカウント番号（ログイン中の場合のみ設定。未ログインの場合はnull） */
+  private AccountNo accountNo;
+
   /** 写真番号 */
   @NonNull private PhotoNo photoNo;
 

@@ -391,6 +391,8 @@ public class PhotoServiceImplTest {
       verify(photoListFilterLogRepositoryImpl).save(filterLogCaptor.capture());
       assertEquals(new AccountNo(1L), filterLogCaptor.getValue().getPhotoAccountNo());
       assertEquals(DirectionEnum.NONE, filterLogCaptor.getValue().getDirectionKbn());
+      // ログイン中の閲覧者のアカウント番号
+      assertEquals(new AccountNo(2L), filterLogCaptor.getValue().getAccountNo());
     }
 
     @Test
@@ -677,6 +679,8 @@ public class PhotoServiceImplTest {
       verify(photoViewLogRepositoryImpl).save(viewLogCaptor.capture());
       assertEquals(new AccountNo(1L), viewLogCaptor.getValue().getPhotoAccountNo());
       assertEquals(new PhotoNo(1L), viewLogCaptor.getValue().getPhotoNo());
+      // ログイン中の閲覧者のアカウント番号
+      assertEquals(new AccountNo(2L), viewLogCaptor.getValue().getAccountNo());
     }
 
     @Test
@@ -844,6 +848,13 @@ public class PhotoServiceImplTest {
 
       assertNull(actual.getLocationNo());
       assertNull(actual.getGeoLocation().address());
+
+      // 未ログイン（accountNoがnull）でも閲覧ログは記録され、閲覧者のアカウント番号はnullのまま
+      // 渡されること（永続化時の0変換はEntity層で行う）
+      ArgumentCaptor<PhotoViewLogModel> viewLogCaptor =
+          ArgumentCaptor.forClass(PhotoViewLogModel.class);
+      verify(photoViewLogRepositoryImpl).save(viewLogCaptor.capture());
+      assertNull(viewLogCaptor.getValue().getAccountNo());
     }
   }
 

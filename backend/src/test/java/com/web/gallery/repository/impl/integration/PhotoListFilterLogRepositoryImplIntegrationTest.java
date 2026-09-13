@@ -84,6 +84,7 @@ public class PhotoListFilterLogRepositoryImplIntegrationTest {
             PhotoListFilterLog.builder()
                 .photoListFilterLogNo(rs.getLong("photo_list_filter_log_no"))
                 .photoAccountNo(rs.getLong("photo_account_no"))
+                .accountNo(rs.getLong("account_no"))
                 .directionKbn(DirectionEnum.getOrDefault(rs.getString("direction_kbn")))
                 .isFavorite(rs.getBoolean("is_favorite"))
                 .tagList(rs.getString("tag_list"))
@@ -111,6 +112,7 @@ public class PhotoListFilterLogRepositoryImplIntegrationTest {
       PhotoListFilterLogModel model =
           PhotoListFilterLogModel.builder()
               .photoAccountNo(new AccountNo(1L))
+              .accountNo(new AccountNo(2L))
               .directionKbn(DirectionEnum.HORIZONTAL)
               .isFavoriteOnly(new IsFavoriteOnly(false))
               .tagList("山,川")
@@ -132,6 +134,8 @@ public class PhotoListFilterLogRepositoryImplIntegrationTest {
       assertEquals("203.0.113.1", actual.getFirst().getIpAddress());
       assertEquals("JP", actual.getFirst().getCountry());
       assertEquals("Tokyo", actual.getFirst().getRegion());
+      // ログイン中の閲覧者のアカウント番号
+      assertEquals(2L, actual.getFirst().getAccountNo());
       // created_byはphoto_account_noと同一
       assertEquals(1L, actual.getFirst().getCreatedBy());
     }
@@ -161,6 +165,30 @@ public class PhotoListFilterLogRepositoryImplIntegrationTest {
       assertEquals("", actual.getFirst().getReferer());
       assertEquals("", actual.getFirst().getCountry());
       assertEquals("", actual.getFirst().getRegion());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：未ログイン（accountNoがnull）の場合、account_noを0で保存する（NOT NULL制約のため）")
+    void save_success_when_not_logged_in() {
+      PhotoListFilterLogModel model =
+          PhotoListFilterLogModel.builder()
+              .photoAccountNo(new AccountNo(1L))
+              .accountNo(null)
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList("")
+              .sortBy(SortPhotoEnum.PHOTO_AT)
+              .referer(new Referer(""))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .geoLocation(IpGeoLocation.empty())
+              .build();
+
+      photoListFilterLogRepositoryImpl.save(model);
+
+      List<PhotoListFilterLog> actual = getByPhotoAccountNo(1L);
+      assertEquals(1, actual.size());
+      assertEquals(0L, actual.getFirst().getAccountNo());
     }
   }
 

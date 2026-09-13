@@ -24,6 +24,9 @@ public class PhotoListFilterLogModel {
   /** 写真アカウント番号（閲覧対象ギャラリーの所有者） */
   @NonNull private AccountNo photoAccountNo;
 
+  /** 閲覧者のアカウント番号（ログイン中の場合のみ設定。未ログインの場合はnull） */
+  private AccountNo accountNo;
+
   /** 向き区分 */
   @NonNull private DirectionEnum directionKbn;
 

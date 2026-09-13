@@ -82,6 +82,7 @@ public class PhotoViewLogRepositoryImplIntegrationTest {
             PhotoViewLog.builder()
                 .photoViewLogNo(rs.getLong("photo_view_log_no"))
                 .photoAccountNo(rs.getLong("photo_account_no"))
+                .accountNo(rs.getLong("account_no"))
                 .photoNo(rs.getLong("photo_no"))
                 .referer(rs.getString("referer"))
                 .ipAddress(rs.getString("ip_address"))
@@ -106,6 +107,7 @@ public class PhotoViewLogRepositoryImplIntegrationTest {
       PhotoViewLogModel model =
           PhotoViewLogModel.builder()
               .photoAccountNo(new AccountNo(1L))
+              .accountNo(new AccountNo(2L))
               .photoNo(new PhotoNo(1L))
               .referer(new Referer("https://example.com/photo_list"))
               .ipAddress(new IpAddress("203.0.113.1"))
@@ -121,6 +123,8 @@ public class PhotoViewLogRepositoryImplIntegrationTest {
       assertEquals("203.0.113.1", actual.getFirst().getIpAddress());
       assertEquals("JP", actual.getFirst().getCountry());
       assertEquals("Osaka", actual.getFirst().getRegion());
+      // ログイン中の閲覧者のアカウント番号
+      assertEquals(2L, actual.getFirst().getAccountNo());
       // created_byはphoto_account_noと同一
       assertEquals(1L, actual.getFirst().getCreatedBy());
     }
@@ -145,6 +149,27 @@ public class PhotoViewLogRepositoryImplIntegrationTest {
       assertEquals("", actual.getFirst().getReferer());
       assertEquals("", actual.getFirst().getCountry());
       assertEquals("", actual.getFirst().getRegion());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：未ログイン（accountNoがnull）の場合、account_noを0で保存する（NOT NULL制約のため）")
+    void save_success_when_not_logged_in() {
+      PhotoViewLogModel model =
+          PhotoViewLogModel.builder()
+              .photoAccountNo(new AccountNo(1L))
+              .accountNo(null)
+              .photoNo(new PhotoNo(1L))
+              .referer(new Referer(""))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .geoLocation(IpGeoLocation.empty())
+              .build();
+
+      photoViewLogRepositoryImpl.save(model);
+
+      List<PhotoViewLog> actual = getByPhotoAccountNo(1L);
+      assertEquals(1, actual.size());
+      assertEquals(0L, actual.getFirst().getAccountNo());
     }
   }
 

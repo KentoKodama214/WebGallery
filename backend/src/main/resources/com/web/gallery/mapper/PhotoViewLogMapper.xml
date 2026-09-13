@@ -7,6 +7,7 @@
 	<insert id="insert" parameterType="com.web.gallery.entity.PhotoViewLog">
 		INSERT INTO photo.photo_view_log (
 			photo_account_no,
+			account_no,
 			photo_no,
 			referer,
 			ip_address,
@@ -16,6 +17,7 @@
 			created_at
 		) VALUES (
 			#{photoAccountNo},
+			#{accountNo},
 			#{photoNo},
 			COALESCE(#{referer}, ''),
 			#{ipAddress},

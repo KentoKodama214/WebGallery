@@ -11,6 +11,8 @@ CREATE TABLE photo.photo_view_log
 	photo_account_no bigint NOT NULL,
 	-- 写真番号
 	photo_no bigint NOT NULL,
+	-- 閲覧者のアカウント番号（ログイン中の場合のみ設定。未ログインの場合は0。センチネル値のため外部キー制約なし）
+	account_no bigint NOT NULL,
 	-- リファラ（遷移元URL、取得できない場合は空文字）
 	referer varchar(2048) NOT NULL DEFAULT '',
 	-- 送信元IPアドレス
@@ -46,6 +48,7 @@ COMMENT ON TABLE photo.photo_view_log IS '写真詳細閲覧ログ';
 COMMENT ON COLUMN photo.photo_view_log.photo_view_log_no IS '写真閲覧ログNo';
 COMMENT ON COLUMN photo.photo_view_log.photo_account_no IS '写真アカウント番号';
 COMMENT ON COLUMN photo.photo_view_log.photo_no IS '写真番号';
+COMMENT ON COLUMN photo.photo_view_log.account_no IS '閲覧者のアカウント番号（ログイン中の場合のみ設定。未ログインの場合は0。センチネル値のため外部キー制約なし）';
 COMMENT ON COLUMN photo.photo_view_log.referer IS 'リファラ（遷移元URL、取得できない場合は空文字）';
 COMMENT ON COLUMN photo.photo_view_log.ip_address IS '送信元IPアドレス';
 COMMENT ON COLUMN photo.photo_view_log.country IS '国: ISO 3166-1 alpha-2コード。未解決時は空文字';

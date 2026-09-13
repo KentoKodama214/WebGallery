@@ -8,7 +8,7 @@
 |----|--------|--------|----------|-------------|----------|-------------|
 | 1 | account_id | アカウントID | varchar(20) | - | 8〜20文字の英数字。ログイン時に使用する一意の識別子 | account |
 | 2 | account_name | アカウント名 | varchar(50) | - | ユーザーの表示名 | account |
-| 3 | account_no | アカウント番号 | bigserial / bigint | (自動採番) / - | アカウントを一意に特定するための番号。accountテーブルではPK（自動採番）、他テーブルではFK | account, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite, login_history |
+| 3 | account_no | アカウント番号 | bigserial / bigint | (自動採番) / - | アカウントを一意に特定するための番号。accountテーブルではPK（自動採番）、他テーブルでは概ねFK。ただしphoto_list_filter_log・photo_view_logのaccount_noは閲覧者のアカウント番号を表し、未ログインの場合は0（センチネル値のためFKなし） | account, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite, login_history, photo_list_filter_log, photo_view_log |
 | 4 | address | 住所 | text | '' | 撮影場所の住所 | location_mst |
 | 5 | authority_kbn | 権限区分 | common.authority_enum | - | mini-user/normal-user/special-user/administratorの4段階。写真アップロード上限に影響 | account |
 | 6 | birthdate | 生年月日 | date | '1900-01-01' | 個人情報管理の観点で、必須入力なし、かつ年月まで。データ登録時にすべて1日に変換する | account |

@@ -23,6 +23,9 @@ public class PhotoListFilterLog {
   /** 写真アカウント番号（閲覧対象ギャラリーの所有者） */
   private Long photoAccountNo;
 
+  /** 閲覧者のアカウント番号（未ログインの場合は0） */
+  private Long accountNo;
+
   /** 向き区分 */
   private DirectionEnum directionKbn;
 
@@ -62,6 +65,7 @@ public class PhotoListFilterLog {
   public static PhotoListFilterLog from(PhotoListFilterLogModel model) {
     return PhotoListFilterLog.builder()
         .photoAccountNo(model.getPhotoAccountNo().value())
+        .accountNo(model.getAccountNo() != null ? model.getAccountNo().value() : 0L)
         .directionKbn(model.getDirectionKbn())
         .isFavorite(model.getIsFavoriteOnly().value())
         .tagList(model.getTagList())

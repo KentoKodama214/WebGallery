@@ -162,6 +162,7 @@ public class PhotoServiceImpl implements PhotoService {
       photoListFilterLogRepository.save(
           PhotoListFilterLogModel.builder()
               .photoAccountNo(photoAccountNo)
+              .accountNo(photoListGetModel.getAccountNo())
               .directionKbn(photoListGetModel.getDirectionKbn())
               .isFavoriteOnly(photoListGetModel.getIsFavoriteOnly())
               .tagList(String.join(",", photoListGetModel.getTagList()))
@@ -195,6 +196,7 @@ public class PhotoServiceImpl implements PhotoService {
       photoViewLogRepository.save(
           PhotoViewLogModel.builder()
               .photoAccountNo(photoAccountNo)
+              .accountNo(photoDetailGetModel.getAccountNo())
               .photoNo(photoDetailGetModel.getPhotoNo())
               .referer(photoDetailGetModel.getReferer())
               .ipAddress(photoDetailGetModel.getIpAddress())

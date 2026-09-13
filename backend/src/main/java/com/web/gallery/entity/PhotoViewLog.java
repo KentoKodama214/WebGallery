@@ -21,6 +21,9 @@ public class PhotoViewLog {
   /** 写真アカウント番号 */
   private Long photoAccountNo;
 
+  /** 閲覧者のアカウント番号（未ログインの場合は0） */
+  private Long accountNo;
+
   /** 写真番号 */
   private Long photoNo;
 
@@ -51,6 +54,7 @@ public class PhotoViewLog {
   public static PhotoViewLog from(PhotoViewLogModel model) {
     return PhotoViewLog.builder()
         .photoAccountNo(model.getPhotoAccountNo().value())
+        .accountNo(model.getAccountNo() != null ? model.getAccountNo().value() : 0L)
         .photoNo(model.getPhotoNo().value())
         .referer(model.getReferer().value())
         .ipAddress(model.getIpAddress().value())
