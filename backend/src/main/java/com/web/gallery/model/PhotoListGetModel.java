@@ -58,6 +58,13 @@ public class PhotoListGetModel {
    */
   @NonNull private Boolean searchExecuted;
 
+  /**
+   * アカウント一覧から開いたかどうか
+   *
+   * <p>trueの場合、「別のアカウントのギャラリーを見た」事実を残す目的で絞り込み・並び替えログに記録する。 ログイン直後の自分自身のギャラリーへの遷移ではfalse
+   */
+  @NonNull private Boolean fromAccountList;
+
   /** 送信元IPアドレス（絞り込み・並び替えログ記録用） */
   @NonNull private IpAddress ipAddress;
 
@@ -106,6 +113,7 @@ public class PhotoListGetModel {
         .sortBy(request.getSortBy())
         .pageNo(request.getPageNo())
         .searchExecuted(Optional.ofNullable(request.getSearchExecuted()).orElse(Boolean.FALSE))
+        .fromAccountList(Optional.ofNullable(request.getFromAccountList()).orElse(Boolean.FALSE))
         .ipAddress(ipAddress)
         .referer(referer)
         .build();

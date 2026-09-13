@@ -611,6 +611,11 @@ export interface PhotoListParams {
    * 外部サイトからの本来の流入元を表せないため、クライアントが明示的に送信する
    */
   referer?: string;
+  /**
+   * アカウント一覧ページのリンクから開いたかどうか（バックエンドの分析ログ記録の判定に使用）。
+   * ログイン直後の自分自身のギャラリーへの遷移では指定しない
+   */
+  fromAccountList?: boolean;
 }
 
 /**
@@ -629,6 +634,7 @@ export async function getPhotoList(
   if (params.pageNo !== undefined) searchParams.set("pageNo", String(params.pageNo));
   if (params.searchExecuted) searchParams.set("searchExecuted", "true");
   if (params.referer) searchParams.set("referer", params.referer);
+  if (params.fromAccountList) searchParams.set("fromAccountList", "true");
 
   const query = searchParams.toString();
   const url = `/api/v1/accounts/${seg(photoAccountId)}/photos${query ? `?${query}` : ""}`;

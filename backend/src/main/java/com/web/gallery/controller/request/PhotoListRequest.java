@@ -79,6 +79,18 @@ public class PhotoListRequest {
   private String referer;
 
   /**
+   * アカウント一覧から開いたかどうか（分析ログ記録の判定に使用）
+   *
+   * <p>フロントエンドがアカウント一覧ページのリンクから遷移する場合のみtrueを送る。ログイン直後の 自分自身のギャラリーへの遷移（ログインリダイレクト・ヘッダーの「My
+   * Gallery」）ではfalse （既定値）のままとする。「別のアカウントのギャラリーを見た」という事実を分析ログ（{@code
+   * photo_list_filter_log}）に残す目的のフラグであり、絞り込み・並び替えパネルの利用状況を表す{@link #searchExecuted}とは独立して判定に使用する
+   */
+  @Schema(description = "アカウント一覧から開いたかどうか（分析ログ記録の判定に使用）", example = "false")
+  @JsonSetter(nulls = Nulls.SKIP)
+  @NotNull(message = "{validation.common.notBlank}")
+  private Boolean fromAccountList = Boolean.FALSE;
+
+  /**
    * タグリストの指定数が上限以下かどうかを検証する
    *
    * <p>タグ1件につき絞り込み用の相関サブクエリが1つ追加されるため、大量指定によるクエリ負荷増大を防ぐ

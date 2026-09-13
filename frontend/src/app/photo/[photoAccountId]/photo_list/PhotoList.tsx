@@ -103,13 +103,21 @@ function favoriteKey(accountNo: number, photoNo: number): string {
 
 interface PhotoListProps {
   photoAccountId: string;
+  /**
+   * アカウント一覧ページのリンクから開いたかどうか
+   *
+   * trueの場合、初回表示（pageNo=1）を「別のアカウントのギャラリーを見た」事実として
+   * 分析ログ（photo_list_filter_log）に記録する。ログイン直後の自分自身のギャラリーへの
+   * 遷移ではfalse
+   */
+  fromAccountList?: boolean;
 }
 
 /**
  * 写真一覧コンポーネント
  * フィルター・グリッド表示・ページネーションを提供
  */
-export function PhotoList({ photoAccountId }: PhotoListProps) {
+export function PhotoList({ photoAccountId, fromAccountList }: PhotoListProps) {
   const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   // マウント時に一度だけ Cookie を読む（従来は 5 回パースしていた）
   const initialFilter = useMemo(
@@ -205,10 +213,11 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
    * 写真一覧取得（初期化時）
    * Cookieから復元したフィルター条件でAPIを呼び出す
    *
-   * 初回検索（pageNo=1）はバックエンドで絞り込み・並び替えログが1件記録されるため、開発時のReact
-   * Strict Modeによるeffectの二重実行（mount→cleanup→mount）で実リクエストが2回送信されログも
-   * 2件になるのを防ぐ目的で、cleanup時にAbortControllerで実際のfetchそのものを中断する
-   * （cancelledフラグだけではstate更新は防げてもリクエスト自体は止まらず、ログの重複が残ってしまう）
+   * fromAccountList（アカウント一覧から開いた場合）はバックエンドで絞り込み・並び替えログが
+   * 1件記録されるため、開発時のReact Strict Modeによるeffectの二重実行（mount→cleanup→mount）で
+   * 実リクエストが2回送信されログも2件になるのを防ぐ目的で、cleanup時にAbortControllerで実際の
+   * fetchそのものを中断する（cancelledフラグだけではstate更新は防げてもリクエスト自体は止まらず、
+   * ログの重複が残ってしまう）
    */
   useEffect(() => {
     // 認証状態が確定してから読み込む（未確定のまま実行すると、閲覧者権限に
@@ -231,6 +240,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       tagList: filter.tagList || undefined,
       sortBy: filter.sortBy || undefined,
       pageNo: 1,
+      // fromAccountList: アカウント一覧のリンクから開いたことをバックエンドへ伝え、
+      // 「別のアカウントのギャラリーを見た」事実を分析ログに記録してもらう
+      fromAccountList: fromAccountList || undefined,
+      referer: document.referrer || undefined,
     };
 
     const seq = ++loadSeqRef.current;
@@ -257,7 +270,14 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     return () => {
       controller.abort();
     };
-  }, [photoAccountId, saveFilterToCookie, authLoading, isAuthenticated, isOwner]);
+  }, [
+    photoAccountId,
+    saveFilterToCookie,
+    authLoading,
+    isAuthenticated,
+    isOwner,
+    fromAccountList,
+  ]);
 
   useEffect(() => {
     if (!isOwner) return;
