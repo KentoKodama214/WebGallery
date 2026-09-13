@@ -107,19 +107,22 @@ public class PhotoServiceImpl implements PhotoService {
                 accountModel.getAccountNo(),
                 photoConfig.getPhotoCountPerPage()));
 
-    // 絞り込み・並び替え条件の利用状況ログ。以下のいずれかの場合のみ記録する
+    // 絞り込み・並び替え条件の利用状況ログ。閲覧対象が自分自身のギャラリーの場合は、絞り込み
+    // パネルからの明示的な検索実行を含めて一切対象外とする（自分自身かどうかはクライアントの
+    // 申告を信用せず、ここで照合し直す（多層防御））。自分以外のギャラリーの場合のみ、以下の
+    // いずれかで記録する
     // ・ユーザーが絞り込みパネルから明示的に検索を実行した場合
-    // ・別アカウントのギャラリーを初めて開いた場合（「見た」事実を残す目的。アカウント一覧経由・
-    //   URL直接アクセスいずれも対象。ただし閲覧対象が自分自身のギャラリーの場合は対象外とする。
-    //   自分自身かどうかはクライアントの申告を信用せず、ここで照合し直す（多層防御））
+    // ・そのギャラリーを初めて開いた場合（「見た」事実を残す目的。アカウント一覧経由・URL直接
+    //   アクセスいずれも対象）
     // ログイン直後の自分自身のギャラリーへの初期表示・写真詳細ページからの戻り・「もっと見る」に
     // よるページ送り等の自動取得は対象外とする
     boolean isOwnGallery =
         photoListGetModel.getAccountNo() != null
             && photoListGetModel.getAccountNo().equals(accountModel.getAccountNo());
     if (photoListGetModel.getPageNo() == 1
+        && !isOwnGallery
         && (Boolean.TRUE.equals(photoListGetModel.getSearchExecuted())
-            || (Boolean.TRUE.equals(photoListGetModel.getLogInitialView()) && !isOwnGallery))) {
+            || Boolean.TRUE.equals(photoListGetModel.getLogInitialView()))) {
       recordPhotoListFilterLog(photoListGetModel, accountModel.getAccountNo());
     }
 

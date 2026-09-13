@@ -503,6 +503,40 @@ public class PhotoServiceImplTest {
 
     @Test
     @Order(5)
+    @DisplayName("正常系：searchExecutedがtrueでも、閲覧対象が自分自身のギャラリーの場合は絞り込みログを記録しないこと")
+    void getPhotoList_doesNotRecordFilterLog_whenSearchExecutedAndOwnGallery()
+        throws GalleryException {
+      String accountId = "aaaaaaaa";
+
+      AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+      doReturn(5).when(photoConfig).getPhotoCountPerPage();
+      doReturn(PhotoPageModel.of(PhotoModelList.empty(), true))
+          .when(photoDetailRepositoryImpl)
+          .getPhotoList(any(PhotoGetModel.class));
+
+      PhotoListGetModel photoListGetModel =
+          PhotoListGetModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoAccountId(new AccountId(accountId))
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList(new ArrayList<String>())
+              .sortBy(SortPhotoEnum.PHOTO_AT)
+              .pageNo(1)
+              .searchExecuted(true)
+              .logInitialView(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      photoServiceImpl.getPhotoList(photoListGetModel);
+
+      verifyNoInteractions(photoListFilterLogRepositoryImpl);
+    }
+
+    @Test
+    @Order(6)
     @DisplayName("正常系：sortByがSEASON以外の場合、フィルタリング・ソート済みのRepositoryの取得結果をそのまま返すこと")
     void getPhotoList_passThrough_when_sortBy_is_not_season() throws GalleryException {
       String accountId = "aaaaaaaa";
@@ -551,7 +585,7 @@ public class PhotoServiceImplTest {
     }
 
     @Test
-    @Order(6)
+    @Order(7)
     @DisplayName("正常系：sortByがSEASONの場合、季節・時期順に並び替えられること")
     void getPhotoList_sortBy_season() throws GalleryException {
       String accountId = "aaaaaaaa";
@@ -641,7 +675,7 @@ public class PhotoServiceImplTest {
     }
 
     @Test
-    @Order(7)
+    @Order(8)
     @DisplayName("異常系：指定のアカウントが存在しない場合、PhotoNotFoundExceptionをthrowすること")
     void getPhotoList_accountNotFound() {
       String accountId = "aaaaaaaa";
