@@ -13,12 +13,14 @@ import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.InvalidRefreshTokenException;
+import com.web.gallery.helper.ClientIpResolver;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -51,12 +53,14 @@ public class AuthController {
 
   private final AuthService authService;
   private final JwtConfig jwtConfig;
+  private final ClientIpResolver clientIpResolver;
 
   /**
    * ログイン認証
    *
    * @param authLoginRequest {@link AuthLoginRequest}
    * @param result AuthLoginRequestのバインディング結果
+   * @param request リクエスト（ログイン履歴記録用の送信元IPアドレス取得に使用）
    * @return {@link AuthLoginResponse}
    * @throws GalleryException リクエストパラメータが不正の場合
    */
@@ -67,7 +71,9 @@ public class AuthController {
   @ApiResponse(responseCode = "423", description = "アカウントロック", content = @Content)
   @PostMapping(ApiRoutes.API_AUTH_LOGIN)
   public ResponseEntity<AuthLoginResponse> login(
-      @RequestBody @Validated AuthLoginRequest authLoginRequest, BindingResult result)
+      @RequestBody @Validated AuthLoginRequest authLoginRequest,
+      BindingResult result,
+      HttpServletRequest request)
       throws GalleryException {
 
     if (result.hasErrors()) {
@@ -77,7 +83,8 @@ public class AuthController {
     AuthTokenModel tokenModel =
         authService.login(
             new AccountId(authLoginRequest.getAccountId()),
-            new Password(authLoginRequest.getPassword()));
+            new Password(authLoginRequest.getPassword()),
+            clientIpResolver.resolve(request));
 
     ResponseCookie refreshTokenCookie =
         createRefreshTokenCookie(

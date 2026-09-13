@@ -10,6 +10,7 @@ import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.controller.response.PhotoListGetResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.FavoriteCount;
 import com.web.gallery.domain.photo.ImageFilePath;
@@ -22,6 +23,7 @@ import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.helper.ClientIpResolver;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailModelList;
@@ -68,10 +70,13 @@ public class PhotoControllerTest {
 
   @Mock private PhotoConfig photoConfig;
 
+  @Mock private ClientIpResolver clientIpResolver;
+
   private MockMvc mockMvc;
 
   @BeforeEach
   void setUp() {
+    lenient().when(clientIpResolver.resolve(any())).thenReturn(new IpAddress("203.0.113.1"));
     mockMvc =
         MockMvcBuilders.standaloneSetup(photoController)
             .setControllerAdvice(new CommonControllerAdvice())

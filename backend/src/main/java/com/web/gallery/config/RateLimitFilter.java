@@ -2,6 +2,7 @@ package com.web.gallery.config;
 
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.MessageConst;
+import com.web.gallery.helper.ClientIpResolver;
 import com.web.gallery.helper.RateLimiter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,7 +15,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
@@ -47,15 +47,20 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
   private final RateLimiter rateLimiter;
 
+  private final ClientIpResolver clientIpResolver;
+
   /**
    * コンストラクタ
    *
    * @param rateLimitConfig レート制限の設定
    * @param rateLimiter レート制限のカウンタ
+   * @param clientIpResolver 送信元IPアドレス取得のHelper
    */
-  public RateLimitFilter(RateLimitConfig rateLimitConfig, RateLimiter rateLimiter) {
+  public RateLimitFilter(
+      RateLimitConfig rateLimitConfig, RateLimiter rateLimiter, ClientIpResolver clientIpResolver) {
     this.rateLimitConfig = rateLimitConfig;
     this.rateLimiter = rateLimiter;
+    this.clientIpResolver = clientIpResolver;
   }
 
   /** エンドポイントのカテゴリ */
@@ -78,7 +83,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     Category category = resolveCategory(request);
     RateLimitConfig.Bucket bucket = bucketOf(category);
-    String clientIp = clientIpOf(request);
+    String clientIp = clientIpResolver.resolve(request).value();
     String key = clientIp + "|" + category.name();
 
     if (!rateLimiter.tryAcquire(key, new RateLimiter.Rule(bucket.capacity(), bucket.window()))) {
@@ -121,17 +126,6 @@ public class RateLimitFilter extends OncePerRequestFilter {
       case REGISTER -> rateLimitConfig.getRegister();
       case GENERAL -> rateLimitConfig.getGeneral();
     };
-  }
-
-  /**
-   * 送信元IPアドレスを取得する（取得できない場合は固定キーにフォールバックする）
-   *
-   * @param request リクエスト
-   * @return 送信元IPアドレス
-   */
-  private String clientIpOf(HttpServletRequest request) {
-    String remoteAddr = request.getRemoteAddr();
-    return StringUtils.hasText(remoteAddr) ? remoteAddr : "unknown";
   }
 
   /**

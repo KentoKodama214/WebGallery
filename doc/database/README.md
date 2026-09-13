@@ -35,6 +35,7 @@ docker compose --profile docs run --rm schemaspy
 | 型名 | 値 | 説明 |
 |------|----|------|
 | `photo.direction_enum` | `vertical`, `horizontal`, `square`, `none` | 写真の向き |
+| `photo.sort_photo_enum` | `photo_at`, `favorite`, `season` | 写真一覧の並び順 |
 
 ## テーブル一覧
 
@@ -44,9 +45,12 @@ docker compose --profile docs run --rm schemaspy
 | 2 | common | kbn_mst | 区分マスタ |
 | 3 | common | location_mst | ロケーションマスタ |
 | 4 | common | refresh_token | リフレッシュトークン |
-| 5 | photo | photo_mst | 写真マスタ |
-| 6 | photo | photo_tag_mst | 写真タグマスタ |
-| 7 | photo | photo_favorite | 写真お気に入り |
+| 5 | common | login_history | ログイン履歴 |
+| 6 | photo | photo_mst | 写真マスタ |
+| 7 | photo | photo_tag_mst | 写真タグマスタ |
+| 8 | photo | photo_favorite | 写真お気に入り |
+| 9 | photo | photo_list_filter_log | 写真一覧絞り込みログ |
+| 10 | photo | photo_view_log | 写真詳細閲覧ログ |
 
 ## DB初期化
 
@@ -57,7 +61,10 @@ docker compose --profile docs run --rm schemaspy
 3. `common/kbn_mst.sql` - 区分マスタテーブル
 4. `common/location_mst.sql` - ロケーションマスタテーブル
 5. `common/refresh_token.sql` - リフレッシュトークンテーブル
-6. `photo/photo.type.sql` - カスタム型定義
-7. `photo/photo_mst.sql` - 写真マスタテーブル
-8. `photo/photo_tag_mst.sql` - 写真タグマスタテーブル
-9. `photo/photo_favorite.sql` - 写真お気に入りテーブル
+6. `common/login_history.sql` - ログイン履歴テーブル
+7. `photo/photo.type.sql` - カスタム型定義
+8. `photo/photo_mst.sql` - 写真マスタテーブル
+9. `photo/photo_tag_mst.sql` - 写真タグマスタテーブル
+10. `photo/photo_favorite.sql` - 写真お気に入りテーブル
+11. `photo/photo_list_filter_log.sql` - 写真一覧絞り込みログテーブル
+12. `photo/photo_view_log.sql` - 写真詳細閲覧ログテーブル

@@ -9,12 +9,18 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.dto.PhotoDeletionDto;
 import com.web.gallery.entity.AccountCondition;
+import com.web.gallery.entity.LoginHistoryCondition;
 import com.web.gallery.entity.PhotoFavoriteCondition;
+import com.web.gallery.entity.PhotoListFilterLogCondition;
 import com.web.gallery.entity.PhotoTagMstCondition;
+import com.web.gallery.entity.PhotoViewLogCondition;
 import com.web.gallery.mapper.AccountMapper;
+import com.web.gallery.mapper.LoginHistoryMapper;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
+import com.web.gallery.mapper.PhotoListFilterLogMapper;
 import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
+import com.web.gallery.mapper.PhotoViewLogMapper;
 import com.web.gallery.mapper.RefreshTokenMapper;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +50,12 @@ public class AccountAggregateRepositoryImplTest {
   @Mock private PhotoMstMapper photoMstMapper;
 
   @Mock private RefreshTokenMapper refreshTokenMapper;
+
+  @Mock private LoginHistoryMapper loginHistoryMapper;
+
+  @Mock private PhotoListFilterLogMapper photoListFilterLogMapper;
+
+  @Mock private PhotoViewLogMapper photoViewLogMapper;
 
   @Nested
   @Order(1)
@@ -78,9 +90,24 @@ public class AccountAggregateRepositoryImplTest {
       verify(photoTagMstMapper).delete(tagConditionCaptor.capture());
       assertEquals(1L, tagConditionCaptor.getValue().getAccountNo());
 
+      ArgumentCaptor<PhotoViewLogCondition> photoViewLogConditionCaptor =
+          ArgumentCaptor.forClass(PhotoViewLogCondition.class);
+      verify(photoViewLogMapper).delete(photoViewLogConditionCaptor.capture());
+      assertEquals(1L, photoViewLogConditionCaptor.getValue().getPhotoAccountNo());
+
       verify(photoMstMapper).deletePhotosByAccountNo(1L);
 
       verify(refreshTokenMapper).revokeAllByAccountNo(1L, 1L);
+
+      ArgumentCaptor<LoginHistoryCondition> loginHistoryConditionCaptor =
+          ArgumentCaptor.forClass(LoginHistoryCondition.class);
+      verify(loginHistoryMapper).delete(loginHistoryConditionCaptor.capture());
+      assertEquals(1L, loginHistoryConditionCaptor.getValue().getAccountNo());
+
+      ArgumentCaptor<PhotoListFilterLogCondition> photoListFilterLogConditionCaptor =
+          ArgumentCaptor.forClass(PhotoListFilterLogCondition.class);
+      verify(photoListFilterLogMapper).delete(photoListFilterLogConditionCaptor.capture());
+      assertEquals(1L, photoListFilterLogConditionCaptor.getValue().getPhotoAccountNo());
 
       ArgumentCaptor<AccountCondition> accountConditionCaptor =
           ArgumentCaptor.forClass(AccountCondition.class);

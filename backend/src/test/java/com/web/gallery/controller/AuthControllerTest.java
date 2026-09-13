@@ -10,7 +10,9 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.AccessToken;
 import com.web.gallery.domain.auth.ExpiresIn;
 import com.web.gallery.domain.auth.RefreshTokenValue;
+import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.exception.InvalidRefreshTokenException;
+import com.web.gallery.helper.ClientIpResolver;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.service.impl.AuthServiceImpl;
 import jakarta.servlet.http.Cookie;
@@ -42,10 +44,15 @@ public class AuthControllerTest {
 
   @Mock private JwtConfig jwtConfig;
 
+  @Mock private ClientIpResolver clientIpResolver;
+
   private MockMvc mockMvc;
+
+  private static final IpAddress TEST_IP_ADDRESS = new IpAddress("203.0.113.1");
 
   @BeforeEach
   void setUp() {
+    lenient().when(clientIpResolver.resolve(any())).thenReturn(TEST_IP_ADDRESS);
     mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
   }
 
@@ -66,7 +73,7 @@ public class AuthControllerTest {
 
       doReturn(tokenModel)
           .when(authServiceImpl)
-          .login(new AccountId("testuser"), new Password("password123"));
+          .login(new AccountId("testuser"), new Password("password123"), TEST_IP_ADDRESS);
       doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
 
       mockMvc
@@ -80,7 +87,7 @@ public class AuthControllerTest {
           .andExpect(header().exists("Set-Cookie"));
 
       verify(authServiceImpl, times(1))
-          .login(new AccountId("testuser"), new Password("password123"));
+          .login(new AccountId("testuser"), new Password("password123"), TEST_IP_ADDRESS);
     }
 
     @Test
@@ -94,7 +101,8 @@ public class AuthControllerTest {
                   .content("{\"accountId\":\"\",\"password\":\"password123\"}"))
           .andExpect(status().isBadRequest());
 
-      verify(authServiceImpl, times(0)).login(any(AccountId.class), any(Password.class));
+      verify(authServiceImpl, times(0))
+          .login(any(AccountId.class), any(Password.class), any(IpAddress.class));
     }
 
     @Test
@@ -108,7 +116,8 @@ public class AuthControllerTest {
                   .content("{\"accountId\":\"testuser\",\"password\":\"\"}"))
           .andExpect(status().isBadRequest());
 
-      verify(authServiceImpl, times(0)).login(any(AccountId.class), any(Password.class));
+      verify(authServiceImpl, times(0))
+          .login(any(AccountId.class), any(Password.class), any(IpAddress.class));
     }
 
     @Test
@@ -117,7 +126,7 @@ public class AuthControllerTest {
     void login_bad_credentials() throws Exception {
       doThrow(new BadCredentialsException("Bad credentials"))
           .when(authServiceImpl)
-          .login(new AccountId("testuser"), new Password("wrongpassword"));
+          .login(new AccountId("testuser"), new Password("wrongpassword"), TEST_IP_ADDRESS);
 
       mockMvc
           .perform(
@@ -134,7 +143,7 @@ public class AuthControllerTest {
     void login_locked() throws Exception {
       doThrow(new LockedException("Account is locked"))
           .when(authServiceImpl)
-          .login(new AccountId("testuser"), new Password("password123"));
+          .login(new AccountId("testuser"), new Password("password123"), TEST_IP_ADDRESS);
 
       mockMvc
           .perform(
@@ -151,7 +160,7 @@ public class AuthControllerTest {
     void login_other_authentication_exception() throws Exception {
       doThrow(new DisabledException("Account is disabled"))
           .when(authServiceImpl)
-          .login(new AccountId("testuser"), new Password("password123"));
+          .login(new AccountId("testuser"), new Password("password123"), TEST_IP_ADDRESS);
 
       mockMvc
           .perform(

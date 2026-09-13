@@ -18,6 +18,8 @@ import com.web.gallery.domain.account.IsAdminLocked;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
+import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.common.IpGeoLocation;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
@@ -31,16 +33,19 @@ import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.helper.GeoIpResolver;
 import com.web.gallery.model.AccountGetModel;
 import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
 import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.model.LoginHistoryModel;
 import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.impl.AccountAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 import com.web.gallery.repository.impl.KbnMstRepositoryImpl;
+import com.web.gallery.repository.impl.LoginHistoryRepositoryImpl;
 import com.web.gallery.repository.impl.RefreshTokenRepositoryImpl;
 import java.time.Clock;
 import java.time.Instant;
@@ -85,11 +90,15 @@ public class AccountServiceImplTest {
 
   @Mock private RefreshTokenRepositoryImpl refreshTokenRepositoryImpl;
 
+  @Mock private LoginHistoryRepositoryImpl loginHistoryRepositoryImpl;
+
   @Mock private KbnMstRepositoryImpl kbnMstRepositoryImpl;
 
   @Mock private PasswordEncoder passwordEncoder;
 
   @Mock private com.web.gallery.helper.ReauthenticationThrottle reauthenticationThrottle;
+
+  @Mock private GeoIpResolver geoIpResolver;
 
   @Mock private AccountPrincipal accountPrincipal;
 
@@ -822,6 +831,54 @@ public class AccountServiceImplTest {
       assertNotNull(accountModel.getLastLoginDatetime());
       assertEquals(new LoginFailureCount(0), accountModel.getLoginFailureCount());
     }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：認証情報にIPアドレスが設定されている場合、ログイン履歴が記録されること")
+    void handle_recordsLoginHistory() throws GalleryException {
+      String username = "aaaaaaaa";
+      String password = "AAAAAAAA";
+      IpAddress ipAddress = new IpAddress("203.0.113.1");
+
+      UsernamePasswordAuthenticationToken authentication =
+          new UsernamePasswordAuthenticationToken(username, password, new ArrayList<>());
+      authentication.setDetails(ipAddress);
+      AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
+
+      AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
+
+      IpGeoLocation geoLocation = IpGeoLocation.empty();
+      doReturn(geoLocation).when(geoIpResolver).resolve(ipAddress);
+
+      accountServiceImpl.handle(event);
+
+      ArgumentCaptor<LoginHistoryModel> loginHistoryModelCaptor =
+          ArgumentCaptor.forClass(LoginHistoryModel.class);
+      verify(loginHistoryRepositoryImpl).save(loginHistoryModelCaptor.capture());
+      LoginHistoryModel loginHistoryModel = loginHistoryModelCaptor.getValue();
+      assertEquals(new AccountNo(1L), loginHistoryModel.getAccountNo());
+      assertEquals(ipAddress, loginHistoryModel.getIpAddress());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：認証情報にIPアドレスが設定されていない場合、ログイン履歴は記録されないこと")
+    void handle_doesNotRecordLoginHistory_whenDetailsMissing() throws GalleryException {
+      String username = "aaaaaaaa";
+      String password = "AAAAAAAA";
+
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(username, password, new ArrayList<>());
+      AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
+
+      AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
+
+      accountServiceImpl.handle(event);
+
+      verifyNoInteractions(loginHistoryRepositoryImpl);
+    }
   }
 
   @Nested
@@ -916,6 +973,35 @@ public class AccountServiceImplTest {
       assertThrows(UpdateFailureException.class, () -> accountServiceImpl.handle(event));
 
       verify(accountRepositoryImpl).incrementLoginFailureCount(new AccountNo(1L));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：ログイン失敗時はログイン履歴が記録されないこと")
+    void handle_doesNotRecordLoginHistory() throws GalleryException {
+      String username = "aaaaaaaa";
+      String password = "AAAAAAAA";
+      IpAddress ipAddress = new IpAddress("203.0.113.1");
+
+      UsernamePasswordAuthenticationToken authentication =
+          new UsernamePasswordAuthenticationToken(username, password, new ArrayList<>());
+      authentication.setDetails(ipAddress);
+
+      String message = "Invalid username or password";
+      BadCredentialsException exception = new BadCredentialsException(message);
+      AuthenticationFailureBadCredentialsEvent event =
+          new AuthenticationFailureBadCredentialsEvent(authentication, exception);
+
+      AccountModel account =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .loginFailureCount(new LoginFailureCount(1))
+              .build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
+
+      accountServiceImpl.handle(event);
+
+      verifyNoInteractions(loginHistoryRepositoryImpl);
     }
   }
 
