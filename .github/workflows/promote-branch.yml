@@ -1,0 +1,55 @@
+name: 環境昇格PR自動作成
+
+on:
+  push:
+    branches:
+      - development
+      - staging
+
+jobs:
+  create-promotion-pr:
+    name: 昇格PR作成
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: マージ先ブランチを決定
+        id: target
+        run: |
+          case "${{ github.ref_name }}" in
+            development) echo "base=staging" >> "$GITHUB_OUTPUT" ;;
+            staging) echo "base=master" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 既存のオープンPRを確認
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --base "${{ steps.target.outputs.base }}" \
+            --head "${{ github.ref_name }}" \
+            --state open \
+            --json number -q '.[0].number')
+          echo "existing=$existing" >> "$GITHUB_OUTPUT"
+
+      - name: 昇格PRを作成
+        if: steps.check.outputs.existing == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --repo "${{ github.repository }}" \
+            --base "${{ steps.target.outputs.base }}" \
+            --head "${{ github.ref_name }}" \
+            --title "chore: ${{ github.ref_name }} を ${{ steps.target.outputs.base }} へ反映" \
+            --body "${{ github.ref_name }} への変更を ${{ steps.target.outputs.base }} へ反映するための自動生成PRです。"
+
+      - name: スキップ理由を出力
+        if: steps.check.outputs.existing != ''
+        run: echo "既存のオープンPR #${{ steps.check.outputs.existing }} があるためスキップしました"

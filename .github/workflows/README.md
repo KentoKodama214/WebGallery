@@ -8,6 +8,7 @@
 | フォーマットチェック | `spotless.yml` | `development`・`staging`・`master`へのPR |
 | テスト実行 | `test.yml` | `development`・`staging`・`master`へのPR |
 | カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `development`・`staging`・`master`へのPR |
+| 環境昇格PR自動作成 | `promote-branch.yml` | `development`・`staging`へのpush（PRマージ含む） |
 
 セキュリティレビューはAnthropic APIの従量課金コストがかかるため、CIワークフロー化はせず、Claude Codeの`/security-review`スキルでローカルから都度実行する運用とする。
 
@@ -95,3 +96,7 @@ E2Eテストは `next dev` で起動するため、本番でのみ付与され�
 生成した3つのXMLを `.github/scripts/jacoco_coverage_table.py` で解析し、3行（単体＋結合／単体／結合）×各カバレッジ指標（命令・分岐・行・メソッド・クラス）のMarkdown表を作成する。その表を **1つのPRコメント**として投稿し（`<!-- jacoco-coverage-report -->` マーカーで既存コメントを検索し、あればGitHub API経由で更新、なければ新規作成）、同じ内容をジョブサマリーにも出力する。
 
 単体テストと結合テストの両方が成功した場合のみ実行される。しきい値による失敗は設定していない（可視化のみ）。外部Actionは使用せず、`gh` CLI と Python 標準ライブラリのみで完結する。
+
+### 環境昇格PR自動作成 (`promote-branch.yml`)
+
+`development`へのpush（PRマージによるものを含む）で`development`→`staging`、`staging`へのpushで`staging`→`master`のマージPRを`gh pr create`で自動作成する。同じhead/baseの組み合わせでオープンなPRが既に存在する場合は作成をスキップする。レビュワーの自動アサインは行わないため、マージ先のRulesetで必須となっているコードオーナーレビューの依頼は手動で行う。外部Actionは使用せず`gh` CLIのみで完結する。
