@@ -3,6 +3,7 @@ package com.web.gallery.service;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.RefreshTokenValue;
+import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.model.AuthTokenModel;
 
 /**
@@ -18,9 +19,10 @@ public interface AuthService {
    *
    * @param accountId アカウントID
    * @param password パスワード
+   * @param ipAddress 送信元IPアドレス（ログイン履歴に記録するため、認証結果に伝播させる）
    * @return {@link AuthTokenModel}
    */
-  AuthTokenModel login(AccountId accountId, Password password);
+  AuthTokenModel login(AccountId accountId, Password password, IpAddress ipAddress);
 
   /**
    * リフレッシュトークンを検証し、新しいアクセストークンを発行する

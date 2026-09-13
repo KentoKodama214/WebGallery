@@ -60,6 +60,11 @@ app:
     region: ${AWS_REGION:ap-northeast-1}
     path-style-access: ${APP_S3_PATH_STYLE_ACCESS:false}
     presign-expiry-seconds: ${APP_S3_PRESIGN_EXPIRY_SECONDS:900}
+  geoip:
+    # IPアドレスから国・地域を解決するGeoLite2（MaxMind）データベースの絶対パス。
+    # ライセンスの都合でWARには同梱せず、サーバー上の外部ファイルを参照する（月次更新想定）。
+    # 未配置の場合は解決処理が常に空値を返すだけで、アプリの起動・動作は妨げない
+    database-path: ${APP_GEOIP_DATABASE_PATH:}
   jwt:
     secret: ${JWT_SECRET}
     accessTokenExpirationMinutes: 15

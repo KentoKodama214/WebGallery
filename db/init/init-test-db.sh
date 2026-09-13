@@ -26,11 +26,14 @@ SQL_FILES=(
   "common/kbn_mst.sql"
   "common/location_mst.sql"
   "common/refresh_token.sql"
+  "common/login_history.sql"
   # photoスキーマ: 型定義 → テーブル定義（外部キー依存順）
   "photo/photo.type.sql"
   "photo/photo_mst.sql"
   "photo/photo_tag_mst.sql"
   "photo/photo_favorite.sql"
+  "photo/photo_list_filter_log.sql"
+  "photo/photo_view_log.sql"
 )
 
 for f in "${SQL_FILES[@]}"; do

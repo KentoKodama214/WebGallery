@@ -106,6 +106,42 @@ interface PhotoListProps {
 }
 
 /**
+ * 「別アカウントのギャラリーを見た」事実を、このブラウザタブのセッション内で
+ * 既に記録済みかどうかを判定するためのsessionStorageキー
+ *
+ * 写真詳細ページからの戻り等でこのページが再取得されても再送しないよう、
+ * ギャラリー単位（photoAccountId単位）でタブセッション中1回だけ記録する
+ */
+function viewLoggedSessionKey(photoAccountId: string): string {
+  return `photoListViewLogged_${photoAccountId}`;
+}
+
+/**
+ * このブラウザタブのセッション内で、指定ギャラリーの閲覧を記録済みかどうかを取得する
+ *
+ * sessionStorageが利用できない環境（プライベートモード等）でもエラーにならないよう
+ * try/catchで握りつぶし、その場合は「未記録」として扱う
+ */
+function hasLoggedViewThisSession(photoAccountId: string): boolean {
+  try {
+    return sessionStorage.getItem(viewLoggedSessionKey(photoAccountId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * このブラウザタブのセッション内で、指定ギャラリーの閲覧を記録済みとしてマークする
+ */
+function markViewLoggedThisSession(photoAccountId: string): void {
+  try {
+    sessionStorage.setItem(viewLoggedSessionKey(photoAccountId), "1");
+  } catch {
+    // 記録できなくても致命的ではないため無視する（次回アクセス時に再送されるだけ）
+  }
+}
+
+/**
  * 写真一覧コンポーネント
  * フィルター・グリッド表示・ページネーションを提供
  */
@@ -153,6 +189,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   const isLoadingMoreRef = useRef(false);
   // お気に入り操作の多重実行防止（(accountNo-photoNo) 単位で進行中を管理）
   const favoriteInFlightRef = useRef<Set<string>>(new Set());
+  // 初回ロードが完了済みかどうか。ログアウト等でauthLoading/isAuthenticated/isOwnerが
+  // 変化して初期ロードeffectが再実行されても、logInitialViewの判定は本当の初回ロード時の
+  // 一度きりに限定するために使う（詳細は下記effectのコメント参照）
+  const initialLoadCompletedRef = useRef(false);
 
   // お気に入りボタン等のコールバックから最新のphotosを参照できるようにする
   useEffect(() => {
@@ -204,13 +244,30 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   /**
    * 写真一覧取得（初期化時）
    * Cookieから復元したフィルター条件でAPIを呼び出す
+   *
+   * logInitialView（自分以外のギャラリーを初めて開いた場合）はバックエンドで絞り込み・並び替え
+   * ログが1件記録されるため、開発時のReact Strict Modeによるeffectの二重実行
+   * （mount→cleanup→mount）で実リクエストが2回送信されログも2件になるのを防ぐ目的で、cleanup時に
+   * AbortControllerで実際のfetchそのものを中断する（cancelledフラグだけではstate更新は防げても
+   * リクエスト自体は止まらず、ログの重複が残ってしまう）
+   *
+   * 「このギャラリーを見た」事実はタブセッション中1回だけ記録すれば十分なため、sessionStorage
+   * （hasLoggedViewThisSession/markViewLoggedThisSession）で判定・記録する。これにより、写真詳細
+   * ページからの戻りで本effectが再実行されても再送されない。
+   *
+   * 本effectはauthLoading/isAuthenticated/isOwnerにも依存しており、ログアウト等で認証状態が
+   * 変化すると（ページ遷移前でも）再実行される。この時isOwnerは「ログアウト後」の値（常にfalse）
+   * になるため、自分自身のギャラリーを見ている最中にログアウトすると、sessionStorageのみの判定
+   * では「未ログインで別アカウントのギャラリーを初めて見た」と誤判定してしまう
+   * （isOwnerがtrue→falseに変わるため、自分自身のギャラリーでは一度もsessionStorageに記録して
+   * いない）。initialLoadCompletedRefで「本当の初回ロード」の一度だけに限定することでこれを防ぐ
    */
   useEffect(() => {
     // 認証状態が確定してから読み込む（未確定のまま実行すると、閲覧者権限に
     // 応じたフィルターのサニタイズ・お気に入り状態の判定が正しく行えない）
     if (authLoading) return;
 
-    let cancelled = false;
+    const controller = new AbortController();
 
     // 保存済み条件のうち、現在の閲覧者権限で許可されないものを取り除く
     const filter = sanitizeFilterForViewer(readStoredFilter(photoAccountId), {
@@ -226,30 +283,44 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       tagList: filter.tagList || undefined,
       sortBy: filter.sortBy || undefined,
       pageNo: 1,
+      // logInitialView: 本当の初回ロード（initialLoadCompletedRefがfalse）で、かつ自分以外の
+      // ギャラリーを、このタブセッションでまだ記録していない場合のみtrueを送り、「このギャラリーを
+      // 見た」事実を分析ログに記録してもらう。自分自身のギャラリー（ログイン直後の初期表示・
+      // My Gallery経由）や、初回ロード後の再実行（ログアウト等）は対象外
+      logInitialView:
+        (!initialLoadCompletedRef.current &&
+          !isOwner &&
+          !hasLoggedViewThisSession(photoAccountId)) ||
+        undefined,
+      referer: document.referrer || undefined,
     };
+    const shouldMarkViewLogged = Boolean(params.logInitialView);
 
     const seq = ++loadSeqRef.current;
     const load = async () => {
       try {
-        const data = await getPhotoList(photoAccountId, params);
-        if (cancelled || loadSeqRef.current !== seq) return;
+        const data = await getPhotoList(photoAccountId, params, controller.signal);
+        if (loadSeqRef.current !== seq) return;
+        initialLoadCompletedRef.current = true;
+        if (shouldMarkViewLogged) markViewLoggedThisSession(photoAccountId);
         setPhotos(data.photoList);
         setIsLast(data.isLast);
         setPageNo(1);
         setAppliedFilter(filter);
         setError(null);
       } catch (err) {
-        if (!cancelled && loadSeqRef.current === seq) {
+        if (err && typeof err === "object" && "name" in err && err.name === "AbortError") return;
+        if (loadSeqRef.current === seq) {
           setError(err instanceof Error ? err.message : "エラーが発生しました");
         }
       } finally {
-        if (!cancelled && loadSeqRef.current === seq) setIsLoading(false);
+        if (loadSeqRef.current === seq && !controller.signal.aborted) setIsLoading(false);
       }
     };
 
     load();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [photoAccountId, saveFilterToCookie, authLoading, isAuthenticated, isOwner]);
 
@@ -487,10 +558,15 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     saveFilterToCookie(nextFilter);
 
     try {
-      const data = await getPhotoList(
-        photoAccountId,
-        buildParams(nextFilter, 1)
-      );
+      // searchExecuted: ユーザーが絞り込みパネルから明示的に検索を実行したことをバックエンドへ伝え、
+      // 分析ログ（絞り込み・並び替えの利用状況）に記録してもらう。
+      // referer: document.referrer はSPA内のクライアントサイド遷移では変化しないため、
+      // ここで送信しても本来の外部流入元（ページの初回ロード元）を正しく反映できる
+      const data = await getPhotoList(photoAccountId, {
+        ...buildParams(nextFilter, 1),
+        searchExecuted: true,
+        referer: document.referrer,
+      });
       if (loadSeqRef.current !== seq) return;
       setPhotos(data.photoList);
       setIsLast(data.isLast);

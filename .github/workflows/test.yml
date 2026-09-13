@@ -126,12 +126,15 @@ jobs:
             "db/common/common.type.sql"
             "db/common/account.sql"
             "db/common/refresh_token.sql"
+            "db/common/login_history.sql"
             "db/common/kbn_mst.sql"
             "db/common/location_mst.sql"
             "db/photo/photo.type.sql"
             "db/photo/photo_mst.sql"
             "db/photo/photo_tag_mst.sql"
             "db/photo/photo_favorite.sql"
+            "db/photo/photo_list_filter_log.sql"
+            "db/photo/photo_view_log.sql"
           )
           for file in "${SQL_FILES[@]}"; do
             psql -h localhost -p 5433 -U postgres -d web_gallery_test -f "$file"
@@ -222,12 +225,15 @@ jobs:
             "db/common/common.type.sql"
             "db/common/account.sql"
             "db/common/refresh_token.sql"
+            "db/common/login_history.sql"
             "db/common/kbn_mst.sql"
             "db/common/location_mst.sql"
             "db/photo/photo.type.sql"
             "db/photo/photo_mst.sql"
             "db/photo/photo_tag_mst.sql"
             "db/photo/photo_favorite.sql"
+            "db/photo/photo_list_filter_log.sql"
+            "db/photo/photo_view_log.sql"
           )
           for file in "${SQL_FILES[@]}"; do
             psql -h localhost -p 5432 -U postgres -d web_gallery -f "$file"

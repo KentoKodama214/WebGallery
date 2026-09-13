@@ -4,6 +4,8 @@ import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.PhotoListRequest;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.common.Referer;
 import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
@@ -50,15 +52,42 @@ public class PhotoListGetModel {
   @NonNull private Integer pageNo;
 
   /**
+   * 絞り込み・並び替えの利用状況ログ記録対象かどうか
+   *
+   * <p>ユーザーが絞り込みパネルから明示的に検索を実行した場合のみtrue。 ログイン直後の初期表示や写真詳細ページからの戻り等の自動取得ではfalse
+   */
+  @NonNull private Boolean searchExecuted;
+
+  /**
+   * 「別アカウントのギャラリーを見た」事実を初回表示時に記録する対象かどうか
+   *
+   * <p>trueの場合、閲覧対象が自分自身のギャラリーでなければ絞り込み・並び替えログに記録する （自分自身のギャラリーの場合は{@link
+   * com.web.gallery.service.impl.PhotoServiceImpl}側で除外する）。写真詳細ページからの戻り等の 再取得ではfalse
+   */
+  @NonNull private Boolean logInitialView;
+
+  /** 送信元IPアドレス（絞り込み・並び替えログ記録用） */
+  @NonNull private IpAddress ipAddress;
+
+  /** リファラ（絞り込み・並び替えログ記録用） */
+  @NonNull private Referer referer;
+
+  /**
    * 写真一覧リクエストからPhotoListGetModelを生成する
    *
    * @param request {@link PhotoListRequest}
    * @param accountNo ログイン中のアカウントNo
    * @param photoAccountId 写真のアカウントID
+   * @param ipAddress 送信元IPアドレス
+   * @param referer リファラ
    * @return {@link PhotoListGetModel}
    */
   public static PhotoListGetModel from(
-      PhotoListRequest request, Long accountNo, String photoAccountId) {
+      PhotoListRequest request,
+      Long accountNo,
+      String photoAccountId,
+      IpAddress ipAddress,
+      Referer referer) {
     Optional<String> tagsOpt = Optional.ofNullable(request.getTagList());
     // 空文字トークンを除外し、件数上限を強制する。
     // （バリデーション側 PhotoListRequest#isTagListSizeValid は空文字を除外して数えるため、
@@ -84,6 +113,10 @@ public class PhotoListGetModel {
         .tagList(tagList)
         .sortBy(request.getSortBy())
         .pageNo(request.getPageNo())
+        .searchExecuted(Optional.ofNullable(request.getSearchExecuted()).orElse(Boolean.FALSE))
+        .logInitialView(Optional.ofNullable(request.getLogInitialView()).orElse(Boolean.FALSE))
+        .ipAddress(ipAddress)
+        .referer(referer)
         .build();
   }
 }

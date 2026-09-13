@@ -10,6 +10,7 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.util.Arrays;
 import lombok.Data;
 
@@ -55,6 +56,41 @@ public class PhotoListRequest {
   // 深いオフセットページングによる負荷増大を抑えるための上限（20件/ページ換算で20万件相当）
   @Max(value = 10000, message = "{validation.common.max}")
   private Integer pageNo = 1;
+
+  /**
+   * 絞り込み・並び替えの利用状況ログ記録対象かどうか
+   *
+   * <p>フロントエンドがユーザーによる絞り込みパネルの「適用」操作から呼び出す場合のみtrueを送る。 ログイン直後の初期表示・写真詳細ページからの戻り・「もっと見る」等、ユーザーが明示的に
+   * 絞り込み・並び替えを実行したわけではない自動取得ではfalse（既定値）のままとし、 分析ログ（{@code photo_list_filter_log}）には記録しない
+   */
+  @Schema(description = "絞り込みパネルからの明示的な検索実行かどうか（分析ログ記録の判定に使用）", example = "false")
+  @JsonSetter(nulls = Nulls.SKIP)
+  @NotNull(message = "{validation.common.notBlank}")
+  private Boolean searchExecuted = Boolean.FALSE;
+
+  /**
+   * クライアント（ブラウザ）が取得した遷移元URL（{@code document.referrer}）
+   *
+   * <p>サーバーが受け取るHTTPリクエストのRefererヘッダーは、SPAの同一ページからのAPI呼び出しである以上常に自ページの
+   * URLになってしまい、外部サイトからの本来の流入元を表さない。そのためフロントエンドが{@code document.referrer}を このパラメータとして明示的に送信する
+   */
+  @Schema(description = "クライアントが取得した遷移元URL（document.referrer）", example = "https://example.com/")
+  @Size(max = 2048, message = "{validation.common.max_length}")
+  private String referer;
+
+  /**
+   * 「別アカウントのギャラリーを見た」事実を初回表示時に記録する対象かどうか（分析ログ記録の判定に使用）
+   *
+   * <p>フロントエンドが、写真一覧ページを新たに開いた際（アカウント一覧経由・URL直接アクセスいずれも含む）、
+   * かつ同一ブラウザセッション内でそのギャラリーの記録が未実施の場合にtrueを送る。写真詳細ページからの
+   * 戻り等でこのページが再取得される場合はfalse（既定値）のままとする。閲覧対象が自分自身のギャラリーの 場合は、このフラグがtrueでもサーバー側で記録しない（{@link
+   * com.web.gallery.service.impl.PhotoServiceImpl}参照）。絞り込み・並び替えパネルの利用状況を表す{@link
+   * #searchExecuted}とは独立して判定に使用する
+   */
+  @Schema(description = "初回表示時のギャラリー閲覧ログ記録対象かどうか（分析ログ記録の判定に使用）", example = "false")
+  @JsonSetter(nulls = Nulls.SKIP)
+  @NotNull(message = "{validation.common.notBlank}")
+  private Boolean logInitialView = Boolean.FALSE;
 
   /**
    * タグリストの指定数が上限以下かどうかを検証する

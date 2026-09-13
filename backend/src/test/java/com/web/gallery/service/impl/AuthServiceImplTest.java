@@ -15,6 +15,7 @@ import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.ExpiresAt;
+import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.common.IsRevoked;
 import com.web.gallery.domain.common.TokenHash;
@@ -94,7 +95,8 @@ class AuthServiceImplTest {
       when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
 
       AuthTokenModel result =
-          authServiceImpl.login(new AccountId(accountId), new Password(password));
+          authServiceImpl.login(
+              new AccountId(accountId), new Password(password), new IpAddress("127.0.0.1"));
 
       assertNotNull(result);
       assertEquals("access-token", result.getAccessToken().value());
@@ -119,7 +121,10 @@ class AuthServiceImplTest {
       assertThrows(
           BadCredentialsException.class,
           () -> {
-            authServiceImpl.login(new AccountId("testuser1"), new Password("wrongpassword"));
+            authServiceImpl.login(
+                new AccountId("testuser1"),
+                new Password("wrongpassword"),
+                new IpAddress("127.0.0.1"));
           });
     }
 
@@ -132,7 +137,8 @@ class AuthServiceImplTest {
       assertThrows(
           LockedException.class,
           () -> {
-            authServiceImpl.login(new AccountId("testuser1"), new Password("password1"));
+            authServiceImpl.login(
+                new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
           });
     }
 
@@ -153,7 +159,8 @@ class AuthServiceImplTest {
       assertThrows(
           LockedException.class,
           () -> {
-            authServiceImpl.login(new AccountId("testuser1"), new Password("password1"));
+            authServiceImpl.login(
+                new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
           });
 
       verify(authenticationManager, times(0))
@@ -186,7 +193,8 @@ class AuthServiceImplTest {
       when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
 
       AuthTokenModel result =
-          authServiceImpl.login(new AccountId("testuser1"), new Password("password1"));
+          authServiceImpl.login(
+              new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
 
       assertNotNull(result);
       ArgumentCaptor<AccountModel> unlockCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -210,7 +218,8 @@ class AuthServiceImplTest {
       assertThrows(
           LockedException.class,
           () -> {
-            authServiceImpl.login(new AccountId("testuser1"), new Password("password1"));
+            authServiceImpl.login(
+                new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
           });
 
       verify(authenticationManager, times(0))
