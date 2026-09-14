@@ -47,7 +47,7 @@ configurations {
 dependencyManagement {
 	imports {
 		mavenBom 'org.springframework.modulith:spring-modulith-bom:2.1.1'
-		mavenBom 'software.amazon.awssdk:bom:2.54.15'
+		mavenBom 'software.amazon.awssdk:bom:2.54.16'
 	}
 }
 
