@@ -1044,6 +1044,8 @@ public class PhotoServiceImplIntegrationTest {
 
       assertEquals(new PhotoNo(3L), actual.getPhotoNo());
       assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 11L, "jpg");
+
+      // 新規登録された写真（photoDetailModel1）がDBに登録されていることを確認
       List<PhotoMst> actualData =
           getPhotoMstData(accountId).stream()
               .filter(photoMst -> photoMst.getPhotoNo() > 10)
@@ -1068,6 +1070,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData.get(0).getShutterSpeed()));
       assertEquals(100, actualData.get(0).getIso());
 
+      // 新規登録された写真に紐づくタグが2件とも登録されていることを確認
       List<PhotoTagMst> actualTagData1 = getPhotoTagMst(accountId, 11L);
       assertEquals(2, actualTagData1.size());
       assertEquals(1L, actualTagData1.get(0).getAccountNo());
@@ -1081,6 +1084,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals("海", actualTagData1.get(1).getTagJapaneseName());
       assertEquals("sea", actualTagData1.get(1).getTagEnglishName());
 
+      // 更新対象の写真（photoDetailModel2、既存photoNo=3）が更新されていることを確認
       List<PhotoMst> actualData2 =
           getPhotoMstData(accountId).stream()
               .filter(photoMst -> photoMst.getPhotoNo() == 3)
@@ -1109,6 +1113,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData2.getFirst().getShutterSpeed()));
       assertEquals(100, actualData2.getFirst().getIso());
 
+      // 更新対象の写真には新たなタグが登録されていないことを確認
       List<PhotoTagMst> actualTagData2 = getPhotoTagMst(accountId, 3L);
       assertEquals(0, actualTagData2.size());
     }
@@ -1150,6 +1155,13 @@ public class PhotoServiceImplIntegrationTest {
           () ->
               photoServiceImpl.savePhotos(
                   new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+      // 1枚目でファイル名重複エラーとなり、後続の2枚目（重複しない正常なデータ）を含めて
+      // トランザクション全体がロールバックされ、DBに新規登録が反映されていないことを確認
+      Integer photoCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=1", Integer.class);
+      assertEquals(10, photoCount);
     }
 
     @Test

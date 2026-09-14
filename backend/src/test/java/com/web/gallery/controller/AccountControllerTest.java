@@ -324,6 +324,107 @@ public class AccountControllerTest {
 
     @Test
     @Order(5)
+    @DisplayName("異常系：accountIdが半角英数字以外を含む場合（@Patternパターン違反）、BadRequestExceptionをthrowする")
+    void account_setting_BadRequestException_accountId_pattern_violation() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/accounts")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("regist_badrequest_accountid_pattern.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(accountService, times(0)).registAccount(any(AccountModel.class));
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("異常系：accountNameが全角スペースのみの場合（@Patternパターン違反）、BadRequestExceptionをthrowする")
+    void account_setting_BadRequestException_accountName_all_space() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/accounts")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("regist_badrequest_accountname_all_space.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(accountService, times(0)).registAccount(any(AccountModel.class));
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("異常系：passwordに数字が含まれない場合（@Patternパターン違反）、BadRequestExceptionをthrowする")
+    void account_setting_BadRequestException_password_pattern_violation() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/accounts")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("regist_badrequest_password_pattern.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(accountService, times(0)).registAccount(any(AccountModel.class));
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("異常系：birthdateが未来日付の場合（@Pastパターン違反）、BadRequestExceptionをthrowする")
+    void account_setting_BadRequestException_birthdate_future() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/accounts")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("regist_badrequest_birthdate_future.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(accountService, times(0)).registAccount(any(AccountModel.class));
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName(
+        "異常系：birthplacePrefectureKbnCodeが半角英数字以外を含む場合（@Patternパターン違反）、BadRequestExceptionをthrowする")
+    void account_setting_BadRequestException_birthplacePrefectureKbnCode_pattern_violation()
+        throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/accounts")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("regist_badrequest_birthplaceprefecture_pattern.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(accountService, times(0)).registAccount(any(AccountModel.class));
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName(
+        "異常系：residentPrefectureKbnCodeがDBカラム長（20文字）を超える場合（@Sizeパターン違反）、BadRequestExceptionをthrowする")
+    void account_setting_BadRequestException_residentPrefectureKbnCode_too_long() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/accounts")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("regist_badrequest_residentprefecture_too_long.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(accountService, times(0)).registAccount(any(AccountModel.class));
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("異常系：freeMemoがDBカラム長（1000文字）を超える場合（@Sizeパターン違反）、BadRequestExceptionをthrowする")
+    void account_setting_BadRequestException_freeMemo_too_long() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/accounts")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("regist_badrequest_freememo_too_long.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(accountService, times(0)).registAccount(any(AccountModel.class));
+    }
+
+    @Test
+    @Order(12)
     @DisplayName("異常系：RegistFailureExceptionをthrowする")
     void account_setting_RegistFailureException() throws Exception {
       ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
@@ -581,6 +682,36 @@ public class AccountControllerTest {
 
     @Test
     @Order(10)
+    @DisplayName("異常系：newPasswordに数字が含まれない場合（@Patternパターン違反）、BadRequestExceptionをthrowする")
+    void update_BadRequestException_newPassword_pattern_violation() throws Exception {
+      mockMvc
+          .perform(
+              put("/api/v1/accounts/aaaaaaaa")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("update_badrequest_newpassword_pattern.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(sessionHelper, times(0)).getAccountNo();
+      verify(accountService, times(0)).updateAccount(any(AccountModel.class), any());
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("異常系：currentPasswordがDBカラム長（72文字）を超える場合（@Sizeパターン違反）、BadRequestExceptionをthrowする")
+    void update_BadRequestException_currentPassword_too_long() throws Exception {
+      mockMvc
+          .perform(
+              put("/api/v1/accounts/aaaaaaaa")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("update_badrequest_currentpassword_too_long.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(sessionHelper, times(0)).getAccountNo();
+      verify(accountService, times(0)).updateAccount(any(AccountModel.class), any());
+    }
+
+    @Test
+    @Order(12)
     @DisplayName("異常系：UpdateFailureExceptionをthrowする")
     void update_UpdateFailureException() throws Exception {
       String accountId = "aaaaaaaa";
@@ -607,7 +738,7 @@ public class AccountControllerTest {
     }
 
     @Test
-    @Order(11)
+    @Order(13)
     @DisplayName("正常系：newPasswordフィールド自体を省略（null）した場合も、パスワード変更なしとして扱われること")
     void update_no_password_field() throws Exception {
       String accountId = "aaaaaaaa";
