@@ -379,6 +379,8 @@ public class PhotoTagMstMapperTest {
               .tagEnglishName("autumn")
               .build();
 
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       Integer actualCount = photoTagMstMapper.insertBulk(List.of(photoTagMst1, photoTagMst2));
       assertEquals(2, actualCount);
 
@@ -398,6 +400,9 @@ public class PhotoTagMstMapperTest {
       assertEquals(2, actualData.size());
       assertEquals("春", actualData.get(0).getTagJapaneseName());
       assertEquals("秋", actualData.get(1).getTagJapaneseName());
+      // 一括登録の各行にcreated_atがトランザクション開始時刻で設定されていることを確認
+      assertEquals(transactionNow, actualData.get(0).getCreatedAt());
+      assertEquals(transactionNow, actualData.get(1).getCreatedAt());
     }
   }
 
