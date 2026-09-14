@@ -35,6 +35,11 @@ updates:
       # https://github.com/typescript-eslint/typescript-eslint/issues/12518
       - dependency-name: "typescript"
         versions: [">=7.0.0"]
+      # ESLint 10系はeslint-config-next経由のeslint-plugin-react@7.37.5と非互換
+      # （context.getFilename()廃止によりLintがエラー、2026-09-14時点で未対応）
+      # https://github.com/jsx-eslint/eslint-plugin-react
+      - dependency-name: "eslint"
+        versions: [">=10.0.0"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
