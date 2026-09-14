@@ -226,6 +226,9 @@ nonce 方式は SSR 時にリクエストヘッダーから nonce を読むた�
 制約であり、静的生成・ISR・CDN エッジキャッシュは使えない。トレードオフを見直す場合は
 nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ移行する必要がある。
 
+写真詳細の撮影場所地図（Google Maps の iframe 埋め込み）表示のため、`frame-src` に
+`https://maps.google.com` / `https://www.google.com` を許可している。
+
 ### 画像ストレージと署名付きURL
 
 写真の実体は S3（ローカル/E2E は docker-compose の MinIO）に保存し、DB の `photo_mst.image_file_path`
