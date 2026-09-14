@@ -156,6 +156,39 @@ describe("PhotoDetail", () => {
     });
   });
 
+  it("緯度経度がある場合は地図が表示されること", async () => {
+    mockGetPhotoDetail.mockResolvedValue({
+      ...samplePhoto,
+      latitude: 35.6586,
+      longitude: 139.7454,
+    });
+
+    render(
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
+    );
+
+    await waitFor(() => {
+      const iframe = screen.getByTitle("撮影場所の地図");
+      expect(iframe).toHaveAttribute(
+        "src",
+        "https://maps.google.com/maps?q=35.6586%2C139.7454&z=15&output=embed"
+      );
+    });
+  });
+
+  it("緯度経度がない場合は地図が表示されないこと", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+
+    render(
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("テスト写真")).toBeInTheDocument();
+    });
+    expect(screen.queryByTitle("撮影場所の地図")).not.toBeInTheDocument();
+  });
+
   it("オーナーの場合に編集・削除ボタンが表示されること", async () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,

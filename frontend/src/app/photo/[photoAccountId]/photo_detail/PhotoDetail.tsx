@@ -11,7 +11,7 @@ import {
   deleteFavorite,
   type PhotoDetailResponse,
 } from "@/lib/api/client";
-import { sanitizeImageUrl } from "@/lib/url";
+import { sanitizeImageUrl, buildGoogleMapEmbedUrl } from "@/lib/url";
 import { ModalDialog } from "@/components/ui/ModalDialog";
 
 interface PhotoDetailProps {
@@ -406,6 +406,21 @@ export function PhotoDetail({
               </div>
             </div>
           )}
+
+          {/* 撮影場所の地図（緯度経度が取得できている場合のみ表示。非公開設定時はバックエンドが返さない） */}
+          {photo.latitude != null && photo.longitude != null && (() => {
+            const mapUrl = buildGoogleMapEmbedUrl(photo.latitude, photo.longitude);
+            return mapUrl ? (
+              <div style={{ marginTop: "16px" }}>
+                <iframe
+                  src={mapUrl}
+                  title="撮影場所の地図"
+                  loading="lazy"
+                  style={{ width: "100%", aspectRatio: "16 / 9", border: 0, display: "block" }}
+                />
+              </div>
+            ) : null;
+          })()}
         </div>
       </div>
 
