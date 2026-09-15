@@ -229,6 +229,20 @@ public class AccountModel {
   }
 
   /**
+   * 管理者によるアカウント権限変更用のAccountModelを生成する
+   *
+   * @param accountNo アカウント番号
+   * @param authorityKbn 変更後の権限区分
+   * @return {@link AccountModel}
+   */
+  public static AccountModel forAuthorityChange(Long accountNo, AuthorityEnum authorityKbn) {
+    return AccountModel.builder()
+        .accountNo(new AccountNo(accountNo))
+        .authorityKbn(authorityKbn)
+        .build();
+  }
+
+  /**
    * 認証成功時のAccountModelを生成する（最終ログイン日時を現在時刻に設定し、ログイン失敗回数を0にリセット）
    *
    * @param accountNo アカウント番号

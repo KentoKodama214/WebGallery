@@ -79,4 +79,8 @@ public final class ApiRoutes {
   /** 管理者用アカウント強制ロックAPI */
   public static final String API_ADMIN_ACCOUNT_LOCK =
       API_ADMIN_ACCOUNTS + "/" + ACCOUNT_NO + "/lock";
+
+  /** 管理者用アカウント権限変更API */
+  public static final String API_ADMIN_ACCOUNT_AUTHORITY =
+      API_ADMIN_ACCOUNTS + "/" + ACCOUNT_NO + "/authority";
 }

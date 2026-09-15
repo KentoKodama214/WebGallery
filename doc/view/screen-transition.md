@@ -241,6 +241,13 @@ sequenceDiagram
         Management->>API: PATCH /api/v1/admin/accounts/{accountNo}/lock
         API-->>Management: 成功
         Management->>Management: 一覧を再取得・更新
+    else 権限変更
+        Admin->>Management: 権限「編集」ボタンをクリック
+        Management->>Management: 権限編集ダイアログ表示（自身の行は非表示）
+        Admin->>Management: 権限を選択して「登録」
+        Management->>API: PUT /api/v1/admin/accounts/{accountNo}/authority
+        API-->>Management: 成功
+        Management->>Management: 一覧を再取得・更新
     end
 ```
 
@@ -338,6 +345,7 @@ sequenceDiagram
 |------|--------|------|
 | ロック解除 → 成功 | 同画面（一覧更新） | AJAX |
 | 強制ロック → 成功 | 同画面（一覧更新） | AJAX |
+| 権限「編集」→ 登録成功 | 同画面（一覧更新） | AJAX → モーダル |
 | 操作失敗 | 同画面（エラー表示） | 画面内表示 |
 | メニュー「My Gallery」 | `/photo/{accountId}/photo_list` | リンク |
 | メニュー「Account Setting」 | `/{accountId}/account_setting` | リンク |
@@ -368,3 +376,4 @@ sequenceDiagram
 | `/api/v1/admin/accounts` | GET | 管理者アカウント管理 | なし（データ表示） |
 | `/api/v1/admin/accounts/{accountNo}/unlock` | PATCH | 管理者アカウント管理 | なし（一覧更新） |
 | `/api/v1/admin/accounts/{accountNo}/lock` | PATCH | 管理者アカウント管理 | なし（一覧更新） |
+| `/api/v1/admin/accounts/{accountNo}/authority` | PUT | 管理者アカウント管理 | なし（一覧更新） |

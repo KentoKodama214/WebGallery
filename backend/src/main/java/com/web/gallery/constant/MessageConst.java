@@ -47,4 +47,5 @@ public final class MessageConst {
   // Admin
   public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";
   public static final String LOCK_ACCOUNT = "アカウントをロックしました。";
+  public static final String UPDATE_ACCOUNT_AUTHORITY = "アカウントの権限を変更しました。";
 }

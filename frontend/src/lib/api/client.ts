@@ -830,3 +830,31 @@ export async function lockAccount(
   }
   return readJson<AdminAccountLockResult>(response);
 }
+
+/** 管理者用アカウント権限変更結果 */
+export interface AdminAccountAuthorityUpdateResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+}
+
+/**
+ * 管理者用アカウント権限変更
+ */
+export async function updateAccountAuthority(
+  accountNo: number,
+  authorityKbn: string
+): Promise<AdminAccountAuthorityUpdateResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/admin/accounts/${seg(accountNo)}/authority`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ authorityKbn }),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "権限の変更に失敗しました"));
+  }
+  return readJson<AdminAccountAuthorityUpdateResult>(response);
+}

@@ -15,6 +15,7 @@ import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.enumeration.ErrorEnum;
+import com.web.gallery.event.AccountAuthorityChangedEvent;
 import com.web.gallery.event.AccountDeletedEvent;
 import com.web.gallery.event.AccountLockedEvent;
 import com.web.gallery.event.AccountRegisteredEvent;
@@ -254,6 +255,20 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
     accountRepository.updateLoginFailureCount(
         AccountModel.forLock(accountNo.value(), loginConfig.getFailCount()));
     applicationEventPublisher.publishEvent(new AccountLockedEvent(accountNo));
+  }
+
+  /**
+   * 管理者用：アカウントの権限を変更する
+   *
+   * @param accountModel {@link AccountModel}（{@link AccountModel#forAuthorityChange}で生成したもの）
+   * @throws GalleryException 更新に失敗した場合
+   */
+  @Override
+  @Transactional(rollbackFor = GalleryException.class)
+  public void updateAccountAuthority(AccountModel accountModel) throws GalleryException {
+    accountRepository.updateAuthority(accountModel);
+    applicationEventPublisher.publishEvent(
+        new AccountAuthorityChangedEvent(accountModel.getAccountNo()));
   }
 
   /**
