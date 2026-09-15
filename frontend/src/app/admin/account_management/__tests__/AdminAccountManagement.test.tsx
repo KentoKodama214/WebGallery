@@ -6,11 +6,13 @@ import { AdminAccountManagement } from "../AdminAccountManagement";
 const mockGetAdminAccountList = jest.fn();
 const mockUnlockAccount = jest.fn();
 const mockLockAccount = jest.fn();
+const mockUpdateAccountAuthority = jest.fn();
 
 jest.mock("@/lib/api/client", () => ({
   getAdminAccountList: (...args: unknown[]) => mockGetAdminAccountList(...args),
   unlockAccount: (...args: unknown[]) => mockUnlockAccount(...args),
   lockAccount: (...args: unknown[]) => mockLockAccount(...args),
+  updateAccountAuthority: (...args: unknown[]) => mockUpdateAccountAuthority(...args),
 }));
 
 const mockUseAuth = jest.fn();
@@ -229,5 +231,110 @@ describe("AdminAccountManagement", () => {
     expect(screen.getByText("有効")).toBeInTheDocument();
     expect(screen.queryByText("ロック中")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "強制ロック" })).toBeEnabled();
+  });
+
+  it("自身の管理者アカウントの行には権限「編集」ボタンが表示されないこと", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "admin1", accountNo: 1, role: "ROLE_ADMIN" },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [
+        sampleAccount,
+        { ...sampleAccount, accountNo: 2, accountId: "user2", accountName: "ユーザー2" },
+      ],
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user2")).toBeInTheDocument();
+    });
+
+    // 自身の行（accountNo=1）には編集ボタンがない、他者の行（accountNo=2）にはある
+    expect(screen.getAllByRole("button", { name: "編集" })).toHaveLength(1);
+  });
+
+  it("権限編集ダイアログで権限を選択し「登録」を押すとAPIが呼ばれ一覧が再取得されること", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [sampleAccount],
+    });
+    mockUpdateAccountAuthority.mockResolvedValue({
+      httpStatus: 200,
+      isSuccess: true,
+      message: "権限を変更しました",
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "編集" }));
+    expect(screen.getByTestId("authority-edit-dialog")).toBeInTheDocument();
+    expect(mockUpdateAccountAuthority).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "administrator" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "登録" }));
+
+    await waitFor(() => {
+      expect(mockUpdateAccountAuthority).toHaveBeenCalledWith(1, "administrator");
+      expect(screen.getByText("権限を変更しました")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("authority-edit-dialog")).not.toBeInTheDocument();
+    expect(mockGetAdminAccountList).toHaveBeenCalledTimes(2);
+  });
+
+  it("権限変更に失敗しても一覧は維持され、操作失敗の通知のみ表示されること", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [sampleAccount],
+    });
+    mockUpdateAccountAuthority.mockRejectedValue(new Error("権限の変更に失敗しました"));
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "編集" }));
+    fireEvent.click(screen.getByRole("button", { name: "登録" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("権限の変更に失敗しました");
+    });
+
+    expect(screen.getByText("user1")).toBeInTheDocument();
+    expect(screen.queryByTestId("authority-edit-dialog")).not.toBeInTheDocument();
+  });
+
+  it("権限編集ダイアログをキャンセルするとAPIは呼ばれないこと", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [sampleAccount],
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "編集" }));
+    expect(screen.getByTestId("authority-edit-dialog")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+
+    expect(screen.queryByTestId("authority-edit-dialog")).not.toBeInTheDocument();
+    expect(mockUpdateAccountAuthority).not.toHaveBeenCalled();
   });
 });

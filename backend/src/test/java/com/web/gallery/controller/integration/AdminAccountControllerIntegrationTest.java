@@ -259,4 +259,91 @@ public class AdminAccountControllerIntegrationTest {
           .andExpect(status().isConflict());
     }
   }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/controller/AdminAccountControllerIntegrationTest.sql")
+  class updateAccountAuthorityTest {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントの権限を変更できる")
+    void updateAccountAuthority_success() throws Exception {
+      mockMvc
+          .perform(
+              put("/api/v1/admin/accounts/2/authority")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAdminAuthentication()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{\"authorityKbn\": \"normal-user\"}"))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(200))
+          .andExpect(jsonPath("$.isSuccess").value(true))
+          .andExpect(jsonPath("$.message").value(MessageConst.UPDATE_ACCOUNT_AUTHORITY));
+
+      String authorityKbn =
+          jdbcTemplate.queryForObject(
+              "SELECT authority_kbn FROM common.account_authority WHERE account_no = 2",
+              String.class);
+      assertEquals("normal-user", authorityKbn);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：管理者以外は403を返す")
+    void updateAccountAuthority_forbidden() throws Exception {
+      mockMvc
+          .perform(
+              put("/api/v1/admin/accounts/2/authority")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createNonAdminAuthentication()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{\"authorityKbn\": \"normal-user\"}"))
+          .andExpect(status().isForbidden());
+
+      String authorityKbn =
+          jdbcTemplate.queryForObject(
+              "SELECT authority_kbn FROM common.account_authority WHERE account_no = 2",
+              String.class);
+      assertEquals("mini-user", authorityKbn);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：authorityKbnが未指定の場合は400を返す")
+    void updateAccountAuthority_badRequest_missing_authorityKbn() throws Exception {
+      mockMvc
+          .perform(
+              put("/api/v1/admin/accounts/2/authority")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAdminAuthentication()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{}"))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：存在しないアカウント番号の場合は409を返す")
+    void updateAccountAuthority_notFound() throws Exception {
+      mockMvc
+          .perform(
+              put("/api/v1/admin/accounts/999/authority")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAdminAuthentication()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{\"authorityKbn\": \"normal-user\"}"))
+          .andExpect(status().isConflict());
+    }
+  }
 }

@@ -17,6 +17,8 @@ import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.dto.AccountDto;
 import com.web.gallery.entity.Account;
 import com.web.gallery.entity.AccountAuthority;
+import com.web.gallery.entity.AccountAuthorityCondition;
+import com.web.gallery.entity.AccountAuthorityUpdateTarget;
 import com.web.gallery.entity.AccountCondition;
 import com.web.gallery.entity.AccountUpdateTarget;
 import com.web.gallery.enumeration.AuthorityEnum;
@@ -1046,6 +1048,45 @@ public class AccountRepositoryImplTest {
       accountRepositoryImpl.lockForUpdate(new AccountNo(1L));
 
       verify(accountMapper).lockAccount(1L);
+    }
+  }
+
+  @Nested
+  @Order(11)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class updateAuthority {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：権限区分が更新されること")
+    void updateAuthority_success() throws GalleryException {
+      AccountModel accountModel = AccountModel.forAuthorityChange(1L, AuthorityEnum.NORMAL);
+
+      ArgumentCaptor<AccountAuthorityCondition> cndCaptor =
+          ArgumentCaptor.forClass(AccountAuthorityCondition.class);
+      ArgumentCaptor<AccountAuthorityUpdateTarget> targetCaptor =
+          ArgumentCaptor.forClass(AccountAuthorityUpdateTarget.class);
+      doReturn(1).when(accountAuthorityMapper).update(cndCaptor.capture(), targetCaptor.capture());
+
+      accountRepositoryImpl.updateAuthority(accountModel);
+
+      verify(accountAuthorityMapper)
+          .update(any(AccountAuthorityCondition.class), any(AccountAuthorityUpdateTarget.class));
+      assertEquals(1L, cndCaptor.getValue().getAccountNo());
+      assertEquals(AuthorityEnum.NORMAL, targetCaptor.getValue().getAuthorityKbn());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：UpdateFailureExceptionをthrowする")
+    void updateAuthority_UpdateFailureException() {
+      AccountModel accountModel = AccountModel.forAuthorityChange(1L, AuthorityEnum.NORMAL);
+
+      doReturn(0)
+          .when(accountAuthorityMapper)
+          .update(any(AccountAuthorityCondition.class), any(AccountAuthorityUpdateTarget.class));
+
+      assertThrows(
+          UpdateFailureException.class, () -> accountRepositoryImpl.updateAuthority(accountModel));
     }
   }
 }

@@ -6,6 +6,7 @@ import com.web.gallery.dto.AccountDto;
 import com.web.gallery.entity.Account;
 import com.web.gallery.entity.AccountAuthority;
 import com.web.gallery.entity.AccountAuthorityCondition;
+import com.web.gallery.entity.AccountAuthorityUpdateTarget;
 import com.web.gallery.entity.AccountCondition;
 import com.web.gallery.entity.AccountUpdateTarget;
 import com.web.gallery.enumeration.ErrorEnum;
@@ -133,6 +134,25 @@ public class AccountRepositoryImpl implements AccountRepository {
   public void incrementLoginFailureCount(AccountNo accountNo) throws GalleryException {
     if (accountMapper.incrementLoginFailureCount(accountNo.value()) < 1) {
       log.warn("Account: Update Failed (AccountNo: {})", accountNo.value());
+      throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
+    }
+  }
+
+  /**
+   * AccountAuthorityテーブルの権限区分を更新する
+   *
+   * @param accountModel {@link AccountModel}
+   * @throws GalleryException 更新に失敗した場合
+   */
+  @Override
+  public void updateAuthority(AccountModel accountModel) throws GalleryException {
+    AccountAuthorityCondition condition =
+        AccountAuthorityCondition.byAccountNo(accountModel.getAccountNo().value());
+    AccountAuthorityUpdateTarget target = AccountAuthorityUpdateTarget.fromForUpdate(accountModel);
+
+    if (accountAuthorityMapper.update(condition, target) < 1) {
+      log.warn(
+          "AccountAuthority: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
       throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
     }
   }

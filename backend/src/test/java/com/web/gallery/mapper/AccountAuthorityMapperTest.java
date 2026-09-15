@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.entity.AccountAuthority;
 import com.web.gallery.entity.AccountAuthorityCondition;
+import com.web.gallery.entity.AccountAuthorityUpdateTarget;
 import com.web.gallery.enumeration.AuthorityEnum;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -78,6 +79,51 @@ public class AccountAuthorityMapperTest {
 
   @Nested
   @Order(2)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/mapper/AccountAuthorityMapperTest.sql")
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class update {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：権限区分が更新されること")
+    void update_success() {
+      AccountAuthorityCondition condition = AccountAuthorityCondition.byAccountNo(2L);
+      AccountAuthorityUpdateTarget target =
+          AccountAuthorityUpdateTarget.builder()
+              .updatedBy(9L)
+              .authorityKbn(AuthorityEnum.MINI)
+              .build();
+
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
+      Integer actualCount = accountAuthorityMapper.update(condition, target);
+      assertEquals(1, actualCount);
+
+      List<AccountAuthority> actualData = getAccountAuthorityList("account_no=2");
+      assertEquals(1, actualData.size());
+      assertEquals(AuthorityEnum.MINI, actualData.getFirst().getAuthorityKbn());
+      assertEquals(9L, actualData.getFirst().getUpdatedBy());
+      assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：更新対象のレコードなし")
+    void update_not_found() {
+      AccountAuthorityCondition condition = AccountAuthorityCondition.byAccountNo(1L);
+      AccountAuthorityUpdateTarget target =
+          AccountAuthorityUpdateTarget.builder()
+              .updatedBy(9L)
+              .authorityKbn(AuthorityEnum.MINI)
+              .build();
+
+      Integer actualCount = accountAuthorityMapper.update(condition, target);
+      assertEquals(0, actualCount);
+    }
+  }
+
+  @Nested
+  @Order(3)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/mapper/AccountAuthorityMapperTest.sql")
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
