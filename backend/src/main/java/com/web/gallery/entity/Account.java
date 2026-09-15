@@ -1,7 +1,6 @@
 package com.web.gallery.entity;
 
 import com.web.gallery.constant.Consts;
-import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 import com.web.gallery.model.AccountModel;
 import java.time.LocalDate;
@@ -60,13 +59,6 @@ public class Account {
   /** フリーメモ */
   private String freeMemo;
 
-  /**
-   * 権限区分
-   *
-   * <p>{@link AuthorityEnum}
-   */
-  private AuthorityEnum authorityKbn;
-
   /** 最終ログイン日時 */
   private OffsetDateTime lastLoginDatetime;
 
@@ -81,10 +73,12 @@ public class Account {
    *
    * @param model {@link AccountModel}
    * @param passwordEncoder {@link PasswordEncoder}
+   * @param accountNo 採番済みのアカウント番号（{@code common.account_authority}と共通の番号で登録するため、呼び出し元で事前に採番する）
    * @return {@link Account}
    */
-  public static Account from(AccountModel model, PasswordEncoder passwordEncoder) {
+  public static Account from(AccountModel model, PasswordEncoder passwordEncoder, Long accountNo) {
     return Account.builder()
+        .accountNo(accountNo)
         .createdBy(0L)
         .updatedBy(0L)
         .accountId(model.getAccountId().value())
@@ -102,7 +96,6 @@ public class Account {
                 ? model.getResidentPrefectureKbnCode().value()
                 : Consts.STRING_NONE)
         .freeMemo(model.getFreeMemo() != null ? model.getFreeMemo().value() : Consts.STRING_EMPTY)
-        .authorityKbn(AuthorityEnum.MINI)
         .lastLoginDatetime(Consts.MIN_OFFSET_DATE_TIME)
         .loginFailureCount(0)
         .isAdminLocked(false)

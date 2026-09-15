@@ -1,6 +1,5 @@
 package com.web.gallery.entity;
 
-import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 import com.web.gallery.model.AccountModel;
 import java.time.LocalDate;
@@ -46,13 +45,6 @@ public class AccountUpdateTarget {
 
   /** フリーメモ */
   private String freeMemo;
-
-  /**
-   * 権限区分
-   *
-   * <p>{@link AuthorityEnum}
-   */
-  private AuthorityEnum authorityKbn;
 
   /** 最終ログイン日時 */
   private OffsetDateTime lastLoginDatetime;

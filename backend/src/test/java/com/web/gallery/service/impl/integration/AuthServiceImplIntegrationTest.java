@@ -65,13 +65,17 @@ public class AuthServiceImplIntegrationTest {
 
     // 正常なアカウント（ログイン失敗回数0）
     jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'testuser01', 'テストユーザー01', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, false)",
+        "INSERT INTO common.account VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'testuser01', 'テストユーザー01', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false)",
         hashedPassword);
+    jdbcTemplate.update(
+        "INSERT INTO common.account_authority VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator')");
 
     // ロック状態のアカウント（ログイン失敗回数3・直近にロックされたばかりの想定で更新日時を現在時刻にする）
     jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 3, false)",
+        "INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 3, false)",
         hashedPassword);
+    jdbcTemplate.update(
+        "INSERT INTO common.account_authority VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), 'administrator')");
 
     jdbcTemplate.update("ALTER SEQUENCE common.account_account_no_seq RESTART 3");
   }
@@ -418,6 +422,7 @@ public class AuthServiceImplIntegrationTest {
       // 直前のlogin()でlogin_historyへの外部キー制約付き行が作られているため、
       // アプリの削除フロー同様に先に削除しておく
       jdbcTemplate.update("DELETE FROM common.login_history WHERE account_no = ?", 1L);
+      jdbcTemplate.update("DELETE FROM common.account_authority WHERE account_no = ?", 1L);
       jdbcTemplate.update("DELETE FROM common.account WHERE account_no = ?", 1L);
 
       // 削除済みアカウントのリフレッシュトークンでリフレッシュ

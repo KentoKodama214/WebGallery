@@ -45,18 +45,24 @@ public class AuthControllerIntegrationTest {
 
     // 正常なアカウント（ログイン失敗回数0）
     jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'testuser01', 'テストユーザー01', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, false)",
+        "INSERT INTO common.account VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'testuser01', 'テストユーザー01', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false)",
         hashedPassword);
+    jdbcTemplate.update(
+        "INSERT INTO common.account_authority VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator')");
 
     // ロック状態のアカウント（ログイン失敗回数3・直近にロックされたばかりの想定で更新日時を現在時刻にする）
     jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 3, false)",
+        "INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 3, false)",
         hashedPassword);
+    jdbcTemplate.update(
+        "INSERT INTO common.account_authority VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), 'administrator')");
 
     // 管理者に強制ロックされたアカウント（更新日時は十分過去だが、is_admin_locked のため自動解除されない）
     jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'adminlocked', '管理者ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, true)",
+        "INSERT INTO common.account VALUES(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'adminlocked', '管理者ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, true)",
         hashedPassword);
+    jdbcTemplate.update(
+        "INSERT INTO common.account_authority VALUES(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', 'administrator')");
 
     jdbcTemplate.update("ALTER SEQUENCE common.account_account_no_seq RESTART 4");
   }

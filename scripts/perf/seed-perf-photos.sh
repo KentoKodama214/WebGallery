@@ -48,16 +48,24 @@ DELETE FROM common.location_mst
   WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
 DELETE FROM common.refresh_token
   WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+DELETE FROM common.account_authority
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
 DELETE FROM common.account WHERE account_id = '${ACCOUNT_ID}';
 
 -- テスト専用アカウントを作成（ログインしない前提なのでパスワードはダミー値）
 INSERT INTO common.account
   (account_no, created_by, created_at, updated_by, updated_at, is_deleted,
-   account_id, account_name, password, authority_kbn, last_login_datetime)
+   account_id, account_name, password, last_login_datetime)
 VALUES
   (DEFAULT, 1, now(), 1, now(), false,
-   '${ACCOUNT_ID}', 'パフォーマンステスト用アカウント', 'no-login-dummy-hash', 'normal-user', now())
+   '${ACCOUNT_ID}', 'パフォーマンステスト用アカウント', 'no-login-dummy-hash', now())
 RETURNING account_no \gset target_
+
+-- アカウント権限を作成
+INSERT INTO common.account_authority
+  (account_no, created_by, created_at, updated_by, updated_at, authority_kbn)
+VALUES
+  (:target_account_no, 1, now(), 1, now(), 'normal-user');
 
 -- 写真の紐付け先ロケーションを1件だけ用意（全写真で共用）
 INSERT INTO common.location_mst

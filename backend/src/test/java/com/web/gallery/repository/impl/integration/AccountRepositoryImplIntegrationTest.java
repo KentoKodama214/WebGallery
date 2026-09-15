@@ -167,7 +167,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
                       .build());
@@ -186,11 +185,17 @@ public class AccountRepositoryImplIntegrationTest {
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.MINI, actualData.getFirst().getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
       assertEquals(0, actualData.getFirst().getLoginFailureCount());
+
+      // account_authorityにも同一のアカウント番号でMINI固定で登録されること
+      AuthorityEnum actualAuthorityKbn =
+          jdbcTemplate.queryForObject(
+              "SELECT authority_kbn FROM common.account_authority WHERE account_no=1",
+              (rs, rowNum) -> AuthorityEnum.getOrDefault(rs.getString("authority_kbn")));
+      assertEquals(AuthorityEnum.MINI, actualAuthorityKbn);
     }
 
     @Test
@@ -234,7 +239,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
                       .build());
@@ -253,11 +257,17 @@ public class AccountRepositoryImplIntegrationTest {
       assertEquals("Hokkaido", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("Okinawa", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("フリーメモ", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.MINI, actualData.getFirst().getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
       assertEquals(0, actualData.getFirst().getLoginFailureCount());
+
+      // account_authorityにも同一のアカウント番号でMINI固定で登録されること
+      AuthorityEnum actualAuthorityKbn =
+          jdbcTemplate.queryForObject(
+              "SELECT authority_kbn FROM common.account_authority WHERE account_no=1",
+              (rs, rowNum) -> AuthorityEnum.getOrDefault(rs.getString("authority_kbn")));
+      assertEquals(AuthorityEnum.MINI, actualAuthorityKbn);
     }
 
     @Test
@@ -317,7 +327,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
                       .build());
@@ -340,7 +349,6 @@ public class AccountRepositoryImplIntegrationTest {
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime());
@@ -391,7 +399,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
                       .build());
@@ -413,7 +420,6 @@ public class AccountRepositoryImplIntegrationTest {
       assertEquals("Hokkaido", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("Okinawa", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("フリーメモ", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
@@ -485,7 +491,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
                       .build());
@@ -507,7 +512,6 @@ public class AccountRepositoryImplIntegrationTest {
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
@@ -550,7 +554,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
                       .build());
@@ -572,7 +575,6 @@ public class AccountRepositoryImplIntegrationTest {
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
@@ -793,6 +795,12 @@ public class AccountRepositoryImplIntegrationTest {
               "SELECT * FROM common.account where account_no=2",
               (rs, rowNum) -> Account.builder().accountNo(rs.getLong("account_no")).build());
       assertEquals(1, otherData.size());
+
+      // account_authorityも外部キー制約に抵触せず削除されていること
+      Integer actualAuthorityCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account_authority WHERE account_no=1", Integer.class);
+      assertEquals(0, actualAuthorityCount);
     }
   }
 
