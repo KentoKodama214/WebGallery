@@ -12,7 +12,6 @@ insert into common.account_authority values(3, 3, '2000-01-03 09:00:00 Asia/Toky
 insert into common.account_authority values(4, 4, '2000-01-04 09:00:00 Asia/Tokyo', 4, '2001-01-04 09:00:00 Asia/Tokyo', 'administrator');
 insert into common.account_authority values(5, 5, '2000-01-05 09:00:00 Asia/Tokyo', 5, '2001-01-05 09:00:00 Asia/Tokyo', 'administrator');
 
-
 -- common.location_mst
 insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション1', '住所1', 38.100, 115.100);
 insert into common.location_mst values(DEFAULT, 1, 2, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション2', '住所2', 38.200, 115.200);

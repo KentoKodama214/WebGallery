@@ -1,3 +1,4 @@
+-- common.account
 insert into common.account values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$password1', '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
 insert into common.account values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
 insert into common.account values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'cccccccc', 'CCCCCCCC', '$2a$10$password3', '1900-01-01', 'none', 'Hokkaido', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
@@ -10,6 +11,8 @@ insert into common.account values(9, 9, '2000-01-09 09:00:00 Asia/Tokyo', 9, '20
 insert into common.account values(10, 10, '2000-01-10 09:00:00 Asia/Tokyo', 10, '2001-01-10 09:00:00 Asia/Tokyo', false, 'jjjjjjjj', 'JJJJJJJJ', '$2a$10$password10', '1900-01-01', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
 insert into common.account values(11, 11, '2000-01-11 09:00:00 Asia/Tokyo', 11, '2001-01-11 09:00:00 Asia/Tokyo', false, 'kkkkkkkk', 'KKKKKKKK', '$2a$10$password11', '1990-01-01', 'woman', 'Okinawa', 'Tokyo', 'よろしく', '2002-01-01 09:00:00 Asia/Tokyo', 3, false);
 insert into common.account values(12, 12, '2000-01-12 09:00:00 Asia/Tokyo', 12, '2001-01-12 09:00:00 Asia/Tokyo', false, 'llllllll', 'LLLLLLLL', '$2a$10$password12', '1900-01-01', 'woman', 'Okinawa', 'Tokyo', 'よろしく', '2002-01-01 09:00:00 Asia/Tokyo', 3, false);
+
+-- common.account_authority
 insert into common.account_authority values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator');
 insert into common.account_authority values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', 'administrator');
 insert into common.account_authority values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', 'administrator');

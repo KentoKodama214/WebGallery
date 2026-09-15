@@ -1,9 +1,13 @@
+-- common.account
 insert into common.account values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$password1', '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
 insert into common.account values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account_authority values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator');
-insert into common.account_authority values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', 'administrator');
 ALTER SEQUENCE common.account_account_no_seq RESTART 3;
 
+-- common.account_authority
+insert into common.account_authority values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator');
+insert into common.account_authority values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', 'administrator');
+
+-- common.refresh_token
 -- アカウント1の有効なトークン
 insert into common.refresh_token (token_id, account_no, token_hash, expires_at, created_at, updated_by, updated_at, is_revoked) values(1, 1, 'valid_token_hash_1', '2099-12-31 00:00:00 Asia/Tokyo', '2024-01-01 00:00:00 Asia/Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo', false);
 -- アカウント1の無効化済みトークン
