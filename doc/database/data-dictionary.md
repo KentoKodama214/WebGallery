@@ -8,15 +8,15 @@
 |----|--------|--------|----------|-------------|----------|-------------|
 | 1 | account_id | アカウントID | varchar(20) | - | 8〜20文字の英数字。ログイン時に使用する一意の識別子 | account |
 | 2 | account_name | アカウント名 | varchar(50) | - | ユーザーの表示名 | account |
-| 3 | account_no | アカウント番号 | bigserial / bigint | (自動採番) / - | アカウントを一意に特定するための番号。accountテーブルではPK（自動採番）、他テーブルでは概ねFK。ただしphoto_list_filter_log・photo_view_logのaccount_noは閲覧者のアカウント番号を表し、未ログインの場合は0（センチネル値のためFKなし） | account, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite, login_history, photo_list_filter_log, photo_view_log |
+| 3 | account_no | アカウント番号 | bigserial / bigint | (自動採番) / - | アカウントを一意に特定するための番号。accountテーブルではPK（自動採番）、他テーブルでは概ねFK。account_authorityではPK兼FK（accountと1対1）。ただしphoto_list_filter_log・photo_view_logのaccount_noは閲覧者のアカウント番号を表し、未ログインの場合は0（センチネル値のためFKなし） | account, account_authority, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite, login_history, photo_list_filter_log, photo_view_log |
 | 4 | address | 住所 | text | '' | 撮影場所の住所 | location_mst |
-| 5 | authority_kbn | 権限区分 | common.authority_enum | - | mini-user/normal-user/special-user/administratorの4段階。写真アップロード上限に影響 | account |
+| 5 | authority_kbn | 権限区分 | common.authority_enum | - | mini-user/normal-user/special-user/administratorの4段階。写真アップロード上限に影響 | account_authority |
 | 6 | birthdate | 生年月日 | date | '1900-01-01' | 個人情報管理の観点で、必須入力なし、かつ年月まで。データ登録時にすべて1日に変換する | account |
 | 7 | birthplace_prefecture_kbn_code | 出身地都道府県区分コード | varchar(20) | 'none' | kbn_mstの都道府県区分コードを参照。未設定時は'none' | account |
 | 8 | caption | キャプション | text | '""' | 写真の説明文 | photo_mst |
 | 9 | country | 国 | varchar(2) | '' | IPアドレスから解決したISO 3166-1 alpha-2コード。未解決時は空文字 | login_history, photo_list_filter_log, photo_view_log |
-| 10 | created_at | 作成日時 | timestamp with time zone | - / NOW() | レコード作成日時（タイムゾーン付き） | account, kbn_mst, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite, login_history, photo_list_filter_log, photo_view_log |
-| 11 | created_by | 作成者 | bigint（kbn_mstのみint） | - | レコードを作成したアカウント番号。システム側が作成した場合は'0'を入れる | account, kbn_mst, location_mst, photo_mst, photo_tag_mst, photo_favorite, login_history, photo_list_filter_log, photo_view_log |
+| 10 | created_at | 作成日時 | timestamp with time zone | - / NOW() | レコード作成日時（タイムゾーン付き） | account, account_authority, kbn_mst, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite, login_history, photo_list_filter_log, photo_view_log |
+| 11 | created_by | 作成者 | bigint（kbn_mstのみint） | - | レコードを作成したアカウント番号。システム側が作成した場合は'0'を入れる | account, account_authority, kbn_mst, location_mst, photo_mst, photo_tag_mst, photo_favorite, login_history, photo_list_filter_log, photo_view_log |
 | 12 | direction_kbn | 写真の向き | photo.direction_enum | 'none' | vertical（縦）/horizontal（横）/square（正方形）/none（未設定） | photo_mst, photo_list_filter_log |
 | 13 | explanation | 説明 | text | '""' | 区分コードの補足説明 | kbn_mst |
 | 14 | expires_at | 有効期限 | timestamp with time zone | - | リフレッシュトークンの有効期限。期限切れトークン削除の定期実行タスク用インデックスあり | refresh_token |
@@ -72,14 +72,14 @@
 | 64 | tag_no | タグ番号 | bigint | - | 写真単位のタグ連番。account_no, photo_noとの複合UNIQUEを構成 | photo_tag_mst |
 | 65 | token_hash | トークンハッシュ | varchar(256) | - | リフレッシュトークンをSHA-256でハッシュ化した値。検索用インデックスあり | refresh_token |
 | 66 | token_id | トークンID | bigserial | (自動採番) | リフレッシュトークンのPK（自動採番） | refresh_token |
-| 67 | updated_at | 更新日時 | timestamp with time zone | - / NOW() | レコード最終更新日時（タイムゾーン付き） | account, location_mst, refresh_token, photo_mst |
-| 68 | updated_by | 更新者 | bigint | - | レコードを最後に更新したアカウント番号。refresh_tokenでは自身のアカウント番号（本人のトークンのみ無効化操作が発生するため） | account, location_mst, refresh_token, photo_mst |
+| 67 | updated_at | 更新日時 | timestamp with time zone | - / NOW() | レコード最終更新日時（タイムゾーン付き） | account, account_authority, location_mst, refresh_token, photo_mst |
+| 68 | updated_by | 更新者 | bigint | - | レコードを最後に更新したアカウント番号。refresh_tokenでは自身のアカウント番号（本人のトークンのみ無効化操作が発生するため） | account, account_authority, location_mst, refresh_token, photo_mst |
 
 ## カスタム型辞書
 
 | No | 型名 | 定義値 | 説明 | 使用カラム |
 |----|------|--------|------|-----------|
 | 2 | common.sex_enum | man, woman, none | 性別区分 | account.sex_kbn |
-| 3 | common.authority_enum | mini-user, normal-user, special-user, administrator | 権限区分 | account.authority_kbn |
+| 3 | common.authority_enum | mini-user, normal-user, special-user, administrator | 権限区分 | account_authority.authority_kbn |
 | 4 | photo.direction_enum | vertical, horizontal, square, none | 写真の向き | photo_mst.direction_kbn, photo_list_filter_log.direction_kbn |
 | 5 | photo.sort_photo_enum | photo_at, favorite, season | 写真一覧の並び順 | photo_list_filter_log.sort_by |

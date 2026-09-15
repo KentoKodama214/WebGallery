@@ -8,12 +8,14 @@ import com.web.gallery.aggregate.Account;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.dto.PhotoDeletionDto;
+import com.web.gallery.entity.AccountAuthorityCondition;
 import com.web.gallery.entity.AccountCondition;
 import com.web.gallery.entity.LoginHistoryCondition;
 import com.web.gallery.entity.PhotoFavoriteCondition;
 import com.web.gallery.entity.PhotoListFilterLogCondition;
 import com.web.gallery.entity.PhotoTagMstCondition;
 import com.web.gallery.entity.PhotoViewLogCondition;
+import com.web.gallery.mapper.AccountAuthorityMapper;
 import com.web.gallery.mapper.AccountMapper;
 import com.web.gallery.mapper.LoginHistoryMapper;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
@@ -42,6 +44,8 @@ public class AccountAggregateRepositoryImplTest {
   @InjectMocks private AccountAggregateRepositoryImpl accountAggregateRepositoryImpl;
 
   @Mock private AccountMapper accountMapper;
+
+  @Mock private AccountAuthorityMapper accountAuthorityMapper;
 
   @Mock private PhotoFavoriteMapper photoFavoriteMapper;
 
@@ -108,6 +112,11 @@ public class AccountAggregateRepositoryImplTest {
           ArgumentCaptor.forClass(PhotoListFilterLogCondition.class);
       verify(photoListFilterLogMapper).delete(photoListFilterLogConditionCaptor.capture());
       assertEquals(1L, photoListFilterLogConditionCaptor.getValue().getPhotoAccountNo());
+
+      ArgumentCaptor<AccountAuthorityCondition> accountAuthorityConditionCaptor =
+          ArgumentCaptor.forClass(AccountAuthorityCondition.class);
+      verify(accountAuthorityMapper).delete(accountAuthorityConditionCaptor.capture());
+      assertEquals(1L, accountAuthorityConditionCaptor.getValue().getAccountNo());
 
       ArgumentCaptor<AccountCondition> accountConditionCaptor =
           ArgumentCaptor.forClass(AccountCondition.class);

@@ -15,7 +15,7 @@ import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.common.UpdatedAt;
-import com.web.gallery.entity.Account;
+import com.web.gallery.dto.AccountDto;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 import java.time.Clock;
@@ -87,42 +87,42 @@ public class AccountModel {
   private IsDeleted isDeleted;
 
   /**
-   * AccountエンティティからAccountModelを生成する
+   * アカウントと権限区分を結合したAccountDtoからAccountModelを生成する
    *
-   * @param entity {@link Account}
+   * @param dto {@link AccountDto}
    * @return {@link AccountModel}
    */
-  public static AccountModel from(Account entity) {
+  public static AccountModel from(AccountDto dto) {
     return AccountModel.builder()
-        .accountNo(new AccountNo(entity.getAccountNo()))
-        .accountId(new AccountId(entity.getAccountId()))
-        .accountName(new AccountName(entity.getAccountName()))
+        .accountNo(new AccountNo(dto.getAccountNo()))
+        .accountId(new AccountId(dto.getAccountId()))
+        .accountName(new AccountName(dto.getAccountName()))
         // 一覧取得などパスワードを射影しないクエリ経由の場合はnullを許容する
-        .password(entity.getPassword() != null ? new Password(entity.getPassword()) : null)
-        .birthdate(entity.getBirthdate() != null ? new BirthDate(entity.getBirthdate()) : null)
-        .sexKbn(entity.getSexKbn())
+        .password(dto.getPassword() != null ? new Password(dto.getPassword()) : null)
+        .birthdate(dto.getBirthdate() != null ? new BirthDate(dto.getBirthdate()) : null)
+        .sexKbn(dto.getSexKbn())
         .birthplacePrefectureKbnCode(
-            entity.getBirthplacePrefectureKbnCode() != null
-                ? new BirthplacePrefectureKbnCode(entity.getBirthplacePrefectureKbnCode())
+            dto.getBirthplacePrefectureKbnCode() != null
+                ? new BirthplacePrefectureKbnCode(dto.getBirthplacePrefectureKbnCode())
                 : null)
         .residentPrefectureKbnCode(
-            entity.getResidentPrefectureKbnCode() != null
-                ? new ResidentPrefectureKbnCode(entity.getResidentPrefectureKbnCode())
+            dto.getResidentPrefectureKbnCode() != null
+                ? new ResidentPrefectureKbnCode(dto.getResidentPrefectureKbnCode())
                 : null)
-        .freeMemo(entity.getFreeMemo() != null ? new FreeMemo(entity.getFreeMemo()) : null)
-        .authorityKbn(entity.getAuthorityKbn())
+        .freeMemo(dto.getFreeMemo() != null ? new FreeMemo(dto.getFreeMemo()) : null)
+        .authorityKbn(dto.getAuthorityKbn())
         .lastLoginDatetime(
-            entity.getLastLoginDatetime() != null
-                ? new LastLoginDatetime(entity.getLastLoginDatetime())
+            dto.getLastLoginDatetime() != null
+                ? new LastLoginDatetime(dto.getLastLoginDatetime())
                 : null)
         .loginFailureCount(
-            entity.getLoginFailureCount() != null
-                ? new LoginFailureCount(entity.getLoginFailureCount())
+            dto.getLoginFailureCount() != null
+                ? new LoginFailureCount(dto.getLoginFailureCount())
                 : null)
         .isAdminLocked(
-            entity.getIsAdminLocked() != null ? new IsAdminLocked(entity.getIsAdminLocked()) : null)
-        .updatedAt(entity.getUpdatedAt() != null ? new UpdatedAt(entity.getUpdatedAt()) : null)
-        .isDeleted(new IsDeleted(entity.getIsDeleted()))
+            dto.getIsAdminLocked() != null ? new IsAdminLocked(dto.getIsAdminLocked()) : null)
+        .updatedAt(dto.getUpdatedAt() != null ? new UpdatedAt(dto.getUpdatedAt()) : null)
+        .isDeleted(new IsDeleted(dto.getIsDeleted()))
         .build();
   }
 

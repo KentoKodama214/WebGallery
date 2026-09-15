@@ -1,6 +1,6 @@
 package com.web.gallery.model;
 
-import com.web.gallery.entity.Account;
+import com.web.gallery.dto.AccountDto;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -39,13 +39,13 @@ public record AccountModelList(List<AccountModel> accountModelList)
   }
 
   /**
-   * AccountエンティティのリストからAccountModelListを生成する
+   * AccountDtoのリストからAccountModelListを生成する
    *
-   * @param accountList {@link Account}のリスト
+   * @param accountDtoList {@link AccountDto}のリスト
    * @return {@link AccountModelList}
    */
-  public static AccountModelList from(List<Account> accountList) {
-    return AccountModelList.of(accountList.stream().map(AccountModel::from).toList());
+  public static AccountModelList from(List<AccountDto> accountDtoList) {
+    return AccountModelList.of(accountDtoList.stream().map(AccountModel::from).toList());
   }
 
   /**
