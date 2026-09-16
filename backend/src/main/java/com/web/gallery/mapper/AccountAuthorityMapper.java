@@ -2,7 +2,9 @@ package com.web.gallery.mapper;
 
 import com.web.gallery.entity.AccountAuthority;
 import com.web.gallery.entity.AccountAuthorityCondition;
+import com.web.gallery.entity.AccountAuthorityUpdateTarget;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /** アカウント権限テーブルのMapperクラス */
 @Mapper
@@ -14,6 +16,17 @@ public interface AccountAuthorityMapper {
    * @return 登録件数
    */
   public Integer insert(AccountAuthority accountAuthority);
+
+  /**
+   * アカウント権限を更新する
+   *
+   * @param condition 更新対象の抽出条件
+   * @param target 更新内容
+   * @return 更新件数
+   */
+  public Integer update(
+      @Param("condition") AccountAuthorityCondition condition,
+      @Param("target") AccountAuthorityUpdateTarget target);
 
   /**
    * アカウント権限を削除する

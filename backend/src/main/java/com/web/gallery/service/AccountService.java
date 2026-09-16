@@ -74,6 +74,14 @@ public interface AccountService {
   void lockAccount(AccountNo accountNo) throws GalleryException;
 
   /**
+   * 管理者用：アカウントの権限を変更する
+   *
+   * @param accountModel {@link AccountModel}（{@link AccountModel#forAuthorityChange}で生成したもの）
+   * @throws GalleryException 更新に失敗した場合
+   */
+  void updateAccountAuthority(AccountModel accountModel) throws GalleryException;
+
+  /**
    * アカウントを削除する
    *
    * <p>{@code currentPassword}による本人確認（再認証）を行う

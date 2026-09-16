@@ -52,6 +52,14 @@ public interface AccountRepository {
   void updateLoginFailureCount(AccountModel accountModel) throws GalleryException;
 
   /**
+   * AccountAuthorityテーブルの権限区分を更新する
+   *
+   * @param accountModel {@link AccountModel}
+   * @throws GalleryException 更新に失敗した場合
+   */
+  void updateAuthority(AccountModel accountModel) throws GalleryException;
+
+  /**
    * Accountテーブルのログイン失敗回数をSQL側で原子的にインクリメントする
    *
    * @param accountNo アカウント番号

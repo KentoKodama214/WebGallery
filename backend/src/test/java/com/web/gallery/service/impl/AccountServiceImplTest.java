@@ -23,6 +23,8 @@ import com.web.gallery.domain.common.IpGeoLocation;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.event.AccountAuthorityChangedEvent;
 import com.web.gallery.event.AccountDeletedEvent;
 import com.web.gallery.event.AccountLockedEvent;
 import com.web.gallery.event.AccountRegisteredEvent;
@@ -1066,6 +1068,45 @@ public class AccountServiceImplTest {
       accountServiceImpl.updateAccount(accountModel, new Password("oldpassword01"));
 
       verify(reauthenticationThrottle, times(1)).reset(1L);
+    }
+  }
+
+  @Nested
+  @Order(13)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class updateAccountAuthorityTest {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：権限が更新され、AccountAuthorityChangedEventが発行されること")
+    void updateAccountAuthority_success() throws GalleryException {
+      ArgumentCaptor<AccountModel> captor = ArgumentCaptor.forClass(AccountModel.class);
+      doNothing().when(accountRepositoryImpl).updateAuthority(captor.capture());
+
+      AccountModel accountModel = AccountModel.forAuthorityChange(1L, AuthorityEnum.NORMAL);
+      accountServiceImpl.updateAccountAuthority(accountModel);
+
+      AccountModel capturedModel = captor.getValue();
+      assertEquals(new AccountNo(1L), capturedModel.getAccountNo());
+      assertEquals(AuthorityEnum.NORMAL, capturedModel.getAuthorityKbn());
+
+      ArgumentCaptor<AccountAuthorityChangedEvent> eventCaptor =
+          ArgumentCaptor.forClass(AccountAuthorityChangedEvent.class);
+      verify(applicationEventPublisher, times(1)).publishEvent(eventCaptor.capture());
+      assertEquals(new AccountNo(1L), eventCaptor.getValue().accountNo());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：UpdateFailureExceptionをthrowする")
+    void updateAccountAuthority_UpdateFailureException() throws GalleryException {
+      doThrow(UpdateFailureException.class)
+          .when(accountRepositoryImpl)
+          .updateAuthority(any(AccountModel.class));
+
+      AccountModel accountModel = AccountModel.forAuthorityChange(999L, AuthorityEnum.NORMAL);
+      assertThrows(
+          UpdateFailureException.class,
+          () -> accountServiceImpl.updateAccountAuthority(accountModel));
     }
   }
 }
