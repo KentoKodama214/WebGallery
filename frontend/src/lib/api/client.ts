@@ -565,6 +565,14 @@ export interface PhotoEditResult {
   imageFilePath: string;
 }
 
+/** 写真新規一括登録結果レスポンス */
+export interface PhotoBulkEditResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+  registeredCount: number;
+}
+
 /** お気に入り操作結果レスポンス */
 export interface PhotoFavoriteResult {
   httpStatus: number;
@@ -591,6 +599,8 @@ export interface PhotoListResponse {
 /** 写真登録上限チェックレスポンス */
 export interface PhotoUpperLimitResponse {
   isReachedUpperLimit: boolean;
+  /** 残り登録可能枚数（上限が存在しない権限区分の場合はnull） */
+  remainingCount: number | null;
 }
 
 /** 写真一覧取得パラメータ */
@@ -744,17 +754,16 @@ export async function deleteFavorite(
 }
 
 /**
- * 写真を保存する（新規登録・更新）
+ * 写真を更新する（画像ファイル自体の差し替え・追加はできない）
  */
 export async function savePhoto(
   photoAccountId: string,
-  formData: FormData,
-  isUpdate: boolean
+  formData: FormData
 ): Promise<PhotoEditResult> {
   const response = await fetchWithAuth(
     `/api/v1/accounts/${seg(photoAccountId)}/photos`,
     {
-      method: isUpdate ? "PUT" : "POST",
+      method: "PUT",
       body: formData,
     }
   );
@@ -762,6 +771,26 @@ export async function savePhoto(
     throw new Error(await readErrorMessage(response, "写真の保存に失敗しました"));
   }
   return readJson<PhotoEditResult>(response);
+}
+
+/**
+ * 複数枚の写真を新規一括登録する（共通のタイトル〜タグを設定する）
+ */
+export async function registPhotos(
+  photoAccountId: string,
+  formData: FormData
+): Promise<PhotoBulkEditResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(photoAccountId)}/photos`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "写真の登録に失敗しました"));
+  }
+  return readJson<PhotoBulkEditResult>(response);
 }
 
 /** 管理者用アカウント一覧アイテム */

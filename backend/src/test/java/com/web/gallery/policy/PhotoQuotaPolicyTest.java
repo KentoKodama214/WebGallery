@@ -70,4 +70,69 @@ public class PhotoQuotaPolicyTest {
   void isReached_administrator() {
     assertFalse(photoQuotaPolicy.isReached(AuthorityEnum.ADMINISTRATOR, new PhotoCount(1000)));
   }
+
+  @Test
+  @Order(7)
+  @DisplayName("正常系：一括登録判定で、登録後の枚数が上限を超える場合")
+  void isReached_bulk_mini_user_exceeds() {
+    doReturn(10).when(photoConfig).getMiniUserUpperLimit();
+    assertTrue(
+        photoQuotaPolicy.isReached(AuthorityEnum.MINI, new PhotoCount(8), new PhotoCount(3)));
+  }
+
+  @Test
+  @Order(8)
+  @DisplayName("正常系：一括登録判定で、登録後の枚数がちょうど上限に達する場合")
+  void isReached_bulk_mini_user_reaches_exactly() {
+    doReturn(10).when(photoConfig).getMiniUserUpperLimit();
+    assertFalse(
+        photoQuotaPolicy.isReached(AuthorityEnum.MINI, new PhotoCount(8), new PhotoCount(2)));
+  }
+
+  @Test
+  @Order(9)
+  @DisplayName("正常系：一括登録判定で、special-userの場合は上限を超えない")
+  void isReached_bulk_special_user() {
+    assertFalse(
+        photoQuotaPolicy.isReached(
+            AuthorityEnum.SPECIAL, new PhotoCount(1000), new PhotoCount(100)));
+  }
+
+  @Test
+  @Order(10)
+  @DisplayName("正常系：mini-userの残り登録可能枚数を取得する場合")
+  void remainingCount_mini_user() {
+    doReturn(10).when(photoConfig).getMiniUserUpperLimit();
+    assertEquals(3, photoQuotaPolicy.remainingCount(AuthorityEnum.MINI, new PhotoCount(7)));
+  }
+
+  @Test
+  @Order(11)
+  @DisplayName("正常系：mini-userで登録済み枚数が上限を超えている場合、残り登録可能枚数は0")
+  void remainingCount_mini_user_over_limit() {
+    doReturn(10).when(photoConfig).getMiniUserUpperLimit();
+    assertEquals(0, photoQuotaPolicy.remainingCount(AuthorityEnum.MINI, new PhotoCount(12)));
+  }
+
+  @Test
+  @Order(12)
+  @DisplayName("正常系：normal-userの残り登録可能枚数を取得する場合")
+  void remainingCount_normal_user() {
+    doReturn(1000).when(photoConfig).getNormalUserUpperLimit();
+    assertEquals(1, photoQuotaPolicy.remainingCount(AuthorityEnum.NORMAL, new PhotoCount(999)));
+  }
+
+  @Test
+  @Order(13)
+  @DisplayName("正常系：special-userの残り登録可能枚数は無制限（null）")
+  void remainingCount_special_user() {
+    assertNull(photoQuotaPolicy.remainingCount(AuthorityEnum.SPECIAL, new PhotoCount(1000)));
+  }
+
+  @Test
+  @Order(14)
+  @DisplayName("正常系：administratorの残り登録可能枚数は無制限（null）")
+  void remainingCount_administrator() {
+    assertNull(photoQuotaPolicy.remainingCount(AuthorityEnum.ADMINISTRATOR, new PhotoCount(1000)));
+  }
 }

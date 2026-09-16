@@ -61,4 +61,7 @@ public final class Consts {
 
   /** タグ名（日本語・英語）の最大文字数（DBの varchar(20) に合わせる） */
   public static final int TAG_NAME_MAX_LENGTH = 20;
+
+  /** 写真の新規一括登録で1リクエストにつき送信できる写真枚数の上限（アノテーション属性で参照するためint型で定義する） */
+  public static final int PHOTO_BULK_REGIST_MAX_SIZE = 10;
 }

@@ -13,13 +13,21 @@ public class PhotoUpperLimitResponse {
   @Schema(description = "写真の登録枚数が上限に達しているか")
   private Boolean isReachedUpperLimit;
 
+  /** 残り登録可能枚数（上限が存在しない権限区分の場合はnull） */
+  @Schema(description = "残り登録可能枚数（上限が存在しない権限区分の場合はnull）")
+  private Integer remainingCount;
+
   /**
    * レスポンスを生成する
    *
    * @param isReachedUpperLimit 写真の登録枚数が上限に達しているか
+   * @param remainingCount 残り登録可能枚数（上限が存在しない権限区分の場合はnull）
    * @return {@link PhotoUpperLimitResponse}
    */
-  public static PhotoUpperLimitResponse of(Boolean isReachedUpperLimit) {
-    return PhotoUpperLimitResponse.builder().isReachedUpperLimit(isReachedUpperLimit).build();
+  public static PhotoUpperLimitResponse of(Boolean isReachedUpperLimit, Integer remainingCount) {
+    return PhotoUpperLimitResponse.builder()
+        .isReachedUpperLimit(isReachedUpperLimit)
+        .remainingCount(remainingCount)
+        .build();
   }
 }

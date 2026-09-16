@@ -1482,7 +1482,9 @@ public class PhotoServiceImplTest {
           .when(accountRepositoryImpl)
           .getByAccountNo(new AccountNo(1L));
       doReturn(3).when(photoMstRepositoryImpl).count(new AccountNo(1L));
-      doReturn(true).when(photoQuotaPolicy).isReached(AuthorityEnum.MINI, new PhotoCount(3));
+      doReturn(true)
+          .when(photoQuotaPolicy)
+          .isReached(AuthorityEnum.MINI, new PhotoCount(3), new PhotoCount(1));
 
       // 新規登録1枚目
       PhotoDetailModel photoDetailModel1 = createNewPhoto();
