@@ -23,6 +23,8 @@ SQL_FILES=(
   # commonスキーマ: 型定義 → テーブル定義（外部キー依存順）
   "common/common.type.sql"
   "common/account.sql"
+  "common/inquiry_mst.sql"
+  "common/inquiry_reply_mst.sql"
   "common/account_authority.sql"
   "common/kbn_mst.sql"
   "common/location_mst.sql"

@@ -49,6 +49,12 @@ export function clearError(
   return next;
 }
 
+/** お問い合わせ件名の最大文字数（バックエンドの Consts.INQUIRY_SUBJECT_MAX_LENGTH と一致させること） */
+export const INQUIRY_SUBJECT_MAX_LENGTH = 100;
+
+/** お問い合わせ本文・返信本文の最大文字数（バックエンドの Consts.INQUIRY_BODY_MAX_LENGTH と一致させること） */
+export const INQUIRY_BODY_MAX_LENGTH = 2000;
+
 /**
  * `yyyy-MM-dd` 形式の日付文字列が過去日かどうかを判定する
  *

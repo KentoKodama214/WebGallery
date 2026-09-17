@@ -29,6 +29,7 @@ docker compose --profile docs run --rm schemaspy
 |------|----|------|
 | `common.sex_enum` | `man`, `woman`, `none` | 性別区分 |
 | `common.authority_enum` | `mini-user`, `normal-user`, `special-user`, `administrator` | 権限区分 |
+| `common.inquiry_status_enum` | `unreplied`, `replied` | お問い合わせステータス区分 |
 
 ### photo スキーマ
 
@@ -47,11 +48,13 @@ docker compose --profile docs run --rm schemaspy
 | 4 | common | location_mst | ロケーションマスタ |
 | 5 | common | refresh_token | リフレッシュトークン |
 | 6 | common | login_history | ログイン履歴 |
-| 7 | photo | photo_mst | 写真マスタ |
-| 8 | photo | photo_tag_mst | 写真タグマスタ |
-| 9 | photo | photo_favorite | 写真お気に入り |
-| 10 | photo | photo_list_filter_log | 写真一覧絞り込みログ |
-| 11 | photo | photo_view_log | 写真詳細閲覧ログ |
+| 7 | common | inquiry_mst | お問い合わせマスタ |
+| 8 | common | inquiry_reply_mst | お問い合わせ返信マスタ |
+| 9 | photo | photo_mst | 写真マスタ |
+| 10 | photo | photo_tag_mst | 写真タグマスタ |
+| 11 | photo | photo_favorite | 写真お気に入り |
+| 12 | photo | photo_list_filter_log | 写真一覧絞り込みログ |
+| 13 | photo | photo_view_log | 写真詳細閲覧ログ |
 
 ## DB初期化
 
@@ -59,14 +62,16 @@ docker compose --profile docs run --rm schemaspy
 
 1. `common/common.type.sql` - カスタム型定義
 2. `common/account.sql` - アカウントテーブル
-3. `common/account_authority.sql` - アカウント権限テーブル
-4. `common/kbn_mst.sql` - 区分マスタテーブル
-5. `common/location_mst.sql` - ロケーションマスタテーブル
-6. `common/refresh_token.sql` - リフレッシュトークンテーブル
-7. `common/login_history.sql` - ログイン履歴テーブル
-8. `photo/photo.type.sql` - カスタム型定義
-9. `photo/photo_mst.sql` - 写真マスタテーブル
-10. `photo/photo_tag_mst.sql` - 写真タグマスタテーブル
-11. `photo/photo_favorite.sql` - 写真お気に入りテーブル
-12. `photo/photo_list_filter_log.sql` - 写真一覧絞り込みログテーブル
-13. `photo/photo_view_log.sql` - 写真詳細閲覧ログテーブル
+3. `common/inquiry_mst.sql` - お問い合わせマスタテーブル
+4. `common/inquiry_reply_mst.sql` - お問い合わせ返信マスタテーブル
+5. `common/account_authority.sql` - アカウント権限テーブル
+6. `common/kbn_mst.sql` - 区分マスタテーブル
+7. `common/location_mst.sql` - ロケーションマスタテーブル
+8. `common/refresh_token.sql` - リフレッシュトークンテーブル
+9. `common/login_history.sql` - ログイン履歴テーブル
+10. `photo/photo.type.sql` - カスタム型定義
+11. `photo/photo_mst.sql` - 写真マスタテーブル
+12. `photo/photo_tag_mst.sql` - 写真タグマスタテーブル
+13. `photo/photo_favorite.sql` - 写真お気に入りテーブル
+14. `photo/photo_list_filter_log.sql` - 写真一覧絞り込みログテーブル
+15. `photo/photo_view_log.sql` - 写真詳細閲覧ログテーブル

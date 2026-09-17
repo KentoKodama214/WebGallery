@@ -72,6 +72,8 @@ app:
   photo:
     photoCountPerPage: 20
     maxFileSizeMb: 5
+  inquiry:
+    inquiryCountPerPage: 20
   s3:
     # 画像ストレージ（S3 / MinIO）。プロファイルごとに endpoint / bucket / 認証情報を上書きする
     region: ${AWS_REGION:ap-northeast-1}

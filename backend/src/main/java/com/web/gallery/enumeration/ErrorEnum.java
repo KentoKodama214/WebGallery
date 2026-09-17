@@ -6,6 +6,7 @@ import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.InquiryNotFoundException;
 import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
@@ -301,6 +302,54 @@ public enum ErrorEnum {
     @Override
     public GalleryException toException() {
       return new SystemException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-I-0001
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REGIST_INQUIRY}
+   */
+  FAIL_TO_REGIST_INQUIRY("E-I-0001", MessageConst.ERR_FAIL_TO_REGIST_INQUIRY) {
+    @Override
+    public GalleryException toException() {
+      return new RegistFailureException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-I-0002
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REPLY_INQUIRY}
+   */
+  FAIL_TO_REPLY_INQUIRY("E-I-0002", MessageConst.ERR_FAIL_TO_REPLY_INQUIRY) {
+    @Override
+    public GalleryException toException() {
+      return new RegistFailureException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-I-0003
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_INQUIRY_NOT_FOUND}
+   */
+  INQUIRY_NOT_FOUND("E-I-0003", MessageConst.ERR_INQUIRY_NOT_FOUND) {
+    @Override
+    public GalleryException toException() {
+      return new InquiryNotFoundException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-I-0004
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_VIEW_INQUIRY}
+   */
+  NOT_AUTHORIZED_TO_VIEW_INQUIRY("E-I-0004", MessageConst.ERR_NOT_AUTHORIZED_TO_VIEW_INQUIRY) {
+    @Override
+    public GalleryException toException() {
+      return new ForbiddenAccountException(this);
     }
   };
 

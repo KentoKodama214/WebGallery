@@ -887,3 +887,170 @@ export async function updateAccountAuthority(
   }
   return readJson<AdminAccountAuthorityUpdateResult>(response);
 }
+
+/** お問い合わせステータス区分 */
+export type InquiryStatusKbn = "unreplied" | "replied";
+
+/** お問い合わせ登録結果 */
+export interface InquiryRegistResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+  inquiryNo: number;
+}
+
+/**
+ * お問い合わせを新規登録する
+ */
+export async function registerInquiry(data: {
+  subject: string;
+  body: string;
+}): Promise<InquiryRegistResult> {
+  const response = await fetchWithAuth("/api/v1/inquiries", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "お問い合わせの登録に失敗しました"));
+  }
+  return readJson<InquiryRegistResult>(response);
+}
+
+/** 自分のお問い合わせ一覧アイテム */
+export interface InquiryListItem {
+  inquiryNo: number;
+  subject: string;
+  statusKbn: InquiryStatusKbn;
+  isReadByUser: boolean;
+  createdAt: string;
+}
+
+/** 自分のお問い合わせ一覧レスポンス（バックエンドはページング済みの結果を返す） */
+export interface InquiryListGetResponse {
+  isLast: boolean;
+  inquiryList: InquiryListItem[];
+}
+
+/**
+ * 自分のお問い合わせ一覧を1ページ分取得する
+ */
+export async function getInquiryList(pageNo: number = 1): Promise<InquiryListGetResponse> {
+  const response = await fetchWithAuth(`/api/v1/inquiries?pageNo=${pageNo}`);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "お問い合わせ一覧の取得に失敗しました"));
+  }
+  return readJson<InquiryListGetResponse>(response);
+}
+
+/** お問い合わせ返信アイテム */
+export interface InquiryReplyItem {
+  replyNo: number;
+  body: string;
+  createdAt: string;
+}
+
+/** 自分のお問い合わせ詳細 */
+export interface InquiryDetail {
+  inquiryNo: number;
+  subject: string;
+  body: string;
+  statusKbn: InquiryStatusKbn;
+  createdAt: string;
+  replyList: InquiryReplyItem[];
+}
+
+/**
+ * 自分のお問い合わせ詳細を取得する（未読の返信があれば取得と同時に既読化される）
+ */
+export async function getInquiryDetail(inquiryNo: number): Promise<InquiryDetail> {
+  const response = await fetchWithAuth(`/api/v1/inquiries/${seg(inquiryNo)}`);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "お問い合わせ詳細の取得に失敗しました"));
+  }
+  return readJson<InquiryDetail>(response);
+}
+
+/** 管理者用お問い合わせ一覧アイテム */
+export interface AdminInquiryListItem {
+  inquiryId: number;
+  accountId: string;
+  accountName: string;
+  subject: string;
+  statusKbn: InquiryStatusKbn;
+  createdAt: string;
+}
+
+/** 管理者用お問い合わせ一覧レスポンス（バックエンドはページング済みの結果を返す） */
+export interface AdminInquiryListGetResponse {
+  isLast: boolean;
+  inquiryList: AdminInquiryListItem[];
+}
+
+/**
+ * 管理者用お問い合わせ一覧を1ページ分取得する
+ *
+ * @param statusKbn ステータス区分による絞り込み（省略時は全件）
+ */
+export async function getAdminInquiryList(
+  pageNo: number = 1,
+  statusKbn?: InquiryStatusKbn
+): Promise<AdminInquiryListGetResponse> {
+  const searchParams = new URLSearchParams();
+  searchParams.set("pageNo", String(pageNo));
+  if (statusKbn) searchParams.set("statusKbn", statusKbn);
+  const response = await fetchWithAuth(`/api/v1/admin/inquiries?${searchParams.toString()}`);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "お問い合わせ一覧の取得に失敗しました"));
+  }
+  return readJson<AdminInquiryListGetResponse>(response);
+}
+
+/** 管理者用お問い合わせ詳細 */
+export interface AdminInquiryDetail {
+  inquiryId: number;
+  accountId: string;
+  accountName: string;
+  subject: string;
+  body: string;
+  statusKbn: InquiryStatusKbn;
+  createdAt: string;
+  replyList: InquiryReplyItem[];
+}
+
+/**
+ * 管理者用お問い合わせ詳細を取得する
+ */
+export async function getAdminInquiryDetail(inquiryId: number): Promise<AdminInquiryDetail> {
+  const response = await fetchWithAuth(`/api/v1/admin/inquiries/${seg(inquiryId)}`);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "お問い合わせ詳細の取得に失敗しました"));
+  }
+  return readJson<AdminInquiryDetail>(response);
+}
+
+/** お問い合わせ返信登録結果 */
+export interface InquiryReplyResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+  replyNo: number;
+}
+
+/**
+ * お問い合わせに返信する
+ */
+export async function replyToInquiry(
+  inquiryId: number,
+  body: string
+): Promise<InquiryReplyResult> {
+  const response = await fetchWithAuth(`/api/v1/admin/inquiries/${seg(inquiryId)}/replies`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ body }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "返信の登録に失敗しました"));
+  }
+  return readJson<InquiryReplyResult>(response);
+}
