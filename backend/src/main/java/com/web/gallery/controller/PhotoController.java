@@ -19,6 +19,7 @@ import com.web.gallery.domain.common.Referer;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.ClientIpResolver;
+import com.web.gallery.helper.PhotoDirectionResolver;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.helper.ValidationErrorLogger;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -70,6 +71,7 @@ public class PhotoController {
   private final PhotoService photoService;
   private final SessionHelper sessionHelper;
   private final ClientIpResolver clientIpResolver;
+  private final PhotoDirectionResolver photoDirectionResolver;
 
   /**
    * クライアントから送信されたリファラを{@link Referer}に変換する（取得できない場合は空文字）
@@ -276,7 +278,13 @@ public class PhotoController {
     PhotoDetailModelList photoDetailModelList =
         PhotoDetailModelList.of(
             photoBulkSaveRequest.getImageFiles().stream()
-                .map(imageFile -> PhotoDetailModel.from(photoBulkSaveRequest, imageFile, accountNo))
+                .map(
+                    imageFile ->
+                        PhotoDetailModel.from(
+                            photoBulkSaveRequest,
+                            imageFile,
+                            photoDirectionResolver.resolve(imageFile),
+                            accountNo))
                 .toList());
 
     photoService.savePhotos(new AccountId(photoAccountId), photoDetailModelList);

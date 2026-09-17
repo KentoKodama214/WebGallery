@@ -1,12 +1,10 @@
 package com.web.gallery.controller.request;
 
 import com.web.gallery.constant.Consts;
-import com.web.gallery.enumeration.DirectionEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -19,7 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * 写真の新規一括登録時のリクエストパラメータを保持するクラス
  *
- * <p>複数の画像ファイルに対し、タイトル〜タグまでの共通メタデータを一括で登録する（写真ごとに個別の値は設定できない）
+ * <p>複数の画像ファイルに対し、タイトル〜タグまでの共通メタデータを一括で登録する（写真ごとに個別の値は設定できない）。
+ * ただし向き区分のみは写真ごとに異なりうるため、クライアントからは受け取らず、画像ファイルの実際の ピクセルサイズからサーバー側で写真ごとに判定する（{@link
+ * com.web.gallery.helper.PhotoDirectionResolver}）
  */
 @Schema(description = "写真新規一括登録リクエスト")
 @Data
@@ -76,15 +76,6 @@ public class PhotoBulkSaveRequest {
   @Schema(description = "キャプション", example = "夕暮れの東京タワー")
   @Size(max = 1000, message = "{validation.common.max_length}")
   private String caption;
-
-  /**
-   * 向き区分
-   *
-   * <p>{@link DirectionEnum}
-   */
-  @Schema(description = "向き区分")
-  @NotNull(message = "{validation.common.notBlank}")
-  private DirectionEnum directionKbn;
 
   /** 焦点距離 */
   @Schema(description = "焦点距離（mm）", example = "50")

@@ -21,6 +21,9 @@ import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.repository.FileRepository;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -28,6 +31,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -87,6 +91,23 @@ public class PhotoControllerIntegrationTest {
     assertTrue(
         key.matches(expectedPattern),
         "オブジェクトキーが不正です。expected pattern: " + expectedPattern + ", actual: " + key);
+  }
+
+  /**
+   * 指定のピクセルサイズを持つ実際のJPEGバイト列を生成する
+   *
+   * <p>PhotoDirectionResolverによる向き区分の自動判定を実際のImageIOの処理を通して検証するために使用する （{@link
+   * #JPEG_BYTES}のようなマジックバイトのみのダミーではピクセルサイズが判定できないため）
+   *
+   * @param width 幅（ピクセル）
+   * @param height 高さ（ピクセル）
+   * @return JPEGバイト列
+   */
+  private static byte[] createJpegBytes(int width, int height) throws IOException {
+    BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    ImageIO.write(image, "jpg", outputStream);
+    return outputStream.toByteArray();
   }
 
   /** S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない）。 署名付きURL発行は渡されたオブジェクトキーをそのまま返し、キーベースのアサーションを維持する。 */
@@ -603,11 +624,13 @@ public class PhotoControllerIntegrationTest {
   class registPhotos {
     @Test
     @Order(1)
-    @DisplayName("正常系：新規登録。写真1枚、タグなし、撮影日時なし。Nullパラメータあり")
+    @DisplayName("正常系：新規登録。写真1枚、タグなし、撮影日時なし。Nullパラメータあり。向き区分は画像の実際のピクセルサイズから判定されること")
     void registPhotos_single_not_photoTag_and_photoAt() throws Exception {
       String photoAccountId = "bbbbbbbb";
+      // 縦長（幅<高さ）の画像。向き区分がクライアントの指定でなく、実際のピクセルサイズから判定されることを検証する
       MockMultipartFile multipartFile =
-          new MockMultipartFile("imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, createJpegBytes(100, 200));
 
       AccountModel sessionAccount =
           AccountModel.builder()
@@ -631,7 +654,6 @@ public class PhotoControllerIntegrationTest {
                   .file(multipartFile)
                   .contentType(MediaType.MULTIPART_FORM_DATA)
                   .param("caption", "")
-                  .param("directionKbn", "VERTICAL")
                   .param("photoEnglishTitle", "")
                   .param("photoJapaneseTitle", "タイトル4")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
@@ -713,7 +735,7 @@ public class PhotoControllerIntegrationTest {
 
     @Test
     @Order(2)
-    @DisplayName("正常系：新規一括登録。写真3枚に共通のタイトル〜タグを設定して登録する")
+    @DisplayName("正常系：新規一括登録。写真3枚に共通のタイトル〜タグを設定して登録する。縦・横・正方形が混在しても写真ごとに正しい向きで登録されること")
     void registPhotos_multiple_with_common_metadata() throws Exception {
       String photoAccountId = "bbbbbbbb";
 
@@ -734,17 +756,26 @@ public class PhotoControllerIntegrationTest {
       mockMvc
           .perform(
               multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  // 縦長・横長・正方形の3枚を1リクエストに混在させ、それぞれ正しい向きで登録されることを検証する
                   .file(
                       new MockMultipartFile(
-                          "imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES))
+                          "imageFiles",
+                          "DSC111.jpg",
+                          MediaType.IMAGE_JPEG_VALUE,
+                          createJpegBytes(100, 200)))
                   .file(
                       new MockMultipartFile(
-                          "imageFiles", "DSC222.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES))
+                          "imageFiles",
+                          "DSC222.jpg",
+                          MediaType.IMAGE_JPEG_VALUE,
+                          createJpegBytes(200, 100)))
                   .file(
                       new MockMultipartFile(
-                          "imageFiles", "DSC333.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES))
+                          "imageFiles",
+                          "DSC333.jpg",
+                          MediaType.IMAGE_JPEG_VALUE,
+                          createJpegBytes(150, 150)))
                   .contentType(MediaType.MULTIPART_FORM_DATA)
-                  .param("directionKbn", "VERTICAL")
                   .param("photoJapaneseTitle", "共通タイトル")
                   .param("photoTagRegistRequestList[0].tagJapaneseName", "太陽")
                   .param("photoTagRegistRequestList[0].tagEnglishName", "sun")
@@ -753,7 +784,7 @@ public class PhotoControllerIntegrationTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.registeredCount").value(3));
 
-      // 3枚とも共通のタイトル・タグで登録されていることを確認する
+      // 3枚とも共通のタイトル・タグで登録されるが、向き区分は画像ごとに異なることを確認する
       List<PhotoMst> actualPhotoMstList =
           jdbcTemplate.query(
               "SELECT * FROM photo.photo_mst WHERE account_no = 2 AND photo_no IN (4, 5, 6) ORDER BY photo_no",
@@ -768,8 +799,10 @@ public class PhotoControllerIntegrationTest {
       assertEquals(3, actualPhotoMstList.size());
       for (PhotoMst photoMst : actualPhotoMstList) {
         assertEquals("共通タイトル", photoMst.getPhotoJapaneseTitle());
-        assertEquals(DirectionEnum.VERTICAL, photoMst.getDirectionKbn());
       }
+      assertEquals(DirectionEnum.VERTICAL, actualPhotoMstList.get(0).getDirectionKbn());
+      assertEquals(DirectionEnum.HORIZONTAL, actualPhotoMstList.get(1).getDirectionKbn());
+      assertEquals(DirectionEnum.SQUARE, actualPhotoMstList.get(2).getDirectionKbn());
       assertOpaqueObjectKey(actualPhotoMstList.get(0).getImageFilePath(), "bbbbbbbb", 4L, "jpg");
       assertOpaqueObjectKey(actualPhotoMstList.get(1).getImageFilePath(), "bbbbbbbb", 5L, "jpg");
       assertOpaqueObjectKey(actualPhotoMstList.get(2).getImageFilePath(), "bbbbbbbb", 6L, "jpg");
@@ -850,7 +883,6 @@ public class PhotoControllerIntegrationTest {
                   .file(multipartFile)
                   .contentType(MediaType.MULTIPART_FORM_DATA)
                   .param("photoJapaneseTitle", "タイトル")
-                  .param("directionKbn", "VERTICAL")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
                   .with(csrf()))
           .andExpect(status().isBadRequest())
@@ -888,7 +920,6 @@ public class PhotoControllerIntegrationTest {
               multipart("/api/v1/accounts/" + photoAccountId + "/photos")
                   .contentType(MediaType.MULTIPART_FORM_DATA)
                   .param("photoJapaneseTitle", "タイトル")
-                  .param("directionKbn", "VERTICAL")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
                   .with(csrf()))
           .andExpect(status().isBadRequest())
@@ -926,7 +957,6 @@ public class PhotoControllerIntegrationTest {
                   .file(multipartFile)
                   .contentType(MediaType.MULTIPART_FORM_DATA)
                   .param("photoJapaneseTitle", "タイトル")
-                  .param("directionKbn", "VERTICAL")
                   .param("focalLength", "-1")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
                   .with(csrf()))
@@ -965,7 +995,6 @@ public class PhotoControllerIntegrationTest {
                   .file(multipartFile)
                   .contentType(MediaType.MULTIPART_FORM_DATA)
                   .param("caption", "")
-                  .param("directionKbn", "VERTICAL")
                   .param("photoEnglishTitle", "")
                   .param("photoJapaneseTitle", "タイトル")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))

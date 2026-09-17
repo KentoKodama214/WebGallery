@@ -236,15 +236,20 @@ public class PhotoDetailModel {
    * 写真新規一括登録リクエストの共通メタデータと、そのうち1枚分の画像ファイルからPhotoDetailModelを生成する
    *
    * <p>アカウント番号はリクエストボディではなくセッションから取得した値を用いる（他人の写真を操作するIDORを防ぐため）。
-   * タイトル〜タグの共通メタデータは一括登録対象の全画像で共有し、画像ファイルのみ引数の1件を設定する。 新規登録専用のため、写真番号・画像ファイルパスは常に未設定とする
+   * タイトル〜タグの共通メタデータは一括登録対象の全画像で共有し、画像ファイル・向き区分のみ引数の1件分を設定する
+   * （複数枚では縦向き・横向きが混在しうるため、向き区分は呼び出し元が画像ファイルの実際のピクセルサイズから 判定した値を渡す）。新規登録専用のため、写真番号・画像ファイルパスは常に未設定とする
    *
    * @param request {@link PhotoBulkSaveRequest}
    * @param imageFile 一括登録対象のうち1枚分の画像ファイル
+   * @param directionKbn 画像ファイルの実際のピクセルサイズから判定した向き区分
    * @param accountNo ログイン中のアカウント番号
    * @return {@link PhotoDetailModel}
    */
   public static PhotoDetailModel from(
-      PhotoBulkSaveRequest request, MultipartFile imageFile, AccountNo accountNo) {
+      PhotoBulkSaveRequest request,
+      MultipartFile imageFile,
+      DirectionEnum directionKbn,
+      AccountNo accountNo) {
     PhotoTagModelList photoTagModelList =
         Objects.isNull(request.getPhotoTagRegistRequestList())
             ? PhotoTagModelList.empty()
@@ -282,7 +287,7 @@ public class PhotoDetailModel {
                 ? new PhotoEnglishTitle(request.getPhotoEnglishTitle())
                 : null)
         .caption(request.getCaption() != null ? new Caption(request.getCaption()) : null)
-        .directionKbn(request.getDirectionKbn())
+        .directionKbn(directionKbn)
         .exifData(
             new ExifData(
                 request.getFocalLength() != null ? new FocalLength(request.getFocalLength()) : null,

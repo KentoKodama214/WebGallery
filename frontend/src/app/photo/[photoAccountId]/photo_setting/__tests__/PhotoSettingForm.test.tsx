@@ -84,6 +84,38 @@ describe("PhotoSettingForm", () => {
     });
   });
 
+  it("新規モードでは「向き」の選択UIが表示されないこと（バックエンドが画像から自動判定するため）", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTestId("direction-select")).not.toBeInTheDocument();
+  });
+
+  it("新規モードで送信すると、directionKbnを送信しないこと（バックエンドが画像から自動判定するため）", async () => {
+    mockRegistPhotos.mockResolvedValue({ isSuccess: true, registeredCount: 1 });
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(mockRegistPhotos).toHaveBeenCalled();
+    });
+    const formData = mockRegistPhotos.mock.calls[0][1] as FormData;
+    expect(formData.get("directionKbn")).toBeNull();
+  });
+
   it("編集モードでデータが反映されること", async () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 
@@ -104,6 +136,33 @@ describe("PhotoSettingForm", () => {
     expect(screen.getByTestId("f-value-input")).toHaveValue(1.8);
     expect(screen.getByTestId("iso-input")).toHaveValue(400);
     expect(screen.getByTestId("image-preview")).toBeInTheDocument();
+    // 編集モードでは向きの選択UIが表示され、画像ファイルの実際の値（未変更）を保持すること
+    expect(screen.getByTestId("direction-select")).toHaveValue("horizontal");
+  });
+
+  it("編集モードで送信すると、directionKbnを送信すること", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockSavePhoto.mockResolvedValue({
+      isSuccess: true,
+      photoNo: 10,
+      imageFilePath: "/photos/test.jpg",
+    });
+
+    render(
+      <PhotoSettingForm photoAccountId="user1" accountNo={1} photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(mockSavePhoto).toHaveBeenCalled();
+    });
+    const formData = mockSavePhoto.mock.calls[0][1] as FormData;
+    expect(formData.get("directionKbn")).toBe("horizontal");
   });
 
   it("編集モードでは画像ファイルの差し替えができないこと", async () => {

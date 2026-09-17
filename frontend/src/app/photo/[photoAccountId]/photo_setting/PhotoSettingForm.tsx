@@ -344,12 +344,14 @@ export function PhotoSettingForm({
 
     try {
       const formData = new FormData();
-      formData.append("directionKbn", directionKbn);
 
       if (isEditMode && savedPhotoNo) {
         formData.append("photoNo", String(savedPhotoNo));
       }
       if (isEditMode) {
+        // 向き区分は更新時のみ送信する（新規登録時はバックエンドが画像の実際のピクセルサイズから判定するため、
+        // 複数枚の向きが混在してもクライアントの単一選択と食い違わない）
+        formData.append("directionKbn", directionKbn);
         if (existingImageFilePath) {
           formData.append("imageFilePath", existingImageFilePath);
         }
@@ -633,19 +635,21 @@ export function PhotoSettingForm({
             />
           </div>
 
-          {/* 向き */}
-          <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-1">向き *</label>
-            <select
-              value={directionKbn}
-              onChange={(e) => setDirectionKbn(e.target.value)}
-              className="w-full bg-gray-800 text-white border border-gray-600 p-2"
-              data-testid="direction-select"
-            >
-              <option value="horizontal">横</option>
-              <option value="vertical">縦</option>
-            </select>
-          </div>
+          {/* 向き（編集時のみ。新規登録時はバックエンドが画像の実際のピクセルサイズから判定するため選択不要） */}
+          {isEditMode && (
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-1">向き *</label>
+              <select
+                value={directionKbn}
+                onChange={(e) => setDirectionKbn(e.target.value)}
+                className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                data-testid="direction-select"
+              >
+                <option value="horizontal">横</option>
+                <option value="vertical">縦</option>
+              </select>
+            </div>
+          )}
 
           {/* EXIF情報 */}
           <div className="grid grid-cols-2 gap-4 mb-4">

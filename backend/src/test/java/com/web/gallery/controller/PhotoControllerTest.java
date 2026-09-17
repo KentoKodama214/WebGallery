@@ -26,6 +26,7 @@ import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.ClientIpResolver;
+import com.web.gallery.helper.PhotoDirectionResolver;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailModelList;
@@ -74,6 +75,8 @@ public class PhotoControllerTest {
   @Mock private PhotoConfig photoConfig;
 
   @Mock private ClientIpResolver clientIpResolver;
+
+  @Mock private PhotoDirectionResolver photoDirectionResolver;
 
   private MockMvc mockMvc;
 
@@ -720,6 +723,7 @@ public class PhotoControllerTest {
 
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
       doReturn(1L).when(sessionHelper).getAccountNo();
+      doReturn(DirectionEnum.VERTICAL).when(photoDirectionResolver).resolve(any());
 
       ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
           ArgumentCaptor.forClass(PhotoDetailModelList.class);
@@ -732,8 +736,7 @@ public class PhotoControllerTest {
           .perform(
               multipart("/api/v1/accounts/aaaaaaaa/photos")
                   .file(multipartFile)
-                  .param("photoJapaneseTitle", photoJapaneseTitle)
-                  .param("directionKbn", "VERTICAL"))
+                  .param("photoJapaneseTitle", photoJapaneseTitle))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.httpStatus").value(200))
           .andExpect(jsonPath("$.isSuccess").value(true))
@@ -749,6 +752,7 @@ public class PhotoControllerTest {
       assertEquals(Consts.STRING_EMPTY, photoDetailModelList.getFirst().getImageFilePath().value());
       assertEquals(
           photoJapaneseTitle, photoDetailModelList.getFirst().getPhotoJapaneseTitle().value());
+      // 向き区分はリクエストではなく、PhotoDirectionResolverが画像から判定した値が使われること
       assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
       assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
 
@@ -758,12 +762,17 @@ public class PhotoControllerTest {
     @Test
     @Order(2)
     @SuppressWarnings("unchecked")
-    @DisplayName("正常系：写真3枚、共通のタイトル〜タグを一括登録する")
+    @DisplayName("正常系：写真3枚、共通のタイトル〜タグを一括登録する。向き区分は画像ごとに個別に判定されること")
     void registPhotos_multiple_with_common_metadata() throws Exception {
       String photoJapaneseTitle = "タイトル";
 
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
       doReturn(1L).when(sessionHelper).getAccountNo();
+      // 縦・横・正方形が混在する一括登録でも、写真ごとに個別の向きが設定されることを検証する
+      // （PhotoDirectionResolverは実装をモック化しているため、呼び出し順に異なる値を返させる）
+      doReturn(DirectionEnum.VERTICAL, DirectionEnum.HORIZONTAL, DirectionEnum.SQUARE)
+          .when(photoDirectionResolver)
+          .resolve(any());
 
       ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
           ArgumentCaptor.forClass(PhotoDetailModelList.class);
@@ -794,7 +803,6 @@ public class PhotoControllerTest {
                           "multipart/form-data",
                           "sample image3".getBytes()))
                   .param("photoJapaneseTitle", photoJapaneseTitle)
-                  .param("directionKbn", "VERTICAL")
                   .param("photoTagRegistRequestList[0].tagJapaneseName", "太陽")
                   .param("photoTagRegistRequestList[0].tagEnglishName", "sun"))
           .andExpect(status().isOk())
@@ -802,12 +810,14 @@ public class PhotoControllerTest {
 
       PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
       assertEquals(3, photoDetailModelList.size());
+      List<DirectionEnum> expectedDirections =
+          List.of(DirectionEnum.VERTICAL, DirectionEnum.HORIZONTAL, DirectionEnum.SQUARE);
       for (int i = 0; i < photoDetailModelList.size(); i++) {
         assertEquals(new AccountNo(1L), photoDetailModelList.get(i).getAccountNo());
         assertNull(photoDetailModelList.get(i).getPhotoNo());
         assertEquals(
             photoJapaneseTitle, photoDetailModelList.get(i).getPhotoJapaneseTitle().value());
-        assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.get(i).getDirectionKbn());
+        assertEquals(expectedDirections.get(i), photoDetailModelList.get(i).getDirectionKbn());
         assertNotNull(photoDetailModelList.get(i).getImageFile());
         assertEquals(1, photoDetailModelList.get(i).getPhotoTagModelList().size());
         assertEquals(
@@ -826,7 +836,7 @@ public class PhotoControllerTest {
       doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
       mockMvc
-          .perform(multipart("/api/v1/accounts/aaaaaaaa/photos").param("directionKbn", "VERTICAL"))
+          .perform(multipart("/api/v1/accounts/aaaaaaaa/photos"))
           .andExpect(status().isForbidden());
 
       verify(photoServiceImpl, times(0))
@@ -852,8 +862,7 @@ public class PhotoControllerTest {
           .perform(
               multipart("/api/v1/accounts/aaaaaaaa/photos")
                   .file(multipartFile)
-                  .param("photoJapaneseTitle", "タイトル")
-                  .param("directionKbn", "VERTICAL"))
+                  .param("photoJapaneseTitle", "タイトル"))
           .andExpect(status().isBadRequest());
     }
 
@@ -866,9 +875,7 @@ public class PhotoControllerTest {
 
       mockMvc
           .perform(
-              multipart("/api/v1/accounts/aaaaaaaa/photos")
-                  .param("photoJapaneseTitle", "タイトル")
-                  .param("directionKbn", "VERTICAL"))
+              multipart("/api/v1/accounts/aaaaaaaa/photos").param("photoJapaneseTitle", "タイトル"))
           .andExpect(status().isBadRequest());
 
       verify(photoServiceImpl, times(0))
@@ -891,7 +898,7 @@ public class PhotoControllerTest {
       }
 
       mockMvc
-          .perform(request.param("photoJapaneseTitle", "タイトル").param("directionKbn", "VERTICAL"))
+          .perform(request.param("photoJapaneseTitle", "タイトル"))
           .andExpect(status().isBadRequest());
 
       verify(photoServiceImpl, times(0))
@@ -914,7 +921,6 @@ public class PhotoControllerTest {
               multipart("/api/v1/accounts/aaaaaaaa/photos")
                   .file(multipartFile)
                   .param("photoJapaneseTitle", "タイトル")
-                  .param("directionKbn", "VERTICAL")
                   .param("focalLength", "-1"))
           .andExpect(status().isBadRequest());
 
@@ -941,8 +947,7 @@ public class PhotoControllerTest {
           .perform(
               multipart("/api/v1/accounts/aaaaaaaa/photos")
                   .file(multipartFile)
-                  .param("photoJapaneseTitle", "タイトル")
-                  .param("directionKbn", "VERTICAL"))
+                  .param("photoJapaneseTitle", "タイトル"))
           .andExpect(status().isConflict());
     }
 
@@ -965,8 +970,7 @@ public class PhotoControllerTest {
           .perform(
               multipart("/api/v1/accounts/aaaaaaaa/photos")
                   .file(multipartFile)
-                  .param("photoJapaneseTitle", "タイトル")
-                  .param("directionKbn", "VERTICAL"))
+                  .param("photoJapaneseTitle", "タイトル"))
           .andExpect(status().isConflict());
     }
 
@@ -982,10 +986,7 @@ public class PhotoControllerTest {
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
       mockMvc
-          .perform(
-              multipart("/api/v1/accounts/aaaaaaaa/photos")
-                  .file(multipartFile)
-                  .param("directionKbn", "VERTICAL"))
+          .perform(multipart("/api/v1/accounts/aaaaaaaa/photos").file(multipartFile))
           .andExpect(status().isBadRequest());
 
       verify(photoServiceImpl, times(0))
@@ -1008,7 +1009,6 @@ public class PhotoControllerTest {
               multipart("/api/v1/accounts/aaaaaaaa/photos")
                   .file(multipartFile)
                   .param("photoJapaneseTitle", "タイトル")
-                  .param("directionKbn", "VERTICAL")
                   .param("photoTagRegistRequestList[0].tagJapaneseName", "太陽")
                   .param("photoTagRegistRequestList[0].tagEnglishName", "abcdefghijklmnopqrstu"))
           .andExpect(status().isBadRequest());
