@@ -7,7 +7,7 @@ import { getInquiryList, type InquiryListItem } from "@/lib/api/client";
 /** ステータス区分の表示ラベル */
 const STATUS_LABELS: Record<string, string> = {
   unreplied: "未対応",
-  replied: "回答済み",
+  replied: "回答あり",
 };
 
 /**

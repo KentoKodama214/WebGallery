@@ -109,6 +109,38 @@ public class AdminInquiryControllerIntegrationTest {
           .andExpect(
               jsonPath("$.errorCode").value(ErrorEnum.NOT_AUTHORIZED_TO_ADMIN.getErrorCode()));
     }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：ステータス区分（未対応）で絞り込める")
+    void getAdminInquiryList_filterByUnrepliedStatus() throws Exception {
+      mockMvc
+          .perform(
+              get("/api/v1/admin/inquiries")
+                  .param("statusKbn", "unreplied")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAdminAuthentication()))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.inquiryList.length()").value(2));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：ステータス区分（回答済み）で絞り込むと該当なしになる")
+    void getAdminInquiryList_filterByRepliedStatus() throws Exception {
+      mockMvc
+          .perform(
+              get("/api/v1/admin/inquiries")
+                  .param("statusKbn", "replied")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAdminAuthentication()))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.inquiryList.length()").value(0));
+    }
   }
 
   @Nested

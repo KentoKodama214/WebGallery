@@ -51,7 +51,7 @@ describe("InquiryList", () => {
     render(<InquiryList />);
 
     await waitFor(() => {
-      expect(screen.getByText("回答済み")).toBeInTheDocument();
+      expect(screen.getByText("回答あり")).toBeInTheDocument();
     });
     expect(screen.getByText("未読")).toBeInTheDocument();
   });

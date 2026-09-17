@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { registerInquiry } from "@/lib/api/client";
 import {
   INQUIRY_SUBJECT_MAX_LENGTH,
@@ -69,6 +70,12 @@ export function InquiryForm() {
     <div className="min-h-screen bg-[whitesmoke] font-['Open_Sans',sans-serif]">
       <div className="flex justify-center pt-12 pb-16 px-4">
         <div className="w-full max-w-[480px]">
+          <Link
+            href="/inquiry/list"
+            className="text-[#2196F3] hover:underline text-sm block mb-4"
+          >
+            &larr; お問い合わせ一覧へ戻る
+          </Link>
           <form
             onSubmit={handleSubmit}
             className="bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-5"
