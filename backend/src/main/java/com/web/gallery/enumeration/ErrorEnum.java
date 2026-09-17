@@ -18,6 +18,18 @@ import lombok.Getter;
 @Getter
 public enum ErrorEnum {
   /**
+   * エラーコード：E-A-0001
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_ADMIN}
+   */
+  NOT_AUTHORIZED_TO_ADMIN("E-A-0001", MessageConst.ERR_NOT_AUTHORIZED_TO_ADMIN) {
+    @Override
+    public GalleryException toException() {
+      return new ForbiddenAccountException(this);
+    }
+  },
+
+  /**
    * エラーコード：E-C-0000
    *
    * <p>エラーメッセージ：{@value MessageConst#ERR_INVALID_INPUT}
@@ -59,6 +71,78 @@ public enum ErrorEnum {
    * <p>エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_EDIT_ACCOUNT}
    */
   NOT_AUTHORIZED_TO_EDIT_ACCOUNT("E-C-0003", MessageConst.ERR_NOT_AUTHORIZED_TO_EDIT_ACCOUNT) {
+    @Override
+    public GalleryException toException() {
+      return new ForbiddenAccountException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-C-0004
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_DELETE_ACCOUNT}
+   */
+  FAIL_TO_DELETE_ACCOUNT("E-C-0004", MessageConst.ERR_FAIL_TO_DELETE_ACCOUNT) {
+    @Override
+    public GalleryException toException() {
+      return new UpdateFailureException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-C-0005
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_CURRENT_PASSWORD_MISMATCH}
+   */
+  CURRENT_PASSWORD_MISMATCH("E-C-0005", MessageConst.ERR_CURRENT_PASSWORD_MISMATCH) {
+    @Override
+    public GalleryException toException() {
+      return new ForbiddenAccountException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-I-0001
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REGIST_INQUIRY}
+   */
+  FAIL_TO_REGIST_INQUIRY("E-I-0001", MessageConst.ERR_FAIL_TO_REGIST_INQUIRY) {
+    @Override
+    public GalleryException toException() {
+      return new RegistFailureException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-I-0002
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REPLY_INQUIRY}
+   */
+  FAIL_TO_REPLY_INQUIRY("E-I-0002", MessageConst.ERR_FAIL_TO_REPLY_INQUIRY) {
+    @Override
+    public GalleryException toException() {
+      return new RegistFailureException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-I-0003
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_INQUIRY_NOT_FOUND}
+   */
+  INQUIRY_NOT_FOUND("E-I-0003", MessageConst.ERR_INQUIRY_NOT_FOUND) {
+    @Override
+    public GalleryException toException() {
+      return new InquiryNotFoundException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-I-0004
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_VIEW_INQUIRY}
+   */
+  NOT_AUTHORIZED_TO_VIEW_INQUIRY("E-I-0004", MessageConst.ERR_NOT_AUTHORIZED_TO_VIEW_INQUIRY) {
     @Override
     public GalleryException toException() {
       return new ForbiddenAccountException(this);
@@ -258,42 +342,6 @@ public enum ErrorEnum {
   },
 
   /**
-   * エラーコード：E-A-0001
-   *
-   * <p>エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_ADMIN}
-   */
-  NOT_AUTHORIZED_TO_ADMIN("E-A-0001", MessageConst.ERR_NOT_AUTHORIZED_TO_ADMIN) {
-    @Override
-    public GalleryException toException() {
-      return new ForbiddenAccountException(this);
-    }
-  },
-
-  /**
-   * エラーコード：E-C-0004
-   *
-   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_DELETE_ACCOUNT}
-   */
-  FAIL_TO_DELETE_ACCOUNT("E-C-0004", MessageConst.ERR_FAIL_TO_DELETE_ACCOUNT) {
-    @Override
-    public GalleryException toException() {
-      return new UpdateFailureException(this);
-    }
-  },
-
-  /**
-   * エラーコード：E-C-0005
-   *
-   * <p>エラーメッセージ：{@value MessageConst#ERR_CURRENT_PASSWORD_MISMATCH}
-   */
-  CURRENT_PASSWORD_MISMATCH("E-C-0005", MessageConst.ERR_CURRENT_PASSWORD_MISMATCH) {
-    @Override
-    public GalleryException toException() {
-      return new ForbiddenAccountException(this);
-    }
-  },
-
-  /**
    * エラーコード：E-S-0001
    *
    * <p>エラーメッセージ：{@value MessageConst#ERR_SYSTEM_ERROR}
@@ -302,54 +350,6 @@ public enum ErrorEnum {
     @Override
     public GalleryException toException() {
       return new SystemException(this);
-    }
-  },
-
-  /**
-   * エラーコード：E-I-0001
-   *
-   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REGIST_INQUIRY}
-   */
-  FAIL_TO_REGIST_INQUIRY("E-I-0001", MessageConst.ERR_FAIL_TO_REGIST_INQUIRY) {
-    @Override
-    public GalleryException toException() {
-      return new RegistFailureException(this);
-    }
-  },
-
-  /**
-   * エラーコード：E-I-0002
-   *
-   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REPLY_INQUIRY}
-   */
-  FAIL_TO_REPLY_INQUIRY("E-I-0002", MessageConst.ERR_FAIL_TO_REPLY_INQUIRY) {
-    @Override
-    public GalleryException toException() {
-      return new RegistFailureException(this);
-    }
-  },
-
-  /**
-   * エラーコード：E-I-0003
-   *
-   * <p>エラーメッセージ：{@value MessageConst#ERR_INQUIRY_NOT_FOUND}
-   */
-  INQUIRY_NOT_FOUND("E-I-0003", MessageConst.ERR_INQUIRY_NOT_FOUND) {
-    @Override
-    public GalleryException toException() {
-      return new InquiryNotFoundException(this);
-    }
-  },
-
-  /**
-   * エラーコード：E-I-0004
-   *
-   * <p>エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_VIEW_INQUIRY}
-   */
-  NOT_AUTHORIZED_TO_VIEW_INQUIRY("E-I-0004", MessageConst.ERR_NOT_AUTHORIZED_TO_VIEW_INQUIRY) {
-    @Override
-    public GalleryException toException() {
-      return new ForbiddenAccountException(this);
     }
   };
 
