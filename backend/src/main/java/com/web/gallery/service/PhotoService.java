@@ -61,4 +61,12 @@ public interface PhotoService {
    * @return 上限に達している場合、true
    */
   Boolean isReachedUpperLimit(AccountNo accountNo);
+
+  /**
+   * 該当アカウントの残り写真登録可能枚数を取得する
+   *
+   * @param accountNo アカウント番号
+   * @return 残り登録可能枚数。上限が存在しない権限区分の場合はnull
+   */
+  Integer getRemainingPhotoCount(AccountNo accountNo);
 }

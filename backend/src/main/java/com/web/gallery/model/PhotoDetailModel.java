@@ -1,6 +1,7 @@
 package com.web.gallery.model;
 
 import com.web.gallery.constant.Consts;
+import com.web.gallery.controller.request.PhotoBulkSaveRequest;
 import com.web.gallery.controller.request.PhotoSaveRequest;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Address;
@@ -33,6 +34,7 @@ import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
+import org.springframework.web.multipart.MultipartFile;
 
 /** 写真のメタデータを含めた詳細情報を受け渡すためのModelクラス */
 @Value
@@ -218,6 +220,74 @@ public class PhotoDetailModel {
                 : null)
         .caption(request.getCaption() != null ? new Caption(request.getCaption()) : null)
         .directionKbn(request.getDirectionKbn())
+        .exifData(
+            new ExifData(
+                request.getFocalLength() != null ? new FocalLength(request.getFocalLength()) : null,
+                request.getFValue() != null ? new FValue(request.getFValue()) : null,
+                request.getShutterSpeed() != null
+                    ? new ShutterSpeed(request.getShutterSpeed())
+                    : null,
+                request.getIso() != null ? new Iso(request.getIso()) : null))
+        .photoTagModelList(photoTagModelList)
+        .build();
+  }
+
+  /**
+   * 写真新規一括登録リクエストの共通メタデータと、そのうち1枚分の画像ファイルからPhotoDetailModelを生成する
+   *
+   * <p>アカウント番号はリクエストボディではなくセッションから取得した値を用いる（他人の写真を操作するIDORを防ぐため）。
+   * タイトル〜タグの共通メタデータは一括登録対象の全画像で共有し、画像ファイル・向き区分のみ引数の1件分を設定する
+   * （複数枚では縦向き・横向きが混在しうるため、向き区分は呼び出し元が画像ファイルの実際のピクセルサイズから 判定した値を渡す）。新規登録専用のため、写真番号・画像ファイルパスは常に未設定とする
+   *
+   * @param request {@link PhotoBulkSaveRequest}
+   * @param imageFile 一括登録対象のうち1枚分の画像ファイル
+   * @param directionKbn 画像ファイルの実際のピクセルサイズから判定した向き区分
+   * @param accountNo ログイン中のアカウント番号
+   * @return {@link PhotoDetailModel}
+   */
+  public static PhotoDetailModel from(
+      PhotoBulkSaveRequest request,
+      MultipartFile imageFile,
+      DirectionEnum directionKbn,
+      AccountNo accountNo) {
+    PhotoTagModelList photoTagModelList =
+        Objects.isNull(request.getPhotoTagRegistRequestList())
+            ? PhotoTagModelList.empty()
+            : PhotoTagModelList.of(
+                request.getPhotoTagRegistRequestList().stream()
+                    .map(tagRequest -> PhotoTagModel.from(tagRequest, accountNo))
+                    .toList());
+    return PhotoDetailModel.builder()
+        .accountNo(accountNo)
+        .photoAt(
+            Optional.ofNullable(request.getPhotoAt())
+                .map(photoAt -> new PhotoAt(photoAt.atOffset(Consts.JST)))
+                .orElse(null))
+        .locationNo(
+            request.getLocationNo() != null ? new LocationNo(request.getLocationNo()) : null)
+        .geoLocation(
+            new GeoLocation(
+                request.getAddress() != null ? new Address(request.getAddress()) : null,
+                request.getLatitude() != null ? new Latitude(request.getLatitude()) : null,
+                request.getLongitude() != null ? new Longitude(request.getLongitude()) : null))
+        .locationName(
+            request.getLocationName() != null ? new LocationName(request.getLocationName()) : null)
+        .isLocationPublic(
+            request.getIsLocationPublic() != null
+                ? new IsLocationPublic(request.getIsLocationPublic())
+                : null)
+        .imageFile(imageFile != null ? new ImageFile(imageFile) : null)
+        .imageFilePath(new ImageFilePath(Consts.STRING_EMPTY))
+        .photoJapaneseTitle(
+            request.getPhotoJapaneseTitle() != null
+                ? new PhotoJapaneseTitle(request.getPhotoJapaneseTitle())
+                : null)
+        .photoEnglishTitle(
+            request.getPhotoEnglishTitle() != null
+                ? new PhotoEnglishTitle(request.getPhotoEnglishTitle())
+                : null)
+        .caption(request.getCaption() != null ? new Caption(request.getCaption()) : null)
+        .directionKbn(directionKbn)
         .exifData(
             new ExifData(
                 request.getFocalLength() != null ? new FocalLength(request.getFocalLength()) : null,

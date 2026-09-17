@@ -1,11 +1,10 @@
 package com.web.gallery.controller.request;
 
 import com.web.gallery.constant.Consts;
-import com.web.gallery.enumeration.DirectionEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -15,23 +14,21 @@ import java.util.List;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
-/** 写真保存時のリクエストパラメータを保持するクラス */
-@Schema(description = "写真保存リクエスト")
+/**
+ * 写真の新規一括登録時のリクエストパラメータを保持するクラス
+ *
+ * <p>複数の画像ファイルに対し、タイトル〜タグまでの共通メタデータを一括で登録する（写真ごとに個別の値は設定できない）。
+ * ただし向き区分のみは写真ごとに異なりうるため、クライアントからは受け取らず、画像ファイルの実際の ピクセルサイズからサーバー側で写真ごとに判定する（{@link
+ * com.web.gallery.helper.PhotoDirectionResolver}）
+ */
+@Schema(description = "写真新規一括登録リクエスト")
 @Data
-public class PhotoSaveRequest {
-  /** 写真番号 */
-  @Schema(description = "写真番号", example = "1")
-  @NotNull(message = "{validation.common.notBlank}")
-  @Positive(message = "{validation.common.positive}")
-  private Long photoNo;
-
-  /** お気に入り数 */
-  @Schema(description = "お気に入り数")
-  private Integer favoriteCount;
-
-  /** お気に入り */
-  @Schema(description = "お気に入り")
-  private Boolean isFavorite;
+public class PhotoBulkSaveRequest {
+  /** 画像ファイルリスト */
+  @Schema(description = "画像ファイルリスト")
+  @NotEmpty(message = "{validation.file.notFound}")
+  @Size(max = Consts.PHOTO_BULK_REGIST_MAX_SIZE, message = "{validation.photo.imageFiles.maxSize}")
+  private List<MultipartFile> imageFiles;
 
   /** 撮影日時 */
   @Schema(description = "撮影日時", example = "2024-01-01T12:00:00")
@@ -64,14 +61,6 @@ public class PhotoSaveRequest {
   @Schema(description = "位置情報公開フラグ（撮影場所を本人以外にも公開するか）", example = "false")
   private Boolean isLocationPublic;
 
-  /** 画像ファイル */
-  @Schema(description = "画像ファイル（新規登録時）")
-  private MultipartFile imageFile;
-
-  /** 画像ファイルパス */
-  @Schema(description = "画像ファイルパス（更新時）")
-  private String imageFilePath;
-
   /** 写真タイトル日本語名 */
   @Schema(description = "写真タイトル日本語名", example = "東京タワー")
   @NotBlank(message = "{validation.common.notBlank}")
@@ -87,15 +76,6 @@ public class PhotoSaveRequest {
   @Schema(description = "キャプション", example = "夕暮れの東京タワー")
   @Size(max = 1000, message = "{validation.common.max_length}")
   private String caption;
-
-  /**
-   * 向き区分
-   *
-   * <p>{@link DirectionEnum}
-   */
-  @Schema(description = "向き区分")
-  @NotNull(message = "{validation.common.notBlank}")
-  private DirectionEnum directionKbn;
 
   /** 焦点距離 */
   @Schema(description = "焦点距離（mm）", example = "50")

@@ -312,22 +312,27 @@ public class PhotoServiceImpl implements PhotoService {
     // ファイルI/OはDBトランザクションの対象外のため、途中の登録失敗でDBがロールバックされても
     // 書き込み済みのファイルは自動的には戻らない。登録済みファイルを記録しておき、失敗時に補償削除する
     List<ImageFilePath> registeredImageFilePaths = new ArrayList<>();
-    AccountModel accountModel = null;
-    PhotoCount registeredCount = null;
+
+    // 新規登録分については、1件も登録処理（ファイルアップロード・DB登録）を始める前に、
+    // リクエスト全体の枚数で登録枚数の上限超過を判定する
+    long newRegistrationCount =
+        photoDetailModelList.stream().filter(m -> Objects.isNull(m.getPhotoNo())).count();
+    if (newRegistrationCount > 0) {
+      AccountModel accountModel = accountRepository.getByAccountNo(photoAccountNo);
+      PhotoCount registeredCount = new PhotoCount(photoMstRepository.count(photoAccountNo));
+      if (photoQuotaPolicy.isReached(
+          accountModel.getAuthorityKbn(),
+          registeredCount,
+          new PhotoCount((int) newRegistrationCount))) {
+        throw ErrorEnum.REACHED_REGISTRATION_LIMIT.toException();
+      }
+    }
 
     try {
       for (PhotoDetailModel photoDetailModel : photoDetailModelList) {
         if (Objects.isNull(photoDetailModel.getPhotoNo())) {
-          if (Objects.isNull(accountModel)) {
-            accountModel = accountRepository.getByAccountNo(photoAccountNo);
-            registeredCount = new PhotoCount(photoMstRepository.count(photoAccountNo));
-          }
-          if (photoQuotaPolicy.isReached(accountModel.getAuthorityKbn(), registeredCount)) {
-            throw ErrorEnum.REACHED_REGISTRATION_LIMIT.toException();
-          }
           savedImageFilePath = registPhoto(photoDetailModel, new PhotoNo(photoNo), filePath);
           registeredImageFilePaths.add(savedImageFilePath);
-          registeredCount = new PhotoCount(registeredCount.value() + 1);
           ++photoNo;
         } else {
           savedPhotoNo = photoDetailModel.getPhotoNo();
@@ -572,6 +577,15 @@ public class PhotoServiceImpl implements PhotoService {
     Integer count = photoMstRepository.count(accountNo);
 
     return photoQuotaPolicy.isReached(accountModel.getAuthorityKbn(), new PhotoCount(count));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Integer getRemainingPhotoCount(AccountNo accountNo) {
+    AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
+    Integer count = photoMstRepository.count(accountNo);
+
+    return photoQuotaPolicy.remainingCount(accountModel.getAuthorityKbn(), new PhotoCount(count));
   }
 
   /**

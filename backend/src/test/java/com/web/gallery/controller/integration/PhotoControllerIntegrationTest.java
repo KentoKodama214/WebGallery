@@ -21,6 +21,9 @@ import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.repository.FileRepository;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -28,6 +31,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -86,6 +91,23 @@ public class PhotoControllerIntegrationTest {
     assertTrue(
         key.matches(expectedPattern),
         "オブジェクトキーが不正です。expected pattern: " + expectedPattern + ", actual: " + key);
+  }
+
+  /**
+   * 指定のピクセルサイズを持つ実際のJPEGバイト列を生成する
+   *
+   * <p>PhotoDirectionResolverによる向き区分の自動判定を実際のImageIOの処理を通して検証するために使用する （{@link
+   * #JPEG_BYTES}のようなマジックバイトのみのダミーではピクセルサイズが判定できないため）
+   *
+   * @param width 幅（ピクセル）
+   * @param height 高さ（ピクセル）
+   * @return JPEGバイト列
+   */
+  private static byte[] createJpegBytes(int width, int height) throws IOException {
+    BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    ImageIO.write(image, "jpg", outputStream);
+    return outputStream.toByteArray();
   }
 
   /** S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない）。 署名付きURL発行は渡されたオブジェクトキーをそのまま返し、キーベースのアサーションを維持する。 */
@@ -310,254 +332,6 @@ public class PhotoControllerIntegrationTest {
   class savePhoto {
     @Test
     @Order(1)
-    @DisplayName("正常系：新規登録。写真タグなし、撮影日時なし。Nullパラメータあり")
-    void savePhoto_addPhoto_not_photoTag_and_photoAt() throws JacksonException, Exception {
-      String photoAccountId = "bbbbbbbb";
-      MockMultipartFile multipartFile =
-          new MockMultipartFile("imageFile", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
-
-      AccountModel sessionAccount =
-          AccountModel.builder()
-              .accountNo(new AccountNo(2L))
-              .accountId(new AccountId("bbbbbbbb"))
-              .accountName(new AccountName("BBBBBBBB"))
-              .password(new Password("$2a$10$password2"))
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .build();
-
-      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(
-              accountPrincipal, null, accountPrincipal.getAuthorities());
-
-      OffsetDateTime transactionNow =
-          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-      mockMvc
-          .perform(
-              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
-                  .file(multipartFile)
-                  .contentType(MediaType.MULTIPART_FORM_DATA)
-                  .param("caption", "")
-                  .param("imageFilePath", "")
-                  .param("directionKbn", "VERTICAL")
-                  .param("photoEnglishTitle", "")
-                  .param("photoJapaneseTitle", "タイトル4")
-                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
-                  .with(csrf()))
-          .andExpect(status().isOk())
-          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
-          .andExpect(jsonPath("$.isSuccess").value(true))
-          .andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
-
-      // photo_mst登録チェック
-      List<PhotoMst> actualPhotoMst =
-          jdbcTemplate.query(
-              "SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=4",
-              (rs, rowNum) ->
-                  PhotoMst.builder()
-                      .accountNo(rs.getLong("account_no"))
-                      .photoNo(rs.getLong("photo_no"))
-                      .createdBy(rs.getLong("created_by"))
-                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
-                      .updatedBy(rs.getLong("updated_by"))
-                      .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-                      .isDeleted(rs.getBoolean("is_deleted"))
-                      .photoAt(rs.getObject("photo_at", OffsetDateTime.class))
-                      .locationNo(rs.getLong("location_no"))
-                      .imageFilePath(rs.getString("image_file_path"))
-                      .photoJapaneseTitle(rs.getString("photo_japanese_title"))
-                      .photoEnglishTitle(rs.getString("photo_english_title"))
-                      .caption(rs.getString("caption"))
-                      .directionKbn(DirectionEnum.getOrDefault(rs.getString("direction_kbn")))
-                      .focalLength(rs.getInt("focal_length"))
-                      .fValue(rs.getBigDecimal("f_value"))
-                      .shutterSpeed(rs.getBigDecimal("shutter_speed"))
-                      .iso(rs.getInt("iso"))
-                      .build());
-
-      assertEquals(1, actualPhotoMst.size());
-      assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
-      assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo());
-      assertEquals(transactionNow, actualPhotoMst.getFirst().getCreatedAt());
-      assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt());
-      assertFalse(actualPhotoMst.getFirst().getIsDeleted());
-      assertEquals(
-          OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
-          actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
-      assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
-      assertOpaqueObjectKey(actualPhotoMst.getFirst().getImageFilePath(), "bbbbbbbb", 4L, "jpg");
-      assertEquals(
-          "DSC111.jpg",
-          jdbcTemplate.queryForObject(
-              "SELECT image_file_name FROM photo.photo_mst WHERE account_no=2 AND photo_no=4",
-              String.class));
-      assertEquals("タイトル4", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
-      assertEquals("", actualPhotoMst.getFirst().getPhotoEnglishTitle());
-      assertEquals("", actualPhotoMst.getFirst().getCaption());
-      assertEquals(DirectionEnum.VERTICAL, actualPhotoMst.getFirst().getDirectionKbn());
-      assertEquals(0, actualPhotoMst.getFirst().getFocalLength());
-      assertEquals(0, BigDecimal.ZERO.compareTo(actualPhotoMst.getFirst().getFValue()));
-      assertEquals(0, BigDecimal.ZERO.compareTo(actualPhotoMst.getFirst().getShutterSpeed()));
-      assertEquals(0, actualPhotoMst.getFirst().getIso());
-
-      // photo_tag_mst登録チェック
-      List<PhotoTagMst> actualPhotoTagMst =
-          jdbcTemplate.query(
-              "SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=4",
-              (rs, rowNum) ->
-                  PhotoTagMst.builder()
-                      .accountNo(rs.getLong("account_no"))
-                      .photoNo(rs.getLong("photo_no"))
-                      .tagNo(rs.getLong("tag_no"))
-                      .createdBy(rs.getLong("created_by"))
-                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
-                      .tagJapaneseName(rs.getObject("tag_japanese_name").toString())
-                      .tagEnglishName(rs.getObject("tag_english_name").toString())
-                      .build());
-      assertEquals(0, actualPhotoTagMst.size());
-    }
-
-    @Test
-    @Order(2)
-    @DisplayName("正常系：新規登録。写真タグあり、撮影日時あり。Nullパラメータなし")
-    void savePhoto_addPhoto_with_photoTag_and_photoAt() throws Exception {
-      String photoAccountId = "bbbbbbbb";
-      MockMultipartFile multipartFile =
-          new MockMultipartFile("imageFile", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
-
-      AccountModel sessionAccount =
-          AccountModel.builder()
-              .accountNo(new AccountNo(2L))
-              .accountId(new AccountId("bbbbbbbb"))
-              .accountName(new AccountName("BBBBBBBB"))
-              .password(new Password("$2a$10$password2"))
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .build();
-
-      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(
-              accountPrincipal, null, accountPrincipal.getAuthorities());
-
-      OffsetDateTime transactionNow =
-          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-      mockMvc
-          .perform(
-              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
-                  .file(multipartFile)
-                  .contentType(MediaType.MULTIPART_FORM_DATA)
-                  .param("caption", "caption111")
-                  .param("imageFilePath", "")
-                  .param("directionKbn", "VERTICAL")
-                  .param("photoEnglishTitle", "title111")
-                  .param("photoJapaneseTitle", "タイトル111")
-                  .param(
-                      "photoAt",
-                      LocalDateTime.of(2000, 1, 1, 0, 0, 0)
-                          .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                  .param("focalLength", "24")
-                  .param("fValue", "8.0")
-                  .param("shutterSpeed", "0.01")
-                  .param("iso", "100")
-                  .param("photoTagRegistRequestList[0].accountNo", "2")
-                  .param("photoTagRegistRequestList[0].tagJapaneseName", "太陽")
-                  .param("photoTagRegistRequestList[0].tagEnglishName", "sun")
-                  .param("photoTagRegistRequestList[1].accountNo", "2")
-                  .param("photoTagRegistRequestList[1].tagJapaneseName", "青空")
-                  .param("photoTagRegistRequestList[1].tagEnglishName", "bluesky")
-                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
-                  .with(csrf()))
-          .andExpect(status().isOk())
-          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
-          .andExpect(jsonPath("$.isSuccess").value(true))
-          .andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
-
-      // photo_mst登録チェック
-      List<PhotoMst> actualPhotoMst =
-          jdbcTemplate.query(
-              "SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=4",
-              (rs, rowNum) ->
-                  PhotoMst.builder()
-                      .accountNo(rs.getLong("account_no"))
-                      .photoNo(rs.getLong("photo_no"))
-                      .createdBy(rs.getLong("created_by"))
-                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
-                      .updatedBy(rs.getLong("updated_by"))
-                      .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
-                      .isDeleted(rs.getBoolean("is_deleted"))
-                      .photoAt(rs.getObject("photo_at", OffsetDateTime.class))
-                      .locationNo(rs.getLong("location_no"))
-                      .imageFilePath(rs.getString("image_file_path"))
-                      .photoJapaneseTitle(rs.getString("photo_japanese_title"))
-                      .photoEnglishTitle(rs.getString("photo_english_title"))
-                      .caption(rs.getString("caption"))
-                      .directionKbn(DirectionEnum.getOrDefault(rs.getString("direction_kbn")))
-                      .focalLength(rs.getInt("focal_length"))
-                      .fValue(rs.getBigDecimal("f_value"))
-                      .shutterSpeed(rs.getBigDecimal("shutter_speed"))
-                      .iso(rs.getInt("iso"))
-                      .build());
-
-      assertEquals(1, actualPhotoMst.size());
-      assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
-      assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo());
-      assertEquals(transactionNow, actualPhotoMst.getFirst().getCreatedAt());
-      assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt());
-      assertFalse(actualPhotoMst.getFirst().getIsDeleted());
-      assertEquals(
-          OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
-          actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
-      assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
-      assertOpaqueObjectKey(actualPhotoMst.getFirst().getImageFilePath(), "bbbbbbbb", 4L, "jpg");
-      assertEquals(
-          "DSC111.jpg",
-          jdbcTemplate.queryForObject(
-              "SELECT image_file_name FROM photo.photo_mst WHERE account_no=2 AND photo_no=4",
-              String.class));
-      assertEquals("タイトル111", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
-      assertEquals("title111", actualPhotoMst.getFirst().getPhotoEnglishTitle());
-      assertEquals("caption111", actualPhotoMst.getFirst().getCaption());
-      assertEquals(DirectionEnum.VERTICAL, actualPhotoMst.getFirst().getDirectionKbn());
-      assertEquals(24, actualPhotoMst.getFirst().getFocalLength());
-      assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualPhotoMst.getFirst().getFValue()));
-      assertEquals(
-          0, BigDecimal.valueOf(0.01).compareTo(actualPhotoMst.getFirst().getShutterSpeed()));
-      assertEquals(100, actualPhotoMst.getFirst().getIso());
-
-      // photo_tag_mst登録チェック
-      List<PhotoTagMst> actualPhotoTagMst =
-          jdbcTemplate.query(
-              "SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=4",
-              (rs, rowNum) ->
-                  PhotoTagMst.builder()
-                      .accountNo(rs.getLong("account_no"))
-                      .photoNo(rs.getLong("photo_no"))
-                      .tagNo(rs.getLong("tag_no"))
-                      .createdBy(rs.getLong("created_by"))
-                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
-                      .tagJapaneseName(rs.getObject("tag_japanese_name").toString())
-                      .tagEnglishName(rs.getObject("tag_english_name").toString())
-                      .build());
-      assertEquals(2, actualPhotoTagMst.size());
-
-      assertEquals(2L, actualPhotoTagMst.get(0).getAccountNo());
-      assertEquals(4L, actualPhotoTagMst.get(0).getPhotoNo());
-      assertEquals(1L, actualPhotoTagMst.get(0).getTagNo());
-      assertEquals(transactionNow, actualPhotoTagMst.get(0).getCreatedAt());
-      assertEquals("太陽", actualPhotoTagMst.get(0).getTagJapaneseName());
-      assertEquals("sun", actualPhotoTagMst.get(0).getTagEnglishName());
-      assertEquals(2L, actualPhotoTagMst.get(1).getAccountNo());
-      assertEquals(4L, actualPhotoTagMst.get(1).getPhotoNo());
-      assertEquals(2L, actualPhotoTagMst.get(1).getTagNo());
-      assertEquals(transactionNow, actualPhotoTagMst.get(1).getCreatedAt());
-      assertEquals("青空", actualPhotoTagMst.get(1).getTagJapaneseName());
-      assertEquals("bluesky", actualPhotoTagMst.get(1).getTagEnglishName());
-    }
-
-    @Test
-    @Order(3)
     @DisplayName("正常系：更新。写真タグあり、撮影日時あり。Nullパラメータなし。リクエストの画像ファイルパスは無視されDB上の既存パスが維持される")
     void savePhoto_updatePhoto_with_photoTag_and_photoAt() throws Exception {
       String photoAccountId = "bbbbbbbb";
@@ -580,7 +354,7 @@ public class PhotoControllerIntegrationTest {
           jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       mockMvc
           .perform(
-              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+              multipart(HttpMethod.PUT, "/api/v1/accounts/" + photoAccountId + "/photos")
                   .contentType(MediaType.MULTIPART_FORM_DATA)
                   .param("photoNo", "1")
                   .param("caption", "caption111")
@@ -695,12 +469,10 @@ public class PhotoControllerIntegrationTest {
     }
 
     @Test
-    @Order(4)
+    @Order(2)
     @DisplayName("異常系：アクセス不正。ForbiddenAccountExceptionをthrowする")
     void savePhoto_ForbiddenAccountException() throws Exception {
       String photoAccountId = "bbbbbbbb";
-      MockMultipartFile multipartFile =
-          new MockMultipartFile("imageFile", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
 
       AccountModel sessionAccount =
           AccountModel.builder()
@@ -718,10 +490,10 @@ public class PhotoControllerIntegrationTest {
 
       mockMvc
           .perform(
-              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
-                  .file(multipartFile)
+              multipart(HttpMethod.PUT, "/api/v1/accounts/" + photoAccountId + "/photos")
                   .contentType(MediaType.MULTIPART_FORM_DATA)
-                  .param("imageFilePath", "")
+                  .param("photoNo", "1")
+                  .param("imageFilePath", "https://www.xxx.com/bbbbbbbb/DSC21.jpg")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
                   .with(csrf()))
           .andExpect(status().isForbidden())
@@ -735,12 +507,361 @@ public class PhotoControllerIntegrationTest {
     }
 
     @Test
+    @Order(3)
+    @DisplayName("異常系：画像ファイルパスが未指定。BadRequestExceptionをthrowする")
+    void savePhoto_BadRequestException_filepath_is_null() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.MINI)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/" + photoAccountId + "/photos")
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoNo", "1")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
+          .andExpect(jsonPath("$.isSuccess").value(false))
+          .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：画像ファイルパス以外のパラメータ不正。BadRequestExceptionをthrowする")
+    void savePhoto_BadRequestException_others() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/" + photoAccountId + "/photos")
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoNo", "1")
+                  .param("imageFilePath", "https://www.xxx.com/bbbbbbbb/DSC21.jpg")
+                  .param("focalLength", "-1")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
+          .andExpect(jsonPath("$.isSuccess").value(false))
+          .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
+    }
+
+    @Test
     @Order(5)
+    @DisplayName("異常系：存在しない写真番号を指定した場合、PhotoNotFoundExceptionをthrowする")
+    void savePhoto_PhotoNotFoundException() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/" + photoAccountId + "/photos")
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoNo", "99")
+                  .param("caption", "caption21")
+                  .param("imageFilePath", "https://www.xxx.com/DSC99.jpg")
+                  .param("directionKbn", "VERTICAL")
+                  .param("photoEnglishTitle", "")
+                  .param("photoJapaneseTitle", "タイトル")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isNotFound())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.NOT_FOUND.value()))
+          .andExpect(jsonPath("$.errorCode").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorCode()))
+          .andExpect(jsonPath("$.errorMessage").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorMessage()));
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")
+  class registPhotos {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：新規登録。写真1枚、タグなし、撮影日時なし。Nullパラメータあり。向き区分は画像の実際のピクセルサイズから判定されること")
+    void registPhotos_single_not_photoTag_and_photoAt() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+      // 縦長（幅<高さ）の画像。向き区分がクライアントの指定でなく、実際のピクセルサイズから判定されることを検証する
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, createJpegBytes(100, 200));
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .file(multipartFile)
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("caption", "")
+                  .param("photoEnglishTitle", "")
+                  .param("photoJapaneseTitle", "タイトル4")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
+          .andExpect(jsonPath("$.isSuccess").value(true))
+          .andExpect(jsonPath("$.message").value("写真登録が完了しました。"))
+          .andExpect(jsonPath("$.registeredCount").value(1));
+
+      // photo_mst登録チェック
+      List<PhotoMst> actualPhotoMst =
+          jdbcTemplate.query(
+              "SELECT * FROM photo.photo_mst where account_no = 2 and photo_no=4",
+              (rs, rowNum) ->
+                  PhotoMst.builder()
+                      .accountNo(rs.getLong("account_no"))
+                      .photoNo(rs.getLong("photo_no"))
+                      .createdBy(rs.getLong("created_by"))
+                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                      .updatedBy(rs.getLong("updated_by"))
+                      .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                      .isDeleted(rs.getBoolean("is_deleted"))
+                      .photoAt(rs.getObject("photo_at", OffsetDateTime.class))
+                      .locationNo(rs.getLong("location_no"))
+                      .imageFilePath(rs.getString("image_file_path"))
+                      .photoJapaneseTitle(rs.getString("photo_japanese_title"))
+                      .photoEnglishTitle(rs.getString("photo_english_title"))
+                      .caption(rs.getString("caption"))
+                      .directionKbn(DirectionEnum.getOrDefault(rs.getString("direction_kbn")))
+                      .focalLength(rs.getInt("focal_length"))
+                      .fValue(rs.getBigDecimal("f_value"))
+                      .shutterSpeed(rs.getBigDecimal("shutter_speed"))
+                      .iso(rs.getInt("iso"))
+                      .build());
+
+      assertEquals(1, actualPhotoMst.size());
+      assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
+      assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo());
+      assertEquals(transactionNow, actualPhotoMst.getFirst().getCreatedAt());
+      assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt());
+      assertFalse(actualPhotoMst.getFirst().getIsDeleted());
+      assertEquals(
+          OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
+          actualPhotoMst.getFirst().getPhotoAt().plusHours(9));
+      assertEquals(0L, actualPhotoMst.getFirst().getLocationNo());
+      assertOpaqueObjectKey(actualPhotoMst.getFirst().getImageFilePath(), "bbbbbbbb", 4L, "jpg");
+      assertEquals(
+          "DSC111.jpg",
+          jdbcTemplate.queryForObject(
+              "SELECT image_file_name FROM photo.photo_mst WHERE account_no=2 AND photo_no=4",
+              String.class));
+      assertEquals("タイトル4", actualPhotoMst.getFirst().getPhotoJapaneseTitle());
+      assertEquals("", actualPhotoMst.getFirst().getPhotoEnglishTitle());
+      assertEquals("", actualPhotoMst.getFirst().getCaption());
+      assertEquals(DirectionEnum.VERTICAL, actualPhotoMst.getFirst().getDirectionKbn());
+      assertEquals(0, actualPhotoMst.getFirst().getFocalLength());
+      assertEquals(0, BigDecimal.ZERO.compareTo(actualPhotoMst.getFirst().getFValue()));
+      assertEquals(0, BigDecimal.ZERO.compareTo(actualPhotoMst.getFirst().getShutterSpeed()));
+      assertEquals(0, actualPhotoMst.getFirst().getIso());
+
+      // photo_tag_mst登録チェック
+      List<PhotoTagMst> actualPhotoTagMst =
+          jdbcTemplate.query(
+              "SELECT * FROM photo.photo_tag_mst WHERE account_no=2 and photo_no=4",
+              (rs, rowNum) ->
+                  PhotoTagMst.builder()
+                      .accountNo(rs.getLong("account_no"))
+                      .photoNo(rs.getLong("photo_no"))
+                      .tagNo(rs.getLong("tag_no"))
+                      .createdBy(rs.getLong("created_by"))
+                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                      .tagJapaneseName(rs.getObject("tag_japanese_name").toString())
+                      .tagEnglishName(rs.getObject("tag_english_name").toString())
+                      .build());
+      assertEquals(0, actualPhotoTagMst.size());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：新規一括登録。写真3枚に共通のタイトル〜タグを設定して登録する。縦・横・正方形が混在しても写真ごとに正しい向きで登録されること")
+    void registPhotos_multiple_with_common_metadata() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  // 縦長・横長・正方形の3枚を1リクエストに混在させ、それぞれ正しい向きで登録されることを検証する
+                  .file(
+                      new MockMultipartFile(
+                          "imageFiles",
+                          "DSC111.jpg",
+                          MediaType.IMAGE_JPEG_VALUE,
+                          createJpegBytes(100, 200)))
+                  .file(
+                      new MockMultipartFile(
+                          "imageFiles",
+                          "DSC222.jpg",
+                          MediaType.IMAGE_JPEG_VALUE,
+                          createJpegBytes(200, 100)))
+                  .file(
+                      new MockMultipartFile(
+                          "imageFiles",
+                          "DSC333.jpg",
+                          MediaType.IMAGE_JPEG_VALUE,
+                          createJpegBytes(150, 150)))
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoJapaneseTitle", "共通タイトル")
+                  .param("photoTagRegistRequestList[0].tagJapaneseName", "太陽")
+                  .param("photoTagRegistRequestList[0].tagEnglishName", "sun")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.registeredCount").value(3));
+
+      // 3枚とも共通のタイトル・タグで登録されるが、向き区分は画像ごとに異なることを確認する
+      List<PhotoMst> actualPhotoMstList =
+          jdbcTemplate.query(
+              "SELECT * FROM photo.photo_mst WHERE account_no = 2 AND photo_no IN (4, 5, 6) ORDER BY photo_no",
+              (rs, rowNum) ->
+                  PhotoMst.builder()
+                      .accountNo(rs.getLong("account_no"))
+                      .photoNo(rs.getLong("photo_no"))
+                      .photoJapaneseTitle(rs.getString("photo_japanese_title"))
+                      .directionKbn(DirectionEnum.getOrDefault(rs.getString("direction_kbn")))
+                      .imageFilePath(rs.getString("image_file_path"))
+                      .build());
+      assertEquals(3, actualPhotoMstList.size());
+      for (PhotoMst photoMst : actualPhotoMstList) {
+        assertEquals("共通タイトル", photoMst.getPhotoJapaneseTitle());
+      }
+      assertEquals(DirectionEnum.VERTICAL, actualPhotoMstList.get(0).getDirectionKbn());
+      assertEquals(DirectionEnum.HORIZONTAL, actualPhotoMstList.get(1).getDirectionKbn());
+      assertEquals(DirectionEnum.SQUARE, actualPhotoMstList.get(2).getDirectionKbn());
+      assertOpaqueObjectKey(actualPhotoMstList.get(0).getImageFilePath(), "bbbbbbbb", 4L, "jpg");
+      assertOpaqueObjectKey(actualPhotoMstList.get(1).getImageFilePath(), "bbbbbbbb", 5L, "jpg");
+      assertOpaqueObjectKey(actualPhotoMstList.get(2).getImageFilePath(), "bbbbbbbb", 6L, "jpg");
+
+      // 3枚ともタグ「太陽」が共通で付与されていることを確認する
+      Integer taggedPhotoCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_tag_mst WHERE account_no = 2"
+                  + " AND photo_no IN (4, 5, 6) AND tag_japanese_name = '太陽'",
+              Integer.class);
+      assertEquals(3, taggedPhotoCount);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：アクセス不正。ForbiddenAccountExceptionをthrowする")
+    void registPhotos_ForbiddenAccountException() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+      MockMultipartFile multipartFile =
+          new MockMultipartFile("imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .accountName(new AccountName("AAAAAAAA"))
+              .password(new Password("$2a$10$password1"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .file(multipartFile)
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isForbidden())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.FORBIDDEN.value()))
+          .andExpect(
+              jsonPath("$.errorCode").value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorCode()))
+          .andExpect(
+              jsonPath("$.errorMessage")
+                  .value(ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.getErrorMessage()));
+    }
+
+    @Test
+    @Order(4)
     @DisplayName("異常系：登録上限に達している。PhotoNotAdditableExceptionをthrowする")
-    void savePhoto_PhotoNotAdditableException() throws Exception {
+    void registPhotos_PhotoNotAdditableException() throws Exception {
       String photoAccountId = "aaaaaaaa";
       MockMultipartFile multipartFile =
-          new MockMultipartFile("imageFile", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
+          new MockMultipartFile("imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
 
       AccountModel sessionAccount =
           AccountModel.builder()
@@ -761,7 +882,7 @@ public class PhotoControllerIntegrationTest {
               multipart("/api/v1/accounts/" + photoAccountId + "/photos")
                   .file(multipartFile)
                   .contentType(MediaType.MULTIPART_FORM_DATA)
-                  .param("imageFilePath", "")
+                  .param("photoJapaneseTitle", "タイトル")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
                   .with(csrf()))
           .andExpect(status().isBadRequest())
@@ -775,79 +896,46 @@ public class PhotoControllerIntegrationTest {
     }
 
     @Test
+    @Order(5)
+    @DisplayName("異常系：画像ファイルが1枚も指定されていない。BadRequestExceptionをthrowする")
+    void registPhotos_BadRequestException_imageFiles_is_empty() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.MINI)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoJapaneseTitle", "タイトル")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
+          .andExpect(jsonPath("$.isSuccess").value(false))
+          .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
+    }
+
+    @Test
     @Order(6)
-    @DisplayName("異常系：画像ファイル、ファイルパスともにnull。BadRequestExceptionをthrowする")
-    void savePhoto_BadRequestException_file_and_filepath_is_null() throws Exception {
-      String photoAccountId = "bbbbbbbb";
-
-      AccountModel sessionAccount =
-          AccountModel.builder()
-              .accountNo(new AccountNo(2L))
-              .accountId(new AccountId("bbbbbbbb"))
-              .accountName(new AccountName("BBBBBBBB"))
-              .password(new Password("$2a$10$password2"))
-              .authorityKbn(AuthorityEnum.MINI)
-              .build();
-
-      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(
-              accountPrincipal, null, accountPrincipal.getAuthorities());
-
-      mockMvc
-          .perform(
-              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
-                  .contentType(MediaType.MULTIPART_FORM_DATA)
-                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
-                  .with(csrf()))
-          .andExpect(status().isBadRequest())
-          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
-          .andExpect(jsonPath("$.isSuccess").value(false))
-          .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
-    }
-
-    @Test
-    @Order(7)
-    @DisplayName("異常系：画像ファイルがnull、ファイルパスがblank。BadRequestExceptionをthrowする")
-    void savePhoto_BadRequestException_file_and_filepath_is_blank() throws Exception {
-      String photoAccountId = "bbbbbbbb";
-
-      AccountModel sessionAccount =
-          AccountModel.builder()
-              .accountNo(new AccountNo(2L))
-              .accountId(new AccountId("bbbbbbbb"))
-              .accountName(new AccountName("BBBBBBBB"))
-              .password(new Password("$2a$10$password2"))
-              .authorityKbn(AuthorityEnum.MINI)
-              .build();
-
-      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(
-              accountPrincipal, null, accountPrincipal.getAuthorities());
-
-      mockMvc
-          .perform(
-              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
-                  .contentType(MediaType.MULTIPART_FORM_DATA)
-                  .param("imageFilePath", "")
-                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
-                  .with(csrf()))
-          .andExpect(status().isBadRequest())
-          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
-          .andExpect(jsonPath("$.isSuccess").value(false))
-          .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
-    }
-
-    @Test
-    @Order(8)
-    @DisplayName("異常系：画像ファイル、ファイルパス以外のパラメータ不正。BadRequestExceptionをthrowする")
-    void savePhoto_BadRequestException_others() throws Exception {
+    @DisplayName("異常系：パラメータ不正。BadRequestExceptionをthrowする")
+    void registPhotos_BadRequestException_others() throws Exception {
       String photoAccountId = "bbbbbbbb";
       MockMultipartFile multipartFile =
-          new MockMultipartFile("imageFile", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
+          new MockMultipartFile("imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
 
       AccountModel sessionAccount =
           AccountModel.builder()
@@ -868,7 +956,7 @@ public class PhotoControllerIntegrationTest {
               multipart("/api/v1/accounts/" + photoAccountId + "/photos")
                   .file(multipartFile)
                   .contentType(MediaType.MULTIPART_FORM_DATA)
-                  .param("imageFilePath", "")
+                  .param("photoJapaneseTitle", "タイトル")
                   .param("focalLength", "-1")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
                   .with(csrf()))
@@ -880,12 +968,12 @@ public class PhotoControllerIntegrationTest {
     }
 
     @Test
-    @Order(9)
+    @Order(7)
     @DisplayName("異常系：FileDuplicateExceptionをthrowする")
-    void savePhoto_FileDuplicateException() throws Exception {
+    void registPhotos_FileDuplicateException() throws Exception {
       String photoAccountId = "bbbbbbbb";
       MockMultipartFile multipartFile =
-          new MockMultipartFile("imageFile", "DSC21.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
+          new MockMultipartFile("imageFiles", "DSC21.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
 
       AccountModel sessionAccount =
           AccountModel.builder()
@@ -907,8 +995,6 @@ public class PhotoControllerIntegrationTest {
                   .file(multipartFile)
                   .contentType(MediaType.MULTIPART_FORM_DATA)
                   .param("caption", "")
-                  .param("imageFilePath", "")
-                  .param("directionKbn", "VERTICAL")
                   .param("photoEnglishTitle", "")
                   .param("photoJapaneseTitle", "タイトル")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
@@ -920,49 +1006,10 @@ public class PhotoControllerIntegrationTest {
           .andExpect(
               jsonPath("$.errorMessage").value(ErrorEnum.DUPLICATE_PHOTO_FILE.getErrorMessage()));
     }
-
-    @Test
-    @Order(10)
-    @DisplayName("異常系：存在しない写真番号を指定した場合、PhotoNotFoundExceptionをthrowする")
-    void savePhoto_PhotoNotFoundException() throws Exception {
-      String photoAccountId = "bbbbbbbb";
-
-      AccountModel sessionAccount =
-          AccountModel.builder()
-              .accountNo(new AccountNo(2L))
-              .accountId(new AccountId("bbbbbbbb"))
-              .accountName(new AccountName("BBBBBBBB"))
-              .password(new Password("$2a$10$password2"))
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .build();
-
-      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(
-              accountPrincipal, null, accountPrincipal.getAuthorities());
-
-      mockMvc
-          .perform(
-              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
-                  .contentType(MediaType.MULTIPART_FORM_DATA)
-                  .param("photoNo", "99")
-                  .param("caption", "caption21")
-                  .param("imageFilePath", "https://www.xxx.com/DSC99.jpg")
-                  .param("directionKbn", "VERTICAL")
-                  .param("photoEnglishTitle", "")
-                  .param("photoJapaneseTitle", "タイトル")
-                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
-                  .with(csrf()))
-          .andExpect(status().isNotFound())
-          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.NOT_FOUND.value()))
-          .andExpect(jsonPath("$.errorCode").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorCode()))
-          .andExpect(jsonPath("$.errorMessage").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorMessage()));
-    }
   }
 
   @Nested
-  @Order(3)
+  @Order(4)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")
@@ -1174,7 +1221,7 @@ public class PhotoControllerIntegrationTest {
   }
 
   @Nested
-  @Order(4)
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")

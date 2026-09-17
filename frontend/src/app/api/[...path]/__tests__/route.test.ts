@@ -117,7 +117,7 @@ describe("APIプロキシ route", () => {
       {
         method: "POST",
         headers: {
-          "content-length": String(7 * 1024 * 1024),
+          "content-length": String(56 * 1024 * 1024),
           origin: "http://localhost",
         },
       }
@@ -133,7 +133,7 @@ describe("APIプロキシ route", () => {
     let emitted = 0;
     const body = new ReadableStream<Uint8Array>({
       pull(controller) {
-        if (emitted++ < 8) {
+        if (emitted++ < 56) {
           controller.enqueue(oneMb);
         } else {
           controller.close();
