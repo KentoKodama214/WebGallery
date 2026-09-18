@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.mapper.InquiryReplyMstMapper">
+	<resultMap id="InquiryReplyMstMap" type="com.web.gallery.entity.InquiryReplyMst">
+		<result property="id" column="id"/>
+		<result property="inquiryId" column="inquiry_id"/>
+		<result property="replyNo" column="reply_no"/>
+		<result property="adminAccountNo" column="admin_account_no"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="body" column="body"/>
+	</resultMap>
+
+	<insert id="insert" parameterType="com.web.gallery.entity.InquiryReplyMst">
+		INSERT INTO
+			common.inquiry_reply_mst (
+				inquiry_id,
+				reply_no,
+				admin_account_no,
+				created_by,
+				created_at,
+				body
+			)
+		VALUES
+			(
+				#{inquiryId},
+				#{replyNo},
+				#{adminAccountNo},
+				#{createdBy},
+				NOW(),
+				#{body}
+			)
+	</insert>
+
+	<select id="getMaxReplyNo" parameterType="Long" resultType="Long">
+		SELECT
+			MAX(reply_no) AS replyNo
+		FROM
+			common.inquiry_reply_mst
+		WHERE
+			inquiry_id = #{inquiryId}
+	</select>
+
+	<select id="selectList" parameterType="com.web.gallery.entity.InquiryReplyMstCondition" resultMap="InquiryReplyMstMap">
+		SELECT
+			id,
+			inquiry_id,
+			reply_no,
+			admin_account_no,
+			created_by,
+			created_at,
+			body
+		FROM
+			common.inquiry_reply_mst
+		WHERE
+			inquiry_id = #{inquiryId}
+		ORDER BY
+			reply_no ASC
+	</select>
+</mapper>

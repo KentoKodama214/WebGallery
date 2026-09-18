@@ -27,6 +27,8 @@ app:
     maxFileSizeMb: 5
     miniUserUpperLimit: 10
     normalUserUpperLimit: 20
+  inquiry:
+    inquiryCountPerPage: 5
   s3:
     # 統合テストでは FileRepository をモックするため S3 へは接続しない。Bean生成用のダミー値
     endpoint: http://localhost:9000

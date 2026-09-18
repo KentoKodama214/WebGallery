@@ -62,6 +62,19 @@ public final class ApiRoutes {
   /** お気に入りAPI（POST=登録, DELETE=解除） */
   public static final String API_FAVORITES = API_PREFIX + "/photos/favorites";
 
+  // お問い合わせ関連
+  /** お問い合わせAPI（GET=自分の一覧取得, POST=新規登録） */
+  public static final String API_INQUIRIES = API_PREFIX + "/inquiries";
+
+  /** お問い合わせ番号 */
+  public static final String INQUIRY_NO = "{inquiryNo}";
+
+  /** お問い合わせ詳細API（GET=自分の詳細取得） */
+  public static final String API_INQUIRY_DETAIL = API_INQUIRIES + "/" + INQUIRY_NO;
+
+  /** お問い合わせ取り下げAPI（POST=取り下げ実行） */
+  public static final String API_INQUIRY_WITHDRAWAL = API_INQUIRY_DETAIL + "/withdrawal";
+
   // 管理者関連
   /** アカウント番号 */
   public static final String ACCOUNT_NO = "{accountNo}";
@@ -83,4 +96,17 @@ public final class ApiRoutes {
   /** 管理者用アカウント権限変更API */
   public static final String API_ADMIN_ACCOUNT_AUTHORITY =
       API_ADMIN_ACCOUNTS + "/" + ACCOUNT_NO + "/authority";
+
+  // 管理者用お問い合わせ関連
+  /** お問い合わせID */
+  public static final String INQUIRY_ID = "{inquiryId}";
+
+  /** 管理者用お問い合わせ一覧API（GET=全件一覧取得） */
+  public static final String API_ADMIN_INQUIRIES = API_ADMIN_PREFIX + "/inquiries";
+
+  /** 管理者用お問い合わせ詳細API（GET=詳細取得） */
+  public static final String API_ADMIN_INQUIRY_DETAIL = API_ADMIN_INQUIRIES + "/" + INQUIRY_ID;
+
+  /** 管理者用お問い合わせ返信API（POST=返信登録） */
+  public static final String API_ADMIN_INQUIRY_REPLY = API_ADMIN_INQUIRY_DETAIL + "/replies";
 }

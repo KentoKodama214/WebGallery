@@ -127,6 +127,8 @@ jobs:
           SQL_FILES=(
             "db/common/common.type.sql"
             "db/common/account.sql"
+            "db/common/inquiry_mst.sql"
+            "db/common/inquiry_reply_mst.sql"
             "db/common/account_authority.sql"
             "db/common/refresh_token.sql"
             "db/common/login_history.sql"
@@ -227,6 +229,8 @@ jobs:
           SQL_FILES=(
             "db/common/common.type.sql"
             "db/common/account.sql"
+            "db/common/inquiry_mst.sql"
+            "db/common/inquiry_reply_mst.sql"
             "db/common/account_authority.sql"
             "db/common/refresh_token.sql"
             "db/common/login_history.sql"

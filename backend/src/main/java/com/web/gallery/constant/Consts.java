@@ -64,4 +64,10 @@ public final class Consts {
 
   /** 写真の新規一括登録で1リクエストにつき送信できる写真枚数の上限（アノテーション属性で参照するためint型で定義する） */
   public static final int PHOTO_BULK_REGIST_MAX_SIZE = 10;
+
+  /** お問い合わせ件名の最大文字数（アノテーション属性で参照するためint型で定義する） */
+  public static final int INQUIRY_SUBJECT_MAX_LENGTH = 100;
+
+  /** お問い合わせ本文・返信本文の最大文字数（アノテーション属性で参照するためint型で定義する） */
+  public static final int INQUIRY_BODY_MAX_LENGTH = 2000;
 }

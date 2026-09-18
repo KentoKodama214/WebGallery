@@ -12,6 +12,11 @@
 | 6 | 写真詳細 | `photo_detail` | `/photo/{photoAccountId}/photo_detail` | 公開 |
 | 7 | 写真設定 | `photo_setting` | `/photo/{photoAccountId}/photo_setting` | 認証必須（本人のみ） |
 | 8 | 管理者アカウント管理 | `admin_account_management` | `/admin/account_management` | 認証必須（管理者のみ） |
+| 9 | お問い合わせ投稿 | `inquiry` | `/inquiry` | 認証必須 |
+| 10 | お問い合わせ一覧 | `inquiry_list` | `/inquiry/list` | 認証必須 |
+| 11 | お問い合わせ詳細 | `inquiry_detail` | `/inquiry/detail` | 認証必須（本人のみ） |
+| 12 | 管理者お問い合わせ管理 | `admin_inquiry_management` | `/admin/inquiry_management` | 認証必須（管理者のみ） |
+| 13 | 管理者お問い合わせ詳細 | `admin_inquiry_detail` | `/admin/inquiry_management/detail` | 認証必須（管理者のみ） |
 
 ---
 
@@ -34,10 +39,15 @@ graph TD
         PHOTO_DETAIL["写真詳細<br/>/photo/{id}/photo_detail"]
         PHOTO_SETTING["写真設定<br/>/photo/{id}/photo_setting"]
         ACCOUNT_SETTING["アカウント設定<br/>/{id}/account_setting"]
+        INQUIRY["お問い合わせ投稿<br/>/inquiry"]
+        INQUIRY_LIST["お問い合わせ一覧<br/>/inquiry/list"]
+        INQUIRY_DETAIL["お問い合わせ詳細<br/>/inquiry/detail"]
     end
 
     subgraph 管理者画面
         ADMIN_ACCOUNT["管理者アカウント管理<br/>/admin/account_management"]
+        ADMIN_INQUIRY["管理者お問い合わせ管理<br/>/admin/inquiry_management"]
+        ADMIN_INQUIRY_DETAIL["管理者お問い合わせ詳細<br/>/admin/inquiry_management/detail"]
     end
 
     ACCOUNT_LIST -->|ギャラリーボタン| PHOTO_LIST
@@ -51,6 +61,13 @@ graph TD
     ACCOUNT_SETTING -->|← back| PHOTO_LIST
     ACCOUNT_SETTING -->|PW変更| LOGIN
     ACCOUNT_SETTING -->|アカウント削除| LOGIN
+
+    INQUIRY_LIST -->|新規お問い合わせ| INQUIRY
+    INQUIRY -->|登録成功| INQUIRY_LIST
+    INQUIRY_LIST -->|件名選択| INQUIRY_DETAIL
+    INQUIRY_DETAIL -->|← back| INQUIRY_LIST
+    ADMIN_INQUIRY -->|件名選択| ADMIN_INQUIRY_DETAIL
+    ADMIN_INQUIRY_DETAIL -->|← back| ADMIN_INQUIRY
 
     REGISTER -->|登録失敗| REGISTER
     ACCOUNT_SETTING -->|更新失敗| ACCOUNT_SETTING
@@ -70,6 +87,7 @@ graph LR
 
     MENU -->|"Sign In<br/>（未認証時）"| LOGIN["ログイン<br/>/login"]
     MENU -->|"Photographers"| ACCOUNT_LIST["アカウント一覧<br/>/account_list"]
+    MENU -->|"Inquiry<br/>（認証済み時）"| INQUIRY_LIST["お問い合わせ一覧<br/>/inquiry/list"]
     MENU -->|"My Gallery<br/>（認証済み時）"| PHOTO_LIST["写真一覧<br/>/photo/{id}/photo_list"]
     MENU -->|"Account Setting<br/>（認証済み時）"| ACCOUNT_SETTING["アカウント設定<br/>/{id}/account_setting"]
     MENU -->|"Sign Out<br/>（認証済み時）"| LOGOUT["ログアウト → /login"]
@@ -253,6 +271,79 @@ sequenceDiagram
 
 ---
 
+## お問い合わせフロー
+
+```mermaid
+sequenceDiagram
+    actor User as ユーザー
+    participant Form as お問い合わせ投稿画面
+    participant List as お問い合わせ一覧画面
+    participant Detail as お問い合わせ詳細画面
+    participant API as REST API
+
+    Note over User, API: 投稿フロー
+    User->>Form: /inquiry にアクセス
+    User->>Form: 件名・本文を入力・送信
+    Form->>API: POST /api/v1/inquiries
+    API-->>Form: 登録成功
+    Form->>Form: モーダル表示
+    Form->>List: /inquiry/list に遷移
+
+    Note over User, API: 一覧・詳細閲覧フロー
+    User->>List: /inquiry/list にアクセス
+    List->>API: GET /api/v1/inquiries
+    API-->>List: お問い合わせ一覧返却（未読の返信はバッジ表示）
+    User->>List: 「もっと見る」ボタン
+    List->>API: GET（ページ追加読み込み）
+    User->>List: 件名を選択
+    List->>Detail: /inquiry/detail?inquiryNo={no} に遷移
+    Detail->>API: GET /api/v1/inquiries/{inquiryNo}
+    API-->>Detail: 詳細・返信一覧を返却（未読の返信があれば同時に既読化）
+    User->>Detail: 「← back」リンク
+    Detail->>List: /inquiry/list に遷移
+
+    Note over User, API: 取り下げフロー
+    User->>Detail: 「このお問い合わせを取り下げる」リンク
+    Detail->>Detail: 確認ダイアログ表示
+    User->>Detail: 「取り下げる」
+    Detail->>API: POST /api/v1/inquiries/{inquiryNo}/withdrawal
+    API-->>Detail: 取り下げ成功（ステータスが取り下げへ遷移。以降は管理者からの返信不可）
+    Detail->>Detail: ステータス表示を更新
+```
+
+---
+
+## 管理者お問い合わせ管理フロー
+
+```mermaid
+sequenceDiagram
+    actor Admin as 管理者
+    participant Management as 管理者お問い合わせ管理画面
+    participant Detail as 管理者お問い合わせ詳細画面
+    participant API as REST API
+
+    Admin->>Management: /admin/inquiry_management にアクセス
+    Management->>API: GET /api/v1/admin/inquiries
+    API-->>Management: 全アカウントのお問い合わせ一覧返却
+    Admin->>Management: ステータスで絞り込み
+    Management->>API: GET /api/v1/admin/inquiries?statusKbn={kbn}
+    API-->>Management: 絞り込み結果返却
+    Admin->>Management: 件名を選択
+    Management->>Detail: /admin/inquiry_management/detail?inquiryId={id} に遷移
+    Detail->>API: GET /api/v1/admin/inquiries/{inquiryId}
+    API-->>Detail: 詳細・返信一覧を返却
+
+    Admin->>Detail: 返信内容を入力して送信
+    Detail->>API: POST /api/v1/admin/inquiries/{inquiryId}/replies
+    API-->>Detail: 登録成功（ステータスが回答済みへ自動遷移）
+    Detail->>Detail: 詳細を再取得・返信履歴に反映
+
+    Admin->>Detail: 「← back」リンク
+    Detail->>Management: /admin/inquiry_management に遷移
+```
+
+---
+
 ## 遷移詳細テーブル
 
 ### ルート (`/`)
@@ -351,6 +442,47 @@ sequenceDiagram
 | メニュー「Account Setting」 | `/{accountId}/account_setting` | リンク |
 | メニュー「Sign Out」 | `/login` | ログアウト |
 
+### お問い合わせ投稿 (`/inquiry`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 登録成功 | `/inquiry/list` | AJAX → モーダル → 遷移 |
+| 登録失敗 | 同画面（エラー表示） | 画面内表示 |
+
+### お問い合わせ一覧 (`/inquiry/list`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 「新規お問い合わせ」ボタン | `/inquiry` | リンク |
+| 件名選択 | `/inquiry/detail?inquiryNo={no}` | リンク |
+| 「もっと見る」ボタン | 同画面（追加読み込み） | AJAX |
+
+### お問い合わせ詳細 (`/inquiry/detail`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 「← back」リンク | `/inquiry/list` | リンク |
+| 「このお問い合わせを取り下げる」→ 確認 | 同画面（ステータス更新） | AJAX → 確認ダイアログ |
+| 不正な `inquiryNo` クエリ | 同画面（「お問い合わせが見つかりません」表示） | 画面内表示 |
+
+### 管理者お問い合わせ管理 (`/admin/inquiry_management`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| ステータス絞り込み | 同画面（一覧更新） | AJAX |
+| 件名選択 | `/admin/inquiry_management/detail?inquiryId={id}` | リンク |
+
+### 管理者お問い合わせ詳細 (`/admin/inquiry_management/detail`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 返信送信 → 成功 | 同画面（返信履歴・ステータス更新） | AJAX |
+| 返信送信 → 失敗 | 同画面（エラー表示） | 画面内表示 |
+| 「← back」リンク | `/admin/inquiry_management` | リンク |
+| 不正な `inquiryId` クエリ | 同画面（「お問い合わせが見つかりません」表示） | 画面内表示 |
+
+取り下げ済み（`statusKbn: withdrawn`）のお問い合わせは、返信フォームの代わりに「返信できません」という案内文のみを表示する（管理者は内容の確認のみ可能）。
+
 ---
 
 ## REST API（画面遷移に関連するもの）
@@ -377,3 +509,10 @@ sequenceDiagram
 | `/api/v1/admin/accounts/{accountNo}/unlock` | PATCH | 管理者アカウント管理 | なし（一覧更新） |
 | `/api/v1/admin/accounts/{accountNo}/lock` | PATCH | 管理者アカウント管理 | なし（一覧更新） |
 | `/api/v1/admin/accounts/{accountNo}/authority` | PUT | 管理者アカウント管理 | なし（一覧更新） |
+| `/api/v1/inquiries` | POST | お問い合わせ投稿 | → お問い合わせ一覧 |
+| `/api/v1/inquiries` | GET | お問い合わせ一覧 | なし（データ表示） |
+| `/api/v1/inquiries/{inquiryNo}` | GET | お問い合わせ詳細 | なし（データ表示、未読返信の既読化） |
+| `/api/v1/inquiries/{inquiryNo}/withdrawal` | POST | お問い合わせ詳細 | なし（ステータス更新） |
+| `/api/v1/admin/inquiries` | GET | 管理者お問い合わせ管理 | なし（データ表示） |
+| `/api/v1/admin/inquiries/{inquiryId}` | GET | 管理者お問い合わせ詳細 | なし（データ表示） |
+| `/api/v1/admin/inquiries/{inquiryId}/replies` | POST | 管理者お問い合わせ詳細 | なし（詳細再取得） |
