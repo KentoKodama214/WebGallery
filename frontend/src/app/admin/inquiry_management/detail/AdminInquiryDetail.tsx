@@ -14,6 +14,7 @@ import { INQUIRY_BODY_MAX_LENGTH } from "@/lib/validation";
 const STATUS_LABELS: Record<string, string> = {
   unreplied: "未対応",
   replied: "回答済み",
+  withdrawn: "取り下げ",
 };
 
 interface AdminInquiryDetailProps {
@@ -149,7 +150,9 @@ export function AdminInquiryDetail({ inquiryId }: AdminInquiryDetailProps) {
               className={
                 detail.statusKbn === "replied"
                   ? "text-green-600 text-sm font-bold"
-                  : "text-gray-500 text-sm font-bold"
+                  : detail.statusKbn === "withdrawn"
+                    ? "text-gray-400 text-sm font-bold"
+                    : "text-gray-500 text-sm font-bold"
               }
             >
               {STATUS_LABELS[detail.statusKbn] ?? detail.statusKbn}
@@ -176,39 +179,45 @@ export function AdminInquiryDetail({ inquiryId }: AdminInquiryDetailProps) {
           </div>
         )}
 
-        <form
-          onSubmit={handleReplySubmit}
-          className="bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-6 mt-6"
-        >
-          <label htmlFor="reply-body" className="block text-[#444] text-sm mb-1 font-bold">
-            返信する
-          </label>
-          <textarea
-            id="reply-body"
-            value={replyBody}
-            onChange={(e) => {
-              setReplyBody(e.target.value);
-              setReplyError((prev) => (prev ? "" : prev));
-            }}
-            maxLength={INQUIRY_BODY_MAX_LENGTH}
-            rows={6}
-            aria-invalid={replyError ? true : undefined}
-            aria-describedby={replyError ? "reply-body-error" : undefined}
-            className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3] resize-y"
-          />
-          {replyError && (
-            <p id="reply-body-error" role="alert" className="text-[lightcoral] text-xs font-bold mb-2">
-              {replyError}
-            </p>
-          )}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full h-[45px] bg-[#2196F3] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#2196F3] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+        {detail.statusKbn === "withdrawn" ? (
+          <p className="text-gray-400 text-sm mt-6 text-center">
+            このお問い合わせは取り下げられているため、返信できません。
+          </p>
+        ) : (
+          <form
+            onSubmit={handleReplySubmit}
+            className="bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-6 mt-6"
           >
-            {isSubmitting ? "送信中..." : "返信を送信"}
-          </button>
-        </form>
+            <label htmlFor="reply-body" className="block text-[#444] text-sm mb-1 font-bold">
+              返信する
+            </label>
+            <textarea
+              id="reply-body"
+              value={replyBody}
+              onChange={(e) => {
+                setReplyBody(e.target.value);
+                setReplyError((prev) => (prev ? "" : prev));
+              }}
+              maxLength={INQUIRY_BODY_MAX_LENGTH}
+              rows={6}
+              aria-invalid={replyError ? true : undefined}
+              aria-describedby={replyError ? "reply-body-error" : undefined}
+              className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3] resize-y"
+            />
+            {replyError && (
+              <p id="reply-body-error" role="alert" className="text-[lightcoral] text-xs font-bold mb-2">
+                {replyError}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-[45px] bg-[#2196F3] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#2196F3] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+            >
+              {isSubmitting ? "送信中..." : "返信を送信"}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

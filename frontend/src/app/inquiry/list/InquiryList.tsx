@@ -8,6 +8,7 @@ import { getInquiryList, type InquiryListItem } from "@/lib/api/client";
 const STATUS_LABELS: Record<string, string> = {
   unreplied: "未対応",
   replied: "回答あり",
+  withdrawn: "取り下げ",
 };
 
 /**
@@ -172,7 +173,11 @@ export function InquiryList() {
                   <td className="py-3 px-4 border border-gray-300">
                     <span
                       className={
-                        inquiry.statusKbn === "replied" ? "text-green-600" : "text-gray-500"
+                        inquiry.statusKbn === "replied"
+                          ? "text-green-600"
+                          : inquiry.statusKbn === "withdrawn"
+                            ? "text-gray-400"
+                            : "text-gray-500"
                       }
                     >
                       {STATUS_LABELS[inquiry.statusKbn] ?? inquiry.statusKbn}

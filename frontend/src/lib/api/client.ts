@@ -889,7 +889,7 @@ export async function updateAccountAuthority(
 }
 
 /** お問い合わせステータス区分 */
-export type InquiryStatusKbn = "unreplied" | "replied";
+export type InquiryStatusKbn = "unreplied" | "replied" | "withdrawn";
 
 /** お問い合わせ登録結果 */
 export interface InquiryRegistResult {
@@ -969,6 +969,26 @@ export async function getInquiryDetail(inquiryNo: number): Promise<InquiryDetail
     throw new Error(await readErrorMessage(response, "お問い合わせ詳細の取得に失敗しました"));
   }
   return readJson<InquiryDetail>(response);
+}
+
+/** お問い合わせ取り下げ結果 */
+export interface InquiryWithdrawalResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+}
+
+/**
+ * 自分のお問い合わせを取り下げる
+ */
+export async function withdrawInquiry(inquiryNo: number): Promise<InquiryWithdrawalResult> {
+  const response = await fetchWithAuth(`/api/v1/inquiries/${seg(inquiryNo)}/withdrawal`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "お問い合わせの取り下げに失敗しました"));
+  }
+  return readJson<InquiryWithdrawalResult>(response);
 }
 
 /** 管理者用お問い合わせ一覧アイテム */

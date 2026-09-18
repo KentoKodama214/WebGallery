@@ -150,6 +150,31 @@ public enum ErrorEnum {
   },
 
   /**
+   * エラーコード：E-I-0005
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_WITHDRAW_INQUIRY}
+   */
+  FAIL_TO_WITHDRAW_INQUIRY("E-I-0005", MessageConst.ERR_FAIL_TO_WITHDRAW_INQUIRY) {
+    @Override
+    public GalleryException toException() {
+      return new UpdateFailureException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-I-0006
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_CANNOT_REPLY_TO_WITHDRAWN_INQUIRY}
+   */
+  CANNOT_REPLY_TO_WITHDRAWN_INQUIRY(
+      "E-I-0006", MessageConst.ERR_CANNOT_REPLY_TO_WITHDRAWN_INQUIRY) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
    * エラーコード：E-P-0001
    *
    * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REGIST_PHOTO}

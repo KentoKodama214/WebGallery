@@ -96,6 +96,11 @@ public class Inquiry {
     this.detail = this.detail.toBuilder().isReadByUser(true).build();
   }
 
+  /** お問い合わせを取り下げる */
+  public void withdraw() {
+    this.detail = this.detail.toBuilder().statusKbn(InquiryStatusEnum.WITHDRAWN).build();
+  }
+
   /**
    * アカウント番号を取得する
    *

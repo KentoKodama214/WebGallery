@@ -16,6 +16,8 @@ import com.web.gallery.domain.inquiry.ReplyNo;
 import com.web.gallery.enumeration.InquiryStatusEnum;
 import com.web.gallery.event.InquiryRegisteredEvent;
 import com.web.gallery.event.InquiryRepliedEvent;
+import com.web.gallery.event.InquiryWithdrawnEvent;
+import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.InquiryNotFoundException;
 import com.web.gallery.model.InquiryDetailModel;
@@ -284,6 +286,67 @@ public class InquiryServiceImplTest {
                   new InquiryId(1L), new AccountNo(2L), new ReplyBody("返信本文")));
 
       verify(inquiryAggregateRepositoryImpl, times(0)).addReply(any(Inquiry.class));
+      verify(applicationEventPublisher, times(0)).publishEvent(any());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：取り下げ済みの場合、BadRequestExceptionをthrowする")
+    void replyToInquiry_withdrawn() throws GalleryException {
+      InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.WITHDRAWN, true);
+      when(inquiryMstRepositoryImpl.getInquiryDetailForAdmin(any(InquiryId.class)))
+          .thenReturn(detail);
+
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              inquiryServiceImpl.replyToInquiry(
+                  new InquiryId(1L), new AccountNo(2L), new ReplyBody("返信本文")));
+
+      verify(inquiryAggregateRepositoryImpl, times(0)).addReply(any(Inquiry.class));
+      verify(applicationEventPublisher, times(0)).publishEvent(any());
+    }
+  }
+
+  @Nested
+  @Order(7)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class withdrawInquiry {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：ステータスを取り下げへ遷移させ、イベントを発行する")
+    void withdrawInquiry_success() throws GalleryException {
+      InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.UNREPLIED, true);
+      when(inquiryMstRepositoryImpl.getInquiryDetail(any(AccountNo.class), any(InquiryNo.class)))
+          .thenReturn(detail);
+
+      inquiryServiceImpl.withdrawInquiry(new AccountNo(1L), new InquiryNo(1L));
+
+      ArgumentCaptor<Inquiry> inquiryCaptor = ArgumentCaptor.forClass(Inquiry.class);
+      verify(inquiryAggregateRepositoryImpl).withdraw(inquiryCaptor.capture());
+      assertEquals(
+          InquiryStatusEnum.WITHDRAWN, inquiryCaptor.getValue().getDetail().getStatusKbn());
+
+      ArgumentCaptor<InquiryWithdrawnEvent> eventCaptor =
+          ArgumentCaptor.forClass(InquiryWithdrawnEvent.class);
+      verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
+      assertEquals(new AccountNo(1L), eventCaptor.getValue().accountNo());
+      assertEquals(1L, eventCaptor.getValue().inquiryNo().value());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：お問い合わせが存在しない場合、InquiryNotFoundExceptionをthrowする")
+    void withdrawInquiry_notFound() throws GalleryException {
+      doThrow(InquiryNotFoundException.class)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryDetail(any(AccountNo.class), any(InquiryNo.class));
+
+      assertThrows(
+          InquiryNotFoundException.class,
+          () -> inquiryServiceImpl.withdrawInquiry(new AccountNo(1L), new InquiryNo(1L)));
+
+      verify(inquiryAggregateRepositoryImpl, times(0)).withdraw(any(Inquiry.class));
       verify(applicationEventPublisher, times(0)).publishEvent(any());
     }
   }

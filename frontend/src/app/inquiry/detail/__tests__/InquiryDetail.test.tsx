@@ -1,11 +1,13 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { InquiryDetail } from "../InquiryDetail";
 
 const mockGetInquiryDetail = jest.fn();
+const mockWithdrawInquiry = jest.fn();
 
 jest.mock("@/lib/api/client", () => ({
   getInquiryDetail: (...args: unknown[]) => mockGetInquiryDetail(...args),
+  withdrawInquiry: (...args: unknown[]) => mockWithdrawInquiry(...args),
 }));
 
 const sampleDetail = {
@@ -59,5 +61,76 @@ describe("InquiryDetail", () => {
     await waitFor(() => {
       expect(screen.getByText("お問い合わせ詳細の取得に失敗しました")).toBeInTheDocument();
     });
+  });
+
+  it("取り下げ済みの場合は取り下げボタンが表示されないこと", async () => {
+    mockGetInquiryDetail.mockResolvedValue({ ...sampleDetail, statusKbn: "withdrawn" });
+
+    render(<InquiryDetail inquiryNo={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("取り下げ")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("このお問い合わせを取り下げる")).not.toBeInTheDocument();
+  });
+
+  it("取り下げるボタン押下で確認ダイアログが表示され、確認すると取り下げが実行されること", async () => {
+    mockGetInquiryDetail.mockResolvedValue(sampleDetail);
+    mockWithdrawInquiry.mockResolvedValue({
+      httpStatus: 200,
+      isSuccess: true,
+      message: "お問い合わせを取り下げました。",
+    });
+
+    render(<InquiryDetail inquiryNo={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("このお問い合わせを取り下げる")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("このお問い合わせを取り下げる"));
+
+    expect(screen.getByTestId("withdraw-confirm-dialog")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "取り下げる" }));
+
+    await waitFor(() => {
+      expect(mockWithdrawInquiry).toHaveBeenCalledWith(1);
+    });
+    await waitFor(() => {
+      expect(screen.queryByTestId("withdraw-confirm-dialog")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("取り下げ")).toBeInTheDocument();
+  });
+
+  it("確認ダイアログでキャンセルすると取り下げが実行されないこと", async () => {
+    mockGetInquiryDetail.mockResolvedValue(sampleDetail);
+
+    render(<InquiryDetail inquiryNo={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("このお問い合わせを取り下げる")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("このお問い合わせを取り下げる"));
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+
+    expect(screen.queryByTestId("withdraw-confirm-dialog")).not.toBeInTheDocument();
+    expect(mockWithdrawInquiry).not.toHaveBeenCalled();
+  });
+
+  it("取り下げに失敗した場合はダイアログ内にエラーメッセージが表示されること", async () => {
+    mockGetInquiryDetail.mockResolvedValue(sampleDetail);
+    mockWithdrawInquiry.mockRejectedValue(new Error("お問い合わせの取り下げに失敗しました"));
+
+    render(<InquiryDetail inquiryNo={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("このお問い合わせを取り下げる")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("このお問い合わせを取り下げる"));
+    fireEvent.click(screen.getByRole("button", { name: "取り下げる" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("お問い合わせの取り下げに失敗しました");
+    });
+    expect(screen.getByTestId("withdraw-confirm-dialog")).toBeInTheDocument();
   });
 });

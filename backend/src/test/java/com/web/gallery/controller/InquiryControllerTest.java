@@ -191,4 +191,30 @@ public class InquiryControllerTest {
       mockMvc.perform(get("/api/v1/inquiries/999")).andExpect(status().isBadRequest());
     }
   }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class withdrawInquiry {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：お問い合わせを取り下げられること")
+    void withdrawInquiry_success() throws Exception {
+      mockMvc
+          .perform(post("/api/v1/inquiries/1/withdrawal"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isSuccess").value(true));
+
+      verify(inquiryService, times(1)).withdrawInquiry(any(), any());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：お問い合わせが存在しない。InquiryNotFoundExceptionをthrowする")
+    void withdrawInquiry_InquiryNotFoundException() throws Exception {
+      doThrow(InquiryNotFoundException.class).when(inquiryService).withdrawInquiry(any(), any());
+
+      mockMvc.perform(post("/api/v1/inquiries/999/withdrawal")).andExpect(status().isBadRequest());
+    }
+  }
 }

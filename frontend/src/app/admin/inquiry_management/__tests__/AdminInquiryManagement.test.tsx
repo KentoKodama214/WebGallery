@@ -82,6 +82,28 @@ describe("AdminInquiryManagement", () => {
     });
   });
 
+  it("取り下げステータスで絞り込めること", async () => {
+    mockGetAdminInquiryList.mockResolvedValue({
+      isLast: true,
+      inquiryList: [{ ...sampleInquiry, statusKbn: "withdrawn" as const }],
+    });
+
+    render(<AdminInquiryManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("写真が表示されない")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText("ステータス"), {
+      target: { value: "withdrawn" },
+    });
+
+    await waitFor(() => {
+      expect(mockGetAdminInquiryList).toHaveBeenCalledWith(1, "withdrawn");
+    });
+    expect(screen.getAllByText("取り下げ").length).toBeGreaterThan(0);
+  });
+
   it("isLastがfalseのとき「もっと見る」ボタンが表示されること", async () => {
     mockGetAdminInquiryList.mockResolvedValue({ isLast: false, inquiryList: [sampleInquiry] });
 

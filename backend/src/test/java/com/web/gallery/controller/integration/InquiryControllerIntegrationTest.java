@@ -188,4 +188,65 @@ public class InquiryControllerIntegrationTest {
           .andExpect(status().isBadRequest());
     }
   }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/controller/InquiryControllerIntegrationTest.sql")
+  class withdrawInquiry {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：自分のお問い合わせを取り下げられる")
+    void withdrawInquiry_success() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/inquiries/1/withdrawal")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAuthentication(1L, "aaaaaaaa")))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isSuccess").value(true));
+
+      String statusKbn =
+          jdbcTemplate.queryForObject(
+              "SELECT status_kbn FROM common.inquiry_mst WHERE id = 1", String.class);
+      assertEquals("withdrawn", statusKbn);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：他アカウントのお問い合わせは取り下げられない（400）")
+    void withdrawInquiry_otherAccount() throws Exception {
+      // inquiryNo=2はアカウント1のみが持つ番号（アカウント2にはinquiryNo=1しか存在しない）
+      mockMvc
+          .perform(
+              post("/api/v1/inquiries/2/withdrawal")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAuthentication(2L, "bbbbbbbb")))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest());
+
+      String statusKbn =
+          jdbcTemplate.queryForObject(
+              "SELECT status_kbn FROM common.inquiry_mst WHERE id = 2", String.class);
+      assertEquals("replied", statusKbn);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：存在しないお問い合わせ番号の場合は400を返す")
+    void withdrawInquiry_notFound() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/inquiries/999/withdrawal")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAuthentication(1L, "aaaaaaaa")))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest());
+    }
+  }
 }

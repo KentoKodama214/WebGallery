@@ -72,7 +72,7 @@
 | 64 | shutter_speed | シャッタースピード | decimal(10,5) | - | EXIF情報から取得したシャッタースピード（秒単位） | photo_mst |
 | 65 | sort_by | 並び順 | photo.sort_photo_enum | - | photo_at（撮影日順）/favorite（お気に入り数順）/season（季節順） | photo_list_filter_log |
 | 66 | sort_order | 表示順 | int | - | 画面表示時のソート順序 | kbn_mst |
-| 67 | status_kbn | ステータス区分 | common.inquiry_status_enum | 'unreplied' | unreplied（未対応）/replied（回答済み） | inquiry_mst |
+| 67 | status_kbn | ステータス区分 | common.inquiry_status_enum | 'unreplied' | unreplied（未対応）/replied（回答済み）/withdrawn（取り下げ） | inquiry_mst |
 | 68 | subject | 件名 | varchar(100) | - | お問い合わせの件名。空文字不可 | inquiry_mst |
 | 69 | tag_english_name | タグ名（英語） | varchar(20) | '""' | 写真に付与するタグの英語名（任意入力） | photo_tag_mst |
 | 70 | tag_japanese_name | タグ名（日本語） | varchar(20) | - | 写真に付与するタグの日本語名（必須入力） | photo_tag_mst |
@@ -89,6 +89,6 @@
 |----|------|--------|------|-----------|
 | 1 | common.sex_enum | man, woman, none | 性別区分 | account.sex_kbn |
 | 2 | common.authority_enum | mini-user, normal-user, special-user, administrator | 権限区分 | account_authority.authority_kbn |
-| 3 | common.inquiry_status_enum | unreplied, replied | お問い合わせステータス区分 | inquiry_mst.status_kbn |
+| 3 | common.inquiry_status_enum | unreplied, replied, withdrawn | お問い合わせステータス区分 | inquiry_mst.status_kbn |
 | 4 | photo.direction_enum | vertical, horizontal, square, none | 写真の向き | photo_mst.direction_kbn, photo_list_filter_log.direction_kbn |
 | 5 | photo.sort_photo_enum | photo_at, favorite, season | 写真一覧の並び順 | photo_list_filter_log.sort_by |

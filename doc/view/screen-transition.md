@@ -301,6 +301,14 @@ sequenceDiagram
     API-->>Detail: 詳細・返信一覧を返却（未読の返信があれば同時に既読化）
     User->>Detail: 「← back」リンク
     Detail->>List: /inquiry/list に遷移
+
+    Note over User, API: 取り下げフロー
+    User->>Detail: 「このお問い合わせを取り下げる」リンク
+    Detail->>Detail: 確認ダイアログ表示
+    User->>Detail: 「取り下げる」
+    Detail->>API: POST /api/v1/inquiries/{inquiryNo}/withdrawal
+    API-->>Detail: 取り下げ成功（ステータスが取り下げへ遷移。以降は管理者からの返信不可）
+    Detail->>Detail: ステータス表示を更新
 ```
 
 ---
@@ -454,6 +462,7 @@ sequenceDiagram
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
 | 「← back」リンク | `/inquiry/list` | リンク |
+| 「このお問い合わせを取り下げる」→ 確認 | 同画面（ステータス更新） | AJAX → 確認ダイアログ |
 | 不正な `inquiryNo` クエリ | 同画面（「お問い合わせが見つかりません」表示） | 画面内表示 |
 
 ### 管理者お問い合わせ管理 (`/admin/inquiry_management`)
@@ -471,6 +480,8 @@ sequenceDiagram
 | 返信送信 → 失敗 | 同画面（エラー表示） | 画面内表示 |
 | 「← back」リンク | `/admin/inquiry_management` | リンク |
 | 不正な `inquiryId` クエリ | 同画面（「お問い合わせが見つかりません」表示） | 画面内表示 |
+
+取り下げ済み（`statusKbn: withdrawn`）のお問い合わせは、返信フォームの代わりに「返信できません」という案内文のみを表示する（管理者は内容の確認のみ可能）。
 
 ---
 
@@ -501,6 +512,7 @@ sequenceDiagram
 | `/api/v1/inquiries` | POST | お問い合わせ投稿 | → お問い合わせ一覧 |
 | `/api/v1/inquiries` | GET | お問い合わせ一覧 | なし（データ表示） |
 | `/api/v1/inquiries/{inquiryNo}` | GET | お問い合わせ詳細 | なし（データ表示、未読返信の既読化） |
+| `/api/v1/inquiries/{inquiryNo}/withdrawal` | POST | お問い合わせ詳細 | なし（ステータス更新） |
 | `/api/v1/admin/inquiries` | GET | 管理者お問い合わせ管理 | なし（データ表示） |
 | `/api/v1/admin/inquiries/{inquiryId}` | GET | 管理者お問い合わせ詳細 | なし（データ表示） |
 | `/api/v1/admin/inquiries/{inquiryId}/replies` | POST | 管理者お問い合わせ詳細 | なし（詳細再取得） |

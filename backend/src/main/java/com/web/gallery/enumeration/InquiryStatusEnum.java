@@ -17,7 +17,10 @@ public enum InquiryStatusEnum {
   UNREPLIED("unreplied"),
   /** 回答済み */
   @JsonProperty("replied")
-  REPLIED("replied");
+  REPLIED("replied"),
+  /** 取り下げ */
+  @JsonProperty("withdrawn")
+  WITHDRAWN("withdrawn");
 
   /** DBに保持する値 */
   private final String dbValue;

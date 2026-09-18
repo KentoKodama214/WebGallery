@@ -56,6 +56,19 @@ describe("InquiryList", () => {
     expect(screen.getByText("未読")).toBeInTheDocument();
   });
 
+  it("取り下げステータスが表示されること", async () => {
+    mockGetInquiryList.mockResolvedValue({
+      isLast: true,
+      inquiryList: [{ ...sampleInquiry, statusKbn: "withdrawn" as const }],
+    });
+
+    render(<InquiryList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("取り下げ")).toBeInTheDocument();
+    });
+  });
+
   it("isLastがfalseのとき「もっと見る」ボタンが表示され、クリックで追加取得されること", async () => {
     mockGetInquiryList
       .mockResolvedValueOnce({ isLast: false, inquiryList: [sampleInquiry] })

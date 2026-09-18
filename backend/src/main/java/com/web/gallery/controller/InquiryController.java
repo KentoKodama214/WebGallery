@@ -7,6 +7,7 @@ import com.web.gallery.controller.request.InquiryRegistRequest;
 import com.web.gallery.controller.response.InquiryDetailGetResponse;
 import com.web.gallery.controller.response.InquiryListGetResponse;
 import com.web.gallery.controller.response.InquiryRegistResponse;
+import com.web.gallery.controller.response.InquiryWithdrawalResponse;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.inquiry.InquiryNo;
 import com.web.gallery.enumeration.ErrorEnum;
@@ -125,5 +126,25 @@ public class InquiryController {
         inquiryService.getInquiryDetail(accountNo, new InquiryNo(inquiryNo));
 
     return ResponseEntity.ok(InquiryDetailGetResponse.from(detail));
+  }
+
+  /**
+   * お問い合わせ取り下げ
+   *
+   * @param inquiryNo お問い合わせ番号
+   * @return {@link InquiryWithdrawalResponse}
+   * @throws GalleryException 以下のいずれかに該当する場合 ・お問い合わせが存在しない場合 ・取り下げに失敗した場合
+   */
+  @Operation(summary = "お問い合わせ取り下げ", description = "自分のお問い合わせを取り下げる")
+  @ApiResponse(responseCode = "200", description = "取り下げ成功")
+  @ApiResponse(responseCode = "400", description = "お問い合わせが存在しない", content = @Content)
+  @PostMapping(ApiRoutes.API_INQUIRY_WITHDRAWAL)
+  public ResponseEntity<InquiryWithdrawalResponse> withdrawInquiry(@PathVariable Long inquiryNo)
+      throws GalleryException {
+
+    AccountNo accountNo = new AccountNo(sessionHelper.getAccountNo());
+    inquiryService.withdrawInquiry(accountNo, new InquiryNo(inquiryNo));
+
+    return ResponseEntity.ok(InquiryWithdrawalResponse.of(MessageConst.WITHDRAW_INQUIRY));
   }
 }

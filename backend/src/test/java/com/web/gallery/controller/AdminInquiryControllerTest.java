@@ -14,6 +14,7 @@ import com.web.gallery.domain.inquiry.InquiryNo;
 import com.web.gallery.domain.inquiry.InquirySubject;
 import com.web.gallery.domain.inquiry.ReplyNo;
 import com.web.gallery.enumeration.InquiryStatusEnum;
+import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.InquiryNotFoundException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.InquiryDetailModel;
@@ -197,6 +198,20 @@ public class AdminInquiryControllerTest {
       mockMvc
           .perform(
               post("/api/v1/admin/inquiries/999/replies")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("reply_success.json")))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：取り下げ済みのお問い合わせ。BadRequestExceptionをthrowする")
+    void replyToInquiry_withdrawn() throws Exception {
+      doThrow(BadRequestException.class).when(inquiryService).replyToInquiry(any(), any(), any());
+
+      mockMvc
+          .perform(
+              post("/api/v1/admin/inquiries/1/replies")
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(readJsonFile("reply_success.json")))
           .andExpect(status().isBadRequest());

@@ -40,4 +40,17 @@ public class InquiryEventListener {
         event.inquiryNo().value(),
         event.replyNo().value());
   }
+
+  /**
+   * お問い合わせ取り下げイベントをハンドリングする
+   *
+   * @param event {@link InquiryWithdrawnEvent}
+   */
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handle(InquiryWithdrawnEvent event) {
+    log.info(
+        "Inquiry withdrawn (accountNo: {}, inquiryNo: {})",
+        event.accountNo().value(),
+        event.inquiryNo().value());
+  }
 }

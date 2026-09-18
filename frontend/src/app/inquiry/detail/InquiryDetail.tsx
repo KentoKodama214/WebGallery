@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getInquiryDetail, type InquiryDetail as InquiryDetailData } from "@/lib/api/client";
+import {
+  getInquiryDetail,
+  withdrawInquiry,
+  type InquiryDetail as InquiryDetailData,
+} from "@/lib/api/client";
+import { ModalDialog } from "@/components/ui/ModalDialog";
 
 /** ステータス区分の表示ラベル */
 const STATUS_LABELS: Record<string, string> = {
   unreplied: "未対応",
   replied: "回答済み",
+  withdrawn: "取り下げ",
 };
 
 interface InquiryDetailProps {
@@ -21,6 +27,9 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
   const [detail, setDetail] = useState<InquiryDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [withdrawError, setWithdrawError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +58,23 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
     const date = new Date(datetime);
     if (Number.isNaN(date.getTime())) return "-";
     return date.toLocaleString("ja-JP");
+  };
+
+  /**
+   * 取り下げを実行する
+   */
+  const handleWithdraw = async () => {
+    setIsWithdrawing(true);
+    setWithdrawError("");
+    try {
+      await withdrawInquiry(inquiryNo);
+      setDetail((prev) => (prev ? { ...prev, statusKbn: "withdrawn" } : prev));
+      setShowWithdrawConfirm(false);
+    } catch (err) {
+      setWithdrawError(err instanceof Error ? err.message : "お問い合わせの取り下げに失敗しました");
+    } finally {
+      setIsWithdrawing(false);
+    }
   };
 
   if (isLoading) {
@@ -84,7 +110,9 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
               className={
                 detail.statusKbn === "replied"
                   ? "text-green-600 text-sm font-bold"
-                  : "text-gray-500 text-sm font-bold"
+                  : detail.statusKbn === "withdrawn"
+                    ? "text-gray-400 text-sm font-bold"
+                    : "text-gray-500 text-sm font-bold"
               }
             >
               {STATUS_LABELS[detail.statusKbn] ?? detail.statusKbn}
@@ -93,6 +121,18 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
           <p className="text-gray-400 text-xs mb-4">{formatDatetime(detail.createdAt)}</p>
           <p className="text-[#444] whitespace-pre-wrap">{detail.body}</p>
         </div>
+
+        {detail.statusKbn !== "withdrawn" && (
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => setShowWithdrawConfirm(true)}
+              className="text-sm text-[lightcoral] hover:underline cursor-pointer bg-none border-none p-0"
+            >
+              このお問い合わせを取り下げる
+            </button>
+          </div>
+        )}
 
         {detail.replyList.length > 0 && (
           <div className="mt-6 flex flex-col gap-4">
@@ -109,6 +149,48 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
           </div>
         )}
       </div>
+
+      {showWithdrawConfirm && (
+        <ModalDialog
+          testId="withdraw-confirm-dialog"
+          label="お問い合わせ取り下げの確認"
+          initialFocusSelector="[data-dialog-initial-focus]"
+          onClose={() => {
+            if (isWithdrawing) return;
+            setShowWithdrawConfirm(false);
+          }}
+          overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
+          containerClassName="bg-white rounded-md p-6 shadow-lg max-w-[320px] w-[90%]"
+        >
+          <p className="text-[#444] text-center mb-4">
+            このお問い合わせを取り下げますか？取り下げ後は元に戻せません。
+          </p>
+          {withdrawError && (
+            <p role="alert" className="text-[lightcoral] text-xs font-bold mb-2 text-center">
+              {withdrawError}
+            </p>
+          )}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              data-dialog-initial-focus
+              onClick={() => setShowWithdrawConfirm(false)}
+              disabled={isWithdrawing}
+              className="flex-1 h-[40px] bg-gray-300 text-[#444] rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              キャンセル
+            </button>
+            <button
+              type="button"
+              onClick={handleWithdraw}
+              disabled={isWithdrawing}
+              className="flex-1 h-[40px] bg-[lightcoral] text-white rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isWithdrawing ? "処理中..." : "取り下げる"}
+            </button>
+          </div>
+        </ModalDialog>
+      )}
     </div>
   );
 }

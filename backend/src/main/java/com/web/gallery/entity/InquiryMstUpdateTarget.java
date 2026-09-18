@@ -53,4 +53,18 @@ public class InquiryMstUpdateTarget {
         .isReadByUser(detail.getIsReadByUser())
         .build();
   }
+
+  /**
+   * 取り下げに伴う更新対象を生成する
+   *
+   * @param detail 取り下げ後の{@link InquiryDetailModel}
+   * @param accountNo 取り下げたユーザーのアカウント番号
+   * @return {@link InquiryMstUpdateTarget}
+   */
+  public static InquiryMstUpdateTarget forWithdraw(InquiryDetailModel detail, Long accountNo) {
+    return InquiryMstUpdateTarget.builder()
+        .updatedBy(accountNo)
+        .statusKbn(detail.getStatusKbn())
+        .build();
+  }
 }

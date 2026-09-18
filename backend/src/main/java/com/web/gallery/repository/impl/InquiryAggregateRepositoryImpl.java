@@ -99,4 +99,27 @@ public class InquiryAggregateRepositoryImpl implements InquiryAggregateRepositor
       throw ErrorEnum.INQUIRY_NOT_FOUND.toException();
     }
   }
+
+  /**
+   * お問い合わせを取り下げる
+   *
+   * @param inquiry {@link Inquiry}
+   * @throws GalleryException 更新に失敗した場合
+   */
+  @Override
+  public void withdraw(Inquiry inquiry) throws GalleryException {
+    InquiryMstCondition condition =
+        InquiryMstCondition.byAccountAndInquiryNo(
+            inquiry.getAccountNo().value(), inquiry.getInquiryNo().value());
+    InquiryMstUpdateTarget target =
+        InquiryMstUpdateTarget.forWithdraw(inquiry.getDetail(), inquiry.getAccountNo().value());
+
+    if (inquiryMstMapper.update(condition, target) < 1) {
+      log.warn(
+          "InquiryMst: Update Failed for withdraw (AccountNo: {}, InquiryNo: {})",
+          inquiry.getAccountNo().value(),
+          inquiry.getInquiryNo().value());
+      throw ErrorEnum.FAIL_TO_WITHDRAW_INQUIRY.toException();
+    }
+  }
 }

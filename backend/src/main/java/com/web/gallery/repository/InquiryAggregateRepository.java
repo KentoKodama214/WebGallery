@@ -28,4 +28,12 @@ public interface InquiryAggregateRepository {
    * @throws GalleryException 更新に失敗した場合
    */
   void markReadByUser(Inquiry inquiry) throws GalleryException;
+
+  /**
+   * お問い合わせを取り下げる
+   *
+   * @param inquiry {@link Inquiry}
+   * @throws GalleryException 更新に失敗した場合
+   */
+  void withdraw(Inquiry inquiry) throws GalleryException;
 }

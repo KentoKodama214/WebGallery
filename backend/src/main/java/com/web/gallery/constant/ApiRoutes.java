@@ -72,6 +72,9 @@ public final class ApiRoutes {
   /** お問い合わせ詳細API（GET=自分の詳細取得） */
   public static final String API_INQUIRY_DETAIL = API_INQUIRIES + "/" + INQUIRY_NO;
 
+  /** お問い合わせ取り下げAPI（POST=取り下げ実行） */
+  public static final String API_INQUIRY_WITHDRAWAL = API_INQUIRY_DETAIL + "/withdrawal";
+
   // 管理者関連
   /** アカウント番号 */
   public static final String ACCOUNT_NO = "{accountNo}";

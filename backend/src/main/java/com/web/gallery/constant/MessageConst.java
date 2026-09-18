@@ -9,6 +9,7 @@ public final class MessageConst {
   public static final String DELETE_PHOTO = "写真削除が完了しました。";
   public static final String REGIST_INQUIRY = "お問い合わせを受け付けました。";
   public static final String REPLY_INQUIRY = "返信を送信しました。";
+  public static final String WITHDRAW_INQUIRY = "お問い合わせを取り下げました。";
 
   // Warning
   public static final String USER_NOT_FOUND = "ユーザーが見つかりません。";
@@ -49,6 +50,8 @@ public final class MessageConst {
   public static final String ERR_FAIL_TO_REPLY_INQUIRY = "返信送信でエラーが発生しました。送信をやり直してください。";
   public static final String ERR_INQUIRY_NOT_FOUND = "お問い合わせが存在しません。";
   public static final String ERR_NOT_AUTHORIZED_TO_VIEW_INQUIRY = "お問い合わせを閲覧する権限がありません。";
+  public static final String ERR_FAIL_TO_WITHDRAW_INQUIRY = "お問い合わせ取り下げでエラーが発生しました。取り下げをやり直してください。";
+  public static final String ERR_CANNOT_REPLY_TO_WITHDRAWN_INQUIRY = "取り下げられたお問い合わせには返信できません。";
 
   // Admin
   public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";

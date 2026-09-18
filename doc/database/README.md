@@ -29,7 +29,7 @@ docker compose --profile docs run --rm schemaspy
 |------|----|------|
 | `common.sex_enum` | `man`, `woman`, `none` | 性別区分 |
 | `common.authority_enum` | `mini-user`, `normal-user`, `special-user`, `administrator` | 権限区分 |
-| `common.inquiry_status_enum` | `unreplied`, `replied` | お問い合わせステータス区分 |
+| `common.inquiry_status_enum` | `unreplied`, `replied`, `withdrawn` | お問い合わせステータス区分 |
 
 ### photo スキーマ
 

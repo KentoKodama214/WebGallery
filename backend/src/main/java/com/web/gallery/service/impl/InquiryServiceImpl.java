@@ -7,8 +7,11 @@ import com.web.gallery.domain.inquiry.InquiryId;
 import com.web.gallery.domain.inquiry.InquiryNo;
 import com.web.gallery.domain.inquiry.ReplyBody;
 import com.web.gallery.domain.inquiry.ReplyNo;
+import com.web.gallery.enumeration.ErrorEnum;
+import com.web.gallery.enumeration.InquiryStatusEnum;
 import com.web.gallery.event.InquiryRegisteredEvent;
 import com.web.gallery.event.InquiryRepliedEvent;
+import com.web.gallery.event.InquiryWithdrawnEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.model.InquiryDetailModel;
 import com.web.gallery.model.InquiryGetModel;
@@ -131,13 +134,18 @@ public class InquiryServiceImpl implements InquiryService {
    * @param adminAccountNo 返信する管理者のアカウント番号
    * @param body 返信本文
    * @return 新規採番した返信番号
-   * @throws GalleryException 以下のいずれかに該当する場合 ・お問い合わせが存在しない場合 ・返信の登録に失敗した場合
+   * @throws GalleryException 以下のいずれかに該当する場合 ・お問い合わせが存在しない場合 ・取り下げられている場合 ・返信の登録に失敗した場合
    */
   @Override
   @Transactional(rollbackFor = GalleryException.class)
   public ReplyNo replyToInquiry(InquiryId inquiryId, AccountNo adminAccountNo, ReplyBody body)
       throws GalleryException {
     InquiryDetailModel detail = inquiryMstRepository.getInquiryDetailForAdmin(inquiryId);
+
+    if (detail.getStatusKbn() == InquiryStatusEnum.WITHDRAWN) {
+      throw ErrorEnum.CANNOT_REPLY_TO_WITHDRAWN_INQUIRY.toException();
+    }
+
     Inquiry inquiry = Inquiry.reconstruct(detail, detail.getReplyModelList());
 
     ReplyNo newReplyNo = inquiryReplyMstRepository.getNewReplyNo(inquiryId);
@@ -149,5 +157,25 @@ public class InquiryServiceImpl implements InquiryService {
         new InquiryRepliedEvent(inquiry.getAccountNo(), inquiry.getInquiryNo(), newReplyNo));
 
     return newReplyNo;
+  }
+
+  /**
+   * 自分のお問い合わせを取り下げる
+   *
+   * @param accountNo アカウント番号
+   * @param inquiryNo お問い合わせ番号
+   * @throws GalleryException 以下のいずれかに該当する場合 ・お問い合わせが存在しない場合 ・取り下げに失敗した場合
+   */
+  @Override
+  @Transactional(rollbackFor = GalleryException.class)
+  public void withdrawInquiry(AccountNo accountNo, InquiryNo inquiryNo) throws GalleryException {
+    InquiryDetailModel detail = inquiryMstRepository.getInquiryDetail(accountNo, inquiryNo);
+    Inquiry inquiry = Inquiry.reconstruct(detail, detail.getReplyModelList());
+
+    inquiry.withdraw();
+    inquiryAggregateRepository.withdraw(inquiry);
+
+    applicationEventPublisher.publishEvent(
+        new InquiryWithdrawnEvent(inquiry.getAccountNo(), inquiry.getInquiryNo()));
   }
 }

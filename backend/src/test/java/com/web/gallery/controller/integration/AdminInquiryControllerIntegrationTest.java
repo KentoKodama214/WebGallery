@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
@@ -89,9 +90,10 @@ public class AdminInquiryControllerIntegrationTest {
           .andExpect(status().isOk())
           .andExpect(content().contentType(MediaType.APPLICATION_JSON))
           .andExpect(jsonPath("$.isLast").value(true))
-          .andExpect(jsonPath("$.inquiryList.length()").value(2))
-          .andExpect(jsonPath("$.inquiryList[0].accountId").value("bbbbbbbb"))
-          .andExpect(jsonPath("$.inquiryList[1].accountId").value("aaaaaaaa"));
+          .andExpect(jsonPath("$.inquiryList.length()").value(3))
+          .andExpect(jsonPath("$.inquiryList[0].accountId").value("aaaaaaaa"))
+          .andExpect(jsonPath("$.inquiryList[1].accountId").value("bbbbbbbb"))
+          .andExpect(jsonPath("$.inquiryList[2].accountId").value("aaaaaaaa"));
     }
 
     @Test
@@ -140,6 +142,23 @@ public class AdminInquiryControllerIntegrationTest {
                   .with(csrf()))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.inquiryList.length()").value(0));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：ステータス区分（取り下げ）で絞り込める")
+    void getAdminInquiryList_filterByWithdrawnStatus() throws Exception {
+      mockMvc
+          .perform(
+              get("/api/v1/admin/inquiries")
+                  .param("statusKbn", "withdrawn")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAdminAuthentication()))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.inquiryList.length()").value(1))
+          .andExpect(jsonPath("$.inquiryList[0].inquiryId").value(3));
     }
   }
 
@@ -257,6 +276,29 @@ public class AdminInquiryControllerIntegrationTest {
                   .contentType(MediaType.APPLICATION_JSON)
                   .content("{\"body\": \"返信本文\"}"))
           .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：取り下げ済みのお問い合わせの場合は400を返す")
+    void replyToInquiry_withdrawn() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/admin/inquiries/3/replies")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAdminAuthentication()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{\"body\": \"返信本文\"}"))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              jsonPath("$.message").value(MessageConst.ERR_CANNOT_REPLY_TO_WITHDRAWN_INQUIRY));
+
+      Integer replyCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_reply_mst WHERE inquiry_id = 3", Integer.class);
+      assertEquals(0, replyCount);
     }
   }
 }

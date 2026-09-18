@@ -137,4 +137,18 @@ describe("AdminInquiryDetail", () => {
       expect(screen.getByText("返信の登録に失敗しました")).toBeInTheDocument();
     });
   });
+
+  it("取り下げ済みの場合は返信フォームが表示されないこと", async () => {
+    mockGetAdminInquiryDetail.mockResolvedValue({ ...sampleDetail, statusKbn: "withdrawn" });
+
+    render(<AdminInquiryDetail inquiryId={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("取り下げ")).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText("このお問い合わせは取り下げられているため、返信できません。")
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("返信する")).not.toBeInTheDocument();
+  });
 });

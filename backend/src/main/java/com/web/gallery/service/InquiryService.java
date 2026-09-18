@@ -70,4 +70,13 @@ public interface InquiryService {
    */
   ReplyNo replyToInquiry(InquiryId inquiryId, AccountNo adminAccountNo, ReplyBody body)
       throws GalleryException;
+
+  /**
+   * 自分のお問い合わせを取り下げる
+   *
+   * @param accountNo アカウント番号
+   * @param inquiryNo お問い合わせ番号
+   * @throws GalleryException 以下のいずれかに該当する場合 ・お問い合わせが存在しない場合 ・取り下げに失敗した場合
+   */
+  void withdrawInquiry(AccountNo accountNo, InquiryNo inquiryNo) throws GalleryException;
 }
