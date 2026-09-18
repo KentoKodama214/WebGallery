@@ -229,7 +229,7 @@ export function AdminInquiryManagement() {
                           ? "text-green-600"
                           : inquiry.statusKbn === "withdrawn"
                             ? "text-gray-400"
-                            : "text-gray-500"
+                            : "text-red-600"
                       }
                     >
                       {STATUS_LABELS[inquiry.statusKbn] ?? inquiry.statusKbn}
