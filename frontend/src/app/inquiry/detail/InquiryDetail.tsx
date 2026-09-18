@@ -112,7 +112,7 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
                   ? "text-green-600 text-sm font-bold"
                   : detail.statusKbn === "withdrawn"
                     ? "text-gray-400 text-sm font-bold"
-                    : "text-gray-500 text-sm font-bold"
+                    : "text-red-600 text-sm font-bold"
               }
             >
               {STATUS_LABELS[detail.statusKbn] ?? detail.statusKbn}
