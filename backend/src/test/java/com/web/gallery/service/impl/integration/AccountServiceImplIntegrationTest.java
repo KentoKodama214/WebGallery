@@ -9,12 +9,15 @@ import static org.mockito.Mockito.verify;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.entity.Account;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
+import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.UpdateFailureException;
@@ -175,6 +178,66 @@ public class AccountServiceImplIntegrationTest {
               .build();
       assertFalse(accountServiceImpl.registAccount(accountModel));
     }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：区分マスタに存在しない都道府県区分コードの場合、BadRequestExceptionをthrowする")
+    @Sql("/sql/common/cleanup.sql")
+    @Sql("/sql/common/ResetAccountNoSeq.sql")
+    void registAccount_invalid_prefecture_code() {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("nnnnnnnn"))
+              .accountName(new AccountName("NNNNNNNN"))
+              .password(new Password("nnnnnnnn"))
+              .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("NotExistCode"))
+              .build();
+
+      assertThrows(BadRequestException.class, () -> accountServiceImpl.registAccount(accountModel));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：出身地が未指定で在住地が区分マスタに存在しない都道府県区分コードの場合、BadRequestExceptionをthrowする")
+    @Sql("/sql/common/cleanup.sql")
+    @Sql("/sql/common/ResetAccountNoSeq.sql")
+    @Sql("/sql/common/PrefectureKbnMst.sql")
+    void registAccount_invalid_resident_prefecture_code() {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("oooooooo"))
+              .accountName(new AccountName("OOOOOOOO"))
+              .password(new Password("oooooooo"))
+              .residentPrefectureKbnCode(new ResidentPrefectureKbnCode("NotExistCode"))
+              .build();
+
+      assertThrows(BadRequestException.class, () -> accountServiceImpl.registAccount(accountModel));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：区分マスタに実在する都道府県区分コードを指定した場合、登録できること")
+    @Sql("/sql/common/cleanup.sql")
+    @Sql("/sql/common/ResetAccountNoSeq.sql")
+    @Sql("/sql/common/PrefectureKbnMst.sql")
+    void registAccount_valid_prefecture_code() throws GalleryException {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("pppppppp"))
+              .accountName(new AccountName("PPPPPPPP"))
+              .password(new Password("pppppppp"))
+              .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Tokyo"))
+              .residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
+              .build();
+
+      assertTrue(accountServiceImpl.registAccount(accountModel));
+
+      String actualBirthplaceCode =
+          jdbcTemplate.queryForObject(
+              "SELECT birthplace_prefecture_kbn_code FROM common.account WHERE account_id='pppppppp'",
+              String.class);
+      assertEquals("Tokyo", actualBirthplaceCode);
+    }
   }
 
   @Nested
@@ -314,6 +377,97 @@ public class AccountServiceImplIntegrationTest {
               .build();
       assertThrows(
           UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel, null));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：パスワードのみ変更（アカウントID変更なし）した場合、リフレッシュトークンが失効すること")
+    void updateAccount_change_password_only() throws GalleryException {
+      // フィクスチャのパスワードはBCrypt照合できないダミー値のため、実際に照合可能な値へ差し替える
+      jdbcTemplate.update(
+          "UPDATE common.account SET password=? WHERE account_no=1",
+          "$2a$10$k19cLX6F2brrOLYp74GstejFJfeGjm52TMk..ELwoJeTcBcUnBVM2");
+      jdbcTemplate.update(
+          "INSERT INTO common.refresh_token VALUES(DEFAULT, 1, 'hash-account1', NOW() + interval '7 days', NOW(), 1, NOW(), false)");
+
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .password(new Password("newpassword01"))
+              .build();
+
+      assertFalse(accountServiceImpl.updateAccount(accountModel, new Password("password01")));
+
+      Integer activeRefreshTokenCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.refresh_token WHERE account_no=1 AND is_revoked=false",
+              Integer.class);
+      assertEquals(0, activeRefreshTokenCount);
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：アカウントID・パスワードいずれも変更しない場合、リフレッシュトークンは失効しないこと")
+    void updateAccount_no_change() throws GalleryException {
+      jdbcTemplate.update(
+          "INSERT INTO common.refresh_token VALUES(DEFAULT, 1, 'hash-account1', NOW() + interval '7 days', NOW(), 1, NOW(), false)");
+
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .build();
+
+      assertFalse(accountServiceImpl.updateAccount(accountModel, null));
+
+      Integer activeRefreshTokenCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.refresh_token WHERE account_no=1 AND is_revoked=false",
+              Integer.class);
+      assertEquals(1, activeRefreshTokenCount);
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("正常系：アカウントIDのみ変更（パスワード変更なし）した場合、リフレッシュトークンが失効すること")
+    void updateAccount_change_accountId_only() throws GalleryException {
+      jdbcTemplate.update(
+          "INSERT INTO common.refresh_token VALUES(DEFAULT, 1, 'hash-account1', NOW() + interval '7 days', NOW(), 1, NOW(), false)");
+
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("newaccid"))
+              .build();
+
+      assertFalse(accountServiceImpl.updateAccount(accountModel, null));
+
+      Integer activeRefreshTokenCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.refresh_token WHERE account_no=1 AND is_revoked=false",
+              Integer.class);
+      assertEquals(0, activeRefreshTokenCount);
+    }
+
+    /**
+     * Controller層（{@code AccountController}）は新パスワード指定時に現在のパスワード未指定を事前に弾くため、
+     * Service層のこのダミー照合（応答時間を一定に保つためのBCrypt照合1回分のコスト）へは通常到達しない。 Service単体でこの防御的分岐を直接検証する
+     */
+    @Test
+    @Order(7)
+    @DisplayName("異常系：パスワード変更時に現在のパスワードが未指定の場合、ForbiddenAccountExceptionをthrowする")
+    void updateAccount_passwordChange_missingCurrentPassword() {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .password(new Password("newpassword01"))
+              .build();
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () -> accountServiceImpl.updateAccount(accountModel, null));
     }
   }
 
@@ -627,6 +781,42 @@ public class AccountServiceImplIntegrationTest {
 					""");
       TestTransaction.flagForCommit();
       TestTransaction.end();
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：管理者ロック中のアカウントは、正しいパスワードでもForbiddenAccountExceptionをthrowする")
+    void deleteAccount_isReauthLocked_adminLocked() {
+      jdbcTemplate.update("UPDATE common.account SET is_admin_locked=true WHERE account_no=1");
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () ->
+              accountServiceImpl.deleteAccount(
+                  new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01")));
+
+      Integer accountCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account WHERE account_no=1", Integer.class);
+      assertEquals(1, accountCount);
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：ログイン失敗回数が上限のアカウントは、正しいパスワードでもForbiddenAccountExceptionをthrowする")
+    void deleteAccount_isReauthLocked_failCountLocked() {
+      jdbcTemplate.update("UPDATE common.account SET login_failure_count=3 WHERE account_no=1");
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () ->
+              accountServiceImpl.deleteAccount(
+                  new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01")));
+
+      Integer accountCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account WHERE account_no=1", Integer.class);
+      assertEquals(1, accountCount);
     }
   }
 

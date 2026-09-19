@@ -271,6 +271,28 @@ public class AuthServiceImplIntegrationTest {
               authServiceImpl.login(
                   new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS));
     }
+
+    @Test
+    @Order(8)
+    @DisplayName("正常系：ロック解除時間経過後は自動解除され、正しいパスワードでログインできる")
+    void login_autoUnlocks_afterLockDurationElapsed() {
+      // lockDurationMinutes（テスト設定で30分）より前に更新されたことにする
+      jdbcTemplate.update(
+          "UPDATE common.account SET updated_at = ? WHERE account_id = 'lockeduser'",
+          OffsetDateTime.now().minusMinutes(31));
+
+      AuthTokenModel result =
+          authServiceImpl.login(
+              new AccountId("lockeduser"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
+
+      assertNotNull(result.getAccessToken().value());
+
+      Integer failureCount =
+          jdbcTemplate.queryForObject(
+              "SELECT login_failure_count FROM common.account WHERE account_id = 'lockeduser'",
+              Integer.class);
+      assertEquals(0, failureCount);
+    }
   }
 
   @Nested
@@ -409,6 +431,30 @@ public class AuthServiceImplIntegrationTest {
 
     @Test
     @Order(7)
+    @DisplayName("正常系：ロック解除時間経過後はリフレッシュ時に自動解除され、リフレッシュが成功する")
+    void refresh_autoUnlocks_afterLockDurationElapsed() {
+      // ログインしてリフレッシュトークンを取得
+      AuthTokenModel loginResult =
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
+      String refreshToken = loginResult.getRefreshToken().value();
+
+      // ロック状態かつ、lockDurationMinutes（テスト設定で30分）より前に更新されたことにする
+      jdbcTemplate.update(
+          "UPDATE common.account SET login_failure_count = 3, updated_at = ? WHERE account_no = 1",
+          OffsetDateTime.now().minusMinutes(31));
+
+      AuthTokenModel refreshResult = authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
+
+      assertNotNull(refreshResult.getAccessToken().value());
+      Integer failureCount =
+          jdbcTemplate.queryForObject(
+              "SELECT login_failure_count FROM common.account WHERE account_no = 1", Integer.class);
+      assertEquals(0, failureCount);
+    }
+
+    @Test
+    @Order(8)
     @DisplayName("異常系：アカウント削除後のリフレッシュトークンの場合、NPEではなくInvalidRefreshTokenExceptionをthrowする")
     void refresh_after_account_deleted() {
       // ログインしてリフレッシュトークンを取得
@@ -434,7 +480,7 @@ public class AuthServiceImplIntegrationTest {
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     @DisplayName("異常系：アカウント削除によりリフレッシュトークンが失効し、リフレッシュに失敗する")
     void refresh_fails_after_delete_account() throws GalleryException {
       // ログインしてリフレッシュトークンを取得

@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
@@ -102,6 +103,16 @@ public class AccountControllerIntegrationTest {
           .andExpect(content().contentType(MediaType.APPLICATION_JSON))
           .andExpect(jsonPath("$.isLast").value(true))
           .andExpect(jsonPath("$.accountList.length()").value(0));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：pageNoが不正な場合は400を返す")
+    void getAccountList_badRequest() throws Exception {
+      mockMvc
+          .perform(get("/api/v1/accounts").param("pageNo", "0"))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value(MessageConst.ERR_INVALID_INPUT));
     }
   }
 
@@ -615,6 +626,41 @@ public class AccountControllerIntegrationTest {
     }
 
     @Test
+    @Order(11)
+    @DisplayName("異常系：新しいパスワードを指定したが現在のパスワードが未入力の場合は400を返す")
+    void update_badRequest_newPassword_without_currentPassword() throws Exception {
+      String accountId = "aaaaaaaa";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId(accountId))
+              .accountName(new AccountName("AAAAAAAA"))
+              .password(new Password("$2a$10$password1"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              put("/api/v1/accounts/" + accountId)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(
+                      "{\"accountId\": \"aaaaaaaa\", \"accountName\": \"AAAAAAAA\", \"newPassword\": \"password111\"}")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value(MessageConst.ERR_INVALID_INPUT));
+
+      List<Account> actual = getAccountList(accountId);
+      assertEquals(ACCOUNT1_PASSWORD_HASH, actual.getFirst().getPassword());
+    }
+
+    @Test
     @Order(4)
     @DisplayName("正常系：アカウントID変更あり、パスワード変更あり")
     void update_change_accountId_and_password() throws Exception {
@@ -942,6 +988,43 @@ public class AccountControllerIntegrationTest {
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
                   .with(csrf()))
           .andExpect(status().isForbidden());
+
+      // アカウントは削除されていないことを確認
+      Integer accountCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account where account_no=1", Integer.class);
+      assertEquals(1, accountCount);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：現在のパスワードが未入力の場合は400を返すこと")
+    void deleteAccount_badRequest() throws Exception {
+      String accountId = "aaaaaaaa";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId(accountId))
+              .accountName(new AccountName("AAAAAAAA"))
+              .password(new Password("$2a$10$password1"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              post("/api/v1/accounts/" + accountId + "/deletion")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{\"currentPassword\": \"\"}")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value(MessageConst.ERR_INVALID_INPUT));
 
       // アカウントは削除されていないことを確認
       Integer accountCount =

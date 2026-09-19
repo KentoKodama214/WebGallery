@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.web.gallery.AccountPrincipal;
 import com.web.gallery.aggregate.Photo;
+import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
@@ -324,6 +325,18 @@ public class PhotoControllerIntegrationTest {
       ObjectMapper objectMapper = new ObjectMapper();
       JsonNode photoList = objectMapper.readTree(jsonResponse).get("photoList");
       assertEquals(0, photoList.size());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：pageNoが不正な場合は400を返す")
+    void getPhotoList_badRequest() throws Exception {
+      String photoAccountId = "aaaaaaaa";
+
+      mockMvc
+          .perform(get("/api/v1/accounts/" + photoAccountId + "/photos").param("pageNo", "0"))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value(MessageConst.ERR_INVALID_INPUT));
     }
   }
 

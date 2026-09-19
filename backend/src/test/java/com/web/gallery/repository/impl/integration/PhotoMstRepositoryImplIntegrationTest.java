@@ -23,6 +23,7 @@ import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.PhotoDeleteModel;
 import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.impl.PhotoMstRepositoryImpl;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -620,6 +621,32 @@ public class PhotoMstRepositoryImplIntegrationTest {
     @DisplayName("正常系")
     void count_success() {
       assertEquals(2, photoMstRepositoryImpl.count(new AccountNo(1L)));
+    }
+  }
+
+  @Nested
+  @Order(7)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/repository/PhotoMstRepositoryImplIntegrationTest.sql")
+  class deleteAndGetUndeletedPhotoNosByAccountNo {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：削除済み・未削除の写真が混在する場合、削除時点で未削除だった写真番号のみ返すこと")
+    void deleteAndGetUndeletedPhotoNosByAccountNo_success() {
+      // account_no=1はphoto_no=1,2が未削除、photo_no=3が削除済みの状態でフィクスチャ投入されている
+      PhotoNoList actual =
+          photoMstRepositoryImpl.deleteAndGetUndeletedPhotoNosByAccountNo(new AccountNo(1L));
+
+      assertEquals(2, actual.toList().size());
+      assertTrue(actual.toList().contains(new PhotoNo(1L)));
+      assertTrue(actual.toList().contains(new PhotoNo(2L)));
+      assertFalse(actual.toList().contains(new PhotoNo(3L)));
+
+      Integer remainingCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=1", Integer.class);
+      assertEquals(0, remainingCount);
     }
   }
 }
