@@ -22,7 +22,8 @@ class ImageFileTest {
     @Order(1)
     @DisplayName("正常系：nullでない値を指定した場合、インスタンスが生成されること")
     void constructor_success() {
-      MockMultipartFile file = new MockMultipartFile("file", "photo.jpg", "image/jpeg", new byte[0]);
+      MockMultipartFile file =
+          new MockMultipartFile("file", "photo.jpg", "image/jpeg", new byte[0]);
 
       ImageFile actual = new ImageFile(file);
 

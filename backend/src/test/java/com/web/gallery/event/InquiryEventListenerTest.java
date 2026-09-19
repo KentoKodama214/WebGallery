@@ -58,8 +58,7 @@ public class InquiryEventListenerTest {
     @Order(1)
     @DisplayName("正常系：InquiryWithdrawnEventを受け取っても例外が発生しないこと")
     void handle_inquiryWithdrawnEvent_success() {
-      InquiryWithdrawnEvent event =
-          new InquiryWithdrawnEvent(new AccountNo(1L), new InquiryNo(1L));
+      InquiryWithdrawnEvent event = new InquiryWithdrawnEvent(new AccountNo(1L), new InquiryNo(1L));
       assertDoesNotThrow(() -> inquiryEventListener.handle(event));
     }
   }
