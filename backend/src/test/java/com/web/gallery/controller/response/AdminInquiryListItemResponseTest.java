@@ -12,7 +12,11 @@ import com.web.gallery.enumeration.InquiryStatusEnum;
 import com.web.gallery.model.InquiryModel;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
@@ -29,29 +33,36 @@ class AdminInquiryListItemResponseTest {
         .createdAt(OffsetDateTime.now());
   }
 
-  @Test
-  @DisplayName("正常系：アカウントID・アカウント名が設定されている場合、それぞれの値が設定されること")
-  void from_withValue() {
-    InquiryModel model =
-        baseBuilder()
-            .accountId(new AccountId("testuser01"))
-            .accountName(new AccountName("テストユーザー"))
-            .build();
+  @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class from {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントID・アカウント名が設定されている場合、それぞれの値が設定されること")
+    void from_withValue() {
+      InquiryModel model =
+          baseBuilder()
+              .accountId(new AccountId("testuser01"))
+              .accountName(new AccountName("テストユーザー"))
+              .build();
 
-    AdminInquiryListItemResponse actual = AdminInquiryListItemResponse.from(model);
+      AdminInquiryListItemResponse actual = AdminInquiryListItemResponse.from(model);
 
-    assertEquals("testuser01", actual.getAccountId());
-    assertEquals("テストユーザー", actual.getAccountName());
-  }
+      assertEquals("testuser01", actual.getAccountId());
+      assertEquals("テストユーザー", actual.getAccountName());
+    }
 
-  @Test
-  @DisplayName("異常系：アカウントID・アカウント名が未設定の場合、それぞれnullが設定されること")
-  void from_withoutValue() {
-    InquiryModel model = baseBuilder().accountId(null).accountName(null).build();
+    @Test
+    @Order(2)
+    @DisplayName("異常系：アカウントID・アカウント名が未設定の場合、それぞれnullが設定されること")
+    void from_withoutValue() {
+      InquiryModel model = baseBuilder().accountId(null).accountName(null).build();
 
-    AdminInquiryListItemResponse actual = AdminInquiryListItemResponse.from(model);
+      AdminInquiryListItemResponse actual = AdminInquiryListItemResponse.from(model);
 
-    assertNull(actual.getAccountId());
-    assertNull(actual.getAccountName());
+      assertNull(actual.getAccountId());
+      assertNull(actual.getAccountName());
+    }
   }
 }
