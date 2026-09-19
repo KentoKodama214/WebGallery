@@ -11,14 +11,30 @@ import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.response.PhotoListGetResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.Address;
+import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.common.Latitude;
+import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.ExifData;
+import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.FavoriteCount;
+import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.IsFavorite;
+import com.web.gallery.domain.photo.IsLocationPublic;
+import com.web.gallery.domain.photo.Iso;
+import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.domain.photo.PhotoAt;
+import com.web.gallery.domain.photo.PhotoEnglishTitle;
+import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.ShutterSpeed;
+import com.web.gallery.domain.photo.TagEnglishName;
+import com.web.gallery.domain.photo.TagJapaneseName;
+import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
@@ -31,12 +47,15 @@ import com.web.gallery.helper.PhotoDirectionResolver;
 import com.web.gallery.helper.PhotoExifExtractor;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoDeleteModelList;
+import com.web.gallery.model.PhotoDetailGetModel;
+import com.web.gallery.model.PhotoDetailModel;
 import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoModel;
 import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoSaveResultModel;
+import com.web.gallery.model.PhotoTagModel;
 import com.web.gallery.model.PhotoTagModelList;
 import com.web.gallery.policy.PhotoExifDataMergePolicy;
 import com.web.gallery.service.impl.PhotoServiceImpl;
@@ -1340,6 +1359,139 @@ public class PhotoControllerTest {
           .andExpect(jsonPath("$.isReachedUpperLimit").value(false));
 
       verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(AccountNo.class));
+    }
+  }
+
+  @Nested
+  @Order(6)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getPhotoDetail {
+    private PhotoDetailModel createFullPhotoDetailModel() {
+      PhotoTagModel photoTag =
+          PhotoTagModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(1L))
+              .tagNo(new TagNo(1L))
+              .tagJapaneseName(new TagJapaneseName("太陽"))
+              .tagEnglishName(new TagEnglishName("sun"))
+              .build();
+
+      return PhotoDetailModel.builder()
+          .accountNo(new AccountNo(1L))
+          .photoNo(new PhotoNo(1L))
+          .isFavorite(new IsFavorite(true))
+          .photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
+          .locationNo(new LocationNo(1L))
+          .geoLocation(
+              new GeoLocation(
+                  new Address("東京都港区芝公園４丁目２−８"),
+                  new Latitude(BigDecimal.valueOf(35.000)),
+                  new Longitude(BigDecimal.valueOf(135.000))))
+          .locationName(new LocationName("東京タワー"))
+          .isLocationPublic(new IsLocationPublic(true))
+          .imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))
+          .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル"))
+          .photoEnglishTitle(new PhotoEnglishTitle("title"))
+          .caption(new Caption("キャプション"))
+          .directionKbn(DirectionEnum.VERTICAL)
+          .exifData(
+              new ExifData(
+                  new FocalLength(50),
+                  new FValue(BigDecimal.valueOf(8.0)),
+                  new ShutterSpeed(BigDecimal.valueOf(0.001)),
+                  new Iso(100)))
+          .photoTagModelList(PhotoTagModelList.of(List.of(photoTag)))
+          .build();
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：ログイン中の本人が自分の写真を取得。EXIF・位置情報・タグを含めて変換されること")
+    void getPhotoDetail_success_full_fields() throws Exception {
+      doReturn(1L).when(sessionHelper).getAccountNo();
+
+      ArgumentCaptor<PhotoDetailGetModel> photoDetailGetModelCaptor =
+          ArgumentCaptor.forClass(PhotoDetailGetModel.class);
+      doReturn(createFullPhotoDetailModel())
+          .when(photoServiceImpl)
+          .getPhotoDetail(photoDetailGetModelCaptor.capture());
+
+      mockMvc
+          .perform(
+              get("/api/v1/accounts/aaaaaaaa/photos/1").param("referer", "https://example.com/"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.accountNo").value(1))
+          .andExpect(jsonPath("$.photoNo").value(1))
+          .andExpect(jsonPath("$.isFavorite").value(true))
+          .andExpect(jsonPath("$.locationNo").value(1))
+          .andExpect(jsonPath("$.address").value("東京都港区芝公園４丁目２−８"))
+          .andExpect(jsonPath("$.latitude").value(35.000))
+          .andExpect(jsonPath("$.longitude").value(135.000))
+          .andExpect(jsonPath("$.locationName").value("東京タワー"))
+          .andExpect(jsonPath("$.isLocationPublic").value(true))
+          .andExpect(
+              jsonPath("$.imageFilePath").value("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))
+          .andExpect(jsonPath("$.photoJapaneseTitle").value("タイトル"))
+          .andExpect(jsonPath("$.photoEnglishTitle").value("title"))
+          .andExpect(jsonPath("$.caption").value("キャプション"))
+          .andExpect(jsonPath("$.directionKbn").value("vertical"))
+          .andExpect(jsonPath("$.focalLength").value(50))
+          .andExpect(jsonPath("$.fValue").value(8.0))
+          .andExpect(jsonPath("$.shutterSpeed").value(0.001))
+          .andExpect(jsonPath("$.iso").value(100))
+          .andExpect(jsonPath("$.photoTagList.length()").value(1))
+          .andExpect(jsonPath("$.photoTagList[0].tagNo").value(1))
+          .andExpect(jsonPath("$.photoTagList[0].tagJapaneseName").value("太陽"))
+          .andExpect(jsonPath("$.photoTagList[0].tagEnglishName").value("sun"));
+
+      PhotoDetailGetModel photoDetailGetModel = photoDetailGetModelCaptor.getValue();
+      assertEquals(new AccountNo(1L), photoDetailGetModel.getAccountNo());
+      assertEquals(new AccountId("aaaaaaaa"), photoDetailGetModel.getPhotoAccountId());
+      assertEquals(1L, photoDetailGetModel.getPhotoNo().value());
+      assertEquals("https://example.com/", photoDetailGetModel.getReferer().value());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：未ログイン（匿名）でも取得でき、accountNoにはnullが渡されること")
+    void getPhotoDetail_success_anonymous() throws Exception {
+      // Mockitoの未スタブのLongは既定でnullでなく0を返すため、未ログイン状態（null）は明示的にスタブする
+      doReturn(null).when(sessionHelper).getAccountNo();
+
+      ArgumentCaptor<PhotoDetailGetModel> photoDetailGetModelCaptor =
+          ArgumentCaptor.forClass(PhotoDetailGetModel.class);
+      doReturn(createFullPhotoDetailModel())
+          .when(photoServiceImpl)
+          .getPhotoDetail(photoDetailGetModelCaptor.capture());
+
+      mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/1")).andExpect(status().isOk());
+
+      assertNull(photoDetailGetModelCaptor.getValue().getAccountNo());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：リファラが最大長（2048文字）を超える。BadRequestExceptionをthrowする")
+    void getPhotoDetail_BadRequestException_referer_too_long() throws Exception {
+      String tooLongReferer = "a".repeat(2049);
+
+      mockMvc
+          .perform(get("/api/v1/accounts/aaaaaaaa/photos/1").param("referer", tooLongReferer))
+          .andExpect(status().isBadRequest());
+
+      verify(photoServiceImpl, times(0)).getPhotoDetail(any(PhotoDetailGetModel.class));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：写真が存在しない場合、404を返す")
+    void getPhotoDetail_PhotoNotFoundException() throws Exception {
+      doReturn(1L).when(sessionHelper).getAccountNo();
+      doThrow(PhotoNotFoundException.class)
+          .when(photoServiceImpl)
+          .getPhotoDetail(any(PhotoDetailGetModel.class));
+
+      mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/999")).andExpect(status().isNotFound());
     }
   }
 }

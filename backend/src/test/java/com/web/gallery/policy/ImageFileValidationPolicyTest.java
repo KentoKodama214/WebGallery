@@ -48,11 +48,22 @@ public class ImageFileValidationPolicyTest {
   private static final byte[] HTML_BYTES =
       "<html><body><script>alert(1)</script></body></html>".getBytes();
 
+  /** RIFFコンテナだがWebPではない（AVI）の先頭バイト列 */
+  private static final byte[] RIFF_AVI_BYTES = buildRiffAviBytes();
+
   private static byte[] buildWebpBytes() {
     byte[] bytes = new byte[16];
     System.arraycopy("RIFF".getBytes(), 0, bytes, 0, 4);
     // 4〜7バイト目：ファイルサイズ（本検証では対象外のためダミー値のまま）
     System.arraycopy("WEBP".getBytes(), 0, bytes, 8, 4);
+    return bytes;
+  }
+
+  private static byte[] buildRiffAviBytes() {
+    byte[] bytes = new byte[16];
+    System.arraycopy("RIFF".getBytes(), 0, bytes, 0, 4);
+    // 4〜7バイト目：ファイルサイズ（本検証では対象外のためダミー値のまま）
+    System.arraycopy("AVI ".getBytes(), 0, bytes, 8, 4);
     return bytes;
   }
 
@@ -124,6 +135,15 @@ public class ImageFileValidationPolicyTest {
 
   @Test
   @Order(6)
+  @DisplayName("異常系：RIFFコンテナだがWebPマーカーを持たない（AVI等）場合、falseを返すこと")
+  void isValidSignature_riffButNotWebp() {
+    ImageFile imageFile =
+        new ImageFile(new MockMultipartFile("file", "a.webp", "image/webp", RIFF_AVI_BYTES));
+    assertFalse(imageFileValidationPolicy.isValidSignature(imageFile));
+  }
+
+  @Test
+  @Order(7)
   @DisplayName("異常系：ファイルの読み込みに失敗した場合、falseを返すこと")
   void isValidSignature_ioException() throws IOException {
     MultipartFile multipartFile = mock(MultipartFile.class);
@@ -134,7 +154,7 @@ public class ImageFileValidationPolicyTest {
   }
 
   @Test
-  @Order(7)
+  @Order(8)
   @DisplayName("正常系：ファイルサイズが上限以下の場合、falseを返すこと")
   void isSizeExceeded_withinLimit() {
     doReturn(5).when(photoConfig).getMaxFileSizeMb();
@@ -145,7 +165,7 @@ public class ImageFileValidationPolicyTest {
   }
 
   @Test
-  @Order(8)
+  @Order(9)
   @DisplayName("異常系：ファイルサイズが上限を超えている場合、trueを返すこと")
   void isSizeExceeded_overLimit() {
     doReturn(5).when(photoConfig).getMaxFileSizeMb();
@@ -158,7 +178,7 @@ public class ImageFileValidationPolicyTest {
   }
 
   @Test
-  @Order(9)
+  @Order(10)
   @DisplayName("正常系：ファイルサイズが上限ちょうどの場合、falseを返すこと")
   void isSizeExceeded_exactlyAtLimit() {
     doReturn(5).when(photoConfig).getMaxFileSizeMb();

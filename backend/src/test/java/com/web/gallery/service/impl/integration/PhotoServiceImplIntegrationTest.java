@@ -3,6 +3,9 @@ package com.web.gallery.service.impl.integration;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
@@ -1392,6 +1395,37 @@ public class PhotoServiceImplIntegrationTest {
           () ->
               photoServiceImpl.deletePhotos(
                   new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
+    }
+
+    /**
+     * 画像ファイルの物理削除はトランザクションのコミット後に遅延実行される（{@code
+     * PhotoServiceImpl#deleteFilesAfterCommit}）。DBロールバック時の「レコードは消えたが実体ファイルは残る」不整合を防ぐための仕様であり、
+     * トランザクションを実際にコミットしない限りこの経路は通らない。本テストでは{@link TestTransaction}で明示的にコミットし、
+     * afterCommitコールバック内でfileRepository.deleteが呼ばれることを検証する
+     */
+    @Test
+    @Order(4)
+    @DisplayName("正常系：トランザクションコミット後に画像ファイルが物理削除される")
+    void deletePhotos_deletesFileAfterCommit() throws GalleryException {
+      // 画像ファイルパス（S3オブジェクトキー）はリクエスト値を信用せず、DB上の既存値（フィクスチャで登録した値）が使われる
+      List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
+      photoDeleteModelList.add(
+          PhotoDeleteModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(1L))
+              .imageFilePath(new ImageFilePath("DSC11.jpg"))
+              .build());
+
+      photoServiceImpl.deletePhotos(
+          new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList));
+      verify(fileRepository, never()).delete(any(ImageFilePath.class));
+
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      verify(fileRepository, times(1))
+          .delete(new ImageFilePath("https://www.xxx.com/aaaaaaaa/DSC11.jpg"));
     }
   }
 
