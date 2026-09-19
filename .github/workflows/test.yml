@@ -78,6 +78,74 @@ jobs:
           name: jacoco-exec-unit
           path: backend/build/jacoco/unitTest.exec
 
+  dependency-scan:
+    name: 依存関係の脆弱性スキャン
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v7
+
+      - name: JDK 21 セットアップ
+        uses: actions/setup-java@v6
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Gradleキャッシュ
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: 週次キャッシュキー生成
+        id: cache-key
+        run: echo "week=$(date +'%Y-%V')" >> "$GITHUB_OUTPUT"
+
+      - name: OWASP Dependency-Checkデータベースキャッシュ
+        uses: actions/cache@v6
+        with:
+          path: ~/.gradle/dependency-check-data
+          key: dependency-check-data-${{ steps.cache-key.outputs.week }}
+          restore-keys: |
+            dependency-check-data-
+
+      - name: backend依存関係の脆弱性スキャン
+        env:
+          # NVD API v2.0は未認証アクセスを事実上受け付けないため、APIキー未設定だとこのステップは失敗する（必須）。
+          # https://nvd.nist.gov/developers/request-an-api-key で取得し、リポジトリシークレット NVD_API_KEY に設定すること
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: ./backend/gradlew -p backend dependencyCheckAnalyze
+
+      - name: backend脆弱性スキャンレポートアップロード
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependency-check-report
+          path: backend/build/reports/dependency-check-report.html
+
+      - name: pnpmセットアップ
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22.15'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: フロントエンド依存パッケージインストール
+        run: cd frontend && pnpm install --frozen-lockfile
+
+      - name: frontend依存関係の脆弱性スキャン
+        run: cd frontend && pnpm audit --audit-level=high
+
   integration-test:
     name: 結合テスト
     needs: unit-test
