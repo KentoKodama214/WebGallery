@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.constant.MessageConst;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
@@ -125,6 +126,22 @@ public class InquiryControllerIntegrationTest {
           .andExpect(jsonPath("$.inquiryList.length()").value(2))
           .andExpect(jsonPath("$.inquiryList[0].inquiryNo").value(2))
           .andExpect(jsonPath("$.inquiryList[1].inquiryNo").value(1));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：pageNoが不正な場合は400を返す")
+    void getInquiryList_badRequest() throws Exception {
+      mockMvc
+          .perform(
+              get("/api/v1/inquiries")
+                  .param("pageNo", "0")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAuthentication(1L, "aaaaaaaa")))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value(MessageConst.ERR_INVALID_INPUT));
     }
   }
 

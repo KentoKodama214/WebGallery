@@ -160,6 +160,22 @@ public class AdminInquiryControllerIntegrationTest {
           .andExpect(jsonPath("$.inquiryList.length()").value(1))
           .andExpect(jsonPath("$.inquiryList[0].inquiryId").value(3));
     }
+
+    @Test
+    @Order(6)
+    @DisplayName("異常系：pageNoが不正な場合は400を返す")
+    void getAdminInquiryList_badRequest() throws Exception {
+      mockMvc
+          .perform(
+              get("/api/v1/admin/inquiries")
+                  .param("pageNo", "0")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAdminAuthentication()))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value(MessageConst.ERR_INVALID_INPUT));
+    }
   }
 
   @Nested

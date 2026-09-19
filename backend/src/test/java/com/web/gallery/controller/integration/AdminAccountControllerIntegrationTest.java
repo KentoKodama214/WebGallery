@@ -124,6 +124,22 @@ public class AdminAccountControllerIntegrationTest {
               jsonPath("$.errorMessage")
                   .value(ErrorEnum.NOT_AUTHORIZED_TO_ADMIN.getErrorMessage()));
     }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：pageNoが不正な場合は400を返す")
+    void getAdminAccountList_badRequest() throws Exception {
+      mockMvc
+          .perform(
+              get("/api/v1/admin/accounts")
+                  .param("pageNo", "0")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAdminAuthentication()))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value(MessageConst.ERR_INVALID_INPUT));
+    }
   }
 
   @Nested
