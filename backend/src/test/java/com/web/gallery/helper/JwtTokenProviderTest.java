@@ -16,8 +16,11 @@ import java.util.Date;
 import javax.crypto.SecretKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -50,11 +53,14 @@ class JwtTokenProviderTest {
   }
 
   @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("#generateAccessToken")
   class generateAccessToken {
 
     @Test
-    @DisplayName("正常系: アクセストークンが生成されること")
+    @Order(1)
+    @DisplayName("正常系：アクセストークンが生成されること")
     void generateAccessToken_success() {
       when(principal.getUsername()).thenReturn("testuser1");
       when(principal.getAccountNo()).thenReturn(1L);
@@ -69,7 +75,8 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("正常系: 生成されたトークンからアカウントIDが取得できること")
+    @Order(2)
+    @DisplayName("正常系：生成されたトークンからアカウントIDが取得できること")
     void generateAccessToken_containsAccountId() {
       when(principal.getUsername()).thenReturn("testuser1");
       when(principal.getAccountNo()).thenReturn(1L);
@@ -85,11 +92,14 @@ class JwtTokenProviderTest {
   }
 
   @Nested
+  @Order(2)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("#generateRefreshToken")
   class generateRefreshToken {
 
     @Test
-    @DisplayName("正常系: リフレッシュトークンが生成されること")
+    @Order(1)
+    @DisplayName("正常系：リフレッシュトークンが生成されること")
     void generateRefreshToken_success() {
       String token = jwtTokenProvider.generateRefreshToken();
 
@@ -98,7 +108,8 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("正常系: 生成されるトークンが毎回異なること")
+    @Order(2)
+    @DisplayName("正常系：生成されるトークンが毎回異なること")
     void generateRefreshToken_unique() {
       String token1 = jwtTokenProvider.generateRefreshToken();
       String token2 = jwtTokenProvider.generateRefreshToken();
@@ -108,11 +119,14 @@ class JwtTokenProviderTest {
   }
 
   @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("#validateAccessToken")
   class validateAccessToken {
 
     @Test
-    @DisplayName("正常系: 有効なトークンのクレームが取得できること")
+    @Order(1)
+    @DisplayName("正常系：有効なトークンのクレームが取得できること")
     void validateAccessToken_success() {
       when(principal.getUsername()).thenReturn("testuser1");
       when(principal.getAccountNo()).thenReturn(1L);
@@ -132,7 +146,8 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("異常系: 不正なトークンの場合は例外がスローされること")
+    @Order(2)
+    @DisplayName("異常系：不正なトークンの場合は例外がスローされること")
     void validateAccessToken_invalidToken() {
       assertThrows(
           JwtException.class,
@@ -142,7 +157,8 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("異常系: 有効期限切れトークンの場合は例外がスローされること")
+    @Order(3)
+    @DisplayName("異常系：有効期限切れトークンの場合は例外がスローされること")
     void validateAccessToken_expiredToken() {
       SecretKey signingKey = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
       Date issuedAt = new Date(System.currentTimeMillis() - 60 * 60 * 1000L);
@@ -166,7 +182,8 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("異常系: 別の秘密鍵で署名されたトークン（改ざん）の場合は例外がスローされること")
+    @Order(4)
+    @DisplayName("異常系：別の秘密鍵で署名されたトークン（改ざん）の場合は例外がスローされること")
     void validateAccessToken_tamperedSignature() {
       String otherSecret = "different-secret-key-must-be-at-least-256-bits-for-hs256-algo";
       SecretKey otherSigningKey = Keys.hmacShaKeyFor(otherSecret.getBytes(StandardCharsets.UTF_8));
@@ -189,7 +206,8 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("異常系: issuerクレームが不一致のトークンの場合は例外がスローされること")
+    @Order(5)
+    @DisplayName("異常系：issuerクレームが不一致のトークンの場合は例外がスローされること")
     void validateAccessToken_issuerMismatch() {
       SecretKey signingKey = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
       String tokenWithWrongIssuer =
@@ -212,11 +230,14 @@ class JwtTokenProviderTest {
   }
 
   @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("#validateSecret")
   class validateSecret {
 
     @Test
-    @DisplayName("正常系: 256bit以上のシークレットキーの場合は例外がスローされないこと")
+    @Order(1)
+    @DisplayName("正常系：256bit以上のシークレットキーの場合は例外がスローされないこと")
     void validateSecret_sufficientLength() {
       JwtConfig jwtConfig =
           new JwtConfig(
@@ -230,7 +251,8 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("異常系: 256bit未満のシークレットキーの場合は例外がスローされること")
+    @Order(2)
+    @DisplayName("異常系：256bit未満のシークレットキーの場合は例外がスローされること")
     void validateSecret_tooShort() {
       JwtConfig jwtConfig =
           new JwtConfig(
@@ -244,7 +266,8 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("異常系: シークレットキーがnullの場合は例外がスローされること")
+    @Order(3)
+    @DisplayName("異常系：シークレットキーがnullの場合は例外がスローされること")
     void validateSecret_null() {
       JwtConfig jwtConfig =
           new JwtConfig(
@@ -259,11 +282,14 @@ class JwtTokenProviderTest {
   }
 
   @Nested
+  @Order(5)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("#isTokenValid")
   class isTokenValid {
 
     @Test
-    @DisplayName("正常系: 有効なトークンの場合はtrueを返すこと")
+    @Order(1)
+    @DisplayName("正常系：有効なトークンの場合はtrueを返すこと")
     void isTokenValid_validToken() {
       when(principal.getUsername()).thenReturn("testuser1");
       when(principal.getAccountNo()).thenReturn(1L);
@@ -277,13 +303,15 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("異常系: 不正なトークンの場合はfalseを返すこと")
+    @Order(2)
+    @DisplayName("異常系：不正なトークンの場合はfalseを返すこと")
     void isTokenValid_invalidToken() {
       assertFalse(jwtTokenProvider.isTokenValid("invalid-token"));
     }
 
     @Test
-    @DisplayName("異常系: nullの場合はfalseを返すこと")
+    @Order(3)
+    @DisplayName("異常系：nullの場合はfalseを返すこと")
     void isTokenValid_nullToken() {
       assertFalse(jwtTokenProvider.isTokenValid(null));
     }

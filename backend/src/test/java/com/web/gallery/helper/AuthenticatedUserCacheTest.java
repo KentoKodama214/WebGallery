@@ -12,10 +12,14 @@ import com.web.gallery.event.AccountUnlockedEvent;
 import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.model.AccountModel;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
@@ -29,11 +33,31 @@ public class AuthenticatedUserCacheTest {
     return new AccountPrincipal(AccountModel.builder().accountNo(new AccountNo(1L)).build(), 3);
   }
 
+  private void assertCleared(Consumer<AuthenticatedUserCache> fireEvent) {
+    AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
+    AtomicInteger calls = new AtomicInteger();
+    Supplier<AccountPrincipal> loader =
+        () -> {
+          calls.incrementAndGet();
+          return principal();
+        };
+
+    cache.get("aaaaaaaa", loader);
+    cache.get("bbbbbbbb", loader);
+    fireEvent.accept(cache);
+    cache.get("aaaaaaaa", loader);
+    cache.get("bbbbbbbb", loader);
+
+    assertEquals(4, calls.get(), "イベント後はキャッシュが全消去され、loaderが再度呼ばれる");
+  }
+
   @Nested
-  @DisplayName("get")
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class get {
     @Test
-    @DisplayName("TTL内は2回目以降loaderを呼ばずキャッシュを返す")
+    @Order(1)
+    @DisplayName("正常系：TTL内は2回目以降loaderを呼ばずキャッシュを返すこと")
     void cache_hit_within_ttl() {
       AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
       AtomicInteger calls = new AtomicInteger();
@@ -50,7 +74,8 @@ public class AuthenticatedUserCacheTest {
     }
 
     @Test
-    @DisplayName("TTLが0以下ならキャッシュせず毎回loaderを呼ぶ")
+    @Order(2)
+    @DisplayName("正常系：TTLが0以下ならキャッシュせず毎回loaderを呼ぶこと")
     void cache_disabled_when_ttl_zero() {
       AuthenticatedUserCache cache = new AuthenticatedUserCache(0L);
       AtomicInteger calls = new AtomicInteger();
@@ -67,7 +92,8 @@ public class AuthenticatedUserCacheTest {
     }
 
     @Test
-    @DisplayName("TTLを過ぎた場合はキャッシュを使わずloaderを再度呼ぶ")
+    @Order(3)
+    @DisplayName("正常系：TTLを過ぎた場合はキャッシュを使わずloaderを再度呼ぶこと")
     void cache_miss_after_ttl_expired() {
       AuthenticatedUserCache cache = new AuthenticatedUserCache(1L);
       AtomicInteger calls = new AtomicInteger();
@@ -89,7 +115,8 @@ public class AuthenticatedUserCacheTest {
     }
 
     @Test
-    @DisplayName("loaderがnullを返した場合はキャッシュに格納せず、次回もloaderを呼ぶ")
+    @Order(4)
+    @DisplayName("正常系：loaderがnullを返した場合はキャッシュに格納せず、次回もloaderを呼ぶこと")
     void does_not_cache_null_result() {
       AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
       AtomicInteger calls = new AtomicInteger();
@@ -106,13 +133,10 @@ public class AuthenticatedUserCacheTest {
       assertNull(second);
       assertEquals(2, calls.get(), "loaderがnullを返した結果はキャッシュされない");
     }
-  }
 
-  @Nested
-  @DisplayName("エントリ数上限")
-  class Capacity {
     @Test
-    @DisplayName("エントリ数が上限に達した場合、キャッシュを全クリアしてから格納する")
+    @Order(5)
+    @DisplayName("正常系：エントリ数が上限に達した場合、キャッシュを全クリアしてから格納すること")
     void clears_all_when_over_capacity() {
       AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
       AtomicInteger calls = new AtomicInteger();
@@ -136,10 +160,12 @@ public class AuthenticatedUserCacheTest {
   }
 
   @Nested
-  @DisplayName("evict")
-  class Evict {
+  @Order(2)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class evict {
     @Test
-    @DisplayName("accountIdがnullの場合は何もしない")
+    @Order(1)
+    @DisplayName("正常系：accountIdがnullの場合は何もしないこと")
     void evict_ignoresNullAccountId() {
       AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
       AtomicInteger calls = new AtomicInteger();
@@ -158,42 +184,54 @@ public class AuthenticatedUserCacheTest {
   }
 
   @Nested
-  @DisplayName("イベントによる全消去")
-  class clearOnEvent {
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class onAccountDeleted {
     @Test
-    @DisplayName("アカウント削除・ロック・ロック解除の各イベントでキャッシュが全消去される")
-    void clears_on_account_events() {
+    @Order(1)
+    @DisplayName("正常系：アカウント削除イベントでキャッシュが全消去されること")
+    void clears_on_account_deleted() {
       AccountNo accountNo = new AccountNo(1L);
 
       assertCleared(cache -> cache.onAccountDeleted(new AccountDeletedEvent(accountNo, null)));
-      assertCleared(cache -> cache.onAccountLocked(new AccountLockedEvent(accountNo)));
-      assertCleared(cache -> cache.onAccountUnlocked(new AccountUnlockedEvent(accountNo)));
-    }
-
-    private void assertCleared(java.util.function.Consumer<AuthenticatedUserCache> fireEvent) {
-      AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
-      AtomicInteger calls = new AtomicInteger();
-      Supplier<AccountPrincipal> loader =
-          () -> {
-            calls.incrementAndGet();
-            return principal();
-          };
-
-      cache.get("aaaaaaaa", loader);
-      cache.get("bbbbbbbb", loader);
-      fireEvent.accept(cache);
-      cache.get("aaaaaaaa", loader);
-      cache.get("bbbbbbbb", loader);
-
-      assertEquals(4, calls.get(), "イベント後はキャッシュが全消去され、loaderが再度呼ばれる");
     }
   }
 
   @Nested
-  @DisplayName("アカウント更新イベントによる個別失効")
-  class evictOnAccountUpdated {
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class onAccountLocked {
     @Test
-    @DisplayName("更新されたアカウントのエントリだけが失効し、他アカウントのキャッシュは保持される")
+    @Order(1)
+    @DisplayName("正常系：アカウントロックイベントでキャッシュが全消去されること")
+    void clears_on_account_locked() {
+      AccountNo accountNo = new AccountNo(1L);
+
+      assertCleared(cache -> cache.onAccountLocked(new AccountLockedEvent(accountNo)));
+    }
+  }
+
+  @Nested
+  @Order(5)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class onAccountUnlocked {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントロック解除イベントでキャッシュが全消去されること")
+    void clears_on_account_unlocked() {
+      AccountNo accountNo = new AccountNo(1L);
+
+      assertCleared(cache -> cache.onAccountUnlocked(new AccountUnlockedEvent(accountNo)));
+    }
+  }
+
+  @Nested
+  @Order(6)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class onAccountUpdated {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：更新されたアカウントのエントリだけが失効し、他アカウントのキャッシュは保持されること")
     void evicts_only_updated_account() {
       AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
       AtomicInteger calls = new AtomicInteger();
@@ -218,7 +256,8 @@ public class AuthenticatedUserCacheTest {
     }
 
     @Test
-    @DisplayName("アカウントID変更時は新旧どちらのエントリも失効する")
+    @Order(2)
+    @DisplayName("正常系：アカウントID変更時は新旧どちらのエントリも失効すること")
     void evicts_both_old_and_new_account_id() {
       AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
       AtomicInteger calls = new AtomicInteger();
@@ -243,7 +282,8 @@ public class AuthenticatedUserCacheTest {
     }
 
     @Test
-    @DisplayName("更新後アカウントIDが不明（accountId=null）の場合は旧IDのみ失効する")
+    @Order(3)
+    @DisplayName("正常系：更新後アカウントIDが不明（accountId=null）の場合は旧IDのみ失効すること")
     void evicts_only_previous_account_id_when_new_id_unknown() {
       AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
       AtomicInteger calls = new AtomicInteger();
@@ -267,7 +307,8 @@ public class AuthenticatedUserCacheTest {
     }
 
     @Test
-    @DisplayName("更新前アカウントIDが不明（previousAccountId=null）の場合は安全側に倒して全消去する")
+    @Order(4)
+    @DisplayName("正常系：更新前アカウントIDが不明（previousAccountId=null）の場合は安全側に倒して全消去すること")
     void clears_all_when_previous_account_id_unknown() {
       AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
       AtomicInteger calls = new AtomicInteger();

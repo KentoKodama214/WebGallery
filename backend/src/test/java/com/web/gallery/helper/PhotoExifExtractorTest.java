@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -23,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PhotoExifExtractorTest {
   private final PhotoExifExtractor photoExifExtractor = new PhotoExifExtractor();
 
@@ -158,92 +158,97 @@ public class PhotoExifExtractorTest {
     return new MockMultipartFile("imageFile", "test.jpg", "image/jpeg", result.toByteArray());
   }
 
-  @Test
+  @Nested
   @Order(1)
-  @DisplayName("正常系：EXIF情報（焦点距離・F値・シャッタースピード・ISO）が埋め込まれたJPEGから全項目を抽出できる")
-  void extract_allFieldsPresent() throws Exception {
-    MultipartFile imageFile = createJpegWithExif(50, 2.8, 0.004, 200);
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class extract {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：EXIF情報（焦点距離・F値・シャッタースピード・ISO）が埋め込まれたJPEGから全項目を抽出できる")
+    void extract_allFieldsPresent() throws Exception {
+      MultipartFile imageFile = createJpegWithExif(50, 2.8, 0.004, 200);
 
-    ExifData exifData = photoExifExtractor.extract(imageFile);
+      ExifData exifData = photoExifExtractor.extract(imageFile);
 
-    assertEquals(50, exifData.focalLength().value());
-    assertEquals(0, BigDecimal.valueOf(2.8).compareTo(exifData.fValue().value()));
-    assertEquals(0, BigDecimal.valueOf(0.004).compareTo(exifData.shutterSpeed().value()));
-    assertEquals(200, exifData.iso().value());
-  }
+      assertEquals(50, exifData.focalLength().value());
+      assertEquals(0, BigDecimal.valueOf(2.8).compareTo(exifData.fValue().value()));
+      assertEquals(0, BigDecimal.valueOf(0.004).compareTo(exifData.shutterSpeed().value()));
+      assertEquals(200, exifData.iso().value());
+    }
 
-  @Test
-  @Order(2)
-  @DisplayName("正常系：EXIFの一部の項目のみ記録されている場合、記録されている項目のみ抽出し、他はnullを返す")
-  void extract_partialFieldsPresent() throws Exception {
-    MultipartFile imageFile = createJpegWithExif(50, null, null, null);
+    @Test
+    @Order(2)
+    @DisplayName("正常系：EXIFの一部の項目のみ記録されている場合、記録されている項目のみ抽出し、他はnullを返す")
+    void extract_partialFieldsPresent() throws Exception {
+      MultipartFile imageFile = createJpegWithExif(50, null, null, null);
 
-    ExifData exifData = photoExifExtractor.extract(imageFile);
+      ExifData exifData = photoExifExtractor.extract(imageFile);
 
-    assertEquals(50, exifData.focalLength().value());
-    assertNull(exifData.fValue());
-    assertNull(exifData.shutterSpeed());
-    assertNull(exifData.iso());
-  }
+      assertEquals(50, exifData.focalLength().value());
+      assertNull(exifData.fValue());
+      assertNull(exifData.shutterSpeed());
+      assertNull(exifData.iso());
+    }
 
-  @Test
-  @Order(3)
-  @DisplayName("正常系：EXIFが埋め込まれていないJPEGの場合、全項目未設定のExifDataを返す")
-  void extract_noExif_returnsEmpty() throws Exception {
-    BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    ImageIO.write(image, "jpg", outputStream);
-    MultipartFile imageFile =
-        new MockMultipartFile("imageFile", "test.jpg", "image/jpeg", outputStream.toByteArray());
+    @Test
+    @Order(3)
+    @DisplayName("正常系：EXIFが埋め込まれていないJPEGの場合、全項目未設定のExifDataを返す")
+    void extract_noExif_returnsEmpty() throws Exception {
+      BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      ImageIO.write(image, "jpg", outputStream);
+      MultipartFile imageFile =
+          new MockMultipartFile("imageFile", "test.jpg", "image/jpeg", outputStream.toByteArray());
 
-    assertEquals(ExifData.empty(), photoExifExtractor.extract(imageFile));
-  }
+      assertEquals(ExifData.empty(), photoExifExtractor.extract(imageFile));
+    }
 
-  @Test
-  @Order(4)
-  @DisplayName("正常系：PNG形式（EXIF非対応）の場合、全項目未設定のExifDataを返す")
-  void extract_png_returnsEmpty() throws Exception {
-    BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    ImageIO.write(image, "png", outputStream);
-    MultipartFile imageFile =
-        new MockMultipartFile("imageFile", "test.png", "image/png", outputStream.toByteArray());
+    @Test
+    @Order(4)
+    @DisplayName("正常系：PNG形式（EXIF非対応）の場合、全項目未設定のExifDataを返す")
+    void extract_png_returnsEmpty() throws Exception {
+      BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      ImageIO.write(image, "png", outputStream);
+      MultipartFile imageFile =
+          new MockMultipartFile("imageFile", "test.png", "image/png", outputStream.toByteArray());
 
-    assertEquals(ExifData.empty(), photoExifExtractor.extract(imageFile));
-  }
+      assertEquals(ExifData.empty(), photoExifExtractor.extract(imageFile));
+    }
 
-  @Test
-  @Order(5)
-  @DisplayName("異常系：破損した不正なバイト列の場合、全項目未設定のExifDataを返す")
-  void extract_invalidBytes_returnsEmpty() {
-    MultipartFile imageFile =
-        new MockMultipartFile("imageFile", "test.jpg", "image/jpeg", "not an image".getBytes());
+    @Test
+    @Order(5)
+    @DisplayName("異常系：破損した不正なバイト列の場合、全項目未設定のExifDataを返す")
+    void extract_invalidBytes_returnsEmpty() {
+      MultipartFile imageFile =
+          new MockMultipartFile("imageFile", "test.jpg", "image/jpeg", "not an image".getBytes());
 
-    assertEquals(ExifData.empty(), photoExifExtractor.extract(imageFile));
-  }
+      assertEquals(ExifData.empty(), photoExifExtractor.extract(imageFile));
+    }
 
-  @Test
-  @Order(6)
-  @DisplayName("異常系：EXIFの値が0（焦点距離・F値・ISO）の場合、無効な値として無視されnullを返す")
-  void extract_zeroValues_ignored() throws Exception {
-    MultipartFile imageFile = createJpegWithExif(0, 0.0, null, 0);
+    @Test
+    @Order(6)
+    @DisplayName("異常系：EXIFの値が0（焦点距離・F値・ISO）の場合、無効な値として無視されnullを返す")
+    void extract_zeroValues_ignored() throws Exception {
+      MultipartFile imageFile = createJpegWithExif(0, 0.0, null, 0);
 
-    ExifData exifData = photoExifExtractor.extract(imageFile);
+      ExifData exifData = photoExifExtractor.extract(imageFile);
 
-    assertNull(exifData.focalLength());
-    assertNull(exifData.fValue());
-    assertNull(exifData.iso());
-  }
+      assertNull(exifData.focalLength());
+      assertNull(exifData.fValue());
+      assertNull(exifData.iso());
+    }
 
-  @Test
-  @Order(7)
-  @DisplayName("異常系：画像読み込み中にIOExceptionが発生した場合、全項目未設定のExifDataを返す")
-  void extract_ioException_returnsEmpty() throws Exception {
-    MultipartFile imageFile = org.mockito.Mockito.mock(MultipartFile.class);
-    org.mockito.Mockito.doThrow(new java.io.IOException("read error"))
-        .when(imageFile)
-        .getInputStream();
+    @Test
+    @Order(7)
+    @DisplayName("異常系：画像読み込み中にIOExceptionが発生した場合、全項目未設定のExifDataを返す")
+    void extract_ioException_returnsEmpty() throws Exception {
+      MultipartFile imageFile = org.mockito.Mockito.mock(MultipartFile.class);
+      org.mockito.Mockito.doThrow(new java.io.IOException("read error"))
+          .when(imageFile)
+          .getInputStream();
 
-    assertEquals(ExifData.empty(), photoExifExtractor.extract(imageFile));
+      assertEquals(ExifData.empty(), photoExifExtractor.extract(imageFile));
+    }
   }
 }
