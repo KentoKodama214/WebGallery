@@ -11,8 +11,18 @@ plugins {
 }
 
 checkstyle {
-	toolVersion = '10.21.4'
+	// 10.21.4はcommons-beanutilsに脆弱性のある1.10.1を推移的に含むため、
+	// commons-beanutils:1.11.0を直接pinしている10.26.1に更新（GHSA-wxr5-93ph-8wr9対策）
+	toolVersion = '10.26.1'
 	configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+}
+
+configurations.checkstyle {
+	resolutionStrategy {
+		// Checkstyle（doxia-core経由）が脆弱性のあるplexus-utils:3.3.0を推移的に含むため、
+		// 修正済みバージョンに強制（GHSA-6fmv-xxpf-w3cw対策）
+		force 'org.codehaus.plexus:plexus-utils:4.1.0'
+	}
 }
 
 spotless {
@@ -39,6 +49,11 @@ checkstyleTest.enabled = false
 
 group = 'com.official'
 version = '0.0.1-SNAPSHOT'
+
+// Spring Boot 4.1.1が管理するTomcatは脆弱性のある11.0.24のため、
+// 修正済みバージョンに上書き（GHSA-9xv2-5v5q-p794 / GHSA-gcx9-497g-6cp6 / GHSA-h3x4-894j-xpx5対策）。
+// Spring Bootが11.0.25以降に追従したパッチ版をリリースしたら削除可能
+ext['tomcat.version'] = '11.0.26'
 
 java {
 	sourceCompatibility = '21'
