@@ -16,6 +16,7 @@ import com.web.gallery.exception.SystemException;
 import com.web.gallery.exception.UpdateFailureException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -151,6 +153,14 @@ public class CommonControllerAdviceTest {
         MockMvcBuilders.standaloneSetup(new TestController())
             .setControllerAdvice(commonControllerAdvice)
             .build();
+  }
+
+  private String readJsonFile(String fileName) throws Exception {
+    return new String(
+        new ClassPathResource("json/controller/CommonControllerAdviceTest/" + fileName)
+            .getInputStream()
+            .readAllBytes(),
+        StandardCharsets.UTF_8);
   }
 
   @Nested
@@ -327,7 +337,7 @@ public class CommonControllerAdviceTest {
           .perform(
               post("/test/method_argument_not_valid")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{}"))
+                  .content(readJsonFile("blank_required_field.json")))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
     }
@@ -340,7 +350,7 @@ public class CommonControllerAdviceTest {
           .perform(
               post("/test/method_argument_not_valid")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{invalid json"))
+                  .content(readJsonFile("invalid_json.json")))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
     }
