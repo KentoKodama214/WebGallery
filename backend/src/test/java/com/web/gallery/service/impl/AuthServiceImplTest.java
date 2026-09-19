@@ -21,6 +21,7 @@ import com.web.gallery.domain.common.IsRevoked;
 import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.helper.JwtTokenProvider;
 import com.web.gallery.model.AccountModel;
@@ -200,6 +201,44 @@ class AuthServiceImplTest {
       ArgumentCaptor<AccountModel> unlockCaptor = ArgumentCaptor.forClass(AccountModel.class);
       verify(accountRepository).updateLoginFailureCount(unlockCaptor.capture());
       assertEquals(0, unlockCaptor.getValue().getLoginFailureCount().value());
+    }
+
+    @Test
+    @DisplayName("正常系: ロック解除の更新に失敗してもログイン処理は継続し、ログインに成功すること")
+    void login_accountLocked_after_lockDuration_releaseLockFails_loginStillSucceeds()
+        throws Exception {
+      when(loginConfig.getFailCount()).thenReturn(3);
+      when(loginConfig.getLockDurationMinutes()).thenReturn(30);
+
+      AccountModel lockedModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .loginFailureCount(new LoginFailureCount(3))
+              .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(31)))
+              .build();
+      when(accountRepository.getByAccountId(new AccountId("testuser1"))).thenReturn(lockedModel);
+      doThrow(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException())
+          .when(accountRepository)
+          .updateLoginFailureCount(any(AccountModel.class));
+
+      AccountPrincipal principal = mock(AccountPrincipal.class);
+      when(principal.getAccountNo()).thenReturn(1L);
+      Authentication authentication = mock(Authentication.class);
+      when(authentication.getPrincipal()).thenReturn(principal);
+      when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+          .thenReturn(authentication);
+      when(jwtTokenProvider.generateAccessToken(principal)).thenReturn("access-token");
+      when(jwtTokenProvider.generateRefreshToken()).thenReturn("refresh-token");
+      when(jwtConfig.getRefreshTokenExpirationDays()).thenReturn(7);
+      when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
+
+      AuthTokenModel result =
+          authServiceImpl.login(
+              new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
+
+      assertNotNull(result);
+      assertEquals("access-token", result.getAccessToken().value());
+      verify(accountRepository).updateLoginFailureCount(any(AccountModel.class));
     }
 
     @Test

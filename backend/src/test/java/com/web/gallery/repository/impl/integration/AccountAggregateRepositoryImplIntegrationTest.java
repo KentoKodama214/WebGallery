@@ -84,6 +84,19 @@ public class AccountAggregateRepositoryImplIntegrationTest {
               "SELECT COUNT(*) FROM common.refresh_token where account_no=1", Integer.class);
       assertEquals(0, refreshTokenCount);
 
+      // ログイン履歴が削除されたことを確認
+      Integer loginHistoryCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.login_history where account_no=1", Integer.class);
+      assertEquals(0, loginHistoryCount);
+
+      // 写真一覧絞り込みログが削除されたことを確認
+      Integer photoListFilterLogCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_list_filter_log where photo_account_no=1",
+              Integer.class);
+      assertEquals(0, photoListFilterLogCount);
+
       // 削除時点で未削除だった写真番号が記録されていること
       assertFalse(account.getDeletedPhotoNoList().isEmpty());
       assertTrue(account.getDeletedPhotoNoList().toList().contains(new PhotoNo(1L)));

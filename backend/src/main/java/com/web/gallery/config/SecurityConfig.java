@@ -191,6 +191,10 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(HttpMethod.POST, ApiRoutes.API_ACCOUNTS)
                     .permitAll()
+                    // 写真登録上限チェックは認証必須（{photoNo}パス変数がupper-limitにもマッチするため、
+                    // 写真詳細の公開ルールより先に判定する）
+                    .requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTO_UPPER_LIMIT)
+                    .authenticated()
                     // 写真一覧・詳細の閲覧（GET）は公開
                     .requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTOS)
                     .permitAll()

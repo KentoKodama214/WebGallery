@@ -702,6 +702,44 @@ public class PhotoServiceImplTest {
       verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
       verify(photoDetailRepositoryImpl, never()).getPhotoList(any(PhotoGetModel.class));
     }
+
+    @Test
+    @Order(9)
+    @DisplayName("正常系：絞り込み・並び替えログの記録に失敗しても、例外を握りつぶして写真一覧を正常に返すこと")
+    void getPhotoList_returnsResult_evenWhenFilterLogRecordingThrows() throws GalleryException {
+      String accountId = "aaaaaaaa";
+
+      AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+      doReturn(5).when(photoConfig).getPhotoCountPerPage();
+      doReturn(PhotoPageModel.of(PhotoModelList.empty(), true))
+          .when(photoDetailRepositoryImpl)
+          .getPhotoList(any(PhotoGetModel.class));
+      doThrow(new RuntimeException("log write failed"))
+          .when(photoListFilterLogRepositoryImpl)
+          .save(any(PhotoListFilterLogModel.class));
+
+      PhotoListGetModel photoListGetModel =
+          PhotoListGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId(accountId))
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList(new ArrayList<String>())
+              .sortBy(SortPhotoEnum.PHOTO_AT)
+              .pageNo(1)
+              .searchExecuted(true)
+              .logInitialView(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+
+      assertTrue(actual.getPhotoModelList().isEmpty());
+      assertTrue(actual.getIsLast());
+      verify(photoListFilterLogRepositoryImpl).save(any(PhotoListFilterLogModel.class));
+    }
   }
 
   @Nested
@@ -926,6 +964,40 @@ public class PhotoServiceImplTest {
           ArgumentCaptor.forClass(PhotoViewLogModel.class);
       verify(photoViewLogRepositoryImpl).save(viewLogCaptor.capture());
       assertNull(viewLogCaptor.getValue().getAccountNo());
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("正常系：閲覧ログの記録に失敗しても、例外を握りつぶして写真詳細を正常に返すこと")
+    void getPhotoDetail_returnsResult_evenWhenViewLogRecordingThrows() throws GalleryException {
+      String accountId = "aaaaaaaa";
+
+      AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+      PhotoDetailModel expected =
+          PhotoDetailModel.builder()
+              .accountNo(new AccountNo(1L))
+              .imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
+              .build();
+      doReturn(expected)
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
+      doThrow(new RuntimeException("log write failed"))
+          .when(photoViewLogRepositoryImpl)
+          .save(any(PhotoViewLogModel.class));
+
+      PhotoDetailGetModel photoDetailGetModel =
+          PhotoDetailGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId(accountId))
+              .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      assertEquals(expected, photoServiceImpl.getPhotoDetail(photoDetailGetModel));
+      verify(photoViewLogRepositoryImpl).save(any(PhotoViewLogModel.class));
     }
   }
 
@@ -1978,6 +2050,34 @@ public class PhotoServiceImplTest {
 
   @Nested
   @Order(6)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getRemainingPhotoCount {
+    @Test
+    @Order(1)
+    @DisplayName("異常系：アカウント番号がnullの場合、NullPointerExceptionをthrowする")
+    void getRemainingPhotoCount_accountNo_is_null() {
+      assertThrows(NullPointerException.class, () -> photoServiceImpl.getRemainingPhotoCount(null));
+      verify(photoQuotaPolicy, times(0))
+          .remainingCount(any(AuthorityEnum.class), any(PhotoCount.class));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：PhotoQuotaPolicyが算出した残り登録可能枚数をそのまま返すこと")
+    void getRemainingPhotoCount_returns_remaining_count() {
+      AccountNo accountNo = new AccountNo(1L);
+      AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.NORMAL).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
+      doReturn(3).when(photoMstRepositoryImpl).count(accountNo);
+      doReturn(97).when(photoQuotaPolicy).remainingCount(AuthorityEnum.NORMAL, new PhotoCount(3));
+
+      assertEquals(97, photoServiceImpl.getRemainingPhotoCount(accountNo));
+      verify(photoQuotaPolicy).remainingCount(AuthorityEnum.NORMAL, new PhotoCount(3));
+    }
+  }
+
+  @Nested
+  @Order(7)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getSeasonComparator {
     @Test

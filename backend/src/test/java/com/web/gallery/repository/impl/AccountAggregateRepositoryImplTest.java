@@ -33,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -136,6 +137,47 @@ public class AccountAggregateRepositoryImplTest {
       accountAggregateRepositoryImpl.delete(account);
 
       assertTrue(account.getDeletedPhotoNoList().isEmpty());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：外部キー制約上必要な順序（お気に入り→タグ→閲覧ログ→写真マスタ→トークン→ログイン履歴/絞込ログ→権限→アカウント本体）で削除すること")
+    void delete_order() {
+      doReturn(List.of()).when(photoMstMapper).deletePhotosByAccountNo(1L);
+
+      Account account = Account.forDelete(new AccountNo(1L));
+      accountAggregateRepositoryImpl.delete(account);
+
+      InOrder inOrder =
+          inOrder(
+              photoFavoriteMapper,
+              photoTagMstMapper,
+              photoViewLogMapper,
+              photoMstMapper,
+              refreshTokenMapper,
+              loginHistoryMapper,
+              photoListFilterLogMapper,
+              accountAuthorityMapper,
+              accountMapper);
+
+      // お気に入り（自分が登録した分・自分の写真に対する他人の分）を削除
+      inOrder.verify(photoFavoriteMapper, times(2)).delete(any(PhotoFavoriteCondition.class));
+      // 写真タグを削除
+      inOrder.verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+      // 写真詳細閲覧ログを削除（写真マスタの物理削除に先立って実施）
+      inOrder.verify(photoViewLogMapper).delete(any(PhotoViewLogCondition.class));
+      // 写真マスタを物理削除
+      inOrder.verify(photoMstMapper).deletePhotosByAccountNo(1L);
+      // リフレッシュトークンを失効
+      inOrder.verify(refreshTokenMapper).revokeAllByAccountNo(1L, 1L);
+      // ログイン履歴を削除（アカウントの物理削除に先立って実施）
+      inOrder.verify(loginHistoryMapper).delete(any(LoginHistoryCondition.class));
+      // 写真一覧絞り込みログを削除（アカウントの物理削除に先立って実施）
+      inOrder.verify(photoListFilterLogMapper).delete(any(PhotoListFilterLogCondition.class));
+      // アカウント権限を削除（アカウントの物理削除に先立って実施）
+      inOrder.verify(accountAuthorityMapper).delete(any(AccountAuthorityCondition.class));
+      // アカウントを物理削除
+      inOrder.verify(accountMapper).delete(any(AccountCondition.class));
     }
   }
 }

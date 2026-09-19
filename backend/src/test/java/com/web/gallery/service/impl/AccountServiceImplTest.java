@@ -21,6 +21,7 @@ import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.IpGeoLocation;
 import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.enumeration.AuthorityEnum;
@@ -31,6 +32,7 @@ import com.web.gallery.event.AccountRegisteredEvent;
 import com.web.gallery.event.AccountUnlockedEvent;
 import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.event.PhotoDeletedEvent;
+import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
@@ -41,6 +43,7 @@ import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountModelList;
 import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.model.KbnMstModelList;
 import com.web.gallery.model.LoginHistoryModel;
 import com.web.gallery.model.PhotoNoList;
 import com.web.gallery.repository.FileRepository;
@@ -197,6 +200,27 @@ public class AccountServiceImplTest {
       doThrow(RegistFailureException.class).when(accountRepositoryImpl).regist(accountModel);
       assertThrows(
           RegistFailureException.class, () -> accountServiceImpl.registAccount(accountModel));
+      verify(applicationEventPublisher, times(0)).publishEvent(any());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：出身都道府県区分コードが区分マスタに実在しない場合はBadRequestExceptionをthrowする")
+    void registAccount_invalid_prefecture_code() throws GalleryException {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("aaaaaaaa"))
+              .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("99"))
+              .build();
+      doReturn(KbnMstModelList.empty())
+          .when(kbnMstRepositoryImpl)
+          .get(new KbnClassCode(Consts.PREFECTURE));
+
+      assertThrows(BadRequestException.class, () -> accountServiceImpl.registAccount(accountModel));
+
+      verify(kbnMstRepositoryImpl).get(new KbnClassCode(Consts.PREFECTURE));
+      verify(accountRepositoryImpl, times(0)).isExistAccount(any(AccountId.class));
+      verify(accountRepositoryImpl, times(0)).regist(any());
       verify(applicationEventPublisher, times(0)).publishEvent(any());
     }
   }
@@ -401,6 +425,36 @@ public class AccountServiceImplTest {
           .isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
       doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
       doReturn(3).when(loginConfig).getFailCount();
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () -> accountServiceImpl.updateAccount(accountModel, new Password("stored-hash")));
+
+      verify(accountRepositoryImpl, times(0)).update(any());
+      verify(passwordEncoder, times(0)).matches(any(), any());
+      verify(applicationEventPublisher, times(0)).publishEvent(any());
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("異常系：ログイン失敗回数が上限未満でも管理者ロック中のアカウントは本人確認を通さず更新しない")
+    void updateAccount_blocked_when_admin_locked() throws GalleryException {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .password(new Password("newpassword01"))
+              .build();
+      AccountModel storedAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .password(new Password("stored-hash"))
+              .isAdminLocked(new IsAdminLocked(true))
+              .build();
+      doReturn(false)
+          .when(accountRepositoryImpl)
+          .isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
+      doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
 
       assertThrows(
           ForbiddenAccountException.class,

@@ -301,4 +301,60 @@ public class AdminInquiryControllerIntegrationTest {
       assertEquals(0, replyCount);
     }
   }
+
+  /** 未認証（認証情報なし）で管理者用お問い合わせ管理エンドポイントにアクセスした場合の共通挙動を検証する */
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/controller/AdminInquiryControllerIntegrationTest.sql")
+  class unauthenticatedAccess {
+    @Test
+    @Order(1)
+    @DisplayName("異常系：未認証でお問い合わせ一覧取得にアクセスすると403ではなく401で共通JSONエラーを返す")
+    void getAdminInquiryList_unauthenticated() throws Exception {
+      mockMvc
+          .perform(get("/api/v1/admin/inquiries"))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(401))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：未認証でお問い合わせ詳細取得にアクセスすると403ではなく401で共通JSONエラーを返す")
+    void getAdminInquiryDetail_unauthenticated() throws Exception {
+      mockMvc
+          .perform(get("/api/v1/admin/inquiries/1"))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(401))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：未認証でお問い合わせ返信登録にアクセスすると403ではなく401で共通JSONエラーを返し、DBに副作用が発生しない")
+    void replyToInquiry_unauthenticated() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/admin/inquiries/1/replies")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{\"body\": \"返信本文\"}"))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(401))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
+
+      Integer replyCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_reply_mst WHERE inquiry_id = 1", Integer.class);
+      assertEquals(0, replyCount);
+      String statusKbn =
+          jdbcTemplate.queryForObject(
+              "SELECT status_kbn FROM common.inquiry_mst WHERE id = 1", String.class);
+      assertEquals("unreplied", statusKbn);
+    }
+  }
 }

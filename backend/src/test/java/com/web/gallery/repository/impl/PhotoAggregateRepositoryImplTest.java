@@ -156,6 +156,26 @@ public class PhotoAggregateRepositoryImplTest {
 
       verify(photoTagMstMapper, times(0)).insertBulk(anyList());
     }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：写真タグ登録でDuplicateKeyExceptionが発生した場合、RegistFailureExceptionをthrowすること")
+    void regist_tag_RegistFailureException() {
+      AccountNo accountNo = new AccountNo(1L);
+      PhotoTagModelList tags = PhotoTagModelList.of(List.of(buildTag(accountNo, "太陽")));
+      PhotoDetailModel requestDetail = buildDetail(accountNo, null, new ImageFilePath(""), tags);
+      Photo photo =
+          Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
+
+      doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+      doReturn(1).when(photoMstMapper).insert(any(PhotoMst.class));
+      doThrow(DuplicateKeyException.class).when(photoTagMstMapper).insertBulk(anyList());
+
+      assertThrows(RegistFailureException.class, () -> photoAggregateRepositoryImpl.regist(photo));
+
+      verify(photoMstMapper).insert(any(PhotoMst.class));
+      verify(photoTagMstMapper).insertBulk(anyList());
+    }
   }
 
   @Nested

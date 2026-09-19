@@ -29,3 +29,11 @@ insert into photo.photo_favorite values(DEFAULT, 2, 2, 1, 1, now());
 -- common.refresh_token (account_no=1、account_no=2それぞれ有効なリフレッシュトークン)
 insert into common.refresh_token values(DEFAULT, 1, 'hash-account1', now() + interval '7 days', now(), 1, now(), false);
 insert into common.refresh_token values(DEFAULT, 2, 'hash-account2', now() + interval '7 days', now(), 2, now(), false);
+
+-- common.login_history (account_no=1のログイン履歴)
+insert into common.login_history (login_history_no, account_no, ip_address, country, region, created_by, created_at) values (1, 1, '198.51.100.1', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
+ALTER SEQUENCE common.login_history_login_history_no_seq RESTART 2;
+
+-- photo.photo_list_filter_log (account_no=1の写真一覧絞り込みログ)
+insert into photo.photo_list_filter_log (photo_list_filter_log_no, photo_account_no, account_no, direction_kbn, is_favorite, tag_list, sort_by, referer, ip_address, country, region, created_by, created_at) values (1, 1, 1, 'vertical', true, '太陽,海', 'favorite', 'https://example.com/', '198.51.100.1', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
+ALTER SEQUENCE photo.photo_list_filter_log_photo_list_filter_log_no_seq RESTART 2;

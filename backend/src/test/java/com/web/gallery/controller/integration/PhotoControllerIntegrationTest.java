@@ -2,12 +2,14 @@ package com.web.gallery.controller.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.aggregate.Photo;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
@@ -21,6 +23,7 @@ import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.repository.FileRepository;
+import com.web.gallery.repository.PhotoAggregateRepository;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -1005,6 +1008,234 @@ public class PhotoControllerIntegrationTest {
           .andExpect(jsonPath("$.errorCode").value(ErrorEnum.DUPLICATE_PHOTO_FILE.getErrorCode()))
           .andExpect(
               jsonPath("$.errorMessage").value(ErrorEnum.DUPLICATE_PHOTO_FILE.getErrorMessage()));
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("異常系：ファイルサイズが上限（app.photo.maxFileSizeMb=5MB）を超える場合、BadRequestExceptionをthrowする")
+    void registPhotos_BadRequestException_imageFileSizeExceeded() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+      // サーブレット側の上限（spring.servlet.multipart.max-file-size=6MB）は超えないが、
+      // アプリ側の上限（app.photo.maxFileSizeMb=5MB）は超えるサイズのファイルを生成する
+      byte[] oversizedBytes = new byte[5 * 1024 * 1024 + 1024];
+      System.arraycopy(JPEG_BYTES, 0, oversizedBytes, 0, JPEG_BYTES.length);
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC999.jpg", MediaType.IMAGE_JPEG_VALUE, oversizedBytes);
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .file(multipartFile)
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoJapaneseTitle", "タイトル")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
+          .andExpect(jsonPath("$.isSuccess").value(false))
+          .andExpect(
+              jsonPath("$.message").value(ErrorEnum.IMAGE_FILE_SIZE_EXCEEDED.getErrorMessage()));
+    }
+  }
+
+  /**
+   * 一意制約違反等の実際のDB制約違反は、写真番号の採番がアカウント単位のロックで直列化されているため
+   * 単一トランザクション・単一スレッドの結合テストでは決定的に再現できない。そのため{@link
+   * PhotoAggregateRepository}をモック化してRepository層からの{@link GalleryException}送出を再現し、
+   * Controller〜ControllerAdviceが実際のDB制約違反時と同じ409レスポンスへ正しく変換することを検証する。 Spring
+   * TestのApplicationContextキャッシュにより、このモック化は本ネストクラス内のみで完結し、 他のネストクラス・テストケースには影響しない
+   */
+  @Nested
+  @Order(6)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")
+  class repositoryFailure {
+    @MockitoBean private PhotoAggregateRepository photoAggregateRepository;
+
+    @Test
+    @Order(1)
+    @DisplayName("異常系：写真マスタ登録でDB制約違反が発生した場合、RegistFailureExceptionにより409を返す")
+    void registPhotos_RegistFailureException() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+      MockMultipartFile multipartFile =
+          new MockMultipartFile("imageFiles", "DSC999.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
+
+      doThrow(ErrorEnum.FAIL_TO_REGIST_PHOTO.toException())
+          .when(photoAggregateRepository)
+          .regist(any(Photo.class));
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .file(multipartFile)
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoJapaneseTitle", "タイトル")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isConflict())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
+          .andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_REGIST_PHOTO.getErrorCode()))
+          .andExpect(
+              jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_REGIST_PHOTO.getErrorMessage()));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：写真マスタ更新でDB制約違反等により対象行を更新できなかった場合、UpdateFailureExceptionにより409を返す")
+    void savePhoto_UpdateFailureException() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+
+      doThrow(ErrorEnum.FAIL_TO_UPDATE_PHOTO.toException())
+          .when(photoAggregateRepository)
+          .update(any(Photo.class));
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/" + photoAccountId + "/photos")
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoNo", "1")
+                  .param("caption", "caption111")
+                  .param("imageFilePath", "https://www.xxx.com/bbbbbbbb/DSC21.jpg")
+                  .param("directionKbn", "VERTICAL")
+                  .param("photoEnglishTitle", "title111")
+                  .param("photoJapaneseTitle", "タイトル111")
+                  .param(
+                      "photoAt",
+                      LocalDateTime.of(2000, 1, 1, 0, 0, 0)
+                          .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                  .param("focalLength", "24")
+                  .param("fValue", "8.0")
+                  .param("shutterSpeed", "0.01")
+                  .param("iso", "100")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isConflict())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.CONFLICT.value()))
+          .andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAIL_TO_UPDATE_PHOTO.getErrorCode()))
+          .andExpect(
+              jsonPath("$.errorMessage").value(ErrorEnum.FAIL_TO_UPDATE_PHOTO.getErrorMessage()));
+    }
+  }
+
+  /** 未認証（認証情報なし）で認証必須の写真関連エンドポイントにアクセスした場合の共通挙動を検証する */
+  @Nested
+  @Order(7)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")
+  class unauthenticatedAccess {
+    @Test
+    @Order(1)
+    @DisplayName("異常系：未認証で写真新規登録にアクセスすると403ではなく401で共通JSONエラーを返す")
+    void registPhotos_unauthenticated() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+      MockMultipartFile multipartFile =
+          new MockMultipartFile("imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .file(multipartFile)
+                  .contentType(MediaType.MULTIPART_FORM_DATA))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"))
+          .andExpect(jsonPath("$.errorMessage").isNotEmpty());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：未認証で写真更新にアクセスすると403ではなく401で共通JSONエラーを返す")
+    void savePhoto_unauthenticated() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+
+      mockMvc
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/" + photoAccountId + "/photos")
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoNo", "1")
+                  .param("imageFilePath", "https://www.xxx.com/bbbbbbbb/DSC21.jpg"))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：未認証で写真削除にアクセスすると403ではなく401で共通JSONエラーを返す")
+    void deletePhoto_unauthenticated() throws Exception {
+      String photoAccountId = "aaaaaaaa";
+
+      mockMvc
+          .perform(
+              delete("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("delete_photo_success.json")))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：未認証で写真登録上限チェックにアクセスすると403ではなく401で共通JSONエラーを返す")
+    void getPhotoUpperLimit_unauthenticated() throws Exception {
+      mockMvc
+          .perform(get("/api/v1/accounts/aaaaaaaa/photos/upper-limit"))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
     }
   }
 

@@ -346,4 +346,83 @@ public class AdminAccountControllerIntegrationTest {
           .andExpect(status().isConflict());
     }
   }
+
+  /** 未認証（認証情報なし）で管理者用アカウント管理エンドポイントにアクセスした場合の共通挙動を検証する */
+  @Nested
+  @Order(5)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/controller/AdminAccountControllerIntegrationTest.sql")
+  class unauthenticatedAccess {
+    @Test
+    @Order(1)
+    @DisplayName("異常系：未認証でアカウント一覧取得にアクセスすると403ではなく401で共通JSONエラーを返す")
+    void getAdminAccountList_unauthenticated() throws Exception {
+      mockMvc
+          .perform(get("/api/v1/admin/accounts"))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：未認証でアカウントロック解除にアクセスすると403ではなく401で共通JSONエラーを返し、DBに副作用が発生しない")
+    void unlockAccount_unauthenticated() throws Exception {
+      mockMvc
+          .perform(put("/api/v1/admin/accounts/2/unlock"))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
+
+      Integer loginFailureCount =
+          jdbcTemplate.queryForObject(
+              "SELECT login_failure_count FROM common.account WHERE account_no = 2", Integer.class);
+      assertEquals(10, loginFailureCount);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：未認証でアカウント強制ロックにアクセスすると403ではなく401で共通JSONエラーを返し、DBに副作用が発生しない")
+    void lockAccount_unauthenticated() throws Exception {
+      mockMvc
+          .perform(put("/api/v1/admin/accounts/1/lock"))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
+
+      Integer loginFailureCount =
+          jdbcTemplate.queryForObject(
+              "SELECT login_failure_count FROM common.account WHERE account_no = 1", Integer.class);
+      assertEquals(0, loginFailureCount);
+      Boolean isAdminLocked =
+          jdbcTemplate.queryForObject(
+              "SELECT is_admin_locked FROM common.account WHERE account_no = 1", Boolean.class);
+      assertFalse(isAdminLocked);
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：未認証でアカウント権限変更にアクセスすると403ではなく401で共通JSONエラーを返し、DBに副作用が発生しない")
+    void updateAccountAuthority_unauthenticated() throws Exception {
+      mockMvc
+          .perform(
+              put("/api/v1/admin/accounts/2/authority")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{\"authorityKbn\": \"normal-user\"}"))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.UNAUTHORIZED.value()))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
+
+      String authorityKbn =
+          jdbcTemplate.queryForObject(
+              "SELECT authority_kbn FROM common.account_authority WHERE account_no = 2",
+              String.class);
+      assertEquals("mini-user", authorityKbn);
+    }
+  }
 }
