@@ -23,14 +23,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest
 @ActiveProfiles("test")
 public class KbnHelperTest {
-  @Autowired private KbnHelper kbnHepler;
+  private final KbnHelper kbnHelper = new KbnHelper();
 
   @Nested
   @Order(1)
@@ -96,7 +93,7 @@ public class KbnHelperTest {
                       .explanation(new Explanation("鹿児島は九州最南"))
                       .build()));
 
-      Map<String, KbnMstModelList> actual = kbnHepler.convertToLinkedHashMap(kbnMstModelList);
+      Map<String, KbnMstModelList> actual = kbnHelper.convertToLinkedHashMap(kbnMstModelList);
 
       KbnMstModelList kbnMstModelList1 = actual.get("");
       assertEquals(4, kbnMstModelList1.size());
@@ -166,7 +163,7 @@ public class KbnHelperTest {
                       .explanation(new Explanation("鹿児島は九州最南"))
                       .build()));
 
-      Map<String, KbnMstModelList> actual = kbnHepler.convertToLinkedHashMap(kbnMstModelList);
+      Map<String, KbnMstModelList> actual = kbnHelper.convertToLinkedHashMap(kbnMstModelList);
 
       KbnMstModelList kbnMstModelList1 = actual.get("北海道・東北");
       assertEquals(2, kbnMstModelList1.size());

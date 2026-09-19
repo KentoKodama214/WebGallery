@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -32,6 +33,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 /** {@link FileRepositoryImpl} の単体テスト */
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class FileRepositoryImplTest {
 
@@ -48,7 +50,7 @@ class FileRepositoryImplTest {
 
   @Nested
   @DisplayName("save")
-  class Save {
+  class save {
     @Test
     @DisplayName("正常系：Content-Typeは検証済み拡張子から確定し、Content-Disposition: inline を付与してputObjectを呼び出す")
     void save_putsObject() throws IOException {
@@ -186,7 +188,7 @@ class FileRepositoryImplTest {
 
   @Nested
   @DisplayName("delete")
-  class Delete {
+  class delete {
     @Test
     @DisplayName("正常系：キーを指定してdeleteObjectを呼び出す")
     void delete_deletesObject() {
@@ -227,7 +229,7 @@ class FileRepositoryImplTest {
 
   @Nested
   @DisplayName("deleteByPrefix")
-  class DeleteByPrefix {
+  class deleteByPrefix {
     @Test
     @DisplayName("正常系：プレフィックス配下のオブジェクトをまとめて削除する")
     void deleteByPrefix_deletesAllListedObjects() {
@@ -298,7 +300,7 @@ class FileRepositoryImplTest {
 
   @Nested
   @DisplayName("getPresignedUrl")
-  class GetPresignedUrl {
+  class getPresignedUrl {
     private void stubPresign(String url) {
       PresignedGetObjectRequest presigned = mock(PresignedGetObjectRequest.class);
       doReturn(toUrl(url)).when(presigned).url();

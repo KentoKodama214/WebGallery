@@ -31,7 +31,7 @@ public class AuthenticatedUserCacheTest {
 
   @Nested
   @DisplayName("get")
-  class Get {
+  class get {
     @Test
     @DisplayName("TTL内は2回目以降loaderを呼ばずキャッシュを返す")
     void cache_hit_within_ttl() {
@@ -159,7 +159,7 @@ public class AuthenticatedUserCacheTest {
 
   @Nested
   @DisplayName("イベントによる全消去")
-  class ClearOnEvent {
+  class clearOnEvent {
     @Test
     @DisplayName("アカウント削除・ロック・ロック解除の各イベントでキャッシュが全消去される")
     void clears_on_account_events() {
@@ -191,7 +191,7 @@ public class AuthenticatedUserCacheTest {
 
   @Nested
   @DisplayName("アカウント更新イベントによる個別失効")
-  class EvictOnAccountUpdated {
+  class evictOnAccountUpdated {
     @Test
     @DisplayName("更新されたアカウントのエントリだけが失効し、他アカウントのキャッシュは保持される")
     void evicts_only_updated_account() {

@@ -680,7 +680,7 @@ public class AccountServiceImplTest {
   @Nested
   @Order(7)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class unlockAccountTest {
+  class unlockAccount {
     @Test
     @Order(1)
     @DisplayName("正常系：管理者ロックとログイン失敗回数の両方が解除されること")
@@ -718,7 +718,7 @@ public class AccountServiceImplTest {
   @Nested
   @Order(8)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class lockAccountTest {
+  class lockAccount {
     @Test
     @Order(1)
     @DisplayName("正常系：管理者ロックフラグが立てられ、ログイン失敗回数も上限値に設定されること")
@@ -757,7 +757,7 @@ public class AccountServiceImplTest {
   @Nested
   @Order(9)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class deleteAccountTest {
+  class deleteAccount {
     @Test
     @Order(1)
     @DisplayName("正常系：アカウントを削除する")
@@ -1237,7 +1237,7 @@ public class AccountServiceImplTest {
   @Nested
   @Order(13)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class updateAccountAuthorityTest {
+  class updateAccountAuthority {
     @Test
     @Order(1)
     @DisplayName("正常系：権限が更新され、AccountAuthorityChangedEventが発行されること")

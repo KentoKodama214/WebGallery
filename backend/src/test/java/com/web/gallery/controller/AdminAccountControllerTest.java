@@ -155,7 +155,7 @@ public class AdminAccountControllerTest {
   @Nested
   @Order(2)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class unlockAccountTest {
+  class unlockAccount {
     @Test
     @Order(1)
     @DisplayName("正常系：アカウントのロックを解除できること")
@@ -185,7 +185,7 @@ public class AdminAccountControllerTest {
   @Nested
   @Order(3)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class lockAccountTest {
+  class lockAccount {
     @Test
     @Order(1)
     @DisplayName("正常系：アカウントを強制ロックできること")
@@ -215,7 +215,7 @@ public class AdminAccountControllerTest {
   @Nested
   @Order(4)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class updateAccountAuthorityTest {
+  class updateAccountAuthority {
     @Test
     @Order(1)
     @DisplayName("正常系：アカウントの権限を変更できること")
