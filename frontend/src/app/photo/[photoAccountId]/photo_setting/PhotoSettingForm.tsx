@@ -652,6 +652,11 @@ export function PhotoSettingForm({
           )}
 
           {/* EXIF情報 */}
+          {!isEditMode && (
+            <p className="text-xs text-gray-500 mb-2">
+              画像ファイルに焦点距離、F値、シャッタースピード、ISOの情報があれば自動登録されます
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm text-gray-400 mb-1">

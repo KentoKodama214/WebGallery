@@ -18,8 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * アップロードされた画像ファイルの実バイナリに埋め込まれたEXIF情報（焦点距離・F値・シャッタースピード・ISO）を抽出するHelperクラス
  *
- * <p>クライアントが申告する値をそのまま信頼せず、画像ファイル自体から読み取った実際の値を優先して採用するために使用する。
- * PNG等EXIFを保持しない形式や、EXIFはあっても各項目が記録されていない画像では項目ごとに未設定を返すため、 呼び出し元でクライアント申告値へのフォールバックが必要となる
+ * <p>ユーザーが値を未入力の項目について、画像ファイル自体から読み取った実際の値を補完するために使用する （{@link
+ * com.web.gallery.policy.PhotoExifDataMergePolicy}）。PNG等EXIFを保持しない形式や、EXIFはあっても
+ * 各項目が記録されていない画像では項目ごとに未設定を返す
  */
 @Component
 public class PhotoExifExtractor {
