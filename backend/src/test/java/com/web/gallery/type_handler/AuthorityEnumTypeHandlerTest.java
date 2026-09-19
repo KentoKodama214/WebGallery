@@ -51,8 +51,30 @@ class AuthorityEnumTypeHandlerTest {
   class getNullableResultByColumnName {
     @Test
     @Order(1)
-    @DisplayName("正常系：DB保存値に一致するEnum値を返すこと")
-    void getNullableResultByColumnName_matched() throws SQLException {
+    @DisplayName("正常系：DB保存値がMINIに対応する場合、MINIを返すこと")
+    void getNullableResultByColumnName_mini() throws SQLException {
+      doReturn(AuthorityEnum.MINI.getDbValue()).when(resultSet).getString("authority");
+
+      AuthorityEnum actual = authorityEnumTypeHandler.getNullableResult(resultSet, "authority");
+
+      assertEquals(AuthorityEnum.MINI, actual);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：DB保存値がNORMALに対応する場合、NORMALを返すこと")
+    void getNullableResultByColumnName_normal() throws SQLException {
+      doReturn(AuthorityEnum.NORMAL.getDbValue()).when(resultSet).getString("authority");
+
+      AuthorityEnum actual = authorityEnumTypeHandler.getNullableResult(resultSet, "authority");
+
+      assertEquals(AuthorityEnum.NORMAL, actual);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：DB保存値がSPECIALに対応する場合、SPECIALを返すこと")
+    void getNullableResultByColumnName_special() throws SQLException {
       doReturn(AuthorityEnum.SPECIAL.getDbValue()).when(resultSet).getString("authority");
 
       AuthorityEnum actual = authorityEnumTypeHandler.getNullableResult(resultSet, "authority");
@@ -61,7 +83,18 @@ class AuthorityEnumTypeHandlerTest {
     }
 
     @Test
-    @Order(2)
+    @Order(4)
+    @DisplayName("正常系：DB保存値がADMINISTRATORに対応する場合、ADMINISTRATORを返すこと")
+    void getNullableResultByColumnName_administrator() throws SQLException {
+      doReturn(AuthorityEnum.ADMINISTRATOR.getDbValue()).when(resultSet).getString("authority");
+
+      AuthorityEnum actual = authorityEnumTypeHandler.getNullableResult(resultSet, "authority");
+
+      assertEquals(AuthorityEnum.ADMINISTRATOR, actual);
+    }
+
+    @Test
+    @Order(5)
     @DisplayName("異常系：DB値がnullの場合、nullを返すこと")
     void getNullableResultByColumnName_null() throws SQLException {
       doReturn(null).when(resultSet).getString("authority");
@@ -72,7 +105,7 @@ class AuthorityEnumTypeHandlerTest {
     }
 
     @Test
-    @Order(3)
+    @Order(6)
     @DisplayName("異常系：DB保存値に一致するEnum値がない場合、nullを返すこと")
     void getNullableResultByColumnName_unmatched() throws SQLException {
       doReturn("unknown").when(resultSet).getString("authority");

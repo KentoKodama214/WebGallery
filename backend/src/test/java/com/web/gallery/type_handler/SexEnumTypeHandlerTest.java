@@ -50,8 +50,19 @@ class SexEnumTypeHandlerTest {
   class getNullableResultByColumnName {
     @Test
     @Order(1)
-    @DisplayName("正常系：DB保存値に一致するEnum値を返すこと")
-    void getNullableResultByColumnName_matched() throws SQLException {
+    @DisplayName("正常系：DB保存値がNONEに対応する場合、NONEを返すこと")
+    void getNullableResultByColumnName_none() throws SQLException {
+      doReturn(SexEnum.NONE.getDbValue()).when(resultSet).getString("sex");
+
+      SexEnum actual = sexEnumTypeHandler.getNullableResult(resultSet, "sex");
+
+      assertEquals(SexEnum.NONE, actual);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：DB保存値がMANに対応する場合、MANを返すこと")
+    void getNullableResultByColumnName_man() throws SQLException {
       doReturn(SexEnum.MAN.getDbValue()).when(resultSet).getString("sex");
 
       SexEnum actual = sexEnumTypeHandler.getNullableResult(resultSet, "sex");
@@ -60,7 +71,18 @@ class SexEnumTypeHandlerTest {
     }
 
     @Test
-    @Order(2)
+    @Order(3)
+    @DisplayName("正常系：DB保存値がWOMANに対応する場合、WOMANを返すこと")
+    void getNullableResultByColumnName_woman() throws SQLException {
+      doReturn(SexEnum.WOMAN.getDbValue()).when(resultSet).getString("sex");
+
+      SexEnum actual = sexEnumTypeHandler.getNullableResult(resultSet, "sex");
+
+      assertEquals(SexEnum.WOMAN, actual);
+    }
+
+    @Test
+    @Order(4)
     @DisplayName("異常系：DB値がnullの場合、nullを返すこと")
     void getNullableResultByColumnName_null() throws SQLException {
       doReturn(null).when(resultSet).getString("sex");
@@ -71,7 +93,7 @@ class SexEnumTypeHandlerTest {
     }
 
     @Test
-    @Order(3)
+    @Order(5)
     @DisplayName("異常系：DB保存値に一致するEnum値がない場合、nullを返すこと")
     void getNullableResultByColumnName_unmatched() throws SQLException {
       doReturn("unknown").when(resultSet).getString("sex");
