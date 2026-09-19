@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.web.gallery.AccountPrincipal;
+import com.web.gallery.enumeration.AuthorityEnum;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -58,6 +59,16 @@ public class SessionHelperTest {
       assertNull(actual);
       verify(accountPrincipal, times(0)).getAccountNo();
     }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：認証情報自体が存在しない場合、nullを返す")
+    void getAccountNo_authenticationNull() {
+      SecurityContextHolder.getContext().setAuthentication(null);
+
+      Long actual = sessionHelper.getAccountNo();
+      assertNull(actual);
+    }
   }
 
   @Nested
@@ -84,6 +95,53 @@ public class SessionHelperTest {
       String actual = sessionHelper.getAccountId();
       assertNull(actual);
       verify(accountPrincipal, times(0)).getUsername();
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：認証情報自体が存在しない場合、nullを返す")
+    void getAccountId_authenticationNull() {
+      SecurityContextHolder.getContext().setAuthentication(null);
+
+      String actual = sessionHelper.getAccountId();
+      assertNull(actual);
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getAuthorityKbn {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：セッションに存在し、権限区分を返す")
+    void getAuthorityKbn_found() {
+      doReturn(accountPrincipal).when(authentication).getPrincipal();
+      doReturn(AuthorityEnum.NORMAL).when(accountPrincipal).getAuthorityKbn();
+
+      AuthorityEnum actual = sessionHelper.getAuthorityKbn();
+      assertEquals(AuthorityEnum.NORMAL, actual);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：セッションに存在せず、nullを返す")
+    void getAuthorityKbn_not_found() {
+      doReturn(null).when(authentication).getPrincipal();
+
+      AuthorityEnum actual = sessionHelper.getAuthorityKbn();
+      assertNull(actual);
+      verify(accountPrincipal, times(0)).getAuthorityKbn();
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：認証情報自体が存在しない場合、nullを返す")
+    void getAuthorityKbn_authenticationNull() {
+      SecurityContextHolder.getContext().setAuthentication(null);
+
+      AuthorityEnum actual = sessionHelper.getAuthorityKbn();
+      assertNull(actual);
     }
   }
 }

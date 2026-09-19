@@ -234,4 +234,16 @@ public class PhotoExifExtractorTest {
     assertNull(exifData.fValue());
     assertNull(exifData.iso());
   }
+
+  @Test
+  @Order(7)
+  @DisplayName("異常系：画像読み込み中にIOExceptionが発生した場合、全項目未設定のExifDataを返す")
+  void extract_ioException_returnsEmpty() throws Exception {
+    MultipartFile imageFile = org.mockito.Mockito.mock(MultipartFile.class);
+    org.mockito.Mockito.doThrow(new java.io.IOException("read error"))
+        .when(imageFile)
+        .getInputStream();
+
+    assertEquals(ExifData.empty(), photoExifExtractor.extract(imageFile));
+  }
 }

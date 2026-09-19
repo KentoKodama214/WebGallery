@@ -53,4 +53,20 @@ class CorsConfigTest {
 
     assertThrows(IllegalStateException.class, corsConfig::validateAllowedOrigins);
   }
+
+  @Test
+  @DisplayName("全要素が空白のみのオリジンリストは起動失敗する")
+  void allBlankEntries() {
+    CorsConfig corsConfig = new CorsConfig(List.of("   "));
+
+    assertThrows(IllegalStateException.class, corsConfig::validateAllowedOrigins);
+  }
+
+  @Test
+  @DisplayName("有効なオリジンと空文字が混在する場合は起動失敗する")
+  void mixedValidAndBlankEntry() {
+    CorsConfig corsConfig = new CorsConfig(List.of("https://gallery.example.com", ""));
+
+    assertThrows(IllegalStateException.class, corsConfig::validateAllowedOrigins);
+  }
 }

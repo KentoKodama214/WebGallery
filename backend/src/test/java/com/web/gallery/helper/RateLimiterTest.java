@@ -1,5 +1,6 @@
 package com.web.gallery.helper;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -109,5 +110,30 @@ class RateLimiterTest {
     assertTrue(rateLimiter.tryAcquire("ip-new|AUTH", RULE));
 
     assertTrue(rateLimiter.size() <= 1);
+  }
+
+  @Test
+  @DisplayName("直近で間引き済みの場合は間引き処理がスキップされる")
+  void sweepSkippedIfRecentlyRun() {
+    // 初回呼び出しでは間引き最短間隔チェックを通過し、間引き処理が実行される
+    assertTrue(rateLimiter.tryAcquire("ip-a|AUTH", RULE));
+    // 直後（間引き最短間隔未満）の呼び出しでは間引きがスキップされる
+    assertTrue(rateLimiter.tryAcquire("ip-b|AUTH", RULE));
+
+    assertEquals(2, rateLimiter.size());
+  }
+
+  @Test
+  @DisplayName("間引き実行時、古すぎないエントリは削除されない")
+  void sweepKeepsFreshEntries() {
+    assertTrue(rateLimiter.tryAcquire("ip-a|AUTH", RULE));
+
+    // SWEEP_MIN_INTERVAL_MILLIS（60秒）は超えるが、STALE_THRESHOLD_MILLIS（1時間）には満たない時間を進める
+    clock.advanceSeconds(90);
+
+    // 別キーへのアクセスで間引きが走るが、ip-aはまだ古すぎないため削除されない
+    assertTrue(rateLimiter.tryAcquire("ip-b|AUTH", RULE));
+
+    assertEquals(2, rateLimiter.size());
   }
 }

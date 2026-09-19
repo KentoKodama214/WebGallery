@@ -107,6 +107,15 @@ public class AdminInquiryControllerTest {
           .andExpect(jsonPath("$.inquiryList[0].accountId").value("aaaaaaaa"))
           .andExpect(jsonPath("$.inquiryList[0].accountName").value("AAAAAAAA"));
     }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：ページ番号が正の数でない場合、400エラーになること")
+    void getAdminInquiryList_BadRequestException_pageNo_not_positive() throws Exception {
+      mockMvc
+          .perform(get("/api/v1/admin/inquiries").param("pageNo", "0"))
+          .andExpect(status().isBadRequest());
+    }
   }
 
   @Nested

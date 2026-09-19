@@ -114,6 +114,40 @@ class AuthServiceImplTest {
     }
 
     @Test
+    @DisplayName("正常系: ログイン失敗回数が未設定（null）のアカウントはロック状態と判定されず、ログインに成功すること")
+    void login_success_loginFailureCountNull() {
+      String accountId = "testuser1";
+      String password = "password1";
+
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .updatedAt(new UpdatedAt(OffsetDateTime.now(clock)))
+              .build();
+      when(accountRepository.getByAccountId(new AccountId(accountId))).thenReturn(accountModel);
+
+      AccountPrincipal principal = mock(AccountPrincipal.class);
+      when(principal.getAccountNo()).thenReturn(1L);
+
+      Authentication authentication = mock(Authentication.class);
+      when(authentication.getPrincipal()).thenReturn(principal);
+      when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+          .thenReturn(authentication);
+
+      when(jwtTokenProvider.generateAccessToken(principal)).thenReturn("access-token");
+      when(jwtTokenProvider.generateRefreshToken()).thenReturn("refresh-token");
+      when(jwtConfig.getRefreshTokenExpirationDays()).thenReturn(7);
+      when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
+
+      AuthTokenModel result =
+          authServiceImpl.login(
+              new AccountId(accountId), new Password(password), new IpAddress("127.0.0.1"));
+
+      assertNotNull(result);
+      assertEquals("access-token", result.getAccessToken().value());
+    }
+
+    @Test
     @DisplayName("異常系: パスワードが間違っている場合は例外がスローされること")
     void login_badCredentials() {
       when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
@@ -264,6 +298,29 @@ class AuthServiceImplTest {
       verify(authenticationManager, times(0))
           .authenticate(any(UsernamePasswordAuthenticationToken.class));
       verify(accountRepository, times(0)).updateLoginFailureCount(any(AccountModel.class));
+    }
+
+    @Test
+    @DisplayName("異常系: ロック中で最終更新日時が未設定の場合は自動解除できず例外がスローされること")
+    void login_locked_updatedAtNull_notAutoReleased() {
+      when(loginConfig.getFailCount()).thenReturn(3);
+
+      AccountModel lockedModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .loginFailureCount(new LoginFailureCount(3))
+              .build();
+      when(accountRepository.getByAccountId(new AccountId("testuser1"))).thenReturn(lockedModel);
+
+      assertThrows(
+          LockedException.class,
+          () -> {
+            authServiceImpl.login(
+                new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
+          });
+
+      verify(authenticationManager, times(0))
+          .authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
   }
 

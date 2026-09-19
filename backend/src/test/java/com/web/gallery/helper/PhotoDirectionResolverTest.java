@@ -1,10 +1,12 @@
 package com.web.gallery.helper;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import com.web.gallery.enumeration.DirectionEnum;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -80,5 +82,15 @@ public class PhotoDirectionResolverTest {
         new MockMultipartFile("imageFile", "test.jpg", "image/jpeg", "not an image".getBytes());
 
     assertEquals(DirectionEnum.NONE, photoDirectionResolver.resolve(invalidFile));
+  }
+
+  @Test
+  @Order(6)
+  @DisplayName("異常系：画像ファイルの読み込みでIOExceptionが発生した場合、NONEを返す")
+  void resolve_ioException_returnsNone() throws Exception {
+    MultipartFile imageFile = mock(MultipartFile.class);
+    doThrow(new IOException("読み込み失敗")).when(imageFile).getInputStream();
+
+    assertEquals(DirectionEnum.NONE, photoDirectionResolver.resolve(imageFile));
   }
 }

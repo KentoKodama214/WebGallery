@@ -223,6 +223,59 @@ public class AccountServiceImplTest {
       verify(accountRepositoryImpl, times(0)).regist(any());
       verify(applicationEventPublisher, times(0)).publishEvent(any());
     }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：出身都道府県区分コードが未指定でも、在住都道府県区分コードが区分マスタに実在すれば登録できること")
+    void registAccount_birthplaceNull_residentValid() throws GalleryException {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("aaaaaaaa"))
+              .residentPrefectureKbnCode(new ResidentPrefectureKbnCode("13"))
+              .build();
+      doReturn(KbnMstModelList.of(List.of(newPrefectureKbnMstModel("13"))))
+          .when(kbnMstRepositoryImpl)
+          .get(new KbnClassCode(Consts.PREFECTURE));
+      doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
+      doNothing().when(accountRepositoryImpl).regist(accountModel);
+
+      assertTrue(accountServiceImpl.registAccount(accountModel));
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("異常系：在住都道府県区分コードが区分マスタに実在しない場合はBadRequestExceptionをthrowする")
+    void registAccount_residentInvalid() throws GalleryException {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("aaaaaaaa"))
+              .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("13"))
+              .residentPrefectureKbnCode(new ResidentPrefectureKbnCode("99"))
+              .build();
+      doReturn(KbnMstModelList.of(List.of(newPrefectureKbnMstModel("13"))))
+          .when(kbnMstRepositoryImpl)
+          .get(new KbnClassCode(Consts.PREFECTURE));
+
+      assertThrows(BadRequestException.class, () -> accountServiceImpl.registAccount(accountModel));
+
+      verify(accountRepositoryImpl, times(0)).regist(any());
+    }
+  }
+
+  private static com.web.gallery.model.KbnMstModel newPrefectureKbnMstModel(String kbnCode) {
+    return com.web.gallery.model.KbnMstModel.builder()
+        .kbnClassCode(new KbnClassCode(Consts.PREFECTURE))
+        .kbnCode(new com.web.gallery.domain.common.KbnCode(kbnCode))
+        .sortOrder(new com.web.gallery.domain.common.SortOrder(1))
+        .kbnGroupCode(new com.web.gallery.domain.common.KbnGroupCode("group"))
+        .kbnClassJapaneseName(new com.web.gallery.domain.common.KbnClassJapaneseName("都道府県"))
+        .kbnGroupJapaneseName(new com.web.gallery.domain.common.KbnGroupJapaneseName("グループ"))
+        .kbnJapaneseName(new com.web.gallery.domain.common.KbnJapaneseName("東京都"))
+        .kbnClassEnglishName(new com.web.gallery.domain.common.KbnClassEnglishName("prefecture"))
+        .kbnGroupEnglishName(new com.web.gallery.domain.common.KbnGroupEnglishName("group"))
+        .kbnEnglishName(new com.web.gallery.domain.common.KbnEnglishName("Tokyo"))
+        .explanation(new com.web.gallery.domain.common.Explanation(""))
+        .build();
   }
 
   @Nested
@@ -935,6 +988,25 @@ public class AccountServiceImplTest {
 
       verifyNoInteractions(loginHistoryRepositoryImpl);
     }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：対象アカウントが取得できない場合、何も更新せず終了すること")
+    void handle_accountNotFound() throws GalleryException {
+      String username = "aaaaaaaa";
+      String password = "AAAAAAAA";
+
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(username, password, new ArrayList<>());
+      AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
+
+      doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
+
+      accountServiceImpl.handle(event);
+
+      verify(accountRepositoryImpl, times(0)).updateLoginFailureCount(any());
+      verifyNoInteractions(loginHistoryRepositoryImpl);
+    }
   }
 
   @Nested
@@ -1122,6 +1194,43 @@ public class AccountServiceImplTest {
       accountServiceImpl.updateAccount(accountModel, new Password("oldpassword01"));
 
       verify(reauthenticationThrottle, times(1)).reset(1L);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：現在のパスワードが未入力（null）の場合でもBCrypt照合を1回行い、不一致として扱うこと")
+    void reauth_currentPasswordNull_treatedAsMismatch() {
+      AccountModel storedAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .password(new Password("stored-hash"))
+              .build();
+      doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () ->
+              accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("aaaaaaaa"), null));
+
+      verify(passwordEncoder, times(1)).matches(eq(""), anyString());
+      verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：対象アカウントにパスワードが設定されていない場合でもBCrypt照合を1回行い、不一致として扱うこと")
+    void reauth_storedPasswordNull_treatedAsMismatch() {
+      AccountModel storedAccount = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () ->
+              accountServiceImpl.deleteAccount(
+                  new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01")));
+
+      verify(passwordEncoder, times(1)).matches(eq("password01"), anyString());
+      verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
     }
   }
 
