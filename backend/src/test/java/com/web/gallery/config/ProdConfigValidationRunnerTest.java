@@ -78,6 +78,70 @@ class ProdConfigValidationRunnerTest {
 
       assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
     }
+
+    @Test
+    @DisplayName("空白のみのオリジンのみを含むリストは起動失敗する")
+    void blankOnlyList() {
+      lenient().when(corsConfig.getAllowedOrigins()).thenReturn(List.of("   "));
+
+      assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+    }
+
+    @Test
+    @DisplayName("複数オリジンのうち一部が空白の場合は起動失敗する")
+    void partiallyBlankInMultipleOrigins() {
+      lenient()
+          .when(corsConfig.getAllowedOrigins())
+          .thenReturn(List.of("https://gallery.example.com", "   "));
+
+      assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+    }
+
+    @Test
+    @DisplayName("ホストを含まないオリジンは起動失敗する")
+    void noHost() {
+      lenient().when(corsConfig.getAllowedOrigins()).thenReturn(List.of("https:///path"));
+
+      assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+    }
+
+    @Test
+    @DisplayName("末尾がルートパス（/）のみのオリジンは検証を通過する")
+    void rootPathOnly() {
+      lenient()
+          .when(corsConfig.getAllowedOrigins())
+          .thenReturn(List.of("https://gallery.example.com/"));
+
+      assertDoesNotThrow(() -> prodConfigValidationRunner.validate());
+    }
+
+    @Test
+    @DisplayName("クエリを含むオリジンは起動失敗する")
+    void withQuery() {
+      lenient()
+          .when(corsConfig.getAllowedOrigins())
+          .thenReturn(List.of("https://gallery.example.com?q=1"));
+
+      assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+    }
+
+    @Test
+    @DisplayName("フラグメントを含むオリジンは起動失敗する")
+    void withFragment() {
+      lenient()
+          .when(corsConfig.getAllowedOrigins())
+          .thenReturn(List.of("https://gallery.example.com#frag"));
+
+      assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+    }
+
+    @Test
+    @DisplayName("URIとして不正な形式のオリジンは起動失敗する")
+    void invalidUriSyntax() {
+      lenient().when(corsConfig.getAllowedOrigins()).thenReturn(List.of("https://exa mple.com"));
+
+      assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+    }
   }
 
   @Nested

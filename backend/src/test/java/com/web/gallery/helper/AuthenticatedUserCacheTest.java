@@ -65,6 +65,96 @@ public class AuthenticatedUserCacheTest {
 
       assertEquals(2, calls.get());
     }
+
+    @Test
+    @DisplayName("TTLを過ぎた場合はキャッシュを使わずloaderを再度呼ぶ")
+    void cache_miss_after_ttl_expired() {
+      AuthenticatedUserCache cache = new AuthenticatedUserCache(1L);
+      AtomicInteger calls = new AtomicInteger();
+      Supplier<AccountPrincipal> loader =
+          () -> {
+            calls.incrementAndGet();
+            return principal();
+          };
+
+      cache.get("aaaaaaaa", loader);
+      try {
+        Thread.sleep(10L);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      cache.get("aaaaaaaa", loader);
+
+      assertEquals(2, calls.get(), "TTL切れ後はキャッシュを使わずloaderが再度呼ばれる");
+    }
+
+    @Test
+    @DisplayName("loaderがnullを返した場合はキャッシュに格納せず、次回もloaderを呼ぶ")
+    void does_not_cache_null_result() {
+      AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
+      AtomicInteger calls = new AtomicInteger();
+      Supplier<AccountPrincipal> loader =
+          () -> {
+            calls.incrementAndGet();
+            return null;
+          };
+
+      AccountPrincipal first = cache.get("aaaaaaaa", loader);
+      AccountPrincipal second = cache.get("aaaaaaaa", loader);
+
+      assertNull(first);
+      assertNull(second);
+      assertEquals(2, calls.get(), "loaderがnullを返した結果はキャッシュされない");
+    }
+  }
+
+  @Nested
+  @DisplayName("エントリ数上限")
+  class Capacity {
+    @Test
+    @DisplayName("エントリ数が上限に達した場合、キャッシュを全クリアしてから格納する")
+    void clears_all_when_over_capacity() {
+      AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
+      AtomicInteger calls = new AtomicInteger();
+      Supplier<AccountPrincipal> loader =
+          () -> {
+            calls.incrementAndGet();
+            return principal();
+          };
+
+      for (int i = 0; i < 10_000; i++) {
+        cache.get("acc" + i, loader);
+      }
+      // 上限到達により、次のgetでキャッシュが全クリアされてから格納される
+      cache.get("acc-over", loader);
+
+      // 全クリアされているため、既存エントリは再度loaderが呼ばれる
+      cache.get("acc0", loader);
+
+      assertEquals(10_002, calls.get(), "上限到達時に全クリアされ、既存エントリのloaderが再度呼ばれる");
+    }
+  }
+
+  @Nested
+  @DisplayName("evict")
+  class Evict {
+    @Test
+    @DisplayName("accountIdがnullの場合は何もしない")
+    void evict_ignoresNullAccountId() {
+      AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
+      AtomicInteger calls = new AtomicInteger();
+      Supplier<AccountPrincipal> loader =
+          () -> {
+            calls.incrementAndGet();
+            return principal();
+          };
+      cache.get("aaaaaaaa", loader);
+
+      assertDoesNotThrow(() -> cache.evict(null));
+
+      cache.get("aaaaaaaa", loader);
+      assertEquals(1, calls.get(), "evict(null)は既存キャッシュに影響しない");
+    }
   }
 
   @Nested
@@ -150,6 +240,30 @@ public class AuthenticatedUserCacheTest {
       cache.get("newid000", loader);
 
       assertEquals(4, calls.get(), "新旧どちらのアカウントIDのエントリも失効している");
+    }
+
+    @Test
+    @DisplayName("更新後アカウントIDが不明（accountId=null）の場合は旧IDのみ失効する")
+    void evicts_only_previous_account_id_when_new_id_unknown() {
+      AuthenticatedUserCache cache = new AuthenticatedUserCache(10_000L);
+      AtomicInteger calls = new AtomicInteger();
+      Supplier<AccountPrincipal> loader =
+          () -> {
+            calls.incrementAndGet();
+            return principal();
+          };
+
+      cache.get("oldid000", loader);
+      cache.get("otherid0", loader);
+      assertEquals(2, calls.get());
+
+      cache.onAccountUpdated(
+          new AccountUpdatedEvent(new AccountNo(1L), null, new AccountId("oldid000")));
+
+      cache.get("oldid000", loader);
+      cache.get("otherid0", loader);
+
+      assertEquals(3, calls.get(), "旧IDのみ失効し、無関係なアカウントのキャッシュは保持される");
     }
 
     @Test

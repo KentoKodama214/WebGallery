@@ -712,6 +712,21 @@ public class AccountControllerTest {
 
     @Test
     @Order(12)
+    @DisplayName("異常系：新しいパスワードが入力されているのに現在のパスワードが未入力の場合、BadRequestExceptionをthrowする")
+    void update_BadRequestException_newPassword_without_currentPassword() throws Exception {
+      mockMvc
+          .perform(
+              put("/api/v1/accounts/aaaaaaaa")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(
+                      readJsonFile("update_badrequest_newpassword_without_currentpassword.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(accountService, times(0)).updateAccount(any(AccountModel.class), any());
+    }
+
+    @Test
+    @Order(13)
     @DisplayName("異常系：UpdateFailureExceptionをthrowする")
     void update_UpdateFailureException() throws Exception {
       String accountId = "aaaaaaaa";
@@ -738,7 +753,7 @@ public class AccountControllerTest {
     }
 
     @Test
-    @Order(13)
+    @Order(14)
     @DisplayName("正常系：newPasswordフィールド自体を省略（null）した場合も、パスワード変更なしとして扱われること")
     void update_no_password_field() throws Exception {
       String accountId = "aaaaaaaa";

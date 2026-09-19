@@ -5,6 +5,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -193,5 +197,64 @@ public class ReauthenticationThrottleTest {
 
     // 間引きが起きても、ロックアウト中の被害者アカウントは削除されない
     assertTrue(throttle.isLockedOut(999_999L));
+  }
+
+  @Test
+  @DisplayName("エントリ数が上限に達したとき、期限切れエントリが優先的に間引かれ、有効なロックアウトは維持される")
+  void eviction_prefers_expired_entries() {
+    ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+
+    // 大量の期限切れになるエントリを先に作る
+    for (long accountNo = 1L; accountNo <= 50_000L; accountNo++) {
+      throttle.recordFailure(accountNo);
+    }
+    clock.advanceMinutes(20);
+
+    // 被害者アカウントを現在時刻でロックアウト状態にする
+    throttle.recordFailure(999_999L);
+    throttle.recordFailure(999_999L);
+    throttle.recordFailure(999_999L);
+    assertTrue(throttle.isLockedOut(999_999L));
+
+    // 残りのエントリを積んで上限に到達させ、期限切れエントリの間引きを発生させる
+    assertDoesNotThrow(
+        () -> {
+          for (long accountNo = 50_001L; accountNo <= 100_005L; accountNo++) {
+            throttle.recordFailure(accountNo);
+          }
+        });
+
+    assertTrue(throttle.isLockedOut(999_999L));
+  }
+
+  @Test
+  @DisplayName("複数スレッドが同時に上限到達時の間引きを試みても、排他制御により例外なく完了する")
+  void eviction_is_exclusive_across_threads() throws Exception {
+    ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+    for (long accountNo = 1L; accountNo <= 100_000L; accountNo++) {
+      throttle.recordFailure(accountNo);
+    }
+
+    int threadCount = 8;
+    ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+    CountDownLatch latch = new CountDownLatch(threadCount);
+    try {
+      for (int i = 0; i < threadCount; i++) {
+        long base = 200_000L + (long) i * 1_000L;
+        executor.submit(
+            () -> {
+              try {
+                for (long accountNo = base; accountNo < base + 1_000L; accountNo++) {
+                  throttle.recordFailure(accountNo);
+                }
+              } finally {
+                latch.countDown();
+              }
+            });
+      }
+      assertTrue(latch.await(30, TimeUnit.SECONDS));
+    } finally {
+      executor.shutdown();
+    }
   }
 }

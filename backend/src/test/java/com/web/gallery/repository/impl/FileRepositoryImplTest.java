@@ -92,6 +92,42 @@ class FileRepositoryImplTest {
     }
 
     @Test
+    @DisplayName("正常系：gif拡張子のキーは Content-Type: image/gif を設定する")
+    void save_resolvesContentTypeForGif() throws IOException {
+      MultipartFile multipartFile = mock(MultipartFile.class);
+      doReturn(1L).when(multipartFile).getSize();
+      doReturn(new java.io.ByteArrayInputStream(new byte[] {1}))
+          .when(multipartFile)
+          .getInputStream();
+
+      newRepository("")
+          .save(FileModel.of(new ImageFilePath("aaaaaaaa/9-x.gif"), new ImageFile(multipartFile)));
+
+      ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
+      verify(s3Client)
+          .putObject(captor.capture(), any(software.amazon.awssdk.core.sync.RequestBody.class));
+      assertEquals("image/gif", captor.getValue().contentType());
+    }
+
+    @Test
+    @DisplayName("正常系：webp拡張子のキーは Content-Type: image/webp を設定する")
+    void save_resolvesContentTypeForWebp() throws IOException {
+      MultipartFile multipartFile = mock(MultipartFile.class);
+      doReturn(1L).when(multipartFile).getSize();
+      doReturn(new java.io.ByteArrayInputStream(new byte[] {1}))
+          .when(multipartFile)
+          .getInputStream();
+
+      newRepository("")
+          .save(FileModel.of(new ImageFilePath("aaaaaaaa/9-x.webp"), new ImageFile(multipartFile)));
+
+      ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
+      verify(s3Client)
+          .putObject(captor.capture(), any(software.amazon.awssdk.core.sync.RequestBody.class));
+      assertEquals("image/webp", captor.getValue().contentType());
+    }
+
+    @Test
     @DisplayName("正常系：未知の拡張子はフォールバックとしてMultipartFileの申告値を用いる")
     void save_fallsBackToDeclaredContentType() throws IOException {
       MultipartFile multipartFile = mock(MultipartFile.class);
@@ -228,6 +264,36 @@ class FileRepositoryImplTest {
 
       verify(s3Client, never()).deleteObjects(any(DeleteObjectsRequest.class));
     }
+
+    @Test
+    @DisplayName("正常系：一覧が複数ページにわたる場合はcontinuationTokenで全ページを取得し、それぞれ削除する")
+    void deleteByPrefix_truncated_fetchesAllPages() {
+      doReturn(
+              ListObjectsV2Response.builder()
+                  .contents(S3Object.builder().key("aaaaaaaa/DSC11.jpg").build())
+                  .isTruncated(true)
+                  .nextContinuationToken("token-1")
+                  .build())
+          .when(s3Client)
+          .listObjectsV2(
+              argThat(
+                  (ListObjectsV2Request req) -> req != null && req.continuationToken() == null));
+      doReturn(
+              ListObjectsV2Response.builder()
+                  .contents(S3Object.builder().key("aaaaaaaa/DSC12.jpg").build())
+                  .isTruncated(false)
+                  .build())
+          .when(s3Client)
+          .listObjectsV2(
+              argThat(
+                  (ListObjectsV2Request req) ->
+                      req != null && "token-1".equals(req.continuationToken())));
+
+      newRepository("").deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
+
+      verify(s3Client, times(2)).listObjectsV2(any(ListObjectsV2Request.class));
+      verify(s3Client, times(2)).deleteObjects(any(DeleteObjectsRequest.class));
+    }
   }
 
   @Nested
@@ -271,6 +337,31 @@ class FileRepositoryImplTest {
 
       assertEquals(
           "http://localhost:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123",
+          actual.value());
+    }
+
+    @Test
+    @DisplayName("正常系：署名付きURLにクエリがない場合、差し替え後もクエリを付与しない")
+    void getPresignedUrl_withPublicBaseUrl_noQuery() {
+      stubPresign("http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg");
+
+      ImageFilePath actual =
+          newRepository("http://localhost:9000")
+              .getPresignedUrl(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
+
+      assertEquals("http://localhost:9000/test-bucket/aaaaaaaa/DSC11.jpg", actual.value());
+    }
+
+    @Test
+    @DisplayName("異常系：public-base-urlの形式が不正な場合、発行された署名付きURLをそのまま返す")
+    void getPresignedUrl_invalidPublicBaseUrl_returnsAsIs() {
+      stubPresign("http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123");
+
+      ImageFilePath actual =
+          newRepository("://invalid-url").getPresignedUrl(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
+
+      assertEquals(
+          "http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123",
           actual.value());
     }
   }

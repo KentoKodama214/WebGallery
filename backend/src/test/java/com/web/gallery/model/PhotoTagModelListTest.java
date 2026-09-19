@@ -51,5 +51,26 @@ public class PhotoTagModelListTest {
       assertEquals(1, actual.size());
       assertEquals(new PhotoNo(1L), actual.get(0).getPhotoNo());
     }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：アカウント番号が一致しない場合、絞り込み結果に含まれないこと")
+    void filterByPhoto_accountNoMismatch() {
+      PhotoTagModelList photoTagModelList =
+          PhotoTagModelList.of(
+              List.of(
+                  PhotoTagModel.builder()
+                      .accountNo(new AccountNo(2L))
+                      .photoNo(new PhotoNo(1L))
+                      .tagNo(new TagNo(1L))
+                      .tagJapaneseName(new TagJapaneseName("太陽"))
+                      .tagEnglishName(new TagEnglishName("sun"))
+                      .build()));
+
+      PhotoTagModelList actual =
+          photoTagModelList.filterByPhoto(new AccountNo(1L), new PhotoNo(1L));
+
+      assertTrue(actual.isEmpty());
+    }
   }
 }
