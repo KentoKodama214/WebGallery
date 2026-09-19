@@ -102,49 +102,37 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: 週次キャッシュキー生成
-        id: cache-key
-        run: echo "week=$(date +'%Y-%V')" >> "$GITHUB_OUTPUT"
+      - name: backend SBOM生成（CycloneDX）
+        run: ./backend/gradlew -p backend cyclonedxBom
 
-      - name: OWASP Dependency-Checkデータベースキャッシュ
-        uses: actions/cache@v6
-        with:
-          path: ~/.gradle/dependency-check-data
-          key: dependency-check-data-${{ steps.cache-key.outputs.week }}
-          restore-keys: |
-            dependency-check-data-
+      # OSV-Scanner（https://github.com/google/osv-scanner）はOSVデータベースをAPI経由で都度照会するため、
+      # OWASP Dependency-Checkのように数GB規模のNVDデータベース全体を同期する必要がなく、
+      # スキャン自体は数秒で完了する。frontendはpnpm-lock.yamlを直接解析できるため、
+      # Node.js/pnpmのセットアップやパッケージインストールも不要。
+      - name: OSV-Scannerインストール
+        run: |
+          curl -sL -o osv-scanner \
+            https://github.com/google/osv-scanner/releases/download/v2.6.0/osv-scanner_linux_amd64
+          chmod +x osv-scanner
 
-      - name: backend依存関係の脆弱性スキャン
-        env:
-          # NVD API v2.0は未認証アクセスを事実上受け付けないため、APIキー未設定だとこのステップは失敗する（必須）。
-          # https://nvd.nist.gov/developers/request-an-api-key で取得し、リポジトリシークレット NVD_API_KEY に設定すること
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        run: ./backend/gradlew -p backend dependencyCheckAnalyze
+      - name: 依存関係の脆弱性スキャン（backend SBOM・frontend pnpm-lock.yaml）
+        run: |
+          set +e
+          ./osv-scanner scan source \
+            -L backend/build/reports/cyclonedx/application.cdx.json \
+            -L frontend/pnpm-lock.yaml \
+            --format=markdown --output-file=osv-results.md
+          exit_code=$?
+          set -e
+          cat osv-results.md >> "$GITHUB_STEP_SUMMARY"
+          exit "$exit_code"
 
-      - name: backend脆弱性スキャンレポートアップロード
+      - name: 脆弱性スキャンレポートアップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: dependency-check-report
-          path: backend/build/reports/dependency-check-report.html
-
-      - name: pnpmセットアップ
-        uses: pnpm/action-setup@v6
-        with:
-          package_json_file: frontend/package.json
-
-      - name: Node.js セットアップ
-        uses: actions/setup-node@v7
-        with:
-          node-version: '22.15'
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - name: フロントエンド依存パッケージインストール
-        run: cd frontend && pnpm install --frozen-lockfile
-
-      - name: frontend依存関係の脆弱性スキャン
-        run: cd frontend && pnpm audit --audit-level=high
+          name: osv-scan-report
+          path: osv-results.md
 
   integration-test:
     name: 結合テスト

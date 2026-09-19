@@ -7,6 +7,7 @@
 | Javadocチェック | `checkstyle.yml` | `development`・`staging`・`master`へのPR |
 | フォーマットチェック | `spotless.yml` | `development`・`staging`・`master`へのPR |
 | テスト実行 | `test.yml` | `development`・`staging`・`master`へのPR |
+| 依存関係の脆弱性スキャン | `test.yml`（`dependency-scan`ジョブ） | `development`・`staging`・`master`へのPR |
 | カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `development`・`staging`・`master`へのPR |
 | 環境昇格PR自動作成 | `promote-branch.yml` | `development`・`staging`へのpush（PRマージ含む） |
 
@@ -24,6 +25,7 @@ spotless.yml:
 test.yml:
   フロントエンド単体テスト ─────────────→ (独立)
   本番CSPスモークテスト ────────────────→ (独立)
+  依存関係の脆弱性スキャン ─────────────→ (独立)
   単体テスト ──→ (成功時のみ) 結合テスト ──┐
              ├→ (成功時のみ) E2Eテスト     │
              └───────────────────────────┴→ (両方成功時) カバレッジレポート
@@ -31,6 +33,7 @@ test.yml:
 
 - Javadocチェック、フォーマットチェック、テスト実行は別ワークフローのため、**並列に実行**される
 - フロントエンド単体テストはバックエンドの単体テストとは独立して**並列に実行**される
+- 依存関係の脆弱性スキャンは他のジョブと依存関係を持たず**並列に実行**される
 - 単体テストが失敗した場合、結合テスト・E2Eテストは**スキップ**される
 - 結合テストとE2Eテストは互いに依存せず**並列に実行**される
 - Javadocチェックの成否はテスト実行に**影響しない**
@@ -68,6 +71,15 @@ Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/ja
 `./gradlew unitTest`を実行し、結合テスト(`*IntegrationTest*`)とMapperテスト(`mapper/*Test*`)を除く単体テストを実行する。
 
 レイヤードアーキテクチャ（Controller → Service → Repository → Mapper）の依存方向違反は、`ArchitectureTest`（ArchUnit）としてこの単体テストの一部で検証される。
+
+### 依存関係の脆弱性スキャン (`test.yml` - `dependency-scan`)
+
+[OSV-Scanner](https://github.com/google/osv-scanner)を使用して、backend・frontendの依存関係（推移的依存を含む）に既知の脆弱性がないかをスキャンする。他のジョブと依存関係を持たず並列に実行される。
+
+- backend: `./gradlew cyclonedxBom`（CycloneDXプラグイン）でランタイム依存関係全体のSBOM（Software Bill of Materials）を生成し、それをスキャン対象にする
+- frontend: `pnpm-lock.yaml`を直接スキャン対象にする（依存パッケージのインストールは不要）
+
+OSV-Scanner CLIはGitHub Releaseからバイナリを直接ダウンロードして使用する（外部Actionは不使用）。以前はOWASP Dependency-Checkを使用していたが、NVD（米国の脆弱性データベース）データベース全体の同期が必要でCI実行時間が長時間化する問題があったため、OSVデータベースをAPI照会するOSV-Scannerに置き換えた。脆弱性が1件でも見つかった場合はジョブが失敗する（重大度による絞り込みは行わない）。スキャン結果はMarkdown形式でジョブサマリーに出力し、同じ内容をアーティファクトとしてもアップロードする。
 
 ### 結合テスト (`test.yml` - `integration-test`)
 
