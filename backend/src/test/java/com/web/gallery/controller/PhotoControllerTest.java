@@ -13,6 +13,7 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.domain.photo.FavoriteCount;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.IsFavorite;
@@ -27,6 +28,7 @@ import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.ClientIpResolver;
 import com.web.gallery.helper.PhotoDirectionResolver;
+import com.web.gallery.helper.PhotoExifExtractor;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.PhotoDeleteModelList;
 import com.web.gallery.model.PhotoDetailModelList;
@@ -36,6 +38,7 @@ import com.web.gallery.model.PhotoModelList;
 import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoSaveResultModel;
 import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.policy.PhotoExifDataMergePolicy;
 import com.web.gallery.service.impl.PhotoServiceImpl;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -78,11 +81,21 @@ public class PhotoControllerTest {
 
   @Mock private PhotoDirectionResolver photoDirectionResolver;
 
+  @Mock private PhotoExifExtractor photoExifExtractor;
+
+  @Mock private PhotoExifDataMergePolicy photoExifDataMergePolicy;
+
   private MockMvc mockMvc;
 
   @BeforeEach
   void setUp() {
     lenient().when(clientIpResolver.resolve(any())).thenReturn(new IpAddress("203.0.113.1"));
+    // 画像バイナリは実際のJPEGではないためEXIF抽出は常に空とし、クライアント申告値のみが採用される状態を再現する
+    // （実際の抽出・マージロジックはPhotoExifExtractorTest・PhotoExifDataMergePolicyTestで個別に検証する）
+    lenient().when(photoExifExtractor.extract(any())).thenReturn(ExifData.empty());
+    lenient()
+        .when(photoExifDataMergePolicy.merge(any(), any()))
+        .thenAnswer(invocation -> invocation.getArgument(1));
     mockMvc =
         MockMvcBuilders.standaloneSetup(photoController)
             .setControllerAdvice(new CommonControllerAdvice())
