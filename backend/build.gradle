@@ -7,6 +7,7 @@ plugins {
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'org.dddjava.jig-gradle-plugin' version '2026.8.1'
+	id 'org.owasp.dependencycheck' version '13.0.0'
 }
 
 checkstyle {
@@ -27,6 +28,26 @@ spotless {
 
 jacoco {
 	toolVersion = '0.8.13'
+}
+
+dependencyCheck {
+	// CVSSスコア7.0以上（High以上）の既知脆弱性を含む依存ライブラリが見つかった場合にビルドを失敗させる
+	failBuildOnCVSS = 7
+	formats = ['HTML', 'JUNIT']
+	data {
+		// CIでキャッシュ可能な固定パスに脆弱性データベースを保存する（毎回フル同期させないため）
+		directory = "${System.getProperty('user.home')}/.gradle/dependency-check-data"
+	}
+}
+
+// NVD API v2.0は未認証アクセスを事実上受け付けず、APIキー未設定だと
+// dependencyCheckAnalyzeがデータ同期時に例外で失敗する（速度低下ではなく必須要件）。
+// https://nvd.nist.gov/developers/request-an-api-key で取得し、環境変数 NVD_API_KEY で渡すこと。
+// nvd.apiKeyへ空文字・nullを設定すると「キー指定あり」の認証モードに入り
+// 空キーとして検証エラーになるため、値が存在する場合のみ設定する
+String nvdApiKey = System.getenv('NVD_API_KEY')
+if (nvdApiKey) {
+	dependencyCheck.nvd.apiKey = nvdApiKey
 }
 
 checkstyleTest.enabled = false
