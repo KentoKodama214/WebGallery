@@ -46,7 +46,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplTest {
 
@@ -74,7 +76,7 @@ class AuthServiceImplTest {
 
   @Nested
   @DisplayName("#login")
-  class Login {
+  class login {
 
     @Test
     @DisplayName("正常系: ログインに成功し、トークンが返されること")
@@ -269,7 +271,7 @@ class AuthServiceImplTest {
 
   @Nested
   @DisplayName("#refresh")
-  class Refresh {
+  class refresh {
 
     @Test
     @DisplayName("正常系: リフレッシュトークンが有効な場合、新しいアクセストークンとリフレッシュトークンが返され、旧トークンが無効化されること")
@@ -538,7 +540,7 @@ class AuthServiceImplTest {
 
   @Nested
   @DisplayName("#logout")
-  class Logout {
+  class logout {
 
     @Test
     @DisplayName("正常系: リフレッシュトークンが無効化されること")

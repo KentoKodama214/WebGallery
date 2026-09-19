@@ -22,7 +22,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class JwtTokenProviderTest {
 
@@ -49,7 +51,7 @@ class JwtTokenProviderTest {
 
   @Nested
   @DisplayName("#generateAccessToken")
-  class GenerateAccessToken {
+  class generateAccessToken {
 
     @Test
     @DisplayName("正常系: アクセストークンが生成されること")
@@ -84,7 +86,7 @@ class JwtTokenProviderTest {
 
   @Nested
   @DisplayName("#generateRefreshToken")
-  class GenerateRefreshToken {
+  class generateRefreshToken {
 
     @Test
     @DisplayName("正常系: リフレッシュトークンが生成されること")
@@ -107,7 +109,7 @@ class JwtTokenProviderTest {
 
   @Nested
   @DisplayName("#validateAccessToken")
-  class ValidateAccessToken {
+  class validateAccessToken {
 
     @Test
     @DisplayName("正常系: 有効なトークンのクレームが取得できること")
@@ -211,7 +213,7 @@ class JwtTokenProviderTest {
 
   @Nested
   @DisplayName("#validateSecret")
-  class ValidateSecret {
+  class validateSecret {
 
     @Test
     @DisplayName("正常系: 256bit以上のシークレットキーの場合は例外がスローされないこと")
@@ -258,7 +260,7 @@ class JwtTokenProviderTest {
 
   @Nested
   @DisplayName("#isTokenValid")
-  class IsTokenValid {
+  class isTokenValid {
 
     @Test
     @DisplayName("正常系: 有効なトークンの場合はtrueを返すこと")
