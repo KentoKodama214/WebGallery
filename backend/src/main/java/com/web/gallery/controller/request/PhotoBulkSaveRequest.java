@@ -19,7 +19,11 @@ import org.springframework.web.multipart.MultipartFile;
  *
  * <p>複数の画像ファイルに対し、タイトル〜タグまでの共通メタデータを一括で登録する（写真ごとに個別の値は設定できない）。
  * ただし向き区分のみは写真ごとに異なりうるため、クライアントからは受け取らず、画像ファイルの実際の ピクセルサイズからサーバー側で写真ごとに判定する（{@link
- * com.web.gallery.helper.PhotoDirectionResolver}）
+ * com.web.gallery.helper.PhotoDirectionResolver}）。
+ * EXIF情報（焦点距離・F値・シャッタースピード・ISO）はここで受け取った値（ユーザー入力値）を項目ごとに優先し、
+ * 未入力の項目についてのみ画像ファイル自体から抽出した値（JPEGのEXIF）で補完する（{@link
+ * com.web.gallery.helper.PhotoExifExtractor}、{@link
+ * com.web.gallery.policy.PhotoExifDataMergePolicy}）
  */
 @Schema(description = "写真新規一括登録リクエスト")
 @Data

@@ -94,6 +94,38 @@ describe("PhotoSettingForm", () => {
     expect(screen.queryByTestId("direction-select")).not.toBeInTheDocument();
   });
 
+  it("新規モードでは、画像ファイルからEXIF情報が自動登録される旨の案内文が表示されること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByText(
+        "画像ファイルに焦点距離、F値、シャッタースピード、ISOの情報があれば自動登録されます"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("編集モードでは、EXIF情報自動登録の案内文が表示されないこと", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+
+    render(
+      <PhotoSettingForm photoAccountId="user1" accountNo={1} photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("写真編集")).toBeInTheDocument();
+    });
+
+    expect(
+      screen.queryByText(
+        "画像ファイルに焦点距離、F値、シャッタースピード、ISOの情報があれば自動登録されます"
+      )
+    ).not.toBeInTheDocument();
+  });
+
   it("新規モードで送信すると、directionKbnを送信しないこと（バックエンドが画像から自動判定するため）", async () => {
     mockRegistPhotos.mockResolvedValue({ isSuccess: true, registeredCount: 1 });
 

@@ -16,10 +16,12 @@ import com.web.gallery.controller.response.PhotoUpperLimitResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Referer;
+import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.ClientIpResolver;
 import com.web.gallery.helper.PhotoDirectionResolver;
+import com.web.gallery.helper.PhotoExifExtractor;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.helper.ValidationErrorLogger;
 import com.web.gallery.model.PhotoDeleteModel;
@@ -30,6 +32,7 @@ import com.web.gallery.model.PhotoDetailModelList;
 import com.web.gallery.model.PhotoListGetModel;
 import com.web.gallery.model.PhotoPageModel;
 import com.web.gallery.model.PhotoSaveResultModel;
+import com.web.gallery.policy.PhotoExifDataMergePolicy;
 import com.web.gallery.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -72,6 +75,8 @@ public class PhotoController {
   private final SessionHelper sessionHelper;
   private final ClientIpResolver clientIpResolver;
   private final PhotoDirectionResolver photoDirectionResolver;
+  private final PhotoExifExtractor photoExifExtractor;
+  private final PhotoExifDataMergePolicy photoExifDataMergePolicy;
 
   /**
    * クライアントから送信されたリファラを{@link Referer}に変換する（取得できない場合は空文字）
@@ -275,6 +280,12 @@ public class PhotoController {
     }
 
     AccountNo accountNo = new AccountNo(sessionHelper.getAccountNo());
+    ExifData clientSubmittedExifData =
+        ExifData.fromRawValues(
+            photoBulkSaveRequest.getFocalLength(),
+            photoBulkSaveRequest.getFValue(),
+            photoBulkSaveRequest.getShutterSpeed(),
+            photoBulkSaveRequest.getIso());
     PhotoDetailModelList photoDetailModelList =
         PhotoDetailModelList.of(
             photoBulkSaveRequest.getImageFiles().stream()
@@ -284,6 +295,8 @@ public class PhotoController {
                             photoBulkSaveRequest,
                             imageFile,
                             photoDirectionResolver.resolve(imageFile),
+                            photoExifDataMergePolicy.merge(
+                                photoExifExtractor.extract(imageFile), clientSubmittedExifData),
                             accountNo))
                 .toList());
 
