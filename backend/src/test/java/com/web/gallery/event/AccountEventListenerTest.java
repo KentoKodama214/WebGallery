@@ -53,4 +53,11 @@ public class AccountEventListenerTest {
     AccountUnlockedEvent event = new AccountUnlockedEvent(new AccountNo(1L));
     assertDoesNotThrow(() -> accountEventListener.handle(event));
   }
+
+  @Test
+  @DisplayName("正常系：AccountAuthorityChangedEventを受け取っても例外が発生しないこと")
+  void handle_accountAuthorityChangedEvent_success() {
+    AccountAuthorityChangedEvent event = new AccountAuthorityChangedEvent(new AccountNo(1L));
+    assertDoesNotThrow(() -> accountEventListener.handle(event));
+  }
 }
