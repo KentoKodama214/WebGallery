@@ -8,7 +8,11 @@ import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.helper.SessionHelper;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -22,23 +26,30 @@ public class AdminAuthorityAspectTest {
 
   @Mock private SessionHelper sessionHelper;
 
-  @Test
-  @DisplayName("正常系：管理者権限を持つ場合は例外が発生しないこと")
-  void validateAdminAuthority_success() {
-    doReturn(AuthorityEnum.ADMINISTRATOR).when(sessionHelper).getAuthorityKbn();
+  @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class validateAdminAuthority {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：管理者権限を持つ場合は例外が発生しないこと")
+    void validateAdminAuthority_success() {
+      doReturn(AuthorityEnum.ADMINISTRATOR).when(sessionHelper).getAuthorityKbn();
 
-    assertDoesNotThrow(() -> adminAuthorityAspect.validateAdminAuthority());
-  }
+      assertDoesNotThrow(() -> adminAuthorityAspect.validateAdminAuthority());
+    }
 
-  @Test
-  @DisplayName("異常系：管理者権限を持たない場合はForbiddenAccountExceptionが発生すること")
-  void validateAdminAuthority_forbidden() {
-    doReturn(AuthorityEnum.NORMAL).when(sessionHelper).getAuthorityKbn();
+    @Test
+    @Order(2)
+    @DisplayName("異常系：管理者権限を持たない場合はForbiddenAccountExceptionが発生すること")
+    void validateAdminAuthority_forbidden() {
+      doReturn(AuthorityEnum.NORMAL).when(sessionHelper).getAuthorityKbn();
 
-    ForbiddenAccountException exception =
-        assertThrows(
-            ForbiddenAccountException.class, () -> adminAuthorityAspect.validateAdminAuthority());
+      ForbiddenAccountException exception =
+          assertThrows(
+              ForbiddenAccountException.class, () -> adminAuthorityAspect.validateAdminAuthority());
 
-    assertEquals(ErrorEnum.NOT_AUTHORIZED_TO_ADMIN.getErrorCode(), exception.getErrorCode());
+      assertEquals(ErrorEnum.NOT_AUTHORIZED_TO_ADMIN.getErrorCode(), exception.getErrorCode());
+    }
   }
 }

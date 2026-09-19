@@ -12,7 +12,11 @@ import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.model.AccountModel;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
@@ -27,30 +31,37 @@ class AdminAccountListItemResponseTest {
         .isDeleted(new IsDeleted(false));
   }
 
-  @Test
-  @DisplayName("正常系：最終ログイン日時・ログイン失敗回数が設定されている場合、それぞれの値が設定されること")
-  void from_withValue() {
-    OffsetDateTime lastLoginDatetime = OffsetDateTime.now();
-    AccountModel model =
-        baseBuilder()
-            .lastLoginDatetime(new LastLoginDatetime(lastLoginDatetime))
-            .loginFailureCount(new LoginFailureCount(2))
-            .build();
+  @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class from {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：最終ログイン日時・ログイン失敗回数が設定されている場合、それぞれの値が設定されること")
+    void from_withValue() {
+      OffsetDateTime lastLoginDatetime = OffsetDateTime.now();
+      AccountModel model =
+          baseBuilder()
+              .lastLoginDatetime(new LastLoginDatetime(lastLoginDatetime))
+              .loginFailureCount(new LoginFailureCount(2))
+              .build();
 
-    AdminAccountListItemResponse actual = AdminAccountListItemResponse.from(model);
+      AdminAccountListItemResponse actual = AdminAccountListItemResponse.from(model);
 
-    assertEquals(lastLoginDatetime, actual.getLastLoginDatetime());
-    assertEquals(2, actual.getLoginFailureCount());
-  }
+      assertEquals(lastLoginDatetime, actual.getLastLoginDatetime());
+      assertEquals(2, actual.getLoginFailureCount());
+    }
 
-  @Test
-  @DisplayName("異常系：最終ログイン日時・ログイン失敗回数が未設定の場合、それぞれnullが設定されること")
-  void from_withoutValue() {
-    AccountModel model = baseBuilder().lastLoginDatetime(null).loginFailureCount(null).build();
+    @Test
+    @Order(2)
+    @DisplayName("異常系：最終ログイン日時・ログイン失敗回数が未設定の場合、それぞれnullが設定されること")
+    void from_withoutValue() {
+      AccountModel model = baseBuilder().lastLoginDatetime(null).loginFailureCount(null).build();
 
-    AdminAccountListItemResponse actual = AdminAccountListItemResponse.from(model);
+      AdminAccountListItemResponse actual = AdminAccountListItemResponse.from(model);
 
-    assertNull(actual.getLastLoginDatetime());
-    assertNull(actual.getLoginFailureCount());
+      assertNull(actual.getLastLoginDatetime());
+      assertNull(actual.getLoginFailureCount());
+    }
   }
 }

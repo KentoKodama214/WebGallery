@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -19,7 +20,6 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
@@ -31,7 +31,7 @@ import org.springframework.test.context.ActiveProfiles;
 @ExtendWith(MockitoExtension.class)
 class JwtAuthenticationFilterTest {
 
-  @InjectMocks private JwtAuthenticationFilter jwtAuthenticationFilter;
+  private JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Mock private JwtTokenProvider jwtTokenProvider;
   @Mock private AccountServiceImpl accountServiceImpl;
@@ -41,6 +41,12 @@ class JwtAuthenticationFilterTest {
   @Mock private HttpServletResponse response;
   @Mock private FilterChain filterChain;
   @Mock private AccountPrincipal accountPrincipal;
+
+  @BeforeEach
+  void setUp() {
+    jwtAuthenticationFilter =
+        new JwtAuthenticationFilter(jwtTokenProvider, accountServiceImpl, authenticatedUserCache);
+  }
 
   @AfterEach
   void clearContext() {
