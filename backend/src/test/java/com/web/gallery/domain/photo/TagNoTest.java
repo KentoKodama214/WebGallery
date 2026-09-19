@@ -39,5 +39,12 @@ class TagNoTest {
     void constructor_zero() {
       assertThrows(IllegalArgumentException.class, () -> new TagNo(0L));
     }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：負の値を指定した場合、IllegalArgumentExceptionをスローすること")
+    void constructor_negative() {
+      assertThrows(IllegalArgumentException.class, () -> new TagNo(-1L));
+    }
   }
 }
