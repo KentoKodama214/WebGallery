@@ -1545,4 +1545,94 @@ public class PhotoControllerIntegrationTest {
           .andExpect(jsonPath("$.isReachedUpperLimit").value(false));
     }
   }
+
+  @Nested
+  @Order(8)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")
+  class getPhotoDetail {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：EXIF・タグ・位置情報を含めて写真詳細を取得できること")
+    void getPhotoDetail_success() throws Exception {
+      mockMvc
+          .perform(get("/api/v1/accounts/aaaaaaaa/photos/1"))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.accountNo").value(1))
+          .andExpect(jsonPath("$.photoNo").value(1))
+          .andExpect(jsonPath("$.imageFilePath").value("https://www.xxx.com/aaaaaaaa/DSC11.jpg"))
+          .andExpect(jsonPath("$.photoJapaneseTitle").value("タイトル11"))
+          .andExpect(jsonPath("$.caption").value("caption11"))
+          .andExpect(jsonPath("$.locationNo").value(1))
+          .andExpect(jsonPath("$.locationName").value("ロケーション1"))
+          .andExpect(jsonPath("$.focalLength").value(24))
+          .andExpect(jsonPath("$.photoTagList.length()").value(2))
+          .andExpect(jsonPath("$.photoTagList[0].tagJapaneseName").value("太陽"))
+          .andExpect(jsonPath("$.photoTagList[1].tagJapaneseName").value("青空"));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：refererが最大長（2048文字）を超える場合、400を返す")
+    void getPhotoDetail_badRequest_referer_too_long() throws Exception {
+      String tooLongReferer = "a".repeat(2049);
+
+      mockMvc
+          .perform(get("/api/v1/accounts/aaaaaaaa/photos/1").param("referer", tooLongReferer))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：写真が存在しない場合、404を返す")
+    void getPhotoDetail_notFound() throws Exception {
+      mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/999")).andExpect(status().isNotFound());
+    }
+
+    /**
+     * IDOR対策の検証：位置情報が非公開（{@code is_location_public=false}）の写真は、閲覧者が
+     * 所有者本人でない限り撮影場所（ロケーション番号・住所・緯度経度・ロケーション名）を返さないこと（{@code PhotoServiceImpl#isLocationHiddenFor}）
+     */
+    @Test
+    @Order(4)
+    @DisplayName("セキュリティ：位置情報が非公開の写真は、所有者以外（未認証を含む）がアクセスした場合、位置情報が秘匿されること")
+    void getPhotoDetail_locationHidden_forNonOwner() throws Exception {
+      mockMvc
+          .perform(get("/api/v1/accounts/aaaaaaaa/photos/11"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.locationNo").isEmpty())
+          .andExpect(jsonPath("$.locationName").isEmpty())
+          .andExpect(jsonPath("$.address").isEmpty())
+          .andExpect(jsonPath("$.latitude").isEmpty())
+          .andExpect(jsonPath("$.longitude").isEmpty());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("セキュリティ：位置情報が非公開の写真でも、所有者本人がアクセスした場合は位置情報が見えること")
+    void getPhotoDetail_locationVisible_forOwner() throws Exception {
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .accountName(new AccountName("AAAAAAAA"))
+              .password(new Password("$2a$10$password1"))
+              .authorityKbn(AuthorityEnum.MINI)
+              .build();
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              get("/api/v1/accounts/aaaaaaaa/photos/11")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication)))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.locationNo").value(1))
+          .andExpect(jsonPath("$.locationName").value("ロケーション1"));
+    }
+  }
 }

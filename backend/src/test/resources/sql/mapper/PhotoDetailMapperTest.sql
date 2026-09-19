@@ -32,6 +32,11 @@ insert into photo.photo_mst values(DEFAULT, 4, 2, 1, '2000-01-01 09:00:00 Asia/T
 insert into photo.photo_mst values(DEFAULT, 4, 3, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2023-12-25 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC313.jpg', 'DSC313.jpg', 'タイトル33', 'title33', 'キャプション33', 'horizontal', 24, 8.0, 1, 100, true);
 insert into photo.photo_mst values(DEFAULT, 4, 4, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2023-11-20 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC314.jpg', 'DSC314.jpg', 'タイトル34', 'title34', 'キャプション34', 'horizontal', 24, 8.0, 1, 100, true);
 
+-- photo.photo_tag_mst（タグ絞り込みテスト用：account1のphoto1は「太陽」「青空」、photo2は「太陽」のみ保持）
+insert into photo.photo_tag_mst values(DEFAULT, 1, 1, 1, 1, '2000-01-01 10:00:00 Asia/Tokyo', '太陽', 'sun');
+insert into photo.photo_tag_mst values(DEFAULT, 1, 1, 2, 1, '2000-01-01 11:00:00 Asia/Tokyo', '青空', 'bluesky');
+insert into photo.photo_tag_mst values(DEFAULT, 1, 2, 1, 1, '2000-02-01 10:00:00 Asia/Tokyo', '太陽', 'sun');
+
 -- photo.photo_favorite
 insert into photo.photo_favorite values(DEFAULT, 1, 1, 1, 1, now());
 insert into photo.photo_favorite values(DEFAULT, 2, 1, 1, 1, now());

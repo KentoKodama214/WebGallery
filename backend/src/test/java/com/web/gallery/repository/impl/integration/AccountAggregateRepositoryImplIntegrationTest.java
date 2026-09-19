@@ -15,9 +15,11 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 @ActiveProfiles("test")
@@ -100,6 +102,87 @@ public class AccountAggregateRepositoryImplIntegrationTest {
       // 削除時点で未削除だった写真番号が記録されていること
       assertFalse(account.getDeletedPhotoNoList().isEmpty());
       assertTrue(account.getDeletedPhotoNoList().toList().contains(new PhotoNo(1L)));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：写真・お気に入り等の関連データが0件のアカウントでも削除が成功すること")
+    void delete_success_whenNoRelatedData() {
+      Account account = Account.forDelete(new AccountNo(3L));
+      accountAggregateRepositoryImpl.delete(account);
+
+      // アカウントが削除されたことを確認
+      Integer accountCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account where account_no=3", Integer.class);
+      assertEquals(0, accountCount);
+
+      // 削除対象の写真が存在しなかったため、削除された写真番号が記録されないこと
+      assertTrue(account.getDeletedPhotoNoList().isEmpty());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：処理途中で例外が発生した場合、それまでの削除を含めてすべてロールバックされること")
+    void delete_rollbackOnFailure() {
+      // @Sqlによるフィクスチャ投入はこのテストメソッドのトランザクション内で行われるため、
+      // 後段でTestTransaction.flagForRollback()するとフィクスチャ投入自体も巻き戻ってしまう。
+      // それを避けるため、一度物理コミットしてフィクスチャを確定させてから新しいトランザクションを開始する
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      // common.location_mstにaccount_no=1を参照する行を用意し、
+      // 外部キー制約（ON DELETE RESTRICT）によりアカウント本体の削除で例外が発生するようにする
+      jdbcTemplate.update(
+          "INSERT INTO common.location_mst"
+              + " VALUES (DEFAULT, 1, 99, 1, now(), 1, now(), false, 'ロケーション99', '住所99', 0, 0)");
+
+      Account account = Account.forDelete(new AccountNo(1L));
+      assertThrows(
+          DataIntegrityViolationException.class,
+          () -> accountAggregateRepositoryImpl.delete(account));
+
+      // 例外発生によりPostgreSQL上のトランザクションが中断状態になるため、
+      // 一度ロールバックして新しいトランザクションを開始した上で状態を確認する
+      TestTransaction.flagForRollback();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      // アカウント本体の削除より前に実行された写真マスタ等の削除も、まとめてロールバックされ残っていること
+      Integer accountCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account where account_no=1", Integer.class);
+      assertEquals(1, accountCount);
+      Integer photoMstCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_mst where account_no=1", Integer.class);
+      assertEquals(2, photoMstCount);
+      Integer photoTagCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_tag_mst where account_no=1", Integer.class);
+      assertEquals(3, photoTagCount);
+      Integer favoriteByAccount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_favorite where account_no=1", Integer.class);
+      assertEquals(2, favoriteByAccount);
+
+      // 冒頭で物理コミットしたフィクスチャが、通常の@Transactionalによる自動ロールバックに
+      // 乗らないまま他のテストクラスへ残留しないよう、明示的にTRUNCATE（CASCADE）して物理コミットする
+      jdbcTemplate.execute(
+          """
+					TRUNCATE TABLE
+						photo.photo_favorite,
+						photo.photo_tag_mst,
+						photo.photo_mst,
+						common.refresh_token,
+						common.location_mst,
+						common.account,
+						common.kbn_mst
+					CASCADE
+					""");
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
     }
   }
 }

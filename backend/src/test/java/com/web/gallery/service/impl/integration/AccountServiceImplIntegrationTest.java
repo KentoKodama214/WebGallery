@@ -1,12 +1,17 @@
 package com.web.gallery.service.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.entity.Account;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
@@ -16,6 +21,7 @@ import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.model.AccountListGetModel;
 import com.web.gallery.model.AccountModel;
 import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.repository.FileRepository;
 import com.web.gallery.service.impl.AccountServiceImpl;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -44,6 +50,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +62,9 @@ public class AccountServiceImplIntegrationTest {
   @Autowired private AccountServiceImpl accountServiceImpl;
 
   @Autowired private JdbcTemplate jdbcTemplate;
+
+  /** S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない） */
+  @MockitoBean private FileRepository fileRepository;
 
   @Nested
   @Order(1)
@@ -579,6 +589,44 @@ public class AccountServiceImplIntegrationTest {
           jdbcTemplate.queryForObject(
               "SELECT COUNT(*) FROM common.account where account_no=1", Integer.class);
       assertEquals(1, accountCount);
+    }
+
+    /**
+     * 写真ファイルディレクトリの物理削除はトランザクションのコミット後に遅延実行される（{@code
+     * AccountServiceImpl#deletePhotoDirectoryAfterCommit}）。DBロールバック時の不整合を防ぐための仕様であり、
+     * トランザクションを実際にコミットしない限りこの経路は通らない。本テストでは{@link TestTransaction}で明示的にコミットし、
+     * afterCommitコールバック内でfileRepository.deleteByPrefixが呼ばれることを検証する
+     */
+    @Test
+    @Order(3)
+    @DisplayName("正常系：トランザクションコミット後に写真ファイルディレクトリが物理削除される")
+    void deleteAccount_deletesPhotoDirectoryAfterCommit() throws GalleryException {
+      accountServiceImpl.deleteAccount(
+          new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01"));
+      verify(fileRepository, never()).deleteByPrefix(any(ImageFilePath.class));
+
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      verify(fileRepository, times(1)).deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
+
+      // 上記で物理コミットした削除結果が、通常の@Transactionalによる自動ロールバックに
+      // 乗らないまま他のNestedクラスへ残留しないよう、明示的にTRUNCATE（CASCADE）して物理コミットする
+      jdbcTemplate.execute(
+          """
+					TRUNCATE TABLE
+						photo.photo_favorite,
+						photo.photo_tag_mst,
+						photo.photo_mst,
+						common.refresh_token,
+						common.location_mst,
+						common.account,
+						common.kbn_mst
+					CASCADE
+					""");
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
     }
   }
 

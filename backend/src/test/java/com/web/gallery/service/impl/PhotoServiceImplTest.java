@@ -1892,6 +1892,64 @@ public class PhotoServiceImplTest {
               photoServiceImpl.savePhotos(
                   new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
     }
+
+    /**
+     * {@code GalleryException}以外の実行時例外（MyBatisの{@code DataAccessException}等）でトランザクションが
+     * ロールバックされる場合も、書き込み済みファイルは自動的には戻らないため補償削除される（{@code PhotoServiceImpl#savePhotos}の{@code catch
+     * (RuntimeException e)}分岐）。{@code GalleryException}分岐（Order(17)）と
+     * 同じ補償削除ロジックだが例外型で分岐が分かれているため、別途検証する
+     */
+    @Test
+    @Order(19)
+    @DisplayName("異常系：GalleryException以外の実行時例外の場合も、書き込み済みファイルを補償削除する")
+    void savePhotos_registPhoto_compensatesOrphanedFileOnNonGalleryRuntimeException()
+        throws GalleryException {
+      String accountId = "aaaaaaaa";
+      List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+      doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+      doReturn(
+              AccountModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .authorityKbn(AuthorityEnum.NORMAL)
+                  .build())
+          .when(accountRepositoryImpl)
+          .getByAccountNo(new AccountNo(1L));
+      doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+      doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+      doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+      doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
+      // 1枚目のDB登録は成功、2枚目のDB登録でGalleryException以外の実行時例外が発生させる
+      doNothing()
+          .doThrow(new RuntimeException("db error"))
+          .when(photoAggregateRepositoryImpl)
+          .regist(any(Photo.class));
+
+      // 新規登録1枚目（成功する）
+      PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
+      photoDetailModelList.add(photoDetailModel1);
+
+      // 新規登録2枚目（DB登録でRuntimeExceptionが発生する）
+      PhotoDetailModel photoDetailModel2 = createNewPhoto();
+      photoDetailModelList.add(photoDetailModel2);
+
+      RuntimeException exception =
+          assertThrows(
+              RuntimeException.class,
+              () ->
+                  photoServiceImpl.savePhotos(
+                      new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+      assertEquals("db error", exception.getMessage());
+
+      verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
+      verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
+
+      // 1枚目は既にファイル書き込みが成功しているため、DBロールバックとの整合性を保つべく補償削除される
+      ArgumentCaptor<ImageFilePath> deleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
+      verify(fileRepositoryImpl, times(1)).delete(deleteCaptor.capture());
+      assertOpaqueObjectKey(deleteCaptor.getValue(), accountId, 5L, "jpg");
+    }
   }
 
   @Nested

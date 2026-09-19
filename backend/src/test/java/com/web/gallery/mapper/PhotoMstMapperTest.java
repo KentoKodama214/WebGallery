@@ -192,6 +192,17 @@ public class PhotoMstMapperTest {
 
     @Test
     @Order(17)
+    @DisplayName("正常系：複数の条件でcountする場合、AND条件で絞り込まれ0件になること（OR的に緩まないこと）")
+    void count_some_conditions_narrows_to_zero() {
+      // account_no=1は3件、photo_no=1は2件（account_no=1, 2）それぞれ単独では存在するが、
+      // account_no=1とphoto_no=99の組み合わせは存在しないため、AND条件なら0件になるはず
+      PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(1L).photoNo(99L).build();
+      Integer actual = photoMstMapper.count(photoMst);
+      assertEquals(0, actual);
+    }
+
+    @Test
+    @Order(18)
     @DisplayName("正常系：画像ファイル名でのcountで1件の場合")
     void count_by_imageFileName() {
       PhotoMstCondition photoMst = PhotoMstCondition.builder().imageFileName("DSC111.jpg").build();
@@ -946,6 +957,26 @@ public class PhotoMstMapperTest {
 
     @Test
     @Order(17)
+    @DisplayName("正常系：複数の条件でupdateする場合、AND条件で絞り込まれ更新0件になること（OR的に緩まないこと）")
+    void update_some_conditions_narrows_to_zero() {
+      // account_no=1、photo_no=1はそれぞれ単独では存在するが、
+      // account_no=1とphoto_no=99の組み合わせは存在しないため、AND条件なら更新されないはず
+      PhotoMstCondition conditionPhotoMst =
+          PhotoMstCondition.builder().accountNo(1L).photoNo(99L).build();
+      PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(1000).build();
+      Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
+      assertEquals(0, actual);
+
+      // account_no=1のiso値がいずれも意図せず更新されていないこと
+      List<PhotoMst> actualData = getPhotoMstList("account_no=1");
+      assertEquals(3, actualData.size());
+      assertEquals(100, actualData.get(0).getIso());
+      assertEquals(200, actualData.get(1).getIso());
+      assertEquals(400, actualData.get(2).getIso());
+    }
+
+    @Test
+    @Order(18)
     @DisplayName("正常系：画像ファイル名でのupdate")
     void update_by_imageFileName() {
       PhotoMstCondition conditionPhotoMst =

@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -125,6 +126,26 @@ class FileRepositoryImplTest {
           .putObject(
               any(PutObjectRequest.class), any(software.amazon.awssdk.core.sync.RequestBody.class));
     }
+
+    @Test
+    @DisplayName("異常系：putObjectがSdkExceptionをthrowした場合はそのまま呼び出し元に伝播する")
+    void save_sdkException_propagates() throws IOException {
+      MultipartFile multipartFile = mock(MultipartFile.class);
+      doReturn(1L).when(multipartFile).getSize();
+      doReturn(new java.io.ByteArrayInputStream(new byte[] {1}))
+          .when(multipartFile)
+          .getInputStream();
+      doThrow(SdkException.create("S3への接続に失敗しました", null))
+          .when(s3Client)
+          .putObject(
+              any(PutObjectRequest.class), any(software.amazon.awssdk.core.sync.RequestBody.class));
+
+      FileModel fileModel =
+          FileModel.of(new ImageFilePath("aaaaaaaa/DSC11.jpg"), new ImageFile(multipartFile));
+
+      FileRepositoryImpl repository = newRepository("");
+      assertThrows(SdkException.class, () -> repository.save(fileModel));
+    }
   }
 
   @Nested
@@ -140,6 +161,18 @@ class FileRepositoryImplTest {
       verify(s3Client).deleteObject(captor.capture());
       assertEquals(BUCKET, captor.getValue().bucket());
       assertEquals("aaaaaaaa/DSC11.jpg", captor.getValue().key());
+    }
+
+    @Test
+    @DisplayName("異常系：deleteObjectがSdkExceptionをthrowした場合はそのまま呼び出し元に伝播する")
+    void delete_sdkException_propagates() {
+      doThrow(SdkException.create("S3への接続に失敗しました", null))
+          .when(s3Client)
+          .deleteObject(any(DeleteObjectRequest.class));
+
+      FileRepositoryImpl repository = newRepository("");
+      assertThrows(
+          SdkException.class, () -> repository.delete(new ImageFilePath("aaaaaaaa/DSC11.jpg")));
     }
 
     @Test

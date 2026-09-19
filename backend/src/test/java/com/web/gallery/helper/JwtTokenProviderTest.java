@@ -8,7 +8,12 @@ import com.web.gallery.AccountPrincipal;
 import com.web.gallery.config.JwtConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Date;
+import javax.crypto.SecretKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -132,6 +137,122 @@ class JwtTokenProviderTest {
           () -> {
             jwtTokenProvider.validateAccessToken("invalid-token");
           });
+    }
+
+    @Test
+    @DisplayName("異常系: 有効期限切れトークンの場合は例外がスローされること")
+    void validateAccessToken_expiredToken() {
+      SecretKey signingKey = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+      Date issuedAt = new Date(System.currentTimeMillis() - 60 * 60 * 1000L);
+      Date expiredAt = new Date(System.currentTimeMillis() - 30 * 60 * 1000L);
+      String expiredToken =
+          Jwts.builder()
+              .issuer("web-gallery")
+              .subject("testuser1")
+              .claim("accountNo", 1L)
+              .claim("role", "ROLE_USER")
+              .issuedAt(issuedAt)
+              .expiration(expiredAt)
+              .signWith(signingKey)
+              .compact();
+
+      assertThrows(
+          JwtException.class,
+          () -> {
+            jwtTokenProvider.validateAccessToken(expiredToken);
+          });
+    }
+
+    @Test
+    @DisplayName("異常系: 別の秘密鍵で署名されたトークン（改ざん）の場合は例外がスローされること")
+    void validateAccessToken_tamperedSignature() {
+      String otherSecret = "different-secret-key-must-be-at-least-256-bits-for-hs256-algo";
+      SecretKey otherSigningKey = Keys.hmacShaKeyFor(otherSecret.getBytes(StandardCharsets.UTF_8));
+      String tamperedToken =
+          Jwts.builder()
+              .issuer("web-gallery")
+              .subject("testuser1")
+              .claim("accountNo", 1L)
+              .claim("role", "ROLE_USER")
+              .issuedAt(new Date())
+              .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000L))
+              .signWith(otherSigningKey)
+              .compact();
+
+      assertThrows(
+          JwtException.class,
+          () -> {
+            jwtTokenProvider.validateAccessToken(tamperedToken);
+          });
+    }
+
+    @Test
+    @DisplayName("異常系: issuerクレームが不一致のトークンの場合は例外がスローされること")
+    void validateAccessToken_issuerMismatch() {
+      SecretKey signingKey = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+      String tokenWithWrongIssuer =
+          Jwts.builder()
+              .issuer("another-issuer")
+              .subject("testuser1")
+              .claim("accountNo", 1L)
+              .claim("role", "ROLE_USER")
+              .issuedAt(new Date())
+              .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000L))
+              .signWith(signingKey)
+              .compact();
+
+      assertThrows(
+          JwtException.class,
+          () -> {
+            jwtTokenProvider.validateAccessToken(tokenWithWrongIssuer);
+          });
+    }
+  }
+
+  @Nested
+  @DisplayName("#validateSecret")
+  class ValidateSecret {
+
+    @Test
+    @DisplayName("正常系: 256bit以上のシークレットキーの場合は例外がスローされないこと")
+    void validateSecret_sufficientLength() {
+      JwtConfig jwtConfig =
+          new JwtConfig(
+              SECRET,
+              ACCESS_TOKEN_EXPIRATION_MINUTES,
+              REFRESH_TOKEN_EXPIRATION_DAYS,
+              REFRESH_TOKEN_REUSE_GRACE_SECONDS);
+      JwtTokenProvider provider = new JwtTokenProvider(jwtConfig);
+
+      assertDoesNotThrow(provider::validateSecret);
+    }
+
+    @Test
+    @DisplayName("異常系: 256bit未満のシークレットキーの場合は例外がスローされること")
+    void validateSecret_tooShort() {
+      JwtConfig jwtConfig =
+          new JwtConfig(
+              "short-secret",
+              ACCESS_TOKEN_EXPIRATION_MINUTES,
+              REFRESH_TOKEN_EXPIRATION_DAYS,
+              REFRESH_TOKEN_REUSE_GRACE_SECONDS);
+      JwtTokenProvider provider = new JwtTokenProvider(jwtConfig);
+
+      assertThrows(IllegalStateException.class, provider::validateSecret);
+    }
+
+    @Test
+    @DisplayName("異常系: シークレットキーがnullの場合は例外がスローされること")
+    void validateSecret_null() {
+      JwtConfig jwtConfig =
+          new JwtConfig(
+              null,
+              ACCESS_TOKEN_EXPIRATION_MINUTES,
+              REFRESH_TOKEN_EXPIRATION_DAYS,
+              REFRESH_TOKEN_REUSE_GRACE_SECONDS);
+      JwtTokenProvider provider = new JwtTokenProvider(jwtConfig);
+
+      assertThrows(IllegalStateException.class, provider::validateSecret);
     }
   }
 

@@ -221,4 +221,17 @@ public class PhotoExifExtractorTest {
 
     assertEquals(ExifData.empty(), photoExifExtractor.extract(imageFile));
   }
+
+  @Test
+  @Order(6)
+  @DisplayName("異常系：EXIFの値が0（焦点距離・F値・ISO）の場合、無効な値として無視されnullを返す")
+  void extract_zeroValues_ignored() throws Exception {
+    MultipartFile imageFile = createJpegWithExif(0, 0.0, null, 0);
+
+    ExifData exifData = photoExifExtractor.extract(imageFile);
+
+    assertNull(exifData.focalLength());
+    assertNull(exifData.fValue());
+    assertNull(exifData.iso());
+  }
 }

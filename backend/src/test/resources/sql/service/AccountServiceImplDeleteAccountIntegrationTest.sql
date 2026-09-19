@@ -1,10 +1,13 @@
 -- common.account
 insert into common.account values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$k19cLX6F2brrOLYp74GstejFJfeGjm52TMk..ELwoJeTcBcUnBVM2', '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
 insert into common.account values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+-- account_no=3：写真・タグ・お気に入り・リフレッシュトークン・ログイン履歴・絞り込みログのいずれも関連データを持たないアカウント（空データでのdelete検証用）
+insert into common.account values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'cccccccc', 'CCCCCCCC', '$2a$10$password3', '1900-01-01', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
 
 -- common.account_authority
 insert into common.account_authority values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator');
 insert into common.account_authority values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', 'administrator');
+insert into common.account_authority values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', 'administrator');
 
 -- photo.photo_mst (account_no=1の写真2件、account_no=2の写真1件)
 insert into photo.photo_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/aaaaaaaa/DSC11.jpg', 'DSC11.jpg', 'タイトル11', 'title11', 'キャプション11', 'horizontal', 24, 8.0, 1, 100, true);
