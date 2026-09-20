@@ -15,7 +15,11 @@ import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
@@ -37,23 +41,29 @@ public class PhotoModelListTest {
         .build();
   }
 
-  @Test
-  @DisplayName("正常系：指定のComparatorでソートされること")
-  void sorted_success() {
-    PhotoModelList photoModelList =
-        PhotoModelList.of(
-            List.of(
-                createPhotoModel(1L, DirectionEnum.VERTICAL, false),
-                createPhotoModel(2L, DirectionEnum.HORIZONTAL, false)));
+  @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class sorted {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：指定のComparatorでソートされること")
+    void sorted_success() {
+      PhotoModelList photoModelList =
+          PhotoModelList.of(
+              List.of(
+                  createPhotoModel(1L, DirectionEnum.VERTICAL, false),
+                  createPhotoModel(2L, DirectionEnum.HORIZONTAL, false)));
 
-    PhotoModelList actual =
-        photoModelList.sorted(
-            Comparator.comparing(
-                (PhotoModel photoModel) -> photoModel.getPhotoNo().value(),
-                Comparator.reverseOrder()));
+      PhotoModelList actual =
+          photoModelList.sorted(
+              Comparator.comparing(
+                  (PhotoModel photoModel) -> photoModel.getPhotoNo().value(),
+                  Comparator.reverseOrder()));
 
-    assertEquals(2, actual.size());
-    assertEquals(new PhotoNo(2L), actual.get(0).getPhotoNo());
-    assertEquals(new PhotoNo(1L), actual.get(1).getPhotoNo());
+      assertEquals(2, actual.size());
+      assertEquals(new PhotoNo(2L), actual.get(0).getPhotoNo());
+      assertEquals(new PhotoNo(1L), actual.get(1).getPhotoNo());
+    }
   }
 }

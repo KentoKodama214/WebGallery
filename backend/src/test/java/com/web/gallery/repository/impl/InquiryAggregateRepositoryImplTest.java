@@ -16,6 +16,7 @@ import com.web.gallery.entity.InquiryMst;
 import com.web.gallery.entity.InquiryMstCondition;
 import com.web.gallery.entity.InquiryMstUpdateTarget;
 import com.web.gallery.entity.InquiryReplyMst;
+import com.web.gallery.enumeration.InquiryStatusEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.InquiryMstMapper;
 import com.web.gallery.mapper.InquiryReplyMstMapper;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -75,7 +77,17 @@ class InquiryAggregateRepositoryImplTest {
 
       inquiryAggregateRepositoryImpl.regist(newInquiryForRegist());
 
-      verify(inquiryMstMapper, times(1)).insert(any(InquiryMst.class));
+      ArgumentCaptor<InquiryMst> captor = ArgumentCaptor.forClass(InquiryMst.class);
+      verify(inquiryMstMapper, times(1)).insert(captor.capture());
+      InquiryMst actual = captor.getValue();
+      assertEquals(1L, actual.getAccountNo());
+      assertEquals(1L, actual.getInquiryNo());
+      assertEquals(1L, actual.getCreatedBy());
+      assertEquals(1L, actual.getUpdatedBy());
+      assertEquals("件名", actual.getSubject());
+      assertEquals("本文", actual.getBody());
+      assertEquals(InquiryStatusEnum.UNREPLIED, actual.getStatusKbn());
+      assertTrue(actual.getIsReadByUser());
     }
 
     @Test
@@ -107,14 +119,30 @@ class InquiryAggregateRepositoryImplTest {
 
       inquiryAggregateRepositoryImpl.addReply(inquiry);
 
-      verify(inquiryReplyMstMapper, times(1)).insert(any(InquiryReplyMst.class));
-      verify(inquiryMstMapper, times(1))
-          .update(any(InquiryMstCondition.class), any(InquiryMstUpdateTarget.class));
+      ArgumentCaptor<InquiryReplyMst> replyCaptor = ArgumentCaptor.forClass(InquiryReplyMst.class);
+      verify(inquiryReplyMstMapper, times(1)).insert(replyCaptor.capture());
+      InquiryReplyMst actualReply = replyCaptor.getValue();
+      assertEquals(1L, actualReply.getInquiryId());
+      assertEquals(1L, actualReply.getReplyNo());
+      assertEquals(2L, actualReply.getAdminAccountNo());
+      assertEquals(2L, actualReply.getCreatedBy());
+      assertEquals("返信本文", actualReply.getBody());
+
+      ArgumentCaptor<InquiryMstCondition> conditionCaptor =
+          ArgumentCaptor.forClass(InquiryMstCondition.class);
+      ArgumentCaptor<InquiryMstUpdateTarget> targetCaptor =
+          ArgumentCaptor.forClass(InquiryMstUpdateTarget.class);
+      verify(inquiryMstMapper, times(1)).update(conditionCaptor.capture(), targetCaptor.capture());
+      assertEquals(1L, conditionCaptor.getValue().getId());
+      InquiryMstUpdateTarget actualTarget = targetCaptor.getValue();
+      assertEquals(2L, actualTarget.getUpdatedBy());
+      assertEquals(InquiryStatusEnum.REPLIED, actualTarget.getStatusKbn());
+      assertFalse(actualTarget.getIsReadByUser());
     }
 
     @Test
     @Order(2)
-    @DisplayName("異常系：返信の登録件数が1未満の場合、GalleryExceptionをthrowすること")
+    @DisplayName("異常系：返信の登録件数が1未満の場合、GalleryExceptionをthrowし、お問い合わせ本体の更新は行われないこと")
     void addReply_replyInsertFailure() {
       Inquiry inquiry = newReconstructedInquiry();
       inquiry.addReply(new AccountNo(2L), new ReplyBody("返信本文"), new ReplyNo(1L));
@@ -122,7 +150,8 @@ class InquiryAggregateRepositoryImplTest {
 
       assertThrows(GalleryException.class, () -> inquiryAggregateRepositoryImpl.addReply(inquiry));
 
-      verify(inquiryMstMapper, never())
+      // 返信の登録に失敗した場合、整合性を保つためお問い合わせ本体の更新は行われない
+      verify(inquiryMstMapper, times(0))
           .update(any(InquiryMstCondition.class), any(InquiryMstUpdateTarget.class));
     }
 
@@ -147,16 +176,28 @@ class InquiryAggregateRepositoryImplTest {
   class markReadByUser {
     @Test
     @Order(1)
-    @DisplayName("正常系：既読化に成功すること")
+    @DisplayName("正常系：既読化に成功すること（ステータス区分は変更なしのためnullで渡ること）")
     void markReadByUser_success() throws GalleryException {
+      Inquiry inquiry = newReconstructedInquiry();
+      inquiry.markReadByUser();
       doReturn(1)
           .when(inquiryMstMapper)
           .update(any(InquiryMstCondition.class), any(InquiryMstUpdateTarget.class));
 
-      inquiryAggregateRepositoryImpl.markReadByUser(newReconstructedInquiry());
+      inquiryAggregateRepositoryImpl.markReadByUser(inquiry);
 
-      verify(inquiryMstMapper, times(1))
-          .update(any(InquiryMstCondition.class), any(InquiryMstUpdateTarget.class));
+      ArgumentCaptor<InquiryMstCondition> conditionCaptor =
+          ArgumentCaptor.forClass(InquiryMstCondition.class);
+      ArgumentCaptor<InquiryMstUpdateTarget> targetCaptor =
+          ArgumentCaptor.forClass(InquiryMstUpdateTarget.class);
+      verify(inquiryMstMapper, times(1)).update(conditionCaptor.capture(), targetCaptor.capture());
+      assertEquals(1L, conditionCaptor.getValue().getAccountNo());
+      assertEquals(1L, conditionCaptor.getValue().getInquiryNo());
+      InquiryMstUpdateTarget actualTarget = targetCaptor.getValue();
+      assertEquals(1L, actualTarget.getUpdatedBy());
+      assertTrue(actualTarget.getIsReadByUser());
+      // ステータス区分は既読化では変更しないためnullのまま渡る
+      assertNull(actualTarget.getStatusKbn());
     }
 
     @Test
@@ -179,16 +220,28 @@ class InquiryAggregateRepositoryImplTest {
   class withdraw {
     @Test
     @Order(1)
-    @DisplayName("正常系：取り下げに成功すること")
+    @DisplayName("正常系：取り下げに成功すること（ユーザー既読フラグは変更なしのためnullで渡ること）")
     void withdraw_success() throws GalleryException {
+      Inquiry inquiry = newReconstructedInquiry();
+      inquiry.withdraw();
       doReturn(1)
           .when(inquiryMstMapper)
           .update(any(InquiryMstCondition.class), any(InquiryMstUpdateTarget.class));
 
-      inquiryAggregateRepositoryImpl.withdraw(newReconstructedInquiry());
+      inquiryAggregateRepositoryImpl.withdraw(inquiry);
 
-      verify(inquiryMstMapper, times(1))
-          .update(any(InquiryMstCondition.class), any(InquiryMstUpdateTarget.class));
+      ArgumentCaptor<InquiryMstCondition> conditionCaptor =
+          ArgumentCaptor.forClass(InquiryMstCondition.class);
+      ArgumentCaptor<InquiryMstUpdateTarget> targetCaptor =
+          ArgumentCaptor.forClass(InquiryMstUpdateTarget.class);
+      verify(inquiryMstMapper, times(1)).update(conditionCaptor.capture(), targetCaptor.capture());
+      assertEquals(1L, conditionCaptor.getValue().getAccountNo());
+      assertEquals(1L, conditionCaptor.getValue().getInquiryNo());
+      InquiryMstUpdateTarget actualTarget = targetCaptor.getValue();
+      assertEquals(1L, actualTarget.getUpdatedBy());
+      assertEquals(InquiryStatusEnum.WITHDRAWN, actualTarget.getStatusKbn());
+      // ユーザー既読フラグは取り下げでは変更しないためnullのまま渡る
+      assertNull(actualTarget.getIsReadByUser());
     }
 
     @Test

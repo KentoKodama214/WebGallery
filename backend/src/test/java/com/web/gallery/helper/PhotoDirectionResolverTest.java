@@ -10,6 +10,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
@@ -21,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PhotoDirectionResolverTest {
   private final PhotoDirectionResolver photoDirectionResolver = new PhotoDirectionResolver();
 
@@ -39,58 +39,64 @@ public class PhotoDirectionResolverTest {
     return new MockMultipartFile("imageFile", "test.jpg", "image/jpeg", outputStream.toByteArray());
   }
 
-  @Test
+  @Nested
   @Order(1)
-  @DisplayName("正常系：幅より高さが大きい場合、VERTICALを返す")
-  void resolve_vertical() throws Exception {
-    assertEquals(DirectionEnum.VERTICAL, photoDirectionResolver.resolve(createJpegFile(100, 200)));
-  }
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class resolve {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：幅より高さが大きい場合、VERTICALを返す")
+    void resolve_vertical() throws Exception {
+      assertEquals(
+          DirectionEnum.VERTICAL, photoDirectionResolver.resolve(createJpegFile(100, 200)));
+    }
 
-  @Test
-  @Order(2)
-  @DisplayName("正常系：高さより幅が大きい場合、HORIZONTALを返す")
-  void resolve_horizontal() throws Exception {
-    assertEquals(
-        DirectionEnum.HORIZONTAL, photoDirectionResolver.resolve(createJpegFile(200, 100)));
-  }
+    @Test
+    @Order(2)
+    @DisplayName("正常系：高さより幅が大きい場合、HORIZONTALを返す")
+    void resolve_horizontal() throws Exception {
+      assertEquals(
+          DirectionEnum.HORIZONTAL, photoDirectionResolver.resolve(createJpegFile(200, 100)));
+    }
 
-  @Test
-  @Order(3)
-  @DisplayName("正常系：幅と高さが等しい場合、SQUAREを返す")
-  void resolve_square() throws Exception {
-    assertEquals(DirectionEnum.SQUARE, photoDirectionResolver.resolve(createJpegFile(150, 150)));
-  }
+    @Test
+    @Order(3)
+    @DisplayName("正常系：幅と高さが等しい場合、SQUAREを返す")
+    void resolve_square() throws Exception {
+      assertEquals(DirectionEnum.SQUARE, photoDirectionResolver.resolve(createJpegFile(150, 150)));
+    }
 
-  @Test
-  @Order(4)
-  @DisplayName("正常系：PNG形式でも判定できる")
-  void resolve_png() throws Exception {
-    BufferedImage image = new BufferedImage(120, 80, BufferedImage.TYPE_INT_RGB);
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    ImageIO.write(image, "png", outputStream);
-    MultipartFile pngFile =
-        new MockMultipartFile("imageFile", "test.png", "image/png", outputStream.toByteArray());
+    @Test
+    @Order(4)
+    @DisplayName("正常系：PNG形式でも判定できる")
+    void resolve_png() throws Exception {
+      BufferedImage image = new BufferedImage(120, 80, BufferedImage.TYPE_INT_RGB);
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      ImageIO.write(image, "png", outputStream);
+      MultipartFile pngFile =
+          new MockMultipartFile("imageFile", "test.png", "image/png", outputStream.toByteArray());
 
-    assertEquals(DirectionEnum.HORIZONTAL, photoDirectionResolver.resolve(pngFile));
-  }
+      assertEquals(DirectionEnum.HORIZONTAL, photoDirectionResolver.resolve(pngFile));
+    }
 
-  @Test
-  @Order(5)
-  @DisplayName("異常系：ピクセルサイズを判定できない不正なバイト列の場合、NONEを返す")
-  void resolve_invalidBytes_returnsNone() {
-    MultipartFile invalidFile =
-        new MockMultipartFile("imageFile", "test.jpg", "image/jpeg", "not an image".getBytes());
+    @Test
+    @Order(5)
+    @DisplayName("異常系：ピクセルサイズを判定できない不正なバイト列の場合、NONEを返す")
+    void resolve_invalidBytes_returnsNone() {
+      MultipartFile invalidFile =
+          new MockMultipartFile("imageFile", "test.jpg", "image/jpeg", "not an image".getBytes());
 
-    assertEquals(DirectionEnum.NONE, photoDirectionResolver.resolve(invalidFile));
-  }
+      assertEquals(DirectionEnum.NONE, photoDirectionResolver.resolve(invalidFile));
+    }
 
-  @Test
-  @Order(6)
-  @DisplayName("異常系：画像ファイルの読み込みでIOExceptionが発生した場合、NONEを返す")
-  void resolve_ioException_returnsNone() throws Exception {
-    MultipartFile imageFile = mock(MultipartFile.class);
-    doThrow(new IOException("読み込み失敗")).when(imageFile).getInputStream();
+    @Test
+    @Order(6)
+    @DisplayName("異常系：画像ファイルの読み込みでIOExceptionが発生した場合、NONEを返す")
+    void resolve_ioException_returnsNone() throws Exception {
+      MultipartFile imageFile = mock(MultipartFile.class);
+      doThrow(new IOException("読み込み失敗")).when(imageFile).getInputStream();
 
-    assertEquals(DirectionEnum.NONE, photoDirectionResolver.resolve(imageFile));
+      assertEquals(DirectionEnum.NONE, photoDirectionResolver.resolve(imageFile));
+    }
   }
 }

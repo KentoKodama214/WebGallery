@@ -24,7 +24,7 @@ import org.springframework.test.context.jdbc.Sql;
 @MybatisTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public class KbmMstMapperTest {
+public class KbnMstMapperTest {
   @Autowired private KbnMstMapper kbnMstMapper;
 
   @Nested

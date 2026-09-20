@@ -41,8 +41,8 @@ public class PhotoFavoriteRepositoryImplTest {
   class regist {
     @Test
     @Order(1)
-    @DisplayName("正常系")
-    void regist_contain_null_parameter() throws GalleryException {
+    @DisplayName("正常系：写真お気に入りを登録すること")
+    void regist_success() throws GalleryException {
       PhotoFavoriteModel favoriteModel =
           PhotoFavoriteModel.builder()
               .accountNo(new AccountNo(1L))
@@ -101,8 +101,8 @@ public class PhotoFavoriteRepositoryImplTest {
   class delete {
     @Test
     @Order(1)
-    @DisplayName("正常系")
-    void delete_contain_null_parameter() throws GalleryException {
+    @DisplayName("正常系：写真お気に入りを削除すること")
+    void delete_success() throws GalleryException {
       PhotoFavoriteDeleteModel favoriteDeleteModel =
           PhotoFavoriteDeleteModel.builder()
               .accountNo(new AccountNo(1L))
@@ -156,7 +156,7 @@ public class PhotoFavoriteRepositoryImplTest {
   class clear {
     @Test
     @Order(1)
-    @DisplayName("正常系：")
+    @DisplayName("正常系：該当写真のお気に入りを全件削除すること")
     void clear_success() {
       PhotoFavoriteDeleteModel favoriteDeleteModel =
           PhotoFavoriteDeleteModel.builder()

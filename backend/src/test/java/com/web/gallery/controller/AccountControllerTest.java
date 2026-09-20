@@ -622,6 +622,29 @@ public class AccountControllerTest {
 
     @Test
     @Order(6)
+    @DisplayName("正常系：newPasswordフィールド自体を省略（null）した場合も、パスワード変更なしとして扱われること")
+    void update_no_password_field() throws Exception {
+      String accountId = "aaaaaaaa";
+
+      doReturn(1L).when(sessionHelper).getAccountNo();
+      doReturn(accountId).when(sessionHelper).getAccountId();
+
+      ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
+      doReturn(false).when(accountService).updateAccount(accountModelCaptor.capture(), any());
+
+      mockMvc
+          .perform(
+              put("/api/v1/accounts/" + accountId)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("update_no_password_field.json")))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isPasswordChanged").value(false));
+
+      assertNull(accountModelCaptor.getValue().getPassword());
+    }
+
+    @Test
+    @Order(7)
     @DisplayName("異常系：パスワード変更なしで、パスワード以外のパラメータが不正")
     void update_BadRequestException_account_id() throws Exception {
       mockMvc
@@ -636,7 +659,7 @@ public class AccountControllerTest {
     }
 
     @Test
-    @Order(7)
+    @Order(8)
     @DisplayName("異常系：パスワード変更ありで不正でなく、パスワード以外のパラメータが不正")
     void update_BadRequestException_account_id_with_change_password() throws Exception {
       mockMvc
@@ -651,7 +674,7 @@ public class AccountControllerTest {
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     @DisplayName("異常系：パスワード変更ありで、パスワードが不正")
     void update_BadRequestException_password() throws Exception {
       mockMvc
@@ -666,7 +689,7 @@ public class AccountControllerTest {
     }
 
     @Test
-    @Order(9)
+    @Order(10)
     @DisplayName("異常系：accountNameがDBカラム長（50文字）を超える場合、BadRequestExceptionをthrowする")
     void update_BadRequestException_accountName_too_long() throws Exception {
       mockMvc
@@ -681,7 +704,7 @@ public class AccountControllerTest {
     }
 
     @Test
-    @Order(10)
+    @Order(11)
     @DisplayName("異常系：newPasswordに数字が含まれない場合（@Patternパターン違反）、BadRequestExceptionをthrowする")
     void update_BadRequestException_newPassword_pattern_violation() throws Exception {
       mockMvc
@@ -696,7 +719,7 @@ public class AccountControllerTest {
     }
 
     @Test
-    @Order(11)
+    @Order(12)
     @DisplayName("異常系：currentPasswordがDBカラム長（72文字）を超える場合（@Sizeパターン違反）、BadRequestExceptionをthrowする")
     void update_BadRequestException_currentPassword_too_long() throws Exception {
       mockMvc
@@ -711,7 +734,7 @@ public class AccountControllerTest {
     }
 
     @Test
-    @Order(12)
+    @Order(13)
     @DisplayName("異常系：新しいパスワードが入力されているのに現在のパスワードが未入力の場合、BadRequestExceptionをthrowする")
     void update_BadRequestException_newPassword_without_currentPassword() throws Exception {
       mockMvc
@@ -726,7 +749,7 @@ public class AccountControllerTest {
     }
 
     @Test
-    @Order(13)
+    @Order(14)
     @DisplayName("異常系：UpdateFailureExceptionをthrowする")
     void update_UpdateFailureException() throws Exception {
       String accountId = "aaaaaaaa";
@@ -750,29 +773,6 @@ public class AccountControllerTest {
       assertEquals(accountId, accountModel.getAccountId().value());
       assertEquals("AAAAAAAA", accountModel.getAccountName().value());
       assertEquals("password01", accountModel.getPassword().value());
-    }
-
-    @Test
-    @Order(14)
-    @DisplayName("正常系：newPasswordフィールド自体を省略（null）した場合も、パスワード変更なしとして扱われること")
-    void update_no_password_field() throws Exception {
-      String accountId = "aaaaaaaa";
-
-      doReturn(1L).when(sessionHelper).getAccountNo();
-      doReturn(accountId).when(sessionHelper).getAccountId();
-
-      ArgumentCaptor<AccountModel> accountModelCaptor = ArgumentCaptor.forClass(AccountModel.class);
-      doReturn(false).when(accountService).updateAccount(accountModelCaptor.capture(), any());
-
-      mockMvc
-          .perform(
-              put("/api/v1/accounts/" + accountId)
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("update_no_password_field.json")))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.isPasswordChanged").value(false));
-
-      assertNull(accountModelCaptor.getValue().getPassword());
     }
   }
 

@@ -4,25 +4,36 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigDecimal;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 class LatitudeTest {
 
-  @Test
-  @DisplayName("正常系：nullでない値を指定した場合、インスタンスが生成されること")
-  void constructor_success() {
-    BigDecimal value = new BigDecimal("35.681236");
+  @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class constructor {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：nullでない値を指定した場合、インスタンスが生成されること")
+    void constructor_success() {
+      BigDecimal value = new BigDecimal("35.681236");
 
-    Latitude actual = new Latitude(value);
+      Latitude actual = new Latitude(value);
 
-    assertEquals(value, actual.value());
-  }
+      assertEquals(value, actual.value());
+    }
 
-  @Test
-  @DisplayName("異常系：nullを指定した場合、IllegalArgumentExceptionをスローすること")
-  void constructor_null() {
-    assertThrows(IllegalArgumentException.class, () -> new Latitude(null));
+    @Test
+    @Order(2)
+    @DisplayName("異常系：nullを指定した場合、IllegalArgumentExceptionをスローすること")
+    void constructor_null() {
+      assertThrows(IllegalArgumentException.class, () -> new Latitude(null));
+    }
   }
 }

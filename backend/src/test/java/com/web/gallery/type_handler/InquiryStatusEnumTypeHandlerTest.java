@@ -51,8 +51,32 @@ class InquiryStatusEnumTypeHandlerTest {
   class getNullableResultByColumnName {
     @Test
     @Order(1)
-    @DisplayName("正常系：DB保存値に一致するEnum値を返すこと")
-    void getNullableResultByColumnName_matched() throws SQLException {
+    @DisplayName("正常系：DB保存値がUNREPLIEDに対応する場合、UNREPLIEDを返すこと")
+    void getNullableResultByColumnName_unreplied() throws SQLException {
+      doReturn(InquiryStatusEnum.UNREPLIED.getDbValue()).when(resultSet).getString("status");
+
+      InquiryStatusEnum actual =
+          inquiryStatusEnumTypeHandler.getNullableResult(resultSet, "status");
+
+      assertEquals(InquiryStatusEnum.UNREPLIED, actual);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：DB保存値がREPLIEDに対応する場合、REPLIEDを返すこと")
+    void getNullableResultByColumnName_replied() throws SQLException {
+      doReturn(InquiryStatusEnum.REPLIED.getDbValue()).when(resultSet).getString("status");
+
+      InquiryStatusEnum actual =
+          inquiryStatusEnumTypeHandler.getNullableResult(resultSet, "status");
+
+      assertEquals(InquiryStatusEnum.REPLIED, actual);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：DB保存値がWITHDRAWNに対応する場合、WITHDRAWNを返すこと")
+    void getNullableResultByColumnName_withdrawn() throws SQLException {
       doReturn(InquiryStatusEnum.WITHDRAWN.getDbValue()).when(resultSet).getString("status");
 
       InquiryStatusEnum actual =
@@ -62,7 +86,7 @@ class InquiryStatusEnumTypeHandlerTest {
     }
 
     @Test
-    @Order(2)
+    @Order(4)
     @DisplayName("異常系：DB値がnullの場合、nullを返すこと")
     void getNullableResultByColumnName_null() throws SQLException {
       doReturn(null).when(resultSet).getString("status");
@@ -74,7 +98,7 @@ class InquiryStatusEnumTypeHandlerTest {
     }
 
     @Test
-    @Order(3)
+    @Order(5)
     @DisplayName("異常系：DB保存値に一致するEnum値がない場合、nullを返すこと")
     void getNullableResultByColumnName_unmatched() throws SQLException {
       doReturn("unknown").when(resultSet).getString("status");

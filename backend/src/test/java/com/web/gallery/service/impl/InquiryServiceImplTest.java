@@ -86,8 +86,9 @@ public class InquiryServiceImplTest {
     @Order(1)
     @DisplayName("正常系：新規採番したお問い合わせ番号で登録し、イベントを発行する")
     void registInquiry_success() throws GalleryException {
-      when(inquiryMstRepositoryImpl.getNewInquiryNo(any(AccountNo.class)))
-          .thenReturn(new InquiryNo(3L));
+      doReturn(new InquiryNo(3L))
+          .when(inquiryMstRepositoryImpl)
+          .getNewInquiryNo(any(AccountNo.class));
 
       InquiryDetailModel requestDetail =
           InquiryDetailModel.builder()
@@ -122,8 +123,7 @@ public class InquiryServiceImplTest {
     @DisplayName("正常系：InquiryGetModelへ変換してRepositoryへ委譲する")
     void getInquiryList_success() {
       InquiryPageModel pageModel = InquiryPageModel.of(InquiryModelList.empty(), true);
-      when(inquiryMstRepositoryImpl.getInquiryList(any(InquiryGetModel.class)))
-          .thenReturn(pageModel);
+      doReturn(pageModel).when(inquiryMstRepositoryImpl).getInquiryList(any(InquiryGetModel.class));
 
       InquiryListGetModel listGetModel =
           InquiryListGetModel.builder().accountNo(new AccountNo(1L)).pageNo(1).build();
@@ -150,14 +150,15 @@ public class InquiryServiceImplTest {
     @DisplayName("正常系：既読済みの場合、既読化処理を行わない")
     void getInquiryDetail_alreadyRead() throws GalleryException {
       InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.REPLIED, true);
-      when(inquiryMstRepositoryImpl.getInquiryDetail(any(AccountNo.class), any(InquiryNo.class)))
-          .thenReturn(detail);
+      doReturn(detail)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryDetail(any(AccountNo.class), any(InquiryNo.class));
 
       InquiryDetailModel result =
           inquiryServiceImpl.getInquiryDetail(new AccountNo(1L), new InquiryNo(1L));
 
       assertEquals(detail, result);
-      verify(inquiryAggregateRepositoryImpl, times(0)).markReadByUser(any(Inquiry.class));
+      verify(inquiryAggregateRepositoryImpl, never()).markReadByUser(any(Inquiry.class));
     }
 
     @Test
@@ -165,8 +166,9 @@ public class InquiryServiceImplTest {
     @DisplayName("正常系：未読の返信が存在する場合、既読化する")
     void getInquiryDetail_markAsRead() throws GalleryException {
       InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.REPLIED, false);
-      when(inquiryMstRepositoryImpl.getInquiryDetail(any(AccountNo.class), any(InquiryNo.class)))
-          .thenReturn(detail);
+      doReturn(detail)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryDetail(any(AccountNo.class), any(InquiryNo.class));
 
       InquiryDetailModel result =
           inquiryServiceImpl.getInquiryDetail(new AccountNo(1L), new InquiryNo(1L));
@@ -190,7 +192,7 @@ public class InquiryServiceImplTest {
           InquiryNotFoundException.class,
           () -> inquiryServiceImpl.getInquiryDetail(new AccountNo(1L), new InquiryNo(1L)));
 
-      verify(inquiryAggregateRepositoryImpl, times(0)).markReadByUser(any(Inquiry.class));
+      verify(inquiryAggregateRepositoryImpl, never()).markReadByUser(any(Inquiry.class));
     }
   }
 
@@ -203,8 +205,9 @@ public class InquiryServiceImplTest {
     @DisplayName("正常系：accountNoを設定せずInquiryGetModelへ変換してRepositoryへ委譲する")
     void getInquiryListForAdmin_success() {
       InquiryPageModel pageModel = InquiryPageModel.of(InquiryModelList.empty(), true);
-      when(inquiryMstRepositoryImpl.getInquiryListForAdmin(any(InquiryGetModel.class)))
-          .thenReturn(pageModel);
+      doReturn(pageModel)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryListForAdmin(any(InquiryGetModel.class));
 
       InquiryListGetModel listGetModel =
           InquiryListGetModel.builder().statusKbn(InquiryStatusEnum.UNREPLIED).pageNo(1).build();
@@ -230,8 +233,9 @@ public class InquiryServiceImplTest {
     @DisplayName("正常系：Repositoryへ委譲する")
     void getInquiryDetailForAdmin_success() throws GalleryException {
       InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.UNREPLIED, true);
-      when(inquiryMstRepositoryImpl.getInquiryDetailForAdmin(any(InquiryId.class)))
-          .thenReturn(detail);
+      doReturn(detail)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryDetailForAdmin(any(InquiryId.class));
 
       InquiryDetailModel result = inquiryServiceImpl.getInquiryDetailForAdmin(new InquiryId(1L));
 
@@ -248,10 +252,12 @@ public class InquiryServiceImplTest {
     @DisplayName("正常系：返信を追加し、ステータスを回答済みへ遷移させ、イベントを発行する")
     void replyToInquiry_success() throws GalleryException {
       InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.UNREPLIED, true);
-      when(inquiryMstRepositoryImpl.getInquiryDetailForAdmin(any(InquiryId.class)))
-          .thenReturn(detail);
-      when(inquiryReplyMstRepositoryImpl.getNewReplyNo(any(InquiryId.class)))
-          .thenReturn(new ReplyNo(1L));
+      doReturn(detail)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryDetailForAdmin(any(InquiryId.class));
+      doReturn(new ReplyNo(1L))
+          .when(inquiryReplyMstRepositoryImpl)
+          .getNewReplyNo(any(InquiryId.class));
 
       ReplyNo result =
           inquiryServiceImpl.replyToInquiry(
@@ -285,8 +291,8 @@ public class InquiryServiceImplTest {
               inquiryServiceImpl.replyToInquiry(
                   new InquiryId(1L), new AccountNo(2L), new ReplyBody("返信本文")));
 
-      verify(inquiryAggregateRepositoryImpl, times(0)).addReply(any(Inquiry.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(inquiryAggregateRepositoryImpl, never()).addReply(any(Inquiry.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -294,8 +300,9 @@ public class InquiryServiceImplTest {
     @DisplayName("異常系：取り下げ済みの場合、BadRequestExceptionをthrowする")
     void replyToInquiry_withdrawn() throws GalleryException {
       InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.WITHDRAWN, true);
-      when(inquiryMstRepositoryImpl.getInquiryDetailForAdmin(any(InquiryId.class)))
-          .thenReturn(detail);
+      doReturn(detail)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryDetailForAdmin(any(InquiryId.class));
 
       assertThrows(
           BadRequestException.class,
@@ -303,8 +310,8 @@ public class InquiryServiceImplTest {
               inquiryServiceImpl.replyToInquiry(
                   new InquiryId(1L), new AccountNo(2L), new ReplyBody("返信本文")));
 
-      verify(inquiryAggregateRepositoryImpl, times(0)).addReply(any(Inquiry.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(inquiryAggregateRepositoryImpl, never()).addReply(any(Inquiry.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
   }
 
@@ -317,8 +324,9 @@ public class InquiryServiceImplTest {
     @DisplayName("正常系：ステータスを取り下げへ遷移させ、イベントを発行する")
     void withdrawInquiry_success() throws GalleryException {
       InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.UNREPLIED, true);
-      when(inquiryMstRepositoryImpl.getInquiryDetail(any(AccountNo.class), any(InquiryNo.class)))
-          .thenReturn(detail);
+      doReturn(detail)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryDetail(any(AccountNo.class), any(InquiryNo.class));
 
       inquiryServiceImpl.withdrawInquiry(new AccountNo(1L), new InquiryNo(1L));
 
@@ -346,8 +354,8 @@ public class InquiryServiceImplTest {
           InquiryNotFoundException.class,
           () -> inquiryServiceImpl.withdrawInquiry(new AccountNo(1L), new InquiryNo(1L)));
 
-      verify(inquiryAggregateRepositoryImpl, times(0)).withdraw(any(Inquiry.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(inquiryAggregateRepositoryImpl, never()).withdraw(any(Inquiry.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
   }
 }

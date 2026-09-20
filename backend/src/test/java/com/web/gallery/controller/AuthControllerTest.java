@@ -16,6 +16,7 @@ import com.web.gallery.helper.ClientIpResolver;
 import com.web.gallery.model.AuthTokenModel;
 import com.web.gallery.service.impl.AuthServiceImpl;
 import jakarta.servlet.http.Cookie;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -53,7 +55,18 @@ public class AuthControllerTest {
   @BeforeEach
   void setUp() {
     lenient().when(clientIpResolver.resolve(any())).thenReturn(TEST_IP_ADDRESS);
-    mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
+    mockMvc =
+        MockMvcBuilders.standaloneSetup(authController)
+            .setControllerAdvice(new CommonControllerAdvice())
+            .build();
+  }
+
+  private String readJsonFile(String fileName) throws Exception {
+    return new String(
+        new ClassPathResource("json/controller/AuthControllerTest/" + fileName)
+            .getInputStream()
+            .readAllBytes(),
+        StandardCharsets.UTF_8);
   }
 
   @Nested
@@ -80,7 +93,7 @@ public class AuthControllerTest {
           .perform(
               post("/api/v1/auth/login")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"testuser\",\"password\":\"password123\"}"))
+                  .content(readJsonFile("login_success.json")))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.accessToken").value("test-access-token"))
           .andExpect(jsonPath("$.expiresIn").value(900))
@@ -98,7 +111,7 @@ public class AuthControllerTest {
           .perform(
               post("/api/v1/auth/login")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"\",\"password\":\"password123\"}"))
+                  .content(readJsonFile("login_badrequest_blank_accountid.json")))
           .andExpect(status().isBadRequest());
 
       verify(authServiceImpl, times(0))
@@ -113,7 +126,7 @@ public class AuthControllerTest {
           .perform(
               post("/api/v1/auth/login")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"testuser\",\"password\":\"\"}"))
+                  .content(readJsonFile("login_badrequest_blank_password.json")))
           .andExpect(status().isBadRequest());
 
       verify(authServiceImpl, times(0))
@@ -132,7 +145,7 @@ public class AuthControllerTest {
           .perform(
               post("/api/v1/auth/login")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"testuser\",\"password\":\"wrongpassword\"}"))
+                  .content(readJsonFile("login_wrongpassword.json")))
           .andExpect(status().isUnauthorized())
           .andExpect(jsonPath("$.message").value("アカウントIDまたはパスワードが間違っています。"));
     }
@@ -149,7 +162,7 @@ public class AuthControllerTest {
           .perform(
               post("/api/v1/auth/login")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"testuser\",\"password\":\"password123\"}"))
+                  .content(readJsonFile("login_success.json")))
           .andExpect(status().is(423))
           .andExpect(jsonPath("$.message").value("アカウントがロックされています。"));
     }
@@ -166,7 +179,7 @@ public class AuthControllerTest {
           .perform(
               post("/api/v1/auth/login")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"testuser\",\"password\":\"password123\"}"))
+                  .content(readJsonFile("login_success.json")))
           .andExpect(status().isUnauthorized())
           .andExpect(jsonPath("$.message").value("アカウントIDまたはパスワードが間違っています。"));
     }

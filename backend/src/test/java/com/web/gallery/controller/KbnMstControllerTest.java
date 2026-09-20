@@ -50,7 +50,10 @@ public class KbnMstControllerTest {
 
   @BeforeEach
   void setUp() {
-    mockMvc = MockMvcBuilders.standaloneSetup(kbnMstController).build();
+    mockMvc =
+        MockMvcBuilders.standaloneSetup(kbnMstController)
+            .setControllerAdvice(new CommonControllerAdvice())
+            .build();
   }
 
   @Nested

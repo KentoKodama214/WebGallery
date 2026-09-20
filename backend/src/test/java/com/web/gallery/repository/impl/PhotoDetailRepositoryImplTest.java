@@ -58,7 +58,7 @@ public class PhotoDetailRepositoryImplTest {
     @Test
     @Order(1)
     @DisplayName("正常系：写真が0件の場合")
-    void getPhotoList_photo_not_found() {
+    void getPhotoList_photoNotFound() {
       PhotoGetModel photoSelectModel =
           PhotoGetModel.builder()
               .accountNo(new AccountNo(1L))
@@ -92,13 +92,13 @@ public class PhotoDetailRepositoryImplTest {
       assertEquals(6, photoListGetDtoCapture.getLimit());
       assertEquals(0, photoListGetDtoCapture.getOffset());
 
-      verify(photoTagMstMapper, times(0)).select(any(PhotoTagMstCondition.class));
+      verify(photoTagMstMapper, never()).select(any(PhotoTagMstCondition.class));
     }
 
     @Test
     @Order(2)
     @DisplayName("正常系：写真が1件以上、写真タグが0件の場合")
-    void getPhotoList_photoTag_not_found() {
+    void getPhotoList_photoTagNotFound() {
       PhotoGetModel photoSelectModel =
           PhotoGetModel.builder()
               .accountNo(new AccountNo(1L))
@@ -189,7 +189,7 @@ public class PhotoDetailRepositoryImplTest {
     @Test
     @Order(3)
     @DisplayName("正常系：写真が1件以上、写真タグが1件以上の場合")
-    void getPhotoList_photoTag_found() {
+    void getPhotoList_photoTagFound() {
       PhotoGetModel photoSelectModel =
           PhotoGetModel.builder()
               .accountNo(new AccountNo(1L))
@@ -338,7 +338,7 @@ public class PhotoDetailRepositoryImplTest {
     @Test
     @Order(4)
     @DisplayName("正常系：取得件数が上限を超える場合、表示件数分に切り詰められ、最後のページでないと判定されること")
-    void getPhotoList_pagination_trims_when_more_results_exist() {
+    void getPhotoList_paginationTrimsWhenMoreResultsExist() {
       // 1ページあたりの表示件数を1件と仮定し、limitはその1件多い2を指定する
       PhotoGetModel photoSelectModel =
           PhotoGetModel.builder()
@@ -403,7 +403,7 @@ public class PhotoDetailRepositoryImplTest {
     @Test
     @Order(1)
     @DisplayName("正常系：写真のメタデータがデフォルト値、写真タグが0件の場合")
-    void getPhotoDetail_photoTag_default_value_not_found() throws GalleryException {
+    void getPhotoDetail_defaultValuePhotoTagNotFound() throws GalleryException {
       PhotoDetailSearchModel photoDetailSearchModel =
           PhotoDetailSearchModel.builder()
               .accountNo(new AccountNo(1L))
@@ -482,7 +482,7 @@ public class PhotoDetailRepositoryImplTest {
     @Test
     @Order(2)
     @DisplayName("正常系：写真のメタデータがデフォルト値でない場、写真タグが1件以上の場合")
-    void getPhotoDetail_not_default_value_photoTag_found() throws GalleryException {
+    void getPhotoDetail_nonDefaultValuePhotoTagFound() throws GalleryException {
       PhotoDetailSearchModel photoDetailSearchModel =
           PhotoDetailSearchModel.builder()
               .accountNo(new AccountNo(1L))
@@ -581,7 +581,7 @@ public class PhotoDetailRepositoryImplTest {
     @Test
     @Order(3)
     @DisplayName("異常系：PhotoNotFoundExceptionをthrowする")
-    void getPhotoDetail_PhotoNotFoundException() {
+    void getPhotoDetail_photoNotFoundException() {
       PhotoDetailSearchModel photoDetailSearchModel =
           PhotoDetailSearchModel.builder()
               .accountNo(new AccountNo(1L))
@@ -596,7 +596,7 @@ public class PhotoDetailRepositoryImplTest {
       assertThrows(
           PhotoNotFoundException.class,
           () -> photoDetailRepositoryImpl.getPhotoDetail(photoDetailSearchModel));
-      verify(photoTagMstMapper, times(0)).select(any(PhotoTagMstCondition.class));
+      verify(photoTagMstMapper, never()).select(any(PhotoTagMstCondition.class));
     }
   }
 }

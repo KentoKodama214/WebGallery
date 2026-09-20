@@ -51,8 +51,30 @@ class DirectionEnumTypeHandlerTest {
   class getNullableResultByColumnName {
     @Test
     @Order(1)
-    @DisplayName("正常系：DB保存値に一致するEnum値を返すこと")
-    void getNullableResultByColumnName_matched() throws SQLException {
+    @DisplayName("正常系：DB保存値がNONEに対応する場合、NONEを返すこと")
+    void getNullableResultByColumnName_none() throws SQLException {
+      doReturn(DirectionEnum.NONE.getDbValue()).when(resultSet).getString("direction");
+
+      DirectionEnum actual = directionEnumTypeHandler.getNullableResult(resultSet, "direction");
+
+      assertEquals(DirectionEnum.NONE, actual);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：DB保存値がVERTICALに対応する場合、VERTICALを返すこと")
+    void getNullableResultByColumnName_vertical() throws SQLException {
+      doReturn(DirectionEnum.VERTICAL.getDbValue()).when(resultSet).getString("direction");
+
+      DirectionEnum actual = directionEnumTypeHandler.getNullableResult(resultSet, "direction");
+
+      assertEquals(DirectionEnum.VERTICAL, actual);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：DB保存値がHORIZONTALに対応する場合、HORIZONTALを返すこと")
+    void getNullableResultByColumnName_horizontal() throws SQLException {
       doReturn(DirectionEnum.HORIZONTAL.getDbValue()).when(resultSet).getString("direction");
 
       DirectionEnum actual = directionEnumTypeHandler.getNullableResult(resultSet, "direction");
@@ -61,7 +83,18 @@ class DirectionEnumTypeHandlerTest {
     }
 
     @Test
-    @Order(2)
+    @Order(4)
+    @DisplayName("正常系：DB保存値がSQUAREに対応する場合、SQUAREを返すこと")
+    void getNullableResultByColumnName_square() throws SQLException {
+      doReturn(DirectionEnum.SQUARE.getDbValue()).when(resultSet).getString("direction");
+
+      DirectionEnum actual = directionEnumTypeHandler.getNullableResult(resultSet, "direction");
+
+      assertEquals(DirectionEnum.SQUARE, actual);
+    }
+
+    @Test
+    @Order(5)
     @DisplayName("異常系：DB値がnullの場合、nullを返すこと")
     void getNullableResultByColumnName_null() throws SQLException {
       doReturn(null).when(resultSet).getString("direction");
@@ -72,7 +105,7 @@ class DirectionEnumTypeHandlerTest {
     }
 
     @Test
-    @Order(3)
+    @Order(6)
     @DisplayName("異常系：DB保存値に一致するEnum値がない場合、nullを返すこと")
     void getNullableResultByColumnName_unmatched() throws SQLException {
       doReturn("unknown").when(resultSet).getString("direction");

@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -105,9 +106,12 @@ public class PhotoAggregateRepositoryImplTest {
 
       photoAggregateRepositoryImpl.regist(photo);
 
-      verify(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
-      verify(photoMstMapper).insert(any(PhotoMst.class));
-      verify(photoTagMstMapper).insertBulk(anyList());
+      InOrder inOrder = inOrder(photoMstMapper, photoTagMstMapper);
+      // 重複チェックを先に行う
+      inOrder.verify(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+      // タグは写真マスタへの外部キー制約を持つため、先に写真マスタを登録する
+      inOrder.verify(photoMstMapper).insert(any(PhotoMst.class));
+      inOrder.verify(photoTagMstMapper).insertBulk(anyList());
 
       PhotoMst photoMstCapture = photoMstCaptor.getValue();
       assertEquals(accountNo.value(), photoMstCapture.getAccountNo());
@@ -209,9 +213,14 @@ public class PhotoAggregateRepositoryImplTest {
 
       photoAggregateRepositoryImpl.update(photo);
 
-      verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
-      verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
-      verify(photoTagMstMapper).insertBulk(anyList());
+      InOrder inOrder = inOrder(photoMstMapper, photoTagMstMapper);
+      inOrder
+          .verify(photoMstMapper)
+          .update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+      // 既存タグを全削除してから
+      inOrder.verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+      // 新しいタグを再登録する
+      inOrder.verify(photoTagMstMapper).insertBulk(anyList());
 
       assertEquals(accountNo.value(), conditionCaptor.getValue().getAccountNo());
       assertEquals(photoNo.value(), conditionCaptor.getValue().getPhotoNo());
@@ -271,9 +280,15 @@ public class PhotoAggregateRepositoryImplTest {
 
       photoAggregateRepositoryImpl.delete(photo);
 
-      verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
-      verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
-      verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+      InOrder inOrder = inOrder(photoFavoriteMapper, photoTagMstMapper, photoMstMapper);
+      // 外部キー制約に抵触しないよう、お気に入りを先に削除する
+      inOrder.verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
+      // 次にタグを削除する
+      inOrder.verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+      // 最後に写真マスタを論理削除する
+      inOrder
+          .verify(photoMstMapper)
+          .update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
 
       assertNull(favoriteConditionCaptor.getValue().getAccountNo());
       assertEquals(
