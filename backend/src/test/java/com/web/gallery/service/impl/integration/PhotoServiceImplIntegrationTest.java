@@ -991,6 +991,8 @@ public class PhotoServiceImplIntegrationTest {
                   .fValue(rs.getBigDecimal("f_value"))
                   .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                   .iso(rs.getInt("iso"))
+                  .imageFileName(rs.getString("image_file_name"))
+                  .isLocationPublic(rs.getBoolean("is_location_public"))
                   .build());
     }
 
@@ -1080,39 +1082,49 @@ public class PhotoServiceImplIntegrationTest {
 
       assertEquals(1L, actualData.get(0).getAccountNo());
       assertEquals(11L, actualData.get(0).getPhotoNo());
+      assertEquals(1L, actualData.get(0).getCreatedBy());
       assertEquals(transactionNow, actualData.get(0).getCreatedAt());
+      assertEquals(1L, actualData.get(0).getUpdatedBy());
       assertEquals(transactionNow, actualData.get(0).getUpdatedAt());
       assertFalse(actualData.get(0).getIsDeleted());
       assertEquals(
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(0).getPhotoAt());
       assertOpaqueObjectKey(actualData.get(0).getImageFilePath(), accountId, 11L, "jpg");
+      assertEquals("DSC21.jpg", actualData.get(0).getImageFileName());
       assertEquals(0L, actualData.get(0).getLocationNo());
       assertEquals("タイトル21", actualData.get(0).getPhotoJapaneseTitle());
       assertEquals("title21", actualData.get(0).getPhotoEnglishTitle());
       assertEquals("キャプション21", actualData.get(0).getCaption());
+      assertEquals(DirectionEnum.NONE, actualData.get(0).getDirectionKbn());
       assertEquals(24, actualData.get(0).getFocalLength());
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData.get(0).getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData.get(0).getShutterSpeed()));
       assertEquals(100, actualData.get(0).getIso());
+      assertFalse(actualData.get(0).getIsLocationPublic());
 
       assertEquals(1L, actualData.get(1).getAccountNo());
       assertEquals(12L, actualData.get(1).getPhotoNo());
+      assertEquals(1L, actualData.get(1).getCreatedBy());
       assertEquals(transactionNow, actualData.get(1).getCreatedAt());
+      assertEquals(1L, actualData.get(1).getUpdatedBy());
       assertEquals(transactionNow, actualData.get(1).getUpdatedAt());
       assertFalse(actualData.get(1).getIsDeleted());
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(1).getPhotoAt().plusHours(9));
       assertOpaqueObjectKey(actualData.get(1).getImageFilePath(), accountId, 12L, "jpg");
+      assertEquals("DSC22.jpg", actualData.get(1).getImageFileName());
       assertEquals(0L, actualData.get(1).getLocationNo());
       assertEquals("", actualData.get(1).getPhotoJapaneseTitle());
       assertEquals("", actualData.get(1).getPhotoEnglishTitle());
       assertEquals("", actualData.get(1).getCaption());
+      assertEquals(DirectionEnum.NONE, actualData.get(1).getDirectionKbn());
       assertEquals(0, actualData.get(1).getFocalLength());
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.get(1).getFValue()));
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.get(1).getShutterSpeed()));
       assertEquals(0, actualData.get(1).getIso());
+      assertFalse(actualData.get(1).getIsLocationPublic());
 
       List<PhotoTagMst> actualTagData1 = getPhotoTagMst(accountId, 11L);
       assertEquals(2, actualTagData1.size());
@@ -1160,9 +1172,11 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(1, actualData1.size());
       assertEquals(1L, actualData1.getFirst().getAccountNo());
       assertEquals(2L, actualData1.getFirst().getPhotoNo());
+      assertEquals(1L, actualData1.getFirst().getCreatedBy());
       assertEquals(
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData1.getFirst().getCreatedAt());
+      assertEquals(1L, actualData1.getFirst().getUpdatedBy());
       assertEquals(transactionNow, actualData1.getFirst().getUpdatedAt());
       assertFalse(actualData1.getFirst().getIsDeleted());
       assertEquals(
@@ -1172,14 +1186,18 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           "https://www.xxx.com/" + accountId + "/DSC12.jpg",
           actualData1.getFirst().getImageFilePath());
+      // 画像は登録後に不変のため、更新では image_file_name を書き換えない（フィクスチャの値がそのまま残る）
+      assertEquals("DSC12.jpg", actualData1.getFirst().getImageFileName());
       assertEquals(0L, actualData1.getFirst().getLocationNo());
       assertEquals("タイトル2", actualData1.getFirst().getPhotoJapaneseTitle());
       assertEquals("title2", actualData1.getFirst().getPhotoEnglishTitle());
       assertEquals("キャプション2", actualData1.getFirst().getCaption());
+      assertEquals(DirectionEnum.NONE, actualData1.getFirst().getDirectionKbn());
       assertEquals(24, actualData1.getFirst().getFocalLength());
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData1.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData1.getFirst().getShutterSpeed()));
       assertEquals(100, actualData1.getFirst().getIso());
+      assertFalse(actualData1.getFirst().getIsLocationPublic());
 
       List<PhotoTagMst> actualTagData1 = getPhotoTagMst(accountId, 2L);
       assertEquals(2, actualTagData1.size());
@@ -1201,9 +1219,11 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(1, actualData2.size());
       assertEquals(1L, actualData2.getFirst().getAccountNo());
       assertEquals(3L, actualData2.getFirst().getPhotoNo());
+      assertEquals(1L, actualData2.getFirst().getCreatedBy());
       assertEquals(
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData2.getFirst().getCreatedAt());
+      assertEquals(1L, actualData2.getFirst().getUpdatedBy());
       assertEquals(transactionNow, actualData2.getFirst().getUpdatedAt());
       assertFalse(actualData2.getFirst().getIsDeleted());
       assertEquals(
@@ -1213,14 +1233,18 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           "https://www.xxx.com/" + accountId + "/DSC13.jpg",
           actualData2.getFirst().getImageFilePath());
+      // 画像は登録後に不変のため、更新では image_file_name を書き換えない（フィクスチャの値がそのまま残る）
+      assertEquals("DSC13.jpg", actualData2.getFirst().getImageFileName());
       assertEquals(0L, actualData2.getFirst().getLocationNo());
       assertEquals("タイトル3", actualData2.getFirst().getPhotoJapaneseTitle());
       assertEquals("title3", actualData2.getFirst().getPhotoEnglishTitle());
       assertEquals("キャプション3", actualData2.getFirst().getCaption());
+      assertEquals(DirectionEnum.NONE, actualData2.getFirst().getDirectionKbn());
       assertEquals(24, actualData2.getFirst().getFocalLength());
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData2.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData2.getFirst().getShutterSpeed()));
       assertEquals(100, actualData2.getFirst().getIso());
+      assertFalse(actualData2.getFirst().getIsLocationPublic());
 
       List<PhotoTagMst> actualTagData2 = getPhotoTagMst(accountId, 3L);
       assertEquals(0, actualTagData2.size());
@@ -1258,21 +1282,26 @@ public class PhotoServiceImplIntegrationTest {
 
       assertEquals(1L, actualData.get(0).getAccountNo());
       assertEquals(11L, actualData.get(0).getPhotoNo());
+      assertEquals(1L, actualData.get(0).getCreatedBy());
       assertEquals(transactionNow, actualData.get(0).getCreatedAt());
+      assertEquals(1L, actualData.get(0).getUpdatedBy());
       assertEquals(transactionNow, actualData.get(0).getUpdatedAt());
       assertFalse(actualData.get(0).getIsDeleted());
       assertEquals(
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(0).getPhotoAt());
       assertOpaqueObjectKey(actualData.get(0).getImageFilePath(), accountId, 11L, "jpg");
+      assertEquals("DSC21.jpg", actualData.get(0).getImageFileName());
       assertEquals(0L, actualData.get(0).getLocationNo());
       assertEquals("タイトル21", actualData.get(0).getPhotoJapaneseTitle());
       assertEquals("title21", actualData.get(0).getPhotoEnglishTitle());
       assertEquals("キャプション21", actualData.get(0).getCaption());
+      assertEquals(DirectionEnum.NONE, actualData.get(0).getDirectionKbn());
       assertEquals(24, actualData.get(0).getFocalLength());
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData.get(0).getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData.get(0).getShutterSpeed()));
       assertEquals(100, actualData.get(0).getIso());
+      assertFalse(actualData.get(0).getIsLocationPublic());
 
       // 新規登録された写真に紐づくタグが2件とも登録されていることを確認
       List<PhotoTagMst> actualTagData1 = getPhotoTagMst(accountId, 11L);
@@ -1296,9 +1325,11 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(1, actualData2.size());
       assertEquals(1L, actualData2.getFirst().getAccountNo());
       assertEquals(3L, actualData2.getFirst().getPhotoNo());
+      assertEquals(1L, actualData2.getFirst().getCreatedBy());
       assertEquals(
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData2.getFirst().getCreatedAt());
+      assertEquals(1L, actualData2.getFirst().getUpdatedBy());
       assertEquals(transactionNow, actualData2.getFirst().getUpdatedAt());
       assertFalse(actualData2.getFirst().getIsDeleted());
       assertEquals(
@@ -1308,14 +1339,18 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           "https://www.xxx.com/" + accountId + "/DSC13.jpg",
           actualData2.getFirst().getImageFilePath());
+      // 画像は登録後に不変のため、更新では image_file_name を書き換えない（フィクスチャの値がそのまま残る）
+      assertEquals("DSC13.jpg", actualData2.getFirst().getImageFileName());
       assertEquals(0L, actualData2.getFirst().getLocationNo());
       assertEquals("タイトル3", actualData2.getFirst().getPhotoJapaneseTitle());
       assertEquals("title3", actualData2.getFirst().getPhotoEnglishTitle());
       assertEquals("キャプション3", actualData2.getFirst().getCaption());
+      assertEquals(DirectionEnum.NONE, actualData2.getFirst().getDirectionKbn());
       assertEquals(24, actualData2.getFirst().getFocalLength());
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData2.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData2.getFirst().getShutterSpeed()));
       assertEquals(100, actualData2.getFirst().getIso());
+      assertFalse(actualData2.getFirst().getIsLocationPublic());
 
       // 更新対象の写真には新たなタグが登録されていないことを確認
       List<PhotoTagMst> actualTagData2 = getPhotoTagMst(accountId, 3L);

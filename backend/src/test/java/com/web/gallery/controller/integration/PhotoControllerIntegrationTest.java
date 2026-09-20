@@ -432,9 +432,11 @@ public class PhotoControllerIntegrationTest {
       assertEquals(1, actualPhotoMst.size());
       assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
       assertEquals(1L, actualPhotoMst.getFirst().getPhotoNo());
+      assertEquals(2L, actualPhotoMst.getFirst().getCreatedBy());
       assertEquals(
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualPhotoMst.getFirst().getCreatedAt());
+      assertEquals(2L, actualPhotoMst.getFirst().getUpdatedBy());
       assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt());
       assertFalse(actualPhotoMst.getFirst().getIsDeleted());
       assertEquals(
@@ -473,12 +475,14 @@ public class PhotoControllerIntegrationTest {
       assertEquals(2L, actualPhotoTagMst.get(0).getAccountNo());
       assertEquals(1L, actualPhotoTagMst.get(0).getPhotoNo());
       assertEquals(1L, actualPhotoTagMst.get(0).getTagNo());
+      assertEquals(2L, actualPhotoTagMst.get(0).getCreatedBy());
       assertEquals(transactionNow, actualPhotoTagMst.get(0).getCreatedAt());
       assertEquals("太陽", actualPhotoTagMst.get(0).getTagJapaneseName());
       assertEquals("sun", actualPhotoTagMst.get(0).getTagEnglishName());
       assertEquals(2L, actualPhotoTagMst.get(1).getAccountNo());
       assertEquals(1L, actualPhotoTagMst.get(1).getPhotoNo());
       assertEquals(2L, actualPhotoTagMst.get(1).getTagNo());
+      assertEquals(2L, actualPhotoTagMst.get(1).getCreatedBy());
       assertEquals(transactionNow, actualPhotoTagMst.get(1).getCreatedAt());
       assertEquals("青空", actualPhotoTagMst.get(1).getTagJapaneseName());
       assertEquals("bluesky", actualPhotoTagMst.get(1).getTagEnglishName());
@@ -710,7 +714,9 @@ public class PhotoControllerIntegrationTest {
       assertEquals(1, actualPhotoMst.size());
       assertEquals(2L, actualPhotoMst.getFirst().getAccountNo());
       assertEquals(4L, actualPhotoMst.getFirst().getPhotoNo());
+      assertEquals(2L, actualPhotoMst.getFirst().getCreatedBy());
       assertEquals(transactionNow, actualPhotoMst.getFirst().getCreatedAt());
+      assertEquals(2L, actualPhotoMst.getFirst().getUpdatedBy());
       assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt());
       assertFalse(actualPhotoMst.getFirst().getIsDeleted());
       assertEquals(
@@ -1319,9 +1325,11 @@ public class PhotoControllerIntegrationTest {
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
                       .build());
+      assertEquals(1L, actualPhotoMst.getFirst().getCreatedBy());
       assertEquals(
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualPhotoMst.getFirst().getCreatedAt());
+      assertEquals(1L, actualPhotoMst.getFirst().getUpdatedBy());
       assertEquals(transactionNow, actualPhotoMst.getFirst().getUpdatedAt());
       assertTrue(actualPhotoMst.getFirst().getIsDeleted());
 

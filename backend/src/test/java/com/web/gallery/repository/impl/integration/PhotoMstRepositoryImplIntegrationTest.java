@@ -100,6 +100,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .imageFileName(rs.getString("image_file_name"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -123,6 +125,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(0, actualData.getFirst().getIso());
+      assertEquals("DSC14.jpg", actualData.getFirst().getImageFileName());
+      assertFalse(actualData.getFirst().getIsLocationPublic());
     }
 
     @Test
@@ -179,6 +183,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .imageFileName(rs.getString("image_file_name"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -202,6 +208,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(100, actualData.getFirst().getIso());
+      assertEquals("DSC14.jpg", actualData.getFirst().getImageFileName());
+      assertFalse(actualData.getFirst().getIsLocationPublic());
     }
 
     @Test
@@ -271,6 +279,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .imageFileName(rs.getString("image_file_name"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -298,6 +308,9 @@ public class PhotoMstRepositoryImplIntegrationTest {
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(0, actualData.getFirst().getIso());
+      // image_file_nameは更新対象に含まれないため、フィクスチャの値がそのまま残る
+      assertEquals("DSC11.jpg", actualData.getFirst().getImageFileName());
+      assertFalse(actualData.getFirst().getIsLocationPublic());
     }
 
     @Test
@@ -353,6 +366,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .imageFileName(rs.getString("image_file_name"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -380,6 +395,9 @@ public class PhotoMstRepositoryImplIntegrationTest {
       assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(1).compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(1000, actualData.getFirst().getIso());
+      // image_file_nameは更新対象に含まれないため、フィクスチャの値がそのまま残る
+      assertEquals("DSC11.jpg", actualData.getFirst().getImageFileName());
+      assertFalse(actualData.getFirst().getIsLocationPublic());
     }
 
     @Test
@@ -446,6 +464,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .imageFileName(rs.getString("image_file_name"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -472,6 +492,9 @@ public class PhotoMstRepositoryImplIntegrationTest {
       assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(1).compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(100, actualData.getFirst().getIso());
+      // 削除は論理削除のみで画像・位置情報公開設定は書き換えないため、フィクスチャの値がそのまま残る
+      assertEquals("DSC11.jpg", actualData.getFirst().getImageFileName());
+      assertTrue(actualData.getFirst().getIsLocationPublic());
     }
 
     @Test

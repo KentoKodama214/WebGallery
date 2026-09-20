@@ -11,8 +11,12 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
+import com.web.gallery.entity.inquiry.InquiryMst;
 import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.enumeration.InquiryStatusEnum;
 import com.web.gallery.model.account.AccountModel;
+import java.time.OffsetDateTime;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -65,6 +69,8 @@ public class InquiryControllerIntegrationTest {
     @Order(1)
     @DisplayName("正常系：お問い合わせを新規登録できる")
     void registInquiry_success() throws Exception {
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       mockMvc
           .perform(
               post("/api/v1/inquiries")
@@ -79,11 +85,33 @@ public class InquiryControllerIntegrationTest {
           .andExpect(jsonPath("$.isSuccess").value(true))
           .andExpect(jsonPath("$.inquiryNo").value(3));
 
-      Integer count =
-          jdbcTemplate.queryForObject(
-              "SELECT COUNT(*) FROM common.inquiry_mst WHERE account_no = 1 AND inquiry_no = 3",
-              Integer.class);
-      assertEquals(1, count);
+      List<InquiryMst> actualData =
+          jdbcTemplate.query(
+              "SELECT * FROM common.inquiry_mst WHERE account_no = 1 AND inquiry_no = 3",
+              (rs, rowNum) ->
+                  InquiryMst.builder()
+                      .accountNo(rs.getLong("account_no"))
+                      .inquiryNo(rs.getLong("inquiry_no"))
+                      .createdBy(rs.getLong("created_by"))
+                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                      .updatedBy(rs.getLong("updated_by"))
+                      .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                      .subject(rs.getString("subject"))
+                      .body(rs.getString("body"))
+                      .statusKbn(InquiryStatusEnum.getOrDefault(rs.getString("status_kbn")))
+                      .isReadByUser(rs.getBoolean("is_read_by_user"))
+                      .build());
+      assertEquals(1, actualData.size());
+      assertEquals(1L, actualData.getFirst().getAccountNo());
+      assertEquals(3L, actualData.getFirst().getInquiryNo());
+      assertEquals(1L, actualData.getFirst().getCreatedBy());
+      assertEquals(transactionNow, actualData.getFirst().getCreatedAt());
+      assertEquals(1L, actualData.getFirst().getUpdatedBy());
+      assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+      assertEquals("新規のお問い合わせ", actualData.getFirst().getSubject());
+      assertEquals("新規のお問い合わせ本文です。", actualData.getFirst().getBody());
+      assertEquals(InquiryStatusEnum.UNREPLIED, actualData.getFirst().getStatusKbn());
+      assertTrue(actualData.getFirst().getIsReadByUser());
     }
 
     @Test

@@ -169,6 +169,7 @@ public class AccountRepositoryImplIntegrationTest {
                       .freeMemo(rs.getString("free_memo"))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -241,6 +242,7 @@ public class AccountRepositoryImplIntegrationTest {
                       .freeMemo(rs.getString("free_memo"))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -329,6 +331,7 @@ public class AccountRepositoryImplIntegrationTest {
                       .freeMemo(rs.getString("free_memo"))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -353,6 +356,7 @@ public class AccountRepositoryImplIntegrationTest {
           OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime());
       assertEquals(0, actualData.getFirst().getLoginFailureCount());
+      assertFalse(actualData.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -401,6 +405,7 @@ public class AccountRepositoryImplIntegrationTest {
                       .freeMemo(rs.getString("free_memo"))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -424,6 +429,7 @@ public class AccountRepositoryImplIntegrationTest {
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
       assertEquals(2, actualData.getFirst().getLoginFailureCount());
+      assertFalse(actualData.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -493,6 +499,7 @@ public class AccountRepositoryImplIntegrationTest {
                       .freeMemo(rs.getString("free_memo"))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -516,6 +523,7 @@ public class AccountRepositoryImplIntegrationTest {
           OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
       assertEquals(0, actualData.getFirst().getLoginFailureCount());
+      assertFalse(actualData.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -556,6 +564,7 @@ public class AccountRepositoryImplIntegrationTest {
                       .freeMemo(rs.getString("free_memo"))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -579,6 +588,7 @@ public class AccountRepositoryImplIntegrationTest {
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
       assertEquals(2, actualData.getFirst().getLoginFailureCount());
+      assertFalse(actualData.getFirst().getIsAdminLocked());
     }
 
     @Test
