@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { test as authTest, expect as authExpect } from "../fixtures/auth";
 
 test.describe("アカウント設定ページ", () => {
   test("未ログイン状態ではログインページへリダイレクトされること", async ({ page }) => {
@@ -17,4 +18,22 @@ test.describe("アカウント設定ページ", () => {
 
     await expect(page.getByText("ページが見つかりません")).toBeVisible();
   });
+});
+
+authTest.describe("アカウント設定ページ（ログイン済み・本人）", () => {
+  authTest(
+    "ログインページへリダイレクトされず、自分のアカウント情報が表示されること",
+    async ({ workerPage: page, testUser }) => {
+      await page.goto(`/${testUser.accountId}/account_setting`);
+
+      await authExpect(page).toHaveURL(new RegExp(`/${testUser.accountId}/account_setting$`));
+      await authExpect(page).toHaveTitle(/アカウント設定/);
+      await authExpect(page.getByLabel("アカウントID")).toHaveValue(testUser.accountId);
+      await authExpect(page.getByLabel("アカウント名")).toHaveValue("E2E Auth User");
+
+      // ヘッダーが認証済み状態のメニュー（Sign Out）になっていること
+      await page.getByTestId("hamburger-button").click();
+      await authExpect(page.getByTestId("logout-button")).toBeVisible();
+    }
+  );
 });
