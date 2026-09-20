@@ -724,11 +724,48 @@ public class AccountRepositoryImplTest {
   @Nested
   @Order(8)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class isExistAccount {
+  class isExistAccountByAccountId {
     @Test
     @Order(1)
     @DisplayName("正常系：アカウントが存在する場合")
-    void isExistAccount_true() {
+    void isExistAccountByAccountId_true() {
+      ArgumentCaptor<AccountCondition> accountCaptor =
+          ArgumentCaptor.forClass(AccountCondition.class);
+      doReturn(true).when(accountMapper).isExistAccount(accountCaptor.capture());
+
+      assertTrue(accountRepositoryImpl.isExistAccount(new AccountId("aaaaaaaa")));
+      verify(accountMapper, times(1)).isExistAccount(any(AccountCondition.class));
+
+      AccountCondition accountCapture = accountCaptor.getValue();
+      assertNull(accountCapture.getAccountNo());
+      assertEquals("aaaaaaaa", accountCapture.getAccountId());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：アカウントが存在しない場合")
+    void isExistAccountByAccountId_false() {
+      ArgumentCaptor<AccountCondition> accountCaptor =
+          ArgumentCaptor.forClass(AccountCondition.class);
+      doReturn(false).when(accountMapper).isExistAccount(accountCaptor.capture());
+
+      assertFalse(accountRepositoryImpl.isExistAccount(new AccountId("aaaaaaaa")));
+      verify(accountMapper, times(1)).isExistAccount(any());
+
+      AccountCondition accountCapture = accountCaptor.getValue();
+      assertNull(accountCapture.getAccountNo());
+      assertEquals("aaaaaaaa", accountCapture.getAccountId());
+    }
+  }
+
+  @Nested
+  @Order(9)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class isExistAccountByAccountNoAndAccountId {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントが存在する場合")
+    void isExistAccountByAccountNoAndAccountId_true() {
       ArgumentCaptor<AccountCondition> accountCaptor =
           ArgumentCaptor.forClass(AccountCondition.class);
       doReturn(true).when(accountMapper).isExistAccount(accountCaptor.capture());
@@ -745,7 +782,7 @@ public class AccountRepositoryImplTest {
     @Test
     @Order(2)
     @DisplayName("正常系：アカウントが存在しない場合")
-    void isExistAccount_false() {
+    void isExistAccountByAccountNoAndAccountId_false() {
       ArgumentCaptor<AccountCondition> accountCaptor =
           ArgumentCaptor.forClass(AccountCondition.class);
       doReturn(false).when(accountMapper).isExistAccount(accountCaptor.capture());
@@ -761,7 +798,7 @@ public class AccountRepositoryImplTest {
   }
 
   @Nested
-  @Order(9)
+  @Order(10)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getAccountList {
     @Test
@@ -939,7 +976,7 @@ public class AccountRepositoryImplTest {
   }
 
   @Nested
-  @Order(10)
+  @Order(11)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getAccountListForAdmin {
     @Test
@@ -1036,7 +1073,7 @@ public class AccountRepositoryImplTest {
   }
 
   @Nested
-  @Order(9)
+  @Order(12)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class lockForUpdate {
     @Test
@@ -1052,7 +1089,23 @@ public class AccountRepositoryImplTest {
   }
 
   @Nested
-  @Order(11)
+  @Order(13)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class lockForLoginAttempt {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：ログイン試行の直列化用アドバイザリロックを取得すること")
+    void lockForLoginAttempt_success() {
+      doReturn(1).when(accountMapper).lockForLoginAttempt("aaaaaaaa");
+
+      accountRepositoryImpl.lockForLoginAttempt(new AccountId("aaaaaaaa"));
+
+      verify(accountMapper).lockForLoginAttempt("aaaaaaaa");
+    }
+  }
+
+  @Nested
+  @Order(14)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class updateAuthority {
     @Test
