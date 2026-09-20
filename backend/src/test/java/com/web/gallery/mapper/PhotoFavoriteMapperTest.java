@@ -2,8 +2,8 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.entity.PhotoFavorite;
-import com.web.gallery.entity.PhotoFavoriteCondition;
+import com.web.gallery.entity.photo.PhotoFavorite;
+import com.web.gallery.entity.photo.PhotoFavoriteCondition;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

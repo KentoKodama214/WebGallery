@@ -3,9 +3,9 @@ package com.web.gallery.repository;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.AccountGetModel;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.model.account.AccountGetModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.account.AccountPageModel;
 
 /** アカウントデータを永続化するRepositoryクラス */
 public interface AccountRepository {

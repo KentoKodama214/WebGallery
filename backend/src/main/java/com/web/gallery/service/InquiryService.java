@@ -6,9 +6,9 @@ import com.web.gallery.domain.inquiry.InquiryNo;
 import com.web.gallery.domain.inquiry.ReplyBody;
 import com.web.gallery.domain.inquiry.ReplyNo;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.InquiryDetailModel;
-import com.web.gallery.model.InquiryListGetModel;
-import com.web.gallery.model.InquiryPageModel;
+import com.web.gallery.model.inquiry.InquiryDetailModel;
+import com.web.gallery.model.inquiry.InquiryListGetModel;
+import com.web.gallery.model.inquiry.InquiryPageModel;
 
 /** お問い合わせに関するビジネスロジックを扱うServiceインターフェース */
 public interface InquiryService {

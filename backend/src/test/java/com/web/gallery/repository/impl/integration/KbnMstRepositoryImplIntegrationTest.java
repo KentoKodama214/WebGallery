@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.common.KbnCode;
-import com.web.gallery.model.KbnMstModelList;
+import com.web.gallery.model.common.KbnMstModelList;
 import com.web.gallery.repository.impl.KbnMstRepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

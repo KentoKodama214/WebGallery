@@ -2,8 +2,8 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.entity.InquiryReplyMst;
-import com.web.gallery.entity.InquiryReplyMstCondition;
+import com.web.gallery.entity.inquiry.InquiryReplyMst;
+import com.web.gallery.entity.inquiry.InquiryReplyMstCondition;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

@@ -1,13 +1,13 @@
 package com.web.gallery.repository.impl;
 
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.entity.PhotoTagMst;
-import com.web.gallery.entity.PhotoTagMstCondition;
+import com.web.gallery.entity.photo.PhotoTagMst;
+import com.web.gallery.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.PhotoTagMstMapper;
-import com.web.gallery.model.PhotoTagDeleteModel;
-import com.web.gallery.model.PhotoTagModel;
+import com.web.gallery.model.photo.PhotoTagDeleteModel;
+import com.web.gallery.model.photo.PhotoTagModel;
 import com.web.gallery.repository.PhotoTagMstRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

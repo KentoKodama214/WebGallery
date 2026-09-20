@@ -2,8 +2,8 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.entity.LoginHistory;
-import com.web.gallery.entity.LoginHistoryCondition;
+import com.web.gallery.entity.account.LoginHistory;
+import com.web.gallery.entity.account.LoginHistoryCondition;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

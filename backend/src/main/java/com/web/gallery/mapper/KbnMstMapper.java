@@ -1,7 +1,7 @@
 package com.web.gallery.mapper;
 
-import com.web.gallery.entity.KbnMst;
-import com.web.gallery.entity.KbnMstCondition;
+import com.web.gallery.entity.common.KbnMst;
+import com.web.gallery.entity.common.KbnMstCondition;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 

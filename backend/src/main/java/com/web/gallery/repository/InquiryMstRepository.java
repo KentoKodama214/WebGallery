@@ -4,9 +4,9 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.inquiry.InquiryId;
 import com.web.gallery.domain.inquiry.InquiryNo;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.InquiryDetailModel;
-import com.web.gallery.model.InquiryGetModel;
-import com.web.gallery.model.InquiryPageModel;
+import com.web.gallery.model.inquiry.InquiryDetailModel;
+import com.web.gallery.model.inquiry.InquiryGetModel;
+import com.web.gallery.model.inquiry.InquiryPageModel;
 
 /** お問い合わせマスタデータを永続化するRepositoryクラス */
 public interface InquiryMstRepository {

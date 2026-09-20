@@ -37,14 +37,14 @@ import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.GeoIpResolver;
-import com.web.gallery.model.AccountGetModel;
-import com.web.gallery.model.AccountListGetModel;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountModelList;
-import com.web.gallery.model.AccountPageModel;
-import com.web.gallery.model.KbnMstModelList;
-import com.web.gallery.model.LoginHistoryModel;
-import com.web.gallery.model.PhotoNoList;
+import com.web.gallery.model.account.AccountGetModel;
+import com.web.gallery.model.account.AccountListGetModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.account.AccountModelList;
+import com.web.gallery.model.account.AccountPageModel;
+import com.web.gallery.model.account.LoginHistoryModel;
+import com.web.gallery.model.common.KbnMstModelList;
+import com.web.gallery.model.photo.PhotoNoList;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.impl.AccountAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
@@ -259,8 +259,8 @@ public class AccountServiceImplTest {
     }
   }
 
-  private static com.web.gallery.model.KbnMstModel newPrefectureKbnMstModel(String kbnCode) {
-    return com.web.gallery.model.KbnMstModel.builder()
+  private static com.web.gallery.model.common.KbnMstModel newPrefectureKbnMstModel(String kbnCode) {
+    return com.web.gallery.model.common.KbnMstModel.builder()
         .kbnClassCode(new KbnClassCode(Consts.PREFECTURE))
         .kbnCode(new com.web.gallery.domain.common.KbnCode(kbnCode))
         .sortOrder(new com.web.gallery.domain.common.SortOrder(1))

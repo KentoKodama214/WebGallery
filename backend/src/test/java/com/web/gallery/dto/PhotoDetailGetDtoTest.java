@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.model.PhotoDetailSearchModel;
+import com.web.gallery.model.photo.PhotoDetailSearchModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

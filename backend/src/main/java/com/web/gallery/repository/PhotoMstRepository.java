@@ -4,9 +4,9 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.PhotoDeleteModel;
-import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoNoList;
+import com.web.gallery.model.photo.PhotoDeleteModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoNoList;
 
 /** 写真マスタデータを永続化するRepositoryクラス */
 public interface PhotoMstRepository {

@@ -1,7 +1,7 @@
 package com.web.gallery.mapper;
 
-import com.web.gallery.entity.LoginHistory;
-import com.web.gallery.entity.LoginHistoryCondition;
+import com.web.gallery.entity.account.LoginHistory;
+import com.web.gallery.entity.account.LoginHistoryCondition;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

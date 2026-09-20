@@ -3,13 +3,13 @@ package com.web.gallery.service;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.PhotoDeleteModelList;
-import com.web.gallery.model.PhotoDetailGetModel;
-import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoDetailModelList;
-import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoPageModel;
-import com.web.gallery.model.PhotoSaveResultModel;
+import com.web.gallery.model.photo.PhotoDeleteModelList;
+import com.web.gallery.model.photo.PhotoDetailGetModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoDetailModelList;
+import com.web.gallery.model.photo.PhotoListGetModel;
+import com.web.gallery.model.photo.PhotoPageModel;
+import com.web.gallery.model.photo.PhotoSaveResultModel;
 
 /** 写真に関するビジネスロジックを行うServiceクラス */
 public interface PhotoService {

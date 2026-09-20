@@ -12,7 +12,7 @@ import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.enumeration.AuthorityEnum;
-import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.account.AccountModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

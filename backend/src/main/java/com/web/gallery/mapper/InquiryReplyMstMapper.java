@@ -1,7 +1,7 @@
 package com.web.gallery.mapper;
 
-import com.web.gallery.entity.InquiryReplyMst;
-import com.web.gallery.entity.InquiryReplyMstCondition;
+import com.web.gallery.entity.inquiry.InquiryReplyMst;
+import com.web.gallery.entity.inquiry.InquiryReplyMstCondition;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 

@@ -27,7 +27,7 @@ class ModelArchitectureTest {
   /**
    * AccountModelは部分更新用の複数のファクトリメソッド（forUnlock等）を持ち、全ファクトリメソッドに共通して必須となる
    * プロパティが存在しないため、意図的に{@code @NonNull}を付与していない（{@link
-   * com.web.gallery.model.AccountModel}のクラスJavadoc参照）
+   * com.web.gallery.model.account.AccountModel}のクラスJavadoc参照）
    */
   private static final String DOCUMENTED_NON_NULL_EXCEPTION = "AccountModel";
 
@@ -35,7 +35,7 @@ class ModelArchitectureTest {
   static final ArchRule modelClassShouldHaveAtLeastOneNonNullField =
       classes()
           .that()
-          .resideInAPackage(Packages.MODEL)
+          .resideInAPackage(Packages.MODEL + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .and(ArchPredicates.NOT_RECORDS)
           .and(not(simpleName(DOCUMENTED_NON_NULL_EXCEPTION)))
@@ -46,7 +46,7 @@ class ModelArchitectureTest {
   static final ArchRule modelListShouldBeIterableRecord =
       classes()
           .that()
-          .resideInAPackage(Packages.MODEL)
+          .resideInAPackage(Packages.MODEL + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .and()
           .haveSimpleNameEndingWith("ModelList")

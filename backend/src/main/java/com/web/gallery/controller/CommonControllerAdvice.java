@@ -1,7 +1,7 @@
 package com.web.gallery.controller;
 
-import com.web.gallery.controller.response.BadRequestResponse;
-import com.web.gallery.controller.response.ErrorResponse;
+import com.web.gallery.controller.response.common.BadRequestResponse;
+import com.web.gallery.controller.response.common.ErrorResponse;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.FavoriteNotFoundException;

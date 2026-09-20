@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.model.FileModel;
+import com.web.gallery.model.photo.FileModel;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;

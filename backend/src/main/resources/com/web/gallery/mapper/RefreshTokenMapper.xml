@@ -4,7 +4,7 @@
 
 <mapper namespace="com.web.gallery.mapper.RefreshTokenMapper">
 
-	<resultMap id="RefreshTokenMap" type="com.web.gallery.entity.RefreshToken">
+	<resultMap id="RefreshTokenMap" type="com.web.gallery.entity.auth.RefreshToken">
 		<result property="tokenId" column="token_id"/>
 		<result property="accountNo" column="account_no"/>
 		<result property="tokenHash" column="token_hash"/>
@@ -15,7 +15,7 @@
 		<result property="isRevoked" column="is_revoked"/>
 	</resultMap>
 
-	<insert id="insert" parameterType="com.web.gallery.entity.RefreshToken">
+	<insert id="insert" parameterType="com.web.gallery.entity.auth.RefreshToken">
 		INSERT INTO common.refresh_token (
 			account_no,
 			token_hash,

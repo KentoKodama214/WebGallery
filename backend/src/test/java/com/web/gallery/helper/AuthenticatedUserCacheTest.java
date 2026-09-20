@@ -10,7 +10,7 @@ import com.web.gallery.event.AccountDeletedEvent;
 import com.web.gallery.event.AccountLockedEvent;
 import com.web.gallery.event.AccountUnlockedEvent;
 import com.web.gallery.event.AccountUpdatedEvent;
-import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.account.AccountModel;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;

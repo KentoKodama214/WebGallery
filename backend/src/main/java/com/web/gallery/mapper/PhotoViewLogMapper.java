@@ -1,7 +1,7 @@
 package com.web.gallery.mapper;
 
-import com.web.gallery.entity.PhotoViewLog;
-import com.web.gallery.entity.PhotoViewLogCondition;
+import com.web.gallery.entity.photo.PhotoViewLog;
+import com.web.gallery.entity.photo.PhotoViewLogCondition;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

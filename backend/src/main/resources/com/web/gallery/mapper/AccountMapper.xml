@@ -40,7 +40,7 @@
 		<if test="${prefix}isAdminLocked != null"> AND account.is_admin_locked = #{${prefix}isAdminLocked}</if>
 	</sql>
 
-	<select id="select" parameterType="com.web.gallery.entity.AccountCondition" resultMap="AccountDtoMap">
+	<select id="select" parameterType="com.web.gallery.entity.account.AccountCondition" resultMap="AccountDtoMap">
 		SELECT
 			account.account_no,
 			account.created_by,
@@ -74,7 +74,7 @@
 		</if>
 	</select>
 
-	<select id="selectList" parameterType="com.web.gallery.entity.AccountCondition" resultMap="AccountDtoMap">
+	<select id="selectList" parameterType="com.web.gallery.entity.account.AccountCondition" resultMap="AccountDtoMap">
 		SELECT
 			account.account_no,
 			account.created_by,
@@ -109,7 +109,7 @@
 		</if>
 	</select>
 
-	<select id="count" parameterType="com.web.gallery.entity.AccountCondition" resultType="Integer">
+	<select id="count" parameterType="com.web.gallery.entity.account.AccountCondition" resultType="Integer">
 		SELECT
 			COUNT(*)
 		FROM
@@ -125,7 +125,7 @@
 		SELECT nextval('common.account_account_no_seq')
 	</select>
 
-	<insert id="insert" parameterType="com.web.gallery.entity.Account">
+	<insert id="insert" parameterType="com.web.gallery.entity.account.Account">
 		INSERT INTO
 			common.account (
 				account_no,
@@ -204,7 +204,7 @@
 			account_no = #{accountNo}
 	</update>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.AccountCondition">
+	<delete id="delete" parameterType="com.web.gallery.entity.account.AccountCondition">
 		DELETE FROM
 			common.account
 		<where>
@@ -214,7 +214,7 @@
 		</where>
 	</delete>
 
-	<select id="isExistAccount" parameterType="com.web.gallery.entity.AccountCondition" resultType="Boolean">
+	<select id="isExistAccount" parameterType="com.web.gallery.entity.account.AccountCondition" resultType="Boolean">
 		SELECT
 			CASE WHEN COUNT(*)>0 THEN true ELSE false END
 		FROM

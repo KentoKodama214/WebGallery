@@ -2,9 +2,9 @@ package com.web.gallery.repository.impl;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.TokenHash;
-import com.web.gallery.entity.RefreshToken;
+import com.web.gallery.entity.auth.RefreshToken;
 import com.web.gallery.mapper.RefreshTokenMapper;
-import com.web.gallery.model.RefreshTokenModel;
+import com.web.gallery.model.auth.RefreshTokenModel;
 import com.web.gallery.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

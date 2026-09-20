@@ -13,7 +13,7 @@ import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.helper.ClientIpResolver;
-import com.web.gallery.model.AuthTokenModel;
+import com.web.gallery.model.auth.AuthTokenModel;
 import com.web.gallery.service.impl.AuthServiceImpl;
 import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;

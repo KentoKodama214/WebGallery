@@ -1,10 +1,10 @@
 package com.web.gallery.repository;
 
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoDetailSearchModel;
-import com.web.gallery.model.PhotoGetModel;
-import com.web.gallery.model.PhotoPageModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoDetailSearchModel;
+import com.web.gallery.model.photo.PhotoGetModel;
+import com.web.gallery.model.photo.PhotoPageModel;
 
 /** 写真のメタデータを含めた詳細情報を永続化するRepositoryクラス */
 public interface PhotoDetailRepository {

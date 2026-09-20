@@ -6,7 +6,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.IsFavoriteOnly;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
-import com.web.gallery.model.PhotoGetModel;
+import com.web.gallery.model.photo.PhotoGetModel;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

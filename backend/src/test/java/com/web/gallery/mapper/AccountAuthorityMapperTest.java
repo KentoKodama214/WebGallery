@@ -2,9 +2,9 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.entity.AccountAuthority;
-import com.web.gallery.entity.AccountAuthorityCondition;
-import com.web.gallery.entity.AccountAuthorityUpdateTarget;
+import com.web.gallery.entity.account.AccountAuthority;
+import com.web.gallery.entity.account.AccountAuthorityCondition;
+import com.web.gallery.entity.account.AccountAuthorityUpdateTarget;
 import com.web.gallery.enumeration.AuthorityEnum;
 import java.time.OffsetDateTime;
 import java.util.List;
