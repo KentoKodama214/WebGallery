@@ -2,8 +2,8 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.entity.PhotoListFilterLog;
-import com.web.gallery.entity.PhotoListFilterLogCondition;
+import com.web.gallery.entity.photo.PhotoListFilterLog;
+import com.web.gallery.entity.photo.PhotoListFilterLogCondition;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import java.time.OffsetDateTime;

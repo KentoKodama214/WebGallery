@@ -1,0 +1,115 @@
+package com.web.gallery.entity.photo;
+
+import com.web.gallery.constant.Consts;
+import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.model.photo.PhotoDeleteModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import lombok.Builder;
+import lombok.Data;
+
+/** 写真マスタテーブルの更新対象クラス */
+@Data
+@Builder
+public class PhotoMstUpdateTarget {
+  /** 更新者 */
+  private Long updatedBy;
+
+  /** 削除フラグ */
+  private Boolean isDeleted;
+
+  /** 撮影日時 */
+  private OffsetDateTime photoAt;
+
+  /** ロケーション番号 */
+  private Long locationNo;
+
+  /** 画像ファイルパス */
+  private String imageFilePath;
+
+  /** 画像ファイル名 */
+  private String imageFileName;
+
+  /** 写真タイトル日本語名 */
+  private String photoJapaneseTitle;
+
+  /** 写真タイトル英語名 */
+  private String photoEnglishTitle;
+
+  /** キャプション */
+  private String caption;
+
+  /**
+   * 向き区分
+   *
+   * <p>{@link DirectionEnum}
+   */
+  private DirectionEnum directionKbn;
+
+  /** 焦点距離 */
+  private Integer focalLength;
+
+  /** F値 */
+  private BigDecimal fValue;
+
+  /** シャッタースピード */
+  private BigDecimal shutterSpeed;
+
+  /** ISO */
+  private Integer iso;
+
+  /** 位置情報公開フラグ */
+  private Boolean isLocationPublic;
+
+  /**
+   * 写真更新用のPhotoDetailModelから更新対象を生成する
+   *
+   * @param model {@link PhotoDetailModel}
+   * @return {@link PhotoMstUpdateTarget}
+   */
+  public static PhotoMstUpdateTarget fromForUpdate(PhotoDetailModel model) {
+    var exifData = model.getExifData();
+    return PhotoMstUpdateTarget.builder()
+        .updatedBy(model.getAccountNo().value())
+        .isDeleted(false)
+        .photoAt(
+            model.getPhotoAt() != null ? model.getPhotoAt().value() : Consts.MIN_OFFSET_DATE_TIME)
+        .locationNo(model.getLocationNo() != null ? model.getLocationNo().value() : 0L)
+        // 画像ファイル（image_file_path / image_file_name）は登録後に不変のため更新対象に含めない。
+        // 不透明キーから元ファイル名を復元できないため、更新時に image_file_name を書き換えると
+        // 重複判定（PhotoMstMapper.isExistPhoto）が壊れる
+        .photoJapaneseTitle(
+            model.getPhotoJapaneseTitle() != null
+                ? model.getPhotoJapaneseTitle().value()
+                : Consts.STRING_EMPTY)
+        .photoEnglishTitle(
+            model.getPhotoEnglishTitle() != null
+                ? model.getPhotoEnglishTitle().value()
+                : Consts.STRING_EMPTY)
+        .caption(model.getCaption() != null ? model.getCaption().value() : Consts.STRING_EMPTY)
+        .directionKbn(DirectionEnum.getOrDefault(model.getDirectionKbn()))
+        .focalLength(exifData.focalLength() != null ? exifData.focalLength().value() : 0)
+        .fValue(exifData.fValue() != null ? exifData.fValue().value() : BigDecimal.ZERO)
+        .shutterSpeed(
+            exifData.shutterSpeed() != null ? exifData.shutterSpeed().value() : BigDecimal.ZERO)
+        .iso(exifData.iso() != null ? exifData.iso().value() : 0)
+        // 未指定の場合は安全側に倒して非公開（false）にする
+        .isLocationPublic(
+            model.getIsLocationPublic() != null && model.getIsLocationPublic().value())
+        .build();
+  }
+
+  /**
+   * 写真削除用のPhotoDeleteModelから更新対象を生成する
+   *
+   * @param model {@link PhotoDeleteModel}
+   * @return {@link PhotoMstUpdateTarget}
+   */
+  public static PhotoMstUpdateTarget forDelete(PhotoDeleteModel model) {
+    return PhotoMstUpdateTarget.builder()
+        .updatedBy(model.getAccountNo().value())
+        .isDeleted(true)
+        .build();
+  }
+}

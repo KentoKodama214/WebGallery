@@ -34,7 +34,7 @@
 		<if test="${prefix}statusKbn != null"> AND im.status_kbn = #{${prefix}statusKbn}::common.inquiry_status_enum</if>
 	</sql>
 
-	<insert id="insert" parameterType="com.web.gallery.entity.InquiryMst">
+	<insert id="insert" parameterType="com.web.gallery.entity.inquiry.InquiryMst">
 		INSERT INTO
 			common.inquiry_mst (
 				account_no,
@@ -88,7 +88,7 @@
 			account_no = #{accountNo}
 	</select>
 
-	<select id="selectList" parameterType="com.web.gallery.entity.InquiryMstCondition" resultMap="InquiryDtoMap">
+	<select id="selectList" parameterType="com.web.gallery.entity.inquiry.InquiryMstCondition" resultMap="InquiryDtoMap">
 		SELECT
 			im.id,
 			im.account_no,
@@ -109,7 +109,7 @@
 		LIMIT #{limit} OFFSET #{offset}
 	</select>
 
-	<select id="selectListForAdmin" parameterType="com.web.gallery.entity.InquiryMstCondition" resultMap="InquiryDtoMap">
+	<select id="selectListForAdmin" parameterType="com.web.gallery.entity.inquiry.InquiryMstCondition" resultMap="InquiryDtoMap">
 		SELECT
 			im.id,
 			im.account_no,
@@ -133,7 +133,7 @@
 		LIMIT #{limit} OFFSET #{offset}
 	</select>
 
-	<select id="selectDetail" parameterType="com.web.gallery.entity.InquiryMstCondition" resultMap="InquiryDetailDtoMap">
+	<select id="selectDetail" parameterType="com.web.gallery.entity.inquiry.InquiryMstCondition" resultMap="InquiryDetailDtoMap">
 		SELECT
 			im.id,
 			im.account_no,
@@ -152,7 +152,7 @@
 		</where>
 	</select>
 
-	<select id="selectDetailForAdmin" parameterType="com.web.gallery.entity.InquiryMstCondition" resultMap="InquiryDetailDtoMap">
+	<select id="selectDetailForAdmin" parameterType="com.web.gallery.entity.inquiry.InquiryMstCondition" resultMap="InquiryDetailDtoMap">
 		SELECT
 			im.id,
 			im.account_no,

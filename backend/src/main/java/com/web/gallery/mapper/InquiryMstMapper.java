@@ -2,9 +2,9 @@ package com.web.gallery.mapper;
 
 import com.web.gallery.dto.InquiryDetailDto;
 import com.web.gallery.dto.InquiryDto;
-import com.web.gallery.entity.InquiryMst;
-import com.web.gallery.entity.InquiryMstCondition;
-import com.web.gallery.entity.InquiryMstUpdateTarget;
+import com.web.gallery.entity.inquiry.InquiryMst;
+import com.web.gallery.entity.inquiry.InquiryMstCondition;
+import com.web.gallery.entity.inquiry.InquiryMstUpdateTarget;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

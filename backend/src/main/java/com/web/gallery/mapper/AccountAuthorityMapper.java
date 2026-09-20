@@ -1,8 +1,8 @@
 package com.web.gallery.mapper;
 
-import com.web.gallery.entity.AccountAuthority;
-import com.web.gallery.entity.AccountAuthorityCondition;
-import com.web.gallery.entity.AccountAuthorityUpdateTarget;
+import com.web.gallery.entity.account.AccountAuthority;
+import com.web.gallery.entity.account.AccountAuthorityCondition;
+import com.web.gallery.entity.account.AccountAuthorityUpdateTarget;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

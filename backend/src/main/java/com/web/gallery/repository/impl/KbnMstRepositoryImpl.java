@@ -1,10 +1,10 @@
 package com.web.gallery.repository.impl;
 
 import com.web.gallery.domain.common.KbnClassCode;
-import com.web.gallery.entity.KbnMst;
-import com.web.gallery.entity.KbnMstCondition;
+import com.web.gallery.entity.common.KbnMst;
+import com.web.gallery.entity.common.KbnMstCondition;
 import com.web.gallery.mapper.KbnMstMapper;
-import com.web.gallery.model.KbnMstModelList;
+import com.web.gallery.model.common.KbnMstModelList;
 import com.web.gallery.repository.KbnMstRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

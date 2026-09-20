@@ -2,7 +2,7 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.entity.RefreshToken;
+import com.web.gallery.entity.auth.RefreshToken;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;

@@ -1,0 +1,48 @@
+package com.web.gallery.controller.response.photo;
+
+import com.web.gallery.model.photo.PhotoTagModel;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Data;
+
+/** 写真タグのレスポンスパラメータを保持するクラス */
+@Schema(description = "写真タグレスポンス")
+@Data
+@Builder
+public class PhotoTagResponse {
+  /** アカウント番号 */
+  @Schema(description = "アカウント番号", example = "1")
+  private Long accountNo;
+
+  /** 写真番号 */
+  @Schema(description = "写真番号", example = "1")
+  private Long photoNo;
+
+  /** タグ番号 */
+  @Schema(description = "タグ番号", example = "1")
+  private Long tagNo;
+
+  /** タグ日本語名 */
+  @Schema(description = "タグ日本語名", example = "風景")
+  private String tagJapaneseName;
+
+  /** タグ英語名 */
+  @Schema(description = "タグ英語名", example = "landscape")
+  private String tagEnglishName;
+
+  /**
+   * PhotoTagModelからPhotoTagResponseを生成する
+   *
+   * @param model {@link PhotoTagModel}
+   * @return {@link PhotoTagResponse}
+   */
+  public static PhotoTagResponse from(PhotoTagModel model) {
+    return PhotoTagResponse.builder()
+        .accountNo(model.getAccountNo().value())
+        .photoNo(model.getPhotoNo() != null ? model.getPhotoNo().value() : null)
+        .tagNo(model.getTagNo() != null ? model.getTagNo().value() : null)
+        .tagJapaneseName(model.getTagJapaneseName().value())
+        .tagEnglishName(model.getTagEnglishName().value())
+        .build();
+  }
+}

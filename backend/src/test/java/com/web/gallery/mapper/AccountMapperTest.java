@@ -3,9 +3,9 @@ package com.web.gallery.mapper;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.dto.AccountDto;
-import com.web.gallery.entity.Account;
-import com.web.gallery.entity.AccountCondition;
-import com.web.gallery.entity.AccountUpdateTarget;
+import com.web.gallery.entity.account.Account;
+import com.web.gallery.entity.account.AccountCondition;
+import com.web.gallery.entity.account.AccountUpdateTarget;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 import java.time.LocalDate;

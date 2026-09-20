@@ -2,8 +2,8 @@ package com.web.gallery.repository;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.PhotoFavoriteDeleteModel;
-import com.web.gallery.model.PhotoFavoriteModel;
+import com.web.gallery.model.photo.PhotoFavoriteDeleteModel;
+import com.web.gallery.model.photo.PhotoFavoriteModel;
 
 /** 写真お気に入りデータを永続化するRepositoryクラス */
 public interface PhotoFavoriteRepository {

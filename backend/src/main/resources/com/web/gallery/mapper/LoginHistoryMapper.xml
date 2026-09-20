@@ -4,7 +4,7 @@
 
 <mapper namespace="com.web.gallery.mapper.LoginHistoryMapper">
 
-	<insert id="insert" parameterType="com.web.gallery.entity.LoginHistory">
+	<insert id="insert" parameterType="com.web.gallery.entity.account.LoginHistory">
 		INSERT INTO common.login_history (
 			account_no,
 			ip_address,
@@ -22,7 +22,7 @@
 		)
 	</insert>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.LoginHistoryCondition">
+	<delete id="delete" parameterType="com.web.gallery.entity.account.LoginHistoryCondition">
 		DELETE FROM
 			common.login_history
 		<where>

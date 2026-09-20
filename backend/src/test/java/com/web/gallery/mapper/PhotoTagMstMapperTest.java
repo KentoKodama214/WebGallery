@@ -2,8 +2,8 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.entity.PhotoTagMst;
-import com.web.gallery.entity.PhotoTagMstCondition;
+import com.web.gallery.entity.photo.PhotoTagMst;
+import com.web.gallery.entity.photo.PhotoTagMstCondition;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;

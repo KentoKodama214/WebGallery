@@ -1,7 +1,7 @@
 package com.web.gallery.repository;
 
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.model.LoginHistoryModel;
+import com.web.gallery.model.account.LoginHistoryModel;
 
 /**
  * ログイン履歴データを永続化するRepositoryクラス

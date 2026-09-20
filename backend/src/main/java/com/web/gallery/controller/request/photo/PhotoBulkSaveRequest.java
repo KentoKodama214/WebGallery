@@ -1,0 +1,109 @@
+package com.web.gallery.controller.request.photo;
+
+import com.web.gallery.constant.Consts;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
+
+/**
+ * 写真の新規一括登録時のリクエストパラメータを保持するクラス
+ *
+ * <p>複数の画像ファイルに対し、タイトル〜タグまでの共通メタデータを一括で登録する（写真ごとに個別の値は設定できない）。
+ * ただし向き区分のみは写真ごとに異なりうるため、クライアントからは受け取らず、画像ファイルの実際の ピクセルサイズからサーバー側で写真ごとに判定する（{@link
+ * com.web.gallery.helper.PhotoDirectionResolver}）。
+ * EXIF情報（焦点距離・F値・シャッタースピード・ISO）はここで受け取った値（ユーザー入力値）を項目ごとに優先し、
+ * 未入力の項目についてのみ画像ファイル自体から抽出した値（JPEGのEXIF）で補完する（{@link
+ * com.web.gallery.helper.PhotoExifExtractor}、{@link
+ * com.web.gallery.policy.PhotoExifDataMergePolicy}）
+ */
+@Schema(description = "写真新規一括登録リクエスト")
+@Data
+public class PhotoBulkSaveRequest {
+  /** 画像ファイルリスト */
+  @Schema(description = "画像ファイルリスト")
+  @NotEmpty(message = "{validation.file.notFound}")
+  @Size(max = Consts.PHOTO_BULK_REGIST_MAX_SIZE, message = "{validation.photo.imageFiles.maxSize}")
+  private List<MultipartFile> imageFiles;
+
+  /** 撮影日時 */
+  @Schema(description = "撮影日時", example = "2024-01-01T12:00:00")
+  @Past(message = "{validation.common.pastDate}")
+  private LocalDateTime photoAt;
+
+  /** ロケーション番号 */
+  @Schema(description = "ロケーション番号")
+  private Long locationNo;
+
+  /** 住所 */
+  @Schema(description = "住所", example = "東京都渋谷区")
+  @Size(max = 255, message = "{validation.common.max_length}")
+  private String address;
+
+  /** 緯度 */
+  @Schema(description = "緯度", example = "35.6812")
+  private BigDecimal latitude;
+
+  /** 経度 */
+  @Schema(description = "経度", example = "139.7671")
+  private BigDecimal longitude;
+
+  /** ロケーション名 */
+  @Schema(description = "ロケーション名", example = "渋谷スクランブル交差点")
+  @Size(max = 100, message = "{validation.common.max_length}")
+  private String locationName;
+
+  /** 位置情報公開フラグ（撮影場所を本人以外にも公開するか。未指定は非公開扱い） */
+  @Schema(description = "位置情報公開フラグ（撮影場所を本人以外にも公開するか）", example = "false")
+  private Boolean isLocationPublic;
+
+  /** 写真タイトル日本語名 */
+  @Schema(description = "写真タイトル日本語名", example = "東京タワー")
+  @NotBlank(message = "{validation.common.notBlank}")
+  @Size(max = 100, message = "{validation.common.max_length}")
+  private String photoJapaneseTitle;
+
+  /** 写真タイトル英語名 */
+  @Schema(description = "写真タイトル英語名", example = "Tokyo Tower")
+  @Size(max = 100, message = "{validation.common.max_length}")
+  private String photoEnglishTitle;
+
+  /** キャプション */
+  @Schema(description = "キャプション", example = "夕暮れの東京タワー")
+  @Size(max = 1000, message = "{validation.common.max_length}")
+  private String caption;
+
+  /** 焦点距離 */
+  @Schema(description = "焦点距離（mm）", example = "50")
+  @Positive(message = "{validation.common.positive}")
+  private Integer focalLength;
+
+  /** F値 */
+  @Schema(description = "F値", example = "2.8")
+  @Positive(message = "{validation.common.positive}")
+  private BigDecimal fValue;
+
+  /** シャッタースピード */
+  @Schema(description = "シャッタースピード（秒）", example = "0.004")
+  @Positive(message = "{validation.common.positive}")
+  private BigDecimal shutterSpeed;
+
+  /** ISO */
+  @Schema(description = "ISO感度", example = "100")
+  @Positive(message = "{validation.common.positive}")
+  private Integer iso;
+
+  /** 写真タグリスト */
+  @Schema(description = "写真タグリスト")
+  @Valid
+  @Size(max = Consts.PHOTO_TAG_MAX_SIZE, message = "{validation.photo.photoTag.maxSize}")
+  private List<PhotoTagSaveRequest> photoTagRegistRequestList;
+}

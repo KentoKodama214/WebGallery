@@ -6,9 +6,9 @@ import com.web.gallery.domain.inquiry.InquiryNo;
 import com.web.gallery.domain.inquiry.ReplyBody;
 import com.web.gallery.domain.inquiry.ReplyNo;
 import com.web.gallery.enumeration.InquiryStatusEnum;
-import com.web.gallery.model.InquiryDetailModel;
-import com.web.gallery.model.InquiryReplyModel;
-import com.web.gallery.model.InquiryReplyModelList;
+import com.web.gallery.model.inquiry.InquiryDetailModel;
+import com.web.gallery.model.inquiry.InquiryReplyModel;
+import com.web.gallery.model.inquiry.InquiryReplyModelList;
 
 /** お問い合わせ・返信のライフサイクルを管理する集約ルートクラス */
 public class Inquiry {

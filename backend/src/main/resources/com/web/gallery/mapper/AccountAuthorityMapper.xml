@@ -3,7 +3,7 @@
 
 
 <mapper namespace="com.web.gallery.mapper.AccountAuthorityMapper">
-	<insert id="insert" parameterType="com.web.gallery.entity.AccountAuthority">
+	<insert id="insert" parameterType="com.web.gallery.entity.account.AccountAuthority">
 		INSERT INTO
 			common.account_authority (
 				account_no,
@@ -37,7 +37,7 @@
 		</where>
 	</update>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.AccountAuthorityCondition">
+	<delete id="delete" parameterType="com.web.gallery.entity.account.AccountAuthorityCondition">
 		DELETE FROM
 			common.account_authority
 		<where>

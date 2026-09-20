@@ -2,7 +2,7 @@ package com.web.gallery.repository;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.TokenHash;
-import com.web.gallery.model.RefreshTokenModel;
+import com.web.gallery.model.auth.RefreshTokenModel;
 
 /**
  * リフレッシュトークンデータを永続化するRepositoryクラス

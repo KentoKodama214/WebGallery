@@ -2,8 +2,8 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.entity.KbnMst;
-import com.web.gallery.entity.KbnMstCondition;
+import com.web.gallery.entity.common.KbnMst;
+import com.web.gallery.entity.common.KbnMstCondition;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;

@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.dto.InquiryDetailDto;
 import com.web.gallery.dto.InquiryDto;
-import com.web.gallery.entity.InquiryMst;
-import com.web.gallery.entity.InquiryMstCondition;
-import com.web.gallery.entity.InquiryMstUpdateTarget;
+import com.web.gallery.entity.inquiry.InquiryMst;
+import com.web.gallery.entity.inquiry.InquiryMstCondition;
+import com.web.gallery.entity.inquiry.InquiryMstUpdateTarget;
 import com.web.gallery.enumeration.InquiryStatusEnum;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

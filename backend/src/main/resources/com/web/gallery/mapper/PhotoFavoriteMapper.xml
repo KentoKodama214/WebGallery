@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.web.gallery.mapper.PhotoFavoriteMapper">
-	<insert id="insert" parameterType="com.web.gallery.entity.PhotoFavorite">
+	<insert id="insert" parameterType="com.web.gallery.entity.photo.PhotoFavorite">
 		INSERT INTO
 			photo.photo_favorite (
 				account_no,
@@ -21,7 +21,7 @@
 			)
 	</insert>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.PhotoFavoriteCondition">
+	<delete id="delete" parameterType="com.web.gallery.entity.photo.PhotoFavoriteCondition">
 		DELETE FROM
 			photo.photo_favorite
 		<where>
