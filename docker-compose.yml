@@ -49,8 +49,9 @@ services:
       - ./db/init/init-test-db.sh:/docker-entrypoint-initdb.d/init-test-db.sh
 
   # 画像ストレージ（S3互換）のローカル環境。コンソール: http://localhost:9001
+  # minio/minioはDocker Hubでのイメージ配布を終了しているため、公式移行先のquay.ioを使用する
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:latest
     container_name: web-gallery-minio
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -69,7 +70,7 @@ services:
 
   # バケットを作成する一度きりのセットアップコンテナ（作成後に終了する）
   minio-setup:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: web-gallery-minio-setup
     depends_on:
       minio:
