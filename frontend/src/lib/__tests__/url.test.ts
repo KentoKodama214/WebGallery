@@ -55,6 +55,11 @@ describe("sanitizeImageUrl", () => {
       );
       expect(sanitizeImageUrl("https://evil.com/a.jpg")).toBe("");
     });
+
+    it("NEXT_PUBLIC_IMAGE_BASE_URL が不正なURLの場合は外部URLをすべて拒否する（フェイルクローズ）", () => {
+      process.env.NEXT_PUBLIC_IMAGE_BASE_URL = "not a valid url";
+      expect(sanitizeImageUrl("https://cdn.example.com/a.jpg")).toBe("");
+    });
   });
 
   describe("開発環境（NODE_ENV=development）", () => {

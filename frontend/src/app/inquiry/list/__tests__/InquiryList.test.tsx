@@ -103,4 +103,61 @@ describe("InquiryList", () => {
     });
     expect(screen.getByRole("button", { name: "再読み込み" })).toBeInTheDocument();
   });
+
+  it("再読み込みボタンを押すと再取得され、成功すれば一覧が表示されること", async () => {
+    mockGetInquiryList
+      .mockRejectedValueOnce(new Error("お問い合わせ一覧の取得に失敗しました"))
+      .mockResolvedValueOnce({ isLast: true, inquiryList: [sampleInquiry] });
+
+    render(<InquiryList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("お問い合わせ一覧の取得に失敗しました")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "再読み込み" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("写真が表示されない")).toBeInTheDocument();
+    });
+    expect(mockGetInquiryList).toHaveBeenCalledTimes(2);
+  });
+
+  it("再読み込みボタンを押しても再度失敗した場合はエラーメッセージを表示し続けること", async () => {
+    mockGetInquiryList
+      .mockRejectedValueOnce(new Error("お問い合わせ一覧の取得に失敗しました"))
+      .mockRejectedValueOnce(new Error("再度の取得に失敗しました"));
+
+    render(<InquiryList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("お問い合わせ一覧の取得に失敗しました")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "再読み込み" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("再度の取得に失敗しました")).toBeInTheDocument();
+    });
+    expect(mockGetInquiryList).toHaveBeenCalledTimes(2);
+  });
+
+  it("「もっと見る」の取得に失敗した場合はエラーメッセージが表示され、一覧は保持されること", async () => {
+    mockGetInquiryList
+      .mockResolvedValueOnce({ isLast: false, inquiryList: [sampleInquiry] })
+      .mockRejectedValueOnce(new Error("追加取得に失敗しました"));
+
+    render(<InquiryList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("＋もっと見る")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("＋もっと見る"));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("追加取得に失敗しました");
+    });
+    expect(screen.getByText("写真が表示されない")).toBeInTheDocument();
+  });
 });

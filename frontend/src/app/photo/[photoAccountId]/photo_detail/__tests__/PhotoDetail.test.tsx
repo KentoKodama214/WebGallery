@@ -502,4 +502,113 @@ describe("PhotoDetail", () => {
       ).toBeInTheDocument();
     });
   });
+
+  it("APIが不正な応答（写真データなし）を返した場合は「写真が見つかりません」を表示すること", async () => {
+    mockGetPhotoDetail.mockResolvedValue(null);
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("写真が見つかりません")).toBeInTheDocument();
+    });
+  });
+
+  it("撮影日時が解釈できない形式の場合は表示しないこと", async () => {
+    mockGetPhotoDetail.mockResolvedValue({
+      ...samplePhoto,
+      photoAt: "invalid-date",
+    });
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("テスト写真")).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/^\d{4}\/\d{2}\/\d{2}/)).not.toBeInTheDocument();
+  });
+
+  it("「編集」ボタンをクリックすると写真設定ページへ遷移すること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "編集" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "編集" }));
+
+    expect(mockPush).toHaveBeenCalledWith(
+      "/photo/user1/photo_setting?accountNo=1&photoNo=10"
+    );
+  });
+
+  it("操作失敗の通知は閉じるボタンで消せること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 2 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockAddFavorite.mockRejectedValue(new Error("お気に入りの登録に失敗しました"));
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "お気に入り登録" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("favorite-button"));
+
+    await waitFor(() => {
+      expect(screen.getByText("お気に入りの登録に失敗しました")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+    expect(
+      screen.queryByText("お気に入りの登録に失敗しました")
+    ).not.toBeInTheDocument();
+  });
+
+  it("削除確認ダイアログを閉じるボタン・いいえボタンで閉じられること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    const dialog = await screen.findByTestId("delete-confirm-dialog");
+    expect(dialog).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+    await waitFor(() => {
+      expect(screen.queryByTestId("delete-confirm-dialog")).not.toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    expect(await screen.findByTestId("delete-confirm-dialog")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    await waitFor(() => {
+      expect(screen.queryByTestId("delete-confirm-dialog")).not.toBeInTheDocument();
+    });
+    expect(mockDeletePhoto).not.toHaveBeenCalled();
+  });
 });

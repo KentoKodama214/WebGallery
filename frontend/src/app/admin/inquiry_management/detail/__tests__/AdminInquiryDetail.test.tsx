@@ -151,4 +151,54 @@ describe("AdminInquiryDetail", () => {
     ).toBeInTheDocument();
     expect(screen.queryByLabelText("返信する")).not.toBeInTheDocument();
   });
+
+  it("認証確認中は読み込み中と表示され、詳細取得は行われないこと", () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+      user: null,
+      isLoading: true,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+
+    render(<AdminInquiryDetail inquiryId={1} />);
+
+    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    expect(mockGetAdminInquiryDetail).not.toHaveBeenCalled();
+  });
+
+  it("詳細取得に失敗した場合はエラーメッセージと戻るリンクが表示されること", async () => {
+    mockGetAdminInquiryDetail.mockRejectedValue(new Error("サーバーエラー"));
+
+    render(<AdminInquiryDetail inquiryId={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("サーバーエラー")).toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole("link", { name: "お問い合わせ管理へ戻る" })
+    ).toBeInTheDocument();
+  });
+
+  it("返信内容が上限文字数を超える場合はエラーが表示され、APIが呼ばれないこと", async () => {
+    mockGetAdminInquiryDetail.mockResolvedValue(sampleDetail);
+
+    render(<AdminInquiryDetail inquiryId={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("写真が表示されない")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText("返信する"), {
+      target: { value: "あ".repeat(2001) },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "返信を送信" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("返信内容は2000文字以内で入力してください")
+      ).toBeInTheDocument();
+    });
+    expect(mockReplyToInquiry).not.toHaveBeenCalled();
+  });
 });

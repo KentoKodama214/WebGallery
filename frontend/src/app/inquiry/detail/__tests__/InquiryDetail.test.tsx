@@ -116,6 +116,25 @@ describe("InquiryDetail", () => {
     expect(mockWithdrawInquiry).not.toHaveBeenCalled();
   });
 
+  it("確認ダイアログはEscapeキーでも閉じられること", async () => {
+    mockGetInquiryDetail.mockResolvedValue(sampleDetail);
+
+    render(<InquiryDetail inquiryNo={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("このお問い合わせを取り下げる")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText("このお問い合わせを取り下げる"));
+    expect(screen.getByTestId("withdraw-confirm-dialog")).toBeInTheDocument();
+
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("withdraw-confirm-dialog")).not.toBeInTheDocument();
+    });
+    expect(mockWithdrawInquiry).not.toHaveBeenCalled();
+  });
+
   it("取り下げに失敗した場合はダイアログ内にエラーメッセージが表示されること", async () => {
     mockGetInquiryDetail.mockResolvedValue(sampleDetail);
     mockWithdrawInquiry.mockRejectedValue(new Error("お問い合わせの取り下げに失敗しました"));

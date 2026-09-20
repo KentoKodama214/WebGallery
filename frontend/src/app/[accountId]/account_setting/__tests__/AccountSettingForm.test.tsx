@@ -505,4 +505,192 @@ describe("AccountSettingForm", () => {
       expect(screen.getByText("Account Setting")).toBeInTheDocument();
     });
   });
+
+  it("他人のアカウント設定ページを開いた場合は権限エラーを表示すること", async () => {
+    render(<AccountSettingForm accountId="otheruser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("この操作を行う権限がありません")).toBeInTheDocument();
+    });
+    expect(mockGetAccount).not.toHaveBeenCalled();
+  });
+
+  it("生年月日が未来日の場合にonChangeでバリデーションエラーが表示され、修正で消えること", async () => {
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    const birthdateInput = screen.getByLabelText("生年月日");
+    const futureYear = new Date().getFullYear() + 1;
+    await user.clear(birthdateInput);
+    await user.type(birthdateInput, `${futureYear}-01-01`);
+
+    await waitFor(() => {
+      expect(screen.getByText("過去の日付を入力してください")).toBeInTheDocument();
+    });
+
+    await user.clear(birthdateInput);
+    await user.type(birthdateInput, "2000-01-01");
+
+    await waitFor(() => {
+      expect(screen.queryByText("過去の日付を入力してください")).not.toBeInTheDocument();
+    });
+  });
+
+  it("アカウント名のフォーカスアウトで空ならエラー、入力すれば消えること", async () => {
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    const nameInput = screen.getByLabelText("アカウント名");
+    await user.clear(nameInput);
+    await user.tab();
+
+    await waitFor(() => {
+      expect(screen.getByText("アカウント名を入力してください")).toBeInTheDocument();
+    });
+
+    await user.type(nameInput, "新しい名前");
+    await user.tab();
+
+    await waitFor(() => {
+      expect(screen.queryByText("アカウント名を入力してください")).not.toBeInTheDocument();
+    });
+  });
+
+  it("新しいパスワード入力後、現在のパスワードが未入力のままフォーカスを外すとエラーが表示されること", async () => {
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
+    await user.type(passwordInput, "newpassword1");
+
+    const currentPasswordInput = screen.getByLabelText("現在のパスワード");
+    await user.click(currentPasswordInput);
+    await user.tab();
+
+    await waitFor(() => {
+      expect(screen.getByText("現在のパスワードを入力してください")).toBeInTheDocument();
+    });
+  });
+
+  it("性別・出身地・居住地・メモを変更すると更新APIへ反映されること", async () => {
+    mockUpdateAccount.mockResolvedValue({
+      httpStatus: 200,
+      isDuplicateAccountId: false,
+      isAccountIdChanged: false,
+      isPasswordChanged: false,
+      message: "",
+    });
+
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    await user.selectOptions(screen.getByLabelText("性別"), "woman");
+    await user.selectOptions(screen.getByLabelText("出身地"), "Aomori");
+    await user.selectOptions(screen.getByLabelText("居住地"), "Tokyo");
+    const memoInput = screen.getByLabelText("メモ");
+    await user.clear(memoInput);
+    await user.type(memoInput, "更新後のメモ");
+
+    await user.click(screen.getByRole("button", { name: "登録" }));
+
+    await waitFor(() => {
+      expect(mockUpdateAccount).toHaveBeenCalledWith(
+        "testuser1",
+        expect.objectContaining({
+          sexKbn: "woman",
+          birthplacePrefectureKbnCode: "Aomori",
+          residentPrefectureKbnCode: "Tokyo",
+          freeMemo: "更新後のメモ",
+        })
+      );
+    });
+  });
+
+  it("削除確認モーダルの「いいえ」ボタンで削除を中止すること", async () => {
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "アカウント削除" }));
+    expect(screen.getByRole("dialog", { name: "アカウント削除の確認" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "いいえ" }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(mockDeleteAccount).not.toHaveBeenCalled();
+  });
+
+  it("削除確認モーダルをEscapeキーで閉じられ、入力値がリセットされること", async () => {
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "アカウント削除" }));
+    const dialog = screen.getByRole("dialog", { name: "アカウント削除の確認" });
+
+    await user.type(within(dialog).getByLabelText("現在のパスワード"), "password01");
+    await user.keyboard("{Escape}");
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+
+    // 再度開いたとき、パスワードが破棄されていること
+    await user.click(screen.getByRole("button", { name: "アカウント削除" }));
+    const reopenedDialog = screen.getByRole("dialog", { name: "アカウント削除の確認" });
+    expect(within(reopenedDialog).getByLabelText("現在のパスワード")).toHaveValue("");
+  });
+
+  it("更新完了モーダルの閉じるボタンでモーダルを閉じられること", async () => {
+    mockUpdateAccount.mockResolvedValue({
+      httpStatus: 200,
+      isDuplicateAccountId: false,
+      isAccountIdChanged: false,
+      isPasswordChanged: false,
+      message: "",
+    });
+
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "登録" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("アカウントを登録しました")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "閉じる" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("アカウントを登録しました")).not.toBeInTheDocument();
+    });
+  });
 });
