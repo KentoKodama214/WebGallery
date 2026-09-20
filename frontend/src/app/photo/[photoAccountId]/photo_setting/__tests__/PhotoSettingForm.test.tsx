@@ -572,4 +572,236 @@ describe("PhotoSettingForm", () => {
       "新規タグ"
     );
   });
+
+  it("画像ファイルが5MBを超える場合にバリデーションエラーが表示されること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("image-input")).toBeInTheDocument();
+    });
+
+    const bigFile = new File(["a".repeat(10)], "big.jpg", { type: "image/jpeg" });
+    Object.defineProperty(bigFile, "size", { value: 6 * 1024 * 1024 });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [bigFile] },
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("画像ファイルは5MB以下にしてください")
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("撮影日時に未来日時を指定すると送信時にバリデーションエラーになること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+
+    const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 16);
+    fireEvent.change(screen.getByTestId("photo-at-input"), {
+      target: { value: futureDate },
+    });
+
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("撮影日時は過去の日時を指定してください")
+      ).toBeInTheDocument();
+    });
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["focal-length-input", "焦点距離"],
+    ["f-value-input", "F値"],
+    ["shutter-speed-input", "シャッタースピード"],
+    ["iso-input", "ISO"],
+  ])("%sに0以下の値を入力すると送信時にバリデーションエラーになること", async (testId, label) => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+
+    fireEvent.change(screen.getByTestId(testId), { target: { value: "-1" } });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(`${label}は正の数値を入力してください`)
+      ).toBeInTheDocument();
+    });
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
+  it("タグの日本語名が未入力の場合は送信時にバリデーションエラーになること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+
+    fireEvent.click(screen.getByTestId("add-tag-button"));
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(screen.getByText("タグの日本語名は必須です")).toBeInTheDocument();
+    });
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
+  it("タグの日本語名にスペースを含む場合は送信時にバリデーションエラーになること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+
+    fireEvent.click(screen.getByTestId("add-tag-button"));
+    fireEvent.change(screen.getByTestId("tag-japanese-1"), {
+      target: { value: "スペース あり" },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("タグの日本語名にスペースは使用できません")
+      ).toBeInTheDocument();
+    });
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
+  it("各種フォームフィールドへの入力が反映されること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("english-title-input")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByTestId("english-title-input"), {
+      target: { value: "New Title" },
+    });
+    fireEvent.change(screen.getByTestId("focal-length-input"), {
+      target: { value: "35" },
+    });
+    fireEvent.change(screen.getByTestId("f-value-input"), {
+      target: { value: "2.8" },
+    });
+    fireEvent.change(screen.getByTestId("shutter-speed-input"), {
+      target: { value: "0.005" },
+    });
+    fireEvent.change(screen.getByTestId("iso-input"), {
+      target: { value: "200" },
+    });
+
+    expect(screen.getByTestId("english-title-input")).toHaveValue("New Title");
+    expect(screen.getByTestId("focal-length-input")).toHaveValue(35);
+    expect(screen.getByTestId("f-value-input")).toHaveValue(2.8);
+    expect(screen.getByTestId("shutter-speed-input")).toHaveValue(0.005);
+    expect(screen.getByTestId("iso-input")).toHaveValue(200);
+  });
+
+  it("編集モードで「向き」を変更できること", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+
+    render(
+      <PhotoSettingForm photoAccountId="user1" accountNo={1} photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("direction-select")).toHaveValue("horizontal");
+    });
+
+    fireEvent.change(screen.getByTestId("direction-select"), {
+      target: { value: "vertical" },
+    });
+
+    expect(screen.getByTestId("direction-select")).toHaveValue("vertical");
+  });
+
+  it("一括登録成功後にモーダルを閉じると写真一覧へ遷移すること", async () => {
+    mockRegistPhotos.mockResolvedValue({ isSuccess: true, registeredCount: 1 });
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("success-modal")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+    expect(mockPush).toHaveBeenCalledWith("/photo/user1/photo_list");
+  });
+
+  it("編集成功後にモーダルを閉じても一覧へ遷移しないこと（同じ写真の編集を続けられる）", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockSavePhoto.mockResolvedValue({ isSuccess: true });
+
+    render(
+      <PhotoSettingForm photoAccountId="user1" accountNo={1} photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("success-modal")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
+
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("success-modal")).not.toBeInTheDocument();
+  });
+
+  it("初期データ取得に失敗した場合はエラーメッセージが表示されること", async () => {
+    mockGetPhotoDetail.mockRejectedValue(new Error("写真詳細の取得に失敗しました"));
+
+    render(
+      <PhotoSettingForm photoAccountId="user1" accountNo={1} photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("写真詳細の取得に失敗しました")).toBeInTheDocument();
+    });
+  });
 });

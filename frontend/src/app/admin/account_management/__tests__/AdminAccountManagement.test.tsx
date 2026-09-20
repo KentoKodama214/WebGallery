@@ -337,4 +337,171 @@ describe("AdminAccountManagement", () => {
     expect(screen.queryByTestId("authority-edit-dialog")).not.toBeInTheDocument();
     expect(mockUpdateAccountAuthority).not.toHaveBeenCalled();
   });
+
+  it("認証確認中は読み込み中と表示され、一覧取得は行われないこと", () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: false,
+      user: null,
+      isLoading: true,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+
+    render(<AdminAccountManagement />);
+
+    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    expect(mockGetAdminAccountList).not.toHaveBeenCalled();
+  });
+
+  it("初回の一覧取得に失敗した場合はエラー画面が表示され、再読み込みで復帰すること", async () => {
+    mockGetAdminAccountList.mockRejectedValueOnce(
+      new Error("アカウント一覧の取得に失敗しました")
+    );
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("アカウント一覧の取得に失敗しました")
+      ).toBeInTheDocument();
+    });
+
+    mockGetAdminAccountList.mockResolvedValueOnce({
+      isLast: true,
+      accountList: [sampleAccount],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "再読み込み" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+  });
+
+  it("「もっと見る」で取得に失敗した場合、一覧を維持したまま通知すること", async () => {
+    mockGetAdminAccountList
+      .mockResolvedValueOnce({ isLast: false, accountList: [sampleAccount] })
+      .mockRejectedValueOnce(new Error("追加取得に失敗しました"));
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("＋もっと見る")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("＋もっと見る"));
+
+    await waitFor(() => {
+      expect(screen.getByText("追加取得に失敗しました")).toBeInTheDocument();
+    });
+    expect(screen.getByText("user1")).toBeInTheDocument();
+  });
+
+  it("ロック操作は成功しても、その後の一覧再取得が失敗した場合はエラー画面になること", async () => {
+    mockGetAdminAccountList
+      .mockResolvedValueOnce({
+        isLast: true,
+        accountList: [{ ...sampleAccount, loginFailureCount: 2 }],
+      })
+      .mockRejectedValueOnce(new Error("アカウント一覧の取得に失敗しました"));
+    mockLockAccount.mockResolvedValue({
+      httpStatus: 200,
+      isSuccess: true,
+      message: "ロックしました",
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "強制ロック" }));
+    fireEvent.click(screen.getByRole("button", { name: "実行" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("アカウント一覧の取得に失敗しました")
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: "再読み込み" })).toBeInTheDocument();
+  });
+
+  it("最終ログイン日時が設定されている場合は日本語ロケールで表示されること", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [
+        { ...sampleAccount, lastLoginDatetime: "2024-05-01T12:00:00+09:00" },
+      ],
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    const expected = new Date("2024-05-01T12:00:00+09:00").toLocaleString(
+      "ja-JP"
+    );
+    expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  it("行にマウスを乗せる/離すと背景色が切り替わること", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [sampleAccount],
+    });
+
+    render(<AdminAccountManagement />);
+
+    const row = await screen.findByText("user1").then((el) => el.closest("tr")!);
+
+    fireEvent.mouseEnter(row);
+    expect(row).toHaveStyle({ backgroundColor: "#fffae9" });
+
+    fireEvent.mouseLeave(row);
+    expect(row).toHaveStyle({ backgroundColor: "rgb(255, 255, 255)" });
+  });
+
+  it("ロック確認ダイアログはEscapeキーで閉じること", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [{ ...sampleAccount, loginFailureCount: 2 }],
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "強制ロック" }));
+    expect(screen.getByTestId("lock-confirm-dialog")).toBeInTheDocument();
+
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+    expect(screen.queryByTestId("lock-confirm-dialog")).not.toBeInTheDocument();
+    expect(mockLockAccount).not.toHaveBeenCalled();
+  });
+
+  it("権限編集ダイアログはEscapeキーで閉じること", async () => {
+    mockGetAdminAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [sampleAccount],
+    });
+
+    render(<AdminAccountManagement />);
+
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "編集" }));
+    expect(screen.getByTestId("authority-edit-dialog")).toBeInTheDocument();
+
+    fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+
+    expect(screen.queryByTestId("authority-edit-dialog")).not.toBeInTheDocument();
+    expect(mockUpdateAccountAuthority).not.toHaveBeenCalled();
+  });
 });
