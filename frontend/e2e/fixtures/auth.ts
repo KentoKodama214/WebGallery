@@ -15,7 +15,7 @@ export interface TestUserCredentials {
  * @param workerIndex Playwrightのワーカー番号
  * @returns 生成されたアカウントID
  */
-function generateTestAccountId(workerIndex: number): string {
+export function generateTestAccountId(workerIndex: number): string {
   const randomPart = Math.random().toString(36).slice(2, 8);
   return `e2ew${workerIndex}${randomPart}`;
 }
