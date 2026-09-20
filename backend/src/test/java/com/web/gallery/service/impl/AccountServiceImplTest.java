@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.AccountPrincipal;
 import com.web.gallery.aggregate.Account;
 import com.web.gallery.config.AccountConfig;
 import com.web.gallery.config.LoginConfig;
@@ -105,8 +104,6 @@ public class AccountServiceImplTest {
 
   @Mock private GeoIpResolver geoIpResolver;
 
-  @Mock private AccountPrincipal accountPrincipal;
-
   @Mock private LoginConfig loginConfig;
 
   @Mock private AccountConfig accountConfig;
@@ -127,7 +124,7 @@ public class AccountServiceImplTest {
   class loadUserByUsername {
     @Test
     @Order(1)
-    @DisplayName("正常系")
+    @DisplayName("正常系：アカウント情報からUserDetailsを構築すること")
     void loadUserByUsername_success() {
       String accountId = "aaaaaaaa";
       String password = "AAAAAAAA";
@@ -185,9 +182,9 @@ public class AccountServiceImplTest {
       AccountModel accountModel =
           AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
       doReturn(true).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
-      verify(accountRepositoryImpl, times(0)).regist(accountModel);
+      verify(accountRepositoryImpl, never()).regist(accountModel);
       assertFalse(accountServiceImpl.registAccount(accountModel));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -200,7 +197,7 @@ public class AccountServiceImplTest {
       doThrow(RegistFailureException.class).when(accountRepositoryImpl).regist(accountModel);
       assertThrows(
           RegistFailureException.class, () -> accountServiceImpl.registAccount(accountModel));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -219,9 +216,9 @@ public class AccountServiceImplTest {
       assertThrows(BadRequestException.class, () -> accountServiceImpl.registAccount(accountModel));
 
       verify(kbnMstRepositoryImpl).get(new KbnClassCode(Consts.PREFECTURE));
-      verify(accountRepositoryImpl, times(0)).isExistAccount(any(AccountId.class));
-      verify(accountRepositoryImpl, times(0)).regist(any());
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(accountRepositoryImpl, never()).isExistAccount(any(AccountId.class));
+      verify(accountRepositoryImpl, never()).regist(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -258,7 +255,7 @@ public class AccountServiceImplTest {
 
       assertThrows(BadRequestException.class, () -> accountServiceImpl.registAccount(accountModel));
 
-      verify(accountRepositoryImpl, times(0)).regist(any());
+      verify(accountRepositoryImpl, never()).regist(any());
     }
   }
 
@@ -318,9 +315,9 @@ public class AccountServiceImplTest {
       doReturn(true)
           .when(accountRepositoryImpl)
           .isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
-      verify(accountRepositoryImpl, times(0)).update(accountModel);
+      verify(accountRepositoryImpl, never()).update(accountModel);
       assertTrue(accountServiceImpl.updateAccount(accountModel, null));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -338,7 +335,7 @@ public class AccountServiceImplTest {
       doThrow(UpdateFailureException.class).when(accountRepositoryImpl).update(accountModel);
       assertThrows(
           UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel, null));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -393,8 +390,8 @@ public class AccountServiceImplTest {
           ForbiddenAccountException.class,
           () -> accountServiceImpl.updateAccount(accountModel, new Password("wrongpassword")));
 
-      verify(accountRepositoryImpl, times(0)).update(any());
-      verify(refreshTokenRepositoryImpl, times(0)).revokeAllByAccountNo(any());
+      verify(accountRepositoryImpl, never()).update(any());
+      verify(refreshTokenRepositoryImpl, never()).revokeAllByAccountNo(any());
       // 再認証失敗はインメモリのスロットルに記録される
       verify(reauthenticationThrottle, times(1)).recordFailure(1L);
     }
@@ -422,7 +419,7 @@ public class AccountServiceImplTest {
 
       assertFalse(accountServiceImpl.updateAccount(accountModel, null));
 
-      verify(refreshTokenRepositoryImpl, times(0)).revokeAllByAccountNo(any());
+      verify(refreshTokenRepositoryImpl, never()).revokeAllByAccountNo(any());
     }
 
     @Test
@@ -483,9 +480,9 @@ public class AccountServiceImplTest {
           ForbiddenAccountException.class,
           () -> accountServiceImpl.updateAccount(accountModel, new Password("stored-hash")));
 
-      verify(accountRepositoryImpl, times(0)).update(any());
-      verify(passwordEncoder, times(0)).matches(any(), any());
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(accountRepositoryImpl, never()).update(any());
+      verify(passwordEncoder, never()).matches(any(), any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -513,9 +510,9 @@ public class AccountServiceImplTest {
           ForbiddenAccountException.class,
           () -> accountServiceImpl.updateAccount(accountModel, new Password("stored-hash")));
 
-      verify(accountRepositoryImpl, times(0)).update(any());
-      verify(passwordEncoder, times(0)).matches(any(), any());
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(accountRepositoryImpl, never()).update(any());
+      verify(passwordEncoder, never()).matches(any(), any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
   }
 
@@ -836,8 +833,8 @@ public class AccountServiceImplTest {
               accountServiceImpl.deleteAccount(
                   new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("wrongpassword")));
 
-      verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(accountAggregateRepositoryImpl, never()).delete(any(Account.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
       // 再認証失敗はインメモリのスロットルに記録される
       verify(reauthenticationThrottle, times(1)).recordFailure(1L);
     }
@@ -856,7 +853,7 @@ public class AccountServiceImplTest {
 
       // 早期returnせず、ダミーハッシュに対して照合を1回行う
       verify(passwordEncoder, times(1)).matches(eq("password01"), anyString());
-      verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
+      verify(accountAggregateRepositoryImpl, never()).delete(any(Account.class));
       verify(reauthenticationThrottle, times(1)).recordFailure(1L);
     }
   }
@@ -867,7 +864,7 @@ public class AccountServiceImplTest {
   class handleAuthenticationSuccess {
     @Test
     @Order(1)
-    @DisplayName("正常系")
+    @DisplayName("正常系：ログイン失敗回数をリセットし、ログイン履歴を記録すること")
     void handle_success() throws GalleryException {
       String username = "aaaaaaaa";
       String password = "AAAAAAAA";
@@ -1004,7 +1001,7 @@ public class AccountServiceImplTest {
 
       accountServiceImpl.handle(event);
 
-      verify(accountRepositoryImpl, times(0)).updateLoginFailureCount(any());
+      verify(accountRepositoryImpl, never()).updateLoginFailureCount(any());
       verifyNoInteractions(loginHistoryRepositoryImpl);
     }
   }
@@ -1066,7 +1063,7 @@ public class AccountServiceImplTest {
       doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
 
       accountServiceImpl.handle(event);
-      verify(accountRepositoryImpl, times(0)).incrementLoginFailureCount(any(AccountNo.class));
+      verify(accountRepositoryImpl, never()).incrementLoginFailureCount(any(AccountNo.class));
     }
 
     @Test
@@ -1162,8 +1159,8 @@ public class AccountServiceImplTest {
           ForbiddenAccountException.class,
           () -> accountServiceImpl.updateAccount(accountModel, new Password("stored-hash")));
 
-      verify(passwordEncoder, times(0)).matches(any(), any());
-      verify(accountRepositoryImpl, times(0)).update(any());
+      verify(passwordEncoder, never()).matches(any(), any());
+      verify(accountRepositoryImpl, never()).update(any());
       // ロックアウト中の試行でも直近失敗時刻を更新する（スライディングウィンドウ）
       verify(reauthenticationThrottle, times(1)).recordFailure(1L);
     }
@@ -1213,7 +1210,7 @@ public class AccountServiceImplTest {
               accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("aaaaaaaa"), null));
 
       verify(passwordEncoder, times(1)).matches(eq(""), anyString());
-      verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
+      verify(accountAggregateRepositoryImpl, never()).delete(any(Account.class));
     }
 
     @Test
@@ -1230,7 +1227,7 @@ public class AccountServiceImplTest {
                   new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01")));
 
       verify(passwordEncoder, times(1)).matches(eq("password01"), anyString());
-      verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
+      verify(accountAggregateRepositoryImpl, never()).delete(any(Account.class));
     }
   }
 
