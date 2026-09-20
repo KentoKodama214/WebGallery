@@ -68,7 +68,7 @@ configurations {
 dependencyManagement {
 	imports {
 		mavenBom 'org.springframework.modulith:spring-modulith-bom:2.1.1'
-		mavenBom 'software.amazon.awssdk:bom:2.54.18'
+		mavenBom 'software.amazon.awssdk:bom:2.55.0'
 	}
 }
 
@@ -96,7 +96,7 @@ dependencies {
 	// IPアドレスから国・地域を解決するGeoLite2（MaxMind）用リーダー
 	implementation 'com.maxmind.geoip2:geoip2:5.2.0'
 	// アップロードされた画像ファイルの実バイナリからEXIF情報を抽出するためのリーダー
-	implementation 'com.drewnoakes:metadata-extractor:2.19.0'
+	implementation 'com.drewnoakes:metadata-extractor:2.21.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 	compileOnly 'org.projectlombok:lombok:1.18.48'
