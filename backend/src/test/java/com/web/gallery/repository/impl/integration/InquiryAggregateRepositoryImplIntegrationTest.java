@@ -10,6 +10,8 @@ import com.web.gallery.domain.inquiry.InquiryNo;
 import com.web.gallery.domain.inquiry.InquirySubject;
 import com.web.gallery.domain.inquiry.ReplyBody;
 import com.web.gallery.domain.inquiry.ReplyNo;
+import com.web.gallery.entity.inquiry.InquiryMst;
+import com.web.gallery.entity.inquiry.InquiryReplyMst;
 import com.web.gallery.enumeration.InquiryStatusEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.InquiryNotFoundException;
@@ -84,18 +86,34 @@ public class InquiryAggregateRepositoryImplIntegrationTest {
           jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       inquiryAggregateRepositoryImpl.regist(inquiry);
 
-      List<String> subjects =
-          jdbcTemplate.queryForList(
-              "SELECT subject FROM common.inquiry_mst WHERE account_no=2 AND inquiry_no=1",
-              String.class);
-      assertEquals(1, subjects.size());
-      assertEquals("新規のお問い合わせ", subjects.getFirst());
+      List<InquiryMst> actualData =
+          jdbcTemplate.query(
+              "SELECT * FROM common.inquiry_mst WHERE account_no=2 AND inquiry_no=1",
+              (rs, rowNum) ->
+                  InquiryMst.builder()
+                      .accountNo(rs.getLong("account_no"))
+                      .inquiryNo(rs.getLong("inquiry_no"))
+                      .createdBy(rs.getLong("created_by"))
+                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                      .updatedBy(rs.getLong("updated_by"))
+                      .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                      .subject(rs.getString("subject"))
+                      .body(rs.getString("body"))
+                      .statusKbn(InquiryStatusEnum.getOrDefault(rs.getString("status_kbn")))
+                      .isReadByUser(rs.getBoolean("is_read_by_user"))
+                      .build());
 
-      OffsetDateTime createdAt =
-          jdbcTemplate.queryForObject(
-              "SELECT created_at FROM common.inquiry_mst WHERE account_no=2 AND inquiry_no=1",
-              OffsetDateTime.class);
-      assertEquals(transactionNow, createdAt);
+      assertEquals(1, actualData.size());
+      assertEquals(2L, actualData.getFirst().getAccountNo());
+      assertEquals(1L, actualData.getFirst().getInquiryNo());
+      assertEquals(2L, actualData.getFirst().getCreatedBy());
+      assertEquals(transactionNow, actualData.getFirst().getCreatedAt());
+      assertEquals(2L, actualData.getFirst().getUpdatedBy());
+      assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+      assertEquals("新規のお問い合わせ", actualData.getFirst().getSubject());
+      assertEquals("新規のお問い合わせ本文です。", actualData.getFirst().getBody());
+      assertEquals(InquiryStatusEnum.UNREPLIED, actualData.getFirst().getStatusKbn());
+      assertTrue(actualData.getFirst().getIsReadByUser());
     }
   }
 
@@ -113,12 +131,29 @@ public class InquiryAggregateRepositoryImplIntegrationTest {
       Inquiry inquiry = Inquiry.reconstruct(detail, InquiryReplyModelList.empty());
       inquiry.addReply(new AccountNo(1L), new ReplyBody("ご返信ありがとうございます。"), new ReplyNo(1L));
 
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       inquiryAggregateRepositoryImpl.addReply(inquiry);
 
-      Integer replyCount =
-          jdbcTemplate.queryForObject(
-              "SELECT COUNT(*) FROM common.inquiry_reply_mst WHERE inquiry_id=1", Integer.class);
-      assertEquals(1, replyCount);
+      List<InquiryReplyMst> actualReplyData =
+          jdbcTemplate.query(
+              "SELECT * FROM common.inquiry_reply_mst WHERE inquiry_id=1",
+              (rs, rowNum) ->
+                  InquiryReplyMst.builder()
+                      .inquiryId(rs.getLong("inquiry_id"))
+                      .replyNo(rs.getLong("reply_no"))
+                      .adminAccountNo(rs.getLong("admin_account_no"))
+                      .createdBy(rs.getLong("created_by"))
+                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                      .body(rs.getString("body"))
+                      .build());
+      assertEquals(1, actualReplyData.size());
+      assertEquals(1L, actualReplyData.getFirst().getInquiryId());
+      assertEquals(1L, actualReplyData.getFirst().getReplyNo());
+      assertEquals(1L, actualReplyData.getFirst().getAdminAccountNo());
+      assertEquals(1L, actualReplyData.getFirst().getCreatedBy());
+      assertEquals(transactionNow, actualReplyData.getFirst().getCreatedAt());
+      assertEquals("ご返信ありがとうございます。", actualReplyData.getFirst().getBody());
 
       String statusKbn =
           jdbcTemplate.queryForObject(

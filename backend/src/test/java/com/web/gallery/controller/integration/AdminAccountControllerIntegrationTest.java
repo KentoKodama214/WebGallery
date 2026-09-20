@@ -11,9 +11,15 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
+import com.web.gallery.entity.account.Account;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.ErrorEnum;
+import com.web.gallery.enumeration.SexEnum;
 import com.web.gallery.model.account.AccountModel;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -152,6 +158,8 @@ public class AdminAccountControllerIntegrationTest {
     @Order(1)
     @DisplayName("正常系：ロックされたアカウントを解除できる")
     void unlockAccount_success() throws Exception {
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       mockMvc
           .perform(
               put("/api/v1/admin/accounts/2/unlock")
@@ -165,14 +173,53 @@ public class AdminAccountControllerIntegrationTest {
           .andExpect(jsonPath("$.isSuccess").value(true))
           .andExpect(jsonPath("$.message").value(MessageConst.UNLOCK_ACCOUNT));
 
-      Integer loginFailureCount =
-          jdbcTemplate.queryForObject(
-              "SELECT login_failure_count FROM common.account WHERE account_no = 2", Integer.class);
-      assertEquals(0, loginFailureCount);
-      Boolean isAdminLocked =
-          jdbcTemplate.queryForObject(
-              "SELECT is_admin_locked FROM common.account WHERE account_no = 2", Boolean.class);
-      assertFalse(isAdminLocked);
+      List<Account> actualData =
+          jdbcTemplate.query(
+              "SELECT * FROM common.account WHERE account_no = 2",
+              (rs, rowNum) ->
+                  Account.builder()
+                      .accountNo(rs.getLong("account_no"))
+                      .createdBy(rs.getLong("created_by"))
+                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                      .updatedBy(rs.getLong("updated_by"))
+                      .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                      .isDeleted(rs.getBoolean("is_deleted"))
+                      .accountId(rs.getString("account_id"))
+                      .accountName(rs.getString("account_name"))
+                      .password(rs.getString("password"))
+                      .birthdate(rs.getObject("birthdate", LocalDate.class))
+                      .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
+                      .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+                      .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+                      .freeMemo(rs.getString("free_memo"))
+                      .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+                      .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
+                      .build());
+
+      assertEquals(1, actualData.size());
+      assertEquals(2L, actualData.getFirst().getAccountNo());
+      assertEquals(2L, actualData.getFirst().getCreatedBy());
+      assertEquals(
+          OffsetDateTime.of(2000, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
+          actualData.getFirst().getCreatedAt());
+      // updated_byは本操作では更新対象に含まれないため、フィクスチャの値がそのまま残る
+      assertEquals(2L, actualData.getFirst().getUpdatedBy());
+      assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+      assertFalse(actualData.getFirst().getIsDeleted());
+      assertEquals("bbbbbbbb", actualData.getFirst().getAccountId());
+      assertEquals("BBBBBBBB", actualData.getFirst().getAccountName());
+      assertEquals("$2a$10$password2", actualData.getFirst().getPassword());
+      assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
+      assertEquals(SexEnum.MAN, actualData.getFirst().getSexKbn());
+      assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+      assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+      assertEquals("", actualData.getFirst().getFreeMemo());
+      assertEquals(
+          OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
+          actualData.getFirst().getLastLoginDatetime());
+      assertEquals(0, actualData.getFirst().getLoginFailureCount());
+      assertFalse(actualData.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -219,6 +266,8 @@ public class AdminAccountControllerIntegrationTest {
     @Order(1)
     @DisplayName("正常系：アカウントを強制ロックできる")
     void lockAccount_success() throws Exception {
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       mockMvc
           .perform(
               put("/api/v1/admin/accounts/1/lock")
@@ -232,14 +281,53 @@ public class AdminAccountControllerIntegrationTest {
           .andExpect(jsonPath("$.isSuccess").value(true))
           .andExpect(jsonPath("$.message").value(MessageConst.LOCK_ACCOUNT));
 
-      Boolean isAdminLocked =
-          jdbcTemplate.queryForObject(
-              "SELECT is_admin_locked FROM common.account WHERE account_no = 1", Boolean.class);
-      assertTrue(isAdminLocked);
-      Integer loginFailureCount =
-          jdbcTemplate.queryForObject(
-              "SELECT login_failure_count FROM common.account WHERE account_no = 1", Integer.class);
-      assertTrue(loginFailureCount > 0);
+      List<Account> actualData =
+          jdbcTemplate.query(
+              "SELECT * FROM common.account WHERE account_no = 1",
+              (rs, rowNum) ->
+                  Account.builder()
+                      .accountNo(rs.getLong("account_no"))
+                      .createdBy(rs.getLong("created_by"))
+                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                      .updatedBy(rs.getLong("updated_by"))
+                      .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                      .isDeleted(rs.getBoolean("is_deleted"))
+                      .accountId(rs.getString("account_id"))
+                      .accountName(rs.getString("account_name"))
+                      .password(rs.getString("password"))
+                      .birthdate(rs.getObject("birthdate", LocalDate.class))
+                      .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
+                      .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
+                      .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
+                      .freeMemo(rs.getString("free_memo"))
+                      .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
+                      .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
+                      .build());
+
+      assertEquals(1, actualData.size());
+      assertEquals(1L, actualData.getFirst().getAccountNo());
+      assertEquals(1L, actualData.getFirst().getCreatedBy());
+      assertEquals(
+          OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
+          actualData.getFirst().getCreatedAt());
+      // updated_byは本操作では更新対象に含まれないため、フィクスチャの値がそのまま残る
+      assertEquals(1L, actualData.getFirst().getUpdatedBy());
+      assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
+      assertFalse(actualData.getFirst().getIsDeleted());
+      assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
+      assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+      assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
+      assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
+      assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
+      assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
+      assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
+      assertEquals("", actualData.getFirst().getFreeMemo());
+      assertEquals(
+          OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
+          actualData.getFirst().getLastLoginDatetime());
+      assertTrue(actualData.getFirst().getLoginFailureCount() > 0);
+      assertTrue(actualData.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -304,6 +392,8 @@ public class AdminAccountControllerIntegrationTest {
     @Order(1)
     @DisplayName("正常系：アカウントの権限を変更できる")
     void updateAccountAuthority_success() throws Exception {
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       mockMvc
           .perform(
               put("/api/v1/admin/accounts/2/authority")
@@ -319,6 +409,25 @@ public class AdminAccountControllerIntegrationTest {
           .andExpect(jsonPath("$.isSuccess").value(true))
           .andExpect(jsonPath("$.message").value(MessageConst.UPDATE_ACCOUNT_AUTHORITY));
 
+      Long createdBy =
+          jdbcTemplate.queryForObject(
+              "SELECT created_by FROM common.account_authority WHERE account_no = 2", Long.class);
+      assertEquals(2L, createdBy);
+      OffsetDateTime createdAt =
+          jdbcTemplate.queryForObject(
+              "SELECT created_at FROM common.account_authority WHERE account_no = 2",
+              OffsetDateTime.class);
+      assertEquals(OffsetDateTime.of(2000, 1, 2, 0, 0, 0, 0, ZoneOffset.ofHours(0)), createdAt);
+      // updated_byは権限変更時に0固定で更新される仕様
+      Long updatedBy =
+          jdbcTemplate.queryForObject(
+              "SELECT updated_by FROM common.account_authority WHERE account_no = 2", Long.class);
+      assertEquals(0L, updatedBy);
+      OffsetDateTime updatedAt =
+          jdbcTemplate.queryForObject(
+              "SELECT updated_at FROM common.account_authority WHERE account_no = 2",
+              OffsetDateTime.class);
+      assertEquals(transactionNow, updatedAt);
       String authorityKbn =
           jdbcTemplate.queryForObject(
               "SELECT authority_kbn FROM common.account_authority WHERE account_no = 2",

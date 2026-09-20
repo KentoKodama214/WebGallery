@@ -11,9 +11,12 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
+import com.web.gallery.entity.inquiry.InquiryReplyMst;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.model.account.AccountModel;
+import java.time.OffsetDateTime;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -213,6 +216,8 @@ public class AdminInquiryControllerIntegrationTest {
     @Order(1)
     @DisplayName("正常系：返信登録するとステータスが回答済みへ遷移し、ユーザー既読フラグが未読になる")
     void replyToInquiry_success() throws Exception {
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       mockMvc
           .perform(
               post("/api/v1/admin/inquiries/1/replies")
@@ -235,10 +240,25 @@ public class AdminInquiryControllerIntegrationTest {
               "SELECT is_read_by_user FROM common.inquiry_mst WHERE id = 1", Boolean.class);
       assertFalse(isReadByUser);
 
-      Integer replyCount =
-          jdbcTemplate.queryForObject(
-              "SELECT COUNT(*) FROM common.inquiry_reply_mst WHERE inquiry_id = 1", Integer.class);
-      assertEquals(1, replyCount);
+      List<InquiryReplyMst> actualReplyData =
+          jdbcTemplate.query(
+              "SELECT * FROM common.inquiry_reply_mst WHERE inquiry_id = 1",
+              (rs, rowNum) ->
+                  InquiryReplyMst.builder()
+                      .inquiryId(rs.getLong("inquiry_id"))
+                      .replyNo(rs.getLong("reply_no"))
+                      .adminAccountNo(rs.getLong("admin_account_no"))
+                      .createdBy(rs.getLong("created_by"))
+                      .createdAt(rs.getObject("created_at", OffsetDateTime.class))
+                      .body(rs.getString("body"))
+                      .build());
+      assertEquals(1, actualReplyData.size());
+      assertEquals(1L, actualReplyData.getFirst().getInquiryId());
+      assertEquals(1L, actualReplyData.getFirst().getReplyNo());
+      assertEquals(1L, actualReplyData.getFirst().getAdminAccountNo());
+      assertEquals(1L, actualReplyData.getFirst().getCreatedBy());
+      assertEquals(transactionNow, actualReplyData.getFirst().getCreatedAt());
+      assertEquals("ご報告ありがとうございます。調査いたします。", actualReplyData.getFirst().getBody());
     }
 
     @Test

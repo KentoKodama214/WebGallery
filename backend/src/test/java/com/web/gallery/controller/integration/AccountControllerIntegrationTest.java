@@ -290,6 +290,7 @@ public class AccountControllerIntegrationTest {
                   .freeMemo(rs.getString("free_memo"))
                   .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                   .loginFailureCount(rs.getInt("login_failure_count"))
+                  .isAdminLocked(rs.getBoolean("is_admin_locked"))
                   .build());
     }
 
@@ -339,6 +340,7 @@ public class AccountControllerIntegrationTest {
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
       assertEquals(0, actualData.getFirst().getLoginFailureCount());
+      assertFalse(actualData.getFirst().getIsAdminLocked());
 
       // account_authorityにも同一のアカウント番号でMINI固定で登録されること
       AuthorityEnum actualAuthorityKbn =
@@ -433,6 +435,7 @@ public class AccountControllerIntegrationTest {
                   .freeMemo(rs.getString("free_memo"))
                   .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                   .loginFailureCount(rs.getInt("login_failure_count"))
+                  .isAdminLocked(rs.getBoolean("is_admin_locked"))
                   .build());
     }
 
@@ -497,6 +500,7 @@ public class AccountControllerIntegrationTest {
           OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actual.getFirst().getLastLoginDatetime());
       assertEquals(0, actual.getFirst().getLoginFailureCount());
+      assertFalse(actual.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -560,6 +564,7 @@ public class AccountControllerIntegrationTest {
           OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actual.getFirst().getLastLoginDatetime());
       assertEquals(0, actual.getFirst().getLoginFailureCount());
+      assertFalse(actual.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -623,6 +628,7 @@ public class AccountControllerIntegrationTest {
           OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actual.getFirst().getLastLoginDatetime());
       assertEquals(0, actual.getFirst().getLoginFailureCount());
+      assertFalse(actual.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -721,6 +727,7 @@ public class AccountControllerIntegrationTest {
           OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actual.getFirst().getLastLoginDatetime());
       assertEquals(0, actual.getFirst().getLoginFailureCount());
+      assertFalse(actual.getFirst().getIsAdminLocked());
     }
 
     @Test

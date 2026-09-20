@@ -9,6 +9,8 @@ import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
+import com.web.gallery.entity.photo.PhotoMst;
+import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
@@ -17,6 +19,9 @@ import com.web.gallery.model.photo.PhotoDetailModel;
 import com.web.gallery.model.photo.PhotoTagModel;
 import com.web.gallery.model.photo.PhotoTagModelList;
 import com.web.gallery.repository.impl.PhotoAggregateRepositoryImpl;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -146,6 +151,8 @@ public class PhotoAggregateRepositoryImplIntegrationTest {
               .build();
       Photo photo = Photo.forUpdate(requestDetail);
 
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       photoAggregateRepositoryImpl.update(photo);
 
       List<Map<String, Object>> photoTagRows =
@@ -154,6 +161,49 @@ public class PhotoAggregateRepositoryImplIntegrationTest {
       assertEquals(1, photoTagRows.size());
       assertEquals("川", photoTagRows.get(0).get("tag_japanese_name"));
       assertEquals(1L, ((Number) photoTagRows.get(0).get("tag_no")).longValue());
+
+      // 写真マスタ本体も更新されていることを確認する
+      // （画像ファイル（image_file_path/image_file_name）は登録後に不変のため更新対象に含まれず、フィクスチャ値が維持される）
+      List<PhotoMst> actualPhotoMstData =
+          jdbcTemplate.query(
+              "SELECT * FROM photo.photo_mst WHERE account_no=1 AND photo_no=2",
+              (rs, rowNum) ->
+                  PhotoMst.builder()
+                      .updatedBy(rs.getLong("updated_by"))
+                      .updatedAt(rs.getObject("updated_at", OffsetDateTime.class))
+                      .isDeleted(rs.getBoolean("is_deleted"))
+                      .photoAt(rs.getObject("photo_at", OffsetDateTime.class))
+                      .locationNo(rs.getLong("location_no"))
+                      .imageFilePath(rs.getString("image_file_path"))
+                      .photoJapaneseTitle(rs.getString("photo_japanese_title"))
+                      .photoEnglishTitle(rs.getString("photo_english_title"))
+                      .caption(rs.getString("caption"))
+                      .directionKbn(DirectionEnum.getOrDefault(rs.getString("direction_kbn")))
+                      .focalLength(rs.getInt("focal_length"))
+                      .fValue(rs.getBigDecimal("f_value"))
+                      .shutterSpeed(rs.getBigDecimal("shutter_speed"))
+                      .iso(rs.getInt("iso"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
+                      .build());
+      assertEquals(1, actualPhotoMstData.size());
+      assertEquals(1L, actualPhotoMstData.getFirst().getUpdatedBy());
+      assertEquals(transactionNow, actualPhotoMstData.getFirst().getUpdatedAt());
+      assertFalse(actualPhotoMstData.getFirst().getIsDeleted());
+      assertEquals(
+          OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
+          actualPhotoMstData.getFirst().getPhotoAt().plusHours(9));
+      assertEquals(
+          "https://www.xxx.com/DSC222.jpg", actualPhotoMstData.getFirst().getImageFilePath());
+      assertEquals(0L, actualPhotoMstData.getFirst().getLocationNo());
+      assertEquals("", actualPhotoMstData.getFirst().getPhotoJapaneseTitle());
+      assertEquals("", actualPhotoMstData.getFirst().getPhotoEnglishTitle());
+      assertEquals("", actualPhotoMstData.getFirst().getCaption());
+      assertEquals(DirectionEnum.NONE, actualPhotoMstData.getFirst().getDirectionKbn());
+      assertEquals(0, actualPhotoMstData.getFirst().getFocalLength());
+      assertEquals(0, BigDecimal.ZERO.compareTo(actualPhotoMstData.getFirst().getFValue()));
+      assertEquals(0, BigDecimal.ZERO.compareTo(actualPhotoMstData.getFirst().getShutterSpeed()));
+      assertEquals(0, actualPhotoMstData.getFirst().getIso());
+      assertFalse(actualPhotoMstData.getFirst().getIsLocationPublic());
     }
 
     @Test
