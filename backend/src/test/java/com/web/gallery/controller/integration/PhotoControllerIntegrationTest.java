@@ -1557,6 +1557,102 @@ public class PhotoControllerIntegrationTest {
           .andExpect(content().contentType(MediaType.APPLICATION_JSON))
           .andExpect(jsonPath("$.isReachedUpperLimit").value(false));
     }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：normal-userの残り登録可能枚数（app.photo.normalUserUpperLimit=20）が正しく算出される")
+    void getPhotoUpperLimit_normalUser_remainingCount() throws Exception {
+      // cccccccc（account_no=3, normal-user）は写真登録0枚
+      String photoAccountId = "cccccccc";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(3L))
+              .accountId(new AccountId(photoAccountId))
+              .accountName(new AccountName("CCCCCCCC"))
+              .password(new Password("$2a$10$password3"))
+              .authorityKbn(AuthorityEnum.NORMAL)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              get("/api/v1/accounts/" + photoAccountId + "/photos/upper-limit")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.isReachedUpperLimit").value(false))
+          .andExpect(jsonPath("$.remainingCount").value(20));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：special-userは登録上限が存在せず、残り登録可能枚数はnull")
+    void getPhotoUpperLimit_specialUser_noLimit() throws Exception {
+      // eeeeeeee（account_no=5, special-user）
+      String photoAccountId = "eeeeeeee";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(5L))
+              .accountId(new AccountId(photoAccountId))
+              .accountName(new AccountName("EEEEEEEE"))
+              .password(new Password("$2a$10$password5"))
+              .authorityKbn(AuthorityEnum.SPECIAL)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              get("/api/v1/accounts/" + photoAccountId + "/photos/upper-limit")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.isReachedUpperLimit").value(false))
+          .andExpect(jsonPath("$.remainingCount").isEmpty());
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("正常系：administratorは登録上限が存在せず、残り登録可能枚数はnull")
+    void getPhotoUpperLimit_administrator_noLimit() throws Exception {
+      // ffffffff（account_no=6, administrator）
+      String photoAccountId = "ffffffff";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(6L))
+              .accountId(new AccountId(photoAccountId))
+              .accountName(new AccountName("FFFFFFFF"))
+              .password(new Password("$2a$10$password6"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              get("/api/v1/accounts/" + photoAccountId + "/photos/upper-limit")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.isReachedUpperLimit").value(false))
+          .andExpect(jsonPath("$.remainingCount").isEmpty());
+    }
   }
 
   @Nested
