@@ -34,8 +34,15 @@ jobs:
       - name: Lint
         run: cd frontend && pnpm lint
 
-      - name: 単体テスト実行
-        run: cd frontend && pnpm test
+      - name: 単体テスト実行（カバレッジ計測）
+        run: cd frontend && pnpm test --coverage
+
+      - name: カバレッジ集計データアップロード
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jest-coverage-summary
+          path: frontend/coverage/coverage-summary.json
 
   unit-test:
     name: 単体テスト
@@ -409,7 +416,7 @@ jobs:
 
   coverage-report:
     name: カバレッジレポート
-    needs: [unit-test, integration-test]
+    needs: [frontend-unit-test, unit-test, integration-test]
     runs-on: ubuntu-latest
 
     permissions:
@@ -443,6 +450,12 @@ jobs:
           path: backend/build/jacoco
           merge-multiple: true
 
+      - name: フロントエンドカバレッジ集計データダウンロード
+        uses: actions/download-artifact@v8
+        with:
+          name: jest-coverage-summary
+          path: frontend/coverage
+
       - name: カバレッジレポート生成（単体 / 結合 / 集約）
         run: ./backend/gradlew -p backend jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
@@ -453,6 +466,9 @@ jobs:
             "単体テスト=backend/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml" \
             "結合テスト=backend/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml" \
             > coverage-table.md
+          python3 .github/scripts/jest_coverage_table.py \
+            frontend/coverage/coverage-summary.json \
+            >> coverage-table.md
           cat coverage-table.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: PRにカバレッジを単一コメントで投稿
