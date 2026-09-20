@@ -30,12 +30,13 @@ app:
   inquiry:
     inquiryCountPerPage: 5
   s3:
-    # 統合テストでは FileRepository をモックするため S3 へは接続しない。Bean生成用のダミー値
+    # Controller/Service層の統合テストでは FileRepository をモックするためS3へは接続しない。
+    # FileRepositoryImplIntegrationTest（Repository層）のみ、この値でdocker-compose/CIのMinIOへ実接続する
     endpoint: http://localhost:9000
     bucket: test-bucket
     region: ap-northeast-1
-    access-key: test
-    secret-key: test
+    access-key: minioadmin
+    secret-key: minioadmin
     path-style-access: true
     presign-expiry-seconds: 900
     public-base-url: ""

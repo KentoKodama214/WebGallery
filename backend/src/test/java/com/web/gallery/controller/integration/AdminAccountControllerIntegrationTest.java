@@ -274,6 +274,24 @@ public class AdminAccountControllerIntegrationTest {
                   .with(csrf()))
           .andExpect(status().isConflict());
     }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：accountNoが数値でない場合、共通のJSONエラー形式で400を返す")
+    void lockAccount_badRequest_notNumeric() throws Exception {
+      mockMvc
+          .perform(
+              put("/api/v1/admin/accounts/not-a-number/lock")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAdminAuthentication()))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
+          .andExpect(jsonPath("$.isSuccess").value(false))
+          .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
+    }
   }
 
   @Nested
