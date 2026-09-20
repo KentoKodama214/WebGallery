@@ -153,22 +153,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      # FileRepositoryImplIntegrationTest（Repository層）が実接続する画像ストレージ（S3互換）。
-      # bitnami/minioはMINIO_DEFAULT_BUCKETSで起動時にバケットを自動作成できるため、
-      # docker-compose.ymlのminio-setupのような別コンテナでのセットアップ手順が不要
-      minio:
-        image: bitnami/minio:latest
-        env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
-          MINIO_DEFAULT_BUCKETS: test-bucket
-        ports:
-          - 9000:9000
-        options: >-
-          --health-cmd "curl -f http://localhost:9000/minio/health/live || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: チェックアウト
@@ -216,6 +200,30 @@ jobs:
           for file in "${SQL_FILES[@]}"; do
             psql -h localhost -p 5433 -U postgres -d web_gallery_test -f "$file"
           done
+
+      # FileRepositoryImplIntegrationTest（Repository層）が実接続する画像ストレージ（S3互換）。
+      # GitHub Actionsのservicesはコンテナ起動時のcommand引数を指定できず、
+      # minio/minioイメージはCMD（server /data）なしでは起動しないため、docker runで直接起動する
+      - name: MinIO起動
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest server /data
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live > /dev/null; then
+              echo "MinIO is ready"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: MinIOバケット作成
+        run: |
+          docker run --rm --network host \
+            -e MC_HOST_local=http://minioadmin:minioadmin@localhost:9000 \
+            minio/mc:latest mb --ignore-existing local/test-bucket
 
       - name: 結合テスト実行
         run: ./backend/gradlew -p backend integrationTest
