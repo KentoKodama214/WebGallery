@@ -4,6 +4,8 @@ export default defineConfig({
   testDir: "./e2e",
   // 本番ビルド専用のスモークテストは playwright.prod.config.ts で実行する
   testIgnore: "**/prod-smoke/**",
+  // ローカル実行時に蓄積するE2E生成アカウントを実行前にクリーンアップする（e2e/global-setup.ts）
+  globalSetup: require.resolve("./e2e/global-setup"),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,

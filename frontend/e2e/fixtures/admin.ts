@@ -1,21 +1,7 @@
 import { test as base, expect, type Page } from "@playwright/test";
 import { Client } from "pg";
 import { generateSortEarlyTestAccountId, TEST_USER_PASSWORD } from "./auth";
-
-/**
- * E2E実行環境のPostgreSQL接続情報。
- *
- * `docker-compose.yml`のpostgres-dbサービス（ローカル）・CIの`postgres`サービスコンテナは
- * いずれも `localhost:5432/web_gallery`（postgres/postgres）に固定されているため、
- * `scripts/e2e.sh`のバックエンド起動設定と同じ既定値を用いる。
- */
-const DB_CONFIG = {
-  host: "localhost",
-  port: 5432,
-  database: "web_gallery",
-  user: "postgres",
-  password: "postgres",
-};
+import { DB_CONFIG } from "./db";
 
 /**
  * 指定したアカウントIDの権限区分を管理者（administrator）に書き換える
