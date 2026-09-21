@@ -10,6 +10,12 @@ export interface TestUserCredentials {
 }
 
 /**
+ * `generateTestAccountId`が生成するアカウントIDの接頭辞。
+ * `global-setup.ts`でE2E生成アカウントを判別してクリーンアップする際にも使う。
+ */
+export const TEST_ACCOUNT_ID_PREFIX = "e2ew";
+
+/**
  * アカウントID制約（半角英数字8〜20文字）を満たす、ワーカー単位で一意なアカウントIDを生成する
  *
  * @param workerIndex Playwrightのワーカー番号
@@ -17,8 +23,11 @@ export interface TestUserCredentials {
  */
 export function generateTestAccountId(workerIndex: number): string {
   const randomPart = Math.random().toString(36).slice(2, 8);
-  return `e2ew${workerIndex}${randomPart}`;
+  return `${TEST_ACCOUNT_ID_PREFIX}${workerIndex}${randomPart}`;
 }
+
+/** `generateSortEarlyTestAccountId`が生成するアカウントIDの接頭辞（`TEST_ACCOUNT_ID_PREFIX`を参照） */
+export const SORT_EARLY_TEST_ACCOUNT_ID_PREFIX = "00e2w";
 
 /**
  * account_id ASC で並ぶ管理者用アカウント一覧（1ページ20件）で、ローカルに蓄積した
@@ -32,7 +41,7 @@ export function generateTestAccountId(workerIndex: number): string {
  */
 export function generateSortEarlyTestAccountId(workerIndex: number): string {
   const randomPart = Math.random().toString(36).slice(2, 8);
-  return `00e2w${workerIndex}${randomPart}`;
+  return `${SORT_EARLY_TEST_ACCOUNT_ID_PREFIX}${workerIndex}${randomPart}`;
 }
 
 type AuthFixtures = {
