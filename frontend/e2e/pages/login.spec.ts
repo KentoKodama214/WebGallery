@@ -12,13 +12,13 @@ test.describe("ログインページ", () => {
     await expect(page.getByText("Create an account")).toBeVisible();
   });
 
-  test("空のフォームで送信するとエラーが表示されること", async ({ page }) => {
+  test("空のフォームで送信するとバリデーションエラーが表示されること", async ({ page }) => {
     await page.getByRole("button", { name: "Log in" }).click();
 
-    // バックエンドが起動していない場合はネットワークエラー、
-    // 起動している場合はバリデーションエラーが表示される
+    // e2e.sh実行時はバックエンドが必ず起動しているため、
+    // 明確にバックエンドのバリデーションエラー文言のみを検証する
     await expect(
-      page.locator("p").filter({ hasText: /(入力内容に誤りがあります|失敗しました)/ })
+      page.getByRole("alert").filter({ hasText: "入力内容に誤りがあります。再度入力してください。" })
     ).toBeVisible({ timeout: 5000 });
   });
 
@@ -27,10 +27,8 @@ test.describe("ログインページ", () => {
     await page.getByPlaceholder("Password").fill("invalidpass");
     await page.getByRole("button", { name: "Log in" }).click();
 
-    // バックエンドが起動していない場合はネットワークエラー、
-    // 起動している場合は認証エラーが表示される
     await expect(
-      page.locator("p").filter({ hasText: /(間違っています|失敗しました)/ })
+      page.getByRole("alert").filter({ hasText: "アカウントIDまたはパスワードが間違っています。" })
     ).toBeVisible({ timeout: 5000 });
   });
 

@@ -15,10 +15,11 @@ test.describe("写真詳細ページ", () => {
     await expect(page.getByTestId("hamburger-button")).toBeVisible();
   });
 
-  test("存在しない写真の場合はエラーが表示されること", async ({ page }) => {
-    // バックエンドの「写真が存在しません。」またはフロントの既定文言のいずれか
-    await expect(
-      page.getByText(/写真が存在しません|写真が見つかりません|写真詳細の取得に失敗しました/)
-    ).toBeVisible({ timeout: 10000 });
+  test("存在しないアカウントの場合は『写真が存在しません。』が表示されること", async ({
+    page,
+  }) => {
+    // e2e.sh実行時はバックエンドが必ず起動しているため、アカウント不存在時の
+    // 明確なエラー文言のみを検証する
+    await expect(page.getByText("写真が存在しません。")).toBeVisible({ timeout: 10000 });
   });
 });
