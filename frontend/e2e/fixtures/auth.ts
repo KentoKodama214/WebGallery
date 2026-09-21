@@ -20,6 +20,21 @@ export function generateTestAccountId(workerIndex: number): string {
   return `e2ew${workerIndex}${randomPart}`;
 }
 
+/**
+ * account_id ASC で並ぶ管理者用アカウント一覧（1ページ20件）で、ローカルに蓄積した
+ * 過去のE2E実行分を含めても1ページ目に収まりやすいアカウントIDを生成する。
+ *
+ * 先頭を数字にすることで、`e2ew...`等の英字始まりの既存アカウントより辞書順で先に来る
+ * （PostgreSQLの既定コレーションでは数字は英字より小さい）。
+ *
+ * @param workerIndex Playwrightのワーカー番号
+ * @returns 生成されたアカウントID
+ */
+export function generateSortEarlyTestAccountId(workerIndex: number): string {
+  const randomPart = Math.random().toString(36).slice(2, 8);
+  return `00e2w${workerIndex}${randomPart}`;
+}
+
 type AuthFixtures = {
   testUser: TestUserCredentials;
   workerPage: Page;
