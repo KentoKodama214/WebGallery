@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import {
   test as adminTest,
   expect as adminExpect,
@@ -11,6 +11,33 @@ import { generateSortEarlyTestAccountId, TEST_USER_PASSWORD } from "../fixtures/
  * 本シナリオでは、そのロック操作が実際に対象アカウントのログイン可否へ反映されることまで
  * 一般ユーザー側の画面操作で確認する（管理者操作の実効性の横断検証）。
  */
+
+/**
+ * 一覧の対象アカウント行を探す。ローカルで繰り返しE2Eを実行すると一覧の件数が
+ * 増えていき、目的の行が1ページ目に収まらない場合があるため、
+ * 「＋もっと見る」で最終ページまで読み進めながら探す
+ * （`pages/admin_account_management.spec.ts`と同様のロジック）。
+ *
+ * <p>ロック・ロック解除操作の直後は一覧が再取得され、蓄積したページ送りが1ページ目に
+ * リセットされるため、操作のたびに呼び直す必要がある。
+ */
+async function revealTargetRow(page: Page, accountId: string) {
+  await page.locator("table").first().waitFor({ state: "visible", timeout: 10000 });
+
+  const row = page.getByRole("row", { name: new RegExp(accountId) });
+  const showMoreButton = page.getByTestId("show-more-button");
+  for (let i = 0; i < 50; i++) {
+    if ((await row.count()) > 0) return row;
+    if ((await showMoreButton.count()) === 0) break;
+    await showMoreButton.click();
+    await expect(async () => {
+      const isStillLoading = await showMoreButton.isDisabled().catch(() => false);
+      expect(isStillLoading).toBe(false);
+    }).toPass({ timeout: 20000 });
+  }
+  return row;
+}
+
 adminTest.describe("管理者による強制ロックがログイン可否に反映されること", () => {
   adminTest.describe.configure({ timeout: 60_000 });
 
@@ -54,19 +81,7 @@ adminTest.describe("管理者による強制ロックがログイン可否に反
 
       // 管理者アカウントの新規登録直後は一覧の再取得前のため、ログイン操作を挟んだ後に開き直す
       await adminPage.goto("/admin/account_management");
-      await adminPage.locator("table").first().waitFor({ state: "visible", timeout: 10000 });
-
-      const targetRow = adminPage.getByRole("row", { name: new RegExp(targetAccountId) });
-      const showMoreButton = adminPage.getByTestId("show-more-button");
-      for (let i = 0; i < 50; i++) {
-        if ((await targetRow.count()) > 0) break;
-        if ((await showMoreButton.count()) === 0) break;
-        await showMoreButton.click();
-        await adminExpect(async () => {
-          const isStillLoading = await showMoreButton.isDisabled().catch(() => false);
-          expect(isStillLoading).toBe(false);
-        }).toPass({ timeout: 20000 });
-      }
+      const targetRow = await revealTargetRow(adminPage, targetAccountId);
       await adminExpect(targetRow).toBeVisible();
 
       await test.step("管理者が対象アカウントを強制ロックする", async () => {
@@ -98,7 +113,8 @@ adminTest.describe("管理者による強制ロックがログイン可否に反
       });
 
       await test.step("管理者がロックを解除する", async () => {
-        const lockedRow = adminPage.getByRole("row", { name: new RegExp(targetAccountId) });
+        // 強制ロック操作で一覧が再取得され、蓄積したページ送りが1ページ目にリセットされているため、再度探索する
+        const lockedRow = await revealTargetRow(adminPage, targetAccountId);
         await adminExpect(lockedRow.getByText("ロック中")).toBeVisible();
         await lockedRow.getByRole("button", { name: "ロック解除" }).click();
         await adminExpect(adminPage.getByTestId("lock-confirm-dialog")).toBeVisible();
