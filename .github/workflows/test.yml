@@ -336,6 +336,32 @@ jobs:
             psql -h localhost -p 5432 -U postgres -d web_gallery -f "$file"
           done
 
+      # 写真アップロードのE2Eシナリオが実接続する画像ストレージ（S3互換）。
+      # GitHub Actionsのservicesはコンテナ起動時のcommand引数を指定できず、
+      # minio/minioイメージはCMD（server /data）なしでは起動しないため、docker runで直接起動する。
+      # minio/minio・minio/mcはDocker Hubでのイメージ配布を終了しているため、
+      # docker-compose.ymlと同様に公式移行先のquay.ioを使用する
+      - name: MinIO起動
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            quay.io/minio/minio:latest server /data
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live > /dev/null; then
+              echo "MinIO is ready"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: MinIOバケット作成
+        run: |
+          docker run --rm --network host \
+            -e MC_HOST_local=http://minioadmin:minioadmin@localhost:9000 \
+            quay.io/minio/mc:latest mb --ignore-existing local/web-gallery-local
+
       - name: バックエンドをバックグラウンドで起動
         env:
           # application-local.yml は JWT_SECRET のデフォルト値を持たないため、CI用の値を明示する（本番用ではない）
