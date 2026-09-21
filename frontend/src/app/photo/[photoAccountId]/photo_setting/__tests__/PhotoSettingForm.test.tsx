@@ -139,6 +139,9 @@ describe("PhotoSettingForm", () => {
     fireEvent.change(screen.getByTestId("image-input"), {
       target: { files: [file] },
     });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
     fireEvent.click(screen.getByTestId("submit-button"));
 
     await waitFor(() => {
@@ -237,6 +240,29 @@ describe("PhotoSettingForm", () => {
     );
   });
 
+  it("タイトル（日本語）が未入力の場合は送信時にバリデーションエラーになること", async () => {
+    // backend側（PhotoBulkSaveRequest/PhotoSaveRequest）が photoJapaneseTitle に
+    // @NotBlank を付与しているため、クライアント側でも同様に必須チェックする
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("タイトル（日本語）を入力してください")
+      ).toBeInTheDocument();
+    });
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
   it("保存失敗時のエラーメッセージにrole=alertが付与されること", async () => {
     mockRegistPhotos.mockRejectedValue(new Error("保存に失敗しました"));
 
@@ -249,6 +275,9 @@ describe("PhotoSettingForm", () => {
     const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
     fireEvent.change(screen.getByTestId("image-input"), {
       target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
     });
 
     fireEvent.click(screen.getByTestId("submit-button"));
@@ -279,6 +308,9 @@ describe("PhotoSettingForm", () => {
     const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
     fireEvent.change(screen.getByTestId("image-input"), {
       target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
     });
 
     fireEvent.click(screen.getByTestId("submit-button"));
@@ -335,6 +367,9 @@ describe("PhotoSettingForm", () => {
     const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
     const input = screen.getByTestId("image-input");
     fireEvent.change(input, { target: { files: [file] } });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
 
     fireEvent.click(screen.getByTestId("submit-button"));
 
@@ -453,6 +488,9 @@ describe("PhotoSettingForm", () => {
     fireEvent.change(screen.getByTestId("image-input"), {
       target: { files: [file] },
     });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
     fireEvent.click(screen.getByTestId("submit-button"));
 
     await waitFor(() => {
@@ -475,6 +513,9 @@ describe("PhotoSettingForm", () => {
     const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
     fireEvent.change(screen.getByTestId("image-input"), {
       target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
     });
     fireEvent.click(screen.getByTestId("submit-button"));
 
@@ -757,6 +798,9 @@ describe("PhotoSettingForm", () => {
     const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
     fireEvent.change(screen.getByTestId("image-input"), {
       target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
     });
     fireEvent.click(screen.getByTestId("submit-button"));
 
