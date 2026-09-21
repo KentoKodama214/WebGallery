@@ -290,6 +290,11 @@ export function PhotoSettingForm({
         errors.push("画像ファイルは5MB以下にしてください");
       }
     }
+    // backend側は新規登録・更新のいずれも photoJapaneseTitle に @NotBlank を付与しているため、
+    // isEditMode を問わず必須にする
+    if (!photoJapaneseTitle.trim()) {
+      errors.push("タイトル（日本語）を入力してください");
+    }
     if (photoAt) {
       const photoDate = new Date(photoAt);
       if (photoDate > new Date()) {
