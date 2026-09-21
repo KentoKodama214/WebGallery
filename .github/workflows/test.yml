@@ -366,6 +366,9 @@ jobs:
         env:
           # application-local.yml は JWT_SECRET のデフォルト値を持たないため、CI用の値を明示する（本番用ではない）
           JWT_SECRET: e2e-only-secret-not-for-production-must-be-256-bits-long
+          # E2Eテストは全ワーカーが同一IP（::1）から多数のアカウント登録・ログインを行うため、
+          # 本番向けのレート制限が誤検知する（scripts/e2e.shのローカル実行と同様に無効化する）
+          RATE_LIMIT_ENABLED: "false"
         run: |
           SPRING_PROFILES_ACTIVE=local nohup ./backend/gradlew -p backend bootRun --no-daemon > backend-e2e.log 2>&1 &
 
