@@ -16,9 +16,12 @@ test.describe("アカウント一覧ページ", () => {
     await expect(menu.getByText("Sign In")).toBeVisible();
   });
 
-  test("一覧が表示されるか、取得エラーが表示されること", async ({ page }) => {
-    const table = page.getByRole("columnheader", { name: "アカウント名" });
-    const error = page.getByText("アカウント一覧の取得に失敗しました");
-    await expect(table.or(error)).toBeVisible({ timeout: 10000 });
+  test("一覧テーブルが表示されること", async ({ page }) => {
+    // e2e.sh実行時はバックエンドが必ず起動しており、登録アカウント数によらず
+    // テーブルのヘッダーは必ず描画される（0件でも空のtbodyでエラーにはならない）
+    await expect(page.getByRole("columnheader", { name: "アカウント名" })).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.getByRole("columnheader", { name: "ギャラリー" })).toBeVisible();
   });
 });

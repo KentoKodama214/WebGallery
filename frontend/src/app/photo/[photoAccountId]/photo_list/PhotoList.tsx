@@ -684,6 +684,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             <select
               value={isFavoriteFilter}
               onChange={(e) => setIsFavoriteFilter(e.target.value)}
+              data-testid="favorite-filter-select"
             >
               <option value=""></option>
               <option value="true">お気に入り写真のみ</option>
@@ -843,6 +844,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                     aria-label={photo.isFavorite ? "お気に入りから外す" : "お気に入りに追加"}
                     aria-pressed={photo.isFavorite}
                     onClick={(e) => handleToggleFavorite(e, photo)}
+                    data-testid={`list-favorite-button-${photo.accountNo}-${photo.photoNo}`}
                     style={{
                       position: "absolute",
                       bottom: "8px",
