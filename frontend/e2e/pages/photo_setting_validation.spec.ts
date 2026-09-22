@@ -134,4 +134,35 @@ authTest.describe("写真設定ページ（アップロード異常系）", () =
       }
     }
   );
+
+  authTest(
+    "新規一括登録でファイル名が重複する場合、登録全体が失敗し一覧へ遷移しないこと",
+    async ({ workerPage: page, testUser }) => {
+      // `PhotoServiceImpl#savePhotos` は複数枚をひとつのトランザクションで順に登録し、
+      // 途中の1枚がファイル名重複（`PhotoAggregateRepositoryImpl#regist`）で失敗すると
+      // 全体をロールバックする（既に登録済みの分もDB・S3双方から補償削除される）。
+      // 「1枚だけ失敗して残りは保存される」という部分成功は起こらないことを検証する。
+      const duplicateFileName = `e2e-duplicate-${Date.now()}.png`;
+
+      await page.goto(`/photo/${testUser.accountId}/photo_setting`);
+      await authExpect(page.getByTestId("image-input")).toBeAttached();
+
+      await page.getByTestId("image-input").setInputFiles([
+        { name: duplicateFileName, mimeType: "image/png", buffer: VALID_PHOTO_BUFFER },
+        { name: duplicateFileName, mimeType: "image/png", buffer: VALID_PHOTO_BUFFER },
+      ]);
+      await authExpect(page.getByTestId("image-preview-item-1")).toBeVisible();
+      await page.getByTestId("japanese-title-input").fill("重複ファイル名一括登録テスト");
+
+      await page.getByTestId("submit-button").click();
+
+      await authExpect(
+        page.getByRole("alert").filter({
+          hasText: "写真登録でエラーが発生しました。（既に同じファイル名でアップロード済みです）",
+        })
+      ).toBeVisible({ timeout: 10000 });
+      // 保存に失敗しているため、一覧へは遷移しない（＝1枚も登録されていない）
+      await authExpect(page).toHaveURL(new RegExp(`/photo/${testUser.accountId}/photo_setting$`));
+    }
+  );
 });

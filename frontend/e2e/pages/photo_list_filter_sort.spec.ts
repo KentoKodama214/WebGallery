@@ -249,4 +249,28 @@ test.describe("写真一覧ページ（もっと見るページネーション�
       await expect(showMoreButton).toHaveCount(0);
     });
   });
+
+  test("ちょうど20枚登録すると、1ページ目に全件表示され+もっと見るボタンは表示されないこと", async ({
+    page,
+  }, testInfo) => {
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+
+    await test.step("上限のないnormal権限で20枚登録する（10枚+10枚）", async () => {
+      await registerAccount(page, accountId, "E2E Pagination Boundary User");
+      await grantNormalAuthority(accountId);
+      await login(page, accountId);
+
+      await page.goto(`/photo/${accountId}/photo_setting`);
+      await uploadBulkPhotos(page, accountId, 10);
+
+      await page.getByRole("link", { name: "＋写真追加" }).click();
+      await uploadBulkPhotos(page, accountId, 10);
+    });
+
+    await test.step("20枚全件表示され、+もっと見るボタンは表示されないこと", async () => {
+      const detailLinks = page.locator('a[href*="/photo_detail?photoNo="]');
+      await expect(detailLinks).toHaveCount(20, { timeout: 10000 });
+      await expect(page.getByRole("button", { name: "+もっと見る" })).toHaveCount(0);
+    });
+  });
 });

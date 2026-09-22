@@ -40,6 +40,18 @@ test.describe("アカウント登録ページ", () => {
     ).toBeVisible();
   });
 
+  test("不正な形式のパスワードを入力するとエラーが表示されること", async ({ page }) => {
+    // 英字と数字を各1文字以上含む半角8〜72文字（PASSWORD_PATTERN）を満たさない例として、
+    // 数字を含まないパスワードを入力する
+    const passwordInput = page.getByPlaceholder("英字と数字を含む半角8〜72文字");
+    await passwordInput.fill("onlyletters");
+    await passwordInput.blur();
+
+    await expect(
+      page.getByText("英字と数字を含む半角8〜72文字で入力してください")
+    ).toBeVisible();
+  });
+
   test("未来の日付を生年月日に入力して送信するとエラーが表示されること", async ({ page }) => {
     await page.getByPlaceholder("半角英数字で8〜20文字").fill("testuser01");
     await page.locator('label:has-text("アカウント名") + input').fill("テストユーザー");
