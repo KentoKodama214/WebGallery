@@ -20,7 +20,7 @@ test.describe("ログインページ", () => {
     // 明確にバックエンドのバリデーションエラー文言のみを検証する
     await expect(
       page.getByRole("alert").filter({ hasText: "入力内容に誤りがあります。再度入力してください。" })
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test("不正な認証情報でエラーメッセージが表示されること", async ({ page }) => {
@@ -30,7 +30,7 @@ test.describe("ログインページ", () => {
 
     await expect(
       page.getByRole("alert").filter({ hasText: "アカウントIDまたはパスワードが間違っています。" })
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test("ページタイトルが正しいこと", async ({ page }) => {

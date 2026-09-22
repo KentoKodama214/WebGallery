@@ -28,6 +28,7 @@ paths:
 
 - `playwright.config.ts`の`webkit-smoke`・`mobile-smoke`プロジェクトは実行時間を抑えるため、レイアウト崩れの影響が大きい主要導線（`CROSS_BROWSER_SPECS`で指定するspecのみ）に限定している。対象を増やす場合はCIの実行時間増加とのトレードオフを踏まえること
 - WebKit（`webkit-smoke`・`mobile-smoke`。iPhone等のモバイルプリセットもWebKitエンジン）は、認証Cookie（`AuthController`が発行する`Secure`付きリフレッシュトークンCookie）を`http://localhost`（非HTTPS）では保存しない。ログイン後に`page.goto`でフルページ遷移するテストはクライアント側メモリのアクセストークンが失われ再認証に失敗するため、`CROSS_BROWSER_SPECS`にはフルページ遷移を伴う認証必須フローを含めないこと（本番はHTTPSのため実害はない、ローカル/CI検証環境固有の制約）
+- CI上のWebKitはChromiumより応答待ちのタイムアウトに引っかかりやすい（共有ランナーでの起動・処理が相対的に遅い）。`CROSS_BROWSER_SPECS`対象specのアサーションは`timeout: 5000`のような短い値を避け、`fixtures/auth.ts`の`login`/`registerAccount`と同じ`timeout: 10000`以上を基準にすること
 - 視覚回帰テスト（`toHaveScreenshot`）・アクセシビリティ検証（`expectNoAccessibilityViolations`）は、複数プロジェクトで重複実行して時間を浪費しないよう、`test.skip(testInfo.project.name !== "chromium", ...)`でchromiumプロジェクトのみに限定すること
 - 視覚回帰テストのスクリーンショットはOS（フォントレンダリング等）に依存するため、プラットフォームごとに別ファイルとして保存される（Playwrightの既定の`snapshotPathTemplate`）。ローカル（macOS等）で生成したベースラインはCI（Linux）では通らない。CIのベースラインはCI実行結果のartifact（失敗時にアップロードされる実際のスクリーンショット）から取得して`*-snapshots/`配下にコミットすること
 - 視覚回帰テストには`maxDiffPixelRatio`で許容誤差を設定し、アンチエイリアシング等の微小差分で恒常的に失敗しないようにすること
