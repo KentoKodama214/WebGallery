@@ -3,6 +3,7 @@ package com.web.gallery.aggregate;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.model.photo.PhotoDetailModel;
@@ -102,6 +103,18 @@ public class Photo {
         this.detail.toBuilder()
             .photoTagModelList(renumberTags(newTags, this.accountNo, this.photoNo))
             .build();
+  }
+
+  /**
+   * ロケーション番号を、永続化層で解決済みの値に差し替える
+   *
+   * <p>ロケーションマスタの存在チェック・新規作成はDBアクセスを伴うためRepository層でのみ行える。集約自身はその結果
+   * （既存マスタの再利用・新規作成いずれかで確定したロケーション番号）を受け取って差し替えるだけの責務を持つ
+   *
+   * @param resolvedLocationNo 解決済みの{@link LocationNo}
+   */
+  public void updateLocationNo(LocationNo resolvedLocationNo) {
+    this.detail = this.detail.toBuilder().locationNo(resolvedLocationNo).build();
   }
 
   /** 削除済みとしてマークする */

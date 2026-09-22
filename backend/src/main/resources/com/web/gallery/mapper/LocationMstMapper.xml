@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.mapper.LocationMstMapper">
+	<resultMap id="LocationMstMap" type="com.web.gallery.entity.common.LocationMst">
+		<result property="accountNo" column="account_no"/>
+		<result property="locationNo" column="location_no"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="locationName" column="location_name"/>
+		<result property="address" column="address"/>
+		<result property="latitude" column="latitude"/>
+		<result property="longitude" column="longitude"/>
+	</resultMap>
+
+	<select id="select" parameterType="com.web.gallery.entity.common.LocationMstCondition" resultMap="LocationMstMap">
+		SELECT
+			id,
+			account_no AS accountNo,
+			location_no AS locationNo,
+			created_by AS createdBy,
+			created_at AS createdAt,
+			location_name AS locationName,
+			address,
+			latitude,
+			longitude
+		FROM
+			common.location_mst
+		<where>
+			AND is_deleted = false
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="locationNo != null"> AND location_no = #{locationNo}</if>
+			<if test="locationName != null"> AND location_name = #{locationName}</if>
+		</where>
+	</select>
+
+	<insert id="insert" parameterType="com.web.gallery.entity.common.LocationMst">
+		INSERT INTO
+			common.location_mst (
+				account_no,
+				location_no,
+				created_by,
+				created_at,
+				updated_by,
+				updated_at,
+				location_name,
+				address,
+				latitude,
+				longitude
+			)
+		VALUES
+			(
+				#{accountNo},
+				#{locationNo},
+				#{createdBy},
+				NOW(),
+				#{createdBy},
+				NOW(),
+				#{locationName},
+				#{address},
+				#{latitude},
+				#{longitude}
+			)
+	</insert>
+
+	<select id="getMaxLocationNo" parameterType="Long" resultType="Long">
+		SELECT
+			MAX(location_no) AS locationNo
+		FROM
+			common.location_mst
+		WHERE
+			account_no = #{accountNo}
+	</select>
+</mapper>

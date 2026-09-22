@@ -5,14 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
+  getLocationList,
   getPhotoDetail,
   getPhotoUpperLimit,
   registPhotos,
   savePhoto,
+  type LocationItem,
   type PhotoDetailResponse,
 } from "@/lib/api/client";
 import { loginUrlWithRedirect, sanitizeImageUrl } from "@/lib/url";
 import { ModalDialog } from "@/components/ui/ModalDialog";
+import { LocationMapPicker } from "./LocationMapPicker";
 
 interface TagEntry {
   /** 一覧の React key 兼、既存タグの場合はバックエンドのタグ番号 */
@@ -25,6 +28,9 @@ interface TagEntry {
 
 /** アップロード可能な画像ファイルの最大サイズ（5MB） */
 const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024;
+
+/** 撮影場所の入力方法 */
+type LocationMode = "none" | "existing" | "new";
 
 /** 新規一括登録で1回に選択できる写真の最大枚数（バックエンドのConsts.PHOTO_BULK_REGIST_MAX_SIZEと合わせる） */
 const MAX_BULK_REGIST_SIZE = 10;
@@ -71,6 +77,14 @@ export function PhotoSettingForm({
   const [iso, setIso] = useState("");
   // 位置情報公開フラグ。新規登録時は安全側に倒して「公開しない」を既定とする
   const [isLocationPublic, setIsLocationPublic] = useState(false);
+  // 撮影場所（任意）。「設定しない」を既定とする
+  const [locationMode, setLocationMode] = useState<LocationMode>("none");
+  const [locationList, setLocationList] = useState<LocationItem[]>([]);
+  const [selectedLocationNo, setSelectedLocationNo] = useState<number | "">("");
+  const [newLocationName, setNewLocationName] = useState("");
+  const [newAddress, setNewAddress] = useState("");
+  const [newLatitude, setNewLatitude] = useState("");
+  const [newLongitude, setNewLongitude] = useState("");
   const [tags, setTags] = useState<TagEntry[]>([]);
   const [nextTagNo, setNextTagNo] = useState(1);
 
@@ -127,6 +141,10 @@ export function PhotoSettingForm({
         );
         setIso(data.iso != null ? String(data.iso) : "");
         setIsLocationPublic(data.isLocationPublic ?? false);
+        if (data.locationNo) {
+          setLocationMode("existing");
+          setSelectedLocationNo(data.locationNo);
+        }
         setExistingImageFilePath(data.imageFilePath);
         setImagePreview(data.imageFilePath);
 
@@ -185,6 +203,27 @@ export function PhotoSettingForm({
       cancelled = true;
     };
   }, [authLoading, isAuthenticated, isEditMode, photoAccountId]);
+
+  /**
+   * ロケーション一覧の取得（既存ロケーションからの選択肢として使用する）
+   *
+   * 取得に失敗した場合は空リストのまま（選択肢なし）とし、新規入力での登録は継続して行える
+   */
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+
+    let cancelled = false;
+    getLocationList(photoAccountId)
+      .then((data) => {
+        if (!cancelled) setLocationList(data.locations);
+      })
+      .catch(() => {
+        // 取得失敗時は選択肢を出さないだけとし、新規入力は妨げない
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, isAuthenticated, photoAccountId]);
 
   // 今回選択できる残り枚数（アカウントの残り登録可能枚数と1リクエストの上限枚数のうち小さい方）。
   // remainingCountが未取得（undefined）または無制限（null）の場合は1リクエストの上限のみで制限する
@@ -324,6 +363,17 @@ export function PhotoSettingForm({
         break;
       }
     }
+    if (locationMode === "existing" && selectedLocationNo === "") {
+      errors.push("ロケーションを選択してください");
+    }
+    if (locationMode === "new") {
+      if (!newLocationName.trim()) {
+        errors.push("ロケーション名を入力してください");
+      }
+      if (!newLatitude || !newLongitude) {
+        errors.push("地図をクリックするか、緯度・経度を入力してください");
+      }
+    }
     return errors;
   };
 
@@ -389,6 +439,17 @@ export function PhotoSettingForm({
         formData.append("iso", iso);
       }
       formData.append("isLocationPublic", String(isLocationPublic));
+
+      if (locationMode === "existing" && selectedLocationNo !== "") {
+        formData.append("locationNo", String(selectedLocationNo));
+      } else if (locationMode === "new") {
+        formData.append("locationName", newLocationName);
+        if (newAddress) {
+          formData.append("address", newAddress);
+        }
+        formData.append("latitude", newLatitude);
+        formData.append("longitude", newLongitude);
+      }
 
       tags.forEach((tag, index) => {
         formData.append(
@@ -718,6 +779,119 @@ export function PhotoSettingForm({
                 data-testid="iso-input"
               />
             </div>
+          </div>
+
+          {/* 撮影場所 */}
+          <div className="mb-4">
+            <label className="text-sm text-gray-400 block mb-2">撮影場所</label>
+            <div className="flex gap-4 mb-2 text-sm">
+              <label className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  name="locationMode"
+                  checked={locationMode === "none"}
+                  onChange={() => setLocationMode("none")}
+                  data-testid="location-mode-none"
+                />
+                設定しない
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  name="locationMode"
+                  checked={locationMode === "existing"}
+                  onChange={() => setLocationMode("existing")}
+                  data-testid="location-mode-existing"
+                />
+                既存のロケーションから選択
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  name="locationMode"
+                  checked={locationMode === "new"}
+                  onChange={() => setLocationMode("new")}
+                  data-testid="location-mode-new"
+                />
+                新規登録
+              </label>
+            </div>
+
+            {locationMode === "existing" && (
+              <select
+                value={selectedLocationNo}
+                onChange={(e) =>
+                  setSelectedLocationNo(e.target.value ? Number(e.target.value) : "")
+                }
+                className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                data-testid="location-select"
+              >
+                <option value="">選択してください</option>
+                {locationList.map((location) => (
+                  <option key={location.locationNo} value={location.locationNo}>
+                    {location.locationName}
+                    {location.address ? `（${location.address}）` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {locationMode === "new" && (
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={newLocationName}
+                  onChange={(e) => setNewLocationName(e.target.value)}
+                  placeholder="ロケーション名 *"
+                  aria-label="ロケーション名"
+                  className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                  data-testid="new-location-name-input"
+                />
+                <p className="text-xs text-gray-400">
+                  地図をクリックすると緯度・経度が自動入力されます（うまく取得できない場合は直接入力してください）
+                </p>
+                <LocationMapPicker
+                  latitude={newLatitude ? Number(newLatitude) : null}
+                  longitude={newLongitude ? Number(newLongitude) : null}
+                  onPick={(lat, lng, address) => {
+                    setNewLatitude(String(lat));
+                    setNewLongitude(String(lng));
+                    if (address) setNewAddress(address);
+                  }}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={newLatitude}
+                    onChange={(e) => setNewLatitude(e.target.value)}
+                    placeholder="緯度 *"
+                    aria-label="緯度"
+                    className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                    data-testid="new-location-latitude-input"
+                  />
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={newLongitude}
+                    onChange={(e) => setNewLongitude(e.target.value)}
+                    placeholder="経度 *"
+                    aria-label="経度"
+                    className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                    data-testid="new-location-longitude-input"
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={newAddress}
+                  onChange={(e) => setNewAddress(e.target.value)}
+                  placeholder="住所（任意）"
+                  aria-label="住所"
+                  className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                  data-testid="new-location-address-input"
+                />
+              </div>
+            )}
           </div>
 
           {/* 位置情報の公開設定 */}

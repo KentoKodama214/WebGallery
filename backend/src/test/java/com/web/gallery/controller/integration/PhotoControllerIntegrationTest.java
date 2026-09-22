@@ -35,6 +35,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -1070,6 +1071,196 @@ public class PhotoControllerIntegrationTest {
           .andExpect(jsonPath("$.isSuccess").value(false))
           .andExpect(
               jsonPath("$.message").value(ErrorEnum.IMAGE_FILE_SIZE_EXCEEDED.getErrorMessage()));
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("正常系：本人所有の既存ロケーション番号を指定した場合、そのロケーション番号が設定されること")
+    void registPhotos_location_existingSelection() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, createJpegBytes(200, 100));
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .file(multipartFile)
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoJapaneseTitle", "タイトル")
+                  .param("locationNo", "1")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isOk());
+
+      Long actualLocationNo =
+          jdbcTemplate.queryForObject(
+              "SELECT location_no FROM photo.photo_mst WHERE account_no = 2 AND photo_no = 4",
+              Long.class);
+      assertEquals(1L, actualLocationNo);
+      Integer locationCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.location_mst WHERE account_no = 2", Integer.class);
+      assertEquals(2, locationCount);
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("異常系：本人所有でないロケーション番号を指定した場合、BadRequestExceptionを返すこと")
+    void registPhotos_location_notOwned() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, createJpegBytes(200, 100));
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .file(multipartFile)
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoJapaneseTitle", "タイトル")
+                  .param("locationNo", "999")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
+          .andExpect(jsonPath("$.isSuccess").value(false))
+          .andExpect(jsonPath("$.message").value(ErrorEnum.LOCATION_NOT_FOUND.getErrorMessage()));
+
+      Integer photoCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_mst WHERE account_no = 2 AND photo_no = 4",
+              Integer.class);
+      assertEquals(0, photoCount);
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("正常系：新規ロケーション名を指定した場合、ロケーションマスタへ新規登録されその番号が設定されること")
+    void registPhotos_location_registNew() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, createJpegBytes(200, 100));
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .file(multipartFile)
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoJapaneseTitle", "タイトル")
+                  .param("locationName", "新宿御苑")
+                  .param("address", "東京都新宿区")
+                  .param("latitude", "35.6850")
+                  .param("longitude", "139.7100")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isOk());
+
+      Long actualLocationNo =
+          jdbcTemplate.queryForObject(
+              "SELECT location_no FROM photo.photo_mst WHERE account_no = 2 AND photo_no = 4",
+              Long.class);
+      assertEquals(3L, actualLocationNo);
+
+      Map<String, Object> actualLocation =
+          jdbcTemplate.queryForMap(
+              "SELECT * FROM common.location_mst WHERE account_no = 2 AND location_no = 3");
+      assertEquals("新宿御苑", actualLocation.get("location_name"));
+      assertEquals("東京都新宿区", actualLocation.get("address"));
+      assertEquals(
+          0, new BigDecimal("35.6850").compareTo((BigDecimal) actualLocation.get("latitude")));
+      assertEquals(
+          0, new BigDecimal("139.7100").compareTo((BigDecimal) actualLocation.get("longitude")));
+      assertEquals(2L, actualLocation.get("created_by"));
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("正常系：新規入力のロケーション名が既存マスタと同名の場合、既存のロケーション番号を再利用すること")
+    void registPhotos_location_reuseExistingByName() throws Exception {
+      String photoAccountId = "bbbbbbbb";
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", MediaType.IMAGE_JPEG_VALUE, createJpegBytes(200, 100));
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      // フィクスチャのaccount_no=2, location_no=1は「ロケーション4」という名称で既に登録済み
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/" + photoAccountId + "/photos")
+                  .file(multipartFile)
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoJapaneseTitle", "タイトル")
+                  .param("locationName", "ロケーション4")
+                  .param("address", "住所は無視される")
+                  .param("latitude", "0")
+                  .param("longitude", "0")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isOk());
+
+      Long actualLocationNo =
+          jdbcTemplate.queryForObject(
+              "SELECT location_no FROM photo.photo_mst WHERE account_no = 2 AND photo_no = 4",
+              Long.class);
+      assertEquals(1L, actualLocationNo);
+      Integer locationCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.location_mst WHERE account_no = 2", Integer.class);
+      assertEquals(2, locationCount);
     }
   }
 

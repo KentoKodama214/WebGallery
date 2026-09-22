@@ -603,6 +603,20 @@ export interface PhotoUpperLimitResponse {
   remainingCount: number | null;
 }
 
+/** ロケーション */
+export interface LocationItem {
+  locationNo: number;
+  locationName: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
+/** ロケーション一覧取得レスポンス */
+export interface LocationListResponse {
+  locations: LocationItem[];
+}
+
 /** 写真一覧取得パラメータ */
 export interface PhotoListParams {
   directionKbn?: string;
@@ -669,6 +683,18 @@ export async function getPhotoUpperLimit(
     throw new Error(await readErrorMessage(response, "写真登録上限の取得に失敗しました"));
   }
   return readJson<PhotoUpperLimitResponse>(response);
+}
+
+/**
+ * 本人が登録済みのロケーション一覧を取得する
+ */
+export async function getLocationList(accountId: string): Promise<LocationListResponse> {
+  const url = `/api/v1/accounts/${seg(accountId)}/locations`;
+  const response = await fetchWithAuth(url);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "ロケーション一覧の取得に失敗しました"));
+  }
+  return readJson<LocationListResponse>(response);
 }
 
 /**

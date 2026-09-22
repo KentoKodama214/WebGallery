@@ -38,6 +38,9 @@ public final class ApiRoutes {
    */
   public static final String API_ACCOUNT_DELETION = API_ACCOUNT + "/deletion";
 
+  /** ロケーション一覧API（GET=本人のロケーションマスタ一覧取得） */
+  public static final String API_LOCATIONS = API_ACCOUNT + "/locations";
+
   /** 写真アカウントID */
   public static final String PHOTO_ACCOUNT_ID = "{photoAccountId}";
 

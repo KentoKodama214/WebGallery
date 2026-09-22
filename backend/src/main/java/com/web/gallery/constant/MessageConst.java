@@ -42,6 +42,8 @@ public final class MessageConst {
   public static final String ERR_IMAGE_FILE_REQUIRED = "新規登録時は画像ファイルの指定が必須です。";
   public static final String ERR_UNSUPPORTED_IMAGE_CONTENT_TYPE = "許可されていないファイル形式です。";
   public static final String ERR_INVALID_IMAGE_SIGNATURE = "画像ファイルの内容が不正です。";
+  public static final String ERR_LOCATION_NOT_FOUND = "指定されたロケーションが存在しません。";
+  public static final String ERR_FAIL_TO_REGIST_LOCATION = "ロケーション登録でエラーが発生しました。登録をやり直してください。";
   public static final String ERR_IMAGE_FILE_SIZE_EXCEEDED = "画像ファイルのサイズが上限を超えています。";
   public static final String ERR_SYSTEM_ERROR = "システムエラーが発生しました。しばらくしてから再度お試しください。";
   public static final String ERR_UNAUTHENTICATED = "認証が必要です。ログインしてください。";

@@ -80,10 +80,12 @@ function buildCsp(nonce: string): string {
     "style-src 'self' 'unsafe-inline'",
     // 本番のみ：<style>/<link> 要素は nonce または自オリジンに限定し、注入された <style> を防ぐ
     ...(isDev ? [] : [`style-src-elem 'self' 'nonce-${nonce}'`]),
-    // 開発時はローカルの MinIO（署名付き URL）を許可する。本番は imageBaseOrigin のみ
-    `img-src 'self' data: blob:${imageBaseOrigin ? ` ${imageBaseOrigin}` : ""}${isDev ? " http://localhost:9000 http://127.0.0.1:9000" : ""}`,
+    // 開発時はローカルの MinIO（署名付き URL）を許可する。本番は imageBaseOrigin のみ。
+    // OpenStreetMapのタイル画像（撮影場所の地図選択UI用）は常時許可する
+    `img-src 'self' data: blob: https://*.tile.openstreetmap.org${imageBaseOrigin ? ` ${imageBaseOrigin}` : ""}${isDev ? " http://localhost:9000 http://127.0.0.1:9000" : ""}`,
     "font-src 'self' data:",
-    `connect-src 'self'${apiBaseOrigin ? ` ${apiBaseOrigin}` : ""}${isDev ? " ws:" : ""}`,
+    // Nominatim（OpenStreetMapの逆ジオコーディングAPI）は撮影場所の住所自動補完に使用する
+    `connect-src 'self' https://nominatim.openstreetmap.org${apiBaseOrigin ? ` ${apiBaseOrigin}` : ""}${isDev ? " ws:" : ""}`,
     "worker-src 'self' blob:",
     // 写真詳細の撮影場所表示（Google Maps の iframe 埋め込み）用
     "frame-src https://maps.google.com https://www.google.com",

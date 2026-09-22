@@ -113,7 +113,11 @@ describe("proxy (画像・API オリジンの環境変数)", () => {
 
     const res = proxyWithInvalidApiBase(makeRequest("/login"));
     const csp = res.headers.get("content-security-policy");
-    expect(csp).toMatch(/connect-src 'self'(?! http)/);
+    // Nominatim（撮影場所の地図選択UI用）は常時許可される静的な追加のため、それ以外の
+    // 動的オリジンが追加されていないことを確認する
+    expect(csp).toMatch(
+      /connect-src 'self' https:\/\/nominatim\.openstreetmap\.org(?! http)/
+    );
   });
 
   it("NEXT_PUBLIC_API_BASE_URL のオリジンが 'null'（opaque origin）の場合は connect-src に追加しない", async () => {
@@ -123,7 +127,9 @@ describe("proxy (画像・API オリジンの環境変数)", () => {
 
     const res = proxyWithOpaqueOrigin(makeRequest("/login"));
     const csp = res.headers.get("content-security-policy");
-    expect(csp).toMatch(/connect-src 'self'(?! http)/);
+    expect(csp).toMatch(
+      /connect-src 'self' https:\/\/nominatim\.openstreetmap\.org(?! http)/
+    );
   });
 
   it("NEXT_PUBLIC_IMAGE_BASE_URL が有効なURLの場合は img-src にそのオリジンを追加する", async () => {
