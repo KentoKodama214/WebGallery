@@ -150,6 +150,7 @@ export function PhotoDetail({
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex justify-center items-center">
+        <h1 className="sr-only">写真詳細</h1>
         <p className="text-gray-400">読み込み中...</p>
       </div>
     );
@@ -158,6 +159,7 @@ export function PhotoDetail({
   if (error) {
     return (
       <div className="min-h-screen bg-black text-white flex justify-center items-center">
+        <h1 className="sr-only">写真詳細</h1>
         <p className="text-red-500">{error}</p>
       </div>
     );
@@ -166,6 +168,7 @@ export function PhotoDetail({
   if (!photo) {
     return (
       <div className="min-h-screen bg-black text-white flex justify-center items-center">
+        <h1 className="sr-only">写真詳細</h1>
         <p className="text-gray-400">写真が見つかりません</p>
       </div>
     );
@@ -197,6 +200,8 @@ export function PhotoDetail({
 
   return (
     <div style={{ backgroundColor: "#000", color: "#fff", minHeight: "100vh" }}>
+      <h1 className="sr-only">写真詳細</h1>
+
       {/* 戻るリンク */}
       <header>
         <Link

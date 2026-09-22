@@ -639,6 +639,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
 
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
+      <h1 className="sr-only">写真一覧</h1>
+
       {/* フィルターオーバーレイ */}
       <div
         className={`${styles.filterOverlay} ${isFilterOpen ? styles.filterOpen : ""}`}

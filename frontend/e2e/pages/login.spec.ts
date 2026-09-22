@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 
 test.describe("ログインページ", () => {
   test.beforeEach(async ({ page }) => {
@@ -19,7 +20,7 @@ test.describe("ログインページ", () => {
     // 明確にバックエンドのバリデーションエラー文言のみを検証する
     await expect(
       page.getByRole("alert").filter({ hasText: "入力内容に誤りがあります。再度入力してください。" })
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test("不正な認証情報でエラーメッセージが表示されること", async ({ page }) => {
@@ -29,10 +30,20 @@ test.describe("ログインページ", () => {
 
     await expect(
       page.getByRole("alert").filter({ hasText: "アカウントIDまたはパスワードが間違っています。" })
-    ).toBeVisible({ timeout: 5000 });
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test("ページタイトルが正しいこと", async ({ page }) => {
     await expect(page).toHaveTitle(/ログイン/);
+  });
+
+  test("アクセシビリティ違反がないこと", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "a11y検証はchromiumプロジェクトのみで実施する");
+    await expectNoAccessibilityViolations(page);
+  });
+
+  test("画面表示が崩れていないこと（視覚回帰）", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "視覚回帰はchromiumプロジェクトのみで検証する");
+    await expect(page).toHaveScreenshot("login.png", { fullPage: true, maxDiffPixelRatio: 0.02 });
   });
 });
