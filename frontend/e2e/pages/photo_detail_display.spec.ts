@@ -162,6 +162,16 @@ test.describe("写真詳細ページ（英語タイトル・EXIF設定テキス�
     const { detailUrl } = await uploadAndGetDetailUrl(page, accountId, "視覚回帰検証用写真");
     await page.goto(detailUrl);
 
+    // 画像は署名付きURLへの非同期フェッチのため、キャプション表示（isLoading解消の合図）だけでは
+    // 画像本体の読み込み完了を保証できない。読み込み中/画像未着の中間状態を撮影しないよう、
+    // 画像要素の読み込み完了（naturalWidth > 0）まで待ってからスクリーンショットを撮る
+    await expect(page.getByText("視覚回帰検証用写真")).toBeVisible();
+    const photoImage = page.locator('img[alt="視覚回帰検証用写真"]');
+    await photoImage.waitFor({ state: "visible" });
+    await expect(async () => {
+      expect(await photoImage.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+    }).toPass({ timeout: 10000 });
+
     await expect(page).toHaveScreenshot("photo_detail.png", {
       fullPage: true,
       maxDiffPixelRatio: 0.02,

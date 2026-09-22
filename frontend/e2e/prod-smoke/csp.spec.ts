@@ -45,9 +45,9 @@ test("ログインページで Tailwind のスタイルが適用されること"
   const button = page.getByRole("button", { name: "Log in" });
   await expect(button).toBeVisible();
 
-  // bg-[#2196F3] が効いていれば rgb(33, 150, 243)。CSS がブロックされると透明になる。
+  // bg-[#1565C0] が効いていれば rgb(21, 101, 192)。CSS がブロックされると透明になる。
   const backgroundColor = await button.evaluate(
     (el) => getComputedStyle(el).backgroundColor
   );
-  expect(backgroundColor).toBe("rgb(33, 150, 243)");
+  expect(backgroundColor).toBe("rgb(21, 101, 192)");
 });
