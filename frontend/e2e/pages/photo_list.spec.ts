@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { generateTestAccountId, TEST_USER_PASSWORD } from "../fixtures/auth";
+import { generateTestAccountId, login, registerAccount } from "../fixtures/auth";
 
 test.describe("写真一覧ページ", () => {
   test.beforeEach(async ({ page }) => {
@@ -51,22 +51,8 @@ test.describe("写真一覧ページ（ログイン済み・写真0件の実ア�
     // 「写真0件」を前提とするこのテストでは使わず、ここで使い捨てアカウントを
     // 個別に登録する（他テストの写真登録と実行順で競合しないようにするため）
     const accountId = generateTestAccountId(testInfo.workerIndex);
-    await page.goto("/register");
-    await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
-    await page.locator('label:has-text("アカウント名") + input').fill("E2E No Photo User");
-    await page.getByPlaceholder("英字と数字を含む半角8〜72文字").fill(TEST_USER_PASSWORD);
-    await page.getByRole("button", { name: "登録" }).click();
-    await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.goto("/login");
-    await page.getByPlaceholder("User ID").fill(accountId);
-    await page.getByPlaceholder("Password").fill(TEST_USER_PASSWORD);
-    await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list`), {
-      timeout: 10000,
-    });
+    await registerAccount(page, accountId, "E2E No Photo User");
+    await login(page, accountId);
 
     await expect(page.getByText("写真がありません")).toBeVisible({ timeout: 10000 });
     await expect(page.getByTestId("filter-trigger")).toBeVisible();

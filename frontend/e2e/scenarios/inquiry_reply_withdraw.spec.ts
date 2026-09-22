@@ -1,6 +1,6 @@
 import type { Browser, Page } from "@playwright/test";
 import { test as adminTest, expect as adminExpect } from "../fixtures/admin";
-import { generateTestAccountId, TEST_USER_PASSWORD } from "../fixtures/auth";
+import { generateTestAccountId, login, registerAccount } from "../fixtures/auth";
 
 /**
  * `pages/inquiry.spec.ts` はユーザー側のお問い合わせ送信フォームの表示・送信のみ、
@@ -21,18 +21,8 @@ async function registerAndSubmitInquiry(
   const context = await browser.newContext({ baseURL });
   const page = await context.newPage();
 
-  await page.goto("/register");
-  await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
-  await page.locator('label:has-text("アカウント名") + input').fill("E2E Inquiry User");
-  await page.getByPlaceholder("英字と数字を含む半角8〜72文字").fill(TEST_USER_PASSWORD);
-  await page.getByRole("button", { name: "登録" }).click();
-  await page.getByRole("dialog", { name: "アカウント登録完了" }).waitFor({ timeout: 10000 });
-
-  await page.goto("/login");
-  await page.getByPlaceholder("User ID").fill(accountId);
-  await page.getByPlaceholder("Password").fill(TEST_USER_PASSWORD);
-  await page.getByRole("button", { name: "Log in" }).click();
-  await page.waitForURL(new RegExp(`/photo/${accountId}/photo_list`), { timeout: 10000 });
+  await registerAccount(page, accountId, "E2E Inquiry User");
+  await login(page, accountId);
 
   await page.goto("/inquiry");
   await page.getByLabel("件名").fill(subject);

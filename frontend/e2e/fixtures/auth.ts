@@ -44,6 +44,69 @@ export function generateSortEarlyTestAccountId(workerIndex: number): string {
   return `${SORT_EARLY_TEST_ACCOUNT_ID_PREFIX}${workerIndex}${randomPart}`;
 }
 
+/**
+ * アカウント登録ページで新規アカウントを登録し、登録完了モーダルが表示されるまで待つ
+ *
+ * @param page 操作対象のページ
+ * @param accountId 登録するアカウントID（半角英数字8〜20文字）
+ * @param accountName 登録するアカウント名
+ * @param password 登録するパスワード（省略時は`TEST_USER_PASSWORD`）
+ */
+export async function registerAccount(
+  page: Page,
+  accountId: string,
+  accountName: string,
+  password: string = TEST_USER_PASSWORD
+): Promise<void> {
+  await page.goto("/register");
+  await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
+  await page.locator('label:has-text("アカウント名") + input').fill(accountName);
+  await page.getByPlaceholder("英字と数字を含む半角8〜72文字").fill(password);
+  await page.getByRole("button", { name: "登録" }).click();
+  await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
+    timeout: 10000,
+  });
+}
+
+/**
+ * ログインページで指定したアカウントにログインし、写真一覧への遷移を待つ
+ *
+ * @param page 操作対象のページ
+ * @param accountId ログインするアカウントID
+ * @param password ログインするパスワード（省略時は`TEST_USER_PASSWORD`）
+ */
+export async function login(
+  page: Page,
+  accountId: string,
+  password: string = TEST_USER_PASSWORD
+): Promise<void> {
+  await page.goto("/login");
+  await page.getByPlaceholder("User ID").fill(accountId);
+  await page.getByPlaceholder("Password").fill(password);
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list`), {
+    timeout: 10000,
+  });
+}
+
+/**
+ * 新規アカウントを登録し、続けてそのアカウントでログインする（`registerAccount` + `login`）
+ *
+ * @param page 操作対象のページ
+ * @param accountId 登録・ログインするアカウントID
+ * @param accountName 登録するアカウント名
+ * @param password 登録・ログインするパスワード（省略時は`TEST_USER_PASSWORD`）
+ */
+export async function registerAndLogin(
+  page: Page,
+  accountId: string,
+  accountName: string,
+  password: string = TEST_USER_PASSWORD
+): Promise<void> {
+  await registerAccount(page, accountId, accountName, password);
+  await login(page, accountId, password);
+}
+
 type AuthFixtures = {
   testUser: TestUserCredentials;
   workerPage: Page;
@@ -85,24 +148,7 @@ export const test = base.extend<object, AuthFixtures>({
       });
       const page: Page = await context.newPage();
 
-      await page.goto("/register");
-      await page.getByPlaceholder("半角英数字で8〜20文字").fill(testUser.accountId);
-      await page.locator('label:has-text("アカウント名") + input').fill("E2E Auth User");
-      await page
-        .getByPlaceholder("英字と数字を含む半角8〜72文字")
-        .fill(testUser.password);
-      await page.getByRole("button", { name: "登録" }).click();
-      await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
-        timeout: 10000,
-      });
-
-      await page.goto("/login");
-      await page.getByPlaceholder("User ID").fill(testUser.accountId);
-      await page.getByPlaceholder("Password").fill(testUser.password);
-      await page.getByRole("button", { name: "Log in" }).click();
-      await expect(page).toHaveURL(new RegExp(`/photo/${testUser.accountId}/photo_list`), {
-        timeout: 10000,
-      });
+      await registerAndLogin(page, testUser.accountId, "E2E Auth User", testUser.password);
 
       await use(page);
       await context.close();

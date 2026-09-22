@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { generateSortEarlyTestAccountId, TEST_USER_PASSWORD } from "../fixtures/auth";
+import { generateSortEarlyTestAccountId, login, registerAccount } from "../fixtures/auth";
 
 test.describe("アカウント一覧ページ", () => {
   test.beforeEach(async ({ page }) => {
@@ -62,22 +62,8 @@ test.describe("アカウント一覧ページ（ログイン済み）", () => {
     const accountId = generateSortEarlyTestAccountId(testInfo.workerIndex);
     const accountName = `E2E List User ${testInfo.workerIndex}${Date.now()}`;
 
-    await page.goto("/register");
-    await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
-    await page.locator('label:has-text("アカウント名") + input').fill(accountName);
-    await page.getByPlaceholder("英字と数字を含む半角8〜72文字").fill(TEST_USER_PASSWORD);
-    await page.getByRole("button", { name: "登録" }).click();
-    await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
-      timeout: 10000,
-    });
-
-    await page.goto("/login");
-    await page.getByPlaceholder("User ID").fill(accountId);
-    await page.getByPlaceholder("Password").fill(TEST_USER_PASSWORD);
-    await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list`), {
-      timeout: 10000,
-    });
+    await registerAccount(page, accountId, accountName);
+    await login(page, accountId);
 
     await page.goto("/account_list");
     await page.getByTestId("hamburger-button").click();

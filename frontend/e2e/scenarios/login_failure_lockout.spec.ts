@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { generateTestAccountId, TEST_USER_PASSWORD } from "../fixtures/auth";
+import { generateTestAccountId, registerAccount, TEST_USER_PASSWORD } from "../fixtures/auth";
 
 /**
  * `pages/login.spec.ts` は誤った認証情報1回分のエラー表示のみを検証しており、
@@ -16,18 +16,7 @@ test.describe("ログイン失敗の連続によるアカウントロック", ()
     const accountId = generateTestAccountId(testInfo.workerIndex);
 
     await test.step("対象アカウントを登録する", async () => {
-      await page.goto("/register");
-      await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
-      await page
-        .locator('label:has-text("アカウント名") + input')
-        .fill("E2E Lockout User");
-      await page
-        .getByPlaceholder("英字と数字を含む半角8〜72文字")
-        .fill(TEST_USER_PASSWORD);
-      await page.getByRole("button", { name: "登録" }).click();
-      await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
-        timeout: 10000,
-      });
+      await registerAccount(page, accountId, "E2E Lockout User");
     });
 
     await test.step("誤ったパスワードで3回連続ログインに失敗する（application.ymlのfailCount=3）", async () => {
