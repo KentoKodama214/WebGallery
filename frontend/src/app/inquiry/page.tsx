@@ -18,7 +18,7 @@ export default function InquiryPage() {
       <AuthGuard>
         <InquiryForm />
       </AuthGuard>
-      <Footer />
+      <Footer variant="light" />
     </>
   );
 }

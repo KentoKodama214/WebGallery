@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 import { generateTestAccountId, TEST_USER_PASSWORD } from "../fixtures/auth";
 
 test.describe("アカウント登録ページ", () => {
@@ -61,6 +62,17 @@ test.describe("アカウント登録ページ", () => {
     await page.getByRole("button", { name: "登録" }).click();
 
     await expect(page.getByText("過去の日付を入力してください")).toBeVisible();
+  });
+
+  test("アクセシビリティ違反がないこと（バリデーションエラー表示時）", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "a11y検証はchromiumプロジェクトのみで実施する");
+
+    await page.getByRole("button", { name: "登録" }).click();
+    await expect(page.getByText("アカウント名を入力してください")).toBeVisible();
+
+    await expectNoAccessibilityViolations(page);
   });
 });
 

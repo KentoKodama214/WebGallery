@@ -528,7 +528,7 @@ export function PhotoSettingForm({
                     style={{ objectFit: "contain" }}
                     data-testid="image-preview"
                   />
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-sm text-gray-400 mt-1">
                     画像ファイルは登録後に変更できません
                   </p>
                 </div>
@@ -544,6 +544,7 @@ export function PhotoSettingForm({
                   multiple
                   onChange={handleImageChange}
                   className="hidden"
+                  aria-label="画像ファイル"
                   data-testid="image-input"
                 />
                 {imagePreviews.length > 0 && (
@@ -584,12 +585,12 @@ export function PhotoSettingForm({
                     {imageFiles.length > 0 ? "＋ファイルを追加" : "ファイルを選択"}
                   </button>
                 ) : (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-400">
                     登録枚数の上限に達しているため、これ以上写真を追加できません
                   </p>
                 )}
                 {remainingCount !== null && remainingCount !== undefined && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-400 mt-1">
                     今回はあと{remainingSelectable}枚まで選択できます（アカウントの残り登録可能枚数:
                     {remainingCount}枚）
                   </p>
@@ -600,10 +601,11 @@ export function PhotoSettingForm({
 
           {/* タイトル（日本語） */}
           <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-1">
+            <label htmlFor="photo-japanese-title" className="block text-sm text-gray-400 mb-1">
               タイトル（日本語）
             </label>
             <input
+              id="photo-japanese-title"
               type="text"
               value={photoJapaneseTitle}
               onChange={(e) => setPhotoJapaneseTitle(e.target.value)}
@@ -614,10 +616,11 @@ export function PhotoSettingForm({
 
           {/* タイトル（英語） */}
           <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-1">
+            <label htmlFor="photo-english-title" className="block text-sm text-gray-400 mb-1">
               タイトル（英語）
             </label>
             <input
+              id="photo-english-title"
               type="text"
               value={photoEnglishTitle}
               onChange={(e) => setPhotoEnglishTitle(e.target.value)}
@@ -628,10 +631,11 @@ export function PhotoSettingForm({
 
           {/* 撮影日時 */}
           <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-1">
+            <label htmlFor="photo-at" className="block text-sm text-gray-400 mb-1">
               撮影日時
             </label>
             <input
+              id="photo-at"
               type="datetime-local"
               value={photoAt}
               onChange={(e) => setPhotoAt(e.target.value)}
@@ -643,8 +647,9 @@ export function PhotoSettingForm({
           {/* 向き（編集時のみ。新規登録時はバックエンドが画像の実際のピクセルサイズから判定するため選択不要） */}
           {isEditMode && (
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-1">向き *</label>
+              <label htmlFor="photo-direction" className="block text-sm text-gray-400 mb-1">向き *</label>
               <select
+                id="photo-direction"
                 value={directionKbn}
                 onChange={(e) => setDirectionKbn(e.target.value)}
                 className="w-full bg-gray-800 text-white border border-gray-600 p-2"
@@ -658,16 +663,17 @@ export function PhotoSettingForm({
 
           {/* EXIF情報 */}
           {!isEditMode && (
-            <p className="text-xs text-gray-500 mb-2">
+            <p className="text-xs text-gray-400 mb-2">
               画像ファイルに焦点距離、F値、シャッタースピード、ISOの情報があれば自動登録されます
             </p>
           )}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
+              <label htmlFor="photo-focal-length" className="block text-sm text-gray-400 mb-1">
                 焦点距離 (mm)
               </label>
               <input
+                id="photo-focal-length"
                 type="number"
                 value={focalLength}
                 onChange={(e) => setFocalLength(e.target.value)}
@@ -676,8 +682,9 @@ export function PhotoSettingForm({
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1">F値</label>
+              <label htmlFor="photo-f-value" className="block text-sm text-gray-400 mb-1">F値</label>
               <input
+                id="photo-f-value"
                 type="number"
                 step="0.1"
                 value={fValue}
@@ -687,10 +694,11 @@ export function PhotoSettingForm({
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1">
+              <label htmlFor="photo-shutter-speed" className="block text-sm text-gray-400 mb-1">
                 シャッタースピード (秒)
               </label>
               <input
+                id="photo-shutter-speed"
                 type="number"
                 step="0.0001"
                 value={shutterSpeed}
@@ -700,8 +708,9 @@ export function PhotoSettingForm({
               />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1">ISO</label>
+              <label htmlFor="photo-iso" className="block text-sm text-gray-400 mb-1">ISO</label>
               <input
+                id="photo-iso"
                 type="number"
                 value={iso}
                 onChange={(e) => setIso(e.target.value)}
@@ -722,17 +731,18 @@ export function PhotoSettingForm({
               />
               撮影場所（緯度経度・住所・ロケーション名）を他のユーザーにも公開する
             </label>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-400 mt-1">
               オフの場合、撮影場所は本人にのみ表示されます。
             </p>
           </div>
 
           {/* キャプション */}
           <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-1">
+            <label htmlFor="photo-caption" className="block text-sm text-gray-400 mb-1">
               キャプション
             </label>
             <textarea
+              id="photo-caption"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               rows={4}
@@ -757,6 +767,7 @@ export function PhotoSettingForm({
                     handleTagChange(tag.tagNo, "tagJapaneseName", e.target.value)
                   }
                   placeholder="タグ名（日本語）*"
+                  aria-label="タグ名（日本語）"
                   className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
                   data-testid={`tag-japanese-${tag.tagNo}`}
                 />
@@ -767,6 +778,7 @@ export function PhotoSettingForm({
                     handleTagChange(tag.tagNo, "tagEnglishName", e.target.value)
                   }
                   placeholder="タグ名（英語）"
+                  aria-label="タグ名（英語）"
                   className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
                   data-testid={`tag-english-${tag.tagNo}`}
                 />

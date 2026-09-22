@@ -34,7 +34,7 @@ export default async function AccountSettingPage({
           <p className="text-red-500">ページが見つかりません</p>
         </div>
       )}
-      <Footer />
+      <Footer variant="light" />
     </>
   );
 }
