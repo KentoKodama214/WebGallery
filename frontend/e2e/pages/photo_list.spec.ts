@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 import { generateTestAccountId, login, registerAccount } from "../fixtures/auth";
 
 test.describe("写真一覧ページ", () => {
@@ -41,6 +42,12 @@ test.describe("写真一覧ページ", () => {
     await expect(page.getByText("ギャラリーが見つかりません")).toBeVisible();
     await expect(page.getByTestId("filter-trigger")).toHaveCount(0);
   });
+
+  test("アクセシビリティ違反がないこと", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "a11y検証はchromiumプロジェクトのみで実施する");
+    await expect(page.getByText("写真が存在しません。")).toBeVisible({ timeout: 10000 });
+    await expectNoAccessibilityViolations(page);
+  });
 });
 
 test.describe("写真一覧ページ（ログイン済み・写真0件の実アカウント）", () => {
@@ -56,5 +63,19 @@ test.describe("写真一覧ページ（ログイン済み・写真0件の実ア�
 
     await expect(page.getByText("写真がありません")).toBeVisible({ timeout: 10000 });
     await expect(page.getByTestId("filter-trigger")).toBeVisible();
+  });
+
+  test("画面表示が崩れていないこと（視覚回帰）", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "視覚回帰はchromiumプロジェクトのみで検証する");
+
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+    await registerAccount(page, accountId, "E2E Visual Regression User");
+    await login(page, accountId);
+
+    await expect(page.getByText("写真がありません")).toBeVisible({ timeout: 10000 });
+    await expect(page).toHaveScreenshot("photo_list_empty.png", {
+      fullPage: true,
+      maxDiffPixelRatio: 0.02,
+    });
   });
 });

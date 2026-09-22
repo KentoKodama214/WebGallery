@@ -1,6 +1,7 @@
 import path from "path";
 import { Client } from "pg";
 import { test, expect, type Page } from "@playwright/test";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 import { generateTestAccountId, login, registerAccount } from "../fixtures/auth";
 import { DB_CONFIG } from "../fixtures/db";
 
@@ -138,6 +139,33 @@ test.describe("写真詳細ページ（英語タイトル・EXIF設定テキス�
     await expect(page).toHaveTitle(/写真詳細/);
     await expect(page.getByText("Exif Display Test Photo")).toBeVisible();
     await expect(page.getByText("50mm F1.8 0.005sec iso200")).toBeVisible();
+  });
+
+  test("アクセシビリティ違反がないこと", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "a11y検証はchromiumプロジェクトのみで実施する");
+
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+    await registerAccount(page, accountId, "E2E A11y Detail User");
+    await login(page, accountId);
+    const { detailUrl } = await uploadAndGetDetailUrl(page, accountId, "A11y検証用写真");
+    await page.goto(detailUrl);
+
+    await expectNoAccessibilityViolations(page);
+  });
+
+  test("画面表示が崩れていないこと（視覚回帰）", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "視覚回帰はchromiumプロジェクトのみで検証する");
+
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+    await registerAccount(page, accountId, "E2E Visual Regression Detail User");
+    await login(page, accountId);
+    const { detailUrl } = await uploadAndGetDetailUrl(page, accountId, "視覚回帰検証用写真");
+    await page.goto(detailUrl);
+
+    await expect(page).toHaveScreenshot("photo_detail.png", {
+      fullPage: true,
+      maxDiffPixelRatio: 0.02,
+    });
   });
 });
 

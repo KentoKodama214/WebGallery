@@ -307,7 +307,9 @@ jobs:
         run: cd frontend && pnpm install --frozen-lockfile
 
       - name: Playwrightブラウザインストール
-        run: cd frontend && pnpm exec playwright install --with-deps chromium
+        # webkit-smoke・mobile-smokeプロジェクト（playwright.config.ts）が主要導線のみ
+        # 追加で実行するために必要
+        run: cd frontend && pnpm exec playwright install --with-deps chromium webkit
 
       - name: データベース初期化
         env:

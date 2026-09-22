@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 
 test.describe("ログインページ", () => {
   test.beforeEach(async ({ page }) => {
@@ -34,5 +35,15 @@ test.describe("ログインページ", () => {
 
   test("ページタイトルが正しいこと", async ({ page }) => {
     await expect(page).toHaveTitle(/ログイン/);
+  });
+
+  test("アクセシビリティ違反がないこと", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "a11y検証はchromiumプロジェクトのみで実施する");
+    await expectNoAccessibilityViolations(page);
+  });
+
+  test("画面表示が崩れていないこと（視覚回帰）", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "視覚回帰はchromiumプロジェクトのみで検証する");
+    await expect(page).toHaveScreenshot("login.png", { fullPage: true, maxDiffPixelRatio: 0.02 });
   });
 });
