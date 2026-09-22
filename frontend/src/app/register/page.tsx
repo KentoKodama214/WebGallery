@@ -15,7 +15,7 @@ export default function RegisterPage() {
     <>
       <Header />
       <RegisterForm />
-      <Footer />
+      <Footer variant="light" />
     </>
   );
 }

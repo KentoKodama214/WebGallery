@@ -72,7 +72,7 @@ export function InquiryForm() {
         <div className="w-full max-w-[480px]">
           <Link
             href="/inquiry/list"
-            className="text-[#2196F3] hover:underline text-sm block mb-4"
+            className="text-[#1565C0] hover:underline text-sm block mb-4"
           >
             &larr; お問い合わせ一覧へ戻る
           </Link>
@@ -80,9 +80,9 @@ export function InquiryForm() {
             onSubmit={handleSubmit}
             className="bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-5"
           >
-            <p className="text-[#444] text-[1.2em] font-bold mt-[10px] mb-[30px] border-b border-[#eee] pb-5">
+            <h1 className="text-[#444] text-[1.2em] font-bold mt-[10px] mb-[30px] border-b border-[#eee] pb-5">
               お問い合わせ
-            </p>
+            </h1>
 
             <label htmlFor="inquiry-subject" className="block text-[#444] text-sm mb-1">
               件名
@@ -110,7 +110,7 @@ export function InquiryForm() {
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.subject && (
-              <p id="inquiry-subject-error" className="text-[lightcoral] text-xs font-bold mb-2">
+              <p id="inquiry-subject-error" className="text-[#C62828] text-xs font-bold mb-2">
                 {errors.subject}
               </p>
             )}
@@ -141,13 +141,13 @@ export function InquiryForm() {
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3] resize-y"
             />
             {errors.body && (
-              <p id="inquiry-body-error" className="text-[lightcoral] text-xs font-bold mb-2">
+              <p id="inquiry-body-error" className="text-[#C62828] text-xs font-bold mb-2">
                 {errors.body}
               </p>
             )}
 
             {submitError && (
-              <p role="alert" className="text-[lightcoral] text-xs font-bold mb-2">
+              <p role="alert" className="text-[#C62828] text-xs font-bold mb-2">
                 {submitError}
               </p>
             )}
@@ -155,7 +155,7 @@ export function InquiryForm() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-[50px] bg-[#2196F3] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#2196F3] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+              className="w-full h-[50px] bg-[#1565C0] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#1565C0] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
             >
               {isSubmitting ? (
                 <span className="inline-block w-5 h-5 border-[3px] border-white border-t-[rgba(255,255,255,0.3)] rounded-full animate-spin" />
@@ -185,7 +185,7 @@ export function InquiryForm() {
               setShowModal(false);
               router.push("/inquiry/list");
             }}
-            className="w-full h-[40px] bg-[#2196F3] text-white border-none rounded-sm cursor-pointer"
+            className="w-full h-[40px] bg-[#1565C0] text-white border-none rounded-sm cursor-pointer"
           >
             お問い合わせ一覧へ
           </button>

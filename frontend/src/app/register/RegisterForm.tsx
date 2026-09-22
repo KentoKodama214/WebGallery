@@ -143,7 +143,7 @@ export function RegisterForm() {
       <header>
         <Link
           href="/login"
-          className="fixed top-[5px] left-[10px] text-xl text-gray-400 z-[1000] no-underline"
+          className="fixed top-[5px] left-[10px] text-xl text-gray-600 z-[1000] no-underline"
         >
           &larr; back
         </Link>
@@ -155,9 +155,9 @@ export function RegisterForm() {
             onSubmit={handleSubmit}
             className="bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-5"
           >
-            <p className="text-[#444] text-[1.2em] font-bold mt-[10px] mb-[30px] border-b border-[#eee] pb-5">
+            <h1 className="text-[#444] text-[1.2em] font-bold mt-[10px] mb-[30px] border-b border-[#eee] pb-5">
               Create an Account
-            </p>
+            </h1>
 
             <label htmlFor="register-account-id" className="block text-[#444] text-sm mb-1">アカウントID</label>
             <input
@@ -179,7 +179,7 @@ export function RegisterForm() {
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.accountId && (
-              <p id="register-account-id-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountId}</p>
+              <p id="register-account-id-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.accountId}</p>
             )}
 
             <label htmlFor="register-account-name" className="block text-[#444] text-sm mb-1 mt-2">アカウント名</label>
@@ -200,7 +200,7 @@ export function RegisterForm() {
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.accountName && (
-              <p id="register-account-name-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountName}</p>
+              <p id="register-account-name-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.accountName}</p>
             )}
 
             <label htmlFor="register-password" className="block text-[#444] text-sm mb-1 mt-2">パスワード</label>
@@ -223,7 +223,7 @@ export function RegisterForm() {
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.password && (
-              <p id="register-password-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.password}</p>
+              <p id="register-password-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.password}</p>
             )}
 
             <label htmlFor="register-birthdate" className="block text-[#444] text-sm mb-1 mt-2">生年月日</label>
@@ -237,7 +237,7 @@ export function RegisterForm() {
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.birthdate && (
-              <p id="register-birthdate-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.birthdate}</p>
+              <p id="register-birthdate-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.birthdate}</p>
             )}
 
             <label htmlFor="register-sex" className="block text-[#444] text-sm mb-1 mt-2">性別</label>
@@ -300,13 +300,13 @@ export function RegisterForm() {
             />
 
             {submitError && (
-              <p className="text-[lightcoral] text-xs font-bold mb-2">{submitError}</p>
+              <p className="text-[#C62828] text-xs font-bold mb-2">{submitError}</p>
             )}
 
             <button
               type="submit"
               disabled={isSubmitting || isCompleted}
-              className="w-full h-[50px] bg-[#2196F3] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#2196F3] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+              className="w-full h-[50px] bg-[#1565C0] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#1565C0] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
             >
               {isSubmitting ? (
                 <span className="inline-block w-5 h-5 border-[3px] border-white border-t-[rgba(255,255,255,0.3)] rounded-full animate-spin" />
