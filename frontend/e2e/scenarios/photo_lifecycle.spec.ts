@@ -1,6 +1,6 @@
 import path from "path";
 import { test, expect } from "@playwright/test";
-import { generateTestAccountId, TEST_USER_PASSWORD } from "../fixtures/auth";
+import { generateTestAccountId, login, registerAccount } from "../fixtures/auth";
 
 const PHOTO_1 = path.join(__dirname, "../fixtures/images/e2e-photo-1.png");
 const PHOTO_2 = path.join(__dirname, "../fixtures/images/e2e-photo-2.png");
@@ -17,31 +17,11 @@ test.describe("写真ライフサイクル（アカウント登録〜ログイ�
     const caption = "E2Eシナリオテストで一括登録した写真です";
 
     await test.step("アカウント登録", async () => {
-      await page.goto("/register");
-      await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
-      await page
-        .locator('label:has-text("アカウント名") + input')
-        .fill(accountName);
-      await page
-        .getByPlaceholder("英字と数字を含む半角8〜72文字")
-        .fill(TEST_USER_PASSWORD);
-      await page.getByRole("button", { name: "登録" }).click();
-
-      await expect(
-        page.getByRole("dialog", { name: "アカウント登録完了" })
-      ).toBeVisible({ timeout: 10000 });
+      await registerAccount(page, accountId, accountName);
     });
 
     await test.step("ログイン", async () => {
-      await page.goto("/login");
-      await page.getByPlaceholder("User ID").fill(accountId);
-      await page.getByPlaceholder("Password").fill(TEST_USER_PASSWORD);
-      await page.getByRole("button", { name: "Log in" }).click();
-
-      await expect(page).toHaveURL(
-        new RegExp(`/photo/${accountId}/photo_list`),
-        { timeout: 10000 }
-      );
+      await login(page, accountId);
     });
 
     await test.step("写真を2枚まとめてアップロードする", async () => {

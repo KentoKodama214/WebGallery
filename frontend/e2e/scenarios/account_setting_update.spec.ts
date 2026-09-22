@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { generateTestAccountId, TEST_USER_PASSWORD } from "../fixtures/auth";
+import { generateTestAccountId, login, registerAccount, TEST_USER_PASSWORD } from "../fixtures/auth";
 
 test.describe("アカウント設定の更新（プロフィール変更〜パスワード変更〜アカウント削除）", () => {
   test("プロフィールを変更でき、パスワード変更後は再ログインが必要になり、アカウント削除後はログインできなくなること", async ({
@@ -12,26 +12,8 @@ test.describe("アカウント設定の更新（プロフィール変更〜パ�
     const newPassword = "NewE2ePass456";
 
     await test.step("アカウント登録・ログイン", async () => {
-      await page.goto("/register");
-      await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
-      await page
-        .locator('label:has-text("アカウント名") + input')
-        .fill("E2E Setting User");
-      await page
-        .getByPlaceholder("英字と数字を含む半角8〜72文字")
-        .fill(TEST_USER_PASSWORD);
-      await page.getByRole("button", { name: "登録" }).click();
-      await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
-        timeout: 10000,
-      });
-
-      await page.goto("/login");
-      await page.getByPlaceholder("User ID").fill(accountId);
-      await page.getByPlaceholder("Password").fill(TEST_USER_PASSWORD);
-      await page.getByRole("button", { name: "Log in" }).click();
-      await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list`), {
-        timeout: 10000,
-      });
+      await registerAccount(page, accountId, "E2E Setting User");
+      await login(page, accountId);
     });
 
     await test.step("アカウント名を変更して保存すると完了モーダルが表示され、リロード後も反映されていること", async () => {

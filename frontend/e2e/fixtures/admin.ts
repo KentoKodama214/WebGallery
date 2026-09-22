@@ -1,6 +1,6 @@
 import { test as base, expect, type Page } from "@playwright/test";
 import { Client } from "pg";
-import { generateSortEarlyTestAccountId, TEST_USER_PASSWORD } from "./auth";
+import { generateSortEarlyTestAccountId, login, registerAccount, TEST_USER_PASSWORD } from "./auth";
 import { DB_CONFIG } from "./db";
 
 /**
@@ -62,26 +62,9 @@ export const test = base.extend<object, AdminFixtures>({
       });
       const page: Page = await context.newPage();
 
-      await page.goto("/register");
-      await page.getByPlaceholder("半角英数字で8〜20文字").fill(adminUser.accountId);
-      await page.locator('label:has-text("アカウント名") + input').fill("E2E Admin User");
-      await page
-        .getByPlaceholder("英字と数字を含む半角8〜72文字")
-        .fill(adminUser.password);
-      await page.getByRole("button", { name: "登録" }).click();
-      await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
-        timeout: 10000,
-      });
-
+      await registerAccount(page, adminUser.accountId, "E2E Admin User", adminUser.password);
       await grantAdministratorAuthority(adminUser.accountId);
-
-      await page.goto("/login");
-      await page.getByPlaceholder("User ID").fill(adminUser.accountId);
-      await page.getByPlaceholder("Password").fill(adminUser.password);
-      await page.getByRole("button", { name: "Log in" }).click();
-      await expect(page).toHaveURL(new RegExp(`/photo/${adminUser.accountId}/photo_list`), {
-        timeout: 10000,
-      });
+      await login(page, adminUser.accountId, adminUser.password);
 
       await use(page);
       await context.close();

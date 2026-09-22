@@ -3,7 +3,7 @@ import {
   test as adminTest,
   expect as adminExpect,
 } from "../fixtures/admin";
-import { generateSortEarlyTestAccountId, TEST_USER_PASSWORD } from "../fixtures/auth";
+import { generateSortEarlyTestAccountId, registerAccount } from "../fixtures/auth";
 
 test.describe("管理者用アカウント管理ページ", () => {
   test.beforeEach(async ({ page }) => {
@@ -57,16 +57,7 @@ async function registerTargetAccount(
   const context = await browser.newContext({ baseURL });
   const page = await context.newPage();
 
-  await page.goto("/register");
-  await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
-  await page.locator('label:has-text("アカウント名") + input').fill("E2E Admin Target User");
-  await page
-    .getByPlaceholder("英字と数字を含む半角8〜72文字")
-    .fill(TEST_USER_PASSWORD);
-  await page.getByRole("button", { name: "登録" }).click();
-  await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
-    timeout: 10000,
-  });
+  await registerAccount(page, accountId, "E2E Admin Target User");
 
   return { page, accountId };
 }

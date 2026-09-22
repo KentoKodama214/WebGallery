@@ -3,7 +3,7 @@ import {
   test as adminTest,
   expect as adminExpect,
 } from "../fixtures/admin";
-import { generateSortEarlyTestAccountId, TEST_USER_PASSWORD } from "../fixtures/auth";
+import { generateSortEarlyTestAccountId, login, registerAccount, TEST_USER_PASSWORD } from "../fixtures/auth";
 
 /**
  * 管理者用アカウント管理ページ（`pages/admin_account_management.spec.ts`）は
@@ -47,20 +47,7 @@ adminTest.describe("管理者による強制ロックがログイン可否に反
       const targetAccountId = generateSortEarlyTestAccountId(testInfo.workerIndex);
 
       await test.step("対象アカウントを登録する", async () => {
-        await adminPage.goto("/register");
-        await adminPage
-          .getByPlaceholder("半角英数字で8〜20文字")
-          .fill(targetAccountId);
-        await adminPage
-          .locator('label:has-text("アカウント名") + input')
-          .fill("E2E Lock Target User");
-        await adminPage
-          .getByPlaceholder("英字と数字を含む半角8〜72文字")
-          .fill(TEST_USER_PASSWORD);
-        await adminPage.getByRole("button", { name: "登録" }).click();
-        await adminExpect(
-          adminPage.getByRole("dialog", { name: "アカウント登録完了" })
-        ).toBeVisible({ timeout: 10000 });
+        await registerAccount(adminPage, targetAccountId, "E2E Lock Target User");
       });
 
       await test.step("ロック前は対象アカウントでログインできること", async () => {
@@ -68,14 +55,7 @@ adminTest.describe("管理者による強制ロックがログイン可否に反
           baseURL: testInfo.project.use.baseURL,
         });
         const targetPage = await context.newPage();
-        await targetPage.goto("/login");
-        await targetPage.getByPlaceholder("User ID").fill(targetAccountId);
-        await targetPage.getByPlaceholder("Password").fill(TEST_USER_PASSWORD);
-        await targetPage.getByRole("button", { name: "Log in" }).click();
-        await expect(targetPage).toHaveURL(
-          new RegExp(`/photo/${targetAccountId}/photo_list`),
-          { timeout: 10000 }
-        );
+        await login(targetPage, targetAccountId);
         await context.close();
       });
 
@@ -129,14 +109,7 @@ adminTest.describe("管理者による強制ロックがログイン可否に反
           baseURL: testInfo.project.use.baseURL,
         });
         const targetPage = await context.newPage();
-        await targetPage.goto("/login");
-        await targetPage.getByPlaceholder("User ID").fill(targetAccountId);
-        await targetPage.getByPlaceholder("Password").fill(TEST_USER_PASSWORD);
-        await targetPage.getByRole("button", { name: "Log in" }).click();
-        await expect(targetPage).toHaveURL(
-          new RegExp(`/photo/${targetAccountId}/photo_list`),
-          { timeout: 10000 }
-        );
+        await login(targetPage, targetAccountId);
         await context.close();
       });
     }
