@@ -16,13 +16,14 @@ import com.web.gallery.domain.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.ShutterSpeed;
-import com.web.gallery.entity.PhotoMst;
+import com.web.gallery.entity.photo.PhotoMst;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
-import com.web.gallery.model.PhotoDeleteModel;
-import com.web.gallery.model.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoDeleteModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoNoList;
 import com.web.gallery.repository.impl.PhotoMstRepositoryImpl;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -99,6 +100,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .imageFileName(rs.getString("image_file_name"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -122,6 +125,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(0, actualData.getFirst().getIso());
+      assertEquals("DSC14.jpg", actualData.getFirst().getImageFileName());
+      assertFalse(actualData.getFirst().getIsLocationPublic());
     }
 
     @Test
@@ -178,6 +183,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .imageFileName(rs.getString("image_file_name"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -201,6 +208,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(100, actualData.getFirst().getIso());
+      assertEquals("DSC14.jpg", actualData.getFirst().getImageFileName());
+      assertFalse(actualData.getFirst().getIsLocationPublic());
     }
 
     @Test
@@ -270,6 +279,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .imageFileName(rs.getString("image_file_name"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -297,6 +308,9 @@ public class PhotoMstRepositoryImplIntegrationTest {
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(0, actualData.getFirst().getIso());
+      // image_file_nameは更新対象に含まれないため、フィクスチャの値がそのまま残る
+      assertEquals("DSC11.jpg", actualData.getFirst().getImageFileName());
+      assertFalse(actualData.getFirst().getIsLocationPublic());
     }
 
     @Test
@@ -352,6 +366,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .imageFileName(rs.getString("image_file_name"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -379,6 +395,9 @@ public class PhotoMstRepositoryImplIntegrationTest {
       assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(1).compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(1000, actualData.getFirst().getIso());
+      // image_file_nameは更新対象に含まれないため、フィクスチャの値がそのまま残る
+      assertEquals("DSC11.jpg", actualData.getFirst().getImageFileName());
+      assertFalse(actualData.getFirst().getIsLocationPublic());
     }
 
     @Test
@@ -445,6 +464,8 @@ public class PhotoMstRepositoryImplIntegrationTest {
                       .fValue(rs.getBigDecimal("f_value"))
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
+                      .imageFileName(rs.getString("image_file_name"))
+                      .isLocationPublic(rs.getBoolean("is_location_public"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -471,6 +492,9 @@ public class PhotoMstRepositoryImplIntegrationTest {
       assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualData.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(1).compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(100, actualData.getFirst().getIso());
+      // 削除は論理削除のみで画像・位置情報公開設定は書き換えないため、フィクスチャの値がそのまま残る
+      assertEquals("DSC11.jpg", actualData.getFirst().getImageFileName());
+      assertTrue(actualData.getFirst().getIsLocationPublic());
     }
 
     @Test
@@ -620,6 +644,32 @@ public class PhotoMstRepositoryImplIntegrationTest {
     @DisplayName("正常系")
     void count_success() {
       assertEquals(2, photoMstRepositoryImpl.count(new AccountNo(1L)));
+    }
+  }
+
+  @Nested
+  @Order(7)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/repository/PhotoMstRepositoryImplIntegrationTest.sql")
+  class deleteAndGetUndeletedPhotoNosByAccountNo {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：削除済み・未削除の写真が混在する場合、削除時点で未削除だった写真番号のみ返すこと")
+    void deleteAndGetUndeletedPhotoNosByAccountNo_success() {
+      // account_no=1はphoto_no=1,2が未削除、photo_no=3が削除済みの状態でフィクスチャ投入されている
+      PhotoNoList actual =
+          photoMstRepositoryImpl.deleteAndGetUndeletedPhotoNosByAccountNo(new AccountNo(1L));
+
+      assertEquals(2, actual.toList().size());
+      assertTrue(actual.toList().contains(new PhotoNo(1L)));
+      assertTrue(actual.toList().contains(new PhotoNo(2L)));
+      assertFalse(actual.toList().contains(new PhotoNo(3L)));
+
+      Integer remainingCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=1", Integer.class);
+      assertEquals(0, remainingCount);
     }
   }
 }

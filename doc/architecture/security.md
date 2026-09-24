@@ -33,7 +33,8 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 | 認証API（`/api/v1/auth/**`） | 公開 |
 | アカウント登録（`POST /api/v1/accounts`） | 公開 |
 | アカウント一覧（`GET /api/v1/accounts`） | 公開（アカウント名のみ表示。詳細は下記） |
-| 写真の閲覧（`GET /api/v1/accounts/{id}/photos/**`） | 公開 |
+| 写真の閲覧（`GET /api/v1/accounts/{id}/photos`、`GET /api/v1/accounts/{id}/photos/{photoNo}`） | 公開 |
+| 写真登録上限チェック（`GET /api/v1/accounts/{id}/photos/upper-limit`） | 認証必須（本人のみ） |
 | 都道府県一覧（`GET /api/v1/prefectures`） | 公開 |
 | 写真の登録・編集・削除 | 認証必須（本人のみ） |
 | お気に入り登録・解除 | 認証必須 |
@@ -189,6 +190,22 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 - DB カラムも `DEFAULT false`（非公開）とする。
 - フラグの値自体はレスポンスに含まれる（`isLocationPublic`）。所有者の編集画面での現在値表示に用いる。
 
+### EXIF情報（撮影メタデータ）の未入力項目の補完
+
+写真新規一括登録（`POST /api/v1/accounts/{id}/photos`）の焦点距離・F値・シャッタースピード・ISOは、
+ユーザーが入力した値（フォーム入力値）を項目ごとに優先して採用し、未入力の項目についてのみ、
+アップロードされた画像ファイルの実バイナリから`PhotoExifExtractor`（`helper/`）が抽出したEXIF値で
+補完する（`PhotoExifDataMergePolicy#merge`）。フィルム写真のデジタル化やEXIF非対応形式（PNG等）の
+ための手入力機能を優先しつつ、未入力時は画像自体の実データを反映させるため。
+
+- 抽出はJPEGのEXIFのみに対応する（PNG等EXIFを保持しない形式では非対応。その場合は未入力項目が
+  そのまま未設定になる）。
+- 破損画像・想定外の解析エラーは例外を伝播させず、EXIF情報なし扱いとしてリクエスト処理を継続する
+  （不正な画像でアップロード自体を失敗させないため）。
+- 写真更新（`PUT /api/v1/accounts/{id}/photos`）では画像ファイル自体の差し替えができないため、
+  この補完は新規登録時のみ行われる。
+- 写真登録画面（新規登録時のみ）には、画像ファイルにこれらの情報があれば自動反映される旨の案内文を表示する。
+
 ## フロントエンド（API プロキシ）側の防御
 
 フロントエンド（`frontend/`）は既定で同一オリジンの `/api/*` プロキシ（`src/app/api/[...path]/route.ts`）
@@ -225,6 +242,9 @@ nonce 方式は SSR 時にリクエストヘッダーから nonce を読むた�
 （`app/layout.tsx` の `export const dynamic = "force-dynamic"`）。これは nonce 方式 CSP に内在する
 制約であり、静的生成・ISR・CDN エッジキャッシュは使えない。トレードオフを見直す場合は
 nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ移行する必要がある。
+
+写真詳細の撮影場所地図（Google Maps の iframe 埋め込み）表示のため、`frame-src` に
+`https://maps.google.com` / `https://www.google.com` を許可している。
 
 ### 画像ストレージと署名付きURL
 

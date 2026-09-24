@@ -1,8 +1,9 @@
 package com.web.gallery.mapper;
 
-import com.web.gallery.entity.Account;
-import com.web.gallery.entity.AccountCondition;
-import com.web.gallery.entity.AccountUpdateTarget;
+import com.web.gallery.dto.AccountDto;
+import com.web.gallery.entity.account.Account;
+import com.web.gallery.entity.account.AccountCondition;
+import com.web.gallery.entity.account.AccountUpdateTarget;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -11,20 +12,20 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface AccountMapper {
   /**
-   * 条件に該当するアカウントの一覧を取得する
+   * 条件に該当するアカウントの一覧を、権限区分（{@code common.account_authority}）と結合して取得する
    *
    * @param condition 抽出条件
-   * @return {@link Account}
+   * @return {@link AccountDto}
    */
-  public List<Account> select(AccountCondition condition);
+  public List<AccountDto> select(AccountCondition condition);
 
   /**
-   * 条件に該当するアカウントの一覧を取得する（パスワードハッシュを射影しない一覧表示専用）
+   * 条件に該当するアカウントの一覧を、権限区分（{@code common.account_authority}）と結合して取得する（パスワードハッシュを射影しない一覧表示専用）
    *
    * @param condition 抽出条件
-   * @return {@link Account}
+   * @return {@link AccountDto}
    */
-  public List<Account> selectList(AccountCondition condition);
+  public List<AccountDto> selectList(AccountCondition condition);
 
   /**
    * 条件に該当するアカウントの件数を取得する
@@ -33,6 +34,16 @@ public interface AccountMapper {
    * @return 抽出件数
    */
   public Integer count(AccountCondition condition);
+
+  /**
+   * アカウント登録用に、シーケンスから次のアカウント番号を採番する
+   *
+   * <p>{@code common.account}と{@code common.account_authority}の2テーブルへ同一のアカウント番号で
+   * 登録するため、INSERT文とは別にあらかじめ採番する
+   *
+   * @return 採番されたアカウント番号
+   */
+  public Long nextAccountNo();
 
   /**
    * アカウントを登録する

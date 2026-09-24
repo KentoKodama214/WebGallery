@@ -51,24 +51,24 @@ import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.GeoIpResolver;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.FileModel;
-import com.web.gallery.model.PhotoDeleteModel;
-import com.web.gallery.model.PhotoDeleteModelList;
-import com.web.gallery.model.PhotoDetailGetModel;
-import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoDetailModelList;
-import com.web.gallery.model.PhotoDetailSearchModel;
-import com.web.gallery.model.PhotoGetModel;
-import com.web.gallery.model.PhotoListFilterLogModel;
-import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoModel;
-import com.web.gallery.model.PhotoModelList;
-import com.web.gallery.model.PhotoPageModel;
-import com.web.gallery.model.PhotoSaveResultModel;
-import com.web.gallery.model.PhotoTagModel;
-import com.web.gallery.model.PhotoTagModelList;
-import com.web.gallery.model.PhotoViewLogModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.photo.FileModel;
+import com.web.gallery.model.photo.PhotoDeleteModel;
+import com.web.gallery.model.photo.PhotoDeleteModelList;
+import com.web.gallery.model.photo.PhotoDetailGetModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoDetailModelList;
+import com.web.gallery.model.photo.PhotoDetailSearchModel;
+import com.web.gallery.model.photo.PhotoGetModel;
+import com.web.gallery.model.photo.PhotoListFilterLogModel;
+import com.web.gallery.model.photo.PhotoListGetModel;
+import com.web.gallery.model.photo.PhotoModel;
+import com.web.gallery.model.photo.PhotoModelList;
+import com.web.gallery.model.photo.PhotoPageModel;
+import com.web.gallery.model.photo.PhotoSaveResultModel;
+import com.web.gallery.model.photo.PhotoTagModel;
+import com.web.gallery.model.photo.PhotoTagModelList;
+import com.web.gallery.model.photo.PhotoViewLogModel;
 import com.web.gallery.policy.ImageFileValidationPolicy;
 import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
@@ -79,14 +79,11 @@ import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoListFilterLogRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoMstRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoViewLogRepositoryImpl;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -702,6 +699,149 @@ public class PhotoServiceImplTest {
       verify(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
       verify(photoDetailRepositoryImpl, never()).getPhotoList(any(PhotoGetModel.class));
     }
+
+    @Test
+    @Order(9)
+    @DisplayName("正常系：絞り込み・並び替えログの記録に失敗しても、例外を握りつぶして写真一覧を正常に返すこと")
+    void getPhotoList_returnsResult_evenWhenFilterLogRecordingThrows() throws GalleryException {
+      String accountId = "aaaaaaaa";
+
+      AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+      doReturn(5).when(photoConfig).getPhotoCountPerPage();
+      doReturn(PhotoPageModel.of(PhotoModelList.empty(), true))
+          .when(photoDetailRepositoryImpl)
+          .getPhotoList(any(PhotoGetModel.class));
+      doThrow(new RuntimeException("log write failed"))
+          .when(photoListFilterLogRepositoryImpl)
+          .save(any(PhotoListFilterLogModel.class));
+
+      PhotoListGetModel photoListGetModel =
+          PhotoListGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId(accountId))
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList(new ArrayList<String>())
+              .sortBy(SortPhotoEnum.PHOTO_AT)
+              .pageNo(1)
+              .searchExecuted(true)
+              .logInitialView(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+
+      assertTrue(actual.getPhotoModelList().isEmpty());
+      assertTrue(actual.getIsLast());
+      verify(photoListFilterLogRepositoryImpl).save(any(PhotoListFilterLogModel.class));
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("正常系：sortByがSEASONの場合、年をまたいでも月日のみで季節・時期順に並び替えられること")
+    void getPhotoList_sortBy_season_wrapsAcrossYearBoundary() throws GalleryException {
+      String accountId = "aaaaaaaa";
+
+      AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+      doReturn(5).when(photoConfig).getPhotoCountPerPage();
+
+      List<PhotoModel> repositoryResultList = new ArrayList<PhotoModel>();
+      repositoryResultList.add(
+          PhotoModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(1L))
+              .favoriteCount(new FavoriteCount(1))
+              .isFavorite(new IsFavorite(false))
+              .photoAt(
+                  new PhotoAt(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+              .imageFilePath(new ImageFilePath("DSC111.jpg"))
+              .caption(new Caption("キャプション1"))
+              .directionKbn(DirectionEnum.VERTICAL)
+              .photoTagModelList(PhotoTagModelList.empty())
+              .build());
+      repositoryResultList.add(
+          PhotoModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(2L))
+              .favoriteCount(new FavoriteCount(3))
+              .isFavorite(new IsFavorite(false))
+              .photoAt(
+                  new PhotoAt(OffsetDateTime.of(2002, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+              .imageFilePath(new ImageFilePath("DSC222.jpg"))
+              .caption(new Caption("キャプション2"))
+              .directionKbn(DirectionEnum.VERTICAL)
+              .photoTagModelList(PhotoTagModelList.empty())
+              .build());
+      repositoryResultList.add(
+          PhotoModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(3L))
+              .favoriteCount(new FavoriteCount(2))
+              .isFavorite(new IsFavorite(false))
+              .photoAt(
+                  new PhotoAt(OffsetDateTime.of(2002, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+              .imageFilePath(new ImageFilePath("DSC333.jpg"))
+              .caption(new Caption("キャプション3"))
+              .directionKbn(DirectionEnum.VERTICAL)
+              .photoTagModelList(PhotoTagModelList.empty())
+              .build());
+      repositoryResultList.add(
+          PhotoModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(4L))
+              .favoriteCount(new FavoriteCount(2))
+              .isFavorite(new IsFavorite(false))
+              .photoAt(
+                  new PhotoAt(OffsetDateTime.of(2001, 3, 31, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+              .imageFilePath(new ImageFilePath("DSC444.jpg"))
+              .caption(new Caption("キャプション4"))
+              .directionKbn(DirectionEnum.VERTICAL)
+              .photoTagModelList(PhotoTagModelList.empty())
+              .build());
+      repositoryResultList.add(
+          PhotoModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(5L))
+              .favoriteCount(new FavoriteCount(3))
+              .isFavorite(new IsFavorite(false))
+              .photoAt(
+                  new PhotoAt(OffsetDateTime.of(2003, 3, 31, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+              .imageFilePath(new ImageFilePath("DSC555.jpg"))
+              .caption(new Caption("キャプション5"))
+              .directionKbn(DirectionEnum.VERTICAL)
+              .photoTagModelList(PhotoTagModelList.empty())
+              .build());
+      doReturn(PhotoPageModel.of(PhotoModelList.of(repositoryResultList), true))
+          .when(photoDetailRepositoryImpl)
+          .getPhotoList(any(PhotoGetModel.class));
+
+      PhotoListGetModel photoListGetModel =
+          PhotoListGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId(accountId))
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList(new ArrayList<String>())
+              .sortBy(SortPhotoEnum.SEASON)
+              .pageNo(1)
+              .searchExecuted(false)
+              .logInitialView(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      PhotoPageModel actual = photoServiceImpl.getPhotoList(photoListGetModel);
+
+      List<PhotoModel> actualData = actual.getPhotoModelList().toList();
+      assertEquals(4L, actualData.get(0).getPhotoNo().value());
+      assertEquals(5L, actualData.get(1).getPhotoNo().value());
+      assertEquals(3L, actualData.get(2).getPhotoNo().value());
+      assertEquals(2L, actualData.get(3).getPhotoNo().value());
+      assertEquals(1L, actualData.get(4).getPhotoNo().value());
+    }
   }
 
   @Nested
@@ -837,7 +977,7 @@ public class PhotoServiceImplTest {
 
     @Test
     @Order(4)
-    @DisplayName("位置情報が非公開で閲覧者が本人でない場合、撮影場所を返さない")
+    @DisplayName("正常系：位置情報が非公開で閲覧者が本人でない場合、撮影場所を返さないこと")
     void getPhotoDetail_hidesLocation_whenPrivateAndNotOwner() throws GalleryException {
       PhotoDetailModel model = photoWithLocation(1L, false);
       stubDetail(1L, model);
@@ -861,7 +1001,7 @@ public class PhotoServiceImplTest {
 
     @Test
     @Order(5)
-    @DisplayName("位置情報が非公開でも閲覧者が本人なら撮影場所を返し、かつ閲覧ログは記録しないこと（自分自身の写真のため）")
+    @DisplayName("正常系：位置情報が非公開でも閲覧者が本人なら撮影場所を返し、かつ閲覧ログは記録しないこと（自分自身の写真のため）")
     void getPhotoDetail_keepsLocation_whenPrivateAndOwner() throws GalleryException {
       PhotoDetailModel model = photoWithLocation(1L, false);
       stubDetail(1L, model);
@@ -883,7 +1023,7 @@ public class PhotoServiceImplTest {
 
     @Test
     @Order(6)
-    @DisplayName("位置情報が公開なら閲覧者が本人でなくても撮影場所を返す")
+    @DisplayName("正常系：位置情報が公開なら閲覧者が本人でなくても撮影場所を返すこと")
     void getPhotoDetail_keepsLocation_whenPublic() throws GalleryException {
       PhotoDetailModel model = photoWithLocation(1L, true);
       stubDetail(1L, model);
@@ -903,7 +1043,7 @@ public class PhotoServiceImplTest {
 
     @Test
     @Order(7)
-    @DisplayName("未認証（閲覧者アカウント番号なし）で非公開なら撮影場所を返さない")
+    @DisplayName("正常系：未認証（閲覧者アカウント番号なし）で非公開なら撮影場所を返さないこと")
     void getPhotoDetail_hidesLocation_whenAnonymousAndPrivate() throws GalleryException {
       PhotoDetailModel model = photoWithLocation(1L, false);
       stubDetail(1L, model);
@@ -926,6 +1066,40 @@ public class PhotoServiceImplTest {
           ArgumentCaptor.forClass(PhotoViewLogModel.class);
       verify(photoViewLogRepositoryImpl).save(viewLogCaptor.capture());
       assertNull(viewLogCaptor.getValue().getAccountNo());
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("正常系：閲覧ログの記録に失敗しても、例外を握りつぶして写真詳細を正常に返すこと")
+    void getPhotoDetail_returnsResult_evenWhenViewLogRecordingThrows() throws GalleryException {
+      String accountId = "aaaaaaaa";
+
+      AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+      PhotoDetailModel expected =
+          PhotoDetailModel.builder()
+              .accountNo(new AccountNo(1L))
+              .imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
+              .build();
+      doReturn(expected)
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
+      doThrow(new RuntimeException("log write failed"))
+          .when(photoViewLogRepositoryImpl)
+          .save(any(PhotoViewLogModel.class));
+
+      PhotoDetailGetModel photoDetailGetModel =
+          PhotoDetailGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId(accountId))
+              .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      assertEquals(expected, photoServiceImpl.getPhotoDetail(photoDetailGetModel));
+      verify(photoViewLogRepositoryImpl).save(any(PhotoViewLogModel.class));
     }
   }
 
@@ -1062,11 +1236,11 @@ public class PhotoServiceImplTest {
     void savePhotos_photoDetailModelList_is_null() throws GalleryException {
       PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), null);
       assertNull(actual);
-      verify(accountRepositoryImpl, times(0)).lockForUpdate(any(AccountNo.class));
-      verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
-      verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
-      verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(accountRepositoryImpl, never()).lockForUpdate(any(AccountNo.class));
+      verify(photoMstRepositoryImpl, never()).getNewPhotoNo(any(AccountNo.class));
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
+      verify(photoAggregateRepositoryImpl, never()).update(any(Photo.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1078,11 +1252,11 @@ public class PhotoServiceImplTest {
           photoServiceImpl.savePhotos(
               new AccountId("aaaaaaaa"), PhotoDetailModelList.of(photoDetailModelList));
       assertNull(actual);
-      verify(accountRepositoryImpl, times(0)).lockForUpdate(any(AccountNo.class));
-      verify(photoMstRepositoryImpl, times(0)).getNewPhotoNo(any(AccountNo.class));
-      verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
-      verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(accountRepositoryImpl, never()).lockForUpdate(any(AccountNo.class));
+      verify(photoMstRepositoryImpl, never()).getNewPhotoNo(any(AccountNo.class));
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
+      verify(photoAggregateRepositoryImpl, never()).update(any(Photo.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1129,7 +1303,7 @@ public class PhotoServiceImplTest {
       assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 6L, "jpg");
       verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
       verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
-      verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
+      verify(photoAggregateRepositoryImpl, never()).update(any(Photo.class));
       verify(fileRepositoryImpl, times(2)).save(any(FileModel.class));
 
       List<FileModel> fileModelCaptureList = fileModelCaptor.getAllValues();
@@ -1211,11 +1385,11 @@ public class PhotoServiceImplTest {
       assertEquals(new PhotoNo(3L), actual.getPhotoNo());
       assertNull(actual.getImageFilePath());
       verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
-      verify(accountRepositoryImpl, times(0)).getByAccountNo(any(AccountNo.class));
-      verify(photoMstRepositoryImpl, times(0)).count(any(AccountNo.class));
-      verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+      verify(accountRepositoryImpl, never()).getByAccountNo(any(AccountNo.class));
+      verify(photoMstRepositoryImpl, never()).count(any(AccountNo.class));
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
       verify(photoAggregateRepositoryImpl, times(2)).update(any(Photo.class));
-      verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
+      verify(fileRepositoryImpl, never()).save(any(FileModel.class));
 
       List<Photo> photoCaptureList = photoCaptor.getAllValues();
       assertEquals(new PhotoNo(2L), photoCaptureList.get(0).getPhotoNo());
@@ -1361,9 +1535,9 @@ public class PhotoServiceImplTest {
                   new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
 
       verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
-      verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
-      verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(photoAggregateRepositoryImpl, never()).update(any(Photo.class));
+      verify(fileRepositoryImpl, never()).save(any(FileModel.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1400,9 +1574,9 @@ public class PhotoServiceImplTest {
               photoServiceImpl.savePhotos(
                   new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
 
-      verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
       verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1427,8 +1601,8 @@ public class PhotoServiceImplTest {
               photoServiceImpl.savePhotos(
                   new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
 
-      verify(photoAggregateRepositoryImpl, times(0)).update(any(Photo.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(photoAggregateRepositoryImpl, never()).update(any(Photo.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1482,7 +1656,9 @@ public class PhotoServiceImplTest {
           .when(accountRepositoryImpl)
           .getByAccountNo(new AccountNo(1L));
       doReturn(3).when(photoMstRepositoryImpl).count(new AccountNo(1L));
-      doReturn(true).when(photoQuotaPolicy).isReached(AuthorityEnum.MINI, new PhotoCount(3));
+      doReturn(true)
+          .when(photoQuotaPolicy)
+          .isReached(AuthorityEnum.MINI, new PhotoCount(3), new PhotoCount(1));
 
       // 新規登録1枚目
       PhotoDetailModel photoDetailModel1 = createNewPhoto();
@@ -1495,8 +1671,8 @@ public class PhotoServiceImplTest {
                   new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
 
       verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
-      verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1528,9 +1704,9 @@ public class PhotoServiceImplTest {
                       new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
       assertEquals(ErrorEnum.IMAGE_FILE_REQUIRED.getErrorCode(), exception.getErrorCode());
 
-      verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
-      verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
+      verify(fileRepositoryImpl, never()).save(any(FileModel.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1615,9 +1791,9 @@ public class PhotoServiceImplTest {
       assertEquals(
           ErrorEnum.UNSUPPORTED_IMAGE_CONTENT_TYPE.getErrorCode(), exception.getErrorCode());
 
-      verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
-      verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
+      verify(fileRepositoryImpl, never()).save(any(FileModel.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1651,9 +1827,9 @@ public class PhotoServiceImplTest {
                       new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
       assertEquals(ErrorEnum.INVALID_IMAGE_SIGNATURE.getErrorCode(), exception.getErrorCode());
 
-      verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
-      verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
+      verify(fileRepositoryImpl, never()).save(any(FileModel.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1686,9 +1862,9 @@ public class PhotoServiceImplTest {
                       new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
       assertEquals(ErrorEnum.IMAGE_FILE_SIZE_EXCEEDED.getErrorCode(), exception.getErrorCode());
 
-      verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
-      verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
+      verify(fileRepositoryImpl, never()).save(any(FileModel.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1722,9 +1898,9 @@ public class PhotoServiceImplTest {
               photoServiceImpl.savePhotos(
                   new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
 
-      verify(photoAggregateRepositoryImpl, times(0)).regist(any(Photo.class));
-      verify(fileRepositoryImpl, times(0)).save(any(FileModel.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
+      verify(fileRepositoryImpl, never()).save(any(FileModel.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1818,6 +1994,64 @@ public class PhotoServiceImplTest {
               photoServiceImpl.savePhotos(
                   new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
     }
+
+    /**
+     * {@code GalleryException}以外の実行時例外（MyBatisの{@code DataAccessException}等）でトランザクションが
+     * ロールバックされる場合も、書き込み済みファイルは自動的には戻らないため補償削除される（{@code PhotoServiceImpl#savePhotos}の{@code catch
+     * (RuntimeException e)}分岐）。{@code GalleryException}分岐（Order(17)）と
+     * 同じ補償削除ロジックだが例外型で分岐が分かれているため、別途検証する
+     */
+    @Test
+    @Order(19)
+    @DisplayName("異常系：GalleryException以外の実行時例外の場合も、書き込み済みファイルを補償削除する")
+    void savePhotos_registPhoto_compensatesOrphanedFileOnNonGalleryRuntimeException()
+        throws GalleryException {
+      String accountId = "aaaaaaaa";
+      List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+
+      doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+      doReturn(
+              AccountModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .authorityKbn(AuthorityEnum.NORMAL)
+                  .build())
+          .when(accountRepositoryImpl)
+          .getByAccountNo(new AccountNo(1L));
+      doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
+      doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
+      doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
+      doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
+      // 1枚目のDB登録は成功、2枚目のDB登録でGalleryException以外の実行時例外が発生させる
+      doNothing()
+          .doThrow(new RuntimeException("db error"))
+          .when(photoAggregateRepositoryImpl)
+          .regist(any(Photo.class));
+
+      // 新規登録1枚目（成功する）
+      PhotoDetailModel photoDetailModel1 = createNewPhotoWithTag();
+      photoDetailModelList.add(photoDetailModel1);
+
+      // 新規登録2枚目（DB登録でRuntimeExceptionが発生する）
+      PhotoDetailModel photoDetailModel2 = createNewPhoto();
+      photoDetailModelList.add(photoDetailModel2);
+
+      RuntimeException exception =
+          assertThrows(
+              RuntimeException.class,
+              () ->
+                  photoServiceImpl.savePhotos(
+                      new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+      assertEquals("db error", exception.getMessage());
+
+      verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
+      verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
+
+      // 1枚目は既にファイル書き込みが成功しているため、DBロールバックとの整合性を保つべく補償削除される
+      ArgumentCaptor<ImageFilePath> deleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
+      verify(fileRepositoryImpl, times(1)).delete(deleteCaptor.capture());
+      assertOpaqueObjectKey(deleteCaptor.getValue(), accountId, 5L, "jpg");
+    }
   }
 
   @Nested
@@ -1830,8 +2064,8 @@ public class PhotoServiceImplTest {
     void deletePhotos_photoDeleteModelList_empty() throws GalleryException {
 
       photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.empty());
-      verify(photoAggregateRepositoryImpl, times(0)).delete(any(Photo.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(photoAggregateRepositoryImpl, never()).delete(any(Photo.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -1927,9 +2161,9 @@ public class PhotoServiceImplTest {
               photoServiceImpl.deletePhotos(
                   new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
 
-      verify(photoAggregateRepositoryImpl, times(0)).delete(any(Photo.class));
-      verify(fileRepositoryImpl, times(0)).delete(any(ImageFilePath.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(photoAggregateRepositoryImpl, never()).delete(any(Photo.class));
+      verify(fileRepositoryImpl, never()).delete(any(ImageFilePath.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
   }
 
@@ -1942,7 +2176,7 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：アカウント番号がnullの場合、NullPointerExceptionをthrowする")
     void isReachedUpperLimit_accountNo_is_null() {
       assertThrows(NullPointerException.class, () -> photoServiceImpl.isReachedUpperLimit(null));
-      verify(photoQuotaPolicy, times(0)).isReached(any(AuthorityEnum.class), any(PhotoCount.class));
+      verify(photoQuotaPolicy, never()).isReached(any(AuthorityEnum.class), any(PhotoCount.class));
     }
 
     @Test
@@ -1977,95 +2211,28 @@ public class PhotoServiceImplTest {
   @Nested
   @Order(6)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class getSeasonComparator {
+  class getRemainingPhotoCount {
     @Test
     @Order(1)
-    @SuppressWarnings("unchecked")
-    @DisplayName("正常系：季節・時期順に並び替えられること")
-    void getSeasonComparator_success()
-        throws NoSuchMethodException,
-            SecurityException,
-            IllegalAccessException,
-            InvocationTargetException {
-      Method getSeasonComparator = PhotoServiceImpl.class.getDeclaredMethod("getSeasonComparator");
-      getSeasonComparator.setAccessible(true);
+    @DisplayName("異常系：アカウント番号がnullの場合、NullPointerExceptionをthrowする")
+    void getRemainingPhotoCount_accountNo_is_null() {
+      assertThrows(NullPointerException.class, () -> photoServiceImpl.getRemainingPhotoCount(null));
+      verify(photoQuotaPolicy, never())
+          .remainingCount(any(AuthorityEnum.class), any(PhotoCount.class));
+    }
 
-      Comparator<PhotoModel> actual =
-          (Comparator<PhotoModel>) getSeasonComparator.invoke(photoServiceImpl);
+    @Test
+    @Order(2)
+    @DisplayName("正常系：PhotoQuotaPolicyが算出した残り登録可能枚数をそのまま返すこと")
+    void getRemainingPhotoCount_returns_remaining_count() {
+      AccountNo accountNo = new AccountNo(1L);
+      AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.NORMAL).build();
+      doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
+      doReturn(3).when(photoMstRepositoryImpl).count(accountNo);
+      doReturn(97).when(photoQuotaPolicy).remainingCount(AuthorityEnum.NORMAL, new PhotoCount(3));
 
-      List<PhotoModel> photoModelList = new ArrayList<PhotoModel>();
-      photoModelList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(1L))
-              .favoriteCount(new FavoriteCount(1))
-              .isFavorite(new IsFavorite(false))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://www.xxx.com/DSC111.jpg"))
-              .caption(new Caption("キャプション1"))
-              .directionKbn(DirectionEnum.VERTICAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-      photoModelList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(2L))
-              .favoriteCount(new FavoriteCount(3))
-              .isFavorite(new IsFavorite(false))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2002, 2, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://www.xxx.com/DSC222.jpg"))
-              .caption(new Caption("キャプション2"))
-              .directionKbn(DirectionEnum.VERTICAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-      photoModelList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(3L))
-              .favoriteCount(new FavoriteCount(2))
-              .isFavorite(new IsFavorite(false))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2002, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://www.xxx.com/DSC333.jpg"))
-              .caption(new Caption("キャプション3"))
-              .directionKbn(DirectionEnum.VERTICAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-      photoModelList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(4L))
-              .favoriteCount(new FavoriteCount(2))
-              .isFavorite(new IsFavorite(false))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2001, 3, 31, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://www.xxx.com/DSC444.jpg"))
-              .caption(new Caption("キャプション4"))
-              .directionKbn(DirectionEnum.VERTICAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-      photoModelList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(5L))
-              .favoriteCount(new FavoriteCount(3))
-              .isFavorite(new IsFavorite(false))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2003, 3, 31, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://www.xxx.com/DSC555.jpg"))
-              .caption(new Caption("キャプション5"))
-              .directionKbn(DirectionEnum.VERTICAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-
-      List<PhotoModel> actualData = photoModelList.stream().sorted(actual).toList();
-      assertEquals(4L, actualData.get(0).getPhotoNo().value());
-      assertEquals(5L, actualData.get(1).getPhotoNo().value());
-      assertEquals(3L, actualData.get(2).getPhotoNo().value());
-      assertEquals(2L, actualData.get(3).getPhotoNo().value());
-      assertEquals(1L, actualData.get(4).getPhotoNo().value());
+      assertEquals(97, photoServiceImpl.getRemainingPhotoCount(accountNo));
+      verify(photoQuotaPolicy).remainingCount(AuthorityEnum.NORMAL, new PhotoCount(3));
     }
   }
 }

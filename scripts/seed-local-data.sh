@@ -2,8 +2,8 @@
 # ローカル動作確認用のダミーデータ投入スクリプト
 #
 # 【注意】実行するとローカルDB・MinIOの写真関連データを完全にリセットする
-#   - account、location_mst、refresh_token、photo_mst、photo_tag_mst、photo_favorite を全件削除
-#     （外部キー制約上、account を削除するには location_mst・refresh_token も連鎖して削除する必要がある）
+#   - account、account_authority、location_mst、refresh_token、photo_mst、photo_tag_mst、photo_favorite を全件削除
+#     （外部キー制約上、account を削除するには account_authority・location_mst・refresh_token も連鎖して削除する必要がある）
 #   - MinIO（web-gallery-local バケット）内の画像ファイルも全件削除
 # その上で、以下を新規作成する
 #   - アカウント3件（localuser01: normal-user, localuser02: mini-user, localuser03: administrator）
@@ -39,7 +39,7 @@ done
 NETWORK=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' "$MINIO_CONTAINER")
 echo "MinIOのDockerネットワーク: $NETWORK"
 
-echo "既存のアカウント・写真関連データを全件削除します（account, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite）"
+echo "既存のアカウント・写真関連データを全件削除します（account, account_authority, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite）"
 docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 <<'SQL'
 TRUNCATE TABLE
   photo.photo_favorite,
@@ -47,6 +47,7 @@ TRUNCATE TABLE
   photo.photo_mst,
   common.location_mst,
   common.refresh_token,
+  common.account_authority,
   common.account
 RESTART IDENTITY CASCADE;
 SQL
@@ -138,9 +139,13 @@ echo "投入用SQLを生成します"
 {
   # created_by/updated_by は監査用の作成者IDとして1を使う（全件クリア直後のためlocaluser01自身のaccount_noと一致する）
   cat <<SQL
-INSERT INTO common.account VALUES (DEFAULT, 1, now(), 1, now(), false, '${ACCOUNT_IDS[0]}', 'ローカル太郎', '${PASSWORD_HASH}', '1900-01-01', 'none', 'none', 'none', '', 'normal-user', now(), 0, false) RETURNING account_no \gset u1_
-INSERT INTO common.account VALUES (DEFAULT, 1, now(), 1, now(), false, '${ACCOUNT_IDS[1]}', 'ローカル花子', '${PASSWORD_HASH}', '1900-01-01', 'none', 'none', 'none', '', 'mini-user', now(), 0, false) RETURNING account_no \gset u2_
-INSERT INTO common.account VALUES (DEFAULT, 1, now(), 1, now(), false, '${ACCOUNT_IDS[2]}', 'ローカル次郎', '${PASSWORD_HASH}', '1900-01-01', 'none', 'none', 'none', '', 'administrator', now(), 0, false) RETURNING account_no \gset u3_
+INSERT INTO common.account VALUES (DEFAULT, 1, now(), 1, now(), false, '${ACCOUNT_IDS[0]}', 'ローカル太郎', '${PASSWORD_HASH}', '1900-01-01', 'none', 'none', 'none', '', now(), 0, false) RETURNING account_no \gset u1_
+INSERT INTO common.account VALUES (DEFAULT, 1, now(), 1, now(), false, '${ACCOUNT_IDS[1]}', 'ローカル花子', '${PASSWORD_HASH}', '1900-01-01', 'none', 'none', 'none', '', now(), 0, false) RETURNING account_no \gset u2_
+INSERT INTO common.account VALUES (DEFAULT, 1, now(), 1, now(), false, '${ACCOUNT_IDS[2]}', 'ローカル次郎', '${PASSWORD_HASH}', '1900-01-01', 'none', 'none', 'none', '', now(), 0, false) RETURNING account_no \gset u3_
+
+INSERT INTO common.account_authority VALUES (:u1_account_no, 1, now(), 1, now(), 'normal-user');
+INSERT INTO common.account_authority VALUES (:u2_account_no, 1, now(), 1, now(), 'mini-user');
+INSERT INTO common.account_authority VALUES (:u3_account_no, 1, now(), 1, now(), 'administrator');
 SQL
 
   for i in $(seq 0 $((PHOTO_COUNT - 1))); do

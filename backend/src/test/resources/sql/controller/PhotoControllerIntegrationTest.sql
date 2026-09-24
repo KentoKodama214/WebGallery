@@ -1,10 +1,18 @@
 -- common.account
-insert into common.account values(1,  1,  '2000-01-01 09:00:00 Asia/Tokyo', 1,  '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$password1', '1991-02-14', 'none', 'none', 'none', '', 'mini-user', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(2,  2,  '2000-01-02 09:00:00 Asia/Tokyo', 2,  '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1900-01-01', 'man',  'none', 'none', '', 'mini-user', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(3,  3,  '2000-01-03 09:00:00 Asia/Tokyo', 3,  '2001-01-03 09:00:00 Asia/Tokyo', false, 'cccccccc', 'CCCCCCCC', '$2a$10$password3', '1900-01-01', 'man',  'none', 'none', '', 'normal-user', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(4,  4,  '2000-01-04 09:00:00 Asia/Tokyo', 4,  '2001-01-04 09:00:00 Asia/Tokyo', false, 'dddddddd', 'DDDDDDDD', '$2a$10$password4', '1900-01-01', 'man',  'none', 'none', '', 'normal-user', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(5,  5,  '2000-01-05 09:00:00 Asia/Tokyo', 5,  '2001-01-05 09:00:00 Asia/Tokyo', false, 'eeeeeeee', 'EEEEEEEE', '$2a$10$password5', '1900-01-01', 'man',  'none', 'none', '', 'special-user', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(6,  6,  '2000-01-06 09:00:00 Asia/Tokyo', 6,  '2001-01-06 09:00:00 Asia/Tokyo', false, 'ffffffff', 'FFFFFFFF', '$2a$10$password6', '1900-01-01', 'man',  'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$password1', '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'cccccccc', 'CCCCCCCC', '$2a$10$password3', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(4, 4, '2000-01-04 09:00:00 Asia/Tokyo', 4, '2001-01-04 09:00:00 Asia/Tokyo', false, 'dddddddd', 'DDDDDDDD', '$2a$10$password4', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(5, 5, '2000-01-05 09:00:00 Asia/Tokyo', 5, '2001-01-05 09:00:00 Asia/Tokyo', false, 'eeeeeeee', 'EEEEEEEE', '$2a$10$password5', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(6, 6, '2000-01-06 09:00:00 Asia/Tokyo', 6, '2001-01-06 09:00:00 Asia/Tokyo', false, 'ffffffff', 'FFFFFFFF', '$2a$10$password6', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+
+-- common.account_authority
+insert into common.account_authority values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'mini-user');
+insert into common.account_authority values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', 'mini-user');
+insert into common.account_authority values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', 'normal-user');
+insert into common.account_authority values(4, 4, '2000-01-04 09:00:00 Asia/Tokyo', 4, '2001-01-04 09:00:00 Asia/Tokyo', 'normal-user');
+insert into common.account_authority values(5, 5, '2000-01-05 09:00:00 Asia/Tokyo', 5, '2001-01-05 09:00:00 Asia/Tokyo', 'special-user');
+insert into common.account_authority values(6, 6, '2000-01-06 09:00:00 Asia/Tokyo', 6, '2001-01-06 09:00:00 Asia/Tokyo', 'administrator');
 
 -- common.location_mst
 insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション1', '住所1', 38.100, 115.100);
@@ -24,6 +32,8 @@ insert into photo.photo_mst values(DEFAULT, 1, 7,  1, '2000-01-01 09:00:00 Asia/
 insert into photo.photo_mst values(DEFAULT, 1, 8,  1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2023-08-01 09:00:00 Asia/Tokyo', 8,  'https://www.xxx.com/aaaaaaaa/DSC18.jpg', 'DSC18.jpg', 'タイトル18', 'title18', 'caption18', 'vertical', 50, 10.0, 3,  400, true);
 insert into photo.photo_mst values(DEFAULT, 1, 9,  1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2023-09-01 09:00:00 Asia/Tokyo', 9,  'https://www.xxx.com/aaaaaaaa/DSC19.jpg', 'DSC19.jpg', 'タイトル19', 'title19', 'caption19', 'horizontal', 50, 10.0, 3,  400, true);
 insert into photo.photo_mst values(DEFAULT, 1, 10, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-10-01 09:00:00 Asia/Tokyo', 10, 'https://www.xxx.com/aaaaaaaa/DSC20.jpg', 'DSC20.jpg', 'タイトル20', 'title20', 'caption20', 'horizontal', 50, 10.0, 3,  400, true);
+-- 写真詳細取得（位置情報の非公開判定）テスト用：位置情報を非公開（is_location_public=false）に設定した写真
+insert into photo.photo_mst values(DEFAULT, 1, 11, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-11-01 09:00:00 Asia/Tokyo', 1,  'https://www.xxx.com/aaaaaaaa/DSC21.jpg', 'DSC21.jpg', 'タイトル21', 'title21', 'caption21', 'horizontal', 50, 10.0, 3,  400, false);
 
 insert into photo.photo_mst values(DEFAULT, 2, 1,  2, '2000-01-01 09:00:00 Asia/Tokyo', 2, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1,  'https://www.xxx.com/bbbbbbbb/DSC21.jpg', 'DSC21.jpg', 'タイトル11', 'title11', 'キャプション11', 'horizontal', 24, 8.0,  1,  100, true);
 insert into photo.photo_mst values(DEFAULT, 2, 2,  2, '2000-01-01 09:00:00 Asia/Tokyo', 2, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-02-01 09:00:00 Asia/Tokyo', 2,  'https://www.xxx.com/bbbbbbbb/DSC22.jpg', 'DSC22.jpg', 'タイトル12', 'title12', 'キャプション12', 'horizontal', 36, 9.0,  2,  200, true);

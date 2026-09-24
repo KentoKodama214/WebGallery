@@ -15,7 +15,7 @@ class RequestArchitectureTest {
   static final ArchRule classNameShouldEndWithRequest =
       classes()
           .that()
-          .resideInAPackage(Packages.CONTROLLER_REQUEST)
+          .resideInAPackage(Packages.CONTROLLER_REQUEST + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Request")
@@ -25,7 +25,7 @@ class RequestArchitectureTest {
   static final ArchRule requestShouldNotHaveDomainModelDtoOrEntityFields =
       classes()
           .that()
-          .resideInAPackage(Packages.CONTROLLER_REQUEST)
+          .resideInAPackage(Packages.CONTROLLER_REQUEST + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should(
               FieldTypeConditions.notHaveFieldsOfType(
@@ -36,7 +36,7 @@ class RequestArchitectureTest {
   static final ArchRule requestShouldHaveValidationAnnotation =
       classes()
           .that()
-          .resideInAPackage(Packages.CONTROLLER_REQUEST)
+          .resideInAPackage(Packages.CONTROLLER_REQUEST + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should(
               FieldAnnotationConditions.haveAtLeastOneFieldAnnotatedWithAnnotationFromPackage(

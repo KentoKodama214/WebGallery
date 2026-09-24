@@ -3,6 +3,9 @@ package com.web.gallery.service.impl.integration;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
@@ -25,25 +28,25 @@ import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagNo;
-import com.web.gallery.entity.PhotoFavorite;
-import com.web.gallery.entity.PhotoMst;
-import com.web.gallery.entity.PhotoTagMst;
+import com.web.gallery.entity.photo.PhotoFavorite;
+import com.web.gallery.entity.photo.PhotoMst;
+import com.web.gallery.entity.photo.PhotoTagMst;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
-import com.web.gallery.model.PhotoDeleteModel;
-import com.web.gallery.model.PhotoDeleteModelList;
-import com.web.gallery.model.PhotoDetailGetModel;
-import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoDetailModelList;
-import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoPageModel;
-import com.web.gallery.model.PhotoSaveResultModel;
-import com.web.gallery.model.PhotoTagModel;
-import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.model.photo.PhotoDeleteModel;
+import com.web.gallery.model.photo.PhotoDeleteModelList;
+import com.web.gallery.model.photo.PhotoDetailGetModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoDetailModelList;
+import com.web.gallery.model.photo.PhotoListGetModel;
+import com.web.gallery.model.photo.PhotoPageModel;
+import com.web.gallery.model.photo.PhotoSaveResultModel;
+import com.web.gallery.model.photo.PhotoTagModel;
+import com.web.gallery.model.photo.PhotoTagModelList;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.service.impl.PhotoServiceImpl;
 import java.math.BigDecimal;
@@ -552,6 +555,135 @@ public class PhotoServiceImplIntegrationTest {
       assertThrows(
           PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoList(photoListGetModel));
     }
+
+    @Test
+    @Order(9)
+    @DisplayName("正常系：他人のギャラリーを検索実行した場合、絞り込みログが記録されること")
+    void getPhotoList_otherGallery_searchExecuted_logsFilter() throws GalleryException {
+      PhotoListGetModel photoListGetModel =
+          PhotoListGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId("aaaaaaaa"))
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList(new ArrayList<String>())
+              .sortBy(SortPhotoEnum.PHOTO_AT)
+              .pageNo(1)
+              .searchExecuted(true)
+              .logInitialView(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      photoServiceImpl.getPhotoList(photoListGetModel);
+
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      Integer logCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_list_filter_log WHERE photo_account_no=1 AND account_no=2",
+              Integer.class);
+      assertEquals(1, logCount);
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("正常系：他人のギャラリーでも2ページ目以降は絞り込みログが記録されないこと")
+    void getPhotoList_otherGallery_pageNotOne_doesNotLog() throws GalleryException {
+      PhotoListGetModel photoListGetModel =
+          PhotoListGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId("aaaaaaaa"))
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList(new ArrayList<String>())
+              .sortBy(SortPhotoEnum.PHOTO_AT)
+              .pageNo(2)
+              .searchExecuted(true)
+              .logInitialView(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      photoServiceImpl.getPhotoList(photoListGetModel);
+
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      Integer logCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_list_filter_log WHERE photo_account_no=1 AND account_no=2",
+              Integer.class);
+      assertEquals(0, logCount);
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("正常系：他人のギャラリーでも検索実行・初回閲覧のいずれでもない場合、絞り込みログが記録されないこと")
+    void getPhotoList_otherGallery_noSearchNoInitialView_doesNotLog() throws GalleryException {
+      PhotoListGetModel photoListGetModel =
+          PhotoListGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId("aaaaaaaa"))
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList(new ArrayList<String>())
+              .sortBy(SortPhotoEnum.PHOTO_AT)
+              .pageNo(1)
+              .searchExecuted(false)
+              .logInitialView(false)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      photoServiceImpl.getPhotoList(photoListGetModel);
+
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      Integer logCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_list_filter_log WHERE photo_account_no=1 AND account_no=2",
+              Integer.class);
+      assertEquals(0, logCount);
+    }
+
+    /** searchExecutedがfalseでもlogInitialViewがtrueであれば記録されること（OR条件の右辺のみが真になるケース）を検証する */
+    @Test
+    @Order(12)
+    @DisplayName("正常系：他人のギャラリーを初めて開いた場合、絞り込みログが記録されること")
+    void getPhotoList_otherGallery_logInitialView_logsFilter() throws GalleryException {
+      PhotoListGetModel photoListGetModel =
+          PhotoListGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId("aaaaaaaa"))
+              .directionKbn(DirectionEnum.NONE)
+              .isFavoriteOnly(new IsFavoriteOnly(false))
+              .tagList(new ArrayList<String>())
+              .sortBy(SortPhotoEnum.PHOTO_AT)
+              .pageNo(1)
+              .searchExecuted(false)
+              .logInitialView(true)
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      photoServiceImpl.getPhotoList(photoListGetModel);
+
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      Integer logCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_list_filter_log WHERE photo_account_no=1 AND account_no=2",
+              Integer.class);
+      assertEquals(1, logCount);
+    }
   }
 
   @Nested
@@ -638,6 +770,78 @@ public class PhotoServiceImplIntegrationTest {
 
       assertThrows(
           PhotoNotFoundException.class, () -> photoServiceImpl.getPhotoDetail(photoDetailGetModel));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：他人が閲覧した場合、閲覧ログが記録され、公開設定の位置情報はそのまま返ること")
+    void getPhotoDetail_otherViewer_publicLocation_showsLocationAndLogsView()
+        throws GalleryException {
+      PhotoDetailGetModel photoDetailGetModel =
+          PhotoDetailGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId("aaaaaaaa"))
+              .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
+      assertNotNull(actual.getLocationNo());
+      assertNotNull(actual.getLocationName());
+
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      Integer viewLogCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_view_log WHERE photo_account_no=1 AND photo_no=1 AND account_no=2",
+              Integer.class);
+      assertEquals(1, viewLogCount);
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：非公開の位置情報は、所有者以外が閲覧した場合は秘匿されること")
+    void getPhotoDetail_privateLocation_hiddenForOtherViewer() throws GalleryException {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_location_public=false WHERE account_no=1 AND photo_no=1");
+
+      PhotoDetailGetModel photoDetailGetModel =
+          PhotoDetailGetModel.builder()
+              .accountNo(new AccountNo(2L))
+              .photoAccountId(new AccountId("aaaaaaaa"))
+              .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
+      assertNull(actual.getLocationNo());
+      assertNull(actual.getLocationName());
+      assertNull(actual.getGeoLocation().address());
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("正常系：非公開の位置情報でも、所有者本人が閲覧した場合は秘匿されないこと")
+    void getPhotoDetail_privateLocation_shownForOwner() throws GalleryException {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_location_public=false WHERE account_no=1 AND photo_no=1");
+
+      PhotoDetailGetModel photoDetailGetModel =
+          PhotoDetailGetModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoAccountId(new AccountId("aaaaaaaa"))
+              .photoNo(new PhotoNo(1L))
+              .ipAddress(new IpAddress("203.0.113.1"))
+              .referer(new Referer(""))
+              .build();
+
+      PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
+      assertNotNull(actual.getLocationNo());
+      assertNotNull(actual.getLocationName());
     }
   }
 
@@ -787,6 +991,8 @@ public class PhotoServiceImplIntegrationTest {
                   .fValue(rs.getBigDecimal("f_value"))
                   .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                   .iso(rs.getInt("iso"))
+                  .imageFileName(rs.getString("image_file_name"))
+                  .isLocationPublic(rs.getBoolean("is_location_public"))
                   .build());
     }
 
@@ -876,39 +1082,49 @@ public class PhotoServiceImplIntegrationTest {
 
       assertEquals(1L, actualData.get(0).getAccountNo());
       assertEquals(11L, actualData.get(0).getPhotoNo());
+      assertEquals(1L, actualData.get(0).getCreatedBy());
       assertEquals(transactionNow, actualData.get(0).getCreatedAt());
+      assertEquals(1L, actualData.get(0).getUpdatedBy());
       assertEquals(transactionNow, actualData.get(0).getUpdatedAt());
       assertFalse(actualData.get(0).getIsDeleted());
       assertEquals(
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(0).getPhotoAt());
       assertOpaqueObjectKey(actualData.get(0).getImageFilePath(), accountId, 11L, "jpg");
+      assertEquals("DSC21.jpg", actualData.get(0).getImageFileName());
       assertEquals(0L, actualData.get(0).getLocationNo());
       assertEquals("タイトル21", actualData.get(0).getPhotoJapaneseTitle());
       assertEquals("title21", actualData.get(0).getPhotoEnglishTitle());
       assertEquals("キャプション21", actualData.get(0).getCaption());
+      assertEquals(DirectionEnum.NONE, actualData.get(0).getDirectionKbn());
       assertEquals(24, actualData.get(0).getFocalLength());
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData.get(0).getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData.get(0).getShutterSpeed()));
       assertEquals(100, actualData.get(0).getIso());
+      assertFalse(actualData.get(0).getIsLocationPublic());
 
       assertEquals(1L, actualData.get(1).getAccountNo());
       assertEquals(12L, actualData.get(1).getPhotoNo());
+      assertEquals(1L, actualData.get(1).getCreatedBy());
       assertEquals(transactionNow, actualData.get(1).getCreatedAt());
+      assertEquals(1L, actualData.get(1).getUpdatedBy());
       assertEquals(transactionNow, actualData.get(1).getUpdatedAt());
       assertFalse(actualData.get(1).getIsDeleted());
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(1).getPhotoAt().plusHours(9));
       assertOpaqueObjectKey(actualData.get(1).getImageFilePath(), accountId, 12L, "jpg");
+      assertEquals("DSC22.jpg", actualData.get(1).getImageFileName());
       assertEquals(0L, actualData.get(1).getLocationNo());
       assertEquals("", actualData.get(1).getPhotoJapaneseTitle());
       assertEquals("", actualData.get(1).getPhotoEnglishTitle());
       assertEquals("", actualData.get(1).getCaption());
+      assertEquals(DirectionEnum.NONE, actualData.get(1).getDirectionKbn());
       assertEquals(0, actualData.get(1).getFocalLength());
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.get(1).getFValue()));
       assertEquals(0, BigDecimal.ZERO.compareTo(actualData.get(1).getShutterSpeed()));
       assertEquals(0, actualData.get(1).getIso());
+      assertFalse(actualData.get(1).getIsLocationPublic());
 
       List<PhotoTagMst> actualTagData1 = getPhotoTagMst(accountId, 11L);
       assertEquals(2, actualTagData1.size());
@@ -956,9 +1172,11 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(1, actualData1.size());
       assertEquals(1L, actualData1.getFirst().getAccountNo());
       assertEquals(2L, actualData1.getFirst().getPhotoNo());
+      assertEquals(1L, actualData1.getFirst().getCreatedBy());
       assertEquals(
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData1.getFirst().getCreatedAt());
+      assertEquals(1L, actualData1.getFirst().getUpdatedBy());
       assertEquals(transactionNow, actualData1.getFirst().getUpdatedAt());
       assertFalse(actualData1.getFirst().getIsDeleted());
       assertEquals(
@@ -968,14 +1186,18 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           "https://www.xxx.com/" + accountId + "/DSC12.jpg",
           actualData1.getFirst().getImageFilePath());
+      // 画像は登録後に不変のため、更新では image_file_name を書き換えない（フィクスチャの値がそのまま残る）
+      assertEquals("DSC12.jpg", actualData1.getFirst().getImageFileName());
       assertEquals(0L, actualData1.getFirst().getLocationNo());
       assertEquals("タイトル2", actualData1.getFirst().getPhotoJapaneseTitle());
       assertEquals("title2", actualData1.getFirst().getPhotoEnglishTitle());
       assertEquals("キャプション2", actualData1.getFirst().getCaption());
+      assertEquals(DirectionEnum.NONE, actualData1.getFirst().getDirectionKbn());
       assertEquals(24, actualData1.getFirst().getFocalLength());
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData1.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData1.getFirst().getShutterSpeed()));
       assertEquals(100, actualData1.getFirst().getIso());
+      assertFalse(actualData1.getFirst().getIsLocationPublic());
 
       List<PhotoTagMst> actualTagData1 = getPhotoTagMst(accountId, 2L);
       assertEquals(2, actualTagData1.size());
@@ -997,9 +1219,11 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(1, actualData2.size());
       assertEquals(1L, actualData2.getFirst().getAccountNo());
       assertEquals(3L, actualData2.getFirst().getPhotoNo());
+      assertEquals(1L, actualData2.getFirst().getCreatedBy());
       assertEquals(
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData2.getFirst().getCreatedAt());
+      assertEquals(1L, actualData2.getFirst().getUpdatedBy());
       assertEquals(transactionNow, actualData2.getFirst().getUpdatedAt());
       assertFalse(actualData2.getFirst().getIsDeleted());
       assertEquals(
@@ -1009,14 +1233,18 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           "https://www.xxx.com/" + accountId + "/DSC13.jpg",
           actualData2.getFirst().getImageFilePath());
+      // 画像は登録後に不変のため、更新では image_file_name を書き換えない（フィクスチャの値がそのまま残る）
+      assertEquals("DSC13.jpg", actualData2.getFirst().getImageFileName());
       assertEquals(0L, actualData2.getFirst().getLocationNo());
       assertEquals("タイトル3", actualData2.getFirst().getPhotoJapaneseTitle());
       assertEquals("title3", actualData2.getFirst().getPhotoEnglishTitle());
       assertEquals("キャプション3", actualData2.getFirst().getCaption());
+      assertEquals(DirectionEnum.NONE, actualData2.getFirst().getDirectionKbn());
       assertEquals(24, actualData2.getFirst().getFocalLength());
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData2.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData2.getFirst().getShutterSpeed()));
       assertEquals(100, actualData2.getFirst().getIso());
+      assertFalse(actualData2.getFirst().getIsLocationPublic());
 
       List<PhotoTagMst> actualTagData2 = getPhotoTagMst(accountId, 3L);
       assertEquals(0, actualTagData2.size());
@@ -1044,6 +1272,8 @@ public class PhotoServiceImplIntegrationTest {
 
       assertEquals(new PhotoNo(3L), actual.getPhotoNo());
       assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 11L, "jpg");
+
+      // 新規登録された写真（photoDetailModel1）がDBに登録されていることを確認
       List<PhotoMst> actualData =
           getPhotoMstData(accountId).stream()
               .filter(photoMst -> photoMst.getPhotoNo() > 10)
@@ -1052,22 +1282,28 @@ public class PhotoServiceImplIntegrationTest {
 
       assertEquals(1L, actualData.get(0).getAccountNo());
       assertEquals(11L, actualData.get(0).getPhotoNo());
+      assertEquals(1L, actualData.get(0).getCreatedBy());
       assertEquals(transactionNow, actualData.get(0).getCreatedAt());
+      assertEquals(1L, actualData.get(0).getUpdatedBy());
       assertEquals(transactionNow, actualData.get(0).getUpdatedAt());
       assertFalse(actualData.get(0).getIsDeleted());
       assertEquals(
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(0).getPhotoAt());
       assertOpaqueObjectKey(actualData.get(0).getImageFilePath(), accountId, 11L, "jpg");
+      assertEquals("DSC21.jpg", actualData.get(0).getImageFileName());
       assertEquals(0L, actualData.get(0).getLocationNo());
       assertEquals("タイトル21", actualData.get(0).getPhotoJapaneseTitle());
       assertEquals("title21", actualData.get(0).getPhotoEnglishTitle());
       assertEquals("キャプション21", actualData.get(0).getCaption());
+      assertEquals(DirectionEnum.NONE, actualData.get(0).getDirectionKbn());
       assertEquals(24, actualData.get(0).getFocalLength());
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData.get(0).getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData.get(0).getShutterSpeed()));
       assertEquals(100, actualData.get(0).getIso());
+      assertFalse(actualData.get(0).getIsLocationPublic());
 
+      // 新規登録された写真に紐づくタグが2件とも登録されていることを確認
       List<PhotoTagMst> actualTagData1 = getPhotoTagMst(accountId, 11L);
       assertEquals(2, actualTagData1.size());
       assertEquals(1L, actualTagData1.get(0).getAccountNo());
@@ -1081,6 +1317,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals("海", actualTagData1.get(1).getTagJapaneseName());
       assertEquals("sea", actualTagData1.get(1).getTagEnglishName());
 
+      // 更新対象の写真（photoDetailModel2、既存photoNo=3）が更新されていることを確認
       List<PhotoMst> actualData2 =
           getPhotoMstData(accountId).stream()
               .filter(photoMst -> photoMst.getPhotoNo() == 3)
@@ -1088,9 +1325,11 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(1, actualData2.size());
       assertEquals(1L, actualData2.getFirst().getAccountNo());
       assertEquals(3L, actualData2.getFirst().getPhotoNo());
+      assertEquals(1L, actualData2.getFirst().getCreatedBy());
       assertEquals(
           OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData2.getFirst().getCreatedAt());
+      assertEquals(1L, actualData2.getFirst().getUpdatedBy());
       assertEquals(transactionNow, actualData2.getFirst().getUpdatedAt());
       assertFalse(actualData2.getFirst().getIsDeleted());
       assertEquals(
@@ -1100,15 +1339,20 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           "https://www.xxx.com/" + accountId + "/DSC13.jpg",
           actualData2.getFirst().getImageFilePath());
+      // 画像は登録後に不変のため、更新では image_file_name を書き換えない（フィクスチャの値がそのまま残る）
+      assertEquals("DSC13.jpg", actualData2.getFirst().getImageFileName());
       assertEquals(0L, actualData2.getFirst().getLocationNo());
       assertEquals("タイトル3", actualData2.getFirst().getPhotoJapaneseTitle());
       assertEquals("title3", actualData2.getFirst().getPhotoEnglishTitle());
       assertEquals("キャプション3", actualData2.getFirst().getCaption());
+      assertEquals(DirectionEnum.NONE, actualData2.getFirst().getDirectionKbn());
       assertEquals(24, actualData2.getFirst().getFocalLength());
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(actualData2.getFirst().getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData2.getFirst().getShutterSpeed()));
       assertEquals(100, actualData2.getFirst().getIso());
+      assertFalse(actualData2.getFirst().getIsLocationPublic());
 
+      // 更新対象の写真には新たなタグが登録されていないことを確認
       List<PhotoTagMst> actualTagData2 = getPhotoTagMst(accountId, 3L);
       assertEquals(0, actualTagData2.size());
     }
@@ -1150,10 +1394,176 @@ public class PhotoServiceImplIntegrationTest {
           () ->
               photoServiceImpl.savePhotos(
                   new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+      // 1枚目でファイル名重複エラーとなり、後続の2枚目（重複しない正常なデータ）を含めて
+      // トランザクション全体がロールバックされ、DBに新規登録が反映されていないことを確認
+      Integer photoCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_mst WHERE account_no=1", Integer.class);
+      assertEquals(10, photoCount);
     }
 
     @Test
     @Order(7)
+    @DisplayName("異常系：2枚目でファイル名重複エラーとなった場合、1枚目の登録済みファイルが補償削除されること")
+    void savePhotos_FileDuplicateException_deletesOrphanedFile() throws GalleryException {
+      String accountId = "aaaaaaaa";
+
+      List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
+      // 新規登録1枚目（重複しない正常なデータ）
+      PhotoDetailModel photoDetailModel1 = createNewPhoto();
+      photoDetailModelList.add(photoDetailModel1);
+      // 新規登録2枚目（ファイル名が既存写真と重複）
+      MultipartFile duplicateFile =
+          new MockMultipartFile("file", "DSC11.jpg", "image/jpeg", jpegBytes);
+      PhotoDetailModel photoDetailModel2 =
+          PhotoDetailModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoAt(
+                  new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+              .imageFile(new ImageFile(duplicateFile))
+              .imageFilePath(new ImageFilePath("https://www.xxx.com/aaaaaaaa/DSC11.jpg"))
+              .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル11"))
+              .photoEnglishTitle(new PhotoEnglishTitle("title11"))
+              .caption(new Caption("キャプション11"))
+              .exifData(
+                  new ExifData(
+                      new FocalLength(24),
+                      new FValue(BigDecimal.valueOf(2.8)),
+                      new ShutterSpeed(BigDecimal.valueOf(0.01)),
+                      new Iso(100)))
+              .build();
+      photoDetailModelList.add(photoDetailModel2);
+
+      assertThrows(
+          FileDuplicateException.class,
+          () ->
+              photoServiceImpl.savePhotos(
+                  new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+
+      // 1枚目でDBに書き込んだファイルパスを指定して、補償削除が呼ばれていること
+      verify(fileRepository, times(1)).delete(any(ImageFilePath.class));
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("異常系：画像ファイルが指定されていない場合、BadRequestExceptionをthrowする")
+    void savePhotos_imageFileRequired() {
+      PhotoDetailModel photoDetailModel =
+          PhotoDetailModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoAt(
+                  new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+              .imageFilePath(new ImageFilePath(""))
+              .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル"))
+              .caption(new Caption(""))
+              .exifData(
+                  new ExifData(
+                      new FocalLength(24),
+                      new FValue(BigDecimal.valueOf(2.8)),
+                      new ShutterSpeed(BigDecimal.valueOf(0.01)),
+                      new Iso(100)))
+              .build();
+
+      assertThrows(
+          com.web.gallery.exception.BadRequestException.class,
+          () ->
+              photoServiceImpl.savePhotos(
+                  new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("異常系：許可されていない拡張子の場合、BadRequestExceptionをthrowする")
+    void savePhotos_invalidExtension() {
+      MultipartFile multipartFile =
+          new MockMultipartFile("file", "DSC30.bmp", "image/jpeg", jpegBytes);
+      PhotoDetailModel photoDetailModel =
+          PhotoDetailModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoAt(
+                  new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+              .imageFile(new ImageFile(multipartFile))
+              .imageFilePath(new ImageFilePath(""))
+              .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル"))
+              .caption(new Caption(""))
+              .exifData(
+                  new ExifData(
+                      new FocalLength(24),
+                      new FValue(BigDecimal.valueOf(2.8)),
+                      new ShutterSpeed(BigDecimal.valueOf(0.01)),
+                      new Iso(100)))
+              .build();
+
+      assertThrows(
+          com.web.gallery.exception.BadRequestException.class,
+          () ->
+              photoServiceImpl.savePhotos(
+                  new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("異常系：Content-Typeが許可されていない場合、BadRequestExceptionをthrowする")
+    void savePhotos_unsupportedContentType() {
+      MultipartFile multipartFile =
+          new MockMultipartFile("file", "DSC31.jpg", "application/octet-stream", jpegBytes);
+      PhotoDetailModel photoDetailModel =
+          PhotoDetailModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoAt(
+                  new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+              .imageFile(new ImageFile(multipartFile))
+              .imageFilePath(new ImageFilePath(""))
+              .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル"))
+              .caption(new Caption(""))
+              .exifData(
+                  new ExifData(
+                      new FocalLength(24),
+                      new FValue(BigDecimal.valueOf(2.8)),
+                      new ShutterSpeed(BigDecimal.valueOf(0.01)),
+                      new Iso(100)))
+              .build();
+
+      assertThrows(
+          com.web.gallery.exception.BadRequestException.class,
+          () ->
+              photoServiceImpl.savePhotos(
+                  new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("異常系：マジックバイトが既知の画像フォーマットと一致しない場合、BadRequestExceptionをthrowする")
+    void savePhotos_invalidSignature() {
+      MultipartFile multipartFile =
+          new MockMultipartFile("file", "DSC32.jpg", "image/jpeg", "これは画像ファイルではありません".getBytes());
+      PhotoDetailModel photoDetailModel =
+          PhotoDetailModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoAt(
+                  new PhotoAt(OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
+              .imageFile(new ImageFile(multipartFile))
+              .imageFilePath(new ImageFilePath(""))
+              .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル"))
+              .caption(new Caption(""))
+              .exifData(
+                  new ExifData(
+                      new FocalLength(24),
+                      new FValue(BigDecimal.valueOf(2.8)),
+                      new ShutterSpeed(BigDecimal.valueOf(0.01)),
+                      new Iso(100)))
+              .build();
+
+      assertThrows(
+          com.web.gallery.exception.BadRequestException.class,
+          () ->
+              photoServiceImpl.savePhotos(
+                  new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
+    }
+
+    @Test
+    @Order(13)
     @DisplayName("異常系：mini-userで登録枚数の上限に達している場合、PhotoNotAdditableExceptionをthrowすること")
     void savePhotos_reachedUpperLimit_throws() {
       String accountId = "ggggggg1";
@@ -1380,6 +1790,37 @@ public class PhotoServiceImplIntegrationTest {
           () ->
               photoServiceImpl.deletePhotos(
                   new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
+    }
+
+    /**
+     * 画像ファイルの物理削除はトランザクションのコミット後に遅延実行される（{@code
+     * PhotoServiceImpl#deleteFilesAfterCommit}）。DBロールバック時の「レコードは消えたが実体ファイルは残る」不整合を防ぐための仕様であり、
+     * トランザクションを実際にコミットしない限りこの経路は通らない。本テストでは{@link TestTransaction}で明示的にコミットし、
+     * afterCommitコールバック内でfileRepository.deleteが呼ばれることを検証する
+     */
+    @Test
+    @Order(4)
+    @DisplayName("正常系：トランザクションコミット後に画像ファイルが物理削除される")
+    void deletePhotos_deletesFileAfterCommit() throws GalleryException {
+      // 画像ファイルパス（S3オブジェクトキー）はリクエスト値を信用せず、DB上の既存値（フィクスチャで登録した値）が使われる
+      List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
+      photoDeleteModelList.add(
+          PhotoDeleteModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(1L))
+              .imageFilePath(new ImageFilePath("DSC11.jpg"))
+              .build());
+
+      photoServiceImpl.deletePhotos(
+          new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList));
+      verify(fileRepository, never()).delete(any(ImageFilePath.class));
+
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      verify(fileRepository, times(1))
+          .delete(new ImageFilePath("https://www.xxx.com/aaaaaaaa/DSC11.jpg"));
     }
   }
 

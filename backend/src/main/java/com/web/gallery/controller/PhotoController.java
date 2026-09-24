@@ -3,30 +3,36 @@ package com.web.gallery.controller;
 import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.constant.Consts;
 import com.web.gallery.constant.MessageConst;
-import com.web.gallery.controller.request.PhotoDeleteRequest;
-import com.web.gallery.controller.request.PhotoDetailRequest;
-import com.web.gallery.controller.request.PhotoListRequest;
-import com.web.gallery.controller.request.PhotoSaveRequest;
-import com.web.gallery.controller.response.PhotoDetailGetResponse;
-import com.web.gallery.controller.response.PhotoEditResponse;
-import com.web.gallery.controller.response.PhotoListGetResponse;
-import com.web.gallery.controller.response.PhotoUpperLimitResponse;
+import com.web.gallery.controller.request.photo.PhotoBulkSaveRequest;
+import com.web.gallery.controller.request.photo.PhotoDeleteRequest;
+import com.web.gallery.controller.request.photo.PhotoDetailRequest;
+import com.web.gallery.controller.request.photo.PhotoListRequest;
+import com.web.gallery.controller.request.photo.PhotoSaveRequest;
+import com.web.gallery.controller.response.photo.PhotoBulkEditResponse;
+import com.web.gallery.controller.response.photo.PhotoDetailGetResponse;
+import com.web.gallery.controller.response.photo.PhotoEditResponse;
+import com.web.gallery.controller.response.photo.PhotoListGetResponse;
+import com.web.gallery.controller.response.photo.PhotoUpperLimitResponse;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Referer;
+import com.web.gallery.domain.photo.ExifData;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.ClientIpResolver;
+import com.web.gallery.helper.PhotoDirectionResolver;
+import com.web.gallery.helper.PhotoExifExtractor;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.helper.ValidationErrorLogger;
-import com.web.gallery.model.PhotoDeleteModel;
-import com.web.gallery.model.PhotoDeleteModelList;
-import com.web.gallery.model.PhotoDetailGetModel;
-import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoDetailModelList;
-import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoPageModel;
-import com.web.gallery.model.PhotoSaveResultModel;
+import com.web.gallery.model.photo.PhotoDeleteModel;
+import com.web.gallery.model.photo.PhotoDeleteModelList;
+import com.web.gallery.model.photo.PhotoDetailGetModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoDetailModelList;
+import com.web.gallery.model.photo.PhotoListGetModel;
+import com.web.gallery.model.photo.PhotoPageModel;
+import com.web.gallery.model.photo.PhotoSaveResultModel;
+import com.web.gallery.policy.PhotoExifDataMergePolicy;
 import com.web.gallery.service.PhotoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -47,9 +53,9 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -68,6 +74,9 @@ public class PhotoController {
   private final PhotoService photoService;
   private final SessionHelper sessionHelper;
   private final ClientIpResolver clientIpResolver;
+  private final PhotoDirectionResolver photoDirectionResolver;
+  private final PhotoExifExtractor photoExifExtractor;
+  private final PhotoExifDataMergePolicy photoExifDataMergePolicy;
 
   /**
    * クライアントから送信されたリファラを{@link Referer}に変換する（取得できない場合は空文字）
@@ -136,11 +145,13 @@ public class PhotoController {
   public ResponseEntity<PhotoUpperLimitResponse> getPhotoUpperLimit(
       @PathVariable String photoAccountId) {
     Boolean isReachedUpperLimit = false;
+    Integer remainingCount = null;
     if (photoAccountId.equals(sessionHelper.getAccountId())) {
-      isReachedUpperLimit =
-          photoService.isReachedUpperLimit(new AccountNo(sessionHelper.getAccountNo()));
+      AccountNo accountNo = new AccountNo(sessionHelper.getAccountNo());
+      isReachedUpperLimit = photoService.isReachedUpperLimit(accountNo);
+      remainingCount = photoService.getRemainingPhotoCount(accountNo);
     }
-    return ResponseEntity.ok(PhotoUpperLimitResponse.of(isReachedUpperLimit));
+    return ResponseEntity.ok(PhotoUpperLimitResponse.of(isReachedUpperLimit, remainingCount));
   }
 
   /**
@@ -185,24 +196,23 @@ public class PhotoController {
   }
 
   /**
-   * 写真保存
+   * 写真更新
+   *
+   * <p>写真の新規登録は行わない（新規登録は{@link #registPhotos}を使用する）。画像ファイル自体の差し替え・追加はできない
    *
    * @param photoAccountId ページ所有者のアカウントID
    * @param photoSaveRequest {@link PhotoSaveRequest}
    * @param result PhotoSaveRequestのバインディング結果
    * @return {@link PhotoEditResponse}
-   * @throws GalleryException 以下のいずれかに該当する場合 ・写真の所有者以外がリクエストした場合 ・写真の登録枚数の上限に達している場合
-   *     ・リクエストパラメータが不正の場合 ・保存するファイルが重複した場合 ・写真の登録に失敗した場合 ・写真の更新に失敗した場合
+   * @throws GalleryException 以下のいずれかに該当する場合 ・写真の所有者以外がリクエストした場合 ・リクエストパラメータが不正の場合 ・写真の更新に失敗した場合
    */
-  @Operation(summary = "写真保存", description = "写真を新規登録または更新する")
-  @ApiResponse(responseCode = "200", description = "保存成功")
+  @Operation(summary = "写真更新", description = "写真を更新する（画像ファイル自体の差し替え・追加は不可）")
+  @ApiResponse(responseCode = "200", description = "更新成功")
   @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
   @ApiResponse(responseCode = "403", description = "写真の所有者以外によるリクエスト", content = @Content)
-  @ApiResponse(responseCode = "409", description = "ファイルが重複または登録失敗", content = @Content)
+  @ApiResponse(responseCode = "409", description = "更新失敗", content = @Content)
   @SecurityRequirement(name = "Bearer")
-  @RequestMapping(
-      value = ApiRoutes.API_PHOTOS,
-      method = {RequestMethod.POST, RequestMethod.PUT})
+  @PutMapping(ApiRoutes.API_PHOTOS)
   public ResponseEntity<PhotoEditResponse> savePhoto(
       @PathVariable String photoAccountId,
       @ModelAttribute @Validated PhotoSaveRequest photoSaveRequest,
@@ -213,14 +223,8 @@ public class PhotoController {
       throw ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.toException();
     }
 
-    if (Objects.isNull(photoSaveRequest.getPhotoNo())
-        && photoService.isReachedUpperLimit(new AccountNo(sessionHelper.getAccountNo()))) {
-      throw ErrorEnum.REACHED_REGISTRATION_LIMIT.toException();
-    }
-
-    if (Objects.isNull(photoSaveRequest.getImageFile())
-        && (Objects.isNull(photoSaveRequest.getImageFilePath())
-            || Consts.STRING_EMPTY.equals(photoSaveRequest.getImageFilePath()))) {
+    if (Objects.isNull(photoSaveRequest.getImageFilePath())
+        || Consts.STRING_EMPTY.equals(photoSaveRequest.getImageFilePath())) {
       throw ErrorEnum.INVALID_INPUT.toException();
     }
 
@@ -239,6 +243,68 @@ public class PhotoController {
         photoService.savePhotos(new AccountId(photoAccountId), photoDetailModelList);
 
     return ResponseEntity.ok(PhotoEditResponse.of(photoSaveResultModel, photoSaveRequest));
+  }
+
+  /**
+   * 写真新規一括登録
+   *
+   * <p>複数の画像ファイルに対し、共通のタイトル〜タグを一括で新規登録する。写真の編集時（更新）は使用できない
+   *
+   * @param photoAccountId ページ所有者のアカウントID
+   * @param photoBulkSaveRequest {@link PhotoBulkSaveRequest}
+   * @param result PhotoBulkSaveRequestのバインディング結果
+   * @return {@link PhotoBulkEditResponse}
+   * @throws GalleryException 以下のいずれかに該当する場合 ・写真の所有者以外がリクエストした場合 ・写真の登録枚数の上限に達している場合
+   *     ・リクエストパラメータが不正の場合 ・保存するファイルが重複した場合 ・写真の登録に失敗した場合
+   */
+  @Operation(summary = "写真新規一括登録", description = "複数の画像ファイルに共通のタイトル〜タグを設定して一括で新規登録する")
+  @ApiResponse(responseCode = "200", description = "登録成功")
+  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+  @ApiResponse(responseCode = "403", description = "写真の所有者以外によるリクエスト", content = @Content)
+  @ApiResponse(responseCode = "409", description = "ファイルが重複または登録失敗", content = @Content)
+  @SecurityRequirement(name = "Bearer")
+  @PostMapping(ApiRoutes.API_PHOTOS)
+  public ResponseEntity<PhotoBulkEditResponse> registPhotos(
+      @PathVariable String photoAccountId,
+      @ModelAttribute @Validated PhotoBulkSaveRequest photoBulkSaveRequest,
+      BindingResult result)
+      throws GalleryException {
+
+    if (!photoAccountId.equals(sessionHelper.getAccountId())) {
+      throw ErrorEnum.NOT_AUTHORIZED_TO_EDIT_PHOTO.toException();
+    }
+
+    if (result.hasErrors()) {
+      ValidationErrorLogger.logFieldErrors(log, result);
+      throw ErrorEnum.INVALID_INPUT.toException();
+    }
+
+    AccountNo accountNo = new AccountNo(sessionHelper.getAccountNo());
+    ExifData clientSubmittedExifData =
+        ExifData.fromRawValues(
+            photoBulkSaveRequest.getFocalLength(),
+            photoBulkSaveRequest.getFValue(),
+            photoBulkSaveRequest.getShutterSpeed(),
+            photoBulkSaveRequest.getIso());
+    PhotoDetailModelList photoDetailModelList =
+        PhotoDetailModelList.of(
+            photoBulkSaveRequest.getImageFiles().stream()
+                .map(
+                    imageFile ->
+                        PhotoDetailModel.from(
+                            photoBulkSaveRequest,
+                            imageFile,
+                            photoDirectionResolver.resolve(imageFile),
+                            photoExifDataMergePolicy.merge(
+                                photoExifExtractor.extract(imageFile), clientSubmittedExifData),
+                            accountNo))
+                .toList());
+
+    photoService.savePhotos(new AccountId(photoAccountId), photoDetailModelList);
+
+    return ResponseEntity.ok(
+        PhotoBulkEditResponse.of(
+            MessageConst.REGIST_PHOTO, photoBulkSaveRequest.getImageFiles().size()));
   }
 
   /**

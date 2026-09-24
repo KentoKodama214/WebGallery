@@ -1,9 +1,9 @@
 package com.web.gallery.controller;
 
 import com.web.gallery.constant.ApiRoutes;
-import com.web.gallery.controller.response.PrefectureGroupResponse;
+import com.web.gallery.controller.response.common.PrefectureGroupResponse;
 import com.web.gallery.helper.KbnHelper;
-import com.web.gallery.model.KbnMstModelList;
+import com.web.gallery.model.common.KbnMstModelList;
 import com.web.gallery.service.KbnMstService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

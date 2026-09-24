@@ -3,9 +3,9 @@ package com.web.gallery.mapper;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.dto.PhotoDeletionDto;
-import com.web.gallery.entity.PhotoMst;
-import com.web.gallery.entity.PhotoMstCondition;
-import com.web.gallery.entity.PhotoMstUpdateTarget;
+import com.web.gallery.entity.photo.PhotoMst;
+import com.web.gallery.entity.photo.PhotoMstCondition;
+import com.web.gallery.entity.photo.PhotoMstUpdateTarget;
 import com.web.gallery.enumeration.DirectionEnum;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -186,6 +186,26 @@ public class PhotoMstMapperTest {
     @DisplayName("正常系：複数の条件でcountする場合")
     void count_some_conditions() {
       PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(1L).photoNo(1L).build();
+      Integer actual = photoMstMapper.count(photoMst);
+      assertEquals(1, actual);
+    }
+
+    @Test
+    @Order(17)
+    @DisplayName("正常系：複数の条件でcountする場合、AND条件で絞り込まれ0件になること（OR的に緩まないこと）")
+    void count_some_conditions_narrows_to_zero() {
+      // account_no=1は3件、photo_no=1は2件（account_no=1, 2）それぞれ単独では存在するが、
+      // account_no=1とphoto_no=99の組み合わせは存在しないため、AND条件なら0件になるはず
+      PhotoMstCondition photoMst = PhotoMstCondition.builder().accountNo(1L).photoNo(99L).build();
+      Integer actual = photoMstMapper.count(photoMst);
+      assertEquals(0, actual);
+    }
+
+    @Test
+    @Order(18)
+    @DisplayName("正常系：画像ファイル名でのcountで1件の場合")
+    void count_by_imageFileName() {
+      PhotoMstCondition photoMst = PhotoMstCondition.builder().imageFileName("DSC111.jpg").build();
       Integer actual = photoMstMapper.count(photoMst);
       assertEquals(1, actual);
     }
@@ -909,6 +929,65 @@ public class PhotoMstMapperTest {
       assertEquals(1, actual);
 
       List<PhotoMst> actualData = getPhotoMstList("account_no=1 and photo_no=1");
+      assertEquals(1, actualData.size());
+
+      assertEquals(1L, actualData.get(0).getAccountNo());
+      assertEquals(1L, actualData.get(0).getPhotoNo());
+      assertEquals(1L, actualData.get(0).getCreatedBy());
+      assertEquals(
+          OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
+          actualData.get(0).getCreatedAt());
+      assertEquals(1L, actualData.get(0).getUpdatedBy());
+      assertEquals(transactionNow, actualData.get(0).getUpdatedAt());
+      assertFalse(actualData.get(0).getIsDeleted());
+      assertEquals(
+          OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
+          actualData.get(0).getPhotoAt());
+      assertEquals(1L, actualData.get(0).getLocationNo());
+      assertEquals("https://www.xxx.com/DSC111.jpg", actualData.get(0).getImageFilePath());
+      assertEquals("タイトル11", actualData.get(0).getPhotoJapaneseTitle());
+      assertEquals("title11", actualData.get(0).getPhotoEnglishTitle());
+      assertEquals("キャプション11", actualData.get(0).getCaption());
+      assertEquals(DirectionEnum.VERTICAL, actualData.get(0).getDirectionKbn());
+      assertEquals(24, actualData.get(0).getFocalLength());
+      assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualData.get(0).getFValue()));
+      assertEquals(0, BigDecimal.valueOf(1).compareTo(actualData.get(0).getShutterSpeed()));
+      assertEquals(1000, actualData.get(0).getIso());
+    }
+
+    @Test
+    @Order(17)
+    @DisplayName("正常系：複数の条件でupdateする場合、AND条件で絞り込まれ更新0件になること（OR的に緩まないこと）")
+    void update_some_conditions_narrows_to_zero() {
+      // account_no=1、photo_no=1はそれぞれ単独では存在するが、
+      // account_no=1とphoto_no=99の組み合わせは存在しないため、AND条件なら更新されないはず
+      PhotoMstCondition conditionPhotoMst =
+          PhotoMstCondition.builder().accountNo(1L).photoNo(99L).build();
+      PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(1000).build();
+      Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
+      assertEquals(0, actual);
+
+      // account_no=1のiso値がいずれも意図せず更新されていないこと
+      List<PhotoMst> actualData = getPhotoMstList("account_no=1");
+      assertEquals(3, actualData.size());
+      assertEquals(100, actualData.get(0).getIso());
+      assertEquals(200, actualData.get(1).getIso());
+      assertEquals(400, actualData.get(2).getIso());
+    }
+
+    @Test
+    @Order(18)
+    @DisplayName("正常系：画像ファイル名でのupdate")
+    void update_by_imageFileName() {
+      PhotoMstCondition conditionPhotoMst =
+          PhotoMstCondition.builder().imageFileName("DSC111.jpg").build();
+      PhotoMstUpdateTarget targetPhotoMst = PhotoMstUpdateTarget.builder().iso(1000).build();
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
+      Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
+      assertEquals(1, actual);
+
+      List<PhotoMst> actualData = getPhotoMstList("image_file_name='DSC111.jpg'");
       assertEquals(1, actualData.size());
 
       assertEquals(1L, actualData.get(0).getAccountNo());

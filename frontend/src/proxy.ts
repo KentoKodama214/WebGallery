@@ -85,6 +85,8 @@ function buildCsp(nonce: string): string {
     "font-src 'self' data:",
     `connect-src 'self'${apiBaseOrigin ? ` ${apiBaseOrigin}` : ""}${isDev ? " ws:" : ""}`,
     "worker-src 'self' blob:",
+    // 写真詳細の撮影場所表示（Google Maps の iframe 埋め込み）用
+    "frame-src https://maps.google.com https://www.google.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

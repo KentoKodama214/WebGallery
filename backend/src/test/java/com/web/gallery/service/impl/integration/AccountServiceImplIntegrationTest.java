@@ -1,21 +1,30 @@
 package com.web.gallery.service.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountName;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
-import com.web.gallery.entity.Account;
+import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
+import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.entity.account.Account;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
+import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.UpdateFailureException;
-import com.web.gallery.model.AccountListGetModel;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.model.account.AccountListGetModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.account.AccountPageModel;
+import com.web.gallery.repository.FileRepository;
 import com.web.gallery.service.impl.AccountServiceImpl;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -44,6 +53,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +65,9 @@ public class AccountServiceImplIntegrationTest {
   @Autowired private AccountServiceImpl accountServiceImpl;
 
   @Autowired private JdbcTemplate jdbcTemplate;
+
+  /** S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない） */
+  @MockitoBean private FileRepository fileRepository;
 
   @Nested
   @Order(1)
@@ -120,9 +133,9 @@ public class AccountServiceImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -139,11 +152,17 @@ public class AccountServiceImplIntegrationTest {
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.MINI, actualData.getFirst().getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
       assertEquals(0, actualData.getFirst().getLoginFailureCount());
+
+      // account_authorityにも同一のアカウント番号でMINI固定で登録されること
+      AuthorityEnum actualAuthorityKbn =
+          jdbcTemplate.queryForObject(
+              "SELECT authority_kbn FROM common.account_authority WHERE account_no=1",
+              (rs, rowNum) -> AuthorityEnum.getOrDefault(rs.getString("authority_kbn")));
+      assertEquals(AuthorityEnum.MINI, actualAuthorityKbn);
     }
 
     @Test
@@ -159,6 +178,66 @@ public class AccountServiceImplIntegrationTest {
               .password(new Password("aaaaaaaa"))
               .build();
       assertFalse(accountServiceImpl.registAccount(accountModel));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：区分マスタに存在しない都道府県区分コードの場合、BadRequestExceptionをthrowする")
+    @Sql("/sql/common/cleanup.sql")
+    @Sql("/sql/common/ResetAccountNoSeq.sql")
+    void registAccount_invalid_prefecture_code() {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("nnnnnnnn"))
+              .accountName(new AccountName("NNNNNNNN"))
+              .password(new Password("nnnnnnnn"))
+              .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("NotExistCode"))
+              .build();
+
+      assertThrows(BadRequestException.class, () -> accountServiceImpl.registAccount(accountModel));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：出身地が未指定で在住地が区分マスタに存在しない都道府県区分コードの場合、BadRequestExceptionをthrowする")
+    @Sql("/sql/common/cleanup.sql")
+    @Sql("/sql/common/ResetAccountNoSeq.sql")
+    @Sql("/sql/common/PrefectureKbnMst.sql")
+    void registAccount_invalid_resident_prefecture_code() {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("oooooooo"))
+              .accountName(new AccountName("OOOOOOOO"))
+              .password(new Password("oooooooo"))
+              .residentPrefectureKbnCode(new ResidentPrefectureKbnCode("NotExistCode"))
+              .build();
+
+      assertThrows(BadRequestException.class, () -> accountServiceImpl.registAccount(accountModel));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：区分マスタに実在する都道府県区分コードを指定した場合、登録できること")
+    @Sql("/sql/common/cleanup.sql")
+    @Sql("/sql/common/ResetAccountNoSeq.sql")
+    @Sql("/sql/common/PrefectureKbnMst.sql")
+    void registAccount_valid_prefecture_code() throws GalleryException {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("pppppppp"))
+              .accountName(new AccountName("PPPPPPPP"))
+              .password(new Password("pppppppp"))
+              .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Tokyo"))
+              .residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
+              .build();
+
+      assertTrue(accountServiceImpl.registAccount(accountModel));
+
+      String actualBirthplaceCode =
+          jdbcTemplate.queryForObject(
+              "SELECT birthplace_prefecture_kbn_code FROM common.account WHERE account_id='pppppppp'",
+              String.class);
+      assertEquals("Tokyo", actualBirthplaceCode);
     }
   }
 
@@ -201,9 +280,9 @@ public class AccountServiceImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -224,11 +303,11 @@ public class AccountServiceImplIntegrationTest {
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime());
       assertEquals(0, actualData.getFirst().getLoginFailureCount());
+      assertFalse(actualData.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -261,9 +340,9 @@ public class AccountServiceImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -285,11 +364,11 @@ public class AccountServiceImplIntegrationTest {
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
       assertEquals(0, actualData.getFirst().getLoginFailureCount());
+      assertFalse(actualData.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -303,6 +382,97 @@ public class AccountServiceImplIntegrationTest {
               .build();
       assertThrows(
           UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel, null));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：パスワードのみ変更（アカウントID変更なし）した場合、リフレッシュトークンが失効すること")
+    void updateAccount_change_password_only() throws GalleryException {
+      // フィクスチャのパスワードはBCrypt照合できないダミー値のため、実際に照合可能な値へ差し替える
+      jdbcTemplate.update(
+          "UPDATE common.account SET password=? WHERE account_no=1",
+          "$2a$10$k19cLX6F2brrOLYp74GstejFJfeGjm52TMk..ELwoJeTcBcUnBVM2");
+      jdbcTemplate.update(
+          "INSERT INTO common.refresh_token VALUES(DEFAULT, 1, 'hash-account1', NOW() + interval '7 days', NOW(), 1, NOW(), false)");
+
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .password(new Password("newpassword01"))
+              .build();
+
+      assertFalse(accountServiceImpl.updateAccount(accountModel, new Password("password01")));
+
+      Integer activeRefreshTokenCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.refresh_token WHERE account_no=1 AND is_revoked=false",
+              Integer.class);
+      assertEquals(0, activeRefreshTokenCount);
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：アカウントID・パスワードいずれも変更しない場合、リフレッシュトークンは失効しないこと")
+    void updateAccount_no_change() throws GalleryException {
+      jdbcTemplate.update(
+          "INSERT INTO common.refresh_token VALUES(DEFAULT, 1, 'hash-account1', NOW() + interval '7 days', NOW(), 1, NOW(), false)");
+
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .build();
+
+      assertFalse(accountServiceImpl.updateAccount(accountModel, null));
+
+      Integer activeRefreshTokenCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.refresh_token WHERE account_no=1 AND is_revoked=false",
+              Integer.class);
+      assertEquals(1, activeRefreshTokenCount);
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("正常系：アカウントIDのみ変更（パスワード変更なし）した場合、リフレッシュトークンが失効すること")
+    void updateAccount_change_accountId_only() throws GalleryException {
+      jdbcTemplate.update(
+          "INSERT INTO common.refresh_token VALUES(DEFAULT, 1, 'hash-account1', NOW() + interval '7 days', NOW(), 1, NOW(), false)");
+
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("newaccid"))
+              .build();
+
+      assertFalse(accountServiceImpl.updateAccount(accountModel, null));
+
+      Integer activeRefreshTokenCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.refresh_token WHERE account_no=1 AND is_revoked=false",
+              Integer.class);
+      assertEquals(0, activeRefreshTokenCount);
+    }
+
+    /**
+     * Controller層（{@code AccountController}）は新パスワード指定時に現在のパスワード未指定を事前に弾くため、
+     * Service層のこのダミー照合（応答時間を一定に保つためのBCrypt照合1回分のコスト）へは通常到達しない。 Service単体でこの防御的分岐を直接検証する
+     */
+    @Test
+    @Order(7)
+    @DisplayName("異常系：パスワード変更時に現在のパスワードが未指定の場合、ForbiddenAccountExceptionをthrowする")
+    void updateAccount_passwordChange_missingCurrentPassword() {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .password(new Password("newpassword01"))
+              .build();
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () -> accountServiceImpl.updateAccount(accountModel, null));
     }
   }
 
@@ -550,6 +720,18 @@ public class AccountServiceImplIntegrationTest {
               "SELECT COUNT(*) FROM common.refresh_token where account_no=2 and is_revoked=false",
               Integer.class);
       assertEquals(1, otherRefreshTokenCount);
+
+      // アカウント権限が削除されたことを確認
+      Integer accountAuthorityCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account_authority where account_no=1", Integer.class);
+      assertEquals(0, accountAuthorityCount);
+
+      // account_no=2のアカウント権限は残っていること
+      Integer otherAccountAuthorityCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account_authority where account_no=2", Integer.class);
+      assertEquals(1, otherAccountAuthorityCount);
     }
 
     @Test
@@ -565,6 +747,80 @@ public class AccountServiceImplIntegrationTest {
       Integer accountCount =
           jdbcTemplate.queryForObject(
               "SELECT COUNT(*) FROM common.account where account_no=1", Integer.class);
+      assertEquals(1, accountCount);
+    }
+
+    /**
+     * 写真ファイルディレクトリの物理削除はトランザクションのコミット後に遅延実行される（{@code
+     * AccountServiceImpl#deletePhotoDirectoryAfterCommit}）。DBロールバック時の不整合を防ぐための仕様であり、
+     * トランザクションを実際にコミットしない限りこの経路は通らない。本テストでは{@link TestTransaction}で明示的にコミットし、
+     * afterCommitコールバック内でfileRepository.deleteByPrefixが呼ばれることを検証する
+     */
+    @Test
+    @Order(3)
+    @DisplayName("正常系：トランザクションコミット後に写真ファイルディレクトリが物理削除される")
+    void deleteAccount_deletesPhotoDirectoryAfterCommit() throws GalleryException {
+      accountServiceImpl.deleteAccount(
+          new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01"));
+      verify(fileRepository, never()).deleteByPrefix(any(ImageFilePath.class));
+
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+      TestTransaction.start();
+
+      verify(fileRepository, times(1)).deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
+
+      // 上記で物理コミットした削除結果が、通常の@Transactionalによる自動ロールバックに
+      // 乗らないまま他のNestedクラスへ残留しないよう、明示的にTRUNCATE（CASCADE）して物理コミットする
+      jdbcTemplate.execute(
+          """
+					TRUNCATE TABLE
+						photo.photo_favorite,
+						photo.photo_tag_mst,
+						photo.photo_mst,
+						common.refresh_token,
+						common.location_mst,
+						common.account,
+						common.kbn_mst
+					CASCADE
+					""");
+      TestTransaction.flagForCommit();
+      TestTransaction.end();
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：管理者ロック中のアカウントは、正しいパスワードでもForbiddenAccountExceptionをthrowする")
+    void deleteAccount_isReauthLocked_adminLocked() {
+      jdbcTemplate.update("UPDATE common.account SET is_admin_locked=true WHERE account_no=1");
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () ->
+              accountServiceImpl.deleteAccount(
+                  new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01")));
+
+      Integer accountCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account WHERE account_no=1", Integer.class);
+      assertEquals(1, accountCount);
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：ログイン失敗回数が上限のアカウントは、正しいパスワードでもForbiddenAccountExceptionをthrowする")
+    void deleteAccount_isReauthLocked_failCountLocked() {
+      jdbcTemplate.update("UPDATE common.account SET login_failure_count=3 WHERE account_no=1");
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () ->
+              accountServiceImpl.deleteAccount(
+                  new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01")));
+
+      Integer accountCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account WHERE account_no=1", Integer.class);
       assertEquals(1, accountCount);
     }
   }
@@ -614,9 +870,9 @@ public class AccountServiceImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -636,10 +892,10 @@ public class AccountServiceImplIntegrationTest {
       assertEquals("Okinawa", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("Tokyo", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("よろしく", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.NORMAL, actualData.getFirst().getAuthorityKbn());
       assertFalse(actualData.getFirst().getLastLoginDatetime().isBefore(beforeLogin));
       assertFalse(actualData.getFirst().getLastLoginDatetime().isAfter(afterLogin));
       assertEquals(0, actualData.getFirst().getLoginFailureCount());
+      assertFalse(actualData.getFirst().getIsAdminLocked());
     }
   }
 
@@ -725,9 +981,9 @@ public class AccountServiceImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -748,11 +1004,11 @@ public class AccountServiceImplIntegrationTest {
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
       assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
       assertEquals("", actualData.getFirst().getFreeMemo());
-      assertEquals(AuthorityEnum.ADMINISTRATOR, actualData.getFirst().getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(2002, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.getFirst().getLastLoginDatetime().plusHours(9));
       assertEquals(1, actualData.getFirst().getLoginFailureCount());
+      assertFalse(actualData.getFirst().getIsAdminLocked());
     }
 
     @Test
@@ -794,9 +1050,9 @@ public class AccountServiceImplIntegrationTest {
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
                       .residentPrefectureKbnCode(rs.getString("resident_prefecture_kbn_code"))
                       .freeMemo(rs.getString("free_memo"))
-                      .authorityKbn(AuthorityEnum.getOrDefault(rs.getString("authority_kbn")))
                       .lastLoginDatetime(rs.getObject("last_login_datetime", OffsetDateTime.class))
                       .loginFailureCount(rs.getInt("login_failure_count"))
+                      .isAdminLocked(rs.getBoolean("is_admin_locked"))
                       .build());
 
       assertEquals(0, actualData.size());

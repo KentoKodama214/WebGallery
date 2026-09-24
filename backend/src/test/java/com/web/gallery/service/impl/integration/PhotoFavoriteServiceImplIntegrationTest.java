@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.entity.PhotoFavorite;
+import com.web.gallery.entity.photo.PhotoFavorite;
 import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.model.PhotoFavoriteModel;
+import com.web.gallery.model.photo.PhotoFavoriteModel;
 import com.web.gallery.service.impl.PhotoFavoriteServiceImpl;
 import java.time.OffsetDateTime;
 import java.util.List;

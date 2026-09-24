@@ -16,7 +16,7 @@ class ResponseArchitectureTest {
   static final ArchRule classNameShouldEndWithResponse =
       classes()
           .that()
-          .resideInAPackage(Packages.CONTROLLER_RESPONSE)
+          .resideInAPackage(Packages.CONTROLLER_RESPONSE + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Response")
@@ -26,7 +26,7 @@ class ResponseArchitectureTest {
   static final ArchRule responseShouldNotHaveDomainModelDtoOrEntityFields =
       classes()
           .that()
-          .resideInAPackage(Packages.CONTROLLER_RESPONSE)
+          .resideInAPackage(Packages.CONTROLLER_RESPONSE + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should(
               FieldTypeConditions.notHaveFieldsOfType(
@@ -37,7 +37,7 @@ class ResponseArchitectureTest {
   static final ArchRule responseShouldHaveFactoryMethod =
       classes()
           .that()
-          .resideInAPackage(Packages.CONTROLLER_RESPONSE)
+          .resideInAPackage(Packages.CONTROLLER_RESPONSE + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should(MethodExistenceConditions.haveStaticFactoryMethod(Set.of("from", "of")))
           .as("Responseクラスにはfrom()またはof()の静的ファクトリメソッドを実装すること");

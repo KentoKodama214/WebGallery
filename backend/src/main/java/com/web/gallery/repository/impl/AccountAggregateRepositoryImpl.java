@@ -2,12 +2,14 @@ package com.web.gallery.repository.impl;
 
 import com.web.gallery.aggregate.Account;
 import com.web.gallery.dto.PhotoDeletionDto;
-import com.web.gallery.entity.AccountCondition;
-import com.web.gallery.entity.LoginHistoryCondition;
-import com.web.gallery.entity.PhotoFavoriteCondition;
-import com.web.gallery.entity.PhotoListFilterLogCondition;
-import com.web.gallery.entity.PhotoTagMstCondition;
-import com.web.gallery.entity.PhotoViewLogCondition;
+import com.web.gallery.entity.account.AccountAuthorityCondition;
+import com.web.gallery.entity.account.AccountCondition;
+import com.web.gallery.entity.account.LoginHistoryCondition;
+import com.web.gallery.entity.photo.PhotoFavoriteCondition;
+import com.web.gallery.entity.photo.PhotoListFilterLogCondition;
+import com.web.gallery.entity.photo.PhotoTagMstCondition;
+import com.web.gallery.entity.photo.PhotoViewLogCondition;
+import com.web.gallery.mapper.AccountAuthorityMapper;
 import com.web.gallery.mapper.AccountMapper;
 import com.web.gallery.mapper.LoginHistoryMapper;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
@@ -16,7 +18,7 @@ import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.mapper.PhotoViewLogMapper;
 import com.web.gallery.mapper.RefreshTokenMapper;
-import com.web.gallery.model.PhotoNoList;
+import com.web.gallery.model.photo.PhotoNoList;
 import com.web.gallery.repository.AccountAggregateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +27,7 @@ import org.springframework.stereotype.Repository;
 /**
  * アカウント集約（{@link Account}）を永続化するRepositoryの実装クラス
  *
- * <p>お気に入り・写真タグ・写真マスタ・リフレッシュトークン・アカウントの各テーブルへの永続化を、
+ * <p>お気に入り・写真タグ・写真マスタ・リフレッシュトークン・アカウント権限・アカウントの各テーブルへの永続化を、
  * アカウント削除というユースケース単位で整合性のある1操作としてまとめる。他のRepositoryには依存せず、 Mapperを直接操作する
  */
 @Slf4j
@@ -34,6 +36,7 @@ import org.springframework.stereotype.Repository;
 public class AccountAggregateRepositoryImpl implements AccountAggregateRepository {
 
   private final AccountMapper accountMapper;
+  private final AccountAuthorityMapper accountAuthorityMapper;
   private final PhotoFavoriteMapper photoFavoriteMapper;
   private final PhotoTagMstMapper photoTagMstMapper;
   private final PhotoMstMapper photoMstMapper;
@@ -80,6 +83,9 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
     // ログイン履歴・写真一覧絞り込みログを削除（外部キー制約に抵触しないよう、アカウントの物理削除に先立って実施）
     loginHistoryMapper.delete(LoginHistoryCondition.byAccountNo(accountNo));
     photoListFilterLogMapper.delete(PhotoListFilterLogCondition.byPhotoAccountNo(accountNo));
+
+    // アカウント権限を削除（外部キー制約に抵触しないよう、アカウントの物理削除に先立って実施）
+    accountAuthorityMapper.delete(AccountAuthorityCondition.byAccountNo(accountNo));
 
     // アカウントを物理削除
     accountMapper.delete(AccountCondition.byAccountNo(accountNo));

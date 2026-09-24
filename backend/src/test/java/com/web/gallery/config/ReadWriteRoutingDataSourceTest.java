@@ -13,12 +13,18 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class ReadWriteRoutingDataSourceTest {
 
@@ -44,44 +50,52 @@ class ReadWriteRoutingDataSourceTest {
     TransactionSynchronizationManager.clear();
   }
 
-  @Test
-  @DisplayName("読み取り専用トランザクション中はリードレプリカへルーティングする")
-  void readOnlyTrue_routesToReplica() throws SQLException {
-    Connection replicaConnection = mock(Connection.class);
-    when(replicaDataSource.getConnection()).thenReturn(replicaConnection);
-    TransactionSynchronizationManager.setCurrentTransactionReadOnly(true);
+  @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getConnection {
+    @Test
+    @Order(1)
+    @DisplayName("読み取り専用トランザクション中はリードレプリカへルーティングする")
+    void readOnlyTrue_routesToReplica() throws SQLException {
+      Connection replicaConnection = mock(Connection.class);
+      when(replicaDataSource.getConnection()).thenReturn(replicaConnection);
+      TransactionSynchronizationManager.setCurrentTransactionReadOnly(true);
 
-    Connection actual = routingDataSource.getConnection();
+      Connection actual = routingDataSource.getConnection();
 
-    assertSame(replicaConnection, actual);
-    verify(replicaDataSource).getConnection();
-    verify(primaryDataSource, never()).getConnection();
-  }
+      assertSame(replicaConnection, actual);
+      verify(replicaDataSource).getConnection();
+      verify(primaryDataSource, never()).getConnection();
+    }
 
-  @Test
-  @DisplayName("書き込みトランザクション中はプライマリへルーティングする")
-  void readOnlyFalse_routesToPrimary() throws SQLException {
-    Connection primaryConnection = mock(Connection.class);
-    when(primaryDataSource.getConnection()).thenReturn(primaryConnection);
-    TransactionSynchronizationManager.setCurrentTransactionReadOnly(false);
+    @Test
+    @Order(2)
+    @DisplayName("書き込みトランザクション中はプライマリへルーティングする")
+    void readOnlyFalse_routesToPrimary() throws SQLException {
+      Connection primaryConnection = mock(Connection.class);
+      when(primaryDataSource.getConnection()).thenReturn(primaryConnection);
+      TransactionSynchronizationManager.setCurrentTransactionReadOnly(false);
 
-    Connection actual = routingDataSource.getConnection();
+      Connection actual = routingDataSource.getConnection();
 
-    assertSame(primaryConnection, actual);
-    verify(primaryDataSource).getConnection();
-    verify(replicaDataSource, never()).getConnection();
-  }
+      assertSame(primaryConnection, actual);
+      verify(primaryDataSource).getConnection();
+      verify(replicaDataSource, never()).getConnection();
+    }
 
-  @Test
-  @DisplayName("トランザクション外ではプライマリへフェイルセーフする")
-  void noActiveTransaction_routesToPrimary() throws SQLException {
-    Connection primaryConnection = mock(Connection.class);
-    when(primaryDataSource.getConnection()).thenReturn(primaryConnection);
+    @Test
+    @Order(3)
+    @DisplayName("トランザクション外ではプライマリへフェイルセーフする")
+    void noActiveTransaction_routesToPrimary() throws SQLException {
+      Connection primaryConnection = mock(Connection.class);
+      when(primaryDataSource.getConnection()).thenReturn(primaryConnection);
 
-    Connection actual = routingDataSource.getConnection();
+      Connection actual = routingDataSource.getConnection();
 
-    assertSame(primaryConnection, actual);
-    verify(primaryDataSource).getConnection();
-    verify(replicaDataSource, never()).getConnection();
+      assertSame(primaryConnection, actual);
+      verify(primaryDataSource).getConnection();
+      verify(replicaDataSource, never()).getConnection();
+    }
   }
 }

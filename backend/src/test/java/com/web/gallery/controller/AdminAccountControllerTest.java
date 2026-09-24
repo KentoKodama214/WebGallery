@@ -13,10 +13,11 @@ import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.common.IsDeleted;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.exception.UpdateFailureException;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountModelList;
-import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.account.AccountModelList;
+import com.web.gallery.model.account.AccountPageModel;
 import com.web.gallery.service.AccountService;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -31,6 +32,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -57,6 +60,14 @@ public class AdminAccountControllerTest {
             .setMessageConverters(converter)
             .setControllerAdvice(new CommonControllerAdvice())
             .build();
+  }
+
+  private String readJsonFile(String fileName) throws Exception {
+    return new String(
+        new ClassPathResource("json/controller/AdminAccountControllerTest/" + fileName)
+            .getInputStream()
+            .readAllBytes(),
+        StandardCharsets.UTF_8);
   }
 
   @Nested
@@ -144,7 +155,7 @@ public class AdminAccountControllerTest {
   @Nested
   @Order(2)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class unlockAccountTest {
+  class unlockAccount {
     @Test
     @Order(1)
     @DisplayName("正常系：アカウントのロックを解除できること")
@@ -174,7 +185,7 @@ public class AdminAccountControllerTest {
   @Nested
   @Order(3)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class lockAccountTest {
+  class lockAccount {
     @Test
     @Order(1)
     @DisplayName("正常系：アカウントを強制ロックできること")
@@ -198,6 +209,58 @@ public class AdminAccountControllerTest {
       doThrow(UpdateFailureException.class).when(accountService).lockAccount(new AccountNo(999L));
 
       mockMvc.perform(put("/api/v1/admin/accounts/999/lock")).andExpect(status().isConflict());
+    }
+  }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class updateAccountAuthority {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントの権限を変更できること")
+    void updateAccountAuthority_success() throws Exception {
+      doNothing().when(accountService).updateAccountAuthority(any());
+
+      mockMvc
+          .perform(
+              put("/api/v1/admin/accounts/1/authority")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("authority_update_success.json")))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.httpStatus").value(200))
+          .andExpect(jsonPath("$.isSuccess").value(true))
+          .andExpect(jsonPath("$.message").value(MessageConst.UPDATE_ACCOUNT_AUTHORITY));
+
+      verify(accountService, times(1)).updateAccountAuthority(any());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：authorityKbnが未指定。BadRequestExceptionをthrowする")
+    void updateAccountAuthority_BadRequestException_missing_authorityKbn() throws Exception {
+      mockMvc
+          .perform(
+              put("/api/v1/admin/accounts/1/authority")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("authority_update_badrequest_missing_authoritykbn.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(accountService, times(0)).updateAccountAuthority(any());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：UpdateFailureExceptionが発生した場合は409を返すこと")
+    void updateAccountAuthority_updateFailure() throws Exception {
+      doThrow(UpdateFailureException.class).when(accountService).updateAccountAuthority(any());
+
+      mockMvc
+          .perform(
+              put("/api/v1/admin/accounts/999/authority")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("authority_update_success.json")))
+          .andExpect(status().isConflict());
     }
   }
 }

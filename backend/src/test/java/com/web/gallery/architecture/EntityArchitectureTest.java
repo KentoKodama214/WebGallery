@@ -20,7 +20,7 @@ class EntityArchitectureTest {
   static final ArchRule entityShouldNotHaveDomainModelOrDtoFields =
       classes()
           .that()
-          .resideInAPackage(Packages.ENTITY)
+          .resideInAPackage(Packages.ENTITY + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should(
               FieldTypeConditions.notHaveFieldsOfType(

@@ -1,6 +1,6 @@
 package com.web.gallery.mapper;
 
-import com.web.gallery.entity.RefreshToken;
+import com.web.gallery.entity.auth.RefreshToken;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

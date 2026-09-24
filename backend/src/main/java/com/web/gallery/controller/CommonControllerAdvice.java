@@ -1,13 +1,14 @@
 package com.web.gallery.controller;
 
-import com.web.gallery.controller.response.BadRequestResponse;
-import com.web.gallery.controller.response.ErrorResponse;
+import com.web.gallery.controller.response.common.BadRequestResponse;
+import com.web.gallery.controller.response.common.ErrorResponse;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.exception.InquiryNotFoundException;
 import com.web.gallery.exception.PhotoNotAdditableException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
@@ -39,7 +40,9 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
     assignableTypes = {
       AccountController.class,
       AdminAccountController.class,
+      AdminInquiryController.class,
       AuthController.class,
+      InquiryController.class,
       KbnMstController.class,
       PhotoFavoriteController.class,
       PhotoController.class
@@ -156,6 +159,20 @@ public class CommonControllerAdvice {
     ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.CONFLICT);
 
     return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.CONFLICT);
+  }
+
+  /**
+   * お問い合わせが存在しないときに制御するExceptionHandler
+   *
+   * @param exception {@link InquiryNotFoundException}
+   * @return {@link ErrorResponse}
+   */
+  @ExceptionHandler(InquiryNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleInquiryNotFoundException(
+      InquiryNotFoundException exception) {
+    ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.BAD_REQUEST);
+
+    return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.BAD_REQUEST);
   }
 
   /**

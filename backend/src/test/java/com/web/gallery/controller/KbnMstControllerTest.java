@@ -16,8 +16,8 @@ import com.web.gallery.domain.common.KbnGroupJapaneseName;
 import com.web.gallery.domain.common.KbnJapaneseName;
 import com.web.gallery.domain.common.SortOrder;
 import com.web.gallery.helper.KbnHelper;
-import com.web.gallery.model.KbnMstModel;
-import com.web.gallery.model.KbnMstModelList;
+import com.web.gallery.model.common.KbnMstModel;
+import com.web.gallery.model.common.KbnMstModelList;
 import com.web.gallery.service.KbnMstService;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,7 +50,10 @@ public class KbnMstControllerTest {
 
   @BeforeEach
   void setUp() {
-    mockMvc = MockMvcBuilders.standaloneSetup(kbnMstController).build();
+    mockMvc =
+        MockMvcBuilders.standaloneSetup(kbnMstController)
+            .setControllerAdvice(new CommonControllerAdvice())
+            .build();
   }
 
   @Nested

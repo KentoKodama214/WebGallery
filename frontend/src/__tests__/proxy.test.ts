@@ -77,3 +77,72 @@ describe("proxy (Content-Security-Policy)", () => {
     expect(res.headers.get("content-security-policy")).toBeTruthy();
   });
 });
+
+describe("proxy (画像・API オリジンの環境変数)", () => {
+  const originalImageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
+  const originalApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  afterEach(() => {
+    if (originalImageBaseUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
+    } else {
+      process.env.NEXT_PUBLIC_IMAGE_BASE_URL = originalImageBaseUrl;
+    }
+    if (originalApiBaseUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    } else {
+      process.env.NEXT_PUBLIC_API_BASE_URL = originalApiBaseUrl;
+    }
+    jest.resetModules();
+  });
+
+  it("NEXT_PUBLIC_IMAGE_BASE_URL が不正なURLの場合は img-src に追加オリジンを含めない", async () => {
+    jest.resetModules();
+    process.env.NEXT_PUBLIC_IMAGE_BASE_URL = "not a valid url";
+    const { proxy: proxyWithInvalidImageBase } = await import("../proxy");
+
+    const res = proxyWithInvalidImageBase(makeRequest("/login"));
+    const csp = res.headers.get("content-security-policy");
+    expect(csp).toMatch(/img-src 'self' data: blob:/);
+  });
+
+  it("NEXT_PUBLIC_API_BASE_URL が不正なURLの場合は connect-src に追加オリジンを含めない", async () => {
+    jest.resetModules();
+    process.env.NEXT_PUBLIC_API_BASE_URL = "not a valid url";
+    const { proxy: proxyWithInvalidApiBase } = await import("../proxy");
+
+    const res = proxyWithInvalidApiBase(makeRequest("/login"));
+    const csp = res.headers.get("content-security-policy");
+    expect(csp).toMatch(/connect-src 'self'(?! http)/);
+  });
+
+  it("NEXT_PUBLIC_API_BASE_URL のオリジンが 'null'（opaque origin）の場合は connect-src に追加しない", async () => {
+    jest.resetModules();
+    process.env.NEXT_PUBLIC_API_BASE_URL = "data:text/plain,abc";
+    const { proxy: proxyWithOpaqueOrigin } = await import("../proxy");
+
+    const res = proxyWithOpaqueOrigin(makeRequest("/login"));
+    const csp = res.headers.get("content-security-policy");
+    expect(csp).toMatch(/connect-src 'self'(?! http)/);
+  });
+
+  it("NEXT_PUBLIC_IMAGE_BASE_URL が有効なURLの場合は img-src にそのオリジンを追加する", async () => {
+    jest.resetModules();
+    process.env.NEXT_PUBLIC_IMAGE_BASE_URL = "https://cdn.example.com/";
+    const { proxy: proxyWithImageBase } = await import("../proxy");
+
+    const res = proxyWithImageBase(makeRequest("/login"));
+    const csp = res.headers.get("content-security-policy");
+    expect(csp).toContain("https://cdn.example.com");
+  });
+
+  it("NEXT_PUBLIC_API_BASE_URL が有効なURLの場合は connect-src にそのオリジンを追加する", async () => {
+    jest.resetModules();
+    process.env.NEXT_PUBLIC_API_BASE_URL = "https://api.example.com";
+    const { proxy: proxyWithApiBase } = await import("../proxy");
+
+    const res = proxyWithApiBase(makeRequest("/login"));
+    const csp = res.headers.get("content-security-policy");
+    expect(csp).toContain("https://api.example.com");
+  });
+});

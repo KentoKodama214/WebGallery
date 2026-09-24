@@ -7,11 +7,22 @@ plugins {
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'org.dddjava.jig-gradle-plugin' version '2026.8.1'
+	id 'org.cyclonedx.bom' version '3.4.1'
 }
 
 checkstyle {
-	toolVersion = '10.21.4'
+	// 10.21.4はcommons-beanutilsに脆弱性のある1.10.1を推移的に含むため、
+	// commons-beanutils:1.11.0を直接pinしている10.26.1に更新（GHSA-wxr5-93ph-8wr9対策）
+	toolVersion = '10.26.1'
 	configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+}
+
+configurations.checkstyle {
+	resolutionStrategy {
+		// Checkstyle（doxia-core経由）が脆弱性のあるplexus-utils:3.3.0を推移的に含むため、
+		// 修正済みバージョンに強制（GHSA-6fmv-xxpf-w3cw対策）
+		force 'org.codehaus.plexus:plexus-utils:4.1.0'
+	}
 }
 
 spotless {
@@ -29,10 +40,20 @@ jacoco {
 	toolVersion = '0.8.13'
 }
 
+// 依存関係の脆弱性スキャン（OSV-Scanner）用に、全依存関係（推移的含む）を含む
+// CycloneDX SBOM（Software Bill of Materials、JSON形式）を生成する。NVDデータベースのような
+// 巨大データの同期が不要で、SBOM生成自体は数秒で完了する
+// （出力先: build/reports/cyclonedx/application.cdx.json）
+
 checkstyleTest.enabled = false
 
 group = 'com.official'
 version = '0.0.1-SNAPSHOT'
+
+// Spring Boot 4.1.1が管理するTomcatは脆弱性のある11.0.24のため、
+// 修正済みバージョンに上書き（GHSA-9xv2-5v5q-p794 / GHSA-gcx9-497g-6cp6 / GHSA-h3x4-894j-xpx5対策）。
+// Spring Bootが11.0.25以降に追従したパッチ版をリリースしたら削除可能
+ext['tomcat.version'] = '11.0.26'
 
 java {
 	sourceCompatibility = '21'
@@ -47,7 +68,7 @@ configurations {
 dependencyManagement {
 	imports {
 		mavenBom 'org.springframework.modulith:spring-modulith-bom:2.1.1'
-		mavenBom 'software.amazon.awssdk:bom:2.54.13'
+		mavenBom 'software.amazon.awssdk:bom:2.55.1'
 	}
 }
 
@@ -73,7 +94,9 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.1.1'
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 	// IPアドレスから国・地域を解決するGeoLite2（MaxMind）用リーダー
-	implementation 'com.maxmind.geoip2:geoip2:4.2.1'
+	implementation 'com.maxmind.geoip2:geoip2:5.2.0'
+	// アップロードされた画像ファイルの実バイナリからEXIF情報を抽出するためのリーダー
+	implementation 'com.drewnoakes:metadata-extractor:2.21.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 	compileOnly 'org.projectlombok:lombok:1.18.48'

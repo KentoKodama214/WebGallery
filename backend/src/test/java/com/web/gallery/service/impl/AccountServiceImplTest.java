@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.AccountPrincipal;
 import com.web.gallery.aggregate.Account;
 import com.web.gallery.config.AccountConfig;
 import com.web.gallery.config.LoginConfig;
@@ -21,26 +20,31 @@ import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.IpGeoLocation;
 import com.web.gallery.domain.common.IsDeleted;
+import com.web.gallery.domain.common.KbnClassCode;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.event.AccountAuthorityChangedEvent;
 import com.web.gallery.event.AccountDeletedEvent;
 import com.web.gallery.event.AccountLockedEvent;
 import com.web.gallery.event.AccountRegisteredEvent;
 import com.web.gallery.event.AccountUnlockedEvent;
 import com.web.gallery.event.AccountUpdatedEvent;
 import com.web.gallery.event.PhotoDeletedEvent;
+import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.ForbiddenAccountException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.GeoIpResolver;
-import com.web.gallery.model.AccountGetModel;
-import com.web.gallery.model.AccountListGetModel;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountModelList;
-import com.web.gallery.model.AccountPageModel;
-import com.web.gallery.model.LoginHistoryModel;
-import com.web.gallery.model.PhotoNoList;
+import com.web.gallery.model.account.AccountGetModel;
+import com.web.gallery.model.account.AccountListGetModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.account.AccountModelList;
+import com.web.gallery.model.account.AccountPageModel;
+import com.web.gallery.model.account.LoginHistoryModel;
+import com.web.gallery.model.common.KbnMstModelList;
+import com.web.gallery.model.photo.PhotoNoList;
 import com.web.gallery.repository.FileRepository;
 import com.web.gallery.repository.impl.AccountAggregateRepositoryImpl;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
@@ -100,8 +104,6 @@ public class AccountServiceImplTest {
 
   @Mock private GeoIpResolver geoIpResolver;
 
-  @Mock private AccountPrincipal accountPrincipal;
-
   @Mock private LoginConfig loginConfig;
 
   @Mock private AccountConfig accountConfig;
@@ -122,7 +124,7 @@ public class AccountServiceImplTest {
   class loadUserByUsername {
     @Test
     @Order(1)
-    @DisplayName("正常系")
+    @DisplayName("正常系：アカウント情報からUserDetailsを構築すること")
     void loadUserByUsername_success() {
       String accountId = "aaaaaaaa";
       String password = "AAAAAAAA";
@@ -180,9 +182,9 @@ public class AccountServiceImplTest {
       AccountModel accountModel =
           AccountModel.builder().accountId(new AccountId("aaaaaaaa")).build();
       doReturn(true).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
-      verify(accountRepositoryImpl, times(0)).regist(accountModel);
+      verify(accountRepositoryImpl, never()).regist(accountModel);
       assertFalse(accountServiceImpl.registAccount(accountModel));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -195,8 +197,82 @@ public class AccountServiceImplTest {
       doThrow(RegistFailureException.class).when(accountRepositoryImpl).regist(accountModel);
       assertThrows(
           RegistFailureException.class, () -> accountServiceImpl.registAccount(accountModel));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：出身都道府県区分コードが区分マスタに実在しない場合はBadRequestExceptionをthrowする")
+    void registAccount_invalid_prefecture_code() throws GalleryException {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("aaaaaaaa"))
+              .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("99"))
+              .build();
+      doReturn(KbnMstModelList.empty())
+          .when(kbnMstRepositoryImpl)
+          .get(new KbnClassCode(Consts.PREFECTURE));
+
+      assertThrows(BadRequestException.class, () -> accountServiceImpl.registAccount(accountModel));
+
+      verify(kbnMstRepositoryImpl).get(new KbnClassCode(Consts.PREFECTURE));
+      verify(accountRepositoryImpl, never()).isExistAccount(any(AccountId.class));
+      verify(accountRepositoryImpl, never()).regist(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：出身都道府県区分コードが未指定でも、在住都道府県区分コードが区分マスタに実在すれば登録できること")
+    void registAccount_birthplaceNull_residentValid() throws GalleryException {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("aaaaaaaa"))
+              .residentPrefectureKbnCode(new ResidentPrefectureKbnCode("13"))
+              .build();
+      doReturn(KbnMstModelList.of(List.of(newPrefectureKbnMstModel("13"))))
+          .when(kbnMstRepositoryImpl)
+          .get(new KbnClassCode(Consts.PREFECTURE));
+      doReturn(false).when(accountRepositoryImpl).isExistAccount(new AccountId("aaaaaaaa"));
+      doNothing().when(accountRepositoryImpl).regist(accountModel);
+
+      assertTrue(accountServiceImpl.registAccount(accountModel));
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("異常系：在住都道府県区分コードが区分マスタに実在しない場合はBadRequestExceptionをthrowする")
+    void registAccount_residentInvalid() throws GalleryException {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountId(new AccountId("aaaaaaaa"))
+              .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("13"))
+              .residentPrefectureKbnCode(new ResidentPrefectureKbnCode("99"))
+              .build();
+      doReturn(KbnMstModelList.of(List.of(newPrefectureKbnMstModel("13"))))
+          .when(kbnMstRepositoryImpl)
+          .get(new KbnClassCode(Consts.PREFECTURE));
+
+      assertThrows(BadRequestException.class, () -> accountServiceImpl.registAccount(accountModel));
+
+      verify(accountRepositoryImpl, never()).regist(any());
+    }
+  }
+
+  private static com.web.gallery.model.common.KbnMstModel newPrefectureKbnMstModel(String kbnCode) {
+    return com.web.gallery.model.common.KbnMstModel.builder()
+        .kbnClassCode(new KbnClassCode(Consts.PREFECTURE))
+        .kbnCode(new com.web.gallery.domain.common.KbnCode(kbnCode))
+        .sortOrder(new com.web.gallery.domain.common.SortOrder(1))
+        .kbnGroupCode(new com.web.gallery.domain.common.KbnGroupCode("group"))
+        .kbnClassJapaneseName(new com.web.gallery.domain.common.KbnClassJapaneseName("都道府県"))
+        .kbnGroupJapaneseName(new com.web.gallery.domain.common.KbnGroupJapaneseName("グループ"))
+        .kbnJapaneseName(new com.web.gallery.domain.common.KbnJapaneseName("東京都"))
+        .kbnClassEnglishName(new com.web.gallery.domain.common.KbnClassEnglishName("prefecture"))
+        .kbnGroupEnglishName(new com.web.gallery.domain.common.KbnGroupEnglishName("group"))
+        .kbnEnglishName(new com.web.gallery.domain.common.KbnEnglishName("Tokyo"))
+        .explanation(new com.web.gallery.domain.common.Explanation(""))
+        .build();
   }
 
   @Nested
@@ -239,9 +315,9 @@ public class AccountServiceImplTest {
       doReturn(true)
           .when(accountRepositoryImpl)
           .isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
-      verify(accountRepositoryImpl, times(0)).update(accountModel);
+      verify(accountRepositoryImpl, never()).update(accountModel);
       assertTrue(accountServiceImpl.updateAccount(accountModel, null));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -259,7 +335,7 @@ public class AccountServiceImplTest {
       doThrow(UpdateFailureException.class).when(accountRepositoryImpl).update(accountModel);
       assertThrows(
           UpdateFailureException.class, () -> accountServiceImpl.updateAccount(accountModel, null));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -314,8 +390,8 @@ public class AccountServiceImplTest {
           ForbiddenAccountException.class,
           () -> accountServiceImpl.updateAccount(accountModel, new Password("wrongpassword")));
 
-      verify(accountRepositoryImpl, times(0)).update(any());
-      verify(refreshTokenRepositoryImpl, times(0)).revokeAllByAccountNo(any());
+      verify(accountRepositoryImpl, never()).update(any());
+      verify(refreshTokenRepositoryImpl, never()).revokeAllByAccountNo(any());
       // 再認証失敗はインメモリのスロットルに記録される
       verify(reauthenticationThrottle, times(1)).recordFailure(1L);
     }
@@ -343,7 +419,7 @@ public class AccountServiceImplTest {
 
       assertFalse(accountServiceImpl.updateAccount(accountModel, null));
 
-      verify(refreshTokenRepositoryImpl, times(0)).revokeAllByAccountNo(any());
+      verify(refreshTokenRepositoryImpl, never()).revokeAllByAccountNo(any());
     }
 
     @Test
@@ -404,9 +480,39 @@ public class AccountServiceImplTest {
           ForbiddenAccountException.class,
           () -> accountServiceImpl.updateAccount(accountModel, new Password("stored-hash")));
 
-      verify(accountRepositoryImpl, times(0)).update(any());
-      verify(passwordEncoder, times(0)).matches(any(), any());
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(accountRepositoryImpl, never()).update(any());
+      verify(passwordEncoder, never()).matches(any(), any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("異常系：ログイン失敗回数が上限未満でも管理者ロック中のアカウントは本人確認を通さず更新しない")
+    void updateAccount_blocked_when_admin_locked() throws GalleryException {
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .password(new Password("newpassword01"))
+              .build();
+      AccountModel storedAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .password(new Password("stored-hash"))
+              .isAdminLocked(new IsAdminLocked(true))
+              .build();
+      doReturn(false)
+          .when(accountRepositoryImpl)
+          .isExistAccount(new AccountNo(1L), new AccountId("aaaaaaaa"));
+      doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () -> accountServiceImpl.updateAccount(accountModel, new Password("stored-hash")));
+
+      verify(accountRepositoryImpl, never()).update(any());
+      verify(passwordEncoder, never()).matches(any(), any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
     }
   }
 
@@ -571,7 +677,7 @@ public class AccountServiceImplTest {
   @Nested
   @Order(7)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class unlockAccountTest {
+  class unlockAccount {
     @Test
     @Order(1)
     @DisplayName("正常系：管理者ロックとログイン失敗回数の両方が解除されること")
@@ -609,7 +715,7 @@ public class AccountServiceImplTest {
   @Nested
   @Order(8)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class lockAccountTest {
+  class lockAccount {
     @Test
     @Order(1)
     @DisplayName("正常系：管理者ロックフラグが立てられ、ログイン失敗回数も上限値に設定されること")
@@ -648,7 +754,7 @@ public class AccountServiceImplTest {
   @Nested
   @Order(9)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class deleteAccountTest {
+  class deleteAccount {
     @Test
     @Order(1)
     @DisplayName("正常系：アカウントを削除する")
@@ -727,8 +833,8 @@ public class AccountServiceImplTest {
               accountServiceImpl.deleteAccount(
                   new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("wrongpassword")));
 
-      verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
-      verify(applicationEventPublisher, times(0)).publishEvent(any());
+      verify(accountAggregateRepositoryImpl, never()).delete(any(Account.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
       // 再認証失敗はインメモリのスロットルに記録される
       verify(reauthenticationThrottle, times(1)).recordFailure(1L);
     }
@@ -747,7 +853,7 @@ public class AccountServiceImplTest {
 
       // 早期returnせず、ダミーハッシュに対して照合を1回行う
       verify(passwordEncoder, times(1)).matches(eq("password01"), anyString());
-      verify(accountAggregateRepositoryImpl, times(0)).delete(any(Account.class));
+      verify(accountAggregateRepositoryImpl, never()).delete(any(Account.class));
       verify(reauthenticationThrottle, times(1)).recordFailure(1L);
     }
   }
@@ -758,7 +864,7 @@ public class AccountServiceImplTest {
   class handleAuthenticationSuccess {
     @Test
     @Order(1)
-    @DisplayName("正常系")
+    @DisplayName("正常系：ログイン失敗回数をリセットし、ログイン履歴を記録すること")
     void handle_success() throws GalleryException {
       String username = "aaaaaaaa";
       String password = "AAAAAAAA";
@@ -879,6 +985,25 @@ public class AccountServiceImplTest {
 
       verifyNoInteractions(loginHistoryRepositoryImpl);
     }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：対象アカウントが取得できない場合、何も更新せず終了すること")
+    void handle_accountNotFound() throws GalleryException {
+      String username = "aaaaaaaa";
+      String password = "AAAAAAAA";
+
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(username, password, new ArrayList<>());
+      AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
+
+      doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
+
+      accountServiceImpl.handle(event);
+
+      verify(accountRepositoryImpl, never()).updateLoginFailureCount(any());
+      verifyNoInteractions(loginHistoryRepositoryImpl);
+    }
   }
 
   @Nested
@@ -938,7 +1063,7 @@ public class AccountServiceImplTest {
       doReturn(null).when(accountRepositoryImpl).getByAccountId(new AccountId(username));
 
       accountServiceImpl.handle(event);
-      verify(accountRepositoryImpl, times(0)).incrementLoginFailureCount(any(AccountNo.class));
+      verify(accountRepositoryImpl, never()).incrementLoginFailureCount(any(AccountNo.class));
     }
 
     @Test
@@ -1034,8 +1159,8 @@ public class AccountServiceImplTest {
           ForbiddenAccountException.class,
           () -> accountServiceImpl.updateAccount(accountModel, new Password("stored-hash")));
 
-      verify(passwordEncoder, times(0)).matches(any(), any());
-      verify(accountRepositoryImpl, times(0)).update(any());
+      verify(passwordEncoder, never()).matches(any(), any());
+      verify(accountRepositoryImpl, never()).update(any());
       // ロックアウト中の試行でも直近失敗時刻を更新する（スライディングウィンドウ）
       verify(reauthenticationThrottle, times(1)).recordFailure(1L);
     }
@@ -1066,6 +1191,82 @@ public class AccountServiceImplTest {
       accountServiceImpl.updateAccount(accountModel, new Password("oldpassword01"));
 
       verify(reauthenticationThrottle, times(1)).reset(1L);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：現在のパスワードが未入力（null）の場合でもBCrypt照合を1回行い、不一致として扱うこと")
+    void reauth_currentPasswordNull_treatedAsMismatch() {
+      AccountModel storedAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .password(new Password("stored-hash"))
+              .build();
+      doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () ->
+              accountServiceImpl.deleteAccount(new AccountNo(1L), new AccountId("aaaaaaaa"), null));
+
+      verify(passwordEncoder, times(1)).matches(eq(""), anyString());
+      verify(accountAggregateRepositoryImpl, never()).delete(any(Account.class));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：対象アカウントにパスワードが設定されていない場合でもBCrypt照合を1回行い、不一致として扱うこと")
+    void reauth_storedPasswordNull_treatedAsMismatch() {
+      AccountModel storedAccount = AccountModel.builder().accountNo(new AccountNo(1L)).build();
+      doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () ->
+              accountServiceImpl.deleteAccount(
+                  new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01")));
+
+      verify(passwordEncoder, times(1)).matches(eq("password01"), anyString());
+      verify(accountAggregateRepositoryImpl, never()).delete(any(Account.class));
+    }
+  }
+
+  @Nested
+  @Order(13)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class updateAccountAuthority {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：権限が更新され、AccountAuthorityChangedEventが発行されること")
+    void updateAccountAuthority_success() throws GalleryException {
+      ArgumentCaptor<AccountModel> captor = ArgumentCaptor.forClass(AccountModel.class);
+      doNothing().when(accountRepositoryImpl).updateAuthority(captor.capture());
+
+      AccountModel accountModel = AccountModel.forAuthorityChange(1L, AuthorityEnum.NORMAL);
+      accountServiceImpl.updateAccountAuthority(accountModel);
+
+      AccountModel capturedModel = captor.getValue();
+      assertEquals(new AccountNo(1L), capturedModel.getAccountNo());
+      assertEquals(AuthorityEnum.NORMAL, capturedModel.getAuthorityKbn());
+
+      ArgumentCaptor<AccountAuthorityChangedEvent> eventCaptor =
+          ArgumentCaptor.forClass(AccountAuthorityChangedEvent.class);
+      verify(applicationEventPublisher, times(1)).publishEvent(eventCaptor.capture());
+      assertEquals(new AccountNo(1L), eventCaptor.getValue().accountNo());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：UpdateFailureExceptionをthrowする")
+    void updateAccountAuthority_UpdateFailureException() throws GalleryException {
+      doThrow(UpdateFailureException.class)
+          .when(accountRepositoryImpl)
+          .updateAuthority(any(AccountModel.class));
+
+      AccountModel accountModel = AccountModel.forAuthorityChange(999L, AuthorityEnum.NORMAL);
+      assertThrows(
+          UpdateFailureException.class,
+          () -> accountServiceImpl.updateAccountAuthority(accountModel));
     }
   }
 }

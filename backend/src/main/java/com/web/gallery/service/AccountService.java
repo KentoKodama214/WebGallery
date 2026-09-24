@@ -4,9 +4,9 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.AccountListGetModel;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.model.account.AccountListGetModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.account.AccountPageModel;
 
 /** アカウントに関するビジネスロジックを行うServiceクラス */
 public interface AccountService {
@@ -72,6 +72,14 @@ public interface AccountService {
    * @throws GalleryException 更新に失敗した場合
    */
   void lockAccount(AccountNo accountNo) throws GalleryException;
+
+  /**
+   * 管理者用：アカウントの権限を変更する
+   *
+   * @param accountModel {@link AccountModel}（{@link AccountModel#forAuthorityChange}で生成したもの）
+   * @throws GalleryException 更新に失敗した場合
+   */
+  void updateAccountAuthority(AccountModel accountModel) throws GalleryException;
 
   /**
    * アカウントを削除する

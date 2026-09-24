@@ -1,6 +1,6 @@
 package com.web.gallery.dto;
 
-import com.web.gallery.model.PhotoDetailSearchModel;
+import com.web.gallery.model.photo.PhotoDetailSearchModel;
 import java.util.Objects;
 import lombok.Data;
 

@@ -12,8 +12,8 @@ import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.InvalidRefreshTokenException;
-import com.web.gallery.model.AuthTokenModel;
-import com.web.gallery.model.RefreshTokenModel;
+import com.web.gallery.model.auth.AuthTokenModel;
+import com.web.gallery.model.auth.RefreshTokenModel;
 import com.web.gallery.repository.RefreshTokenRepository;
 import com.web.gallery.service.AccountService;
 import com.web.gallery.service.impl.AuthServiceImpl;
@@ -65,13 +65,17 @@ public class AuthServiceImplIntegrationTest {
 
     // 正常なアカウント（ログイン失敗回数0）
     jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'testuser01', 'テストユーザー01', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, false)",
+        "INSERT INTO common.account VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'testuser01', 'テストユーザー01', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false)",
         hashedPassword);
+    jdbcTemplate.update(
+        "INSERT INTO common.account_authority VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator')");
 
     // ロック状態のアカウント（ログイン失敗回数3・直近にロックされたばかりの想定で更新日時を現在時刻にする）
     jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 3, false)",
+        "INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 3, false)",
         hashedPassword);
+    jdbcTemplate.update(
+        "INSERT INTO common.account_authority VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), 'administrator')");
 
     jdbcTemplate.update("ALTER SEQUENCE common.account_account_no_seq RESTART 3");
   }
@@ -267,6 +271,28 @@ public class AuthServiceImplIntegrationTest {
               authServiceImpl.login(
                   new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS));
     }
+
+    @Test
+    @Order(8)
+    @DisplayName("正常系：ロック解除時間経過後は自動解除され、正しいパスワードでログインできる")
+    void login_autoUnlocks_afterLockDurationElapsed() {
+      // lockDurationMinutes（テスト設定で30分）より前に更新されたことにする
+      jdbcTemplate.update(
+          "UPDATE common.account SET updated_at = ? WHERE account_id = 'lockeduser'",
+          OffsetDateTime.now().minusMinutes(31));
+
+      AuthTokenModel result =
+          authServiceImpl.login(
+              new AccountId("lockeduser"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
+
+      assertNotNull(result.getAccessToken().value());
+
+      Integer failureCount =
+          jdbcTemplate.queryForObject(
+              "SELECT login_failure_count FROM common.account WHERE account_id = 'lockeduser'",
+              Integer.class);
+      assertEquals(0, failureCount);
+    }
   }
 
   @Nested
@@ -405,6 +431,30 @@ public class AuthServiceImplIntegrationTest {
 
     @Test
     @Order(7)
+    @DisplayName("正常系：ロック解除時間経過後はリフレッシュ時に自動解除され、リフレッシュが成功する")
+    void refresh_autoUnlocks_afterLockDurationElapsed() {
+      // ログインしてリフレッシュトークンを取得
+      AuthTokenModel loginResult =
+          authServiceImpl.login(
+              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
+      String refreshToken = loginResult.getRefreshToken().value();
+
+      // ロック状態かつ、lockDurationMinutes（テスト設定で30分）より前に更新されたことにする
+      jdbcTemplate.update(
+          "UPDATE common.account SET login_failure_count = 3, updated_at = ? WHERE account_no = 1",
+          OffsetDateTime.now().minusMinutes(31));
+
+      AuthTokenModel refreshResult = authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
+
+      assertNotNull(refreshResult.getAccessToken().value());
+      Integer failureCount =
+          jdbcTemplate.queryForObject(
+              "SELECT login_failure_count FROM common.account WHERE account_no = 1", Integer.class);
+      assertEquals(0, failureCount);
+    }
+
+    @Test
+    @Order(8)
     @DisplayName("異常系：アカウント削除後のリフレッシュトークンの場合、NPEではなくInvalidRefreshTokenExceptionをthrowする")
     void refresh_after_account_deleted() {
       // ログインしてリフレッシュトークンを取得
@@ -418,6 +468,7 @@ public class AuthServiceImplIntegrationTest {
       // 直前のlogin()でlogin_historyへの外部キー制約付き行が作られているため、
       // アプリの削除フロー同様に先に削除しておく
       jdbcTemplate.update("DELETE FROM common.login_history WHERE account_no = ?", 1L);
+      jdbcTemplate.update("DELETE FROM common.account_authority WHERE account_no = ?", 1L);
       jdbcTemplate.update("DELETE FROM common.account WHERE account_no = ?", 1L);
 
       // 削除済みアカウントのリフレッシュトークンでリフレッシュ
@@ -429,7 +480,7 @@ public class AuthServiceImplIntegrationTest {
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     @DisplayName("異常系：アカウント削除によりリフレッシュトークンが失効し、リフレッシュに失敗する")
     void refresh_fails_after_delete_account() throws GalleryException {
       // ログインしてリフレッシュトークンを取得

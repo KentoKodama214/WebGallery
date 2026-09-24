@@ -7,32 +7,56 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.web.gallery.config.PhotoConfig;
-import com.web.gallery.controller.response.PhotoListGetResponse;
+import com.web.gallery.constant.Consts;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.Address;
+import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.common.Latitude;
+import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.Caption;
+import com.web.gallery.domain.photo.ExifData;
+import com.web.gallery.domain.photo.FValue;
 import com.web.gallery.domain.photo.FavoriteCount;
+import com.web.gallery.domain.photo.FocalLength;
 import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.IsFavorite;
+import com.web.gallery.domain.photo.IsLocationPublic;
+import com.web.gallery.domain.photo.Iso;
+import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.domain.photo.PhotoAt;
+import com.web.gallery.domain.photo.PhotoEnglishTitle;
+import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.photo.ShutterSpeed;
+import com.web.gallery.domain.photo.TagEnglishName;
+import com.web.gallery.domain.photo.TagJapaneseName;
+import com.web.gallery.domain.photo.TagNo;
 import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.helper.ClientIpResolver;
+import com.web.gallery.helper.PhotoDirectionResolver;
+import com.web.gallery.helper.PhotoExifExtractor;
 import com.web.gallery.helper.SessionHelper;
-import com.web.gallery.model.PhotoDeleteModelList;
-import com.web.gallery.model.PhotoDetailModelList;
-import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoModel;
-import com.web.gallery.model.PhotoModelList;
-import com.web.gallery.model.PhotoPageModel;
-import com.web.gallery.model.PhotoSaveResultModel;
-import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.model.photo.PhotoDeleteModelList;
+import com.web.gallery.model.photo.PhotoDetailGetModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoDetailModelList;
+import com.web.gallery.model.photo.PhotoListGetModel;
+import com.web.gallery.model.photo.PhotoModel;
+import com.web.gallery.model.photo.PhotoModelList;
+import com.web.gallery.model.photo.PhotoPageModel;
+import com.web.gallery.model.photo.PhotoSaveResultModel;
+import com.web.gallery.model.photo.PhotoTagModel;
+import com.web.gallery.model.photo.PhotoTagModelList;
+import com.web.gallery.policy.PhotoExifDataMergePolicy;
 import com.web.gallery.service.impl.PhotoServiceImpl;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -54,6 +78,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -72,11 +97,23 @@ public class PhotoControllerTest {
 
   @Mock private ClientIpResolver clientIpResolver;
 
+  @Mock private PhotoDirectionResolver photoDirectionResolver;
+
+  @Mock private PhotoExifExtractor photoExifExtractor;
+
+  @Mock private PhotoExifDataMergePolicy photoExifDataMergePolicy;
+
   private MockMvc mockMvc;
 
   @BeforeEach
   void setUp() {
     lenient().when(clientIpResolver.resolve(any())).thenReturn(new IpAddress("203.0.113.1"));
+    // 画像バイナリは実際のJPEGではないためEXIF抽出は常に空とし、クライアント申告値のみが採用される状態を再現する
+    // （実際の抽出・マージロジックはPhotoExifExtractorTest・PhotoExifDataMergePolicyTestで個別に検証する）
+    lenient().when(photoExifExtractor.extract(any())).thenReturn(ExifData.empty());
+    lenient()
+        .when(photoExifDataMergePolicy.merge(any(), any()))
+        .thenAnswer(invocation -> invocation.getArgument(1));
     mockMvc =
         MockMvcBuilders.standaloneSetup(photoController)
             .setControllerAdvice(new CommonControllerAdvice())
@@ -362,30 +399,6 @@ public class PhotoControllerTest {
 
     @Test
     @Order(5)
-    @DisplayName("異常系：ページ番号が0以下。BadRequestExceptionをthrowする")
-    void getPhotoList_BadRequestException_pageNo_not_positive() throws Exception {
-      mockMvc
-          .perform(get("/api/v1/accounts/aaaaaaaa/photos").param("pageNo", "0"))
-          .andExpect(status().isBadRequest());
-
-      verify(photoServiceImpl, times(0)).getPhotoList(any(PhotoListGetModel.class));
-    }
-
-    @Test
-    @Order(6)
-    @DisplayName("異常系：タグの指定数が上限（20件）を超える場合。BadRequestExceptionをthrowする")
-    void getPhotoList_BadRequestException_tagList_exceeds_maxSize() throws Exception {
-      String tooManyTags = String.join(" ", Collections.nCopies(21, "tag"));
-
-      mockMvc
-          .perform(get("/api/v1/accounts/aaaaaaaa/photos").param("tagList", tooManyTags))
-          .andExpect(status().isBadRequest());
-
-      verify(photoServiceImpl, times(0)).getPhotoList(any(PhotoListGetModel.class));
-    }
-
-    @Test
-    @Order(7)
     @DisplayName("正常系：タグに連続した空白が含まれていても、空文字トークンは除去されて渡される")
     void getPhotoList_tagList_ignores_blank_tokens() throws Exception {
       doReturn(1L).when(sessionHelper).getAccountNo();
@@ -407,6 +420,30 @@ public class PhotoControllerTest {
       List<String> actualTagList = photoListGetModelCaptor.getValue().getTagList();
       assertEquals(List.of("太陽", "海"), actualTagList);
     }
+
+    @Test
+    @Order(6)
+    @DisplayName("異常系：ページ番号が0以下。BadRequestExceptionをthrowする")
+    void getPhotoList_BadRequestException_pageNo_not_positive() throws Exception {
+      mockMvc
+          .perform(get("/api/v1/accounts/aaaaaaaa/photos").param("pageNo", "0"))
+          .andExpect(status().isBadRequest());
+
+      verify(photoServiceImpl, times(0)).getPhotoList(any(PhotoListGetModel.class));
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("異常系：タグの指定数が上限（20件）を超える場合。BadRequestExceptionをthrowする")
+    void getPhotoList_BadRequestException_tagList_exceeds_maxSize() throws Exception {
+      String tooManyTags = String.join(" ", Collections.nCopies(21, "tag"));
+
+      mockMvc
+          .perform(get("/api/v1/accounts/aaaaaaaa/photos").param("tagList", tooManyTags))
+          .andExpect(status().isBadRequest());
+
+      verify(photoServiceImpl, times(0)).getPhotoList(any(PhotoListGetModel.class));
+    }
   }
 
   @Nested
@@ -416,79 +453,11 @@ public class PhotoControllerTest {
     @Test
     @Order(1)
     @SuppressWarnings("unchecked")
-    @DisplayName("正常系：写真タグなし、撮影日時なし。Nullパラメータあり")
-    void savePhoto_addPhoto_not_photoTag_and_photoAt() throws Exception {
-      String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
-      String photoJapaneseTitle = "タイトル";
-      MockMultipartFile multipartFile =
-          new MockMultipartFile(
-              "imageFile", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
-
-      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-      doReturn(1L).when(sessionHelper).getAccountNo();
-      doReturn(false).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
-
-      ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
-          ArgumentCaptor.forClass(PhotoDetailModelList.class);
-      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
-      doReturn(
-              PhotoSaveResultModel.builder()
-                  .photoNo(new PhotoNo(1L))
-                  .imageFilePath(new ImageFilePath(imageFilePath))
-                  .build())
-          .when(photoServiceImpl)
-          .savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
-
-      mockMvc
-          .perform(
-              multipart("/api/v1/accounts/aaaaaaaa/photos")
-                  .file(multipartFile)
-                  .param("imageFilePath", imageFilePath)
-                  .param("photoJapaneseTitle", photoJapaneseTitle)
-                  .param("directionKbn", "VERTICAL"))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.httpStatus").value(200))
-          .andExpect(jsonPath("$.isSuccess").value(true))
-          .andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
-
-      PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
-      assertEquals(1, photoDetailModelList.size());
-      assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
-      assertNull(photoDetailModelList.getFirst().getPhotoNo());
-      assertNull(photoDetailModelList.getFirst().getIsFavorite());
-      assertNull(photoDetailModelList.getFirst().getPhotoAt());
-      assertNull(photoDetailModelList.getFirst().getLocationNo());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().address());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().latitude());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().longitude());
-      assertNull(photoDetailModelList.getFirst().getLocationName());
-      assertNotNull(photoDetailModelList.getFirst().getImageFile());
-      assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
-      assertEquals(
-          photoJapaneseTitle, photoDetailModelList.getFirst().getPhotoJapaneseTitle().value());
-      assertNull(photoDetailModelList.getFirst().getPhotoEnglishTitle());
-      assertNull(photoDetailModelList.getFirst().getCaption());
-      assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
-      assertNull(photoDetailModelList.getFirst().getExifData().focalLength());
-      assertNull(photoDetailModelList.getFirst().getExifData().fValue());
-      assertNull(photoDetailModelList.getFirst().getExifData().shutterSpeed());
-      assertNull(photoDetailModelList.getFirst().getExifData().iso());
-      assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
-
-      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
-    }
-
-    @Test
-    @Order(2)
-    @SuppressWarnings("unchecked")
     @DisplayName("正常系：写真タグあり、撮影日時あり。Nullパラメータなし")
-    void savePhoto_addPhoto_with_photoTag_and_photoAt() throws Exception {
+    void savePhoto_update_with_photoTag_and_photoAt() throws Exception {
       String address = "東京都港区芝公園４丁目２−８";
       String locationName = "東京タワー";
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
-      MockMultipartFile multipartFile =
-          new MockMultipartFile(
-              "imageFile", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
       String photoJapaneseTitle = "タイトル";
       String photoEnglishTitle = "title";
       String caption = "キャプション";
@@ -505,8 +474,7 @@ public class PhotoControllerTest {
 
       mockMvc
           .perform(
-              multipart("/api/v1/accounts/aaaaaaaa/photos")
-                  .file(multipartFile)
+              multipart(HttpMethod.PUT, "/api/v1/accounts/aaaaaaaa/photos")
                   .param("photoNo", "1")
                   .param("isFavorite", "false")
                   .param("photoAt", "2000-12-01T00:00")
@@ -524,21 +492,13 @@ public class PhotoControllerTest {
                   .param("fValue", "8.0")
                   .param("shutterSpeed", "0.001")
                   .param("iso", "100")
-                  .param("photoTagRegistRequestList[0].accountNo", "1")
-                  .param("photoTagRegistRequestList[0].photoNo", "1")
-                  .param("photoTagRegistRequestList[0].tagNo", "1")
                   .param("photoTagRegistRequestList[0].tagJapaneseName", "太陽")
                   .param("photoTagRegistRequestList[0].tagEnglishName", "sun")
-                  .param("photoTagRegistRequestList[1].accountNo", "1")
-                  .param("photoTagRegistRequestList[1].photoNo", "1")
-                  .param("photoTagRegistRequestList[1].tagNo", "2")
                   .param("photoTagRegistRequestList[1].tagJapaneseName", "海"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.httpStatus").value(200))
           .andExpect(jsonPath("$.isSuccess").value(true))
           .andExpect(jsonPath("$.message").value("写真登録が完了しました。"));
-
-      verify(photoServiceImpl, times(0)).isReachedUpperLimit(new AccountNo(1L));
 
       PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
       assertEquals(1, photoDetailModelList.size());
@@ -559,7 +519,6 @@ public class PhotoControllerTest {
           BigDecimal.valueOf(135.000)
               .compareTo(photoDetailModelList.getFirst().getGeoLocation().longitude().value()));
       assertEquals(locationName, photoDetailModelList.getFirst().getLocationName().value());
-      assertNotNull(photoDetailModelList.getFirst().getImageFile());
       assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
       assertEquals(
           photoJapaneseTitle, photoDetailModelList.getFirst().getPhotoJapaneseTitle().value());
@@ -578,7 +537,7 @@ public class PhotoControllerTest {
               .compareTo(photoDetailModelList.getFirst().getExifData().shutterSpeed().value()));
       assertEquals(100, photoDetailModelList.getFirst().getExifData().iso().value());
 
-      // アカウント番号・写真番号・タグ番号はリクエスト値を採用せず、集約側で採番・振り直しされるためこの時点ではnull（accountNoはセッション値）
+      // 写真番号・タグ番号はリクエスト値を採用せず、集約側で採番・振り直しされるためこの時点ではnull（accountNoはセッション値）
       assertEquals(
           new AccountNo(1L),
           photoDetailModelList.getFirst().getPhotoTagModelList().get(0).getAccountNo());
@@ -625,17 +584,37 @@ public class PhotoControllerTest {
     }
 
     @Test
-    @Order(3)
+    @Order(2)
     @SuppressWarnings("unchecked")
     @DisplayName("異常系：アクセス不正。ForbiddenAccountExceptionをthrowする")
     void savePhoto_ForbiddenAccountException() throws Exception {
       doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
       mockMvc
-          .perform(multipart("/api/v1/accounts/aaaaaaaa/photos").param("directionKbn", "VERTICAL"))
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/aaaaaaaa/photos")
+                  .param("directionKbn", "VERTICAL"))
           .andExpect(status().isForbidden());
 
-      verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(AccountNo.class));
+      verify(photoServiceImpl, times(0))
+          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+    }
+
+    @Test
+    @Order(3)
+    @SuppressWarnings("unchecked")
+    @DisplayName("異常系：写真番号が未指定。BadRequestExceptionをthrowする")
+    void savePhoto_BadRequestException_photoNo_is_null() throws Exception {
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+
+      mockMvc
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/aaaaaaaa/photos")
+                  .param("imageFilePath", "https://localhost:8080/image/aaaaaaaa/DSC111.jpg")
+                  .param("photoJapaneseTitle", "タイトル")
+                  .param("directionKbn", "VERTICAL"))
+          .andExpect(status().isBadRequest());
+
       verify(photoServiceImpl, times(0))
           .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
     }
@@ -643,14 +622,16 @@ public class PhotoControllerTest {
     @Test
     @Order(4)
     @SuppressWarnings("unchecked")
-    @DisplayName("異常系：登録上限に達している。PhotoNotAdditableExceptionをthrowする")
-    void savePhoto_PhotoNotAdditableException() throws Exception {
+    @DisplayName("異常系：画像ファイルパスが未指定。BadRequestExceptionをthrowする")
+    void savePhoto_BadRequestException_filepath_is_null() throws Exception {
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-      doReturn(1L).when(sessionHelper).getAccountNo();
-      doReturn(true).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
 
       mockMvc
-          .perform(multipart("/api/v1/accounts/aaaaaaaa/photos").param("directionKbn", "VERTICAL"))
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/aaaaaaaa/photos")
+                  .param("photoNo", "1")
+                  .param("photoJapaneseTitle", "タイトル")
+                  .param("directionKbn", "VERTICAL"))
           .andExpect(status().isBadRequest());
 
       verify(photoServiceImpl, times(0))
@@ -660,14 +641,17 @@ public class PhotoControllerTest {
     @Test
     @Order(5)
     @SuppressWarnings("unchecked")
-    @DisplayName("異常系：画像ファイル、ファイルパスともにnull。BadRequestExceptionをthrowする")
-    void savePhoto_BadRequestException_file_and_filepath_is_null() throws Exception {
+    @DisplayName("異常系：画像ファイルパスが空文字。BadRequestExceptionをthrowする")
+    void savePhoto_BadRequestException_filepath_is_blank() throws Exception {
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-      doReturn(1L).when(sessionHelper).getAccountNo();
-      doReturn(false).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
 
       mockMvc
-          .perform(multipart("/api/v1/accounts/aaaaaaaa/photos").param("directionKbn", "VERTICAL"))
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/aaaaaaaa/photos")
+                  .param("photoNo", "1")
+                  .param("imageFilePath", "")
+                  .param("photoJapaneseTitle", "タイトル")
+                  .param("directionKbn", "VERTICAL"))
           .andExpect(status().isBadRequest());
 
       verify(photoServiceImpl, times(0))
@@ -677,36 +661,16 @@ public class PhotoControllerTest {
     @Test
     @Order(6)
     @SuppressWarnings("unchecked")
-    @DisplayName("異常系：画像ファイルがnull、ファイルパスがblank。BadRequestExceptionをthrowする")
-    void savePhoto_BadRequestException_file_and_filepath_is_blank() throws Exception {
-      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-      doReturn(1L).when(sessionHelper).getAccountNo();
-      doReturn(false).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
-
-      mockMvc
-          .perform(
-              multipart("/api/v1/accounts/aaaaaaaa/photos")
-                  .param("imageFilePath", "")
-                  .param("directionKbn", "VERTICAL"))
-          .andExpect(status().isBadRequest());
-
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
-    }
-
-    @Test
-    @Order(7)
-    @SuppressWarnings("unchecked")
-    @DisplayName("異常系：画像ファイル、ファイルパス以外のパラメータ不正。BadRequestExceptionをthrowする")
+    @DisplayName("異常系：画像ファイルパス以外のパラメータ不正。BadRequestExceptionをthrowする")
     void savePhoto_BadRequestException_others() throws Exception {
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-      doReturn(1L).when(sessionHelper).getAccountNo();
-      doReturn(false).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
 
       mockMvc
           .perform(
-              multipart("/api/v1/accounts/aaaaaaaa/photos")
+              multipart(HttpMethod.PUT, "/api/v1/accounts/aaaaaaaa/photos")
+                  .param("photoNo", "1")
                   .param("imageFilePath", "https://localhost:8080/image/aaaaaaaa/DSC111.jpg")
+                  .param("photoJapaneseTitle", "タイトル")
                   .param("directionKbn", "VERTICAL")
                   .param("focalLength", "-1"))
           .andExpect(status().isBadRequest());
@@ -716,135 +680,31 @@ public class PhotoControllerTest {
     }
 
     @Test
+    @Order(7)
+    @SuppressWarnings("unchecked")
+    @DisplayName("異常系：写真タイトル日本語名が未入力。BadRequestExceptionをthrowする")
+    void savePhoto_BadRequestException_photoJapaneseTitle_blank() throws Exception {
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+
+      mockMvc
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/aaaaaaaa/photos")
+                  .param("photoNo", "1")
+                  .param("imageFilePath", "https://localhost:8080/image/aaaaaaaa/DSC111.jpg")
+                  .param("directionKbn", "VERTICAL"))
+          .andExpect(status().isBadRequest());
+
+      verify(photoServiceImpl, times(0))
+          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+    }
+
+    @Test
     @Order(8)
-    @SuppressWarnings("unchecked")
-    @DisplayName("異常系：FileDuplicateExceptionをthrowする")
-    void savePhoto_FileDuplicateException() throws Exception {
-      String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
-      String photoJapaneseTitle = "タイトル";
-      MockMultipartFile multipartFile =
-          new MockMultipartFile(
-              "imageFile", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
-
-      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-      doReturn(1L).when(sessionHelper).getAccountNo();
-
-      ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
-          ArgumentCaptor.forClass(PhotoDetailModelList.class);
-      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
-      doThrow(FileDuplicateException.class)
-          .when(photoServiceImpl)
-          .savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
-
-      mockMvc
-          .perform(
-              multipart("/api/v1/accounts/aaaaaaaa/photos")
-                  .file(multipartFile)
-                  .param("photoNo", "1")
-                  .param("imageFilePath", imageFilePath)
-                  .param("photoJapaneseTitle", photoJapaneseTitle)
-                  .param("directionKbn", "VERTICAL"))
-          .andExpect(status().isConflict());
-
-      verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(AccountNo.class));
-
-      PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
-      assertEquals(1, photoDetailModelList.size());
-      assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
-      assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
-      assertNull(photoDetailModelList.getFirst().getIsFavorite());
-      assertNull(photoDetailModelList.getFirst().getPhotoAt());
-      assertNull(photoDetailModelList.getFirst().getLocationNo());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().address());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().latitude());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().longitude());
-      assertNull(photoDetailModelList.getFirst().getLocationName());
-      assertNotNull(photoDetailModelList.getFirst().getImageFile());
-      assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
-      assertEquals(
-          photoJapaneseTitle, photoDetailModelList.getFirst().getPhotoJapaneseTitle().value());
-      assertNull(photoDetailModelList.getFirst().getPhotoEnglishTitle());
-      assertNull(photoDetailModelList.getFirst().getCaption());
-      assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
-      assertNull(photoDetailModelList.getFirst().getExifData().focalLength());
-      assertNull(photoDetailModelList.getFirst().getExifData().fValue());
-      assertNull(photoDetailModelList.getFirst().getExifData().shutterSpeed());
-      assertNull(photoDetailModelList.getFirst().getExifData().iso());
-      assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
-
-      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
-    }
-
-    @Test
-    @Order(9)
-    @SuppressWarnings("unchecked")
-    @DisplayName("異常系：RegistFailureExceptionをthrowする")
-    void savePhoto_RegistFailureException() throws Exception {
-      String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
-      String photoJapaneseTitle = "タイトル";
-      MockMultipartFile multipartFile =
-          new MockMultipartFile(
-              "imageFile", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
-
-      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-      doReturn(1L).when(sessionHelper).getAccountNo();
-
-      ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
-          ArgumentCaptor.forClass(PhotoDetailModelList.class);
-      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
-      doThrow(RegistFailureException.class)
-          .when(photoServiceImpl)
-          .savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
-
-      mockMvc
-          .perform(
-              multipart("/api/v1/accounts/aaaaaaaa/photos")
-                  .file(multipartFile)
-                  .param("photoNo", "1")
-                  .param("imageFilePath", imageFilePath)
-                  .param("photoJapaneseTitle", photoJapaneseTitle)
-                  .param("directionKbn", "VERTICAL"))
-          .andExpect(status().isConflict());
-
-      verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(AccountNo.class));
-
-      PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
-      assertEquals(1, photoDetailModelList.size());
-      assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
-      assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
-      assertNull(photoDetailModelList.getFirst().getIsFavorite());
-      assertNull(photoDetailModelList.getFirst().getPhotoAt());
-      assertNull(photoDetailModelList.getFirst().getLocationNo());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().address());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().latitude());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().longitude());
-      assertNull(photoDetailModelList.getFirst().getLocationName());
-      assertNotNull(photoDetailModelList.getFirst().getImageFile());
-      assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
-      assertEquals(
-          photoJapaneseTitle, photoDetailModelList.getFirst().getPhotoJapaneseTitle().value());
-      assertNull(photoDetailModelList.getFirst().getPhotoEnglishTitle());
-      assertNull(photoDetailModelList.getFirst().getCaption());
-      assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
-      assertNull(photoDetailModelList.getFirst().getExifData().focalLength());
-      assertNull(photoDetailModelList.getFirst().getExifData().fValue());
-      assertNull(photoDetailModelList.getFirst().getExifData().shutterSpeed());
-      assertNull(photoDetailModelList.getFirst().getExifData().iso());
-      assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
-
-      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
-    }
-
-    @Test
-    @Order(10)
     @SuppressWarnings("unchecked")
     @DisplayName("異常系：UpdateFailureExceptionをthrowする")
     void savePhoto_UpdateFailureException() throws Exception {
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
       String photoJapaneseTitle = "タイトル";
-      MockMultipartFile multipartFile =
-          new MockMultipartFile(
-              "imageFile", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
 
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
       doReturn(1L).when(sessionHelper).getAccountNo();
@@ -858,58 +718,195 @@ public class PhotoControllerTest {
 
       mockMvc
           .perform(
-              multipart("/api/v1/accounts/aaaaaaaa/photos")
-                  .file(multipartFile)
+              multipart(HttpMethod.PUT, "/api/v1/accounts/aaaaaaaa/photos")
                   .param("photoNo", "1")
                   .param("imageFilePath", imageFilePath)
                   .param("photoJapaneseTitle", photoJapaneseTitle)
                   .param("directionKbn", "VERTICAL"))
           .andExpect(status().isConflict());
 
-      verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(AccountNo.class));
-
       PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
       assertEquals(1, photoDetailModelList.size());
       assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
       assertEquals(1L, photoDetailModelList.getFirst().getPhotoNo().value());
-      assertNull(photoDetailModelList.getFirst().getIsFavorite());
-      assertNull(photoDetailModelList.getFirst().getPhotoAt());
-      assertNull(photoDetailModelList.getFirst().getLocationNo());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().address());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().latitude());
-      assertNull(photoDetailModelList.getFirst().getGeoLocation().longitude());
-      assertNull(photoDetailModelList.getFirst().getLocationName());
-      assertNotNull(photoDetailModelList.getFirst().getImageFile());
       assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
       assertEquals(
           photoJapaneseTitle, photoDetailModelList.getFirst().getPhotoJapaneseTitle().value());
-      assertNull(photoDetailModelList.getFirst().getPhotoEnglishTitle());
-      assertNull(photoDetailModelList.getFirst().getCaption());
       assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
-      assertNull(photoDetailModelList.getFirst().getExifData().focalLength());
-      assertNull(photoDetailModelList.getFirst().getExifData().fValue());
-      assertNull(photoDetailModelList.getFirst().getExifData().shutterSpeed());
-      assertNull(photoDetailModelList.getFirst().getExifData().iso());
+
+      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class registPhotos {
+    @Test
+    @Order(1)
+    @SuppressWarnings("unchecked")
+    @DisplayName("正常系：写真1枚、タグなし、撮影日時なし。Nullパラメータあり")
+    void registPhotos_single_not_photoTag_and_photoAt() throws Exception {
+      String photoJapaneseTitle = "タイトル";
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
+
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+      doReturn(1L).when(sessionHelper).getAccountNo();
+      doReturn(DirectionEnum.VERTICAL).when(photoDirectionResolver).resolve(any());
+
+      ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
+          ArgumentCaptor.forClass(PhotoDetailModelList.class);
+      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
+      doReturn(PhotoSaveResultModel.builder().photoNo(new PhotoNo(1L)).build())
+          .when(photoServiceImpl)
+          .savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/aaaaaaaa/photos")
+                  .file(multipartFile)
+                  .param("photoJapaneseTitle", photoJapaneseTitle))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.httpStatus").value(200))
+          .andExpect(jsonPath("$.isSuccess").value(true))
+          .andExpect(jsonPath("$.message").value("写真登録が完了しました。"))
+          .andExpect(jsonPath("$.registeredCount").value(1));
+
+      PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
+      assertEquals(1, photoDetailModelList.size());
+      assertEquals(new AccountNo(1L), photoDetailModelList.getFirst().getAccountNo());
+      assertNull(photoDetailModelList.getFirst().getPhotoNo());
+      assertNull(photoDetailModelList.getFirst().getPhotoAt());
+      assertNotNull(photoDetailModelList.getFirst().getImageFile());
+      assertEquals(Consts.STRING_EMPTY, photoDetailModelList.getFirst().getImageFilePath().value());
+      assertEquals(
+          photoJapaneseTitle, photoDetailModelList.getFirst().getPhotoJapaneseTitle().value());
+      // 向き区分はリクエストではなく、PhotoDirectionResolverが画像から判定した値が使われること
+      assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
       assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
 
       assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
     }
 
     @Test
-    @Order(11)
+    @Order(2)
     @SuppressWarnings("unchecked")
-    @DisplayName("異常系：写真タイトル日本語名が未入力。BadRequestExceptionをthrowする")
-    void savePhoto_BadRequestException_photoJapaneseTitle_blank() throws Exception {
+    @DisplayName("正常系：写真3枚、共通のタイトル〜タグを一括登録する。向き区分は画像ごとに個別に判定されること")
+    void registPhotos_multiple_with_common_metadata() throws Exception {
+      String photoJapaneseTitle = "タイトル";
+
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
       doReturn(1L).when(sessionHelper).getAccountNo();
-      doReturn(false).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
+      // 縦・横・正方形が混在する一括登録でも、写真ごとに個別の向きが設定されることを検証する
+      // （PhotoDirectionResolverは実装をモック化しているため、呼び出し順に異なる値を返させる）
+      doReturn(DirectionEnum.VERTICAL, DirectionEnum.HORIZONTAL, DirectionEnum.SQUARE)
+          .when(photoDirectionResolver)
+          .resolve(any());
+
+      ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
+          ArgumentCaptor.forClass(PhotoDetailModelList.class);
+      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
+      doReturn(PhotoSaveResultModel.builder().photoNo(new PhotoNo(3L)).build())
+          .when(photoServiceImpl)
+          .savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
 
       mockMvc
           .perform(
               multipart("/api/v1/accounts/aaaaaaaa/photos")
-                  .param("accountNo", "1")
-                  .param("imageFilePath", "https://localhost:8080/image/aaaaaaaa/DSC111.jpg")
-                  .param("directionKbn", "VERTICAL"))
+                  .file(
+                      new MockMultipartFile(
+                          "imageFiles",
+                          "DSC111.jpg",
+                          "multipart/form-data",
+                          "sample image1".getBytes()))
+                  .file(
+                      new MockMultipartFile(
+                          "imageFiles",
+                          "DSC222.jpg",
+                          "multipart/form-data",
+                          "sample image2".getBytes()))
+                  .file(
+                      new MockMultipartFile(
+                          "imageFiles",
+                          "DSC333.jpg",
+                          "multipart/form-data",
+                          "sample image3".getBytes()))
+                  .param("photoJapaneseTitle", photoJapaneseTitle)
+                  .param("photoTagRegistRequestList[0].tagJapaneseName", "太陽")
+                  .param("photoTagRegistRequestList[0].tagEnglishName", "sun"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.registeredCount").value(3));
+
+      PhotoDetailModelList photoDetailModelList = photoDetailModelCaptor.getValue();
+      assertEquals(3, photoDetailModelList.size());
+      List<DirectionEnum> expectedDirections =
+          List.of(DirectionEnum.VERTICAL, DirectionEnum.HORIZONTAL, DirectionEnum.SQUARE);
+      for (int i = 0; i < photoDetailModelList.size(); i++) {
+        assertEquals(new AccountNo(1L), photoDetailModelList.get(i).getAccountNo());
+        assertNull(photoDetailModelList.get(i).getPhotoNo());
+        assertEquals(
+            photoJapaneseTitle, photoDetailModelList.get(i).getPhotoJapaneseTitle().value());
+        assertEquals(expectedDirections.get(i), photoDetailModelList.get(i).getDirectionKbn());
+        assertNotNull(photoDetailModelList.get(i).getImageFile());
+        assertEquals(1, photoDetailModelList.get(i).getPhotoTagModelList().size());
+        assertEquals(
+            "太陽",
+            photoDetailModelList.get(i).getPhotoTagModelList().get(0).getTagJapaneseName().value());
+      }
+
+      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
+    }
+
+    @Test
+    @Order(3)
+    @SuppressWarnings("unchecked")
+    @DisplayName("異常系：アクセス不正。ForbiddenAccountExceptionをthrowする")
+    void registPhotos_ForbiddenAccountException() throws Exception {
+      doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
+
+      mockMvc
+          .perform(multipart("/api/v1/accounts/aaaaaaaa/photos"))
+          .andExpect(status().isForbidden());
+
+      verify(photoServiceImpl, times(0))
+          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+    }
+
+    @Test
+    @Order(4)
+    @SuppressWarnings("unchecked")
+    @DisplayName("異常系：登録上限に達している。PhotoNotAdditableExceptionをthrowする")
+    void registPhotos_PhotoNotAdditableException() throws Exception {
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
+
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+      doReturn(1L).when(sessionHelper).getAccountNo();
+      doThrow(ErrorEnum.REACHED_REGISTRATION_LIMIT.toException())
+          .when(photoServiceImpl)
+          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/aaaaaaaa/photos")
+                  .file(multipartFile)
+                  .param("photoJapaneseTitle", "タイトル"))
+          .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Order(5)
+    @SuppressWarnings("unchecked")
+    @DisplayName("異常系：画像ファイルが1枚も指定されていない。BadRequestExceptionをthrowする")
+    void registPhotos_BadRequestException_imageFiles_is_empty() throws Exception {
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/aaaaaaaa/photos").param("photoJapaneseTitle", "タイトル"))
           .andExpect(status().isBadRequest());
 
       verify(photoServiceImpl, times(0))
@@ -917,22 +914,86 @@ public class PhotoControllerTest {
     }
 
     @Test
-    @Order(12)
+    @Order(6)
     @SuppressWarnings("unchecked")
-    @DisplayName("異常系：タグ英語名が20文字を超える。BadRequestExceptionをthrowする")
-    void savePhoto_BadRequestException_tagEnglishName_too_long() throws Exception {
+    @DisplayName("異常系：画像ファイルが1リクエストの上限（10枚）を超える。BadRequestExceptionをthrowする")
+    void registPhotos_BadRequestException_imageFiles_exceeds_maxSize() throws Exception {
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
-      doReturn(1L).when(sessionHelper).getAccountNo();
-      doReturn(false).when(photoServiceImpl).isReachedUpperLimit(new AccountNo(1L));
+
+      var request = multipart("/api/v1/accounts/aaaaaaaa/photos");
+      for (int i = 0; i < Consts.PHOTO_BULK_REGIST_MAX_SIZE + 1; i++) {
+        request =
+            request.file(
+                new MockMultipartFile(
+                    "imageFiles", "DSC" + i + ".jpg", "multipart/form-data", "sample".getBytes()));
+      }
+
+      mockMvc
+          .perform(request.param("photoJapaneseTitle", "タイトル"))
+          .andExpect(status().isBadRequest());
+
+      verify(photoServiceImpl, times(0))
+          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+    }
+
+    @Test
+    @Order(7)
+    @SuppressWarnings("unchecked")
+    @DisplayName("異常系：パラメータ不正。BadRequestExceptionをthrowする")
+    void registPhotos_BadRequestException_others() throws Exception {
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
+
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
 
       mockMvc
           .perform(
               multipart("/api/v1/accounts/aaaaaaaa/photos")
-                  .param("accountNo", "1")
-                  .param("imageFilePath", "https://localhost:8080/image/aaaaaaaa/DSC111.jpg")
+                  .file(multipartFile)
                   .param("photoJapaneseTitle", "タイトル")
-                  .param("directionKbn", "VERTICAL")
-                  .param("photoTagRegistRequestList[0].accountNo", "1")
+                  .param("focalLength", "-1"))
+          .andExpect(status().isBadRequest());
+
+      verify(photoServiceImpl, times(0))
+          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+    }
+
+    @Test
+    @Order(8)
+    @SuppressWarnings("unchecked")
+    @DisplayName("異常系：写真タイトル日本語名が未入力。BadRequestExceptionをthrowする")
+    void registPhotos_BadRequestException_photoJapaneseTitle_blank() throws Exception {
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
+
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+
+      mockMvc
+          .perform(multipart("/api/v1/accounts/aaaaaaaa/photos").file(multipartFile))
+          .andExpect(status().isBadRequest());
+
+      verify(photoServiceImpl, times(0))
+          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+    }
+
+    @Test
+    @Order(9)
+    @SuppressWarnings("unchecked")
+    @DisplayName("異常系：タグ英語名が20文字を超える。BadRequestExceptionをthrowする")
+    void registPhotos_BadRequestException_tagEnglishName_too_long() throws Exception {
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
+
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/aaaaaaaa/photos")
+                  .file(multipartFile)
+                  .param("photoJapaneseTitle", "タイトル")
                   .param("photoTagRegistRequestList[0].tagJapaneseName", "太陽")
                   .param("photoTagRegistRequestList[0].tagEnglishName", "abcdefghijklmnopqrstu"))
           .andExpect(status().isBadRequest());
@@ -940,10 +1001,56 @@ public class PhotoControllerTest {
       verify(photoServiceImpl, times(0))
           .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
     }
+
+    @Test
+    @Order(10)
+    @SuppressWarnings("unchecked")
+    @DisplayName("異常系：FileDuplicateExceptionをthrowする")
+    void registPhotos_FileDuplicateException() throws Exception {
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
+
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+      doReturn(1L).when(sessionHelper).getAccountNo();
+      doThrow(FileDuplicateException.class)
+          .when(photoServiceImpl)
+          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/aaaaaaaa/photos")
+                  .file(multipartFile)
+                  .param("photoJapaneseTitle", "タイトル"))
+          .andExpect(status().isConflict());
+    }
+
+    @Test
+    @Order(11)
+    @SuppressWarnings("unchecked")
+    @DisplayName("異常系：RegistFailureExceptionをthrowする")
+    void registPhotos_RegistFailureException() throws Exception {
+      MockMultipartFile multipartFile =
+          new MockMultipartFile(
+              "imageFiles", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
+
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+      doReturn(1L).when(sessionHelper).getAccountNo();
+      doThrow(RegistFailureException.class)
+          .when(photoServiceImpl)
+          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+
+      mockMvc
+          .perform(
+              multipart("/api/v1/accounts/aaaaaaaa/photos")
+                  .file(multipartFile)
+                  .param("photoJapaneseTitle", "タイトル"))
+          .andExpect(status().isConflict());
+    }
   }
 
   @Nested
-  @Order(3)
+  @Order(4)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class deletePhoto {
     @Test
@@ -1047,167 +1154,6 @@ public class PhotoControllerTest {
   }
 
   @Nested
-  @Order(4)
-  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class createPhotoListGetResponse {
-    private PhotoModelList createPhotoList() {
-      List<PhotoModel> photoList = new ArrayList<PhotoModel>();
-      photoList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(1L))
-              .favoriteCount(new FavoriteCount(1))
-              .isFavorite(new IsFavorite(false))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))
-              .caption(new Caption("キャプション1"))
-              .directionKbn(DirectionEnum.VERTICAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-      photoList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(2L))
-              .favoriteCount(new FavoriteCount(1))
-              .isFavorite(new IsFavorite(true))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC222.jpg"))
-              .caption(new Caption("キャプション2"))
-              .directionKbn(DirectionEnum.HORIZONTAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-      photoList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(3L))
-              .favoriteCount(new FavoriteCount(1))
-              .isFavorite(new IsFavorite(true))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC333.jpg"))
-              .caption(new Caption("キャプション3"))
-              .directionKbn(DirectionEnum.HORIZONTAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-      photoList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(4L))
-              .favoriteCount(new FavoriteCount(1))
-              .isFavorite(new IsFavorite(true))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC444.jpg"))
-              .caption(new Caption("キャプション4"))
-              .directionKbn(DirectionEnum.HORIZONTAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-      photoList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(5L))
-              .favoriteCount(new FavoriteCount(1))
-              .isFavorite(new IsFavorite(true))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC555.jpg"))
-              .caption(new Caption("キャプション5"))
-              .directionKbn(DirectionEnum.HORIZONTAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-      photoList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(6L))
-              .favoriteCount(new FavoriteCount(1))
-              .isFavorite(new IsFavorite(true))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC666.jpg"))
-              .caption(new Caption("キャプション6"))
-              .directionKbn(DirectionEnum.HORIZONTAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-      photoList.add(
-          PhotoModel.builder()
-              .accountNo(new AccountNo(1L))
-              .photoNo(new PhotoNo(7L))
-              .favoriteCount(new FavoriteCount(1))
-              .isFavorite(new IsFavorite(true))
-              .photoAt(
-                  new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0))))
-              .imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC777.jpg"))
-              .caption(new Caption("キャプション7"))
-              .directionKbn(DirectionEnum.HORIZONTAL)
-              .photoTagModelList(PhotoTagModelList.empty())
-              .build());
-
-      return PhotoModelList.of(photoList);
-    }
-
-    @Test
-    @Order(1)
-    @DisplayName("正常系：DB側で絞り込み済みの写真一覧・isLastをそのままレスポンスに変換すること")
-    void createPhotoListGetResponse_passThrough() {
-      PhotoModelList photoList = PhotoModelList.of(createPhotoList().toList().subList(0, 3));
-      PhotoPageModel photoPageModel = PhotoPageModel.of(photoList, false);
-
-      PhotoListGetResponse actual = PhotoListGetResponse.from(photoPageModel);
-      assertFalse(actual.getIsLast());
-      assertEquals(3, actual.getPhotoList().size());
-      assertEquals(1L, actual.getPhotoList().get(0).getAccountNo());
-      assertEquals(1L, actual.getPhotoList().get(0).getPhotoNo());
-      assertFalse(actual.getPhotoList().get(0).getIsFavorite());
-      assertEquals(
-          "https://localhost:8080/image/aaaaaaaa/DSC111.jpg",
-          actual.getPhotoList().get(0).getImageFilePath());
-      assertEquals("キャプション1", actual.getPhotoList().get(0).getCaption());
-      assertEquals(DirectionEnum.VERTICAL, actual.getPhotoList().get(0).getDirectionKbn());
-      assertEquals(1L, actual.getPhotoList().get(1).getAccountNo());
-      assertEquals(2L, actual.getPhotoList().get(1).getPhotoNo());
-      assertTrue(actual.getPhotoList().get(1).getIsFavorite());
-      assertEquals(
-          "https://localhost:8080/image/aaaaaaaa/DSC222.jpg",
-          actual.getPhotoList().get(1).getImageFilePath());
-      assertEquals("キャプション2", actual.getPhotoList().get(1).getCaption());
-      assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(1).getDirectionKbn());
-      assertEquals(1L, actual.getPhotoList().get(2).getAccountNo());
-      assertEquals(3L, actual.getPhotoList().get(2).getPhotoNo());
-      assertTrue(actual.getPhotoList().get(2).getIsFavorite());
-      assertEquals(
-          "https://localhost:8080/image/aaaaaaaa/DSC333.jpg",
-          actual.getPhotoList().get(2).getImageFilePath());
-      assertEquals("キャプション3", actual.getPhotoList().get(2).getCaption());
-      assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(2).getDirectionKbn());
-    }
-
-    @Test
-    @Order(2)
-    @DisplayName("正常系：isLastがtrueの場合、そのままtrueとして変換されること")
-    void createPhotoListGetResponse_isLast_true() {
-      PhotoModelList photoList = PhotoModelList.of(createPhotoList().toList().subList(0, 1));
-      PhotoPageModel photoPageModel = PhotoPageModel.of(photoList, true);
-
-      PhotoListGetResponse actual = PhotoListGetResponse.from(photoPageModel);
-      assertTrue(actual.getIsLast());
-      assertEquals(1, actual.getPhotoList().size());
-    }
-
-    @Test
-    @Order(3)
-    @DisplayName("正常系：写真が0件の場合、空リストに変換されること")
-    void createPhotoListGetResponse_empty() {
-      PhotoPageModel photoPageModel = PhotoPageModel.of(PhotoModelList.empty(), true);
-
-      PhotoListGetResponse actual = PhotoListGetResponse.from(photoPageModel);
-      assertTrue(actual.getIsLast());
-      assertTrue(actual.getPhotoList().isEmpty());
-    }
-  }
-
-  @Nested
   @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getPhotoUpperLimit {
@@ -1251,6 +1197,139 @@ public class PhotoControllerTest {
           .andExpect(jsonPath("$.isReachedUpperLimit").value(false));
 
       verify(photoServiceImpl, times(0)).isReachedUpperLimit(any(AccountNo.class));
+    }
+  }
+
+  @Nested
+  @Order(6)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getPhotoDetail {
+    private PhotoDetailModel createFullPhotoDetailModel() {
+      PhotoTagModel photoTag =
+          PhotoTagModel.builder()
+              .accountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(1L))
+              .tagNo(new TagNo(1L))
+              .tagJapaneseName(new TagJapaneseName("太陽"))
+              .tagEnglishName(new TagEnglishName("sun"))
+              .build();
+
+      return PhotoDetailModel.builder()
+          .accountNo(new AccountNo(1L))
+          .photoNo(new PhotoNo(1L))
+          .isFavorite(new IsFavorite(true))
+          .photoAt(new PhotoAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9))))
+          .locationNo(new LocationNo(1L))
+          .geoLocation(
+              new GeoLocation(
+                  new Address("東京都港区芝公園４丁目２−８"),
+                  new Latitude(BigDecimal.valueOf(35.000)),
+                  new Longitude(BigDecimal.valueOf(135.000))))
+          .locationName(new LocationName("東京タワー"))
+          .isLocationPublic(new IsLocationPublic(true))
+          .imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))
+          .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル"))
+          .photoEnglishTitle(new PhotoEnglishTitle("title"))
+          .caption(new Caption("キャプション"))
+          .directionKbn(DirectionEnum.VERTICAL)
+          .exifData(
+              new ExifData(
+                  new FocalLength(50),
+                  new FValue(BigDecimal.valueOf(8.0)),
+                  new ShutterSpeed(BigDecimal.valueOf(0.001)),
+                  new Iso(100)))
+          .photoTagModelList(PhotoTagModelList.of(List.of(photoTag)))
+          .build();
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：ログイン中の本人が自分の写真を取得。EXIF・位置情報・タグを含めて変換されること")
+    void getPhotoDetail_success_full_fields() throws Exception {
+      doReturn(1L).when(sessionHelper).getAccountNo();
+
+      ArgumentCaptor<PhotoDetailGetModel> photoDetailGetModelCaptor =
+          ArgumentCaptor.forClass(PhotoDetailGetModel.class);
+      doReturn(createFullPhotoDetailModel())
+          .when(photoServiceImpl)
+          .getPhotoDetail(photoDetailGetModelCaptor.capture());
+
+      mockMvc
+          .perform(
+              get("/api/v1/accounts/aaaaaaaa/photos/1").param("referer", "https://example.com/"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.accountNo").value(1))
+          .andExpect(jsonPath("$.photoNo").value(1))
+          .andExpect(jsonPath("$.isFavorite").value(true))
+          .andExpect(jsonPath("$.locationNo").value(1))
+          .andExpect(jsonPath("$.address").value("東京都港区芝公園４丁目２−８"))
+          .andExpect(jsonPath("$.latitude").value(35.000))
+          .andExpect(jsonPath("$.longitude").value(135.000))
+          .andExpect(jsonPath("$.locationName").value("東京タワー"))
+          .andExpect(jsonPath("$.isLocationPublic").value(true))
+          .andExpect(
+              jsonPath("$.imageFilePath").value("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))
+          .andExpect(jsonPath("$.photoJapaneseTitle").value("タイトル"))
+          .andExpect(jsonPath("$.photoEnglishTitle").value("title"))
+          .andExpect(jsonPath("$.caption").value("キャプション"))
+          .andExpect(jsonPath("$.directionKbn").value("vertical"))
+          .andExpect(jsonPath("$.focalLength").value(50))
+          .andExpect(jsonPath("$.fValue").value(8.0))
+          .andExpect(jsonPath("$.shutterSpeed").value(0.001))
+          .andExpect(jsonPath("$.iso").value(100))
+          .andExpect(jsonPath("$.photoTagList.length()").value(1))
+          .andExpect(jsonPath("$.photoTagList[0].tagNo").value(1))
+          .andExpect(jsonPath("$.photoTagList[0].tagJapaneseName").value("太陽"))
+          .andExpect(jsonPath("$.photoTagList[0].tagEnglishName").value("sun"));
+
+      PhotoDetailGetModel photoDetailGetModel = photoDetailGetModelCaptor.getValue();
+      assertEquals(new AccountNo(1L), photoDetailGetModel.getAccountNo());
+      assertEquals(new AccountId("aaaaaaaa"), photoDetailGetModel.getPhotoAccountId());
+      assertEquals(1L, photoDetailGetModel.getPhotoNo().value());
+      assertEquals("https://example.com/", photoDetailGetModel.getReferer().value());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：未ログイン（匿名）でも取得でき、accountNoにはnullが渡されること")
+    void getPhotoDetail_success_anonymous() throws Exception {
+      // Mockitoの未スタブのLongは既定でnullでなく0を返すため、未ログイン状態（null）は明示的にスタブする
+      doReturn(null).when(sessionHelper).getAccountNo();
+
+      ArgumentCaptor<PhotoDetailGetModel> photoDetailGetModelCaptor =
+          ArgumentCaptor.forClass(PhotoDetailGetModel.class);
+      doReturn(createFullPhotoDetailModel())
+          .when(photoServiceImpl)
+          .getPhotoDetail(photoDetailGetModelCaptor.capture());
+
+      mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/1")).andExpect(status().isOk());
+
+      assertNull(photoDetailGetModelCaptor.getValue().getAccountNo());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：リファラが最大長（2048文字）を超える。BadRequestExceptionをthrowする")
+    void getPhotoDetail_BadRequestException_referer_too_long() throws Exception {
+      String tooLongReferer = "a".repeat(2049);
+
+      mockMvc
+          .perform(get("/api/v1/accounts/aaaaaaaa/photos/1").param("referer", tooLongReferer))
+          .andExpect(status().isBadRequest());
+
+      verify(photoServiceImpl, times(0)).getPhotoDetail(any(PhotoDetailGetModel.class));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：写真が存在しない場合、404を返す")
+    void getPhotoDetail_PhotoNotFoundException() throws Exception {
+      doReturn(1L).when(sessionHelper).getAccountNo();
+      doThrow(PhotoNotFoundException.class)
+          .when(photoServiceImpl)
+          .getPhotoDetail(any(PhotoDetailGetModel.class));
+
+      mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/999")).andExpect(status().isNotFound());
     }
   }
 }

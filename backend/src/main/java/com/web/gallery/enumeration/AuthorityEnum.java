@@ -1,5 +1,6 @@
 package com.web.gallery.enumeration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.web.gallery.constant.Consts;
 import java.util.Arrays;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,7 @@ public enum AuthorityEnum {
    *
    * <p>写真登録の上限は10枚（上限50MB）
    */
+  @JsonProperty(Consts.AUTHORITY_MINI)
   MINI(Consts.AUTHORITY_MINI),
 
   /**
@@ -25,6 +27,7 @@ public enum AuthorityEnum {
    *
    * <p>写真登録の上限は1000枚（上限5GB）
    */
+  @JsonProperty(Consts.AUTHORITY_NORMAL)
   NORMAL(Consts.AUTHORITY_NORMAL),
 
   /**
@@ -34,6 +37,7 @@ public enum AuthorityEnum {
    *
    * <p>写真登録の上限は無制限
    */
+  @JsonProperty(Consts.AUTHORITY_SPECIAL)
   SPECIAL(Consts.AUTHORITY_SPECIAL),
 
   /**
@@ -43,6 +47,7 @@ public enum AuthorityEnum {
    *
    * <p>写真登録の上限は無制限
    */
+  @JsonProperty(Consts.ADMINISTRATOR)
   ADMINISTRATOR(Consts.ADMINISTRATOR);
 
   /** DBに保持する値 */

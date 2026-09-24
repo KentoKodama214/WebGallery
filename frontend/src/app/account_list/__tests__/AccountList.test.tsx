@@ -136,4 +136,75 @@ describe("AccountList", () => {
     expect(mockGetAccountList).toHaveBeenNthCalledWith(2, 2);
     expect(screen.queryByText("＋もっと見る")).not.toBeInTheDocument();
   });
+
+  it("エラー画面で「再読み込み」ボタンを押すと一覧が再取得されること", async () => {
+    mockGetAccountList.mockRejectedValueOnce(
+      new Error("アカウント一覧の取得に失敗しました")
+    );
+
+    render(<AccountList />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("アカウント一覧の取得に失敗しました")
+      ).toBeInTheDocument();
+    });
+
+    mockGetAccountList.mockResolvedValueOnce({
+      isLast: true,
+      accountList: [{ accountId: "user1", accountName: "ユーザー1" }],
+    });
+
+    fireEvent.click(screen.getByText("再読み込み"));
+
+    await waitFor(() => {
+      expect(screen.getByText("ユーザー1")).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByText("アカウント一覧の取得に失敗しました")
+    ).not.toBeInTheDocument();
+    expect(mockGetAccountList).toHaveBeenNthCalledWith(1, 1);
+    expect(mockGetAccountList).toHaveBeenNthCalledWith(2, 1);
+  });
+
+  it("「もっと見る」で取得に失敗した場合、既存の一覧を維持したままエラーを通知すること", async () => {
+    mockGetAccountList
+      .mockResolvedValueOnce({
+        isLast: false,
+        accountList: [{ accountId: "user1", accountName: "ユーザー1" }],
+      })
+      .mockRejectedValueOnce(new Error("追加取得に失敗しました"));
+
+    render(<AccountList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("＋もっと見る")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText("＋もっと見る"));
+
+    await waitFor(() => {
+      expect(screen.getByText("追加取得に失敗しました")).toBeInTheDocument();
+    });
+    // 取得済みの一覧は維持され、ボタンも再度表示される
+    expect(screen.getByText("ユーザー1")).toBeInTheDocument();
+    expect(screen.getByText("＋もっと見る")).toBeInTheDocument();
+  });
+
+  it("行にマウスを乗せる/離すと背景色が切り替わること", async () => {
+    mockGetAccountList.mockResolvedValue({
+      isLast: true,
+      accountList: [{ accountId: "user1", accountName: "ユーザー1" }],
+    });
+
+    render(<AccountList />);
+
+    const row = await screen.findByText("ユーザー1").then((el) => el.closest("tr")!);
+
+    fireEvent.mouseEnter(row);
+    expect(row).toHaveStyle({ backgroundColor: "#fffae9" });
+
+    fireEvent.mouseLeave(row);
+    expect(row).toHaveStyle({ backgroundColor: "rgb(255, 255, 255)" });
+  });
 });

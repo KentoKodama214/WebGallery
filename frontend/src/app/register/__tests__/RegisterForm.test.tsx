@@ -285,4 +285,70 @@ describe("RegisterForm", () => {
       ).toBeInTheDocument();
     });
   });
+
+  it("アカウント名のフォーカスアウトで空ならエラー、入力すれば消えること", async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    render(<RegisterForm />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Create an Account")).toBeInTheDocument();
+    });
+
+    const textInputs = screen.getAllByRole("textbox");
+    const accountNameInput = textInputs[1];
+
+    await user.click(accountNameInput);
+    await user.tab();
+
+    await waitFor(() => {
+      expect(screen.getByText("アカウント名を入力してください")).toBeInTheDocument();
+    });
+
+    await user.type(accountNameInput, "テストユーザー");
+    await user.tab();
+
+    await waitFor(() => {
+      expect(screen.queryByText("アカウント名を入力してください")).not.toBeInTheDocument();
+    });
+  });
+
+  it("性別・出身地・居住地・メモを入力すると登録APIへ反映されること", async () => {
+    mockRegisterAccount.mockResolvedValue({
+      httpStatus: 200,
+      isSuccess: true,
+      message: "",
+    });
+
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    render(<RegisterForm />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Create an Account")).toBeInTheDocument();
+    });
+
+    const textInputs = screen.getAllByRole("textbox");
+    const accountNameInput = textInputs[1];
+
+    await user.type(screen.getByPlaceholderText("半角英数字で8〜20文字"), "testuser1");
+    await user.type(accountNameInput, "テストユーザー");
+    await user.type(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"), "password1");
+
+    await user.selectOptions(screen.getByLabelText("性別"), "woman");
+    await user.selectOptions(screen.getByLabelText("出身地"), "Aomori");
+    await user.selectOptions(screen.getByLabelText("居住地"), "Tokyo");
+    await user.type(screen.getByLabelText("メモ"), "よろしくお願いします");
+
+    await user.click(screen.getByRole("button", { name: "登録" }));
+
+    await waitFor(() => {
+      expect(mockRegisterAccount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sexKbn: "woman",
+          birthplacePrefectureKbnCode: "Aomori",
+          residentPrefectureKbnCode: "Tokyo",
+          freeMemo: "よろしくお願いします",
+        })
+      );
+    });
+  });
 });

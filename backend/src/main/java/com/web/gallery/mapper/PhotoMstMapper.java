@@ -1,9 +1,9 @@
 package com.web.gallery.mapper;
 
 import com.web.gallery.dto.PhotoDeletionDto;
-import com.web.gallery.entity.PhotoMst;
-import com.web.gallery.entity.PhotoMstCondition;
-import com.web.gallery.entity.PhotoMstUpdateTarget;
+import com.web.gallery.entity.photo.PhotoMst;
+import com.web.gallery.entity.photo.PhotoMstCondition;
+import com.web.gallery.entity.photo.PhotoMstUpdateTarget;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

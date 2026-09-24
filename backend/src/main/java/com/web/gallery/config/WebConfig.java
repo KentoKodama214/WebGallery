@@ -1,6 +1,7 @@
 package com.web.gallery.config;
 
 import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.enumeration.InquiryStatusEnum;
 import com.web.gallery.enumeration.SortPhotoEnum;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -23,6 +24,7 @@ public class WebConfig implements WebMvcConfigurer {
   public void addFormatters(FormatterRegistry registry) {
     registry.addConverter(new StringToDirectionEnumConverter());
     registry.addConverter(new StringToSortPhotoEnumConverter());
+    registry.addConverter(new StringToInquiryStatusEnumConverter());
   }
 
   /** クエリパラメータの文字列を{@link DirectionEnum}に変換するConverter */
@@ -38,6 +40,15 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public SortPhotoEnum convert(String source) {
       return SortPhotoEnum.getOrDefault(source);
+    }
+  }
+
+  /** クエリパラメータの文字列を{@link InquiryStatusEnum}に変換するConverter */
+  private static class StringToInquiryStatusEnumConverter
+      implements Converter<String, InquiryStatusEnum> {
+    @Override
+    public InquiryStatusEnum convert(String source) {
+      return InquiryStatusEnum.getOrDefault(source);
     }
   }
 }

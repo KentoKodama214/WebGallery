@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
+import { generateTestAccountId, TEST_USER_PASSWORD } from "../fixtures/auth";
 
 test.describe("アカウント登録ページ", () => {
   test.beforeEach(async ({ page }) => {
@@ -39,6 +41,18 @@ test.describe("アカウント登録ページ", () => {
     ).toBeVisible();
   });
 
+  test("不正な形式のパスワードを入力するとエラーが表示されること", async ({ page }) => {
+    // 英字と数字を各1文字以上含む半角8〜72文字（PASSWORD_PATTERN）を満たさない例として、
+    // 数字を含まないパスワードを入力する
+    const passwordInput = page.getByPlaceholder("英字と数字を含む半角8〜72文字");
+    await passwordInput.fill("onlyletters");
+    await passwordInput.blur();
+
+    await expect(
+      page.getByText("英字と数字を含む半角8〜72文字で入力してください")
+    ).toBeVisible();
+  });
+
   test("未来の日付を生年月日に入力して送信するとエラーが表示されること", async ({ page }) => {
     await page.getByPlaceholder("半角英数字で8〜20文字").fill("testuser01");
     await page.locator('label:has-text("アカウント名") + input').fill("テストユーザー");
@@ -48,5 +62,50 @@ test.describe("アカウント登録ページ", () => {
     await page.getByRole("button", { name: "登録" }).click();
 
     await expect(page.getByText("過去の日付を入力してください")).toBeVisible();
+  });
+
+  test("アクセシビリティ違反がないこと（バリデーションエラー表示時）", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "chromium", "a11y検証はchromiumプロジェクトのみで実施する");
+
+    await page.getByRole("button", { name: "登録" }).click();
+    await expect(page.getByText("アカウント名を入力してください")).toBeVisible();
+
+    await expectNoAccessibilityViolations(page);
+  });
+});
+
+test.describe("アカウント登録ページ（重複アカウントID）", () => {
+  test("既に使用されているアカウントIDで登録すると、エラーメッセージが表示され登録完了モーダルは出ないこと", async ({
+    page,
+  }, testInfo) => {
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+
+    await page.goto("/register");
+    await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
+    await page
+      .locator('label:has-text("アカウント名") + input')
+      .fill("E2E Duplicate User 1");
+    await page.getByPlaceholder("英字と数字を含む半角8〜72文字").fill(TEST_USER_PASSWORD);
+    await page.getByRole("button", { name: "登録" }).click();
+    await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
+      timeout: 10000,
+    });
+
+    // 同じアカウントIDで再度登録を試みる
+    await page.goto("/register");
+    await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
+    await page
+      .locator('label:has-text("アカウント名") + input')
+      .fill("E2E Duplicate User 2");
+    await page.getByPlaceholder("英字と数字を含む半角8〜72文字").fill(TEST_USER_PASSWORD);
+    await page.getByRole("button", { name: "登録" }).click();
+
+    await expect(page.getByText("このアカウントIDは既に使われています")).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toHaveCount(0);
+    await expect(page).toHaveURL(/\/register$/);
   });
 });

@@ -5,9 +5,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.test.context.ActiveProfiles;
 
 /** {@link ReauthenticationThrottle}のユニットテスト */
@@ -54,144 +62,229 @@ public class ReauthenticationThrottleTest {
     clock = new MutableClock(1_000_000_000_000L);
   }
 
-  @Test
-  @DisplayName("上限未満ではロックアウトしない")
-  void not_locked_below_threshold() {
-    ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+  @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class isLockedOut {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：上限未満ではロックアウトしない")
+    void not_locked_below_threshold() {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
 
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-
-    assertFalse(throttle.isLockedOut(1L));
-  }
-
-  @Test
-  @DisplayName("上限に達するとロックアウトする")
-  void locked_at_threshold() {
-    ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
-
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-
-    assertTrue(throttle.isLockedOut(1L));
-    // 別アカウントには影響しない
-    assertFalse(throttle.isLockedOut(2L));
-  }
-
-  @Test
-  @DisplayName("ロックアウト時間が経過すると自動的に解除される")
-  void unlocks_after_lockout_window() {
-    ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-    assertTrue(throttle.isLockedOut(1L));
-
-    clock.advanceMinutes(15);
-
-    assertFalse(throttle.isLockedOut(1L));
-  }
-
-  @Test
-  @DisplayName("reset で失敗カウンタが消える")
-  void reset_clears_counter() {
-    ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-    assertTrue(throttle.isLockedOut(1L));
-
-    throttle.reset(1L);
-
-    assertFalse(throttle.isLockedOut(1L));
-  }
-
-  @Test
-  @DisplayName("max-failures が0以下なら常に無効（ロックアウトしない）")
-  void disabled_when_max_failures_not_positive() {
-    ReauthenticationThrottle throttle = new ReauthenticationThrottle(0, 15, clock);
-
-    for (int i = 0; i < 100; i++) {
       throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+
+      assertFalse(throttle.isLockedOut(1L));
     }
 
-    assertFalse(throttle.isLockedOut(1L));
-  }
+    @Test
+    @Order(2)
+    @DisplayName("正常系：上限に達するとロックアウトする")
+    void locked_at_threshold() {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
 
-  @Test
-  @DisplayName("前回失敗からロックアウト時間以上あくとカウントが振り出しに戻る")
-  void counter_resets_after_idle_period() {
-    ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
 
-    clock.advanceMinutes(15);
-    throttle.recordFailure(1L);
-
-    // 直前の2回は失効しているため、まだロックアウトされない
-    assertFalse(throttle.isLockedOut(1L));
-  }
-
-  @Test
-  @DisplayName("ロックアウト中の試行を記録するとロックアウトが延長される（スライディングウィンドウ）")
-  void lockout_extends_on_attempt_during_lockout() {
-    ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-    assertTrue(throttle.isLockedOut(1L));
-
-    // ロックアウト中に10分後、さらに試行して失敗を記録する
-    clock.advanceMinutes(10);
-    throttle.recordFailure(1L);
-
-    // 最初の3回から15分経過してもなお、直近失敗から15分経っていないためロックアウト継続
-    clock.advanceMinutes(6);
-    assertTrue(throttle.isLockedOut(1L));
-
-    // 直近失敗から15分経過すると解除される
-    clock.advanceMinutes(9);
-    assertFalse(throttle.isLockedOut(1L));
-  }
-
-  @Test
-  @DisplayName("あるアカウントのロックアウトは他アカウントの失敗記録に影響されない")
-  void lockout_is_isolated_per_account() {
-    ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-    throttle.recordFailure(1L);
-    assertTrue(throttle.isLockedOut(1L));
-
-    for (int i = 0; i < 50; i++) {
-      throttle.recordFailure(100L + i);
+      assertTrue(throttle.isLockedOut(1L));
+      // 別アカウントには影響しない
+      assertFalse(throttle.isLockedOut(2L));
     }
 
-    assertTrue(throttle.isLockedOut(1L));
+    @Test
+    @Order(3)
+    @DisplayName("正常系：ロックアウト時間が経過すると自動的に解除される")
+    void unlocks_after_lockout_window() {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+      assertTrue(throttle.isLockedOut(1L));
+
+      clock.advanceMinutes(15);
+
+      assertFalse(throttle.isLockedOut(1L));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：max-failures が0以下なら常に無効（ロックアウトしない）")
+    void disabled_when_max_failures_not_positive() {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(0, 15, clock);
+
+      for (int i = 0; i < 100; i++) {
+        throttle.recordFailure(1L);
+      }
+
+      assertFalse(throttle.isLockedOut(1L));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：前回失敗からロックアウト時間以上あくとカウントが振り出しに戻る")
+    void counter_resets_after_idle_period() {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+
+      clock.advanceMinutes(15);
+      throttle.recordFailure(1L);
+
+      // 直前の2回は失効しているため、まだロックアウトされない
+      assertFalse(throttle.isLockedOut(1L));
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("正常系：ロックアウト中の試行を記録するとロックアウトが延長される（スライディングウィンドウ）")
+    void lockout_extends_on_attempt_during_lockout() {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+      assertTrue(throttle.isLockedOut(1L));
+
+      // ロックアウト中に10分後、さらに試行して失敗を記録する
+      clock.advanceMinutes(10);
+      throttle.recordFailure(1L);
+
+      // 最初の3回から15分経過してもなお、直近失敗から15分経っていないためロックアウト継続
+      clock.advanceMinutes(6);
+      assertTrue(throttle.isLockedOut(1L));
+
+      // 直近失敗から15分経過すると解除される
+      clock.advanceMinutes(9);
+      assertFalse(throttle.isLockedOut(1L));
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("正常系：あるアカウントのロックアウトは他アカウントの失敗記録に影響されない")
+    void lockout_is_isolated_per_account() {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+      assertTrue(throttle.isLockedOut(1L));
+
+      for (int i = 0; i < 50; i++) {
+        throttle.recordFailure(100L + i);
+      }
+
+      assertTrue(throttle.isLockedOut(1L));
+    }
   }
 
-  @Test
-  @DisplayName("エントリ数が上限に達しても間引きは例外なく完了し、ロックアウト中のアカウントは巻き添えにしない")
-  void eviction_over_capacity_completes_without_error_and_keeps_locked_out_entries() {
-    ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+  @Nested
+  @Order(2)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class reset {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：reset で失敗カウンタが消える")
+    void reset_clears_counter() {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+      throttle.recordFailure(1L);
+      assertTrue(throttle.isLockedOut(1L));
 
-    // 被害者アカウントを先にロックアウト状態にしておく
-    throttle.recordFailure(999_999L);
-    throttle.recordFailure(999_999L);
-    throttle.recordFailure(999_999L);
-    assertTrue(throttle.isLockedOut(999_999L));
+      throttle.reset(1L);
 
-    // エントリ数の上限（10万）を超えるまで新規アカウントの失敗を積む。
-    // 間引き（全走査＋スナップショットソート）が Comparator 契約違反の例外を出さずに完了すること。
-    assertDoesNotThrow(
-        () -> {
-          for (long accountNo = 1L; accountNo <= 100_005L; accountNo++) {
-            throttle.recordFailure(accountNo);
-          }
-        });
+      assertFalse(throttle.isLockedOut(1L));
+    }
+  }
 
-    // 間引きが起きても、ロックアウト中の被害者アカウントは削除されない
-    assertTrue(throttle.isLockedOut(999_999L));
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class recordFailure {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：エントリ数が上限に達しても間引きは例外なく完了し、ロックアウト中のアカウントは巻き添えにしない")
+    void eviction_over_capacity_completes_without_error_and_keeps_locked_out_entries() {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+
+      // 被害者アカウントを先にロックアウト状態にしておく
+      throttle.recordFailure(999_999L);
+      throttle.recordFailure(999_999L);
+      throttle.recordFailure(999_999L);
+      assertTrue(throttle.isLockedOut(999_999L));
+
+      // エントリ数の上限（10万）を超えるまで新規アカウントの失敗を積む。
+      // 間引き（全走査＋スナップショットソート）が Comparator 契約違反の例外を出さずに完了すること。
+      assertDoesNotThrow(
+          () -> {
+            for (long accountNo = 1L; accountNo <= 100_005L; accountNo++) {
+              throttle.recordFailure(accountNo);
+            }
+          });
+
+      // 間引きが起きても、ロックアウト中の被害者アカウントは削除されない
+      assertTrue(throttle.isLockedOut(999_999L));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：エントリ数が上限に達したとき、期限切れエントリが優先的に間引かれ、有効なロックアウトは維持される")
+    void eviction_prefers_expired_entries() {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+
+      // 大量の期限切れになるエントリを先に作る
+      for (long accountNo = 1L; accountNo <= 50_000L; accountNo++) {
+        throttle.recordFailure(accountNo);
+      }
+      clock.advanceMinutes(20);
+
+      // 被害者アカウントを現在時刻でロックアウト状態にする
+      throttle.recordFailure(999_999L);
+      throttle.recordFailure(999_999L);
+      throttle.recordFailure(999_999L);
+      assertTrue(throttle.isLockedOut(999_999L));
+
+      // 残りのエントリを積んで上限に到達させ、期限切れエントリの間引きを発生させる
+      assertDoesNotThrow(
+          () -> {
+            for (long accountNo = 50_001L; accountNo <= 100_005L; accountNo++) {
+              throttle.recordFailure(accountNo);
+            }
+          });
+
+      assertTrue(throttle.isLockedOut(999_999L));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：複数スレッドが同時に上限到達時の間引きを試みても、排他制御により例外なく完了する")
+    void eviction_is_exclusive_across_threads() throws Exception {
+      ReauthenticationThrottle throttle = new ReauthenticationThrottle(3, 15, clock);
+      for (long accountNo = 1L; accountNo <= 100_000L; accountNo++) {
+        throttle.recordFailure(accountNo);
+      }
+
+      int threadCount = 8;
+      ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+      CountDownLatch latch = new CountDownLatch(threadCount);
+      try {
+        for (int i = 0; i < threadCount; i++) {
+          long base = 200_000L + (long) i * 1_000L;
+          executor.submit(
+              () -> {
+                try {
+                  for (long accountNo = base; accountNo < base + 1_000L; accountNo++) {
+                    throttle.recordFailure(accountNo);
+                  }
+                } finally {
+                  latch.countDown();
+                }
+              });
+        }
+        assertTrue(latch.await(30, TimeUnit.SECONDS));
+      } finally {
+        executor.shutdown();
+      }
+    }
   }
 }

@@ -69,4 +69,14 @@ public class AccountEventListener {
   public void handle(AccountUnlockedEvent event) {
     log.info("Account unlocked (accountNo: {})", event.accountNo().value());
   }
+
+  /**
+   * アカウントの権限変更イベントをハンドリングする
+   *
+   * @param event {@link AccountAuthorityChangedEvent}
+   */
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handle(AccountAuthorityChangedEvent event) {
+    log.info("Account authority changed (accountNo: {})", event.accountNo().value());
+  }
 }

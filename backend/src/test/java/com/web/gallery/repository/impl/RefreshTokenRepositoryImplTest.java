@@ -7,9 +7,9 @@ import static org.mockito.Mockito.*;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.ExpiresAt;
 import com.web.gallery.domain.common.TokenHash;
-import com.web.gallery.entity.RefreshToken;
+import com.web.gallery.entity.auth.RefreshToken;
 import com.web.gallery.mapper.RefreshTokenMapper;
-import com.web.gallery.model.RefreshTokenModel;
+import com.web.gallery.model.auth.RefreshTokenModel;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -53,9 +53,15 @@ public class RefreshTokenRepositoryImplTest {
 
       ArgumentCaptor<RefreshToken> refreshTokenCaptor = ArgumentCaptor.forClass(RefreshToken.class);
       verify(refreshTokenMapper, times(1)).insert(refreshTokenCaptor.capture());
-      assertEquals(1L, refreshTokenCaptor.getValue().getAccountNo());
-      assertEquals("abc123hash", refreshTokenCaptor.getValue().getTokenHash());
-      assertEquals(expiresAt, refreshTokenCaptor.getValue().getExpiresAt());
+      RefreshToken actual = refreshTokenCaptor.getValue();
+      assertNull(actual.getTokenId());
+      assertEquals(1L, actual.getAccountNo());
+      assertEquals("abc123hash", actual.getTokenHash());
+      assertEquals(expiresAt, actual.getExpiresAt());
+      assertNull(actual.getCreatedAt());
+      assertEquals(1L, actual.getUpdatedBy());
+      assertNull(actual.getUpdatedAt());
+      assertNull(actual.getIsRevoked());
     }
   }
 
@@ -107,6 +113,51 @@ public class RefreshTokenRepositoryImplTest {
   @Nested
   @Order(3)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class findByTokenHashForUpdate {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：トークンハッシュに該当するリフレッシュトークンを行ロック付きで取得する")
+    void findByTokenHashForUpdate_success() {
+      OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7);
+      RefreshToken mapperResult =
+          RefreshToken.builder()
+              .tokenId(1L)
+              .accountNo(1L)
+              .tokenHash("abc123hash")
+              .expiresAt(expiresAt)
+              .isRevoked(false)
+              .build();
+
+      doReturn(mapperResult).when(refreshTokenMapper).selectByTokenHashForUpdate("abc123hash");
+
+      RefreshTokenModel actual =
+          refreshTokenRepositoryImpl.findByTokenHashForUpdate(new TokenHash("abc123hash"));
+
+      assertNotNull(actual);
+      assertEquals(new AccountNo(1L), actual.getAccountNo());
+      assertEquals(new TokenHash("abc123hash"), actual.getTokenHash());
+      assertEquals(new ExpiresAt(expiresAt), actual.getExpiresAt());
+      assertFalse(actual.getIsRevoked().value());
+      verify(refreshTokenMapper, times(1)).selectByTokenHashForUpdate("abc123hash");
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：該当するリフレッシュトークンが存在しない場合、nullを返す")
+    void findByTokenHashForUpdate_not_found() {
+      doReturn(null).when(refreshTokenMapper).selectByTokenHashForUpdate("nonexistent");
+
+      RefreshTokenModel actual =
+          refreshTokenRepositoryImpl.findByTokenHashForUpdate(new TokenHash("nonexistent"));
+
+      assertNull(actual);
+      verify(refreshTokenMapper, times(1)).selectByTokenHashForUpdate("nonexistent");
+    }
+  }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class revokeAllByAccountNo {
     @Test
     @Order(1)
@@ -121,7 +172,7 @@ public class RefreshTokenRepositoryImplTest {
   }
 
   @Nested
-  @Order(4)
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class revokeByTokenHash {
     @Test
@@ -151,7 +202,7 @@ public class RefreshTokenRepositoryImplTest {
   }
 
   @Nested
-  @Order(5)
+  @Order(6)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class deleteExpired {
     @Test

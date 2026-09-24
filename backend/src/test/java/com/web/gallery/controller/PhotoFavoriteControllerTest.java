@@ -10,7 +10,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.helper.SessionHelper;
-import com.web.gallery.model.PhotoFavoriteModel;
+import com.web.gallery.model.photo.PhotoFavoriteModel;
 import com.web.gallery.service.impl.PhotoFavoriteServiceImpl;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;

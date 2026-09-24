@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.web.gallery.mapper.PhotoMstMapper">
-	<resultMap id="PhotoMstMap" type="com.web.gallery.entity.PhotoMst">
+	<resultMap id="PhotoMstMap" type="com.web.gallery.entity.photo.PhotoMst">
 		<result property="accountNo" column="account_no"/>
 		<result property="photoNo" column="photo_no"/>
 		<result property="createdBy" column="created_by"/>
@@ -43,7 +43,7 @@
 		<if test="${prefix}iso != null"> AND iso = #{${prefix}iso}</if>
 	</sql>
 
-	<select id="count" parameterType="com.web.gallery.entity.PhotoMstCondition" resultType="Integer">
+	<select id="count" parameterType="com.web.gallery.entity.photo.PhotoMstCondition" resultType="Integer">
 		SELECT
 			COUNT(*)
 		FROM
@@ -55,7 +55,7 @@
 		</where>
 	</select>
 
-	<insert id="insert" parameterType="com.web.gallery.entity.PhotoMst">
+	<insert id="insert" parameterType="com.web.gallery.entity.photo.PhotoMst">
 		INSERT INTO
 			photo.photo_mst (
 				account_no,
@@ -141,7 +141,7 @@
 			account_no = #{accountNo}
 	</select>
 
-	<select id="isExistPhoto" parameterType="com.web.gallery.entity.PhotoMstCondition" resultType="Boolean">
+	<select id="isExistPhoto" parameterType="com.web.gallery.entity.photo.PhotoMstCondition" resultType="Boolean">
 		SELECT
 			CASE WHEN COUNT(*)>0 THEN true ELSE false END
 		FROM

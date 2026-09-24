@@ -147,9 +147,11 @@
 /* メニューリンク */
 .menuLink {
   display: block;
+  width: 100%;
   position: relative;
   color: #fff;
   text-decoration: none;
+  text-align: center;
   overflow: hidden;
   background: none;
   border: none;

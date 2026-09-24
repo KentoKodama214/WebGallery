@@ -1,9 +1,16 @@
 -- common.account
-insert into common.account values(1,  1,  '2000-01-01 09:00:00 Asia/Tokyo', 1,  '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$password1', '1991-02-14', 'none',  'none',     'none',    '',         'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(2,  2,  '2000-01-02 09:00:00 Asia/Tokyo', 2,  '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1900-01-01', 'man',   'none',     'none',    '',         'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(3,  3,  '2000-01-03 09:00:00 Asia/Tokyo', 3,  '2001-01-03 09:00:00 Asia/Tokyo', false, 'cccccccc', 'CCCCCCCC', '$2a$10$password3', '1900-01-01', 'none',  'Hokkaido', 'none',    '',         'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(4,  4,  '2000-01-04 09:00:00 Asia/Tokyo', 4,  '2001-01-04 09:00:00 Asia/Tokyo', false, 'dddddddd', 'DDDDDDDD', '$2a$10$password4', '1900-01-01', 'none',  'none',     'Okinawa', '',         'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(5,  5,  '2000-01-05 09:00:00 Asia/Tokyo', 5,  '2001-01-05 09:00:00 Asia/Tokyo', false, 'eeeeeeee', 'EEEEEEEE', '$2a$10$password5', '1900-01-01', 'none',  'none',     'none',    'フリーメモ', 'administrator', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$password1', '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'cccccccc', 'CCCCCCCC', '$2a$10$password3', '1900-01-01', 'none', 'Hokkaido', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(4, 4, '2000-01-04 09:00:00 Asia/Tokyo', 4, '2001-01-04 09:00:00 Asia/Tokyo', false, 'dddddddd', 'DDDDDDDD', '$2a$10$password4', '1900-01-01', 'none', 'none', 'Okinawa', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(5, 5, '2000-01-05 09:00:00 Asia/Tokyo', 5, '2001-01-05 09:00:00 Asia/Tokyo', false, 'eeeeeeee', 'EEEEEEEE', '$2a$10$password5', '1900-01-01', 'none', 'none', 'none', 'フリーメモ', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+
+-- common.account_authority
+insert into common.account_authority values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator');
+insert into common.account_authority values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', 'administrator');
+insert into common.account_authority values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', 'administrator');
+insert into common.account_authority values(4, 4, '2000-01-04 09:00:00 Asia/Tokyo', 4, '2001-01-04 09:00:00 Asia/Tokyo', 'administrator');
+insert into common.account_authority values(5, 5, '2000-01-05 09:00:00 Asia/Tokyo', 5, '2001-01-05 09:00:00 Asia/Tokyo', 'administrator');
 
 -- common.location_mst
 insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション1', '住所1', 38.100, 115.100);
@@ -24,6 +31,11 @@ insert into photo.photo_mst values(DEFAULT, 4, 1, 1, '2000-01-01 09:00:00 Asia/T
 insert into photo.photo_mst values(DEFAULT, 4, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2022-12-25 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC312.jpg', 'DSC312.jpg', 'タイトル32', 'title32', 'キャプション32', 'horizontal', 24, 8.0, 1, 100, true);
 insert into photo.photo_mst values(DEFAULT, 4, 3, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2023-12-25 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC313.jpg', 'DSC313.jpg', 'タイトル33', 'title33', 'キャプション33', 'horizontal', 24, 8.0, 1, 100, true);
 insert into photo.photo_mst values(DEFAULT, 4, 4, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2023-11-20 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC314.jpg', 'DSC314.jpg', 'タイトル34', 'title34', 'キャプション34', 'horizontal', 24, 8.0, 1, 100, true);
+
+-- photo.photo_tag_mst（タグ絞り込みテスト用：account1のphoto1は「太陽」「青空」、photo2は「太陽」のみ保持）
+insert into photo.photo_tag_mst values(DEFAULT, 1, 1, 1, 1, '2000-01-01 10:00:00 Asia/Tokyo', '太陽', 'sun');
+insert into photo.photo_tag_mst values(DEFAULT, 1, 1, 2, 1, '2000-01-01 11:00:00 Asia/Tokyo', '青空', 'bluesky');
+insert into photo.photo_tag_mst values(DEFAULT, 1, 2, 1, 1, '2000-02-01 10:00:00 Asia/Tokyo', '太陽', 'sun');
 
 -- photo.photo_favorite
 insert into photo.photo_favorite values(DEFAULT, 1, 1, 1, 1, now());

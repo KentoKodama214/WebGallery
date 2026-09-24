@@ -137,6 +137,21 @@ describe("LoginForm", () => {
     });
   });
 
+  it("Errorインスタンスでない例外の場合は既定のエラーメッセージが表示されること", async () => {
+    mockLogin.mockRejectedValueOnce("network down");
+    const user = userEvent.setup();
+
+    render(<LoginForm />);
+
+    await user.type(screen.getByPlaceholderText("User ID"), "testuser1");
+    await user.type(screen.getByPlaceholderText("Password"), "password1");
+    await user.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("ログインに失敗しました")).toBeInTheDocument();
+    });
+  });
+
   it("送信中はボタンが無効化されること", async () => {
     mockLogin.mockImplementation(
       () => new Promise((resolve) => setTimeout(resolve, 1000))

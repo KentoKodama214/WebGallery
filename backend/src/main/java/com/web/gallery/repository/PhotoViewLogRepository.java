@@ -1,7 +1,7 @@
 package com.web.gallery.repository;
 
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.model.PhotoViewLogModel;
+import com.web.gallery.model.photo.PhotoViewLogModel;
 
 /**
  * 写真詳細閲覧ログデータを永続化するRepositoryクラス
