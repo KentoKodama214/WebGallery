@@ -3,7 +3,9 @@ name: テスト実行
 on:
   pull_request:
     branches:
-      - main
+      - development
+      - staging
+      - master
 
 jobs:
   frontend-unit-test:
@@ -32,8 +34,15 @@ jobs:
       - name: Lint
         run: cd frontend && pnpm lint
 
-      - name: 単体テスト実行
-        run: cd frontend && pnpm test
+      - name: 単体テスト実行（カバレッジ計測）
+        run: cd frontend && pnpm test --coverage
+
+      - name: カバレッジ集計データアップロード
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jest-coverage-summary
+          path: frontend/coverage/coverage-summary.json
 
   unit-test:
     name: 単体テスト
@@ -76,6 +85,62 @@ jobs:
           name: jacoco-exec-unit
           path: backend/build/jacoco/unitTest.exec
 
+  dependency-scan:
+    name: 依存関係の脆弱性スキャン
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v7
+
+      - name: JDK 21 セットアップ
+        uses: actions/setup-java@v6
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Gradleキャッシュ
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: backend SBOM生成（CycloneDX）
+        run: ./backend/gradlew -p backend cyclonedxBom
+
+      # OSV-Scanner（https://github.com/google/osv-scanner）はOSVデータベースをAPI経由で都度照会するため、
+      # OWASP Dependency-Checkのように数GB規模のNVDデータベース全体を同期する必要がなく、
+      # スキャン自体は数秒で完了する。frontendはpnpm-lock.yamlを直接解析できるため、
+      # Node.js/pnpmのセットアップやパッケージインストールも不要。
+      - name: OSV-Scannerインストール
+        run: |
+          curl -sL -o osv-scanner \
+            https://github.com/google/osv-scanner/releases/download/v2.6.0/osv-scanner_linux_amd64
+          chmod +x osv-scanner
+
+      - name: 依存関係の脆弱性スキャン（backend SBOM・frontend pnpm-lock.yaml）
+        run: |
+          set +e
+          ./osv-scanner scan source \
+            -L backend/build/reports/cyclonedx/application.cdx.json \
+            -L frontend/pnpm-lock.yaml \
+            --format=markdown --output-file=osv-results.md
+          exit_code=$?
+          set -e
+          cat osv-results.md >> "$GITHUB_STEP_SUMMARY"
+          exit "$exit_code"
+
+      - name: 脆弱性スキャンレポートアップロード
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: osv-scan-report
+          path: osv-results.md
+
   integration-test:
     name: 結合テスト
     needs: unit-test
@@ -83,7 +148,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:latest
+        image: postgres:16
         env:
           POSTGRES_DB: web_gallery_test
           POSTGRES_USER: postgres
@@ -125,6 +190,9 @@ jobs:
           SQL_FILES=(
             "db/common/common.type.sql"
             "db/common/account.sql"
+            "db/common/inquiry_mst.sql"
+            "db/common/inquiry_reply_mst.sql"
+            "db/common/account_authority.sql"
             "db/common/refresh_token.sql"
             "db/common/login_history.sql"
             "db/common/kbn_mst.sql"
@@ -139,6 +207,32 @@ jobs:
           for file in "${SQL_FILES[@]}"; do
             psql -h localhost -p 5433 -U postgres -d web_gallery_test -f "$file"
           done
+
+      # FileRepositoryImplIntegrationTest（Repository層）が実接続する画像ストレージ（S3互換）。
+      # GitHub Actionsのservicesはコンテナ起動時のcommand引数を指定できず、
+      # minio/minioイメージはCMD（server /data）なしでは起動しないため、docker runで直接起動する。
+      # minio/minio・minio/mcはDocker Hubでのイメージ配布を終了しているため、
+      # docker-compose.ymlと同様に公式移行先のquay.ioを使用する
+      - name: MinIO起動
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            quay.io/minio/minio:latest server /data
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live > /dev/null; then
+              echo "MinIO is ready"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: MinIOバケット作成
+        run: |
+          docker run --rm --network host \
+            -e MC_HOST_local=http://minioadmin:minioadmin@localhost:9000 \
+            quay.io/minio/mc:latest mb --ignore-existing local/test-bucket
 
       - name: 結合テスト実行
         run: ./backend/gradlew -p backend integrationTest
@@ -164,7 +258,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:latest
+        image: postgres:16
         env:
           POSTGRES_DB: web_gallery
           POSTGRES_USER: postgres
@@ -213,7 +307,9 @@ jobs:
         run: cd frontend && pnpm install --frozen-lockfile
 
       - name: Playwrightブラウザインストール
-        run: cd frontend && pnpm exec playwright install --with-deps chromium
+        # webkit-smoke・mobile-smokeプロジェクト（playwright.config.ts）が主要導線のみ
+        # 追加で実行するために必要
+        run: cd frontend && pnpm exec playwright install --with-deps chromium webkit
 
       - name: データベース初期化
         env:
@@ -224,6 +320,9 @@ jobs:
           SQL_FILES=(
             "db/common/common.type.sql"
             "db/common/account.sql"
+            "db/common/inquiry_mst.sql"
+            "db/common/inquiry_reply_mst.sql"
+            "db/common/account_authority.sql"
             "db/common/refresh_token.sql"
             "db/common/login_history.sql"
             "db/common/kbn_mst.sql"
@@ -239,10 +338,39 @@ jobs:
             psql -h localhost -p 5432 -U postgres -d web_gallery -f "$file"
           done
 
+      # 写真アップロードのE2Eシナリオが実接続する画像ストレージ（S3互換）。
+      # GitHub Actionsのservicesはコンテナ起動時のcommand引数を指定できず、
+      # minio/minioイメージはCMD（server /data）なしでは起動しないため、docker runで直接起動する。
+      # minio/minio・minio/mcはDocker Hubでのイメージ配布を終了しているため、
+      # docker-compose.ymlと同様に公式移行先のquay.ioを使用する
+      - name: MinIO起動
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            quay.io/minio/minio:latest server /data
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live > /dev/null; then
+              echo "MinIO is ready"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: MinIOバケット作成
+        run: |
+          docker run --rm --network host \
+            -e MC_HOST_local=http://minioadmin:minioadmin@localhost:9000 \
+            quay.io/minio/mc:latest mb --ignore-existing local/web-gallery-local
+
       - name: バックエンドをバックグラウンドで起動
         env:
           # application-local.yml は JWT_SECRET のデフォルト値を持たないため、CI用の値を明示する（本番用ではない）
           JWT_SECRET: e2e-only-secret-not-for-production-must-be-256-bits-long
+          # E2Eテストは全ワーカーが同一IP（::1）から多数のアカウント登録・ログインを行うため、
+          # 本番向けのレート制限が誤検知する（scripts/e2e.shのローカル実行と同様に無効化する）
+          RATE_LIMIT_ENABLED: "false"
         run: |
           SPRING_PROFILES_ACTIVE=local nohup ./backend/gradlew -p backend bootRun --no-daemon > backend-e2e.log 2>&1 &
 
@@ -319,7 +447,7 @@ jobs:
 
   coverage-report:
     name: カバレッジレポート
-    needs: [unit-test, integration-test]
+    needs: [frontend-unit-test, unit-test, integration-test]
     runs-on: ubuntu-latest
 
     permissions:
@@ -353,6 +481,12 @@ jobs:
           path: backend/build/jacoco
           merge-multiple: true
 
+      - name: フロントエンドカバレッジ集計データダウンロード
+        uses: actions/download-artifact@v8
+        with:
+          name: jest-coverage-summary
+          path: frontend/coverage
+
       - name: カバレッジレポート生成（単体 / 結合 / 集約）
         run: ./backend/gradlew -p backend jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
@@ -363,6 +497,9 @@ jobs:
             "単体テスト=backend/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml" \
             "結合テスト=backend/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml" \
             > coverage-table.md
+          python3 .github/scripts/jest_coverage_table.py \
+            frontend/coverage/coverage-summary.json \
+            >> coverage-table.md
           cat coverage-table.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: PRにカバレッジを単一コメントで投稿

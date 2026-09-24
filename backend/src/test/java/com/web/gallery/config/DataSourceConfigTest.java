@@ -14,12 +14,17 @@ import com.zaxxer.hikari.HikariDataSource;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
 import org.springframework.mock.env.MockEnvironment;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("test")
 class DataSourceConfigTest {
 
   private static DataSourceProperties dataSourceProperties() {
@@ -31,106 +36,177 @@ class DataSourceConfigTest {
   }
 
   @Nested
-  @DisplayName("リードレプリカ未設定の場合")
-  class ReplicaNotConfigured {
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class dataSource {
+    @Nested
+    @Order(1)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    @DisplayName("リードレプリカ未設定の場合")
+    class replicaNotConfigured {
 
-    @Test
-    @DisplayName("プライマリのDataSourceをそのまま返す")
-    void nullUrl_returnsPrimaryDirectly() {
-      DataSourceConfig config =
-          spy(
-              new DataSourceConfig(
-                  dataSourceProperties(),
-                  new DataSourceReplicaConfig(null, null, null),
-                  new MockEnvironment(),
-                  new SimpleMeterRegistry()));
-      DataSource mockPrimary = mock(DataSource.class);
-      doReturn(mockPrimary)
-          .when(config)
-          .buildTargetDataSource(anyString(), anyString(), anyString(), anyString(), anyString());
+      @Test
+      @Order(1)
+      @DisplayName("プライマリのDataSourceをそのまま返す")
+      void nullUrl_returnsPrimaryDirectly() {
+        DataSourceConfig config =
+            spy(
+                new DataSourceConfig(
+                    dataSourceProperties(),
+                    new DataSourceReplicaConfig(null, null, null),
+                    new MockEnvironment(),
+                    new SimpleMeterRegistry()));
+        DataSource mockPrimary = mock(DataSource.class);
+        doReturn(mockPrimary)
+            .when(config)
+            .buildTargetDataSource(anyString(), anyString(), anyString(), anyString(), anyString());
 
-      DataSource actual = config.dataSource();
+        DataSource actual = config.dataSource();
 
-      assertSame(mockPrimary, actual);
-      verify(config, times(1))
-          .buildTargetDataSource(anyString(), anyString(), anyString(), anyString(), anyString());
+        assertSame(mockPrimary, actual);
+        verify(config, times(1))
+            .buildTargetDataSource(anyString(), anyString(), anyString(), anyString(), anyString());
+      }
+
+      @Test
+      @Order(2)
+      @DisplayName("空文字でもプライマリのDataSourceをそのまま返す")
+      void blankUrl_returnsPrimaryDirectly() {
+        DataSourceConfig config =
+            spy(
+                new DataSourceConfig(
+                    dataSourceProperties(),
+                    new DataSourceReplicaConfig("", null, null),
+                    new MockEnvironment(),
+                    new SimpleMeterRegistry()));
+        DataSource mockPrimary = mock(DataSource.class);
+        doReturn(mockPrimary)
+            .when(config)
+            .buildTargetDataSource(anyString(), anyString(), anyString(), anyString(), anyString());
+
+        DataSource actual = config.dataSource();
+
+        assertSame(mockPrimary, actual);
+      }
     }
 
-    @Test
-    @DisplayName("空文字でもプライマリのDataSourceをそのまま返す")
-    void blankUrl_returnsPrimaryDirectly() {
-      DataSourceConfig config =
-          spy(
-              new DataSourceConfig(
-                  dataSourceProperties(),
-                  new DataSourceReplicaConfig("", null, null),
-                  new MockEnvironment(),
-                  new SimpleMeterRegistry()));
-      DataSource mockPrimary = mock(DataSource.class);
-      doReturn(mockPrimary)
-          .when(config)
-          .buildTargetDataSource(anyString(), anyString(), anyString(), anyString(), anyString());
+    @Nested
+    @Order(2)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    @DisplayName("リードレプリカ設定ありの場合")
+    class replicaConfigured {
 
-      DataSource actual = config.dataSource();
+      @Test
+      @Order(1)
+      @DisplayName("LazyConnectionDataSourceProxyでラップしたルーティング用DataSourceを返す")
+      void configuredUrl_wrapsWithLazyProxyAndRouting() {
+        DataSourceProperties properties = dataSourceProperties();
+        DataSourceReplicaConfig replicaConfig =
+            new DataSourceReplicaConfig("jdbc:postgresql://replica:5432/web_gallery", null, null);
+        DataSourceConfig config =
+            spy(
+                new DataSourceConfig(
+                    properties, replicaConfig, new MockEnvironment(), new SimpleMeterRegistry()));
+        DataSource mockPrimary = mock(DataSource.class);
+        DataSource mockReplica = mock(DataSource.class);
+        doReturn(mockPrimary)
+            .when(config)
+            .buildTargetDataSource(
+                properties.determineUrl(),
+                properties.determineUsername(),
+                properties.determinePassword(),
+                properties.determineDriverClassName(),
+                "primary");
+        doReturn(mockReplica)
+            .when(config)
+            .buildTargetDataSource(
+                replicaConfig.getUrl(),
+                properties.determineUsername(),
+                properties.determinePassword(),
+                properties.determineDriverClassName(),
+                "replica");
 
-      assertSame(mockPrimary, actual);
+        DataSource actual = config.dataSource();
+
+        assertInstanceOf(LazyConnectionDataSourceProxy.class, actual);
+        DataSource wrapped = ((LazyConnectionDataSourceProxy) actual).getTargetDataSource();
+        assertInstanceOf(ReadWriteRoutingDataSource.class, wrapped);
+        ReadWriteRoutingDataSource routingDataSource = (ReadWriteRoutingDataSource) wrapped;
+        assertSame(mockPrimary, routingDataSource.getResolvedDefaultDataSource());
+        assertSame(
+            mockPrimary,
+            routingDataSource
+                .getResolvedDataSources()
+                .get(ReadWriteRoutingDataSource.Role.PRIMARY));
+        assertSame(
+            mockReplica,
+            routingDataSource
+                .getResolvedDataSources()
+                .get(ReadWriteRoutingDataSource.Role.REPLICA));
+      }
+    }
+
+    @Nested
+    @Order(3)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    @DisplayName("リードレプリカのプールサイズ上書きの場合")
+    class replicaPoolSizeOverride {
+
+      private static HikariDataSource replicaOf(DataSource dataSource) {
+        ReadWriteRoutingDataSource routingDataSource =
+            (ReadWriteRoutingDataSource)
+                ((LazyConnectionDataSourceProxy) dataSource).getTargetDataSource();
+        return (HikariDataSource)
+            routingDataSource.getResolvedDataSources().get(ReadWriteRoutingDataSource.Role.REPLICA);
+      }
+
+      @Test
+      @Order(1)
+      @DisplayName("app.datasource.replica.*が設定されている場合はプライマリと異なるプールサイズになる")
+      void overridesAppliedWhenConfigured() {
+        DataSourceReplicaConfig replicaConfig =
+            new DataSourceReplicaConfig("jdbc:postgresql://replica:5432/web_gallery", 5, 2);
+        MockEnvironment environment = new MockEnvironment();
+        environment.setProperty("spring.datasource.hikari.maximum-pool-size", "20");
+        environment.setProperty("spring.datasource.hikari.minimum-idle", "10");
+        DataSourceConfig config =
+            new DataSourceConfig(
+                dataSourceProperties(), replicaConfig, environment, new SimpleMeterRegistry());
+
+        HikariDataSource replica = replicaOf(config.dataSource());
+
+        assertEquals(5, replica.getMaximumPoolSize());
+        assertEquals(2, replica.getMinimumIdle());
+      }
+
+      @Test
+      @Order(2)
+      @DisplayName("app.datasource.replica.*が未設定の場合はプライマリと同じプールサイズになる")
+      void fallsBackToPrimarySettingsWhenNotConfigured() {
+        DataSourceReplicaConfig replicaConfig =
+            new DataSourceReplicaConfig("jdbc:postgresql://replica:5432/web_gallery", null, null);
+        MockEnvironment environment = new MockEnvironment();
+        environment.setProperty("spring.datasource.hikari.maximum-pool-size", "20");
+        environment.setProperty("spring.datasource.hikari.minimum-idle", "10");
+        DataSourceConfig config =
+            new DataSourceConfig(
+                dataSourceProperties(), replicaConfig, environment, new SimpleMeterRegistry());
+
+        HikariDataSource replica = replicaOf(config.dataSource());
+
+        assertEquals(20, replica.getMaximumPoolSize());
+        assertEquals(10, replica.getMinimumIdle());
+      }
     }
   }
 
   @Nested
-  @DisplayName("リードレプリカ設定ありの場合")
-  class ReplicaConfigured {
+  @Order(2)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class buildTargetDataSource {
 
     @Test
-    @DisplayName("LazyConnectionDataSourceProxyでラップしたルーティング用DataSourceを返す")
-    void configuredUrl_wrapsWithLazyProxyAndRouting() {
-      DataSourceProperties properties = dataSourceProperties();
-      DataSourceReplicaConfig replicaConfig =
-          new DataSourceReplicaConfig("jdbc:postgresql://replica:5432/web_gallery", null, null);
-      DataSourceConfig config =
-          spy(
-              new DataSourceConfig(
-                  properties, replicaConfig, new MockEnvironment(), new SimpleMeterRegistry()));
-      DataSource mockPrimary = mock(DataSource.class);
-      DataSource mockReplica = mock(DataSource.class);
-      doReturn(mockPrimary)
-          .when(config)
-          .buildTargetDataSource(
-              properties.determineUrl(),
-              properties.determineUsername(),
-              properties.determinePassword(),
-              properties.determineDriverClassName(),
-              "primary");
-      doReturn(mockReplica)
-          .when(config)
-          .buildTargetDataSource(
-              replicaConfig.getUrl(),
-              properties.determineUsername(),
-              properties.determinePassword(),
-              properties.determineDriverClassName(),
-              "replica");
-
-      DataSource actual = config.dataSource();
-
-      assertInstanceOf(LazyConnectionDataSourceProxy.class, actual);
-      DataSource wrapped = ((LazyConnectionDataSourceProxy) actual).getTargetDataSource();
-      assertInstanceOf(ReadWriteRoutingDataSource.class, wrapped);
-      ReadWriteRoutingDataSource routingDataSource = (ReadWriteRoutingDataSource) wrapped;
-      assertSame(mockPrimary, routingDataSource.getResolvedDefaultDataSource());
-      assertSame(
-          mockPrimary,
-          routingDataSource.getResolvedDataSources().get(ReadWriteRoutingDataSource.Role.PRIMARY));
-      assertSame(
-          mockReplica,
-          routingDataSource.getResolvedDataSources().get(ReadWriteRoutingDataSource.Role.REPLICA));
-    }
-  }
-
-  @Nested
-  @DisplayName("buildTargetDataSourceの場合")
-  class BuildTargetDataSource {
-
-    @Test
+    @Order(1)
     @DisplayName("プール名とspring.datasource.hikari.*のプロパティがHikariDataSourceへ反映される")
     void appliesPoolNameAndHikariProperties() {
       MockEnvironment environment = new MockEnvironment();
@@ -160,6 +236,7 @@ class DataSourceConfigTest {
     }
 
     @Test
+    @Order(2)
     @DisplayName("指定したMeterRegistryがHikariDataSourceに紐付けられる")
     void appliesMeterRegistry() {
       SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
@@ -180,55 +257,6 @@ class DataSourceConfigTest {
 
       HikariDataSource hikariDataSource = assertInstanceOf(HikariDataSource.class, actual);
       assertSame(meterRegistry, hikariDataSource.getMetricRegistry());
-    }
-  }
-
-  @Nested
-  @DisplayName("リードレプリカのプールサイズ上書きの場合")
-  class ReplicaPoolSizeOverride {
-
-    private static HikariDataSource replicaOf(DataSource dataSource) {
-      ReadWriteRoutingDataSource routingDataSource =
-          (ReadWriteRoutingDataSource)
-              ((LazyConnectionDataSourceProxy) dataSource).getTargetDataSource();
-      return (HikariDataSource)
-          routingDataSource.getResolvedDataSources().get(ReadWriteRoutingDataSource.Role.REPLICA);
-    }
-
-    @Test
-    @DisplayName("app.datasource.replica.*が設定されている場合はプライマリと異なるプールサイズになる")
-    void overridesAppliedWhenConfigured() {
-      DataSourceReplicaConfig replicaConfig =
-          new DataSourceReplicaConfig("jdbc:postgresql://replica:5432/web_gallery", 5, 2);
-      MockEnvironment environment = new MockEnvironment();
-      environment.setProperty("spring.datasource.hikari.maximum-pool-size", "20");
-      environment.setProperty("spring.datasource.hikari.minimum-idle", "10");
-      DataSourceConfig config =
-          new DataSourceConfig(
-              dataSourceProperties(), replicaConfig, environment, new SimpleMeterRegistry());
-
-      HikariDataSource replica = replicaOf(config.dataSource());
-
-      assertEquals(5, replica.getMaximumPoolSize());
-      assertEquals(2, replica.getMinimumIdle());
-    }
-
-    @Test
-    @DisplayName("app.datasource.replica.*が未設定の場合はプライマリと同じプールサイズになる")
-    void fallsBackToPrimarySettingsWhenNotConfigured() {
-      DataSourceReplicaConfig replicaConfig =
-          new DataSourceReplicaConfig("jdbc:postgresql://replica:5432/web_gallery", null, null);
-      MockEnvironment environment = new MockEnvironment();
-      environment.setProperty("spring.datasource.hikari.maximum-pool-size", "20");
-      environment.setProperty("spring.datasource.hikari.minimum-idle", "10");
-      DataSourceConfig config =
-          new DataSourceConfig(
-              dataSourceProperties(), replicaConfig, environment, new SimpleMeterRegistry());
-
-      HikariDataSource replica = replicaOf(config.dataSource());
-
-      assertEquals(20, replica.getMaximumPoolSize());
-      assertEquals(10, replica.getMinimumIdle());
     }
   }
 }

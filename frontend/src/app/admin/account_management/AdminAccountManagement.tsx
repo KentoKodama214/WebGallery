@@ -6,6 +6,7 @@ import {
   getAdminAccountList,
   unlockAccount,
   lockAccount,
+  updateAccountAuthority,
   type AdminAccountListItem,
 } from "@/lib/api/client";
 import { LOGIN_FAILURE_LOCK_THRESHOLD } from "@/lib/consts";
@@ -17,6 +18,21 @@ interface PendingLockAction {
   accountNo: number;
   accountId: string;
 }
+
+/** 権限変更の編集対象 */
+interface EditingAuthority {
+  accountNo: number;
+  accountId: string;
+  authorityKbn: string;
+}
+
+/** 権限区分の選択肢（表示順もこの並びに従う） */
+const AUTHORITY_OPTIONS: { value: string; label: string }[] = [
+  { value: "mini-user", label: "簡易ユーザー" },
+  { value: "normal-user", label: "一般ユーザー" },
+  { value: "special-user", label: "特別ユーザー" },
+  { value: "administrator", label: "管理者" },
+];
 
 /**
  * 管理者用アカウント管理コンポーネント
@@ -36,6 +52,8 @@ export function AdminAccountManagement() {
   const [pageNo, setPageNo] = useState(1);
   const [pendingAction, setPendingAction] = useState<PendingLockAction | null>(null);
   const [isActionProcessing, setIsActionProcessing] = useState(false);
+  const [editingAuthority, setEditingAuthority] = useState<EditingAuthority | null>(null);
+  const [selectedAuthorityKbn, setSelectedAuthorityKbn] = useState("");
   // 取得リクエストの世代。初期ロード・再取得・もっと見るは開始時に採番し、
   // 自分が最新でなければ結果を破棄する（後着レスポンスが新しい一覧を上書きする競合を防ぐ）
   const loadSeqRef = useRef(0);
@@ -149,6 +167,30 @@ export function AdminAccountManagement() {
     }
   };
 
+  /**
+   * 権限変更ダイアログで「登録」が押されたときの処理
+   */
+  const handleConfirmAuthorityChange = async () => {
+    if (!editingAuthority || isActionProcessing) return;
+    setIsActionProcessing(true);
+    setMessage(null);
+    setActionError(null);
+    try {
+      const result = await updateAccountAuthority(
+        editingAuthority.accountNo,
+        selectedAuthorityKbn
+      );
+      setMessage(result.message);
+      setEditingAuthority(null);
+      await fetchAccounts();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "エラーが発生しました");
+      setEditingAuthority(null);
+    } finally {
+      setIsActionProcessing(false);
+    }
+  };
+
   if (isAuthLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
@@ -195,15 +237,8 @@ export function AdminAccountManagement() {
     return date.toLocaleString("ja-JP");
   };
 
-  const authorityLabel = (kbn: string): string => {
-    switch (kbn) {
-      case "administrator": return "管理者";
-      case "special-user": return "特別ユーザー";
-      case "normal-user": return "一般ユーザー";
-      case "mini-user": return "簡易ユーザー";
-      default: return kbn;
-    }
-  };
+  const authorityLabel = (kbn: string): string =>
+    AUTHORITY_OPTIONS.find((option) => option.value === kbn)?.label ?? kbn;
 
   return (
     <div className="flex flex-col items-center py-8 gap-4">
@@ -252,7 +287,26 @@ export function AdminAccountManagement() {
                 <td className="py-3 px-4 border border-gray-300">{account.accountNo}</td>
                 <td className="py-3 px-4 border border-gray-300">{account.accountId}</td>
                 <td className="py-3 px-4 border border-gray-300">{account.accountName}</td>
-                <td className="py-3 px-4 border border-gray-300">{authorityLabel(account.authorityKbn)}</td>
+                <td className="py-3 px-4 border border-gray-300">
+                  <div className="flex items-center gap-2">
+                    <span>{authorityLabel(account.authorityKbn)}</span>
+                    {account.accountNo !== user?.accountNo && (
+                      <button
+                        onClick={() => {
+                          setEditingAuthority({
+                            accountNo: account.accountNo,
+                            accountId: account.accountId,
+                            authorityKbn: account.authorityKbn,
+                          });
+                          setSelectedAuthorityKbn(account.authorityKbn);
+                        }}
+                        className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                      >
+                        編集
+                      </button>
+                    )}
+                  </div>
+                </td>
                 <td className="py-3 px-4 border border-gray-300">
                   {account.isDeleted ? (
                     <span className="text-gray-500">削除済み</span>
@@ -361,6 +415,56 @@ export function AdminAccountManagement() {
               }`}
             >
               {isActionProcessing ? "処理中..." : "実行"}
+            </button>
+          </div>
+        </ModalDialog>
+      )}
+
+      {/* 権限編集ダイアログ */}
+      {editingAuthority && (
+        <ModalDialog
+          testId="authority-edit-dialog"
+          label="権限の編集"
+          initialFocusSelector="[data-dialog-initial-focus]"
+          onClose={() => {
+            if (isActionProcessing) return;
+            setEditingAuthority(null);
+          }}
+          overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
+          containerClassName="bg-white rounded-md p-6 shadow-lg max-w-[320px] w-[90%]"
+        >
+          <p className="text-[#444] text-center mb-4">
+            {editingAuthority.accountId} の権限を変更します
+          </p>
+          <select
+            value={selectedAuthorityKbn}
+            onChange={(e) => setSelectedAuthorityKbn(e.target.value)}
+            disabled={isActionProcessing}
+            className="w-full h-[40px] mb-4 border border-gray-300 rounded-sm px-2"
+          >
+            {AUTHORITY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              data-dialog-initial-focus
+              onClick={() => setEditingAuthority(null)}
+              disabled={isActionProcessing}
+              className="flex-1 h-[40px] bg-gray-300 text-[#444] rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              キャンセル
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmAuthorityChange}
+              disabled={isActionProcessing}
+              className="flex-1 h-[40px] bg-blue-500 text-white rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isActionProcessing ? "処理中..." : "登録"}
             </button>
           </div>
         </ModalDialog>

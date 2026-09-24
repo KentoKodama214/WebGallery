@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import { NextRequest } from "next/server";
-import { GET, POST } from "../route";
+import { GET, POST, PUT, DELETE, PATCH } from "../route";
 
 type Ctx = { params: Promise<{ path: string[] }> };
 
@@ -117,7 +117,7 @@ describe("APIプロキシ route", () => {
       {
         method: "POST",
         headers: {
-          "content-length": String(7 * 1024 * 1024),
+          "content-length": String(56 * 1024 * 1024),
           origin: "http://localhost",
         },
       }
@@ -133,7 +133,7 @@ describe("APIプロキシ route", () => {
     let emitted = 0;
     const body = new ReadableStream<Uint8Array>({
       pull(controller) {
-        if (emitted++ < 8) {
+        if (emitted++ < 56) {
           controller.enqueue(oneMb);
         } else {
           controller.close();
@@ -373,5 +373,34 @@ describe("APIプロキシ route", () => {
 
     delete process.env.PROXY_MAX_CONCURRENCY;
     jest.resetModules();
+  });
+
+  it("Origin ヘッダーが不正なURL文字列の場合は検証不能として403を返す", async () => {
+    const req = new NextRequest("http://localhost/api/v1/auth/logout", {
+      method: "POST",
+      headers: { origin: "not a valid url" },
+    });
+    const res = await POST(req, ctx(["v1", "auth", "logout"]));
+
+    expect(res.status).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["PUT", PUT] as const,
+    ["DELETE", DELETE] as const,
+    ["PATCH", PATCH] as const,
+  ])("%sリクエストをバックエンドへ中継すること", async (method, handler) => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const req = new NextRequest("http://localhost/api/v1/accounts/testuser1", {
+      method,
+      headers: { origin: "http://localhost" },
+    });
+    const res = await handler(req, ctx(["v1", "accounts", "testuser1"]));
+
+    expect(res.status).toBe(204);
+    expect(fetchMock).toHaveBeenCalled();
+    expect(fetchMock.mock.calls[0][1]?.method).toBe(method);
   });
 });

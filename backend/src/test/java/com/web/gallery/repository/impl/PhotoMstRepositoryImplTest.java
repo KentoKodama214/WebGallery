@@ -19,17 +19,17 @@ import com.web.gallery.domain.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.ShutterSpeed;
 import com.web.gallery.dto.PhotoDeletionDto;
-import com.web.gallery.entity.PhotoMst;
-import com.web.gallery.entity.PhotoMstCondition;
-import com.web.gallery.entity.PhotoMstUpdateTarget;
+import com.web.gallery.entity.photo.PhotoMst;
+import com.web.gallery.entity.photo.PhotoMstCondition;
+import com.web.gallery.entity.photo.PhotoMstUpdateTarget;
 import com.web.gallery.enumeration.DirectionEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.PhotoMstMapper;
-import com.web.gallery.model.PhotoDeleteModel;
-import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoNoList;
+import com.web.gallery.model.photo.PhotoDeleteModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoNoList;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -64,7 +64,7 @@ public class PhotoMstRepositoryImplTest {
     @Test
     @Order(1)
     @DisplayName("正常系：Nullのパラメータを含むPhotoDetailModelの登録")
-    void regist_contain_null_parameter() throws GalleryException {
+    void regist_containsNullFields() throws GalleryException {
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
       PhotoDetailModel photoDetailModel =
@@ -93,6 +93,7 @@ public class PhotoMstRepositoryImplTest {
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), photoMst.getPhotoAt());
       assertEquals(0L, photoMst.getLocationNo());
       assertEquals(imageFilePath, photoMst.getImageFilePath());
+      assertEquals("DSC111.jpg", photoMst.getImageFileName());
       assertEquals("", photoMst.getPhotoJapaneseTitle());
       assertEquals("", photoMst.getPhotoEnglishTitle());
       assertEquals("", photoMst.getCaption());
@@ -101,12 +102,14 @@ public class PhotoMstRepositoryImplTest {
       assertEquals(0, BigDecimal.ZERO.compareTo(photoMst.getFValue()));
       assertEquals(0, BigDecimal.ZERO.compareTo(photoMst.getShutterSpeed()));
       assertEquals(0, photoMst.getIso());
+      // 位置情報公開フラグ未指定の新規登録は安全側に倒し、非公開（false）で保存されること
+      assertFalse(photoMst.getIsLocationPublic());
     }
 
     @Test
     @Order(2)
     @DisplayName("正常系：Nullのパラメータを含まないPhotoDetailModelの登録")
-    void regist_not_contain_null_parameter() throws GalleryException {
+    void regist_allFieldsSet() throws GalleryException {
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
       PhotoDetailModel photoDetailModel =
@@ -148,6 +151,7 @@ public class PhotoMstRepositoryImplTest {
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)), photoMst.getPhotoAt());
       assertEquals(1L, photoMst.getLocationNo());
       assertEquals(imageFilePath, photoMst.getImageFilePath());
+      assertEquals("DSC111.jpg", photoMst.getImageFileName());
       assertEquals("タイトル1", photoMst.getPhotoJapaneseTitle());
       assertEquals("title1", photoMst.getPhotoEnglishTitle());
       assertEquals("キャプション1", photoMst.getCaption());
@@ -156,12 +160,13 @@ public class PhotoMstRepositoryImplTest {
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(photoMst.getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(photoMst.getShutterSpeed()));
       assertEquals(100, photoMst.getIso());
+      assertFalse(photoMst.getIsLocationPublic());
     }
 
     @Test
     @Order(3)
     @DisplayName("異常系：RegistFailureExceptionをthrowする")
-    void regist_RegistFailureException() {
+    void regist_registFailureException() {
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
       PhotoDetailModel photoDetailModel =
@@ -193,6 +198,7 @@ public class PhotoMstRepositoryImplTest {
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)), photoMst.getPhotoAt());
       assertEquals(0L, photoMst.getLocationNo());
       assertEquals(imageFilePath, photoMst.getImageFilePath());
+      assertEquals("DSC111.jpg", photoMst.getImageFileName());
       assertEquals("", photoMst.getPhotoJapaneseTitle());
       assertEquals("", photoMst.getPhotoEnglishTitle());
       assertEquals("", photoMst.getCaption());
@@ -201,6 +207,7 @@ public class PhotoMstRepositoryImplTest {
       assertEquals(0, BigDecimal.ZERO.compareTo(photoMst.getFValue()));
       assertEquals(0, BigDecimal.ZERO.compareTo(photoMst.getShutterSpeed()));
       assertEquals(0, photoMst.getIso());
+      assertFalse(photoMst.getIsLocationPublic());
     }
   }
 
@@ -211,7 +218,7 @@ public class PhotoMstRepositoryImplTest {
     @Test
     @Order(1)
     @DisplayName("正常系：Nullのパラメータを含むPhotoDetailModelでの更新")
-    void update_contain_null_parameter() throws GalleryException {
+    void update_containsNullFields() throws GalleryException {
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
       PhotoDetailModel photoDetailModel =
@@ -240,6 +247,7 @@ public class PhotoMstRepositoryImplTest {
       assertNull(cndPhotoMst.getPhotoAt());
       assertNull(cndPhotoMst.getLocationNo());
       assertNull(cndPhotoMst.getImageFilePath());
+      assertNull(cndPhotoMst.getImageFileName());
       assertNull(cndPhotoMst.getPhotoJapaneseTitle());
       assertNull(cndPhotoMst.getPhotoEnglishTitle());
       assertNull(cndPhotoMst.getCaption());
@@ -267,12 +275,14 @@ public class PhotoMstRepositoryImplTest {
       assertEquals(0, BigDecimal.ZERO.compareTo(targetPhotoMst.getFValue()));
       assertEquals(0, BigDecimal.ZERO.compareTo(targetPhotoMst.getShutterSpeed()));
       assertEquals(0, targetPhotoMst.getIso());
+      // 位置情報公開フラグ未指定の更新は安全側に倒し、非公開（false）で保存されること
+      assertFalse(targetPhotoMst.getIsLocationPublic());
     }
 
     @Test
     @Order(2)
     @DisplayName("正常系：Nullのパラメータを含まないPhotoDetailModelでの更新")
-    void update_not_contain_null_parameter() throws GalleryException {
+    void update_allFieldsSet() throws GalleryException {
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
       PhotoDetailModel photoDetailModel =
@@ -314,6 +324,7 @@ public class PhotoMstRepositoryImplTest {
       assertNull(cndPhotoMst.getPhotoAt());
       assertNull(cndPhotoMst.getLocationNo());
       assertNull(cndPhotoMst.getImageFilePath());
+      assertNull(cndPhotoMst.getImageFileName());
       assertNull(cndPhotoMst.getPhotoJapaneseTitle());
       assertNull(cndPhotoMst.getPhotoEnglishTitle());
       assertNull(cndPhotoMst.getCaption());
@@ -341,12 +352,13 @@ public class PhotoMstRepositoryImplTest {
       assertEquals(0, BigDecimal.valueOf(2.8).compareTo(targetPhotoMst.getFValue()));
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(targetPhotoMst.getShutterSpeed()));
       assertEquals(100, targetPhotoMst.getIso());
+      assertFalse(targetPhotoMst.getIsLocationPublic());
     }
 
     @Test
     @Order(3)
     @DisplayName("異常系：UpdateFailureExceptionをthrowする")
-    void update_UpdateFailureException() {
+    void update_updateFailureException() {
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
       PhotoDetailModel photoDetailModel =
@@ -412,7 +424,7 @@ public class PhotoMstRepositoryImplTest {
   class delete {
     @Test
     @Order(1)
-    @DisplayName("正常系")
+    @DisplayName("正常系：写真マスタを論理削除すること")
     void delete_success() throws GalleryException {
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
@@ -442,6 +454,7 @@ public class PhotoMstRepositoryImplTest {
       assertNull(cndPhotoMst.getPhotoAt());
       assertNull(cndPhotoMst.getLocationNo());
       assertNull(cndPhotoMst.getImageFilePath());
+      assertNull(cndPhotoMst.getImageFileName());
       assertNull(cndPhotoMst.getPhotoJapaneseTitle());
       assertNull(cndPhotoMst.getPhotoEnglishTitle());
       assertNull(cndPhotoMst.getCaption());
@@ -457,6 +470,7 @@ public class PhotoMstRepositoryImplTest {
       assertNull(targetPhotoMst.getPhotoAt());
       assertNull(targetPhotoMst.getLocationNo());
       assertNull(targetPhotoMst.getImageFilePath());
+      assertNull(targetPhotoMst.getImageFileName());
       assertNull(targetPhotoMst.getPhotoJapaneseTitle());
       assertNull(targetPhotoMst.getPhotoEnglishTitle());
       assertNull(targetPhotoMst.getCaption());
@@ -465,12 +479,13 @@ public class PhotoMstRepositoryImplTest {
       assertNull(targetPhotoMst.getFValue());
       assertNull(targetPhotoMst.getShutterSpeed());
       assertNull(targetPhotoMst.getIso());
+      assertNull(targetPhotoMst.getIsLocationPublic());
     }
 
     @Test
     @Order(2)
     @DisplayName("異常系：UpdateFailureExceptionをthrowする")
-    void delete_UpdateFailureException() {
+    void delete_updateFailureException() {
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
 
       PhotoDeleteModel photoDeleteModel =
@@ -500,6 +515,7 @@ public class PhotoMstRepositoryImplTest {
       assertNull(cndPhotoMst.getPhotoAt());
       assertNull(cndPhotoMst.getLocationNo());
       assertNull(cndPhotoMst.getImageFilePath());
+      assertNull(cndPhotoMst.getImageFileName());
       assertNull(cndPhotoMst.getPhotoJapaneseTitle());
       assertNull(cndPhotoMst.getPhotoEnglishTitle());
       assertNull(cndPhotoMst.getCaption());
@@ -515,6 +531,7 @@ public class PhotoMstRepositoryImplTest {
       assertNull(targetPhotoMst.getPhotoAt());
       assertNull(targetPhotoMst.getLocationNo());
       assertNull(targetPhotoMst.getImageFilePath());
+      assertNull(targetPhotoMst.getImageFileName());
       assertNull(targetPhotoMst.getPhotoJapaneseTitle());
       assertNull(targetPhotoMst.getPhotoEnglishTitle());
       assertNull(targetPhotoMst.getCaption());
@@ -523,6 +540,7 @@ public class PhotoMstRepositoryImplTest {
       assertNull(targetPhotoMst.getFValue());
       assertNull(targetPhotoMst.getShutterSpeed());
       assertNull(targetPhotoMst.getIso());
+      assertNull(targetPhotoMst.getIsLocationPublic());
     }
   }
 
@@ -533,7 +551,7 @@ public class PhotoMstRepositoryImplTest {
     @Test
     @Order(1)
     @DisplayName("正常系：getMaxPhotoNoがある場合")
-    void getNewPhotoNo_getMaxPhotoNo_found() {
+    void getNewPhotoNo_maxPhotoNoFound() {
       doReturn(1L).when(photoMstMapper).getMaxPhotoNo(1L);
       assertEquals(new PhotoNo(2L), photoMstRepositoryImpl.getNewPhotoNo(new AccountNo(1L)));
     }
@@ -541,7 +559,7 @@ public class PhotoMstRepositoryImplTest {
     @Test
     @Order(2)
     @DisplayName("正常系：getMaxPhotoNoがない場合")
-    void getNewPhotoNo_getMaxPhotoNo_not_found() {
+    void getNewPhotoNo_maxPhotoNoNotFound() {
       doReturn(null).when(photoMstMapper).getMaxPhotoNo(1L);
       assertEquals(new PhotoNo(1L), photoMstRepositoryImpl.getNewPhotoNo(new AccountNo(1L)));
     }
@@ -554,7 +572,7 @@ public class PhotoMstRepositoryImplTest {
     @Test
     @Order(1)
     @DisplayName("正常系：画像ファイル名に該当する写真がない場合")
-    void isExistPhoto_not_found() {
+    void isExistPhoto_notFound() {
       MultipartFile multipartFile =
           new MockMultipartFile(
               "file", "DSC111.jpg", "multipart/form-data", "sample image".getBytes());
@@ -598,6 +616,7 @@ public class PhotoMstRepositoryImplTest {
 
       PhotoMstCondition photoMst = photoMstCaptor.getValue();
       assertEquals(1L, photoMst.getAccountNo());
+      assertEquals("DSC111.jpg", photoMst.getImageFileName());
     }
   }
 
@@ -607,7 +626,7 @@ public class PhotoMstRepositoryImplTest {
   class count {
     @Test
     @Order(1)
-    @DisplayName("正常系")
+    @DisplayName("正常系：登録件数を取得すること")
     void count_success() {
       ArgumentCaptor<PhotoMstCondition> photoMstCaptor =
           ArgumentCaptor.forClass(PhotoMstCondition.class);
@@ -622,6 +641,7 @@ public class PhotoMstRepositoryImplTest {
       assertNull(photoMst.getPhotoAt());
       assertNull(photoMst.getLocationNo());
       assertNull(photoMst.getImageFilePath());
+      assertNull(photoMst.getImageFileName());
       assertNull(photoMst.getPhotoJapaneseTitle());
       assertNull(photoMst.getPhotoEnglishTitle());
       assertNull(photoMst.getCaption());
@@ -660,7 +680,7 @@ public class PhotoMstRepositoryImplTest {
     @Test
     @Order(2)
     @DisplayName("正常系：アカウント番号に紐づく写真がない場合")
-    void deleteAndGetUndeletedPhotoNosByAccountNo_not_found() {
+    void deleteAndGetUndeletedPhotoNosByAccountNo_notFound() {
       doReturn(List.of()).when(photoMstMapper).deletePhotosByAccountNo(1L);
 
       PhotoNoList actual =

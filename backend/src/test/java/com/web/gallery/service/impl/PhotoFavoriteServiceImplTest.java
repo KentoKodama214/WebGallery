@@ -9,9 +9,9 @@ import com.web.gallery.exception.FavoriteNotFoundException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.model.PhotoDetailSearchModel;
-import com.web.gallery.model.PhotoFavoriteDeleteModel;
-import com.web.gallery.model.PhotoFavoriteModel;
+import com.web.gallery.model.photo.PhotoDetailSearchModel;
+import com.web.gallery.model.photo.PhotoFavoriteDeleteModel;
+import com.web.gallery.model.photo.PhotoFavoriteModel;
 import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoFavoriteRepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +42,7 @@ public class PhotoFavoriteServiceImplTest {
   class addFavorite {
     @Test
     @Order(1)
-    @DisplayName("正常系（自分自身の写真へのお気に入り登録も許可される）")
+    @DisplayName("正常系：自分自身の写真へのお気に入り登録も許可されること")
     void addFavorite_success() throws GalleryException {
       PhotoFavoriteModel photoFavoriteModel =
           PhotoFavoriteModel.builder()
@@ -50,8 +50,9 @@ public class PhotoFavoriteServiceImplTest {
               .favoritePhotoAccountNo(new AccountNo(1L))
               .favoritePhotoNo(new PhotoNo(1L))
               .build();
-      when(photoDetailRepositoryImpl.getPhotoDetail(any(PhotoDetailSearchModel.class)))
-          .thenReturn(null);
+      doReturn(null)
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
       doNothing().when(photoFavoriteRepositoryImpl).regist(photoFavoriteModel);
       photoFavoriteServiceImpl.addFavorite(photoFavoriteModel);
     }
@@ -66,8 +67,9 @@ public class PhotoFavoriteServiceImplTest {
               .favoritePhotoAccountNo(new AccountNo(1L))
               .favoritePhotoNo(new PhotoNo(1L))
               .build();
-      when(photoDetailRepositoryImpl.getPhotoDetail(any(PhotoDetailSearchModel.class)))
-          .thenReturn(null);
+      doReturn(null)
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
       doThrow(RegistFailureException.class)
           .when(photoFavoriteRepositoryImpl)
           .regist(photoFavoriteModel);
@@ -86,8 +88,9 @@ public class PhotoFavoriteServiceImplTest {
               .favoritePhotoAccountNo(new AccountNo(2L))
               .favoritePhotoNo(new PhotoNo(999L))
               .build();
-      when(photoDetailRepositoryImpl.getPhotoDetail(any(PhotoDetailSearchModel.class)))
-          .thenThrow(PhotoNotFoundException.class);
+      doThrow(PhotoNotFoundException.class)
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
       assertThrows(
           PhotoNotFoundException.class,
           () -> photoFavoriteServiceImpl.addFavorite(photoFavoriteModel));
@@ -101,7 +104,7 @@ public class PhotoFavoriteServiceImplTest {
   class deleteFavorite {
     @Test
     @Order(1)
-    @DisplayName("正常系")
+    @DisplayName("正常系：お気に入りが解除されること")
     void deleteFavorite_success() throws GalleryException {
       PhotoFavoriteModel photoFavoriteModel =
           PhotoFavoriteModel.builder()

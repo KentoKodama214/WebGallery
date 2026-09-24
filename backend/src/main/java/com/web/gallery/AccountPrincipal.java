@@ -1,7 +1,7 @@
 package com.web.gallery;
 
 import com.web.gallery.enumeration.AuthorityEnum;
-import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.account.AccountModel;
 import java.util.Collection;
 import java.util.Collections;
 import org.springframework.security.core.GrantedAuthority;

@@ -441,7 +441,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             setIsLoading(true);
             setReloadKey((k) => k + 1);
           }}
-          className="px-4 py-2 bg-[#2196F3] text-white rounded-sm cursor-pointer"
+          className="px-4 py-2 bg-[#1565C0] text-white rounded-sm cursor-pointer"
         >
           再読み込み
         </button>
@@ -454,7 +454,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       <header>
         <Link
           href={`/photo/${accountId}/photo_list`}
-          className="fixed top-[5px] left-[10px] text-xl text-gray-400 z-[1000] no-underline"
+          className="fixed top-[5px] left-[10px] text-xl text-gray-600 z-[1000] no-underline"
         >
           &larr; back
         </Link>
@@ -466,9 +466,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             onSubmit={handleSubmit}
             className="bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-5"
           >
-            <p className="text-[#444] text-[1.2em] font-bold mt-[10px] mb-[30px] border-b border-[#eee] pb-5">
+            <h1 className="text-[#444] text-[1.2em] font-bold mt-[10px] mb-[30px] border-b border-[#eee] pb-5">
               Account Setting
-            </p>
+            </h1>
 
             <label htmlFor="account-setting-id" className="block text-[#444] text-sm mb-1">アカウントID</label>
             <input
@@ -497,7 +497,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.accountName && (
-              <p id="account-setting-name-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.accountName}</p>
+              <p id="account-setting-name-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.accountName}</p>
             )}
 
             <label htmlFor="account-setting-current-password" className="block text-[#444] text-sm mb-1 mt-2">
@@ -525,7 +525,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.currentPassword && (
-              <p id="account-setting-current-password-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.currentPassword}</p>
+              <p id="account-setting-current-password-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.currentPassword}</p>
             )}
 
             <label htmlFor="account-setting-password" className="block text-[#444] text-sm mb-1 mt-2">新しいパスワード</label>
@@ -548,7 +548,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.newPassword && (
-              <p id="account-setting-password-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.newPassword}</p>
+              <p id="account-setting-password-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.newPassword}</p>
             )}
 
             <label htmlFor="account-setting-birthdate" className="block text-[#444] text-sm mb-1 mt-2">生年月日</label>
@@ -570,7 +570,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {errors.birthdate && (
-              <p id="account-setting-birthdate-error" className="text-[lightcoral] text-xs font-bold mb-2">{errors.birthdate}</p>
+              <p id="account-setting-birthdate-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.birthdate}</p>
             )}
 
             <label htmlFor="account-setting-sex" className="block text-[#444] text-sm mb-1 mt-2">性別</label>
@@ -633,11 +633,11 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             />
 
             {duplicateError && (
-              <p key={duplicateErrorSeq} role="alert" className="text-[lightcoral] text-xs font-bold mb-2">{duplicateError}</p>
+              <p key={duplicateErrorSeq} role="alert" className="text-[#C62828] text-xs font-bold mb-2">{duplicateError}</p>
             )}
 
             {isReauthCoolingDown && (
-              <p className="text-[lightcoral] text-xs font-bold mb-2">
+              <p className="text-[#C62828] text-xs font-bold mb-2">
                 {/* メッセージ本文だけを1度告知する。毎秒変わる残り秒数はライブリージョン外に置き、
                     スクリーンリーダーが毎秒読み上げないようにする */}
                 <span role="alert">{reauthCooldownMessage}</span>
@@ -650,7 +650,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             <button
               type="submit"
               disabled={isSubmitting || (!!newPassword && isReauthCoolingDown)}
-              className="w-full h-[50px] bg-[#2196F3] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#2196F3] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+              className="w-full h-[50px] bg-[#1565C0] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#1565C0] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
             >
               {isSubmitting ? (
                 <span className="inline-block w-5 h-5 border-[3px] border-white border-t-[rgba(255,255,255,0.3)] rounded-full animate-spin" />
@@ -665,7 +665,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="w-full h-[50px] bg-[#e53935] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#e53935]"
+              className="w-full h-[50px] bg-[#C62828] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#C62828]"
             >
               アカウント削除
             </button>
@@ -710,7 +710,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               className="block w-full p-[10px] mb-2 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
             {deleteError && (
-              <p key={deleteErrorSeq} role="alert" className="text-[lightcoral] text-xs font-bold mb-2">{deleteError}</p>
+              <p key={deleteErrorSeq} role="alert" className="text-[#C62828] text-xs font-bold mb-2">{deleteError}</p>
             )}
             <div className="flex gap-3">
               <button
@@ -729,7 +729,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               <button
                 type="submit"
                 disabled={isDeleting || isReauthCoolingDown}
-                className="flex-1 h-[40px] bg-[#e53935] text-white border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                className="flex-1 h-[40px] bg-[#C62828] text-white border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isDeleting ? (
                   <span className="inline-block w-5 h-5 border-[3px] border-white border-t-[rgba(255,255,255,0.3)] rounded-full animate-spin" />

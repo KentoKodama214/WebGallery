@@ -9,13 +9,13 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagNo;
-import com.web.gallery.entity.PhotoTagMst;
-import com.web.gallery.entity.PhotoTagMstCondition;
+import com.web.gallery.entity.photo.PhotoTagMst;
+import com.web.gallery.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.mapper.PhotoTagMstMapper;
-import com.web.gallery.model.PhotoTagDeleteModel;
-import com.web.gallery.model.PhotoTagModel;
+import com.web.gallery.model.photo.PhotoTagDeleteModel;
+import com.web.gallery.model.photo.PhotoTagModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -43,8 +43,8 @@ public class PhotoTagMstRepositoryImplTest {
   class regist {
     @Test
     @Order(1)
-    @DisplayName("正常系")
-    void regist_contain_null_parameter() throws GalleryException {
+    @DisplayName("正常系：写真タグマスタを登録すること")
+    void regist_success() throws GalleryException {
       PhotoTagModel photoTagModel =
           PhotoTagModel.builder()
               .accountNo(new AccountNo(1L))
@@ -61,6 +61,7 @@ public class PhotoTagMstRepositoryImplTest {
 
       verify(photoTagMstMapper).insert(any(PhotoTagMst.class));
       PhotoTagMst photoTagMst = photoTagMstCaptor.getValue();
+      assertNull(photoTagMst.getId());
       assertEquals(1L, photoTagMst.getAccountNo());
       assertEquals(1L, photoTagMst.getPhotoNo());
       assertEquals(1L, photoTagMst.getTagNo());
@@ -93,6 +94,7 @@ public class PhotoTagMstRepositoryImplTest {
 
       verify(photoTagMstMapper).insert(any(PhotoTagMst.class));
       PhotoTagMst photoTagMst = photoTagMstCaptor.getValue();
+      assertNull(photoTagMst.getId());
       assertEquals(1L, photoTagMst.getAccountNo());
       assertEquals(1L, photoTagMst.getPhotoNo());
       assertEquals(1L, photoTagMst.getTagNo());
@@ -109,7 +111,7 @@ public class PhotoTagMstRepositoryImplTest {
   class clear {
     @Test
     @Order(1)
-    @DisplayName("正常系：")
+    @DisplayName("正常系：該当写真の写真タグを全件削除すること")
     void clear_success() {
       PhotoTagDeleteModel photoTagDeleteModel =
           PhotoTagDeleteModel.builder()
@@ -127,6 +129,7 @@ public class PhotoTagMstRepositoryImplTest {
       PhotoTagMstCondition photoTagMst = photoTagMstCaptor.getValue();
       assertEquals(1L, photoTagMst.getAccountNo());
       assertEquals(1L, photoTagMst.getPhotoNo());
+      assertNull(photoTagMst.getPhotoNoList());
       assertNull(photoTagMst.getTagNo());
       assertNull(photoTagMst.getTagJapaneseName());
       assertNull(photoTagMst.getTagEnglishName());
@@ -151,7 +154,10 @@ public class PhotoTagMstRepositoryImplTest {
       PhotoTagMstCondition photoTagMst = photoTagMstCaptor.getValue();
       assertEquals(1L, photoTagMst.getAccountNo());
       assertNull(photoTagMst.getPhotoNo());
+      assertNull(photoTagMst.getPhotoNoList());
       assertNull(photoTagMst.getTagNo());
+      assertNull(photoTagMst.getTagJapaneseName());
+      assertNull(photoTagMst.getTagEnglishName());
     }
   }
 }

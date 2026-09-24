@@ -2,16 +2,21 @@ package com.web.gallery.repository.impl;
 
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.entity.Account;
-import com.web.gallery.entity.AccountCondition;
-import com.web.gallery.entity.AccountUpdateTarget;
+import com.web.gallery.dto.AccountDto;
+import com.web.gallery.entity.account.Account;
+import com.web.gallery.entity.account.AccountAuthority;
+import com.web.gallery.entity.account.AccountAuthorityCondition;
+import com.web.gallery.entity.account.AccountAuthorityUpdateTarget;
+import com.web.gallery.entity.account.AccountCondition;
+import com.web.gallery.entity.account.AccountUpdateTarget;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
+import com.web.gallery.mapper.AccountAuthorityMapper;
 import com.web.gallery.mapper.AccountMapper;
-import com.web.gallery.model.AccountGetModel;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountModelList;
-import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.model.account.AccountGetModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.account.AccountModelList;
+import com.web.gallery.model.account.AccountPageModel;
 import com.web.gallery.repository.AccountRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +32,7 @@ import org.springframework.stereotype.Repository;
 public class AccountRepositoryImpl implements AccountRepository {
 
   private final AccountMapper accountMapper;
+  private final AccountAuthorityMapper accountAuthorityMapper;
   private final PasswordEncoder passwordEncoder;
 
   /**
@@ -38,9 +44,9 @@ public class AccountRepositoryImpl implements AccountRepository {
    */
   @Override
   public AccountModel getByAccountNo(AccountNo accountNo) {
-    List<Account> accountList =
+    List<AccountDto> accountDtoList =
         accountMapper.select(AccountCondition.byAccountNo(accountNo.value()));
-    return accountList.isEmpty() ? null : AccountModel.from(accountList.getFirst());
+    return accountDtoList.isEmpty() ? null : AccountModel.from(accountDtoList.getFirst());
   }
 
   /**
@@ -52,20 +58,23 @@ public class AccountRepositoryImpl implements AccountRepository {
    */
   @Override
   public AccountModel getByAccountId(AccountId accountId) {
-    List<Account> accountList =
+    List<AccountDto> accountDtoList =
         accountMapper.select(AccountCondition.byAccountId(accountId.value()));
-    return accountList.isEmpty() ? null : AccountModel.from(accountList.getFirst());
+    return accountDtoList.isEmpty() ? null : AccountModel.from(accountDtoList.getFirst());
   }
 
   /**
    * Accountテーブルへ登録する
+   *
+   * <p>{@code common.account}と{@code common.account_authority}へ、同一のアカウント番号で登録する
    *
    * @param accountModel {@link AccountModel}
    * @throws GalleryException 登録に失敗した場合
    */
   @Override
   public void regist(AccountModel accountModel) throws GalleryException {
-    Account account = Account.from(accountModel, passwordEncoder);
+    Long accountNo = accountMapper.nextAccountNo();
+    Account account = Account.from(accountModel, passwordEncoder, accountNo);
 
     try {
       accountMapper.insert(account);
@@ -73,6 +82,7 @@ public class AccountRepositoryImpl implements AccountRepository {
       log.warn("Account: Duplicate Key (AccountId: {})", accountModel.getAccountId().value(), e);
       throw ErrorEnum.FAIL_TO_REGIST_ACCOUNT.toException();
     }
+    accountAuthorityMapper.insert(AccountAuthority.forRegist(accountNo));
   }
 
   /**
@@ -129,6 +139,25 @@ public class AccountRepositoryImpl implements AccountRepository {
   }
 
   /**
+   * AccountAuthorityテーブルの権限区分を更新する
+   *
+   * @param accountModel {@link AccountModel}
+   * @throws GalleryException 更新に失敗した場合
+   */
+  @Override
+  public void updateAuthority(AccountModel accountModel) throws GalleryException {
+    AccountAuthorityCondition condition =
+        AccountAuthorityCondition.byAccountNo(accountModel.getAccountNo().value());
+    AccountAuthorityUpdateTarget target = AccountAuthorityUpdateTarget.fromForUpdate(accountModel);
+
+    if (accountAuthorityMapper.update(condition, target) < 1) {
+      log.warn(
+          "AccountAuthority: Update Failed (AccountNo: {})", accountModel.getAccountNo().value());
+      throw ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException();
+    }
+  }
+
+  /**
    * アカウントIDに該当するアカウントの存在有無をチェックする（新規登録用、除外なし）
    *
    * @param accountId アカウントID
@@ -162,13 +191,14 @@ public class AccountRepositoryImpl implements AccountRepository {
    */
   @Override
   public AccountPageModel getAccountList(AccountGetModel accountGetModel) {
-    List<Account> accountList = accountMapper.selectList(AccountCondition.forList(accountGetModel));
+    List<AccountDto> accountDtoList =
+        accountMapper.selectList(AccountCondition.forList(accountGetModel));
 
-    Boolean isLast = accountList.size() < accountGetModel.getLimit();
-    List<Account> pageAccountList =
-        isLast ? accountList : accountList.subList(0, accountGetModel.getLimit() - 1);
+    Boolean isLast = accountDtoList.size() < accountGetModel.getLimit();
+    List<AccountDto> pageAccountDtoList =
+        isLast ? accountDtoList : accountDtoList.subList(0, accountGetModel.getLimit() - 1);
 
-    return AccountPageModel.of(AccountModelList.from(pageAccountList), isLast);
+    return AccountPageModel.of(AccountModelList.from(pageAccountDtoList), isLast);
   }
 
   /**
@@ -181,23 +211,26 @@ public class AccountRepositoryImpl implements AccountRepository {
    */
   @Override
   public AccountPageModel getAccountListForAdmin(AccountGetModel accountGetModel) {
-    List<Account> accountList =
+    List<AccountDto> accountDtoList =
         accountMapper.selectList(AccountCondition.forAdminList(accountGetModel));
 
-    Boolean isLast = accountList.size() < accountGetModel.getLimit();
-    List<Account> pageAccountList =
-        isLast ? accountList : accountList.subList(0, accountGetModel.getLimit() - 1);
+    Boolean isLast = accountDtoList.size() < accountGetModel.getLimit();
+    List<AccountDto> pageAccountDtoList =
+        isLast ? accountDtoList : accountDtoList.subList(0, accountGetModel.getLimit() - 1);
 
-    return AccountPageModel.of(AccountModelList.from(pageAccountList), isLast);
+    return AccountPageModel.of(AccountModelList.from(pageAccountDtoList), isLast);
   }
 
   /**
    * Accountテーブルから該当するレコードを物理削除する
    *
+   * <p>外部キー制約に抵触しないよう、account_authorityの削除を先に行う
+   *
    * @param accountNo アカウント番号
    */
   @Override
   public void delete(AccountNo accountNo) {
+    accountAuthorityMapper.delete(AccountAuthorityCondition.byAccountNo(accountNo.value()));
     accountMapper.delete(AccountCondition.byAccountNo(accountNo.value()));
   }
 

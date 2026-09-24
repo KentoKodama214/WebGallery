@@ -1,6 +1,6 @@
 package com.web.gallery.service;
 
-import com.web.gallery.model.KbnMstModelList;
+import com.web.gallery.model.common.KbnMstModelList;
 
 /** 区分マスタに関するビジネスロジックを行うServiceクラス */
 public interface KbnMstService {

@@ -18,22 +18,22 @@ import com.web.gallery.event.PhotoRegisteredEvent;
 import com.web.gallery.event.PhotoUpdatedEvent;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.helper.GeoIpResolver;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.FileModel;
-import com.web.gallery.model.PhotoDeleteModel;
-import com.web.gallery.model.PhotoDeleteModelList;
-import com.web.gallery.model.PhotoDetailGetModel;
-import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoDetailModelList;
-import com.web.gallery.model.PhotoDetailSearchModel;
-import com.web.gallery.model.PhotoGetModel;
-import com.web.gallery.model.PhotoListFilterLogModel;
-import com.web.gallery.model.PhotoListGetModel;
-import com.web.gallery.model.PhotoModel;
-import com.web.gallery.model.PhotoModelList;
-import com.web.gallery.model.PhotoPageModel;
-import com.web.gallery.model.PhotoSaveResultModel;
-import com.web.gallery.model.PhotoViewLogModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.photo.FileModel;
+import com.web.gallery.model.photo.PhotoDeleteModel;
+import com.web.gallery.model.photo.PhotoDeleteModelList;
+import com.web.gallery.model.photo.PhotoDetailGetModel;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoDetailModelList;
+import com.web.gallery.model.photo.PhotoDetailSearchModel;
+import com.web.gallery.model.photo.PhotoGetModel;
+import com.web.gallery.model.photo.PhotoListFilterLogModel;
+import com.web.gallery.model.photo.PhotoListGetModel;
+import com.web.gallery.model.photo.PhotoModel;
+import com.web.gallery.model.photo.PhotoModelList;
+import com.web.gallery.model.photo.PhotoPageModel;
+import com.web.gallery.model.photo.PhotoSaveResultModel;
+import com.web.gallery.model.photo.PhotoViewLogModel;
 import com.web.gallery.policy.ImageFileValidationPolicy;
 import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
@@ -312,22 +312,27 @@ public class PhotoServiceImpl implements PhotoService {
     // ファイルI/OはDBトランザクションの対象外のため、途中の登録失敗でDBがロールバックされても
     // 書き込み済みのファイルは自動的には戻らない。登録済みファイルを記録しておき、失敗時に補償削除する
     List<ImageFilePath> registeredImageFilePaths = new ArrayList<>();
-    AccountModel accountModel = null;
-    PhotoCount registeredCount = null;
+
+    // 新規登録分については、1件も登録処理（ファイルアップロード・DB登録）を始める前に、
+    // リクエスト全体の枚数で登録枚数の上限超過を判定する
+    long newRegistrationCount =
+        photoDetailModelList.stream().filter(m -> Objects.isNull(m.getPhotoNo())).count();
+    if (newRegistrationCount > 0) {
+      AccountModel accountModel = accountRepository.getByAccountNo(photoAccountNo);
+      PhotoCount registeredCount = new PhotoCount(photoMstRepository.count(photoAccountNo));
+      if (photoQuotaPolicy.isReached(
+          accountModel.getAuthorityKbn(),
+          registeredCount,
+          new PhotoCount((int) newRegistrationCount))) {
+        throw ErrorEnum.REACHED_REGISTRATION_LIMIT.toException();
+      }
+    }
 
     try {
       for (PhotoDetailModel photoDetailModel : photoDetailModelList) {
         if (Objects.isNull(photoDetailModel.getPhotoNo())) {
-          if (Objects.isNull(accountModel)) {
-            accountModel = accountRepository.getByAccountNo(photoAccountNo);
-            registeredCount = new PhotoCount(photoMstRepository.count(photoAccountNo));
-          }
-          if (photoQuotaPolicy.isReached(accountModel.getAuthorityKbn(), registeredCount)) {
-            throw ErrorEnum.REACHED_REGISTRATION_LIMIT.toException();
-          }
           savedImageFilePath = registPhoto(photoDetailModel, new PhotoNo(photoNo), filePath);
           registeredImageFilePaths.add(savedImageFilePath);
-          registeredCount = new PhotoCount(registeredCount.value() + 1);
           ++photoNo;
         } else {
           savedPhotoNo = photoDetailModel.getPhotoNo();
@@ -572,6 +577,15 @@ public class PhotoServiceImpl implements PhotoService {
     Integer count = photoMstRepository.count(accountNo);
 
     return photoQuotaPolicy.isReached(accountModel.getAuthorityKbn(), new PhotoCount(count));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Integer getRemainingPhotoCount(AccountNo accountNo) {
+    AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
+    Integer count = photoMstRepository.count(accountNo);
+
+    return photoQuotaPolicy.remainingCount(accountModel.getAuthorityKbn(), new PhotoCount(count));
   }
 
   /**

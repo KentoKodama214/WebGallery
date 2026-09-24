@@ -21,20 +21,24 @@ import com.web.gallery.domain.common.IsRevoked;
 import com.web.gallery.domain.common.TokenHash;
 import com.web.gallery.domain.common.UpdatedAt;
 import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.InvalidRefreshTokenException;
 import com.web.gallery.helper.JwtTokenProvider;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AuthTokenModel;
-import com.web.gallery.model.RefreshTokenModel;
-import com.web.gallery.repository.AccountRepository;
-import com.web.gallery.repository.RefreshTokenRepository;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.auth.AuthTokenModel;
+import com.web.gallery.model.auth.RefreshTokenModel;
+import com.web.gallery.repository.impl.AccountRepositoryImpl;
+import com.web.gallery.repository.impl.RefreshTokenRepositoryImpl;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -45,7 +49,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.test.context.ActiveProfiles;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplTest {
 
@@ -59,9 +65,9 @@ class AuthServiceImplTest {
 
   @Mock private LoginConfig loginConfig;
 
-  @Mock private RefreshTokenRepository refreshTokenRepository;
+  @Mock private RefreshTokenRepositoryImpl refreshTokenRepositoryImpl;
 
-  @Mock private AccountRepository accountRepository;
+  @Mock private AccountRepositoryImpl accountRepositoryImpl;
 
   @Mock private Clock clock;
 
@@ -72,27 +78,30 @@ class AuthServiceImplTest {
   }
 
   @Nested
-  @DisplayName("#login")
-  class Login {
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class login {
 
     @Test
-    @DisplayName("正常系: ログインに成功し、トークンが返されること")
+    @Order(1)
+    @DisplayName("正常系：ログインに成功し、トークンが返されること")
     void login_success() {
       String accountId = "testuser1";
       String password = "password1";
 
       AccountPrincipal principal = mock(AccountPrincipal.class);
-      when(principal.getAccountNo()).thenReturn(1L);
+      doReturn(1L).when(principal).getAccountNo();
 
       Authentication authentication = mock(Authentication.class);
-      when(authentication.getPrincipal()).thenReturn(principal);
-      when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-          .thenReturn(authentication);
+      doReturn(principal).when(authentication).getPrincipal();
+      doReturn(authentication)
+          .when(authenticationManager)
+          .authenticate(any(UsernamePasswordAuthenticationToken.class));
 
-      when(jwtTokenProvider.generateAccessToken(principal)).thenReturn("access-token");
-      when(jwtTokenProvider.generateRefreshToken()).thenReturn("refresh-token");
-      when(jwtConfig.getRefreshTokenExpirationDays()).thenReturn(7);
-      when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
+      doReturn("access-token").when(jwtTokenProvider).generateAccessToken(principal);
+      doReturn("refresh-token").when(jwtTokenProvider).generateRefreshToken();
+      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
+      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
 
       AuthTokenModel result =
           authServiceImpl.login(
@@ -103,20 +112,58 @@ class AuthServiceImplTest {
       assertEquals("refresh-token", result.getRefreshToken().value());
       assertEquals(900L, result.getExpiresIn().value());
 
-      verify(refreshTokenRepository).revokeAllByAccountNo(new AccountNo(1L));
+      verify(refreshTokenRepositoryImpl).revokeAllByAccountNo(new AccountNo(1L));
       ArgumentCaptor<RefreshTokenModel> refreshTokenModelCaptor =
           ArgumentCaptor.forClass(RefreshTokenModel.class);
-      verify(refreshTokenRepository).save(refreshTokenModelCaptor.capture());
+      verify(refreshTokenRepositoryImpl).save(refreshTokenModelCaptor.capture());
       assertEquals(
           OffsetDateTime.now(clock).plusDays(7),
           refreshTokenModelCaptor.getValue().getExpiresAt().value());
     }
 
     @Test
-    @DisplayName("異常系: パスワードが間違っている場合は例外がスローされること")
+    @Order(2)
+    @DisplayName("正常系：ログイン失敗回数が未設定（null）のアカウントはロック状態と判定されず、ログインに成功すること")
+    void login_success_loginFailureCountNull() {
+      String accountId = "testuser1";
+      String password = "password1";
+
+      AccountModel accountModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .updatedAt(new UpdatedAt(OffsetDateTime.now(clock)))
+              .build();
+      doReturn(accountModel).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
+
+      AccountPrincipal principal = mock(AccountPrincipal.class);
+      doReturn(1L).when(principal).getAccountNo();
+
+      Authentication authentication = mock(Authentication.class);
+      doReturn(principal).when(authentication).getPrincipal();
+      doReturn(authentication)
+          .when(authenticationManager)
+          .authenticate(any(UsernamePasswordAuthenticationToken.class));
+
+      doReturn("access-token").when(jwtTokenProvider).generateAccessToken(principal);
+      doReturn("refresh-token").when(jwtTokenProvider).generateRefreshToken();
+      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
+      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
+
+      AuthTokenModel result =
+          authServiceImpl.login(
+              new AccountId(accountId), new Password(password), new IpAddress("127.0.0.1"));
+
+      assertNotNull(result);
+      assertEquals("access-token", result.getAccessToken().value());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：パスワードが間違っている場合は例外がスローされること")
     void login_badCredentials() {
-      when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-          .thenThrow(new BadCredentialsException("Bad credentials"));
+      doThrow(new BadCredentialsException("Bad credentials"))
+          .when(authenticationManager)
+          .authenticate(any(UsernamePasswordAuthenticationToken.class));
 
       assertThrows(
           BadCredentialsException.class,
@@ -129,10 +176,12 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("異常系: アカウントがロックされている場合は例外がスローされること")
+    @Order(4)
+    @DisplayName("異常系：アカウントがロックされている場合は例外がスローされること")
     void login_accountLocked() {
-      when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-          .thenThrow(new LockedException("Account is locked"));
+      doThrow(new LockedException("Account is locked"))
+          .when(authenticationManager)
+          .authenticate(any(UsernamePasswordAuthenticationToken.class));
 
       assertThrows(
           LockedException.class,
@@ -143,10 +192,11 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("異常系: ロック中かつ最終更新から自動解除時間が経過していない場合は例外がスローされ、認証は行われないこと")
+    @Order(5)
+    @DisplayName("異常系：ロック中かつ最終更新から自動解除時間が経過していない場合は例外がスローされ、認証は行われないこと")
     void login_accountLocked_within_lockDuration() {
-      when(loginConfig.getFailCount()).thenReturn(3);
-      when(loginConfig.getLockDurationMinutes()).thenReturn(30);
+      doReturn(3).when(loginConfig).getFailCount();
+      doReturn(30).when(loginConfig).getLockDurationMinutes();
 
       AccountModel lockedModel =
           AccountModel.builder()
@@ -154,7 +204,7 @@ class AuthServiceImplTest {
               .loginFailureCount(new LoginFailureCount(3))
               .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(5)))
               .build();
-      when(accountRepository.getByAccountId(new AccountId("testuser1"))).thenReturn(lockedModel);
+      doReturn(lockedModel).when(accountRepositoryImpl).getByAccountId(new AccountId("testuser1"));
 
       assertThrows(
           LockedException.class,
@@ -163,15 +213,16 @@ class AuthServiceImplTest {
                 new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
           });
 
-      verify(authenticationManager, times(0))
+      verify(authenticationManager, never())
           .authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 
     @Test
-    @DisplayName("正常系: ロック中でも最終更新から自動解除時間が経過していればロックが解除され、ログインに成功すること")
+    @Order(6)
+    @DisplayName("正常系：ロック中でも最終更新から自動解除時間が経過していればロックが解除され、ログインに成功すること")
     void login_accountLocked_after_lockDuration_autoReleased() throws Exception {
-      when(loginConfig.getFailCount()).thenReturn(3);
-      when(loginConfig.getLockDurationMinutes()).thenReturn(30);
+      doReturn(3).when(loginConfig).getFailCount();
+      doReturn(30).when(loginConfig).getLockDurationMinutes();
 
       AccountModel lockedModel =
           AccountModel.builder()
@@ -179,18 +230,19 @@ class AuthServiceImplTest {
               .loginFailureCount(new LoginFailureCount(3))
               .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(31)))
               .build();
-      when(accountRepository.getByAccountId(new AccountId("testuser1"))).thenReturn(lockedModel);
+      doReturn(lockedModel).when(accountRepositoryImpl).getByAccountId(new AccountId("testuser1"));
 
       AccountPrincipal principal = mock(AccountPrincipal.class);
-      when(principal.getAccountNo()).thenReturn(1L);
+      doReturn(1L).when(principal).getAccountNo();
       Authentication authentication = mock(Authentication.class);
-      when(authentication.getPrincipal()).thenReturn(principal);
-      when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-          .thenReturn(authentication);
-      when(jwtTokenProvider.generateAccessToken(principal)).thenReturn("access-token");
-      when(jwtTokenProvider.generateRefreshToken()).thenReturn("refresh-token");
-      when(jwtConfig.getRefreshTokenExpirationDays()).thenReturn(7);
-      when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
+      doReturn(principal).when(authentication).getPrincipal();
+      doReturn(authentication)
+          .when(authenticationManager)
+          .authenticate(any(UsernamePasswordAuthenticationToken.class));
+      doReturn("access-token").when(jwtTokenProvider).generateAccessToken(principal);
+      doReturn("refresh-token").when(jwtTokenProvider).generateRefreshToken();
+      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
+      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
 
       AuthTokenModel result =
           authServiceImpl.login(
@@ -198,12 +250,53 @@ class AuthServiceImplTest {
 
       assertNotNull(result);
       ArgumentCaptor<AccountModel> unlockCaptor = ArgumentCaptor.forClass(AccountModel.class);
-      verify(accountRepository).updateLoginFailureCount(unlockCaptor.capture());
+      verify(accountRepositoryImpl).updateLoginFailureCount(unlockCaptor.capture());
       assertEquals(0, unlockCaptor.getValue().getLoginFailureCount().value());
     }
 
     @Test
-    @DisplayName("異常系: 管理者ロックされている場合は、最終更新から自動解除時間が経過していても解除されず例外がスローされること")
+    @Order(7)
+    @DisplayName("正常系：ロック解除の更新に失敗してもログイン処理は継続し、ログインに成功すること")
+    void login_accountLocked_after_lockDuration_releaseLockFails_loginStillSucceeds()
+        throws Exception {
+      doReturn(3).when(loginConfig).getFailCount();
+      doReturn(30).when(loginConfig).getLockDurationMinutes();
+
+      AccountModel lockedModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .loginFailureCount(new LoginFailureCount(3))
+              .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(31)))
+              .build();
+      doReturn(lockedModel).when(accountRepositoryImpl).getByAccountId(new AccountId("testuser1"));
+      doThrow(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException())
+          .when(accountRepositoryImpl)
+          .updateLoginFailureCount(any(AccountModel.class));
+
+      AccountPrincipal principal = mock(AccountPrincipal.class);
+      doReturn(1L).when(principal).getAccountNo();
+      Authentication authentication = mock(Authentication.class);
+      doReturn(principal).when(authentication).getPrincipal();
+      doReturn(authentication)
+          .when(authenticationManager)
+          .authenticate(any(UsernamePasswordAuthenticationToken.class));
+      doReturn("access-token").when(jwtTokenProvider).generateAccessToken(principal);
+      doReturn("refresh-token").when(jwtTokenProvider).generateRefreshToken();
+      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
+      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
+
+      AuthTokenModel result =
+          authServiceImpl.login(
+              new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
+
+      assertNotNull(result);
+      assertEquals("access-token", result.getAccessToken().value());
+      verify(accountRepositoryImpl).updateLoginFailureCount(any(AccountModel.class));
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("異常系：管理者ロックされている場合は、最終更新から自動解除時間が経過していても解除されず例外がスローされること")
     void login_adminLocked_notAutoReleased() throws Exception {
       AccountModel adminLockedModel =
           AccountModel.builder()
@@ -212,8 +305,9 @@ class AuthServiceImplTest {
               .isAdminLocked(new IsAdminLocked(true))
               .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(999)))
               .build();
-      when(accountRepository.getByAccountId(new AccountId("testuser1")))
-          .thenReturn(adminLockedModel);
+      doReturn(adminLockedModel)
+          .when(accountRepositoryImpl)
+          .getByAccountId(new AccountId("testuser1"));
 
       assertThrows(
           LockedException.class,
@@ -222,18 +316,44 @@ class AuthServiceImplTest {
                 new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
           });
 
-      verify(authenticationManager, times(0))
+      verify(authenticationManager, never())
           .authenticate(any(UsernamePasswordAuthenticationToken.class));
-      verify(accountRepository, times(0)).updateLoginFailureCount(any(AccountModel.class));
+      verify(accountRepositoryImpl, never()).updateLoginFailureCount(any(AccountModel.class));
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("異常系：ロック中で最終更新日時が未設定の場合は自動解除できず例外がスローされること")
+    void login_locked_updatedAtNull_notAutoReleased() {
+      doReturn(3).when(loginConfig).getFailCount();
+
+      AccountModel lockedModel =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .loginFailureCount(new LoginFailureCount(3))
+              .build();
+      doReturn(lockedModel).when(accountRepositoryImpl).getByAccountId(new AccountId("testuser1"));
+
+      assertThrows(
+          LockedException.class,
+          () -> {
+            authServiceImpl.login(
+                new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
+          });
+
+      verify(authenticationManager, never())
+          .authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
   }
 
   @Nested
-  @DisplayName("#refresh")
-  class Refresh {
+  @Order(2)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class refresh {
 
     @Test
-    @DisplayName("正常系: リフレッシュトークンが有効な場合、新しいアクセストークンとリフレッシュトークンが返され、旧トークンが無効化されること")
+    @Order(1)
+    @DisplayName("正常系：リフレッシュトークンが有効な場合、新しいアクセストークンとリフレッシュトークンが返され、旧トークンが無効化されること")
     void refresh_success() {
       String refreshToken = "valid-refresh-token";
       RefreshTokenModel storedToken =
@@ -244,8 +364,9 @@ class AuthServiceImplTest {
               .isRevoked(new IsRevoked(false))
               .build();
 
-      when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class)))
-          .thenReturn(storedToken);
+      doReturn(storedToken)
+          .when(refreshTokenRepositoryImpl)
+          .findByTokenHashForUpdate(any(TokenHash.class));
 
       AccountModel account =
           AccountModel.builder()
@@ -255,14 +376,15 @@ class AuthServiceImplTest {
               .isDeleted(new IsDeleted(false))
               .authorityKbn(AuthorityEnum.MINI)
               .build();
-      when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
-      when(loginConfig.getFailCount()).thenReturn(3);
+      doReturn(account).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+      doReturn(3).when(loginConfig).getFailCount();
 
-      when(jwtTokenProvider.generateAccessToken(any(AccountPrincipal.class)))
-          .thenReturn("new-access-token");
-      when(jwtTokenProvider.generateRefreshToken()).thenReturn("new-refresh-token");
-      when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
-      when(jwtConfig.getRefreshTokenExpirationDays()).thenReturn(7);
+      doReturn("new-access-token")
+          .when(jwtTokenProvider)
+          .generateAccessToken(any(AccountPrincipal.class));
+      doReturn("new-refresh-token").when(jwtTokenProvider).generateRefreshToken();
+      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
+      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
 
       AuthTokenModel result = authServiceImpl.refresh(new RefreshTokenValue(refreshToken));
 
@@ -271,12 +393,12 @@ class AuthServiceImplTest {
       assertEquals("new-refresh-token", result.getRefreshToken().value());
       assertEquals(900L, result.getExpiresIn().value());
 
-      verify(refreshTokenRepository).revokeByTokenHash(any(TokenHash.class));
-      verify(refreshTokenRepository, times(0)).revokeAllByAccountNo(any(AccountNo.class));
+      verify(refreshTokenRepositoryImpl).revokeByTokenHash(any(TokenHash.class));
+      verify(refreshTokenRepositoryImpl, never()).revokeAllByAccountNo(any(AccountNo.class));
 
       ArgumentCaptor<RefreshTokenModel> refreshTokenModelCaptor =
           ArgumentCaptor.forClass(RefreshTokenModel.class);
-      verify(refreshTokenRepository).save(refreshTokenModelCaptor.capture());
+      verify(refreshTokenRepositoryImpl).save(refreshTokenModelCaptor.capture());
       assertEquals(new AccountNo(1L), refreshTokenModelCaptor.getValue().getAccountNo());
       assertEquals(
           OffsetDateTime.now(clock).plusDays(7),
@@ -284,7 +406,8 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("異常系: アカウントがロックされている場合は例外がスローされること")
+    @Order(2)
+    @DisplayName("異常系：アカウントがロックされている場合は例外がスローされること")
     void refresh_accountLocked() {
       String refreshToken = "valid-refresh-token";
       RefreshTokenModel storedToken =
@@ -295,8 +418,9 @@ class AuthServiceImplTest {
               .isRevoked(new IsRevoked(false))
               .build();
 
-      when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class)))
-          .thenReturn(storedToken);
+      doReturn(storedToken)
+          .when(refreshTokenRepositoryImpl)
+          .findByTokenHashForUpdate(any(TokenHash.class));
 
       AccountModel account =
           AccountModel.builder()
@@ -306,8 +430,8 @@ class AuthServiceImplTest {
               .isDeleted(new IsDeleted(false))
               .authorityKbn(AuthorityEnum.MINI)
               .build();
-      when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
-      when(loginConfig.getFailCount()).thenReturn(3);
+      doReturn(account).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+      doReturn(3).when(loginConfig).getFailCount();
 
       assertThrows(
           LockedException.class,
@@ -317,9 +441,10 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("正常系: ロック中でも最終更新から自動解除時間が経過していればロックが解除され、リフレッシュに成功すること")
+    @Order(3)
+    @DisplayName("正常系：ロック中でも最終更新から自動解除時間が経過していればロックが解除され、リフレッシュに成功すること")
     void refresh_accountLocked_after_lockDuration_autoReleased() throws Exception {
-      when(loginConfig.getLockDurationMinutes()).thenReturn(30);
+      doReturn(30).when(loginConfig).getLockDurationMinutes();
 
       RefreshTokenModel storedToken =
           RefreshTokenModel.builder()
@@ -328,8 +453,9 @@ class AuthServiceImplTest {
               .expiresAt(new ExpiresAt(OffsetDateTime.now().plusDays(7)))
               .isRevoked(new IsRevoked(false))
               .build();
-      when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class)))
-          .thenReturn(storedToken);
+      doReturn(storedToken)
+          .when(refreshTokenRepositoryImpl)
+          .findByTokenHashForUpdate(any(TokenHash.class));
 
       AccountModel account =
           AccountModel.builder()
@@ -340,25 +466,27 @@ class AuthServiceImplTest {
               .authorityKbn(AuthorityEnum.MINI)
               .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(31)))
               .build();
-      when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
-      when(loginConfig.getFailCount()).thenReturn(3);
+      doReturn(account).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+      doReturn(3).when(loginConfig).getFailCount();
 
-      when(jwtTokenProvider.generateAccessToken(any(AccountPrincipal.class)))
-          .thenReturn("new-access-token");
-      when(jwtTokenProvider.generateRefreshToken()).thenReturn("new-refresh-token");
-      when(jwtConfig.getAccessTokenExpirationMinutes()).thenReturn(15);
-      when(jwtConfig.getRefreshTokenExpirationDays()).thenReturn(7);
+      doReturn("new-access-token")
+          .when(jwtTokenProvider)
+          .generateAccessToken(any(AccountPrincipal.class));
+      doReturn("new-refresh-token").when(jwtTokenProvider).generateRefreshToken();
+      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
+      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
 
       AuthTokenModel result = authServiceImpl.refresh(new RefreshTokenValue("valid-refresh-token"));
 
       assertNotNull(result);
       ArgumentCaptor<AccountModel> unlockCaptor = ArgumentCaptor.forClass(AccountModel.class);
-      verify(accountRepository).updateLoginFailureCount(unlockCaptor.capture());
+      verify(accountRepositoryImpl).updateLoginFailureCount(unlockCaptor.capture());
       assertEquals(0, unlockCaptor.getValue().getLoginFailureCount().value());
     }
 
     @Test
-    @DisplayName("異常系: アカウントが無効化（削除済み）されている場合は例外がスローされること")
+    @Order(4)
+    @DisplayName("異常系：アカウントが無効化（削除済み）されている場合は例外がスローされること")
     void refresh_accountDisabled() {
       String refreshToken = "valid-refresh-token";
       RefreshTokenModel storedToken =
@@ -369,8 +497,9 @@ class AuthServiceImplTest {
               .isRevoked(new IsRevoked(false))
               .build();
 
-      when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class)))
-          .thenReturn(storedToken);
+      doReturn(storedToken)
+          .when(refreshTokenRepositoryImpl)
+          .findByTokenHashForUpdate(any(TokenHash.class));
 
       AccountModel account =
           AccountModel.builder()
@@ -380,8 +509,8 @@ class AuthServiceImplTest {
               .isDeleted(new IsDeleted(true))
               .authorityKbn(AuthorityEnum.MINI)
               .build();
-      when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(account);
-      when(loginConfig.getFailCount()).thenReturn(3);
+      doReturn(account).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+      doReturn(3).when(loginConfig).getFailCount();
 
       assertThrows(
           InvalidRefreshTokenException.class,
@@ -391,7 +520,8 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("異常系: 無効化済み（ローテーション済み）トークンが再利用された場合、盗用とみなし該当アカウントの全トークンを失効させたうえで例外がスローされること")
+    @Order(5)
+    @DisplayName("異常系：無効化済み（ローテーション済み）トークンが再利用された場合、盗用とみなし該当アカウントの全トークンを失効させたうえで例外がスローされること")
     void refresh_revokedToken() {
       RefreshTokenModel storedToken =
           RefreshTokenModel.builder()
@@ -401,8 +531,9 @@ class AuthServiceImplTest {
               .isRevoked(new IsRevoked(true))
               .build();
 
-      when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class)))
-          .thenReturn(storedToken);
+      doReturn(storedToken)
+          .when(refreshTokenRepositoryImpl)
+          .findByTokenHashForUpdate(any(TokenHash.class));
 
       assertThrows(
           InvalidRefreshTokenException.class,
@@ -410,14 +541,15 @@ class AuthServiceImplTest {
             authServiceImpl.refresh(new RefreshTokenValue("revoked-token"));
           });
 
-      verify(refreshTokenRepository).revokeAllByAccountNo(new AccountNo(1L));
-      verify(refreshTokenRepository, times(0)).save(any(RefreshTokenModel.class));
+      verify(refreshTokenRepositoryImpl).revokeAllByAccountNo(new AccountNo(1L));
+      verify(refreshTokenRepositoryImpl, never()).save(any(RefreshTokenModel.class));
     }
 
     @Test
-    @DisplayName("正常系: ローテーション直後の猶予期間内に無効化済みトークンが再送された場合は、正常系のリトライとみなし全トークンは失効させずに拒否のみ行うこと")
+    @Order(6)
+    @DisplayName("正常系：ローテーション直後の猶予期間内に無効化済みトークンが再送された場合は、正常系のリトライとみなし全トークンは失効させずに拒否のみ行うこと")
     void refresh_revokedToken_withinGracePeriod() {
-      when(jwtConfig.getRefreshTokenReuseGraceSeconds()).thenReturn(30);
+      doReturn(30).when(jwtConfig).getRefreshTokenReuseGraceSeconds();
 
       RefreshTokenModel storedToken =
           RefreshTokenModel.builder()
@@ -428,8 +560,9 @@ class AuthServiceImplTest {
               .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusSeconds(5)))
               .build();
 
-      when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class)))
-          .thenReturn(storedToken);
+      doReturn(storedToken)
+          .when(refreshTokenRepositoryImpl)
+          .findByTokenHashForUpdate(any(TokenHash.class));
 
       assertThrows(
           InvalidRefreshTokenException.class,
@@ -437,12 +570,13 @@ class AuthServiceImplTest {
             authServiceImpl.refresh(new RefreshTokenValue("rotated-token"));
           });
 
-      verify(refreshTokenRepository, times(0)).revokeAllByAccountNo(any(AccountNo.class));
-      verify(refreshTokenRepository, times(0)).save(any(RefreshTokenModel.class));
+      verify(refreshTokenRepositoryImpl, never()).revokeAllByAccountNo(any(AccountNo.class));
+      verify(refreshTokenRepositoryImpl, never()).save(any(RefreshTokenModel.class));
     }
 
     @Test
-    @DisplayName("異常系: リフレッシュトークンの有効期限が切れている場合は例外がスローされること")
+    @Order(7)
+    @DisplayName("異常系：リフレッシュトークンの有効期限が切れている場合は例外がスローされること")
     void refresh_expiredToken() {
       RefreshTokenModel storedToken =
           RefreshTokenModel.builder()
@@ -452,8 +586,9 @@ class AuthServiceImplTest {
               .isRevoked(new IsRevoked(false))
               .build();
 
-      when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class)))
-          .thenReturn(storedToken);
+      doReturn(storedToken)
+          .when(refreshTokenRepositoryImpl)
+          .findByTokenHashForUpdate(any(TokenHash.class));
 
       assertThrows(
           InvalidRefreshTokenException.class,
@@ -463,9 +598,12 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("異常系: リフレッシュトークンが存在しない場合は例外がスローされること")
+    @Order(8)
+    @DisplayName("異常系：リフレッシュトークンが存在しない場合は例外がスローされること")
     void refresh_tokenNotFound() {
-      when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class))).thenReturn(null);
+      doReturn(null)
+          .when(refreshTokenRepositoryImpl)
+          .findByTokenHashForUpdate(any(TokenHash.class));
 
       assertThrows(
           InvalidRefreshTokenException.class,
@@ -475,7 +613,8 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("異常系: トークンに紐づくアカウントが既に削除されている場合は例外がスローされること")
+    @Order(9)
+    @DisplayName("異常系：トークンに紐づくアカウントが既に削除されている場合は例外がスローされること")
     void refresh_accountNotFound() {
       RefreshTokenModel storedToken =
           RefreshTokenModel.builder()
@@ -485,9 +624,10 @@ class AuthServiceImplTest {
               .isRevoked(new IsRevoked(false))
               .build();
 
-      when(refreshTokenRepository.findByTokenHashForUpdate(any(TokenHash.class)))
-          .thenReturn(storedToken);
-      when(accountRepository.getByAccountNo(new AccountNo(1L))).thenReturn(null);
+      doReturn(storedToken)
+          .when(refreshTokenRepositoryImpl)
+          .findByTokenHashForUpdate(any(TokenHash.class));
+      doReturn(null).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
 
       assertThrows(
           InvalidRefreshTokenException.class,
@@ -498,15 +638,32 @@ class AuthServiceImplTest {
   }
 
   @Nested
-  @DisplayName("#logout")
-  class Logout {
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class logout {
 
     @Test
-    @DisplayName("正常系: リフレッシュトークンが無効化されること")
+    @Order(1)
+    @DisplayName("正常系：リフレッシュトークンが無効化されること")
     void logout_success() {
       authServiceImpl.logout(new RefreshTokenValue("refresh-token"));
 
-      verify(refreshTokenRepository).revokeByTokenHash(any(TokenHash.class));
+      verify(refreshTokenRepositoryImpl).revokeByTokenHash(any(TokenHash.class));
+    }
+  }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class purgeExpiredRefreshTokens {
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：有効期限切れのリフレッシュトークンが削除されること")
+    void purgeExpiredRefreshTokens_success() {
+      authServiceImpl.purgeExpiredRefreshTokens();
+
+      verify(refreshTokenRepositoryImpl).deleteExpired();
     }
   }
 }

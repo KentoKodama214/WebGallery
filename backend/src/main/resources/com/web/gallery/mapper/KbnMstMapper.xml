@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.web.gallery.mapper.KbnMstMapper">
-	<resultMap id="KbnMstMap" type="com.web.gallery.entity.KbnMst">
+	<resultMap id="KbnMstMap" type="com.web.gallery.entity.common.KbnMst">
 		<result property="kbnClassCode" column="kbn_class_code"/>
 		<result property="kbnCode" column="kbn_code"/>
 		<result property="createdBy" column="created_by"/>
@@ -18,7 +18,7 @@
 		<result property="explanation" column="explanation"/>
 	</resultMap>
 
-	<select id="select" parameterType="com.web.gallery.entity.KbnMstCondition" resultMap="KbnMstMap">
+	<select id="select" parameterType="com.web.gallery.entity.common.KbnMstCondition" resultMap="KbnMstMap">
 		SELECT
 			kbn_class_code AS kbnClassCode,
 			kbn_code AS kbnCode,

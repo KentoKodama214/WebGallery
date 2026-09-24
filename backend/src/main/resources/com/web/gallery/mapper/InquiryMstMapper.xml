@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.mapper.InquiryMstMapper">
+	<resultMap id="InquiryDtoMap" type="com.web.gallery.dto.InquiryDto">
+		<result property="id" column="id"/>
+		<result property="accountNo" column="account_no"/>
+		<result property="accountId" column="account_id"/>
+		<result property="accountName" column="account_name"/>
+		<result property="inquiryNo" column="inquiry_no"/>
+		<result property="subject" column="subject"/>
+		<result property="statusKbn" column="status_kbn" typeHandler="com.web.gallery.type_handler.InquiryStatusEnumTypeHandler"/>
+		<result property="isReadByUser" column="is_read_by_user"/>
+		<result property="createdAt" column="created_at"/>
+	</resultMap>
+
+	<resultMap id="InquiryDetailDtoMap" type="com.web.gallery.dto.InquiryDetailDto">
+		<result property="id" column="id"/>
+		<result property="accountNo" column="account_no"/>
+		<result property="accountId" column="account_id"/>
+		<result property="accountName" column="account_name"/>
+		<result property="inquiryNo" column="inquiry_no"/>
+		<result property="subject" column="subject"/>
+		<result property="body" column="body"/>
+		<result property="statusKbn" column="status_kbn" typeHandler="com.web.gallery.type_handler.InquiryStatusEnumTypeHandler"/>
+		<result property="isReadByUser" column="is_read_by_user"/>
+		<result property="createdAt" column="created_at"/>
+	</resultMap>
+
+	<sql id="inquiryMstConditionWhere">
+		<if test="${prefix}id != null"> AND im.id = #{${prefix}id}</if>
+		<if test="${prefix}accountNo != null"> AND im.account_no = #{${prefix}accountNo}</if>
+		<if test="${prefix}inquiryNo != null"> AND im.inquiry_no = #{${prefix}inquiryNo}</if>
+		<if test="${prefix}statusKbn != null"> AND im.status_kbn = #{${prefix}statusKbn}::common.inquiry_status_enum</if>
+	</sql>
+
+	<insert id="insert" parameterType="com.web.gallery.entity.inquiry.InquiryMst">
+		INSERT INTO
+			common.inquiry_mst (
+				account_no,
+				inquiry_no,
+				created_by,
+				created_at,
+				updated_by,
+				updated_at,
+				subject,
+				body,
+				status_kbn,
+				is_read_by_user
+			)
+		VALUES
+			(
+				#{accountNo},
+				#{inquiryNo},
+				#{createdBy},
+				NOW(),
+				#{updatedBy},
+				NOW(),
+				#{subject},
+				#{body},
+				#{statusKbn}::common.inquiry_status_enum,
+				#{isReadByUser}
+			)
+	</insert>
+
+	<update id="update">
+		UPDATE
+			common.inquiry_mst im
+		<set>
+			updated_at = NOW()
+			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy}</if>
+			<if test="target.statusKbn != null"> , status_kbn = #{target.statusKbn}::common.inquiry_status_enum</if>
+			<if test="target.isReadByUser != null"> , is_read_by_user = #{target.isReadByUser}</if>
+		</set>
+		<where>
+			<include refid="inquiryMstConditionWhere">
+				<property name="prefix" value="condition."/>
+			</include>
+		</where>
+	</update>
+
+	<select id="getMaxInquiryNo" parameterType="Long" resultType="Long">
+		SELECT
+			MAX(inquiry_no) AS inquiryNo
+		FROM
+			common.inquiry_mst
+		WHERE
+			account_no = #{accountNo}
+	</select>
+
+	<select id="selectList" parameterType="com.web.gallery.entity.inquiry.InquiryMstCondition" resultMap="InquiryDtoMap">
+		SELECT
+			im.id,
+			im.account_no,
+			im.inquiry_no,
+			im.subject,
+			im.status_kbn,
+			im.is_read_by_user,
+			im.created_at
+		FROM
+			common.inquiry_mst im
+		<where>
+			<include refid="inquiryMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+		ORDER BY
+			im.inquiry_no DESC
+		LIMIT #{limit} OFFSET #{offset}
+	</select>
+
+	<select id="selectListForAdmin" parameterType="com.web.gallery.entity.inquiry.InquiryMstCondition" resultMap="InquiryDtoMap">
+		SELECT
+			im.id,
+			im.account_no,
+			a.account_id,
+			a.account_name,
+			im.inquiry_no,
+			im.subject,
+			im.status_kbn,
+			im.is_read_by_user,
+			im.created_at
+		FROM
+			common.inquiry_mst im
+		INNER JOIN common.account a ON a.account_no = im.account_no
+		<where>
+			<include refid="inquiryMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+		ORDER BY
+			im.created_at DESC
+		LIMIT #{limit} OFFSET #{offset}
+	</select>
+
+	<select id="selectDetail" parameterType="com.web.gallery.entity.inquiry.InquiryMstCondition" resultMap="InquiryDetailDtoMap">
+		SELECT
+			im.id,
+			im.account_no,
+			im.inquiry_no,
+			im.subject,
+			im.body,
+			im.status_kbn,
+			im.is_read_by_user,
+			im.created_at
+		FROM
+			common.inquiry_mst im
+		<where>
+			<include refid="inquiryMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+	</select>
+
+	<select id="selectDetailForAdmin" parameterType="com.web.gallery.entity.inquiry.InquiryMstCondition" resultMap="InquiryDetailDtoMap">
+		SELECT
+			im.id,
+			im.account_no,
+			a.account_id,
+			a.account_name,
+			im.inquiry_no,
+			im.subject,
+			im.body,
+			im.status_kbn,
+			im.is_read_by_user,
+			im.created_at
+		FROM
+			common.inquiry_mst im
+		INNER JOIN common.account a ON a.account_no = im.account_no
+		<where>
+			<include refid="inquiryMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+	</select>
+</mapper>

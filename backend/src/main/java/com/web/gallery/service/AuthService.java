@@ -4,7 +4,7 @@ import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.auth.RefreshTokenValue;
 import com.web.gallery.domain.common.IpAddress;
-import com.web.gallery.model.AuthTokenModel;
+import com.web.gallery.model.auth.AuthTokenModel;
 
 /**
  * JWT認証に関するサービスのインターフェース

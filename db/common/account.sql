@@ -40,12 +40,6 @@ CREATE TABLE common.account
 	resident_prefecture_kbn_code varchar(20) DEFAULT 'none' NOT NULL,
 	-- フリーメモ
 	free_memo text DEFAULT '""' NOT NULL,
-	-- 権限区分:
-	-- mini-user: サイトを閲覧したり、サービスを利用する人。写真登録の上限は10枚（上限50MB）
-	-- normal-user: サイトを閲覧したり、サービスを利用する人。写真登録の上限は1000枚（上限5GB）
-	-- special-user: サイトを閲覧したり、サービスを利用する人。写真登録の上限は無制限
-	-- administrator: サイトを管理・運営する人。写真登録の上限は無制限
-	authority_kbn common.authority_enum NOT NULL,
 	-- 最終ログイン日時
 	last_login_datetime timestamp with time zone NOT NULL,
 	-- ログイン失敗回数
@@ -72,7 +66,6 @@ COMMENT ON COLUMN common.account.sex_kbn IS '性別区分: man(男性)、woman(�
 COMMENT ON COLUMN common.account.birthplace_prefecture_kbn_code IS '出身都道府県区分コード : none:未設定（画面上、任意入力）北海道　〜　沖縄';
 COMMENT ON COLUMN common.account.resident_prefecture_kbn_code IS '在住都道府県区分コード : none:未設定（画面上、任意入力）北海道　〜　沖縄';
 COMMENT ON COLUMN common.account.free_memo IS 'フリーメモ';
-COMMENT ON COLUMN common.account.authority_kbn IS '権限区分: mini-user(サイトを閲覧したり、サービスを利用する人。写真登録の上限は10枚（上限50MB）)、normal-user(サイトを閲覧したり、サービスを利用する人。写真登録の上限は1000枚（上限5GB）)、special-user(サイトを閲覧したり、サービスを利用する人。写真登録の上限は無制限)、administrator(サイトを管理・運営する人。写真登録の上限は無制限)';
 COMMENT ON COLUMN common.account.last_login_datetime IS '最終ログイン日時';
 COMMENT ON COLUMN common.account.login_failure_count IS 'ログイン失敗回数: 連続ログイン失敗回数。ログイン成功時にリセット';
 COMMENT ON COLUMN common.account.is_admin_locked IS '管理者ロックフラグ: 管理者が強制ロックした場合にtrue。ログイン失敗回数による自動ロック解除の対象外';

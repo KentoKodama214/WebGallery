@@ -71,14 +71,14 @@ export function LoginForm() {
           onSubmit={handleSubmit}
           className="relative bg-white rounded-sm shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-[10px_20px_80px_20px] w-[90%] max-w-[320px]"
         >
-          <p className="text-[#444] text-[1.2em] font-bold my-[10px_0_30px_0] mt-[10px] mb-[30px] border-b border-[#eee] pb-5">
+          <h1 className="text-[#444] text-[1.2em] font-bold my-[10px_0_30px_0] mt-[10px] mb-[30px] border-b border-[#eee] pb-5">
             Log in
-          </p>
+          </h1>
 
           {deletedNotice && !error && (
             <p
               role="status"
-              className="text-[#2196F3] text-xs font-bold text-left mb-[10px]"
+              className="text-[#1565C0] text-xs font-bold text-left mb-[10px]"
             >
               アカウントを削除しました
             </p>
@@ -122,14 +122,14 @@ export function LoginForm() {
             </p>
           )}
 
-          <Link href="/register" className="text-[0.8em] text-[#2196F3] no-underline">
+          <Link href="/register" className="text-[0.8em] text-[#1565C0] no-underline">
             Create an account
           </Link>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="absolute left-0 bottom-0 w-full h-[60px] max-h-[60px] bg-[#2196F3] text-white border-none border-b-[7px] border-b-[rgba(0,0,0,0.1)] rounded-b-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#2196F3] focus:border-b-[4px] disabled:opacity-70 disabled:cursor-not-allowed"
+            className="absolute left-0 bottom-0 w-full h-[60px] max-h-[60px] bg-[#1565C0] text-white border-none border-b-[7px] border-b-[rgba(0,0,0,0.1)] rounded-b-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#1565C0] focus:border-b-[4px] disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <span className="inline-block w-5 h-5 border-[3px] border-white border-t-[rgba(255,255,255,0.3)] rounded-full animate-spin" />

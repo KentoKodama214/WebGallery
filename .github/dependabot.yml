@@ -29,6 +29,19 @@ updates:
       frontend-dependencies:
         patterns:
           - "*"
+    ignore:
+      # TypeScript 6系はrootDir推論の挙動変更によりts-jest実行時に
+      # TS5011（common source directoryエラー）が発生し単体テストが失敗する。
+      # 7系はプログラマティックAPIを提供しておらず、typescript-eslintが未対応のため
+      # Lintが失敗する（TS 7.1での対応を待つ）
+      # https://github.com/typescript-eslint/typescript-eslint/issues/12518
+      - dependency-name: "typescript"
+        versions: [">=6.0.0"]
+      # ESLint 10系はeslint-config-next経由のeslint-plugin-react@7.37.5と非互換
+      # （context.getFilename()廃止によりLintがエラー、2026-09-14時点で未対応）
+      # https://github.com/jsx-eslint/eslint-plugin-react
+      - dependency-name: "eslint"
+        versions: [">=10.0.0"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

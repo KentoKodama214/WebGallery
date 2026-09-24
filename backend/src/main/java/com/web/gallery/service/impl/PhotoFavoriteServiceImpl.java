@@ -1,9 +1,9 @@
 package com.web.gallery.service.impl;
 
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.PhotoDetailSearchModel;
-import com.web.gallery.model.PhotoFavoriteDeleteModel;
-import com.web.gallery.model.PhotoFavoriteModel;
+import com.web.gallery.model.photo.PhotoDetailSearchModel;
+import com.web.gallery.model.photo.PhotoFavoriteDeleteModel;
+import com.web.gallery.model.photo.PhotoFavoriteModel;
 import com.web.gallery.repository.PhotoDetailRepository;
 import com.web.gallery.repository.PhotoFavoriteRepository;
 import com.web.gallery.service.PhotoFavoriteService;

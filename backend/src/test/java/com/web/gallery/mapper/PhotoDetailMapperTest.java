@@ -156,6 +156,82 @@ public class PhotoDetailMapperTest {
       assertEquals(1L, actual.get(2).getPhotoNo());
       assertEquals(4L, actual.get(3).getPhotoNo());
     }
+
+    @Test
+    @Order(6)
+    @DisplayName("正常系：向き区分で絞り込まれること")
+    void getPhotoList_filterByDirectionKbn() {
+      PhotoListGetDto photoSelectDto = new PhotoListGetDto();
+      photoSelectDto.setAccountNo(1L);
+      photoSelectDto.setPhotoAccountNo(1L);
+      photoSelectDto.setDirectionKbn(DirectionEnum.VERTICAL);
+      photoSelectDto.setLimit(100);
+      photoSelectDto.setOffset(0);
+
+      List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
+
+      assertEquals(1, actual.size());
+      assertEquals(1L, actual.getFirst().getPhotoNo());
+      assertEquals(DirectionEnum.VERTICAL, actual.getFirst().getDirectionKbn());
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("正常系：お気に入りのみに絞り込まれること")
+    void getPhotoList_filterByFavorite() {
+      // account1自身がお気に入りしているのはphoto_no=1のみ（photo_no=2はaccount2のみがお気に入り）
+      PhotoListGetDto photoSelectDto = new PhotoListGetDto();
+      photoSelectDto.setAccountNo(1L);
+      photoSelectDto.setPhotoAccountNo(1L);
+      photoSelectDto.setIsFavoriteOnly(true);
+      photoSelectDto.setLimit(100);
+      photoSelectDto.setOffset(0);
+
+      List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
+
+      assertEquals(1, actual.size());
+      assertEquals(1L, actual.getFirst().getPhotoNo());
+      assertTrue(actual.getFirst().getIsFavorite());
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("正常系：タグをすべて保持する写真のみに絞り込まれること")
+    void getPhotoList_filterByTags() {
+      // 「太陽」「青空」を両方保持するのはphoto_no=1のみ（photo_no=2は「太陽」のみ保持）
+      PhotoListGetDto photoSelectDto = new PhotoListGetDto();
+      photoSelectDto.setAccountNo(1L);
+      photoSelectDto.setPhotoAccountNo(1L);
+      photoSelectDto.setTagList(List.of("太陽", "青空"));
+      photoSelectDto.setLimit(100);
+      photoSelectDto.setOffset(0);
+
+      List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
+
+      assertEquals(1, actual.size());
+      assertEquals(1L, actual.getFirst().getPhotoNo());
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("正常系：お気に入り数の降順に並び替えられること（撮影日時降順とは逆順になること）")
+    void getPhotoList_sortBy_favorite() {
+      // 撮影日時降順ではphoto_no=2が先だが、お気に入り数（photo_no=1が2件、photo_no=2が1件）順では逆転する
+      PhotoListGetDto photoSelectDto = new PhotoListGetDto();
+      photoSelectDto.setAccountNo(1L);
+      photoSelectDto.setPhotoAccountNo(1L);
+      photoSelectDto.setSortBy("FAVORITE");
+      photoSelectDto.setLimit(100);
+      photoSelectDto.setOffset(0);
+
+      List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
+
+      assertEquals(2, actual.size());
+      assertEquals(1L, actual.get(0).getPhotoNo());
+      assertEquals(2, actual.get(0).getFavoriteCount());
+      assertEquals(2L, actual.get(1).getPhotoNo());
+      assertEquals(1, actual.get(1).getFavoriteCount());
+    }
   }
 
   @Nested

@@ -12,10 +12,10 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.common.IsDeleted;
-import com.web.gallery.entity.PhotoFavorite;
+import com.web.gallery.entity.photo.PhotoFavorite;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.model.AccountModel;
+import com.web.gallery.model.account.AccountModel;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -161,6 +161,35 @@ public class PhotoFavoriteControllerIntegrationTest {
               jsonPath("$.errorMessage")
                   .value(ErrorEnum.FAIL_TO_REGIST_FAVORITE.getErrorMessage()));
     }
+
+    @Test
+    @Order(4)
+    @DisplayName(
+        "異常系：存在しない写真（favoritePhotoAccountNo/favoritePhotoNo）を指定した場合、PhotoNotFoundExceptionにより404を返す")
+    void addFavorite_PhotoNotFoundException() throws Exception {
+      Authentication authentication = createAuthentication();
+
+      mockMvc
+          .perform(
+              post("/api/v1/photos/favorites")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("add_favorite_photo_not_found.json"))
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isNotFound())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(404))
+          .andExpect(jsonPath("$.errorCode").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorCode()))
+          .andExpect(jsonPath("$.errorMessage").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorMessage()));
+
+      // 存在しない写真を指定した場合、お気に入りは登録されない（副作用がないこと）
+      Integer count =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_favorite WHERE account_no=1"
+                  + " AND favorite_photo_account_no=99 AND favorite_photo_no=1",
+              Integer.class);
+      assertEquals(0, count);
+    }
   }
 
   @Nested
@@ -264,6 +293,42 @@ public class PhotoFavoriteControllerIntegrationTest {
           .andExpect(jsonPath("$.errorCode").value(ErrorEnum.FAVORITE_NOT_FOUND.getErrorCode()))
           .andExpect(
               jsonPath("$.errorMessage").value(ErrorEnum.FAVORITE_NOT_FOUND.getErrorMessage()));
+    }
+  }
+
+  /** 未認証（認証情報なし）でお気に入り関連エンドポイントにアクセスした場合の共通挙動を検証する */
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class unauthenticatedAccess {
+    @Test
+    @Order(1)
+    @DisplayName("異常系：未認証でお気に入り登録にアクセスすると403ではなく401で共通JSONエラーを返す")
+    void addFavorite_unauthenticated() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/photos/favorites")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("add_favorite_success.json")))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(401))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：未認証でお気に入り解除にアクセスすると403ではなく401で共通JSONエラーを返す")
+    void deleteFavorite_unauthenticated() throws Exception {
+      mockMvc
+          .perform(
+              delete("/api/v1/photos/favorites")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("delete_favorite_success.json")))
+          .andExpect(status().isUnauthorized())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(401))
+          .andExpect(jsonPath("$.errorCode").value("E-A-0002"));
     }
   }
 }

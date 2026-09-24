@@ -123,7 +123,7 @@ mise trust
 just db-up
 ```
 
-開発用データベース（`web_gallery`、ポート5432）とテスト用データベース（`web_gallery_test`、ポート5433）、および画像ストレージの MinIO（S3 互換、API ポート9000／コンソール http://localhost:9001 、認証情報 `minioadmin` / `minioadmin`）が起動します。データベースの初期化は `db/` 配下のSQLスクリプトにより、MinIO のバケット（`web-gallery-local`）作成は `minio-setup` コンテナにより自動的に行われます。
+開発用データベース（`web_gallery`、ポート5432）とテスト用データベース（`web_gallery_test`、ポート5433）、および画像ストレージの MinIO（S3 互換、API ポート9000／コンソール http://localhost:9001 、認証情報 `minioadmin` / `minioadmin`）が起動します。データベースの初期化は `db/` 配下のSQLスクリプトにより、MinIO のバケット（アプリ用の `web-gallery-local` と、`FileRepositoryImplIntegrationTest` が実接続する `test-bucket`）作成は `minio-setup` コンテナにより自動的に行われます。
 
 ### 2. 環境変数の設定
 

@@ -4,7 +4,7 @@
 
 <mapper namespace="com.web.gallery.mapper.PhotoViewLogMapper">
 
-	<insert id="insert" parameterType="com.web.gallery.entity.PhotoViewLog">
+	<insert id="insert" parameterType="com.web.gallery.entity.photo.PhotoViewLog">
 		INSERT INTO photo.photo_view_log (
 			photo_account_no,
 			account_no,
@@ -28,7 +28,7 @@
 		)
 	</insert>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.PhotoViewLogCondition">
+	<delete id="delete" parameterType="com.web.gallery.entity.photo.PhotoViewLogCondition">
 		DELETE FROM
 			photo.photo_view_log
 		<where>

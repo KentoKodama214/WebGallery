@@ -6,19 +6,24 @@ import static org.mockito.Mockito.*;
 
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.model.FileModel;
+import com.web.gallery.model.photo.FileModel;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
@@ -31,6 +36,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 /** {@link FileRepositoryImpl} の単体テスト */
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class FileRepositoryImplTest {
 
@@ -46,9 +52,12 @@ class FileRepositoryImplTest {
   }
 
   @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("save")
-  class Save {
+  class save {
     @Test
+    @Order(1)
     @DisplayName("正常系：Content-Typeは検証済み拡張子から確定し、Content-Disposition: inline を付与してputObjectを呼び出す")
     void save_putsObject() throws IOException {
       MultipartFile multipartFile = mock(MultipartFile.class);
@@ -73,6 +82,7 @@ class FileRepositoryImplTest {
     }
 
     @Test
+    @Order(2)
     @DisplayName("正常系：png拡張子のキーは Content-Type: image/png を設定する（大文字拡張子も許容）")
     void save_resolvesContentTypeFromExtension() throws IOException {
       MultipartFile multipartFile = mock(MultipartFile.class);
@@ -91,6 +101,45 @@ class FileRepositoryImplTest {
     }
 
     @Test
+    @Order(3)
+    @DisplayName("正常系：gif拡張子のキーは Content-Type: image/gif を設定する")
+    void save_resolvesContentTypeForGif() throws IOException {
+      MultipartFile multipartFile = mock(MultipartFile.class);
+      doReturn(1L).when(multipartFile).getSize();
+      doReturn(new java.io.ByteArrayInputStream(new byte[] {1}))
+          .when(multipartFile)
+          .getInputStream();
+
+      newRepository("")
+          .save(FileModel.of(new ImageFilePath("aaaaaaaa/9-x.gif"), new ImageFile(multipartFile)));
+
+      ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
+      verify(s3Client)
+          .putObject(captor.capture(), any(software.amazon.awssdk.core.sync.RequestBody.class));
+      assertEquals("image/gif", captor.getValue().contentType());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：webp拡張子のキーは Content-Type: image/webp を設定する")
+    void save_resolvesContentTypeForWebp() throws IOException {
+      MultipartFile multipartFile = mock(MultipartFile.class);
+      doReturn(1L).when(multipartFile).getSize();
+      doReturn(new java.io.ByteArrayInputStream(new byte[] {1}))
+          .when(multipartFile)
+          .getInputStream();
+
+      newRepository("")
+          .save(FileModel.of(new ImageFilePath("aaaaaaaa/9-x.webp"), new ImageFile(multipartFile)));
+
+      ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
+      verify(s3Client)
+          .putObject(captor.capture(), any(software.amazon.awssdk.core.sync.RequestBody.class));
+      assertEquals("image/webp", captor.getValue().contentType());
+    }
+
+    @Test
+    @Order(5)
     @DisplayName("正常系：未知の拡張子はフォールバックとしてMultipartFileの申告値を用いる")
     void save_fallsBackToDeclaredContentType() throws IOException {
       MultipartFile multipartFile = mock(MultipartFile.class);
@@ -111,6 +160,7 @@ class FileRepositoryImplTest {
     }
 
     @Test
+    @Order(6)
     @DisplayName("異常系：InputStream取得に失敗した場合はUncheckedIOExceptionをthrowする")
     void save_ioException_wrapped() throws IOException {
       MultipartFile multipartFile = mock(MultipartFile.class);
@@ -125,12 +175,36 @@ class FileRepositoryImplTest {
           .putObject(
               any(PutObjectRequest.class), any(software.amazon.awssdk.core.sync.RequestBody.class));
     }
+
+    @Test
+    @Order(7)
+    @DisplayName("異常系：putObjectがSdkExceptionをthrowした場合はそのまま呼び出し元に伝播する")
+    void save_sdkException_propagates() throws IOException {
+      MultipartFile multipartFile = mock(MultipartFile.class);
+      doReturn(1L).when(multipartFile).getSize();
+      doReturn(new java.io.ByteArrayInputStream(new byte[] {1}))
+          .when(multipartFile)
+          .getInputStream();
+      doThrow(SdkException.create("S3への接続に失敗しました", null))
+          .when(s3Client)
+          .putObject(
+              any(PutObjectRequest.class), any(software.amazon.awssdk.core.sync.RequestBody.class));
+
+      FileModel fileModel =
+          FileModel.of(new ImageFilePath("aaaaaaaa/DSC11.jpg"), new ImageFile(multipartFile));
+
+      FileRepositoryImpl repository = newRepository("");
+      assertThrows(SdkException.class, () -> repository.save(fileModel));
+    }
   }
 
   @Nested
+  @Order(2)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("delete")
-  class Delete {
+  class delete {
     @Test
+    @Order(1)
     @DisplayName("正常系：キーを指定してdeleteObjectを呼び出す")
     void delete_deletesObject() {
       newRepository("").delete(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
@@ -143,6 +217,20 @@ class FileRepositoryImplTest {
     }
 
     @Test
+    @Order(2)
+    @DisplayName("異常系：deleteObjectがSdkExceptionをthrowした場合はそのまま呼び出し元に伝播する")
+    void delete_sdkException_propagates() {
+      doThrow(SdkException.create("S3への接続に失敗しました", null))
+          .when(s3Client)
+          .deleteObject(any(DeleteObjectRequest.class));
+
+      FileRepositoryImpl repository = newRepository("");
+      assertThrows(
+          SdkException.class, () -> repository.delete(new ImageFilePath("aaaaaaaa/DSC11.jpg")));
+    }
+
+    @Test
+    @Order(3)
     @DisplayName("正常系：キーが'/'終端の場合はプレフィックス一括削除に委譲する")
     void delete_trailingSlash_delegatesToPrefixDeletion() {
       doReturn(ListObjectsV2Response.builder().contents(List.of()).isTruncated(false).build())
@@ -157,9 +245,12 @@ class FileRepositoryImplTest {
   }
 
   @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("deleteByPrefix")
-  class DeleteByPrefix {
+  class deleteByPrefix {
     @Test
+    @Order(1)
     @DisplayName("正常系：プレフィックス配下のオブジェクトをまとめて削除する")
     void deleteByPrefix_deletesAllListedObjects() {
       doReturn(
@@ -185,6 +276,7 @@ class FileRepositoryImplTest {
     }
 
     @Test
+    @Order(2)
     @DisplayName("正常系：対象が0件の場合はdeleteObjectsを呼び出さない")
     void deleteByPrefix_noObjects_doesNotDelete() {
       doReturn(ListObjectsV2Response.builder().contents(List.of()).isTruncated(false).build())
@@ -195,11 +287,44 @@ class FileRepositoryImplTest {
 
       verify(s3Client, never()).deleteObjects(any(DeleteObjectsRequest.class));
     }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：一覧が複数ページにわたる場合はcontinuationTokenで全ページを取得し、それぞれ削除する")
+    void deleteByPrefix_truncated_fetchesAllPages() {
+      doReturn(
+              ListObjectsV2Response.builder()
+                  .contents(S3Object.builder().key("aaaaaaaa/DSC11.jpg").build())
+                  .isTruncated(true)
+                  .nextContinuationToken("token-1")
+                  .build())
+          .when(s3Client)
+          .listObjectsV2(
+              argThat(
+                  (ListObjectsV2Request req) -> req != null && req.continuationToken() == null));
+      doReturn(
+              ListObjectsV2Response.builder()
+                  .contents(S3Object.builder().key("aaaaaaaa/DSC12.jpg").build())
+                  .isTruncated(false)
+                  .build())
+          .when(s3Client)
+          .listObjectsV2(
+              argThat(
+                  (ListObjectsV2Request req) ->
+                      req != null && "token-1".equals(req.continuationToken())));
+
+      newRepository("").deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
+
+      verify(s3Client, times(2)).listObjectsV2(any(ListObjectsV2Request.class));
+      verify(s3Client, times(2)).deleteObjects(any(DeleteObjectsRequest.class));
+    }
   }
 
   @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("getPresignedUrl")
-  class GetPresignedUrl {
+  class getPresignedUrl {
     private void stubPresign(String url) {
       PresignedGetObjectRequest presigned = mock(PresignedGetObjectRequest.class);
       doReturn(toUrl(url)).when(presigned).url();
@@ -215,6 +340,7 @@ class FileRepositoryImplTest {
     }
 
     @Test
+    @Order(1)
     @DisplayName("正常系：public-base-url未設定の場合は発行された署名付きURLをそのまま返す")
     void getPresignedUrl_noPublicBaseUrl_returnsAsIs() {
       stubPresign("http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123");
@@ -228,6 +354,7 @@ class FileRepositoryImplTest {
     }
 
     @Test
+    @Order(2)
     @DisplayName("正常系：public-base-url設定時はスキーム・ホスト・ポートを差し替え、パスとクエリは維持する")
     void getPresignedUrl_withPublicBaseUrl_rewritesHost() {
       stubPresign("http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123");
@@ -238,6 +365,33 @@ class FileRepositoryImplTest {
 
       assertEquals(
           "http://localhost:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123",
+          actual.value());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：署名付きURLにクエリがない場合、差し替え後もクエリを付与しない")
+    void getPresignedUrl_withPublicBaseUrl_noQuery() {
+      stubPresign("http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg");
+
+      ImageFilePath actual =
+          newRepository("http://localhost:9000")
+              .getPresignedUrl(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
+
+      assertEquals("http://localhost:9000/test-bucket/aaaaaaaa/DSC11.jpg", actual.value());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：public-base-urlの形式が不正な場合、発行された署名付きURLをそのまま返す")
+    void getPresignedUrl_invalidPublicBaseUrl_returnsAsIs() {
+      stubPresign("http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123");
+
+      ImageFilePath actual =
+          newRepository("://invalid-url").getPresignedUrl(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
+
+      assertEquals(
+          "http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123",
           actual.value());
     }
   }

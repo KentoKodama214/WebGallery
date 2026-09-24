@@ -14,19 +14,24 @@ import com.web.gallery.domain.account.LastLoginDatetime;
 import com.web.gallery.domain.account.LoginFailureCount;
 import com.web.gallery.domain.account.Password;
 import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
-import com.web.gallery.entity.Account;
-import com.web.gallery.entity.AccountCondition;
-import com.web.gallery.entity.AccountUpdateTarget;
+import com.web.gallery.dto.AccountDto;
+import com.web.gallery.entity.account.Account;
+import com.web.gallery.entity.account.AccountAuthority;
+import com.web.gallery.entity.account.AccountAuthorityCondition;
+import com.web.gallery.entity.account.AccountAuthorityUpdateTarget;
+import com.web.gallery.entity.account.AccountCondition;
+import com.web.gallery.entity.account.AccountUpdateTarget;
 import com.web.gallery.enumeration.AuthorityEnum;
 import com.web.gallery.enumeration.SexEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.mapper.AccountAuthorityMapper;
 import com.web.gallery.mapper.AccountMapper;
-import com.web.gallery.model.AccountGetModel;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountModelList;
-import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.model.account.AccountGetModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.account.AccountModelList;
+import com.web.gallery.model.account.AccountPageModel;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -55,6 +60,8 @@ public class AccountRepositoryImplTest {
 
   @Mock private AccountMapper accountMapper;
 
+  @Mock private AccountAuthorityMapper accountAuthorityMapper;
+
   @Mock private PasswordEncoder passwordEncoder;
 
   @Nested
@@ -65,28 +72,27 @@ public class AccountRepositoryImplTest {
     @Order(1)
     @DisplayName("正常系：アカウントが取得できた場合")
     void getByAccountNo_found() {
-      Account account =
-          Account.builder()
-              .accountNo(1L)
-              .createdBy(1L)
-              .createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .updatedBy(1L)
-              .updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .isDeleted(false)
-              .accountId("aaaaaaaa")
-              .accountName("AAAAAAAA")
-              .password("$2a$10$password1")
-              .birthdate(LocalDate.of(1991, 2, 14))
-              .sexKbn(SexEnum.NONE)
-              .birthplacePrefectureKbnCode("")
-              .residentPrefectureKbnCode("")
-              .freeMemo("")
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .loginFailureCount(0)
-              .build();
+      AccountDto account = new AccountDto();
+      account.setAccountNo(1L);
+      account.setCreatedBy(1L);
+      account.setCreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account.setUpdatedBy(1L);
+      account.setUpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account.setIsDeleted(false);
+      account.setAccountId("aaaaaaaa");
+      account.setAccountName("AAAAAAAA");
+      account.setPassword("$2a$10$password1");
+      account.setBirthdate(LocalDate.of(1991, 2, 14));
+      account.setSexKbn(SexEnum.NONE);
+      account.setBirthplacePrefectureKbnCode("");
+      account.setResidentPrefectureKbnCode("");
+      account.setFreeMemo("");
+      account.setAuthorityKbn(AuthorityEnum.ADMINISTRATOR);
+      account.setLastLoginDatetime(
+          OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account.setLoginFailureCount(0);
 
-      List<Account> accountList = new ArrayList<Account>();
+      List<AccountDto> accountList = new ArrayList<AccountDto>();
       accountList.add(account);
 
       ArgumentCaptor<AccountCondition> accountCaptor =
@@ -123,7 +129,7 @@ public class AccountRepositoryImplTest {
     void getByAccountNo_not_found() {
       ArgumentCaptor<AccountCondition> accountCaptor =
           ArgumentCaptor.forClass(AccountCondition.class);
-      doReturn(new ArrayList<Account>()).when(accountMapper).select(accountCaptor.capture());
+      doReturn(new ArrayList<AccountDto>()).when(accountMapper).select(accountCaptor.capture());
 
       AccountModel actual = accountRepositoryImpl.getByAccountNo(new AccountNo(1L));
 
@@ -143,28 +149,27 @@ public class AccountRepositoryImplTest {
     @Order(1)
     @DisplayName("正常系：アカウントが取得できた場合")
     void getByAccountId_found() {
-      Account account =
-          Account.builder()
-              .accountNo(1L)
-              .createdBy(1L)
-              .createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .updatedBy(1L)
-              .updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .isDeleted(false)
-              .accountId("aaaaaaaa")
-              .accountName("AAAAAAAA")
-              .password("$2a$10$password1")
-              .birthdate(LocalDate.of(1991, 2, 14))
-              .sexKbn(SexEnum.NONE)
-              .birthplacePrefectureKbnCode("")
-              .residentPrefectureKbnCode("")
-              .freeMemo("")
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .loginFailureCount(0)
-              .build();
+      AccountDto account = new AccountDto();
+      account.setAccountNo(1L);
+      account.setCreatedBy(1L);
+      account.setCreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account.setUpdatedBy(1L);
+      account.setUpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account.setIsDeleted(false);
+      account.setAccountId("aaaaaaaa");
+      account.setAccountName("AAAAAAAA");
+      account.setPassword("$2a$10$password1");
+      account.setBirthdate(LocalDate.of(1991, 2, 14));
+      account.setSexKbn(SexEnum.NONE);
+      account.setBirthplacePrefectureKbnCode("");
+      account.setResidentPrefectureKbnCode("");
+      account.setFreeMemo("");
+      account.setAuthorityKbn(AuthorityEnum.ADMINISTRATOR);
+      account.setLastLoginDatetime(
+          OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account.setLoginFailureCount(0);
 
-      List<Account> accountList = new ArrayList<Account>();
+      List<AccountDto> accountList = new ArrayList<AccountDto>();
       accountList.add(account);
 
       ArgumentCaptor<AccountCondition> accountCaptor =
@@ -201,7 +206,7 @@ public class AccountRepositoryImplTest {
     void getByAccountId_not_found() {
       ArgumentCaptor<AccountCondition> accountCaptor =
           ArgumentCaptor.forClass(AccountCondition.class);
-      doReturn(new ArrayList<Account>()).when(accountMapper).select(accountCaptor.capture());
+      doReturn(new ArrayList<AccountDto>()).when(accountMapper).select(accountCaptor.capture());
 
       AccountModel actual = accountRepositoryImpl.getByAccountId(new AccountId("aaaaaaaa"));
 
@@ -229,14 +234,18 @@ public class AccountRepositoryImplTest {
               .build();
 
       ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+      ArgumentCaptor<AccountAuthority> accountAuthorityCaptor =
+          ArgumentCaptor.forClass(AccountAuthority.class);
+      doReturn(1L).when(accountMapper).nextAccountNo();
       doReturn(1).when(accountMapper).insert(accountCaptor.capture());
+      doReturn(1).when(accountAuthorityMapper).insert(accountAuthorityCaptor.capture());
       doReturn("$2a$10$password1").when(passwordEncoder).encode("aaaaaaaa");
 
       accountRepositoryImpl.regist(accountModel);
 
       verify(accountMapper).insert(any(Account.class));
       Account accountCapture = accountCaptor.getValue();
-      assertEquals(null, accountCapture.getAccountNo());
+      assertEquals(1L, accountCapture.getAccountNo());
       assertEquals(0L, accountCapture.getCreatedBy());
       assertEquals(null, accountCapture.getCreatedAt());
       assertEquals(0L, accountCapture.getUpdatedBy());
@@ -250,11 +259,17 @@ public class AccountRepositoryImplTest {
       assertEquals("none", accountCapture.getBirthplacePrefectureKbnCode());
       assertEquals("none", accountCapture.getResidentPrefectureKbnCode());
       assertEquals("", accountCapture.getFreeMemo());
-      assertEquals(AuthorityEnum.MINI, accountCapture.getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)),
           accountCapture.getLastLoginDatetime());
       assertEquals(0, accountCapture.getLoginFailureCount());
+
+      verify(accountAuthorityMapper).insert(any(AccountAuthority.class));
+      AccountAuthority accountAuthorityCapture = accountAuthorityCaptor.getValue();
+      assertEquals(1L, accountAuthorityCapture.getAccountNo());
+      assertEquals(0L, accountAuthorityCapture.getCreatedBy());
+      assertEquals(0L, accountAuthorityCapture.getUpdatedBy());
+      assertEquals(AuthorityEnum.MINI, accountAuthorityCapture.getAuthorityKbn());
     }
 
     @Test
@@ -274,14 +289,18 @@ public class AccountRepositoryImplTest {
               .build();
 
       ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
+      ArgumentCaptor<AccountAuthority> accountAuthorityCaptor =
+          ArgumentCaptor.forClass(AccountAuthority.class);
+      doReturn(1L).when(accountMapper).nextAccountNo();
       doReturn(1).when(accountMapper).insert(accountCaptor.capture());
+      doReturn(1).when(accountAuthorityMapper).insert(accountAuthorityCaptor.capture());
       doReturn("$2a$10$password1").when(passwordEncoder).encode("aaaaaaaa");
 
       accountRepositoryImpl.regist(accountModel);
 
       verify(accountMapper).insert(any(Account.class));
       Account accountCapture = accountCaptor.getValue();
-      assertEquals(null, accountCapture.getAccountNo());
+      assertEquals(1L, accountCapture.getAccountNo());
       assertEquals(0L, accountCapture.getCreatedBy());
       assertEquals(null, accountCapture.getCreatedAt());
       assertEquals(0L, accountCapture.getUpdatedBy());
@@ -295,11 +314,15 @@ public class AccountRepositoryImplTest {
       assertEquals("Hokkaido", accountCapture.getBirthplacePrefectureKbnCode());
       assertEquals("Okinawa", accountCapture.getResidentPrefectureKbnCode());
       assertEquals("フリーメモ", accountCapture.getFreeMemo());
-      assertEquals(AuthorityEnum.MINI, accountCapture.getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)),
           accountCapture.getLastLoginDatetime());
       assertEquals(0, accountCapture.getLoginFailureCount());
+
+      verify(accountAuthorityMapper).insert(any(AccountAuthority.class));
+      AccountAuthority accountAuthorityCapture = accountAuthorityCaptor.getValue();
+      assertEquals(1L, accountAuthorityCapture.getAccountNo());
+      assertEquals(AuthorityEnum.MINI, accountAuthorityCapture.getAuthorityKbn());
     }
 
     @Test
@@ -321,7 +344,8 @@ public class AccountRepositoryImplTest {
 
       verify(accountMapper).insert(any(Account.class));
       Account accountCapture = accountCaptor.getValue();
-      assertEquals(null, accountCapture.getAccountNo());
+      // accountMapper.nextAccountNo()はモック未スタブのため、Mockitoの既定値0Lが採番結果として使われる
+      assertEquals(0L, accountCapture.getAccountNo());
       assertEquals(0L, accountCapture.getCreatedBy());
       assertEquals(null, accountCapture.getCreatedAt());
       assertEquals(0L, accountCapture.getUpdatedBy());
@@ -335,11 +359,12 @@ public class AccountRepositoryImplTest {
       assertEquals("none", accountCapture.getBirthplacePrefectureKbnCode());
       assertEquals("none", accountCapture.getResidentPrefectureKbnCode());
       assertEquals("", accountCapture.getFreeMemo());
-      assertEquals(AuthorityEnum.MINI, accountCapture.getAuthorityKbn());
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(9)),
           accountCapture.getLastLoginDatetime());
       assertEquals(0, accountCapture.getLoginFailureCount());
+
+      verify(accountAuthorityMapper, never()).insert(any());
     }
   }
 
@@ -691,17 +716,56 @@ public class AccountRepositoryImplTest {
       verify(accountMapper, times(1)).delete(any(AccountCondition.class));
       AccountCondition accountCapture = accountCaptor.getValue();
       assertEquals(1L, accountCapture.getAccountNo());
+
+      verify(accountAuthorityMapper, times(1)).delete(any());
     }
   }
 
   @Nested
   @Order(8)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class isExistAccount {
+  class isExistAccountByAccountId {
     @Test
     @Order(1)
     @DisplayName("正常系：アカウントが存在する場合")
-    void isExistAccount_true() {
+    void isExistAccountByAccountId_true() {
+      ArgumentCaptor<AccountCondition> accountCaptor =
+          ArgumentCaptor.forClass(AccountCondition.class);
+      doReturn(true).when(accountMapper).isExistAccount(accountCaptor.capture());
+
+      assertTrue(accountRepositoryImpl.isExistAccount(new AccountId("aaaaaaaa")));
+      verify(accountMapper, times(1)).isExistAccount(any(AccountCondition.class));
+
+      AccountCondition accountCapture = accountCaptor.getValue();
+      assertNull(accountCapture.getAccountNo());
+      assertEquals("aaaaaaaa", accountCapture.getAccountId());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：アカウントが存在しない場合")
+    void isExistAccountByAccountId_false() {
+      ArgumentCaptor<AccountCondition> accountCaptor =
+          ArgumentCaptor.forClass(AccountCondition.class);
+      doReturn(false).when(accountMapper).isExistAccount(accountCaptor.capture());
+
+      assertFalse(accountRepositoryImpl.isExistAccount(new AccountId("aaaaaaaa")));
+      verify(accountMapper, times(1)).isExistAccount(any());
+
+      AccountCondition accountCapture = accountCaptor.getValue();
+      assertNull(accountCapture.getAccountNo());
+      assertEquals("aaaaaaaa", accountCapture.getAccountId());
+    }
+  }
+
+  @Nested
+  @Order(9)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class isExistAccountByAccountNoAndAccountId {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントが存在する場合")
+    void isExistAccountByAccountNoAndAccountId_true() {
       ArgumentCaptor<AccountCondition> accountCaptor =
           ArgumentCaptor.forClass(AccountCondition.class);
       doReturn(true).when(accountMapper).isExistAccount(accountCaptor.capture());
@@ -718,7 +782,7 @@ public class AccountRepositoryImplTest {
     @Test
     @Order(2)
     @DisplayName("正常系：アカウントが存在しない場合")
-    void isExistAccount_false() {
+    void isExistAccountByAccountNoAndAccountId_false() {
       ArgumentCaptor<AccountCondition> accountCaptor =
           ArgumentCaptor.forClass(AccountCondition.class);
       doReturn(false).when(accountMapper).isExistAccount(accountCaptor.capture());
@@ -734,55 +798,53 @@ public class AccountRepositoryImplTest {
   }
 
   @Nested
-  @Order(9)
+  @Order(10)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getAccountList {
     @Test
     @Order(1)
     @DisplayName("正常系：アカウントを2件以上取得")
     void getAccountList_found_some_accounts() {
-      Account account1 =
-          Account.builder()
-              .accountNo(1L)
-              .createdBy(1L)
-              .createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .updatedBy(1L)
-              .updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .isDeleted(false)
-              .accountId("aaaaaaaa")
-              .accountName("AAAAAAAA")
-              .password("$2a$10$password1")
-              .birthdate(LocalDate.of(1991, 1, 1))
-              .sexKbn(SexEnum.MAN)
-              .birthplacePrefectureKbnCode("Hokkaido")
-              .residentPrefectureKbnCode("Aomori")
-              .freeMemo("よろしく")
-              .authorityKbn(AuthorityEnum.MINI)
-              .lastLoginDatetime(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .loginFailureCount(0)
-              .build();
-      Account account2 =
-          Account.builder()
-              .accountNo(2L)
-              .createdBy(2L)
-              .createdAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .updatedBy(2L)
-              .updatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .isDeleted(false)
-              .accountId("bbbbbbbb")
-              .accountName("BBBBBBBB")
-              .password("$2a$10$password2")
-              .birthdate(LocalDate.of(1991, 2, 1))
-              .sexKbn(SexEnum.WOMAN)
-              .birthplacePrefectureKbnCode("Iwate")
-              .residentPrefectureKbnCode("Okinawa")
-              .freeMemo("お願いします")
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .lastLoginDatetime(OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)))
-              .loginFailureCount(1)
-              .build();
+      AccountDto account1 = new AccountDto();
+      account1.setAccountNo(1L);
+      account1.setCreatedBy(1L);
+      account1.setCreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account1.setUpdatedBy(1L);
+      account1.setUpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account1.setIsDeleted(false);
+      account1.setAccountId("aaaaaaaa");
+      account1.setAccountName("AAAAAAAA");
+      account1.setPassword("$2a$10$password1");
+      account1.setBirthdate(LocalDate.of(1991, 1, 1));
+      account1.setSexKbn(SexEnum.MAN);
+      account1.setBirthplacePrefectureKbnCode("Hokkaido");
+      account1.setResidentPrefectureKbnCode("Aomori");
+      account1.setFreeMemo("よろしく");
+      account1.setAuthorityKbn(AuthorityEnum.MINI);
+      account1.setLastLoginDatetime(
+          OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account1.setLoginFailureCount(0);
+      AccountDto account2 = new AccountDto();
+      account2.setAccountNo(2L);
+      account2.setCreatedBy(2L);
+      account2.setCreatedAt(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account2.setUpdatedBy(2L);
+      account2.setUpdatedAt(OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account2.setIsDeleted(false);
+      account2.setAccountId("bbbbbbbb");
+      account2.setAccountName("BBBBBBBB");
+      account2.setPassword("$2a$10$password2");
+      account2.setBirthdate(LocalDate.of(1991, 2, 1));
+      account2.setSexKbn(SexEnum.WOMAN);
+      account2.setBirthplacePrefectureKbnCode("Iwate");
+      account2.setResidentPrefectureKbnCode("Okinawa");
+      account2.setFreeMemo("お願いします");
+      account2.setAuthorityKbn(AuthorityEnum.ADMINISTRATOR);
+      account2.setLastLoginDatetime(
+          OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
+      account2.setLoginFailureCount(1);
 
-      List<Account> accountList = new ArrayList<Account>();
+      List<AccountDto> accountList = new ArrayList<AccountDto>();
       accountList.add(account1);
       accountList.add(account2);
 
@@ -853,7 +915,7 @@ public class AccountRepositoryImplTest {
     @Order(2)
     @DisplayName("正常系：アカウントが0件")
     void getAccountList_not_found() {
-      List<Account> expected = new ArrayList<Account>();
+      List<AccountDto> expected = new ArrayList<AccountDto>();
 
       ArgumentCaptor<AccountCondition> accountCaptor =
           ArgumentCaptor.forClass(AccountCondition.class);
@@ -872,36 +934,32 @@ public class AccountRepositoryImplTest {
     @Order(3)
     @DisplayName("正常系：取得件数が上限に達した場合、最後のページでないと判定され、表示件数分に切り詰められること")
     void getAccountList_pagination_trims_when_more_results_exist() {
-      Account account1 =
-          Account.builder()
-              .accountNo(1L)
-              .accountId("aaaaaaaa")
-              .accountName("AAAAAAAA")
-              .password("$2a$10$password1")
-              .isDeleted(false)
-              .sexKbn(SexEnum.NONE)
-              .birthplacePrefectureKbnCode("none")
-              .residentPrefectureKbnCode("none")
-              .freeMemo("")
-              .authorityKbn(AuthorityEnum.MINI)
-              .loginFailureCount(0)
-              .build();
-      Account account2 =
-          Account.builder()
-              .accountNo(2L)
-              .accountId("bbbbbbbb")
-              .accountName("BBBBBBBB")
-              .password("$2a$10$password2")
-              .isDeleted(false)
-              .sexKbn(SexEnum.NONE)
-              .birthplacePrefectureKbnCode("none")
-              .residentPrefectureKbnCode("none")
-              .freeMemo("")
-              .authorityKbn(AuthorityEnum.MINI)
-              .loginFailureCount(0)
-              .build();
+      AccountDto account1 = new AccountDto();
+      account1.setAccountNo(1L);
+      account1.setAccountId("aaaaaaaa");
+      account1.setAccountName("AAAAAAAA");
+      account1.setPassword("$2a$10$password1");
+      account1.setIsDeleted(false);
+      account1.setSexKbn(SexEnum.NONE);
+      account1.setBirthplacePrefectureKbnCode("none");
+      account1.setResidentPrefectureKbnCode("none");
+      account1.setFreeMemo("");
+      account1.setAuthorityKbn(AuthorityEnum.MINI);
+      account1.setLoginFailureCount(0);
+      AccountDto account2 = new AccountDto();
+      account2.setAccountNo(2L);
+      account2.setAccountId("bbbbbbbb");
+      account2.setAccountName("BBBBBBBB");
+      account2.setPassword("$2a$10$password2");
+      account2.setIsDeleted(false);
+      account2.setSexKbn(SexEnum.NONE);
+      account2.setBirthplacePrefectureKbnCode("none");
+      account2.setResidentPrefectureKbnCode("none");
+      account2.setFreeMemo("");
+      account2.setAuthorityKbn(AuthorityEnum.MINI);
+      account2.setLoginFailureCount(0);
 
-      List<Account> accountList = new ArrayList<Account>();
+      List<AccountDto> accountList = new ArrayList<AccountDto>();
       accountList.add(account1);
       accountList.add(account2);
 
@@ -918,43 +976,39 @@ public class AccountRepositoryImplTest {
   }
 
   @Nested
-  @Order(10)
+  @Order(11)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getAccountListForAdmin {
     @Test
     @Order(1)
     @DisplayName("正常系：削除済みを含むアカウントを2件以上取得")
     void getAccountListForAdmin_found_some_accounts() {
-      Account account1 =
-          Account.builder()
-              .accountNo(1L)
-              .accountId("aaaaaaaa")
-              .accountName("AAAAAAAA")
-              .password("$2a$10$password1")
-              .isDeleted(false)
-              .sexKbn(SexEnum.NONE)
-              .birthplacePrefectureKbnCode("none")
-              .residentPrefectureKbnCode("none")
-              .freeMemo("")
-              .authorityKbn(AuthorityEnum.MINI)
-              .loginFailureCount(0)
-              .build();
-      Account account2 =
-          Account.builder()
-              .accountNo(2L)
-              .accountId("bbbbbbbb")
-              .accountName("BBBBBBBB")
-              .password("$2a$10$password2")
-              .isDeleted(true)
-              .sexKbn(SexEnum.NONE)
-              .birthplacePrefectureKbnCode("none")
-              .residentPrefectureKbnCode("none")
-              .freeMemo("")
-              .authorityKbn(AuthorityEnum.MINI)
-              .loginFailureCount(0)
-              .build();
+      AccountDto account1 = new AccountDto();
+      account1.setAccountNo(1L);
+      account1.setAccountId("aaaaaaaa");
+      account1.setAccountName("AAAAAAAA");
+      account1.setPassword("$2a$10$password1");
+      account1.setIsDeleted(false);
+      account1.setSexKbn(SexEnum.NONE);
+      account1.setBirthplacePrefectureKbnCode("none");
+      account1.setResidentPrefectureKbnCode("none");
+      account1.setFreeMemo("");
+      account1.setAuthorityKbn(AuthorityEnum.MINI);
+      account1.setLoginFailureCount(0);
+      AccountDto account2 = new AccountDto();
+      account2.setAccountNo(2L);
+      account2.setAccountId("bbbbbbbb");
+      account2.setAccountName("BBBBBBBB");
+      account2.setPassword("$2a$10$password2");
+      account2.setIsDeleted(true);
+      account2.setSexKbn(SexEnum.NONE);
+      account2.setBirthplacePrefectureKbnCode("none");
+      account2.setResidentPrefectureKbnCode("none");
+      account2.setFreeMemo("");
+      account2.setAuthorityKbn(AuthorityEnum.MINI);
+      account2.setLoginFailureCount(0);
 
-      List<Account> accountList = new ArrayList<Account>();
+      List<AccountDto> accountList = new ArrayList<AccountDto>();
       accountList.add(account1);
       accountList.add(account2);
 
@@ -977,36 +1031,32 @@ public class AccountRepositoryImplTest {
     @Order(2)
     @DisplayName("正常系：取得件数が上限に達した場合、最後のページでないと判定され、表示件数分に切り詰められること")
     void getAccountListForAdmin_pagination_trims_when_more_results_exist() {
-      Account account1 =
-          Account.builder()
-              .accountNo(1L)
-              .accountId("aaaaaaaa")
-              .accountName("AAAAAAAA")
-              .password("$2a$10$password1")
-              .isDeleted(false)
-              .sexKbn(SexEnum.NONE)
-              .birthplacePrefectureKbnCode("none")
-              .residentPrefectureKbnCode("none")
-              .freeMemo("")
-              .authorityKbn(AuthorityEnum.MINI)
-              .loginFailureCount(0)
-              .build();
-      Account account2 =
-          Account.builder()
-              .accountNo(2L)
-              .accountId("bbbbbbbb")
-              .accountName("BBBBBBBB")
-              .password("$2a$10$password2")
-              .isDeleted(false)
-              .sexKbn(SexEnum.NONE)
-              .birthplacePrefectureKbnCode("none")
-              .residentPrefectureKbnCode("none")
-              .freeMemo("")
-              .authorityKbn(AuthorityEnum.MINI)
-              .loginFailureCount(0)
-              .build();
+      AccountDto account1 = new AccountDto();
+      account1.setAccountNo(1L);
+      account1.setAccountId("aaaaaaaa");
+      account1.setAccountName("AAAAAAAA");
+      account1.setPassword("$2a$10$password1");
+      account1.setIsDeleted(false);
+      account1.setSexKbn(SexEnum.NONE);
+      account1.setBirthplacePrefectureKbnCode("none");
+      account1.setResidentPrefectureKbnCode("none");
+      account1.setFreeMemo("");
+      account1.setAuthorityKbn(AuthorityEnum.MINI);
+      account1.setLoginFailureCount(0);
+      AccountDto account2 = new AccountDto();
+      account2.setAccountNo(2L);
+      account2.setAccountId("bbbbbbbb");
+      account2.setAccountName("BBBBBBBB");
+      account2.setPassword("$2a$10$password2");
+      account2.setIsDeleted(false);
+      account2.setSexKbn(SexEnum.NONE);
+      account2.setBirthplacePrefectureKbnCode("none");
+      account2.setResidentPrefectureKbnCode("none");
+      account2.setFreeMemo("");
+      account2.setAuthorityKbn(AuthorityEnum.MINI);
+      account2.setLoginFailureCount(0);
 
-      List<Account> accountList = new ArrayList<Account>();
+      List<AccountDto> accountList = new ArrayList<AccountDto>();
       accountList.add(account1);
       accountList.add(account2);
 
@@ -1023,7 +1073,7 @@ public class AccountRepositoryImplTest {
   }
 
   @Nested
-  @Order(9)
+  @Order(12)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class lockForUpdate {
     @Test
@@ -1035,6 +1085,61 @@ public class AccountRepositoryImplTest {
       accountRepositoryImpl.lockForUpdate(new AccountNo(1L));
 
       verify(accountMapper).lockAccount(1L);
+    }
+  }
+
+  @Nested
+  @Order(13)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class lockForLoginAttempt {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：ログイン試行の直列化用アドバイザリロックを取得すること")
+    void lockForLoginAttempt_success() {
+      doReturn(1).when(accountMapper).lockForLoginAttempt("aaaaaaaa");
+
+      accountRepositoryImpl.lockForLoginAttempt(new AccountId("aaaaaaaa"));
+
+      verify(accountMapper).lockForLoginAttempt("aaaaaaaa");
+    }
+  }
+
+  @Nested
+  @Order(14)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class updateAuthority {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：権限区分が更新されること")
+    void updateAuthority_success() throws GalleryException {
+      AccountModel accountModel = AccountModel.forAuthorityChange(1L, AuthorityEnum.NORMAL);
+
+      ArgumentCaptor<AccountAuthorityCondition> cndCaptor =
+          ArgumentCaptor.forClass(AccountAuthorityCondition.class);
+      ArgumentCaptor<AccountAuthorityUpdateTarget> targetCaptor =
+          ArgumentCaptor.forClass(AccountAuthorityUpdateTarget.class);
+      doReturn(1).when(accountAuthorityMapper).update(cndCaptor.capture(), targetCaptor.capture());
+
+      accountRepositoryImpl.updateAuthority(accountModel);
+
+      verify(accountAuthorityMapper)
+          .update(any(AccountAuthorityCondition.class), any(AccountAuthorityUpdateTarget.class));
+      assertEquals(1L, cndCaptor.getValue().getAccountNo());
+      assertEquals(AuthorityEnum.NORMAL, targetCaptor.getValue().getAuthorityKbn());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：UpdateFailureExceptionをthrowする")
+    void updateAuthority_UpdateFailureException() {
+      AccountModel accountModel = AccountModel.forAuthorityChange(1L, AuthorityEnum.NORMAL);
+
+      doReturn(0)
+          .when(accountAuthorityMapper)
+          .update(any(AccountAuthorityCondition.class), any(AccountAuthorityUpdateTarget.class));
+
+      assertThrows(
+          UpdateFailureException.class, () -> accountRepositoryImpl.updateAuthority(accountModel));
     }
   }
 }

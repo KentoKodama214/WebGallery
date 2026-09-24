@@ -4,7 +4,7 @@
 
 <mapper namespace="com.web.gallery.mapper.PhotoListFilterLogMapper">
 
-	<insert id="insert" parameterType="com.web.gallery.entity.PhotoListFilterLog">
+	<insert id="insert" parameterType="com.web.gallery.entity.photo.PhotoListFilterLog">
 		INSERT INTO photo.photo_list_filter_log (
 			photo_account_no,
 			account_no,
@@ -34,7 +34,7 @@
 		)
 	</insert>
 
-	<delete id="delete" parameterType="com.web.gallery.entity.PhotoListFilterLogCondition">
+	<delete id="delete" parameterType="com.web.gallery.entity.photo.PhotoListFilterLogCondition">
 		DELETE FROM
 			photo.photo_list_filter_log
 		<where>

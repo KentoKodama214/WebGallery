@@ -11,7 +11,7 @@ import {
   deleteFavorite,
   type PhotoDetailResponse,
 } from "@/lib/api/client";
-import { sanitizeImageUrl } from "@/lib/url";
+import { sanitizeImageUrl, buildGoogleMapEmbedUrl } from "@/lib/url";
 import { ModalDialog } from "@/components/ui/ModalDialog";
 
 interface PhotoDetailProps {
@@ -150,6 +150,7 @@ export function PhotoDetail({
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex justify-center items-center">
+        <h1 className="sr-only">写真詳細</h1>
         <p className="text-gray-400">読み込み中...</p>
       </div>
     );
@@ -158,6 +159,7 @@ export function PhotoDetail({
   if (error) {
     return (
       <div className="min-h-screen bg-black text-white flex justify-center items-center">
+        <h1 className="sr-only">写真詳細</h1>
         <p className="text-red-500">{error}</p>
       </div>
     );
@@ -166,6 +168,7 @@ export function PhotoDetail({
   if (!photo) {
     return (
       <div className="min-h-screen bg-black text-white flex justify-center items-center">
+        <h1 className="sr-only">写真詳細</h1>
         <p className="text-gray-400">写真が見つかりません</p>
       </div>
     );
@@ -197,6 +200,8 @@ export function PhotoDetail({
 
   return (
     <div style={{ backgroundColor: "#000", color: "#fff", minHeight: "100vh" }}>
+      <h1 className="sr-only">写真詳細</h1>
+
       {/* 戻るリンク */}
       <header>
         <Link
@@ -406,6 +411,21 @@ export function PhotoDetail({
               </div>
             </div>
           )}
+
+          {/* 撮影場所の地図（緯度経度が取得できている場合のみ表示。非公開設定時はバックエンドが返さない） */}
+          {photo.latitude != null && photo.longitude != null && (() => {
+            const mapUrl = buildGoogleMapEmbedUrl(photo.latitude, photo.longitude);
+            return mapUrl ? (
+              <div style={{ marginTop: "16px" }}>
+                <iframe
+                  src={mapUrl}
+                  title="撮影場所の地図"
+                  loading="lazy"
+                  style={{ width: "100%", aspectRatio: "16 / 9", border: 0, display: "block" }}
+                />
+              </div>
+            ) : null;
+          })()}
         </div>
       </div>
 

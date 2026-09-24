@@ -1,7 +1,7 @@
 package com.web.gallery.mapper;
 
-import com.web.gallery.entity.PhotoFavorite;
-import com.web.gallery.entity.PhotoFavoriteCondition;
+import com.web.gallery.entity.photo.PhotoFavorite;
+import com.web.gallery.entity.photo.PhotoFavoriteCondition;
 import org.apache.ibatis.annotations.Mapper;
 
 /** 写真お気に入りテーブルのMapperクラス */

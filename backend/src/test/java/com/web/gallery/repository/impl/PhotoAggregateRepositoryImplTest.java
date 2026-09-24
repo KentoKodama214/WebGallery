@@ -11,12 +11,12 @@ import com.web.gallery.domain.photo.ImageFilePath;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
-import com.web.gallery.entity.PhotoFavoriteCondition;
-import com.web.gallery.entity.PhotoMst;
-import com.web.gallery.entity.PhotoMstCondition;
-import com.web.gallery.entity.PhotoMstUpdateTarget;
-import com.web.gallery.entity.PhotoTagMst;
-import com.web.gallery.entity.PhotoTagMstCondition;
+import com.web.gallery.entity.photo.PhotoFavoriteCondition;
+import com.web.gallery.entity.photo.PhotoMst;
+import com.web.gallery.entity.photo.PhotoMstCondition;
+import com.web.gallery.entity.photo.PhotoMstUpdateTarget;
+import com.web.gallery.entity.photo.PhotoTagMst;
+import com.web.gallery.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
@@ -25,9 +25,9 @@ import com.web.gallery.exception.UpdateFailureException;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
 import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
-import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoTagModel;
-import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoTagModel;
+import com.web.gallery.model.photo.PhotoTagModelList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -105,9 +106,12 @@ public class PhotoAggregateRepositoryImplTest {
 
       photoAggregateRepositoryImpl.regist(photo);
 
-      verify(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
-      verify(photoMstMapper).insert(any(PhotoMst.class));
-      verify(photoTagMstMapper).insertBulk(anyList());
+      InOrder inOrder = inOrder(photoMstMapper, photoTagMstMapper);
+      // 重複チェックを先に行う
+      inOrder.verify(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+      // タグは写真マスタへの外部キー制約を持つため、先に写真マスタを登録する
+      inOrder.verify(photoMstMapper).insert(any(PhotoMst.class));
+      inOrder.verify(photoTagMstMapper).insertBulk(anyList());
 
       PhotoMst photoMstCapture = photoMstCaptor.getValue();
       assertEquals(accountNo.value(), photoMstCapture.getAccountNo());
@@ -156,6 +160,26 @@ public class PhotoAggregateRepositoryImplTest {
 
       verify(photoTagMstMapper, times(0)).insertBulk(anyList());
     }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：写真タグ登録でDuplicateKeyExceptionが発生した場合、RegistFailureExceptionをthrowすること")
+    void regist_tag_RegistFailureException() {
+      AccountNo accountNo = new AccountNo(1L);
+      PhotoTagModelList tags = PhotoTagModelList.of(List.of(buildTag(accountNo, "太陽")));
+      PhotoDetailModel requestDetail = buildDetail(accountNo, null, new ImageFilePath(""), tags);
+      Photo photo =
+          Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
+
+      doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+      doReturn(1).when(photoMstMapper).insert(any(PhotoMst.class));
+      doThrow(DuplicateKeyException.class).when(photoTagMstMapper).insertBulk(anyList());
+
+      assertThrows(RegistFailureException.class, () -> photoAggregateRepositoryImpl.regist(photo));
+
+      verify(photoMstMapper).insert(any(PhotoMst.class));
+      verify(photoTagMstMapper).insertBulk(anyList());
+    }
   }
 
   @Nested
@@ -189,9 +213,14 @@ public class PhotoAggregateRepositoryImplTest {
 
       photoAggregateRepositoryImpl.update(photo);
 
-      verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
-      verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
-      verify(photoTagMstMapper).insertBulk(anyList());
+      InOrder inOrder = inOrder(photoMstMapper, photoTagMstMapper);
+      inOrder
+          .verify(photoMstMapper)
+          .update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+      // 既存タグを全削除してから
+      inOrder.verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+      // 新しいタグを再登録する
+      inOrder.verify(photoTagMstMapper).insertBulk(anyList());
 
       assertEquals(accountNo.value(), conditionCaptor.getValue().getAccountNo());
       assertEquals(photoNo.value(), conditionCaptor.getValue().getPhotoNo());
@@ -251,9 +280,15 @@ public class PhotoAggregateRepositoryImplTest {
 
       photoAggregateRepositoryImpl.delete(photo);
 
-      verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
-      verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
-      verify(photoMstMapper).update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+      InOrder inOrder = inOrder(photoFavoriteMapper, photoTagMstMapper, photoMstMapper);
+      // 外部キー制約に抵触しないよう、お気に入りを先に削除する
+      inOrder.verify(photoFavoriteMapper).delete(any(PhotoFavoriteCondition.class));
+      // 次にタグを削除する
+      inOrder.verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+      // 最後に写真マスタを論理削除する
+      inOrder
+          .verify(photoMstMapper)
+          .update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
 
       assertNull(favoriteConditionCaptor.getValue().getAccountNo());
       assertEquals(

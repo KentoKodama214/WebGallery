@@ -9,9 +9,9 @@ import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
 import com.web.gallery.domain.photo.TagNo;
-import com.web.gallery.model.PhotoDetailModel;
-import com.web.gallery.model.PhotoTagModel;
-import com.web.gallery.model.PhotoTagModelList;
+import com.web.gallery.model.photo.PhotoDetailModel;
+import com.web.gallery.model.photo.PhotoTagModel;
+import com.web.gallery.model.photo.PhotoTagModelList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -167,6 +167,30 @@ public class PhotoTest {
       assertEquals(new TagNo(1L), photo.getPhotoTagModelList().get(0).getTagNo());
       assertEquals("山", photo.getPhotoTagModelList().get(1).getTagJapaneseName().value());
       assertEquals(new TagNo(2L), photo.getPhotoTagModelList().get(1).getTagNo());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("セキュリティ：タグのアカウント番号は入力値ではなく写真所有者の値に強制されること")
+    void updateTags_forces_owner_account_no_on_tags() {
+      AccountNo ownerAccountNo = new AccountNo(1L);
+      PhotoNo photoNo = new PhotoNo(5L);
+      AccountNo attackerSuppliedAccountNo = new AccountNo(999L);
+      PhotoTagModelList initialTags =
+          PhotoTagModelList.of(List.of(buildTag(ownerAccountNo, photoNo, 1L, "太陽")));
+      Photo photo = Photo.forUpdate(buildDetail(ownerAccountNo, photoNo, initialTags));
+
+      PhotoTagModelList newTags =
+          PhotoTagModelList.of(
+              List.of(
+                  buildTag(attackerSuppliedAccountNo, new PhotoNo(1L), 1L, "海"),
+                  buildTag(attackerSuppliedAccountNo, new PhotoNo(1L), 2L, "山")));
+      photo.updateTags(newTags);
+
+      assertEquals(ownerAccountNo, photo.getPhotoTagModelList().get(0).getAccountNo());
+      assertEquals(ownerAccountNo, photo.getPhotoTagModelList().get(1).getAccountNo());
+      assertEquals(photoNo, photo.getPhotoTagModelList().get(0).getPhotoNo());
+      assertEquals(photoNo, photo.getPhotoTagModelList().get(1).getPhotoNo());
     }
   }
 }

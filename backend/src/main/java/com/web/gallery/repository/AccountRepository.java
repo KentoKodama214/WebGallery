@@ -3,9 +3,9 @@ package com.web.gallery.repository;
 import com.web.gallery.domain.account.AccountId;
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.exception.GalleryException;
-import com.web.gallery.model.AccountGetModel;
-import com.web.gallery.model.AccountModel;
-import com.web.gallery.model.AccountPageModel;
+import com.web.gallery.model.account.AccountGetModel;
+import com.web.gallery.model.account.AccountModel;
+import com.web.gallery.model.account.AccountPageModel;
 
 /** アカウントデータを永続化するRepositoryクラス */
 public interface AccountRepository {
@@ -50,6 +50,14 @@ public interface AccountRepository {
    * @throws GalleryException 更新に失敗した場合
    */
   void updateLoginFailureCount(AccountModel accountModel) throws GalleryException;
+
+  /**
+   * AccountAuthorityテーブルの権限区分を更新する
+   *
+   * @param accountModel {@link AccountModel}
+   * @throws GalleryException 更新に失敗した場合
+   */
+  void updateAuthority(AccountModel accountModel) throws GalleryException;
 
   /**
    * Accountテーブルのログイン失敗回数をSQL側で原子的にインクリメントする

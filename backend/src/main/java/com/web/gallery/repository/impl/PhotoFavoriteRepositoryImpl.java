@@ -1,13 +1,13 @@
 package com.web.gallery.repository.impl;
 
 import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.entity.PhotoFavorite;
-import com.web.gallery.entity.PhotoFavoriteCondition;
+import com.web.gallery.entity.photo.PhotoFavorite;
+import com.web.gallery.entity.photo.PhotoFavoriteCondition;
 import com.web.gallery.enumeration.ErrorEnum;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
-import com.web.gallery.model.PhotoFavoriteDeleteModel;
-import com.web.gallery.model.PhotoFavoriteModel;
+import com.web.gallery.model.photo.PhotoFavoriteDeleteModel;
+import com.web.gallery.model.photo.PhotoFavoriteModel;
 import com.web.gallery.repository.PhotoFavoriteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

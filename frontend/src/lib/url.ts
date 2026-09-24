@@ -125,3 +125,25 @@ export function sanitizeImageUrl(url: string | null | undefined): string {
   }
   return "";
 }
+
+/**
+ * 撮影場所の緯度経度から Google マップ埋め込み用 URL を組み立てる
+ *
+ * 正式な Embed API（要 API キー）ではなく、API キー不要な非公式の `output=embed`
+ * 形式を用いる。将来 Google 側の仕様変更・廃止で表示できなくなる可能性がある点に留意する。
+ * CSP の `frame-src` は `https://maps.google.com` / `https://www.google.com` のみ許可している。
+ *
+ * @param latitude 緯度
+ * @param longitude 経度
+ * @returns 埋め込み用 URL。座標が不正な場合は空文字
+ */
+export function buildGoogleMapEmbedUrl(latitude: number, longitude: number): string {
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return "";
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return "";
+  const params = new URLSearchParams({
+    q: `${latitude},${longitude}`,
+    z: "15",
+    output: "embed",
+  });
+  return `https://maps.google.com/maps?${params.toString()}`;
+}
