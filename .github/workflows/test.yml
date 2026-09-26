@@ -6,6 +6,7 @@ on:
       - development
       - staging
       - master
+  workflow_dispatch:
 
 jobs:
   frontend-unit-test:
@@ -211,15 +212,16 @@ jobs:
       # FileRepositoryImplIntegrationTest（Repository層）が実接続する画像ストレージ（S3互換）。
       # GitHub Actionsのservicesはコンテナ起動時のcommand引数を指定できず、
       # minio/minioイメージはCMD（server /data）なしでは起動しないため、docker runで直接起動する。
-      # minio/minio・minio/mcはDocker Hubでのイメージ配布を終了しているため、
-      # docker-compose.ymlと同様に公式移行先のquay.ioを使用する
+      # minio/minioはDocker Hub、quay.io/minio/minioも2026-09-24付けで匿名pullをロックダウンしたため、
+      # 匿名pull可能でmcクライアントも同一イメージに同梱するChainguard版イメージを使用する
+      # （docker-compose.ymlと同様）
       - name: MinIO起動
         run: |
           docker run -d --name minio \
             -p 9000:9000 \
             -e MINIO_ROOT_USER=minioadmin \
             -e MINIO_ROOT_PASSWORD=minioadmin \
-            quay.io/minio/minio:latest server /data
+            cgr.dev/chainguard/minio:latest server /data
           for i in $(seq 1 30); do
             if curl -sf http://localhost:9000/minio/health/live > /dev/null; then
               echo "MinIO is ready"
@@ -232,7 +234,8 @@ jobs:
         run: |
           docker run --rm --network host \
             -e MC_HOST_local=http://minioadmin:minioadmin@localhost:9000 \
-            quay.io/minio/mc:latest mb --ignore-existing local/test-bucket
+            --entrypoint mc \
+            cgr.dev/chainguard/minio:latest mb --ignore-existing local/test-bucket
 
       - name: 結合テスト実行
         run: ./backend/gradlew -p backend integrationTest
@@ -341,15 +344,16 @@ jobs:
       # 写真アップロードのE2Eシナリオが実接続する画像ストレージ（S3互換）。
       # GitHub Actionsのservicesはコンテナ起動時のcommand引数を指定できず、
       # minio/minioイメージはCMD（server /data）なしでは起動しないため、docker runで直接起動する。
-      # minio/minio・minio/mcはDocker Hubでのイメージ配布を終了しているため、
-      # docker-compose.ymlと同様に公式移行先のquay.ioを使用する
+      # minio/minioはDocker Hub、quay.io/minio/minioも2026-09-24付けで匿名pullをロックダウンしたため、
+      # 匿名pull可能でmcクライアントも同一イメージに同梱するChainguard版イメージを使用する
+      # （docker-compose.ymlと同様）
       - name: MinIO起動
         run: |
           docker run -d --name minio \
             -p 9000:9000 \
             -e MINIO_ROOT_USER=minioadmin \
             -e MINIO_ROOT_PASSWORD=minioadmin \
-            quay.io/minio/minio:latest server /data
+            cgr.dev/chainguard/minio:latest server /data
           for i in $(seq 1 30); do
             if curl -sf http://localhost:9000/minio/health/live > /dev/null; then
               echo "MinIO is ready"
@@ -362,7 +366,8 @@ jobs:
         run: |
           docker run --rm --network host \
             -e MC_HOST_local=http://minioadmin:minioadmin@localhost:9000 \
-            quay.io/minio/mc:latest mb --ignore-existing local/web-gallery-local
+            --entrypoint mc \
+            cgr.dev/chainguard/minio:latest mb --ignore-existing local/web-gallery-local
 
       - name: バックエンドをバックグラウンドで起動
         env:
@@ -503,6 +508,7 @@ jobs:
           cat coverage-table.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: PRにカバレッジを単一コメントで投稿
+        if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
