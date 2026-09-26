@@ -136,7 +136,7 @@ public class AccountAggregateRepositoryImplIntegrationTest {
       // 外部キー制約（ON DELETE RESTRICT）によりアカウント本体の削除で例外が発生するようにする
       jdbcTemplate.update(
           "INSERT INTO common.location_mst"
-              + " VALUES (DEFAULT, 1, 99, 1, now(), 1, now(), false, 'ロケーション99', '住所99', 0, 0)");
+              + " VALUES (DEFAULT, 1, 99, 1, now(), 1, now(), false, 'ロケーション99_管理用', 'ロケーション99', '住所99', 0, 0)");
 
       Account account = Account.forDelete(new AccountNo(1L));
       assertThrows(
