@@ -7,7 +7,8 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Address;
 import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.common.Latitude;
-import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.LocationDisplayName;
+import com.web.gallery.domain.common.LocationManagementName;
 import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.ExifData;
@@ -58,8 +59,11 @@ public class PhotoDetailModel {
   /** 位置情報（住所・緯度・経度） */
   private GeoLocation geoLocation;
 
-  /** ロケーション名 */
-  private LocationName locationName;
+  /** ロケーション管理名（新規入力時のみ設定。既存選択・写真詳細取得では未設定） */
+  private LocationManagementName managementName;
+
+  /** ロケーション表示名 */
+  private LocationDisplayName displayName;
 
   /** 位置情報公開フラグ */
   private IsLocationPublic isLocationPublic;
@@ -133,8 +137,8 @@ public class PhotoDetailModel {
                 dto.getAddress() != null ? new Address(dto.getAddress()) : null,
                 dto.getLatitude() != null ? new Latitude(dto.getLatitude()) : null,
                 dto.getLongitude() != null ? new Longitude(dto.getLongitude()) : null))
-        .locationName(
-            dto.getLocationName() != null ? new LocationName(dto.getLocationName()) : null)
+        .displayName(
+            dto.getDisplayName() != null ? new LocationDisplayName(dto.getDisplayName()) : null)
         .isLocationPublic(
             dto.getIsLocationPublic() != null
                 ? new IsLocationPublic(dto.getIsLocationPublic())
@@ -200,8 +204,14 @@ public class PhotoDetailModel {
                 request.getAddress() != null ? new Address(request.getAddress()) : null,
                 request.getLatitude() != null ? new Latitude(request.getLatitude()) : null,
                 request.getLongitude() != null ? new Longitude(request.getLongitude()) : null))
-        .locationName(
-            request.getLocationName() != null ? new LocationName(request.getLocationName()) : null)
+        .managementName(
+            request.getManagementName() != null
+                ? new LocationManagementName(request.getManagementName())
+                : null)
+        .displayName(
+            request.getDisplayName() != null
+                ? new LocationDisplayName(request.getDisplayName())
+                : null)
         .isLocationPublic(
             request.getIsLocationPublic() != null
                 ? new IsLocationPublic(request.getIsLocationPublic())
@@ -272,8 +282,14 @@ public class PhotoDetailModel {
                 request.getAddress() != null ? new Address(request.getAddress()) : null,
                 request.getLatitude() != null ? new Latitude(request.getLatitude()) : null,
                 request.getLongitude() != null ? new Longitude(request.getLongitude()) : null))
-        .locationName(
-            request.getLocationName() != null ? new LocationName(request.getLocationName()) : null)
+        .managementName(
+            request.getManagementName() != null
+                ? new LocationManagementName(request.getManagementName())
+                : null)
+        .displayName(
+            request.getDisplayName() != null
+                ? new LocationDisplayName(request.getDisplayName())
+                : null)
         .isLocationPublic(
             request.getIsLocationPublic() != null
                 ? new IsLocationPublic(request.getIsLocationPublic())

@@ -1,6 +1,7 @@
 package com.web.gallery.domain.photo;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 /**
  * ロケーション番号の値オブジェクト
@@ -31,5 +32,15 @@ public record LocationNo(Long value) implements Serializable {
    */
   public static LocationNo getOrDefault(LocationNo nullable) {
     return nullable != null ? nullable : new LocationNo(0L);
+  }
+
+  /**
+   * 現在登録されている最大ロケーション番号から、新規採番するロケーション番号を生成する
+   *
+   * @param maxLocationNo 現在登録されている最大ロケーション番号（未登録の場合はnull）
+   * @return 新規採番したロケーション番号
+   */
+  public static LocationNo next(Long maxLocationNo) {
+    return new LocationNo(Optional.ofNullable(maxLocationNo).map(num -> num + 1).orElse(1L));
   }
 }

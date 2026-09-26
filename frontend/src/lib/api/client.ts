@@ -541,7 +541,7 @@ export interface PhotoDetailResponse {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
-  locationName: string | null;
+  displayName: string | null;
   /** 位置情報公開フラグ（非公開かつ閲覧者が本人でない場合、上記の位置情報系フィールドは null で返る） */
   isLocationPublic: boolean | null;
   imageFilePath: string;
@@ -601,6 +601,23 @@ export interface PhotoUpperLimitResponse {
   isReachedUpperLimit: boolean;
   /** 残り登録可能枚数（上限が存在しない権限区分の場合はnull） */
   remainingCount: number | null;
+}
+
+/** ロケーション */
+export interface LocationItem {
+  locationNo: number;
+  /** 管理名（既存マスタからの選択UIで表示する名称） */
+  managementName: string;
+  /** 表示名（写真詳細での表示に使用） */
+  displayName: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
+/** ロケーション一覧取得レスポンス */
+export interface LocationListResponse {
+  locations: LocationItem[];
 }
 
 /** 写真一覧取得パラメータ */
@@ -669,6 +686,18 @@ export async function getPhotoUpperLimit(
     throw new Error(await readErrorMessage(response, "写真登録上限の取得に失敗しました"));
   }
   return readJson<PhotoUpperLimitResponse>(response);
+}
+
+/**
+ * 本人が登録済みのロケーション一覧を取得する
+ */
+export async function getLocationList(accountId: string): Promise<LocationListResponse> {
+  const url = `/api/v1/accounts/${seg(accountId)}/locations`;
+  const response = await fetchWithAuth(url);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "ロケーション一覧の取得に失敗しました"));
+  }
+  return readJson<LocationListResponse>(response);
 }
 
 /**

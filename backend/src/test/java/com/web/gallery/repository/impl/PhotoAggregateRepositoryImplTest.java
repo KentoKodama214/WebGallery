@@ -6,22 +6,33 @@ import static org.mockito.Mockito.*;
 
 import com.web.gallery.aggregate.Photo;
 import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.common.Address;
+import com.web.gallery.domain.common.GeoLocation;
+import com.web.gallery.domain.common.Latitude;
+import com.web.gallery.domain.common.LocationDisplayName;
+import com.web.gallery.domain.common.LocationManagementName;
+import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.domain.photo.PhotoNo;
 import com.web.gallery.domain.photo.TagEnglishName;
 import com.web.gallery.domain.photo.TagJapaneseName;
+import com.web.gallery.entity.common.LocationMst;
+import com.web.gallery.entity.common.LocationMstCondition;
 import com.web.gallery.entity.photo.PhotoFavoriteCondition;
 import com.web.gallery.entity.photo.PhotoMst;
 import com.web.gallery.entity.photo.PhotoMstCondition;
 import com.web.gallery.entity.photo.PhotoMstUpdateTarget;
 import com.web.gallery.entity.photo.PhotoTagMst;
 import com.web.gallery.entity.photo.PhotoTagMstCondition;
+import com.web.gallery.exception.BadRequestException;
 import com.web.gallery.exception.FileDuplicateException;
 import com.web.gallery.exception.GalleryException;
 import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.mapper.LocationMstMapper;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
 import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
@@ -57,6 +68,8 @@ public class PhotoAggregateRepositoryImplTest {
 
   @Mock private PhotoFavoriteMapper photoFavoriteMapper;
 
+  @Mock private LocationMstMapper locationMstMapper;
+
   private PhotoDetailModel buildDetail(
       AccountNo accountNo, PhotoNo photoNo, ImageFilePath imageFilePath, PhotoTagModelList tags) {
     MultipartFile multipartFile =
@@ -76,6 +89,33 @@ public class PhotoAggregateRepositoryImplTest {
         .accountNo(accountNo)
         .tagJapaneseName(new TagJapaneseName(japaneseName))
         .tagEnglishName(new TagEnglishName(japaneseName))
+        .build();
+  }
+
+  private PhotoDetailModel withLocation(
+      PhotoDetailModel base,
+      LocationNo locationNo,
+      LocationManagementName managementName,
+      LocationDisplayName displayName,
+      GeoLocation geoLocation) {
+    return base.toBuilder()
+        .locationNo(locationNo)
+        .managementName(managementName)
+        .displayName(displayName)
+        .geoLocation(geoLocation)
+        .build();
+  }
+
+  private LocationMst buildLocationMst(
+      Long accountNo, Long locationNo, String managementName, String displayName) {
+    return LocationMst.builder()
+        .accountNo(accountNo)
+        .locationNo(locationNo)
+        .managementName(managementName)
+        .displayName(displayName)
+        .address("東京都渋谷区")
+        .latitude(new java.math.BigDecimal("35.6812"))
+        .longitude(new java.math.BigDecimal("139.7671"))
         .build();
   }
 
@@ -179,6 +219,167 @@ public class PhotoAggregateRepositoryImplTest {
 
       verify(photoMstMapper).insert(any(PhotoMst.class));
       verify(photoTagMstMapper).insertBulk(anyList());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：既存ロケーション番号が本人所有の場合、そのロケーション番号を採用すること")
+    void regist_location_existingSelection() throws GalleryException {
+      AccountNo accountNo = new AccountNo(1L);
+      PhotoDetailModel requestDetail =
+          withLocation(
+              buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty()),
+              new LocationNo(3L),
+              null,
+              null,
+              null);
+      Photo photo =
+          Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
+
+      doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+      doReturn(List.of(buildLocationMst(1L, 3L, "渋谷_管理用", "渋谷")))
+          .when(locationMstMapper)
+          .select(any(LocationMstCondition.class));
+
+      ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+      doReturn(1).when(photoMstMapper).insert(photoMstCaptor.capture());
+
+      photoAggregateRepositoryImpl.regist(photo);
+
+      assertEquals(3L, photoMstCaptor.getValue().getLocationNo());
+      verify(locationMstMapper, times(0)).insert(any(LocationMst.class));
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("異常系：既存ロケーション番号が本人所有でない場合、BadRequestExceptionをthrowすること")
+    void regist_location_notOwned() {
+      AccountNo accountNo = new AccountNo(1L);
+      PhotoDetailModel requestDetail =
+          withLocation(
+              buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty()),
+              new LocationNo(3L),
+              null,
+              null,
+              null);
+      Photo photo =
+          Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
+
+      doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+      doReturn(List.of()).when(locationMstMapper).select(any(LocationMstCondition.class));
+
+      assertThrows(BadRequestException.class, () -> photoAggregateRepositoryImpl.regist(photo));
+
+      verify(photoMstMapper, times(0)).insert(any(PhotoMst.class));
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("正常系：新規入力のロケーション名が既存マスタと同名の場合、既存のロケーション番号を再利用すること")
+    void regist_location_reuseExistingByName() throws GalleryException {
+      AccountNo accountNo = new AccountNo(1L);
+      GeoLocation geoLocation =
+          new GeoLocation(
+              new Address("東京都渋谷区"),
+              new Latitude(new java.math.BigDecimal("35.6812")),
+              new Longitude(new java.math.BigDecimal("139.7671")));
+      PhotoDetailModel requestDetail =
+          withLocation(
+              buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty()),
+              null,
+              new LocationManagementName("渋谷スクランブル交差点_管理用"),
+              new LocationDisplayName("渋谷スクランブル交差点"),
+              geoLocation);
+      Photo photo =
+          Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
+
+      doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+      doReturn(List.of(buildLocationMst(1L, 7L, "渋谷スクランブル交差点_管理用", "渋谷スクランブル交差点")))
+          .when(locationMstMapper)
+          .select(any(LocationMstCondition.class));
+
+      ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+      doReturn(1).when(photoMstMapper).insert(photoMstCaptor.capture());
+
+      photoAggregateRepositoryImpl.regist(photo);
+
+      assertEquals(7L, photoMstCaptor.getValue().getLocationNo());
+      verify(locationMstMapper, times(0)).insert(any(LocationMst.class));
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("正常系：新規入力のロケーション名が既存マスタと同名でない場合、新規採番してロケーションマスタへ登録すること")
+    void regist_location_registNew() throws GalleryException {
+      AccountNo accountNo = new AccountNo(1L);
+      GeoLocation geoLocation =
+          new GeoLocation(
+              new Address("東京都渋谷区"),
+              new Latitude(new java.math.BigDecimal("35.6812")),
+              new Longitude(new java.math.BigDecimal("139.7671")));
+      PhotoDetailModel requestDetail =
+          withLocation(
+              buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty()),
+              null,
+              new LocationManagementName("渋谷スクランブル交差点_管理用"),
+              new LocationDisplayName("渋谷スクランブル交差点"),
+              geoLocation);
+      Photo photo =
+          Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
+
+      doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+      doReturn(List.of()).when(locationMstMapper).select(any(LocationMstCondition.class));
+      doReturn(null).when(locationMstMapper).getMaxLocationNo(accountNo.value());
+
+      ArgumentCaptor<LocationMst> locationMstCaptor = ArgumentCaptor.forClass(LocationMst.class);
+      doReturn(1).when(locationMstMapper).insert(locationMstCaptor.capture());
+
+      ArgumentCaptor<PhotoMst> photoMstCaptor = ArgumentCaptor.forClass(PhotoMst.class);
+      doReturn(1).when(photoMstMapper).insert(photoMstCaptor.capture());
+
+      photoAggregateRepositoryImpl.regist(photo);
+
+      LocationMst capturedLocationMst = locationMstCaptor.getValue();
+      assertEquals(accountNo.value(), capturedLocationMst.getAccountNo());
+      assertEquals(1L, capturedLocationMst.getLocationNo());
+      assertEquals(accountNo.value(), capturedLocationMst.getCreatedBy());
+      assertEquals("渋谷スクランブル交差点_管理用", capturedLocationMst.getManagementName());
+      assertEquals("渋谷スクランブル交差点", capturedLocationMst.getDisplayName());
+      assertEquals("東京都渋谷区", capturedLocationMst.getAddress());
+      assertEquals(new java.math.BigDecimal("35.6812"), capturedLocationMst.getLatitude());
+      assertEquals(new java.math.BigDecimal("139.7671"), capturedLocationMst.getLongitude());
+
+      assertEquals(1L, photoMstCaptor.getValue().getLocationNo());
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("異常系：新規ロケーション登録でDuplicateKeyExceptionが発生した場合、RegistFailureExceptionをthrowすること")
+    void regist_location_RegistFailureException() {
+      AccountNo accountNo = new AccountNo(1L);
+      GeoLocation geoLocation =
+          new GeoLocation(
+              new Address("東京都渋谷区"),
+              new Latitude(new java.math.BigDecimal("35.6812")),
+              new Longitude(new java.math.BigDecimal("139.7671")));
+      PhotoDetailModel requestDetail =
+          withLocation(
+              buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty()),
+              null,
+              new LocationManagementName("渋谷スクランブル交差点_管理用"),
+              new LocationDisplayName("渋谷スクランブル交差点"),
+              geoLocation);
+      Photo photo =
+          Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
+
+      doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
+      doReturn(List.of()).when(locationMstMapper).select(any(LocationMstCondition.class));
+      doReturn(5L).when(locationMstMapper).getMaxLocationNo(accountNo.value());
+      doThrow(DuplicateKeyException.class).when(locationMstMapper).insert(any(LocationMst.class));
+
+      assertThrows(RegistFailureException.class, () -> photoAggregateRepositoryImpl.regist(photo));
+
+      verify(photoMstMapper, times(0)).insert(any(PhotoMst.class));
     }
   }
 

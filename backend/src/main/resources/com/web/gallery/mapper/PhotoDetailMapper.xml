@@ -22,7 +22,7 @@
 		<result column="address" property="address"/>
 		<result column="latitude" property="latitude"/>
 		<result column="longitude" property="longitude"/>
-		<result column="locationName" property="locationName"/>
+		<result column="displayName" property="displayName"/>
 		<result column="imageFilePath" property="imageFilePath"/>
 		<result column="photoJapaneseTitle" property="photoJapaneseTitle"/>
 		<result column="photoEnglishTitle" property="photoEnglishTitle"/>
@@ -203,7 +203,7 @@
 			location_mst.address AS address,
 			location_mst.latitude AS latitude,
 			location_mst.longitude AS longitude,
-			location_mst.location_name AS locationName,
+			location_mst.display_name AS displayName,
 			photo_mst.image_file_path AS imageFilePath,
 			photo_mst.photo_japanese_title AS photoJapaneseTitle,
 			photo_mst.photo_english_title AS photoEnglishTitle,

@@ -35,6 +35,7 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 | アカウント一覧（`GET /api/v1/accounts`） | 公開（アカウント名のみ表示。詳細は下記） |
 | 写真の閲覧（`GET /api/v1/accounts/{id}/photos`、`GET /api/v1/accounts/{id}/photos/{photoNo}`） | 公開 |
 | 写真登録上限チェック（`GET /api/v1/accounts/{id}/photos/upper-limit`） | 認証必須（本人のみ） |
+| ロケーション一覧（`GET /api/v1/accounts/{id}/locations`） | 認証必須（本人のみ） |
 | 都道府県一覧（`GET /api/v1/prefectures`） | 公開 |
 | 写真の登録・編集・削除 | 認証必須（本人のみ） |
 | お気に入り登録・解除 | 認証必須 |

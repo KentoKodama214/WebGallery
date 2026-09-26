@@ -17,11 +17,11 @@ insert into common.account_authority values(6, 6, '2000-01-06 09:00:00 Asia/Toky
 insert into common.account_authority values(7, 7, '2000-01-07 09:00:00 Asia/Tokyo', 7, '2001-01-07 09:00:00 Asia/Tokyo', 'mini-user');
 
 -- common.location_mst
-insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション1', '住所1', 38.100, 115.100);
-insert into common.location_mst values(DEFAULT, 1, 2, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション2', '住所2', 38.200, 115.200);
-insert into common.location_mst values(DEFAULT, 1, 3, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', true, 'ロケーション3', '住所3', 38.300, 115.300);
-insert into common.location_mst values(DEFAULT, 2, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション4', '住所4', 38.400, 115.400);
-insert into common.location_mst values(DEFAULT, 2, 2, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', true, 'ロケーション5', '住所5', 38.500, 115.500);
+insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション1', 'ロケーション1', '住所1', 38.100, 115.100);
+insert into common.location_mst values(DEFAULT, 1, 2, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション2', 'ロケーション2', '住所2', 38.200, 115.200);
+insert into common.location_mst values(DEFAULT, 1, 3, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', true, 'ロケーション3', 'ロケーション3', '住所3', 38.300, 115.300);
+insert into common.location_mst values(DEFAULT, 2, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション4', 'ロケーション4', '住所4', 38.400, 115.400);
+insert into common.location_mst values(DEFAULT, 2, 2, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', true, 'ロケーション5', 'ロケーション5', '住所5', 38.500, 115.500);
 
 -- photo.photo_mst
 insert into photo.photo_mst values(DEFAULT, 1, 1,  1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false,  '2021-01-01 09:00:00 Asia/Tokyo', 1,  'https://www.xxx.com/aaaaaaaa/DSC11.jpg', 'DSC11.jpg', 'タイトル11', 'title11', 'キャプション11', 'horizontal', 24, 8.0,  1,  100, true);

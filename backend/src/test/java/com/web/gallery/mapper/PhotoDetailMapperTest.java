@@ -259,7 +259,7 @@ public class PhotoDetailMapperTest {
       assertEquals("住所1", actual.getAddress());
       assertEquals(0, BigDecimal.valueOf(38.1).compareTo(actual.getLatitude()));
       assertEquals(0, BigDecimal.valueOf(115.1).compareTo(actual.getLongitude()));
-      assertEquals("ロケーション1", actual.getLocationName());
+      assertEquals("ロケーション1", actual.getDisplayName());
       assertEquals("https://www.xxx.com/DSC111.jpg", actual.getImageFilePath());
       assertEquals("タイトル11", actual.getPhotoJapaneseTitle());
       assertEquals("title11", actual.getPhotoEnglishTitle());

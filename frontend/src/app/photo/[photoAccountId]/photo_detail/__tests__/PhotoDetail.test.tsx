@@ -36,7 +36,7 @@ const samplePhoto = {
   address: null,
   latitude: null,
   longitude: null,
-  locationName: "東京タワー",
+  displayName: "東京タワー",
   isLocationPublic: true,
   imageFilePath: "/photos/test.jpg",
   photoJapaneseTitle: "テスト写真",
@@ -241,7 +241,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue({
       ...samplePhoto,
       isLocationPublic: false,
-      locationName: null,
+      displayName: null,
     });
 
     render(<PhotoDetail photoAccountId="user1" photoNo={10} />);

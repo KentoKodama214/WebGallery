@@ -420,7 +420,7 @@ public class PhotoDetailRepositoryImplTest {
       photoDetailDto.setAddress(null);
       photoDetailDto.setLatitude(null);
       photoDetailDto.setLongitude(null);
-      photoDetailDto.setLocationName(null);
+      photoDetailDto.setDisplayName(null);
       photoDetailDto.setImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg");
       photoDetailDto.setPhotoJapaneseTitle("");
       photoDetailDto.setPhotoEnglishTitle("");
@@ -453,7 +453,7 @@ public class PhotoDetailRepositoryImplTest {
       assertNull(actual.getGeoLocation().address());
       assertNull(actual.getGeoLocation().latitude());
       assertNull(actual.getGeoLocation().longitude());
-      assertNull(actual.getLocationName());
+      assertNull(actual.getDisplayName());
       assertEquals(
           "https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.getImageFilePath().value());
       assertEquals("", actual.getPhotoJapaneseTitle().value());
@@ -499,7 +499,7 @@ public class PhotoDetailRepositoryImplTest {
       photoDetailDto.setAddress("住所");
       photoDetailDto.setLatitude(BigDecimal.valueOf(38.000));
       photoDetailDto.setLongitude(BigDecimal.valueOf(115.000));
-      photoDetailDto.setLocationName("富士山");
+      photoDetailDto.setDisplayName("富士山");
       photoDetailDto.setImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg");
       photoDetailDto.setPhotoJapaneseTitle("タイトル");
       photoDetailDto.setPhotoEnglishTitle("title");
@@ -551,7 +551,7 @@ public class PhotoDetailRepositoryImplTest {
           0, BigDecimal.valueOf(38.000).compareTo(actual.getGeoLocation().latitude().value()));
       assertEquals(
           0, BigDecimal.valueOf(115.000).compareTo(actual.getGeoLocation().longitude().value()));
-      assertEquals("富士山", actual.getLocationName().value());
+      assertEquals("富士山", actual.getDisplayName().value());
       assertEquals(
           "https://localhost:8080/image/aaaaaaaa/DSC111.jpg", actual.getImageFilePath().value());
       assertEquals("タイトル", actual.getPhotoJapaneseTitle().value());

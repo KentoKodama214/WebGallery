@@ -14,7 +14,7 @@ import com.web.gallery.domain.common.Address;
 import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.Latitude;
-import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.LocationDisplayName;
 import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.ExifData;
@@ -456,7 +456,8 @@ public class PhotoControllerTest {
     @DisplayName("正常系：写真タグあり、撮影日時あり。Nullパラメータなし")
     void savePhoto_update_with_photoTag_and_photoAt() throws Exception {
       String address = "東京都港区芝公園４丁目２−８";
-      String locationName = "東京タワー";
+      String managementName = "東京タワー_管理用";
+      String displayName = "東京タワー";
       String imageFilePath = "https://localhost:8080/image/aaaaaaaa/DSC111.jpg";
       String photoJapaneseTitle = "タイトル";
       String photoEnglishTitle = "title";
@@ -482,7 +483,8 @@ public class PhotoControllerTest {
                   .param("address", address)
                   .param("latitude", "35.000")
                   .param("longitude", "135.00")
-                  .param("locationName", locationName)
+                  .param("managementName", managementName)
+                  .param("displayName", displayName)
                   .param("imageFilePath", imageFilePath)
                   .param("photoJapaneseTitle", photoJapaneseTitle)
                   .param("photoEnglishTitle", photoEnglishTitle)
@@ -518,7 +520,8 @@ public class PhotoControllerTest {
           0,
           BigDecimal.valueOf(135.000)
               .compareTo(photoDetailModelList.getFirst().getGeoLocation().longitude().value()));
-      assertEquals(locationName, photoDetailModelList.getFirst().getLocationName().value());
+      assertEquals(managementName, photoDetailModelList.getFirst().getManagementName().value());
+      assertEquals(displayName, photoDetailModelList.getFirst().getDisplayName().value());
       assertEquals(imageFilePath, photoDetailModelList.getFirst().getImageFilePath().value());
       assertEquals(
           photoJapaneseTitle, photoDetailModelList.getFirst().getPhotoJapaneseTitle().value());
@@ -1225,7 +1228,7 @@ public class PhotoControllerTest {
                   new Address("東京都港区芝公園４丁目２−８"),
                   new Latitude(BigDecimal.valueOf(35.000)),
                   new Longitude(BigDecimal.valueOf(135.000))))
-          .locationName(new LocationName("東京タワー"))
+          .displayName(new LocationDisplayName("東京タワー"))
           .isLocationPublic(new IsLocationPublic(true))
           .imageFilePath(new ImageFilePath("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))
           .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル"))
@@ -1265,7 +1268,7 @@ public class PhotoControllerTest {
           .andExpect(jsonPath("$.address").value("東京都港区芝公園４丁目２−８"))
           .andExpect(jsonPath("$.latitude").value(35.000))
           .andExpect(jsonPath("$.longitude").value(135.000))
-          .andExpect(jsonPath("$.locationName").value("東京タワー"))
+          .andExpect(jsonPath("$.displayName").value("東京タワー"))
           .andExpect(jsonPath("$.isLocationPublic").value(true))
           .andExpect(
               jsonPath("$.imageFilePath").value("https://localhost:8080/image/aaaaaaaa/DSC111.jpg"))

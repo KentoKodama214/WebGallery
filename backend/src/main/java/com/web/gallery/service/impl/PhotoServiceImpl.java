@@ -35,6 +35,7 @@ import com.web.gallery.model.photo.PhotoPageModel;
 import com.web.gallery.model.photo.PhotoSaveResultModel;
 import com.web.gallery.model.photo.PhotoViewLogModel;
 import com.web.gallery.policy.ImageFileValidationPolicy;
+import com.web.gallery.policy.LocationInputPolicy;
 import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
 import com.web.gallery.repository.AccountRepository;
@@ -80,6 +81,7 @@ public class PhotoServiceImpl implements PhotoService {
   private final PhotoQuotaPolicy photoQuotaPolicy;
   private final ImageFileValidationPolicy imageFileValidationPolicy;
   private final PhotoFileExtensionPolicy photoFileExtensionPolicy;
+  private final LocationInputPolicy locationInputPolicy;
   private final ApplicationEventPublisher applicationEventPublisher;
 
   /**
@@ -250,9 +252,9 @@ public class PhotoServiceImpl implements PhotoService {
             .imageFilePath(fileRepository.getPresignedUrl(photoDetailModel.getImageFilePath()));
 
     // 位置情報が非公開の写真は、閲覧者が本人でない限り撮影場所（ロケーション番号・住所・緯度経度・
-    // ロケーション名）を返さない（撮影場所からの個人特定を防ぐ）
+    // 表示名）を返さない（撮影場所からの個人特定を防ぐ）
     if (isLocationHiddenFor(photoDetailModel, photoDetailGetModel, accountModel.getAccountNo())) {
-      builder.locationNo(null).geoLocation(GeoLocation.empty()).locationName(null);
+      builder.locationNo(null).geoLocation(GeoLocation.empty()).displayName(null);
     }
     return builder.build();
   }
@@ -289,7 +291,8 @@ public class PhotoServiceImpl implements PhotoService {
    * @param photoDetailModelList {@link PhotoDetailModelList}
    * @throws GalleryException 以下のいずれかに該当する場合 ・新規登録時に画像ファイルが指定されていない場合 ・許可されていない拡張子のファイルの場合
    *     ・画像ファイルのContent-Typeが許可されていない場合 ・画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合 ・画像ファイルのサイズが上限を超えている場合
-   *     ・同じファイル名のファイルが既に保存済みの場合 ・登録枚数の上限に達している場合 ・登録に失敗した場合 ・更新に失敗した場合
+   *     ・同じファイル名のファイルが既に保存済みの場合 ・登録枚数の上限に達している場合 ・ロケーションの新規入力なのに管理名・表示名・緯度・経度のいずれかが未指定の場合
+   *     ・選択されたロケーションが本人所有でない場合 ・登録に失敗した場合 ・更新に失敗した場合
    */
   @Override
   @Transactional(rollbackFor = GalleryException.class)
@@ -297,6 +300,16 @@ public class PhotoServiceImpl implements PhotoService {
       AccountId accountId, PhotoDetailModelList photoDetailModelList) throws GalleryException {
     if (Objects.isNull(photoDetailModelList)) return null;
     if (photoDetailModelList.isEmpty()) return null;
+
+    for (PhotoDetailModel photoDetailModel : photoDetailModelList) {
+      if (!locationInputPolicy.isValid(
+          photoDetailModel.getLocationNo(),
+          photoDetailModel.getManagementName(),
+          photoDetailModel.getDisplayName(),
+          photoDetailModel.getGeoLocation())) {
+        throw ErrorEnum.INVALID_INPUT.toException();
+      }
+    }
 
     AccountNo photoAccountNo = photoDetailModelList.getFirst().getAccountNo();
     accountRepository.lockForUpdate(photoAccountNo);

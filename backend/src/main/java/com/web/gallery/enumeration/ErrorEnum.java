@@ -367,6 +367,30 @@ public enum ErrorEnum {
   },
 
   /**
+   * エラーコード：E-P-0017
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_LOCATION_NOT_FOUND}
+   */
+  LOCATION_NOT_FOUND("E-P-0017", MessageConst.ERR_LOCATION_NOT_FOUND) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0018
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REGIST_LOCATION}
+   */
+  FAIL_TO_REGIST_LOCATION("E-P-0018", MessageConst.ERR_FAIL_TO_REGIST_LOCATION) {
+    @Override
+    public GalleryException toException() {
+      return new RegistFailureException(this);
+    }
+  },
+
+  /**
    * エラーコード：E-S-0001
    *
    * <p>エラーメッセージ：{@value MessageConst#ERR_SYSTEM_ERROR}

@@ -55,7 +55,7 @@ class PhotoDetailModelTest {
       assertNull(actual.getGeoLocation().address());
       assertNull(actual.getGeoLocation().latitude());
       assertNull(actual.getGeoLocation().longitude());
-      assertNull(actual.getLocationName());
+      assertNull(actual.getDisplayName());
       assertNull(actual.getIsLocationPublic());
       assertNull(actual.getPhotoJapaneseTitle());
       assertNull(actual.getPhotoEnglishTitle());
@@ -77,7 +77,7 @@ class PhotoDetailModelTest {
       dto.setAddress("東京都渋谷区");
       dto.setLatitude(new BigDecimal("35.6812"));
       dto.setLongitude(new BigDecimal("139.7671"));
-      dto.setLocationName("渋谷スクランブル交差点");
+      dto.setDisplayName("渋谷スクランブル交差点");
       dto.setIsLocationPublic(true);
       dto.setPhotoJapaneseTitle("東京タワー");
       dto.setPhotoEnglishTitle("Tokyo Tower");
@@ -94,7 +94,7 @@ class PhotoDetailModelTest {
       assertEquals("東京都渋谷区", actual.getGeoLocation().address().value());
       assertEquals(new BigDecimal("35.6812"), actual.getGeoLocation().latitude().value());
       assertEquals(new BigDecimal("139.7671"), actual.getGeoLocation().longitude().value());
-      assertEquals("渋谷スクランブル交差点", actual.getLocationName().value());
+      assertEquals("渋谷スクランブル交差点", actual.getDisplayName().value());
       assertTrue(actual.getIsLocationPublic().value());
       assertEquals("東京タワー", actual.getPhotoJapaneseTitle().value());
       assertEquals("Tokyo Tower", actual.getPhotoEnglishTitle().value());
@@ -140,7 +140,8 @@ class PhotoDetailModelTest {
       request.setAddress(null);
       request.setLatitude(null);
       request.setLongitude(null);
-      request.setLocationName(null);
+      request.setManagementName(null);
+      request.setDisplayName(null);
       request.setIsLocationPublic(null);
       request.setImageFile(null);
       request.setImageFilePath(null);
@@ -159,7 +160,8 @@ class PhotoDetailModelTest {
       assertNull(actual.getGeoLocation().address());
       assertNull(actual.getGeoLocation().latitude());
       assertNull(actual.getGeoLocation().longitude());
-      assertNull(actual.getLocationName());
+      assertNull(actual.getManagementName());
+      assertNull(actual.getDisplayName());
       assertNull(actual.getIsLocationPublic());
       assertNull(actual.getImageFile());
       assertEquals(Consts.STRING_EMPTY, actual.getImageFilePath().value());
@@ -186,7 +188,8 @@ class PhotoDetailModelTest {
       request.setAddress("東京都渋谷区");
       request.setLatitude(new BigDecimal("35.6812"));
       request.setLongitude(new BigDecimal("139.7671"));
-      request.setLocationName("渋谷スクランブル交差点");
+      request.setManagementName("渋谷交差点_管理用");
+      request.setDisplayName("渋谷スクランブル交差点");
       request.setIsLocationPublic(true);
       request.setImageFile(imageFile);
       request.setImageFilePath("path/to/image.jpg");
@@ -203,6 +206,8 @@ class PhotoDetailModelTest {
       assertNotNull(actual.getPhotoAt());
       assertEquals(1L, actual.getLocationNo().value());
       assertEquals("東京都渋谷区", actual.getGeoLocation().address().value());
+      assertEquals("渋谷交差点_管理用", actual.getManagementName().value());
+      assertEquals("渋谷スクランブル交差点", actual.getDisplayName().value());
       assertNotNull(actual.getImageFile());
       assertEquals("Tokyo Tower", actual.getPhotoEnglishTitle().value());
       assertEquals("夕暮れの東京タワー", actual.getCaption().value());
@@ -227,7 +232,8 @@ class PhotoDetailModelTest {
       request.setAddress(null);
       request.setLatitude(null);
       request.setLongitude(null);
-      request.setLocationName(null);
+      request.setManagementName(null);
+      request.setDisplayName(null);
       request.setIsLocationPublic(null);
       request.setPhotoJapaneseTitle("東京タワー");
       request.setPhotoEnglishTitle(null);
@@ -241,7 +247,8 @@ class PhotoDetailModelTest {
       assertNull(actual.getPhotoAt());
       assertNull(actual.getLocationNo());
       assertNull(actual.getGeoLocation().address());
-      assertNull(actual.getLocationName());
+      assertNull(actual.getManagementName());
+      assertNull(actual.getDisplayName());
       assertNull(actual.getIsLocationPublic());
       assertNull(actual.getImageFile());
       assertEquals(Consts.STRING_EMPTY, actual.getImageFilePath().value());
@@ -267,7 +274,8 @@ class PhotoDetailModelTest {
       request.setAddress("東京都渋谷区");
       request.setLatitude(new BigDecimal("35.6812"));
       request.setLongitude(new BigDecimal("139.7671"));
-      request.setLocationName("渋谷スクランブル交差点");
+      request.setManagementName("渋谷交差点_管理用");
+      request.setDisplayName("渋谷スクランブル交差点");
       request.setIsLocationPublic(true);
       request.setPhotoJapaneseTitle("東京タワー");
       request.setPhotoEnglishTitle("Tokyo Tower");
@@ -285,6 +293,8 @@ class PhotoDetailModelTest {
       assertNotNull(actual.getPhotoAt());
       assertEquals(1L, actual.getLocationNo().value());
       assertEquals("東京都渋谷区", actual.getGeoLocation().address().value());
+      assertEquals("渋谷交差点_管理用", actual.getManagementName().value());
+      assertEquals("渋谷スクランブル交差点", actual.getDisplayName().value());
       assertNotNull(actual.getImageFile());
       assertEquals(Consts.STRING_EMPTY, actual.getImageFilePath().value());
       assertEquals("Tokyo Tower", actual.getPhotoEnglishTitle().value());

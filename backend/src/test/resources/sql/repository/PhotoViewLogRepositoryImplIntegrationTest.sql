@@ -8,8 +8,8 @@ insert into common.account_authority values(1, 1, '2000-01-01 09:00:00 Asia/Toky
 insert into common.account_authority values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', 'administrator');
 
 -- common.location_mst
-insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション1', '住所1', 38.100, 115.100);
-insert into common.location_mst values(DEFAULT, 2, 1, 2, '2000-01-05 09:00:00 Asia/Tokyo', 2, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション2', '住所2', 38.200, 115.200);
+insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション1', 'ロケーション1', '住所1', 38.100, 115.100);
+insert into common.location_mst values(DEFAULT, 2, 1, 2, '2000-01-05 09:00:00 Asia/Tokyo', 2, '2000-01-05 09:00:00 Asia/Tokyo', false, 'ロケーション2', 'ロケーション2', '住所2', 38.200, 115.200);
 
 -- photo.photo_mst
 insert into photo.photo_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC111.jpg', 'DSC111.jpg', 'タイトル11', 'title11', 'キャプション11', 'vertical', 24, 8.0, 1, 100, true);

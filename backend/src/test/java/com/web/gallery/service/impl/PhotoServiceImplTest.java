@@ -13,7 +13,7 @@ import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.IpGeoLocation;
 import com.web.gallery.domain.common.Latitude;
-import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.LocationDisplayName;
 import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.common.Referer;
 import com.web.gallery.domain.photo.Caption;
@@ -70,6 +70,7 @@ import com.web.gallery.model.photo.PhotoTagModel;
 import com.web.gallery.model.photo.PhotoTagModelList;
 import com.web.gallery.model.photo.PhotoViewLogModel;
 import com.web.gallery.policy.ImageFileValidationPolicy;
+import com.web.gallery.policy.LocationInputPolicy;
 import com.web.gallery.policy.PhotoFileExtensionPolicy;
 import com.web.gallery.policy.PhotoQuotaPolicy;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
@@ -149,6 +150,8 @@ public class PhotoServiceImplTest {
 
   @Mock private PhotoFileExtensionPolicy photoFileExtensionPolicy;
 
+  @Mock private LocationInputPolicy locationInputPolicy;
+
   @Mock private ApplicationEventPublisher applicationEventPublisher;
 
   /**
@@ -162,6 +165,11 @@ public class PhotoServiceImplTest {
         .when(fileRepositoryImpl)
         .getPresignedUrl(any(ImageFilePath.class));
     lenient().when(geoIpResolver.resolve(any(IpAddress.class))).thenReturn(IpGeoLocation.empty());
+    lenient()
+        .when(
+            locationInputPolicy.isValid(
+                any(), any(), any(), any(com.web.gallery.domain.common.GeoLocation.class)))
+        .thenReturn(true);
   }
 
   @Nested
@@ -961,7 +969,7 @@ public class PhotoServiceImplTest {
                   new Address("東京都渋谷区"),
                   new Latitude(BigDecimal.valueOf(35.6812)),
                   new Longitude(BigDecimal.valueOf(139.7671))))
-          .locationName(new LocationName("渋谷"))
+          .displayName(new LocationDisplayName("渋谷"))
           .isLocationPublic(new IsLocationPublic(isLocationPublic))
           .build();
     }
@@ -993,7 +1001,7 @@ public class PhotoServiceImplTest {
                   .build());
 
       assertNull(actual.getLocationNo());
-      assertNull(actual.getLocationName());
+      assertNull(actual.getDisplayName());
       assertNull(actual.getGeoLocation().address());
       assertNull(actual.getGeoLocation().latitude());
       assertNull(actual.getGeoLocation().longitude());
@@ -2051,6 +2059,29 @@ public class PhotoServiceImplTest {
       ArgumentCaptor<ImageFilePath> deleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
       verify(fileRepositoryImpl, times(1)).delete(deleteCaptor.capture());
       assertOpaqueObjectKey(deleteCaptor.getValue(), accountId, 5L, "jpg");
+    }
+
+    @Test
+    @Order(20)
+    @DisplayName("異常系：ロケーション入力が整合しない場合、BadRequestExceptionをthrowし登録処理を一切行わないこと")
+    void savePhotos_invalidLocationInput() throws GalleryException {
+      String accountId = "aaaaaaaa";
+      doReturn(false)
+          .when(locationInputPolicy)
+          .isValid(any(), any(), any(), any(com.web.gallery.domain.common.GeoLocation.class));
+
+      PhotoDetailModel photoDetailModel =
+          createNewPhoto().toBuilder().displayName(new LocationDisplayName("渋谷")).build();
+
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              photoServiceImpl.savePhotos(
+                  new AccountId(accountId), PhotoDetailModelList.of(List.of(photoDetailModel))));
+
+      verify(accountRepositoryImpl, never()).lockForUpdate(any(AccountNo.class));
+      verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
+      verify(photoAggregateRepositoryImpl, never()).update(any(Photo.class));
     }
   }
 

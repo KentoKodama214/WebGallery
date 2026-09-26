@@ -21,8 +21,10 @@ CREATE TABLE common.location_mst
 	updated_at timestamp with time zone NOT NULL,
 	-- 削除フラグ
 	is_deleted boolean DEFAULT 'false' NOT NULL,
-	-- ロケーション名
-	location_name text NOT NULL,
+	-- 管理名
+	management_name text NOT NULL,
+	-- 表示名
+	display_name text NOT NULL,
 	-- 住所
 	address text DEFAULT '' NOT NULL,
 	-- 緯度
@@ -31,7 +33,7 @@ CREATE TABLE common.location_mst
 	longitude decimal(11,4) NOT NULL,
 	PRIMARY KEY (id),
 	CONSTRAINT location_no_unique UNIQUE (account_no, location_no),
-	CONSTRAINT location_name_unique UNIQUE (account_no, location_name)
+	CONSTRAINT location_management_name_unique UNIQUE (account_no, management_name)
 ) WITHOUT OIDS;
 
 
@@ -54,7 +56,8 @@ COMMENT ON COLUMN common.location_mst.created_at IS '作成日時';
 COMMENT ON COLUMN common.location_mst.updated_by IS '更新者';
 COMMENT ON COLUMN common.location_mst.updated_at IS '更新日時';
 COMMENT ON COLUMN common.location_mst.is_deleted IS '削除フラグ';
-COMMENT ON COLUMN common.location_mst.location_name IS 'ロケーション名 : 空文字不可';
+COMMENT ON COLUMN common.location_mst.management_name IS '管理名 : 空文字不可、アカウント内で一意（既存マスタからの選択・重複登録防止に使用）';
+COMMENT ON COLUMN common.location_mst.display_name IS '表示名 : 空文字不可、写真詳細等での表示に使用。重複可';
 COMMENT ON COLUMN common.location_mst.address IS '住所';
 COMMENT ON COLUMN common.location_mst.latitude IS '緯度';
 COMMENT ON COLUMN common.location_mst.longitude IS '経度';
