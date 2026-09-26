@@ -70,10 +70,10 @@ VALUES
 -- 写真の紐付け先ロケーションを1件だけ用意（全写真で共用）
 INSERT INTO common.location_mst
   (id, account_no, location_no, created_by, created_at, updated_by, updated_at, is_deleted,
-   location_name, address, latitude, longitude)
+   management_name, display_name, address, latitude, longitude)
 VALUES
   (DEFAULT, :target_account_no, 1, :target_account_no, now(), :target_account_no, now(), false,
-   'パフォーマンステスト地点', '', 0, 0);
+   'パフォーマンステスト地点_管理用', 'パフォーマンステスト地点', '', 0, 0);
 
 -- generate_seriesで一括INSERT（1件ずつのループより大幅に高速）
 INSERT INTO photo.photo_mst

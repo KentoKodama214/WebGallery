@@ -151,7 +151,7 @@ SQL
   for i in $(seq 0 $((PHOTO_COUNT - 1))); do
     no=$((i + 1))
     cat <<SQL
-INSERT INTO common.location_mst VALUES (DEFAULT, :u1_account_no, ${no}, 1, now(), 1, now(), false, '${LOCATION_NAMES[$i]}', '${ADDRESSES[$i]}', ${LATS[$i]}, ${LONS[$i]});
+INSERT INTO common.location_mst VALUES (DEFAULT, :u1_account_no, ${no}, 1, now(), 1, now(), false, '${LOCATION_NAMES[$i]}_管理用', '${LOCATION_NAMES[$i]}', '${ADDRESSES[$i]}', ${LATS[$i]}, ${LONS[$i]});
 INSERT INTO photo.photo_mst VALUES (DEFAULT, :u1_account_no, ${no}, 1, now(), 1, now(), false, '${PHOTO_AT[$i]}', ${no}, '${ACCOUNT_IDS[0]}/${IMAGE_KEYS[$i]}', '${IMAGE_KEYS[$i]}', '${TITLES_JA[$i]}', '${TITLES_EN[$i]}', '${CAPTIONS[$i]}', '${DIRECTIONS[$i]}', ${FOCALS[$i]}, ${FVALS[$i]}, ${SHUTTERS[$i]}, ${ISOS[$i]}, ${IS_PUBLIC[$i]});
 SQL
 
