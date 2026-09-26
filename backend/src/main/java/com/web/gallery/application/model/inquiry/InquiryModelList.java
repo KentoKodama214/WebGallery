@@ -1,6 +1,6 @@
 package com.web.gallery.application.model.inquiry;
 
-import com.web.gallery.dto.InquiryDto;
+import com.web.gallery.infrastructure.persistence.dto.InquiryDto;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;

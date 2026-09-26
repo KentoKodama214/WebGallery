@@ -14,7 +14,7 @@ import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.Password;
-import com.web.gallery.entity.inquiry.InquiryReplyMst;
+import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMst;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

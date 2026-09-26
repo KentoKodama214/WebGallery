@@ -52,7 +52,7 @@ springdoc:
     path: /scalar
 
 mybatis:
-  type-handlers-package: com.web.gallery.type_handler
+  type-handlers-package: com.web.gallery.infrastructure.persistence.type_handler
 
 management:
   add-application-context-header: false

@@ -3,7 +3,7 @@ package com.web.gallery.application.model.inquiry;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
-import com.web.gallery.dto.InquiryDto;
+import com.web.gallery.infrastructure.persistence.dto.InquiryDto;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;

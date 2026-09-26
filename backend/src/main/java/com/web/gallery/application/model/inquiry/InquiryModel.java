@@ -7,7 +7,7 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.domain.model.inquiry.InquirySubject;
-import com.web.gallery.dto.InquiryDto;
+import com.web.gallery.infrastructure.persistence.dto.InquiryDto;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.NonNull;

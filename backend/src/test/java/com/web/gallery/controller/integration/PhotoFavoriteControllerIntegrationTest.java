@@ -15,7 +15,7 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.LoginFailureCount;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.common.IsDeleted;
-import com.web.gallery.entity.photo.PhotoFavorite;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavorite;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.List;

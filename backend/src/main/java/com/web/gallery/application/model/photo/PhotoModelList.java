@@ -1,7 +1,7 @@
 package com.web.gallery.application.model.photo;
 
-import com.web.gallery.dto.PhotoDto;
-import com.web.gallery.entity.photo.PhotoTagMst;
+import com.web.gallery.infrastructure.persistence.dto.PhotoDto;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMst;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.PhotoMstMapper">
+	<resultMap id="PhotoMstMap" type="com.web.gallery.infrastructure.persistence.entity.photo.PhotoMst">
+		<result property="accountNo" column="account_no"/>
+		<result property="photoNo" column="photo_no"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedBy" column="updated_by"/>
+		<result property="updatedAt" column="updated_at"/>
+		<result property="isDeleted" column="is_deleted"/>
+		<result property="photoAt" column="photo_at"/>
+		<result property="locationNo" column="location_no"/>
+		<result property="imageFilePath" column="image_file_path"/>
+		<result property="imageFileName" column="image_file_name"/>
+		<result property="photoJapaneseTitle" column="photo_japanese_title"/>
+		<result property="photoEnglishTitle" column="photo_english_title"/>
+		<result property="caption" column="caption"/>
+		<result property="directionKbn" column="direction_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.DirectionEnumTypeHandler"/>
+		<result property="focalLength" column="focal_length"/>
+		<result property="fValue" column="f_value"/>
+		<result property="shutterSpeed" column="shutter_speed"/>
+		<result property="iso" column="iso"/>
+		<result property="isLocationPublic" column="is_location_public"/>
+	</resultMap>
+
+	<sql id="photoMstConditionWhere">
+		<if test="${prefix}accountNo != null"> AND account_no = #{${prefix}accountNo}</if>
+		<if test="${prefix}photoNo != null"> AND photo_no = #{${prefix}photoNo}</if>
+		<if test="${prefix}isDeleted != null"> AND is_deleted = #{${prefix}isDeleted}</if>
+		<if test="${prefix}photoAt != null"> AND photo_at = #{${prefix}photoAt}</if>
+		<if test="${prefix}locationNo != null"> AND location_no = #{${prefix}locationNo}</if>
+		<if test="${prefix}imageFilePath != null"> AND image_file_path = #{${prefix}imageFilePath}</if>
+		<if test="${prefix}imageFileName != null"> AND image_file_name = #{${prefix}imageFileName}</if>
+		<if test="${prefix}photoJapaneseTitle != null"> AND photo_japanese_title = #{${prefix}photoJapaneseTitle}</if>
+		<if test="${prefix}photoEnglishTitle != null"> AND photo_english_title = #{${prefix}photoEnglishTitle}</if>
+		<if test="${prefix}caption != null"> AND caption = #{${prefix}caption}</if>
+		<if test="${prefix}directionKbn != null"> AND direction_kbn = #{${prefix}directionKbn}::photo.direction_enum</if>
+		<if test="${prefix}focalLength != null"> AND focal_length = #{${prefix}focalLength}</if>
+		<if test="${prefix}fValue != null"> AND f_value = #{${prefix}fValue}</if>
+		<if test="${prefix}shutterSpeed != null"> AND shutter_speed = #{${prefix}shutterSpeed}</if>
+		<if test="${prefix}iso != null"> AND iso = #{${prefix}iso}</if>
+	</sql>
+
+	<select id="count" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PhotoMstCondition" resultType="Integer">
+		SELECT
+			COUNT(*)
+		FROM
+			photo.photo_mst
+		<where>
+			<include refid="photoMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+	</select>
+
+	<insert id="insert" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PhotoMst">
+		INSERT INTO
+			photo.photo_mst (
+				account_no,
+				photo_no,
+				created_by,
+				created_at,
+				updated_by,
+				updated_at,
+				is_deleted,
+				photo_at,
+				location_no,
+				image_file_path,
+				image_file_name,
+				photo_japanese_title,
+				photo_english_title,
+				caption,
+				direction_kbn,
+				focal_length,
+				f_value,
+				shutter_speed,
+				iso,
+				is_location_public
+			)
+		VALUES
+			(
+				#{accountNo},
+				#{photoNo},
+				#{createdBy},
+				NOW(),
+				#{updatedBy},
+				NOW(),
+				false,
+				#{photoAt},
+				#{locationNo},
+				#{imageFilePath},
+				#{imageFileName},
+				#{photoJapaneseTitle},
+				#{photoEnglishTitle},
+				#{caption},
+				#{directionKbn}::photo.direction_enum,
+				#{focalLength},
+				#{fValue},
+				#{shutterSpeed},
+				#{iso},
+				#{isLocationPublic}
+			)
+	</insert>
+
+	<update id="update">
+		UPDATE
+			photo.photo_mst
+		<set>
+			updated_at = NOW()
+			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy}</if>
+			<if test="target.isDeleted != null"> , is_deleted = #{target.isDeleted}</if>
+			<if test="target.photoAt != null"> , photo_at = #{target.photoAt}</if>
+			<if test="target.locationNo != null"> , location_no = #{target.locationNo}</if>
+			<if test="target.imageFilePath != null"> , image_file_path = #{target.imageFilePath}</if>
+			<if test="target.imageFileName != null"> , image_file_name = #{target.imageFileName}</if>
+			<if test="target.photoJapaneseTitle != null"> , photo_japanese_title = #{target.photoJapaneseTitle}</if>
+			<if test="target.photoEnglishTitle != null"> , photo_english_title = #{target.photoEnglishTitle}</if>
+			<if test="target.caption != null"> , caption = #{target.caption}</if>
+			<if test="target.directionKbn != null"> , direction_kbn = #{target.directionKbn}::photo.direction_enum</if>
+			<if test="target.focalLength != null"> , focal_length = #{target.focalLength}</if>
+			<if test="target.fValue != null"> , f_value = #{target.fValue}</if>
+			<if test="target.shutterSpeed != null"> , shutter_speed = #{target.shutterSpeed}</if>
+			<if test="target.iso != null"> , iso = #{target.iso}</if>
+			<if test="target.isLocationPublic != null"> , is_location_public = #{target.isLocationPublic}</if>
+		</set>
+		<where>
+			<include refid="photoMstConditionWhere">
+				<property name="prefix" value="condition."/>
+			</include>
+		</where>
+	</update>
+
+	<select id="getMaxPhotoNo" parameterType="Long" resultType="Long">
+		SELECT
+			MAX(photo_no) AS photoNo
+		FROM
+			photo.photo_mst
+		WHERE
+			account_no = #{accountNo}
+	</select>
+
+	<select id="isExistPhoto" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PhotoMstCondition" resultType="Boolean">
+		SELECT
+			CASE WHEN COUNT(*)>0 THEN true ELSE false END
+		FROM
+			photo.photo_mst
+		WHERE
+			account_no = #{accountNo}
+		AND image_file_name = #{imageFileName}
+		AND is_deleted = false
+	</select>
+
+	<resultMap id="PhotoDeletionDtoResultMap" type="com.web.gallery.infrastructure.persistence.dto.PhotoDeletionDto">
+		<result column="photoNo" property="photoNo"/>
+		<result column="isDeleted" property="isDeleted"/>
+	</resultMap>
+
+	<select id="deletePhotosByAccountNo" parameterType="Long" resultMap="PhotoDeletionDtoResultMap">
+		DELETE FROM
+			photo.photo_mst
+		WHERE
+			account_no = #{accountNo}
+		RETURNING
+			photo_no AS photoNo,
+			is_deleted AS isDeleted
+	</select>
+</mapper>

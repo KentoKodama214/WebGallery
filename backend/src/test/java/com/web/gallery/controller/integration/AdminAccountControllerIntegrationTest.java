@@ -15,7 +15,7 @@ import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.Password;
-import com.web.gallery.entity.account.Account;
+import com.web.gallery.infrastructure.persistence.entity.account.Account;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

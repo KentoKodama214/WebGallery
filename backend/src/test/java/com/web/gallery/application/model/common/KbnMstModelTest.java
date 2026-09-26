@@ -2,7 +2,7 @@ package com.web.gallery.application.model.common;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.entity.common.KbnMst;
+import com.web.gallery.infrastructure.persistence.entity.common.KbnMst;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

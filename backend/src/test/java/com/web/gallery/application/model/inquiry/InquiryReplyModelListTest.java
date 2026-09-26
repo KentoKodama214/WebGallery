@@ -2,7 +2,7 @@ package com.web.gallery.application.model.inquiry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.entity.inquiry.InquiryReplyMst;
+import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMst;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

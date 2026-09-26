@@ -11,7 +11,7 @@ import com.web.gallery.domain.model.common.KbnGroupEnglishName;
 import com.web.gallery.domain.model.common.KbnGroupJapaneseName;
 import com.web.gallery.domain.model.common.KbnJapaneseName;
 import com.web.gallery.domain.model.common.SortOrder;
-import com.web.gallery.entity.common.KbnMst;
+import com.web.gallery.infrastructure.persistence.entity.common.KbnMst;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

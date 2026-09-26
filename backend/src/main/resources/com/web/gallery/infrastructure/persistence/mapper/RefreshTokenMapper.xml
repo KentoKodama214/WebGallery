@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.RefreshTokenMapper">
+
+	<resultMap id="RefreshTokenMap" type="com.web.gallery.infrastructure.persistence.entity.auth.RefreshToken">
+		<result property="tokenId" column="token_id"/>
+		<result property="accountNo" column="account_no"/>
+		<result property="tokenHash" column="token_hash"/>
+		<result property="expiresAt" column="expires_at"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedBy" column="updated_by"/>
+		<result property="updatedAt" column="updated_at"/>
+		<result property="isRevoked" column="is_revoked"/>
+	</resultMap>
+
+	<insert id="insert" parameterType="com.web.gallery.infrastructure.persistence.entity.auth.RefreshToken">
+		INSERT INTO common.refresh_token (
+			account_no,
+			token_hash,
+			expires_at,
+			created_at,
+			updated_by,
+			updated_at,
+			is_revoked
+		) VALUES (
+			#{accountNo},
+			#{tokenHash},
+			#{expiresAt},
+			COALESCE(#{createdAt}, NOW()),
+			#{updatedBy},
+			COALESCE(#{updatedAt}, NOW()),
+			COALESCE(#{isRevoked}, FALSE)
+		)
+	</insert>
+
+	<select id="selectByTokenHash" parameterType="String" resultMap="RefreshTokenMap">
+		SELECT
+			token_id AS tokenId,
+			account_no AS accountNo,
+			token_hash AS tokenHash,
+			expires_at AS expiresAt,
+			created_at AS createdAt,
+			updated_by AS updatedBy,
+			updated_at AS updatedAt,
+			is_revoked AS isRevoked
+		FROM
+			common.refresh_token
+		WHERE
+			token_hash = #{tokenHash}
+	</select>
+
+	<select id="selectByTokenHashForUpdate" parameterType="String" resultMap="RefreshTokenMap">
+		SELECT
+			token_id AS tokenId,
+			account_no AS accountNo,
+			token_hash AS tokenHash,
+			expires_at AS expiresAt,
+			created_at AS createdAt,
+			updated_by AS updatedBy,
+			updated_at AS updatedAt,
+			is_revoked AS isRevoked
+		FROM
+			common.refresh_token
+		WHERE
+			token_hash = #{tokenHash}
+		FOR UPDATE
+	</select>
+
+	<update id="revokeAllByAccountNo">
+		UPDATE common.refresh_token
+		SET is_revoked = TRUE,
+			updated_by = #{updatedBy},
+			updated_at = NOW()
+		WHERE account_no = #{accountNo}
+		AND is_revoked = FALSE
+	</update>
+
+	<update id="revokeByTokenHash">
+		UPDATE common.refresh_token
+		SET is_revoked = TRUE,
+			updated_by = #{updatedBy},
+			updated_at = NOW()
+		WHERE token_hash = #{tokenHash}
+		AND is_revoked = FALSE
+	</update>
+
+	<delete id="deleteExpired">
+		DELETE FROM common.refresh_token
+		WHERE expires_at &lt; NOW()
+	</delete>
+
+</mapper>

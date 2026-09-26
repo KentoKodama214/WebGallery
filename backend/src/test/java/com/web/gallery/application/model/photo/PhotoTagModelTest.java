@@ -8,7 +8,7 @@ import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TagNo;
-import com.web.gallery.entity.photo.PhotoTagMst;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMst;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

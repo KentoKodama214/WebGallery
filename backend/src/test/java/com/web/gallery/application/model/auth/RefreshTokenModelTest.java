@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.domain.model.common.TokenHash;
-import com.web.gallery.entity.auth.RefreshToken;
+import com.web.gallery.infrastructure.persistence.entity.auth.RefreshToken;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

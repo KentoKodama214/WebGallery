@@ -9,7 +9,7 @@ import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.PhotoNo;
-import com.web.gallery.entity.photo.PhotoFavorite;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavorite;
 import java.time.OffsetDateTime;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

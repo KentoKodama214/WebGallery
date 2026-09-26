@@ -5,7 +5,7 @@ import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.domain.model.common.IsRevoked;
 import com.web.gallery.domain.model.common.TokenHash;
 import com.web.gallery.domain.model.common.UpdatedAt;
-import com.web.gallery.entity.auth.RefreshToken;
+import com.web.gallery.infrastructure.persistence.entity.auth.RefreshToken;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

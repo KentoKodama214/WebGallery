@@ -7,7 +7,7 @@ import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TagNo;
-import com.web.gallery.entity.photo.PhotoTagMst;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMst;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;

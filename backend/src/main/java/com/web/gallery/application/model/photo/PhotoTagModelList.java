@@ -2,7 +2,7 @@ package com.web.gallery.application.model.photo;
 
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.PhotoNo;
-import com.web.gallery.entity.photo.PhotoTagMst;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMst;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;

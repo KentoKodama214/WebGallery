@@ -8,7 +8,7 @@ import com.web.gallery.domain.model.common.LocationDisplayName;
 import com.web.gallery.domain.model.common.LocationManagementName;
 import com.web.gallery.domain.model.common.Longitude;
 import com.web.gallery.domain.model.photo.LocationNo;
-import com.web.gallery.entity.common.LocationMst;
+import com.web.gallery.infrastructure.persistence.entity.common.LocationMst;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

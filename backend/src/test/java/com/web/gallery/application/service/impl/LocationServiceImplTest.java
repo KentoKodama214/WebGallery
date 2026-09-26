@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 
 import com.web.gallery.application.model.common.LocationModelList;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.repository.impl.LocationMstRepositoryImpl;
+import com.web.gallery.infrastructure.persistence.repository.LocationMstRepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

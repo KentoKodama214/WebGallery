@@ -1,6 +1,6 @@
 package com.web.gallery.application.model.common;
 
-import com.web.gallery.entity.common.KbnMst;
+import com.web.gallery.infrastructure.persistence.entity.common.KbnMst;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;

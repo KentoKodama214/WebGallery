@@ -16,7 +16,7 @@ import com.web.gallery.domain.model.common.KbnGroupEnglishName;
 import com.web.gallery.domain.model.common.KbnGroupJapaneseName;
 import com.web.gallery.domain.model.common.KbnJapaneseName;
 import com.web.gallery.domain.model.common.SortOrder;
-import com.web.gallery.repository.impl.KbnMstRepositoryImpl;
+import com.web.gallery.infrastructure.persistence.repository.KbnMstRepositoryImpl;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

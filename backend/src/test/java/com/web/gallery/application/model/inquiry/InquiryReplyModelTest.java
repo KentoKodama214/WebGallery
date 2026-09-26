@@ -6,7 +6,7 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.ReplyBody;
 import com.web.gallery.domain.model.inquiry.ReplyNo;
-import com.web.gallery.entity.inquiry.InquiryReplyMst;
+import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMst;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.DisplayName;

@@ -17,7 +17,7 @@ import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.model.common.IsDeleted;
 import com.web.gallery.domain.model.common.UpdatedAt;
-import com.web.gallery.dto.AccountDto;
+import com.web.gallery.infrastructure.persistence.dto.AccountDto;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import lombok.Builder;

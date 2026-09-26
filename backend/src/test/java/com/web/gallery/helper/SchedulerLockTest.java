@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.web.gallery.enumeration.SchedulerLockNameEnum;
-import com.web.gallery.repository.impl.SchedulerLockRepositoryImpl;
+import com.web.gallery.infrastructure.persistence.repository.SchedulerLockRepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

@@ -9,7 +9,7 @@ import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.ExifData;
-import com.web.gallery.dto.PhotoDetailDto;
+import com.web.gallery.infrastructure.persistence.dto.PhotoDetailDto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;

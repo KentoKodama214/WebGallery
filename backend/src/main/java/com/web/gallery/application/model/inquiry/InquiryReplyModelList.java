@@ -1,6 +1,6 @@
 package com.web.gallery.application.model.inquiry;
 
-import com.web.gallery.entity.inquiry.InquiryReplyMst;
+import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMst;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
