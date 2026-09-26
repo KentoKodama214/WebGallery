@@ -1,9 +1,11 @@
 package com.web.gallery.repository.impl;
 
-import com.web.gallery.aggregate.Photo;
-import com.web.gallery.domain.common.GeoLocation;
-import com.web.gallery.domain.common.LocationManagementName;
-import com.web.gallery.domain.photo.LocationNo;
+import com.web.gallery.domain.aggregate.Photo;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.common.GeoLocation;
+import com.web.gallery.domain.model.common.LocationManagementName;
+import com.web.gallery.domain.model.photo.LocationNo;
 import com.web.gallery.entity.common.LocationMst;
 import com.web.gallery.entity.common.LocationMstCondition;
 import com.web.gallery.entity.photo.PhotoFavoriteCondition;
@@ -12,8 +14,6 @@ import com.web.gallery.entity.photo.PhotoMstCondition;
 import com.web.gallery.entity.photo.PhotoMstUpdateTarget;
 import com.web.gallery.entity.photo.PhotoTagMst;
 import com.web.gallery.entity.photo.PhotoTagMstCondition;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.LocationMstMapper;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
 import com.web.gallery.mapper.PhotoMstMapper;

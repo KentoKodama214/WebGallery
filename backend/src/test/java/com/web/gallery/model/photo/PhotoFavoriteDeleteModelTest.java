@@ -3,9 +3,9 @@ package com.web.gallery.model.photo;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.controller.request.photo.PhotoDeleteRequest;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

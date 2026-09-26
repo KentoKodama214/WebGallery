@@ -1,7 +1,7 @@
 package com.web.gallery.model.photo;
 
-import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

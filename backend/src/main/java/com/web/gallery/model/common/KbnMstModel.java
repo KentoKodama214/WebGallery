@@ -1,16 +1,16 @@
 package com.web.gallery.model.common;
 
-import com.web.gallery.domain.common.Explanation;
-import com.web.gallery.domain.common.KbnClassCode;
-import com.web.gallery.domain.common.KbnClassEnglishName;
-import com.web.gallery.domain.common.KbnClassJapaneseName;
-import com.web.gallery.domain.common.KbnCode;
-import com.web.gallery.domain.common.KbnEnglishName;
-import com.web.gallery.domain.common.KbnGroupCode;
-import com.web.gallery.domain.common.KbnGroupEnglishName;
-import com.web.gallery.domain.common.KbnGroupJapaneseName;
-import com.web.gallery.domain.common.KbnJapaneseName;
-import com.web.gallery.domain.common.SortOrder;
+import com.web.gallery.domain.model.common.Explanation;
+import com.web.gallery.domain.model.common.KbnClassCode;
+import com.web.gallery.domain.model.common.KbnClassEnglishName;
+import com.web.gallery.domain.model.common.KbnClassJapaneseName;
+import com.web.gallery.domain.model.common.KbnCode;
+import com.web.gallery.domain.model.common.KbnEnglishName;
+import com.web.gallery.domain.model.common.KbnGroupCode;
+import com.web.gallery.domain.model.common.KbnGroupEnglishName;
+import com.web.gallery.domain.model.common.KbnGroupJapaneseName;
+import com.web.gallery.domain.model.common.KbnJapaneseName;
+import com.web.gallery.domain.model.common.SortOrder;
 import com.web.gallery.entity.common.KbnMst;
 import lombok.Builder;
 import lombok.NonNull;

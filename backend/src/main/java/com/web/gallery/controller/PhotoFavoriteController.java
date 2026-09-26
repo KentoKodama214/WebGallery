@@ -1,12 +1,12 @@
 package com.web.gallery.controller;
 
-import com.web.gallery.constant.ApiRoutes;
-import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.request.photo.PhotoFavoriteDeleteRequest;
 import com.web.gallery.controller.request.photo.PhotoFavoriteRegistRequest;
 import com.web.gallery.controller.response.photo.PhotoFavoriteResponse;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.constant.ApiRoutes;
+import com.web.gallery.domain.constant.MessageConst;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.photo.PhotoFavoriteModel;
 import com.web.gallery.service.PhotoFavoriteService;

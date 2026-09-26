@@ -1,13 +1,13 @@
 package com.web.gallery.model.common;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.Address;
-import com.web.gallery.domain.common.GeoLocation;
-import com.web.gallery.domain.common.Latitude;
-import com.web.gallery.domain.common.LocationDisplayName;
-import com.web.gallery.domain.common.LocationManagementName;
-import com.web.gallery.domain.common.Longitude;
-import com.web.gallery.domain.photo.LocationNo;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.common.Address;
+import com.web.gallery.domain.model.common.GeoLocation;
+import com.web.gallery.domain.model.common.Latitude;
+import com.web.gallery.domain.model.common.LocationDisplayName;
+import com.web.gallery.domain.model.common.LocationManagementName;
+import com.web.gallery.domain.model.common.Longitude;
+import com.web.gallery.domain.model.photo.LocationNo;
 import com.web.gallery.entity.common.LocationMst;
 import lombok.Builder;
 import lombok.NonNull;

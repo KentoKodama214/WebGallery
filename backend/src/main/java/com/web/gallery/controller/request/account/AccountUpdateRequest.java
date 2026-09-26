@@ -1,6 +1,6 @@
 package com.web.gallery.controller.request.account;
 
-import com.web.gallery.enumeration.SexEnum;
+import com.web.gallery.domain.enumeration.SexEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;

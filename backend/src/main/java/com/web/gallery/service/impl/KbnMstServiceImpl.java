@@ -1,7 +1,7 @@
 package com.web.gallery.service.impl;
 
-import com.web.gallery.constant.Consts;
-import com.web.gallery.domain.common.KbnClassCode;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.model.common.KbnClassCode;
 import com.web.gallery.model.common.KbnMstModelList;
 import com.web.gallery.repository.KbnMstRepository;
 import com.web.gallery.service.KbnMstService;

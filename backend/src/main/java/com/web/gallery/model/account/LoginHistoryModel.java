@@ -1,8 +1,8 @@
 package com.web.gallery.model.account;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.IpAddress;
-import com.web.gallery.domain.common.IpGeoLocation;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.common.IpAddress;
+import com.web.gallery.domain.model.common.IpGeoLocation;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.controller.request.photo.PhotoFavoriteDeleteRequest;
 import com.web.gallery.controller.request.photo.PhotoFavoriteRegistRequest;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

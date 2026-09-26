@@ -1,7 +1,7 @@
 package com.web.gallery.repository;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.model.photo.PhotoTagDeleteModel;
 import com.web.gallery.model.photo.PhotoTagModel;
 

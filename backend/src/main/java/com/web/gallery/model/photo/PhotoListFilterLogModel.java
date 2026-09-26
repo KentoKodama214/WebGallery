@@ -1,12 +1,12 @@
 package com.web.gallery.model.photo;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.IpAddress;
-import com.web.gallery.domain.common.IpGeoLocation;
-import com.web.gallery.domain.common.Referer;
-import com.web.gallery.domain.photo.IsFavoriteOnly;
-import com.web.gallery.enumeration.DirectionEnum;
-import com.web.gallery.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.common.IpAddress;
+import com.web.gallery.domain.model.common.IpGeoLocation;
+import com.web.gallery.domain.model.common.Referer;
+import com.web.gallery.domain.model.photo.IsFavoriteOnly;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

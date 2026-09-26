@@ -1,15 +1,15 @@
 package com.web.gallery.repository.impl;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.inquiry.InquiryId;
-import com.web.gallery.domain.inquiry.InquiryNo;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.inquiry.InquiryId;
+import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.dto.InquiryDetailDto;
 import com.web.gallery.dto.InquiryDto;
 import com.web.gallery.entity.inquiry.InquiryMstCondition;
 import com.web.gallery.entity.inquiry.InquiryReplyMst;
 import com.web.gallery.entity.inquiry.InquiryReplyMstCondition;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.InquiryMstMapper;
 import com.web.gallery.mapper.InquiryReplyMstMapper;
 import com.web.gallery.model.inquiry.InquiryDetailModel;

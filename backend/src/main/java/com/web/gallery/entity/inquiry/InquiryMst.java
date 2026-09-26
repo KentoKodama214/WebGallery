@@ -1,6 +1,6 @@
 package com.web.gallery.entity.inquiry;
 
-import com.web.gallery.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.model.inquiry.InquiryDetailModel;
 import java.time.OffsetDateTime;
 import lombok.Builder;

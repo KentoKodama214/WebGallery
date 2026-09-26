@@ -1,7 +1,9 @@
 package com.web.gallery.repository.impl;
 
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.dto.AccountDto;
 import com.web.gallery.entity.account.Account;
 import com.web.gallery.entity.account.AccountAuthority;
@@ -9,8 +11,6 @@ import com.web.gallery.entity.account.AccountAuthorityCondition;
 import com.web.gallery.entity.account.AccountAuthorityUpdateTarget;
 import com.web.gallery.entity.account.AccountCondition;
 import com.web.gallery.entity.account.AccountUpdateTarget;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.AccountAuthorityMapper;
 import com.web.gallery.mapper.AccountMapper;
 import com.web.gallery.model.account.AccountGetModel;

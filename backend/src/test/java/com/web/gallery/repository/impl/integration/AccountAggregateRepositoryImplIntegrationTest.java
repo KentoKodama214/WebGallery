@@ -2,9 +2,9 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.aggregate.Account;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.aggregate.Account;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.repository.impl.AccountAggregateRepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

@@ -3,8 +3,8 @@ package com.web.gallery.repository.impl;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.domain.inquiry.InquiryId;
-import com.web.gallery.domain.inquiry.ReplyNo;
+import com.web.gallery.domain.model.inquiry.InquiryId;
+import com.web.gallery.domain.model.inquiry.ReplyNo;
 import com.web.gallery.mapper.InquiryReplyMstMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

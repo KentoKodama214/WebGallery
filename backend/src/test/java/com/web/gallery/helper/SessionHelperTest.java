@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.web.gallery.AccountPrincipal;
-import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.domain.enumeration.AuthorityEnum;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

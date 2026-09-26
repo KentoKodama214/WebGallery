@@ -4,38 +4,38 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.aggregate.Account;
 import com.web.gallery.config.AccountConfig;
 import com.web.gallery.config.LoginConfig;
-import com.web.gallery.constant.Consts;
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountName;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
-import com.web.gallery.domain.account.FreeMemo;
-import com.web.gallery.domain.account.IsAdminLocked;
-import com.web.gallery.domain.account.LoginFailureCount;
-import com.web.gallery.domain.account.Password;
-import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
-import com.web.gallery.domain.common.IpAddress;
-import com.web.gallery.domain.common.IpGeoLocation;
-import com.web.gallery.domain.common.IsDeleted;
-import com.web.gallery.domain.common.KbnClassCode;
-import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.enumeration.AuthorityEnum;
-import com.web.gallery.event.AccountAuthorityChangedEvent;
-import com.web.gallery.event.AccountDeletedEvent;
-import com.web.gallery.event.AccountLockedEvent;
-import com.web.gallery.event.AccountRegisteredEvent;
-import com.web.gallery.event.AccountUnlockedEvent;
-import com.web.gallery.event.AccountUpdatedEvent;
-import com.web.gallery.event.PhotoDeletedEvent;
-import com.web.gallery.exception.BadRequestException;
-import com.web.gallery.exception.ForbiddenAccountException;
-import com.web.gallery.exception.GalleryException;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.domain.aggregate.Account;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.enumeration.AuthorityEnum;
+import com.web.gallery.domain.event.AccountAuthorityChangedEvent;
+import com.web.gallery.domain.event.AccountDeletedEvent;
+import com.web.gallery.domain.event.AccountLockedEvent;
+import com.web.gallery.domain.event.AccountRegisteredEvent;
+import com.web.gallery.domain.event.AccountUnlockedEvent;
+import com.web.gallery.domain.event.AccountUpdatedEvent;
+import com.web.gallery.domain.event.PhotoDeletedEvent;
+import com.web.gallery.domain.exception.BadRequestException;
+import com.web.gallery.domain.exception.ForbiddenAccountException;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.RegistFailureException;
+import com.web.gallery.domain.exception.UpdateFailureException;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.account.BirthplacePrefectureKbnCode;
+import com.web.gallery.domain.model.account.FreeMemo;
+import com.web.gallery.domain.model.account.IsAdminLocked;
+import com.web.gallery.domain.model.account.LoginFailureCount;
+import com.web.gallery.domain.model.account.Password;
+import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
+import com.web.gallery.domain.model.common.IpAddress;
+import com.web.gallery.domain.model.common.IpGeoLocation;
+import com.web.gallery.domain.model.common.IsDeleted;
+import com.web.gallery.domain.model.common.KbnClassCode;
+import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.helper.GeoIpResolver;
 import com.web.gallery.model.account.AccountGetModel;
 import com.web.gallery.model.account.AccountListGetModel;
@@ -262,16 +262,17 @@ public class AccountServiceImplTest {
   private static com.web.gallery.model.common.KbnMstModel newPrefectureKbnMstModel(String kbnCode) {
     return com.web.gallery.model.common.KbnMstModel.builder()
         .kbnClassCode(new KbnClassCode(Consts.PREFECTURE))
-        .kbnCode(new com.web.gallery.domain.common.KbnCode(kbnCode))
-        .sortOrder(new com.web.gallery.domain.common.SortOrder(1))
-        .kbnGroupCode(new com.web.gallery.domain.common.KbnGroupCode("group"))
-        .kbnClassJapaneseName(new com.web.gallery.domain.common.KbnClassJapaneseName("都道府県"))
-        .kbnGroupJapaneseName(new com.web.gallery.domain.common.KbnGroupJapaneseName("グループ"))
-        .kbnJapaneseName(new com.web.gallery.domain.common.KbnJapaneseName("東京都"))
-        .kbnClassEnglishName(new com.web.gallery.domain.common.KbnClassEnglishName("prefecture"))
-        .kbnGroupEnglishName(new com.web.gallery.domain.common.KbnGroupEnglishName("group"))
-        .kbnEnglishName(new com.web.gallery.domain.common.KbnEnglishName("Tokyo"))
-        .explanation(new com.web.gallery.domain.common.Explanation(""))
+        .kbnCode(new com.web.gallery.domain.model.common.KbnCode(kbnCode))
+        .sortOrder(new com.web.gallery.domain.model.common.SortOrder(1))
+        .kbnGroupCode(new com.web.gallery.domain.model.common.KbnGroupCode("group"))
+        .kbnClassJapaneseName(new com.web.gallery.domain.model.common.KbnClassJapaneseName("都道府県"))
+        .kbnGroupJapaneseName(new com.web.gallery.domain.model.common.KbnGroupJapaneseName("グループ"))
+        .kbnJapaneseName(new com.web.gallery.domain.model.common.KbnJapaneseName("東京都"))
+        .kbnClassEnglishName(
+            new com.web.gallery.domain.model.common.KbnClassEnglishName("prefecture"))
+        .kbnGroupEnglishName(new com.web.gallery.domain.model.common.KbnGroupEnglishName("group"))
+        .kbnEnglishName(new com.web.gallery.domain.model.common.KbnEnglishName("Tokyo"))
+        .explanation(new com.web.gallery.domain.model.common.Explanation(""))
         .build();
   }
 

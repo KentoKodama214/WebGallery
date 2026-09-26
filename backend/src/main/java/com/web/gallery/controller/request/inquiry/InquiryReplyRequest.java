@@ -1,6 +1,6 @@
 package com.web.gallery.controller.request.inquiry;
 
-import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.constant.Consts;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

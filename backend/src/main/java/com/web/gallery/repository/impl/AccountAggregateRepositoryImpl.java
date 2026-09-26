@@ -1,6 +1,6 @@
 package com.web.gallery.repository.impl;
 
-import com.web.gallery.aggregate.Account;
+import com.web.gallery.domain.aggregate.Account;
 import com.web.gallery.dto.PhotoDeletionDto;
 import com.web.gallery.entity.account.AccountAuthorityCondition;
 import com.web.gallery.entity.account.AccountCondition;

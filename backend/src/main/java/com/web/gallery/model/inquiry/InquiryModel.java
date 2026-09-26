@@ -1,13 +1,13 @@
 package com.web.gallery.model.inquiry;
 
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountName;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.inquiry.InquiryId;
-import com.web.gallery.domain.inquiry.InquiryNo;
-import com.web.gallery.domain.inquiry.InquirySubject;
+import com.web.gallery.domain.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.inquiry.InquiryId;
+import com.web.gallery.domain.model.inquiry.InquiryNo;
+import com.web.gallery.domain.model.inquiry.InquirySubject;
 import com.web.gallery.dto.InquiryDto;
-import com.web.gallery.enumeration.InquiryStatusEnum;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.NonNull;

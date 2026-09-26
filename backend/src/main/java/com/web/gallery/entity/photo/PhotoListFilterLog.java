@@ -1,7 +1,7 @@
 package com.web.gallery.entity.photo;
 
-import com.web.gallery.enumeration.DirectionEnum;
-import com.web.gallery.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import com.web.gallery.model.photo.PhotoListFilterLogModel;
 import java.time.OffsetDateTime;
 import lombok.Builder;

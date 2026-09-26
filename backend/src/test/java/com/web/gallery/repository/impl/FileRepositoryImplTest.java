@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.domain.photo.ImageFile;
-import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.ImageFile;
+import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.model.photo.FileModel;
 import java.io.IOException;
 import java.io.UncheckedIOException;

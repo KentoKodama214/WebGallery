@@ -1,6 +1,6 @@
 package com.web.gallery.repository.impl;
 
-import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.entity.common.LocationMstCondition;
 import com.web.gallery.mapper.LocationMstMapper;
 import com.web.gallery.model.common.LocationModelList;

@@ -1,6 +1,6 @@
 package com.web.gallery.helper;
 
-import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
 import java.io.IOException;
 import java.util.Iterator;
 import javax.imageio.ImageIO;

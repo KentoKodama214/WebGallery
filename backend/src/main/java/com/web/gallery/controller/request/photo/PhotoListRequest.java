@@ -2,9 +2,9 @@ package com.web.gallery.controller.request.photo;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import com.web.gallery.constant.Consts;
-import com.web.gallery.enumeration.DirectionEnum;
-import com.web.gallery.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Max;

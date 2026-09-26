@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.web.gallery.AccountPrincipal;
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.event.AccountDeletedEvent;
-import com.web.gallery.event.AccountLockedEvent;
-import com.web.gallery.event.AccountUnlockedEvent;
-import com.web.gallery.event.AccountUpdatedEvent;
+import com.web.gallery.domain.event.AccountDeletedEvent;
+import com.web.gallery.domain.event.AccountLockedEvent;
+import com.web.gallery.domain.event.AccountUnlockedEvent;
+import com.web.gallery.domain.event.AccountUpdatedEvent;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.model.account.AccountModel;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;

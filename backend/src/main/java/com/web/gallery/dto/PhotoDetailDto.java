@@ -1,6 +1,6 @@
 package com.web.gallery.dto;
 
-import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import lombok.Data;

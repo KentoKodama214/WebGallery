@@ -3,7 +3,7 @@ package com.web.gallery.helper;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.model.common.IpAddress;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

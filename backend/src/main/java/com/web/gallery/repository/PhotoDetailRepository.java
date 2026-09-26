@@ -1,6 +1,6 @@
 package com.web.gallery.repository;
 
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.model.photo.PhotoDetailModel;
 import com.web.gallery.model.photo.PhotoDetailSearchModel;
 import com.web.gallery.model.photo.PhotoGetModel;

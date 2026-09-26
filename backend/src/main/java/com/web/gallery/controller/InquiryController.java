@@ -1,17 +1,17 @@
 package com.web.gallery.controller;
 
-import com.web.gallery.constant.ApiRoutes;
-import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.request.inquiry.InquiryListRequest;
 import com.web.gallery.controller.request.inquiry.InquiryRegistRequest;
 import com.web.gallery.controller.response.inquiry.InquiryDetailGetResponse;
 import com.web.gallery.controller.response.inquiry.InquiryListGetResponse;
 import com.web.gallery.controller.response.inquiry.InquiryRegistResponse;
 import com.web.gallery.controller.response.inquiry.InquiryWithdrawalResponse;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.inquiry.InquiryNo;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.constant.ApiRoutes;
+import com.web.gallery.domain.constant.MessageConst;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.helper.ValidationErrorLogger;
 import com.web.gallery.model.inquiry.InquiryDetailModel;

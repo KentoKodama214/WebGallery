@@ -2,14 +2,14 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.constant.Consts;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.IsFavoriteOnly;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.enumeration.DirectionEnum;
-import com.web.gallery.enumeration.SortPhotoEnum;
-import com.web.gallery.exception.GalleryException;
-import com.web.gallery.exception.PhotoNotFoundException;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.PhotoNotFoundException;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.IsFavoriteOnly;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.model.photo.PhotoDetailModel;
 import com.web.gallery.model.photo.PhotoDetailSearchModel;
 import com.web.gallery.model.photo.PhotoGetModel;

@@ -1,10 +1,10 @@
 package com.web.gallery.entity.common;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.GeoLocation;
-import com.web.gallery.domain.common.LocationDisplayName;
-import com.web.gallery.domain.common.LocationManagementName;
-import com.web.gallery.domain.photo.LocationNo;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.common.GeoLocation;
+import com.web.gallery.domain.model.common.LocationDisplayName;
+import com.web.gallery.domain.model.common.LocationManagementName;
+import com.web.gallery.domain.model.photo.LocationNo;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import lombok.Builder;

@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.aggregate.Account;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.aggregate.Account;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.dto.PhotoDeletionDto;
 import com.web.gallery.entity.account.AccountAuthorityCondition;
 import com.web.gallery.entity.account.AccountCondition;

@@ -2,11 +2,11 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.dto.PhotoDeletionDto;
 import com.web.gallery.entity.photo.PhotoMst;
 import com.web.gallery.entity.photo.PhotoMstCondition;
 import com.web.gallery.entity.photo.PhotoMstUpdateTarget;
-import com.web.gallery.enumeration.DirectionEnum;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

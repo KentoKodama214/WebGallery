@@ -1,9 +1,9 @@
 package com.web.gallery.model.photo;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.IsFavoriteOnly;
-import com.web.gallery.enumeration.DirectionEnum;
-import com.web.gallery.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.IsFavoriteOnly;
 import java.util.List;
 import lombok.Builder;
 import lombok.NonNull;

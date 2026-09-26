@@ -5,13 +5,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.web.gallery.config.JwtConfig;
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.Password;
-import com.web.gallery.domain.auth.AccessToken;
-import com.web.gallery.domain.auth.ExpiresIn;
-import com.web.gallery.domain.auth.RefreshTokenValue;
-import com.web.gallery.domain.common.IpAddress;
-import com.web.gallery.exception.InvalidRefreshTokenException;
+import com.web.gallery.domain.exception.InvalidRefreshTokenException;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.Password;
+import com.web.gallery.domain.model.auth.AccessToken;
+import com.web.gallery.domain.model.auth.ExpiresIn;
+import com.web.gallery.domain.model.auth.RefreshTokenValue;
+import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.helper.ClientIpResolver;
 import com.web.gallery.model.auth.AuthTokenModel;
 import com.web.gallery.service.impl.AuthServiceImpl;

@@ -2,10 +2,10 @@ package com.web.gallery.entity.inquiry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.inquiry.InquiryBody;
-import com.web.gallery.domain.inquiry.InquirySubject;
-import com.web.gallery.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.inquiry.InquiryBody;
+import com.web.gallery.domain.model.inquiry.InquirySubject;
 import com.web.gallery.model.inquiry.InquiryDetailModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

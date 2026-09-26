@@ -3,7 +3,7 @@ package com.web.gallery.type_handler;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

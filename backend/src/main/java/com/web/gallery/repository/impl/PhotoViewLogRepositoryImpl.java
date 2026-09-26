@@ -1,6 +1,6 @@
 package com.web.gallery.repository.impl;
 
-import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.entity.photo.PhotoViewLog;
 import com.web.gallery.entity.photo.PhotoViewLogCondition;
 import com.web.gallery.mapper.PhotoViewLogMapper;

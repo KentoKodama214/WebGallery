@@ -2,7 +2,7 @@ package com.web.gallery.service.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.common.KbnCode;
+import com.web.gallery.domain.model.common.KbnCode;
 import com.web.gallery.model.common.KbnMstModelList;
 import com.web.gallery.service.impl.KbnMstServiceImpl;
 import org.junit.jupiter.api.DisplayName;

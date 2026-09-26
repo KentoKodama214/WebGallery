@@ -1,6 +1,6 @@
 package com.web.gallery.entity.inquiry;
 
-import com.web.gallery.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.model.inquiry.InquiryDetailModel;
 import lombok.Builder;
 import lombok.Data;
@@ -25,7 +25,7 @@ public class InquiryMstUpdateTarget {
   /**
    * 返信登録に伴う更新対象を生成する
    *
-   * <p>ステータス・ユーザー既読フラグの遷移先は{@link com.web.gallery.aggregate.Inquiry#addReply}が 決定済みの{@link
+   * <p>ステータス・ユーザー既読フラグの遷移先は{@link com.web.gallery.domain.aggregate.Inquiry#addReply}が 決定済みの{@link
    * InquiryDetailModel}からそのまま読み取る（ビジネスルールを集約に一元化するため）
    *
    * @param detail 返信追加後の{@link InquiryDetailModel}

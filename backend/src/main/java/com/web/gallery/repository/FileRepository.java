@@ -1,6 +1,6 @@
 package com.web.gallery.repository;
 
-import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.model.photo.FileModel;
 
 /** ファイルを永続化するRepositoryクラス */

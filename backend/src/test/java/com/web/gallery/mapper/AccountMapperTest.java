@@ -2,12 +2,12 @@ package com.web.gallery.mapper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.domain.enumeration.AuthorityEnum;
+import com.web.gallery.domain.enumeration.SexEnum;
 import com.web.gallery.dto.AccountDto;
 import com.web.gallery.entity.account.Account;
 import com.web.gallery.entity.account.AccountCondition;
 import com.web.gallery.entity.account.AccountUpdateTarget;
-import com.web.gallery.enumeration.AuthorityEnum;
-import com.web.gallery.enumeration.SexEnum;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

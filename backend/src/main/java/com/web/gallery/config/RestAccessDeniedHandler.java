@@ -1,6 +1,6 @@
 package com.web.gallery.config;
 
-import com.web.gallery.enumeration.ErrorEnum;
+import com.web.gallery.domain.enumeration.ErrorEnum;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

@@ -1,7 +1,7 @@
 package com.web.gallery.controller.request.photo;
 
-import com.web.gallery.constant.Consts;
-import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.enumeration.DirectionEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;

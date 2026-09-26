@@ -1,12 +1,12 @@
 package com.web.gallery.model.photo;
 
-import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.photo.PhotoTagSaveRequest;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.domain.photo.TagEnglishName;
-import com.web.gallery.domain.photo.TagJapaneseName;
-import com.web.gallery.domain.photo.TagNo;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.TagEnglishName;
+import com.web.gallery.domain.model.photo.TagJapaneseName;
+import com.web.gallery.domain.model.photo.TagNo;
 import com.web.gallery.entity.photo.PhotoTagMst;
 import java.util.Optional;
 import lombok.Builder;

@@ -1,6 +1,6 @@
 package com.web.gallery.config;
 
-import com.web.gallery.constant.ApiRoutes;
+import com.web.gallery.domain.constant.ApiRoutes;
 import jakarta.servlet.DispatcherType;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

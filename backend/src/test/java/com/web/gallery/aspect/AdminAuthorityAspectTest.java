@@ -3,9 +3,9 @@ package com.web.gallery.aspect;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.enumeration.AuthorityEnum;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.ForbiddenAccountException;
+import com.web.gallery.domain.enumeration.AuthorityEnum;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.ForbiddenAccountException;
 import com.web.gallery.helper.SessionHelper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

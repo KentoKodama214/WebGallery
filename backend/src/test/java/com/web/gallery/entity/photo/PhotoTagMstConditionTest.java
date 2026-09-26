@@ -2,10 +2,10 @@ package com.web.gallery.entity.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.enumeration.DirectionEnum;
-import com.web.gallery.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.model.photo.PhotoDetailSearchModel;
 import com.web.gallery.model.photo.PhotoGetModel;
 import com.web.gallery.model.photo.PhotoTagDeleteModel;

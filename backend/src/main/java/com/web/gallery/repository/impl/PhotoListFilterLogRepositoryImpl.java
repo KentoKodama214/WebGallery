@@ -1,6 +1,6 @@
 package com.web.gallery.repository.impl;
 
-import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.entity.photo.PhotoListFilterLog;
 import com.web.gallery.entity.photo.PhotoListFilterLogCondition;
 import com.web.gallery.mapper.PhotoListFilterLogMapper;

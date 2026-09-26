@@ -1,6 +1,6 @@
 package com.web.gallery.model.photo;
 
-import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;

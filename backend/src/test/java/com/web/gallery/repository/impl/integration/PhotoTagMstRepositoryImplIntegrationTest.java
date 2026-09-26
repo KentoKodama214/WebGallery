@@ -2,14 +2,14 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.domain.photo.TagEnglishName;
-import com.web.gallery.domain.photo.TagJapaneseName;
-import com.web.gallery.domain.photo.TagNo;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.RegistFailureException;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.TagEnglishName;
+import com.web.gallery.domain.model.photo.TagJapaneseName;
+import com.web.gallery.domain.model.photo.TagNo;
 import com.web.gallery.entity.photo.PhotoTagMst;
-import com.web.gallery.exception.GalleryException;
-import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.model.photo.PhotoTagDeleteModel;
 import com.web.gallery.model.photo.PhotoTagModel;
 import com.web.gallery.repository.impl.PhotoTagMstRepositoryImpl;

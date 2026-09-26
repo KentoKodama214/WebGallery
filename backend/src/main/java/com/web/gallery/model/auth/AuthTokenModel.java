@@ -1,8 +1,8 @@
 package com.web.gallery.model.auth;
 
-import com.web.gallery.domain.auth.AccessToken;
-import com.web.gallery.domain.auth.ExpiresIn;
-import com.web.gallery.domain.auth.RefreshTokenValue;
+import com.web.gallery.domain.model.auth.AccessToken;
+import com.web.gallery.domain.model.auth.ExpiresIn;
+import com.web.gallery.domain.model.auth.RefreshTokenValue;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

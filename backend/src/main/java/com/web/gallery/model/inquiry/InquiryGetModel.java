@@ -1,7 +1,7 @@
 package com.web.gallery.model.inquiry;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.model.account.AccountNo;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

@@ -1,6 +1,6 @@
 package com.web.gallery.repository;
 
-import com.web.gallery.aggregate.Account;
+import com.web.gallery.domain.aggregate.Account;
 
 /** アカウント集約（{@link Account}）を永続化するRepositoryクラス */
 public interface AccountAggregateRepository {

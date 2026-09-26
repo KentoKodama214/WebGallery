@@ -2,12 +2,12 @@ package com.web.gallery.service.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.exception.FavoriteNotFoundException;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.RegistFailureException;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.entity.photo.PhotoFavorite;
-import com.web.gallery.exception.FavoriteNotFoundException;
-import com.web.gallery.exception.GalleryException;
-import com.web.gallery.exception.RegistFailureException;
 import com.web.gallery.model.photo.PhotoFavoriteModel;
 import com.web.gallery.service.impl.PhotoFavoriteServiceImpl;
 import java.time.OffsetDateTime;

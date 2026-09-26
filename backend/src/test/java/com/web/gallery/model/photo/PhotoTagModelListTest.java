@@ -2,11 +2,11 @@ package com.web.gallery.model.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.domain.photo.TagEnglishName;
-import com.web.gallery.domain.photo.TagJapaneseName;
-import com.web.gallery.domain.photo.TagNo;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.TagEnglishName;
+import com.web.gallery.domain.model.photo.TagJapaneseName;
+import com.web.gallery.domain.model.photo.TagNo;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

@@ -3,11 +3,11 @@ package com.web.gallery.repository.impl;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.Country;
-import com.web.gallery.domain.common.IpAddress;
-import com.web.gallery.domain.common.IpGeoLocation;
-import com.web.gallery.domain.common.Region;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.common.Country;
+import com.web.gallery.domain.model.common.IpAddress;
+import com.web.gallery.domain.model.common.IpGeoLocation;
+import com.web.gallery.domain.model.common.Region;
 import com.web.gallery.entity.account.LoginHistory;
 import com.web.gallery.entity.account.LoginHistoryCondition;
 import com.web.gallery.mapper.LoginHistoryMapper;

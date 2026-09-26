@@ -1,6 +1,6 @@
 package com.web.gallery.service;
 
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.model.photo.PhotoFavoriteModel;
 
 /** 写真お気に入りに関するビジネスロジックを行うServiceクラス */

@@ -2,8 +2,8 @@ package com.web.gallery.model.inquiry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.dto.InquiryDto;
-import com.web.gallery.enumeration.InquiryStatusEnum;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.web.gallery.controller.request.photo;
 
-import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.constant.Consts;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -23,7 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
  * EXIF情報（焦点距離・F値・シャッタースピード・ISO）はここで受け取った値（ユーザー入力値）を項目ごとに優先し、
  * 未入力の項目についてのみ画像ファイル自体から抽出した値（JPEGのEXIF）で補完する（{@link
  * com.web.gallery.helper.PhotoExifExtractor}、{@link
- * com.web.gallery.policy.PhotoExifDataMergePolicy}）
+ * com.web.gallery.domain.service.PhotoExifDataMergePolicy}）
  */
 @Schema(description = "写真新規一括登録リクエスト")
 @Data

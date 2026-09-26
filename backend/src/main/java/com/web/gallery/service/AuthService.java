@@ -1,9 +1,9 @@
 package com.web.gallery.service;
 
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.Password;
-import com.web.gallery.domain.auth.RefreshTokenValue;
-import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.Password;
+import com.web.gallery.domain.model.auth.RefreshTokenValue;
+import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.model.auth.AuthTokenModel;
 
 /**

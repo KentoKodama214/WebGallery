@@ -1,19 +1,19 @@
 package com.web.gallery.controller;
 
 import com.web.gallery.annotation.RequireAdminAuthority;
-import com.web.gallery.constant.ApiRoutes;
-import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.request.inquiry.AdminInquiryListRequest;
 import com.web.gallery.controller.request.inquiry.InquiryReplyRequest;
 import com.web.gallery.controller.response.inquiry.AdminInquiryDetailGetResponse;
 import com.web.gallery.controller.response.inquiry.AdminInquiryListGetResponse;
 import com.web.gallery.controller.response.inquiry.InquiryReplyResponse;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.inquiry.InquiryId;
-import com.web.gallery.domain.inquiry.ReplyBody;
-import com.web.gallery.domain.inquiry.ReplyNo;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.constant.ApiRoutes;
+import com.web.gallery.domain.constant.MessageConst;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.inquiry.InquiryId;
+import com.web.gallery.domain.model.inquiry.ReplyBody;
+import com.web.gallery.domain.model.inquiry.ReplyNo;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.helper.ValidationErrorLogger;
 import com.web.gallery.model.inquiry.InquiryDetailModel;

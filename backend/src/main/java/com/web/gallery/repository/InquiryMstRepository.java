@@ -1,9 +1,9 @@
 package com.web.gallery.repository;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.inquiry.InquiryId;
-import com.web.gallery.domain.inquiry.InquiryNo;
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.inquiry.InquiryId;
+import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.model.inquiry.InquiryDetailModel;
 import com.web.gallery.model.inquiry.InquiryGetModel;
 import com.web.gallery.model.inquiry.InquiryPageModel;

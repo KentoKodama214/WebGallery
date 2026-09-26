@@ -1,16 +1,16 @@
 package com.web.gallery.controller;
 
 import com.web.gallery.annotation.RequireAdminAuthority;
-import com.web.gallery.constant.ApiRoutes;
-import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.request.account.AccountListRequest;
 import com.web.gallery.controller.request.account.AdminAccountAuthorityUpdateRequest;
 import com.web.gallery.controller.response.account.AdminAccountAuthorityUpdateResponse;
 import com.web.gallery.controller.response.account.AdminAccountListGetResponse;
 import com.web.gallery.controller.response.account.AdminAccountLockResponse;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.constant.ApiRoutes;
+import com.web.gallery.domain.constant.MessageConst;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.helper.ValidationErrorLogger;
 import com.web.gallery.model.account.AccountListGetModel;
 import com.web.gallery.model.account.AccountModel;

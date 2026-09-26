@@ -2,7 +2,7 @@ package com.web.gallery.helper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.photo.ExifData;
+import com.web.gallery.domain.model.photo.ExifData;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;

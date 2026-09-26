@@ -1,6 +1,6 @@
 package com.web.gallery.controller.response.common;
 
-import com.web.gallery.exception.BadRequestException;
+import com.web.gallery.domain.exception.BadRequestException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;

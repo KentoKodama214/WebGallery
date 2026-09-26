@@ -1,7 +1,7 @@
 package com.web.gallery.entity.account;
 
-import com.web.gallery.constant.Consts;
-import com.web.gallery.enumeration.SexEnum;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.enumeration.SexEnum;
 import com.web.gallery.model.account.AccountModel;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;

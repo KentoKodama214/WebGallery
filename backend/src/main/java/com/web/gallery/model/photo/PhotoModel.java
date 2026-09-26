@@ -1,16 +1,16 @@
 package com.web.gallery.model.photo;
 
-import com.web.gallery.constant.Consts;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.Caption;
-import com.web.gallery.domain.photo.FavoriteCount;
-import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.domain.photo.IsFavorite;
-import com.web.gallery.domain.photo.PhotoAt;
-import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.Caption;
+import com.web.gallery.domain.model.photo.FavoriteCount;
+import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.IsFavorite;
+import com.web.gallery.domain.model.photo.PhotoAt;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.dto.PhotoDto;
 import com.web.gallery.entity.photo.PhotoTagMst;
-import com.web.gallery.enumeration.DirectionEnum;
 import java.util.List;
 import lombok.Builder;
 import lombok.NonNull;

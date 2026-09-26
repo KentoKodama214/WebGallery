@@ -1,10 +1,10 @@
 package com.web.gallery.helper;
 
 import com.web.gallery.AccountPrincipal;
-import com.web.gallery.event.AccountDeletedEvent;
-import com.web.gallery.event.AccountLockedEvent;
-import com.web.gallery.event.AccountUnlockedEvent;
-import com.web.gallery.event.AccountUpdatedEvent;
+import com.web.gallery.domain.event.AccountDeletedEvent;
+import com.web.gallery.domain.event.AccountLockedEvent;
+import com.web.gallery.domain.event.AccountUnlockedEvent;
+import com.web.gallery.domain.event.AccountUpdatedEvent;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;

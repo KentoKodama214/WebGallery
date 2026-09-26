@@ -1,6 +1,6 @@
 package com.web.gallery.helper;
 
-import com.web.gallery.domain.common.IpAddress;
+import com.web.gallery.domain.model.common.IpAddress;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;

@@ -4,52 +4,56 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.aggregate.Photo;
 import com.web.gallery.config.PhotoConfig;
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.Address;
-import com.web.gallery.domain.common.GeoLocation;
-import com.web.gallery.domain.common.IpAddress;
-import com.web.gallery.domain.common.IpGeoLocation;
-import com.web.gallery.domain.common.Latitude;
-import com.web.gallery.domain.common.LocationDisplayName;
-import com.web.gallery.domain.common.Longitude;
-import com.web.gallery.domain.common.Referer;
-import com.web.gallery.domain.photo.Caption;
-import com.web.gallery.domain.photo.ExifData;
-import com.web.gallery.domain.photo.FValue;
-import com.web.gallery.domain.photo.FavoriteCount;
-import com.web.gallery.domain.photo.FocalLength;
-import com.web.gallery.domain.photo.ImageFile;
-import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.domain.photo.IsFavorite;
-import com.web.gallery.domain.photo.IsFavoriteOnly;
-import com.web.gallery.domain.photo.IsLocationPublic;
-import com.web.gallery.domain.photo.Iso;
-import com.web.gallery.domain.photo.LocationNo;
-import com.web.gallery.domain.photo.PhotoAt;
-import com.web.gallery.domain.photo.PhotoCount;
-import com.web.gallery.domain.photo.PhotoEnglishTitle;
-import com.web.gallery.domain.photo.PhotoJapaneseTitle;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.domain.photo.ShutterSpeed;
-import com.web.gallery.domain.photo.TagEnglishName;
-import com.web.gallery.domain.photo.TagJapaneseName;
-import com.web.gallery.domain.photo.TagNo;
-import com.web.gallery.enumeration.AuthorityEnum;
-import com.web.gallery.enumeration.DirectionEnum;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.enumeration.SortPhotoEnum;
-import com.web.gallery.event.PhotoDeletedEvent;
-import com.web.gallery.event.PhotoRegisteredEvent;
-import com.web.gallery.event.PhotoUpdatedEvent;
-import com.web.gallery.exception.BadRequestException;
-import com.web.gallery.exception.GalleryException;
-import com.web.gallery.exception.PhotoNotAdditableException;
-import com.web.gallery.exception.PhotoNotFoundException;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.domain.aggregate.Photo;
+import com.web.gallery.domain.enumeration.AuthorityEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.event.PhotoDeletedEvent;
+import com.web.gallery.domain.event.PhotoRegisteredEvent;
+import com.web.gallery.domain.event.PhotoUpdatedEvent;
+import com.web.gallery.domain.exception.BadRequestException;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.PhotoNotAdditableException;
+import com.web.gallery.domain.exception.PhotoNotFoundException;
+import com.web.gallery.domain.exception.RegistFailureException;
+import com.web.gallery.domain.exception.UpdateFailureException;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.common.Address;
+import com.web.gallery.domain.model.common.GeoLocation;
+import com.web.gallery.domain.model.common.IpAddress;
+import com.web.gallery.domain.model.common.IpGeoLocation;
+import com.web.gallery.domain.model.common.Latitude;
+import com.web.gallery.domain.model.common.LocationDisplayName;
+import com.web.gallery.domain.model.common.Longitude;
+import com.web.gallery.domain.model.common.Referer;
+import com.web.gallery.domain.model.photo.Caption;
+import com.web.gallery.domain.model.photo.ExifData;
+import com.web.gallery.domain.model.photo.FValue;
+import com.web.gallery.domain.model.photo.FavoriteCount;
+import com.web.gallery.domain.model.photo.FocalLength;
+import com.web.gallery.domain.model.photo.ImageFile;
+import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.IsFavorite;
+import com.web.gallery.domain.model.photo.IsFavoriteOnly;
+import com.web.gallery.domain.model.photo.IsLocationPublic;
+import com.web.gallery.domain.model.photo.Iso;
+import com.web.gallery.domain.model.photo.LocationNo;
+import com.web.gallery.domain.model.photo.PhotoAt;
+import com.web.gallery.domain.model.photo.PhotoCount;
+import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
+import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
+import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.ShutterSpeed;
+import com.web.gallery.domain.model.photo.TagEnglishName;
+import com.web.gallery.domain.model.photo.TagJapaneseName;
+import com.web.gallery.domain.model.photo.TagNo;
+import com.web.gallery.domain.service.ImageFileValidationPolicy;
+import com.web.gallery.domain.service.LocationInputPolicy;
+import com.web.gallery.domain.service.PhotoFileExtensionPolicy;
+import com.web.gallery.domain.service.PhotoQuotaPolicy;
 import com.web.gallery.helper.GeoIpResolver;
 import com.web.gallery.model.account.AccountModel;
 import com.web.gallery.model.photo.FileModel;
@@ -69,10 +73,6 @@ import com.web.gallery.model.photo.PhotoSaveResultModel;
 import com.web.gallery.model.photo.PhotoTagModel;
 import com.web.gallery.model.photo.PhotoTagModelList;
 import com.web.gallery.model.photo.PhotoViewLogModel;
-import com.web.gallery.policy.ImageFileValidationPolicy;
-import com.web.gallery.policy.LocationInputPolicy;
-import com.web.gallery.policy.PhotoFileExtensionPolicy;
-import com.web.gallery.policy.PhotoQuotaPolicy;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 import com.web.gallery.repository.impl.FileRepositoryImpl;
 import com.web.gallery.repository.impl.PhotoAggregateRepositoryImpl;
@@ -168,7 +168,7 @@ public class PhotoServiceImplTest {
     lenient()
         .when(
             locationInputPolicy.isValid(
-                any(), any(), any(), any(com.web.gallery.domain.common.GeoLocation.class)))
+                any(), any(), any(), any(com.web.gallery.domain.model.common.GeoLocation.class)))
         .thenReturn(true);
   }
 
@@ -2068,7 +2068,7 @@ public class PhotoServiceImplTest {
       String accountId = "aaaaaaaa";
       doReturn(false)
           .when(locationInputPolicy)
-          .isValid(any(), any(), any(), any(com.web.gallery.domain.common.GeoLocation.class));
+          .isValid(any(), any(), any(), any(com.web.gallery.domain.model.common.GeoLocation.class));
 
       PhotoDetailModel photoDetailModel =
           createNewPhoto().toBuilder().displayName(new LocationDisplayName("渋谷")).build();

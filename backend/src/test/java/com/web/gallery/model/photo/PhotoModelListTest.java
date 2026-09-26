@@ -2,14 +2,14 @@ package com.web.gallery.model.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.Caption;
-import com.web.gallery.domain.photo.FavoriteCount;
-import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.domain.photo.IsFavorite;
-import com.web.gallery.domain.photo.PhotoAt;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.Caption;
+import com.web.gallery.domain.model.photo.FavoriteCount;
+import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.IsFavorite;
+import com.web.gallery.domain.model.photo.PhotoAt;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Comparator;

@@ -1,7 +1,7 @@
 package com.web.gallery.repository;
 
-import com.web.gallery.aggregate.Inquiry;
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.aggregate.Inquiry;
+import com.web.gallery.domain.exception.GalleryException;
 
 /** お問い合わせ集約（{@link Inquiry}）を永続化するRepositoryクラス */
 public interface InquiryAggregateRepository {

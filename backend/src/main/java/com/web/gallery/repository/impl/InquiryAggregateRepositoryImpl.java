@@ -1,12 +1,12 @@
 package com.web.gallery.repository.impl;
 
-import com.web.gallery.aggregate.Inquiry;
+import com.web.gallery.domain.aggregate.Inquiry;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.entity.inquiry.InquiryMst;
 import com.web.gallery.entity.inquiry.InquiryMstCondition;
 import com.web.gallery.entity.inquiry.InquiryMstUpdateTarget;
 import com.web.gallery.entity.inquiry.InquiryReplyMst;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
 import com.web.gallery.mapper.InquiryMstMapper;
 import com.web.gallery.mapper.InquiryReplyMstMapper;
 import com.web.gallery.repository.InquiryAggregateRepository;

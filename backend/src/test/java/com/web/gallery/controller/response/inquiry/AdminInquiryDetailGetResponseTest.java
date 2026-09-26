@@ -2,13 +2,13 @@ package com.web.gallery.controller.response.inquiry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountName;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.inquiry.InquiryBody;
-import com.web.gallery.domain.inquiry.InquiryId;
-import com.web.gallery.domain.inquiry.InquirySubject;
-import com.web.gallery.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.inquiry.InquiryBody;
+import com.web.gallery.domain.model.inquiry.InquiryId;
+import com.web.gallery.domain.model.inquiry.InquirySubject;
 import com.web.gallery.model.inquiry.InquiryDetailModel;
 import com.web.gallery.model.inquiry.InquiryReplyModelList;
 import org.junit.jupiter.api.DisplayName;

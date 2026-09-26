@@ -1,8 +1,8 @@
 package com.web.gallery.controller;
 
-import com.web.gallery.constant.ApiRoutes;
 import com.web.gallery.controller.response.common.LocationListGetResponse;
-import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.constant.ApiRoutes;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.model.common.LocationModelList;
 import com.web.gallery.service.LocationService;

@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.entity.common.LocationMst;
 import com.web.gallery.entity.common.LocationMstCondition;
 import com.web.gallery.mapper.LocationMstMapper;

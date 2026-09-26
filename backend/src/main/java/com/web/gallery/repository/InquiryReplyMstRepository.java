@@ -1,7 +1,7 @@
 package com.web.gallery.repository;
 
-import com.web.gallery.domain.inquiry.InquiryId;
-import com.web.gallery.domain.inquiry.ReplyNo;
+import com.web.gallery.domain.model.inquiry.InquiryId;
+import com.web.gallery.domain.model.inquiry.ReplyNo;
 
 /** お問い合わせ返信マスタデータを永続化するRepositoryクラス */
 public interface InquiryReplyMstRepository {

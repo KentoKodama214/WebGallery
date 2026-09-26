@@ -2,10 +2,10 @@ package com.web.gallery.model.inquiry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.inquiry.InquiryId;
-import com.web.gallery.domain.inquiry.ReplyBody;
-import com.web.gallery.domain.inquiry.ReplyNo;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.inquiry.InquiryId;
+import com.web.gallery.domain.model.inquiry.ReplyBody;
+import com.web.gallery.domain.model.inquiry.ReplyNo;
 import com.web.gallery.entity.inquiry.InquiryReplyMst;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

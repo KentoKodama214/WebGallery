@@ -1,6 +1,6 @@
 package com.web.gallery.config;
 
-import com.web.gallery.constant.MessageConst;
+import com.web.gallery.domain.constant.MessageConst;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

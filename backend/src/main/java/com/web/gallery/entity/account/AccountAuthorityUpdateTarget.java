@@ -1,6 +1,6 @@
 package com.web.gallery.entity.account;
 
-import com.web.gallery.enumeration.AuthorityEnum;
+import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.model.account.AccountModel;
 import lombok.Builder;
 import lombok.Data;

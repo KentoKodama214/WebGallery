@@ -2,7 +2,7 @@ package com.web.gallery.model.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

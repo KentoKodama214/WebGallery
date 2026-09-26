@@ -1,8 +1,8 @@
 package com.web.gallery.config;
 
-import com.web.gallery.enumeration.DirectionEnum;
-import com.web.gallery.enumeration.InquiryStatusEnum;
-import com.web.gallery.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.format.FormatterRegistry;

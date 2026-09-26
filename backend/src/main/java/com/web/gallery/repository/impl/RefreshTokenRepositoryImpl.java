@@ -1,7 +1,7 @@
 package com.web.gallery.repository.impl;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.TokenHash;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.common.TokenHash;
 import com.web.gallery.entity.auth.RefreshToken;
 import com.web.gallery.mapper.RefreshTokenMapper;
 import com.web.gallery.model.auth.RefreshTokenModel;

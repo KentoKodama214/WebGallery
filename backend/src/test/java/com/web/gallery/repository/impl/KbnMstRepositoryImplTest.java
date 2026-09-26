@@ -3,7 +3,7 @@ package com.web.gallery.repository.impl;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.domain.common.KbnClassCode;
+import com.web.gallery.domain.model.common.KbnClassCode;
 import com.web.gallery.entity.common.KbnMst;
 import com.web.gallery.entity.common.KbnMstCondition;
 import com.web.gallery.mapper.KbnMstMapper;

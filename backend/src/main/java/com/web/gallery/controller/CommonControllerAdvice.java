@@ -2,17 +2,17 @@ package com.web.gallery.controller;
 
 import com.web.gallery.controller.response.common.BadRequestResponse;
 import com.web.gallery.controller.response.common.ErrorResponse;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.BadRequestException;
-import com.web.gallery.exception.FavoriteNotFoundException;
-import com.web.gallery.exception.FileDuplicateException;
-import com.web.gallery.exception.ForbiddenAccountException;
-import com.web.gallery.exception.GalleryException;
-import com.web.gallery.exception.InquiryNotFoundException;
-import com.web.gallery.exception.PhotoNotAdditableException;
-import com.web.gallery.exception.PhotoNotFoundException;
-import com.web.gallery.exception.RegistFailureException;
-import com.web.gallery.exception.UpdateFailureException;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.BadRequestException;
+import com.web.gallery.domain.exception.FavoriteNotFoundException;
+import com.web.gallery.domain.exception.FileDuplicateException;
+import com.web.gallery.domain.exception.ForbiddenAccountException;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.InquiryNotFoundException;
+import com.web.gallery.domain.exception.PhotoNotAdditableException;
+import com.web.gallery.domain.exception.PhotoNotFoundException;
+import com.web.gallery.domain.exception.RegistFailureException;
+import com.web.gallery.domain.exception.UpdateFailureException;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -222,7 +222,7 @@ public class CommonControllerAdvice {
   /**
    * 個別のExceptionHandlerで捕捉されないアプリケーション例外の安全網
    *
-   * <p>主に{@link com.web.gallery.exception.SystemException}を想定し、内部情報を含まない一般的なエラーレスポンスに変換する
+   * <p>主に{@link com.web.gallery.domain.exception.SystemException}を想定し、内部情報を含まない一般的なエラーレスポンスに変換する
    *
    * @param exception {@link GalleryException}
    * @return {@link ErrorResponse}

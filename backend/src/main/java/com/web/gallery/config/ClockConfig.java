@@ -1,6 +1,6 @@
 package com.web.gallery.config;
 
-import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.constant.Consts;
 import java.time.Clock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

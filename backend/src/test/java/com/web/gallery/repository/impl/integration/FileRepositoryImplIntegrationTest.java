@@ -2,8 +2,8 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.photo.ImageFile;
-import com.web.gallery.domain.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.ImageFile;
+import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.model.photo.FileModel;
 import com.web.gallery.repository.FileRepository;
 import java.io.IOException;

@@ -6,14 +6,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.web.gallery.AccountPrincipal;
-import com.web.gallery.constant.MessageConst;
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountName;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.account.Password;
+import com.web.gallery.domain.constant.MessageConst;
+import com.web.gallery.domain.enumeration.AuthorityEnum;
+import com.web.gallery.domain.enumeration.InquiryStatusEnum;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.entity.inquiry.InquiryMst;
-import com.web.gallery.enumeration.AuthorityEnum;
-import com.web.gallery.enumeration.InquiryStatusEnum;
 import com.web.gallery.model.account.AccountModel;
 import java.time.OffsetDateTime;
 import java.util.List;

@@ -2,15 +2,15 @@ package com.web.gallery.controller.response.account;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.constant.Consts;
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountName;
-import com.web.gallery.domain.account.BirthDate;
-import com.web.gallery.domain.account.BirthplacePrefectureKbnCode;
-import com.web.gallery.domain.account.FreeMemo;
-import com.web.gallery.domain.account.ResidentPrefectureKbnCode;
-import com.web.gallery.domain.common.IsDeleted;
-import com.web.gallery.enumeration.SexEnum;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.enumeration.SexEnum;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
+import com.web.gallery.domain.model.account.BirthDate;
+import com.web.gallery.domain.model.account.BirthplacePrefectureKbnCode;
+import com.web.gallery.domain.model.account.FreeMemo;
+import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
+import com.web.gallery.domain.model.common.IsDeleted;
 import com.web.gallery.model.account.AccountModel;
 import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;

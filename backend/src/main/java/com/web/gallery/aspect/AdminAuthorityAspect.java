@@ -1,8 +1,8 @@
 package com.web.gallery.aspect;
 
-import com.web.gallery.enumeration.AuthorityEnum;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.enumeration.AuthorityEnum;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.Aspect;

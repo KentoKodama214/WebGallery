@@ -1,6 +1,6 @@
 package com.web.gallery.service;
 
-import com.web.gallery.domain.account.AccountNo;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.model.common.LocationModelList;
 
 /** ロケーションに関するビジネスロジックを扱うServiceクラス */

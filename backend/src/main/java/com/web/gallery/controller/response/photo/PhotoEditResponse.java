@@ -1,8 +1,8 @@
 package com.web.gallery.controller.response.photo;
 
-import com.web.gallery.constant.Consts;
-import com.web.gallery.constant.MessageConst;
 import com.web.gallery.controller.request.photo.PhotoSaveRequest;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.model.photo.PhotoSaveResultModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Objects;

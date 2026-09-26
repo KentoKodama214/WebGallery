@@ -7,36 +7,36 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.web.gallery.constant.Consts;
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.common.IpAddress;
-import com.web.gallery.domain.common.Referer;
-import com.web.gallery.domain.photo.Caption;
-import com.web.gallery.domain.photo.ExifData;
-import com.web.gallery.domain.photo.FValue;
-import com.web.gallery.domain.photo.FocalLength;
-import com.web.gallery.domain.photo.ImageFile;
-import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.domain.photo.IsFavoriteOnly;
-import com.web.gallery.domain.photo.Iso;
-import com.web.gallery.domain.photo.PhotoAt;
-import com.web.gallery.domain.photo.PhotoEnglishTitle;
-import com.web.gallery.domain.photo.PhotoJapaneseTitle;
-import com.web.gallery.domain.photo.PhotoNo;
-import com.web.gallery.domain.photo.ShutterSpeed;
-import com.web.gallery.domain.photo.TagEnglishName;
-import com.web.gallery.domain.photo.TagJapaneseName;
-import com.web.gallery.domain.photo.TagNo;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.SortPhotoEnum;
+import com.web.gallery.domain.exception.FileDuplicateException;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.PhotoNotAdditableException;
+import com.web.gallery.domain.exception.PhotoNotFoundException;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.common.IpAddress;
+import com.web.gallery.domain.model.common.Referer;
+import com.web.gallery.domain.model.photo.Caption;
+import com.web.gallery.domain.model.photo.ExifData;
+import com.web.gallery.domain.model.photo.FValue;
+import com.web.gallery.domain.model.photo.FocalLength;
+import com.web.gallery.domain.model.photo.ImageFile;
+import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.IsFavoriteOnly;
+import com.web.gallery.domain.model.photo.Iso;
+import com.web.gallery.domain.model.photo.PhotoAt;
+import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
+import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
+import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.ShutterSpeed;
+import com.web.gallery.domain.model.photo.TagEnglishName;
+import com.web.gallery.domain.model.photo.TagJapaneseName;
+import com.web.gallery.domain.model.photo.TagNo;
 import com.web.gallery.entity.photo.PhotoFavorite;
 import com.web.gallery.entity.photo.PhotoMst;
 import com.web.gallery.entity.photo.PhotoTagMst;
-import com.web.gallery.enumeration.DirectionEnum;
-import com.web.gallery.enumeration.SortPhotoEnum;
-import com.web.gallery.exception.FileDuplicateException;
-import com.web.gallery.exception.GalleryException;
-import com.web.gallery.exception.PhotoNotAdditableException;
-import com.web.gallery.exception.PhotoNotFoundException;
 import com.web.gallery.model.photo.PhotoDeleteModel;
 import com.web.gallery.model.photo.PhotoDeleteModelList;
 import com.web.gallery.model.photo.PhotoDetailGetModel;
@@ -1466,7 +1466,7 @@ public class PhotoServiceImplIntegrationTest {
               .build();
 
       assertThrows(
-          com.web.gallery.exception.BadRequestException.class,
+          com.web.gallery.domain.exception.BadRequestException.class,
           () ->
               photoServiceImpl.savePhotos(
                   new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
@@ -1496,7 +1496,7 @@ public class PhotoServiceImplIntegrationTest {
               .build();
 
       assertThrows(
-          com.web.gallery.exception.BadRequestException.class,
+          com.web.gallery.domain.exception.BadRequestException.class,
           () ->
               photoServiceImpl.savePhotos(
                   new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
@@ -1526,7 +1526,7 @@ public class PhotoServiceImplIntegrationTest {
               .build();
 
       assertThrows(
-          com.web.gallery.exception.BadRequestException.class,
+          com.web.gallery.domain.exception.BadRequestException.class,
           () ->
               photoServiceImpl.savePhotos(
                   new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
@@ -1556,7 +1556,7 @@ public class PhotoServiceImplIntegrationTest {
               .build();
 
       assertThrows(
-          com.web.gallery.exception.BadRequestException.class,
+          com.web.gallery.domain.exception.BadRequestException.class,
           () ->
               photoServiceImpl.savePhotos(
                   new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));

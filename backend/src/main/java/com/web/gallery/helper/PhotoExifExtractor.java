@@ -4,11 +4,11 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
-import com.web.gallery.domain.photo.ExifData;
-import com.web.gallery.domain.photo.FValue;
-import com.web.gallery.domain.photo.FocalLength;
-import com.web.gallery.domain.photo.Iso;
-import com.web.gallery.domain.photo.ShutterSpeed;
+import com.web.gallery.domain.model.photo.ExifData;
+import com.web.gallery.domain.model.photo.FValue;
+import com.web.gallery.domain.model.photo.FocalLength;
+import com.web.gallery.domain.model.photo.Iso;
+import com.web.gallery.domain.model.photo.ShutterSpeed;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
  * アップロードされた画像ファイルの実バイナリに埋め込まれたEXIF情報（焦点距離・F値・シャッタースピード・ISO）を抽出するHelperクラス
  *
  * <p>ユーザーが値を未入力の項目について、画像ファイル自体から読み取った実際の値を補完するために使用する （{@link
- * com.web.gallery.policy.PhotoExifDataMergePolicy}）。PNG等EXIFを保持しない形式や、EXIFはあっても
+ * com.web.gallery.domain.service.PhotoExifDataMergePolicy}）。PNG等EXIFを保持しない形式や、EXIFはあっても
  * 各項目が記録されていない画像では項目ごとに未設定を返す
  */
 @Component

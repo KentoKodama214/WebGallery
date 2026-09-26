@@ -3,21 +3,21 @@ package com.web.gallery.entity.photo;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.photo.Caption;
-import com.web.gallery.domain.photo.ExifData;
-import com.web.gallery.domain.photo.FValue;
-import com.web.gallery.domain.photo.FocalLength;
-import com.web.gallery.domain.photo.ImageFile;
-import com.web.gallery.domain.photo.ImageFilePath;
-import com.web.gallery.domain.photo.IsLocationPublic;
-import com.web.gallery.domain.photo.Iso;
-import com.web.gallery.domain.photo.LocationNo;
-import com.web.gallery.domain.photo.PhotoAt;
-import com.web.gallery.domain.photo.PhotoEnglishTitle;
-import com.web.gallery.domain.photo.PhotoJapaneseTitle;
-import com.web.gallery.domain.photo.ShutterSpeed;
-import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.Caption;
+import com.web.gallery.domain.model.photo.ExifData;
+import com.web.gallery.domain.model.photo.FValue;
+import com.web.gallery.domain.model.photo.FocalLength;
+import com.web.gallery.domain.model.photo.ImageFile;
+import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.IsLocationPublic;
+import com.web.gallery.domain.model.photo.Iso;
+import com.web.gallery.domain.model.photo.LocationNo;
+import com.web.gallery.domain.model.photo.PhotoAt;
+import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
+import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
+import com.web.gallery.domain.model.photo.ShutterSpeed;
 import com.web.gallery.model.photo.PhotoDetailModel;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -95,7 +95,8 @@ class PhotoMstTest {
 
       PhotoMst actual = PhotoMst.fromForRegist(model, "1/1-xyz.jpg", 1L);
 
-      assertEquals(com.web.gallery.constant.Consts.MIN_OFFSET_DATE_TIME, actual.getPhotoAt());
+      assertEquals(
+          com.web.gallery.domain.constant.Consts.MIN_OFFSET_DATE_TIME, actual.getPhotoAt());
       assertEquals(0L, actual.getLocationNo());
       assertEquals("", actual.getPhotoJapaneseTitle());
       assertEquals("", actual.getPhotoEnglishTitle());

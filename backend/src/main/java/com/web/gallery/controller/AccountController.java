@@ -1,7 +1,5 @@
 package com.web.gallery.controller;
 
-import com.web.gallery.constant.ApiRoutes;
-import com.web.gallery.constant.Consts;
 import com.web.gallery.controller.request.account.AccountDeleteRequest;
 import com.web.gallery.controller.request.account.AccountListRequest;
 import com.web.gallery.controller.request.account.AccountRegistRequest;
@@ -10,11 +8,13 @@ import com.web.gallery.controller.response.account.AccountDetailResponse;
 import com.web.gallery.controller.response.account.AccountListGetResponse;
 import com.web.gallery.controller.response.account.AccountRegistResponse;
 import com.web.gallery.controller.response.account.AccountUpdateResponse;
-import com.web.gallery.domain.account.AccountId;
-import com.web.gallery.domain.account.AccountNo;
-import com.web.gallery.domain.account.Password;
-import com.web.gallery.enumeration.ErrorEnum;
-import com.web.gallery.exception.GalleryException;
+import com.web.gallery.domain.constant.ApiRoutes;
+import com.web.gallery.domain.constant.Consts;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.helper.ValidationErrorLogger;
 import com.web.gallery.model.account.AccountListGetModel;

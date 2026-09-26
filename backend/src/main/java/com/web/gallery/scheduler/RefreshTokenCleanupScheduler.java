@@ -1,6 +1,6 @@
 package com.web.gallery.scheduler;
 
-import com.web.gallery.constant.Consts;
+import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import com.web.gallery.helper.SchedulerLock;
 import com.web.gallery.service.AuthService;

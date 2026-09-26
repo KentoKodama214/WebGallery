@@ -3,7 +3,7 @@ package com.web.gallery.helper;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.enumeration.DirectionEnum;
+import com.web.gallery.domain.enumeration.DirectionEnum;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
