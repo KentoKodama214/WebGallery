@@ -4,12 +4,12 @@
 
 | ワークフロー | ファイル | トリガー |
 |---|---|---|
-| Javadocチェック | `checkstyle.yml` | `development`・`staging`・`master`へのPR |
-| フォーマットチェック | `spotless.yml` | `development`・`staging`・`master`へのPR |
-| テスト実行 | `test.yml` | `development`・`staging`・`master`へのPR |
-| 依存関係の脆弱性スキャン | `test.yml`（`dependency-scan`ジョブ） | `development`・`staging`・`master`へのPR |
-| カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `development`・`staging`・`master`へのPR |
-| 環境昇格PR自動作成 | `promote-branch.yml` | `development`・`staging`へのpush（PRマージ含む） |
+| Javadocチェック | `checkstyle.yml` | `development`・`staging`・`master`へのPR、手動実行 |
+| フォーマットチェック | `spotless.yml` | `development`・`staging`・`master`へのPR、手動実行 |
+| テスト実行 | `test.yml` | `development`・`staging`・`master`へのPR、手動実行 |
+| 依存関係の脆弱性スキャン | `test.yml`（`dependency-scan`ジョブ） | `development`・`staging`・`master`へのPR、手動実行 |
+| カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `development`・`staging`・`master`へのPR、手動実行 |
+| 環境昇格PR自動作成・リリースタグ発行 | `promote-branch.yml` | `development`・`staging`へのpush（PRマージ含む） |
 
 セキュリティレビューはAnthropic APIの従量課金コストがかかるため、CIワークフロー化はせず、Claude Codeの`/security-review`スキルでローカルから都度実行する運用とする。
 
@@ -38,6 +38,10 @@ test.yml:
 - 結合テストとE2Eテストは互いに依存せず**並列に実行**される
 - Javadocチェックの成否はテスト実行に**影響しない**
 - カバレッジレポートはフロントエンド単体テスト・バックエンド単体テスト・結合テストがすべて成功した場合のみ実行される
+
+## 手動実行
+
+`checkstyle.yml`・`spotless.yml`・`test.yml`はGitHub Actionsの画面（Actions → 対象ワークフロー → Run workflow）から任意のブランチに対して手動実行できる（`workflow_dispatch`）。手動実行時は`coverage-report`ジョブのPRコメント投稿ステップのみスキップされ（PRに紐付かないため）、それ以外のジョブ・ジョブサマリーへの出力は通常のPR実行と同様に行われる。
 
 ## 各ジョブの詳細
 
@@ -113,6 +117,8 @@ E2Eテストは `next dev` で起動するため、本番でのみ付与され�
 
 フロントエンド単体テスト・バックエンド単体テスト・結合テストがすべて成功した場合のみ実行される。しきい値による失敗は設定していない（可視化のみ）。外部Actionは使用せず、`gh` CLI と Python 標準ライブラリのみで完結する。
 
-### 環境昇格PR自動作成 (`promote-branch.yml`)
+### 環境昇格PR自動作成・リリースタグ発行 (`promote-branch.yml`)
 
 `development`へのpush（PRマージによるものを含む）で`development`→`staging`、`staging`へのpushで`staging`→`master`のマージPRを`gh pr create`で自動作成する。同じhead/baseの組み合わせでオープンなPRが既に存在する場合は作成をスキップする。レビュワーの自動アサインは行わないため、マージ先のRulesetで必須となっているコードオーナーレビューの依頼は手動で行う。外部Actionは使用せず`gh` CLIのみで完結する。
+
+`staging`へのpush（＝本番リリース対象の確定）のタイミングでのみ、追加でセマンティックバージョニング（`vX.Y.Z`）のリリースタグを発行する。既存タグの最新patchバージョンを`git tag --list`と`sort -V`で取得し、patchを+1して`staging`のHEADコミットにタグ付け・pushする（タグが1つも無い場合は`v1.0.0`から開始）。minor/majorバージョンの更新は運用者が別途手動でタグを打つ想定で、このワークフローはpatchの自動インクリメントのみを行う。発行したタグ名は昇格PRの本文に記載される。
