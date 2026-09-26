@@ -1,8 +1,5 @@
-package com.web.gallery.infrastructure.persistence.repository;
+package com.web.gallery.infrastructure.scheduler.lock;
 
-import com.web.gallery.application.repository.SchedulerLockRepository;
-import com.web.gallery.enumeration.SchedulerLockNameEnum;
-import com.web.gallery.mapper.SchedulerLockMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

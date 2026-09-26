@@ -1,10 +1,8 @@
-package com.web.gallery.infrastructure.persistence.repository;
+package com.web.gallery.infrastructure.scheduler.lock;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.enumeration.SchedulerLockNameEnum;
-import com.web.gallery.mapper.SchedulerLockMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

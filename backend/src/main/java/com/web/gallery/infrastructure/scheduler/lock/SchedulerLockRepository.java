@@ -1,6 +1,4 @@
-package com.web.gallery.application.repository;
-
-import com.web.gallery.enumeration.SchedulerLockNameEnum;
+package com.web.gallery.infrastructure.scheduler.lock;
 
 /**
  * スケジューラの多重実行防止用ロックを管理するRepositoryクラス

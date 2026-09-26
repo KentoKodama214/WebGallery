@@ -1,7 +1,5 @@
-package com.web.gallery.helper;
+package com.web.gallery.infrastructure.scheduler.lock;
 
-import com.web.gallery.application.repository.SchedulerLockRepository;
-import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

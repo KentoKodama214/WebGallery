@@ -8,9 +8,9 @@ final class Packages {
   static final String CONTROLLER_RESPONSE = "com.web.gallery.controller.response";
   static final String SERVICE = "com.web.gallery.application.service";
   static final String SERVICE_IMPL = "com.web.gallery.application.service.impl";
-  // SchedulerLockRepositoryを除く。同Repositoryのみ他から参照されず自己完結しているためPhase3でinfrastructure/schedulerへ集約する
+  // SchedulerLockRepositoryは他から参照されず自己完結しているためinfrastructure.schedulerへ集約されており対象外
   static final String REPOSITORY = "com.web.gallery.application.repository";
-  // SchedulerLockRepositoryImplを除く。Phase3でinfrastructure/schedulerへ集約する
+  // SchedulerLockRepositoryImplはinfrastructure.schedulerへ集約されており対象外
   static final String REPOSITORY_IMPL = "com.web.gallery.infrastructure.persistence.repository";
   static final String MODEL = "com.web.gallery.application.model";
   static final String ENTITY = "com.web.gallery.infrastructure.persistence.entity";
@@ -19,11 +19,11 @@ final class Packages {
   static final String AGGREGATE = "com.web.gallery.domain.aggregate";
   static final String POLICY = "com.web.gallery.domain.service";
   static final String EVENT = "com.web.gallery.domain.event";
-  static final String SCHEDULER = "com.web.gallery.scheduler";
-  static final String MAPPER = "com.web.gallery.mapper";
-  // ビジネス区分値Enum（domain.enumeration）。SchedulerLockNameEnum等インフラ寄りのEnumはENUMERATIONを参照
+  static final String SCHEDULER = "com.web.gallery.infrastructure.scheduler";
+  // SchedulerLockMapperはinfrastructure.schedulerへ集約されており対象外
+  static final String MAPPER = "com.web.gallery.infrastructure.persistence.mapper";
+  // ビジネス区分値Enum。SchedulerLockNameEnumはinfrastructure.schedulerへ集約されており対象外
   static final String DOMAIN_ENUMERATION = "com.web.gallery.domain.enumeration";
-  static final String ENUMERATION = "com.web.gallery.enumeration";
   static final String EXCEPTION = "com.web.gallery.domain.exception";
   static final String TYPE_HANDLER = "com.web.gallery.infrastructure.persistence.type_handler";
 

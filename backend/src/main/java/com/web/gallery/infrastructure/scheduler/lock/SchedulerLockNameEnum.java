@@ -1,4 +1,4 @@
-package com.web.gallery.enumeration;
+package com.web.gallery.infrastructure.scheduler.lock;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

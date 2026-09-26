@@ -1,4 +1,4 @@
-package com.web.gallery.mapper;
+package com.web.gallery.infrastructure.scheduler.lock;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

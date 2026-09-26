@@ -23,11 +23,11 @@ class NamingSuffixArchitectureTest {
   static final ArchRule enumerationClassNameShouldEndWithEnum =
       classes()
           .that()
-          .resideInAPackage(Packages.ENUMERATION)
+          .resideInAPackage(Packages.DOMAIN_ENUMERATION)
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Enum")
-          .as("enumerationパッケージのクラス名は「Enum」で終わる必要がある");
+          .as("domain.enumerationパッケージのクラス名は「Enum」で終わる必要がある");
 
   @ArchTest
   static final ArchRule exceptionClassNameShouldEndWithException =

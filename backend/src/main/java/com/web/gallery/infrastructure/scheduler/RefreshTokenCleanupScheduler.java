@@ -1,9 +1,9 @@
-package com.web.gallery.scheduler;
+package com.web.gallery.infrastructure.scheduler;
 
 import com.web.gallery.application.service.AuthService;
 import com.web.gallery.domain.constant.Consts;
-import com.web.gallery.enumeration.SchedulerLockNameEnum;
-import com.web.gallery.helper.SchedulerLock;
+import com.web.gallery.infrastructure.scheduler.lock.SchedulerLock;
+import com.web.gallery.infrastructure.scheduler.lock.SchedulerLockNameEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
