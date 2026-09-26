@@ -2,6 +2,7 @@ package com.web.gallery.controller.response.inquiry;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.inquiry.InquiryModel;
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
@@ -9,7 +10,6 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.domain.model.inquiry.InquirySubject;
-import com.web.gallery.model.inquiry.InquiryModel;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

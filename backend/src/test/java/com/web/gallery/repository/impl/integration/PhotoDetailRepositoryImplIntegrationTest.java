@@ -2,6 +2,10 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoDetailModel;
+import com.web.gallery.application.model.photo.PhotoDetailSearchModel;
+import com.web.gallery.application.model.photo.PhotoGetModel;
+import com.web.gallery.application.model.photo.PhotoPageModel;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
@@ -10,10 +14,6 @@ import com.web.gallery.domain.exception.PhotoNotFoundException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.IsFavoriteOnly;
 import com.web.gallery.domain.model.photo.PhotoNo;
-import com.web.gallery.model.photo.PhotoDetailModel;
-import com.web.gallery.model.photo.PhotoDetailSearchModel;
-import com.web.gallery.model.photo.PhotoGetModel;
-import com.web.gallery.model.photo.PhotoPageModel;
 import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

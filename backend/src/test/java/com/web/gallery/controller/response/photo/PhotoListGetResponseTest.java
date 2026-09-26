@@ -2,6 +2,10 @@ package com.web.gallery.controller.response.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoModel;
+import com.web.gallery.application.model.photo.PhotoModelList;
+import com.web.gallery.application.model.photo.PhotoPageModel;
+import com.web.gallery.application.model.photo.PhotoTagModelList;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.Caption;
@@ -10,10 +14,6 @@ import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.IsFavorite;
 import com.web.gallery.domain.model.photo.PhotoAt;
 import com.web.gallery.domain.model.photo.PhotoNo;
-import com.web.gallery.model.photo.PhotoModel;
-import com.web.gallery.model.photo.PhotoModelList;
-import com.web.gallery.model.photo.PhotoPageModel;
-import com.web.gallery.model.photo.PhotoTagModelList;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;

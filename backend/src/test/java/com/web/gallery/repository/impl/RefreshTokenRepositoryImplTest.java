@@ -4,12 +4,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.model.auth.RefreshTokenModel;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.domain.model.common.TokenHash;
 import com.web.gallery.entity.auth.RefreshToken;
 import com.web.gallery.mapper.RefreshTokenMapper;
-import com.web.gallery.model.auth.RefreshTokenModel;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

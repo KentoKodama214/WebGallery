@@ -2,6 +2,8 @@ package com.web.gallery.helper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.common.KbnMstModel;
+import com.web.gallery.application.model.common.KbnMstModelList;
 import com.web.gallery.domain.model.common.Explanation;
 import com.web.gallery.domain.model.common.KbnClassCode;
 import com.web.gallery.domain.model.common.KbnClassEnglishName;
@@ -13,8 +15,6 @@ import com.web.gallery.domain.model.common.KbnGroupEnglishName;
 import com.web.gallery.domain.model.common.KbnGroupJapaneseName;
 import com.web.gallery.domain.model.common.KbnJapaneseName;
 import com.web.gallery.domain.model.common.SortOrder;
-import com.web.gallery.model.common.KbnMstModel;
-import com.web.gallery.model.common.KbnMstModelList;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;

@@ -1,0 +1,15 @@
+package com.web.gallery.application.repository;
+
+import com.web.gallery.domain.aggregate.Account;
+
+/** アカウント集約（{@link Account}）を永続化するRepositoryクラス */
+public interface AccountAggregateRepository {
+  /**
+   * アカウント集約を削除する
+   *
+   * <p>お気に入り・写真タグ・写真マスタ・リフレッシュトークン・アカウント権限・アカウント本体を、 ユースケース単位で整合性のある1操作として削除する
+   *
+   * @param account {@link Account}
+   */
+  void delete(Account account);
+}

@@ -1,6 +1,6 @@
 package com.web.gallery.entity.inquiry;
 
-import com.web.gallery.model.inquiry.InquiryReplyModel;
+import com.web.gallery.application.model.inquiry.InquiryReplyModel;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.Data;

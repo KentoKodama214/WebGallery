@@ -2,6 +2,9 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.account.AccountGetModel;
+import com.web.gallery.application.model.account.AccountModel;
+import com.web.gallery.application.model.account.AccountPageModel;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.SexEnum;
 import com.web.gallery.domain.exception.GalleryException;
@@ -19,9 +22,6 @@ import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.model.common.IsDeleted;
 import com.web.gallery.entity.account.Account;
-import com.web.gallery.model.account.AccountGetModel;
-import com.web.gallery.model.account.AccountModel;
-import com.web.gallery.model.account.AccountPageModel;
 import com.web.gallery.repository.impl.AccountRepositoryImpl;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;

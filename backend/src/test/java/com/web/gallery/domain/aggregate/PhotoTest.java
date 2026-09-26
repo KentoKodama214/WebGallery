@@ -2,6 +2,9 @@ package com.web.gallery.domain.aggregate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoDetailModel;
+import com.web.gallery.application.model.photo.PhotoTagModel;
+import com.web.gallery.application.model.photo.PhotoTagModelList;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.Caption;
 import com.web.gallery.domain.model.photo.ImageFilePath;
@@ -9,9 +12,6 @@ import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TagNo;
-import com.web.gallery.model.photo.PhotoDetailModel;
-import com.web.gallery.model.photo.PhotoTagModel;
-import com.web.gallery.model.photo.PhotoTagModelList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

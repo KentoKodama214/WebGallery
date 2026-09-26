@@ -1,14 +1,14 @@
 package com.web.gallery.domain.aggregate;
 
+import com.web.gallery.application.model.photo.PhotoDetailModel;
+import com.web.gallery.application.model.photo.PhotoTagModel;
+import com.web.gallery.application.model.photo.PhotoTagModelList;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.ImageFile;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.LocationNo;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.TagNo;
-import com.web.gallery.model.photo.PhotoDetailModel;
-import com.web.gallery.model.photo.PhotoTagModel;
-import com.web.gallery.model.photo.PhotoTagModelList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

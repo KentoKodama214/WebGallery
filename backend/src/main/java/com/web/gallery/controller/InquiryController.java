@@ -1,5 +1,9 @@
 package com.web.gallery.controller;
 
+import com.web.gallery.application.model.inquiry.InquiryDetailModel;
+import com.web.gallery.application.model.inquiry.InquiryListGetModel;
+import com.web.gallery.application.model.inquiry.InquiryPageModel;
+import com.web.gallery.application.service.InquiryService;
 import com.web.gallery.controller.request.inquiry.InquiryListRequest;
 import com.web.gallery.controller.request.inquiry.InquiryRegistRequest;
 import com.web.gallery.controller.response.inquiry.InquiryDetailGetResponse;
@@ -14,10 +18,6 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.helper.SessionHelper;
 import com.web.gallery.helper.ValidationErrorLogger;
-import com.web.gallery.model.inquiry.InquiryDetailModel;
-import com.web.gallery.model.inquiry.InquiryListGetModel;
-import com.web.gallery.model.inquiry.InquiryPageModel;
-import com.web.gallery.service.InquiryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

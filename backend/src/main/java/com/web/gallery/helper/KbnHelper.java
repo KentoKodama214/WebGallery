@@ -1,6 +1,6 @@
 package com.web.gallery.helper;
 
-import com.web.gallery.model.common.KbnMstModelList;
+import com.web.gallery.application.model.common.KbnMstModelList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;

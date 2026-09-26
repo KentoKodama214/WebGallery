@@ -1,7 +1,7 @@
 package com.web.gallery.domain.aggregate;
 
+import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.model.photo.PhotoNoList;
 
 /** アカウントと、それに紐づく写真・お気に入り・タグ・リフレッシュトークンのライフサイクルを管理する集約ルートクラス */
 public class Account {

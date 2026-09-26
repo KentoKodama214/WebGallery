@@ -1,8 +1,8 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.photo.FileModel;
+import com.web.gallery.application.repository.FileRepository;
 import com.web.gallery.domain.model.photo.ImageFilePath;
-import com.web.gallery.model.photo.FileModel;
-import com.web.gallery.repository.FileRepository;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;

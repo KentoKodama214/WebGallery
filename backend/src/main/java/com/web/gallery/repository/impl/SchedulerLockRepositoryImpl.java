@@ -1,8 +1,8 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.repository.SchedulerLockRepository;
 import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import com.web.gallery.mapper.SchedulerLockMapper;
-import com.web.gallery.repository.SchedulerLockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

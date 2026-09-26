@@ -1,11 +1,11 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.account.LoginHistoryModel;
+import com.web.gallery.application.repository.LoginHistoryRepository;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.entity.account.LoginHistory;
 import com.web.gallery.entity.account.LoginHistoryCondition;
 import com.web.gallery.mapper.LoginHistoryMapper;
-import com.web.gallery.model.account.LoginHistoryModel;
-import com.web.gallery.repository.LoginHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

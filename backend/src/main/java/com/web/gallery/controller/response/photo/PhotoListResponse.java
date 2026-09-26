@@ -1,7 +1,7 @@
 package com.web.gallery.controller.response.photo;
 
+import com.web.gallery.application.model.photo.PhotoModel;
 import com.web.gallery.domain.enumeration.DirectionEnum;
-import com.web.gallery.model.photo.PhotoModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;

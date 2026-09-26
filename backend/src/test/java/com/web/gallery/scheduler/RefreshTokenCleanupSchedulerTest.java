@@ -2,9 +2,9 @@ package com.web.gallery.scheduler;
 
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.service.AuthService;
 import com.web.gallery.enumeration.SchedulerLockNameEnum;
 import com.web.gallery.helper.SchedulerLock;
-import com.web.gallery.service.AuthService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

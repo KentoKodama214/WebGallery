@@ -1,6 +1,6 @@
 package com.web.gallery.controller.response.common;
 
-import com.web.gallery.model.common.KbnMstModel;
+import com.web.gallery.application.model.common.KbnMstModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;

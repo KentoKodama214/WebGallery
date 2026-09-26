@@ -3,6 +3,7 @@ package com.web.gallery.repository.impl;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.model.account.LoginHistoryModel;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Country;
 import com.web.gallery.domain.model.common.IpAddress;
@@ -11,7 +12,6 @@ import com.web.gallery.domain.model.common.Region;
 import com.web.gallery.entity.account.LoginHistory;
 import com.web.gallery.entity.account.LoginHistoryCondition;
 import com.web.gallery.mapper.LoginHistoryMapper;
-import com.web.gallery.model.account.LoginHistoryModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

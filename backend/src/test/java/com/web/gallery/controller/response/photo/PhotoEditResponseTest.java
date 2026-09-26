@@ -2,10 +2,10 @@ package com.web.gallery.controller.response.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoSaveResultModel;
 import com.web.gallery.controller.request.photo.PhotoSaveRequest;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.PhotoNo;
-import com.web.gallery.model.photo.PhotoSaveResultModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

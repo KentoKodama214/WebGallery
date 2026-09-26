@@ -1,5 +1,10 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.inquiry.InquiryDetailModel;
+import com.web.gallery.application.model.inquiry.InquiryGetModel;
+import com.web.gallery.application.model.inquiry.InquiryModelList;
+import com.web.gallery.application.model.inquiry.InquiryPageModel;
+import com.web.gallery.application.repository.InquiryMstRepository;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -12,11 +17,6 @@ import com.web.gallery.entity.inquiry.InquiryReplyMst;
 import com.web.gallery.entity.inquiry.InquiryReplyMstCondition;
 import com.web.gallery.mapper.InquiryMstMapper;
 import com.web.gallery.mapper.InquiryReplyMstMapper;
-import com.web.gallery.model.inquiry.InquiryDetailModel;
-import com.web.gallery.model.inquiry.InquiryGetModel;
-import com.web.gallery.model.inquiry.InquiryModelList;
-import com.web.gallery.model.inquiry.InquiryPageModel;
-import com.web.gallery.repository.InquiryMstRepository;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;

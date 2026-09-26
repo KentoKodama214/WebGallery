@@ -1,5 +1,6 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.repository.InquiryAggregateRepository;
 import com.web.gallery.domain.aggregate.Inquiry;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
@@ -9,7 +10,6 @@ import com.web.gallery.entity.inquiry.InquiryMstUpdateTarget;
 import com.web.gallery.entity.inquiry.InquiryReplyMst;
 import com.web.gallery.mapper.InquiryMstMapper;
 import com.web.gallery.mapper.InquiryReplyMstMapper;
-import com.web.gallery.repository.InquiryAggregateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;

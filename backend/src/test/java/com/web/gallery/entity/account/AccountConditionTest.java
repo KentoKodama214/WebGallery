@@ -2,7 +2,7 @@ package com.web.gallery.entity.account;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.model.account.AccountGetModel;
+import com.web.gallery.application.model.account.AccountGetModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

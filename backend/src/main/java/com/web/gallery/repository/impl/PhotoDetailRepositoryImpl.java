@@ -1,5 +1,11 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.photo.PhotoDetailModel;
+import com.web.gallery.application.model.photo.PhotoDetailSearchModel;
+import com.web.gallery.application.model.photo.PhotoGetModel;
+import com.web.gallery.application.model.photo.PhotoModelList;
+import com.web.gallery.application.model.photo.PhotoPageModel;
+import com.web.gallery.application.repository.PhotoDetailRepository;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.dto.PhotoDetailDto;
@@ -10,12 +16,6 @@ import com.web.gallery.entity.photo.PhotoTagMst;
 import com.web.gallery.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.mapper.PhotoDetailMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
-import com.web.gallery.model.photo.PhotoDetailModel;
-import com.web.gallery.model.photo.PhotoDetailSearchModel;
-import com.web.gallery.model.photo.PhotoGetModel;
-import com.web.gallery.model.photo.PhotoModelList;
-import com.web.gallery.model.photo.PhotoPageModel;
-import com.web.gallery.repository.PhotoDetailRepository;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;

@@ -2,9 +2,9 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.common.KbnMstModelList;
 import com.web.gallery.domain.model.common.KbnClassCode;
 import com.web.gallery.domain.model.common.KbnCode;
-import com.web.gallery.model.common.KbnMstModelList;
 import com.web.gallery.repository.impl.KbnMstRepositoryImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

@@ -3,6 +3,7 @@ package com.web.gallery.repository.impl;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.model.photo.PhotoListFilterLogModel;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -15,7 +16,6 @@ import com.web.gallery.domain.model.photo.IsFavoriteOnly;
 import com.web.gallery.entity.photo.PhotoListFilterLog;
 import com.web.gallery.entity.photo.PhotoListFilterLogCondition;
 import com.web.gallery.mapper.PhotoListFilterLogMapper;
-import com.web.gallery.model.photo.PhotoListFilterLogModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

@@ -1,6 +1,6 @@
 package com.web.gallery.controller.response.inquiry;
 
-import com.web.gallery.model.inquiry.InquiryPageModel;
+import com.web.gallery.application.model.inquiry.InquiryPageModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Builder;

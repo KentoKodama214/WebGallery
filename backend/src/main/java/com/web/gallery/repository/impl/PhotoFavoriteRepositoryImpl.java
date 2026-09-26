@@ -1,14 +1,14 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.photo.PhotoFavoriteDeleteModel;
+import com.web.gallery.application.model.photo.PhotoFavoriteModel;
+import com.web.gallery.application.repository.PhotoFavoriteRepository;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.entity.photo.PhotoFavorite;
 import com.web.gallery.entity.photo.PhotoFavoriteCondition;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
-import com.web.gallery.model.photo.PhotoFavoriteDeleteModel;
-import com.web.gallery.model.photo.PhotoFavoriteModel;
-import com.web.gallery.repository.PhotoFavoriteRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;

@@ -1,5 +1,7 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.photo.PhotoNoList;
+import com.web.gallery.application.repository.AccountAggregateRepository;
 import com.web.gallery.domain.aggregate.Account;
 import com.web.gallery.dto.PhotoDeletionDto;
 import com.web.gallery.entity.account.AccountAuthorityCondition;
@@ -18,8 +20,6 @@ import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
 import com.web.gallery.mapper.PhotoViewLogMapper;
 import com.web.gallery.mapper.RefreshTokenMapper;
-import com.web.gallery.model.photo.PhotoNoList;
-import com.web.gallery.repository.AccountAggregateRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;

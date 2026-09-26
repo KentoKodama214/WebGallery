@@ -1,5 +1,10 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.photo.PhotoDeleteModel;
+import com.web.gallery.application.model.photo.PhotoDetailModel;
+import com.web.gallery.application.model.photo.PhotoFavoriteDeleteModel;
+import com.web.gallery.application.model.photo.PhotoTagDeleteModel;
+import com.web.gallery.application.repository.PhotoAggregateRepository;
 import com.web.gallery.domain.aggregate.Photo;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
@@ -18,11 +23,6 @@ import com.web.gallery.mapper.LocationMstMapper;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
 import com.web.gallery.mapper.PhotoMstMapper;
 import com.web.gallery.mapper.PhotoTagMstMapper;
-import com.web.gallery.model.photo.PhotoDeleteModel;
-import com.web.gallery.model.photo.PhotoDetailModel;
-import com.web.gallery.model.photo.PhotoFavoriteDeleteModel;
-import com.web.gallery.model.photo.PhotoTagDeleteModel;
-import com.web.gallery.repository.PhotoAggregateRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

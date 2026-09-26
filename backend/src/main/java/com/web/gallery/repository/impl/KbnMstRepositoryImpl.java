@@ -1,11 +1,11 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.common.KbnMstModelList;
+import com.web.gallery.application.repository.KbnMstRepository;
 import com.web.gallery.domain.model.common.KbnClassCode;
 import com.web.gallery.entity.common.KbnMst;
 import com.web.gallery.entity.common.KbnMstCondition;
 import com.web.gallery.mapper.KbnMstMapper;
-import com.web.gallery.model.common.KbnMstModelList;
-import com.web.gallery.repository.KbnMstRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

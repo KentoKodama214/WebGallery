@@ -1,6 +1,6 @@
 package com.web.gallery.entity.photo;
 
-import com.web.gallery.model.photo.PhotoFavoriteModel;
+import com.web.gallery.application.model.photo.PhotoFavoriteModel;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.Data;

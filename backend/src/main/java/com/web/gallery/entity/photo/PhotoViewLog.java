@@ -1,6 +1,6 @@
 package com.web.gallery.entity.photo;
 
-import com.web.gallery.model.photo.PhotoViewLogModel;
+import com.web.gallery.application.model.photo.PhotoViewLogModel;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.Data;

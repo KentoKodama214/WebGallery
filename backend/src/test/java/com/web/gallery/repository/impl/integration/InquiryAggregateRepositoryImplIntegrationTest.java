@@ -2,6 +2,8 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.inquiry.InquiryDetailModel;
+import com.web.gallery.application.model.inquiry.InquiryReplyModelList;
 import com.web.gallery.domain.aggregate.Inquiry;
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.domain.exception.GalleryException;
@@ -16,8 +18,6 @@ import com.web.gallery.domain.model.inquiry.ReplyBody;
 import com.web.gallery.domain.model.inquiry.ReplyNo;
 import com.web.gallery.entity.inquiry.InquiryMst;
 import com.web.gallery.entity.inquiry.InquiryReplyMst;
-import com.web.gallery.model.inquiry.InquiryDetailModel;
-import com.web.gallery.model.inquiry.InquiryReplyModelList;
 import com.web.gallery.repository.impl.InquiryAggregateRepositoryImpl;
 import java.time.OffsetDateTime;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.web.gallery.controller.response.photo;
 
-import com.web.gallery.model.photo.PhotoPageModel;
+import com.web.gallery.application.model.photo.PhotoPageModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Builder;

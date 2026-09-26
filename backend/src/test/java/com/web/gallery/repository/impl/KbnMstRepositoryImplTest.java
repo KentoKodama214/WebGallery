@@ -3,11 +3,11 @@ package com.web.gallery.repository.impl;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.model.common.KbnMstModelList;
 import com.web.gallery.domain.model.common.KbnClassCode;
 import com.web.gallery.entity.common.KbnMst;
 import com.web.gallery.entity.common.KbnMstCondition;
 import com.web.gallery.mapper.KbnMstMapper;
-import com.web.gallery.model.common.KbnMstModelList;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

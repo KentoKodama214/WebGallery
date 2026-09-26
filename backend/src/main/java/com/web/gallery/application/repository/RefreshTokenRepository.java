@@ -1,0 +1,56 @@
+package com.web.gallery.application.repository;
+
+import com.web.gallery.application.model.auth.RefreshTokenModel;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.common.TokenHash;
+
+/**
+ * リフレッシュトークンデータを永続化するRepositoryクラス
+ *
+ * @author Kento Kodama
+ * @version 1.0.0
+ * @since 1.0.0
+ */
+public interface RefreshTokenRepository {
+  /**
+   * リフレッシュトークンを保存する
+   *
+   * @param refreshTokenModel {@link RefreshTokenModel}
+   */
+  void save(RefreshTokenModel refreshTokenModel);
+
+  /**
+   * トークンハッシュに該当するリフレッシュトークンを取得する
+   *
+   * @param tokenHash トークンハッシュ
+   * @return {@link RefreshTokenModel}、取得できない場合はnull
+   */
+  RefreshTokenModel findByTokenHash(TokenHash tokenHash);
+
+  /**
+   * トークンハッシュに該当するリフレッシュトークンを行ロック付きで取得する
+   *
+   * <p>リフレッシュトークンのローテーション処理で、同一トークンによる同時リクエストを直列化するために使用する
+   *
+   * @param tokenHash トークンハッシュ
+   * @return {@link RefreshTokenModel}、取得できない場合はnull
+   */
+  RefreshTokenModel findByTokenHashForUpdate(TokenHash tokenHash);
+
+  /**
+   * アカウント番号に該当するリフレッシュトークンをすべて無効化する
+   *
+   * @param accountNo アカウント番号
+   */
+  void revokeAllByAccountNo(AccountNo accountNo);
+
+  /**
+   * トークンハッシュに該当するリフレッシュトークンを無効化する
+   *
+   * @param tokenHash トークンハッシュ
+   */
+  void revokeByTokenHash(TokenHash tokenHash);
+
+  /** 有効期限切れのリフレッシュトークンを削除する */
+  void deleteExpired();
+}

@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.model.inquiry.InquiryDetailModel;
+import com.web.gallery.application.model.inquiry.InquiryReplyModelList;
 import com.web.gallery.domain.aggregate.Inquiry;
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.domain.exception.GalleryException;
@@ -20,8 +22,6 @@ import com.web.gallery.entity.inquiry.InquiryMstUpdateTarget;
 import com.web.gallery.entity.inquiry.InquiryReplyMst;
 import com.web.gallery.mapper.InquiryMstMapper;
 import com.web.gallery.mapper.InquiryReplyMstMapper;
-import com.web.gallery.model.inquiry.InquiryDetailModel;
-import com.web.gallery.model.inquiry.InquiryReplyModelList;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

@@ -1,5 +1,9 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.photo.PhotoDeleteModel;
+import com.web.gallery.application.model.photo.PhotoDetailModel;
+import com.web.gallery.application.model.photo.PhotoNoList;
+import com.web.gallery.application.repository.PhotoMstRepository;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -10,10 +14,6 @@ import com.web.gallery.entity.photo.PhotoMst;
 import com.web.gallery.entity.photo.PhotoMstCondition;
 import com.web.gallery.entity.photo.PhotoMstUpdateTarget;
 import com.web.gallery.mapper.PhotoMstMapper;
-import com.web.gallery.model.photo.PhotoDeleteModel;
-import com.web.gallery.model.photo.PhotoDetailModel;
-import com.web.gallery.model.photo.PhotoNoList;
-import com.web.gallery.repository.PhotoMstRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;

@@ -2,6 +2,7 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoViewLogModel;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Country;
 import com.web.gallery.domain.model.common.IpAddress;
@@ -10,7 +11,6 @@ import com.web.gallery.domain.model.common.Referer;
 import com.web.gallery.domain.model.common.Region;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.entity.photo.PhotoViewLog;
-import com.web.gallery.model.photo.PhotoViewLogModel;
 import com.web.gallery.repository.impl.PhotoViewLogRepositoryImpl;
 import java.time.OffsetDateTime;
 import java.util.List;

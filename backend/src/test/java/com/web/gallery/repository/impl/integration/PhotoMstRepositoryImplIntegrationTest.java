@@ -2,6 +2,9 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoDeleteModel;
+import com.web.gallery.application.model.photo.PhotoDetailModel;
+import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.RegistFailureException;
@@ -21,9 +24,6 @@ import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.ShutterSpeed;
 import com.web.gallery.entity.photo.PhotoMst;
-import com.web.gallery.model.photo.PhotoDeleteModel;
-import com.web.gallery.model.photo.PhotoDetailModel;
-import com.web.gallery.model.photo.PhotoNoList;
 import com.web.gallery.repository.impl.PhotoMstRepositoryImpl;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

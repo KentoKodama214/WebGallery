@@ -1,7 +1,7 @@
 package com.web.gallery.entity.inquiry;
 
+import com.web.gallery.application.model.inquiry.InquiryDetailModel;
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
-import com.web.gallery.model.inquiry.InquiryDetailModel;
 import lombok.Builder;
 import lombok.Data;
 

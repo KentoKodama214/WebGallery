@@ -1,5 +1,7 @@
 package com.web.gallery.controller;
 
+import com.web.gallery.application.model.photo.PhotoFavoriteModel;
+import com.web.gallery.application.service.PhotoFavoriteService;
 import com.web.gallery.controller.request.photo.PhotoFavoriteDeleteRequest;
 import com.web.gallery.controller.request.photo.PhotoFavoriteRegistRequest;
 import com.web.gallery.controller.response.photo.PhotoFavoriteResponse;
@@ -8,8 +10,6 @@ import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.helper.SessionHelper;
-import com.web.gallery.model.photo.PhotoFavoriteModel;
-import com.web.gallery.service.PhotoFavoriteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

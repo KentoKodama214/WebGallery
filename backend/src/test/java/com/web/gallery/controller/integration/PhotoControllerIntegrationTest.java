@@ -8,7 +8,10 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.web.gallery.AccountPrincipal;
+import com.web.gallery.application.AccountPrincipal;
+import com.web.gallery.application.model.account.AccountModel;
+import com.web.gallery.application.repository.FileRepository;
+import com.web.gallery.application.repository.PhotoAggregateRepository;
 import com.web.gallery.domain.aggregate.Photo;
 import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
@@ -22,9 +25,6 @@ import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.entity.photo.PhotoFavorite;
 import com.web.gallery.entity.photo.PhotoMst;
 import com.web.gallery.entity.photo.PhotoTagMst;
-import com.web.gallery.model.account.AccountModel;
-import com.web.gallery.repository.FileRepository;
-import com.web.gallery.repository.PhotoAggregateRepository;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

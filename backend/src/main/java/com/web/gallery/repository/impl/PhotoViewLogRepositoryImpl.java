@@ -1,11 +1,11 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.photo.PhotoViewLogModel;
+import com.web.gallery.application.repository.PhotoViewLogRepository;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.entity.photo.PhotoViewLog;
 import com.web.gallery.entity.photo.PhotoViewLogCondition;
 import com.web.gallery.mapper.PhotoViewLogMapper;
-import com.web.gallery.model.photo.PhotoViewLogModel;
-import com.web.gallery.repository.PhotoViewLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;

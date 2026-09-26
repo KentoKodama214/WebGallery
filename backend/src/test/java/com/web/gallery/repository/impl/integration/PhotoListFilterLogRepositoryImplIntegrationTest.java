@@ -2,6 +2,7 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoListFilterLogModel;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -12,7 +13,6 @@ import com.web.gallery.domain.model.common.Referer;
 import com.web.gallery.domain.model.common.Region;
 import com.web.gallery.domain.model.photo.IsFavoriteOnly;
 import com.web.gallery.entity.photo.PhotoListFilterLog;
-import com.web.gallery.model.photo.PhotoListFilterLogModel;
 import com.web.gallery.repository.impl.PhotoListFilterLogRepositoryImpl;
 import java.time.OffsetDateTime;
 import java.util.List;

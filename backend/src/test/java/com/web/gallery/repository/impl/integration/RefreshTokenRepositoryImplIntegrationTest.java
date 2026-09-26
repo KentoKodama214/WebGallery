@@ -2,11 +2,11 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.auth.RefreshTokenModel;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.domain.model.common.TokenHash;
 import com.web.gallery.entity.auth.RefreshToken;
-import com.web.gallery.model.auth.RefreshTokenModel;
 import com.web.gallery.repository.impl.RefreshTokenRepositoryImpl;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;

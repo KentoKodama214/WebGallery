@@ -1,6 +1,6 @@
 package com.web.gallery.helper;
 
-import com.web.gallery.AccountPrincipal;
+import com.web.gallery.application.AccountPrincipal;
 import com.web.gallery.domain.event.AccountDeletedEvent;
 import com.web.gallery.domain.event.AccountLockedEvent;
 import com.web.gallery.domain.event.AccountUnlockedEvent;

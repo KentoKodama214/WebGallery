@@ -2,6 +2,7 @@ package com.web.gallery.entity.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoListFilterLogModel;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -11,7 +12,6 @@ import com.web.gallery.domain.model.common.IpGeoLocation;
 import com.web.gallery.domain.model.common.Referer;
 import com.web.gallery.domain.model.common.Region;
 import com.web.gallery.domain.model.photo.IsFavoriteOnly;
-import com.web.gallery.model.photo.PhotoListFilterLogModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

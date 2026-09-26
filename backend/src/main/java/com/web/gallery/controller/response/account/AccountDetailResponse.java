@@ -1,8 +1,8 @@
 package com.web.gallery.controller.response.account;
 
+import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.SexEnum;
-import com.web.gallery.model.account.AccountModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import lombok.Builder;

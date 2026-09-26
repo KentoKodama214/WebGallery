@@ -2,6 +2,9 @@ package com.web.gallery.controller.response.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoDetailModel;
+import com.web.gallery.application.model.photo.PhotoTagModel;
+import com.web.gallery.application.model.photo.PhotoTagModelList;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Address;
@@ -26,9 +29,6 @@ import com.web.gallery.domain.model.photo.ShutterSpeed;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TagNo;
-import com.web.gallery.model.photo.PhotoDetailModel;
-import com.web.gallery.model.photo.PhotoTagModel;
-import com.web.gallery.model.photo.PhotoTagModelList;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;

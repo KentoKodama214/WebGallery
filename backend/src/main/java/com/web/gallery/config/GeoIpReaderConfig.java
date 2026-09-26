@@ -13,7 +13,7 @@ import org.springframework.util.StringUtils;
  * GeoLite2（MaxMind）データベースリーダーのBean定義クラス
  *
  * <p>{@link GeoIpConfig} で指定されたファイルが存在しない場合はBeanを生成しない。 呼び出し側（{@link
- * com.web.gallery.helper.GeoIpResolver}）はBean不在を許容し、常に空値（未解決）を返す。
+ * com.web.gallery.helper.GeoIpResolverImpl}）はBean不在を許容し、常に空値（未解決）を返す。
  *
  * @author Kento Kodama
  * @version 1.0.0

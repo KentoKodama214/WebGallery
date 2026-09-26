@@ -4,11 +4,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.model.common.LocationModelList;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.entity.common.LocationMst;
 import com.web.gallery.entity.common.LocationMstCondition;
 import com.web.gallery.mapper.LocationMstMapper;
-import com.web.gallery.model.common.LocationModelList;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;

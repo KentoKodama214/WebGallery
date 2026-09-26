@@ -6,12 +6,12 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.web.gallery.application.model.photo.PhotoFavoriteModel;
+import com.web.gallery.application.service.impl.PhotoFavoriteServiceImpl;
 import com.web.gallery.domain.exception.FavoriteNotFoundException;
 import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.helper.SessionHelper;
-import com.web.gallery.model.photo.PhotoFavoriteModel;
-import com.web.gallery.service.impl.PhotoFavoriteServiceImpl;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

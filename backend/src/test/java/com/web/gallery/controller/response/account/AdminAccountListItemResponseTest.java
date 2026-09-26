@@ -2,6 +2,7 @@ package com.web.gallery.controller.response.account;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
@@ -9,7 +10,6 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.LastLoginDatetime;
 import com.web.gallery.domain.model.account.LoginFailureCount;
 import com.web.gallery.domain.model.common.IsDeleted;
-import com.web.gallery.model.account.AccountModel;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.model.photo.PhotoTagDeleteModel;
+import com.web.gallery.application.model.photo.PhotoTagModel;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -14,8 +16,6 @@ import com.web.gallery.domain.model.photo.TagNo;
 import com.web.gallery.entity.photo.PhotoTagMst;
 import com.web.gallery.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.mapper.PhotoTagMstMapper;
-import com.web.gallery.model.photo.PhotoTagDeleteModel;
-import com.web.gallery.model.photo.PhotoTagModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

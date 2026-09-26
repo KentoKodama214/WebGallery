@@ -2,6 +2,7 @@ package com.web.gallery.entity.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoViewLogModel;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Country;
 import com.web.gallery.domain.model.common.IpAddress;
@@ -9,7 +10,6 @@ import com.web.gallery.domain.model.common.IpGeoLocation;
 import com.web.gallery.domain.model.common.Referer;
 import com.web.gallery.domain.model.common.Region;
 import com.web.gallery.domain.model.photo.PhotoNo;
-import com.web.gallery.model.photo.PhotoViewLogModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

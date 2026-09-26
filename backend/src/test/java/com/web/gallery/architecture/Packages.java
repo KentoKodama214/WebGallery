@@ -6,11 +6,12 @@ final class Packages {
   static final String CONTROLLER = "com.web.gallery.controller";
   static final String CONTROLLER_REQUEST = "com.web.gallery.controller.request";
   static final String CONTROLLER_RESPONSE = "com.web.gallery.controller.response";
-  static final String SERVICE = "com.web.gallery.service";
-  static final String SERVICE_IMPL = "com.web.gallery.service.impl";
-  static final String REPOSITORY = "com.web.gallery.repository";
+  static final String SERVICE = "com.web.gallery.application.service";
+  static final String SERVICE_IMPL = "com.web.gallery.application.service.impl";
+  // SchedulerLockRepositoryを除く。同Repositoryのみ他から参照されず自己完結しているためPhase3でinfrastructure/schedulerへ集約する
+  static final String REPOSITORY = "com.web.gallery.application.repository";
   static final String REPOSITORY_IMPL = "com.web.gallery.repository.impl";
-  static final String MODEL = "com.web.gallery.model";
+  static final String MODEL = "com.web.gallery.application.model";
   static final String ENTITY = "com.web.gallery.entity";
   static final String DTO = "com.web.gallery.dto";
   static final String DOMAIN = "com.web.gallery.domain.model";

@@ -2,6 +2,9 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoDetailModel;
+import com.web.gallery.application.model.photo.PhotoTagModel;
+import com.web.gallery.application.model.photo.PhotoTagModelList;
 import com.web.gallery.domain.aggregate.Photo;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.exception.FileDuplicateException;
@@ -15,9 +18,6 @@ import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.entity.photo.PhotoMst;
-import com.web.gallery.model.photo.PhotoDetailModel;
-import com.web.gallery.model.photo.PhotoTagModel;
-import com.web.gallery.model.photo.PhotoTagModelList;
 import com.web.gallery.repository.impl.PhotoAggregateRepositoryImpl;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

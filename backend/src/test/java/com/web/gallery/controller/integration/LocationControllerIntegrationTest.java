@@ -3,13 +3,13 @@ package com.web.gallery.controller.integration;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.web.gallery.AccountPrincipal;
+import com.web.gallery.application.AccountPrincipal;
+import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.Password;
-import com.web.gallery.model.account.AccountModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

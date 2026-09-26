@@ -1,0 +1,155 @@
+package com.web.gallery.application.service.impl;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import com.web.gallery.application.model.photo.PhotoDetailSearchModel;
+import com.web.gallery.application.model.photo.PhotoFavoriteDeleteModel;
+import com.web.gallery.application.model.photo.PhotoFavoriteModel;
+import com.web.gallery.domain.exception.FavoriteNotFoundException;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.PhotoNotFoundException;
+import com.web.gallery.domain.exception.RegistFailureException;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.repository.impl.PhotoDetailRepositoryImpl;
+import com.web.gallery.repository.impl.PhotoFavoriteRepositoryImpl;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
+
+@ActiveProfiles("test")
+@ExtendWith(MockitoExtension.class)
+public class PhotoFavoriteServiceImplTest {
+  @InjectMocks private PhotoFavoriteServiceImpl photoFavoriteServiceImpl;
+
+  @Mock private PhotoFavoriteRepositoryImpl photoFavoriteRepositoryImpl;
+
+  @Mock private PhotoDetailRepositoryImpl photoDetailRepositoryImpl;
+
+  @Nested
+  @Order(1)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class addFavorite {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：自分自身の写真へのお気に入り登録も許可されること")
+    void addFavorite_success() throws GalleryException {
+      PhotoFavoriteModel photoFavoriteModel =
+          PhotoFavoriteModel.builder()
+              .accountNo(new AccountNo(1L))
+              .favoritePhotoAccountNo(new AccountNo(1L))
+              .favoritePhotoNo(new PhotoNo(1L))
+              .build();
+      doReturn(null)
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
+      doNothing().when(photoFavoriteRepositoryImpl).regist(photoFavoriteModel);
+      photoFavoriteServiceImpl.addFavorite(photoFavoriteModel);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：RegistFailureExceptionをthrowする")
+    void addFavorite_RegistFailureException() throws GalleryException {
+      PhotoFavoriteModel photoFavoriteModel =
+          PhotoFavoriteModel.builder()
+              .accountNo(new AccountNo(1L))
+              .favoritePhotoAccountNo(new AccountNo(1L))
+              .favoritePhotoNo(new PhotoNo(1L))
+              .build();
+      doReturn(null)
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
+      doThrow(RegistFailureException.class)
+          .when(photoFavoriteRepositoryImpl)
+          .regist(photoFavoriteModel);
+      assertThrows(
+          RegistFailureException.class,
+          () -> photoFavoriteServiceImpl.addFavorite(photoFavoriteModel));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：対象の写真が存在しない場合はPhotoNotFoundExceptionをthrowする")
+    void addFavorite_photoNotFound() throws GalleryException {
+      PhotoFavoriteModel photoFavoriteModel =
+          PhotoFavoriteModel.builder()
+              .accountNo(new AccountNo(1L))
+              .favoritePhotoAccountNo(new AccountNo(2L))
+              .favoritePhotoNo(new PhotoNo(999L))
+              .build();
+      doThrow(PhotoNotFoundException.class)
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
+      assertThrows(
+          PhotoNotFoundException.class,
+          () -> photoFavoriteServiceImpl.addFavorite(photoFavoriteModel));
+      verify(photoFavoriteRepositoryImpl, never()).regist(any(PhotoFavoriteModel.class));
+    }
+  }
+
+  @Nested
+  @Order(2)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class deleteFavorite {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：お気に入りが解除されること")
+    void deleteFavorite_success() throws GalleryException {
+      PhotoFavoriteModel photoFavoriteModel =
+          PhotoFavoriteModel.builder()
+              .accountNo(new AccountNo(1L))
+              .favoritePhotoAccountNo(new AccountNo(1L))
+              .favoritePhotoNo(new PhotoNo(1L))
+              .build();
+      ArgumentCaptor<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptor =
+          ArgumentCaptor.forClass(PhotoFavoriteDeleteModel.class);
+      doNothing()
+          .when(photoFavoriteRepositoryImpl)
+          .delete(photoFavoriteDeleteModelCaptor.capture());
+
+      photoFavoriteServiceImpl.deleteFavorite(photoFavoriteModel);
+
+      PhotoFavoriteDeleteModel photoFavoriteDeleteModel = photoFavoriteDeleteModelCaptor.getValue();
+      assertEquals(new AccountNo(1L), photoFavoriteDeleteModel.getAccountNo());
+      assertEquals(new AccountNo(1L), photoFavoriteDeleteModel.getFavoritePhotoAccountNo());
+      assertEquals(1L, photoFavoriteDeleteModel.getFavoritePhotoNo().value());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：対象のお気に入りが存在しない場合、FavoriteNotFoundExceptionをthrowする")
+    void deleteFavorite_FavoriteNotFoundException() throws GalleryException {
+      PhotoFavoriteModel photoFavoriteModel =
+          PhotoFavoriteModel.builder()
+              .accountNo(new AccountNo(1L))
+              .favoritePhotoAccountNo(new AccountNo(1L))
+              .favoritePhotoNo(new PhotoNo(1L))
+              .build();
+      ArgumentCaptor<PhotoFavoriteDeleteModel> photoFavoriteDeleteModelCaptor =
+          ArgumentCaptor.forClass(PhotoFavoriteDeleteModel.class);
+      doThrow(FavoriteNotFoundException.class)
+          .when(photoFavoriteRepositoryImpl)
+          .delete(photoFavoriteDeleteModelCaptor.capture());
+
+      assertThrows(
+          FavoriteNotFoundException.class,
+          () -> photoFavoriteServiceImpl.deleteFavorite(photoFavoriteModel));
+
+      PhotoFavoriteDeleteModel photoFavoriteDeleteModel = photoFavoriteDeleteModelCaptor.getValue();
+      assertEquals(new AccountNo(1L), photoFavoriteDeleteModel.getAccountNo());
+      assertEquals(new AccountNo(1L), photoFavoriteDeleteModel.getFavoritePhotoAccountNo());
+      assertEquals(1L, photoFavoriteDeleteModel.getFavoritePhotoNo().value());
+    }
+  }
+}

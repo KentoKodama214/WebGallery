@@ -3,7 +3,7 @@ package com.web.gallery.helper;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.AccountPrincipal;
+import com.web.gallery.application.AccountPrincipal;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

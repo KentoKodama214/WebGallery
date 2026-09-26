@@ -1,6 +1,6 @@
 package com.web.gallery.controller.response.inquiry;
 
-import com.web.gallery.model.inquiry.InquiryReplyModel;
+import com.web.gallery.application.model.inquiry.InquiryReplyModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 import lombok.Builder;

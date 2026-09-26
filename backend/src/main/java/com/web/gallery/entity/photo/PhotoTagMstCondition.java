@@ -1,8 +1,8 @@
 package com.web.gallery.entity.photo;
 
-import com.web.gallery.model.photo.PhotoDetailSearchModel;
-import com.web.gallery.model.photo.PhotoGetModel;
-import com.web.gallery.model.photo.PhotoTagDeleteModel;
+import com.web.gallery.application.model.photo.PhotoDetailSearchModel;
+import com.web.gallery.application.model.photo.PhotoGetModel;
+import com.web.gallery.application.model.photo.PhotoTagDeleteModel;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;

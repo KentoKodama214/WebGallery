@@ -1,6 +1,6 @@
 package com.web.gallery.entity.auth;
 
-import com.web.gallery.model.auth.RefreshTokenModel;
+import com.web.gallery.application.model.auth.RefreshTokenModel;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.Data;

@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 class ArchitectureTest {
 
   private static final String CONTROLLER_PKG = "com.web.gallery.controller";
-  private static final String SERVICE_PKG = "com.web.gallery.service";
+  private static final String SERVICE_PKG = "com.web.gallery.application.service";
   private static final String REPOSITORY_PKG = "com.web.gallery.repository";
 
   @ArchTest

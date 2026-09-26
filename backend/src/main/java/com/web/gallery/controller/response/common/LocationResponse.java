@@ -1,6 +1,6 @@
 package com.web.gallery.controller.response.common;
 
-import com.web.gallery.model.common.LocationModel;
+import com.web.gallery.application.model.common.LocationModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import lombok.Builder;

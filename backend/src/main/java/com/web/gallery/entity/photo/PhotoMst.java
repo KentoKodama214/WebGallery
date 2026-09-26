@@ -1,8 +1,8 @@
 package com.web.gallery.entity.photo;
 
+import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.DirectionEnum;
-import com.web.gallery.model.photo.PhotoDetailModel;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;

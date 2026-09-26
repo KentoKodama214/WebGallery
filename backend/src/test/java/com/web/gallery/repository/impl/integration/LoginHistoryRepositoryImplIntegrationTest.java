@@ -2,13 +2,13 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.account.LoginHistoryModel;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Country;
 import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.domain.model.common.IpGeoLocation;
 import com.web.gallery.domain.model.common.Region;
 import com.web.gallery.entity.account.LoginHistory;
-import com.web.gallery.model.account.LoginHistoryModel;
 import com.web.gallery.repository.impl.LoginHistoryRepositoryImpl;
 import java.time.OffsetDateTime;
 import java.util.List;

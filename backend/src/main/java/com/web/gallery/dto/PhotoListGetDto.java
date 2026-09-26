@@ -1,7 +1,7 @@
 package com.web.gallery.dto;
 
+import com.web.gallery.application.model.photo.PhotoGetModel;
 import com.web.gallery.domain.enumeration.DirectionEnum;
-import com.web.gallery.model.photo.PhotoGetModel;
 import java.util.List;
 import java.util.Objects;
 import lombok.Data;

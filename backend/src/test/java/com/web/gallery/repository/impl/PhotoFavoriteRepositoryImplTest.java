@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.model.photo.PhotoFavoriteDeleteModel;
+import com.web.gallery.application.model.photo.PhotoFavoriteModel;
 import com.web.gallery.domain.exception.FavoriteNotFoundException;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.RegistFailureException;
@@ -12,8 +14,6 @@ import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.entity.photo.PhotoFavorite;
 import com.web.gallery.entity.photo.PhotoFavoriteCondition;
 import com.web.gallery.mapper.PhotoFavoriteMapper;
-import com.web.gallery.model.photo.PhotoFavoriteDeleteModel;
-import com.web.gallery.model.photo.PhotoFavoriteModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

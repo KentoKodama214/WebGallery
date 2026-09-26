@@ -1,9 +1,9 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.repository.InquiryReplyMstRepository;
 import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.ReplyNo;
 import com.web.gallery.mapper.InquiryReplyMstMapper;
-import com.web.gallery.repository.InquiryReplyMstRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

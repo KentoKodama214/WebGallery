@@ -1,8 +1,8 @@
 package com.web.gallery.entity.account;
 
+import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.SexEnum;
-import com.web.gallery.model.account.AccountModel;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import lombok.Builder;

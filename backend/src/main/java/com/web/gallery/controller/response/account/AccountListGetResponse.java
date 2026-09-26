@@ -1,6 +1,6 @@
 package com.web.gallery.controller.response.account;
 
-import com.web.gallery.model.account.AccountPageModel;
+import com.web.gallery.application.model.account.AccountPageModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Builder;

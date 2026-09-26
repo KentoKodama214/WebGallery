@@ -1,6 +1,6 @@
 package com.web.gallery.entity.photo;
 
-import com.web.gallery.model.photo.PhotoFavoriteDeleteModel;
+import com.web.gallery.application.model.photo.PhotoFavoriteDeleteModel;
 import lombok.Builder;
 import lombok.Data;
 

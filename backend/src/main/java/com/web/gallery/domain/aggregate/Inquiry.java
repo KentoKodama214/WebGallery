@@ -1,14 +1,14 @@
 package com.web.gallery.domain.aggregate;
 
+import com.web.gallery.application.model.inquiry.InquiryDetailModel;
+import com.web.gallery.application.model.inquiry.InquiryReplyModel;
+import com.web.gallery.application.model.inquiry.InquiryReplyModelList;
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.domain.model.inquiry.ReplyBody;
 import com.web.gallery.domain.model.inquiry.ReplyNo;
-import com.web.gallery.model.inquiry.InquiryDetailModel;
-import com.web.gallery.model.inquiry.InquiryReplyModel;
-import com.web.gallery.model.inquiry.InquiryReplyModelList;
 
 /** お問い合わせ・返信のライフサイクルを管理する集約ルートクラス */
 public class Inquiry {

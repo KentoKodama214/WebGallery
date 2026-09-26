@@ -1,10 +1,10 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.common.LocationModelList;
+import com.web.gallery.application.repository.LocationMstRepository;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.entity.common.LocationMstCondition;
 import com.web.gallery.mapper.LocationMstMapper;
-import com.web.gallery.model.common.LocationModelList;
-import com.web.gallery.repository.LocationMstRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

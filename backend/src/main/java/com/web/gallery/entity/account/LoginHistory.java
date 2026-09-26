@@ -1,6 +1,6 @@
 package com.web.gallery.entity.account;
 
-import com.web.gallery.model.account.LoginHistoryModel;
+import com.web.gallery.application.model.account.LoginHistoryModel;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.Data;

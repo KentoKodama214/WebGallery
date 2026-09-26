@@ -5,7 +5,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.web.gallery.AccountPrincipal;
+import com.web.gallery.application.AccountPrincipal;
+import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.model.account.AccountId;
@@ -15,7 +16,6 @@ import com.web.gallery.domain.model.account.LoginFailureCount;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.common.IsDeleted;
 import com.web.gallery.entity.photo.PhotoFavorite;
-import com.web.gallery.model.account.AccountModel;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.List;

@@ -1,14 +1,14 @@
 package com.web.gallery.repository.impl;
 
+import com.web.gallery.application.model.photo.PhotoTagDeleteModel;
+import com.web.gallery.application.model.photo.PhotoTagModel;
+import com.web.gallery.application.repository.PhotoTagMstRepository;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.entity.photo.PhotoTagMst;
 import com.web.gallery.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.mapper.PhotoTagMstMapper;
-import com.web.gallery.model.photo.PhotoTagDeleteModel;
-import com.web.gallery.model.photo.PhotoTagModel;
-import com.web.gallery.repository.PhotoTagMstRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;

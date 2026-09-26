@@ -1,6 +1,6 @@
 package com.web.gallery.controller.response.auth;
 
-import com.web.gallery.model.auth.AuthTokenModel;
+import com.web.gallery.application.model.auth.AuthTokenModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;

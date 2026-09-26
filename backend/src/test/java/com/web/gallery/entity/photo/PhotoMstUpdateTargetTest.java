@@ -2,6 +2,8 @@ package com.web.gallery.entity.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoDeleteModel;
+import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.Caption;
@@ -17,8 +19,6 @@ import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.ShutterSpeed;
-import com.web.gallery.model.photo.PhotoDeleteModel;
-import com.web.gallery.model.photo.PhotoDetailModel;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import org.junit.jupiter.api.DisplayName;

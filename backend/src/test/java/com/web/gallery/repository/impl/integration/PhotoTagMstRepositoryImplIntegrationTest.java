@@ -2,6 +2,8 @@ package com.web.gallery.repository.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.PhotoTagDeleteModel;
+import com.web.gallery.application.model.photo.PhotoTagModel;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -10,8 +12,6 @@ import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TagNo;
 import com.web.gallery.entity.photo.PhotoTagMst;
-import com.web.gallery.model.photo.PhotoTagDeleteModel;
-import com.web.gallery.model.photo.PhotoTagModel;
 import com.web.gallery.repository.impl.PhotoTagMstRepositoryImpl;
 import java.time.OffsetDateTime;
 import java.util.List;

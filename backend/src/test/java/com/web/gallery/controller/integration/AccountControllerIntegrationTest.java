@@ -5,7 +5,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.web.gallery.AccountPrincipal;
+import com.web.gallery.application.AccountPrincipal;
+import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
@@ -15,7 +16,6 @@ import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.entity.account.Account;
-import com.web.gallery.model.account.AccountModel;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -57,7 +57,7 @@ public class AccountControllerIntegrationTest {
 
   @Autowired private JdbcTemplate jdbcTemplate;
 
-  @Autowired private com.web.gallery.helper.JwtTokenProvider jwtTokenProvider;
+  @Autowired private com.web.gallery.application.helper.JwtTokenProvider jwtTokenProvider;
 
   private String readJsonFile(String fileName) throws Exception {
     return new String(

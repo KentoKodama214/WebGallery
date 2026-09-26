@@ -1,6 +1,6 @@
 package com.web.gallery.helper;
 
-import com.web.gallery.AccountPrincipal;
+import com.web.gallery.application.AccountPrincipal;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

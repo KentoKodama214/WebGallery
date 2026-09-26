@@ -1,7 +1,7 @@
 package com.web.gallery.controller.response.inquiry;
 
+import com.web.gallery.application.model.inquiry.InquiryDetailModel;
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
-import com.web.gallery.model.inquiry.InquiryDetailModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.OffsetDateTime;
 import java.util.List;

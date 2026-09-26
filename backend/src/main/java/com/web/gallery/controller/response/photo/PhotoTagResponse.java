@@ -1,6 +1,6 @@
 package com.web.gallery.controller.response.photo;
 
-import com.web.gallery.model.photo.PhotoTagModel;
+import com.web.gallery.application.model.photo.PhotoTagModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;

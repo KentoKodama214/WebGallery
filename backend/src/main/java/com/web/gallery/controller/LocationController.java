@@ -1,11 +1,11 @@
 package com.web.gallery.controller;
 
+import com.web.gallery.application.model.common.LocationModelList;
+import com.web.gallery.application.service.LocationService;
 import com.web.gallery.controller.response.common.LocationListGetResponse;
 import com.web.gallery.domain.constant.ApiRoutes;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.helper.SessionHelper;
-import com.web.gallery.model.common.LocationModelList;
-import com.web.gallery.service.LocationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
