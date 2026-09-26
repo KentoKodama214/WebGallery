@@ -16,8 +16,6 @@ import com.web.gallery.application.repository.KbnMstRepository;
 import com.web.gallery.application.repository.LoginHistoryRepository;
 import com.web.gallery.application.repository.RefreshTokenRepository;
 import com.web.gallery.application.service.AccountService;
-import com.web.gallery.config.AccountConfig;
-import com.web.gallery.config.LoginConfig;
 import com.web.gallery.domain.aggregate.Account;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.constant.MessageConst;
@@ -38,6 +36,8 @@ import com.web.gallery.domain.model.common.IpGeoLocation;
 import com.web.gallery.domain.model.common.KbnClassCode;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.infrastructure.config.AccountConfig;
+import com.web.gallery.infrastructure.config.LoginConfig;
 import java.time.Clock;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -354,7 +354,8 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
   /**
    * アカウントが再認証を通せないロック状態（ログイン失敗回数の上限到達、または管理者ロック）かどうかを判定する
    *
-   * <p>管理者ロック済み・ログイン不能のアカウントは、通常は{@link com.web.gallery.config.JwtAuthenticationFilter}が
+   * <p>管理者ロック済み・ログイン不能のアカウントは、通常は{@link
+   * com.web.gallery.infrastructure.web.JwtAuthenticationFilter}が
    * アクセストークン検証時点で認証を拒否するため、この経路には到達しない。ただしフィルタの プリンシパルキャッシュ（{@code
    * app.auth.principal-cache-ttl-millis}）の反映猶予中や、ロック直前に
    * 発行され失効前のアクセストークンが残っているケースに備えた保険として、ここでも明示的に弾く。

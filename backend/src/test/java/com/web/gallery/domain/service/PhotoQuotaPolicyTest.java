@@ -3,9 +3,9 @@ package com.web.gallery.domain.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.model.photo.PhotoCount;
+import com.web.gallery.infrastructure.config.PhotoConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

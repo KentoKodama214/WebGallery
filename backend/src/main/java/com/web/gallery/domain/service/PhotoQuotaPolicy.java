@@ -1,8 +1,8 @@
 package com.web.gallery.domain.service;
 
-import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.model.photo.PhotoCount;
+import com.web.gallery.infrastructure.config.PhotoConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

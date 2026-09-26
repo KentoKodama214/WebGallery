@@ -1,7 +1,7 @@
 package com.web.gallery.domain.service;
 
-import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.domain.model.photo.ImageFile;
+import com.web.gallery.infrastructure.config.PhotoConfig;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;

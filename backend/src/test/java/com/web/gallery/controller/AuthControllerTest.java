@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.web.gallery.application.model.auth.AuthTokenModel;
 import com.web.gallery.application.service.impl.AuthServiceImpl;
-import com.web.gallery.config.JwtConfig;
 import com.web.gallery.domain.exception.InvalidRefreshTokenException;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.Password;
@@ -14,6 +13,7 @@ import com.web.gallery.domain.model.auth.AccessToken;
 import com.web.gallery.domain.model.auth.ExpiresIn;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
 import com.web.gallery.domain.model.common.IpAddress;
+import com.web.gallery.infrastructure.config.JwtConfig;
 import com.web.gallery.infrastructure.web.ClientIpResolver;
 import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;

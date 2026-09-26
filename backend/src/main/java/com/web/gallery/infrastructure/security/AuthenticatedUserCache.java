@@ -16,7 +16,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 /**
  * アクセストークン検証後のアカウント情報（{@link AccountPrincipal}）を短時間キャッシュするヘルパークラス
  *
- * <p>{@link com.web.gallery.config.JwtAuthenticationFilter} は毎リクエストでアカウントをDB参照するため、
+ * <p>{@link com.web.gallery.infrastructure.web.JwtAuthenticationFilter} は毎リクエストでアカウントをDB参照するため、
  * 高頻度アクセス時の負荷が大きい。ごく短いTTLでキャッシュすることでDB参照を間引く。
  *
  * <p>トレードオフ：管理者ロック・アカウント削除の反映が最大 TTL ミリ秒遅延する。 アクセストークンの有効期限（15分）より十分に短く、許容範囲とする。 TTLは {@code

@@ -5,7 +5,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doReturn;
 
 import com.web.gallery.application.AccountPrincipal;
-import com.web.gallery.config.JwtConfig;
+import com.web.gallery.infrastructure.config.JwtConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

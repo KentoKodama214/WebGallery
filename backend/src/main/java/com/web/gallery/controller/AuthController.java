@@ -2,7 +2,6 @@ package com.web.gallery.controller;
 
 import com.web.gallery.application.model.auth.AuthTokenModel;
 import com.web.gallery.application.service.AuthService;
-import com.web.gallery.config.JwtConfig;
 import com.web.gallery.controller.request.auth.AuthLoginRequest;
 import com.web.gallery.controller.response.auth.AuthErrorResponse;
 import com.web.gallery.controller.response.auth.AuthLoginResponse;
@@ -15,6 +14,7 @@ import com.web.gallery.domain.exception.InvalidRefreshTokenException;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
+import com.web.gallery.infrastructure.config.JwtConfig;
 import com.web.gallery.infrastructure.web.ClientIpResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

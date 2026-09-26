@@ -371,7 +371,7 @@ public class AuthControllerIntegrationTest {
   }
 
   /**
-   * {@link com.web.gallery.config.JwtAuthenticationFilter}の異常系を検証するテストクラス
+   * {@link com.web.gallery.infrastructure.web.JwtAuthenticationFilter}の異常系を検証するテストクラス
    *
    * <p>アクセストークン自体は正当だが、検証後の付随チェック（アカウントロック・アカウント削除）で 認証情報を設定しないパスを、保護対象API（アカウント詳細取得）経由で検証する
    */

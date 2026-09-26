@@ -3,8 +3,8 @@ package com.web.gallery.domain.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.web.gallery.config.PhotoConfig;
 import com.web.gallery.domain.model.photo.ImageFile;
+import com.web.gallery.infrastructure.config.PhotoConfig;
 import java.io.IOException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
