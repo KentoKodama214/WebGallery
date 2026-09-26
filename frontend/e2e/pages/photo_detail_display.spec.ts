@@ -17,22 +17,17 @@ import { DB_CONFIG } from "../fixtures/db";
 const PHOTO_1 = path.join(__dirname, "../fixtures/images/e2e-photo-1.png");
 
 /**
- * `PhotoSettingForm`には撮影場所（緯度経度・ロケーション名）を入力するUIが存在せず、
- * バックエンドもEXIFのGPS情報からの自動抽出は行わない（`PhotoExifExtractor`は焦点距離・
- * F値・シャッタースピード・ISOのみを対象とする）。撮影場所はAPI経由でのみ設定可能なため、
- * この検証専用にDBへ直接ロケーションマスタを作成し、対象の写真に紐付ける
- * （`fixtures/admin.ts`の`grantAdministratorAuthority`と同様、UI操作だけでは到達できない
- * 状態を用意するための直接更新）。
- *
- * なお、位置情報の公開設定もこのヘルパーで直接更新する。編集フォーム経由の保存は
+ * 位置情報の公開設定は、写真編集フォーム経由では直接切り替えられない。編集フォームの保存は
  * locationNoを一切送信しないため、`LocationNo.getOrDefault`によりlocation_noが0
  * （紐付けなし）へ巻き戻ってしまい、UI操作では地図を維持したまま公開設定だけを
- * 切り替えられない（本アプリの現在の仕様上の制約）
+ * 切り替えられない（本アプリの現在の仕様上の制約）。そのためこの検証専用にDBへ直接
+ * ロケーションマスタを作成し、対象の写真に紐付ける（`fixtures/admin.ts`の
+ * `grantAdministratorAuthority`と同様、UI操作だけでは到達できない状態を用意するための直接更新）
  */
 async function linkLocationToPhoto(
   accountId: string,
   photoNo: number,
-  locationName: string,
+  displayName: string,
   isLocationPublic: boolean
 ): Promise<void> {
   const client = new Client(DB_CONFIG);
@@ -48,9 +43,9 @@ async function linkLocationToPhoto(
     await client.query(
       `INSERT INTO common.location_mst
          (account_no, location_no, created_by, created_at, updated_by, updated_at,
-          is_deleted, location_name, address, latitude, longitude)
-       VALUES ($1, 1, $1, now(), $1, now(), false, $2, 'テスト住所', 35.6595, 139.7005)`,
-      [accountNo, locationName]
+          is_deleted, management_name, display_name, address, latitude, longitude)
+       VALUES ($1, 1, $1, now(), $1, now(), false, $2, $2, 'テスト住所', 35.6595, 139.7005)`,
+      [accountNo, displayName]
     );
     await client.query(
       `UPDATE photo.photo_mst SET location_no = 1, is_location_public = $3

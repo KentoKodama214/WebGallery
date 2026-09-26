@@ -1189,7 +1189,8 @@ public class PhotoControllerIntegrationTest {
                   .file(multipartFile)
                   .contentType(MediaType.MULTIPART_FORM_DATA)
                   .param("photoJapaneseTitle", "タイトル")
-                  .param("locationName", "新宿御苑")
+                  .param("managementName", "新宿御苑_管理用")
+                  .param("displayName", "新宿御苑")
                   .param("address", "東京都新宿区")
                   .param("latitude", "35.6850")
                   .param("longitude", "139.7100")
@@ -1206,7 +1207,8 @@ public class PhotoControllerIntegrationTest {
       Map<String, Object> actualLocation =
           jdbcTemplate.queryForMap(
               "SELECT * FROM common.location_mst WHERE account_no = 2 AND location_no = 3");
-      assertEquals("新宿御苑", actualLocation.get("location_name"));
+      assertEquals("新宿御苑_管理用", actualLocation.get("management_name"));
+      assertEquals("新宿御苑", actualLocation.get("display_name"));
       assertEquals("東京都新宿区", actualLocation.get("address"));
       assertEquals(
           0, new BigDecimal("35.6850").compareTo((BigDecimal) actualLocation.get("latitude")));
@@ -1237,14 +1239,15 @@ public class PhotoControllerIntegrationTest {
           new UsernamePasswordAuthenticationToken(
               accountPrincipal, null, accountPrincipal.getAuthorities());
 
-      // フィクスチャのaccount_no=2, location_no=1は「ロケーション4」という名称で既に登録済み
+      // フィクスチャのaccount_no=2, location_no=1は管理名「ロケーション4」で既に登録済み
       mockMvc
           .perform(
               multipart("/api/v1/accounts/" + photoAccountId + "/photos")
                   .file(multipartFile)
                   .contentType(MediaType.MULTIPART_FORM_DATA)
                   .param("photoJapaneseTitle", "タイトル")
-                  .param("locationName", "ロケーション4")
+                  .param("managementName", "ロケーション4")
+                  .param("displayName", "表示名は無視される")
                   .param("address", "住所は無視される")
                   .param("latitude", "0")
                   .param("longitude", "0")
@@ -1874,7 +1877,7 @@ public class PhotoControllerIntegrationTest {
           .andExpect(jsonPath("$.photoJapaneseTitle").value("タイトル11"))
           .andExpect(jsonPath("$.caption").value("caption11"))
           .andExpect(jsonPath("$.locationNo").value(1))
-          .andExpect(jsonPath("$.locationName").value("ロケーション1"))
+          .andExpect(jsonPath("$.displayName").value("ロケーション1"))
           .andExpect(jsonPath("$.focalLength").value(24))
           .andExpect(jsonPath("$.photoTagList.length()").value(2))
           .andExpect(jsonPath("$.photoTagList[0].tagJapaneseName").value("太陽"))
@@ -1911,7 +1914,7 @@ public class PhotoControllerIntegrationTest {
           .perform(get("/api/v1/accounts/aaaaaaaa/photos/11"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.locationNo").isEmpty())
-          .andExpect(jsonPath("$.locationName").isEmpty())
+          .andExpect(jsonPath("$.displayName").isEmpty())
           .andExpect(jsonPath("$.address").isEmpty())
           .andExpect(jsonPath("$.latitude").isEmpty())
           .andExpect(jsonPath("$.longitude").isEmpty());
@@ -1940,7 +1943,7 @@ public class PhotoControllerIntegrationTest {
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication)))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.locationNo").value(1))
-          .andExpect(jsonPath("$.locationName").value("ロケーション1"));
+          .andExpect(jsonPath("$.displayName").value("ロケーション1"));
     }
   }
 }

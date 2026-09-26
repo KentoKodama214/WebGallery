@@ -449,7 +449,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
           0, BigDecimal.valueOf(38.400).compareTo(actual.getGeoLocation().latitude().value()));
       assertEquals(
           0, BigDecimal.valueOf(115.400).compareTo(actual.getGeoLocation().longitude().value()));
-      assertEquals("ロケーション4", actual.getLocationName().value());
+      assertEquals("ロケーション4", actual.getDisplayName().value());
       assertEquals("https://www.xxx.com/DSC444.jpg", actual.getImageFilePath().value());
       assertEquals("タイトル21", actual.getPhotoJapaneseTitle().value());
       assertEquals("title21", actual.getPhotoEnglishTitle().value());
@@ -486,7 +486,7 @@ public class PhotoDetailRepositoryImplIntegrationTest {
           0, BigDecimal.valueOf(38.100).compareTo(actual.getGeoLocation().latitude().value()));
       assertEquals(
           0, BigDecimal.valueOf(115.100).compareTo(actual.getGeoLocation().longitude().value()));
-      assertEquals("ロケーション1", actual.getLocationName().value());
+      assertEquals("ロケーション1", actual.getDisplayName().value());
       assertEquals("https://www.xxx.com/DSC111.jpg", actual.getImageFilePath().value());
       assertEquals("タイトル11", actual.getPhotoJapaneseTitle().value());
       assertEquals("title11", actual.getPhotoEnglishTitle().value());

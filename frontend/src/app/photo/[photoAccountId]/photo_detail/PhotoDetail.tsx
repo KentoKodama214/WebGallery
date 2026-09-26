@@ -382,7 +382,7 @@ export function PhotoDetail({
           )}
 
           <p style={{ fontSize: "12px", textAlign: "center", margin: "1px 0" }}>
-            {formatPhotoAt(photo.photoAt)} {photo.locationName || ""}
+            {formatPhotoAt(photo.photoAt)} {photo.displayName || ""}
           </p>
 
           {buildSettingText() && (

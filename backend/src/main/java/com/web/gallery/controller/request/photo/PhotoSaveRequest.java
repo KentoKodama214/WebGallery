@@ -55,10 +55,15 @@ public class PhotoSaveRequest {
   @Schema(description = "経度", example = "139.7671")
   private BigDecimal longitude;
 
-  /** ロケーション名 */
-  @Schema(description = "ロケーション名", example = "渋谷スクランブル交差点")
+  /** ロケーション管理名（新規登録時は必須） */
+  @Schema(description = "ロケーション管理名（新規登録時は必須）", example = "渋谷交差点_管理用")
   @Size(max = 100, message = "{validation.common.max_length}")
-  private String locationName;
+  private String managementName;
+
+  /** ロケーション表示名（新規登録時は必須） */
+  @Schema(description = "ロケーション表示名（新規登録時は必須）", example = "渋谷スクランブル交差点")
+  @Size(max = 100, message = "{validation.common.max_length}")
+  private String displayName;
 
   /** 位置情報公開フラグ（撮影場所を本人以外にも公開するか。未指定は非公開扱い） */
   @Schema(description = "位置情報公開フラグ（撮影場所を本人以外にも公開するか）", example = "false")

@@ -44,7 +44,8 @@ public class LocationMstRepositoryImplTest {
           LocationMst.builder()
               .accountNo(1L)
               .locationNo(3L)
-              .locationName("渋谷スクランブル交差点")
+              .managementName("渋谷スクランブル交差点_管理用")
+              .displayName("渋谷スクランブル交差点")
               .address("東京都渋谷区")
               .latitude(new BigDecimal("35.6812"))
               .longitude(new BigDecimal("139.7671"))
@@ -59,7 +60,8 @@ public class LocationMstRepositoryImplTest {
       assertEquals(1L, conditionCaptor.getValue().getAccountNo());
       assertEquals(1, result.size());
       assertEquals(3L, result.get(0).getLocationNo().value());
-      assertEquals("渋谷スクランブル交差点", result.get(0).getLocationName().value());
+      assertEquals("渋谷スクランブル交差点_管理用", result.get(0).getManagementName().value());
+      assertEquals("渋谷スクランブル交差点", result.get(0).getDisplayName().value());
     }
 
     @Test

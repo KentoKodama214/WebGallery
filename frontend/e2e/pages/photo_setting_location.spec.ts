@@ -33,7 +33,8 @@ test.describe("写真設定ページ（撮影場所：新規ロケーション�
     await page.getByTestId("japanese-title-input").fill("新規ロケーション検証用写真");
 
     await page.getByTestId("location-mode-new").check();
-    await page.getByTestId("new-location-name-input").fill("E2E新規ロケーション");
+    await page.getByTestId("new-location-management-name-input").fill("E2E新規ロケーション_管理用");
+    await page.getByTestId("new-location-display-name-input").fill("E2E新規ロケーション");
 
     const map = page.getByTestId("location-map-picker");
     await expect(map).toBeVisible();
@@ -53,7 +54,7 @@ test.describe("写真設定ページ（撮影場所：新規ロケーション�
     await expect(page.getByTestId("success-modal")).toBeVisible({ timeout: 10000 });
   });
 
-  test("新規ロケーション登録モードでロケーション名が未入力の場合、保存できずエラーが表示されること", async ({
+  test("新規ロケーション登録モードで管理名が未入力の場合、保存できずエラーが表示されること", async ({
     page,
   }, testInfo) => {
     const accountId = generateTestAccountId(testInfo.workerIndex);
@@ -64,13 +65,35 @@ test.describe("写真設定ページ（撮影場所：新規ロケーション�
     await expect(page.getByTestId("image-input")).toBeAttached();
     await page.getByTestId("image-input").setInputFiles(PHOTO_1);
     await expect(page.getByTestId("image-preview-item-0")).toBeVisible();
-    await page.getByTestId("japanese-title-input").fill("ロケーション名未入力検証用写真");
+    await page.getByTestId("japanese-title-input").fill("管理名未入力検証用写真");
 
     await page.getByTestId("location-mode-new").check();
     await page.getByTestId("submit-button").click();
 
     await expect(
-      page.getByTestId("validation-errors").getByText("ロケーション名を入力してください")
+      page.getByTestId("validation-errors").getByText("管理名を入力してください")
+    ).toBeVisible();
+  });
+
+  test("新規ロケーション登録モードで表示名が未入力の場合、保存できずエラーが表示されること", async ({
+    page,
+  }, testInfo) => {
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+    await registerAccount(page, accountId, "E2E Location Display Validation User");
+    await login(page, accountId);
+
+    await page.goto(`/photo/${accountId}/photo_setting`);
+    await expect(page.getByTestId("image-input")).toBeAttached();
+    await page.getByTestId("image-input").setInputFiles(PHOTO_1);
+    await expect(page.getByTestId("image-preview-item-0")).toBeVisible();
+    await page.getByTestId("japanese-title-input").fill("表示名未入力検証用写真");
+
+    await page.getByTestId("location-mode-new").check();
+    await page.getByTestId("new-location-management-name-input").fill("E2E管理名のみ");
+    await page.getByTestId("submit-button").click();
+
+    await expect(
+      page.getByTestId("validation-errors").getByText("表示名を入力してください")
     ).toBeVisible();
   });
 
@@ -115,7 +138,8 @@ test.describe("写真設定ページ（撮影場所：既存ロケーション�
       await page.getByTestId("japanese-title-input").fill("1枚目：新規ロケーション登録");
 
       await page.getByTestId("location-mode-new").check();
-      await page.getByTestId("new-location-name-input").fill("E2E再利用ロケーション");
+      await page.getByTestId("new-location-management-name-input").fill("E2E再利用ロケーション");
+      await page.getByTestId("new-location-display-name-input").fill("E2E再利用スポット表示名");
       await page.getByTestId("new-location-latitude-input").fill("35.6812");
       await page.getByTestId("new-location-longitude-input").fill("139.7671");
 

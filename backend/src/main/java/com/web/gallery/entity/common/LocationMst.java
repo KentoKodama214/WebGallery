@@ -2,7 +2,8 @@ package com.web.gallery.entity.common;
 
 import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.GeoLocation;
-import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.LocationDisplayName;
+import com.web.gallery.domain.common.LocationManagementName;
 import com.web.gallery.domain.photo.LocationNo;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -28,8 +29,11 @@ public class LocationMst {
   /** 作成日時 */
   private OffsetDateTime createdAt;
 
-  /** ロケーション名 */
-  private String locationName;
+  /** 管理名 */
+  private String managementName;
+
+  /** 表示名 */
+  private String displayName;
 
   /** 住所 */
   private String address;
@@ -45,20 +49,23 @@ public class LocationMst {
    *
    * @param accountNo アカウント番号
    * @param newLocationNo 新規採番されたロケーション番号
-   * @param locationName ロケーション名
+   * @param managementName 管理名
+   * @param displayName 表示名
    * @param geoLocation 位置情報（住所・緯度・経度）
    * @return {@link LocationMst}
    */
   public static LocationMst fromForRegist(
       AccountNo accountNo,
       LocationNo newLocationNo,
-      LocationName locationName,
+      LocationManagementName managementName,
+      LocationDisplayName displayName,
       GeoLocation geoLocation) {
     return LocationMst.builder()
         .accountNo(accountNo.value())
         .locationNo(newLocationNo.value())
         .createdBy(accountNo.value())
-        .locationName(locationName.value())
+        .managementName(managementName.value())
+        .displayName(displayName.value())
         .address(geoLocation.address() != null ? geoLocation.address().value() : "")
         .latitude(geoLocation.latitude().value())
         .longitude(geoLocation.longitude().value())

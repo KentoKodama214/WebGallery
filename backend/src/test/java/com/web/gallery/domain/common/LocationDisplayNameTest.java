@@ -11,7 +11,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
-class LocationNameTest {
+class LocationDisplayNameTest {
 
   @Nested
   @Order(1)
@@ -21,16 +21,16 @@ class LocationNameTest {
     @Order(1)
     @DisplayName("正常系：nullでない値を指定した場合、インスタンスが生成されること")
     void constructor_success() {
-      LocationName actual = new LocationName("東京タワー");
+      LocationDisplayName actual = new LocationDisplayName("渋谷スクランブル交差点");
 
-      assertEquals("東京タワー", actual.value());
+      assertEquals("渋谷スクランブル交差点", actual.value());
     }
 
     @Test
     @Order(2)
     @DisplayName("異常系：nullを指定した場合、IllegalArgumentExceptionをスローすること")
     void constructor_null() {
-      assertThrows(IllegalArgumentException.class, () -> new LocationName(null));
+      assertThrows(IllegalArgumentException.class, () -> new LocationDisplayName(null));
     }
   }
 }

@@ -717,7 +717,7 @@ public class PhotoServiceImplIntegrationTest {
           0, BigDecimal.valueOf(38.100).compareTo(actual.getGeoLocation().latitude().value()));
       assertEquals(
           0, BigDecimal.valueOf(115.100).compareTo(actual.getGeoLocation().longitude().value()));
-      assertEquals("ロケーション1", actual.getLocationName().value());
+      assertEquals("ロケーション1", actual.getDisplayName().value());
       assertNull(actual.getImageFile());
       assertEquals("https://www.xxx.com/aaaaaaaa/DSC11.jpg", actual.getImageFilePath().value());
       assertEquals("タイトル11", actual.getPhotoJapaneseTitle().value());
@@ -788,7 +788,7 @@ public class PhotoServiceImplIntegrationTest {
 
       PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
       assertNotNull(actual.getLocationNo());
-      assertNotNull(actual.getLocationName());
+      assertNotNull(actual.getDisplayName());
 
       TestTransaction.flagForCommit();
       TestTransaction.end();
@@ -819,7 +819,7 @@ public class PhotoServiceImplIntegrationTest {
 
       PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
       assertNull(actual.getLocationNo());
-      assertNull(actual.getLocationName());
+      assertNull(actual.getDisplayName());
       assertNull(actual.getGeoLocation().address());
     }
 
@@ -841,7 +841,7 @@ public class PhotoServiceImplIntegrationTest {
 
       PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
       assertNotNull(actual.getLocationNo());
-      assertNotNull(actual.getLocationName());
+      assertNotNull(actual.getDisplayName());
     }
   }
 

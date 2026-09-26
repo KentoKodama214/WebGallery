@@ -9,7 +9,8 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Address;
 import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.common.Latitude;
-import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.LocationDisplayName;
+import com.web.gallery.domain.common.LocationManagementName;
 import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.ImageFile;
 import com.web.gallery.domain.photo.ImageFilePath;
@@ -94,20 +95,24 @@ public class PhotoAggregateRepositoryImplTest {
   private PhotoDetailModel withLocation(
       PhotoDetailModel base,
       LocationNo locationNo,
-      LocationName locationName,
+      LocationManagementName managementName,
+      LocationDisplayName displayName,
       GeoLocation geoLocation) {
     return base.toBuilder()
         .locationNo(locationNo)
-        .locationName(locationName)
+        .managementName(managementName)
+        .displayName(displayName)
         .geoLocation(geoLocation)
         .build();
   }
 
-  private LocationMst buildLocationMst(Long accountNo, Long locationNo, String locationName) {
+  private LocationMst buildLocationMst(
+      Long accountNo, Long locationNo, String managementName, String displayName) {
     return LocationMst.builder()
         .accountNo(accountNo)
         .locationNo(locationNo)
-        .locationName(locationName)
+        .managementName(managementName)
+        .displayName(displayName)
         .address("東京都渋谷区")
         .latitude(new java.math.BigDecimal("35.6812"))
         .longitude(new java.math.BigDecimal("139.7671"))
@@ -226,12 +231,13 @@ public class PhotoAggregateRepositoryImplTest {
               buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty()),
               new LocationNo(3L),
               null,
+              null,
               null);
       Photo photo =
           Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
 
       doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
-      doReturn(List.of(buildLocationMst(1L, 3L, "渋谷")))
+      doReturn(List.of(buildLocationMst(1L, 3L, "渋谷_管理用", "渋谷")))
           .when(locationMstMapper)
           .select(any(LocationMstCondition.class));
 
@@ -253,6 +259,7 @@ public class PhotoAggregateRepositoryImplTest {
           withLocation(
               buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty()),
               new LocationNo(3L),
+              null,
               null,
               null);
       Photo photo =
@@ -280,13 +287,14 @@ public class PhotoAggregateRepositoryImplTest {
           withLocation(
               buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty()),
               null,
-              new LocationName("渋谷スクランブル交差点"),
+              new LocationManagementName("渋谷スクランブル交差点_管理用"),
+              new LocationDisplayName("渋谷スクランブル交差点"),
               geoLocation);
       Photo photo =
           Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
 
       doReturn(false).when(photoMstMapper).isExistPhoto(any(PhotoMstCondition.class));
-      doReturn(List.of(buildLocationMst(1L, 7L, "渋谷スクランブル交差点")))
+      doReturn(List.of(buildLocationMst(1L, 7L, "渋谷スクランブル交差点_管理用", "渋谷スクランブル交差点")))
           .when(locationMstMapper)
           .select(any(LocationMstCondition.class));
 
@@ -313,7 +321,8 @@ public class PhotoAggregateRepositoryImplTest {
           withLocation(
               buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty()),
               null,
-              new LocationName("渋谷スクランブル交差点"),
+              new LocationManagementName("渋谷スクランブル交差点_管理用"),
+              new LocationDisplayName("渋谷スクランブル交差点"),
               geoLocation);
       Photo photo =
           Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));
@@ -334,7 +343,8 @@ public class PhotoAggregateRepositoryImplTest {
       assertEquals(accountNo.value(), capturedLocationMst.getAccountNo());
       assertEquals(1L, capturedLocationMst.getLocationNo());
       assertEquals(accountNo.value(), capturedLocationMst.getCreatedBy());
-      assertEquals("渋谷スクランブル交差点", capturedLocationMst.getLocationName());
+      assertEquals("渋谷スクランブル交差点_管理用", capturedLocationMst.getManagementName());
+      assertEquals("渋谷スクランブル交差点", capturedLocationMst.getDisplayName());
       assertEquals("東京都渋谷区", capturedLocationMst.getAddress());
       assertEquals(new java.math.BigDecimal("35.6812"), capturedLocationMst.getLatitude());
       assertEquals(new java.math.BigDecimal("139.7671"), capturedLocationMst.getLongitude());
@@ -356,7 +366,8 @@ public class PhotoAggregateRepositoryImplTest {
           withLocation(
               buildDetail(accountNo, null, new ImageFilePath(""), PhotoTagModelList.empty()),
               null,
-              new LocationName("渋谷スクランブル交差点"),
+              new LocationManagementName("渋谷スクランブル交差点_管理用"),
+              new LocationDisplayName("渋谷スクランブル交差点"),
               geoLocation);
       Photo photo =
           Photo.forRegist(requestDetail, new PhotoNo(5L), new ImageFilePath("/path/DSC111.jpg"));

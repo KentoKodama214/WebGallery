@@ -541,7 +541,7 @@ export interface PhotoDetailResponse {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
-  locationName: string | null;
+  displayName: string | null;
   /** 位置情報公開フラグ（非公開かつ閲覧者が本人でない場合、上記の位置情報系フィールドは null で返る） */
   isLocationPublic: boolean | null;
   imageFilePath: string;
@@ -606,7 +606,10 @@ export interface PhotoUpperLimitResponse {
 /** ロケーション */
 export interface LocationItem {
   locationNo: number;
-  locationName: string;
+  /** 管理名（既存マスタからの選択UIで表示する名称） */
+  managementName: string;
+  /** 表示名（写真詳細での表示に使用） */
+  displayName: string;
   address: string;
   latitude: number;
   longitude: number;

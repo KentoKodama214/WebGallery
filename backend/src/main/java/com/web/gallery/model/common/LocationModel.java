@@ -4,7 +4,8 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Address;
 import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.common.Latitude;
-import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.LocationDisplayName;
+import com.web.gallery.domain.common.LocationManagementName;
 import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.entity.common.LocationMst;
@@ -22,8 +23,11 @@ public class LocationModel {
   /** ロケーション番号 */
   @NonNull private LocationNo locationNo;
 
-  /** ロケーション名 */
-  @NonNull private LocationName locationName;
+  /** 管理名 */
+  @NonNull private LocationManagementName managementName;
+
+  /** 表示名 */
+  @NonNull private LocationDisplayName displayName;
 
   /** 位置情報（住所・緯度・経度） */
   @NonNull private GeoLocation geoLocation;
@@ -38,7 +42,8 @@ public class LocationModel {
     return LocationModel.builder()
         .accountNo(new AccountNo(entity.getAccountNo()))
         .locationNo(new LocationNo(entity.getLocationNo()))
-        .locationName(new LocationName(entity.getLocationName()))
+        .managementName(new LocationManagementName(entity.getManagementName()))
+        .displayName(new LocationDisplayName(entity.getDisplayName()))
         .geoLocation(
             new GeoLocation(
                 new Address(entity.getAddress()),

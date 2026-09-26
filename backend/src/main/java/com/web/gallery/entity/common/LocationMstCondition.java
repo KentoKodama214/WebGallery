@@ -13,8 +13,8 @@ public class LocationMstCondition {
   /** ロケーション番号 */
   private Long locationNo;
 
-  /** ロケーション名 */
-  private String locationName;
+  /** 管理名 */
+  private String managementName;
 
   /**
    * アカウント番号による抽出条件を生成する
@@ -40,15 +40,19 @@ public class LocationMstCondition {
   }
 
   /**
-   * アカウント番号・ロケーション名による抽出条件を生成する
+   * アカウント番号・管理名による抽出条件を生成する
    *
-   * <p>新規ロケーション登録時の重複チェック（同名ロケーションの再利用）に使用する
+   * <p>新規ロケーション登録時の重複チェック（同一管理名のロケーションの再利用）に使用する
    *
    * @param accountNo アカウント番号
-   * @param locationName ロケーション名
+   * @param managementName 管理名
    * @return {@link LocationMstCondition}
    */
-  public static LocationMstCondition byAccountAndName(Long accountNo, String locationName) {
-    return LocationMstCondition.builder().accountNo(accountNo).locationName(locationName).build();
+  public static LocationMstCondition byAccountAndManagementName(
+      Long accountNo, String managementName) {
+    return LocationMstCondition.builder()
+        .accountNo(accountNo)
+        .managementName(managementName)
+        .build();
   }
 }

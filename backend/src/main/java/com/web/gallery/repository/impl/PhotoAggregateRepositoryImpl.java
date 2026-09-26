@@ -2,7 +2,7 @@ package com.web.gallery.repository.impl;
 
 import com.web.gallery.aggregate.Photo;
 import com.web.gallery.domain.common.GeoLocation;
-import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.LocationManagementName;
 import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.entity.common.LocationMst;
 import com.web.gallery.entity.common.LocationMstCondition;
@@ -154,7 +154,7 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
    * 写真詳細情報からロケーション番号を解決する
    *
    * <p>解決順は以下の通り： 1. ロケーション番号が指定されている（既存マスタからの選択） → 本人所有のロケーションマスタに存在するか検証し、そのまま採用する 2.
-   * ロケーション番号が未指定でロケーション名が指定されている（新規入力） → 同名のロケーションマスタが既に存在すればそのロケーション番号を再利用し、存在しなければ新規に採番・登録する 3.
+   * ロケーション番号が未指定で管理名が指定されている（新規入力） → 同一管理名のロケーションマスタが既に存在すればそのロケーション番号を再利用し、存在しなければ新規に採番・登録する 3.
    * どちらも未指定（ロケーション未設定） → デフォルト値（0）を採用する
    *
    * @param detail {@link PhotoDetailModel}
@@ -183,14 +183,14 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
       return requestedLocationNo;
     }
 
-    LocationName locationName = detail.getLocationName();
-    if (locationName == null) {
+    LocationManagementName managementName = detail.getManagementName();
+    if (managementName == null) {
       return LocationNo.getOrDefault(null);
     }
 
     List<LocationMst> matched =
         locationMstMapper.select(
-            LocationMstCondition.byAccountAndName(accountNo, locationName.value()));
+            LocationMstCondition.byAccountAndManagementName(accountNo, managementName.value()));
     if (!matched.isEmpty()) {
       return new LocationNo(matched.get(0).getLocationNo());
     }
@@ -198,14 +198,19 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
     GeoLocation geoLocation = detail.getGeoLocation();
     LocationNo newLocationNo = LocationNo.next(locationMstMapper.getMaxLocationNo(accountNo));
     LocationMst locationMst =
-        LocationMst.fromForRegist(detail.getAccountNo(), newLocationNo, locationName, geoLocation);
+        LocationMst.fromForRegist(
+            detail.getAccountNo(),
+            newLocationNo,
+            managementName,
+            detail.getDisplayName(),
+            geoLocation);
     try {
       locationMstMapper.insert(locationMst);
     } catch (DuplicateKeyException e) {
       log.warn(
-          "LocationMst: Duplicate Key (AccountNo: {}, LocationName: {})",
+          "LocationMst: Duplicate Key (AccountNo: {}, ManagementName: {})",
           accountNo,
-          locationName.value(),
+          managementName.value(),
           e);
       throw ErrorEnum.FAIL_TO_REGIST_LOCATION.toException();
     }

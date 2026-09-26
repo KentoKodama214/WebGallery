@@ -81,7 +81,8 @@ export function PhotoSettingForm({
   const [locationMode, setLocationMode] = useState<LocationMode>("none");
   const [locationList, setLocationList] = useState<LocationItem[]>([]);
   const [selectedLocationNo, setSelectedLocationNo] = useState<number | "">("");
-  const [newLocationName, setNewLocationName] = useState("");
+  const [newManagementName, setNewManagementName] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
   const [newAddress, setNewAddress] = useState("");
   const [newLatitude, setNewLatitude] = useState("");
   const [newLongitude, setNewLongitude] = useState("");
@@ -367,8 +368,11 @@ export function PhotoSettingForm({
       errors.push("ロケーションを選択してください");
     }
     if (locationMode === "new") {
-      if (!newLocationName.trim()) {
-        errors.push("ロケーション名を入力してください");
+      if (!newManagementName.trim()) {
+        errors.push("管理名を入力してください");
+      }
+      if (!newDisplayName.trim()) {
+        errors.push("表示名を入力してください");
       }
       if (!newLatitude || !newLongitude) {
         errors.push("地図をクリックするか、緯度・経度を入力してください");
@@ -443,7 +447,8 @@ export function PhotoSettingForm({
       if (locationMode === "existing" && selectedLocationNo !== "") {
         formData.append("locationNo", String(selectedLocationNo));
       } else if (locationMode === "new") {
-        formData.append("locationName", newLocationName);
+        formData.append("managementName", newManagementName);
+        formData.append("displayName", newDisplayName);
         if (newAddress) {
           formData.append("address", newAddress);
         }
@@ -829,7 +834,7 @@ export function PhotoSettingForm({
                 <option value="">選択してください</option>
                 {locationList.map((location) => (
                   <option key={location.locationNo} value={location.locationNo}>
-                    {location.locationName}
+                    {location.managementName}
                     {location.address ? `（${location.address}）` : ""}
                   </option>
                 ))}
@@ -840,13 +845,28 @@ export function PhotoSettingForm({
               <div className="flex flex-col gap-2">
                 <input
                   type="text"
-                  value={newLocationName}
-                  onChange={(e) => setNewLocationName(e.target.value)}
-                  placeholder="ロケーション名 *"
-                  aria-label="ロケーション名"
+                  value={newManagementName}
+                  onChange={(e) => setNewManagementName(e.target.value)}
+                  placeholder="管理名 *"
+                  aria-label="管理名"
                   className="w-full bg-gray-800 text-white border border-gray-600 p-2"
-                  data-testid="new-location-name-input"
+                  data-testid="new-location-management-name-input"
                 />
+                <p className="text-xs text-gray-400">
+                  管理名は自分がロケーションを識別するための名称です（他のユーザーには表示されません）。
+                </p>
+                <input
+                  type="text"
+                  value={newDisplayName}
+                  onChange={(e) => setNewDisplayName(e.target.value)}
+                  placeholder="表示名 *"
+                  aria-label="表示名"
+                  className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                  data-testid="new-location-display-name-input"
+                />
+                <p className="text-xs text-gray-400">
+                  表示名は写真詳細ページで表示される名称です。
+                </p>
                 <p className="text-xs text-gray-400">
                   地図をクリックすると緯度・経度が自動入力されます（うまく取得できない場合は直接入力してください）
                 </p>
@@ -903,7 +923,7 @@ export function PhotoSettingForm({
                 onChange={(e) => setIsLocationPublic(e.target.checked)}
                 data-testid="location-public-checkbox"
               />
-              撮影場所（緯度経度・住所・ロケーション名）を他のユーザーにも公開する
+              撮影場所（緯度経度・住所・表示名）を他のユーザーにも公開する
             </label>
             <p className="text-xs text-gray-400 mt-1">
               オフの場合、撮影場所は本人にのみ表示されます。

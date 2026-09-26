@@ -7,7 +7,8 @@
 		<result property="locationNo" column="location_no"/>
 		<result property="createdBy" column="created_by"/>
 		<result property="createdAt" column="created_at"/>
-		<result property="locationName" column="location_name"/>
+		<result property="managementName" column="management_name"/>
+		<result property="displayName" column="display_name"/>
 		<result property="address" column="address"/>
 		<result property="latitude" column="latitude"/>
 		<result property="longitude" column="longitude"/>
@@ -20,7 +21,8 @@
 			location_no AS locationNo,
 			created_by AS createdBy,
 			created_at AS createdAt,
-			location_name AS locationName,
+			management_name AS managementName,
+			display_name AS displayName,
 			address,
 			latitude,
 			longitude
@@ -30,7 +32,7 @@
 			AND is_deleted = false
 			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
 			<if test="locationNo != null"> AND location_no = #{locationNo}</if>
-			<if test="locationName != null"> AND location_name = #{locationName}</if>
+			<if test="managementName != null"> AND management_name = #{managementName}</if>
 		</where>
 	</select>
 
@@ -43,7 +45,8 @@
 				created_at,
 				updated_by,
 				updated_at,
-				location_name,
+				management_name,
+				display_name,
 				address,
 				latitude,
 				longitude
@@ -56,7 +59,8 @@
 				NOW(),
 				#{createdBy},
 				NOW(),
-				#{locationName},
+				#{managementName},
+				#{displayName},
 				#{address},
 				#{latitude},
 				#{longitude}

@@ -50,9 +50,9 @@ public class PhotoDetailGetResponse {
   @Schema(description = "経度")
   private BigDecimal longitude;
 
-  /** ロケーション名 */
-  @Schema(description = "ロケーション名")
-  private String locationName;
+  /** ロケーション表示名 */
+  @Schema(description = "ロケーション表示名")
+  private String displayName;
 
   /** 位置情報公開フラグ（非公開かつ閲覧者が本人でない場合、上記の位置情報系フィールドはnullで返る） */
   @Schema(description = "位置情報公開フラグ")
@@ -129,7 +129,7 @@ public class PhotoDetailGetResponse {
         .address(geoLocation.address() != null ? geoLocation.address().value() : null)
         .latitude(geoLocation.latitude() != null ? geoLocation.latitude().value() : null)
         .longitude(geoLocation.longitude() != null ? geoLocation.longitude().value() : null)
-        .locationName(model.getLocationName() != null ? model.getLocationName().value() : null)
+        .displayName(model.getDisplayName() != null ? model.getDisplayName().value() : null)
         .isLocationPublic(
             model.getIsLocationPublic() != null ? model.getIsLocationPublic().value() : null)
         .imageFilePath(model.getImageFilePath().value())

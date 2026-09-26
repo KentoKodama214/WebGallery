@@ -44,7 +44,7 @@ const samplePhoto = {
   address: null,
   latitude: null,
   longitude: null,
-  locationName: null,
+  displayName: null,
   isLocationPublic: true,
   imageFilePath: "/photos/test.jpg",
   photoJapaneseTitle: "テスト写真",
@@ -536,7 +536,7 @@ describe("PhotoSettingForm", () => {
     expect(formData.get("isLocationPublic")).toBe("true");
   });
 
-  it("既定では撮影場所が「設定しない」で、locationNo・locationNameのいずれも送信されないこと", async () => {
+  it("既定では撮影場所が「設定しない」で、locationNo・managementName・displayNameのいずれも送信されないこと", async () => {
     mockRegistPhotos.mockResolvedValue({ isSuccess: true, registeredCount: 1 });
 
     render(<PhotoSettingForm photoAccountId="user1" />);
@@ -559,7 +559,8 @@ describe("PhotoSettingForm", () => {
     });
     const formData = mockRegistPhotos.mock.calls[0][1] as FormData;
     expect(formData.get("locationNo")).toBeNull();
-    expect(formData.get("locationName")).toBeNull();
+    expect(formData.get("managementName")).toBeNull();
+    expect(formData.get("displayName")).toBeNull();
   });
 
   it("既存のロケーションを選択して送信すると、locationNoのみを送信すること", async () => {
@@ -567,7 +568,8 @@ describe("PhotoSettingForm", () => {
       locations: [
         {
           locationNo: 3,
-          locationName: "渋谷スクランブル交差点",
+          managementName: "渋谷スクランブル交差点_管理用",
+          displayName: "渋谷スクランブル交差点",
           address: "東京都渋谷区",
           latitude: 35.6812,
           longitude: 139.7671,
@@ -604,7 +606,8 @@ describe("PhotoSettingForm", () => {
     });
     const formData = mockRegistPhotos.mock.calls[0][1] as FormData;
     expect(formData.get("locationNo")).toBe("3");
-    expect(formData.get("locationName")).toBeNull();
+    expect(formData.get("managementName")).toBeNull();
+    expect(formData.get("displayName")).toBeNull();
   });
 
   it("既存のロケーションから選択モードで未選択のまま送信すると、バリデーションエラーになること", async () => {
@@ -632,7 +635,7 @@ describe("PhotoSettingForm", () => {
     expect(mockRegistPhotos).not.toHaveBeenCalled();
   });
 
-  it("新規ロケーションを入力して送信すると、locationName・address・latitude・longitudeを送信すること", async () => {
+  it("新規ロケーションを入力して送信すると、managementName・displayName・address・latitude・longitudeを送信すること", async () => {
     mockRegistPhotos.mockResolvedValue({ isSuccess: true, registeredCount: 1 });
 
     render(<PhotoSettingForm photoAccountId="user1" />);
@@ -642,7 +645,10 @@ describe("PhotoSettingForm", () => {
     });
 
     fireEvent.click(screen.getByTestId("location-mode-new"));
-    fireEvent.change(screen.getByTestId("new-location-name-input"), {
+    fireEvent.change(screen.getByTestId("new-location-management-name-input"), {
+      target: { value: "新宿御苑_管理用" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-display-name-input"), {
       target: { value: "新宿御苑" },
     });
     fireEvent.change(screen.getByTestId("new-location-latitude-input"), {
@@ -668,14 +674,15 @@ describe("PhotoSettingForm", () => {
       expect(mockRegistPhotos).toHaveBeenCalled();
     });
     const formData = mockRegistPhotos.mock.calls[0][1] as FormData;
-    expect(formData.get("locationName")).toBe("新宿御苑");
+    expect(formData.get("managementName")).toBe("新宿御苑_管理用");
+    expect(formData.get("displayName")).toBe("新宿御苑");
     expect(formData.get("latitude")).toBe("35.6850");
     expect(formData.get("longitude")).toBe("139.7100");
     expect(formData.get("address")).toBe("東京都新宿区");
     expect(formData.get("locationNo")).toBeNull();
   });
 
-  it("新規ロケーション登録モードでロケーション名が未入力の場合、バリデーションエラーになること", async () => {
+  it("新規ロケーション登録モードで管理名が未入力の場合、バリデーションエラーになること", async () => {
     render(<PhotoSettingForm photoAccountId="user1" />);
 
     await waitFor(() => {
@@ -683,6 +690,9 @@ describe("PhotoSettingForm", () => {
     });
 
     fireEvent.click(screen.getByTestId("location-mode-new"));
+    fireEvent.change(screen.getByTestId("new-location-display-name-input"), {
+      target: { value: "新宿御苑" },
+    });
     fireEvent.change(screen.getByTestId("new-location-latitude-input"), {
       target: { value: "35.6850" },
     });
@@ -701,7 +711,42 @@ describe("PhotoSettingForm", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("validation-errors")).toHaveTextContent(
-        "ロケーション名を入力してください"
+        "管理名を入力してください"
+      );
+    });
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
+  it("新規ロケーション登録モードで表示名が未入力の場合、バリデーションエラーになること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+    fireEvent.change(screen.getByTestId("new-location-management-name-input"), {
+      target: { value: "新宿御苑_管理用" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-latitude-input"), {
+      target: { value: "35.6850" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-longitude-input"), {
+      target: { value: "139.7100" },
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("validation-errors")).toHaveTextContent(
+        "表示名を入力してください"
       );
     });
     expect(mockRegistPhotos).not.toHaveBeenCalled();
@@ -715,7 +760,10 @@ describe("PhotoSettingForm", () => {
     });
 
     fireEvent.click(screen.getByTestId("location-mode-new"));
-    fireEvent.change(screen.getByTestId("new-location-name-input"), {
+    fireEvent.change(screen.getByTestId("new-location-management-name-input"), {
+      target: { value: "新宿御苑_管理用" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-display-name-input"), {
       target: { value: "新宿御苑" },
     });
 
@@ -745,7 +793,8 @@ describe("PhotoSettingForm", () => {
       locations: [
         {
           locationNo: 3,
-          locationName: "渋谷スクランブル交差点",
+          managementName: "渋谷スクランブル交差点_管理用",
+          displayName: "渋谷スクランブル交差点",
           address: "東京都渋谷区",
           latitude: 35.6812,
           longitude: 139.7671,

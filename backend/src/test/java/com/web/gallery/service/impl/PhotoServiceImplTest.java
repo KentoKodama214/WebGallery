@@ -13,7 +13,7 @@ import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.common.IpAddress;
 import com.web.gallery.domain.common.IpGeoLocation;
 import com.web.gallery.domain.common.Latitude;
-import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.LocationDisplayName;
 import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.common.Referer;
 import com.web.gallery.domain.photo.Caption;
@@ -168,7 +168,7 @@ public class PhotoServiceImplTest {
     lenient()
         .when(
             locationInputPolicy.isValid(
-                any(), any(), any(com.web.gallery.domain.common.GeoLocation.class)))
+                any(), any(), any(), any(com.web.gallery.domain.common.GeoLocation.class)))
         .thenReturn(true);
   }
 
@@ -969,7 +969,7 @@ public class PhotoServiceImplTest {
                   new Address("東京都渋谷区"),
                   new Latitude(BigDecimal.valueOf(35.6812)),
                   new Longitude(BigDecimal.valueOf(139.7671))))
-          .locationName(new LocationName("渋谷"))
+          .displayName(new LocationDisplayName("渋谷"))
           .isLocationPublic(new IsLocationPublic(isLocationPublic))
           .build();
     }
@@ -1001,7 +1001,7 @@ public class PhotoServiceImplTest {
                   .build());
 
       assertNull(actual.getLocationNo());
-      assertNull(actual.getLocationName());
+      assertNull(actual.getDisplayName());
       assertNull(actual.getGeoLocation().address());
       assertNull(actual.getGeoLocation().latitude());
       assertNull(actual.getGeoLocation().longitude());
@@ -2068,10 +2068,10 @@ public class PhotoServiceImplTest {
       String accountId = "aaaaaaaa";
       doReturn(false)
           .when(locationInputPolicy)
-          .isValid(any(), any(), any(com.web.gallery.domain.common.GeoLocation.class));
+          .isValid(any(), any(), any(), any(com.web.gallery.domain.common.GeoLocation.class));
 
       PhotoDetailModel photoDetailModel =
-          createNewPhoto().toBuilder().locationName(new LocationName("渋谷")).build();
+          createNewPhoto().toBuilder().displayName(new LocationDisplayName("渋谷")).build();
 
       assertThrows(
           BadRequestException.class,

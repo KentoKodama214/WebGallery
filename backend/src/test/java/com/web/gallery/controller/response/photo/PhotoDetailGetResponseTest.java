@@ -6,7 +6,7 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Address;
 import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.common.Latitude;
-import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.LocationDisplayName;
 import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.Caption;
 import com.web.gallery.domain.photo.ExifData;
@@ -76,7 +76,7 @@ class PhotoDetailGetResponseTest {
                         new Address("東京都渋谷区"),
                         new Latitude(new BigDecimal("35.681236")),
                         new Longitude(new BigDecimal("139.767125"))))
-                .locationName(new LocationName("渋谷駅"))
+                .displayName(new LocationDisplayName("渋谷駅"))
                 .isLocationPublic(new IsLocationPublic(true))
                 .imageFilePath(new ImageFilePath("path/to/image.jpg"))
                 .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル"))
@@ -102,7 +102,7 @@ class PhotoDetailGetResponseTest {
         assertEquals("東京都渋谷区", actual.getAddress());
         assertEquals(new BigDecimal("35.681236"), actual.getLatitude());
         assertEquals(new BigDecimal("139.767125"), actual.getLongitude());
-        assertEquals("渋谷駅", actual.getLocationName());
+        assertEquals("渋谷駅", actual.getDisplayName());
         assertTrue(actual.getIsLocationPublic());
         assertEquals("path/to/image.jpg", actual.getImageFilePath());
         assertEquals("タイトル", actual.getPhotoJapaneseTitle());
@@ -136,7 +136,7 @@ class PhotoDetailGetResponseTest {
         assertNull(actual.getAddress());
         assertNull(actual.getLatitude());
         assertNull(actual.getLongitude());
-        assertNull(actual.getLocationName());
+        assertNull(actual.getDisplayName());
         assertNull(actual.getIsLocationPublic());
         assertNull(actual.getPhotoJapaneseTitle());
         assertNull(actual.getPhotoEnglishTitle());

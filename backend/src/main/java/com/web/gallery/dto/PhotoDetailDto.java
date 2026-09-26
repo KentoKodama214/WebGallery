@@ -32,8 +32,8 @@ public class PhotoDetailDto {
   /** 経度 */
   private BigDecimal longitude;
 
-  /** ロケーション名 */
-  private String locationName;
+  /** ロケーション表示名 */
+  private String displayName;
 
   /** 画像ファイルパス */
   private String imageFilePath;

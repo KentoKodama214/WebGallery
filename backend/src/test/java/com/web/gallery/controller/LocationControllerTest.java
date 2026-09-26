@@ -9,7 +9,8 @@ import com.web.gallery.domain.account.AccountNo;
 import com.web.gallery.domain.common.Address;
 import com.web.gallery.domain.common.GeoLocation;
 import com.web.gallery.domain.common.Latitude;
-import com.web.gallery.domain.common.LocationName;
+import com.web.gallery.domain.common.LocationDisplayName;
+import com.web.gallery.domain.common.LocationManagementName;
 import com.web.gallery.domain.common.Longitude;
 import com.web.gallery.domain.photo.LocationNo;
 import com.web.gallery.helper.SessionHelper;
@@ -52,11 +53,13 @@ public class LocationControllerTest {
             .build();
   }
 
-  private LocationModel buildLocationModel(Long locationNo, String locationName) {
+  private LocationModel buildLocationModel(
+      Long locationNo, String managementName, String displayName) {
     return LocationModel.builder()
         .accountNo(new AccountNo(1L))
         .locationNo(new LocationNo(locationNo))
-        .locationName(new LocationName(locationName))
+        .managementName(new LocationManagementName(managementName))
+        .displayName(new LocationDisplayName(displayName))
         .geoLocation(
             new GeoLocation(
                 new Address("東京都渋谷区"),
@@ -76,14 +79,15 @@ public class LocationControllerTest {
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
       doReturn(1L).when(sessionHelper).getAccountNo();
       LocationModelList locationModelList =
-          LocationModelList.of(List.of(buildLocationModel(3L, "渋谷スクランブル交差点")));
+          LocationModelList.of(List.of(buildLocationModel(3L, "渋谷スクランブル交差点_管理用", "渋谷スクランブル交差点")));
       doReturn(locationModelList).when(locationService).getLocationList(new AccountNo(1L));
 
       mockMvc
           .perform(get("/api/v1/accounts/aaaaaaaa/locations"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.locations[0].locationNo").value(3))
-          .andExpect(jsonPath("$.locations[0].locationName").value("渋谷スクランブル交差点"))
+          .andExpect(jsonPath("$.locations[0].managementName").value("渋谷スクランブル交差点_管理用"))
+          .andExpect(jsonPath("$.locations[0].displayName").value("渋谷スクランブル交差点"))
           .andExpect(jsonPath("$.locations[0].address").value("東京都渋谷区"))
           .andExpect(jsonPath("$.locations[0].latitude").value(35.6812))
           .andExpect(jsonPath("$.locations[0].longitude").value(139.7671));

@@ -70,7 +70,8 @@ public class LocationControllerIntegrationTest {
           .andExpect(content().contentType(MediaType.APPLICATION_JSON))
           .andExpect(jsonPath("$.locations.length()").value(1))
           .andExpect(jsonPath("$.locations[0].locationNo").value(1))
-          .andExpect(jsonPath("$.locations[0].locationName").value("渋谷スクランブル交差点"))
+          .andExpect(jsonPath("$.locations[0].managementName").value("渋谷スクランブル交差点_管理用"))
+          .andExpect(jsonPath("$.locations[0].displayName").value("渋谷スクランブル交差点"))
           .andExpect(jsonPath("$.locations[0].address").value("東京都渋谷区"))
           .andExpect(jsonPath("$.locations[0].latitude").value(35.6812))
           .andExpect(jsonPath("$.locations[0].longitude").value(139.7671));

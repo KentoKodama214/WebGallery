@@ -15,9 +15,13 @@ public class LocationResponse {
   @Schema(description = "ロケーション番号", example = "1")
   private Long locationNo;
 
-  /** ロケーション名 */
-  @Schema(description = "ロケーション名", example = "渋谷スクランブル交差点")
-  private String locationName;
+  /** 管理名（既存マスタからの選択UIで表示する名称） */
+  @Schema(description = "管理名（既存マスタからの選択UIで表示する名称）", example = "渋谷交差点_管理用")
+  private String managementName;
+
+  /** 表示名 */
+  @Schema(description = "表示名", example = "渋谷スクランブル交差点")
+  private String displayName;
 
   /** 住所 */
   @Schema(description = "住所", example = "東京都渋谷区")
@@ -40,7 +44,8 @@ public class LocationResponse {
   public static LocationResponse from(LocationModel model) {
     return LocationResponse.builder()
         .locationNo(model.getLocationNo().value())
-        .locationName(model.getLocationName().value())
+        .managementName(model.getManagementName().value())
+        .displayName(model.getDisplayName().value())
         .address(model.getGeoLocation().address().value())
         .latitude(model.getGeoLocation().latitude().value())
         .longitude(model.getGeoLocation().longitude().value())

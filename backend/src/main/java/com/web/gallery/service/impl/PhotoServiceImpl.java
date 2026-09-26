@@ -252,9 +252,9 @@ public class PhotoServiceImpl implements PhotoService {
             .imageFilePath(fileRepository.getPresignedUrl(photoDetailModel.getImageFilePath()));
 
     // 位置情報が非公開の写真は、閲覧者が本人でない限り撮影場所（ロケーション番号・住所・緯度経度・
-    // ロケーション名）を返さない（撮影場所からの個人特定を防ぐ）
+    // 表示名）を返さない（撮影場所からの個人特定を防ぐ）
     if (isLocationHiddenFor(photoDetailModel, photoDetailGetModel, accountModel.getAccountNo())) {
-      builder.locationNo(null).geoLocation(GeoLocation.empty()).locationName(null);
+      builder.locationNo(null).geoLocation(GeoLocation.empty()).displayName(null);
     }
     return builder.build();
   }
@@ -291,7 +291,7 @@ public class PhotoServiceImpl implements PhotoService {
    * @param photoDetailModelList {@link PhotoDetailModelList}
    * @throws GalleryException 以下のいずれかに該当する場合 ・新規登録時に画像ファイルが指定されていない場合 ・許可されていない拡張子のファイルの場合
    *     ・画像ファイルのContent-Typeが許可されていない場合 ・画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合 ・画像ファイルのサイズが上限を超えている場合
-   *     ・同じファイル名のファイルが既に保存済みの場合 ・登録枚数の上限に達している場合 ・ロケーションの新規入力なのに緯度または経度が未指定の場合
+   *     ・同じファイル名のファイルが既に保存済みの場合 ・登録枚数の上限に達している場合 ・ロケーションの新規入力なのに管理名・表示名・緯度・経度のいずれかが未指定の場合
    *     ・選択されたロケーションが本人所有でない場合 ・登録に失敗した場合 ・更新に失敗した場合
    */
   @Override
@@ -304,7 +304,8 @@ public class PhotoServiceImpl implements PhotoService {
     for (PhotoDetailModel photoDetailModel : photoDetailModelList) {
       if (!locationInputPolicy.isValid(
           photoDetailModel.getLocationNo(),
-          photoDetailModel.getLocationName(),
+          photoDetailModel.getManagementName(),
+          photoDetailModel.getDisplayName(),
           photoDetailModel.getGeoLocation())) {
         throw ErrorEnum.INVALID_INPUT.toException();
       }
