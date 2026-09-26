@@ -16,7 +16,7 @@ import com.web.gallery.domain.model.common.LocationDisplayName;
 import com.web.gallery.domain.model.common.LocationManagementName;
 import com.web.gallery.domain.model.common.Longitude;
 import com.web.gallery.domain.model.photo.LocationNo;
-import com.web.gallery.helper.SessionHelper;
+import com.web.gallery.infrastructure.security.SessionHelper;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

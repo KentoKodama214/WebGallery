@@ -1,4 +1,4 @@
-package com.web.gallery.helper;
+package com.web.gallery.infrastructure.web;
 
 import com.web.gallery.application.helper.ReauthenticationThrottle;
 import java.time.Clock;

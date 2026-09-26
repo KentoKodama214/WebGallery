@@ -1,4 +1,4 @@
-package com.web.gallery.helper;
+package com.web.gallery.infrastructure.helper;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

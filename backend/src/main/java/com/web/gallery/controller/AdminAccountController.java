@@ -1,6 +1,5 @@
 package com.web.gallery.controller;
 
-import com.web.gallery.annotation.RequireAdminAuthority;
 import com.web.gallery.application.model.account.AccountListGetModel;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.account.AccountPageModel;
@@ -15,7 +14,8 @@ import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.helper.ValidationErrorLogger;
+import com.web.gallery.infrastructure.security.RequireAdminAuthority;
+import com.web.gallery.infrastructure.web.ValidationErrorLogger;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

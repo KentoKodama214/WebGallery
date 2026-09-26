@@ -1,4 +1,4 @@
-package com.web.gallery.helper;
+package com.web.gallery.infrastructure.web;
 
 import java.util.Set;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package com.web.gallery.helper;
+package com.web.gallery.infrastructure.helper;
 
 import com.web.gallery.application.model.common.KbnMstModelList;
 import java.util.LinkedHashMap;

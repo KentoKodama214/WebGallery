@@ -24,7 +24,7 @@ import com.web.gallery.domain.model.account.FreeMemo;
 import com.web.gallery.domain.model.account.LoginFailureCount;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
-import com.web.gallery.helper.SessionHelper;
+import com.web.gallery.infrastructure.security.SessionHelper;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;

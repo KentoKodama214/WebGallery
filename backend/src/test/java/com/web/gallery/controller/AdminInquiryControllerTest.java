@@ -22,7 +22,7 @@ import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.domain.model.inquiry.InquirySubject;
 import com.web.gallery.domain.model.inquiry.ReplyNo;
-import com.web.gallery.helper.SessionHelper;
+import com.web.gallery.infrastructure.security.SessionHelper;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

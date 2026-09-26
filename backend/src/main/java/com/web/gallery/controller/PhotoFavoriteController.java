@@ -9,7 +9,7 @@ import com.web.gallery.domain.constant.ApiRoutes;
 import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
-import com.web.gallery.helper.SessionHelper;
+import com.web.gallery.infrastructure.security.SessionHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

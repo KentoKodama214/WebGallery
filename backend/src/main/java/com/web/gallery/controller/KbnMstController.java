@@ -4,7 +4,7 @@ import com.web.gallery.application.model.common.KbnMstModelList;
 import com.web.gallery.application.service.KbnMstService;
 import com.web.gallery.controller.response.common.PrefectureGroupResponse;
 import com.web.gallery.domain.constant.ApiRoutes;
-import com.web.gallery.helper.KbnHelper;
+import com.web.gallery.infrastructure.helper.KbnHelper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,15 +1,17 @@
-package com.web.gallery.aspect;
+package com.web.gallery.infrastructure.security;
 
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
-import com.web.gallery.helper.SessionHelper;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
 
-/** {@link com.web.gallery.annotation.RequireAdminAuthority}が付与されたメソッドの実行前に 管理者権限を検証するAspectクラス */
+/**
+ * {@link com.web.gallery.infrastructure.security.RequireAdminAuthority}が付与されたメソッドの実行前に
+ * 管理者権限を検証するAspectクラス
+ */
 @Aspect
 @Component
 @RequiredArgsConstructor
@@ -21,7 +23,7 @@ public class AdminAuthorityAspect {
    *
    * @throws GalleryException 管理者権限がない場合
    */
-  @Before("@annotation(com.web.gallery.annotation.RequireAdminAuthority)")
+  @Before("@annotation(com.web.gallery.infrastructure.security.RequireAdminAuthority)")
   public void validateAdminAuthority() throws GalleryException {
     if (sessionHelper.getAuthorityKbn() != AuthorityEnum.ADMINISTRATOR) {
       throw ErrorEnum.NOT_AUTHORIZED_TO_ADMIN.toException();

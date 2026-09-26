@@ -9,8 +9,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.web.gallery.helper.ClientIpResolver;
-import com.web.gallery.helper.RateLimiter;
+import com.web.gallery.infrastructure.web.ClientIpResolver;
+import com.web.gallery.infrastructure.web.RateLimiter;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

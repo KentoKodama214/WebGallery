@@ -14,7 +14,7 @@ import com.web.gallery.domain.model.auth.AccessToken;
 import com.web.gallery.domain.model.auth.ExpiresIn;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
 import com.web.gallery.domain.model.common.IpAddress;
-import com.web.gallery.helper.ClientIpResolver;
+import com.web.gallery.infrastructure.web.ClientIpResolver;
 import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;

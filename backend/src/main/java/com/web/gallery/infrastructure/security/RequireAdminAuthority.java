@@ -1,4 +1,4 @@
-package com.web.gallery.annotation;
+package com.web.gallery.infrastructure.security;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

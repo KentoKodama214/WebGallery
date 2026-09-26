@@ -11,7 +11,7 @@ import com.web.gallery.application.service.impl.PhotoFavoriteServiceImpl;
 import com.web.gallery.domain.exception.FavoriteNotFoundException;
 import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.helper.SessionHelper;
+import com.web.gallery.infrastructure.security.SessionHelper;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

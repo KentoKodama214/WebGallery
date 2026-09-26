@@ -1,4 +1,4 @@
-package com.web.gallery.helper;
+package com.web.gallery.infrastructure.helper;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;

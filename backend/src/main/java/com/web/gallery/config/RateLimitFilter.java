@@ -2,8 +2,8 @@ package com.web.gallery.config;
 
 import com.web.gallery.domain.constant.ApiRoutes;
 import com.web.gallery.domain.constant.MessageConst;
-import com.web.gallery.helper.ClientIpResolver;
-import com.web.gallery.helper.RateLimiter;
+import com.web.gallery.infrastructure.web.ClientIpResolver;
+import com.web.gallery.infrastructure.web.RateLimiter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -18,7 +18,7 @@ import com.web.gallery.domain.model.common.KbnGroupEnglishName;
 import com.web.gallery.domain.model.common.KbnGroupJapaneseName;
 import com.web.gallery.domain.model.common.KbnJapaneseName;
 import com.web.gallery.domain.model.common.SortOrder;
-import com.web.gallery.helper.KbnHelper;
+import com.web.gallery.infrastructure.helper.KbnHelper;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

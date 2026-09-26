@@ -1,4 +1,4 @@
-package com.web.gallery.helper;
+package com.web.gallery.infrastructure.web;
 
 import com.web.gallery.domain.model.common.IpAddress;
 import jakarta.servlet.http.HttpServletRequest;

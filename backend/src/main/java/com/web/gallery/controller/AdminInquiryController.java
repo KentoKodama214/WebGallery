@@ -1,6 +1,5 @@
 package com.web.gallery.controller;
 
-import com.web.gallery.annotation.RequireAdminAuthority;
 import com.web.gallery.application.model.inquiry.InquiryDetailModel;
 import com.web.gallery.application.model.inquiry.InquiryListGetModel;
 import com.web.gallery.application.model.inquiry.InquiryPageModel;
@@ -18,8 +17,9 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.ReplyBody;
 import com.web.gallery.domain.model.inquiry.ReplyNo;
-import com.web.gallery.helper.SessionHelper;
-import com.web.gallery.helper.ValidationErrorLogger;
+import com.web.gallery.infrastructure.security.RequireAdminAuthority;
+import com.web.gallery.infrastructure.security.SessionHelper;
+import com.web.gallery.infrastructure.web.ValidationErrorLogger;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

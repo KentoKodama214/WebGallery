@@ -1,4 +1,4 @@
-package com.web.gallery.helper;
+package com.web.gallery.infrastructure.web;
 
 import java.time.Clock;
 import java.time.Duration;

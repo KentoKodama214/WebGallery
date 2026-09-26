@@ -1,4 +1,4 @@
-package com.web.gallery.helper;
+package com.web.gallery.infrastructure.helper;
 
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import java.io.IOException;
