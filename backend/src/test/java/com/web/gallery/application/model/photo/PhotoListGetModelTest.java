@@ -2,13 +2,13 @@ package com.web.gallery.application.model.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.controller.request.photo.PhotoListRequest;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.domain.model.common.Referer;
+import com.web.gallery.presentation.controller.request.photo.PhotoListRequest;
 import java.util.Collections;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

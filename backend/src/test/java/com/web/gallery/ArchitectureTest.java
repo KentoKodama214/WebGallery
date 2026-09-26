@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @AnalyzeClasses(packages = "com.web.gallery", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
 
-  private static final String CONTROLLER_PKG = "com.web.gallery.controller";
+  private static final String CONTROLLER_PKG = "com.web.gallery.presentation.controller";
   private static final String SERVICE_PKG = "com.web.gallery.application.service";
   private static final String SERVICE_IMPL_PKG = "com.web.gallery.application.service.impl";
   private static final String REPOSITORY_PKG = "com.web.gallery.application.repository";

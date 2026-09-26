@@ -1,6 +1,6 @@
 package com.web.gallery.application.model.account;
 
-import com.web.gallery.controller.request.account.AccountListRequest;
+import com.web.gallery.presentation.controller.request.account.AccountListRequest;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

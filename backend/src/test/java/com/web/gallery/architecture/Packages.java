@@ -3,9 +3,9 @@ package com.web.gallery.architecture;
 /** 新規ArchUnitテストで共通利用するパッケージ名定数 */
 final class Packages {
 
-  static final String CONTROLLER = "com.web.gallery.controller";
-  static final String CONTROLLER_REQUEST = "com.web.gallery.controller.request";
-  static final String CONTROLLER_RESPONSE = "com.web.gallery.controller.response";
+  static final String CONTROLLER = "com.web.gallery.presentation.controller";
+  static final String CONTROLLER_REQUEST = "com.web.gallery.presentation.controller.request";
+  static final String CONTROLLER_RESPONSE = "com.web.gallery.presentation.controller.response";
   static final String SERVICE = "com.web.gallery.application.service";
   static final String SERVICE_IMPL = "com.web.gallery.application.service.impl";
   // SchedulerLockRepositoryは他から参照されず自己完結しているためinfrastructure.schedulerへ集約されており対象外

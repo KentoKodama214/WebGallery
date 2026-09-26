@@ -2,14 +2,14 @@ package com.web.gallery.application.model.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.controller.request.photo.PhotoBulkSaveRequest;
-import com.web.gallery.controller.request.photo.PhotoSaveRequest;
-import com.web.gallery.controller.request.photo.PhotoTagSaveRequest;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.ExifData;
 import com.web.gallery.infrastructure.persistence.dto.PhotoDetailDto;
+import com.web.gallery.presentation.controller.request.photo.PhotoBulkSaveRequest;
+import com.web.gallery.presentation.controller.request.photo.PhotoSaveRequest;
+import com.web.gallery.presentation.controller.request.photo.PhotoTagSaveRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;

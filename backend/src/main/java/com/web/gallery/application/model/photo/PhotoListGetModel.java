@@ -1,6 +1,5 @@
 package com.web.gallery.application.model.photo;
 
-import com.web.gallery.controller.request.photo.PhotoListRequest;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
@@ -9,6 +8,7 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.domain.model.common.Referer;
 import com.web.gallery.domain.model.photo.IsFavoriteOnly;
+import com.web.gallery.presentation.controller.request.photo.PhotoListRequest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

@@ -1,7 +1,5 @@
 package com.web.gallery.application.model.photo;
 
-import com.web.gallery.controller.request.photo.PhotoBulkSaveRequest;
-import com.web.gallery.controller.request.photo.PhotoSaveRequest;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -28,6 +26,8 @@ import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.ShutterSpeed;
 import com.web.gallery.infrastructure.persistence.dto.PhotoDetailDto;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMst;
+import com.web.gallery.presentation.controller.request.photo.PhotoBulkSaveRequest;
+import com.web.gallery.presentation.controller.request.photo.PhotoSaveRequest;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;

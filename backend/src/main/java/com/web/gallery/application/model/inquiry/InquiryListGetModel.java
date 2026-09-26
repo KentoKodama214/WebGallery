@@ -1,9 +1,9 @@
 package com.web.gallery.application.model.inquiry;
 
-import com.web.gallery.controller.request.inquiry.AdminInquiryListRequest;
-import com.web.gallery.controller.request.inquiry.InquiryListRequest;
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.presentation.controller.request.inquiry.AdminInquiryListRequest;
+import com.web.gallery.presentation.controller.request.inquiry.InquiryListRequest;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

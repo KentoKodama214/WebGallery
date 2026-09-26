@@ -2,7 +2,6 @@ package com.web.gallery.application.model.account;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.controller.request.account.AccountUpdateRequest;
 import com.web.gallery.domain.enumeration.SexEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
@@ -12,6 +11,7 @@ import com.web.gallery.domain.model.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.model.account.FreeMemo;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
+import com.web.gallery.presentation.controller.request.account.AccountUpdateRequest;
 import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;

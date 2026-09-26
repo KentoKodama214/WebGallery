@@ -2,13 +2,13 @@ package com.web.gallery.application.model.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.controller.request.photo.PhotoTagSaveRequest;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TagNo;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMst;
+import com.web.gallery.presentation.controller.request.photo.PhotoTagSaveRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;

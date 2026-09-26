@@ -1,7 +1,5 @@
 package com.web.gallery.application.model.account;
 
-import com.web.gallery.controller.request.account.AccountRegistRequest;
-import com.web.gallery.controller.request.account.AccountUpdateRequest;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.SexEnum;
 import com.web.gallery.domain.model.account.AccountId;
@@ -18,6 +16,8 @@ import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.model.common.IsDeleted;
 import com.web.gallery.domain.model.common.UpdatedAt;
 import com.web.gallery.infrastructure.persistence.dto.AccountDto;
+import com.web.gallery.presentation.controller.request.account.AccountRegistRequest;
+import com.web.gallery.presentation.controller.request.account.AccountUpdateRequest;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import lombok.Builder;
