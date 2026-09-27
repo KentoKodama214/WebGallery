@@ -46,6 +46,7 @@ test.yml:
 - **Gradleキャッシュ**：`gradle/actions/setup-gradle`で依存関係とビルドキャッシュ（`org.gradle.caching=true`、`backend/gradle.properties`）をキャッシュする。同一PRへ追加pushした際、入力が変わっていないタスク（`compileJava`・`compileTestJava`・`unitTest`・`integrationTest`等）は出力がキャッシュから復元され再実行されない。JaCoCoの実行データ（`*.exec`）とテストレポートもタスク出力としてキャッシュされるため、キャッシュヒット時もカバレッジ集計に影響しない
 - **Playwrightブラウザキャッシュ**：`~/.cache/ms-playwright`をキャッシュし、ブラウザバイナリのダウンロードを省略する（`--with-deps`によるOSライブラリの導入は毎回実行される）
 - **E2Eジョブのステップ並行化**：バックエンドの起動（Gradleの起動・コンパイル・Spring Bootの初期化）に1分近くかかるため、データベース初期化の直後にバックグラウンドで起動し、MinIOの起動とフロントエンドのセットアップを並行して進める。起動完了の待機はE2Eテストの直前に行う
+- **E2Eのルート暖機**：`next dev`はページルート・APIプロキシルートを初回リクエスト時にオンデマンドでコンパイルする。ブラウザ別にジョブを分割したことで`webkit-smoke`・`mobile-smoke`は先行するchromium実行による暖機を当てにできなくなったため、`e2e/global-setup.ts`の`warmUpRoutes`でテスト開始前に主要ルートを一度叩いてコンパイル済みにする
 - **Springテストコンテキストの共有**：Controller層の統合テストは`@MockitoBean(types = FileRepository.class)`をクラスレベルで統一して宣言し、全クラスで同一のテストコンテキストを共有する。`BeanOverrideHandler#equals`はフィールド名まで比較するため、フィールド宣言とクラスレベル宣言が混在するとコンテキストキーが変わり再生成される
 
 ## 手動実行

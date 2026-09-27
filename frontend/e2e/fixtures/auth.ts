@@ -1,4 +1,5 @@
 import { test as base, expect, type Page } from "@playwright/test";
+import { fillStable } from "./form";
 
 /** `workerPage` が登録するテストアカウントのパスワード（E2E専用、本番では使用しない） */
 export const TEST_USER_PASSWORD = "E2eTestPass123";
@@ -59,9 +60,9 @@ export async function registerAccount(
   password: string = TEST_USER_PASSWORD
 ): Promise<void> {
   await page.goto("/register");
-  await page.getByPlaceholder("半角英数字で8〜20文字").fill(accountId);
-  await page.locator('label:has-text("アカウント名") + input').fill(accountName);
-  await page.getByPlaceholder("英字と数字を含む半角8〜72文字").fill(password);
+  await fillStable(page.getByPlaceholder("半角英数字で8〜20文字"), accountId);
+  await fillStable(page.locator('label:has-text("アカウント名") + input'), accountName);
+  await fillStable(page.getByPlaceholder("英字と数字を含む半角8〜72文字"), password);
   await page.getByRole("button", { name: "登録" }).click();
   await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
     timeout: 10000,
@@ -81,8 +82,8 @@ export async function login(
   password: string = TEST_USER_PASSWORD
 ): Promise<void> {
   await page.goto("/login");
-  await page.getByPlaceholder("User ID").fill(accountId);
-  await page.getByPlaceholder("Password").fill(password);
+  await fillStable(page.getByPlaceholder("User ID"), accountId);
+  await fillStable(page.getByPlaceholder("Password"), password);
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list`), {
     timeout: 10000,
