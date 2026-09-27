@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/src/test/**/controller/response/**
+  - backend/src/test/**/presentation/response/**
   - "!backend/src/test/**/integration/**"
 ---
 

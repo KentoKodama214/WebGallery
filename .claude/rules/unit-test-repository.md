@@ -1,10 +1,12 @@
 ---
 paths:
-  - backend/src/test/**/repository/**
+  - backend/src/test/**/*RepositoryImplTest*
   - "!backend/src/test/**/integration/**"
 ---
 
 # Repositoryパッケージの単体テスト規約
+
+`infrastructure/persistence/repository/{機能}/`配下のRepositoryImplTestに加え、`infrastructure/scheduler/lock/SchedulerLockRepositoryImplTest`（自己完結クラスタとして例外的にディレクトリが異なる）も対象とする。
 
 ## 命名規則
 
@@ -14,13 +16,18 @@ paths:
 
 - `@ActiveProfiles("test")`をテストクラスに付与すること
 - `@ExtendWith(MockitoExtension.class)`を付与し、`@Mock`でモック化した依存関係と`@InjectMocks`を使用する
-- `@Mock`で注入する依存は、対象の`mapper/`インターフェース、または`PasswordEncoder`・`S3Client`・`S3Presigner`等の外部SDK/技術コンポーネントに限ること
+- `@Mock`で注入する依存は、対象の`infrastructure/persistence/mapper/`インターフェース、または`PasswordEncoder`・`S3Client`・`S3Presigner`等の外部SDK/技術コンポーネントに限ること
 
 ## Entity変換の検証
 
 - insert/update対象のEntity（`Condition`/`UpdateTarget`含む）は`ArgumentCaptor`で捕捉し、全フィールドを`assertEquals`で検証すること
 - Modelの必須項目のみ指定したケースと、全項目を指定したケースの最低2パターンを用意し、デフォルト値・センチネル値への変換ロジックを網羅すること
 - update系で未指定項目が「変更なし」としてnullで渡ることを検証する場合は、その旨をコメントで明示した上で`assertNull`すること
+
+## Dto/Entity → Modelの変換検証
+
+- Mapperから返る`Dto`/`Entity`をModelへ変換するprivateメソッド（`toXxxModel`等）は、Repository実装の公開メソッド（`getByXxx`等）経由で間接的に検証する（private自体を直接呼び出さない）
+- Mapperのスタブ戻り値に全項目・任意項目未設定の両パターンを用意し、変換後のModelの各フィールドを`assertEquals`/`assertNull`で検証すること
 
 ## 例外・異常系の検証
 

@@ -1,9 +1,11 @@
 ---
 paths:
-  - backend/**/aggregate/**
+  - backend/**/application/aggregate/**
 ---
 
 # 集約（Aggregate）クラスのアーキテクチャルール
+
+集約ルートは、書き込みユースケースの整合性管理という点でユースケース固有の関心事であり、`domain/`ではなく`application/aggregate/`に配置する（`domain`は値オブジェクトとドメインサービス＝Policyのみを置く最内層）。
 
 ## 目的
 
@@ -18,8 +20,8 @@ paths:
 
 ## レイヤー間依存関係
 
-- **許可するimport**: `model/`、`domain/`、`constant/`、`enumeration/`、`exception/`
-- **禁止するimport**: `controller/`、`mapper/`、`entity/`、`dto/`、`repository/impl/`への直接依存
+- **許可するimport**: `application/model/`、`domain/`配下全体（値オブジェクト、`enumeration/`、`constant/`、`exception/`）
+- **禁止するimport**: `presentation/`配下全体（Controller・Request・Response・Converter）、`infrastructure/persistence/mapper・entity・dto`、`infrastructure/persistence/repository/`への直接依存
 
 ## 命名規則
 
@@ -27,4 +29,4 @@ paths:
 
 ## 検証
 
-コンストラクタのprivate化、publicなsetterの非公開、禁止importは`backend/src/test/java/com/web/gallery/architecture/AggregateArchitectureTest.java`のArchUnitテストで機械的に検証される。
+コンストラクタのprivate化、publicなsetterの非公開、mapper・entity・dto・repository.implへの依存禁止は`backend/src/test/java/com/web/gallery/architecture/AggregateArchitectureTest.java`のArchUnitテストで機械的に検証される。presentation配下全体への依存禁止は、application層全体を対象とする`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`（`applicationShouldNotDependOnOuterLayers`）で検証される。

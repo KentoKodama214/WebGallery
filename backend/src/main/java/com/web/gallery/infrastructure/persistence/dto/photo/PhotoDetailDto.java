@@ -1,0 +1,71 @@
+package com.web.gallery.infrastructure.persistence.dto.photo;
+
+import com.web.gallery.domain.enumeration.DirectionEnum;
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import lombok.Data;
+
+/** 写真のメタデータを含めた詳細情報を保持するDtoクラス */
+@Data
+public class PhotoDetailDto {
+  /** アカウントNo */
+  private Long accountNo;
+
+  /** 写真番号 */
+  private Long photoNo;
+
+  /** お気に入り */
+  private Boolean isFavorite;
+
+  /** 撮影日時 */
+  private OffsetDateTime photoAt;
+
+  /** ロケーション番号 */
+  private Long locationNo;
+
+  /** 住所 */
+  private String address;
+
+  /** 緯度 */
+  private BigDecimal latitude;
+
+  /** 経度 */
+  private BigDecimal longitude;
+
+  /** ロケーション表示名 */
+  private String displayName;
+
+  /** 画像ファイルパス */
+  private String imageFilePath;
+
+  /** 写真タイトル日本語名 */
+  private String photoJapaneseTitle;
+
+  /** 写真タイトル英語名 */
+  private String photoEnglishTitle;
+
+  /** キャプション */
+  private String caption;
+
+  /**
+   * 向き区分
+   *
+   * <p>{@link DirectionEnum}
+   */
+  private DirectionEnum directionKbn;
+
+  /** 焦点距離 */
+  private Integer focalLength;
+
+  /** F値 */
+  private BigDecimal fValue;
+
+  /** シャッタースピード */
+  private BigDecimal shutterSpeed;
+
+  /** ISO */
+  private Integer iso;
+
+  /** 位置情報公開フラグ */
+  private Boolean isLocationPublic;
+}

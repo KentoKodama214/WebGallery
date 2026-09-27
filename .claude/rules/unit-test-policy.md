@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/src/test/**/policy/**
+  - backend/src/test/**/domain/service/**
   - "!backend/src/test/**/integration/**"
 ---
 

@@ -25,18 +25,21 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @AnalyzeClasses(packages = "com.web.gallery", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
 
-  private static final String CONTROLLER_PKG = "com.web.gallery.controller";
-  private static final String SERVICE_PKG = "com.web.gallery.service";
-  private static final String REPOSITORY_PKG = "com.web.gallery.repository";
+  private static final String CONTROLLER_PKG = "com.web.gallery.presentation.controller";
+  private static final String SERVICE_PKG = "com.web.gallery.application.service";
+  private static final String SERVICE_IMPL_PKG = "com.web.gallery.application.service.impl";
+  private static final String REPOSITORY_PKG = "com.web.gallery.application.repository";
+  private static final String REPOSITORY_IMPL_PKG =
+      "com.web.gallery.infrastructure.persistence.repository";
 
   @ArchTest
   static final ArchRule controllerShouldNotDependOnRepository =
       noClasses()
           .that()
-          .resideInAPackage(CONTROLLER_PKG)
+          .resideInAPackage(CONTROLLER_PKG + "..")
           .should()
           .dependOnClassesThat()
-          .resideInAPackage(REPOSITORY_PKG + "..")
+          .resideInAnyPackage(REPOSITORY_PKG + "..", REPOSITORY_IMPL_PKG + "..")
           .as("Controllerはrepositoryパッケージに依存してはいけない（スキップ違反）");
 
   @ArchTest
@@ -46,27 +49,27 @@ class ArchitectureTest {
           .resideInAPackage(SERVICE_PKG + "..")
           .should()
           .dependOnClassesThat()
-          .resideInAPackage(CONTROLLER_PKG)
+          .resideInAPackage(CONTROLLER_PKG + "..")
           .as("Serviceはcontrollerパッケージに依存してはいけない（逆方向の依存）");
 
   @ArchTest
   static final ArchRule repositoryShouldNotDependOnController =
       noClasses()
           .that()
-          .resideInAPackage(REPOSITORY_PKG + "..")
+          .resideInAnyPackage(REPOSITORY_PKG + "..", REPOSITORY_IMPL_PKG + "..")
           .should()
           .dependOnClassesThat()
-          .resideInAPackage(CONTROLLER_PKG)
+          .resideInAPackage(CONTROLLER_PKG + "..")
           .as("Repositoryはcontrollerパッケージに依存してはいけない（逆方向の依存）");
 
   @ArchTest
   static final ArchRule repositoryShouldNotDependOnService =
       noClasses()
           .that()
-          .resideInAPackage(REPOSITORY_PKG + "..")
+          .resideInAnyPackage(REPOSITORY_PKG + "..", REPOSITORY_IMPL_PKG + "..")
           .should()
           .dependOnClassesThat()
-          .resideInAPackage(SERVICE_PKG + "..")
+          .resideInAnyPackage(SERVICE_PKG + "..", SERVICE_IMPL_PKG + "..")
           .as("Repositoryはserviceパッケージに依存してはいけない（逆方向の依存）");
 
   // CommonControllerAdviceは@RestControllerAdvice(assignableTypes = {...})で
@@ -76,40 +79,49 @@ class ArchitectureTest {
   static final ArchRule controllerShouldNotDependOnOtherController =
       noClasses()
           .that()
-          .resideInAPackage(CONTROLLER_PKG)
+          .resideInAPackage(CONTROLLER_PKG + "..")
           .and()
           .areNotAnnotatedWith(RestControllerAdvice.class)
           .should()
           .dependOnClassesThat()
-          .resideInAPackage(CONTROLLER_PKG)
+          .resideInAPackage(CONTROLLER_PKG + "..")
           .as("Controllerは他のControllerに依存してはいけない（同レイヤー間の依存）");
 
   @ArchTest
   static final ArchRule serviceImplShouldOnlyDependOnOwnInterface =
       classes()
           .that()
-          .resideInAPackage(SERVICE_PKG + ".impl")
-          .should(onlyDependOnOwnInterfaceWithin(SERVICE_PKG))
+          .resideInAPackage(SERVICE_IMPL_PKG + "..")
+          .should(onlyDependOnOwnInterfaceWithin(SERVICE_PKG, SERVICE_IMPL_PKG))
           .as("ServiceImplは自身が実装するServiceインターフェース以外のserviceパッケージに依存してはいけない（同レイヤー間の依存）");
 
   @ArchTest
   static final ArchRule repositoryImplShouldOnlyDependOnOwnInterface =
       classes()
           .that()
-          .resideInAPackage(REPOSITORY_PKG + ".impl")
-          .should(onlyDependOnOwnInterfaceWithin(REPOSITORY_PKG))
+          .resideInAPackage(REPOSITORY_IMPL_PKG + "..")
+          .should(onlyDependOnOwnInterfaceWithin(REPOSITORY_PKG, REPOSITORY_IMPL_PKG))
           .as("RepositoryImplは自身が実装するRepositoryインターフェース以外のrepositoryパッケージに依存してはいけない（同レイヤー間の依存）");
 
   /**
-   * 指定したレイヤーパッケージ配下のImplクラスが、自身が{@code
+   * 指定したレイヤーパッケージ群配下のImplクラスが、自身が{@code
    * implements}しているインターフェース以外の同レイヤーパッケージ配下のクラスに依存していないことを検証するConditionを生成する。
    *
-   * @param layerPackage 対象レイヤーの基底パッケージ（例: "com.web.gallery.service"）
+   * <p>インターフェースと実装が異なるパッケージツリーに配置されるオニオン構成のため、レイヤーを構成する複数の基底パッケージを受け取る。
+   *
+   * @param layerPackages 対象レイヤーを構成する基底パッケージ群（例: "com.web.gallery.application.repository",
+   *     "com.web.gallery.infrastructure.persistence.repository"）
    * @return 生成したArchCondition
    */
-  private static ArchCondition<JavaClass> onlyDependOnOwnInterfaceWithin(String layerPackage) {
-    DescribedPredicate<JavaClass> inLayer = resideInAPackage(layerPackage + "..");
-    return new ArchCondition<JavaClass>("only depend on its own interface within " + layerPackage) {
+  private static ArchCondition<JavaClass> onlyDependOnOwnInterfaceWithin(String... layerPackages) {
+    DescribedPredicate<JavaClass> inLayer = DescribedPredicate.alwaysFalse();
+    for (String layerPackage : layerPackages) {
+      inLayer = inLayer.or(resideInAPackage(layerPackage + ".."));
+    }
+    String layerDescription = String.join(", ", layerPackages);
+    DescribedPredicate<JavaClass> finalInLayer = inLayer;
+    return new ArchCondition<JavaClass>(
+        "only depend on its own interface within " + layerDescription) {
       @Override
       public void check(JavaClass implClass, ConditionEvents events) {
         var ownInterfaces = implClass.getRawInterfaces();
@@ -118,12 +130,12 @@ class ArchitectureTest {
           if (belongToSameTopLevelClass(implClass, target)) {
             continue;
           }
-          if (inLayer.test(target) && !ownInterfaces.contains(target)) {
+          if (finalInLayer.test(target) && !ownInterfaces.contains(target)) {
             String message =
                 String.format(
                     "%sは自身が実装するインターフェース以外の%s配下のクラス(%s)に依存しています: %s",
                     implClass.getSimpleName(),
-                    layerPackage,
+                    layerDescription,
                     target.getFullName(),
                     dependency.getDescription());
             events.add(SimpleConditionEvent.violated(implClass, message));

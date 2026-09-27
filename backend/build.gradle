@@ -128,7 +128,7 @@ tasks.register('unitTest', Test) {
 	classpath = sourceSets.test.runtimeClasspath
 	useJUnitPlatform()
 	exclude '**/*IntegrationTest*'
-	exclude '**/mapper/*Test*'
+	exclude '**/*MapperTest*'
 	exclude '**/ModulithDocumentationTest*'
 }
 
@@ -144,7 +144,7 @@ tasks.register('integrationTest', Test) {
 	classpath = sourceSets.test.runtimeClasspath
 	useJUnitPlatform()
 	include '**/*IntegrationTest*'
-	include '**/mapper/*Test*'
+	include '**/*MapperTest*'
 }
 
 tasks.register('allTest', Test) {

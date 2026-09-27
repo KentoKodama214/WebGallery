@@ -5,8 +5,14 @@ paths:
 
 # Schedulerクラスのアーキテクチャルール
 
-`@Scheduled` による定期実行タスク（期限切れリフレッシュトークンの削除等）を配置する。
-定期実行の有効化は `config/SchedulingConfig`（`@EnableScheduling`）で行う。
+`@Scheduled` による定期実行タスク（期限切れリフレッシュトークンの削除等）を`infrastructure/scheduler/`直下に配置する。
+定期実行の有効化は `infrastructure/config/SchedulingConfig`（`@EnableScheduling`）で行う。
+
+多重起動防止に使う `SchedulerLock`・`SchedulerLockRepository`（+実装）・`SchedulerLockMapper`（+XML）・`SchedulerLockNameEnum` は、
+他のどのapplication/domain層からも参照されない完全に自己完結したクラスタのため、通常のレイヤー別配置
+（`application/repository/`・`infrastructure/persistence/repository/`・`infrastructure/persistence/mapper/`・`domain/enumeration/`）
+ではなく `infrastructure/scheduler/lock/` サブパッケージに丸ごと集約する。`infrastructure/scheduler/` 直下には
+`Scheduler` サフィックスの薄いクラスのみを置く。
 
 ## 命名規則
 
@@ -27,13 +33,12 @@ paths:
 
 - ビジネスロジック・バリデーション・永続化処理を持たない
 - Service層のメソッドを呼び出すだけの薄い層とする（可能ならメソッド参照で委譲する）
-- 処理件数の集計・通知などの副次的処理は Service層・`event/` 側に置く
+- 処理件数の集計・通知などの副次的処理は Service層・`domain/event/` 側に置く
 
 ## レイヤー間依存関係
 
-- **許可するimport**: `service/` のインターフェース、`helper/`（`SchedulerLock`）、`config/`、`enumeration/`、`constant/`、`domain/`
-- **禁止するimport**: `controller/`、`repository/`、`mapper/`、`entity/`、`dto/`、`aggregate/`、`service/impl/` への直接依存
-- **禁止するimport**: `controller/request/` や `controller/response/` のDTO
+- **許可するimport**: `application/service/` のインターフェース、`infrastructure/scheduler/lock/`（`SchedulerLock`、`SchedulerLockNameEnum`）、`infrastructure/config/`、`domain/`配下全体（値オブジェクト、`enumeration/`、`constant/`）
+- **禁止するimport**: `presentation/`配下全体（Controller・Request・Response・Converter）、`application/repository/`、`infrastructure/persistence/mapper・entity・dto`、`application/aggregate/`、`application/service/impl/` への直接依存
 - 他の `Scheduler` クラスへの依存
 
 ## 多重起動防止（複数インスタンス構成）
@@ -42,7 +47,7 @@ AWS等で複数インスタンスを稼働させると、全インスタンス�
 そのため、定期実行メソッドの処理は **必ず `SchedulerLock#runIfLocked` でラップする**。
 
 - 処理が冪等であってもラップする（ログ出力の一元化・実行インスタンスの一意化のため）
-- `SchedulerLock`（`helper/`）は PostgreSQL のトランザクションレベルのアドバイザリーロック
+- `SchedulerLock`（`infrastructure/scheduler/lock/`）は PostgreSQL のトランザクションレベルのアドバイザリーロック
   （`pg_try_advisory_xact_lock`）を用いて、ロックを取得できたインスタンスでのみ `task` を実行する
 - ロックの取得と `task` の実行は同一トランザクションで行われ、ロックはトランザクション終了時に自動解放される
 - ロックを取得できなかったインスタンスは待機せずスキップする
@@ -55,7 +60,7 @@ public void purgeExpiredRefreshTokens() {
 }
 ```
 
-### ロック名（`enumeration/SchedulerLockNameEnum`）
+### ロック名（`infrastructure/scheduler/lock/SchedulerLockNameEnum`）
 
 - 定期実行処理ごとに要素を1つ追加する
 - `lockKey`（`bigint`）はインスタンス間・再起動をまたいで安定させる必要があるため、
@@ -71,14 +76,16 @@ public void purgeExpiredRefreshTokens() {
 
 ## テスト
 
-- 単体テスト（`@ExtendWith(MockitoExtension.class)`）を `scheduler/` パッケージに配置する
+- 単体テスト（`@ExtendWith(MockitoExtension.class)`）を `infrastructure/scheduler/` パッケージに配置する
 - `SchedulerLock` をモックし、`SchedulerLockNameEnum` の正しい要素とともに対象の Service層メソッドへ
   委譲していることを検証する
 
 ## 検証
 
-命名規則、`@Component` 付与、`@Scheduled` の `zone`、`@ConditionalOnProperty` の `prefix`、禁止importは
-`backend/src/test/java/com/web/gallery/architecture/SchedulerArchitectureTest.java` の ArchUnit テストで機械的に検証される。
+命名規則、`@Component` 付与、`@Scheduled` の `zone`、`@ConditionalOnProperty` の `prefix`、repository・mapper・entity・dto・
+aggregate・service.implへの依存禁止は`backend/src/test/java/com/web/gallery/architecture/SchedulerArchitectureTest.java` の
+ArchUnit テストで機械的に検証される。presentation配下全体への依存禁止は、infrastructure層全体を対象とする
+`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`で検証される。
 ただし `@RequiredArgsConstructor` の Lombok アノテーション規約は、コンパイラが `RetentionPolicy.SOURCE` で完全に除去し
 バイトコードに一切残らないため、バイトコード解析である ArchUnit では原理的に検証不可能であり、`backend-architecture-checker`
 によるレビューで担保する。

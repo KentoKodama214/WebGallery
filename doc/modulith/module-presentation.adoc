@@ -1,0 +1,20 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.presentation`
+|Bean references
+|* `c.w.g.a.service.account.AccountService` (in Application)
+* `c.w.g.i.security.SessionHelper` (in Infrastructure)
+* `c.w.g.a.service.auth.AuthService` (in Application)
+* `c.w.g.a.config.JwtConfig` (in Application)
+* `c.w.g.i.web.ClientIpResolver` (in Infrastructure)
+* `c.w.g.a.service.common.KbnMstService` (in Application)
+* `c.w.g.i.helper.KbnHelper` (in Infrastructure)
+* `c.w.g.a.service.common.LocationService` (in Application)
+* `c.w.g.a.service.inquiry.InquiryService` (in Application)
+* `c.w.g.a.service.photo.PhotoService` (in Application)
+* `c.w.g.i.helper.PhotoDirectionResolver` (in Infrastructure)
+* `c.w.g.i.helper.PhotoExifExtractor` (in Infrastructure)
+* `c.w.g.d.service.PhotoExifDataMergePolicy` (in Domain)
+* `c.w.g.a.service.photo.PhotoFavoriteService` (in Application)
+|===

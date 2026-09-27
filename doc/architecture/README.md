@@ -2,11 +2,11 @@
 
 ## 概要
 
-WebGalleryは、Spring Bootベースのレイヤード・アーキテクチャを採用しています。
+WebGalleryは、Spring Bootベースのオニオンアーキテクチャ（domain → application → infrastructure/presentation）を採用しています。
 
 ## ドキュメント一覧
 
-- [レイヤード・アーキテクチャ](./layered-architecture.md)
+- [オニオンアーキテクチャ](./onion-architecture.md)
 - [セキュリティ](./security.md)
 - [データソース構成（プライマリ／リードレプリカ）](./datasource.md)
 - [モジュール構成・依存関係（Spring Modulith）](../modulith/components.png)

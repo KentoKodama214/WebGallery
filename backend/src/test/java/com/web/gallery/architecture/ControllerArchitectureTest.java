@@ -16,7 +16,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
-import com.web.gallery.constant.ApiRoutes;
+import com.web.gallery.domain.constant.ApiRoutes;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -52,7 +52,7 @@ class ControllerArchitectureTest {
   static final ArchRule classNameShouldEndWithControllerOrControllerAdvice =
       classes()
           .that()
-          .resideInAPackage(Packages.CONTROLLER)
+          .resideInAPackage(Packages.CONTROLLER + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Controller")
@@ -64,7 +64,7 @@ class ControllerArchitectureTest {
   static final ArchRule controllerShouldNotDependOnMapperEntityDtoOrServiceImpl =
       noClasses()
           .that()
-          .resideInAPackage(Packages.CONTROLLER)
+          .resideInAPackage(Packages.CONTROLLER + "..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
@@ -78,7 +78,7 @@ class ControllerArchitectureTest {
   static final ArchRule responseShouldBeCreatedThroughFactoryMethod =
       noClasses()
           .that()
-          .resideInAPackage(Packages.CONTROLLER)
+          .resideInAPackage(Packages.CONTROLLER + "..")
           .should(notDirectlyConstructResponseObjects())
           .as("controllerはResponseクラスをnew/builder()で直接生成せず、from/ofファクトリメソッドを経由すること");
 
@@ -87,18 +87,17 @@ class ControllerArchitectureTest {
       methods()
           .that()
           .areDeclaredInClassesThat(
-              resideInAPackage(Packages.CONTROLLER).and(ArchPredicates.TOP_LEVEL_CLASSES))
+              resideInAPackage(Packages.CONTROLLER + "..").and(ArchPredicates.TOP_LEVEL_CLASSES))
           .should(haveMappingPathDefinedInApiRoutes())
           .as("@GetMapping等のパスはApiRoutesクラスの定数値のいずれかと一致すること");
 
   private static ArchCondition<JavaClass> notDirectlyConstructResponseObjects() {
-    return new ArchCondition<JavaClass>(
-        "not directly construct classes in " + Packages.CONTROLLER_RESPONSE) {
+    return new ArchCondition<JavaClass>("not directly construct classes in " + Packages.RESPONSE) {
       @Override
       public void check(JavaClass controllerClass, ConditionEvents events) {
         for (JavaConstructorCall call : controllerClass.getConstructorCallsFromSelf()) {
           JavaClass targetOwner = call.getTargetOwner();
-          if (AllowedTypes.isInPackage(targetOwner, Packages.CONTROLLER_RESPONSE)) {
+          if (AllowedTypes.isInPackage(targetOwner, Packages.RESPONSE)) {
             events.add(
                 SimpleConditionEvent.violated(
                     controllerClass,
@@ -111,7 +110,7 @@ class ControllerArchitectureTest {
         }
         for (JavaMethodCall call : controllerClass.getMethodCallsFromSelf()) {
           JavaClass targetOwner = call.getTargetOwner();
-          if (AllowedTypes.isInPackage(targetOwner, Packages.CONTROLLER_RESPONSE)
+          if (AllowedTypes.isInPackage(targetOwner, Packages.RESPONSE)
               && "builder".equals(call.getTarget().getName())) {
             events.add(
                 SimpleConditionEvent.violated(

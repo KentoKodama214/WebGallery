@@ -20,7 +20,7 @@ class DtoArchitectureTest {
   static final ArchRule classNameShouldEndWithDto =
       classes()
           .that()
-          .resideInAPackage(Packages.DTO)
+          .resideInAPackage(Packages.DTO + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Dto")
@@ -30,7 +30,7 @@ class DtoArchitectureTest {
   static final ArchRule dtoShouldNotHaveDomainModelOrEntityFields =
       classes()
           .that()
-          .resideInAPackage(Packages.DTO)
+          .resideInAPackage(Packages.DTO + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should(
               FieldTypeConditions.notHaveFieldsOfType(

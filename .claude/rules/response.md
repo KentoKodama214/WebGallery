@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/controller/response/**
+  - backend/**/presentation/response/**
 ---
 
 # Responseクラスのアーキテクチャルール

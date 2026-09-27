@@ -1,0 +1,107 @@
+package com.web.gallery.infrastructure.persistence.mapper.account;
+
+import com.web.gallery.infrastructure.persistence.dto.account.AccountDto;
+import com.web.gallery.infrastructure.persistence.entity.account.Account;
+import com.web.gallery.infrastructure.persistence.entity.account.AccountCondition;
+import com.web.gallery.infrastructure.persistence.entity.account.AccountUpdateTarget;
+import java.util.List;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+/** アカウントテーブルのMapperクラス */
+@Mapper
+public interface AccountMapper {
+  /**
+   * 条件に該当するアカウントの一覧を、権限区分（{@code common.account_authority}）と結合して取得する
+   *
+   * @param condition 抽出条件
+   * @return {@link AccountDto}
+   */
+  public List<AccountDto> select(AccountCondition condition);
+
+  /**
+   * 条件に該当するアカウントの一覧を、権限区分（{@code common.account_authority}）と結合して取得する（パスワードハッシュを射影しない一覧表示専用）
+   *
+   * @param condition 抽出条件
+   * @return {@link AccountDto}
+   */
+  public List<AccountDto> selectList(AccountCondition condition);
+
+  /**
+   * 条件に該当するアカウントの件数を取得する
+   *
+   * @param condition カウント条件
+   * @return 抽出件数
+   */
+  public Integer count(AccountCondition condition);
+
+  /**
+   * アカウント登録用に、シーケンスから次のアカウント番号を採番する
+   *
+   * <p>{@code common.account}と{@code common.account_authority}の2テーブルへ同一のアカウント番号で
+   * 登録するため、INSERT文とは別にあらかじめ採番する
+   *
+   * @return 採番されたアカウント番号
+   */
+  public Long nextAccountNo();
+
+  /**
+   * アカウントを登録する
+   *
+   * @param account {@link Account}
+   * @return 登録件数
+   */
+  public Integer insert(Account account);
+
+  /**
+   * アカウントを更新する
+   *
+   * @param condition 更新対象の抽出条件
+   * @param target 更新内容
+   * @return 更新件数
+   */
+  public Integer update(
+      @Param("condition") AccountCondition condition, @Param("target") AccountUpdateTarget target);
+
+  /**
+   * アカウントのログイン失敗回数をSQL側で原子的にインクリメントする
+   *
+   * @param accountNo アカウント番号
+   * @return 更新件数
+   */
+  public Integer incrementLoginFailureCount(@Param("accountNo") Long accountNo);
+
+  /**
+   * アカウントを削除する
+   *
+   * @param condition 削除対象の抽出条件
+   * @return 削除件数
+   */
+  public Integer delete(AccountCondition condition);
+
+  /**
+   * アカウントIDに該当するアカウントが存在するかをチェックする
+   *
+   * @param condition {@link AccountCondition}
+   * @return アカウントの存在有無
+   */
+  public Boolean isExistAccount(AccountCondition condition);
+
+  /**
+   * アカウントの行ロックを取得する（排他制御用）
+   *
+   * @param accountNo アカウント番号
+   * @return ロックしたアカウント番号（存在しない場合はnull）
+   */
+  public Long lockAccount(@Param("accountNo") Long accountNo);
+
+  /**
+   * ログイン試行を直列化するためのトランザクションレベルのアドバイザリロックを取得する
+   *
+   * <p>アカウントが存在しない場合でもキー（アカウントID）に基づいてロックする
+   *
+   * @param accountId アカウントID
+   * @return 常に1（ロック取得の完了を表す）
+   */
+  public Integer lockForLoginAttempt(@Param("accountId") String accountId);
+}

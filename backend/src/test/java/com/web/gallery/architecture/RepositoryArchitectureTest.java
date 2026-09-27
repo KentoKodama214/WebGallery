@@ -18,8 +18,8 @@ import org.springframework.stereotype.Repository;
  * <p>レイヤー間の依存方向・Impl同士の依存禁止は{@link com.web.gallery.ArchitectureTest}で検証済みのため、本クラスでは命名規則、
  * インターフェース-実装の1対1対応、Springアノテーション、追加の禁止import、メソッドシグネチャを検証する。
  *
- * <p>{@code SchedulerLockRepository#tryLock}は{@code enumeration}パッケージのロック名を引数に取るため、 引数の許容型には{@code
- * enumeration}パッケージも含める（{@code repository.md}に明記）。
+ * <p>{@code SchedulerLockRepository}は他のapplication/domain層から一切参照されない自己完結したクラスタとして{@code
+ * infrastructure.scheduler}パッケージへ集約されているため、本クラスの検証対象外である。
  */
 @AnalyzeClasses(packages = "com.web.gallery", importOptions = ImportOption.DoNotIncludeTests.class)
 class RepositoryArchitectureTest {
@@ -28,7 +28,7 @@ class RepositoryArchitectureTest {
   static final ArchRule interfaceNameShouldEndWithRepository =
       classes()
           .that()
-          .resideInAPackage(Packages.REPOSITORY)
+          .resideInAPackage(Packages.REPOSITORY + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Repository")
@@ -38,7 +38,7 @@ class RepositoryArchitectureTest {
   static final ArchRule implNameShouldEndWithRepositoryImpl =
       classes()
           .that()
-          .resideInAPackage(Packages.REPOSITORY_IMPL)
+          .resideInAPackage(Packages.REPOSITORY_IMPL + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("RepositoryImpl")
@@ -53,7 +53,7 @@ class RepositoryArchitectureTest {
   static final ArchRule implShouldBeAnnotatedWithRepository =
       classes()
           .that()
-          .resideInAPackage(Packages.REPOSITORY_IMPL)
+          .resideInAPackage(Packages.REPOSITORY_IMPL + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .beAnnotatedWith(Repository.class)
@@ -74,16 +74,14 @@ class RepositoryArchitectureTest {
       methods()
           .that()
           .areDeclaredInClassesThat(
-              resideInAPackage(Packages.REPOSITORY).and(ArchPredicates.TOP_LEVEL_CLASSES))
+              resideInAPackage(Packages.REPOSITORY + "..").and(ArchPredicates.TOP_LEVEL_CLASSES))
           .should(
               MethodSignatureConditions.haveAllowedSignature(
-                  new String[] {
-                    Packages.MODEL, Packages.AGGREGATE, Packages.DOMAIN, Packages.ENUMERATION
-                  },
+                  new String[] {Packages.MODEL, Packages.AGGREGATE, Packages.DOMAIN},
                   new String[] {Packages.MODEL, Packages.AGGREGATE, Packages.DOMAIN},
                   true,
                   3))
           .as(
-              "Repositoryインターフェースのメソッドは、引数がModel・集約・ドメインクラス・Enumのみ、"
+              "Repositoryインターフェースのメソッドは、引数がModel・集約・ドメインクラスのみ、"
                   + "返り値がModel・集約・ドメインクラス・Boolean・Integer・voidのいずれかで、引数は3個以下であること");
 }

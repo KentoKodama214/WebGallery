@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/domain/**
+  - backend/**/domain/model/**
 ---
 
 # Domainクラスのアーキテクチャルール

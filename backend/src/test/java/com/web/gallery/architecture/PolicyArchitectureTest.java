@@ -44,7 +44,7 @@ class PolicyArchitectureTest {
           .arePublic()
           .should(
               MethodSignatureConditions.haveAllowedSignature(
-                  new String[] {Packages.DOMAIN, Packages.ENUMERATION},
+                  new String[] {Packages.DOMAIN, Packages.DOMAIN_ENUMERATION},
                   new String[] {Packages.DOMAIN},
                   false,
                   Integer.MAX_VALUE))

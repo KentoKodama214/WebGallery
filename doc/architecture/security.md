@@ -127,7 +127,7 @@ APM に記録されやすく（`Authorization` と違い）マスク対象から
 
 リクエストのバリデーション失敗をログ出力する際、機微フィールド（`password` /
 `newPassword` / `currentPassword`）の入力値は `***` にマスクする
-（`helper/ValidationErrorLogger`）。ログ集約基盤に平文の資格情報を残さないため。
+（`infrastructure/web/ValidationErrorLogger`）。ログ集約基盤に平文の資格情報を残さないため。
 
 ### 信頼するプロキシと発信元IPの復元
 
@@ -167,14 +167,14 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 
 ### 本番プロファイルの起動時設定検証
 
-`config/ProdConfigValidationRunner`（`@Profile("prod")`）が起動完了時に本番設定を検証し、
+`infrastructure/config/ProdConfigValidationRunner`（`@Profile("prod")`）が起動完了時に本番設定を検証し、
 危険な構成を検出したら `IllegalStateException` を投げて**起動自体を失敗させる**（フェイルクローズ）。
 
 - `app.cors.allowed-origins`（環境変数 `FRONTEND_ORIGIN`）が 1 件以上・すべて `https://` の
   絶対オリジン・ワイルドカード（`*`）やパス・クエリを含まないこと
 - `app.s3.endpoint` / `app.s3.public-base-url` が設定されている場合、`https://` であること（平文通信の禁止）
 
-`JWT_SECRET` の 256bit 長チェックは `helper/JwtTokenProvider` の `@PostConstruct` で全プロファイル共通に行う。
+`JWT_SECRET` の 256bit 長チェックは `infrastructure/security/JwtTokenProviderImpl` の `@PostConstruct` で全プロファイル共通に行う。
 `prod` プロファイルでは OpenAPI ドキュメント（`/scalar`・`/v3/api-docs`）用の `SecurityFilterChain` を
 登録しないため、デフォルトの `denyAll` チェーンにより拒否される。
 
@@ -195,7 +195,7 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 
 写真新規一括登録（`POST /api/v1/accounts/{id}/photos`）の焦点距離・F値・シャッタースピード・ISOは、
 ユーザーが入力した値（フォーム入力値）を項目ごとに優先して採用し、未入力の項目についてのみ、
-アップロードされた画像ファイルの実バイナリから`PhotoExifExtractor`（`helper/`）が抽出したEXIF値で
+アップロードされた画像ファイルの実バイナリから`PhotoExifExtractor`（`infrastructure/helper/`）が抽出したEXIF値で
 補完する（`PhotoExifDataMergePolicy#merge`）。フィルム写真のデジタル化やEXIF非対応形式（PNG等）の
 ための手入力機能を優先しつつ、未入力時は画像自体の実データを反映させるため。
 

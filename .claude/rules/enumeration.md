@@ -5,6 +5,8 @@ paths:
 
 # Enumクラスのアーキテクチャルール
 
+ビジネス区分値のEnumは`domain/enumeration/`に配置する。例外：`SchedulerLockNameEnum`は他から参照されず自己完結しているため`infrastructure/scheduler/lock/`に集約する（詳細は`scheduler.md`）。
+
 ## 命名規則
 
 - クラス名サフィックス: `Enum`

@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/src/test/**/aggregate/**
+  - backend/src/test/**/application/aggregate/**
   - "!backend/src/test/**/integration/**"
 ---
 

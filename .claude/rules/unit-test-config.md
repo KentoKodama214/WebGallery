@@ -1,10 +1,13 @@
 ---
 paths:
-  - backend/src/test/**/config/**
+  - backend/src/test/**/infrastructure/config/**
+  - backend/src/test/**/infrastructure/web/**
   - "!backend/src/test/**/integration/**"
 ---
 
 # Configパッケージの単体テスト規約
+
+`infrastructure/config/`（DataSource/S3/GeoIp等の設定クラス）と`infrastructure/web/`（Security/Cors/RateLimit系Config、Servletフィルタ、ClientIpResolver等の技術ユーティリティ）配下のテストを対象とする。
 
 ## 命名規則
 

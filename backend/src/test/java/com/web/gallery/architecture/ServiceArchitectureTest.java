@@ -5,6 +5,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -26,7 +27,9 @@ class ServiceArchitectureTest {
   static final ArchRule interfaceNameShouldEndWithService =
       classes()
           .that()
-          .resideInAPackage(Packages.SERVICE)
+          .resideInAPackage(Packages.SERVICE + "..")
+          .and()
+          .resideOutsideOfPackage(Packages.SERVICE_IMPL + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Service")
@@ -36,7 +39,7 @@ class ServiceArchitectureTest {
   static final ArchRule implNameShouldEndWithServiceImpl =
       classes()
           .that()
-          .resideInAPackage(Packages.SERVICE_IMPL)
+          .resideInAPackage(Packages.SERVICE_IMPL + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("ServiceImpl")
@@ -51,7 +54,7 @@ class ServiceArchitectureTest {
   static final ArchRule implShouldBeAnnotatedWithService =
       classes()
           .that()
-          .resideInAPackage(Packages.SERVICE_IMPL)
+          .resideInAPackage(Packages.SERVICE_IMPL + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .beAnnotatedWith(Service.class)
@@ -62,7 +65,7 @@ class ServiceArchitectureTest {
       methods()
           .that()
           .areDeclaredInClassesThat(
-              resideInAPackage(Packages.SERVICE_IMPL).and(ArchPredicates.TOP_LEVEL_CLASSES))
+              resideInAPackage(Packages.SERVICE_IMPL + "..").and(ArchPredicates.TOP_LEVEL_CLASSES))
           .and()
           .arePublic()
           .should()
@@ -89,7 +92,9 @@ class ServiceArchitectureTest {
       methods()
           .that()
           .areDeclaredInClassesThat(
-              resideInAPackage(Packages.SERVICE).and(ArchPredicates.TOP_LEVEL_CLASSES))
+              resideInAPackage(Packages.SERVICE + "..")
+                  .and(DescribedPredicate.not(resideInAPackage(Packages.SERVICE_IMPL + "..")))
+                  .and(ArchPredicates.TOP_LEVEL_CLASSES))
           .should(
               MethodSignatureConditions.haveAllowedSignature(
                   new String[] {Packages.MODEL, Packages.AGGREGATE, Packages.DOMAIN},

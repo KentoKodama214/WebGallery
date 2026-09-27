@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/controller/request/**
+  - backend/**/presentation/request/**
 ---
 
 # Requestクラスのアーキテクチャルール

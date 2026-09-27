@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/src/test/**/service/**
+  - backend/src/test/**/application/service/**
   - "!backend/src/test/**/integration/**"
 ---
 
@@ -14,7 +14,7 @@ paths:
 
 - `@ActiveProfiles("test")`をテストクラスに付与すること
 - `@ExtendWith(MockitoExtension.class)`を付与し、`@Mock`でモック化した依存関係と`@InjectMocks`を使用する
-- `@Mock`で注入する依存は、`repository/impl/`の実装クラス（インターフェースでなく実装型）、`config/`の設定値クラス、`policy/`、`ApplicationEventPublisher`、`Clock`を対象とする
+- `@Mock`で注入する依存は、`infrastructure/persistence/repository/`の実装クラス（インターフェースでなく実装型）、`application/config/`の設定値ポート（インターフェース）、`domain/service/`のPolicy、`ApplicationEventPublisher`、`Clock`を対象とする
 - `Clock`に依存するクラスは、`@BeforeEach`で`clock.instant()`と`clock.getZone()`を`lenient()`付きでスタブすること
 
 ## ドメインイベント・例外系の検証
