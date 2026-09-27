@@ -51,6 +51,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
       AuthController.class,
       InquiryController.class,
       KbnMstController.class,
+      LocationController.class,
       PhotoFavoriteController.class,
       PhotoController.class
     })

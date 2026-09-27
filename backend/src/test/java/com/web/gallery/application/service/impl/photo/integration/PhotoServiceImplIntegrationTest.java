@@ -86,14 +86,14 @@ public class PhotoServiceImplIntegrationTest {
    * サーバ生成の不透明オブジェクトキー（{@code {accountId}/{写真番号}-{ランダム32桁}.{拡張子}}）であることを検証する
    *
    * @param actual 実際のキー（{@link ImageFilePath} または文字列）
-   * @param accountId アカウントID
+   * @param accountNo アカウント番号（キーのプレフィックス。変更されうるアカウントIDは用いない）
    * @param photoNo 写真番号
    * @param extension 拡張子（ドットなし）
    */
   private static void assertOpaqueObjectKey(
-      Object actual, String accountId, long photoNo, String extension) {
+      Object actual, long accountNo, long photoNo, String extension) {
     String key = actual instanceof ImageFilePath path ? path.value() : String.valueOf(actual);
-    String expectedPattern = "^" + accountId + "/" + photoNo + "-[0-9a-f]{32}\\." + extension + "$";
+    String expectedPattern = "^" + accountNo + "/" + photoNo + "-[0-9a-f]{32}\\." + extension + "$";
     assertTrue(
         key.matches(expectedPattern),
         "オブジェクトキーが不正です。expected pattern: " + expectedPattern + ", actual: " + key);
@@ -1020,7 +1020,7 @@ public class PhotoServiceImplIntegrationTest {
     void savePhotos_photoDetailModelList_is_null() throws GalleryException {
       String accountId = "aaaaaaaa";
       List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
-      PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId(accountId), null);
+      PhotoSaveResultModel actual = photoServiceImpl.savePhotos(null);
       assertNull(actual);
       List<PhotoMst> afterData = getPhotoMstData(accountId);
       assertEquals(beforeSaveData.size(), afterData.size());
@@ -1034,8 +1034,7 @@ public class PhotoServiceImplIntegrationTest {
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
       List<PhotoMst> beforeSaveData = getPhotoMstData(accountId);
       PhotoSaveResultModel actual =
-          photoServiceImpl.savePhotos(
-              new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+          photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList));
       assertNull(actual);
       List<PhotoMst> afterData = getPhotoMstData(accountId);
       assertEquals(beforeSaveData.size(), afterData.size());
@@ -1058,11 +1057,10 @@ public class PhotoServiceImplIntegrationTest {
       OffsetDateTime transactionNow =
           jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       PhotoSaveResultModel actual =
-          photoServiceImpl.savePhotos(
-              new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+          photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(11L), actual.getPhotoNo());
-      assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 12L, "jpg");
+      assertOpaqueObjectKey(actual.getImageFilePath(), 1L, 12L, "jpg");
       // 元ファイル名は image_file_name に別途保持される
       assertEquals(
           "DSC21.jpg",
@@ -1090,7 +1088,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(0).getPhotoAt());
-      assertOpaqueObjectKey(actualData.get(0).getImageFilePath(), accountId, 11L, "jpg");
+      assertOpaqueObjectKey(actualData.get(0).getImageFilePath(), 1L, 11L, "jpg");
       assertEquals("DSC21.jpg", actualData.get(0).getImageFileName());
       assertEquals(0L, actualData.get(0).getLocationNo());
       assertEquals("タイトル21", actualData.get(0).getPhotoJapaneseTitle());
@@ -1113,7 +1111,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           OffsetDateTime.of(1900, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(1).getPhotoAt().plusHours(9));
-      assertOpaqueObjectKey(actualData.get(1).getImageFilePath(), accountId, 12L, "jpg");
+      assertOpaqueObjectKey(actualData.get(1).getImageFilePath(), 1L, 12L, "jpg");
       assertEquals("DSC22.jpg", actualData.get(1).getImageFileName());
       assertEquals(0L, actualData.get(1).getLocationNo());
       assertEquals("", actualData.get(1).getPhotoJapaneseTitle());
@@ -1160,8 +1158,7 @@ public class PhotoServiceImplIntegrationTest {
       OffsetDateTime transactionNow =
           jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       PhotoSaveResultModel actual =
-          photoServiceImpl.savePhotos(
-              new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+          photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(3L), actual.getPhotoNo());
       assertNull(actual.getImageFilePath());
@@ -1267,11 +1264,10 @@ public class PhotoServiceImplIntegrationTest {
       OffsetDateTime transactionNow =
           jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
       PhotoSaveResultModel actual =
-          photoServiceImpl.savePhotos(
-              new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+          photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(3L), actual.getPhotoNo());
-      assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 11L, "jpg");
+      assertOpaqueObjectKey(actual.getImageFilePath(), 1L, 11L, "jpg");
 
       // 新規登録された写真（photoDetailModel1）がDBに登録されていることを確認
       List<PhotoMst> actualData =
@@ -1290,7 +1286,7 @@ public class PhotoServiceImplIntegrationTest {
       assertEquals(
           OffsetDateTime.of(2000, 12, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
           actualData.get(0).getPhotoAt());
-      assertOpaqueObjectKey(actualData.get(0).getImageFilePath(), accountId, 11L, "jpg");
+      assertOpaqueObjectKey(actualData.get(0).getImageFilePath(), 1L, 11L, "jpg");
       assertEquals("DSC21.jpg", actualData.get(0).getImageFileName());
       assertEquals(0L, actualData.get(0).getLocationNo());
       assertEquals("タイトル21", actualData.get(0).getPhotoJapaneseTitle());
@@ -1391,9 +1387,7 @@ public class PhotoServiceImplIntegrationTest {
 
       assertThrows(
           FileDuplicateException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
 
       // 1枚目でファイル名重複エラーとなり、後続の2枚目（重複しない正常なデータ）を含めて
       // トランザクション全体がロールバックされ、DBに新規登録が反映されていないことを確認
@@ -1437,9 +1431,7 @@ public class PhotoServiceImplIntegrationTest {
 
       assertThrows(
           FileDuplicateException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
 
       // 1枚目でDBに書き込んだファイルパスを指定して、補償削除が呼ばれていること
       verify(fileRepository, times(1)).delete(any(ImageFilePath.class));
@@ -1467,9 +1459,7 @@ public class PhotoServiceImplIntegrationTest {
 
       assertThrows(
           com.web.gallery.domain.exception.BadRequestException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(List.of(photoDetailModel))));
     }
 
     @Test
@@ -1497,9 +1487,7 @@ public class PhotoServiceImplIntegrationTest {
 
       assertThrows(
           com.web.gallery.domain.exception.BadRequestException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(List.of(photoDetailModel))));
     }
 
     @Test
@@ -1527,9 +1515,7 @@ public class PhotoServiceImplIntegrationTest {
 
       assertThrows(
           com.web.gallery.domain.exception.BadRequestException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(List.of(photoDetailModel))));
     }
 
     @Test
@@ -1557,9 +1543,7 @@ public class PhotoServiceImplIntegrationTest {
 
       assertThrows(
           com.web.gallery.domain.exception.BadRequestException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId("aaaaaaaa"), PhotoDetailModelList.of(List.of(photoDetailModel))));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(List.of(photoDetailModel))));
     }
 
     @Test
@@ -1580,9 +1564,7 @@ public class PhotoServiceImplIntegrationTest {
 
       assertThrows(
           PhotoNotAdditableException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(List.of(photoDetailModel))));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(List.of(photoDetailModel))));
 
       Integer photoCount =
           jdbcTemplate.queryForObject(
@@ -1601,7 +1583,7 @@ public class PhotoServiceImplIntegrationTest {
     @Order(1)
     @DisplayName("正常系：photoDeleteModelListが0件の場合、終了")
     void deletePhotos_photoDeleteModelList_empty() throws GalleryException {
-      photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.empty());
+      photoServiceImpl.deletePhotos(PhotoDeleteModelList.empty());
 
       List<PhotoMst> actualData =
           jdbcTemplate.query(
@@ -1651,8 +1633,7 @@ public class PhotoServiceImplIntegrationTest {
 
       OffsetDateTime transactionNow =
           jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-      photoServiceImpl.deletePhotos(
-          new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList));
+      photoServiceImpl.deletePhotos(PhotoDeleteModelList.of(photoDeleteModelList));
 
       List<PhotoMst> actualPhotoMstData =
           jdbcTemplate.query(
@@ -1787,9 +1768,7 @@ public class PhotoServiceImplIntegrationTest {
 
       assertThrows(
           PhotoNotFoundException.class,
-          () ->
-              photoServiceImpl.deletePhotos(
-                  new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
+          () -> photoServiceImpl.deletePhotos(PhotoDeleteModelList.of(photoDeleteModelList)));
     }
 
     /**
@@ -1811,8 +1790,7 @@ public class PhotoServiceImplIntegrationTest {
               .imageFilePath(new ImageFilePath("DSC11.jpg"))
               .build());
 
-      photoServiceImpl.deletePhotos(
-          new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList));
+      photoServiceImpl.deletePhotos(PhotoDeleteModelList.of(photoDeleteModelList));
       verify(fileRepository, never()).delete(any(ImageFilePath.class));
 
       TestTransaction.flagForCommit();

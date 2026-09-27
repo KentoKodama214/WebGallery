@@ -291,8 +291,9 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
     accountAggregateRepository.delete(account);
 
     // 写真ファイルのディレクトリ削除はDBコミット確定後に行う（ロールバック時の不整合を防ぐ）
-    // S3上は「{accountId}/」プレフィックス配下を一括削除する
-    deletePhotoDirectoryAfterCommit(new ImageFilePath(accountId.value() + "/"));
+    // S3上は「{アカウント番号}/」プレフィックス配下を一括削除する。プレフィックスには変更されうる
+    // アカウントIDではなく不変のアカウント番号を用いるため、ID変更後の退会でも取り残しが発生しない
+    deletePhotoDirectoryAfterCommit(new ImageFilePath(accountNo.value() + "/"));
 
     for (PhotoNo photoNo : account.getDeletedPhotoNoList()) {
       applicationEventPublisher.publishEvent(new PhotoDeletedEvent(accountNo, photoNo));

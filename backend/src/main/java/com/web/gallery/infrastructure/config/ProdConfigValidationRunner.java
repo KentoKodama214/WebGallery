@@ -4,12 +4,14 @@ import com.web.gallery.infrastructure.web.CorsConfig;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -32,6 +34,12 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class ProdConfigValidationRunner implements ApplicationRunner {
 
+  /** {@code X-Forwarded-For}を信頼する送信元範囲のプロパティキー */
+  private static final String INTERNAL_PROXIES_PROPERTY = "server.tomcat.remoteip.internal-proxies";
+
+  /** 任意のIPに一致してしまうため本番では許容しない、信頼プロキシ範囲の正規表現 */
+  private static final Set<String> CATCH_ALL_PROXY_PATTERNS = Set.of(".*", ".+", "[\\s\\S]*");
+
   private final CorsConfig corsConfig;
 
   private final S3Config s3Config;
@@ -39,6 +47,8 @@ public class ProdConfigValidationRunner implements ApplicationRunner {
   private final DataSourceProperties dataSourceProperties;
 
   private final DataSourceReplicaConfig dataSourceReplicaConfig;
+
+  private final Environment environment;
 
   /**
    * 起動完了時に本番設定の検証を実行する
@@ -61,6 +71,34 @@ public class ProdConfigValidationRunner implements ApplicationRunner {
     validateHttpsUrl("app.s3.endpoint", s3Config.getEndpoint());
     validateHttpsUrl("app.s3.public-base-url", s3Config.getPublicBaseUrl());
     validateReplicaUrl(dataSourceReplicaConfig.getUrl());
+    validateTrustedProxies(environment.getProperty(INTERNAL_PROXIES_PROPERTY));
+  }
+
+  /**
+   * {@code X-Forwarded-For}を信頼する送信元の範囲が、本番として妥当に絞られているかを検証する
+   *
+   * <p>この範囲が広いと、範囲内から届いた{@code X-Forwarded-For}をそのまま信頼してしまい、送信元IPの詐称
+   * （レート制限の回避・ログイン履歴やアクセスログの偽装）が成立する。{@code application-prod.yml}では 既定値を設けず環境変数{@code
+   * TRUSTED_PROXIES}の明示設定を必須にしているが、空文字や catch-all の 正規表現が設定された場合はここで検出して起動を失敗させる。
+   *
+   * @param internalProxies {@value #INTERNAL_PROXIES_PROPERTY}（環境変数 {@code TRUSTED_PROXIES}）の値
+   * @throws IllegalStateException 未設定、または任意のIPに一致する正規表現の場合
+   */
+  private void validateTrustedProxies(String internalProxies) {
+    if (!StringUtils.hasText(internalProxies)) {
+      throw new IllegalStateException(
+          "本番プロファイルでは "
+              + INTERNAL_PROXIES_PROPERTY
+              + "（環境変数 TRUSTED_PROXIES）に前段プロキシのCIDRを明示設定する必要があります");
+    }
+    String trimmed = internalProxies.trim();
+    if (CATCH_ALL_PROXY_PATTERNS.contains(trimmed)) {
+      throw new IllegalStateException(
+          "本番プロファイルの "
+              + INTERNAL_PROXIES_PROPERTY
+              + " に任意のIPと一致する値を指定することはできません（送信元IPの詐称を許してしまいます）: "
+              + internalProxies);
+    }
   }
 
   /**

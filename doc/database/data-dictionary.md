@@ -30,7 +30,7 @@
 | 22 | free_memo | フリーメモ | text | '""' | ユーザーが自由に入力できるメモ欄 | account |
 | 23 | id | ID | bigserial | (自動採番) | サロゲートキー（自動採番） | location_mst, photo_mst, photo_tag_mst, photo_favorite, inquiry_mst, inquiry_reply_mst |
 | 24 | image_file_name | 画像ファイル名 | text | - | アップロード時のクライアント送信ファイル名（ベース名）。表示用・写真登録時の重複存在チェックの等価検索に使用。オブジェクトキー（image_file_path）とは独立 | photo_mst |
-| 25 | image_file_path | 画像ファイルパス | text | - | S3オブジェクトキー（サーバ生成の不透明値 `{accountId}/{写真番号}-{ランダム}.{拡張子}`）。閲覧時はこのキーから署名付きURLを発行する | photo_mst |
+| 25 | image_file_path | 画像ファイルパス | text | - | S3オブジェクトキー（サーバ生成の不透明値 `{アカウント番号}/{写真番号}-{ランダム}.{拡張子}`）。閲覧時はこのキーから署名付きURLを発行する | photo_mst |
 | 26 | inquiry_id | お問い合わせID | bigint | - | inquiry_mst(id)へのFK | inquiry_reply_mst |
 | 27 | inquiry_no | お問い合わせ番号 | bigint | - | アカウント単位のお問い合わせ連番。account_noとの複合UNIQUEを構成 | inquiry_mst |
 | 28 | ip_address | 送信元IPアドレス | varchar(45) | - | アクセス元のIPアドレス（IPv6を考慮した最大長） | login_history, photo_list_filter_log, photo_view_log |

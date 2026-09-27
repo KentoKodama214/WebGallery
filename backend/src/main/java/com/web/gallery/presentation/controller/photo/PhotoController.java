@@ -12,7 +12,6 @@ import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
-import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Referer;
 import com.web.gallery.domain.model.photo.ExifData;
@@ -239,8 +238,7 @@ public class PhotoController {
                 photoConverter.toPhotoDetailModelForRegist(
                     photoSaveRequest, new AccountNo(sessionHelper.getAccountNo()))));
 
-    PhotoSaveResultModel photoSaveResultModel =
-        photoService.savePhotos(new AccountId(photoAccountId), photoDetailModelList);
+    PhotoSaveResultModel photoSaveResultModel = photoService.savePhotos(photoDetailModelList);
 
     return ResponseEntity.ok(PhotoEditResponse.of(photoSaveResultModel, photoSaveRequest));
   }
@@ -300,7 +298,7 @@ public class PhotoController {
                             accountNo))
                 .toList());
 
-    photoService.savePhotos(new AccountId(photoAccountId), photoDetailModelList);
+    photoService.savePhotos(photoDetailModelList);
 
     return ResponseEntity.ok(
         PhotoBulkEditResponse.of(
@@ -347,7 +345,7 @@ public class PhotoController {
                 photoConverter.toPhotoDeleteModel(
                     photoDeleteRequest, new AccountNo(sessionHelper.getAccountNo()))));
 
-    photoService.deletePhotos(new AccountId(photoAccountId), photoDeleteModelList);
+    photoService.deletePhotos(photoDeleteModelList);
 
     return ResponseEntity.ok(PhotoEditResponse.of(MessageConst.DELETE_PHOTO, null, null));
   }

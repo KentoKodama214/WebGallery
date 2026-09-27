@@ -32,6 +32,14 @@ public interface InquiryMstMapper {
       @Param("target") InquiryMstUpdateTarget target);
 
   /**
+   * 条件に該当するお問い合わせマスタを物理削除する
+   *
+   * @param condition 削除対象の抽出条件
+   * @return 削除件数
+   */
+  public Integer delete(InquiryMstCondition condition);
+
+  /**
    * アカウントが登録済みの最大のお問い合わせ番号を取得する
    *
    * @param accountNo アカウント番号

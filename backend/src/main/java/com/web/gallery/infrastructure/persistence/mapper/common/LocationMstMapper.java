@@ -25,6 +25,14 @@ public interface LocationMstMapper {
   public Integer insert(LocationMst locationMst);
 
   /**
+   * 条件に該当するロケーションマスタを物理削除する
+   *
+   * @param condition 削除対象の抽出条件
+   * @return 削除件数
+   */
+  public Integer delete(LocationMstCondition condition);
+
+  /**
    * アカウントが登録済みの最大のロケーション番号を取得する
    *
    * @param accountNo アカウント番号

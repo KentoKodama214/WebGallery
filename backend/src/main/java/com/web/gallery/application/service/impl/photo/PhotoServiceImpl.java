@@ -34,7 +34,6 @@ import com.web.gallery.domain.event.PhotoDeletedEvent;
 import com.web.gallery.domain.event.PhotoRegisteredEvent;
 import com.web.gallery.domain.event.PhotoUpdatedEvent;
 import com.web.gallery.domain.exception.GalleryException;
-import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.GeoLocation;
 import com.web.gallery.domain.model.common.IpGeoLocation;
@@ -298,8 +297,8 @@ public class PhotoServiceImpl implements PhotoService {
    */
   @Override
   @Transactional(rollbackFor = GalleryException.class)
-  public PhotoSaveResultModel savePhotos(
-      AccountId accountId, PhotoDetailModelList photoDetailModelList) throws GalleryException {
+  public PhotoSaveResultModel savePhotos(PhotoDetailModelList photoDetailModelList)
+      throws GalleryException {
     if (Objects.isNull(photoDetailModelList)) return null;
     if (photoDetailModelList.isEmpty()) return null;
 
@@ -319,10 +318,12 @@ public class PhotoServiceImpl implements PhotoService {
     Long photoNo = photoMstRepository.getNewPhotoNo(photoAccountNo).value();
     PhotoNo savedPhotoNo = new PhotoNo(photoNo);
     ImageFilePath savedImageFilePath = null;
-    // DBおよびS3には「{accountId}/{写真番号}-{ランダム}.{拡張子}」形式のオブジェクトキーを保存する。
+    // DBおよびS3には「{アカウント番号}/{写真番号}-{ランダム}.{拡張子}」形式のオブジェクトキーを保存する。
     // クライアント送信のファイル名はキーに含めない（パストラバーサル・特殊文字混入・衝突・列挙の防止）。
-    // 表示名としての元ファイル名は photo_mst.image_file_name に別途保持する
-    String filePath = accountId.value() + "/";
+    // 表示名としての元ファイル名は photo_mst.image_file_name に別途保持する。
+    // プレフィックスには変更されうるアカウントIDではなく不変のアカウント番号を用いる
+    // （ID変更後にアカウントを削除しても旧IDプレフィックス配下のオブジェクトが残るのを防ぐ）
+    String filePath = photoAccountNo.value() + "/";
 
     // ファイルI/OはDBトランザクションの対象外のため、途中の登録失敗でDBがロールバックされても
     // 書き込み済みのファイルは自動的には戻らない。登録済みファイルを記録しておき、失敗時に補償削除する
@@ -548,14 +549,12 @@ public class PhotoServiceImpl implements PhotoService {
    * <p>削除対象のS3オブジェクトキーはクライアント送信値を信用せず、写真番号をキーにDB上の値を取得して用いる
    * （クライアント入力によるファイルパス汚染・他オブジェクトの巻き込み削除を防ぐため）
    *
-   * @param accountId アカウントID
    * @param photoDeleteModelList {@link PhotoDeleteModelList}
    * @throws GalleryException 写真が存在しない場合、または削除に失敗した場合
    */
   @Override
   @Transactional(rollbackFor = GalleryException.class)
-  public void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList)
-      throws GalleryException {
+  public void deletePhotos(PhotoDeleteModelList photoDeleteModelList) throws GalleryException {
     List<ImageFilePath> deletedImageFilePaths = new ArrayList<>();
     for (PhotoDeleteModel photoDeleteModel : photoDeleteModelList) {
       // 画像ファイルパス（S3オブジェクトキー）はリクエスト値を信用せず、DB上の既存値を用いる

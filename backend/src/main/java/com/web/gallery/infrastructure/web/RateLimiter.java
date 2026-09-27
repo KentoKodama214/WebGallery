@@ -2,6 +2,7 @@ package com.web.gallery.infrastructure.web;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +26,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class RateLimiter {
 
-  /** エントリ数の上限。超過時は古いエントリを間引く（枯渇時も全消去はしない） */
+  /** エントリ数の上限。超過時は古いエントリを間引き、それでも下回らなければ古い順に強制削除する（全消去はしない） */
   private static final int MAX_ENTRIES = 200_000;
 
   /** 間引き処理（全走査）の最短実行間隔（ミリ秒）。thundering herd 対策 */
@@ -33,6 +34,13 @@ public class RateLimiter {
 
   /** エントリを「古い」とみなす経過時間（ミリ秒）。どのウィンドウ長よりも十分に長くとる */
   private static final long STALE_THRESHOLD_MILLIS = 3_600_000L;
+
+  /**
+   * エントリ数が上限を超えたのに古いエントリの間引きだけでは上限を下回らなかった場合に、 強制削除したあとの目標エントリ数（{@link #MAX_ENTRIES}に対する割合）
+   *
+   * <p>削除しすぎるとカウントを失って制限が緩むため、上限の8割まで落として余裕を作る
+   */
+  private static final double FORCED_EVICTION_TARGET_RATIO = 0.8;
 
   private final Clock clock;
 
@@ -95,6 +103,9 @@ public class RateLimiter {
   /**
    * 一定間隔ごと、またはエントリ数が上限を超えたときに、古いエントリを間引く
    *
+   * <p>間引き後もエントリ数が上限を超えている場合は、古い順に強制削除して上限内へ戻す （{@link
+   * #evictOldestEntries}）。これにより短時間に大量の異なるキーが生成されても マップが無制限に成長しない。
+   *
    * @param now 現在時刻（エポックミリ秒）
    */
   private void sweepIfDue(long now) {
@@ -113,6 +124,40 @@ public class RateLimiter {
           it.remove();
         }
       }
+    }
+    if (windows.size() > MAX_ENTRIES) {
+      evictOldestEntries();
+    }
+  }
+
+  /**
+   * ウィンドウ開始時刻が古い順にエントリを強制削除し、エントリ数を上限内へ戻す
+   *
+   * <p>{@link #STALE_THRESHOLD_MILLIS}未満の新しいエントリしか無い状況（短時間に大量の異なるキーが
+   * 到来した場合）でもメモリ使用量を抑えるための最終手段。削除されたキーはカウントを失うため 直後のリクエストが通りうるが、IP単位のレート制限としては許容できる範囲とする。
+   */
+  private void evictOldestEntries() {
+    int targetSize = (int) (MAX_ENTRIES * FORCED_EVICTION_TARGET_RATIO);
+    int removeCount = windows.size() - targetSize;
+    if (removeCount <= 0) {
+      return;
+    }
+    windows.entrySet().stream()
+        .sorted(Comparator.comparingLong(entry -> startEpochMillisOf(entry.getValue())))
+        .limit(removeCount)
+        .map(Map.Entry::getKey)
+        .forEach(windows::remove);
+  }
+
+  /**
+   * エントリのウィンドウ開始時刻を、そのエントリのモニタで同期して読み出す
+   *
+   * @param window 対象のエントリ
+   * @return ウィンドウ開始時刻（エポックミリ秒）
+   */
+  private static long startEpochMillisOf(Window window) {
+    synchronized (window) {
+      return window.startEpochMillis;
     }
   }
 

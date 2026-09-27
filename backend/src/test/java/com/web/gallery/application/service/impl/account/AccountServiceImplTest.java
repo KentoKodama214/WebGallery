@@ -793,7 +793,8 @@ public class AccountServiceImplTest {
       assertEquals(new AccountNo(accountNo), accountCaptor.getValue().getAccountNo());
       assertTrue(accountCaptor.getValue().isDeleted());
 
-      verify(fileRepository, times(1)).deleteByPrefix(new ImageFilePath(accountId + "/"));
+      // S3のプレフィックスは変更されうるアカウントIDではなく不変のアカウント番号を用いる
+      verify(fileRepository, times(1)).deleteByPrefix(new ImageFilePath(accountNo + "/"));
 
       ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
       verify(applicationEventPublisher, times(3)).publishEvent(eventCaptor.capture());

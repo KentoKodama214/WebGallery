@@ -42,6 +42,18 @@ public class InquiryMstCondition {
   }
 
   /**
+   * アカウント番号による抽出条件を生成する
+   *
+   * <p>アカウント削除時に、そのアカウントが登録したお問い合わせをまとめて削除するために使用する
+   *
+   * @param accountNo アカウント番号
+   * @return {@link InquiryMstCondition}
+   */
+  public static InquiryMstCondition byAccountNo(Long accountNo) {
+    return InquiryMstCondition.builder().accountNo(accountNo).build();
+  }
+
+  /**
    * アカウント番号・お問い合わせ番号による抽出条件を生成する
    *
    * @param accountNo アカウント番号

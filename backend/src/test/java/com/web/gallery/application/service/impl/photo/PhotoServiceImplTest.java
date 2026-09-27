@@ -113,14 +113,14 @@ public class PhotoServiceImplTest {
    * サーバ生成の不透明オブジェクトキー（{@code {accountId}/{写真番号}-{ランダム32桁}.{拡張子}}）であることを検証する
    *
    * @param actual 実際のキー（{@link ImageFilePath} または文字列）
-   * @param accountId アカウントID
+   * @param accountNo アカウント番号（キーのプレフィックス。変更されうるアカウントIDは用いない）
    * @param photoNo 写真番号
    * @param extension 拡張子（ドットなし）
    */
   private static void assertOpaqueObjectKey(
-      Object actual, String accountId, long photoNo, String extension) {
+      Object actual, long accountNo, long photoNo, String extension) {
     String key = actual instanceof ImageFilePath path ? path.value() : String.valueOf(actual);
-    String expectedPattern = "^" + accountId + "/" + photoNo + "-[0-9a-f]{32}\\." + extension + "$";
+    String expectedPattern = "^" + accountNo + "/" + photoNo + "-[0-9a-f]{32}\\." + extension + "$";
     assertTrue(
         key.matches(expectedPattern),
         "オブジェクトキーが不正です。expected pattern: " + expectedPattern + ", actual: " + key);
@@ -1246,7 +1246,7 @@ public class PhotoServiceImplTest {
     @Order(1)
     @DisplayName("正常系：photoDetailModelListがnullの場合、終了")
     void savePhotos_photoDetailModelList_is_null() throws GalleryException {
-      PhotoSaveResultModel actual = photoServiceImpl.savePhotos(new AccountId("aaaaaaaa"), null);
+      PhotoSaveResultModel actual = photoServiceImpl.savePhotos(null);
       assertNull(actual);
       verify(accountRepositoryImpl, never()).lockForUpdate(any(AccountNo.class));
       verify(photoMstRepositoryImpl, never()).getNewPhotoNo(any(AccountNo.class));
@@ -1261,8 +1261,7 @@ public class PhotoServiceImplTest {
     void savePhotos_photoDetailModelList_is_empty() throws GalleryException {
       List<PhotoDetailModel> photoDetailModelList = new ArrayList<PhotoDetailModel>();
       PhotoSaveResultModel actual =
-          photoServiceImpl.savePhotos(
-              new AccountId("aaaaaaaa"), PhotoDetailModelList.of(photoDetailModelList));
+          photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList));
       assertNull(actual);
       verify(accountRepositoryImpl, never()).lockForUpdate(any(AccountNo.class));
       verify(photoMstRepositoryImpl, never()).getNewPhotoNo(any(AccountNo.class));
@@ -1310,26 +1309,25 @@ public class PhotoServiceImplTest {
       photoDetailModelList.add(photoDetailModel2);
 
       PhotoSaveResultModel actual =
-          photoServiceImpl.savePhotos(
-              new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+          photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(5L), actual.getPhotoNo());
-      assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 6L, "jpg");
+      assertOpaqueObjectKey(actual.getImageFilePath(), 1L, 6L, "jpg");
       verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
       verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
       verify(photoAggregateRepositoryImpl, never()).update(any(Photo.class));
       verify(fileRepositoryImpl, times(2)).save(any(FileModel.class));
 
       List<FileModel> fileModelCaptureList = fileModelCaptor.getAllValues();
-      assertOpaqueObjectKey(fileModelCaptureList.get(0).getFilePath(), accountId, 5L, "jpg");
+      assertOpaqueObjectKey(fileModelCaptureList.get(0).getFilePath(), 1L, 5L, "jpg");
       assertEquals(photoDetailModel1.getImageFile(), fileModelCaptureList.get(0).getImageFile());
-      assertOpaqueObjectKey(fileModelCaptureList.get(1).getFilePath(), accountId, 6L, "jpg");
+      assertOpaqueObjectKey(fileModelCaptureList.get(1).getFilePath(), 1L, 6L, "jpg");
       assertEquals(photoDetailModel2.getImageFile(), fileModelCaptureList.get(1).getImageFile());
 
       List<Photo> photoCaptureList = photoCaptor.getAllValues();
       assertEquals(new AccountNo(1L), photoCaptureList.get(0).getAccountNo());
       assertEquals(new PhotoNo(5L), photoCaptureList.get(0).getPhotoNo());
-      assertOpaqueObjectKey(photoCaptureList.get(0).getImageFilePath(), accountId, 5L, "jpg");
+      assertOpaqueObjectKey(photoCaptureList.get(0).getImageFilePath(), 1L, 5L, "jpg");
       assertEquals(2, photoCaptureList.get(0).getPhotoTagModelList().size());
       assertEquals(
           new AccountNo(1L), photoCaptureList.get(0).getPhotoTagModelList().get(0).getAccountNo());
@@ -1350,7 +1348,7 @@ public class PhotoServiceImplTest {
 
       assertEquals(new AccountNo(1L), photoCaptureList.get(1).getAccountNo());
       assertEquals(new PhotoNo(6L), photoCaptureList.get(1).getPhotoNo());
-      assertOpaqueObjectKey(photoCaptureList.get(1).getImageFilePath(), accountId, 6L, "jpg");
+      assertOpaqueObjectKey(photoCaptureList.get(1).getImageFilePath(), 1L, 6L, "jpg");
 
       ArgumentCaptor<PhotoRegisteredEvent> photoRegisteredEventCaptor =
           ArgumentCaptor.forClass(PhotoRegisteredEvent.class);
@@ -1393,8 +1391,7 @@ public class PhotoServiceImplTest {
       photoDetailModelList.add(photoDetailModel2);
 
       PhotoSaveResultModel actual =
-          photoServiceImpl.savePhotos(
-              new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+          photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(3L), actual.getPhotoNo());
       assertNull(actual.getImageFilePath());
@@ -1476,22 +1473,21 @@ public class PhotoServiceImplTest {
       photoDetailModelList.add(photoDetailModel2);
 
       PhotoSaveResultModel actual =
-          photoServiceImpl.savePhotos(
-              new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+          photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(3L), actual.getPhotoNo());
-      assertOpaqueObjectKey(actual.getImageFilePath(), accountId, 5L, "jpg");
+      assertOpaqueObjectKey(actual.getImageFilePath(), 1L, 5L, "jpg");
       verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
       verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
       verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
 
       FileModel fileModelCapture = fileModelCaptor.getValue();
-      assertOpaqueObjectKey(fileModelCapture.getFilePath(), accountId, 5L, "jpg");
+      assertOpaqueObjectKey(fileModelCapture.getFilePath(), 1L, 5L, "jpg");
       assertEquals(photoDetailModel1.getImageFile(), fileModelCapture.getImageFile());
 
       Photo registeredPhoto = photoRegistCaptor.getValue();
       assertEquals(new PhotoNo(5L), registeredPhoto.getPhotoNo());
-      assertOpaqueObjectKey(registeredPhoto.getImageFilePath(), accountId, 5L, "jpg");
+      assertOpaqueObjectKey(registeredPhoto.getImageFilePath(), 1L, 5L, "jpg");
       assertEquals(2, registeredPhoto.getPhotoTagModelList().size());
 
       Photo updatedPhoto = photoUpdateCaptor.getValue();
@@ -1548,9 +1544,7 @@ public class PhotoServiceImplTest {
 
       assertThrows(
           RegistFailureException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
 
       verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
       verify(photoAggregateRepositoryImpl, never()).update(any(Photo.class));
@@ -1588,9 +1582,7 @@ public class PhotoServiceImplTest {
 
       assertThrows(
           UpdateFailureException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
 
       verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
       verify(photoAggregateRepositoryImpl, times(1)).update(any(Photo.class));
@@ -1615,9 +1607,7 @@ public class PhotoServiceImplTest {
 
       assertThrows(
           PhotoNotFoundException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
 
       verify(photoAggregateRepositoryImpl, never()).update(any(Photo.class));
       verify(applicationEventPublisher, never()).publishEvent(any());
@@ -1652,8 +1642,7 @@ public class PhotoServiceImplTest {
               .build();
       photoDetailModelList.add(photoDetailModel);
 
-      photoServiceImpl.savePhotos(
-          new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+      photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(existingImageFilePath, photoCaptor.getValue().getImageFilePath());
     }
@@ -1688,9 +1677,7 @@ public class PhotoServiceImplTest {
 
       assertThrows(
           PhotoNotAdditableException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
 
       verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
       verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
@@ -1721,9 +1708,7 @@ public class PhotoServiceImplTest {
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () ->
-                  photoServiceImpl.savePhotos(
-                      new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+              () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
       assertEquals(ErrorEnum.IMAGE_FILE_REQUIRED.getErrorCode(), exception.getErrorCode());
 
       verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
@@ -1765,8 +1750,7 @@ public class PhotoServiceImplTest {
       photoDetailModelList.add(photoDetailModel);
 
       PhotoSaveResultModel actual =
-          photoServiceImpl.savePhotos(
-              new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList));
+          photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList));
 
       assertEquals(new PhotoNo(5L), actual.getPhotoNo());
       verify(photoAggregateRepositoryImpl, times(1)).regist(any(Photo.class));
@@ -1777,7 +1761,7 @@ public class PhotoServiceImplTest {
               fileModelCaptor.getValue().getFilePath().value(),
               photoCaptor.getValue().getImageFilePath().value(),
               actual.getImageFilePath().value())) {
-        assertOpaqueObjectKey(key, accountId, 5L, "jpg");
+        assertOpaqueObjectKey(key, 1L, 5L, "jpg");
         assertFalse(key.contains(".."));
         assertFalse(key.contains("etc"));
         assertFalse(key.contains("evil"));
@@ -1809,9 +1793,7 @@ public class PhotoServiceImplTest {
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () ->
-                  photoServiceImpl.savePhotos(
-                      new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+              () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
       assertEquals(
           ErrorEnum.UNSUPPORTED_IMAGE_CONTENT_TYPE.getErrorCode(), exception.getErrorCode());
 
@@ -1846,9 +1828,7 @@ public class PhotoServiceImplTest {
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () ->
-                  photoServiceImpl.savePhotos(
-                      new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+              () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
       assertEquals(ErrorEnum.INVALID_IMAGE_SIGNATURE.getErrorCode(), exception.getErrorCode());
 
       verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
@@ -1883,9 +1863,7 @@ public class PhotoServiceImplTest {
       BadRequestException exception =
           assertThrows(
               BadRequestException.class,
-              () ->
-                  photoServiceImpl.savePhotos(
-                      new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+              () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
       assertEquals(ErrorEnum.IMAGE_FILE_SIZE_EXCEEDED.getErrorCode(), exception.getErrorCode());
 
       verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
@@ -1922,9 +1900,7 @@ public class PhotoServiceImplTest {
 
       assertThrows(
           BadRequestException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
 
       verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
       verify(fileRepositoryImpl, never()).save(any(FileModel.class));
@@ -1970,9 +1946,7 @@ public class PhotoServiceImplTest {
 
       assertThrows(
           RegistFailureException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
 
       verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
       verify(fileRepositoryImpl, times(1)).save(any(FileModel.class));
@@ -1980,7 +1954,7 @@ public class PhotoServiceImplTest {
       // 1枚目は既にファイル書き込みが成功しているため、DBロールバックとの整合性を保つべく補償削除される
       ArgumentCaptor<ImageFilePath> deleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
       verify(fileRepositoryImpl, times(1)).delete(deleteCaptor.capture());
-      assertOpaqueObjectKey(deleteCaptor.getValue(), accountId, 5L, "jpg");
+      assertOpaqueObjectKey(deleteCaptor.getValue(), 1L, 5L, "jpg");
     }
 
     @Test
@@ -2022,9 +1996,7 @@ public class PhotoServiceImplTest {
 
       assertThrows(
           RegistFailureException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
     }
 
     /**
@@ -2073,9 +2045,7 @@ public class PhotoServiceImplTest {
       RuntimeException exception =
           assertThrows(
               RuntimeException.class,
-              () ->
-                  photoServiceImpl.savePhotos(
-                      new AccountId(accountId), PhotoDetailModelList.of(photoDetailModelList)));
+              () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(photoDetailModelList)));
       assertEquals("db error", exception.getMessage());
 
       verify(photoAggregateRepositoryImpl, times(2)).regist(any(Photo.class));
@@ -2084,7 +2054,7 @@ public class PhotoServiceImplTest {
       // 1枚目は既にファイル書き込みが成功しているため、DBロールバックとの整合性を保つべく補償削除される
       ArgumentCaptor<ImageFilePath> deleteCaptor = ArgumentCaptor.forClass(ImageFilePath.class);
       verify(fileRepositoryImpl, times(1)).delete(deleteCaptor.capture());
-      assertOpaqueObjectKey(deleteCaptor.getValue(), accountId, 5L, "jpg");
+      assertOpaqueObjectKey(deleteCaptor.getValue(), 1L, 5L, "jpg");
     }
 
     @Test
@@ -2101,9 +2071,7 @@ public class PhotoServiceImplTest {
 
       assertThrows(
           BadRequestException.class,
-          () ->
-              photoServiceImpl.savePhotos(
-                  new AccountId(accountId), PhotoDetailModelList.of(List.of(photoDetailModel))));
+          () -> photoServiceImpl.savePhotos(PhotoDetailModelList.of(List.of(photoDetailModel))));
 
       verify(accountRepositoryImpl, never()).lockForUpdate(any(AccountNo.class));
       verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
@@ -2120,7 +2088,7 @@ public class PhotoServiceImplTest {
     @DisplayName("正常系：photoDeleteModelListが0件の場合、終了")
     void deletePhotos_photoDeleteModelList_empty() throws GalleryException {
 
-      photoServiceImpl.deletePhotos(new AccountId("aaaaaaaa"), PhotoDeleteModelList.empty());
+      photoServiceImpl.deletePhotos(PhotoDeleteModelList.empty());
       verify(photoAggregateRepositoryImpl, never()).delete(any(Photo.class));
       verify(applicationEventPublisher, never()).publishEvent(any());
     }
@@ -2164,8 +2132,7 @@ public class PhotoServiceImplTest {
               .imageFilePath(new ImageFilePath("クライアント送信値は無視される"))
               .build());
 
-      photoServiceImpl.deletePhotos(
-          new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList));
+      photoServiceImpl.deletePhotos(PhotoDeleteModelList.of(photoDeleteModelList));
       verify(photoAggregateRepositoryImpl, times(2)).delete(any(Photo.class));
       verify(fileRepositoryImpl, times(2)).delete(any(ImageFilePath.class));
 
@@ -2214,9 +2181,7 @@ public class PhotoServiceImplTest {
 
       assertThrows(
           PhotoNotFoundException.class,
-          () ->
-              photoServiceImpl.deletePhotos(
-                  new AccountId("aaaaaaaa"), PhotoDeleteModelList.of(photoDeleteModelList)));
+          () -> photoServiceImpl.deletePhotos(PhotoDeleteModelList.of(photoDeleteModelList)));
 
       verify(photoAggregateRepositoryImpl, never()).delete(any(Photo.class));
       verify(fileRepositoryImpl, never()).delete(any(ImageFilePath.class));

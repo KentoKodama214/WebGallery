@@ -67,6 +67,16 @@
 			)
 	</insert>
 
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.common.LocationMstCondition">
+		DELETE FROM
+			common.location_mst
+		<where>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="locationNo != null"> AND location_no = #{locationNo}</if>
+			<if test="managementName != null"> AND management_name = #{managementName}</if>
+		</where>
+	</delete>
+
 	<select id="getMaxLocationNo" parameterType="Long" resultType="Long">
 		SELECT
 			MAX(location_no) AS locationNo

@@ -34,6 +34,16 @@
 		<if test="${prefix}statusKbn != null"> AND im.status_kbn = #{${prefix}statusKbn}::common.inquiry_status_enum</if>
 	</sql>
 
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMstCondition">
+		DELETE FROM
+			common.inquiry_mst AS im
+		<where>
+			<include refid="inquiryMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+	</delete>
+
 	<insert id="insert" parameterType="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMst">
 		INSERT INTO
 			common.inquiry_mst (

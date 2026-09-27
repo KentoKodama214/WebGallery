@@ -5,7 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 /**
- * リフレッシュトーク��テーブルのMapperクラス
+ * リフレッシュトークンテーブルのMapperクラス
  *
  * @author Kento Kodama
  * @version 1.0.0
@@ -24,7 +24,7 @@ public interface RefreshTokenMapper {
   /**
    * トークンハッシュに該当するリフレッシュトークンを取得する
    *
-   * @param tokenHash トーク��ハッシュ
+   * @param tokenHash トークンハッシュ
    * @return {@link RefreshToken}
    */
   public RefreshToken selectByTokenHash(@Param("tokenHash") String tokenHash);

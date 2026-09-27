@@ -768,7 +768,7 @@ public class AccountServiceImplIntegrationTest {
       TestTransaction.end();
       TestTransaction.start();
 
-      verify(fileRepository, times(1)).deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
+      verify(fileRepository, times(1)).deleteByPrefix(new ImageFilePath("1/"));
 
       // 上記で物理コミットした削除結果が、通常の@Transactionalによる自動ロールバックに
       // 乗らないまま他のNestedクラスへ残留しないよう、明示的にTRUNCATE（CASCADE）して物理コミットする

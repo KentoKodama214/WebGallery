@@ -138,6 +138,10 @@ APM に記録されやすく（`Authorization` と違い）マスク対象から
 **本番では前段の ALB／リバースプロキシが存在するサブネットの CIDR だけに狭める**こと。加えて、
 アプリコンテナはネットワーク的に ALB 経由でしか到達できない構成にする。
 
+本番プロファイルでは既定値のまま起動できないよう、`application-prod.yml` が
+`internal-proxies: ${TRUSTED_PROXIES}`（既定値なし）を指定し、さらに
+`ProdConfigValidationRunner` が値の妥当性（未設定・catch-all の禁止）を検証する。
+
 ### バックエンドのレスポンスヘッダーと CORS
 
 `SecurityConfig#applyApiResponseHeaders` が API・Actuator・デフォルトの3つの `SecurityFilterChain` に対して
@@ -173,6 +177,9 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 - `app.cors.allowed-origins`（環境変数 `FRONTEND_ORIGIN`）が 1 件以上・すべて `https://` の
   絶対オリジン・ワイルドカード（`*`）やパス・クエリを含まないこと
 - `app.s3.endpoint` / `app.s3.public-base-url` が設定されている場合、`https://` であること（平文通信の禁止）
+- `server.tomcat.remoteip.internal-proxies`（環境変数 `TRUSTED_PROXIES`）が設定済みで、かつ任意のIPに
+  一致する catch-all（`.*` / `.+` 等）でないこと。`application-prod.yml` では既定値を設けず
+  `${TRUSTED_PROXIES}` としているため、未設定なら起動時のプレースホルダ解決の時点で失敗する（二重の防御）
 
 `JWT_SECRET` の 256bit 長チェックは `infrastructure/security/JwtTokenProviderImpl` の `@PostConstruct` で全プロファイル共通に行う。
 `prod` プロファイルでは OpenAPI ドキュメント（`/scalar`・`/v3/api-docs`）用の `SecurityFilterChain` を
@@ -262,8 +269,9 @@ nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ�
 ### 画像ストレージと署名付きURL
 
 写真の実体は S3（ローカル/E2E は docker-compose の MinIO）に保存し、DB の `photo_mst.image_file_path`
-には**サーバ生成の不透明オブジェクトキー**（`{accountId}/{写真番号}-{ランダム32桁}.{検証済み拡張子}`）のみを
-保持する。写真一覧・詳細 API は、Service 層（`PhotoServiceImpl`）が `FileRepository.getPresignedUrl` で
+には**サーバ生成の不透明オブジェクトキー**（`{アカウント番号}/{写真番号}-{ランダム32桁}.{検証済み拡張子}`）のみを
+保持する。プレフィックスには変更されうるアカウントIDではなく**不変のアカウント番号**を用いる
+（アカウントID変更後に退会した場合、旧IDプレフィックス配下のオブジェクトが削除されずに残るのを防ぐ）。写真一覧・詳細 API は、Service 層（`PhotoServiceImpl`）が `FileRepository.getPresignedUrl` で
 **有効期限付きの署名付き URL**（pre-signed GET URL、既定 15 分。`app.s3.presign-expiry-seconds`）を
 発行してレスポンスに載せ、ブラウザがストレージから直接画像を取得する。アプリサーバーは画像バイト列を中継しない。
 
@@ -273,6 +281,11 @@ nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ�
   に別途保持する。画像は登録後に不変のため、写真の編集では `image_file_path` / `image_file_name` を更新しない。
 - PUT 時に `Content-Type` は検証済み拡張子から確定した値を設定し（クライアント申告値は使わない）、
   `Content-Disposition: inline` を明示する。
+- 署名付き URL のホストは**発行後に差し替えない**。SigV4 は `host` を署名対象に含むため、発行済み URL の
+  ホストを書き換えると署名検証に失敗する。ブラウザから到達可能なホストで署名する必要がある構成
+  （S3 エンドポイントがコンテナ内部ホスト名の場合等）では、`S3Presigner` のエンドポイント自体に
+  `app.s3.public-base-url` を設定する（`infrastructure/config/S3ClientConfig#s3Presigner`）。
+  アップロード等のサーバー間通信を担う `S3Client` は従来どおり内部向けの `app.s3.endpoint` を使う。
 - 削除時は、クライアント送信の `imageFilePath` を信用せず、写真番号で DB から実キーを引いて削除対象を決める
   （パス汚染・他オブジェクトの巻き込み削除の防止）。
 - フロントの `sanitizeImageUrl`（`src/lib/url.ts`）と CSP `img-src` は、本番では `https:` かつ

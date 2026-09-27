@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * JWTトークンの��成・検証を行うヘルパークラス
+ * JWTトークンの生成・検証を行うヘルパークラス
  *
  * @author Kento Kodama
  * @version 1.0.0
@@ -49,7 +49,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
   }
 
   /**
-   * アクセストークンを���成する
+   * アクセストークンを生成する
    *
    * @param principal 認証済みユーザー情報
    * @return JWTアクセストークン文字列
@@ -127,7 +127,7 @@ public class JwtTokenProviderImpl implements JwtTokenProvider {
   }
 
   /**
-   * 署名用のキーを取得��る
+   * 署名用のキーを取得する
    *
    * @return SecretKeyオブジェクト
    */
