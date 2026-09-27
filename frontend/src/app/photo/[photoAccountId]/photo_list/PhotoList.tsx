@@ -179,6 +179,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     useState<PhotoListFilter>(initialFilter);
 
   const galleryRef = useRef<HTMLDivElement>(null);
+  // フィルターパネルのフォーカス管理用（開いたら内部へフォーカスを移し、Tabを循環させ、閉じたらトリガーへ戻す）
+  const filterPanelRef = useRef<HTMLDivElement>(null);
+  const filterTriggerRef = useRef<HTMLDivElement>(null);
   const lightboxRef = useRef<InstanceType<typeof import("photoswipe/lightbox").default> | null>(null);
   const photosRef = useRef<PhotoListItem[]>(photos);
   // 一覧取得リクエストの世代。初期ロード・絞り込み・もっと見るは開始時に
@@ -226,6 +229,12 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     setTagList(appliedFilter.tagList);
     setSortBy(appliedFilter.sortBy);
   };
+
+  // Escapeキーのハンドラから常に最新のresetFilterEditsを呼べるようにする
+  const resetFilterEditsRef = useRef(resetFilterEdits);
+  useEffect(() => {
+    resetFilterEditsRef.current = resetFilterEdits;
+  });
 
   /**
    * フィルター条件をCookieに保存する
@@ -323,6 +332,56 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       controller.abort();
     };
   }, [photoAccountId, saveFilterToCookie, authLoading, isAuthenticated, isOwner]);
+
+  /**
+   * フィルターパネル展開中のフォーカス制御
+   *
+   * パネルは常にDOM上に存在し、閉じている間は`visibility: hidden`で不可視・フォーカス不能に
+   * なっている。開いている間だけ、内部へフォーカスを移し、Escapeで閉じ、Tabをパネル内で循環させる
+   * （`ModalDialog`/`useDialog`と同じ扱いにするため。パネルは条件付きレンダリングではないので
+   * このコンポーネント側で制御する）
+   */
+  useEffect(() => {
+    if (!isFilterOpen) return;
+
+    const panel = filterPanelRef.current;
+    // トリガーはこのコンポーネントがマウントされている間は同一DOMノードのため、
+    // effect実行時に控えてクリーンアップ（＝パネルを閉じた時）のフォーカス復帰に使う
+    const trigger = filterTriggerRef.current;
+    const focusables = panel
+      ? Array.from(
+          panel.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        )
+      : [];
+    focusables[0]?.focus();
+
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        resetFilterEditsRef.current();
+        setIsFilterOpen(false);
+        return;
+      }
+      if (e.key !== "Tab" || focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+      trigger?.focus();
+    };
+  }, [isFilterOpen]);
 
   useEffect(() => {
     if (!isOwner) return;
@@ -643,6 +702,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
 
       {/* フィルターオーバーレイ */}
       <div
+        ref={filterPanelRef}
+        id="photo-list-filter-panel"
         className={`${styles.filterOverlay} ${isFilterOpen ? styles.filterOpen : ""}`}
         data-testid="filter-panel"
       >
@@ -674,8 +735,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             <select
               value={directionKbn}
               onChange={(e) => setDirectionKbn(e.target.value)}
+              aria-label="写真の向きで絞り込む"
+              data-testid="direction-filter-select"
             >
-              <option value=""></option>
+              <option value="">向き（指定なし）</option>
               <option value="vertical">縦写真</option>
               <option value="horizontal">横写真</option>
             </select>
@@ -686,9 +749,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             <select
               value={isFavoriteFilter}
               onChange={(e) => setIsFavoriteFilter(e.target.value)}
+              aria-label="お気に入りで絞り込む"
               data-testid="favorite-filter-select"
             >
-              <option value=""></option>
+              <option value="">お気に入り（指定なし）</option>
               <option value="true">お気に入り写真のみ</option>
             </select>
           )}
@@ -699,12 +763,16 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             value={tagList}
             onChange={(e) => setTagList(e.target.value)}
             placeholder="キーワードを入力"
+            aria-label="キーワード（タグ）で絞り込む"
+            data-testid="tag-filter-input"
           />
 
           {/* 並び順 */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
+            aria-label="並び順"
+            data-testid="sort-by-select"
           >
             <option value="photoAt">撮影日順</option>
             <option value="favorite">お気に入り数順</option>
@@ -725,6 +793,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       <div className={styles.photosContainer}>
         {/* フィルタートリガー */}
         <div
+          ref={filterTriggerRef}
           className={styles.filterTrigger}
           onClick={() => setIsFilterOpen(true)}
           onKeyDown={onActivateKey(() => setIsFilterOpen(true))}
@@ -732,6 +801,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
           tabIndex={0}
           aria-label="フィルターを開く"
           aria-expanded={isFilterOpen}
+          aria-controls="photo-list-filter-panel"
           data-testid="filter-trigger"
         >
           <span>

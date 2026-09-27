@@ -3,6 +3,7 @@ import {
   test as adminTest,
   expect as adminExpect,
 } from "../fixtures/admin";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 import { generateSortEarlyTestAccountId, registerAccount } from "../fixtures/auth";
 
 test.describe("管理者用アカウント管理ページ", () => {
@@ -67,6 +68,34 @@ async function registerTargetAccount(
 // 不足する場合があるため、この describe 内のテストは長めのタイムアウトを設定する
 adminTest.describe("管理者用アカウント管理ページ（ログイン済み・管理者）", () => {
   adminTest.describe.configure({ timeout: 60_000 });
+
+  adminTest(
+    "アクセシビリティ違反がないこと（一覧・権限編集ダイアログ）",
+    async ({ adminPage: page, browser }, testInfo) => {
+      adminTest.skip(
+        testInfo.project.name !== "chromium",
+        "a11y検証はchromiumプロジェクトのみで実施する"
+      );
+      const target = await registerTargetAccount(
+        browser,
+        testInfo.project.use.baseURL,
+        testInfo.workerIndex
+      );
+
+      await page.goto("/admin/account_management");
+      const targetRow = await revealAccountRow(page, target.accountId);
+      // color-contrast は一覧テーブルのヘッダー（白文字 × #2196F3 = 3.12:1）と
+      // 操作ボタン（bg-blue-500 / green-500 / red-500 × 白文字）に既存の違反があり、
+      // 解消にはアプリ共通の配色変更が必要なため、本検証の対象外とする。
+      // ラベル・アクセシブルネーム等、本PRの対象ルールは検査する
+      await expectNoAccessibilityViolations(page, { disableRules: ["color-contrast"] });
+
+      // 権限編集ダイアログ内のselectは、ダイアログを開いてはじめて検証できる
+      await targetRow.getByRole("button", { name: "編集" }).click();
+      await adminExpect(page.getByRole("dialog", { name: "権限の編集" })).toBeVisible();
+      await expectNoAccessibilityViolations(page, { disableRules: ["color-contrast"] });
+    }
+  );
 
   adminTest(
     "ログインページへリダイレクトされず、アカウント一覧が表示されること",

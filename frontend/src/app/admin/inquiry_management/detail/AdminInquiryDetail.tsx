@@ -141,7 +141,11 @@ export function AdminInquiryDetail({ inquiryId }: AdminInquiryDetailProps) {
           &larr; お問い合わせ管理へ戻る
         </Link>
 
-        {message && <p className="text-green-600 font-medium mt-2">{message}</p>}
+        {message && (
+          <p role="status" className="text-green-600 font-medium mt-2">
+            {message}
+          </p>
+        )}
 
         <div className="bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-6 mt-4">
           <div className="flex justify-between items-start mb-2">

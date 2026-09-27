@@ -480,6 +480,65 @@ describe("PhotoSettingForm", () => {
     expect(screen.queryByTestId("image-preview-item-0")).not.toBeInTheDocument();
   });
 
+  it("位置情報公開の設定欄に、画像ファイル自体のEXIF位置情報は除去されない旨の注記を表示すること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const notice = screen.getByTestId("exif-location-notice");
+    expect(notice).toHaveTextContent("画像ファイル自体に埋め込まれた位置情報");
+    expect(notice).toHaveTextContent("除去されません");
+    // チェックボックスから説明として関連付けられていること
+    const checkbox = screen.getByTestId("location-public-checkbox");
+    expect(checkbox).toHaveAttribute("aria-describedby", "location-public-help");
+    expect(document.getElementById("location-public-help")).toContainElement(notice);
+  });
+
+  it("タイトル（日本語）が必須項目として示されること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("japanese-title-input")).toHaveAttribute(
+      "aria-required",
+      "true"
+    );
+    expect(screen.getByLabelText("タイトル（日本語） *")).toBe(
+      screen.getByTestId("japanese-title-input")
+    );
+  });
+
+  it("撮影場所の新規登録モードで、各入力欄が可視ラベルで関連付けられていること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+
+    // placeholderではなく<label for>で関連付けられていること
+    expect(screen.getByLabelText("管理名 *")).toBe(
+      screen.getByTestId("new-location-management-name-input")
+    );
+    expect(screen.getByLabelText("表示名 *")).toBe(
+      screen.getByTestId("new-location-display-name-input")
+    );
+    expect(screen.getByLabelText("緯度 *")).toBe(
+      screen.getByTestId("new-location-latitude-input")
+    );
+    expect(screen.getByLabelText("経度 *")).toBe(
+      screen.getByTestId("new-location-longitude-input")
+    );
+    expect(screen.getByLabelText("住所（任意）")).toBe(
+      screen.getByTestId("new-location-address-input")
+    );
+  });
+
   it("新規モードでは位置情報公開チェックボックスが未チェックで、送信時に isLocationPublic=false を送ること", async () => {
     mockRegistPhotos.mockResolvedValue({ isSuccess: true, registeredCount: 1 });
 

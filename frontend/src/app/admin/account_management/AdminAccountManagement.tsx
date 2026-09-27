@@ -242,10 +242,12 @@ export function AdminAccountManagement() {
 
   return (
     <div className="flex flex-col items-center py-8 gap-4">
-      <h2 className="text-xl font-bold">アカウント管理</h2>
+      <h1 className="text-xl font-bold">アカウント管理</h1>
 
       {message && (
-        <p className="text-green-600 font-medium">{message}</p>
+        <p role="status" className="text-green-600 font-medium">
+          {message}
+        </p>
       )}
 
       {actionError && (
@@ -436,11 +438,16 @@ export function AdminAccountManagement() {
           <p className="text-[#444] text-center mb-4">
             {editingAuthority.accountId} の権限を変更します
           </p>
+          <label htmlFor="authority-select" className="block text-sm text-[#444] mb-1">
+            権限
+          </label>
           <select
+            id="authority-select"
             value={selectedAuthorityKbn}
             onChange={(e) => setSelectedAuthorityKbn(e.target.value)}
             disabled={isActionProcessing}
             className="w-full h-[40px] mb-4 border border-gray-300 rounded-sm px-2"
+            data-testid="authority-select"
           >
             {AUTHORITY_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
