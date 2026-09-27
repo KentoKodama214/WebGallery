@@ -1,10 +1,12 @@
 ---
 paths:
-  - backend/src/test/**/repository/**
+  - backend/src/test/**/*RepositoryImplTest*
   - "!backend/src/test/**/integration/**"
 ---
 
 # Repositoryパッケージの単体テスト規約
+
+`infrastructure/persistence/repository/{機能}/`配下のRepositoryImplTestに加え、`infrastructure/scheduler/lock/SchedulerLockRepositoryImplTest`（自己完結クラスタとして例外的にディレクトリが異なる）も対象とする。
 
 ## 命名規則
 

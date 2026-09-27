@@ -1,10 +1,12 @@
 ---
 paths:
-  - backend/src/test/**/mapper/**
+  - backend/src/test/**/*MapperTest*
   - "!backend/src/test/**/integration/**"
 ---
 
 # Mapperパッケージの単体テスト規約
+
+`infrastructure/persistence/mapper/{機能}/`配下のMapperTestに加え、`infrastructure/scheduler/lock/SchedulerLockMapperTest`（自己完結クラスタとして例外的にディレクトリが異なる）も対象とする。
 
 ## 命名規則
 

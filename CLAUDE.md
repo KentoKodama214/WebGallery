@@ -49,18 +49,18 @@ just e2e-prod
 
 ## アーキテクチャ
 
-### レイヤードアーキテクチャ (Controller -> Service -> Repository -> Mapper)
+### オニオンアーキテクチャ (domain → application → infrastructure/presentation)
 
-1. **Controller層** (`controller/`) - RESTコントローラー。`/model/`のModelオブジェクトでService層と転送する
-2. **Service層** (`service/` + `service/impl/`) - ビジネスロジックとバリデーション。`/model/`のModelオブジェクトでController層・Repository層と転送する
-3. **Repository層** (`repository/` + `repository/impl/`) - データベースアクセス。`/model/`でService層と、`/entity/`や`/dto/`でMapper層と転送する
-4. **MyBatis Mapper層** (`mapper/`) - SQLは`resources/com/web/gallery/mapper/*.xml`のXMLファイルで定義
+`com.web.gallery`直下に4つのレイヤーをトップレベルパッケージとして持ち、依存は常に内側（domain）へ向かう。
 
-上記に加え、`domain/`にはプロパティ単位の値オブジェクト（`record`）が定義されており、Model・Repository・Serviceのメソッド引数・返り値として利用される。単一のビジネスルールを判定するドメインサービスは`policy/`に配置し、Service層からのみ利用する。また、管理者権限チェックには`annotation/`のカスタムアノテーションと`aspect/`のAOPを使用する。写真登録・削除などのドメインイベントとそのリスナーは`event/`に配置し、通知やログ集計等の副次的な処理をService層のビジネスロジックから疎結合にする。`@Scheduled`による定期実行タスク（期限切れリフレッシュトークンの削除等）は`scheduler/`に配置し、Service層のメソッドを呼び出す（有効化は`config/SchedulingConfig`）。JWT生成・検証やセッション取得などの技術的ユーティリティは`helper/`に配置する。
+1. **domain層**（最内層・外部依存なし） - プロパティ単位の値オブジェクト（`record`、`domain/model/{機能}/`）、単一のビジネスルールを判定するドメインサービス（`Policy`サフィックス、`domain/service/`）、ドメインイベント・リスナー（`domain/event/`）、カスタム例外（`domain/exception/`）、ビジネス区分値Enum（`domain/enumeration/`）、定数（`domain/constant/`、`ApiRoutes`/`Consts`/`MessageConst`）
+2. **application層**（ユースケース。domainのみに依存） - レイヤー間転送用のModelオブジェクト（`application/model/{機能}/`）、Service（`application/service/{機能}/` + `application/service/impl/{機能}/`）、Repositoryインターフェース（`application/repository/{機能}/`）、書き込みユースケースの集約ルート（`application/aggregate/`）、技術詳細へのポート（`application/helper/`、`application/config/`）
+3. **infrastructure層**（技術詳細。domain・applicationに依存可） - Entity/Dto/Mapper/Repository実装（`infrastructure/persistence/{entity,dto,mapper,repository}/{機能}/`）、定期実行タスク（`infrastructure/scheduler/`、有効化は`infrastructure/config/SchedulingConfig`）、セキュリティ実装（`infrastructure/security/`、`infrastructure/web/`）、上記ポートの実装（`infrastructure/security・web・config`の`*Impl`クラス）
+4. **presentation層**（domain・applicationに加えinfrastructureにも一方向で依存可） - RESTコントローラー（`presentation/controller/{機能}/`）、Request/Response DTO（`presentation/request/{機能}/`、`presentation/response/{機能}/`）、Request→ModelのConverter（`presentation/converter/{機能}/`）
 
-書き込みユースケース（登録・更新・削除）で複数テーブルにまたがる整合性・ライフサイクルの管理が必要な場合、`aggregate/`に集約ルートクラスを定義し、Service層とRepository層の間に位置づける（例：`Photo`集約）。詳細は`.claude/rules/aggregate.md`を参照。
+Service層が本来infrastructure層の技術（JWT生成・GeoIP解決・`application.yml`の設定値等）を必要とする場合は、`application/helper/`・`application/config/`にポート（インターフェース）を定義し、`infrastructure/`側に実装を置く（DIP）。書き込みユースケースで複数テーブルにまたがる整合性・ライフサイクルの管理が必要な場合は`application/aggregate/`に集約ルートクラスを定義し、Service層とRepository層の間に位置づける（例：`Photo`集約）。詳細は`.claude/rules/aggregate.md`を参照。
 
-各レイヤーの詳細なルール（依存関係、命名規則、アノテーション規約等）は `.claude/rules/` 配下のルールファイルを参照。
+依存方向・パッケージ構成の全体像は`.claude/rules/architecture-overview.md`を、各レイヤーの詳細なルール（依存関係、命名規則、アノテーション規約等）は `.claude/rules/` 配下のルールファイルを参照。
 
 ### セキュリティモデル
 
@@ -91,7 +91,7 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 just backend-unitTest
 
 # backendの特定のテストクラスを実行
-./backend/gradlew -p backend unitTest --tests "com.web.gallery.service.impl.PhotoServiceImplTest"
+./backend/gradlew -p backend unitTest --tests "com.web.gallery.application.service.impl.photo.PhotoServiceImplTest"
 
 # frontendの単体テスト（Jest）
 just front-test
@@ -120,28 +120,31 @@ just e2e
 
 ### 新機能追加の手順
 
-1. `ApiRoutes.java`にルートを定義
-2. `controller/request/`と`controller/response/`にリクエスト/レスポンスDTOを作成
+機能を`{機能}`（`account`/`auth`/`common`/`inquiry`/`photo`のいずれか）として、以下の順に作成する（domainからpresentationへ、内側から外側へ向かう順）。
+
+1. `domain/constant/ApiRoutes.java`にルートを定義
+2. `presentation/request/{機能}/`と`presentation/response/{機能}/`にリクエスト/レスポンスDTOを作成
 3. テーブルの追加やカラムの追加が必要な場合は`db/`の対象スキーマのフォルダ配下にSQLファイルを作成または既存ファイルを修正
    プライマリキーは`bigserial`型、日時は`timestamp with time zone`型で、すべてのカラムに必ず`NOT NULL`制約を付与する
 4. テーブルを追加した場合
    1. `db/init`の`init-db.sh`と`init-test-db.sh`のSQL_FILESに追加したテーブルのSQLファイルを追加する
    2. `doc/database/README.md`に追加したテーブルを追記
    3. `doc/database/data-dictionary.md`に追加したカラムがなければ追記
-   4. `entity/`にエンティティを作成
+   4. `infrastructure/persistence/entity/{機能}/`にエンティティを作成
 5. カラムを追加・修正した場合
    1. `doc/database/data-dictionary.md`にカラムを追加・修正
-   2. `entity/`の該当テーブルのエンティティを追加・修正
-6. `mapper/`にMyBatisマッパーインターフェース、`resources/com/web/gallery/mapper/`にXMLを作成
-7. 3以外でテーブルと同等ではないプロパティや複数テーブルを結合してプロパティを取得する場合、または特殊な条件で抽出する場合は`dto/`にDTOクラスを作成
-8. `repository/`と`repository/impl/`にリポジトリインターフェースと実装を作成
-9.  レイヤー間転送用のモデルオブジェクトを`model/`に作成
-10. `service/`と`service/impl/`にサービスインターフェースと実装を作成
-11. `controller/`にコントローラーを作成
-12. `backend/src/test/resources/sql/`にテスト用SQLフィクスチャを追加
-13. `backend/src/test/resources/json/controller`にテスト用APIリクエストのjsonを作成
-14. 既存パターンに従って`backend/src/test`にユニットテストと統合テスト、対象コンポーネントの`__tests__/`にfrontendのユニットテスト（Jest）、`frontend/e2e/pages/`または`frontend/e2e/scenarios/`にE2Eテストを追加
-15. すべてのユニットテスト・統合テスト・E2Eテストを実行して、成功することを確認
+   2. `infrastructure/persistence/entity/{機能}/`の該当テーブルのエンティティを追加・修正
+6. `infrastructure/persistence/mapper/{機能}/`にMyBatisマッパーインターフェース、`resources/com/web/gallery/infrastructure/persistence/mapper/{機能}/`にXMLを作成
+7. 3以外でテーブルと同等ではないプロパティや複数テーブルを結合してプロパティを取得する場合、または特殊な条件で抽出する場合は`infrastructure/persistence/dto/{機能}/`にDTOクラスを作成
+8. `application/repository/{機能}/`にリポジトリインターフェース、`infrastructure/persistence/repository/{機能}/`に実装を作成
+9.  レイヤー間転送用のモデルオブジェクトを`application/model/{機能}/`に作成
+10. `application/service/{機能}/`にサービスインターフェース、`application/service/impl/{機能}/`に実装を作成
+11. `presentation/controller/{機能}/`にコントローラーを作成
+12. RequestからModelへの変換ロジックが必要な場合は`presentation/converter/{機能}/`にConverterクラスを作成する（詳細は`.claude/rules/converter.md`）。Controller自身に変換ロジックを持たせない
+13. `backend/src/test/resources/sql/`にテスト用SQLフィクスチャを追加
+14. `backend/src/test/resources/json/controller`にテスト用APIリクエストのjsonを作成
+15. 既存パターンに従って`backend/src/test`にユニットテストと統合テスト、対象コンポーネントの`__tests__/`にfrontendのユニットテスト（Jest）、`frontend/e2e/pages/`または`frontend/e2e/scenarios/`にE2Eテストを追加
+16. すべてのユニットテスト・統合テスト・E2Eテストを実行して、成功することを確認
 
 ### 重要事項
 

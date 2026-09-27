@@ -1,12 +1,15 @@
 ---
 paths:
   - backend/src/test/**/scheduler/**
+  - "!backend/src/test/**/scheduler/lock/**"
   - "!backend/src/test/**/integration/**"
 ---
 
 # Schedulerパッケージの単体テスト規約
 
-`scheduler/`配下の`@Scheduled`クラスの検証内容（`SchedulerLock`をモックし、正しい`SchedulerLockNameEnum`とともにService層メソッドへ委譲していることの検証）は`.claude/rules/scheduler.md`の「## テスト」セクションを参照。本ファイルはテストクラスの構造に関する規約のみを定める。
+`infrastructure/scheduler/`直下の`@Scheduled`クラスの検証内容（`SchedulerLock`をモックし、正しい`SchedulerLockNameEnum`とともにService層メソッドへ委譲していることの検証）は`.claude/rules/scheduler.md`の「## テスト」セクションを参照。本ファイルはテストクラスの構造に関する規約のみを定める。
+
+`infrastructure/scheduler/lock/`配下のSchedulerLock関連クラス自体（Mapper・Repository・`SchedulerLock`ヘルパー）のテストは本ファイルの対象外とし、それぞれ`unit-test-mapper.md`・`unit-test-repository.md`・`unit-test-helper.md`の規約に従う。
 
 ## 命名規則
 

@@ -16,8 +16,10 @@ model: sonnet
 チェック実行前に、まず `.claude/rules/` 配下のルールファイルをすべて読み込んでください。
 以下のファイルにパッケージごとのチェックルールが定義されています。
 
+- `.claude/rules/architecture-overview.md` - オニオンアーキテクチャ（domain→application→infrastructure/presentation）全体像
 - `.claude/rules/aggregate.md` - 集約ルートクラスのルール
 - `.claude/rules/controller.md` - Controller層のルール
+- `.claude/rules/converter.md` - Converterクラス（Request→Model変換）のルール
 - `.claude/rules/database.md` - データベース定義のルール
 - `.claude/rules/domain.md` - ドメイン（値オブジェクト）のルール
 - `.claude/rules/service.md` - Service層のルール
@@ -32,9 +34,8 @@ model: sonnet
 - `.claude/rules/enumeration.md` - Enumクラスのルール
 - `.claude/rules/exception.md` - Exceptionクラスのルール
 - `.claude/rules/policy.md` - ドメインサービス（ポリシー）クラスのルール
+- `.claude/rules/scheduler.md` - 定期実行タスク（Scheduler）クラスのルール
 - `.claude/rules/type_handler.md` - TypeHandlerクラスのルール
-- `.claude/rules/unit-test.md` - ユニットテストのルール
-- `.claude/rules/integration-test.md` - 統合テストのルール
 
 ## 実行手順
 

@@ -1,12 +1,12 @@
 ---
 paths:
-  - backend/src/test/**/aspect/**
+  - backend/src/test/**/*Aspect*
   - "!backend/src/test/**/integration/**"
 ---
 
 # Aspectパッケージの単体テスト規約
 
-`aspect/`配下のAOPクラス（管理者権限チェック等）のテストを対象とする。
+`infrastructure/security/`配下のAOPクラス（`Aspect`サフィックス、管理者権限チェック等）のテストを対象とする。
 
 ## 命名規則
 

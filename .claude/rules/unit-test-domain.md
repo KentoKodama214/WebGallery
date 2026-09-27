@@ -6,7 +6,7 @@ paths:
 
 # Domainパッケージの単体テスト規約
 
-`domain/`配下の値オブジェクト（`record`）のテストを対象とする。
+`domain/model/`配下の値オブジェクト（`record`）のテストを対象とする。
 
 ## 命名規則
 

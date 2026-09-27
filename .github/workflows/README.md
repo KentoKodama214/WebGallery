@@ -72,9 +72,9 @@ Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/ja
 
 ### 単体テスト (`test.yml` - `unit-test`)
 
-`./gradlew unitTest`を実行し、結合テスト(`*IntegrationTest*`)とMapperテスト(`mapper/*Test*`)を除く単体テストを実行する。
+`./gradlew unitTest`を実行し、結合テスト(`*IntegrationTest*`)とMapperテスト(`*MapperTest*`、実DB接続が必要な`@MybatisTest`)を除く単体テストを実行する。
 
-レイヤードアーキテクチャ（Controller → Service → Repository → Mapper）の依存方向違反は、`ArchitectureTest`（ArchUnit）としてこの単体テストの一部で検証される。
+オニオンアーキテクチャ（domain → application → infrastructure/presentation）の依存方向違反は、`OnionArchitectureTest`をはじめとする各種ArchUnitテストとしてこの単体テストの一部で検証される。
 
 ### 依存関係の脆弱性スキャン (`test.yml` - `dependency-scan`)
 
