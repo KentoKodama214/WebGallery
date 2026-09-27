@@ -25,6 +25,14 @@ public interface InquiryReplyMstMapper {
   public Long getMaxReplyNo(Long inquiryId);
 
   /**
+   * 条件に該当するお問い合わせ返信マスタを物理削除する
+   *
+   * @param condition 削除対象の抽出条件
+   * @return 削除件数
+   */
+  public Integer delete(InquiryReplyMstCondition condition);
+
+  /**
    * 条件に該当するお問い合わせ返信一覧を、返信番号の昇順で取得する
    *
    * @param condition {@link InquiryReplyMstCondition}

@@ -1,11 +1,17 @@
 package com.web.gallery.infrastructure.persistence.repository.account.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
 import com.web.gallery.application.aggregate.Account;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.infrastructure.persistence.entity.account.AccountCondition;
+import com.web.gallery.infrastructure.persistence.mapper.account.AccountMapper;
 import com.web.gallery.infrastructure.persistence.repository.account.AccountAggregateRepositoryImpl;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -18,6 +24,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +36,13 @@ public class AccountAggregateRepositoryImplIntegrationTest {
   @Autowired private AccountAggregateRepositoryImpl accountAggregateRepositoryImpl;
 
   @Autowired private JdbcTemplate jdbcTemplate;
+
+  /**
+   * アカウント本体の物理削除だけを意図的に失敗させ、ロールバックを検証するためのスパイ
+   *
+   * <p>スタブしない限り実装どおりに動作するため、他のテストケースの挙動は変わらない
+   */
+  @MockitoSpyBean private AccountMapper accountMapper;
 
   @Nested
   @Order(1)
@@ -99,9 +113,93 @@ public class AccountAggregateRepositoryImplIntegrationTest {
               Integer.class);
       assertEquals(0, photoListFilterLogCount);
 
+      // ロケーションマスタが削除されたことを確認
+      Integer locationMstCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.location_mst where account_no=1", Integer.class);
+      assertEquals(0, locationMstCount);
+
+      // account_no=2のロケーションマスタは残っていること
+      Integer otherLocationMstCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.location_mst where account_no=2", Integer.class);
+      assertEquals(1, otherLocationMstCount);
+
+      // 自分が登録したお問い合わせが削除されたことを確認
+      Integer inquiryMstCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_mst where account_no=1", Integer.class);
+      assertEquals(0, inquiryMstCount);
+
+      // account_no=2のお問い合わせは残っていること
+      Integer otherInquiryMstCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_mst where account_no=2", Integer.class);
+      assertEquals(1, otherInquiryMstCount);
+
+      // 自分が管理者として投稿した返信が削除されたことを確認（admin_account_no 参照の解消）
+      Integer replyByAccount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_reply_mst where admin_account_no=1",
+              Integer.class);
+      assertEquals(0, replyByAccount);
+
+      // 自分のお問い合わせに紐づく返信が削除されたことを確認（inquiry_id 参照の解消）
+      Integer replyForAccount =
+          jdbcTemplate.queryForObject(
+              """
+              SELECT COUNT(*) FROM common.inquiry_reply_mst r
+              WHERE EXISTS (SELECT 1 FROM common.inquiry_mst i WHERE i.id = r.inquiry_id AND i.account_no = 1)
+              """,
+              Integer.class);
+      assertEquals(0, replyForAccount);
+
       // 削除時点で未削除だった写真番号が記録されていること
       assertFalse(account.getDeletedPhotoNoList().isEmpty());
       assertTrue(account.getDeletedPhotoNoList().toList().contains(new PhotoNo(1L)));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：common.accountを参照する全テーブルから、削除対象アカウントを参照する行が消えていること")
+    void delete_removesAllForeignKeyReferences() {
+      Account account = Account.forDelete(new AccountNo(1L));
+      accountAggregateRepositoryImpl.delete(account);
+
+      // common.account(account_no) を参照する外部キーはいずれも ON DELETE RESTRICT / NO ACTION のため、
+      // 参照元テーブルの削除漏れはアカウント本体の物理削除を外部キー違反で失敗させる。
+      // information_schema から参照元を動的に列挙し、テーブル追加時の削除漏れを機械的に検出する
+      List<Map<String, Object>> referencingColumns =
+          jdbcTemplate.queryForList(
+              """
+              SELECT
+                  src_ns.nspname AS schema_name,
+                  src.relname    AS table_name,
+                  src_att.attname AS column_name
+              FROM pg_constraint c
+              JOIN pg_class src ON src.oid = c.conrelid
+              JOIN pg_namespace src_ns ON src_ns.oid = src.relnamespace
+              JOIN pg_class tgt ON tgt.oid = c.confrelid
+              JOIN pg_namespace tgt_ns ON tgt_ns.oid = tgt.relnamespace
+              JOIN pg_attribute src_att
+                ON src_att.attrelid = c.conrelid AND src_att.attnum = c.conkey[1]
+              JOIN pg_attribute tgt_att
+                ON tgt_att.attrelid = c.confrelid AND tgt_att.attnum = c.confkey[1]
+              WHERE c.contype = 'f'
+                AND tgt_ns.nspname = 'common'
+                AND tgt.relname = 'account'
+                AND tgt_att.attname = 'account_no'
+              """);
+
+      assertFalse(referencingColumns.isEmpty(), "common.accountを参照する外部キーが1件も取得できていません");
+      for (Map<String, Object> reference : referencingColumns) {
+        String table = reference.get("schema_name") + "." + reference.get("table_name");
+        String column = (String) reference.get("column_name");
+        Integer remaining =
+            jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM " + table + " WHERE " + column + " = 1", Integer.class);
+        assertEquals(0, remaining, table + "." + column + " に削除対象アカウントを参照する行が残っています");
+      }
     }
 
     @Test
@@ -122,7 +220,7 @@ public class AccountAggregateRepositoryImplIntegrationTest {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     @DisplayName("異常系：処理途中で例外が発生した場合、それまでの削除を含めてすべてロールバックされること")
     void delete_rollbackOnFailure() {
       // @Sqlによるフィクスチャ投入はこのテストメソッドのトランザクション内で行われるため、
@@ -132,11 +230,13 @@ public class AccountAggregateRepositoryImplIntegrationTest {
       TestTransaction.end();
       TestTransaction.start();
 
-      // common.location_mstにaccount_no=1を参照する行を用意し、
-      // 外部キー制約（ON DELETE RESTRICT）によりアカウント本体の削除で例外が発生するようにする
-      jdbcTemplate.update(
-          "INSERT INTO common.location_mst"
-              + " VALUES (DEFAULT, 1, 99, 1, now(), 1, now(), false, 'ロケーション99_管理用', 'ロケーション99', '住所99', 0, 0)");
+      // アカウント本体の物理削除で例外が発生するようにする。
+      // 以前は common.location_mst の外部キー違反（ON DELETE RESTRICT）を利用していたが、
+      // ロケーションマスタは削除対象に含まれるようになったため意図的な失敗を作れない。
+      // 参照元テーブルに依存せず「最後のステップで落ちたら全部戻る」ことだけを検証する
+      doThrow(new DataIntegrityViolationException("意図的な削除失敗"))
+          .when(accountMapper)
+          .delete(any(AccountCondition.class));
 
       Account account = Account.forDelete(new AccountNo(1L));
       assertThrows(
@@ -175,6 +275,8 @@ public class AccountAggregateRepositoryImplIntegrationTest {
 						photo.photo_favorite,
 						photo.photo_tag_mst,
 						photo.photo_mst,
+						common.inquiry_reply_mst,
+						common.inquiry_mst,
 						common.refresh_token,
 						common.location_mst,
 						common.account,

@@ -47,8 +47,8 @@ class FileRepositoryImplTest {
 
   @Mock private S3Presigner s3Presigner;
 
-  private FileRepositoryImpl newRepository(String publicBaseUrl) {
-    return new FileRepositoryImpl(s3Client, s3Presigner, BUCKET, EXPIRY_SECONDS, publicBaseUrl);
+  private FileRepositoryImpl newRepository() {
+    return new FileRepositoryImpl(s3Client, s3Presigner, BUCKET, EXPIRY_SECONDS);
   }
 
   @Nested
@@ -70,7 +70,7 @@ class FileRepositoryImplTest {
       FileModel fileModel =
           FileModel.of(new ImageFilePath("aaaaaaaa/5-abc123.jpg"), new ImageFile(multipartFile));
 
-      newRepository("").save(fileModel);
+      newRepository().save(fileModel);
 
       ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
       verify(s3Client)
@@ -91,7 +91,7 @@ class FileRepositoryImplTest {
           .when(multipartFile)
           .getInputStream();
 
-      newRepository("")
+      newRepository()
           .save(FileModel.of(new ImageFilePath("aaaaaaaa/9-x.PNG"), new ImageFile(multipartFile)));
 
       ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
@@ -110,7 +110,7 @@ class FileRepositoryImplTest {
           .when(multipartFile)
           .getInputStream();
 
-      newRepository("")
+      newRepository()
           .save(FileModel.of(new ImageFilePath("aaaaaaaa/9-x.gif"), new ImageFile(multipartFile)));
 
       ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
@@ -129,7 +129,7 @@ class FileRepositoryImplTest {
           .when(multipartFile)
           .getInputStream();
 
-      newRepository("")
+      newRepository()
           .save(FileModel.of(new ImageFilePath("aaaaaaaa/9-x.webp"), new ImageFile(multipartFile)));
 
       ArgumentCaptor<PutObjectRequest> captor = ArgumentCaptor.forClass(PutObjectRequest.class);
@@ -149,7 +149,7 @@ class FileRepositoryImplTest {
           .when(multipartFile)
           .getInputStream();
 
-      newRepository("")
+      newRepository()
           .save(
               FileModel.of(new ImageFilePath("aaaaaaaa/legacy-key"), new ImageFile(multipartFile)));
 
@@ -169,7 +169,7 @@ class FileRepositoryImplTest {
       FileModel fileModel =
           FileModel.of(new ImageFilePath("aaaaaaaa/DSC11.jpg"), new ImageFile(multipartFile));
 
-      FileRepositoryImpl repository = newRepository("");
+      FileRepositoryImpl repository = newRepository();
       assertThrows(UncheckedIOException.class, () -> repository.save(fileModel));
       verify(s3Client, never())
           .putObject(
@@ -193,7 +193,7 @@ class FileRepositoryImplTest {
       FileModel fileModel =
           FileModel.of(new ImageFilePath("aaaaaaaa/DSC11.jpg"), new ImageFile(multipartFile));
 
-      FileRepositoryImpl repository = newRepository("");
+      FileRepositoryImpl repository = newRepository();
       assertThrows(SdkException.class, () -> repository.save(fileModel));
     }
   }
@@ -207,7 +207,7 @@ class FileRepositoryImplTest {
     @Order(1)
     @DisplayName("正常系：キーを指定してdeleteObjectを呼び出す")
     void delete_deletesObject() {
-      newRepository("").delete(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
+      newRepository().delete(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
 
       ArgumentCaptor<DeleteObjectRequest> captor =
           ArgumentCaptor.forClass(DeleteObjectRequest.class);
@@ -224,7 +224,7 @@ class FileRepositoryImplTest {
           .when(s3Client)
           .deleteObject(any(DeleteObjectRequest.class));
 
-      FileRepositoryImpl repository = newRepository("");
+      FileRepositoryImpl repository = newRepository();
       assertThrows(
           SdkException.class, () -> repository.delete(new ImageFilePath("aaaaaaaa/DSC11.jpg")));
     }
@@ -237,7 +237,7 @@ class FileRepositoryImplTest {
           .when(s3Client)
           .listObjectsV2(any(ListObjectsV2Request.class));
 
-      newRepository("").delete(new ImageFilePath("aaaaaaaa/"));
+      newRepository().delete(new ImageFilePath("aaaaaaaa/"));
 
       verify(s3Client).listObjectsV2(any(ListObjectsV2Request.class));
       verify(s3Client, never()).deleteObject(any(DeleteObjectRequest.class));
@@ -263,7 +263,7 @@ class FileRepositoryImplTest {
           .when(s3Client)
           .listObjectsV2(any(ListObjectsV2Request.class));
 
-      newRepository("").deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
+      newRepository().deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
 
       ArgumentCaptor<DeleteObjectsRequest> captor =
           ArgumentCaptor.forClass(DeleteObjectsRequest.class);
@@ -283,7 +283,7 @@ class FileRepositoryImplTest {
           .when(s3Client)
           .listObjectsV2(any(ListObjectsV2Request.class));
 
-      newRepository("").deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
+      newRepository().deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
 
       verify(s3Client, never()).deleteObjects(any(DeleteObjectsRequest.class));
     }
@@ -313,7 +313,7 @@ class FileRepositoryImplTest {
                   (ListObjectsV2Request req) ->
                       req != null && "token-1".equals(req.continuationToken())));
 
-      newRepository("").deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
+      newRepository().deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
 
       verify(s3Client, times(2)).listObjectsV2(any(ListObjectsV2Request.class));
       verify(s3Client, times(2)).deleteObjects(any(DeleteObjectsRequest.class));
@@ -341,58 +341,45 @@ class FileRepositoryImplTest {
 
     @Test
     @Order(1)
-    @DisplayName("正常系：public-base-url未設定の場合は発行された署名付きURLをそのまま返す")
-    void getPresignedUrl_noPublicBaseUrl_returnsAsIs() {
-      stubPresign("http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123");
+    @DisplayName("正常系：バケット・キー・有効期限を指定して署名付きURLを発行する")
+    void getPresignedUrl_buildsRequest() {
+      stubPresign("https://cdn.example.com/test-bucket/1/5-abc123.jpg?X-Amz-Signature=abc123");
 
-      ImageFilePath actual =
-          newRepository("").getPresignedUrl(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
+      newRepository().getPresignedUrl(new ImageFilePath("1/5-abc123.jpg"));
 
+      ArgumentCaptor<GetObjectPresignRequest> captor =
+          ArgumentCaptor.forClass(GetObjectPresignRequest.class);
+      verify(s3Presigner).presignGetObject(captor.capture());
       assertEquals(
-          "http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123",
-          actual.value());
+          java.time.Duration.ofSeconds(EXPIRY_SECONDS), captor.getValue().signatureDuration());
+      assertEquals(BUCKET, captor.getValue().getObjectRequest().bucket());
+      assertEquals("1/5-abc123.jpg", captor.getValue().getObjectRequest().key());
     }
 
     @Test
     @Order(2)
-    @DisplayName("正常系：public-base-url設定時はスキーム・ホスト・ポートを差し替え、パスとクエリは維持する")
-    void getPresignedUrl_withPublicBaseUrl_rewritesHost() {
-      stubPresign("http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123");
+    @DisplayName("正常系：発行された署名付きURLをホスト差し替えせずそのまま返す")
+    void getPresignedUrl_returnsAsIs() {
+      // SigV4は host を署名対象に含むため、発行後のURLを加工すると署名が壊れる。
+      // 公開ホストへの切り替えは S3Presigner のエンドポイント設定側（S3ClientConfig）が担う
+      stubPresign("https://cdn.example.com/test-bucket/1/5-abc123.jpg?X-Amz-Signature=abc123");
 
-      ImageFilePath actual =
-          newRepository("http://localhost:9000")
-              .getPresignedUrl(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
+      ImageFilePath actual = newRepository().getPresignedUrl(new ImageFilePath("1/5-abc123.jpg"));
 
       assertEquals(
-          "http://localhost:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123",
+          "https://cdn.example.com/test-bucket/1/5-abc123.jpg?X-Amz-Signature=abc123",
           actual.value());
     }
 
     @Test
     @Order(3)
-    @DisplayName("正常系：署名付きURLにクエリがない場合、差し替え後もクエリを付与しない")
-    void getPresignedUrl_withPublicBaseUrl_noQuery() {
-      stubPresign("http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg");
+    @DisplayName("正常系：クエリを持たない署名付きURLもそのまま返す")
+    void getPresignedUrl_noQuery_returnsAsIs() {
+      stubPresign("https://cdn.example.com/test-bucket/1/5-abc123.jpg");
 
-      ImageFilePath actual =
-          newRepository("http://localhost:9000")
-              .getPresignedUrl(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
+      ImageFilePath actual = newRepository().getPresignedUrl(new ImageFilePath("1/5-abc123.jpg"));
 
-      assertEquals("http://localhost:9000/test-bucket/aaaaaaaa/DSC11.jpg", actual.value());
-    }
-
-    @Test
-    @Order(4)
-    @DisplayName("異常系：public-base-urlの形式が不正な場合、発行された署名付きURLをそのまま返す")
-    void getPresignedUrl_invalidPublicBaseUrl_returnsAsIs() {
-      stubPresign("http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123");
-
-      ImageFilePath actual =
-          newRepository("://invalid-url").getPresignedUrl(new ImageFilePath("aaaaaaaa/DSC11.jpg"));
-
-      assertEquals(
-          "http://s3.internal:9000/test-bucket/aaaaaaaa/DSC11.jpg?X-Amz-Signature=abc123",
-          actual.value());
+      assertEquals("https://cdn.example.com/test-bucket/1/5-abc123.jpg", actual.value());
     }
   }
 }

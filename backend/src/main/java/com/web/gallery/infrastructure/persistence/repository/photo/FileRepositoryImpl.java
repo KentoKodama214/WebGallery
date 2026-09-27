@@ -5,11 +5,9 @@ import com.web.gallery.application.repository.photo.FileRepository;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,10 +26,9 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 /**
  * ファイルをS3（互換）ストレージへ永続化するRepositoryの実装クラス
  *
- * <p>画像の実体はS3に保存し、DBにはサーバ生成の不透明オブジェクトキー（{@code {accountId}/{写真番号}-{ランダム}.{拡張子}}）のみを保持する。 閲覧時は
- * {@link #getPresignedUrl} で有効期限付きの署名付きURLを発行し、ブラウザがS3から直接取得する。
+ * <p>画像の実体はS3に保存し、DBにはサーバ生成の不透明オブジェクトキー（{@code {アカウント番号}/{写真番号}-{ランダム}.{拡張子}}）のみを保持する。 閲覧時は {@link
+ * #getPresignedUrl} で有効期限付きの署名付きURLを発行し、ブラウザがS3から直接取得する。
  */
-@Slf4j
 @Repository
 public class FileRepositoryImpl implements FileRepository {
 
@@ -39,7 +36,6 @@ public class FileRepositoryImpl implements FileRepository {
   private final S3Presigner s3Presigner;
   private final String bucket;
   private final int presignExpirySeconds;
-  private final String publicBaseUrl;
 
   /**
    * コンストラクタ
@@ -48,19 +44,16 @@ public class FileRepositoryImpl implements FileRepository {
    * @param s3Presigner {@link S3Presigner}
    * @param bucket バケット名
    * @param presignExpirySeconds 署名付きURLの有効期限（秒）
-   * @param publicBaseUrl ブラウザから到達可能な公開ベースURL（未設定なら空文字）
    */
   public FileRepositoryImpl(
       S3Client s3Client,
       S3Presigner s3Presigner,
       @Value("${app.s3.bucket}") String bucket,
-      @Value("${app.s3.presign-expiry-seconds:900}") int presignExpirySeconds,
-      @Value("${app.s3.public-base-url:}") String publicBaseUrl) {
+      @Value("${app.s3.presign-expiry-seconds:900}") int presignExpirySeconds) {
     this.s3Client = s3Client;
     this.s3Presigner = s3Presigner;
     this.bucket = bucket;
     this.presignExpirySeconds = presignExpirySeconds;
-    this.publicBaseUrl = publicBaseUrl;
   }
 
   @Override
@@ -153,6 +146,13 @@ public class FileRepositoryImpl implements FileRepository {
     } while (continuationToken != null);
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>ブラウザから到達可能なホストで署名する必要があるため、エンドポイントの切り替えは {@code S3Presigner}のBean定義（{@code
+   * S3ClientConfig#s3Presigner}）側で行う。発行済みURLの ホストを後から差し替えるとSigV4の署名（{@code
+   * host}を署名対象に含む）が壊れるため、ここでは加工しない。
+   */
   @Override
   public ImageFilePath getPresignedUrl(ImageFilePath filePath) {
     String key = filePath.value();
@@ -165,34 +165,6 @@ public class FileRepositoryImpl implements FileRepository {
                     .build())
             .url()
             .toString();
-    return new ImageFilePath(rewriteToPublicBaseUrl(presignedUrl));
-  }
-
-  /**
-   * 署名付きURLのスキーム・ホスト・ポートを公開ベースURLのものへ差し替える
-   *
-   * <p>S3エンドポイントがコンテナ内部のホスト名等でブラウザから到達できない場合に用いる。 {@code publicBaseUrl} が未設定なら差し替えず、そのまま返す。
-   *
-   * @param presignedUrl 発行された署名付きURL
-   * @return 差し替え後のURL文字列
-   */
-  private String rewriteToPublicBaseUrl(String presignedUrl) {
-    if (publicBaseUrl == null || publicBaseUrl.isBlank()) {
-      return presignedUrl;
-    }
-    try {
-      URI original = URI.create(presignedUrl);
-      URI base = URI.create(publicBaseUrl);
-      String hostPort = base.getHost() + (base.getPort() == -1 ? "" : ":" + base.getPort());
-      // 署名済みのパス・クエリは再エンコードせずそのまま連結する（%の二重エンコードで署名を壊さないため）
-      return base.getScheme()
-          + "://"
-          + hostPort
-          + original.getRawPath()
-          + (original.getRawQuery() == null ? "" : "?" + original.getRawQuery());
-    } catch (IllegalArgumentException e) {
-      log.warn("署名付きURLの公開ベースURLへの差し替えに失敗しました。発行値をそのまま返します。", e);
-      return presignedUrl;
-    }
+    return new ImageFilePath(presignedUrl);
   }
 }

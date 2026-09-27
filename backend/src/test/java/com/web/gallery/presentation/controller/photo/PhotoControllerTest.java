@@ -473,10 +473,9 @@ public class PhotoControllerTest {
 
       ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
           ArgumentCaptor.forClass(PhotoDetailModelList.class);
-      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
       doReturn(PhotoSaveResultModel.builder().photoNo(new PhotoNo(1L)).build())
           .when(photoServiceImpl)
-          .savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+          .savePhotos(photoDetailModelCaptor.capture());
 
       mockMvc
           .perform(
@@ -587,8 +586,6 @@ public class PhotoControllerTest {
               .get(1)
               .getTagEnglishName()
               .value());
-
-      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
     }
 
     @Test
@@ -604,8 +601,7 @@ public class PhotoControllerTest {
                   .param("directionKbn", "VERTICAL"))
           .andExpect(status().isForbidden());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -623,8 +619,7 @@ public class PhotoControllerTest {
                   .param("directionKbn", "VERTICAL"))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -642,8 +637,7 @@ public class PhotoControllerTest {
                   .param("directionKbn", "VERTICAL"))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -662,8 +656,7 @@ public class PhotoControllerTest {
                   .param("directionKbn", "VERTICAL"))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -683,8 +676,7 @@ public class PhotoControllerTest {
                   .param("focalLength", "-1"))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -702,8 +694,7 @@ public class PhotoControllerTest {
                   .param("directionKbn", "VERTICAL"))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -719,10 +710,9 @@ public class PhotoControllerTest {
 
       ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
           ArgumentCaptor.forClass(PhotoDetailModelList.class);
-      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
       doThrow(UpdateFailureException.class)
           .when(photoServiceImpl)
-          .savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+          .savePhotos(photoDetailModelCaptor.capture());
 
       mockMvc
           .perform(
@@ -741,8 +731,6 @@ public class PhotoControllerTest {
       assertEquals(
           photoJapaneseTitle, photoDetailModelList.getFirst().getPhotoJapaneseTitle().value());
       assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
-
-      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
     }
   }
 
@@ -766,10 +754,9 @@ public class PhotoControllerTest {
 
       ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
           ArgumentCaptor.forClass(PhotoDetailModelList.class);
-      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
       doReturn(PhotoSaveResultModel.builder().photoNo(new PhotoNo(1L)).build())
           .when(photoServiceImpl)
-          .savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+          .savePhotos(photoDetailModelCaptor.capture());
 
       mockMvc
           .perform(
@@ -794,8 +781,6 @@ public class PhotoControllerTest {
       // 向き区分はリクエストではなく、PhotoDirectionResolverが画像から判定した値が使われること
       assertEquals(DirectionEnum.VERTICAL, photoDetailModelList.getFirst().getDirectionKbn());
       assertTrue(photoDetailModelList.getFirst().getPhotoTagModelList().isEmpty());
-
-      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
     }
 
     @Test
@@ -815,10 +800,9 @@ public class PhotoControllerTest {
 
       ArgumentCaptor<PhotoDetailModelList> photoDetailModelCaptor =
           ArgumentCaptor.forClass(PhotoDetailModelList.class);
-      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
       doReturn(PhotoSaveResultModel.builder().photoNo(new PhotoNo(3L)).build())
           .when(photoServiceImpl)
-          .savePhotos(photoAcountIdCaptor.capture(), photoDetailModelCaptor.capture());
+          .savePhotos(photoDetailModelCaptor.capture());
 
       mockMvc
           .perform(
@@ -863,8 +847,6 @@ public class PhotoControllerTest {
             "太陽",
             photoDetailModelList.get(i).getPhotoTagModelList().get(0).getTagJapaneseName().value());
       }
-
-      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
     }
 
     @Test
@@ -878,8 +860,7 @@ public class PhotoControllerTest {
           .perform(multipart("/api/v1/accounts/aaaaaaaa/photos"))
           .andExpect(status().isForbidden());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -895,7 +876,7 @@ public class PhotoControllerTest {
       doReturn(1L).when(sessionHelper).getAccountNo();
       doThrow(ErrorEnum.REACHED_REGISTRATION_LIMIT.toException())
           .when(photoServiceImpl)
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+          .savePhotos(any(PhotoDetailModelList.class));
 
       mockMvc
           .perform(
@@ -917,8 +898,7 @@ public class PhotoControllerTest {
               multipart("/api/v1/accounts/aaaaaaaa/photos").param("photoJapaneseTitle", "タイトル"))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -940,8 +920,7 @@ public class PhotoControllerTest {
           .perform(request.param("photoJapaneseTitle", "タイトル"))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -963,8 +942,7 @@ public class PhotoControllerTest {
                   .param("focalLength", "-1"))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -982,8 +960,7 @@ public class PhotoControllerTest {
           .perform(multipart("/api/v1/accounts/aaaaaaaa/photos").file(multipartFile))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -1006,8 +983,7 @@ public class PhotoControllerTest {
                   .param("photoTagRegistRequestList[0].tagEnglishName", "abcdefghijklmnopqrstu"))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0))
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+      verify(photoServiceImpl, times(0)).savePhotos(any(PhotoDetailModelList.class));
     }
 
     @Test
@@ -1023,7 +999,7 @@ public class PhotoControllerTest {
       doReturn(1L).when(sessionHelper).getAccountNo();
       doThrow(FileDuplicateException.class)
           .when(photoServiceImpl)
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+          .savePhotos(any(PhotoDetailModelList.class));
 
       mockMvc
           .perform(
@@ -1046,7 +1022,7 @@ public class PhotoControllerTest {
       doReturn(1L).when(sessionHelper).getAccountNo();
       doThrow(RegistFailureException.class)
           .when(photoServiceImpl)
-          .savePhotos(any(AccountId.class), any(PhotoDetailModelList.class));
+          .savePhotos(any(PhotoDetailModelList.class));
 
       mockMvc
           .perform(
@@ -1073,10 +1049,7 @@ public class PhotoControllerTest {
 
       ArgumentCaptor<PhotoDeleteModelList> photoDeleteModelCaptor =
           ArgumentCaptor.forClass(PhotoDeleteModelList.class);
-      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
-      doNothing()
-          .when(photoServiceImpl)
-          .deletePhotos(photoAcountIdCaptor.capture(), photoDeleteModelCaptor.capture());
+      doNothing().when(photoServiceImpl).deletePhotos(photoDeleteModelCaptor.capture());
 
       mockMvc
           .perform(
@@ -1093,7 +1066,6 @@ public class PhotoControllerTest {
       assertEquals(new AccountNo(1L), photoDeleteModelList.getFirst().getAccountNo());
       assertEquals(1L, photoDeleteModelList.getFirst().getPhotoNo().value());
       assertEquals(imageFilePath, photoDeleteModelList.getFirst().getImageFilePath().value());
-      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
     }
 
     @Test
@@ -1109,7 +1081,7 @@ public class PhotoControllerTest {
                   .content(readJsonFile("delete_photo.json")))
           .andExpect(status().isForbidden());
 
-      verify(photoServiceImpl, times(0)).deletePhotos(any(), any());
+      verify(photoServiceImpl, times(0)).deletePhotos(any());
     }
 
     @Test
@@ -1125,7 +1097,7 @@ public class PhotoControllerTest {
                   .content(readJsonFile("delete_photo_badrequest.json")))
           .andExpect(status().isBadRequest());
 
-      verify(photoServiceImpl, times(0)).deletePhotos(any(), any());
+      verify(photoServiceImpl, times(0)).deletePhotos(any());
     }
 
     @Test
@@ -1140,10 +1112,9 @@ public class PhotoControllerTest {
 
       ArgumentCaptor<PhotoDeleteModelList> photoDeleteModelCaptor =
           ArgumentCaptor.forClass(PhotoDeleteModelList.class);
-      ArgumentCaptor<AccountId> photoAcountIdCaptor = ArgumentCaptor.forClass(AccountId.class);
       doThrow(PhotoNotFoundException.class)
           .when(photoServiceImpl)
-          .deletePhotos(photoAcountIdCaptor.capture(), photoDeleteModelCaptor.capture());
+          .deletePhotos(photoDeleteModelCaptor.capture());
 
       mockMvc
           .perform(
@@ -1157,7 +1128,6 @@ public class PhotoControllerTest {
       assertEquals(new AccountNo(1L), photoDeleteModelList.getFirst().getAccountNo());
       assertEquals(1L, photoDeleteModelList.getFirst().getPhotoNo().value());
       assertEquals(imageFilePath, photoDeleteModelList.getFirst().getImageFilePath().value());
-      assertEquals(new AccountId("aaaaaaaa"), photoAcountIdCaptor.getValue());
     }
   }
 

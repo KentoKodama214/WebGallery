@@ -3,6 +3,8 @@ package com.web.gallery.infrastructure.config;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.net.URL;
+import java.time.Duration;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -15,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
@@ -106,6 +109,54 @@ class S3ClientConfigTest {
       S3Presigner actual = s3ClientConfig.s3Presigner();
 
       assertNotNull(actual);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("公開ベースURLが設定されている場合、それをエンドポイントとして署名する")
+    void s3Presigner_prefersPublicBaseUrl() {
+      // SigV4は host を署名対象に含むため、ブラウザから到達可能なホストで署名する必要がある
+      stubCommonProperties();
+      // 公開ベースURLが優先されるため getEndpoint() は参照されない
+      doReturn("http://localhost:9000").when(s3Config).getPublicBaseUrl();
+
+      S3ClientConfig s3ClientConfig = new S3ClientConfig(s3Config);
+
+      assertEquals("http://localhost:9000", presignedHost(s3ClientConfig.s3Presigner()));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("公開ベースURLが未設定の場合はS3互換エンドポイントで署名する")
+    void s3Presigner_fallsBackToEndpoint() {
+      stubCommonProperties();
+      doReturn("http://minio.internal:9000").when(s3Config).getEndpoint();
+      doReturn("").when(s3Config).getPublicBaseUrl();
+
+      S3ClientConfig s3ClientConfig = new S3ClientConfig(s3Config);
+
+      assertEquals("http://minio.internal:9000", presignedHost(s3ClientConfig.s3Presigner()));
+    }
+
+    /**
+     * プリサイナーが実際に発行する署名付きURLから、スキーム・ホスト・ポートを取り出す
+     *
+     * @param presigner 検証対象の{@link S3Presigner}
+     * @return {@code スキーム://ホスト[:ポート]} 形式の文字列
+     */
+    private String presignedHost(S3Presigner presigner) {
+      URL url =
+          presigner
+              .presignGetObject(
+                  GetObjectPresignRequest.builder()
+                      .signatureDuration(Duration.ofSeconds(900))
+                      .getObjectRequest(builder -> builder.bucket("test-bucket").key("1/1-a.jpg"))
+                      .build())
+              .url();
+      return url.getProtocol()
+          + "://"
+          + url.getHost()
+          + (url.getPort() == -1 ? "" : ":" + url.getPort());
     }
   }
 }

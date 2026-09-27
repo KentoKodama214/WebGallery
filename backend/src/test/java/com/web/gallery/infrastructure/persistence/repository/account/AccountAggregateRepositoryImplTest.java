@@ -11,6 +11,9 @@ import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDeletionDto;
 import com.web.gallery.infrastructure.persistence.entity.account.AccountAuthorityCondition;
 import com.web.gallery.infrastructure.persistence.entity.account.AccountCondition;
 import com.web.gallery.infrastructure.persistence.entity.account.LoginHistoryCondition;
+import com.web.gallery.infrastructure.persistence.entity.common.LocationMstCondition;
+import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMstCondition;
+import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavoriteCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoListFilterLogCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMstCondition;
@@ -19,6 +22,9 @@ import com.web.gallery.infrastructure.persistence.mapper.account.AccountAuthorit
 import com.web.gallery.infrastructure.persistence.mapper.account.AccountMapper;
 import com.web.gallery.infrastructure.persistence.mapper.account.LoginHistoryMapper;
 import com.web.gallery.infrastructure.persistence.mapper.auth.RefreshTokenMapper;
+import com.web.gallery.infrastructure.persistence.mapper.common.LocationMstMapper;
+import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryMstMapper;
+import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryReplyMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoFavoriteMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoListFilterLogMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoMstMapper;
@@ -61,6 +67,12 @@ public class AccountAggregateRepositoryImplTest {
   @Mock private PhotoListFilterLogMapper photoListFilterLogMapper;
 
   @Mock private PhotoViewLogMapper photoViewLogMapper;
+
+  @Mock private LocationMstMapper locationMstMapper;
+
+  @Mock private InquiryMstMapper inquiryMstMapper;
+
+  @Mock private InquiryReplyMstMapper inquiryReplyMstMapper;
 
   @Nested
   @Order(1)
@@ -114,6 +126,27 @@ public class AccountAggregateRepositoryImplTest {
       verify(photoListFilterLogMapper).delete(photoListFilterLogConditionCaptor.capture());
       assertEquals(1L, photoListFilterLogConditionCaptor.getValue().getPhotoAccountNo());
 
+      ArgumentCaptor<LocationMstCondition> locationMstConditionCaptor =
+          ArgumentCaptor.forClass(LocationMstCondition.class);
+      verify(locationMstMapper).delete(locationMstConditionCaptor.capture());
+      assertEquals(1L, locationMstConditionCaptor.getValue().getAccountNo());
+
+      // お問い合わせ返信は「管理者として投稿した分」「自分のお問い合わせに紐づく分」の2回削除する
+      ArgumentCaptor<InquiryReplyMstCondition> inquiryReplyConditionCaptor =
+          ArgumentCaptor.forClass(InquiryReplyMstCondition.class);
+      verify(inquiryReplyMstMapper, times(2)).delete(inquiryReplyConditionCaptor.capture());
+      List<InquiryReplyMstCondition> inquiryReplyConditions =
+          inquiryReplyConditionCaptor.getAllValues();
+      assertEquals(1L, inquiryReplyConditions.get(0).getAdminAccountNo());
+      assertNull(inquiryReplyConditions.get(0).getInquiryAccountNo());
+      assertEquals(1L, inquiryReplyConditions.get(1).getInquiryAccountNo());
+      assertNull(inquiryReplyConditions.get(1).getAdminAccountNo());
+
+      ArgumentCaptor<InquiryMstCondition> inquiryMstConditionCaptor =
+          ArgumentCaptor.forClass(InquiryMstCondition.class);
+      verify(inquiryMstMapper).delete(inquiryMstConditionCaptor.capture());
+      assertEquals(1L, inquiryMstConditionCaptor.getValue().getAccountNo());
+
       ArgumentCaptor<AccountAuthorityCondition> accountAuthorityConditionCaptor =
           ArgumentCaptor.forClass(AccountAuthorityCondition.class);
       verify(accountAuthorityMapper).delete(accountAuthorityConditionCaptor.capture());
@@ -141,7 +174,8 @@ public class AccountAggregateRepositoryImplTest {
 
     @Test
     @Order(3)
-    @DisplayName("正常系：外部キー制約上必要な順序（お気に入り→タグ→閲覧ログ→写真マスタ→トークン→ログイン履歴/絞込ログ→権限→アカウント本体）で削除すること")
+    @DisplayName(
+        "正常系：外部キー制約上必要な順序（お気に入り→タグ→閲覧ログ→写真マスタ→トークン→ログイン履歴/絞込ログ→ロケーション→お問い合わせ返信→お問い合わせ→権限→アカウント本体）で削除すること")
     void delete_order() {
       doReturn(List.of()).when(photoMstMapper).deletePhotosByAccountNo(1L);
 
@@ -157,6 +191,9 @@ public class AccountAggregateRepositoryImplTest {
               refreshTokenMapper,
               loginHistoryMapper,
               photoListFilterLogMapper,
+              locationMstMapper,
+              inquiryReplyMstMapper,
+              inquiryMstMapper,
               accountAuthorityMapper,
               accountMapper);
 
@@ -174,6 +211,12 @@ public class AccountAggregateRepositoryImplTest {
       inOrder.verify(loginHistoryMapper).delete(any(LoginHistoryCondition.class));
       // 写真一覧絞り込みログを削除（アカウントの物理削除に先立って実施）
       inOrder.verify(photoListFilterLogMapper).delete(any(PhotoListFilterLogCondition.class));
+      // ロケーションマスタを削除（アカウントの物理削除に先立って実施）
+      inOrder.verify(locationMstMapper).delete(any(LocationMstCondition.class));
+      // お問い合わせ返信を削除（お問い合わせ本体・アカウントの物理削除に先立って実施）
+      inOrder.verify(inquiryReplyMstMapper, times(2)).delete(any(InquiryReplyMstCondition.class));
+      // お問い合わせ本体を削除（アカウントの物理削除に先立って実施）
+      inOrder.verify(inquiryMstMapper).delete(any(InquiryMstCondition.class));
       // アカウント権限を削除（アカウントの物理削除に先立って実施）
       inOrder.verify(accountAuthorityMapper).delete(any(AccountAuthorityCondition.class));
       // アカウントを物理削除

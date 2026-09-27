@@ -8,7 +8,6 @@ import com.web.gallery.application.model.photo.PhotoListGetModel;
 import com.web.gallery.application.model.photo.PhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoSaveResultModel;
 import com.web.gallery.domain.exception.GalleryException;
-import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountNo;
 
 /** 写真に関するビジネスロジックを行うServiceクラス */
@@ -34,25 +33,22 @@ public interface PhotoService {
   /**
    * 写真を登録・更新する
    *
-   * @param accountId アカウントID
    * @param photoDetailModelList {@link PhotoDetailModelList}
    * @throws GalleryException 以下のいずれかに該当する場合 ・新規登録時に画像ファイルが指定されていない場合 ・許可されていない拡張子のファイルの場合
    *     ・画像ファイルのContent-Typeが許可されていない場合 ・画像ファイルのマジックバイトが既知の画像フォーマットと一致しない場合 ・画像ファイルのサイズが上限を超えている場合
    *     ・同じファイル名のファイルが既に保存済みの場合 ・登録に失敗した場合 ・更新に失敗した場合
    * @return {@link PhotoSaveResultModel}
    */
-  PhotoSaveResultModel savePhotos(AccountId accountId, PhotoDetailModelList photoDetailModelList)
+  PhotoSaveResultModel savePhotos(PhotoDetailModelList photoDetailModelList)
       throws GalleryException;
 
   /**
    * 写真を削除する
    *
-   * @param accountId アカウントID
    * @param photoDeleteModelList {@link PhotoDeleteModelList}
    * @throws GalleryException 削除に失敗した場合
    */
-  void deletePhotos(AccountId accountId, PhotoDeleteModelList photoDeleteModelList)
-      throws GalleryException;
+  void deletePhotos(PhotoDeleteModelList photoDeleteModelList) throws GalleryException;
 
   /**
    * 該当アカウントが写真の登録枚数の上限に達しているかチェックする

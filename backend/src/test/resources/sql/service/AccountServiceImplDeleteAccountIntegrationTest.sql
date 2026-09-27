@@ -40,3 +40,20 @@ ALTER SEQUENCE common.login_history_login_history_no_seq RESTART 2;
 -- photo.photo_list_filter_log (account_no=1の写真一覧絞り込みログ)
 insert into photo.photo_list_filter_log (photo_list_filter_log_no, photo_account_no, account_no, direction_kbn, is_favorite, tag_list, sort_by, referer, ip_address, country, region, created_by, created_at) values (1, 1, 1, 'vertical', true, '太陽,海', 'favorite', 'https://example.com/', '198.51.100.1', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
 ALTER SEQUENCE photo.photo_list_filter_log_photo_list_filter_log_no_seq RESTART 2;
+
+-- common.location_mst (account_no=1のロケーション2件、account_no=2のロケーション1件)
+-- common.account への外部キーが ON DELETE RESTRICT のため、削除漏れがあるとアカウント本体の物理削除が失敗する
+insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, 'ロケーション11_管理用', 'ロケーション11', '東京都千代田区', 35.6812, 139.7671);
+insert into common.location_mst values(DEFAULT, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, 'ロケーション12_管理用', 'ロケーション12', '東京都港区', 35.6586, 139.7454);
+insert into common.location_mst values(DEFAULT, 2, 1, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2000-01-02 09:00:00 Asia/Tokyo', false, 'ロケーション21_管理用', 'ロケーション21', '大阪府大阪市', 34.6937, 135.5023);
+
+-- common.inquiry_mst (account_no=1のお問い合わせ2件、account_no=2のお問い合わせ1件)
+insert into common.inquiry_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', '件名11', '本文11', 'replied', true);
+insert into common.inquiry_mst values(DEFAULT, 1, 2, 1, '2000-01-02 09:00:00 Asia/Tokyo', 1, '2000-01-02 09:00:00 Asia/Tokyo', '件名12', '本文12', 'unreplied', true);
+insert into common.inquiry_mst values(DEFAULT, 2, 1, 2, '2000-01-03 09:00:00 Asia/Tokyo', 2, '2000-01-03 09:00:00 Asia/Tokyo', '件名21', '本文21', 'replied', true);
+
+-- common.inquiry_reply_mst
+-- account_no=2の管理者が、account_no=1のお問い合わせへ返信（inquiry_id 参照の解消が必要）
+insert into common.inquiry_reply_mst values(DEFAULT, (select id from common.inquiry_mst where account_no=1 and inquiry_no=1), 1, 2, 2, '2000-01-01 10:00:00 Asia/Tokyo', '返信本文11');
+-- account_no=1の管理者が、account_no=2のお問い合わせへ返信（admin_account_no 参照の解消が必要）
+insert into common.inquiry_reply_mst values(DEFAULT, (select id from common.inquiry_mst where account_no=2 and inquiry_no=1), 1, 1, 1, '2000-01-03 10:00:00 Asia/Tokyo', '返信本文21');

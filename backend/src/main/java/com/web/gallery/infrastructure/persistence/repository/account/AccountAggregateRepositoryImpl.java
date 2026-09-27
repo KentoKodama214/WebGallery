@@ -7,6 +7,9 @@ import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDeletionDto;
 import com.web.gallery.infrastructure.persistence.entity.account.AccountAuthorityCondition;
 import com.web.gallery.infrastructure.persistence.entity.account.AccountCondition;
 import com.web.gallery.infrastructure.persistence.entity.account.LoginHistoryCondition;
+import com.web.gallery.infrastructure.persistence.entity.common.LocationMstCondition;
+import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMstCondition;
+import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavoriteCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoListFilterLogCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMstCondition;
@@ -15,6 +18,9 @@ import com.web.gallery.infrastructure.persistence.mapper.account.AccountAuthorit
 import com.web.gallery.infrastructure.persistence.mapper.account.AccountMapper;
 import com.web.gallery.infrastructure.persistence.mapper.account.LoginHistoryMapper;
 import com.web.gallery.infrastructure.persistence.mapper.auth.RefreshTokenMapper;
+import com.web.gallery.infrastructure.persistence.mapper.common.LocationMstMapper;
+import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryMstMapper;
+import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryReplyMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoFavoriteMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoListFilterLogMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoMstMapper;
@@ -27,8 +33,12 @@ import org.springframework.stereotype.Repository;
 /**
  * アカウント集約（{@link Account}）を永続化するRepositoryの実装クラス
  *
- * <p>お気に入り・写真タグ・写真マスタ・リフレッシュトークン・アカウント権限・アカウントの各テーブルへの永続化を、
- * アカウント削除というユースケース単位で整合性のある1操作としてまとめる。他のRepositoryには依存せず、 Mapperを直接操作する
+ * <p>お気に入り・写真タグ・写真マスタ・リフレッシュトークン・ロケーションマスタ・お問い合わせ・アカウント権限・
+ * アカウントの各テーブルへの永続化を、アカウント削除というユースケース単位で整合性のある1操作としてまとめる。 他のRepositoryには依存せず、Mapperを直接操作する。
+ *
+ * <p>{@code common.account(account_no)}を参照する外部キーはいずれも{@code ON DELETE RESTRICT}であるため、
+ * 参照元テーブルの削除漏れはアカウント本体の物理削除を外部キー違反で失敗させる。テーブル追加時は {@code
+ * AccountAggregateRepositoryImplIntegrationTest}の参照元テーブル網羅テストが検出する
  */
 @Slf4j
 @Repository
@@ -44,6 +54,9 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
   private final LoginHistoryMapper loginHistoryMapper;
   private final PhotoListFilterLogMapper photoListFilterLogMapper;
   private final PhotoViewLogMapper photoViewLogMapper;
+  private final LocationMstMapper locationMstMapper;
+  private final InquiryMstMapper inquiryMstMapper;
+  private final InquiryReplyMstMapper inquiryReplyMstMapper;
 
   /**
    * アカウント集約を削除する
@@ -83,6 +96,21 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
     // ログイン履歴・写真一覧絞り込みログを削除（外部キー制約に抵触しないよう、アカウントの物理削除に先立って実施）
     loginHistoryMapper.delete(LoginHistoryCondition.byAccountNo(accountNo));
     photoListFilterLogMapper.delete(PhotoListFilterLogCondition.byPhotoAccountNo(accountNo));
+
+    // ロケーションマスタを削除（common.account への外部キーがON DELETE RESTRICTのため、
+    // 残したままだとアカウント本体の物理削除が外部キー違反になる）
+    locationMstMapper.delete(LocationMstCondition.byAccountNo(accountNo));
+
+    // お問い合わせ返信を削除する。inquiry_reply_mst は inquiry_mst と common.account の双方を
+    // ON DELETE RESTRICT で参照するため、お問い合わせ本体・アカウント本体より先に削除する。
+    // 1. このアカウントが管理者として投稿した返信（admin_account_no 参照の解消）
+    // 2. このアカウントが登録したお問い合わせに紐づく返信（inquiry_id 参照の解消）
+    inquiryReplyMstMapper.delete(InquiryReplyMstCondition.byAdminAccountNo(accountNo));
+    inquiryReplyMstMapper.delete(InquiryReplyMstCondition.byInquiryAccountNo(accountNo));
+
+    // お問い合わせ本体を削除（common.account への外部キーがON DELETE RESTRICTのため、
+    // 残したままだとアカウント本体の物理削除が外部キー違反になる）
+    inquiryMstMapper.delete(InquiryMstCondition.byAccountNo(accountNo));
 
     // アカウント権限を削除（外部キー制約に抵触しないよう、アカウントの物理削除に先立って実施）
     accountAuthorityMapper.delete(AccountAuthorityCondition.byAccountNo(accountNo));

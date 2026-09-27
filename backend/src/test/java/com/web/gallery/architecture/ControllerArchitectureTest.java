@@ -17,17 +17,21 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.web.gallery.domain.constant.ApiRoutes;
+import com.web.gallery.presentation.controller.common.CommonControllerAdvice;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
  * {@code .claude/rules/controller.md}に定義されたController層のアーキテクチャルールを検証するテスト
@@ -90,6 +94,50 @@ class ControllerArchitectureTest {
               resideInAPackage(Packages.CONTROLLER + "..").and(ArchPredicates.TOP_LEVEL_CLASSES))
           .should(haveMappingPathDefinedInApiRoutes())
           .as("@GetMapping等のパスはApiRoutesクラスの定数値のいずれかと一致すること");
+
+  @ArchTest
+  static final ArchRule restControllerShouldBeRegisteredInCommonControllerAdvice =
+      classes()
+          .that()
+          .resideInAPackage(Packages.CONTROLLER + "..")
+          .and(ArchPredicates.TOP_LEVEL_CLASSES)
+          .and()
+          .areAnnotatedWith(RestController.class)
+          .should(beRegisteredInCommonControllerAdvice())
+          .as("@RestControllerはCommonControllerAdviceのassignableTypesに登録されている必要がある");
+
+  /**
+   * {@link CommonControllerAdvice}の{@code assignableTypes}への登録漏れを検出する
+   *
+   * <p>登録漏れのControllerで例外が発生すると、他のエンドポイントと異なり標準のエラーレスポンス形 （{@code httpStatus}/{@code
+   * errorCode}/{@code errorMessage}）を返さずSpringの{@code /error}へ落ちる。
+   * Controller追加時に静かに壊れるのを防ぐため、機械的に検証する。
+   *
+   * @return ArchCondition
+   */
+  private static ArchCondition<JavaClass> beRegisteredInCommonControllerAdvice() {
+    Set<String> registered =
+        Set.of(
+                CommonControllerAdvice.class
+                    .getAnnotation(RestControllerAdvice.class)
+                    .assignableTypes())
+            .stream()
+            .map(Class::getName)
+            .collect(Collectors.toSet());
+    return new ArchCondition<JavaClass>("be registered in CommonControllerAdvice#assignableTypes") {
+      @Override
+      public void check(JavaClass controllerClass, ConditionEvents events) {
+        if (!registered.contains(controllerClass.getFullName())) {
+          events.add(
+              SimpleConditionEvent.violated(
+                  controllerClass,
+                  String.format(
+                      "%sがCommonControllerAdviceのassignableTypesに登録されていません",
+                      controllerClass.getSimpleName())));
+        }
+      }
+    };
+  }
 
   private static ArchCondition<JavaClass> notDirectlyConstructResponseObjects() {
     return new ArchCondition<JavaClass>("not directly construct classes in " + Packages.RESPONSE) {
