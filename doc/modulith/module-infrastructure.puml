@@ -1,5 +1,5 @@
 @startuml
-title <size:24>WebGalleryApplication</size>
+title <size:24>Infrastructure</size>
 
 set separator none
 top to bottom direction
@@ -20,14 +20,10 @@ System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags
     Component(WebGalleryApplication.WebGalleryApplication.Domain, "Domain", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Application, "Application", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Infrastructure, "Infrastructure", $techn="Module", $descr="", $tags="", $link="")
-    Component(WebGalleryApplication.WebGalleryApplication.Presentation, "Presentation", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
 
-Rel(WebGalleryApplication.WebGalleryApplication.Presentation, WebGalleryApplication.WebGalleryApplication.Application, "uses", $techn="", $tags="", $link="")
-Rel(WebGalleryApplication.WebGalleryApplication.Presentation, WebGalleryApplication.WebGalleryApplication.Infrastructure, "uses", $techn="", $tags="", $link="")
-Rel(WebGalleryApplication.WebGalleryApplication.Presentation, WebGalleryApplication.WebGalleryApplication.Domain, "uses", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Application, WebGalleryApplication.WebGalleryApplication.Domain, "uses", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Infrastructure, WebGalleryApplication.WebGalleryApplication.Domain, "listens to", $techn="", $tags="", $link="")
 Rel(WebGalleryApplication.WebGalleryApplication.Infrastructure, WebGalleryApplication.WebGalleryApplication.Application, "uses", $techn="", $tags="", $link="")

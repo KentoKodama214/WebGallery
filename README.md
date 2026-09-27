@@ -424,42 +424,46 @@ WebGallery/
 │   ├── set-env.sh                  # 環境変数設定スクリプト
 │   └── src/
 │       ├── main/
-│       │   ├── java/com/web/gallery/
-│       │   │   ├── aggregate/          # 集約ルート（複数テーブルにまたがる整合性・ライフサイクル管理）
-│       │   │   ├── annotation/         # カスタムアノテーション
-│       │   │   ├── aspect/             # AOP（管理者権限チェック等）
-│       │   │   ├── config/             # 設定クラス
-│       │   │   ├── constant/           # 定数（APIルート・メッセージ）
-│       │   │   ├── controller/         # コントローラ
-│       │   │   │   ├── request/        # リクエストDTO
-│       │   │   │   └── response/       # レスポンスDTO
-│       │   │   ├── domain/             # ドメインオブジェクト（値オブジェクト）
-│       │   │   ├── dto/                # DBアクセス層の複合データ転送オブジェクト
-│       │   │   ├── entity/             # エンティティ
-│       │   │   ├── enumeration/        # 列挙型
-│       │   │   ├── event/              # ドメインイベント・リスナー
-│       │   │   ├── exception/          # カスタム例外
-│       │   │   ├── helper/             # ヘルパーユーティリティ
-│       │   │   ├── mapper/             # MyBatisマッパー
-│       │   │   ├── model/              # モデルオブジェクト
-│       │   │   ├── policy/             # ドメインサービス（単一のビジネスルールを判定）
-│       │   │   ├── repository/         # リポジトリ
-│       │   │   │   └── impl/
-│       │   │   ├── scheduler/          # 定期実行タスク（期限切れリフレッシュトークンの削除等）
-│       │   │   ├── service/            # サービス
-│       │   │   │   └── impl/
-│       │   │   └── type_handler/       # MyBatis型ハンドラ
+│       │   ├── java/com/web/gallery/       # オニオンアーキテクチャ（domain→application→infrastructure/presentation）
+│       │   │   ├── domain/                     # 【中心・外部依存なし】
+│       │   │   │   ├── model/{機能}/               # 値オブジェクト（record）
+│       │   │   │   ├── service/                    # ドメインサービス（Policyサフィックス）
+│       │   │   │   ├── event/                      # ドメインイベント定義+Listener
+│       │   │   │   ├── exception/                  # カスタム例外
+│       │   │   │   ├── enumeration/                # ビジネス区分値Enum
+│       │   │   │   └── constant/                   # 定数（Consts, MessageConst, ApiRoutes）
+│       │   │   ├── application/                # 【ユースケース】
+│       │   │   │   ├── model/{機能}/               # Modelオブジェクト（レイヤー間転送用）
+│       │   │   │   ├── aggregate/                  # 集約ルート（複数テーブルにまたがる整合性・ライフサイクル管理）
+│       │   │   │   ├── service/{機能}/ + service/impl/{機能}/
+│       │   │   │   ├── repository/{機能}/          # リポジトリインターフェース（ポート）
+│       │   │   │   ├── helper/                     # 技術的な処理のポート（JwtTokenProvider等）
+│       │   │   │   └── config/                     # 設定値のポート（AccountConfig等）
+│       │   │   ├── infrastructure/             # 【技術詳細・外側】
+│       │   │   │   ├── persistence/{entity,dto,mapper,repository}/{機能}/、type_handler/
+│       │   │   │   ├── scheduler/                  # 定期実行タスク（lock/にSchedulerLock関連を集約）
+│       │   │   │   ├── security/                   # JwtTokenProviderImpl、SessionHelper、aspect/、annotation/
+│       │   │   │   ├── web/                        # ClientIpResolver、Security/Cors/RateLimit系Config
+│       │   │   │   ├── helper/                     # PhotoDirectionResolver等
+│       │   │   │   └── config/                     # Configポートの実装（*ConfigImpl）、DataSource/S3/Scheduling等
+│       │   │   └── presentation/
+│       │   │       ├── controller/{機能}/          # コントローラ
+│       │   │       ├── request/{機能}/             # リクエストDTO
+│       │   │       ├── response/{機能}/            # レスポンスDTO
+│       │   │       └── converter/{機能}/           # Request→ModelのConverter
 │       │   └── resources/
 │       │       ├── application.yml
 │       │       ├── application-local.yml       # ローカル開発用プロファイル
 │       │       ├── application-development.yml # 開発環境用プロファイル
 │       │       ├── application-prod.yml        # 本番環境用プロファイル
 │       │       ├── messages.properties
-│       │       └── com/web/gallery/mapper/  # MyBatis XMLマッパー
+│       │       └── com/web/gallery/infrastructure/persistence/mapper/  # MyBatis XMLマッパー
 │       └── test/
-│           ├── java/com/web/gallery/   # テストクラス
+│           ├── java/com/web/gallery/   # テストクラス（main側と同じパッケージ構成）
 │           └── resources/
 │               ├── application-test.yml
 │               ├── json/controller     # テスト用リクエストjson
 │               └── sql/                # テスト用SQL
 ```
+
+詳しくは[オニオンアーキテクチャ全体像](.claude/rules/architecture-overview.md)を参照。

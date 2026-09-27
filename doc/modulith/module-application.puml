@@ -1,5 +1,5 @@
 @startuml
-title <size:24>Event</size>
+title <size:24>Application</size>
 
 set separator none
 top to bottom direction
@@ -17,13 +17,13 @@ top to bottom direction
 
 System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
   Container_Boundary("WebGalleryApplication.WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
-    Component(WebGalleryApplication.WebGalleryApplication.Event, "Event", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Domain, "Domain", $techn="Module", $descr="", $tags="", $link="")
+    Component(WebGalleryApplication.WebGalleryApplication.Application, "Application", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
 
-Rel(WebGalleryApplication.WebGalleryApplication.Event, WebGalleryApplication.WebGalleryApplication.Domain, "depends on", $techn="", $tags="", $link="")
+Rel(WebGalleryApplication.WebGalleryApplication.Application, WebGalleryApplication.WebGalleryApplication.Domain, "uses", $techn="", $tags="", $link="")
 
 SHOW_LEGEND(true)
 hide stereotypes
