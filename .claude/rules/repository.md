@@ -22,8 +22,7 @@ paths:
 
 - **許可するimport（インターフェース、`application/repository/`）**: `application/model/`、`application/aggregate/`、`domain/`配下全体（値オブジェクト、`enumeration/`、`constant/`）
 - **許可するimport（実装、`infrastructure/persistence/repository/`）**: 上記に加え`infrastructure/persistence/mapper/`、`infrastructure/persistence/entity/`、`infrastructure/persistence/dto/`
-- **禁止するimport**: `presentation/controller/`、`application/service/`への直接依存
-- **禁止するimport**: `presentation/request/`や`presentation/response/`のDTO
+- **禁止するimport**: `presentation/`配下全体（Controller・Request・Response・Converter）、`application/service/`への直接依存
 - **禁止するimport**: `infrastructure/persistence/repository/`の実装クラスから、自身に対応するインターフェース以外の`application/repository/`配下のインターフェース・`infrastructure/persistence/repository/`配下の実装への依存（`backend/src/test/java/com/web/gallery/ArchitectureTest.java`のArchUnitテストで機械的に検出される）
 
 ## インターフェースベース設計
@@ -48,4 +47,4 @@ paths:
 
 ## 検証
 
-本ファイルのその他のルール（命名規則、インターフェース-実装の1対1対応、`@Repository`付与、追加の禁止import、メソッドシグネチャ）は`backend/src/test/java/com/web/gallery/architecture/RepositoryArchitectureTest.java`のArchUnitテストで機械的に検証される。
+本ファイルのその他のルール（命名規則、インターフェース-実装の1対1対応、`@Repository`付与、controller・serviceへの依存禁止、メソッドシグネチャ）は`backend/src/test/java/com/web/gallery/architecture/RepositoryArchitectureTest.java`のArchUnitテストで機械的に検証される。presentation配下全体への依存禁止は、application層・infrastructure層全体を対象とする`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`で検証される。

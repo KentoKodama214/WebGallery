@@ -19,9 +19,8 @@ paths:
 ## レイヤー間依存関係
 
 - **許可するimport**: `application/repository/`のインターフェース、`application/model/`、`application/aggregate/`、`application/helper/`（JwtTokenProvider・GeoIpResolver・ReauthenticationThrottle等のポート）、`application/config/`（Configポート）、`domain/`配下全体（値オブジェクト、`domain/service/`のPolicy、`domain/enumeration/`、`domain/constant/`、`domain/exception/`、`domain/event/`）
-- **禁止するimport**: `presentation/controller/`、`infrastructure/persistence/mapper・entity・dto`、`infrastructure/persistence/repository/`（repositoryの実装）への直接依存
+- **禁止するimport**: `presentation/`配下全体（Controller・Request・Response・Converter）、`infrastructure/persistence/mapper・entity・dto`、`infrastructure/persistence/repository/`（repositoryの実装）への直接依存
 - **禁止するimport**: `infrastructure/config/`の具象Configクラスへの直接依存。設定値は必ず`application/config/`のポート型で受け取ること（実装は`infrastructure/config/`の`*ConfigImpl`がDIで注入される）
-- **禁止するimport**: `presentation/request/`や`presentation/response/`のDTO
 
 ## インターフェースベース設計
 
@@ -36,4 +35,4 @@ paths:
 
 ## 検証
 
-本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/ServiceArchitectureTest.java`のArchUnitテストで機械的に検証される。メソッドシグネチャの検証は`Service`インターフェースのメソッドを対象とし、`UserDetailsService`等の外部インターフェースの実装やSpringの`@EventListener`ハンドラなど、`ServiceImpl`が独自interfaceの契約外に持つメソッドは対象としない。
+本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/ServiceArchitectureTest.java`のArchUnitテストで機械的に検証される。メソッドシグネチャの検証は`Service`インターフェースのメソッドを対象とし、`UserDetailsService`等の外部インターフェースの実装やSpringの`@EventListener`ハンドラなど、`ServiceImpl`が独自interfaceの契約外に持つメソッドは対象としない。presentation配下全体への依存禁止は、application層全体を対象とする`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`で検証される。

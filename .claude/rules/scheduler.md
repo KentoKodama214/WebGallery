@@ -38,8 +38,7 @@ paths:
 ## レイヤー間依存関係
 
 - **許可するimport**: `application/service/` のインターフェース、`infrastructure/scheduler/lock/`（`SchedulerLock`、`SchedulerLockNameEnum`）、`infrastructure/config/`、`domain/`配下全体（値オブジェクト、`enumeration/`、`constant/`）
-- **禁止するimport**: `presentation/controller/`、`application/repository/`、`infrastructure/persistence/mapper・entity・dto`、`application/aggregate/`、`application/service/impl/` への直接依存
-- **禁止するimport**: `presentation/request/` や `presentation/response/` のDTO
+- **禁止するimport**: `presentation/`配下全体（Controller・Request・Response・Converter）、`application/repository/`、`infrastructure/persistence/mapper・entity・dto`、`application/aggregate/`、`application/service/impl/` への直接依存
 - 他の `Scheduler` クラスへの依存
 
 ## 多重起動防止（複数インスタンス構成）
@@ -83,8 +82,10 @@ public void purgeExpiredRefreshTokens() {
 
 ## 検証
 
-命名規則、`@Component` 付与、`@Scheduled` の `zone`、`@ConditionalOnProperty` の `prefix`、禁止importは
-`backend/src/test/java/com/web/gallery/architecture/SchedulerArchitectureTest.java` の ArchUnit テストで機械的に検証される。
+命名規則、`@Component` 付与、`@Scheduled` の `zone`、`@ConditionalOnProperty` の `prefix`、repository・mapper・entity・dto・
+aggregate・service.implへの依存禁止は`backend/src/test/java/com/web/gallery/architecture/SchedulerArchitectureTest.java` の
+ArchUnit テストで機械的に検証される。presentation配下全体への依存禁止は、infrastructure層全体を対象とする
+`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`で検証される。
 ただし `@RequiredArgsConstructor` の Lombok アノテーション規約は、コンパイラが `RetentionPolicy.SOURCE` で完全に除去し
 バイトコードに一切残らないため、バイトコード解析である ArchUnit では原理的に検証不可能であり、`backend-architecture-checker`
 によるレビューで担保する。
