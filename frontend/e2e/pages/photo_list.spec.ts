@@ -48,6 +48,34 @@ test.describe("写真一覧ページ", () => {
     await expect(page.getByText("写真が存在しません。")).toBeVisible({ timeout: 10000 });
     await expectNoAccessibilityViolations(page);
   });
+
+  test("フィルターパネル展開中もアクセシビリティ違反がないこと", async ({ page }, testInfo) => {
+    // パネルは閉じている間 visibility:hidden のため axe の走査対象外になる。
+    // 絞り込みのコントロール（select・キーワード入力）は展開してはじめて検証できる
+    test.skip(testInfo.project.name !== "chromium", "a11y検証はchromiumプロジェクトのみで実施する");
+    await expect(page.getByText("写真が存在しません。")).toBeVisible({ timeout: 10000 });
+
+    await page.getByTestId("filter-trigger").click();
+    await expect(page.getByTestId("filter-panel")).toHaveClass(/filterOpen/);
+
+    await expectNoAccessibilityViolations(page);
+  });
+
+  test("フィルターパネルは展開時に内部へフォーカスが移り、Escapeで閉じてトリガーへ戻ること", async ({
+    page,
+  }) => {
+    const filterPanel = page.getByTestId("filter-panel");
+    const filterTrigger = page.getByTestId("filter-trigger");
+
+    await filterTrigger.click();
+    await expect(filterPanel).toHaveClass(/filterOpen/);
+    // パネル内の最初のフォーカス可能要素（閉じるボタン）へフォーカスが移る
+    await expect(page.getByTestId("filter-close-button")).toBeFocused();
+
+    await page.keyboard.press("Escape");
+    await expect(filterPanel).not.toHaveClass(/filterOpen/);
+    await expect(filterTrigger).toBeFocused();
+  });
 });
 
 test.describe("写真一覧ページ（ログイン済み・写真0件の実アカウント）", () => {

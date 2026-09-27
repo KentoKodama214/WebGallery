@@ -579,9 +579,11 @@ export function PhotoSettingForm({
         <form onSubmit={handleSubmit}>
           {/* 画像アップロード */}
           <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-1">
+            {/* 新規登録時のファイル入力は視覚的に隠した <input> なので、対応コントロールを
+                包まない <label> は使わず、グループの見出しとして表示する */}
+            <p className="block text-sm text-gray-400 mb-1">
               画像ファイル{!isEditMode && " *"}
-            </label>
+            </p>
             {isEditMode ? (
               // 画像ファイルは登録後は差し替え不可（バックエンド仕様）。編集モードでは
               // 選択操作自体をUI上から無くし、既存画像のプレビュー表示のみを行う
@@ -668,13 +670,14 @@ export function PhotoSettingForm({
           {/* タイトル（日本語） */}
           <div className="mb-4">
             <label htmlFor="photo-japanese-title" className="block text-sm text-gray-400 mb-1">
-              タイトル（日本語）
+              タイトル（日本語） *
             </label>
             <input
               id="photo-japanese-title"
               type="text"
               value={photoJapaneseTitle}
               onChange={(e) => setPhotoJapaneseTitle(e.target.value)}
+              aria-required="true"
               className="w-full bg-gray-800 text-white border border-gray-600 p-2"
               data-testid="japanese-title-input"
             />
@@ -787,8 +790,8 @@ export function PhotoSettingForm({
           </div>
 
           {/* 撮影場所 */}
-          <div className="mb-4">
-            <label className="text-sm text-gray-400 block mb-2">撮影場所</label>
+          <fieldset className="mb-4">
+            <legend className="text-sm text-gray-400 mb-2">撮影場所</legend>
             <div className="flex gap-4 mb-2 text-sm">
               <label className="flex items-center gap-1">
                 <input
@@ -828,6 +831,7 @@ export function PhotoSettingForm({
                 onChange={(e) =>
                   setSelectedLocationNo(e.target.value ? Number(e.target.value) : "")
                 }
+                aria-label="登録済みのロケーション"
                 className="w-full bg-gray-800 text-white border border-gray-600 p-2"
                 data-testid="location-select"
               >
@@ -843,36 +847,49 @@ export function PhotoSettingForm({
 
             {locationMode === "new" && (
               <div className="flex flex-col gap-2">
+                {/* 可視ラベルを持たせる（placeholderは入力開始で消えるためラベル代わりにしない） */}
+                <label
+                  htmlFor="new-location-management-name"
+                  className="block text-sm text-gray-400"
+                >
+                  管理名 *
+                </label>
                 <input
+                  id="new-location-management-name"
                   type="text"
                   value={newManagementName}
                   onChange={(e) => setNewManagementName(e.target.value)}
-                  placeholder="管理名 *"
-                  aria-label="管理名"
+                  aria-required="true"
+                  aria-describedby="new-location-management-name-help"
                   className="w-full bg-gray-800 text-white border border-gray-600 p-2"
                   data-testid="new-location-management-name-input"
                 />
-                <p className="text-xs text-gray-400">
+                <p id="new-location-management-name-help" className="text-xs text-gray-400">
                   管理名は自分がロケーションを識別するための名称です（他のユーザーには表示されません）。
                 </p>
+                <label htmlFor="new-location-display-name" className="block text-sm text-gray-400">
+                  表示名 *
+                </label>
                 <input
+                  id="new-location-display-name"
                   type="text"
                   value={newDisplayName}
                   onChange={(e) => setNewDisplayName(e.target.value)}
-                  placeholder="表示名 *"
-                  aria-label="表示名"
+                  aria-required="true"
+                  aria-describedby="new-location-display-name-help"
                   className="w-full bg-gray-800 text-white border border-gray-600 p-2"
                   data-testid="new-location-display-name-input"
                 />
-                <p className="text-xs text-gray-400">
+                <p id="new-location-display-name-help" className="text-xs text-gray-400">
                   表示名は写真詳細ページで表示される名称です。
                 </p>
-                <p className="text-xs text-gray-400">
-                  地図をクリックすると緯度・経度が自動入力されます（うまく取得できない場合は直接入力してください）
+                <p id="location-map-picker-help" className="text-xs text-gray-400">
+                  地図をクリックすると緯度・経度が自動入力されます。キーボード操作の場合や、うまく取得できない場合は、下の緯度・経度を直接入力してください。
                 </p>
                 <LocationMapPicker
                   latitude={newLatitude ? Number(newLatitude) : null}
                   longitude={newLongitude ? Number(newLongitude) : null}
+                  describedById="location-map-picker-help"
                   onPick={(lat, lng, address) => {
                     setNewLatitude(String(lat));
                     setNewLongitude(String(lng));
@@ -880,39 +897,57 @@ export function PhotoSettingForm({
                   }}
                 />
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="number"
-                    step="0.0001"
-                    value={newLatitude}
-                    onChange={(e) => setNewLatitude(e.target.value)}
-                    placeholder="緯度 *"
-                    aria-label="緯度"
-                    className="w-full bg-gray-800 text-white border border-gray-600 p-2"
-                    data-testid="new-location-latitude-input"
-                  />
-                  <input
-                    type="number"
-                    step="0.0001"
-                    value={newLongitude}
-                    onChange={(e) => setNewLongitude(e.target.value)}
-                    placeholder="経度 *"
-                    aria-label="経度"
-                    className="w-full bg-gray-800 text-white border border-gray-600 p-2"
-                    data-testid="new-location-longitude-input"
-                  />
+                  <div>
+                    <label
+                      htmlFor="new-location-latitude"
+                      className="block text-sm text-gray-400 mb-1"
+                    >
+                      緯度 *
+                    </label>
+                    <input
+                      id="new-location-latitude"
+                      type="number"
+                      step="0.0001"
+                      value={newLatitude}
+                      onChange={(e) => setNewLatitude(e.target.value)}
+                      aria-required="true"
+                      className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                      data-testid="new-location-latitude-input"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="new-location-longitude"
+                      className="block text-sm text-gray-400 mb-1"
+                    >
+                      経度 *
+                    </label>
+                    <input
+                      id="new-location-longitude"
+                      type="number"
+                      step="0.0001"
+                      value={newLongitude}
+                      onChange={(e) => setNewLongitude(e.target.value)}
+                      aria-required="true"
+                      className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                      data-testid="new-location-longitude-input"
+                    />
+                  </div>
                 </div>
+                <label htmlFor="new-location-address" className="block text-sm text-gray-400">
+                  住所（任意）
+                </label>
                 <input
+                  id="new-location-address"
                   type="text"
                   value={newAddress}
                   onChange={(e) => setNewAddress(e.target.value)}
-                  placeholder="住所（任意）"
-                  aria-label="住所"
                   className="w-full bg-gray-800 text-white border border-gray-600 p-2"
                   data-testid="new-location-address-input"
                 />
               </div>
             )}
-          </div>
+          </fieldset>
 
           {/* 位置情報の公開設定 */}
           <div className="mb-4">
@@ -921,13 +956,18 @@ export function PhotoSettingForm({
                 type="checkbox"
                 checked={isLocationPublic}
                 onChange={(e) => setIsLocationPublic(e.target.checked)}
+                aria-describedby="location-public-help"
                 data-testid="location-public-checkbox"
               />
               撮影場所（緯度経度・住所・表示名）を他のユーザーにも公開する
             </label>
-            <p className="text-xs text-gray-400 mt-1">
-              オフの場合、撮影場所は本人にのみ表示されます。
-            </p>
+            <div id="location-public-help" className="text-xs text-gray-400 mt-1">
+              <p>オフの場合、この画面で設定した撮影場所は本人にのみ表示されます。</p>
+              {/* この設定はAPIレスポンスの制御のみで、画像ファイルそのものは加工せずに配信される */}
+              <p className="mt-1" data-testid="exif-location-notice">
+                ただし、画像ファイル自体に埋め込まれた位置情報（EXIFのGPS情報）は除去されません。オフにしても、画像をダウンロードすれば撮影地点を読み取れる場合があります。撮影場所を知られたくない写真は、アップロード前に画像側の位置情報を削除してください。
+              </p>
+            </div>
           </div>
 
           {/* キャプション */}
@@ -946,8 +986,8 @@ export function PhotoSettingForm({
           </div>
 
           {/* タグ */}
-          <div className="mb-6">
-            <label className="text-sm text-gray-400 block mb-2">タグ</label>
+          <fieldset className="mb-6">
+            <legend className="text-sm text-gray-400 mb-2">タグ</legend>
             {tags.map((tag) => (
               <div
                 key={tag.tagNo}
@@ -996,7 +1036,7 @@ export function PhotoSettingForm({
                 + タグを追加
               </button>
             </div>
-          </div>
+          </fieldset>
 
           {/* 保存・キャンセルボタン */}
           <div className="flex justify-center gap-4">

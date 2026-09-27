@@ -3,6 +3,7 @@ import {
   test as adminTest,
   expect as adminExpect,
 } from "../fixtures/admin";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 import { generateTestAccountId, login, registerAccount } from "../fixtures/auth";
 
 test.describe("管理者用お問い合わせ管理ページ", () => {
@@ -18,6 +19,26 @@ test.describe("管理者用お問い合わせ管理ページ", () => {
     await expect(page.locator("text=管理者権限がありません")).toBeVisible({
       timeout: 5000,
     });
+  });
+});
+
+test.describe("管理者用お問い合わせ管理ページ（管理者ログイン済み）", () => {
+  adminTest("アクセシビリティ違反がないこと", async ({ adminPage: page }, testInfo) => {
+    adminTest.skip(
+      testInfo.project.name !== "chromium",
+      "a11y検証はchromiumプロジェクトのみで実施する"
+    );
+    await page.goto("/admin/inquiry_management");
+
+    await adminExpect(page).toHaveTitle(/お問い合わせ管理/);
+    await adminExpect(page.getByText("管理者権限がありません")).toHaveCount(0);
+    await page.locator("table").first().waitFor({ state: "visible", timeout: 10000 });
+
+    // color-contrast は一覧テーブルのヘッダー（白文字 × #2196F3 = 3.12:1）と
+    // 操作ボタン（bg-blue-500 / green-500 / red-500 × 白文字）に既存の違反があり、
+    // 解消にはアプリ共通の配色変更が必要なため、本検証の対象外とする。
+    // ラベル・アクセシブルネーム等、本PRの対象ルールは検査する
+    await expectNoAccessibilityViolations(page, { disableRules: ["color-contrast"] });
   });
 });
 

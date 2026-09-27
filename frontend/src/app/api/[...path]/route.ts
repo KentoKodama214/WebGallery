@@ -20,8 +20,10 @@ import { type NextRequest, NextResponse } from "next/server";
  * - Cookie（refreshToken 等）とバックエンドの Set-Cookie を双方向に転送する
  * - クライアントが詐称しうる転送系ヘッダー（X-Forwarded-* / Forwarded / X-Real-IP）は一旦除去し、
  *   バックエンドのレート制限が使う X-Forwarded-For だけを、前段プロキシ（ALB / CloudFront）が
- *   付与した値の左端＝実クライアント IP に載せ直してから中継する。このアプリは信頼できる L7
- *   プロキシ経由でのみ到達可能な構成を前提とする（バックエンドの `TRUSTED_PROXIES` と対で機能）。
+ *   付与した値＝実クライアント IP に載せ直してから中継する。ALB / CloudFront は X-Forwarded-For を
+ *   上書きせず追記するため、左端ではなく右端側（信頼境界の直前）を採用する（{@link resolveClientIp}）。
+ *   このアプリは信頼できる L7 プロキシ経由でのみ到達可能な構成を前提とする
+ *   （バックエンドの `TRUSTED_PROXIES` と対で機能）。
  */
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
@@ -83,19 +85,41 @@ const EXCLUDED_RESPONSE_HEADERS = new Set([
 ]);
 
 /**
+ * 信頼する前段プロキシのホップ数
+ *
+ * `X-Forwarded-For` の**右端から数えて**何個目を実クライアント IP とみなすかを表す。
+ * ALB のみを前段に置く標準構成では 1（＝右端が実クライアント IP）。
+ * CloudFront + ALB のように信頼できるプロキシを 2 段重ねる場合は 2 を指定する。
+ * 環境変数 `TRUSTED_PROXY_HOPS` で上書きする。
+ */
+const TRUSTED_PROXY_HOPS = Math.max(1, Number(process.env.TRUSTED_PROXY_HOPS) || 1);
+
+/**
  * 実クライアント IP を求める
  *
- * 前段プロキシ（ALB / CloudFront）が付与した `X-Forwarded-For` の左端を実クライアント IP とみなす。
- * このアプリは信頼できる L7 プロキシ経由でのみ到達可能な構成を前提とし、バックエンドは
- * この載せ直した `X-Forwarded-For` を `TRUSTED_PROXIES` の範囲でのみ信頼する。
+ * ALB / CloudFront はいずれも受信した `X-Forwarded-For` を**上書きせず追記する**。
+ * そのためクライアントが `X-Forwarded-For: 203.0.113.9` を付けて送ると前段通過後は
+ * `203.0.113.9, <実クライアント IP>` となり、**左端は攻撃者が選んだ値**になる。
+ * 左端を信頼するとバックエンドのレート制限（IP 単位）の回避や、ログイン履歴・
+ * アクセスログ・GeoIP の偽装が成立してしまう。
+ *
+ * よって「信頼境界の直前」＝右端から {@link TRUSTED_PROXY_HOPS} 個目を実クライアント IP とみなす。
+ * 前段が付与した値だけを採用するため、クライアントが左側に何を並べても影響を受けない。
+ * 想定よりチェーンが短い場合（前段を経由していない＝ローカル実行等）は左端へフォールバックする。
  *
  * @param request 受信したリクエスト
  * @returns 実クライアント IP。特定できなければ null
  */
 function resolveClientIp(request: NextRequest): string | null {
   const forwardedFor = request.headers.get("x-forwarded-for");
-  const first = forwardedFor?.split(",")[0]?.trim();
-  return first ? first : null;
+  if (!forwardedFor) return null;
+  const hops = forwardedFor
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value !== "");
+  if (hops.length === 0) return null;
+  const index = Math.max(0, hops.length - TRUSTED_PROXY_HOPS);
+  return hops[index] ?? null;
 }
 
 /** リクエストボディが上限を超えたことを表すエラー */

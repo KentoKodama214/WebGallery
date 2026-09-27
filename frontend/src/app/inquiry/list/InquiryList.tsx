@@ -124,7 +124,7 @@ export function InquiryList() {
   return (
     <div className="flex flex-col items-center py-8 gap-4">
       <div className="w-full max-w-[800px] flex justify-between items-center px-4">
-        <h2 className="text-xl font-bold">お問い合わせ一覧</h2>
+        <h1 className="text-xl font-bold">お問い合わせ一覧</h1>
         <Link
           href="/inquiry"
           className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"

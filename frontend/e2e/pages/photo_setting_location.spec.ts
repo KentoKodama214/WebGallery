@@ -10,8 +10,9 @@ import { generateTestAccountId, login, registerAccount } from "../fixtures/auth"
  * （DB直接投入は行わない。UI操作で到達できる状態のため）。
  *
  * 地図のクリック位置からの逆ジオコーディング（住所自動補完）は外部サービス（Nominatim）への
- * 実通信に依存し結果が非決定的なため、住所の内容自体はアサーションしない。緯度・経度が
- * クリックにより入力されることのみを検証する
+ * 実通信に依存し結果が非決定的なため、住所の内容自体はアサーションしない。緯度・経度は
+ * 逆ジオコーディングの完了を待たずクリック時点で反映される仕様（`LocationMapPicker`）のため、
+ * 外部通信の成否に関わらず入力されることを検証する
  */
 const PHOTO_1 = path.join(__dirname, "../fixtures/images/e2e-photo-1.png");
 const PHOTO_2 = path.join(__dirname, "../fixtures/images/e2e-photo-2.png");
@@ -42,6 +43,9 @@ test.describe("写真設定ページ（撮影場所：新規ロケーション�
     // クラス付与（leaflet-container、Leafletがコンテナに直接付与する）を待ってから
     // クリックする。空のdivが可視というだけではクリックリスナーの登録前にクリックしてしまう場合がある
     await expect(map).toHaveClass(/leaflet-container/, { timeout: 10000 });
+    // page.mouse.click はビューポート座標を指すため、地図が画面外にあるとクリックが届かない。
+    // 先に地図を表示領域へスクロールしてから座標を取り直す
+    await map.scrollIntoViewIfNeeded();
     const box = (await map.boundingBox())!;
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 

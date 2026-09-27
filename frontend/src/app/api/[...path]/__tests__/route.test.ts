@@ -58,19 +58,59 @@ describe("APIプロキシ route", () => {
     expect(headers.get("forwarded")).toBeNull();
   });
 
-  it("前段プロキシが付与した X-Forwarded-For の左端を実クライアント IP として載せ直す", async () => {
+  it("前段プロキシが付与した X-Forwarded-For の右端を実クライアント IP として載せ直す", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     const req = new NextRequest("http://localhost/api/v1/accounts", {
       headers: {
-        // 左端＝ALB が記録した実クライアント IP、以降＝中継プロキシ
+        // ALB / CloudFront は X-Forwarded-For を上書きせず追記するため、
+        // 右端＝前段プロキシが付与した実クライアント IP、左側＝クライアントが送った値
         "x-forwarded-for": "203.0.113.9, 10.0.1.5",
       },
     });
     await GET(req, ctx(["v1", "accounts"]));
 
     const headers = fetchMock.mock.calls[0][1].headers as Headers;
-    expect(headers.get("x-forwarded-for")).toBe("203.0.113.9");
+    expect(headers.get("x-forwarded-for")).toBe("10.0.1.5");
+  });
+
+  it("クライアントが X-Forwarded-For を詐称しても、前段が付与した値のみを採用する", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const req = new NextRequest("http://localhost/api/v1/accounts", {
+      headers: {
+        // 攻撃者が複数の偽 IP を並べても、右端（前段が付与した実 IP）だけが採用される
+        "x-forwarded-for": "1.1.1.1, 2.2.2.2, 3.3.3.3, 10.0.1.5",
+      },
+    });
+    await GET(req, ctx(["v1", "accounts"]));
+
+    const headers = fetchMock.mock.calls[0][1].headers as Headers;
+    expect(headers.get("x-forwarded-for")).toBe("10.0.1.5");
+  });
+
+  it("X-Forwarded-For が1件だけの場合はその値を採用する", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const req = new NextRequest("http://localhost/api/v1/accounts", {
+      headers: { "x-forwarded-for": "10.0.1.5" },
+    });
+    await GET(req, ctx(["v1", "accounts"]));
+
+    const headers = fetchMock.mock.calls[0][1].headers as Headers;
+    expect(headers.get("x-forwarded-for")).toBe("10.0.1.5");
+  });
+
+  it("X-Forwarded-For が空要素のみの場合はバックエンドへ付与しない", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const req = new NextRequest("http://localhost/api/v1/accounts", {
+      headers: { "x-forwarded-for": " , " },
+    });
+    await GET(req, ctx(["v1", "accounts"]));
+
+    const headers = fetchMock.mock.calls[0][1].headers as Headers;
+    expect(headers.get("x-forwarded-for")).toBeNull();
   });
 
   it("X-Forwarded-For が無ければバックエンドへも付与しない", async () => {

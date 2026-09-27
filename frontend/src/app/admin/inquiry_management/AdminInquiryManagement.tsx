@@ -158,7 +158,7 @@ export function AdminInquiryManagement() {
 
   return (
     <div className="flex flex-col items-center py-8 gap-4">
-      <h2 className="text-xl font-bold">お問い合わせ管理</h2>
+      <h1 className="text-xl font-bold">お問い合わせ管理</h1>
 
       <div className="w-full max-w-[1000px] flex items-center gap-2 px-4">
         <label htmlFor="status-filter" className="text-sm text-[#444]">
