@@ -80,6 +80,7 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
+        <h1 className="sr-only">お問い合わせ詳細</h1>
         <p>読み込み中...</p>
       </div>
     );
@@ -88,6 +89,7 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
   if (error || !detail) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
+        <h1 className="sr-only">お問い合わせ詳細</h1>
         <p className="text-red-500">{error ?? "お問い合わせが見つかりません"}</p>
         <Link href="/inquiry/list" className="text-[#2196F3] hover:underline">
           お問い合わせ一覧へ戻る
@@ -98,6 +100,8 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
 
   return (
     <div className="flex flex-col items-center py-8 gap-4 px-4">
+      {/* 見出しレベル1はどの表示状態でも1つ存在させる（件名はh2のため、ページ見出しはsr-onlyで補う） */}
+      <h1 className="sr-only">お問い合わせ詳細</h1>
       <div className="w-full max-w-[700px]">
         <Link href="/inquiry/list" className="text-[#2196F3] hover:underline text-sm">
           &larr; お問い合わせ一覧へ戻る

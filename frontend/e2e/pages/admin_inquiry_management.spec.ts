@@ -146,4 +146,34 @@ adminTest.describe("管理者用お問い合わせ管理ページ（ログイン
       await sender.page.close();
     }
   );
+
+  adminTest(
+    "問い合わせ詳細ページにアクセシビリティ違反がないこと",
+    async ({ adminPage: page, browser }, testInfo) => {
+      adminTest.skip(
+        testInfo.project.name !== "chromium",
+        "a11y検証はchromiumプロジェクトのみで実施する"
+      );
+      const subject = `E2E管理者詳細a11yテスト${testInfo.workerIndex}${Date.now()}`;
+      const sender = await submitInquiryAsNewAccount(
+        browser,
+        testInfo.project.use.baseURL,
+        testInfo.workerIndex,
+        subject
+      );
+
+      await page.goto("/admin/inquiry_management");
+      await page.getByRole("link", { name: subject }).click();
+      await adminExpect(page.getByRole("heading", { name: subject })).toBeVisible({
+        timeout: 10000,
+      });
+
+      // color-contrast は共通配色（リンクの #2196F3 × 白、操作ボタンの bg-blue-500 × 白文字）に
+      // 既存の違反があり、解消にはアプリ共通の配色変更が必要なため本検証の対象外とする。
+      // 見出しレベル（page-has-heading-one）・ラベル等は検査する
+      await expectNoAccessibilityViolations(page, { disableRules: ["color-contrast"] });
+
+      await sender.page.close();
+    }
+  );
 });

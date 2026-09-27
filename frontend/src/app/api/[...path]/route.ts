@@ -105,7 +105,12 @@ const TRUSTED_PROXY_HOPS = Math.max(1, Number(process.env.TRUSTED_PROXY_HOPS) ||
  *
  * よって「信頼境界の直前」＝右端から {@link TRUSTED_PROXY_HOPS} 個目を実クライアント IP とみなす。
  * 前段が付与した値だけを採用するため、クライアントが左側に何を並べても影響を受けない。
- * 想定よりチェーンが短い場合（前段を経由していない＝ローカル実行等）は左端へフォールバックする。
+ *
+ * チェーンが想定ホップ数に届かない場合（前段を経由していない＝ローカル実行、CloudFront を
+ * バイパスして ALB を直叩き、VPC 内からの直接到達等）は **null を返す（fail-closed）**。
+ * 左端へフォールバックすると、そこはクライアントが自由に指定できる値なので IP 詐称の入口に
+ * なってしまう。null を返せばバックエンドは `X-Forwarded-For` を受け取らず、TCP 接続元 IP
+ * （＝前段またはこのプロキシ）でレート制限・ログ記録を行うため、安全側に倒れる。
  *
  * @param request 受信したリクエスト
  * @returns 実クライアント IP。特定できなければ null
@@ -117,9 +122,9 @@ function resolveClientIp(request: NextRequest): string | null {
     .split(",")
     .map((value) => value.trim())
     .filter((value) => value !== "");
-  if (hops.length === 0) return null;
-  const index = Math.max(0, hops.length - TRUSTED_PROXY_HOPS);
-  return hops[index] ?? null;
+  // 信頼できる前段の数に届かないチェーンは、どの要素もクライアントが詐称しうるため採用しない
+  if (hops.length < TRUSTED_PROXY_HOPS) return null;
+  return hops[hops.length - TRUSTED_PROXY_HOPS] ?? null;
 }
 
 /** リクエストボディが上限を超えたことを表すエラー */

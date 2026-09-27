@@ -53,6 +53,10 @@ test.describe("写真設定ページ（撮影場所：新規ロケーション�
     const longitudeInput = page.getByTestId("new-location-longitude-input");
     await expect(latitudeInput).not.toHaveValue("", { timeout: 10000 });
     await expect(longitudeInput).not.toHaveValue("");
+    // 入力欄の step="0.0001" とDBの decimal(11,4) に合わせて小数第4位へ丸めて入る
+    // （丸めないとブラウザの制約検証（stepMismatch）で送信自体が止まる）
+    await expect(latitudeInput).toHaveValue(/^-?\d+(\.\d{1,4})?$/);
+    await expect(longitudeInput).toHaveValue(/^-?\d+(\.\d{1,4})?$/);
 
     await page.getByTestId("submit-button").click();
     await expect(page.getByTestId("success-modal")).toBeVisible({ timeout: 10000 });
