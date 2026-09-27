@@ -24,11 +24,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   // ワーカーごとに使い捨てアカウントを使う設計（fixtures/auth.ts・fixtures/admin.ts）のため
-  // 並列実行してもテスト間の競合はない。GitHub Actionsのubuntu-latestは4 vCPUのため、
-  // ワーカー数をCPU数に合わせる（旧: 1 → 2 → 4）。バックエンド（JVM）とNext.jsの
-  // 開発サーバーも同一ランナー上で動くためCPUは競合するが、各ワーカーの待ち時間
-  // （ページ遷移・API応答の待機）が支配的なため、並列度を上げるほど全体時間は短くなる
-  workers: process.env.CI ? 4 : undefined,
+  // 並列実行してもテスト間の競合はない。CIランナーのCPU数を踏まえ、直列実行（旧: 1）から
+  // 引き上げて実行時間を短縮する
+  workers: process.env.CI ? 2 : undefined,
   // CIではPlaywrightの公式GitHub Actions向けレポーターも併用し、失敗箇所をジョブサマリー・
   // チェックにアノテーションとして表示する（htmlレポートのartifactダウンロードのみに頼らない）
   reporter: process.env.CI ? [["html"], ["github"]] : "html",
