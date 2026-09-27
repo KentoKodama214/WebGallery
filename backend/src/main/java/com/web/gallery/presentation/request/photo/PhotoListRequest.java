@@ -84,7 +84,7 @@ public class PhotoListRequest {
    * <p>フロントエンドが、写真一覧ページを新たに開いた際（アカウント一覧経由・URL直接アクセスいずれも含む）、
    * かつ同一ブラウザセッション内でそのギャラリーの記録が未実施の場合にtrueを送る。写真詳細ページからの
    * 戻り等でこのページが再取得される場合はfalse（既定値）のままとする。閲覧対象が自分自身のギャラリーの 場合は、このフラグがtrueでもサーバー側で記録しない（{@link
-   * com.web.gallery.application.service.impl.PhotoServiceImpl}参照）。絞り込み・並び替えパネルの利用状況を表す{@link
+   * com.web.gallery.application.service.impl.photo.PhotoServiceImpl}参照）。絞り込み・並び替えパネルの利用状況を表す{@link
    * #searchExecuted}とは独立して判定に使用する
    */
   @Schema(description = "初回表示時のギャラリー閲覧ログ記録対象かどうか（分析ログ記録の判定に使用）", example = "false")

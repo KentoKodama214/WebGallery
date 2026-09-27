@@ -19,14 +19,14 @@ com.web.gallery
 │
 ├── application/                     【ユースケース】
 │   ├── model/{機能}/                                 Modelクラス（レイヤー間転送用）
-│   ├── aggregate/                                    集約ルート（書き込みユースケースの整合性管理）
-│   ├── service/ + service/impl/
-│   ├── repository/                                   Repositoryインターフェース（ポート）
-│   ├── helper/                                       技術的な処理のポート（JwtTokenProvider等）
-│   └── config/                                       設定値のポート（AccountConfig等）
+│   ├── aggregate/                                    集約ルート（書き込みユースケースの整合性管理。機能分割なし）
+│   ├── service/{機能}/ + service/impl/{機能}/
+│   ├── repository/{機能}/                            Repositoryインターフェース（ポート）
+│   ├── helper/                                       技術的な処理のポート（JwtTokenProvider等。機能分割なし）
+│   └── config/                                       設定値のポート（AccountConfig等。機能分割なし）
 │
 ├── infrastructure/                  【技術詳細・外側】
-│   ├── persistence/{entity,dto,mapper,repository,type_handler}/
+│   ├── persistence/{entity,dto,mapper,repository}/{機能}/、type_handler/
 │   ├── scheduler/                                    定期実行タスク（lock/にSchedulerLock関連を集約）
 │   ├── security/                                     JwtTokenProviderImpl, SessionHelper, aspect/, annotation/
 │   ├── web/                                          ClientIpResolver, GeoIpResolverImpl, Security/Cors/RateLimit系Config
@@ -34,10 +34,10 @@ com.web.gallery
 │   └── config/                                       Configポートの実装（*ConfigImpl）、DataSource/S3/Scheduling等
 │
 └── presentation/
-    ├── controller/                                   Controllerクラス
+    ├── controller/{機能}/                            Controllerクラス
     ├── request/{機能}/
     ├── response/{機能}/
-    └── converter/                                    Request→ModelのConverterクラス
+    └── converter/{機能}/                             Request→ModelのConverterクラス
 ```
 
 ## 依存方向の原則
@@ -85,4 +85,12 @@ com.web.gallery
 
 ## 機能別サブパッケージ分割について
 
-`domain/model`・`infrastructure/persistence/entity`・`application/model`・`presentation/request`・`presentation/response`は`{account,auth,common,inquiry,photo}`の機能別サブパッケージに分かれているが、`application/service`・`application/repository`・`infrastructure/persistence/{dto,mapper,repository}`・`presentation/controller`・`presentation/converter`は現状フラット構成である。機能別分割は本ドキュメントが扱うレイヤー構成とは独立した変更軸であり、将来的に分割する場合は`domain/model`等の既存feature配置を正として依存関係から逆引きすること（クラス名だけで判断しない。例: `FileRepository`は実体としてphoto機能）。
+`domain/model`・`application/model`・`application/service`（+`service/impl`）・`application/repository`・`infrastructure/persistence/{entity,dto,mapper,repository}`・`presentation/{controller,request,response,converter}`は、`{account,auth,common,inquiry,photo}`の機能別サブパッケージに分かれている。分類は依存関係（対応するEntityやDomainモデルの機能）から逆引きしており、クラス名だけでは判断しない（例: `FileRepository`は実体としてphoto機能、`LoginHistoryRepository`はaccount機能、`RefreshTokenRepository`はauth機能）。
+
+機能分割していないパッケージは以下の通り。いずれもクラス数が少なく機能単位に分けるメリットが薄いため、意図的にフラット構成のままとしている。
+
+- `application/aggregate`（`Account`/`Inquiry`/`Photo`の3クラスのみ）
+- `application/helper`・`application/config`（ポートインターフェースのみ）
+- `infrastructure/persistence/type_handler`
+- `infrastructure/scheduler`（`lock/`サブパッケージのみ）
+- `infrastructure/security`・`infrastructure/web`・`infrastructure/helper`・`infrastructure/config`

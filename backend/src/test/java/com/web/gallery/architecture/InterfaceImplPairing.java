@@ -65,7 +65,8 @@ final class InterfaceImplPairing {
       JavaClasses classes, String packageName, boolean interfacesOnly) {
     Map<String, JavaClass> result = new HashMap<>();
     for (JavaClass javaClass : classes) {
-      if (!javaClass.getPackageName().equals(packageName)) {
+      String actualPackage = javaClass.getPackageName();
+      if (!actualPackage.equals(packageName) && !actualPackage.startsWith(packageName + ".")) {
         continue;
       }
       if (javaClass.getEnclosingClass().isPresent()) {

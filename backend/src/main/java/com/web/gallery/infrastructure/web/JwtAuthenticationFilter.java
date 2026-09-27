@@ -2,7 +2,7 @@ package com.web.gallery.infrastructure.web;
 
 import com.web.gallery.application.AccountPrincipal;
 import com.web.gallery.application.helper.JwtTokenProvider;
-import com.web.gallery.application.service.impl.AccountServiceImpl;
+import com.web.gallery.application.service.impl.account.AccountServiceImpl;
 import com.web.gallery.infrastructure.security.AuthenticatedUserCache;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

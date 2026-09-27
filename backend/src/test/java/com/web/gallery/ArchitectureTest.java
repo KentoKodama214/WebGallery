@@ -36,7 +36,7 @@ class ArchitectureTest {
   static final ArchRule controllerShouldNotDependOnRepository =
       noClasses()
           .that()
-          .resideInAPackage(CONTROLLER_PKG)
+          .resideInAPackage(CONTROLLER_PKG + "..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(REPOSITORY_PKG + "..", REPOSITORY_IMPL_PKG + "..")
@@ -49,7 +49,7 @@ class ArchitectureTest {
           .resideInAPackage(SERVICE_PKG + "..")
           .should()
           .dependOnClassesThat()
-          .resideInAPackage(CONTROLLER_PKG)
+          .resideInAPackage(CONTROLLER_PKG + "..")
           .as("Serviceはcontrollerパッケージに依存してはいけない（逆方向の依存）");
 
   @ArchTest
@@ -59,7 +59,7 @@ class ArchitectureTest {
           .resideInAnyPackage(REPOSITORY_PKG + "..", REPOSITORY_IMPL_PKG + "..")
           .should()
           .dependOnClassesThat()
-          .resideInAPackage(CONTROLLER_PKG)
+          .resideInAPackage(CONTROLLER_PKG + "..")
           .as("Repositoryはcontrollerパッケージに依存してはいけない（逆方向の依存）");
 
   @ArchTest
@@ -79,19 +79,19 @@ class ArchitectureTest {
   static final ArchRule controllerShouldNotDependOnOtherController =
       noClasses()
           .that()
-          .resideInAPackage(CONTROLLER_PKG)
+          .resideInAPackage(CONTROLLER_PKG + "..")
           .and()
           .areNotAnnotatedWith(RestControllerAdvice.class)
           .should()
           .dependOnClassesThat()
-          .resideInAPackage(CONTROLLER_PKG)
+          .resideInAPackage(CONTROLLER_PKG + "..")
           .as("Controllerは他のControllerに依存してはいけない（同レイヤー間の依存）");
 
   @ArchTest
   static final ArchRule serviceImplShouldOnlyDependOnOwnInterface =
       classes()
           .that()
-          .resideInAPackage(SERVICE_IMPL_PKG)
+          .resideInAPackage(SERVICE_IMPL_PKG + "..")
           .should(onlyDependOnOwnInterfaceWithin(SERVICE_PKG, SERVICE_IMPL_PKG))
           .as("ServiceImplは自身が実装するServiceインターフェース以外のserviceパッケージに依存してはいけない（同レイヤー間の依存）");
 
@@ -99,7 +99,7 @@ class ArchitectureTest {
   static final ArchRule repositoryImplShouldOnlyDependOnOwnInterface =
       classes()
           .that()
-          .resideInAPackage(REPOSITORY_IMPL_PKG)
+          .resideInAPackage(REPOSITORY_IMPL_PKG + "..")
           .should(onlyDependOnOwnInterfaceWithin(REPOSITORY_PKG, REPOSITORY_IMPL_PKG))
           .as("RepositoryImplは自身が実装するRepositoryインターフェース以外のrepositoryパッケージに依存してはいけない（同レイヤー間の依存）");
 

@@ -28,7 +28,7 @@ class RepositoryArchitectureTest {
   static final ArchRule interfaceNameShouldEndWithRepository =
       classes()
           .that()
-          .resideInAPackage(Packages.REPOSITORY)
+          .resideInAPackage(Packages.REPOSITORY + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Repository")
@@ -38,7 +38,7 @@ class RepositoryArchitectureTest {
   static final ArchRule implNameShouldEndWithRepositoryImpl =
       classes()
           .that()
-          .resideInAPackage(Packages.REPOSITORY_IMPL)
+          .resideInAPackage(Packages.REPOSITORY_IMPL + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("RepositoryImpl")
@@ -53,7 +53,7 @@ class RepositoryArchitectureTest {
   static final ArchRule implShouldBeAnnotatedWithRepository =
       classes()
           .that()
-          .resideInAPackage(Packages.REPOSITORY_IMPL)
+          .resideInAPackage(Packages.REPOSITORY_IMPL + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .beAnnotatedWith(Repository.class)
@@ -74,7 +74,7 @@ class RepositoryArchitectureTest {
       methods()
           .that()
           .areDeclaredInClassesThat(
-              resideInAPackage(Packages.REPOSITORY).and(ArchPredicates.TOP_LEVEL_CLASSES))
+              resideInAPackage(Packages.REPOSITORY + "..").and(ArchPredicates.TOP_LEVEL_CLASSES))
           .should(
               MethodSignatureConditions.haveAllowedSignature(
                   new String[] {Packages.MODEL, Packages.AGGREGATE, Packages.DOMAIN},

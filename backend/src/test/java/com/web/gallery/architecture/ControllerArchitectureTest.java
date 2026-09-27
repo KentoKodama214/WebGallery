@@ -52,7 +52,7 @@ class ControllerArchitectureTest {
   static final ArchRule classNameShouldEndWithControllerOrControllerAdvice =
       classes()
           .that()
-          .resideInAPackage(Packages.CONTROLLER)
+          .resideInAPackage(Packages.CONTROLLER + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Controller")
@@ -64,7 +64,7 @@ class ControllerArchitectureTest {
   static final ArchRule controllerShouldNotDependOnMapperEntityDtoOrServiceImpl =
       noClasses()
           .that()
-          .resideInAPackage(Packages.CONTROLLER)
+          .resideInAPackage(Packages.CONTROLLER + "..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(
@@ -78,7 +78,7 @@ class ControllerArchitectureTest {
   static final ArchRule responseShouldBeCreatedThroughFactoryMethod =
       noClasses()
           .that()
-          .resideInAPackage(Packages.CONTROLLER)
+          .resideInAPackage(Packages.CONTROLLER + "..")
           .should(notDirectlyConstructResponseObjects())
           .as("controllerはResponseクラスをnew/builder()で直接生成せず、from/ofファクトリメソッドを経由すること");
 
@@ -87,7 +87,7 @@ class ControllerArchitectureTest {
       methods()
           .that()
           .areDeclaredInClassesThat(
-              resideInAPackage(Packages.CONTROLLER).and(ArchPredicates.TOP_LEVEL_CLASSES))
+              resideInAPackage(Packages.CONTROLLER + "..").and(ArchPredicates.TOP_LEVEL_CLASSES))
           .should(haveMappingPathDefinedInApiRoutes())
           .as("@GetMapping等のパスはApiRoutesクラスの定数値のいずれかと一致すること");
 

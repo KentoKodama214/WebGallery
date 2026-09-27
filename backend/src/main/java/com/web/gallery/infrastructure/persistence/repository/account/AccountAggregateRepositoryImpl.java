@@ -1,0 +1,93 @@
+package com.web.gallery.infrastructure.persistence.repository.account;
+
+import com.web.gallery.application.aggregate.Account;
+import com.web.gallery.application.model.photo.PhotoNoList;
+import com.web.gallery.application.repository.account.AccountAggregateRepository;
+import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDeletionDto;
+import com.web.gallery.infrastructure.persistence.entity.account.AccountAuthorityCondition;
+import com.web.gallery.infrastructure.persistence.entity.account.AccountCondition;
+import com.web.gallery.infrastructure.persistence.entity.account.LoginHistoryCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavoriteCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoListFilterLogCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMstCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoViewLogCondition;
+import com.web.gallery.infrastructure.persistence.mapper.account.AccountAuthorityMapper;
+import com.web.gallery.infrastructure.persistence.mapper.account.AccountMapper;
+import com.web.gallery.infrastructure.persistence.mapper.account.LoginHistoryMapper;
+import com.web.gallery.infrastructure.persistence.mapper.auth.RefreshTokenMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoFavoriteMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoListFilterLogMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoMstMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoTagMstMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoViewLogMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Repository;
+
+/**
+ * アカウント集約（{@link Account}）を永続化するRepositoryの実装クラス
+ *
+ * <p>お気に入り・写真タグ・写真マスタ・リフレッシュトークン・アカウント権限・アカウントの各テーブルへの永続化を、
+ * アカウント削除というユースケース単位で整合性のある1操作としてまとめる。他のRepositoryには依存せず、 Mapperを直接操作する
+ */
+@Slf4j
+@Repository
+@RequiredArgsConstructor
+public class AccountAggregateRepositoryImpl implements AccountAggregateRepository {
+
+  private final AccountMapper accountMapper;
+  private final AccountAuthorityMapper accountAuthorityMapper;
+  private final PhotoFavoriteMapper photoFavoriteMapper;
+  private final PhotoTagMstMapper photoTagMstMapper;
+  private final PhotoMstMapper photoMstMapper;
+  private final RefreshTokenMapper refreshTokenMapper;
+  private final LoginHistoryMapper loginHistoryMapper;
+  private final PhotoListFilterLogMapper photoListFilterLogMapper;
+  private final PhotoViewLogMapper photoViewLogMapper;
+
+  /**
+   * アカウント集約を削除する
+   *
+   * @param account {@link Account}
+   */
+  @Override
+  public void delete(Account account) {
+    Long accountNo = account.getAccountNo().value();
+
+    // 自分が登録したお気に入りを削除
+    photoFavoriteMapper.delete(PhotoFavoriteCondition.byAccountNo(accountNo));
+
+    // 自分の写真に対する他人のお気に入りを削除
+    photoFavoriteMapper.delete(PhotoFavoriteCondition.byFavoritePhotoAccountNo(accountNo));
+
+    // 写真タグを削除
+    photoTagMstMapper.delete(PhotoTagMstCondition.byAccountNo(accountNo));
+
+    // 写真詳細閲覧ログを削除（外部キー制約に抵触しないよう、写真マスタの物理削除に先立って実施）
+    photoViewLogMapper.delete(PhotoViewLogCondition.byPhotoAccountNo(accountNo));
+
+    // 写真マスタを物理削除し、削除時点で未削除だった写真番号を取得
+    // SELECTとDELETEの間のTOCTOUギャップを無くすため単一SQLでアトミックに実施し、
+    // 既に論理削除済みだった写真はイベントの重複発行を避けるため対象から除外する
+    PhotoNoList deletedPhotoNoList =
+        PhotoNoList.from(
+            photoMstMapper.deletePhotosByAccountNo(accountNo).stream()
+                .filter(dto -> !dto.getIsDeleted())
+                .map(PhotoDeletionDto::getPhotoNo)
+                .toList());
+    account.recordDeletedPhotoNos(deletedPhotoNoList);
+
+    // リフレッシュトークンを失効
+    refreshTokenMapper.revokeAllByAccountNo(accountNo, accountNo);
+
+    // ログイン履歴・写真一覧絞り込みログを削除（外部キー制約に抵触しないよう、アカウントの物理削除に先立って実施）
+    loginHistoryMapper.delete(LoginHistoryCondition.byAccountNo(accountNo));
+    photoListFilterLogMapper.delete(PhotoListFilterLogCondition.byPhotoAccountNo(accountNo));
+
+    // アカウント権限を削除（外部キー制約に抵触しないよう、アカウントの物理削除に先立って実施）
+    accountAuthorityMapper.delete(AccountAuthorityCondition.byAccountNo(accountNo));
+
+    // アカウントを物理削除
+    accountMapper.delete(AccountCondition.byAccountNo(accountNo));
+  }
+}

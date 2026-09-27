@@ -19,7 +19,7 @@ class MapperArchitectureTest {
   static final ArchRule classNameShouldEndWithMapper =
       classes()
           .that()
-          .resideInAPackage(Packages.MAPPER)
+          .resideInAPackage(Packages.MAPPER + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Mapper")
@@ -29,7 +29,7 @@ class MapperArchitectureTest {
   static final ArchRule mapperShouldHaveCorrespondingXmlFile =
       classes()
           .that()
-          .resideInAPackage(Packages.MAPPER)
+          .resideInAPackage(Packages.MAPPER + "..")
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should(haveCorrespondingXmlFile())
           .as("Mapperインターフェースには対応するXMLファイルがresources配下の同一パッケージパスに存在すること");
@@ -39,7 +39,7 @@ class MapperArchitectureTest {
       @Override
       public void check(JavaClass javaClass, ConditionEvents events) {
         String resourcePath =
-            Packages.MAPPER.replace('.', '/') + "/" + javaClass.getSimpleName() + ".xml";
+            javaClass.getPackageName().replace('.', '/') + "/" + javaClass.getSimpleName() + ".xml";
         if (getClass().getClassLoader().getResource(resourcePath) == null) {
           events.add(
               SimpleConditionEvent.violated(
