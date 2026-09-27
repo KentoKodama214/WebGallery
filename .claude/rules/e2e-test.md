@@ -9,7 +9,7 @@ paths:
 
 - ページ単位の検証は`pages/`に、複数ページにまたがるシナリオ（ログイン→操作→別ページでの確認等）は`scenarios/`に配置すること
 - 本番ビルド専用のスモークテスト（CSP等、`next dev`では検証できないもの）は`prod-smoke/`に配置し、`playwright.prod.config.ts`からのみ実行すること（通常の`playwright.config.ts`は`testIgnore`で除外する）
-- 共通のヘルパー・フィクスチャは`fixtures/`に配置すること（`auth.ts`＝一般アカウント認証、`admin.ts`＝管理者アカウント認証、`db.ts`＝DB接続情報、`a11y.ts`＝アクセシビリティ検証）
+- 共通のヘルパー・フィクスチャは`fixtures/`に配置すること（`auth.ts`＝一般アカウント認証、`admin.ts`＝管理者アカウント認証、`db.ts`＝DB接続情報、`a11y.ts`＝アクセシビリティ検証、`form.ts`＝フォーム入力ヘルパー）
 - テスト用画像・不正ファイルは`fixtures/images/`に配置すること
 
 ## 命名規則
@@ -32,6 +32,12 @@ paths:
 - 視覚回帰テスト（`toHaveScreenshot`）・アクセシビリティ検証（`expectNoAccessibilityViolations`）は、複数プロジェクトで重複実行して時間を浪費しないよう、`test.skip(testInfo.project.name !== "chromium", ...)`でchromiumプロジェクトのみに限定すること
 - 視覚回帰テストのスクリーンショットはOS（フォントレンダリング等）に依存するため、プラットフォームごとに別ファイルとして保存される（Playwrightの既定の`snapshotPathTemplate`）。ローカル（macOS等）で生成したベースラインはCI（Linux）では通らない。CIのベースラインはCI実行結果のartifact（失敗時にアップロードされる実際のスクリーンショット）から取得して`*-snapshots/`配下にコミットすること
 - 視覚回帰テストには`maxDiffPixelRatio`で許容誤差を設定し、アンチエイリアシング等の微小差分で恒常的に失敗しないようにすること
+
+## フォーム入力とオンデマンドコンパイルへの対処
+
+- `page.goto`直後のフォーム入力は`page.locator(...).fill(値)`を直接使わず、`fixtures/form.ts`の`fillStable`を使うこと。Reactのハイドレーション完了前に`fill`すると入力値が初期値で上書きされ、「1つ目のフィールドだけ空になり、2つ目以降は入力できている」形で不定期に失敗する（`fillStable`は値が定着するまで`fill`を再試行する）
+- `next dev`はページルートもAPIプロキシルート（`src/app/api/[...path]/route.ts`）も初回リクエスト時にオンデマンドでコンパイルするため、未コンパイルのルートを最初に叩くテストは応答待ちでタイムアウトしやすい。暖機は`global-setup.ts`の`warmUpRoutes`で行っており、`CROSS_BROWSER_SPECS`に新しいページを追加する場合は暖機対象のパスも追加すること
+- 上記2点は、ブラウザ別にE2Eジョブを分割して`webkit-smoke`・`mobile-smoke`が先行するchromium実行による暖機を当てにできなくなったことで顕在化した。ジョブ構成を変える際は同種の前提が崩れないか確認すること
 
 ## テスト実行環境
 

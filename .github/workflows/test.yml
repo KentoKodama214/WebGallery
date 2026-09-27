@@ -8,6 +8,12 @@ on:
       - master
   workflow_dispatch:
 
+# 同一ブランチへ連続してpushした場合、古い実行をキャンセルして最新のコミットのみ検証する。
+# ランナーの空き待ちが解消され、結果が返るまでの時間が短くなる
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   frontend-unit-test:
     name: フロントエンド単体テスト
@@ -59,15 +65,14 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Gradleキャッシュ
-        uses: actions/cache@v6
+      - name: Gradleセットアップ
+        uses: gradle/actions/setup-gradle@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          build-root-directory: backend
+          # デフォルトブランチ以外では読み取り専用になるため明示的に書き込みを許可する。
+          # 同一PRへ追加pushした際に、変更のないモジュールのコンパイル結果（compileJava・
+          # compileTestJava）やテストタスクの出力をビルドキャッシュから復元できる
+          cache-read-only: false
 
       - name: 単体テスト実行
         run: ./backend/gradlew -p backend unitTest
@@ -100,15 +105,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Gradleキャッシュ
-        uses: actions/cache@v6
+      - name: Gradleセットアップ
+        uses: gradle/actions/setup-gradle@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          build-root-directory: backend
+          cache-read-only: false
 
       - name: backend SBOM生成（CycloneDX）
         run: ./backend/gradlew -p backend cyclonedxBom
@@ -142,9 +143,11 @@ jobs:
           name: osv-scan-report
           path: osv-results.md
 
+  # 単体テストへのneedsは指定しない。単体テストと結合テスト・E2Eテストの間に成果物の
+  # 受け渡しはなく、直列化すると単体テストの所要時間がそのままクリティカルパスに積まれるため、
+  # 最初から並列で起動する
   integration-test:
     name: 結合テスト
-    needs: unit-test
     runs-on: ubuntu-latest
 
     services:
@@ -172,15 +175,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Gradleキャッシュ
-        uses: actions/cache@v6
+      - name: Gradleセットアップ
+        uses: gradle/actions/setup-gradle@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          build-root-directory: backend
+          cache-read-only: false
 
       - name: データベース初期化
         env:
@@ -254,10 +253,26 @@ jobs:
           name: jacoco-exec-integration
           path: backend/build/jacoco/integrationTest.exec
 
+  # integration-testと同様にneedsは指定せず、最初から並列で起動する。
+  # ブラウザ別に2つのジョブへ分割し、webkit（Desktop Safari・iPhone 13）のダウンロードと
+  # スモークテストの実行をchromium側のクリティカルパスから外す
   e2e-test:
-    name: E2Eテスト
-    needs: unit-test
+    name: E2Eテスト（${{ matrix.name }}）
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # playwright.config.tsの全specを対象とする本体
+          - name: chromium
+            browsers: chromium
+            project_args: --project=chromium
+          # CROSS_BROWSER_SPECS（login・photo_list）のみを対象とするスモーク。
+          # mobile-smokeのiPhone 13もWebKitエンジンのため、インストールはwebkitのみでよい
+          - name: cross-browser
+            browsers: webkit
+            project_args: --project=webkit-smoke --project=mobile-smoke
 
     services:
       postgres:
@@ -284,35 +299,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Gradleキャッシュ
-        uses: actions/cache@v6
+      - name: Gradleセットアップ
+        uses: gradle/actions/setup-gradle@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: pnpmセットアップ
-        uses: pnpm/action-setup@v6
-        with:
-          package_json_file: frontend/package.json
-
-      - name: Node.js セットアップ
-        uses: actions/setup-node@v7
-        with:
-          node-version: '22.15'
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - name: フロントエンド依存パッケージインストール
-        run: cd frontend && pnpm install --frozen-lockfile
-
-      - name: Playwrightブラウザインストール
-        # webkit-smoke・mobile-smokeプロジェクト（playwright.config.ts）が主要導線のみ
-        # 追加で実行するために必要
-        run: cd frontend && pnpm exec playwright install --with-deps chromium webkit
+          build-root-directory: backend
+          cache-read-only: false
 
       - name: データベース初期化
         env:
@@ -340,6 +331,22 @@ jobs:
           for file in "${SQL_FILES[@]}"; do
             psql -h localhost -p 5432 -U postgres -d web_gallery -f "$file"
           done
+
+      # バックエンドの起動（Gradleの起動・コンパイル・Spring Bootの初期化）には1分近くかかるため、
+      # データベースの初期化直後にバックグラウンドで起動しておき、MinIOの起動とフロントエンドの
+      # セットアップ（pnpm install・Playwrightブラウザのインストール）を並行して進める。
+      # 起動完了の待機は「バックエンドの起動を待機」ステップで、E2Eテストの直前に行う。
+      # S3クライアント（S3ClientConfig）はBean生成時にMinIOへ接続しないため、
+      # MinIOの起動を待たずにバックエンドを起動して問題ない
+      - name: バックエンドをバックグラウンドで起動
+        env:
+          # application-local.yml は JWT_SECRET のデフォルト値を持たないため、CI用の値を明示する（本番用ではない）
+          JWT_SECRET: e2e-only-secret-not-for-production-must-be-256-bits-long
+          # E2Eテストは全ワーカーが同一IP（::1）から多数のアカウント登録・ログインを行うため、
+          # 本番向けのレート制限が誤検知する（scripts/e2e.shのローカル実行と同様に無効化する）
+          RATE_LIMIT_ENABLED: "false"
+        run: |
+          SPRING_PROFILES_ACTIVE=local nohup ./backend/gradlew -p backend bootRun --no-daemon > backend-e2e.log 2>&1 &
 
       # 写真アップロードのE2Eシナリオが実接続する画像ストレージ（S3互換）。
       # GitHub Actionsのservicesはコンテナ起動時のcommand引数を指定できず、
@@ -369,15 +376,34 @@ jobs:
             --entrypoint mc \
             cgr.dev/chainguard/minio:latest mb --ignore-existing local/web-gallery-local
 
-      - name: バックエンドをバックグラウンドで起動
-        env:
-          # application-local.yml は JWT_SECRET のデフォルト値を持たないため、CI用の値を明示する（本番用ではない）
-          JWT_SECRET: e2e-only-secret-not-for-production-must-be-256-bits-long
-          # E2Eテストは全ワーカーが同一IP（::1）から多数のアカウント登録・ログインを行うため、
-          # 本番向けのレート制限が誤検知する（scripts/e2e.shのローカル実行と同様に無効化する）
-          RATE_LIMIT_ENABLED: "false"
-        run: |
-          SPRING_PROFILES_ACTIVE=local nohup ./backend/gradlew -p backend bootRun --no-daemon > backend-e2e.log 2>&1 &
+      - name: pnpmセットアップ
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22.15'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: フロントエンド依存パッケージインストール
+        run: cd frontend && pnpm install --frozen-lockfile
+
+      # ブラウザのバイナリをキャッシュしてダウンロードを省略する。@playwright/testの
+      # バージョンが変わると必要なブラウザのリビジョンも変わるため、キーにはpnpm-lock.yamlの
+      # ハッシュを含める（部分一致で古いリビジョンを復元しないよう restore-keys は指定しない）
+      - name: Playwrightブラウザキャッシュ
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ matrix.browsers }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+
+      # --with-depsはブラウザの実行に必要なOSライブラリ（apt）も導入する。
+      # キャッシュヒット時はブラウザのダウンロードが省略され、apt部分のみが実行される
+      - name: Playwrightブラウザインストール
+        run: cd frontend && pnpm exec playwright install --with-deps ${{ matrix.browsers }}
 
       - name: バックエンドの起動を待機
         run: |
@@ -393,20 +419,20 @@ jobs:
           exit 1
 
       - name: E2Eテスト実行
-        run: cd frontend && pnpm exec playwright test
+        run: cd frontend && pnpm exec playwright test ${{ matrix.project_args }}
 
       - name: バックエンドログアップロード
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: e2e-backend-log
+          name: e2e-backend-log-${{ matrix.name }}
           path: backend-e2e.log
 
       - name: Playwrightレポートアップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.name }}
           path: frontend/playwright-report/
           retention-days: 7
 
@@ -432,6 +458,13 @@ jobs:
 
       - name: フロントエンド依存パッケージインストール
         run: cd frontend && pnpm install --frozen-lockfile
+
+      # e2e-testのchromiumジョブとキーを共有し、どちらかが作成したキャッシュを再利用する
+      - name: Playwrightブラウザキャッシュ
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('frontend/pnpm-lock.yaml') }}
 
       - name: Playwrightブラウザインストール
         run: cd frontend && pnpm exec playwright install --with-deps chromium
@@ -469,15 +502,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Gradleキャッシュ
-        uses: actions/cache@v6
+      - name: Gradleセットアップ
+        uses: gradle/actions/setup-gradle@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          build-root-directory: backend
+          cache-read-only: false
 
       - name: カバレッジ実行データダウンロード
         uses: actions/download-artifact@v8

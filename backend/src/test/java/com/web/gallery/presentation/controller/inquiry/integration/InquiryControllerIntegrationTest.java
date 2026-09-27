@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.web.gallery.application.AccountPrincipal;
 import com.web.gallery.application.model.account.AccountModel;
+import com.web.gallery.application.repository.photo.FileRepository;
 import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
@@ -32,6 +33,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +42,11 @@ import org.springframework.transaction.annotation.Transactional;
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
+// S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない）。
+// Controller層の統合テスト全クラスで同一の宣言に揃えることで、Springのテストコンテキストが
+// 共有され（フィールド宣言とクラスレベル宣言が混在するとコンテキストキーが変わり再生成される）、
+// コンテキスト生成回数が減ってCIの実行時間が短くなる
+@MockitoBean(types = FileRepository.class)
 public class InquiryControllerIntegrationTest {
   @Autowired private MockMvc mockMvc;
 

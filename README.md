@@ -416,6 +416,7 @@ WebGallery/
 ├── backend/                        # バックエンド（Spring Boot）
 │   ├── build.gradle
 │   ├── settings.gradle
+│   ├── gradle.properties           # Gradleビルドキャッシュ等のビルド設定
 │   ├── gradlew / gradlew.bat      # Gradleラッパー
 │   ├── gradle/                     # Gradleラッパー JAR
 │   ├── config/
