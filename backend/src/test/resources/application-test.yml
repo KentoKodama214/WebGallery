@@ -5,7 +5,9 @@ spring:
     password: postgres
   sql:
     init:
-      mode: always
+      # schema.sql・data.sqlは存在せず（テーブル定義はdb/配下のSQLで、テストデータは@Sqlで投入する）、
+      # alwaysではSpringコンテキスト生成のたびに空振りの探索が走るためneverにする
+      mode: never
   jackson:
     time-zone: Asia/Tokyo
 

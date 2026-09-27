@@ -72,6 +72,11 @@ import tools.jackson.databind.ObjectMapper;
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
+// S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない）。
+// Controller層の統合テスト全クラスで同一の宣言に揃えることで、Springのテストコンテキストが
+// 共有され（フィールド宣言とクラスレベル宣言が混在するとコンテキストキーが変わり再生成される）、
+// コンテキスト生成回数が減ってCIの実行時間が短くなる
+@MockitoBean(types = FileRepository.class)
 public class PhotoControllerIntegrationTest {
   /** 新規登録時のバリデーション（Content-Type・マジックバイト）を通過させるための、実際のJPEGファイルの先頭バイト列 */
   private static final byte[] JPEG_BYTES = {
@@ -115,8 +120,11 @@ public class PhotoControllerIntegrationTest {
     return outputStream.toByteArray();
   }
 
-  /** S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない）。 署名付きURL発行は渡されたオブジェクトキーをそのまま返し、キーベースのアサーションを維持する。 */
-  @MockitoBean private FileRepository fileRepository;
+  /**
+   * クラスレベルの{@code @MockitoBean}で差し替えたモックを受け取る。署名付きURL発行は渡されたオブジェクトキーをそのまま返し、
+   * キーベースのアサーションを維持する（スタブは{@link #setUpFileRepositoryStub()}で設定する）
+   */
+  @Autowired private FileRepository fileRepository;
 
   @BeforeEach
   void setUpFileRepositoryStub() {
