@@ -6,7 +6,7 @@ paths:
 
 # Modelパッケージの単体テスト規約
 
-`application/model/`のModelクラス（Entity/DTO/Requestからの変換ロジックを持たない、純粋なデータ保持クラス）を対象とする。Request→Modelの変換テストは`presentation/controller/converter/`のConverterクラスに対して書く（`unit-test-controller.md`の対象外、Converter自体は本ファイルと同様Mockitoを使わず直接インスタンス化してテストする）。Dto/Entity→Modelの変換テストは、変換ロジックを持つ`infrastructure/persistence/repository/`のRepository実装のテストでカバーする（`unit-test-repository.md`）。
+`application/model/`のModelクラス（Entity/DTO/Requestからの変換ロジックを持たない、純粋なデータ保持クラス）を対象とする。Request→Modelの変換テストは`presentation/converter/`のConverterクラスに対して書く（`unit-test-controller.md`の対象外、Converter自体は本ファイルと同様Mockitoを使わず直接インスタンス化してテストする）。Dto/Entity→Modelの変換テストは、変換ロジックを持つ`infrastructure/persistence/repository/`のRepository実装のテストでカバーする（`unit-test-repository.md`）。
 
 ## 命名規則
 

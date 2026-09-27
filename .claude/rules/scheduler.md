@@ -39,7 +39,7 @@ paths:
 
 - **許可するimport**: `application/service/` のインターフェース、`infrastructure/scheduler/lock/`（`SchedulerLock`、`SchedulerLockNameEnum`）、`infrastructure/config/`、`domain/`配下全体（値オブジェクト、`enumeration/`、`constant/`）
 - **禁止するimport**: `presentation/controller/`、`application/repository/`、`infrastructure/persistence/mapper・entity・dto`、`application/aggregate/`、`application/service/impl/` への直接依存
-- **禁止するimport**: `presentation/controller/request/` や `presentation/controller/response/` のDTO
+- **禁止するimport**: `presentation/request/` や `presentation/response/` のDTO
 - 他の `Scheduler` クラスへの依存
 
 ## 多重起動防止（複数インスタンス構成）

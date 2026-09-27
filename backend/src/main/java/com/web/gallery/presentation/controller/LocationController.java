@@ -5,7 +5,7 @@ import com.web.gallery.application.service.LocationService;
 import com.web.gallery.domain.constant.ApiRoutes;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.infrastructure.security.SessionHelper;
-import com.web.gallery.presentation.controller.response.common.LocationListGetResponse;
+import com.web.gallery.presentation.response.common.LocationListGetResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

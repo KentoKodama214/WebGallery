@@ -5,9 +5,9 @@ paths:
 
 # Modelクラスのアーキテクチャルール
 
-`application/model/`に配置する。オニオンアーキテクチャ上、Modelクラス（`application`層）が`presentation/controller/request/`のRequestクラスや`infrastructure/persistence/entity・dto`のEntity/Dtoクラス（いずれも外側の層）を直接参照することは依存性逆転となるため禁止する。変換ロジックは以下のいずれかに切り出すこと。
+`application/model/`に配置する。オニオンアーキテクチャ上、Modelクラス（`application`層）が`presentation/request/`のRequestクラスや`infrastructure/persistence/entity・dto`のEntity/Dtoクラス（いずれも外側の層）を直接参照することは依存性逆転となるため禁止する。変換ロジックは以下のいずれかに切り出すこと。
 
-- **Request → Model**: `presentation/controller/converter/`の専用Converterクラス（`@Component`）にメソッドとして実装する（詳細は`converter.md`）。Modelクラス自身に`from(Request)`のような静的ファクトリメソッドを持たせない
+- **Request → Model**: `presentation/converter/`の専用Converterクラス（`@Component`）にメソッドとして実装する（詳細は`converter.md`）。Modelクラス自身に`from(Request)`のような静的ファクトリメソッドを持たせない
 - **Dto/Entity → Model**: 対応する`infrastructure/persistence/repository/`のRepository実装クラス内のprivateメソッド（例: `toXxxModel(XxxDto dto)`）として実装する。Dto/Entity→Model変換専用のクラスは設けない（詳細は`repository.md`）
 
 ## 命名規則

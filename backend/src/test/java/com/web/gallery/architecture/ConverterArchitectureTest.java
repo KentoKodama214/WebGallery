@@ -21,7 +21,7 @@ class ConverterArchitectureTest {
   static final ArchRule classNameShouldEndWithConverter =
       classes()
           .that()
-          .resideInAPackage(Packages.CONTROLLER_CONVERTER)
+          .resideInAPackage(Packages.CONVERTER)
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .haveSimpleNameEndingWith("Converter")
@@ -31,7 +31,7 @@ class ConverterArchitectureTest {
   static final ArchRule classShouldBeAnnotatedWithComponent =
       classes()
           .that()
-          .resideInAPackage(Packages.CONTROLLER_CONVERTER)
+          .resideInAPackage(Packages.CONVERTER)
           .and(ArchPredicates.TOP_LEVEL_CLASSES)
           .should()
           .beAnnotatedWith(Component.class)
@@ -41,7 +41,7 @@ class ConverterArchitectureTest {
   static final ArchRule converterShouldNotDependOnForbiddenPackages =
       noClasses()
           .that()
-          .resideInAPackage(Packages.CONTROLLER_CONVERTER + "..")
+          .resideInAPackage(Packages.CONVERTER + "..")
           .should()
           .dependOnClassesThat()
           .resideInAnyPackage(

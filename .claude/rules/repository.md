@@ -23,7 +23,7 @@ paths:
 - **許可するimport（インターフェース、`application/repository/`）**: `application/model/`、`application/aggregate/`、`domain/`配下全体（値オブジェクト、`enumeration/`、`constant/`）
 - **許可するimport（実装、`infrastructure/persistence/repository/`）**: 上記に加え`infrastructure/persistence/mapper/`、`infrastructure/persistence/entity/`、`infrastructure/persistence/dto/`
 - **禁止するimport**: `presentation/controller/`、`application/service/`への直接依存
-- **禁止するimport**: `presentation/controller/request/`や`presentation/controller/response/`のDTO
+- **禁止するimport**: `presentation/request/`や`presentation/response/`のDTO
 - **禁止するimport**: `infrastructure/persistence/repository/`の実装クラスから、自身に対応するインターフェース以外の`application/repository/`配下のインターフェース・`infrastructure/persistence/repository/`配下の実装への依存（`backend/src/test/java/com/web/gallery/ArchitectureTest.java`のArchUnitテストで機械的に検出される）
 
 ## インターフェースベース設計
@@ -39,7 +39,7 @@ paths:
 
 ## Dto/Entity → Modelの変換
 
-- Repository実装がMapperから受け取った`Entity`/`Dto`をインターフェースの返り値の型（Model等）へ変換するロジックは、Repository実装クラス内のprivateメソッド（例: `toXxxModel(XxxDto dto)`）として実装する。Request→Modelの変換（`presentation/controller/converter/`のConverterクラス）とは異なり、Dto/Entity→Model変換専用のクラスは設けない
+- Repository実装がMapperから受け取った`Entity`/`Dto`をインターフェースの返り値の型（Model等）へ変換するロジックは、Repository実装クラス内のprivateメソッド（例: `toXxxModel(XxxDto dto)`）として実装する。Request→Modelの変換（`presentation/converter/`のConverterクラス）とは異なり、Dto/Entity→Model変換専用のクラスは設けない
 
 ## 集約Repository
 

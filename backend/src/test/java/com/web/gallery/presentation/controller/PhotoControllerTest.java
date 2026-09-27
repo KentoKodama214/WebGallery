@@ -58,7 +58,7 @@ import com.web.gallery.infrastructure.helper.PhotoDirectionResolver;
 import com.web.gallery.infrastructure.helper.PhotoExifExtractor;
 import com.web.gallery.infrastructure.security.SessionHelper;
 import com.web.gallery.infrastructure.web.ClientIpResolver;
-import com.web.gallery.presentation.controller.converter.PhotoConverter;
+import com.web.gallery.presentation.converter.PhotoConverter;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;

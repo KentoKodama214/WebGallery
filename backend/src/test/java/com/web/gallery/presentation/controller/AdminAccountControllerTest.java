@@ -17,7 +17,7 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.LastLoginDatetime;
 import com.web.gallery.domain.model.account.LoginFailureCount;
 import com.web.gallery.domain.model.common.IsDeleted;
-import com.web.gallery.presentation.controller.converter.AccountConverter;
+import com.web.gallery.presentation.converter.AccountConverter;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

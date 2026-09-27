@@ -92,13 +92,12 @@ class ControllerArchitectureTest {
           .as("@GetMapping等のパスはApiRoutesクラスの定数値のいずれかと一致すること");
 
   private static ArchCondition<JavaClass> notDirectlyConstructResponseObjects() {
-    return new ArchCondition<JavaClass>(
-        "not directly construct classes in " + Packages.CONTROLLER_RESPONSE) {
+    return new ArchCondition<JavaClass>("not directly construct classes in " + Packages.RESPONSE) {
       @Override
       public void check(JavaClass controllerClass, ConditionEvents events) {
         for (JavaConstructorCall call : controllerClass.getConstructorCallsFromSelf()) {
           JavaClass targetOwner = call.getTargetOwner();
-          if (AllowedTypes.isInPackage(targetOwner, Packages.CONTROLLER_RESPONSE)) {
+          if (AllowedTypes.isInPackage(targetOwner, Packages.RESPONSE)) {
             events.add(
                 SimpleConditionEvent.violated(
                     controllerClass,
@@ -111,7 +110,7 @@ class ControllerArchitectureTest {
         }
         for (JavaMethodCall call : controllerClass.getMethodCallsFromSelf()) {
           JavaClass targetOwner = call.getTargetOwner();
-          if (AllowedTypes.isInPackage(targetOwner, Packages.CONTROLLER_RESPONSE)
+          if (AllowedTypes.isInPackage(targetOwner, Packages.RESPONSE)
               && "builder".equals(call.getTarget().getName())) {
             events.add(
                 SimpleConditionEvent.violated(

@@ -34,7 +34,10 @@ com.web.gallery
 │   └── config/                                       Configポートの実装（*ConfigImpl）、DataSource/S3/Scheduling等
 │
 └── presentation/
-    └── controller/ + controller/{request,response,converter}/
+    ├── controller/                                   Controllerクラス
+    ├── request/{機能}/
+    ├── response/{機能}/
+    └── converter/                                    Request→ModelのConverterクラス
 ```
 
 ## 依存方向の原則
@@ -63,7 +66,7 @@ com.web.gallery
 
 `application/model/`のModelクラスは、外側の層（presentation層のRequest、infrastructure層のDto/Entity）を直接参照しない。変換ロジックは呼び出し元の層に置く。
 
-- **Request → Model**（presentation → application）: `presentation/controller/converter/`の専用Converterクラスに実装する（詳細は`converter.md`）
+- **Request → Model**（presentation → application）: `presentation/converter/`の専用Converterクラスに実装する（詳細は`converter.md`）
 - **Dto/Entity → Model**（infrastructure → application）: `infrastructure/persistence/repository/`のRepository実装クラス内のprivateメソッドとして実装する（詳細は`repository.md`）
 - **Model → Response**（application → presentation）: presentationがapplicationに依存する方向であり問題ないため、従来通りResponseクラス自身の`static from(Model)`ファクトリメソッドで行う（詳細は`response.md`）
 
@@ -82,4 +85,4 @@ com.web.gallery
 
 ## 機能別サブパッケージ分割について
 
-`domain/model`・`infrastructure/persistence/entity`・`application/model`は`{account,auth,common,inquiry,photo}`の機能別サブパッケージに分かれているが、`application/service`・`application/repository`・`infrastructure/persistence/{dto,mapper,repository}`・`presentation/controller/{,request,response,converter}`は現状フラット構成である。機能別分割は本ドキュメントが扱うレイヤー構成とは独立した変更軸であり、将来的に分割する場合は`domain/model`等の既存feature配置を正として依存関係から逆引きすること（クラス名だけで判断しない。例: `FileRepository`は実体としてphoto機能）。
+`domain/model`・`infrastructure/persistence/entity`・`application/model`・`presentation/request`・`presentation/response`は`{account,auth,common,inquiry,photo}`の機能別サブパッケージに分かれているが、`application/service`・`application/repository`・`infrastructure/persistence/{dto,mapper,repository}`・`presentation/controller`・`presentation/converter`は現状フラット構成である。機能別分割は本ドキュメントが扱うレイヤー構成とは独立した変更軸であり、将来的に分割する場合は`domain/model`等の既存feature配置を正として依存関係から逆引きすること（クラス名だけで判断しない。例: `FileRepository`は実体としてphoto機能）。

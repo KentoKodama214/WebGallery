@@ -1,12 +1,12 @@
 ---
 paths:
-  - backend/src/test/**/controller/request/**
+  - backend/src/test/**/presentation/request/**
   - "!backend/src/test/**/integration/**"
 ---
 
 # Requestパッケージの単体テスト規約
 
-`controller/request/`配下のRequestクラスのテストを対象とする。標準のバリデーションアノテーション（`@NotNull`、`@Size`等）自体の付与は`.claude/rules/request.md`の`RequestArchitectureTest`で機械的に検証されるため、本パッケージの単体テストはカスタムバリデーションメソッドを対象とする。
+`presentation/request/`配下のRequestクラスのテストを対象とする。標準のバリデーションアノテーション（`@NotNull`、`@Size`等）自体の付与は`.claude/rules/request.md`の`RequestArchitectureTest`で機械的に検証されるため、本パッケージの単体テストはカスタムバリデーションメソッドを対象とする。
 
 ## 命名規則
 
