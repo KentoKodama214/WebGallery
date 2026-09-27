@@ -1,6 +1,8 @@
 package com.web.gallery.application.service.impl;
 
 import com.web.gallery.application.AccountPrincipal;
+import com.web.gallery.application.config.JwtConfig;
+import com.web.gallery.application.config.LoginConfig;
 import com.web.gallery.application.helper.JwtTokenProvider;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.auth.AuthTokenModel;
@@ -19,8 +21,6 @@ import com.web.gallery.domain.model.auth.RefreshTokenValue;
 import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.domain.model.common.TokenHash;
-import com.web.gallery.infrastructure.config.JwtConfig;
-import com.web.gallery.infrastructure.config.LoginConfig;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

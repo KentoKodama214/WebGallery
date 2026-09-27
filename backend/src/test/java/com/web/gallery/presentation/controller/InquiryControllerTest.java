@@ -19,6 +19,7 @@ import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.domain.model.inquiry.InquirySubject;
 import com.web.gallery.infrastructure.security.SessionHelper;
+import com.web.gallery.presentation.controller.converter.InquiryConverter;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
@@ -48,6 +50,8 @@ public class InquiryControllerTest {
   @Mock private InquiryService inquiryService;
 
   @Mock private SessionHelper sessionHelper;
+
+  @Spy private InquiryConverter inquiryConverter = new InquiryConverter();
 
   private MockMvc mockMvc;
 

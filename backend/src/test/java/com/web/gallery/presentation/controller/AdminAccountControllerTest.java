@@ -17,6 +17,7 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.LastLoginDatetime;
 import com.web.gallery.domain.model.account.LoginFailureCount;
 import com.web.gallery.domain.model.common.IsDeleted;
+import com.web.gallery.presentation.controller.converter.AccountConverter;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
@@ -46,6 +48,8 @@ public class AdminAccountControllerTest {
   @InjectMocks private AdminAccountController adminAccountController;
 
   @Mock private AccountService accountService;
+
+  @Spy private AccountConverter accountConverter = new AccountConverter();
 
   private MockMvc mockMvc;
 

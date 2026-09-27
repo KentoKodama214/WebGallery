@@ -1,4 +1,4 @@
-package com.web.gallery.domain.aggregate;
+package com.web.gallery.application.aggregate;
 
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.domain.model.account.AccountNo;

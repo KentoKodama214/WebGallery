@@ -1,7 +1,6 @@
 package com.web.gallery.presentation.controller;
 
 import com.web.gallery.application.model.inquiry.InquiryDetailModel;
-import com.web.gallery.application.model.inquiry.InquiryListGetModel;
 import com.web.gallery.application.model.inquiry.InquiryPageModel;
 import com.web.gallery.application.service.InquiryService;
 import com.web.gallery.domain.constant.ApiRoutes;
@@ -15,6 +14,7 @@ import com.web.gallery.domain.model.inquiry.ReplyNo;
 import com.web.gallery.infrastructure.security.RequireAdminAuthority;
 import com.web.gallery.infrastructure.security.SessionHelper;
 import com.web.gallery.infrastructure.web.ValidationErrorLogger;
+import com.web.gallery.presentation.controller.converter.InquiryConverter;
 import com.web.gallery.presentation.controller.request.inquiry.AdminInquiryListRequest;
 import com.web.gallery.presentation.controller.request.inquiry.InquiryReplyRequest;
 import com.web.gallery.presentation.controller.response.inquiry.AdminInquiryDetailGetResponse;
@@ -48,6 +48,7 @@ public class AdminInquiryController {
 
   private final InquiryService inquiryService;
   private final SessionHelper sessionHelper;
+  private final InquiryConverter inquiryConverter;
 
   /**
    * 管理者用お問い合わせ一覧取得
@@ -74,7 +75,8 @@ public class AdminInquiryController {
     }
 
     InquiryPageModel inquiryPageModel =
-        inquiryService.getInquiryListForAdmin(InquiryListGetModel.from(adminInquiryListRequest));
+        inquiryService.getInquiryListForAdmin(
+            inquiryConverter.toInquiryListGetModel(adminInquiryListRequest));
 
     return ResponseEntity.ok(AdminInquiryListGetResponse.from(inquiryPageModel));
   }

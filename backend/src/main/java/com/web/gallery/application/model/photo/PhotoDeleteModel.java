@@ -3,7 +3,6 @@ package com.web.gallery.application.model.photo;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.PhotoNo;
-import com.web.gallery.presentation.controller.request.photo.PhotoDeleteRequest;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -20,21 +19,4 @@ public class PhotoDeleteModel {
 
   /** 画像ファイルパス */
   @NonNull private ImageFilePath imageFilePath;
-
-  /**
-   * 写真削除リクエストとログイン中のアカウント番号からPhotoDeleteModelを生成する
-   *
-   * <p>アカウント番号はリクエストボディではなくセッションから取得した値を用いる（他人の写真を操作するIDORを防ぐため）
-   *
-   * @param request {@link PhotoDeleteRequest}
-   * @param accountNo ログイン中のアカウント番号
-   * @return {@link PhotoDeleteModel}
-   */
-  public static PhotoDeleteModel from(PhotoDeleteRequest request, AccountNo accountNo) {
-    return PhotoDeleteModel.builder()
-        .accountNo(accountNo)
-        .photoNo(new PhotoNo(request.getPhotoNo()))
-        .imageFilePath(new ImageFilePath(request.getImageFilePath()))
-        .build();
-  }
 }

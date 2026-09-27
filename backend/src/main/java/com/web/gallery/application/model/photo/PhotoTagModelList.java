@@ -2,7 +2,6 @@ package com.web.gallery.application.model.photo;
 
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.PhotoNo;
-import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMst;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -38,19 +37,6 @@ public record PhotoTagModelList(List<PhotoTagModel> photoTagModelList)
    */
   public static PhotoTagModelList empty() {
     return PhotoTagModelList.of(List.of());
-  }
-
-  /**
-   * PhotoTagMstエンティティのリストからPhotoTagModelListを生成する
-   *
-   * <p>タグ番号の昇順でソートして生成する
-   *
-   * @param photoTagMstList {@link PhotoTagMst}のリスト
-   * @return {@link PhotoTagModelList}
-   */
-  public static PhotoTagModelList from(List<PhotoTagMst> photoTagMstList) {
-    return PhotoTagModelList.of(photoTagMstList.stream().map(PhotoTagModel::from).toList())
-        .sortByTagNo();
   }
 
   /**

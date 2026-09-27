@@ -1,6 +1,5 @@
 package com.web.gallery.application.model.common;
 
-import com.web.gallery.infrastructure.persistence.entity.common.LocationMst;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -35,16 +34,6 @@ public record LocationModelList(List<LocationModel> locationModelList)
    */
   public static LocationModelList empty() {
     return LocationModelList.of(List.of());
-  }
-
-  /**
-   * LocationMstエンティティのリストからLocationModelListを生成する
-   *
-   * @param locationMstList {@link LocationMst}のリスト
-   * @return {@link LocationModelList}
-   */
-  public static LocationModelList from(List<LocationMst> locationMstList) {
-    return LocationModelList.of(locationMstList.stream().map(LocationModel::from).toList());
   }
 
   /**

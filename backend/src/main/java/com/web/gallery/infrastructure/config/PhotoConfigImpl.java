@@ -1,5 +1,6 @@
 package com.web.gallery.infrastructure.config;
 
+import com.web.gallery.application.config.PhotoConfig;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -14,7 +15,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @RequiredArgsConstructor
 @Getter
 @ConfigurationProperties(prefix = "app.photo")
-public class PhotoConfig {
+public class PhotoConfigImpl implements PhotoConfig {
   /** 写真一覧で、1ページあたりの表示枚数 */
   private final Integer photoCountPerPage;
 

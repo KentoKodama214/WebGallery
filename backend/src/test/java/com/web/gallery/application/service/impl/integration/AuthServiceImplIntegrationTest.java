@@ -2,6 +2,7 @@ package com.web.gallery.application.service.impl.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.config.JwtConfig;
 import com.web.gallery.application.model.auth.AuthTokenModel;
 import com.web.gallery.application.model.auth.RefreshTokenModel;
 import com.web.gallery.application.repository.RefreshTokenRepository;
@@ -16,7 +17,6 @@ import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
 import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.domain.model.common.TokenHash;
-import com.web.gallery.infrastructure.config.JwtConfig;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.OffsetDateTime;

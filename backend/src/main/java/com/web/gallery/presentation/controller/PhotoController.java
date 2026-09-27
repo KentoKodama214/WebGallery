@@ -1,11 +1,9 @@
 package com.web.gallery.presentation.controller;
 
-import com.web.gallery.application.model.photo.PhotoDeleteModel;
 import com.web.gallery.application.model.photo.PhotoDeleteModelList;
 import com.web.gallery.application.model.photo.PhotoDetailGetModel;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.application.model.photo.PhotoDetailModelList;
-import com.web.gallery.application.model.photo.PhotoListGetModel;
 import com.web.gallery.application.model.photo.PhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoSaveResultModel;
 import com.web.gallery.application.service.PhotoService;
@@ -24,6 +22,7 @@ import com.web.gallery.infrastructure.helper.PhotoExifExtractor;
 import com.web.gallery.infrastructure.security.SessionHelper;
 import com.web.gallery.infrastructure.web.ClientIpResolver;
 import com.web.gallery.infrastructure.web.ValidationErrorLogger;
+import com.web.gallery.presentation.controller.converter.PhotoConverter;
 import com.web.gallery.presentation.controller.request.photo.PhotoBulkSaveRequest;
 import com.web.gallery.presentation.controller.request.photo.PhotoDeleteRequest;
 import com.web.gallery.presentation.controller.request.photo.PhotoDetailRequest;
@@ -77,6 +76,7 @@ public class PhotoController {
   private final PhotoDirectionResolver photoDirectionResolver;
   private final PhotoExifExtractor photoExifExtractor;
   private final PhotoExifDataMergePolicy photoExifDataMergePolicy;
+  private final PhotoConverter photoConverter;
 
   /**
    * クライアントから送信されたリファラを{@link Referer}に変換する（取得できない場合は空文字）
@@ -122,7 +122,7 @@ public class PhotoController {
     // 抽出条件に該当する写真の一覧を、指定の並び順で取得する
     PhotoPageModel photoPageModel =
         photoService.getPhotoList(
-            PhotoListGetModel.from(
+            photoConverter.toPhotoListGetModel(
                 photoListRequest,
                 sessionHelper.getAccountNo(),
                 photoAccountId,
@@ -236,7 +236,7 @@ public class PhotoController {
     PhotoDetailModelList photoDetailModelList =
         PhotoDetailModelList.of(
             List.of(
-                PhotoDetailModel.from(
+                photoConverter.toPhotoDetailModelForRegist(
                     photoSaveRequest, new AccountNo(sessionHelper.getAccountNo()))));
 
     PhotoSaveResultModel photoSaveResultModel =
@@ -291,7 +291,7 @@ public class PhotoController {
             photoBulkSaveRequest.getImageFiles().stream()
                 .map(
                     imageFile ->
-                        PhotoDetailModel.from(
+                        photoConverter.toPhotoDetailModelForBulkRegist(
                             photoBulkSaveRequest,
                             imageFile,
                             photoDirectionResolver.resolve(imageFile),
@@ -344,7 +344,7 @@ public class PhotoController {
     PhotoDeleteModelList photoDeleteModelList =
         PhotoDeleteModelList.of(
             List.of(
-                PhotoDeleteModel.from(
+                photoConverter.toPhotoDeleteModel(
                     photoDeleteRequest, new AccountNo(sessionHelper.getAccountNo()))));
 
     photoService.deletePhotos(new AccountId(photoAccountId), photoDeleteModelList);

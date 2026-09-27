@@ -2,8 +2,6 @@ package com.web.gallery.application.model.inquiry;
 
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.presentation.controller.request.inquiry.AdminInquiryListRequest;
-import com.web.gallery.presentation.controller.request.inquiry.InquiryListRequest;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -24,28 +22,4 @@ public class InquiryListGetModel {
 
   /** ページ番号 */
   @NonNull private Integer pageNo;
-
-  /**
-   * 自分のお問い合わせ一覧リクエストとログイン中のアカウント番号からInquiryListGetModelを生成する
-   *
-   * @param request {@link InquiryListRequest}
-   * @param accountNo ログイン中のアカウント番号
-   * @return {@link InquiryListGetModel}
-   */
-  public static InquiryListGetModel from(InquiryListRequest request, AccountNo accountNo) {
-    return InquiryListGetModel.builder().accountNo(accountNo).pageNo(request.getPageNo()).build();
-  }
-
-  /**
-   * 管理者用お問い合わせ一覧リクエストからInquiryListGetModelを生成する
-   *
-   * @param request {@link AdminInquiryListRequest}
-   * @return {@link InquiryListGetModel}
-   */
-  public static InquiryListGetModel from(AdminInquiryListRequest request) {
-    return InquiryListGetModel.builder()
-        .statusKbn(request.getStatusKbn())
-        .pageNo(request.getPageNo())
-        .build();
-  }
 }

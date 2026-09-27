@@ -5,7 +5,6 @@ import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.domain.model.common.IsRevoked;
 import com.web.gallery.domain.model.common.TokenHash;
 import com.web.gallery.domain.model.common.UpdatedAt;
-import com.web.gallery.infrastructure.persistence.entity.auth.RefreshToken;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -34,22 +33,6 @@ public class RefreshTokenModel {
 
   /** 更新日時（ローテーション＝無効化した時刻。盗用検知の猶予判定に使用する。 エンティティ由来の取得時のみ設定される） */
   private UpdatedAt updatedAt;
-
-  /**
-   * RefreshTokenエンティティからRefreshTokenModelを生成する
-   *
-   * @param entity {@link RefreshToken}
-   * @return {@link RefreshTokenModel}
-   */
-  public static RefreshTokenModel from(RefreshToken entity) {
-    return RefreshTokenModel.builder()
-        .accountNo(new AccountNo(entity.getAccountNo()))
-        .tokenHash(new TokenHash(entity.getTokenHash()))
-        .expiresAt(new ExpiresAt(entity.getExpiresAt()))
-        .isRevoked(entity.getIsRevoked() != null ? new IsRevoked(entity.getIsRevoked()) : null)
-        .updatedAt(entity.getUpdatedAt() != null ? new UpdatedAt(entity.getUpdatedAt()) : null)
-        .build();
-  }
 
   /**
    * アカウント番号・トークンハッシュ・有効期限からRefreshTokenModelを生成する

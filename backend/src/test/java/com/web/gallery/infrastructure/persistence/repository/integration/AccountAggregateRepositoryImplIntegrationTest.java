@@ -2,7 +2,7 @@ package com.web.gallery.infrastructure.persistence.repository.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.web.gallery.domain.aggregate.Account;
+import com.web.gallery.application.aggregate.Account;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.infrastructure.persistence.repository.AccountAggregateRepositoryImpl;

@@ -1,7 +1,7 @@
 package com.web.gallery.infrastructure.persistence.repository;
 
+import com.web.gallery.application.aggregate.Inquiry;
 import com.web.gallery.application.repository.InquiryAggregateRepository;
-import com.web.gallery.domain.aggregate.Inquiry;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMst;

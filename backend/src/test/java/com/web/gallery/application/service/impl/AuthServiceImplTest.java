@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.web.gallery.application.AccountPrincipal;
+import com.web.gallery.application.config.JwtConfig;
+import com.web.gallery.application.config.LoginConfig;
 import com.web.gallery.application.helper.JwtTokenProvider;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.auth.AuthTokenModel;
@@ -25,8 +27,6 @@ import com.web.gallery.domain.model.common.IsDeleted;
 import com.web.gallery.domain.model.common.IsRevoked;
 import com.web.gallery.domain.model.common.TokenHash;
 import com.web.gallery.domain.model.common.UpdatedAt;
-import com.web.gallery.infrastructure.config.JwtConfig;
-import com.web.gallery.infrastructure.config.LoginConfig;
 import com.web.gallery.infrastructure.persistence.repository.AccountRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.RefreshTokenRepositoryImpl;
 import java.time.Clock;

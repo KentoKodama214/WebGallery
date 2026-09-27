@@ -8,7 +8,18 @@ import com.web.gallery.application.repository.AccountRepository;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.account.BirthDate;
+import com.web.gallery.domain.model.account.BirthplacePrefectureKbnCode;
+import com.web.gallery.domain.model.account.FreeMemo;
+import com.web.gallery.domain.model.account.IsAdminLocked;
+import com.web.gallery.domain.model.account.LastLoginDatetime;
+import com.web.gallery.domain.model.account.LoginFailureCount;
+import com.web.gallery.domain.model.account.Password;
+import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
+import com.web.gallery.domain.model.common.IsDeleted;
+import com.web.gallery.domain.model.common.UpdatedAt;
 import com.web.gallery.infrastructure.persistence.dto.AccountDto;
 import com.web.gallery.infrastructure.persistence.entity.account.Account;
 import com.web.gallery.infrastructure.persistence.entity.account.AccountAuthority;
@@ -46,7 +57,7 @@ public class AccountRepositoryImpl implements AccountRepository {
   public AccountModel getByAccountNo(AccountNo accountNo) {
     List<AccountDto> accountDtoList =
         accountMapper.select(AccountCondition.byAccountNo(accountNo.value()));
-    return accountDtoList.isEmpty() ? null : AccountModel.from(accountDtoList.getFirst());
+    return accountDtoList.isEmpty() ? null : toAccountModel(accountDtoList.getFirst());
   }
 
   /**
@@ -60,7 +71,7 @@ public class AccountRepositoryImpl implements AccountRepository {
   public AccountModel getByAccountId(AccountId accountId) {
     List<AccountDto> accountDtoList =
         accountMapper.select(AccountCondition.byAccountId(accountId.value()));
-    return accountDtoList.isEmpty() ? null : AccountModel.from(accountDtoList.getFirst());
+    return accountDtoList.isEmpty() ? null : toAccountModel(accountDtoList.getFirst());
   }
 
   /**
@@ -198,7 +209,9 @@ public class AccountRepositoryImpl implements AccountRepository {
     List<AccountDto> pageAccountDtoList =
         isLast ? accountDtoList : accountDtoList.subList(0, accountGetModel.getLimit() - 1);
 
-    return AccountPageModel.of(AccountModelList.from(pageAccountDtoList), isLast);
+    return AccountPageModel.of(
+        AccountModelList.of(pageAccountDtoList.stream().map(this::toAccountModel).toList()),
+        isLast);
   }
 
   /**
@@ -218,7 +231,9 @@ public class AccountRepositoryImpl implements AccountRepository {
     List<AccountDto> pageAccountDtoList =
         isLast ? accountDtoList : accountDtoList.subList(0, accountGetModel.getLimit() - 1);
 
-    return AccountPageModel.of(AccountModelList.from(pageAccountDtoList), isLast);
+    return AccountPageModel.of(
+        AccountModelList.of(pageAccountDtoList.stream().map(this::toAccountModel).toList()),
+        isLast);
   }
 
   /**
@@ -252,5 +267,45 @@ public class AccountRepositoryImpl implements AccountRepository {
   @Override
   public void lockForLoginAttempt(AccountId accountId) {
     accountMapper.lockForLoginAttempt(accountId.value());
+  }
+
+  /**
+   * アカウントと権限区分を結合したAccountDtoからAccountModelを組み立てる
+   *
+   * @param dto {@link AccountDto}
+   * @return {@link AccountModel}
+   */
+  private AccountModel toAccountModel(AccountDto dto) {
+    return AccountModel.builder()
+        .accountNo(new AccountNo(dto.getAccountNo()))
+        .accountId(new AccountId(dto.getAccountId()))
+        .accountName(new AccountName(dto.getAccountName()))
+        // 一覧取得などパスワードを射影しないクエリ経由の場合はnullを許容する
+        .password(dto.getPassword() != null ? new Password(dto.getPassword()) : null)
+        .birthdate(dto.getBirthdate() != null ? new BirthDate(dto.getBirthdate()) : null)
+        .sexKbn(dto.getSexKbn())
+        .birthplacePrefectureKbnCode(
+            dto.getBirthplacePrefectureKbnCode() != null
+                ? new BirthplacePrefectureKbnCode(dto.getBirthplacePrefectureKbnCode())
+                : null)
+        .residentPrefectureKbnCode(
+            dto.getResidentPrefectureKbnCode() != null
+                ? new ResidentPrefectureKbnCode(dto.getResidentPrefectureKbnCode())
+                : null)
+        .freeMemo(dto.getFreeMemo() != null ? new FreeMemo(dto.getFreeMemo()) : null)
+        .authorityKbn(dto.getAuthorityKbn())
+        .lastLoginDatetime(
+            dto.getLastLoginDatetime() != null
+                ? new LastLoginDatetime(dto.getLastLoginDatetime())
+                : null)
+        .loginFailureCount(
+            dto.getLoginFailureCount() != null
+                ? new LoginFailureCount(dto.getLoginFailureCount())
+                : null)
+        .isAdminLocked(
+            dto.getIsAdminLocked() != null ? new IsAdminLocked(dto.getIsAdminLocked()) : null)
+        .updatedAt(dto.getUpdatedAt() != null ? new UpdatedAt(dto.getUpdatedAt()) : null)
+        .isDeleted(new IsDeleted(dto.getIsDeleted()))
+        .build();
   }
 }

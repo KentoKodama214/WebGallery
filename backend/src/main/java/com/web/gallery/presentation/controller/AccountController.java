@@ -1,6 +1,5 @@
 package com.web.gallery.presentation.controller;
 
-import com.web.gallery.application.model.account.AccountListGetModel;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.account.AccountPageModel;
 import com.web.gallery.application.service.AccountService;
@@ -13,6 +12,7 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.infrastructure.security.SessionHelper;
 import com.web.gallery.infrastructure.web.ValidationErrorLogger;
+import com.web.gallery.presentation.controller.converter.AccountConverter;
 import com.web.gallery.presentation.controller.request.account.AccountDeleteRequest;
 import com.web.gallery.presentation.controller.request.account.AccountListRequest;
 import com.web.gallery.presentation.controller.request.account.AccountRegistRequest;
@@ -58,6 +58,7 @@ public class AccountController {
 
   private final AccountService accountService;
   private final SessionHelper sessionHelper;
+  private final AccountConverter accountConverter;
 
   /**
    * アカウント一覧取得
@@ -82,7 +83,7 @@ public class AccountController {
     }
 
     AccountPageModel accountPageModel =
-        accountService.getAccountList(AccountListGetModel.from(accountListRequest));
+        accountService.getAccountList(accountConverter.toAccountListGetModel(accountListRequest));
 
     return ResponseEntity.ok(AccountListGetResponse.from(accountPageModel));
   }
@@ -135,7 +136,7 @@ public class AccountController {
       throw ErrorEnum.INVALID_INPUT.toException();
     }
 
-    AccountModel accountModel = AccountModel.from(accountRegistRequest);
+    AccountModel accountModel = accountConverter.toAccountModelForRegist(accountRegistRequest);
 
     Boolean isSuccess = accountService.registAccount(accountModel);
     return ResponseEntity.ok(AccountRegistResponse.of(isSuccess, Consts.STRING_EMPTY));
@@ -193,7 +194,8 @@ public class AccountController {
     }
 
     AccountModel accountModel =
-        AccountModel.from(accountUpdateRequest, sessionHelper.getAccountNo());
+        accountConverter.toAccountModelForUpdate(
+            accountUpdateRequest, sessionHelper.getAccountNo());
 
     Boolean isDuplicateAccountId =
         accountService.updateAccount(

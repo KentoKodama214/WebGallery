@@ -2,10 +2,10 @@ package com.web.gallery.infrastructure.persistence.repository.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.aggregate.Photo;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.application.model.photo.PhotoTagModel;
 import com.web.gallery.application.model.photo.PhotoTagModelList;
-import com.web.gallery.domain.aggregate.Photo;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.exception.FileDuplicateException;
 import com.web.gallery.domain.exception.GalleryException;

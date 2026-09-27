@@ -1,4 +1,4 @@
-package com.web.gallery.domain.aggregate;
+package com.web.gallery.application.aggregate;
 
 import static org.junit.jupiter.api.Assertions.*;
 

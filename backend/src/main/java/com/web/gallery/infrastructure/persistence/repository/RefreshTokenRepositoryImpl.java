@@ -3,7 +3,10 @@ package com.web.gallery.infrastructure.persistence.repository;
 import com.web.gallery.application.model.auth.RefreshTokenModel;
 import com.web.gallery.application.repository.RefreshTokenRepository;
 import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.common.ExpiresAt;
+import com.web.gallery.domain.model.common.IsRevoked;
 import com.web.gallery.domain.model.common.TokenHash;
+import com.web.gallery.domain.model.common.UpdatedAt;
 import com.web.gallery.infrastructure.persistence.entity.auth.RefreshToken;
 import com.web.gallery.infrastructure.persistence.mapper.RefreshTokenMapper;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +36,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     if (refreshToken == null) {
       return null;
     }
-    return RefreshTokenModel.from(refreshToken);
+    return toRefreshTokenModel(refreshToken);
   }
 
   @Override
@@ -42,7 +45,7 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
     if (refreshToken == null) {
       return null;
     }
-    return RefreshTokenModel.from(refreshToken);
+    return toRefreshTokenModel(refreshToken);
   }
 
   @Override
@@ -62,5 +65,21 @@ public class RefreshTokenRepositoryImpl implements RefreshTokenRepository {
   @Override
   public void deleteExpired() {
     refreshTokenMapper.deleteExpired();
+  }
+
+  /**
+   * RefreshTokenエンティティからRefreshTokenModelを組み立てる
+   *
+   * @param entity {@link RefreshToken}
+   * @return {@link RefreshTokenModel}
+   */
+  private RefreshTokenModel toRefreshTokenModel(RefreshToken entity) {
+    return RefreshTokenModel.builder()
+        .accountNo(new AccountNo(entity.getAccountNo()))
+        .tokenHash(new TokenHash(entity.getTokenHash()))
+        .expiresAt(new ExpiresAt(entity.getExpiresAt()))
+        .isRevoked(entity.getIsRevoked() != null ? new IsRevoked(entity.getIsRevoked()) : null)
+        .updatedAt(entity.getUpdatedAt() != null ? new UpdatedAt(entity.getUpdatedAt()) : null)
+        .build();
   }
 }

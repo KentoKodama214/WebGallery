@@ -51,7 +51,7 @@ public class CommonControllerAdviceTest {
   @RestController
   static class TestController extends PhotoFavoriteController {
     TestController() {
-      super(null, null);
+      super(null, null, null);
     }
 
     @GetMapping("/test/bad_request")

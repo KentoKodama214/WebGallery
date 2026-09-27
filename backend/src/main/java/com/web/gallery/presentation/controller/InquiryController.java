@@ -1,7 +1,6 @@
 package com.web.gallery.presentation.controller;
 
 import com.web.gallery.application.model.inquiry.InquiryDetailModel;
-import com.web.gallery.application.model.inquiry.InquiryListGetModel;
 import com.web.gallery.application.model.inquiry.InquiryPageModel;
 import com.web.gallery.application.service.InquiryService;
 import com.web.gallery.domain.constant.ApiRoutes;
@@ -12,6 +11,7 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.infrastructure.security.SessionHelper;
 import com.web.gallery.infrastructure.web.ValidationErrorLogger;
+import com.web.gallery.presentation.controller.converter.InquiryConverter;
 import com.web.gallery.presentation.controller.request.inquiry.InquiryListRequest;
 import com.web.gallery.presentation.controller.request.inquiry.InquiryRegistRequest;
 import com.web.gallery.presentation.controller.response.inquiry.InquiryDetailGetResponse;
@@ -46,6 +46,7 @@ public class InquiryController {
 
   private final InquiryService inquiryService;
   private final SessionHelper sessionHelper;
+  private final InquiryConverter inquiryConverter;
 
   /**
    * お問い合わせ登録
@@ -69,7 +70,7 @@ public class InquiryController {
     }
 
     AccountNo accountNo = new AccountNo(sessionHelper.getAccountNo());
-    InquiryDetailModel requestDetail = InquiryDetailModel.from(request, accountNo);
+    InquiryDetailModel requestDetail = inquiryConverter.toInquiryDetailModel(request, accountNo);
     InquiryNo inquiryNo = inquiryService.registInquiry(requestDetail);
 
     return ResponseEntity.ok(
@@ -100,7 +101,8 @@ public class InquiryController {
 
     AccountNo accountNo = new AccountNo(sessionHelper.getAccountNo());
     InquiryPageModel inquiryPageModel =
-        inquiryService.getInquiryList(InquiryListGetModel.from(inquiryListRequest, accountNo));
+        inquiryService.getInquiryList(
+            inquiryConverter.toInquiryListGetModel(inquiryListRequest, accountNo));
 
     return ResponseEntity.ok(InquiryListGetResponse.from(inquiryPageModel));
   }

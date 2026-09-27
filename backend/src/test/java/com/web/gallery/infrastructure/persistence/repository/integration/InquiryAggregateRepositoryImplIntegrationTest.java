@@ -2,9 +2,9 @@ package com.web.gallery.infrastructure.persistence.repository.integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.aggregate.Inquiry;
 import com.web.gallery.application.model.inquiry.InquiryDetailModel;
 import com.web.gallery.application.model.inquiry.InquiryReplyModelList;
-import com.web.gallery.domain.aggregate.Inquiry;
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.InquiryNotFoundException;

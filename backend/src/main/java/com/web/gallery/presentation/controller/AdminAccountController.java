@@ -1,6 +1,5 @@
 package com.web.gallery.presentation.controller;
 
-import com.web.gallery.application.model.account.AccountListGetModel;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.account.AccountPageModel;
 import com.web.gallery.application.service.AccountService;
@@ -11,6 +10,7 @@ import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.infrastructure.security.RequireAdminAuthority;
 import com.web.gallery.infrastructure.web.ValidationErrorLogger;
+import com.web.gallery.presentation.controller.converter.AccountConverter;
 import com.web.gallery.presentation.controller.request.account.AccountListRequest;
 import com.web.gallery.presentation.controller.request.account.AdminAccountAuthorityUpdateRequest;
 import com.web.gallery.presentation.controller.response.account.AdminAccountAuthorityUpdateResponse;
@@ -42,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "Bearer")
 public class AdminAccountController {
   private final AccountService accountService;
+  private final AccountConverter accountConverter;
 
   /**
    * 管理者用アカウント一覧取得
@@ -68,7 +69,8 @@ public class AdminAccountController {
     }
 
     AccountPageModel accountPageModel =
-        accountService.getAccountListForAdmin(AccountListGetModel.from(accountListRequest));
+        accountService.getAccountListForAdmin(
+            accountConverter.toAccountListGetModel(accountListRequest));
 
     return ResponseEntity.ok(AdminAccountListGetResponse.from(accountPageModel));
   }

@@ -1,4 +1,4 @@
-package com.web.gallery.domain.aggregate;
+package com.web.gallery.application.aggregate;
 
 import com.web.gallery.application.model.inquiry.InquiryDetailModel;
 import com.web.gallery.application.model.inquiry.InquiryReplyModel;

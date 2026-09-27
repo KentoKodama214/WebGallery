@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.aggregate.Photo;
+import com.web.gallery.application.config.PhotoConfig;
 import com.web.gallery.application.helper.GeoIpResolver;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.photo.FileModel;
@@ -23,7 +25,6 @@ import com.web.gallery.application.model.photo.PhotoSaveResultModel;
 import com.web.gallery.application.model.photo.PhotoTagModel;
 import com.web.gallery.application.model.photo.PhotoTagModelList;
 import com.web.gallery.application.model.photo.PhotoViewLogModel;
-import com.web.gallery.domain.aggregate.Photo;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
@@ -59,11 +60,13 @@ import com.web.gallery.domain.model.photo.IsFavoriteOnly;
 import com.web.gallery.domain.model.photo.IsLocationPublic;
 import com.web.gallery.domain.model.photo.Iso;
 import com.web.gallery.domain.model.photo.LocationNo;
+import com.web.gallery.domain.model.photo.MaxFileSizeMb;
 import com.web.gallery.domain.model.photo.PhotoAt;
 import com.web.gallery.domain.model.photo.PhotoCount;
 import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.PhotoUpperLimits;
 import com.web.gallery.domain.model.photo.ShutterSpeed;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
@@ -72,7 +75,6 @@ import com.web.gallery.domain.service.ImageFileValidationPolicy;
 import com.web.gallery.domain.service.LocationInputPolicy;
 import com.web.gallery.domain.service.PhotoFileExtensionPolicy;
 import com.web.gallery.domain.service.PhotoQuotaPolicy;
-import com.web.gallery.infrastructure.config.PhotoConfig;
 import com.web.gallery.infrastructure.persistence.repository.AccountRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.FileRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.PhotoAggregateRepositoryImpl;
@@ -170,6 +172,8 @@ public class PhotoServiceImplTest {
             locationInputPolicy.isValid(
                 any(), any(), any(), any(com.web.gallery.domain.model.common.GeoLocation.class)))
         .thenReturn(true);
+    // MaxFileSizeMbのコンパクトコンストラクタは0以下を許容しないため、未設定時のデフォルト値(0)を避ける
+    lenient().doReturn(5).when(photoConfig).getMaxFileSizeMb();
   }
 
   @Nested
@@ -1286,7 +1290,9 @@ public class PhotoServiceImplTest {
       doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
       doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
       doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
-      doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(false)
+          .when(imageFileValidationPolicy)
+          .isSizeExceeded(any(ImageFile.class), any(MaxFileSizeMb.class));
       doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
 
       ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
@@ -1447,7 +1453,9 @@ public class PhotoServiceImplTest {
       doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
       doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
       doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
-      doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(false)
+          .when(imageFileValidationPolicy)
+          .isSizeExceeded(any(ImageFile.class), any(MaxFileSizeMb.class));
       doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
 
       ArgumentCaptor<Photo> photoRegistCaptor = ArgumentCaptor.forClass(Photo.class);
@@ -1522,7 +1530,9 @@ public class PhotoServiceImplTest {
       doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
       doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
       doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
-      doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(false)
+          .when(imageFileValidationPolicy)
+          .isSizeExceeded(any(ImageFile.class), any(MaxFileSizeMb.class));
       doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
       doThrow(RegistFailureException.class)
           .when(photoAggregateRepositoryImpl)
@@ -1666,7 +1676,11 @@ public class PhotoServiceImplTest {
       doReturn(3).when(photoMstRepositoryImpl).count(new AccountNo(1L));
       doReturn(true)
           .when(photoQuotaPolicy)
-          .isReached(AuthorityEnum.MINI, new PhotoCount(3), new PhotoCount(1));
+          .isReached(
+              eq(AuthorityEnum.MINI),
+              eq(new PhotoCount(3)),
+              eq(new PhotoCount(1)),
+              any(PhotoUpperLimits.class));
 
       // 新規登録1枚目
       PhotoDetailModel photoDetailModel1 = createNewPhoto();
@@ -1735,7 +1749,9 @@ public class PhotoServiceImplTest {
       doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
       doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
       doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
-      doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(false)
+          .when(imageFileValidationPolicy)
+          .isSizeExceeded(any(ImageFile.class), any(MaxFileSizeMb.class));
       doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
 
       ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
@@ -1857,7 +1873,9 @@ public class PhotoServiceImplTest {
           .when(accountRepositoryImpl)
           .getByAccountNo(new AccountNo(1L));
       doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
-      doReturn(true).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(true)
+          .when(imageFileValidationPolicy)
+          .isSizeExceeded(any(ImageFile.class), any(MaxFileSizeMb.class));
 
       PhotoDetailModel photoDetailModel = createNewPhoto();
       photoDetailModelList.add(photoDetailModel);
@@ -1894,7 +1912,9 @@ public class PhotoServiceImplTest {
       doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
       doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
       doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
-      doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(false)
+          .when(imageFileValidationPolicy)
+          .isSizeExceeded(any(ImageFile.class), any(MaxFileSizeMb.class));
       doReturn(false).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
 
       PhotoDetailModel photoDetailModel = createNewPhotoWithFilename("malicious.exe");
@@ -1930,7 +1950,9 @@ public class PhotoServiceImplTest {
       doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
       doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
       doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
-      doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(false)
+          .when(imageFileValidationPolicy)
+          .isSizeExceeded(any(ImageFile.class), any(MaxFileSizeMb.class));
       doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
       // 1枚目のDB登録は成功、2枚目のDB登録で失敗させる
       doNothing()
@@ -1981,7 +2003,9 @@ public class PhotoServiceImplTest {
       doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
       doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
       doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
-      doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(false)
+          .when(imageFileValidationPolicy)
+          .isSizeExceeded(any(ImageFile.class), any(MaxFileSizeMb.class));
       doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
       doNothing()
           .doThrow(RegistFailureException.class)
@@ -2028,7 +2052,9 @@ public class PhotoServiceImplTest {
       doReturn(0).when(photoMstRepositoryImpl).count(new AccountNo(1L));
       doReturn(true).when(imageFileValidationPolicy).isAllowedContentType(any(ImageFile.class));
       doReturn(true).when(imageFileValidationPolicy).isValidSignature(any(ImageFile.class));
-      doReturn(false).when(imageFileValidationPolicy).isSizeExceeded(any(ImageFile.class));
+      doReturn(false)
+          .when(imageFileValidationPolicy)
+          .isSizeExceeded(any(ImageFile.class), any(MaxFileSizeMb.class));
       doReturn(true).when(photoFileExtensionPolicy).isAllowedExtension(any(ImageFile.class));
       // 1枚目のDB登録は成功、2枚目のDB登録でGalleryException以外の実行時例外が発生させる
       doNothing()
@@ -2207,7 +2233,8 @@ public class PhotoServiceImplTest {
     @DisplayName("異常系：アカウント番号がnullの場合、NullPointerExceptionをthrowする")
     void isReachedUpperLimit_accountNo_is_null() {
       assertThrows(NullPointerException.class, () -> photoServiceImpl.isReachedUpperLimit(null));
-      verify(photoQuotaPolicy, never()).isReached(any(AuthorityEnum.class), any(PhotoCount.class));
+      verify(photoQuotaPolicy, never())
+          .isReached(any(AuthorityEnum.class), any(PhotoCount.class), any(PhotoUpperLimits.class));
     }
 
     @Test
@@ -2218,10 +2245,13 @@ public class PhotoServiceImplTest {
       AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.MINI).build();
       doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
       doReturn(10).when(photoMstRepositoryImpl).count(accountNo);
-      doReturn(true).when(photoQuotaPolicy).isReached(AuthorityEnum.MINI, new PhotoCount(10));
+      doReturn(true)
+          .when(photoQuotaPolicy)
+          .isReached(eq(AuthorityEnum.MINI), eq(new PhotoCount(10)), any(PhotoUpperLimits.class));
 
       assertTrue(photoServiceImpl.isReachedUpperLimit(accountNo));
-      verify(photoQuotaPolicy).isReached(AuthorityEnum.MINI, new PhotoCount(10));
+      verify(photoQuotaPolicy)
+          .isReached(eq(AuthorityEnum.MINI), eq(new PhotoCount(10)), any(PhotoUpperLimits.class));
     }
 
     @Test
@@ -2232,10 +2262,15 @@ public class PhotoServiceImplTest {
       AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.NORMAL).build();
       doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
       doReturn(999).when(photoMstRepositoryImpl).count(accountNo);
-      doReturn(false).when(photoQuotaPolicy).isReached(AuthorityEnum.NORMAL, new PhotoCount(999));
+      doReturn(false)
+          .when(photoQuotaPolicy)
+          .isReached(
+              eq(AuthorityEnum.NORMAL), eq(new PhotoCount(999)), any(PhotoUpperLimits.class));
 
       assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
-      verify(photoQuotaPolicy).isReached(AuthorityEnum.NORMAL, new PhotoCount(999));
+      verify(photoQuotaPolicy)
+          .isReached(
+              eq(AuthorityEnum.NORMAL), eq(new PhotoCount(999)), any(PhotoUpperLimits.class));
     }
   }
 
@@ -2249,7 +2284,8 @@ public class PhotoServiceImplTest {
     void getRemainingPhotoCount_accountNo_is_null() {
       assertThrows(NullPointerException.class, () -> photoServiceImpl.getRemainingPhotoCount(null));
       verify(photoQuotaPolicy, never())
-          .remainingCount(any(AuthorityEnum.class), any(PhotoCount.class));
+          .remainingCount(
+              any(AuthorityEnum.class), any(PhotoCount.class), any(PhotoUpperLimits.class));
     }
 
     @Test
@@ -2260,10 +2296,15 @@ public class PhotoServiceImplTest {
       AccountModel account = AccountModel.builder().authorityKbn(AuthorityEnum.NORMAL).build();
       doReturn(account).when(accountRepositoryImpl).getByAccountNo(accountNo);
       doReturn(3).when(photoMstRepositoryImpl).count(accountNo);
-      doReturn(97).when(photoQuotaPolicy).remainingCount(AuthorityEnum.NORMAL, new PhotoCount(3));
+      doReturn(97)
+          .when(photoQuotaPolicy)
+          .remainingCount(
+              eq(AuthorityEnum.NORMAL), eq(new PhotoCount(3)), any(PhotoUpperLimits.class));
 
       assertEquals(97, photoServiceImpl.getRemainingPhotoCount(accountNo));
-      verify(photoQuotaPolicy).remainingCount(AuthorityEnum.NORMAL, new PhotoCount(3));
+      verify(photoQuotaPolicy)
+          .remainingCount(
+              eq(AuthorityEnum.NORMAL), eq(new PhotoCount(3)), any(PhotoUpperLimits.class));
     }
   }
 }

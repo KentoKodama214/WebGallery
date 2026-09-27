@@ -12,6 +12,7 @@ import com.web.gallery.domain.exception.FavoriteNotFoundException;
 import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.infrastructure.security.SessionHelper;
+import com.web.gallery.presentation.controller.converter.PhotoConverter;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
@@ -39,6 +41,8 @@ public class PhotoFavoriteControllerTest {
   @Mock private PhotoFavoriteServiceImpl photoFavoriteServiceImpl;
 
   @Mock private SessionHelper sessionHelper;
+
+  @Spy private PhotoConverter photoConverter = new PhotoConverter();
 
   private MockMvc mockMvc;
 

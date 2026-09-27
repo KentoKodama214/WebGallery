@@ -1,11 +1,11 @@
 package com.web.gallery.infrastructure.persistence.repository;
 
+import com.web.gallery.application.aggregate.Photo;
 import com.web.gallery.application.model.photo.PhotoDeleteModel;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.application.model.photo.PhotoFavoriteDeleteModel;
 import com.web.gallery.application.model.photo.PhotoTagDeleteModel;
 import com.web.gallery.application.repository.PhotoAggregateRepository;
-import com.web.gallery.domain.aggregate.Photo;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.common.GeoLocation;

@@ -2,14 +2,23 @@ package com.web.gallery.infrastructure.persistence.repository;
 
 import com.web.gallery.application.model.inquiry.InquiryDetailModel;
 import com.web.gallery.application.model.inquiry.InquiryGetModel;
+import com.web.gallery.application.model.inquiry.InquiryModel;
 import com.web.gallery.application.model.inquiry.InquiryModelList;
 import com.web.gallery.application.model.inquiry.InquiryPageModel;
+import com.web.gallery.application.model.inquiry.InquiryReplyModel;
+import com.web.gallery.application.model.inquiry.InquiryReplyModelList;
 import com.web.gallery.application.repository.InquiryMstRepository;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.inquiry.InquiryBody;
 import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
+import com.web.gallery.domain.model.inquiry.InquirySubject;
+import com.web.gallery.domain.model.inquiry.ReplyBody;
+import com.web.gallery.domain.model.inquiry.ReplyNo;
 import com.web.gallery.infrastructure.persistence.dto.InquiryDetailDto;
 import com.web.gallery.infrastructure.persistence.dto.InquiryDto;
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMstCondition;
@@ -75,7 +84,28 @@ public class InquiryMstRepositoryImpl implements InquiryMstRepository {
   private InquiryPageModel toPageModel(List<InquiryDto> inquiryDtoList, Integer limit) {
     Boolean isLast = inquiryDtoList.size() < limit;
     List<InquiryDto> pageDtoList = isLast ? inquiryDtoList : inquiryDtoList.subList(0, limit - 1);
-    return InquiryPageModel.of(InquiryModelList.from(pageDtoList), isLast);
+    return InquiryPageModel.of(
+        InquiryModelList.of(pageDtoList.stream().map(this::toInquiryModel).toList()), isLast);
+  }
+
+  /**
+   * InquiryDtoからInquiryModelを組み立てる
+   *
+   * @param dto {@link InquiryDto}
+   * @return {@link InquiryModel}
+   */
+  private InquiryModel toInquiryModel(InquiryDto dto) {
+    return InquiryModel.builder()
+        .inquiryId(new InquiryId(dto.getId()))
+        .accountNo(new AccountNo(dto.getAccountNo()))
+        .accountId(dto.getAccountId() != null ? new AccountId(dto.getAccountId()) : null)
+        .accountName(dto.getAccountName() != null ? new AccountName(dto.getAccountName()) : null)
+        .inquiryNo(new InquiryNo(dto.getInquiryNo()))
+        .subject(new InquirySubject(dto.getSubject()))
+        .statusKbn(dto.getStatusKbn())
+        .isReadByUser(dto.getIsReadByUser())
+        .createdAt(dto.getCreatedAt())
+        .build();
   }
 
   /**
@@ -118,6 +148,35 @@ public class InquiryMstRepositoryImpl implements InquiryMstRepository {
 
     List<InquiryReplyMst> replyMstList =
         inquiryReplyMstMapper.selectList(InquiryReplyMstCondition.byInquiryId(dto.getId()));
-    return InquiryDetailModel.from(dto, replyMstList);
+    return InquiryDetailModel.builder()
+        .accountNo(new AccountNo(dto.getAccountNo()))
+        .accountId(dto.getAccountId() != null ? new AccountId(dto.getAccountId()) : null)
+        .accountName(dto.getAccountName() != null ? new AccountName(dto.getAccountName()) : null)
+        .inquiryId(new InquiryId(dto.getId()))
+        .inquiryNo(new InquiryNo(dto.getInquiryNo()))
+        .subject(new InquirySubject(dto.getSubject()))
+        .body(new InquiryBody(dto.getBody()))
+        .statusKbn(dto.getStatusKbn())
+        .isReadByUser(dto.getIsReadByUser())
+        .createdAt(dto.getCreatedAt())
+        .replyModelList(
+            InquiryReplyModelList.of(replyMstList.stream().map(this::toInquiryReplyModel).toList()))
+        .build();
+  }
+
+  /**
+   * InquiryReplyMstエンティティからInquiryReplyModelを組み立てる
+   *
+   * @param entity {@link InquiryReplyMst}
+   * @return {@link InquiryReplyModel}
+   */
+  private InquiryReplyModel toInquiryReplyModel(InquiryReplyMst entity) {
+    return InquiryReplyModel.builder()
+        .inquiryId(new InquiryId(entity.getInquiryId()))
+        .replyNo(new ReplyNo(entity.getReplyNo()))
+        .adminAccountNo(new AccountNo(entity.getAdminAccountNo()))
+        .body(new ReplyBody(entity.getBody()))
+        .createdAt(entity.getCreatedAt())
+        .build();
   }
 }

@@ -1,5 +1,6 @@
 package com.web.gallery.infrastructure.config;
 
+import com.web.gallery.application.config.LoginConfig;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -14,7 +15,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @RequiredArgsConstructor
 @Getter
 @ConfigurationProperties(prefix = "auth.login")
-public class LoginConfig {
+public class LoginConfigImpl implements LoginConfig {
   /** ログイン失敗上限回数 */
   private final Integer failCount;
 

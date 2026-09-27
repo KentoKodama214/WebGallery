@@ -1,20 +1,16 @@
 package com.web.gallery.domain.service;
 
 import com.web.gallery.domain.model.photo.ImageFile;
-import com.web.gallery.infrastructure.config.PhotoConfig;
+import com.web.gallery.domain.model.photo.MaxFileSizeMb;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /** アップロードされた画像ファイルの実効的な検証（Content-Type・マジックバイト・サイズ）に関するビジネスルールを判定するドメインサービス */
 @Component
-@RequiredArgsConstructor
 public class ImageFileValidationPolicy {
-
-  private final PhotoConfig photoConfig;
 
   /** 許可する画像ファイルのContent-Type */
   private static final Set<String> ALLOWED_CONTENT_TYPES =
@@ -89,13 +85,14 @@ public class ImageFileValidationPolicy {
   }
 
   /**
-   * 画像ファイルのサイズが、設定された上限（{@link PhotoConfig#getMaxFileSizeMb()}）を超えているかどうかを判定する
+   * 画像ファイルのサイズが、設定された上限を超えているかどうかを判定する
    *
    * @param imageFile {@link ImageFile}
+   * @param maxFileSizeMb ファイルサイズ上限
    * @return 上限を超えている場合、true
    */
-  public Boolean isSizeExceeded(ImageFile imageFile) {
-    long maxFileSizeBytes = photoConfig.getMaxFileSizeMb() * BYTES_PER_MB;
+  public Boolean isSizeExceeded(ImageFile imageFile, MaxFileSizeMb maxFileSizeMb) {
+    long maxFileSizeBytes = maxFileSizeMb.value() * BYTES_PER_MB;
     return imageFile.value().getSize() > maxFileSizeBytes;
   }
 

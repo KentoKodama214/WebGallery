@@ -1,5 +1,7 @@
 package com.web.gallery.application.service.impl;
 
+import com.web.gallery.application.aggregate.Inquiry;
+import com.web.gallery.application.config.InquiryConfig;
 import com.web.gallery.application.model.inquiry.InquiryDetailModel;
 import com.web.gallery.application.model.inquiry.InquiryGetModel;
 import com.web.gallery.application.model.inquiry.InquiryListGetModel;
@@ -8,7 +10,6 @@ import com.web.gallery.application.repository.InquiryAggregateRepository;
 import com.web.gallery.application.repository.InquiryMstRepository;
 import com.web.gallery.application.repository.InquiryReplyMstRepository;
 import com.web.gallery.application.service.InquiryService;
-import com.web.gallery.domain.aggregate.Inquiry;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.domain.event.InquiryRegisteredEvent;
@@ -20,7 +21,6 @@ import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.domain.model.inquiry.ReplyBody;
 import com.web.gallery.domain.model.inquiry.ReplyNo;
-import com.web.gallery.infrastructure.config.InquiryConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

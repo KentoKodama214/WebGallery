@@ -1,7 +1,5 @@
 package com.web.gallery.application.model.photo;
 
-import com.web.gallery.infrastructure.persistence.dto.PhotoDto;
-import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMst;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -36,19 +34,6 @@ public record PhotoModelList(List<PhotoModel> photoModelList) implements Iterabl
    */
   public static PhotoModelList empty() {
     return PhotoModelList.of(List.of());
-  }
-
-  /**
-   * PhotoDtoのリストとタグエンティティリストからPhotoModelListを生成する
-   *
-   * @param photoDtoList {@link PhotoDto}のリスト
-   * @param photoTagMstList 全タグエンティティリスト（内部で該当写真のタグをフィルタリングする）
-   * @return {@link PhotoModelList}
-   */
-  public static PhotoModelList from(
-      List<PhotoDto> photoDtoList, List<PhotoTagMst> photoTagMstList) {
-    return PhotoModelList.of(
-        photoDtoList.stream().map(photoDto -> PhotoModel.from(photoDto, photoTagMstList)).toList());
   }
 
   /**

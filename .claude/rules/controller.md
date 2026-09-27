@@ -16,8 +16,13 @@ paths:
 
 ## レイヤー間依存関係
 
-- **許可するimport**: `service/`のインターフェース、`model/`、`controller/request/`、`controller/response/`、`constant/`
-- **禁止するimport**: `repository/`、`mapper/`、`entity/`、`dto/`、`service/impl/`への直接依存
+- **許可するimport**: `application/service/`のインターフェース、`application/model/`、`presentation/controller/request/`、`presentation/controller/response/`、`presentation/controller/converter/`、`domain/constant/`、`infrastructure/`配下（`SessionHelper`、`ClientIpResolver`等、presentationからinfrastructureへの依存は一方向のみ許可される。詳細は`architecture-overview.md`）
+- **禁止するimport**: `infrastructure/persistence/repository・mapper・entity・dto`、`application/service/impl/`への直接依存
+
+## Request → Modelの変換
+
+- ControllerはRequestオブジェクトから直接Modelを組み立てない。`presentation/controller/converter/`の専用Converterクラス（例: `PhotoConverter`）を`@Component`としてDIし、そのメソッド経由でRequestをModelへ変換すること
+- Converterクラスの詳細な設計ルールは`converter.md`を参照
 
 ## Responseファクトリメソッド経由の呼び出し
 

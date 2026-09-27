@@ -1,5 +1,6 @@
 package com.web.gallery.infrastructure.config;
 
+import com.web.gallery.application.config.JwtConfig;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -14,7 +15,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @RequiredArgsConstructor
 @Getter
 @ConfigurationProperties(prefix = "app.jwt")
-public class JwtConfig {
+public class JwtConfigImpl implements JwtConfig {
   /** JWTシークレットキー */
   private final String secret;
 

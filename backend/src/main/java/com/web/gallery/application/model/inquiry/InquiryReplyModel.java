@@ -4,7 +4,6 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.ReplyBody;
 import com.web.gallery.domain.model.inquiry.ReplyNo;
-import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMst;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.NonNull;
@@ -28,20 +27,4 @@ public class InquiryReplyModel {
 
   /** 作成日時 */
   private OffsetDateTime createdAt;
-
-  /**
-   * InquiryReplyMstエンティティからInquiryReplyModelを生成する
-   *
-   * @param entity {@link InquiryReplyMst}
-   * @return {@link InquiryReplyModel}
-   */
-  public static InquiryReplyModel from(InquiryReplyMst entity) {
-    return InquiryReplyModel.builder()
-        .inquiryId(new InquiryId(entity.getInquiryId()))
-        .replyNo(new ReplyNo(entity.getReplyNo()))
-        .adminAccountNo(new AccountNo(entity.getAdminAccountNo()))
-        .body(new ReplyBody(entity.getBody()))
-        .createdAt(entity.getCreatedAt())
-        .build();
-  }
 }

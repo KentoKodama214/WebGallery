@@ -1,6 +1,5 @@
 package com.web.gallery.application.model.common;
 
-import com.web.gallery.infrastructure.persistence.entity.common.KbnMst;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -35,16 +34,6 @@ public record KbnMstModelList(List<KbnMstModel> kbnMstModelList) implements Iter
    */
   public static KbnMstModelList empty() {
     return KbnMstModelList.of(List.of());
-  }
-
-  /**
-   * KbnMstエンティティのリストからKbnMstModelListを生成する
-   *
-   * @param kbnMstList {@link KbnMst}のリスト
-   * @return {@link KbnMstModelList}
-   */
-  public static KbnMstModelList from(List<KbnMst> kbnMstList) {
-    return KbnMstModelList.of(kbnMstList.stream().map(KbnMstModel::from).toList());
   }
 
   /**

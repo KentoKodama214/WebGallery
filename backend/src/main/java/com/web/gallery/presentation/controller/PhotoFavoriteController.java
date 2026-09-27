@@ -1,12 +1,12 @@
 package com.web.gallery.presentation.controller;
 
-import com.web.gallery.application.model.photo.PhotoFavoriteModel;
 import com.web.gallery.application.service.PhotoFavoriteService;
 import com.web.gallery.domain.constant.ApiRoutes;
 import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.infrastructure.security.SessionHelper;
+import com.web.gallery.presentation.controller.converter.PhotoConverter;
 import com.web.gallery.presentation.controller.request.photo.PhotoFavoriteDeleteRequest;
 import com.web.gallery.presentation.controller.request.photo.PhotoFavoriteRegistRequest;
 import com.web.gallery.presentation.controller.response.photo.PhotoFavoriteResponse;
@@ -40,6 +40,7 @@ public class PhotoFavoriteController {
 
   private final PhotoFavoriteService photoFavoriteService;
   private final SessionHelper sessionHelper;
+  private final PhotoConverter photoConverter;
 
   /**
    * お気に入り登録
@@ -68,7 +69,8 @@ public class PhotoFavoriteController {
     }
 
     photoFavoriteService.addFavorite(
-        PhotoFavoriteModel.from(photoFavoriteRegistRequest, sessionHelper.getAccountNo()));
+        photoConverter.toPhotoFavoriteModel(
+            photoFavoriteRegistRequest, sessionHelper.getAccountNo()));
 
     return ResponseEntity.ok(PhotoFavoriteResponse.of(MessageConst.REGIST_FAVORITE));
   }
@@ -100,7 +102,8 @@ public class PhotoFavoriteController {
     }
 
     photoFavoriteService.deleteFavorite(
-        PhotoFavoriteModel.from(photoFavoriteDeleteRequest, sessionHelper.getAccountNo()));
+        photoConverter.toPhotoFavoriteModel(
+            photoFavoriteDeleteRequest, sessionHelper.getAccountNo()));
 
     return ResponseEntity.ok(PhotoFavoriteResponse.of(MessageConst.CANCEL_FAVORITE));
   }

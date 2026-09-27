@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.web.gallery.domain.model.photo.ImageFile;
-import com.web.gallery.infrastructure.config.PhotoConfig;
+import com.web.gallery.domain.model.photo.MaxFileSizeMb;
 import java.io.IOException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -13,8 +13,6 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
@@ -23,9 +21,8 @@ import org.springframework.web.multipart.MultipartFile;
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 public class ImageFileValidationPolicyTest {
-  @InjectMocks private ImageFileValidationPolicy imageFileValidationPolicy;
-
-  @Mock private PhotoConfig photoConfig;
+  private final ImageFileValidationPolicy imageFileValidationPolicy =
+      new ImageFileValidationPolicy();
 
   /** JPEGの先頭バイト列 */
   private static final byte[] JPEG_BYTES = {
@@ -173,37 +170,31 @@ public class ImageFileValidationPolicyTest {
     @Order(1)
     @DisplayName("正常系：ファイルサイズが上限以下の場合、falseを返すこと")
     void isSizeExceeded_withinLimit() {
-      doReturn(5).when(photoConfig).getMaxFileSizeMb();
-
       ImageFile imageFile =
           new ImageFile(new MockMultipartFile("file", "a.jpg", "image/jpeg", JPEG_BYTES));
-      assertFalse(imageFileValidationPolicy.isSizeExceeded(imageFile));
+      assertFalse(imageFileValidationPolicy.isSizeExceeded(imageFile, new MaxFileSizeMb(5)));
     }
 
     @Test
     @Order(2)
     @DisplayName("異常系：ファイルサイズが上限を超えている場合、trueを返すこと")
     void isSizeExceeded_overLimit() {
-      doReturn(5).when(photoConfig).getMaxFileSizeMb();
-
       MultipartFile multipartFile = mock(MultipartFile.class);
       doReturn(5L * 1024 * 1024 + 1).when(multipartFile).getSize();
 
       ImageFile imageFile = new ImageFile(multipartFile);
-      assertTrue(imageFileValidationPolicy.isSizeExceeded(imageFile));
+      assertTrue(imageFileValidationPolicy.isSizeExceeded(imageFile, new MaxFileSizeMb(5)));
     }
 
     @Test
     @Order(3)
     @DisplayName("正常系：ファイルサイズが上限ちょうどの場合、falseを返すこと")
     void isSizeExceeded_exactlyAtLimit() {
-      doReturn(5).when(photoConfig).getMaxFileSizeMb();
-
       MultipartFile multipartFile = mock(MultipartFile.class);
       doReturn(5L * 1024 * 1024).when(multipartFile).getSize();
 
       ImageFile imageFile = new ImageFile(multipartFile);
-      assertFalse(imageFileValidationPolicy.isSizeExceeded(imageFile));
+      assertFalse(imageFileValidationPolicy.isSizeExceeded(imageFile, new MaxFileSizeMb(5)));
     }
   }
 }

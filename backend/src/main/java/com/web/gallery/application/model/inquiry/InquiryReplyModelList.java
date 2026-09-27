@@ -1,6 +1,5 @@
 package com.web.gallery.application.model.inquiry;
 
-import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMst;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -35,16 +34,6 @@ public record InquiryReplyModelList(List<InquiryReplyModel> inquiryReplyModelLis
    */
   public static InquiryReplyModelList empty() {
     return InquiryReplyModelList.of(List.of());
-  }
-
-  /**
-   * InquiryReplyMstエンティティのリストからInquiryReplyModelListを生成する
-   *
-   * @param entityList {@link InquiryReplyMst}のリスト
-   * @return {@link InquiryReplyModelList}
-   */
-  public static InquiryReplyModelList from(List<InquiryReplyMst> entityList) {
-    return InquiryReplyModelList.of(entityList.stream().map(InquiryReplyModel::from).toList());
   }
 
   /**

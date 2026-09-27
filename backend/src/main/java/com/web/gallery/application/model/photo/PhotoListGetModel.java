@@ -1,6 +1,5 @@
 package com.web.gallery.application.model.photo;
 
-import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import com.web.gallery.domain.model.account.AccountId;
@@ -8,12 +7,7 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.domain.model.common.Referer;
 import com.web.gallery.domain.model.photo.IsFavoriteOnly;
-import com.web.gallery.presentation.controller.request.photo.PhotoListRequest;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -71,52 +65,4 @@ public class PhotoListGetModel {
 
   /** リファラ（絞り込み・並び替えログ記録用） */
   @NonNull private Referer referer;
-
-  /**
-   * 写真一覧リクエストからPhotoListGetModelを生成する
-   *
-   * @param request {@link PhotoListRequest}
-   * @param accountNo ログイン中のアカウントNo
-   * @param photoAccountId 写真のアカウントID
-   * @param ipAddress 送信元IPアドレス
-   * @param referer リファラ
-   * @return {@link PhotoListGetModel}
-   */
-  public static PhotoListGetModel from(
-      PhotoListRequest request,
-      Long accountNo,
-      String photoAccountId,
-      IpAddress ipAddress,
-      Referer referer) {
-    Optional<String> tagsOpt = Optional.ofNullable(request.getTagList());
-    // 空文字トークンを除外し、件数上限を強制する。
-    // （バリデーション側 PhotoListRequest#isTagListSizeValid は空文字を除外して数えるため、
-    //   ここで除外しないと「全角スペースの大量指定」で相関サブクエリを無制限に増やせてしまう）
-    List<String> tagList =
-        tagsOpt
-            .map(
-                tag ->
-                    Arrays.stream(
-                            tag.replace(Consts.FULL_SPACE, Consts.HALF_SPACE)
-                                .split(Consts.HALF_SPACE))
-                        .filter(t -> !t.isEmpty())
-                        .limit(Consts.TAG_LIST_MAX_SIZE)
-                        .collect(Collectors.toCollection(ArrayList::new)))
-            .orElseGet(ArrayList::new);
-
-    return PhotoListGetModel.builder()
-        .accountNo(accountNo != null ? new AccountNo(accountNo) : null)
-        .photoAccountId(new AccountId(photoAccountId))
-        .directionKbn(request.getDirectionKbn())
-        .isFavoriteOnly(
-            new IsFavoriteOnly(Optional.ofNullable(request.getIsFavorite()).orElse(Boolean.FALSE)))
-        .tagList(tagList)
-        .sortBy(request.getSortBy())
-        .pageNo(request.getPageNo())
-        .searchExecuted(Optional.ofNullable(request.getSearchExecuted()).orElse(Boolean.FALSE))
-        .logInitialView(Optional.ofNullable(request.getLogInitialView()).orElse(Boolean.FALSE))
-        .ipAddress(ipAddress)
-        .referer(referer)
-        .build();
-  }
 }

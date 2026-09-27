@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.web.gallery.application.config.PhotoConfig;
 import com.web.gallery.application.model.photo.PhotoDeleteModelList;
 import com.web.gallery.application.model.photo.PhotoDetailGetModel;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
@@ -53,11 +54,11 @@ import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TagNo;
 import com.web.gallery.domain.service.PhotoExifDataMergePolicy;
-import com.web.gallery.infrastructure.config.PhotoConfig;
 import com.web.gallery.infrastructure.helper.PhotoDirectionResolver;
 import com.web.gallery.infrastructure.helper.PhotoExifExtractor;
 import com.web.gallery.infrastructure.security.SessionHelper;
 import com.web.gallery.infrastructure.web.ClientIpResolver;
+import com.web.gallery.presentation.controller.converter.PhotoConverter;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -76,6 +77,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
@@ -102,6 +104,8 @@ public class PhotoControllerTest {
   @Mock private PhotoExifExtractor photoExifExtractor;
 
   @Mock private PhotoExifDataMergePolicy photoExifDataMergePolicy;
+
+  @Spy private PhotoConverter photoConverter = new PhotoConverter();
 
   private MockMvc mockMvc;
 

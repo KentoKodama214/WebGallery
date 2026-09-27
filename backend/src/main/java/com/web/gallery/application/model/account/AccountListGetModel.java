@@ -1,6 +1,5 @@
 package com.web.gallery.application.model.account;
 
-import com.web.gallery.presentation.controller.request.account.AccountListRequest;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -11,14 +10,4 @@ import lombok.Value;
 public class AccountListGetModel {
   /** ページ番号 */
   @NonNull private Integer pageNo;
-
-  /**
-   * アカウント一覧リクエストからAccountListGetModelを生成する
-   *
-   * @param request {@link AccountListRequest}
-   * @return {@link AccountListGetModel}
-   */
-  public static AccountListGetModel from(AccountListRequest request) {
-    return AccountListGetModel.builder().pageNo(request.getPageNo()).build();
-  }
 }

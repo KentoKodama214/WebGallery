@@ -1,6 +1,5 @@
 package com.web.gallery.application.model.inquiry;
 
-import com.web.gallery.infrastructure.persistence.dto.InquiryDto;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -35,16 +34,6 @@ public record InquiryModelList(List<InquiryModel> inquiryModelList)
    */
   public static InquiryModelList empty() {
     return InquiryModelList.of(List.of());
-  }
-
-  /**
-   * InquiryDtoのリストからInquiryModelListを生成する
-   *
-   * @param inquiryDtoList {@link InquiryDto}のリスト
-   * @return {@link InquiryModelList}
-   */
-  public static InquiryModelList from(List<InquiryDto> inquiryDtoList) {
-    return InquiryModelList.of(inquiryDtoList.stream().map(InquiryModel::from).toList());
   }
 
   /**

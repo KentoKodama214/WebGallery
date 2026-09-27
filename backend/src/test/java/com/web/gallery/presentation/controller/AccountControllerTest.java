@@ -25,6 +25,7 @@ import com.web.gallery.domain.model.account.LoginFailureCount;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import com.web.gallery.infrastructure.security.SessionHelper;
+import com.web.gallery.presentation.controller.converter.AccountConverter;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
@@ -39,6 +40,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
@@ -56,6 +58,8 @@ public class AccountControllerTest {
   @Mock private AccountService accountService;
 
   @Mock private SessionHelper sessionHelper;
+
+  @Spy private AccountConverter accountConverter = new AccountConverter();
 
   private MockMvc mockMvc;
 

@@ -1,7 +1,8 @@
-package com.web.gallery.application.model.account;
+package com.web.gallery.presentation.controller.converter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.domain.enumeration.SexEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
@@ -22,16 +23,18 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
-class AccountModelTest {
+class AccountConverterTest {
+
+  private final AccountConverter accountConverter = new AccountConverter();
 
   @Nested
   @Order(1)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class fromAccountUpdateRequest {
+  class toAccountModelForUpdate {
     @Test
     @Order(1)
     @DisplayName("正常系：全項目が設定されている場合、そのまま設定されること")
-    void from_allFieldsSet() {
+    void toAccountModelForUpdate_allFieldsSet() {
       AccountUpdateRequest request = new AccountUpdateRequest();
       request.setAccountId("testuser01");
       request.setAccountName("テストユーザー");
@@ -42,7 +45,7 @@ class AccountModelTest {
       request.setResidentPrefectureKbnCode("Tokyo");
       request.setFreeMemo("よろしくお願いします");
 
-      AccountModel actual = AccountModel.from(request, 1L);
+      AccountModel actual = accountConverter.toAccountModelForUpdate(request, 1L);
 
       assertEquals(new AccountNo(1L), actual.getAccountNo());
       assertEquals(new AccountId("testuser01"), actual.getAccountId());
@@ -59,13 +62,13 @@ class AccountModelTest {
     @Test
     @Order(2)
     @DisplayName("正常系：新しいパスワードが空文字の場合、パスワードは変更しない（null）こと")
-    void from_newPasswordEmpty() {
+    void toAccountModelForUpdate_newPasswordEmpty() {
       AccountUpdateRequest request = new AccountUpdateRequest();
       request.setAccountId("testuser01");
       request.setAccountName("テストユーザー");
       request.setNewPassword("");
 
-      AccountModel actual = AccountModel.from(request, 1L);
+      AccountModel actual = accountConverter.toAccountModelForUpdate(request, 1L);
 
       assertNull(actual.getPassword());
     }
@@ -73,13 +76,13 @@ class AccountModelTest {
     @Test
     @Order(3)
     @DisplayName("正常系：新しいパスワードがnullの場合、パスワードは変更しない（null）こと")
-    void from_newPasswordNull() {
+    void toAccountModelForUpdate_newPasswordNull() {
       AccountUpdateRequest request = new AccountUpdateRequest();
       request.setAccountId("testuser01");
       request.setAccountName("テストユーザー");
       request.setNewPassword(null);
 
-      AccountModel actual = AccountModel.from(request, 1L);
+      AccountModel actual = accountConverter.toAccountModelForUpdate(request, 1L);
 
       assertNull(actual.getPassword());
     }
@@ -87,7 +90,7 @@ class AccountModelTest {
     @Test
     @Order(4)
     @DisplayName("正常系：任意項目が未設定の場合、nullが設定されること")
-    void from_optionalFieldsNull() {
+    void toAccountModelForUpdate_optionalFieldsNull() {
       AccountUpdateRequest request = new AccountUpdateRequest();
       request.setAccountId("testuser01");
       request.setAccountName("テストユーザー");
@@ -97,7 +100,7 @@ class AccountModelTest {
       request.setResidentPrefectureKbnCode(null);
       request.setFreeMemo(null);
 
-      AccountModel actual = AccountModel.from(request, 1L);
+      AccountModel actual = accountConverter.toAccountModelForUpdate(request, 1L);
 
       assertNull(actual.getBirthdate());
       assertNull(actual.getBirthplacePrefectureKbnCode());

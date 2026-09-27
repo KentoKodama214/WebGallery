@@ -11,7 +11,6 @@ import com.web.gallery.domain.model.common.KbnGroupEnglishName;
 import com.web.gallery.domain.model.common.KbnGroupJapaneseName;
 import com.web.gallery.domain.model.common.KbnJapaneseName;
 import com.web.gallery.domain.model.common.SortOrder;
-import com.web.gallery.infrastructure.persistence.entity.common.KbnMst;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -52,26 +51,4 @@ public class KbnMstModel {
 
   /** 説明 */
   @NonNull private Explanation explanation;
-
-  /**
-   * KbnMstエンティティからKbnMstModelを生成する
-   *
-   * @param entity {@link KbnMst}
-   * @return {@link KbnMstModel}
-   */
-  public static KbnMstModel from(KbnMst entity) {
-    return KbnMstModel.builder()
-        .kbnClassCode(new KbnClassCode(entity.getKbnClassCode()))
-        .kbnCode(new KbnCode(entity.getKbnCode()))
-        .sortOrder(new SortOrder(entity.getSortOrder()))
-        .kbnGroupCode(new KbnGroupCode(entity.getKbnGroupCode()))
-        .kbnClassJapaneseName(new KbnClassJapaneseName(entity.getKbnClassJapaneseName()))
-        .kbnGroupJapaneseName(new KbnGroupJapaneseName(entity.getKbnGroupJapaneseName()))
-        .kbnJapaneseName(new KbnJapaneseName(entity.getKbnJapaneseName()))
-        .kbnClassEnglishName(new KbnClassEnglishName(entity.getKbnClassEnglishName()))
-        .kbnGroupEnglishName(new KbnGroupEnglishName(entity.getKbnGroupEnglishName()))
-        .kbnEnglishName(new KbnEnglishName(entity.getKbnEnglishName()))
-        .explanation(new Explanation(entity.getExplanation()))
-        .build();
-  }
 }

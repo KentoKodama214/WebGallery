@@ -5,7 +5,7 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doReturn;
 
 import com.web.gallery.application.AccountPrincipal;
-import com.web.gallery.infrastructure.config.JwtConfig;
+import com.web.gallery.infrastructure.config.JwtConfigImpl;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -43,8 +43,8 @@ class JwtTokenProviderImplTest {
 
   @BeforeEach
   void setUp() {
-    JwtConfig jwtConfig =
-        new JwtConfig(
+    JwtConfigImpl jwtConfig =
+        new JwtConfigImpl(
             SECRET,
             ACCESS_TOKEN_EXPIRATION_MINUTES,
             REFRESH_TOKEN_EXPIRATION_DAYS,
@@ -239,8 +239,8 @@ class JwtTokenProviderImplTest {
     @Order(1)
     @DisplayName("正常系：256bit以上のシークレットキーの場合は例外がスローされないこと")
     void validateSecret_sufficientLength() {
-      JwtConfig jwtConfig =
-          new JwtConfig(
+      JwtConfigImpl jwtConfig =
+          new JwtConfigImpl(
               SECRET,
               ACCESS_TOKEN_EXPIRATION_MINUTES,
               REFRESH_TOKEN_EXPIRATION_DAYS,
@@ -254,8 +254,8 @@ class JwtTokenProviderImplTest {
     @Order(2)
     @DisplayName("異常系：256bit未満のシークレットキーの場合は例外がスローされること")
     void validateSecret_tooShort() {
-      JwtConfig jwtConfig =
-          new JwtConfig(
+      JwtConfigImpl jwtConfig =
+          new JwtConfigImpl(
               "short-secret",
               ACCESS_TOKEN_EXPIRATION_MINUTES,
               REFRESH_TOKEN_EXPIRATION_DAYS,
@@ -269,8 +269,8 @@ class JwtTokenProviderImplTest {
     @Order(3)
     @DisplayName("異常系：シークレットキーがnullの場合は例外がスローされること")
     void validateSecret_null() {
-      JwtConfig jwtConfig =
-          new JwtConfig(
+      JwtConfigImpl jwtConfig =
+          new JwtConfigImpl(
               null,
               ACCESS_TOKEN_EXPIRATION_MINUTES,
               REFRESH_TOKEN_EXPIRATION_DAYS,

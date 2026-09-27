@@ -8,11 +8,7 @@ import com.web.gallery.domain.model.inquiry.InquiryBody;
 import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.domain.model.inquiry.InquirySubject;
-import com.web.gallery.infrastructure.persistence.dto.InquiryDetailDto;
-import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMst;
-import com.web.gallery.presentation.controller.request.inquiry.InquiryRegistRequest;
 import java.time.OffsetDateTime;
-import java.util.List;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -63,44 +59,4 @@ public class InquiryDetailModel {
 
   /** 返信一覧 */
   private InquiryReplyModelList replyModelList;
-
-  /**
-   * InquiryDetailDtoと返信エンティティリストからInquiryDetailModelを生成する
-   *
-   * @param dto {@link InquiryDetailDto}
-   * @param replyMstList 該当お問い合わせの返信エンティティリスト
-   * @return {@link InquiryDetailModel}
-   */
-  public static InquiryDetailModel from(InquiryDetailDto dto, List<InquiryReplyMst> replyMstList) {
-    return InquiryDetailModel.builder()
-        .accountNo(new AccountNo(dto.getAccountNo()))
-        .accountId(dto.getAccountId() != null ? new AccountId(dto.getAccountId()) : null)
-        .accountName(dto.getAccountName() != null ? new AccountName(dto.getAccountName()) : null)
-        .inquiryId(new InquiryId(dto.getId()))
-        .inquiryNo(new InquiryNo(dto.getInquiryNo()))
-        .subject(new InquirySubject(dto.getSubject()))
-        .body(new InquiryBody(dto.getBody()))
-        .statusKbn(dto.getStatusKbn())
-        .isReadByUser(dto.getIsReadByUser())
-        .createdAt(dto.getCreatedAt())
-        .replyModelList(InquiryReplyModelList.from(replyMstList))
-        .build();
-  }
-
-  /**
-   * 新規お問い合わせ登録リクエストとログイン中のアカウント番号からInquiryDetailModelを生成する
-   *
-   * <p>アカウント番号はリクエストボディではなくセッションから取得した値を用いる（他人になりすましたお問い合わせ登録を防ぐため）
-   *
-   * @param request {@link InquiryRegistRequest}
-   * @param accountNo ログイン中のアカウント番号
-   * @return {@link InquiryDetailModel}
-   */
-  public static InquiryDetailModel from(InquiryRegistRequest request, AccountNo accountNo) {
-    return InquiryDetailModel.builder()
-        .accountNo(accountNo)
-        .subject(new InquirySubject(request.getSubject()))
-        .body(new InquiryBody(request.getBody()))
-        .build();
-  }
 }

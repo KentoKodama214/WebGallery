@@ -98,6 +98,31 @@ public class RefreshTokenRepositoryImplTest {
 
     @Test
     @Order(2)
+    @DisplayName("正常系：無効化フラグ・更新日時が設定されている場合、そのまま転写されること")
+    void findByTokenHash_isRevokedAndUpdatedAtSet() {
+      OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(7);
+      OffsetDateTime updatedAt = OffsetDateTime.now();
+      RefreshToken mapperResult =
+          RefreshToken.builder()
+              .tokenId(1L)
+              .accountNo(1L)
+              .tokenHash("abc123hash")
+              .expiresAt(expiresAt)
+              .isRevoked(true)
+              .updatedAt(updatedAt)
+              .build();
+
+      doReturn(mapperResult).when(refreshTokenMapper).selectByTokenHash("abc123hash");
+
+      RefreshTokenModel actual =
+          refreshTokenRepositoryImpl.findByTokenHash(new TokenHash("abc123hash"));
+
+      assertTrue(actual.getIsRevoked().value());
+      assertEquals(updatedAt, actual.getUpdatedAt().value());
+    }
+
+    @Test
+    @Order(3)
     @DisplayName("正常系：該当するリフレッシュトークンが存在しない場合、nullを返す")
     void findByTokenHash_not_found() {
       doReturn(null).when(refreshTokenMapper).selectByTokenHash("nonexistent");

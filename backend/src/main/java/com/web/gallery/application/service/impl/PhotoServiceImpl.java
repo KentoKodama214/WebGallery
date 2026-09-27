@@ -1,5 +1,7 @@
 package com.web.gallery.application.service.impl;
 
+import com.web.gallery.application.aggregate.Photo;
+import com.web.gallery.application.config.PhotoConfig;
 import com.web.gallery.application.helper.GeoIpResolver;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.photo.FileModel;
@@ -25,7 +27,6 @@ import com.web.gallery.application.repository.PhotoListFilterLogRepository;
 import com.web.gallery.application.repository.PhotoMstRepository;
 import com.web.gallery.application.repository.PhotoViewLogRepository;
 import com.web.gallery.application.service.PhotoService;
-import com.web.gallery.domain.aggregate.Photo;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
@@ -39,13 +40,14 @@ import com.web.gallery.domain.model.common.GeoLocation;
 import com.web.gallery.domain.model.common.IpGeoLocation;
 import com.web.gallery.domain.model.photo.ImageFile;
 import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.MaxFileSizeMb;
 import com.web.gallery.domain.model.photo.PhotoCount;
 import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.PhotoUpperLimits;
 import com.web.gallery.domain.service.ImageFileValidationPolicy;
 import com.web.gallery.domain.service.LocationInputPolicy;
 import com.web.gallery.domain.service.PhotoFileExtensionPolicy;
 import com.web.gallery.domain.service.PhotoQuotaPolicy;
-import com.web.gallery.infrastructure.config.PhotoConfig;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -336,7 +338,8 @@ public class PhotoServiceImpl implements PhotoService {
       if (photoQuotaPolicy.isReached(
           accountModel.getAuthorityKbn(),
           registeredCount,
-          new PhotoCount((int) newRegistrationCount))) {
+          new PhotoCount((int) newRegistrationCount),
+          buildPhotoUpperLimits())) {
         throw ErrorEnum.REACHED_REGISTRATION_LIMIT.toException();
       }
     }
@@ -504,7 +507,8 @@ public class PhotoServiceImpl implements PhotoService {
       throw ErrorEnum.IMAGE_FILE_REQUIRED.toException();
     }
     // サイズ超過はバイナリ内容を読む前に弾く（大きなファイルの読み込みコストを避ける）
-    if (imageFileValidationPolicy.isSizeExceeded(imageFile)) {
+    if (imageFileValidationPolicy.isSizeExceeded(
+        imageFile, new MaxFileSizeMb(photoConfig.getMaxFileSizeMb()))) {
       throw ErrorEnum.IMAGE_FILE_SIZE_EXCEEDED.toException();
     }
     if (!imageFileValidationPolicy.isAllowedContentType(imageFile)) {
@@ -589,7 +593,8 @@ public class PhotoServiceImpl implements PhotoService {
     AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
     Integer count = photoMstRepository.count(accountNo);
 
-    return photoQuotaPolicy.isReached(accountModel.getAuthorityKbn(), new PhotoCount(count));
+    return photoQuotaPolicy.isReached(
+        accountModel.getAuthorityKbn(), new PhotoCount(count), buildPhotoUpperLimits());
   }
 
   @Override
@@ -598,7 +603,18 @@ public class PhotoServiceImpl implements PhotoService {
     AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
     Integer count = photoMstRepository.count(accountNo);
 
-    return photoQuotaPolicy.remainingCount(accountModel.getAuthorityKbn(), new PhotoCount(count));
+    return photoQuotaPolicy.remainingCount(
+        accountModel.getAuthorityKbn(), new PhotoCount(count), buildPhotoUpperLimits());
+  }
+
+  /**
+   * 設定値から権限区分ごとの写真登録枚数上限を組み立てる
+   *
+   * @return {@link PhotoUpperLimits}
+   */
+  private PhotoUpperLimits buildPhotoUpperLimits() {
+    return new PhotoUpperLimits(
+        photoConfig.getMiniUserUpperLimit(), photoConfig.getNormalUserUpperLimit());
   }
 
   /**

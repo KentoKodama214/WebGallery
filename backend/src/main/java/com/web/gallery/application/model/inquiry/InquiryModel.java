@@ -7,7 +7,6 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.inquiry.InquiryId;
 import com.web.gallery.domain.model.inquiry.InquiryNo;
 import com.web.gallery.domain.model.inquiry.InquirySubject;
-import com.web.gallery.infrastructure.persistence.dto.InquiryDto;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.NonNull;
@@ -51,24 +50,4 @@ public class InquiryModel {
 
   /** 作成日時 */
   @NonNull private OffsetDateTime createdAt;
-
-  /**
-   * InquiryDtoからInquiryModelを生成する
-   *
-   * @param dto {@link InquiryDto}
-   * @return {@link InquiryModel}
-   */
-  public static InquiryModel from(InquiryDto dto) {
-    return InquiryModel.builder()
-        .inquiryId(new InquiryId(dto.getId()))
-        .accountNo(new AccountNo(dto.getAccountNo()))
-        .accountId(dto.getAccountId() != null ? new AccountId(dto.getAccountId()) : null)
-        .accountName(dto.getAccountName() != null ? new AccountName(dto.getAccountName()) : null)
-        .inquiryNo(new InquiryNo(dto.getInquiryNo()))
-        .subject(new InquirySubject(dto.getSubject()))
-        .statusKbn(dto.getStatusKbn())
-        .isReadByUser(dto.getIsReadByUser())
-        .createdAt(dto.getCreatedAt())
-        .build();
-  }
 }

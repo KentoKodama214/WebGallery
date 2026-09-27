@@ -25,8 +25,8 @@ public class InquiryMstUpdateTarget {
   /**
    * 返信登録に伴う更新対象を生成する
    *
-   * <p>ステータス・ユーザー既読フラグの遷移先は{@link com.web.gallery.domain.aggregate.Inquiry#addReply}が 決定済みの{@link
-   * InquiryDetailModel}からそのまま読み取る（ビジネスルールを集約に一元化するため）
+   * <p>ステータス・ユーザー既読フラグの遷移先は{@link com.web.gallery.application.aggregate.Inquiry#addReply}が
+   * 決定済みの{@link InquiryDetailModel}からそのまま読み取る（ビジネスルールを集約に一元化するため）
    *
    * @param detail 返信追加後の{@link InquiryDetailModel}
    * @param adminAccountNo 返信した管理者のアカウント番号

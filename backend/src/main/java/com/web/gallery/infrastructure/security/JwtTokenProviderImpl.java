@@ -1,8 +1,8 @@
 package com.web.gallery.infrastructure.security;
 
 import com.web.gallery.application.AccountPrincipal;
+import com.web.gallery.application.config.JwtConfig;
 import com.web.gallery.application.helper.JwtTokenProvider;
-import com.web.gallery.infrastructure.config.JwtConfig;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

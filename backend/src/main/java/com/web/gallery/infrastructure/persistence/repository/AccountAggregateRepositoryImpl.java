@@ -1,8 +1,8 @@
 package com.web.gallery.infrastructure.persistence.repository;
 
+import com.web.gallery.application.aggregate.Account;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.repository.AccountAggregateRepository;
-import com.web.gallery.domain.aggregate.Account;
 import com.web.gallery.infrastructure.persistence.dto.PhotoDeletionDto;
 import com.web.gallery.infrastructure.persistence.entity.account.AccountAuthorityCondition;
 import com.web.gallery.infrastructure.persistence.entity.account.AccountCondition;

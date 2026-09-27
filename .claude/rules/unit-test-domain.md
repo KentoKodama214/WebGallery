@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/src/test/**/domain/**
+  - backend/src/test/**/domain/model/**
   - "!backend/src/test/**/integration/**"
 ---
 

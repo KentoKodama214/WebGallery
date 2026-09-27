@@ -1,6 +1,6 @@
 package com.web.gallery.application.repository;
 
-import com.web.gallery.domain.aggregate.Photo;
+import com.web.gallery.application.aggregate.Photo;
 import com.web.gallery.domain.exception.GalleryException;
 
 /** 写真集約（{@link Photo}）を永続化するRepositoryクラス */

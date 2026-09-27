@@ -1,5 +1,6 @@
 package com.web.gallery.presentation.controller;
 
+import com.web.gallery.application.config.JwtConfig;
 import com.web.gallery.application.model.auth.AuthTokenModel;
 import com.web.gallery.application.service.AuthService;
 import com.web.gallery.domain.constant.ApiRoutes;
@@ -11,7 +12,6 @@ import com.web.gallery.domain.exception.InvalidRefreshTokenException;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
-import com.web.gallery.infrastructure.config.JwtConfig;
 import com.web.gallery.infrastructure.web.ClientIpResolver;
 import com.web.gallery.presentation.controller.request.auth.AuthLoginRequest;
 import com.web.gallery.presentation.controller.response.auth.AuthErrorResponse;
