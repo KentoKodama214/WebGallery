@@ -6,7 +6,7 @@ WebGalleryは、Spring Bootベースのオニオンアーキテクチャ（domai
 
 ## ドキュメント一覧
 
-- [レイヤード・アーキテクチャ](./layered-architecture.md)
+- [オニオンアーキテクチャ](./onion-architecture.md)
 - [セキュリティ](./security.md)
 - [データソース構成（プライマリ／リードレプリカ）](./datasource.md)
 - [モジュール構成・依存関係（Spring Modulith）](../modulith/components.png)
