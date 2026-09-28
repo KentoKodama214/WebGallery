@@ -3,7 +3,7 @@ plugins {
 	id 'war'
 	id 'checkstyle'
 	id 'jacoco'
-	id 'com.diffplug.spotless' version '8.10.2'
+	id 'com.diffplug.spotless' version '8.10.3'
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'org.dddjava.jig-gradle-plugin' version '2026.8.1'
@@ -68,7 +68,7 @@ configurations {
 dependencyManagement {
 	imports {
 		mavenBom 'org.springframework.modulith:spring-modulith-bom:2.1.1'
-		mavenBom 'software.amazon.awssdk:bom:2.55.5'
+		mavenBom 'software.amazon.awssdk:bom:2.55.6'
 	}
 }
 
@@ -114,7 +114,7 @@ dependencies {
 	testImplementation 'org.mockito:mockito-junit-jupiter'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.springframework.modulith:spring-modulith-docs'
-	testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.0'
+	testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.1'
 }
 
 tasks.named('test') {
