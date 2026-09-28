@@ -123,6 +123,25 @@ APM に記録されやすく（`Authorization` と違い）マスク対象から
   個別失効させ、あるユーザーの軽微な編集で認証ホットパスのキャッシュ全体が飛ぶのを防ぐ。
   ただし更新前のアカウントIDが取得できなかった場合は旧IDを個別失効できないため、安全側に倒して全消去する。
 
+### アカウント削除（退会）時の関連データの扱い
+
+`AccountAggregateRepositoryImpl#delete` が、`common.account(account_no)` を参照する全テーブルから
+対象アカウントの行を外部キー依存順に削除する（いずれの外部キーも `ON DELETE RESTRICT` のため、
+削除漏れはアカウント本体の物理削除を外部キー違反で失敗させる。参照元テーブルの網羅は
+`AccountAggregateRepositoryImplIntegrationTest` が `pg_constraint` からの動的列挙で検証する）。
+これに加えて以下の2点を扱う。
+
+- **管理者として投稿したお問い合わせ返信が残っている場合は、削除そのものを拒否する**
+  （`AccountServiceImpl#deleteAccount` → `ErrorEnum.CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY`、400）。
+  `common.inquiry_reply_mst.admin_account_no` の参照を解消するために返信を巻き込んで削除すると、
+  **無関係な第三者のお問い合わせスレッドから回答本文だけが消え**、お問い合わせのステータス（回答済み）と
+  実データが食い違ってしまう。業務ルールとして削除を禁止し、運営側での対応に委ねる。
+- **外部キーを持たない「閲覧者側」のログは匿名化する**。`photo_view_log.account_no` /
+  `photo_list_filter_log.account_no`（閲覧者。未ログインを `0` で表すセンチネル値のため外部キーなし）は
+  削除漏れが外部キー違反にならないため、放置すると退会後も IP アドレス・国・地域・検索キーワードが
+  他人の写真のログとして残り続ける。所有者側の閲覧数・絞り込みの分析データは残したいため、行の削除ではなく
+  アカウント番号を `0` へ、個人データを空文字へ更新する（各 Mapper の `anonymizeViewer`）。
+
 ### バリデーションエラーのログ
 
 リクエストのバリデーション失敗をログ出力する際、機微フィールド（`password` /
@@ -131,16 +150,34 @@ APM に記録されやすく（`Authorization` と違い）マスク対象から
 
 ### 信頼するプロキシと発信元IPの復元
 
-`server.tomcat.remoteip` で `X-Forwarded-For` / `X-Forwarded-Proto` から発信元 IP・プロトコルを
-復元する。信頼する「直前の送信元 IP」の範囲は `server.tomcat.remoteip.internal-proxies`
-（環境変数 `TRUSTED_PROXIES`）で制御し、範囲外から届いた `X-Forwarded-For` は無視して TCP 接続の
-実 IP を使う（クライアントによる IP 詐称の防止）。既定値はループバック＋RFC1918（Tomcat 既定と同等）で、
-**本番では前段の ALB／リバースプロキシが存在するサブネットの CIDR だけに狭める**こと。加えて、
-アプリコンテナはネットワーク的に ALB 経由でしか到達できない構成にする。
+`infrastructure/web/ForwardedForFilter` が `X-Forwarded-For` から発信元 IP を復元する。信頼する
+「直前の送信元 IP」の範囲は `app.forwarded.trusted-proxies`（環境変数 `TRUSTED_PROXIES`、正規表現）で
+制御し、範囲外から届いた `X-Forwarded-For` は無視して TCP 接続の実 IP を使う（クライアントによる
+IP 詐称の防止）。復元後の値は `HttpServletRequestWrapper#getRemoteAddr` として後続のフィルタ・
+コントローラへ渡り、`ClientIpResolver` / `RateLimitFilter` がそれを参照する。既定値はループバック＋
+RFC1918 で、**本番では前段の ALB／リバースプロキシが存在するサブネットの CIDR だけに狭める**こと。
+加えて、アプリコンテナはネットワーク的に ALB 経由でしか到達できない構成にする。
+
+> **Tomcat の `RemoteIpValve` を使わない理由**
+> 本アプリは WAR を外部 Tomcat へデプロイする構成（`ServletInitializer` / `build.gradle` の `war`
+> プラグイン）のため、Spring Boot の `server.tomcat.remoteip.*` と `server.forward-headers-strategy`
+> は**埋め込みサーバー（`ConfigurableTomcatWebServerFactory`）向けの設定であり本番では読まれない**。
+> 設定した気になって保護が効かない状態（レート制限が前段 IP 単位に退化し、ログイン履歴・GeoIP も
+> 前段 IP で記録される）を避けるため、コンテナ構成に依存しないアプリ側のフィルターで実装している。
+> これにより WAR・`bootRun`・テストで同一の挙動になる。
+> `X-Forwarded-Proto` は扱っていない（`request.isSecure()` / `getScheme()` に依存する処理が無く、
+> リフレッシュトークン Cookie の `Secure` 属性は常に付与しているため）。
+
+復元アルゴリズムは `RemoteIpValve` と同等で、`X-Forwarded-For` を**右端から左へ**辿り、信頼できる
+プロキシに一致する要素を読み飛ばして最初に現れた要素を実クライアント IP とする（前段は追記する仕様
+のため、右側が信頼境界に近い）。全要素が信頼できるプロキシだった場合は差し替えない。
 
 本番プロファイルでは既定値のまま起動できないよう、`application-prod.yml` が
-`internal-proxies: ${TRUSTED_PROXIES}`（既定値なし）を指定し、さらに
-`ProdConfigValidationRunner` が値の妥当性（未設定・catch-all の禁止）を検証する。
+`app.forwarded.trusted-proxies: ${TRUSTED_PROXIES}`（既定値なし）を指定し、さらに
+`ProdConfigValidationRunner` が値の妥当性を検証する。検証は文字列の照合ではなく、値を実際に
+`Pattern` へコンパイルして代表的なグローバル IP（`8.8.8.8` / `203.0.113.1` / `2001:db8::1`）に
+一致しないことを確かめる方式とする（`.*` と等価な表記は `(.*)` / `^.*$` / `[0-9.]*` など無数にあり、
+禁止文字列のリストでは網羅できないため）。正規表現として不正な値もここで検出する。
 
 ### バックエンドのレスポンスヘッダーと CORS
 
@@ -177,9 +214,9 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 - `app.cors.allowed-origins`（環境変数 `FRONTEND_ORIGIN`）が 1 件以上・すべて `https://` の
   絶対オリジン・ワイルドカード（`*`）やパス・クエリを含まないこと
 - `app.s3.endpoint` / `app.s3.public-base-url` が設定されている場合、`https://` であること（平文通信の禁止）
-- `server.tomcat.remoteip.internal-proxies`（環境変数 `TRUSTED_PROXIES`）が設定済みで、かつ任意のIPに
-  一致する catch-all（`.*` / `.+` 等）でないこと。`application-prod.yml` では既定値を設けず
-  `${TRUSTED_PROXIES}` としているため、未設定なら起動時のプレースホルダ解決の時点で失敗する（二重の防御）
+- `app.forwarded.trusted-proxies`（環境変数 `TRUSTED_PROXIES`）が設定済みで、正規表現として妥当、かつ
+  代表的なグローバル IP に一致しないこと。`application-prod.yml` では既定値を設けず `${TRUSTED_PROXIES}`
+  としているため、未設定なら起動時のプレースホルダ解決の時点で失敗する（二重の防御）
 
 `JWT_SECRET` の 256bit 長チェックは `infrastructure/security/JwtTokenProviderImpl` の `@PostConstruct` で全プロファイル共通に行う。
 `prod` プロファイルでは OpenAPI ドキュメント（`/scalar`・`/v3/api-docs`）用の `SecurityFilterChain` を
@@ -196,7 +233,9 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 - 新規アップロード時は安全側に倒し、フロントのトグルは既定 OFF（非公開）。写真登録・編集画面で
   ユーザーが公開/非公開を選択できる。
 - DB カラムも `DEFAULT false`（非公開）とする。
-- フラグの値自体はレスポンスに含まれる（`isLocationPublic`）。所有者の編集画面での現在値表示に用いる。
+- フラグの値（`isLocationPublic`）をレスポンスに含めるのは**所有者本人のみ**（編集画面での現在値表示に
+  用いる）。非公開かつ他人の写真では `null` を返す。値を返すと「撮影場所が隠された写真」であること自体が
+  分かってしまうため。
 
 > **制限**: この制御は**写真詳細 API のレスポンス**に対するものであり、S3 に保存された画像ファイル
 > そのものは加工していない。スマートフォン等で撮影した JPEG には EXIF の GPS 情報が埋め込まれている
@@ -286,6 +325,9 @@ nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ�
   （S3 エンドポイントがコンテナ内部ホスト名の場合等）では、`S3Presigner` のエンドポイント自体に
   `app.s3.public-base-url` を設定する（`infrastructure/config/S3ClientConfig#s3Presigner`）。
   アップロード等のサーバー間通信を担う `S3Client` は従来どおり内部向けの `app.s3.endpoint` を使う。
+  **`app.s3.public-base-url` は「S3 互換 API 自身の公開ホスト」であることが前提**。CloudFront 等の CDN を
+  前段に挟むホストを設定すると、CDN ホストで計算した署名をオリジンの S3 が検証できず 403 になる。
+  CDN 経由で配信する場合は CDN 側の署名機構（署名付き Cookie / URL）へ移行する必要がある。
 - 削除時は、クライアント送信の `imageFilePath` を信用せず、写真番号で DB から実キーを引いて削除対象を決める
   （パス汚染・他オブジェクトの巻き込み削除の防止）。
 - フロントの `sanitizeImageUrl`（`src/lib/url.ts`）と CSP `img-src` は、本番では `https:` かつ

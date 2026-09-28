@@ -91,6 +91,10 @@
 		DELETE FROM
 			photo.photo_tag_mst
 		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード。
+			     抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接組み立てられた
+			     場合でも1件も消さないようにする -->
+			<if test="accountNo == null and photoNo == null and tagNo == null and tagJapaneseName == null and tagEnglishName == null"> AND 1 = 0</if>
 			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
 			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
 			<if test="tagNo != null"> AND tag_no = #{tagNo}</if>

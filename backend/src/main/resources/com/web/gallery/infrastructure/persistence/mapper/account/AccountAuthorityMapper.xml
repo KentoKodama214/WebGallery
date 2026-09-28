@@ -41,6 +41,10 @@
 		DELETE FROM
 			common.account_authority
 		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード。
+			     抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接組み立てられた
+			     場合でも1件も消さないようにする -->
+			<if test="accountNo == null"> AND 1 = 0</if>
 			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
 		</where>
 	</delete>

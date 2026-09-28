@@ -34,10 +34,32 @@
 		)
 	</insert>
 
+	<!--
+		退会したアカウントが「閲覧者」として残したログを匿名化する（詳細は PhotoViewLogMapper.xml の
+		anonymizeViewer と同じ理由）。検索キーワード（tag_list）も本人の関心を示す個人データのため消去する
+	-->
+	<update id="anonymizeViewer" parameterType="Long">
+		UPDATE
+			photo.photo_list_filter_log
+		SET
+			account_no = 0,
+			tag_list = '',
+			referer = '',
+			ip_address = '',
+			country = '',
+			region = ''
+		WHERE
+			account_no = #{accountNo}
+	</update>
+
 	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PhotoListFilterLogCondition">
 		DELETE FROM
 			photo.photo_list_filter_log
 		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード。
+			     抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接組み立てられた
+			     場合でも1件も消さないようにする -->
+			<if test="photoAccountNo == null"> AND 1 = 0</if>
 			<if test="photoAccountNo != null"> AND photo_account_no = #{photoAccountNo}</if>
 		</where>
 	</delete>
