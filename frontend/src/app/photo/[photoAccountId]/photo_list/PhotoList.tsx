@@ -826,7 +826,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       </div>
 
       {/* 写真コンテナ（フィルターパネル展開中は inert で不活性化する） */}
-      <div className={styles.photosContainer} inert={isFilterOpen}>
+      <div className={styles.photosContainer} inert={isFilterOpen} data-testid="photos-container">
         {/* フィルタートリガー
             クリック可能な範囲をアイコンとフィルター条件テキストだけに限定するため、
             レイアウト用の行（filterTriggerRow）と操作要素（filterTrigger）を分ける。

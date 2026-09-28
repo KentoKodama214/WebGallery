@@ -134,8 +134,10 @@ test.describe("写真一覧ページ", () => {
     await expect(filterPanel).toHaveAttribute("aria-modal", "true");
     // パネル内の最初のフォーカス可能要素（閉じるボタン）へフォーカスが移る
     await expect(page.getByTestId("filter-close-button")).toBeFocused();
-    // 背面（トリガーを含む写真コンテナ）は inert で不活性化される
-    await expect(filterTrigger.locator("xpath=..")).toHaveAttribute("inert", "");
+    // 背面（トリガーを含む写真コンテナ）は inert で不活性化される。
+    // トリガーの親要素はクリック範囲を限定するための行（filterTriggerRow）であり
+    // 写真コンテナそのものではないため、コンテナを直接指定して検証する
+    await expect(page.getByTestId("photos-container")).toHaveAttribute("inert", "");
 
     await page.keyboard.press("Escape");
     await expect(filterPanel).not.toHaveClass(/filterOpen/);
