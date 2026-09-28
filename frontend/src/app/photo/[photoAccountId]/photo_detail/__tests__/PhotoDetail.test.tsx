@@ -131,6 +131,47 @@ describe("PhotoDetail", () => {
     });
   });
 
+  it("英語タイトル・撮影日時／撮影場所・EXIF情報は16pxで表示されること", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+
+    render(
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Photo")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Test Photo")).toHaveStyle({ fontSize: "16px" });
+    expect(screen.getByText("2024/03/15 10:30 東京タワー")).toHaveStyle({
+      fontSize: "16px",
+    });
+    expect(screen.getByText("50mm F1.8 0.01sec iso400")).toHaveStyle({
+      fontSize: "16px",
+    });
+  });
+
+  it("英語タイトルは長い文字列でも折り返されること", async () => {
+    const longTitle = "A".repeat(200);
+    mockGetPhotoDetail.mockResolvedValue({
+      ...samplePhoto,
+      photoEnglishTitle: longTitle,
+    });
+
+    render(
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(longTitle)).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(longTitle)).toHaveStyle({
+      overflowWrap: "break-word",
+      wordBreak: "break-all",
+    });
+  });
+
   it("タグが表示されること", async () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 

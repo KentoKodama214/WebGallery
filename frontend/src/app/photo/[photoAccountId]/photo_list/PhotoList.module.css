@@ -14,7 +14,10 @@
 .filterOverlay::before {
   content: "";
   background: lightgray;
-  left: -55%;
+  /* 抽出項目（filterCloseButton / filterForm）と移動距離を揃えるため、
+     パネル幅と同じ 300px だけ左外へ退避させる。`-55%`（ビューポート幅基準）だと
+     移動距離が抽出項目と食い違い、背景だけが先行してスライドして見えてしまう */
+  left: -300px;
   top: 0;
   width: 300px;
   height: 100%;
@@ -44,6 +47,11 @@
   left: 0;
 }
 
+.filterOpen .filterCloseButton,
+.filterOpen .filterForm {
+  transform: translateX(0);
+}
+
 /* 閉じるボタン（X形） */
 .filterCloseButton {
   position: relative;
@@ -53,6 +61,10 @@
   width: 35px;
   z-index: 9999;
   cursor: pointer;
+  /* パネル背景（filterOverlay::before）と同じ距離・同じイージングでスライドさせる。
+     `left` は配置に使っているため、移動には transform を使う */
+  transform: translateX(-300px);
+  transition: transform 0.35s ease;
 }
 
 .filterCloseButton span {
@@ -89,6 +101,9 @@
   width: 260px;
   margin: 30px 20px;
   z-index: 10000;
+  /* パネル背景と同じ距離・同じイージングでスライドさせる */
+  transform: translateX(-300px);
+  transition: transform 0.35s ease;
 }
 
 .filterForm select,
@@ -120,11 +135,18 @@
   box-shadow: 0px 1px 3px #2196f3;
 }
 
-/* フィルタートリガー（アイコン+テキスト） */
-.filterTrigger {
+/* フィルタートリガーの行（レイアウトのみ。クリック操作は持たせない） */
+.filterTriggerRow {
   display: flex;
   padding-top: 60px;
   margin: 0 auto 20px auto;
+}
+
+/* フィルタートリガー（アイコン+テキスト）
+   `inline-flex` で幅を内容（アイコンとフィルター条件テキスト）に合わせ、
+   テキストのない右側の余白がクリック範囲に含まれないようにする */
+.filterTrigger {
+  display: inline-flex;
   cursor: pointer;
 }
 
@@ -138,7 +160,7 @@
 
 .filterText {
   height: 25px;
-  margin: 5px auto 5px 5px;
+  margin: 5px 0 5px 5px;
   color: white;
 }
 

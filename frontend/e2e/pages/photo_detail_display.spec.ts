@@ -123,6 +123,11 @@ test.describe("写真詳細ページ（英語タイトル・EXIF設定テキス�
     await page.getByTestId("submit-button").click();
     await expect(page.getByTestId("success-modal")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "閉じる" }).click();
+    // 一覧への遷移完了を待たずに詳細リンクを探すと、写真設定ページのまま
+    // 0件と判定されて失敗するため、URLの遷移を待ってから探す
+    await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list$`), {
+      timeout: 10000,
+    });
 
     const detailLinks = page.locator('a[href*="/photo_detail?photoNo="]');
     await expect(detailLinks).toHaveCount(1, { timeout: 10000 });
@@ -134,6 +139,99 @@ test.describe("写真詳細ページ（英語タイトル・EXIF設定テキス�
     await expect(page).toHaveTitle(/写真詳細/);
     await expect(page.getByText("Exif Display Test Photo")).toBeVisible();
     await expect(page.getByText("50mm F1.8 0.005sec iso200")).toBeVisible();
+  });
+
+  test("英語タイトル・撮影日時／撮影場所・EXIF設定テキストが16pxで表示されること", async ({
+    page,
+  }, testInfo) => {
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+    await registerAccount(page, accountId, "E2E Font Size Detail User");
+    await login(page, accountId);
+
+    await page.goto(`/photo/${accountId}/photo_setting`);
+    await expect(page.getByTestId("image-input")).toBeAttached();
+    await page.getByTestId("image-input").setInputFiles(PHOTO_1);
+    await expect(page.getByTestId("image-preview-item-0")).toBeVisible();
+    await page.getByTestId("japanese-title-input").fill("フォントサイズ検証用写真");
+    await page.getByTestId("english-title-input").fill("Font Size Test Photo");
+    // 撮影日時はアップロード画像のEXIFに依存しないよう明示的に指定する
+    await page.getByTestId("photo-at-input").fill("2024-03-15T10:30");
+    await page.getByTestId("focal-length-input").fill("35");
+    await page.getByTestId("f-value-input").fill("2.8");
+    await page.getByTestId("shutter-speed-input").fill("0.002");
+    await page.getByTestId("iso-input").fill("100");
+
+    await page.getByTestId("submit-button").click();
+    await expect(page.getByTestId("success-modal")).toBeVisible({ timeout: 10000 });
+    await page.getByRole("button", { name: "閉じる" }).click();
+    // 一覧への遷移完了を待たずに詳細リンクを探すと、写真設定ページのまま
+    // 0件と判定されて失敗するため、URLの遷移を待ってから探す
+    await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list$`), {
+      timeout: 10000,
+    });
+
+    const detailLinks = page.locator('a[href*="/photo_detail?photoNo="]');
+    await expect(detailLinks).toHaveCount(1, { timeout: 10000 });
+    await page.goto((await detailLinks.first().getAttribute("href"))!);
+
+    const englishTitle = page.getByText("Font Size Test Photo");
+    const photoAtText = page.getByText("2024/03/15 10:30");
+    const exifText = page.getByText("35mm F2.8 0.002sec iso100");
+    await expect(englishTitle).toBeVisible();
+    await expect(photoAtText).toBeVisible();
+    await expect(exifText).toBeVisible();
+    expect(await englishTitle.evaluate((el) => getComputedStyle(el).fontSize)).toBe("16px");
+    expect(await photoAtText.evaluate((el) => getComputedStyle(el).fontSize)).toBe("16px");
+    expect(await exifText.evaluate((el) => getComputedStyle(el).fontSize)).toBe("16px");
+  });
+
+  test("英語タイトルは空白を含まない長い文字列でも折り返されること", async ({
+    page,
+  }, testInfo) => {
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+    await registerAccount(page, accountId, "E2E Title Wrap Detail User");
+    await login(page, accountId);
+
+    // 英語タイトルは最大100文字（`PhotoSaveRequest`）。空白を含まないため
+    // 折り返し指定がないとコンテナ幅をはみ出して横スクロールが発生する
+    const longTitle = "A".repeat(100);
+
+    await page.goto(`/photo/${accountId}/photo_setting`);
+    await expect(page.getByTestId("image-input")).toBeAttached();
+    await page.getByTestId("image-input").setInputFiles(PHOTO_1);
+    await expect(page.getByTestId("image-preview-item-0")).toBeVisible();
+    await page.getByTestId("japanese-title-input").fill("英語タイトル折り返し検証用写真");
+    await page.getByTestId("english-title-input").fill(longTitle);
+
+    await page.getByTestId("submit-button").click();
+    await expect(page.getByTestId("success-modal")).toBeVisible({ timeout: 10000 });
+    await page.getByRole("button", { name: "閉じる" }).click();
+    // 一覧への遷移完了を待たずに詳細リンクを探すと、写真設定ページのまま
+    // 0件と判定されて失敗するため、URLの遷移を待ってから探す
+    await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list$`), {
+      timeout: 10000,
+    });
+
+    const detailLinks = page.locator('a[href*="/photo_detail?photoNo="]');
+    await expect(detailLinks).toHaveCount(1, { timeout: 10000 });
+    // 既定のビューポート幅では100文字がちょうど1行に収まりうるため、
+    // 折り返しが必ず発生する幅に狭めてから詳細ページを表示する
+    await page.setViewportSize({ width: 600, height: 800 });
+    await page.goto((await detailLinks.first().getAttribute("href"))!);
+
+    const englishTitle = page.getByText(longTitle);
+    await expect(englishTitle).toBeVisible();
+    // 複数行に折り返されており（行ごとに1つのrectになる）、コンテナ幅も超えていない
+    const { lineCount, isWithinContainer } = await englishTitle.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return {
+        lineCount: range.getClientRects().length,
+        isWithinContainer: el.scrollWidth <= el.clientWidth,
+      };
+    });
+    expect(lineCount).toBeGreaterThan(1);
+    expect(isWithinContainer).toBe(true);
   });
 
   test("アクセシビリティ違反がないこと", async ({ page }, testInfo) => {
