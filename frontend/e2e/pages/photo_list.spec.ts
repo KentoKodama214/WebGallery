@@ -129,8 +129,13 @@ test.describe("写真一覧ページ", () => {
 
     await filterTrigger.click();
     await expect(filterPanel).toHaveClass(/filterOpen/);
+    // 挙動がモーダルダイアログと同じであることを示す属性が付いていること
+    await expect(filterPanel).toHaveAttribute("role", "dialog");
+    await expect(filterPanel).toHaveAttribute("aria-modal", "true");
     // パネル内の最初のフォーカス可能要素（閉じるボタン）へフォーカスが移る
     await expect(page.getByTestId("filter-close-button")).toBeFocused();
+    // 背面（トリガーを含む写真コンテナ）は inert で不活性化される
+    await expect(filterTrigger.locator("xpath=..")).toHaveAttribute("inert", "");
 
     await page.keyboard.press("Escape");
     await expect(filterPanel).not.toHaveClass(/filterOpen/);

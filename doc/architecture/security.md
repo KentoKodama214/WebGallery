@@ -205,6 +205,13 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 > その旨を明示し、アップロード前に画像側の位置情報を削除するよう案内している。
 > 画像からの EXIF 除去（サーバー側での再エンコード等）は未実装。
 
+撮影場所の入力補助（`LocationMapPicker`）は、住所の自動補完のため **ブラウザから OpenStreetMap
+Nominatim（`https://nominatim.openstreetmap.org`）へクリック地点の緯度・経度を送信する**。
+第三者への位置情報の送信になるため、写真登録・編集画面の地図の説明文でその旨を明示している
+（`Referrer-Policy: strict-origin-when-cross-origin` によりページ URL 自体は送信されない）。
+緯度・経度は入力欄の `step="0.0001"` と DB の `decimal(11,4)` に合わせて小数第4位へ丸めて反映する
+（丸めないと保存時に DB 側で黙って丸められ、表示値と保存値が食い違う）。
+
 ### EXIF情報（撮影メタデータ）の未入力項目の補完
 
 写真新規一括登録（`POST /api/v1/accounts/{id}/photos`）の焦点距離・F値・シャッタースピード・ISOは、
@@ -237,7 +244,11 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
   クライアントが自由に指定できる値になる（左端を信頼するとレート制限の回避・ログイン履歴や
   GeoIP の偽装が成立する）。そのため「信頼境界の直前」＝**右端から `TRUSTED_PROXY_HOPS` 個目**
   （既定 1＝右端）を採用する。CloudFront + ALB のように信頼できる前段を多段構成にする場合は、
-  環境変数 `TRUSTED_PROXY_HOPS` にその段数を設定する
+  環境変数 `TRUSTED_PROXY_HOPS` にその段数を設定する。
+  チェーンが `TRUSTED_PROXY_HOPS` に届かない場合（前段を経由していない＝ローカル実行、
+  CloudFront をバイパスして ALB を直叩き、VPC 内からの直接到達等）は**左端へフォールバックせず
+  `X-Forwarded-For` を付与しない**（fail-closed）。左端は攻撃者が選べる値なのでフォールバックは
+  IP 詐称の入口になる。付与しなければバックエンドは TCP 接続元 IP を使うため安全側に倒れる
 - `Location` の正規化（バックエンド絶対 URL は相対化、外部 URL・プロトコル相対は削除）
 - バックエンドへ同時に中継するリクエスト数の上限（`PROXY_MAX_CONCURRENCY`、既定 100）。
   超過分は待たせず `503`＋`Retry-After` で突き放す（ロードシェディング。最大 6MB を
@@ -264,7 +275,12 @@ nonce 方式は SSR 時にリクエストヘッダーから nonce を読むた�
 nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ移行する必要がある。
 
 写真詳細の撮影場所地図（Google Maps の iframe 埋め込み）表示のため、`frame-src` に
-`https://maps.google.com` / `https://www.google.com` を許可している。
+`https://maps.google.com/maps` / `https://www.google.com/maps/embed` を許可している。
+`buildGoogleMapEmbedUrl`（`src/lib/url.ts`）が組み立てる `maps.google.com/maps?...&output=embed` は
+301 で `www.google.com/maps/embed?...` へ転送され、CSP は iframe 内の遷移先にも適用されるため両方が必要。
+サイト全体（`https://www.google.com`）ではなくパス単位に絞っている（CSP のパス照合は末尾に `/` が
+無ければ完全一致。クエリ文字列は照合対象外）。埋め込み URL の組み立てを変える場合は `frame-src` も
+併せて見直すこと。
 
 ### 画像ストレージと署名付きURL
 

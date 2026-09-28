@@ -110,6 +110,7 @@ export function AdminInquiryDetail({ inquiryId }: AdminInquiryDetailProps) {
   if (!isAuthenticated || !isAdmin) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
+        <h1 className="sr-only">お問い合わせ詳細（管理者）</h1>
         <p className="text-red-500">管理者権限がありません。</p>
       </div>
     );
@@ -118,6 +119,7 @@ export function AdminInquiryDetail({ inquiryId }: AdminInquiryDetailProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
+        <h1 className="sr-only">お問い合わせ詳細（管理者）</h1>
         <p>読み込み中...</p>
       </div>
     );
@@ -126,6 +128,7 @@ export function AdminInquiryDetail({ inquiryId }: AdminInquiryDetailProps) {
   if (error || !detail) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
+        <h1 className="sr-only">お問い合わせ詳細（管理者）</h1>
         <p className="text-red-500">{error ?? "お問い合わせが見つかりません"}</p>
         <Link href="/admin/inquiry_management" className="text-[#2196F3] hover:underline">
           お問い合わせ管理へ戻る
@@ -136,16 +139,20 @@ export function AdminInquiryDetail({ inquiryId }: AdminInquiryDetailProps) {
 
   return (
     <div className="flex flex-col items-center py-8 gap-4 px-4">
+      {/* 見出しレベル1はどの表示状態でも1つ存在させる（件名はh2のため、ページ見出しはsr-onlyで補う） */}
+      <h1 className="sr-only">お問い合わせ詳細（管理者）</h1>
       <div className="w-full max-w-[700px]">
         <Link href="/admin/inquiry_management" className="text-[#2196F3] hover:underline text-sm">
           &larr; お問い合わせ管理へ戻る
         </Link>
 
-        {message && (
-          <p role="status" className="text-green-600 font-medium mt-2">
-            {message}
-          </p>
-        )}
+        {/*
+          ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため、常設して
+          中身だけを差し替える（`role="status"` は polite。リージョンが先に存在していることが前提）
+        */}
+        <p role="status" className="text-green-600 font-medium mt-2 empty:hidden">
+          {message}
+        </p>
 
         <div className="bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-6 mt-4">
           <div className="flex justify-between items-start mb-2">

@@ -35,6 +35,21 @@ type LocationMode = "none" | "existing" | "new";
 /** 新規一括登録で1回に選択できる写真の最大枚数（バックエンドのConsts.PHOTO_BULK_REGIST_MAX_SIZEと合わせる） */
 const MAX_BULK_REGIST_SIZE = 10;
 
+/**
+ * 入力文字列を有限数へ変換する
+ *
+ * 入力途中の値（空文字・`-`・`1e` 等）は `Number()` で NaN になり、そのまま Leaflet へ渡すと
+ * `Invalid LatLng object` で例外になるため、有限数でなければ null を返す
+ *
+ * @param value 入力欄の文字列
+ * @returns 有限数、変換できなければ null
+ */
+function toFiniteOrNull(value: string): number | null {
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 interface PhotoSettingFormProps {
   photoAccountId: string;
   accountNo?: number;
@@ -376,6 +391,17 @@ export function PhotoSettingForm({
       }
       if (!newLatitude || !newLongitude) {
         errors.push("地図をクリックするか、緯度・経度を入力してください");
+      } else {
+        // 範囲外・桁数過多の値はDBの列定義（decimal(11,4)）を超えてサーバーエラーになるため、
+        // 送信前に弾く（バックエンド側のBean Validationと二重で守る）
+        const latitudeValue = Number(newLatitude);
+        const longitudeValue = Number(newLongitude);
+        if (!Number.isFinite(latitudeValue) || latitudeValue < -90 || latitudeValue > 90) {
+          errors.push("緯度は -90 から 90 の範囲で入力してください");
+        }
+        if (!Number.isFinite(longitudeValue) || longitudeValue < -180 || longitudeValue > 180) {
+          errors.push("経度は -180 から 180 の範囲で入力してください");
+        }
       }
     }
     return errors;
@@ -885,16 +911,20 @@ export function PhotoSettingForm({
                 </p>
                 <p id="location-map-picker-help" className="text-xs text-gray-400">
                   地図をクリックすると緯度・経度が自動入力されます。キーボード操作の場合や、うまく取得できない場合は、下の緯度・経度を直接入力してください。
+                  住所の自動取得のため、クリックした地点の緯度・経度を OpenStreetMap
+                  （Nominatim）へ送信します。
                 </p>
+                {/* onAddressResolved で住所だけを反映する。座標を再設定すると、逆ジオコーディングの
+                    通信中に緯度・経度を手入力していた場合にクリック位置へ巻き戻してしまう */}
                 <LocationMapPicker
-                  latitude={newLatitude ? Number(newLatitude) : null}
-                  longitude={newLongitude ? Number(newLongitude) : null}
+                  latitude={toFiniteOrNull(newLatitude)}
+                  longitude={toFiniteOrNull(newLongitude)}
                   describedById="location-map-picker-help"
-                  onPick={(lat, lng, address) => {
+                  onPick={(lat, lng) => {
                     setNewLatitude(String(lat));
                     setNewLongitude(String(lng));
-                    if (address) setNewAddress(address);
                   }}
+                  onAddressResolved={(address) => setNewAddress(address)}
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <div>
@@ -908,6 +938,8 @@ export function PhotoSettingForm({
                       id="new-location-latitude"
                       type="number"
                       step="0.0001"
+                      min={-90}
+                      max={90}
                       value={newLatitude}
                       onChange={(e) => setNewLatitude(e.target.value)}
                       aria-required="true"
@@ -926,6 +958,8 @@ export function PhotoSettingForm({
                       id="new-location-longitude"
                       type="number"
                       step="0.0001"
+                      min={-180}
+                      max={180}
                       value={newLongitude}
                       onChange={(e) => setNewLongitude(e.target.value)}
                       aria-required="true"
@@ -988,7 +1022,7 @@ export function PhotoSettingForm({
           {/* タグ */}
           <fieldset className="mb-6">
             <legend className="text-sm text-gray-400 mb-2">タグ</legend>
-            {tags.map((tag) => (
+            {tags.map((tag, index) => (
               <div
                 key={tag.tagNo}
                 className="flex gap-2 mb-2"
@@ -1001,7 +1035,7 @@ export function PhotoSettingForm({
                     handleTagChange(tag.tagNo, "tagJapaneseName", e.target.value)
                   }
                   placeholder="タグ名（日本語）*"
-                  aria-label="タグ名（日本語）"
+                  aria-label={`${index + 1}件目のタグ名（日本語）`}
                   className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
                   data-testid={`tag-japanese-${tag.tagNo}`}
                 />
@@ -1012,7 +1046,7 @@ export function PhotoSettingForm({
                     handleTagChange(tag.tagNo, "tagEnglishName", e.target.value)
                   }
                   placeholder="タグ名（英語）"
-                  aria-label="タグ名（英語）"
+                  aria-label={`${index + 1}件目のタグ名（英語）`}
                   className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
                   data-testid={`tag-english-${tag.tagNo}`}
                 />
@@ -1020,6 +1054,7 @@ export function PhotoSettingForm({
                   type="button"
                   onClick={() => handleRemoveTag(tag.tagNo)}
                   className="bg-red-600 text-white px-3 border-none cursor-pointer hover:bg-red-700"
+                  aria-label={`${index + 1}件目のタグを削除`}
                   data-testid={`remove-tag-${tag.tagNo}`}
                 >
                   ×

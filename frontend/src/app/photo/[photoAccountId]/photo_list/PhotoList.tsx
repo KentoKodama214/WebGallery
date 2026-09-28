@@ -359,7 +359,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
    * パネルは常にDOM上に存在し、閉じている間は`visibility: hidden`で不可視・フォーカス不能に
    * なっている。開いている間だけ、内部へフォーカスを移し、Escapeで閉じ、Tabをパネル内で循環させる
    * （`ModalDialog`/`useDialog`と同じ扱いにするため。パネルは条件付きレンダリングではないので
-   * このコンポーネント側で制御する）
+   * このコンポーネント側で制御する）。パネル外は`inert`で不活性化する（描画側で制御）
    */
   useEffect(() => {
     if (!isFilterOpen) return;
@@ -368,14 +368,19 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     // トリガーはこのコンポーネントがマウントされている間は同一DOMノードのため、
     // effect実行時に控えてクリーンアップ（＝パネルを閉じた時）のフォーカス復帰に使う
     const trigger = filterTriggerRef.current;
-    const focusables = panel
-      ? Array.from(
-          panel.querySelectorAll<HTMLElement>(
-            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+    // パネル内のコントロールは認証状態の確定（isOwner / isAuthenticated）で増減するため、
+    // 展開時に一度作ったリストを使い回すとTabがパネル外へ抜ける。キー入力ごとに取り直す
+    const getFocusables = () =>
+      panel
+        ? Array.from(
+            panel.querySelectorAll<HTMLElement>(
+              'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
           )
-        )
-      : [];
-    focusables[0]?.focus();
+        : [];
+
+    getFocusables()[0]?.focus();
 
     const handleKeyDown = (e: globalThis.KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -384,7 +389,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         setIsFilterOpen(false);
         return;
       }
-      if (e.key !== "Tab" || focusables.length === 0) return;
+      if (e.key !== "Tab") return;
+      const focusables = getFocusables();
+      if (focusables.length === 0) return;
       const first = focusables[0];
       const last = focusables[focusables.length - 1];
       if (e.shiftKey && document.activeElement === first) {
@@ -718,12 +725,21 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
 
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
-      <h1 className="sr-only">写真一覧</h1>
+      <h1 className="sr-only" inert={isFilterOpen}>
+        写真一覧
+      </h1>
 
-      {/* フィルターオーバーレイ */}
+      {/*
+        フィルターオーバーレイ。展開中は画面全体を覆いEscape・Tab循環・フォーカス復帰を行うため、
+        挙動はモーダルダイアログと同じ。role/aria-modalを与え、背面は inert で不活性化して
+        スクリーンリーダーのブラウズモードでも背面へ回り込めないようにする
+      */}
       <div
         ref={filterPanelRef}
         id="photo-list-filter-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="写真の絞り込み"
         className={`${styles.filterOverlay} ${isFilterOpen ? styles.filterOpen : ""}`}
         data-testid="filter-panel"
       >
@@ -809,8 +825,8 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         </div>
       </div>
 
-      {/* 写真コンテナ */}
-      <div className={styles.photosContainer}>
+      {/* 写真コンテナ（フィルターパネル展開中は inert で不活性化する） */}
+      <div className={styles.photosContainer} inert={isFilterOpen}>
         {/* フィルタートリガー
             クリック可能な範囲をアイコンとフィルター条件テキストだけに限定するため、
             レイアウト用の行（filterTriggerRow）と操作要素（filterTrigger）を分ける。
@@ -969,9 +985,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         )}
       </div>
 
-      {/* もっと見るボタン */}
+      {/* もっと見るボタン（フィルターパネル展開中は inert で不活性化する） */}
       {!isLoading && !error && !isLast && (
-        <div className={styles.showMore}>
+        <div className={styles.showMore} inert={isFilterOpen}>
           <button
             type="button"
             className={styles.showMoreText}
@@ -989,6 +1005,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         <Link
           href={`/photo/${photoAccountId}/photo_setting`}
           className={styles.photoSettingButton}
+          inert={isFilterOpen}
         >
           ＋写真追加
         </Link>
