@@ -22,6 +22,12 @@ export default defineConfig({
   globalSetup: require.resolve("./e2e/global-setup"),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
+  // 1テストあたりの上限。ほとんどのテストは前準備でアカウント登録（BCryptハッシュ化）と
+  // ログインを行い、devサーバーは初回アクセス時にページをオンデマンドでコンパイルするため、
+  // Playwright既定の30秒では並列実行時の負荷で頻繁に不足する（重いspecが個別に
+  // describe.configure({ timeout: 60_000 }) で引き上げる運用になっていたが、引き上げ漏れの
+  // specが負荷次第で落ちていた）。既定を60秒にし、さらに重いspecのみ個別に上書きする
+  timeout: 60_000,
   retries: process.env.CI ? 2 : 0,
   // ワーカーごとに使い捨てアカウントを使う設計（fixtures/auth.ts・fixtures/admin.ts）のため
   // 並列実行してもテスト間の競合はない。CIランナーのCPU数を踏まえ、直列実行（旧: 1）から

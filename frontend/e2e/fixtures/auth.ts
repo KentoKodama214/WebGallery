@@ -64,8 +64,10 @@ export async function registerAccount(
   await fillStable(page.locator('label:has-text("アカウント名") + input'), accountName);
   await fillStable(page.getByPlaceholder("英字と数字を含む半角8〜72文字"), password);
   await page.getByRole("button", { name: "登録" }).click();
+  // 登録はBCryptのハッシュ化を伴ううえ、devサーバーが /register を初回コンパイルすることもある。
+  // 並列実行時の負荷で10秒では不足しうるため長めに取る（速い場合は待たずに次へ進む）
   await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
-    timeout: 10000,
+    timeout: 30000,
   });
 }
 
@@ -85,8 +87,9 @@ export async function login(
   await fillStable(page.getByPlaceholder("User ID"), accountId);
   await fillStable(page.getByPlaceholder("Password"), password);
   await page.getByRole("button", { name: "Log in" }).click();
+  // ログインもBCryptの照合と写真一覧ページの初回コンパイルを伴うため長めに取る
   await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list`), {
-    timeout: 10000,
+    timeout: 30000,
   });
 }
 
