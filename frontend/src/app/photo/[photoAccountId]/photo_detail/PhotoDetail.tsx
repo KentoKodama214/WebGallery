@@ -363,7 +363,14 @@ export function PhotoDetail({
             </p>
           )}
           {photo.photoEnglishTitle && (
-            <p style={{ fontSize: "12px", textAlign: "center", margin: "3px 0 5px 0" }}>
+            <p style={{
+              fontSize: "16px",
+              textAlign: "center",
+              margin: "3px 0 5px 0",
+              // 空白を含まない長いタイトルでもコンテナ幅で折り返す（横スクロールを防ぐ）
+              overflowWrap: "break-word",
+              wordBreak: "break-all",
+            }}>
               {photo.photoEnglishTitle}
             </p>
           )}
@@ -381,12 +388,12 @@ export function PhotoDetail({
             </p>
           )}
 
-          <p style={{ fontSize: "12px", textAlign: "center", margin: "1px 0" }}>
+          <p style={{ fontSize: "16px", textAlign: "center", margin: "1px 0" }}>
             {formatPhotoAt(photo.photoAt)} {photo.displayName || ""}
           </p>
 
           {buildSettingText() && (
-            <p style={{ fontSize: "12px", textAlign: "center", margin: "1px 0" }}>
+            <p style={{ fontSize: "16px", textAlign: "center", margin: "1px 0" }}>
               {buildSettingText()}
             </p>
           )}

@@ -18,6 +18,26 @@ import styles from "./PhotoList.module.css";
 
 const COOKIE_MAX_AGE = 1800; // 30分
 
+/** 拡大表示時のキャプションの最大表示文字数（超過分は省略記号に置き換える） */
+const CAPTION_MAX_LENGTH = 100;
+
+/**
+ * 拡大表示用にキャプションを最大表示文字数で切り詰める
+ *
+ * 最大表示文字数を超える場合のみ末尾を省略記号に置き換える。文字数は
+ * サロゲートペア（絵文字等）を1文字として数えるため、コードユニット単位の
+ * `String.prototype.length`/`slice` ではなくコードポイント単位で数える
+ * （途中で切って文字が壊れるのを防ぐ）。
+ *
+ * @param caption キャプション（未設定の場合は空文字）
+ * @returns 切り詰め後のキャプション
+ */
+function truncateCaption(caption: string): string {
+  const chars = Array.from(caption);
+  if (chars.length <= CAPTION_MAX_LENGTH) return caption;
+  return `${chars.slice(0, CAPTION_MAX_LENGTH).join("")}...`;
+}
+
 interface PhotoListFilter {
   directionKbn: string;
   isFavoriteFilter: string;
@@ -745,7 +765,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         </div>
 
         {/* フィルターフォーム */}
-        <div className={styles.filterForm}>
+        <div className={styles.filterForm} data-testid="filter-form">
           {/* 向き（オーナーのみ） */}
           {isOwner && (
             <select
@@ -806,28 +826,34 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       </div>
 
       {/* 写真コンテナ（フィルターパネル展開中は inert で不活性化する） */}
-      <div className={styles.photosContainer} inert={isFilterOpen}>
-        {/* フィルタートリガー */}
-        <div
-          ref={filterTriggerRef}
-          className={styles.filterTrigger}
-          onClick={() => setIsFilterOpen(true)}
-          onKeyDown={onActivateKey(() => setIsFilterOpen(true))}
-          role="button"
-          tabIndex={0}
-          aria-label="フィルターを開く"
-          aria-expanded={isFilterOpen}
-          aria-controls="photo-list-filter-panel"
-          data-testid="filter-trigger"
-        >
-          <span>
-            <img
-              className={styles.filterIconImg}
-              src="/ui/filter.png"
-              alt=""
-            />
-          </span>
-          <span className={styles.filterText}>{buildFilterText()}</span>
+      <div className={styles.photosContainer} inert={isFilterOpen} data-testid="photos-container">
+        {/* フィルタートリガー
+            クリック可能な範囲をアイコンとフィルター条件テキストだけに限定するため、
+            レイアウト用の行（filterTriggerRow）と操作要素（filterTrigger）を分ける。
+            トリガー自体を行幅いっぱいに広げると、テキストのない右側の余白を
+            クリックしただけでパネルが開いてしまう */}
+        <div className={styles.filterTriggerRow} data-testid="filter-trigger-row">
+          <div
+            ref={filterTriggerRef}
+            className={styles.filterTrigger}
+            onClick={() => setIsFilterOpen(true)}
+            onKeyDown={onActivateKey(() => setIsFilterOpen(true))}
+            role="button"
+            tabIndex={0}
+            aria-label="フィルターを開く"
+            aria-expanded={isFilterOpen}
+            aria-controls="photo-list-filter-panel"
+            data-testid="filter-trigger"
+          >
+            <span>
+              <img
+                className={styles.filterIconImg}
+                src="/ui/filter.png"
+                alt=""
+              />
+            </span>
+            <span className={styles.filterText}>{buildFilterText()}</span>
+          </div>
         </div>
 
         {/* ローディング */}
@@ -916,7 +942,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                     </div>
                   )}
                   <div className="hidden-caption-content" style={{ display: "none" }}>
-                    <p className="caption_content">{photo.caption || ""}</p>
+                    <p className="caption_content">{truncateCaption(photo.caption || "")}</p>
                     <p className="show_detail">
                       <a href={`/photo/${photoAccountId}/photo_detail?photoNo=${photo.photoNo}`}>
                         詳細

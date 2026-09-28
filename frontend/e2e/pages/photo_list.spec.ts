@@ -25,6 +25,66 @@ test.describe("写真一覧ページ", () => {
     await expect(filterPanel).not.toHaveClass(/filterOpen/);
   });
 
+  test("フィルター条件テキストの外側（行の余白）をクリックしてもパネルが開かないこと", async ({
+    page,
+  }) => {
+    const row = page.getByTestId("filter-trigger-row");
+    const trigger = page.getByTestId("filter-trigger");
+    const rowBox = (await row.boundingBox())!;
+    const triggerBox = (await trigger.boundingBox())!;
+
+    // トリガー（アイコン＋フィルター条件テキスト）は行より狭く、右側に余白が残る
+    expect(rowBox.width).toBeGreaterThan(triggerBox.width);
+
+    // 余白（トリガーの右外）をクリックしてもパネルは開かない
+    await row.click({
+      position: { x: rowBox.width - 5, y: rowBox.height - 5 },
+    });
+    await expect(page.getByTestId("filter-panel")).not.toHaveClass(/filterOpen/);
+
+    // トリガー自体のクリックでは開く
+    await trigger.click();
+    await expect(page.getByTestId("filter-panel")).toHaveClass(/filterOpen/);
+  });
+
+  test("抽出条件パネルは背景と抽出項目が同じ距離・同じ時間で左からスライドすること", async ({
+    page,
+  }) => {
+    const panel = page.getByTestId("filter-panel");
+    const form = page.getByTestId("filter-form");
+    const closeButton = page.getByTestId("filter-close-button");
+
+    // 閉じている間は、背景（::before）も抽出項目もパネル幅（300px）だけ左外へ退避している
+    const background = await panel.evaluate((el) => {
+      const style = getComputedStyle(el, "::before");
+      return { left: style.left, duration: style.transitionDuration };
+    });
+    expect(background.left).toBe("-300px");
+    expect(await form.evaluate((el) => getComputedStyle(el).transform)).toBe(
+      "matrix(1, 0, 0, 1, -300, 0)"
+    );
+    expect(await closeButton.evaluate((el) => getComputedStyle(el).transform)).toBe(
+      "matrix(1, 0, 0, 1, -300, 0)"
+    );
+    // 背景と抽出項目が同時に動くよう、トランジション時間も一致させている
+    expect(await form.evaluate((el) => getComputedStyle(el).transitionDuration)).toBe(
+      background.duration
+    );
+
+    await page.getByTestId("filter-trigger").click();
+    await expect(panel).toHaveClass(/filterOpen/);
+
+    // スライド完了後は所定位置（移動量0）に収まる
+    await expect(async () => {
+      expect(await form.evaluate((el) => getComputedStyle(el).transform)).toBe(
+        "matrix(1, 0, 0, 1, 0, 0)"
+      );
+      expect(await closeButton.evaluate((el) => getComputedStyle(el).transform)).toBe(
+        "matrix(1, 0, 0, 1, 0, 0)"
+      );
+    }).toPass({ timeout: 10000 });
+  });
+
   test("存在しないアカウントの場合は『写真が存在しません。』が表示されること", async ({
     page,
   }) => {
@@ -74,8 +134,10 @@ test.describe("写真一覧ページ", () => {
     await expect(filterPanel).toHaveAttribute("aria-modal", "true");
     // パネル内の最初のフォーカス可能要素（閉じるボタン）へフォーカスが移る
     await expect(page.getByTestId("filter-close-button")).toBeFocused();
-    // 背面（トリガーを含む写真コンテナ）は inert で不活性化される
-    await expect(filterTrigger.locator("xpath=..")).toHaveAttribute("inert", "");
+    // 背面（トリガーを含む写真コンテナ）は inert で不活性化される。
+    // トリガーの親要素はクリック範囲を限定するための行（filterTriggerRow）であり
+    // 写真コンテナそのものではないため、コンテナを直接指定して検証する
+    await expect(page.getByTestId("photos-container")).toHaveAttribute("inert", "");
 
     await page.keyboard.press("Escape");
     await expect(filterPanel).not.toHaveClass(/filterOpen/);

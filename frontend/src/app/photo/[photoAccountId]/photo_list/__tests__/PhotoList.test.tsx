@@ -293,6 +293,23 @@ describe("PhotoList", () => {
     expect(screen.getByTestId("filter-panel").className).not.toMatch(/filterOpen/);
   });
 
+  it("フィルタートリガーの行（テキスト外の余白）クリックではパネルが開かないこと", async () => {
+    mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: samplePhotos });
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(galleryImages()).toHaveLength(2);
+    });
+
+    // トリガー本体はレイアウト用の行の内側にあり、行自体は操作要素ではない
+    const row = screen.getByTestId("filter-trigger-row");
+    expect(row).toContainElement(screen.getByTestId("filter-trigger"));
+    expect(row).not.toHaveAttribute("role", "button");
+
+    fireEvent.click(row);
+    expect(screen.getByTestId("filter-panel").className).not.toMatch(/filterOpen/);
+  });
+
   it("認証済みユーザーにはお気に入りフィルターが表示されること", async () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
@@ -1087,6 +1104,63 @@ describe("PhotoList", () => {
       fireEvent.click(detailLink);
 
       expect(clickSpy).not.toHaveBeenCalled();
+    });
+
+    /**
+     * 先頭の写真のキャプションだけを差し替えてライトボックスを初期化し、
+     * 表示中スライドのキャプション要素を返す
+     *
+     * `galleryImages()` は alt（＝キャプション）で写真グリッド画像を絞り込むため、
+     * キャプションを差し替えるこれらのテストでは使えない。代わりに
+     * 写真グリッドの要素数で描画完了を待つ
+     */
+    async function renderWithCaptionAndGetCaptionElement(caption: string) {
+      mockGetPhotoList.mockResolvedValue({
+        isLast: true,
+        photoList: [{ ...samplePhotos[0], caption }, samplePhotos[1]],
+      });
+      render(<PhotoList photoAccountId="user1" />);
+      await waitFor(() => {
+        expect(document.querySelectorAll(".pswp-gallery__item")).toHaveLength(2);
+      });
+      await waitFor(() => {
+        expect(mockLightboxInstances.at(-1)?.pswp).not.toBeNull();
+      });
+      const lightbox = mockLightboxInstances.at(-1)!;
+      lightbox.pswp!.currSlide.data.element = document.querySelector(
+        ".pswp-gallery__item"
+      ) as HTMLElement;
+      lightbox.triggerChange(0);
+      return lightbox.elements["custom-caption"].el;
+    }
+
+    it("キャプションが100文字ちょうどの場合は切り詰めずに全文表示すること", async () => {
+      const caption = "あ".repeat(100);
+
+      const captionEl = await renderWithCaptionAndGetCaptionElement(caption);
+
+      expect(captionEl.querySelector(".caption_content")).toHaveTextContent(caption);
+    });
+
+    it("キャプションが101文字以上の場合は100文字までに切り詰めて末尾を...にすること", async () => {
+      const captionEl = await renderWithCaptionAndGetCaptionElement(
+        `${"あ".repeat(100)}いうえお`
+      );
+
+      expect(captionEl.querySelector(".caption_content")).toHaveTextContent(
+        `${"あ".repeat(100)}...`
+      );
+    });
+
+    it("サロゲートペアを含むキャプションでも文字が壊れずに切り詰められること", async () => {
+      // 絵文字（サロゲートペア）を1文字として数えるため、101文字目以降だけが落ちる
+      const captionEl = await renderWithCaptionAndGetCaptionElement(
+        `${"😀".repeat(100)}😀`
+      );
+
+      expect(captionEl.querySelector(".caption_content")).toHaveTextContent(
+        `${"😀".repeat(100)}...`
+      );
     });
   });
 });
