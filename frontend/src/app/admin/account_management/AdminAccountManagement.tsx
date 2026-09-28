@@ -244,11 +244,13 @@ export function AdminAccountManagement() {
     <div className="flex flex-col items-center py-8 gap-4">
       <h1 className="text-xl font-bold">アカウント管理</h1>
 
-      {message && (
-        <p role="status" className="text-green-600 font-medium">
-          {message}
-        </p>
-      )}
+      {/*
+        ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため、常設して
+        中身だけを差し替える（`role="status"` は polite。リージョンが先に存在していることが前提）
+      */}
+      <p role="status" className="text-green-600 font-medium empty:hidden">
+        {message}
+      </p>
 
       {actionError && (
         <p role="alert" className="text-red-500 text-sm">

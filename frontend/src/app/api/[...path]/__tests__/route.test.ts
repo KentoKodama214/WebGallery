@@ -101,6 +101,60 @@ describe("APIプロキシ route", () => {
     expect(headers.get("x-forwarded-for")).toBe("10.0.1.5");
   });
 
+  it("信頼するホップ数に届かないチェーンはバックエンドへ付与しない（fail-closed）", async () => {
+    // TRUSTED_PROXY_HOPS はモジュール読み込み時に確定するため、環境変数を差し替えて再読み込みする
+    jest.resetModules();
+    const previous = process.env.TRUSTED_PROXY_HOPS;
+    process.env.TRUSTED_PROXY_HOPS = "2";
+    try {
+      const { GET: getWithTwoHops } = await import("../route");
+      fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      // 前段が1段しか通っていない（＝CloudFrontをバイパスした等）ため、
+      // 左端は攻撃者が指定した値になりうる。左端へフォールバックせず付与しないこと
+      const req = new NextRequest("http://localhost/api/v1/accounts", {
+        headers: { "x-forwarded-for": "1.1.1.1" },
+      });
+      await getWithTwoHops(req, ctx(["v1", "accounts"]));
+
+      const headers = fetchMock.mock.calls[0][1].headers as Headers;
+      expect(headers.get("x-forwarded-for")).toBeNull();
+    } finally {
+      if (previous === undefined) {
+        delete process.env.TRUSTED_PROXY_HOPS;
+      } else {
+        process.env.TRUSTED_PROXY_HOPS = previous;
+      }
+      jest.resetModules();
+    }
+  });
+
+  it("信頼するホップ数が2の場合は右端から2番目を実クライアント IP として採用する", async () => {
+    jest.resetModules();
+    const previous = process.env.TRUSTED_PROXY_HOPS;
+    process.env.TRUSTED_PROXY_HOPS = "2";
+    try {
+      const { GET: getWithTwoHops } = await import("../route");
+      fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      // 左端＝クライアント詐称値、中央＝CloudFrontが付与した実IP、右端＝ALBが付与したCloudFrontのIP
+      const req = new NextRequest("http://localhost/api/v1/accounts", {
+        headers: { "x-forwarded-for": "1.1.1.1, 203.0.113.9, 10.0.1.5" },
+      });
+      await getWithTwoHops(req, ctx(["v1", "accounts"]));
+
+      const headers = fetchMock.mock.calls[0][1].headers as Headers;
+      expect(headers.get("x-forwarded-for")).toBe("203.0.113.9");
+    } finally {
+      if (previous === undefined) {
+        delete process.env.TRUSTED_PROXY_HOPS;
+      } else {
+        process.env.TRUSTED_PROXY_HOPS = previous;
+      }
+      jest.resetModules();
+    }
+  });
+
   it("X-Forwarded-For が空要素のみの場合はバックエンドへ付与しない", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
 

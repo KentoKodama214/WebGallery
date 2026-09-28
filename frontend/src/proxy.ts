@@ -87,8 +87,11 @@ function buildCsp(nonce: string): string {
     // Nominatim（OpenStreetMapの逆ジオコーディングAPI）は撮影場所の住所自動補完に使用する
     `connect-src 'self' https://nominatim.openstreetmap.org${apiBaseOrigin ? ` ${apiBaseOrigin}` : ""}${isDev ? " ws:" : ""}`,
     "worker-src 'self' blob:",
-    // 写真詳細の撮影場所表示（Google Maps の iframe 埋め込み）用
-    "frame-src https://maps.google.com https://www.google.com",
+    // 写真詳細の撮影場所表示（Google Maps の iframe 埋め込み）用。
+    // maps.google.com は 301 で www.google.com/maps/embed へ転送されるため両方必要だが、
+    // www.google.com はサイト全体ではなく /maps/embed のパスだけを許可する
+    // （CSP のパス照合は末尾に "/" が無ければ完全一致。クエリ文字列は照合対象外）
+    "frame-src https://maps.google.com/maps https://www.google.com/maps/embed",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

@@ -17,10 +17,30 @@ jest.mock("@/lib/api/client", () => ({
   getLocationList: (...args: unknown[]) => mockGetLocationList(...args),
 }));
 
-// leafletは地図描画を伴い、jsdom環境での実描画は検証対象外とするため、
-// クリック等の操作テストが不要な本ファイルでは軽量なダミーに置き換える
+// leafletは地図描画を伴い、jsdom環境での実描画は検証対象外とするため、軽量なダミーに置き換える。
+// 地図クリック（onPick）と逆ジオコーディング完了（onAddressResolved）は、それぞれを発火する
+// ボタンとして露出させ、フォーム側の状態反映だけを検証できるようにする
 jest.mock("../LocationMapPicker", () => ({
-  LocationMapPicker: () => null,
+  LocationMapPicker: ({
+    onPick,
+    onAddressResolved,
+  }: {
+    onPick: (latitude: number, longitude: number) => void;
+    onAddressResolved?: (address: string) => void;
+  }) => (
+    <div>
+      <button type="button" data-testid="mock-map-pick" onClick={() => onPick(35.6812, 139.7671)}>
+        地図をクリックする
+      </button>
+      <button
+        type="button"
+        data-testid="mock-map-address-resolved"
+        onClick={() => onAddressResolved?.("東京都千代田区丸の内1丁目")}
+      >
+        住所が解決された
+      </button>
+    </div>
+  ),
 }));
 
 const mockUseAuth = jest.fn();
@@ -841,6 +861,109 @@ describe("PhotoSettingForm", () => {
       );
     });
     expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["latitude", "new-location-latitude-input", "91", "緯度は -90 から 90 の範囲で入力してください"],
+    ["latitude", "new-location-latitude-input", "-91", "緯度は -90 から 90 の範囲で入力してください"],
+    ["longitude", "new-location-longitude-input", "181", "経度は -180 から 180 の範囲で入力してください"],
+    [
+      "longitude",
+      "new-location-longitude-input",
+      "-181",
+      "経度は -180 から 180 の範囲で入力してください",
+    ],
+  ])(
+    "新規ロケーション登録モードで%sが範囲外（%s=%s）の場合、送信せずバリデーションエラーになること",
+    async (_field, testId, value, expectedMessage) => {
+      render(<PhotoSettingForm photoAccountId="user1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("location-mode-new"));
+      fireEvent.change(screen.getByTestId("new-location-management-name-input"), {
+        target: { value: "範囲外テスト_管理用" },
+      });
+      fireEvent.change(screen.getByTestId("new-location-display-name-input"), {
+        target: { value: "範囲外テスト" },
+      });
+      // 対象外の項目には正常値を入れ、検証対象の項目だけを範囲外にする
+      fireEvent.change(screen.getByTestId("new-location-latitude-input"), {
+        target: { value: "35.6812" },
+      });
+      fireEvent.change(screen.getByTestId("new-location-longitude-input"), {
+        target: { value: "139.7671" },
+      });
+      fireEvent.change(screen.getByTestId(testId), { target: { value } });
+
+      const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+      fireEvent.change(screen.getByTestId("image-input"), {
+        target: { files: [file] },
+      });
+      fireEvent.change(screen.getByTestId("japanese-title-input"), {
+        target: { value: "テストタイトル" },
+      });
+
+      // 通常の操作では input の min / max によりブラウザ側の制約検証で送信自体が止まる。
+      // ここでは submit イベントを直接発火させ、JS側の検証（多層防御）が働くことを確かめる
+      fireEvent.submit(screen.getByTestId("submit-button").closest("form")!);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("validation-errors")).toHaveTextContent(expectedMessage);
+      });
+      expect(mockRegistPhotos).not.toHaveBeenCalled();
+    }
+  );
+
+  it("緯度・経度の入力欄に指定可能な範囲（min / max）が設定されていること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+
+    const latitudeInput = screen.getByTestId("new-location-latitude-input");
+    expect(latitudeInput).toHaveAttribute("min", "-90");
+    expect(latitudeInput).toHaveAttribute("max", "90");
+    const longitudeInput = screen.getByTestId("new-location-longitude-input");
+    expect(longitudeInput).toHaveAttribute("min", "-180");
+    expect(longitudeInput).toHaveAttribute("max", "180");
+  });
+
+  it("逆ジオコーディングで住所が解決されても、手入力した緯度・経度を上書きしないこと", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+
+    // 地図クリックで座標が入る
+    fireEvent.click(screen.getByTestId("mock-map-pick"));
+    expect(screen.getByTestId("new-location-latitude-input")).toHaveValue(35.6812);
+    expect(screen.getByTestId("new-location-longitude-input")).toHaveValue(139.7671);
+
+    // 住所取得の通信中にユーザーが座標を手で調整する
+    fireEvent.change(screen.getByTestId("new-location-latitude-input"), {
+      target: { value: "35.1" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-longitude-input"), {
+      target: { value: "139.1" },
+    });
+
+    // 応答が届いても住所だけが反映され、座標はクリック位置へ巻き戻らない
+    fireEvent.click(screen.getByTestId("mock-map-address-resolved"));
+
+    expect(screen.getByTestId("new-location-address-input")).toHaveValue(
+      "東京都千代田区丸の内1丁目"
+    );
+    expect(screen.getByTestId("new-location-latitude-input")).toHaveValue(35.1);
+    expect(screen.getByTestId("new-location-longitude-input")).toHaveValue(139.1);
   });
 
   it("編集モードで既存のロケーション番号を持つ写真を開くと、既存選択モードでそのロケーションが選ばれること", async () => {
