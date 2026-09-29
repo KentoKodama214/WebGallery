@@ -8,20 +8,17 @@ spring:
     # 空文字デフォルトをYAMLへ書くと、未設定環境でも app.datasource.replica.url キー自体は存在してしまい、
     # 意図せずリードレプリカ用DataSourceが生成されてしまう（詳細: doc/architecture/datasource.md）
 
-server:
-  tomcat:
-    remoteip:
-      # X-Forwarded-For を信頼する「直前の送信元IP」の範囲。本番では既定値（ループバック＋RFC1918全域）を
-      # 使わせず、前段のALB/リバースプロキシが存在するサブネットのCIDRだけに狭めることを必須とする。
-      # 既定値を設けないため、環境変数 TRUSTED_PROXIES が未設定なら起動時にプレースホルダ解決で失敗する
-      # （値の妥当性は ProdConfigValidationRunner がさらに検証する）
-      internal-proxies: ${TRUSTED_PROXIES}
-
 logging:
   level:
     ROOT: INFO
 
 app:
+  forwarded:
+    # X-Forwarded-For を信頼する「直前の送信元IP」の範囲。本番では既定値（ループバック＋RFC1918全域）を
+    # 使わせず、前段のALB/リバースプロキシが存在するサブネットのCIDRだけに狭めることを必須とする。
+    # 既定値を設けないため、環境変数 TRUSTED_PROXIES が未設定なら起動時にプレースホルダ解決で失敗する
+    # （値の妥当性は ProdConfigValidationRunner がさらに検証する）
+    trusted-proxies: ${TRUSTED_PROXIES}
   photo:
     miniUserUpperLimit: ${MINI_USER_UPPER_LIMIT}
     normalUserUpperLimit: ${NORMAL_USER_UPPER_LIMIT}

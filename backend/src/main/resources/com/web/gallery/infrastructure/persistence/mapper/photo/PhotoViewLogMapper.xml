@@ -28,10 +28,32 @@
 		)
 	</insert>
 
+	<!--
+		退会したアカウントが「閲覧者」として残したログを匿名化する。account_no（閲覧者）は
+		common.account への外部キーを持たない（未ログインを0で表すセンチネル値のため）ので削除漏れが
+		外部キー違反にならず、放置すると退会後もIPアドレス等が他人の写真のログとして残り続ける。
+		所有者側の閲覧数の分析データは残したいため、行の削除ではなく個人データの消去で対応する
+	-->
+	<update id="anonymizeViewer" parameterType="Long">
+		UPDATE
+			photo.photo_view_log
+		SET
+			account_no = 0,
+			ip_address = '',
+			country = '',
+			region = ''
+		WHERE
+			account_no = #{accountNo}
+	</update>
+
 	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PhotoViewLogCondition">
 		DELETE FROM
 			photo.photo_view_log
 		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード。
+			     抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接組み立てられた
+			     場合でも1件も消さないようにする -->
+			<if test="photoAccountNo == null"> AND 1 = 0</if>
 			<if test="photoAccountNo != null"> AND photo_account_no = #{photoAccountNo}</if>
 		</where>
 	</delete>

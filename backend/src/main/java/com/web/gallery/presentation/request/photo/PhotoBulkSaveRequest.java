@@ -3,6 +3,8 @@ package com.web.gallery.presentation.request.photo;
 import com.web.gallery.domain.constant.Consts;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Past;
@@ -50,10 +52,14 @@ public class PhotoBulkSaveRequest {
 
   /** 緯度 */
   @Schema(description = "緯度", example = "35.6812")
+  @DecimalMin(value = "-90", message = "{validation.photo.latitude.range}")
+  @DecimalMax(value = "90", message = "{validation.photo.latitude.range}")
   private BigDecimal latitude;
 
   /** 経度 */
   @Schema(description = "経度", example = "139.7671")
+  @DecimalMin(value = "-180", message = "{validation.photo.longitude.range}")
+  @DecimalMax(value = "180", message = "{validation.photo.longitude.range}")
   private BigDecimal longitude;
 
   /** ロケーション管理名（新規登録時は必須） */

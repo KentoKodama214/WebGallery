@@ -22,10 +22,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * アカウント登録スパムに対して低いしきい値を適用する。認証・認可より前に実行し、無駄な認証処理を避ける。
  * IP単位のため共有NAT（CGNAT・社内NAT）配下では誤検知しうる。厳密な制御は前段のWAFに委ね、 アカウント単位のロック（ログイン失敗3回）と併せた多層防御と位置づける。
  *
- * <p>送信元IPは {@code HttpServletRequest#getRemoteAddr()} で取得する。これは Tomcat の RemoteIpValve
- * （`server.tomcat.remoteip`）が `X-Forwarded-For` を解決した後の値であり、信頼できるプロキシ
- * （`server.tomcat.remoteip.internal-proxies` / 環境変数 `TRUSTED_PROXIES`）経由のリクエストでのみ
- * 実クライアントIPになる。フロントの `/api` プロキシは実クライアントIPを `X-Forwarded-For` に載せ直す。
+ * <p>送信元IPは {@code HttpServletRequest#getRemoteAddr()} で取得する。これは {@link ForwardedForFilter} が
+ * `X-Forwarded-For` を解決した後の値であり、信頼できるプロキシ（`app.forwarded.trusted-proxies` / 環境変数
+ * `TRUSTED_PROXIES`）経由のリクエストでのみ実クライアントIPになる。フロントの `/api` プロキシは 実クライアントIPを `X-Forwarded-For` に載せ直す。
  *
  * @author Kento Kodama
  * @version 1.0.0

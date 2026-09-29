@@ -155,7 +155,7 @@ just db-up
 | `RATE_LIMIT_REGISTER_CAPACITY` / `RATE_LIMIT_REGISTER_WINDOW_SECONDS` | アカウント登録のしきい値 | `10` / `3600` |
 | `RATE_LIMIT_GENERAL_CAPACITY` / `RATE_LIMIT_GENERAL_WINDOW_SECONDS` | その他 `/api/**` のしきい値 | `300` / `60` |
 | `FRONTEND_ORIGIN` | CORS 許可オリジン（1 値のみ。`prod` では `https://` 必須） | `http://localhost:3000` |
-| `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現。**本番では ALB のサブネット CIDR に狭める** | ループバック＋RFC1918（Tomcat 既定と同等） |
+| `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現（`app.forwarded.trusted-proxies`）。**本番では既定値なし＝必須。ALB のサブネット CIDR に狭める** | 非 `prod`：ループバック＋RFC1918 / `prod`：**なし（必須）** |
 
 > **IntelliJ IDEA で起動する場合**
 > Dock やランチャーから起動した IntelliJ はシェルの `export` を引き継がないため、`JWT_SECRET` を渡す必要があります。共有の実行構成 `backend/.run/WebGalleryApplication_local.run.xml`（実行構成名「WebGalleryApplication (local)」、プロファイル `local` ＋ ローカル用 `JWT_SECRET` を設定済み）を選択して実行してください。独自の実行構成を使う場合は「Environment variables」に `JWT_SECRET` を追加してください。

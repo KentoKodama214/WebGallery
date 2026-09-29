@@ -253,9 +253,14 @@ public class PhotoServiceImpl implements PhotoService {
             .imageFilePath(fileRepository.getPresignedUrl(photoDetailModel.getImageFilePath()));
 
     // 位置情報が非公開の写真は、閲覧者が本人でない限り撮影場所（ロケーション番号・住所・緯度経度・
-    // 表示名）を返さない（撮影場所からの個人特定を防ぐ）
+    // 表示名）を返さない（撮影場所からの個人特定を防ぐ）。公開フラグ自体も本人以外には返さない
+    // （「撮影場所が隠された写真」であること自体を知らせないため。所有者の編集画面でのみ必要な値）
     if (isLocationHiddenFor(photoDetailModel, photoDetailGetModel, accountModel.getAccountNo())) {
-      builder.locationNo(null).geoLocation(GeoLocation.empty()).displayName(null);
+      builder
+          .locationNo(null)
+          .geoLocation(GeoLocation.empty())
+          .displayName(null)
+          .isLocationPublic(null);
     }
     return builder.build();
   }
