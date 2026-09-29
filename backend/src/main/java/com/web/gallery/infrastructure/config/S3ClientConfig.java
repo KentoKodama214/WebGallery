@@ -57,6 +57,10 @@ public class S3ClientConfig {
    * が設定されている場合はそちらをエンドポイントとして用いる（未設定なら{@code app.s3.endpoint}にフォールバック）。 アップロード等のサーバー間通信を担う{@link
    * #s3Client()}は、従来どおり内部向けの{@code app.s3.endpoint}を使う。
    *
+   * <p><b>前提</b>：{@code app.s3.public-base-url}は「S3互換API自身の公開ホスト」であること。CloudFront等の
+   * CDNを前段に挟むホストを設定すると、CDNホストで計算した署名をオリジンのS3が検証できず403になる。 CDN経由で配信する場合はCDN側の署名機構（署名付きCookie /
+   * URL）へ移行する必要がある。
+   *
    * @return {@link S3Presigner}
    */
   @Bean

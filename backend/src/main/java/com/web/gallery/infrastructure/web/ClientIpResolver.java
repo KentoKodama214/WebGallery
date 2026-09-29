@@ -8,9 +8,9 @@ import org.springframework.util.StringUtils;
 /**
  * リクエストから送信元IPアドレスを取得するHelperクラス
  *
- * <p>{@code HttpServletRequest#getRemoteAddr()}で取得する。これはTomcatのRemoteIpValve （{@code
- * server.tomcat.remoteip}）がX-Forwarded-Forを解決した後の値であり、信頼できるプロキシ （{@code
- * server.tomcat.remoteip.internal-proxies}）経由のリクエストでのみ実クライアントIPになる。
+ * <p>{@code HttpServletRequest#getRemoteAddr()}で取得する。これは{@link ForwardedForFilter}が {@code
+ * X-Forwarded-For}を解決した後の値であり、信頼できるプロキシ（{@code app.forwarded.trusted-proxies} / 環境変数{@code
+ * TRUSTED_PROXIES}）経由のリクエストでのみ実クライアントIPになる。
  */
 @Component
 public class ClientIpResolver {

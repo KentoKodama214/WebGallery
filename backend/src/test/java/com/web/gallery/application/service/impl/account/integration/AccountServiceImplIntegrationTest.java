@@ -735,6 +735,39 @@ public class AccountServiceImplIntegrationTest {
     }
 
     @Test
+    @Order(5)
+    @DisplayName("異常系：管理者として投稿したお問い合わせ返信が残っている場合は削除されずBadRequestExceptionをthrowする")
+    @Sql("/sql/common/cleanup.sql")
+    @Sql("/sql/service/AccountServiceImplDeleteAccountIntegrationTest.sql")
+    @Sql("/sql/service/AccountServiceImplDeleteAccountAdminReplyIntegrationTest.sql")
+    void deleteAccount_withAdminReply() {
+      // 返信を巻き込んで削除すると、無関係な第三者（account_no=2）のお問い合わせスレッドから
+      // 回答本文だけが消えてしまうため、業務ルールとして削除自体を拒否する
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              accountServiceImpl.deleteAccount(
+                  new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01")));
+
+      // アカウントも関連データも残っていること
+      Integer accountCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account where account_no=1", Integer.class);
+      assertEquals(1, accountCount);
+      Integer photoMstCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_mst where account_no=1", Integer.class);
+      assertEquals(2, photoMstCount);
+
+      // 他ユーザーのお問い合わせに紐づく返信が消えていないこと
+      Integer replyByAccount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_reply_mst where admin_account_no=1",
+              Integer.class);
+      assertEquals(1, replyByAccount);
+    }
+
+    @Test
     @Order(2)
     @DisplayName("異常系：現在のパスワードが一致しない場合は削除されずForbiddenAccountExceptionをthrowする")
     void deleteAccount_currentPassword_mismatch() {

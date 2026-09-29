@@ -45,6 +45,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -642,6 +644,59 @@ public class PhotoControllerIntegrationTest {
           .andExpect(jsonPath("$.httpStatus").value(HttpStatus.NOT_FOUND.value()))
           .andExpect(jsonPath("$.errorCode").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorCode()))
           .andExpect(jsonPath("$.errorMessage").value(ErrorEnum.PHOTO_NOT_FOUND.getErrorMessage()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+      "90.0001, 139.7671",
+      "-90.0001, 139.7671",
+      "35.6812, 180.0001",
+      "35.6812, -180.0001",
+      "12345678, 139.7671",
+      "35.6812, 12345678"
+    })
+    @Order(6)
+    @DisplayName("異常系：緯度・経度が地理的に不正な範囲の場合、500ではなく400を返すこと")
+    void savePhoto_invalidGeoLocation(String latitude, String longitude) throws Exception {
+      String photoAccountId = "bbbbbbbb";
+
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(2L))
+              .accountId(new AccountId("bbbbbbbb"))
+              .accountName(new AccountName("BBBBBBBB"))
+              .password(new Password("$2a$10$password2"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      // 範囲外・桁数過多の値は common.location_mst の decimal(11,4) を超えて
+      // numeric field overflow（500）になりうるため、Bean Validationで400として弾く
+      mockMvc
+          .perform(
+              multipart(HttpMethod.PUT, "/api/v1/accounts/" + photoAccountId + "/photos")
+                  .contentType(MediaType.MULTIPART_FORM_DATA)
+                  .param("photoNo", "1")
+                  .param("caption", "caption111")
+                  .param("imageFilePath", "https://www.xxx.com/DSC21.jpg")
+                  .param("directionKbn", "VERTICAL")
+                  .param("photoEnglishTitle", "title111")
+                  .param("photoJapaneseTitle", "タイトル111")
+                  .param("managementName", "新規ロケーション_管理用")
+                  .param("displayName", "新規ロケーション")
+                  .param("latitude", latitude)
+                  .param("longitude", longitude)
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.BAD_REQUEST.value()))
+          .andExpect(jsonPath("$.isSuccess").value(false))
+          .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
     }
   }
 

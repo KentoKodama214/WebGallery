@@ -154,6 +154,37 @@ public class AccountAggregateRepositoryImplIntegrationTest {
               Integer.class);
       assertEquals(0, replyForAccount);
 
+      // 「閲覧者」として他人のギャラリーに残したログは、行を消さず個人データだけを匿名化すること
+      // （閲覧者カラムは外部キーを持たないため、放置してもアカウント削除は成功してしまう）
+      Map<String, Object> anonymizedViewLog =
+          jdbcTemplate.queryForMap(
+              "SELECT account_no, ip_address, country, region FROM photo.photo_view_log WHERE photo_view_log_no=2");
+      assertEquals(0L, anonymizedViewLog.get("account_no"));
+      assertEquals("", anonymizedViewLog.get("ip_address"));
+      assertEquals("", anonymizedViewLog.get("country"));
+      assertEquals("", anonymizedViewLog.get("region"));
+
+      Map<String, Object> anonymizedFilterLog =
+          jdbcTemplate.queryForMap(
+              "SELECT account_no, tag_list, referer, ip_address, country, region FROM photo.photo_list_filter_log WHERE photo_list_filter_log_no=2");
+      assertEquals(0L, anonymizedFilterLog.get("account_no"));
+      assertEquals("", anonymizedFilterLog.get("tag_list"));
+      assertEquals("", anonymizedFilterLog.get("referer"));
+      assertEquals("", anonymizedFilterLog.get("ip_address"));
+      assertEquals("", anonymizedFilterLog.get("country"));
+      assertEquals("", anonymizedFilterLog.get("region"));
+
+      // 所有者（account_no=2）側の分析データとしての行自体は残ること
+      Integer remainingViewLogForOther =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_view_log where photo_account_no=2", Integer.class);
+      assertEquals(1, remainingViewLogForOther);
+      Integer remainingFilterLogForOther =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_list_filter_log where photo_account_no=2",
+              Integer.class);
+      assertEquals(1, remainingFilterLogForOther);
+
       // 削除時点で未削除だった写真番号が記録されていること
       assertFalse(account.getDeletedPhotoNoList().isEmpty());
       assertTrue(account.getDeletedPhotoNoList().toList().contains(new PhotoNo(1L)));
@@ -163,43 +194,118 @@ public class AccountAggregateRepositoryImplIntegrationTest {
     @Order(3)
     @DisplayName("正常系：common.accountを参照する全テーブルから、削除対象アカウントを参照する行が消えていること")
     void delete_removesAllForeignKeyReferences() {
+      // common.account(account_no) を参照する外部キーはいずれも ON DELETE RESTRICT / NO ACTION のため、
+      // 参照元テーブルの削除漏れはアカウント本体の物理削除を外部キー違反で失敗させる。
+      // pg_constraint から参照元を動的に列挙し、テーブル追加時の削除漏れを機械的に検出する
+      List<Map<String, Object>> referencingColumns = selectColumnsReferencingAccountNo();
+      assertFalse(referencingColumns.isEmpty(), "common.accountを参照する外部キーが1件も取得できていません");
+
+      // 削除前に参照が存在することを確かめる。これが無いと、フィクスチャに行が無いテーブルは
+      // 削除処理が抜けていても「削除後0件」で通ってしまい、テーブル追加時の漏れを検出できない
+      for (Map<String, Object> reference : referencingColumns) {
+        String table = tableNameOf(reference);
+        String column = columnNameOf(reference);
+        if (isGuardedByDeletionBlock(table, column)) {
+          // 削除をブロックする仕様の参照は、そもそもフィクスチャに存在させられない
+          assertEquals(
+              0,
+              countReferencing(table, column),
+              table + "." + column + " は削除ブロック対象のため、フィクスチャに行を作ってはいけません");
+          continue;
+        }
+        assertTrue(
+            countReferencing(table, column) > 0,
+            table + "." + column + " を参照する行がフィクスチャに存在しません。参照を作ってから削除を検証してください");
+      }
+
       Account account = Account.forDelete(new AccountNo(1L));
       accountAggregateRepositoryImpl.delete(account);
 
-      // common.account(account_no) を参照する外部キーはいずれも ON DELETE RESTRICT / NO ACTION のため、
-      // 参照元テーブルの削除漏れはアカウント本体の物理削除を外部キー違反で失敗させる。
-      // information_schema から参照元を動的に列挙し、テーブル追加時の削除漏れを機械的に検出する
-      List<Map<String, Object>> referencingColumns =
-          jdbcTemplate.queryForList(
-              """
-              SELECT
-                  src_ns.nspname AS schema_name,
-                  src.relname    AS table_name,
-                  src_att.attname AS column_name
-              FROM pg_constraint c
-              JOIN pg_class src ON src.oid = c.conrelid
-              JOIN pg_namespace src_ns ON src_ns.oid = src.relnamespace
-              JOIN pg_class tgt ON tgt.oid = c.confrelid
-              JOIN pg_namespace tgt_ns ON tgt_ns.oid = tgt.relnamespace
-              JOIN pg_attribute src_att
-                ON src_att.attrelid = c.conrelid AND src_att.attnum = c.conkey[1]
-              JOIN pg_attribute tgt_att
-                ON tgt_att.attrelid = c.confrelid AND tgt_att.attnum = c.confkey[1]
-              WHERE c.contype = 'f'
-                AND tgt_ns.nspname = 'common'
-                AND tgt.relname = 'account'
-                AND tgt_att.attname = 'account_no'
-              """);
-
-      assertFalse(referencingColumns.isEmpty(), "common.accountを参照する外部キーが1件も取得できていません");
       for (Map<String, Object> reference : referencingColumns) {
-        String table = reference.get("schema_name") + "." + reference.get("table_name");
-        String column = (String) reference.get("column_name");
-        Integer remaining =
-            jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM " + table + " WHERE " + column + " = 1", Integer.class);
-        assertEquals(0, remaining, table + "." + column + " に削除対象アカウントを参照する行が残っています");
+        String table = tableNameOf(reference);
+        String column = columnNameOf(reference);
+        assertEquals(
+            0, countReferencing(table, column), table + "." + column + " に削除対象アカウントを参照する行が残っています");
       }
+    }
+
+    /**
+     * {@code common.account(account_no)}を参照する外部キーの参照元カラムを列挙する
+     *
+     * <p>複合外部キーでも{@code account_no}を参照する列を取り逃さないよう、{@code conkey}を全要素展開する
+     *
+     * @return スキーマ名・テーブル名・カラム名のリスト
+     */
+    private List<Map<String, Object>> selectColumnsReferencingAccountNo() {
+      return jdbcTemplate.queryForList(
+          """
+          SELECT DISTINCT
+              src_ns.nspname  AS schema_name,
+              src.relname     AS table_name,
+              src_att.attname AS column_name
+          FROM pg_constraint c
+          JOIN pg_class src ON src.oid = c.conrelid
+          JOIN pg_namespace src_ns ON src_ns.oid = src.relnamespace
+          JOIN pg_class tgt ON tgt.oid = c.confrelid
+          JOIN pg_namespace tgt_ns ON tgt_ns.oid = tgt.relnamespace
+          JOIN LATERAL unnest(c.conkey, c.confkey) AS k(conkey, confkey) ON true
+          JOIN pg_attribute src_att
+            ON src_att.attrelid = c.conrelid AND src_att.attnum = k.conkey
+          JOIN pg_attribute tgt_att
+            ON tgt_att.attrelid = c.confrelid AND tgt_att.attnum = k.confkey
+          WHERE c.contype = 'f'
+            AND tgt_ns.nspname = 'common'
+            AND tgt.relname = 'account'
+            AND tgt_att.attname = 'account_no'
+          """);
+    }
+
+    /**
+     * 参照元テーブルの完全修飾名を取り出す
+     *
+     * @param reference {@link #selectColumnsReferencingAccountNo()}の1行
+     * @return {@code スキーマ名.テーブル名}
+     */
+    private String tableNameOf(Map<String, Object> reference) {
+      return reference.get("schema_name") + "." + reference.get("table_name");
+    }
+
+    /**
+     * 参照元カラム名を取り出す
+     *
+     * @param reference {@link #selectColumnsReferencingAccountNo()}の1行
+     * @return カラム名
+     */
+    private String columnNameOf(Map<String, Object> reference) {
+      return (String) reference.get("column_name");
+    }
+
+    /**
+     * 削除対象アカウント（account_no=1）を参照する行数を数える
+     *
+     * @param table 参照元テーブルの完全修飾名
+     * @param column 参照元カラム名
+     * @return 行数
+     */
+    private Integer countReferencing(String table, String column) {
+      return jdbcTemplate.queryForObject(
+          "SELECT COUNT(*) FROM " + table + " WHERE " + column + " = 1", Integer.class);
+    }
+
+    /**
+     * 「参照が残っている場合は削除自体をブロックする」仕様の外部キーかどうかを判定する
+     *
+     * <p>{@code common.inquiry_reply_mst.admin_account_no}だけは、参照を解消する（＝返信を削除する）と
+     * 無関係な第三者のお問い合わせスレッドから回答本文だけが消えてしまうため、Repositoryでは削除せず {@code
+     * AccountServiceImpl#deleteAccount}がアカウント削除自体を拒否する。 ブロックされることの検証は{@code
+     * AccountServiceImplIntegrationTest}側で行う
+     *
+     * @param table 参照元テーブルの完全修飾名
+     * @param column 参照元カラム名
+     * @return 削除ブロックで守る参照の場合、true
+     */
+    private boolean isGuardedByDeletionBlock(String table, String column) {
+      return "common.inquiry_reply_mst".equals(table) && "admin_account_no".equals(column);
     }
 
     @Test

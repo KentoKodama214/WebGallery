@@ -989,7 +989,7 @@ public class PhotoServiceImplTest {
 
     @Test
     @Order(4)
-    @DisplayName("正常系：位置情報が非公開で閲覧者が本人でない場合、撮影場所を返さないこと")
+    @DisplayName("正常系：位置情報が非公開で閲覧者が本人でない場合、撮影場所と公開フラグを返さないこと")
     void getPhotoDetail_hidesLocation_whenPrivateAndNotOwner() throws GalleryException {
       PhotoDetailModel model = photoWithLocation(1L, false);
       stubDetail(1L, model);
@@ -1009,6 +1009,8 @@ public class PhotoServiceImplTest {
       assertNull(actual.getGeoLocation().address());
       assertNull(actual.getGeoLocation().latitude());
       assertNull(actual.getGeoLocation().longitude());
+      // 公開フラグ自体も返さない（「撮影場所が隠された写真」であること自体を知らせないため）
+      assertNull(actual.getIsLocationPublic());
     }
 
     @Test
@@ -1030,6 +1032,8 @@ public class PhotoServiceImplTest {
 
       assertEquals(9L, actual.getLocationNo().value());
       assertEquals("東京都渋谷区", actual.getGeoLocation().address().value());
+      // 所有者には編集画面での現在値表示のために公開フラグを返す
+      assertFalse(actual.getIsLocationPublic().value());
       verifyNoInteractions(photoViewLogRepositoryImpl);
     }
 
@@ -1051,6 +1055,8 @@ public class PhotoServiceImplTest {
                   .build());
 
       assertEquals("東京都渋谷区", actual.getGeoLocation().address().value());
+      // 公開設定の写真は、他人にも公開フラグを返す
+      assertTrue(actual.getIsLocationPublic().value());
     }
 
     @Test

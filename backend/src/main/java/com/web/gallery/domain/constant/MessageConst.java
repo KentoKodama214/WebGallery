@@ -20,6 +20,8 @@ public final class MessageConst {
   public static final String ERR_FAIL_TO_UPDATE_ACCOUNT = "アカウント更新でエラーが発生しました。更新をやり直してください。";
   public static final String ERR_NOT_AUTHORIZED_TO_EDIT_ACCOUNT = "アカウントを編集する権限がありません。";
   public static final String ERR_CURRENT_PASSWORD_MISMATCH = "現在のパスワードが正しくありません。";
+  public static final String ERR_CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY =
+      "管理者として投稿したお問い合わせ返信が残っているため、アカウントを削除できません。運営へお問い合わせください。";
   public static final String ERR_FAIL_TO_REGIST_PHOTO = "写真登録でエラーが発生しました。登録をやり直してください。";
   public static final String ERR_FAIL_TO_UPDATE_PHOTO = "写真更新でエラーが発生しました。更新をやり直してください。";
   public static final String ERR_FAIL_TO_DELETE_PHOTO = "写真削除でエラーが発生しました。削除をやり直してください。";
