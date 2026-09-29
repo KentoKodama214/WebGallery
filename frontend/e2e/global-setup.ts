@@ -26,11 +26,24 @@ import { DB_CONFIG } from "./fixtures/db";
  */
 async function warmUpRoutes(baseURL: string): Promise<void> {
   // フォーム入力を伴うページ・cross-browser対象の写真一覧ページと、
-  // バックエンドへの中継を行うAPIプロキシルート（認証不要かつ読み取り専用の都道府県一覧で代表させる）
+  // バックエンドへの中継を行うAPIプロキシルート（認証不要かつ読み取り専用の都道府県一覧で代表させる）。
+  //
+  // 加えて、認証が必要なページも暖機する。これらは未ログインでも200を返して
+  // クライアント側でログインページへ遷移する作りのため、ダミーのアカウントIDで
+  // リクエストするだけでルートがコンパイルされる。
+  //
+  // 暖機対象は実測で選定している。devサーバーのログで初回リクエストの
+  // next.js処理時間を計測したところ、photo_settingが突出して重かった。
+  //   photo_setting 26.3s / photo_detail 2.2s / account_setting 1.6s
+  // テストタイムアウトは60秒のため、photo_settingの初回コンパイルだけで
+  // 予算の半分近くを消費し、写真アップロードを伴うspecがまとめて失敗していた。
   const paths = [
     "/login",
     "/register",
     "/photo/warmup/photo_list",
+    "/photo/warmup/photo_setting",
+    "/photo/warmup/photo_detail?photoNo=1",
+    "/warmup/account_setting",
     "/api/v1/prefectures",
   ];
   const deadline = Date.now() + 60000;
