@@ -15,6 +15,10 @@ import { generateTestAccountId, login, registerAccount } from "../fixtures/auth"
  * リフレッシュが401で失敗し、未ログイン確定としてログインページへ誘導される。
  */
 test.describe("同一アカウントの二重ログインによるセッション競合", () => {
+  // 2つのブラウザコンテキストでアカウント登録・ログインを行うため、
+  // 既定（60秒）では並列実行時の負荷で不足する
+  test.describe.configure({ timeout: 120_000 });
+
   test("別ブラウザで再ログインすると、先にログインしていた側は保護ページの再読み込みでログインページへ誘導されること", async ({
     browser,
   }, testInfo) => {

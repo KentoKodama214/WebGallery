@@ -39,7 +39,33 @@ for _ in $(seq 1 30); do
 done
 
 if curl -sf "$BACKEND_URL" >/dev/null 2>&1; then
-  echo "バックエンドは既に起動しています。新規起動はスキップします"
+  # 既にポート8080でバックエンドが応答している。ただしそのインスタンスにE2E専用の設定
+  # （とくに RATE_LIMIT_ENABLED=false）が適用されているとは限らないため、既定では再利用しない。
+  # 手動起動したインスタンス（RATE_LIMIT_ENABLED は既定 true）を再利用すると、
+  # app.rate-limit.register（10件 / 3600秒）に引っかかって11件目以降のアカウント登録が
+  # 429 になり、アカウントを登録する多数のテストがまとめて失敗する。
+  # 原因がレート制限だと気づきにくいため、静かに再利用せずここで止める
+  if [ "${E2E_REUSE_BACKEND:-0}" = "1" ]; then
+    echo "警告: 起動済みのバックエンドを再利用します (E2E_REUSE_BACKEND=1)"
+    echo "      RATE_LIMIT_ENABLED=false で起動したインスタンスでない場合、"
+    echo "      アカウント登録が429になり多数のテストが失敗します"
+  else
+    cat >&2 <<'REUSE_ERROR'
+エラー: ポート8080で既にバックエンドが起動しています。
+
+E2Eはアカウントを多数登録するため、レート制限を無効化した専用設定
+(RATE_LIMIT_ENABLED=false) で起動したバックエンドが必要です。
+手動起動したインスタンス (既定は RATE_LIMIT_ENABLED=true) をそのまま使うと、
+11件目以降のアカウント登録が429になり、多数のテストがまとめて失敗します。
+
+対処:
+  1. 起動中のバックエンドを停止してから実行し直す (推奨)
+       lsof -ti:8080 | xargs kill -9 && just e2e
+  2. レート制限を無効化して起動済みであることが確実な場合のみ、再利用する
+       E2E_REUSE_BACKEND=1 just e2e
+REUSE_ERROR
+    exit 1
+  fi
 else
   echo "バックエンドを起動します (SPRING_PROFILES_ACTIVE=local)"
   # docker-compose.ymlのpostgres-db設定に合わせて明示的に指定する

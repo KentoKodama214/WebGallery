@@ -10,6 +10,10 @@ import { generateTestAccountId, registerAndLogin, TEST_USER_PASSWORD } from "../
  * パスワード変更・アカウント削除の両操作が共有する再認証カウンタの挙動を検証する。
  */
 test.describe("アカウント設定の再認証クールダウン（現在のパスワード連続失敗による一時停止）", () => {
+  // アカウント登録・ログインに加え、現在のパスワードの照合（BCrypt）を複数回行うため、
+  // 既定（60秒）では並列実行時の負荷で不足する
+  test.describe.configure({ timeout: 120_000 });
+
   test("3回連続で現在のパスワードを間違えるとクールダウンし、リロード後も維持され、クールダウン明けには解除されること", async ({
     page,
   }, testInfo) => {
