@@ -46,7 +46,7 @@
 		adminAccountNo は意図的に削除条件として扱わない。管理者として投稿した返信を巻き込んで削除すると、
 		無関係な第三者のお問い合わせスレッドから回答本文だけが消えてしまうため、
 		「返信を持つ管理者アカウントは削除できない」という業務ルール（ErrorEnum.CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY）
-		でアカウント削除自体をブロックする。件数確認には下の count を使う
+		でアカウント削除自体をブロックする。存在確認には下の exists を使う
 	-->
 	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition">
 		DELETE FROM
@@ -70,25 +70,47 @@
 		</where>
 	</delete>
 
-	<select id="count" parameterType="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition" resultType="int">
+	<!--
+		存在確認のみが用途のため COUNT(*) で全件を数えず EXISTS で最初の1件が見つかった時点で打ち切る。
+		excludingInquiryAccountNo は単独では抽出条件にならない（除外条件のみ指定された場合は全件が対象に
+		なってしまうため）。他の条件が1つも指定されていない場合は下のガードで必ず false を返す
+	-->
+	<select id="exists" parameterType="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition" resultType="boolean">
 		SELECT
-			COUNT(*)
-		FROM
-			common.inquiry_reply_mst
-		<where>
-			<if test="inquiryId != null"> AND inquiry_id = #{inquiryId}</if>
-			<if test="adminAccountNo != null"> AND admin_account_no = #{adminAccountNo}</if>
-			<if test="inquiryAccountNo != null">
-				AND inquiry_id IN (
-					SELECT
-						id
-					FROM
-						common.inquiry_mst
-					WHERE
-						account_no = #{inquiryAccountNo}
-				)
-			</if>
-		</where>
+			EXISTS (
+				SELECT
+					1
+				FROM
+					common.inquiry_reply_mst
+				<where>
+					<!-- 抽出条件が1つも指定されていない場合に「1件でも行があれば true」になるのを防ぐガード。
+					     抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接
+					     組み立てられた場合でも false を返すようにする -->
+					<if test="inquiryId == null and adminAccountNo == null and inquiryAccountNo == null"> AND 1 = 0</if>
+					<if test="inquiryId != null"> AND inquiry_id = #{inquiryId}</if>
+					<if test="adminAccountNo != null"> AND admin_account_no = #{adminAccountNo}</if>
+					<if test="inquiryAccountNo != null">
+						AND inquiry_id IN (
+							SELECT
+								id
+							FROM
+								common.inquiry_mst
+							WHERE
+								account_no = #{inquiryAccountNo}
+						)
+					</if>
+					<if test="excludingInquiryAccountNo != null">
+						AND inquiry_id NOT IN (
+							SELECT
+								id
+							FROM
+								common.inquiry_mst
+							WHERE
+								account_no = #{excludingInquiryAccountNo}
+						)
+					</if>
+				</where>
+			)
 	</select>
 
 	<select id="selectList" parameterType="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition" resultMap="InquiryReplyMstMap">

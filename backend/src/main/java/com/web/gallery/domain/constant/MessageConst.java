@@ -10,6 +10,7 @@ public final class MessageConst {
   public static final String REGIST_INQUIRY = "お問い合わせを受け付けました。";
   public static final String REPLY_INQUIRY = "返信を送信しました。";
   public static final String WITHDRAW_INQUIRY = "お問い合わせを取り下げました。";
+  public static final String MARK_INQUIRY_AS_READ = "お問い合わせを既読にしました。";
 
   // Warning
   public static final String USER_NOT_FOUND = "ユーザーが見つかりません。";

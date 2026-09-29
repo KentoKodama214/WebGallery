@@ -16,6 +16,7 @@ import com.web.gallery.presentation.request.inquiry.InquiryListRequest;
 import com.web.gallery.presentation.request.inquiry.InquiryRegistRequest;
 import com.web.gallery.presentation.response.inquiry.InquiryDetailGetResponse;
 import com.web.gallery.presentation.response.inquiry.InquiryListGetResponse;
+import com.web.gallery.presentation.response.inquiry.InquiryReadResponse;
 import com.web.gallery.presentation.response.inquiry.InquiryRegistResponse;
 import com.web.gallery.presentation.response.inquiry.InquiryWithdrawalResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -110,13 +111,15 @@ public class InquiryController {
   /**
    * 自分のお問い合わせ詳細取得
    *
-   * <p>未読の返信が存在する場合、取得と同時に既読化する
+   * <p>副作用を持たない参照専用のAPI。既読化は{@link #markInquiryAsRead}で別途行う
    *
    * @param inquiryNo お問い合わせ番号
    * @return {@link InquiryDetailGetResponse}
    * @throws GalleryException お問い合わせが存在しない場合
    */
-  @Operation(summary = "お問い合わせ詳細取得", description = "自分のお問い合わせの詳細情報（返信を含む）を取得する")
+  @Operation(
+      summary = "お問い合わせ詳細取得",
+      description = "自分のお問い合わせの詳細情報（返信を含む）を取得する。既読化は行わないため、既読にする場合は既読化APIを別途呼び出すこと")
   @ApiResponse(responseCode = "200", description = "取得成功")
   @ApiResponse(responseCode = "400", description = "お問い合わせが存在しない", content = @Content)
   @GetMapping(ApiRoutes.API_INQUIRY_DETAIL)
@@ -128,6 +131,29 @@ public class InquiryController {
         inquiryService.getInquiryDetail(accountNo, new InquiryNo(inquiryNo));
 
     return ResponseEntity.ok(InquiryDetailGetResponse.from(detail));
+  }
+
+  /**
+   * 自分のお問い合わせ既読化
+   *
+   * <p>詳細取得（GET）で既読化すると、ブラウザ・プロキシのプリフェッチやリトライ、フロントの再取得で
+   * 意図せず既読になってしまう。GETを安全なメソッドに保つため、状態を変える既読化はこのPOSTへ分離している
+   *
+   * @param inquiryNo お問い合わせ番号
+   * @return {@link InquiryReadResponse}
+   * @throws GalleryException 以下のいずれかに該当する場合 ・お問い合わせが存在しない場合 ・既読化に失敗した場合
+   */
+  @Operation(summary = "お問い合わせ既読化", description = "自分のお問い合わせを既読にする（既に既読の場合は何もしない）")
+  @ApiResponse(responseCode = "200", description = "既読化成功")
+  @ApiResponse(responseCode = "400", description = "お問い合わせが存在しない", content = @Content)
+  @PostMapping(ApiRoutes.API_INQUIRY_READ)
+  public ResponseEntity<InquiryReadResponse> markInquiryAsRead(@PathVariable Long inquiryNo)
+      throws GalleryException {
+
+    AccountNo accountNo = new AccountNo(sessionHelper.getAccountNo());
+    inquiryService.markInquiryAsRead(accountNo, new InquiryNo(inquiryNo));
+
+    return ResponseEntity.ok(InquiryReadResponse.of(MessageConst.MARK_INQUIRY_AS_READ));
   }
 
   /**

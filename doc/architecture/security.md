@@ -131,16 +131,51 @@ APM に記録されやすく（`Authorization` と違い）マスク対象から
 `AccountAggregateRepositoryImplIntegrationTest` が `pg_constraint` からの動的列挙で検証する）。
 これに加えて以下の2点を扱う。
 
-- **管理者として投稿したお問い合わせ返信が残っている場合は、削除そのものを拒否する**
+- **管理者として「他ユーザーの」お問い合わせへ投稿した返信が残っている場合は、削除そのものを拒否する**
   （`AccountServiceImpl#deleteAccount` → `ErrorEnum.CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY`、400）。
   `common.inquiry_reply_mst.admin_account_no` の参照を解消するために返信を巻き込んで削除すると、
   **無関係な第三者のお問い合わせスレッドから回答本文だけが消え**、お問い合わせのステータス（回答済み）と
   実データが食い違ってしまう。業務ルールとして削除を禁止し、運営側での対応に委ねる。
+  ただし**自分が起票したお問い合わせへの自己返信は判定に含めない**（`InquiryReplyMstRepository#existsReplyToOthersInquiry`）。
+  自スレッドの返信は退会時に `byInquiryAccountNo` の条件でスレッドごと削除されるため第三者への影響がなく、
+  含めてしまうと動作確認やテスト投稿で自分のお問い合わせに返信しただけの管理者が退会できなくなる。
 - **外部キーを持たない「閲覧者側」のログは匿名化する**。`photo_view_log.account_no` /
   `photo_list_filter_log.account_no`（閲覧者。未ログインを `0` で表すセンチネル値のため外部キーなし）は
   削除漏れが外部キー違反にならないため、放置すると退会後も IP アドレス・国・地域・検索キーワードが
   他人の写真のログとして残り続ける。所有者側の閲覧数・絞り込みの分析データは残したいため、行の削除ではなく
   アカウント番号を `0` へ、個人データを空文字へ更新する（各 Mapper の `anonymizeViewer`）。
+
+#### 管理者返信を持つアカウントの退会（運用手順）
+
+上記のブロックを解除する経路はアプリケーションに実装していない。`common.inquiry_reply_mst.admin_account_no`
+は `common.account(account_no)` への外部キー（`ON DELETE RESTRICT`）であり、返信を残したままアカウントだけを
+消すことはできないため、**返信を別の管理者へ引き継いでから退会 API を実行する**。個人データ削除の要求を
+受けた場合は運営が以下を実施する。
+
+1. 対象アカウントに残っている返信を確認する（0 件なら退会 API がそのまま通る）。
+
+   ```sql
+   SELECT r.id, r.inquiry_id, r.reply_no, i.account_no AS inquiry_account_no
+     FROM common.inquiry_reply_mst r
+     JOIN common.inquiry_mst i ON i.id = r.inquiry_id
+    WHERE r.admin_account_no = <退会するアカウント番号>
+      AND i.account_no <> <退会するアカウント番号>;
+   ```
+
+2. 引き継ぎ先の管理者アカウント番号を決める（`common.account_authority` で `admin` 権限を持つ現役のアカウント）。
+3. 返信の `admin_account_no` を引き継ぎ先へ付け替える。返信本文・`created_by`・`created_at` は
+   お問い合わせスレッドの履歴として残す（第三者から見た回答内容が変わらないようにするため）。
+
+   ```sql
+   UPDATE common.inquiry_reply_mst
+      SET admin_account_no = <引き継ぎ先のアカウント番号>
+    WHERE admin_account_no = <退会するアカウント番号>
+      AND inquiry_id IN (SELECT id FROM common.inquiry_mst WHERE account_no <> <退会するアカウント番号>);
+   ```
+
+4. 退会 API（`DELETE /api/v1/accounts`）を本人に再実行してもらう。自スレッドへの自己返信は
+   この時点でスレッドごと削除される。
+5. 誰の返信を誰へ引き継いだかを運用記録として残す（アプリ側には監査ログを持たない）。
 
 ### バリデーションエラーのログ
 
@@ -172,12 +207,31 @@ RFC1918 で、**本番では前段の ALB／リバースプロキシが存在す
 プロキシに一致する要素を読み飛ばして最初に現れた要素を実クライアント IP とする（前段は追記する仕様
 のため、右側が信頼境界に近い）。全要素が信頼できるプロキシだった場合は差し替えない。
 
+`RemoteIpValve` と異なり、**各要素を IP アドレスとして検証・正規化してから扱う**。前段が
+`X-Forwarded-For` を追記せず素通しする構成（`proxy_set_header X-Forwarded-For $http_x_forwarded_for`
+など）では右端＝クライアントの指定値になり、検証しなければ任意の文字列がそのまま `getRemoteAddr()` に
+なってしまう。復元した IP は `common.login_history.ip_address` / `photo.photo_view_log.ip_address`
+（いずれも `varchar(45)`）へ保存されるため、不正な値や 46 文字以上の値は INSERT を失敗させ、GeoIP 解決
+にも渡ってしまう。IP アドレスとして読めない要素が現れた時点で差し替えを諦め、TCP 接続の送信元 IP に倒す。
+あわせて `1.2.3.4:5678` / `[2001:db8::1]:443` のようなポート付き表記（Azure Front Door 等の前段が付ける）
+からポートを剥がし、剥がした結果で信頼プロキシ判定を行う。名前解決は行わない
+（`InetAddress#getByName` は不正な値で DNS 参照へ抜けるため使わない）。
+
 本番プロファイルでは既定値のまま起動できないよう、`application-prod.yml` が
-`app.forwarded.trusted-proxies: ${TRUSTED_PROXIES}`（既定値なし）を指定し、さらに
-`ProdConfigValidationRunner` が値の妥当性を検証する。検証は文字列の照合ではなく、値を実際に
+`app.forwarded.trusted-proxies: ${TRUSTED_PROXIES:}`（空文字既定）を指定し、`ProdConfigValidationRunner`
+が未設定・空文字・不正な正規表現・広すぎる正規表現のいずれも検出して起動を失敗させる。空文字を既定値に
+しているのは、環境変数の設定漏れを Spring の `Could not resolve placeholder` ではなく
+「前段プロキシの CIDR を明示設定する必要があります」という運用者向けのメッセージで伝えるため
+（検証の実行経路も 1 本化される）。広すぎるかどうかの検証は文字列の照合ではなく、値を実際に
 `Pattern` へコンパイルして代表的なグローバル IP（`8.8.8.8` / `203.0.113.1` / `2001:db8::1`）に
 一致しないことを確かめる方式とする（`.*` と等価な表記は `(.*)` / `^.*$` / `[0-9.]*` など無数にあり、
-禁止文字列のリストでは網羅できないため）。正規表現として不正な値もここで検出する。
+禁止文字列のリストでは網羅できないため）。
+
+ただしこの検証はあくまで catch-all に近い値を弾くためのもので、過不足の両方がある。`203.0.113.1` は
+TEST-NET-3 のため前段プロキシを同レンジに置いた検証環境では正当な設定でも起動に失敗し、逆に
+`10\.\d+\.\d+\.\d+` のようにプライベート範囲全域を許す値はどのプローブにも一致せず素通しする。
+「前段プロキシの CIDR だけに狭める」を機械的に担保するには、設定を正規表現ではなく CIDR のリスト
+（`IpAddressMatcher`）へ変え、プレフィックス長の下限を検証する形にする必要がある。
 
 ### バックエンドのレスポンスヘッダーと CORS
 

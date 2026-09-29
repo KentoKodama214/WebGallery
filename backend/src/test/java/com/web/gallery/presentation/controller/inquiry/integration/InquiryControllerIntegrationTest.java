@@ -188,7 +188,7 @@ public class InquiryControllerIntegrationTest {
   class getInquiryDetail {
     @Test
     @Order(1)
-    @DisplayName("正常系：返信付きの詳細を取得でき、未読の返信は既読化される")
+    @DisplayName("正常系：返信付きの詳細を取得でき、GETでは既読化されない")
     void getInquiryDetail_success() throws Exception {
       mockMvc
           .perform(
@@ -205,10 +205,11 @@ public class InquiryControllerIntegrationTest {
           .andExpect(jsonPath("$.replyList.length()").value(1))
           .andExpect(jsonPath("$.replyList[0].body").value("パスワード変更方法は設定画面からご案内できます。"));
 
+      // GETは安全なメソッドとして扱うため、プリフェッチ・リトライで既読にならないこと
       Boolean isReadByUser =
           jdbcTemplate.queryForObject(
               "SELECT is_read_by_user FROM common.inquiry_mst WHERE id = 2", Boolean.class);
-      assertTrue(isReadByUser);
+      assertFalse(isReadByUser);
     }
 
     @Test
@@ -243,6 +244,87 @@ public class InquiryControllerIntegrationTest {
 
   @Nested
   @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/controller/InquiryControllerIntegrationTest.sql")
+  class markInquiryAsRead {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：未読のお問い合わせを既読化できる")
+    void markInquiryAsRead_success() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/inquiries/2/read")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAuthentication(1L, "aaaaaaaa")))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isSuccess").value(true));
+
+      Boolean isReadByUser =
+          jdbcTemplate.queryForObject(
+              "SELECT is_read_by_user FROM common.inquiry_mst WHERE id = 2", Boolean.class);
+      assertTrue(isReadByUser);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：繰り返し呼び出しても結果が変わらない（冪等）")
+    void markInquiryAsRead_idempotent() throws Exception {
+      for (int i = 0; i < 2; i++) {
+        mockMvc
+            .perform(
+                post("/api/v1/inquiries/2/read")
+                    .with(
+                        SecurityMockMvcRequestPostProcessors.authentication(
+                            createAuthentication(1L, "aaaaaaaa")))
+                    .with(csrf()))
+            .andExpect(status().isOk());
+      }
+
+      Boolean isReadByUser =
+          jdbcTemplate.queryForObject(
+              "SELECT is_read_by_user FROM common.inquiry_mst WHERE id = 2", Boolean.class);
+      assertTrue(isReadByUser);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：他アカウントのお問い合わせは既読化できない（400）")
+    void markInquiryAsRead_otherAccount() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/inquiries/2/read")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAuthentication(2L, "bbbbbbbb")))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest());
+
+      Boolean isReadByUser =
+          jdbcTemplate.queryForObject(
+              "SELECT is_read_by_user FROM common.inquiry_mst WHERE id = 2", Boolean.class);
+      assertFalse(isReadByUser);
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：存在しないお問い合わせ番号の場合は400を返す")
+    void markInquiryAsRead_notFound() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/inquiries/999/read")
+                  .with(
+                      SecurityMockMvcRequestPostProcessors.authentication(
+                          createAuthentication(1L, "aaaaaaaa")))
+                  .with(csrf()))
+          .andExpect(status().isBadRequest());
+    }
+  }
+
+  @Nested
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/controller/InquiryControllerIntegrationTest.sql")

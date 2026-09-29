@@ -43,6 +43,17 @@ public class ProdConfigValidationRunner implements ApplicationRunner {
    *
    * <p>正規表現の表記は無数にあるため（{@code .*} / {@code (.*)} / {@code ^.*$} / {@code [0-9.]*} 等）、
    * 文字列の照合では網羅できない。実際にコンパイルしてこれらに一致するかどうかで判定する
+   *
+   * <p><b>この判定の限界</b>：あくまで「catch-allに近い値」を弾くための固定プローブであり、過不足の両方がある。
+   *
+   * <ul>
+   *   <li>過検出：{@code 203.0.113.1}はTEST-NET-3（RFC5737）だが、前段プロキシを同レンジに置いた検証環境では 正当な設定でも起動に失敗する
+   *   <li>検出漏れ：{@code 10\.\d+\.\d+\.\d+}のようにプライベート範囲全域を許す値はどのプローブにも一致しない。
+   *       「前段プロキシのCIDRだけに狭める」という本来の目的は、この検証だけでは担保できない
+   * </ul>
+   *
+   * <p>より強く担保するなら、設定を正規表現ではなくCIDRのリスト（{@code IpAddressMatcher}）に変え、
+   * プレフィックス長の下限（例：/16未満を拒否）を検証する形にする必要がある
    */
   private static final List<String> GLOBAL_IP_PROBES =
       List.of("8.8.8.8", "203.0.113.1", "2001:db8::1");
@@ -85,8 +96,10 @@ public class ProdConfigValidationRunner implements ApplicationRunner {
    * {@code X-Forwarded-For}を信頼する送信元の範囲が、本番として妥当に絞られているかを検証する
    *
    * <p>この範囲が広いと、範囲内から届いた{@code X-Forwarded-For}をそのまま信頼してしまい、送信元IPの詐称
-   * （レート制限の回避・ログイン履歴やアクセスログの偽装）が成立する。{@code application-prod.yml}では 既定値を設けず環境変数{@code
-   * TRUSTED_PROXIES}の明示設定を必須にしているが、空文字・不正な正規表現・ 広すぎる正規表現が設定された場合はここで検出して起動を失敗させる。
+   * （レート制限の回避・ログイン履歴やアクセスログの偽装）が成立する。{@code application-prod.yml}は
+   * 環境変数プレースホルダに空文字の既定値を与えており、未設定・空文字・不正な正規表現・広すぎる正規表現の いずれもここで検出して起動を失敗させる。空文字既定にしているのは、環境変数の設定漏れを
+   * Springの{@code Could not resolve placeholder}ではなく「前段プロキシのCIDRを明示設定する必要があります」という
+   * 運用者向けのメッセージで伝えるため（検証の実行経路もこのメソッドに一本化される）。
    *
    * <p>広すぎるかどうかは、値を実際に{@link Pattern}へコンパイルし{@link #GLOBAL_IP_PROBES}に 一致するかどうかで判定する。文字列の照合では{@code
    * .*}と等価な無数の表記を網羅できないため。 正規表現として不正な値も、この時点で検出する（不正なままだと {@code

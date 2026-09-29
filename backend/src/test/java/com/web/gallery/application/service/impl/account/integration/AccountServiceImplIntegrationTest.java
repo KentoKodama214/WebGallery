@@ -785,6 +785,32 @@ public class AccountServiceImplIntegrationTest {
     }
 
     @Test
+    @Order(6)
+    @DisplayName("正常系：自分のお問い合わせへの自己返信しか持たない場合は削除できる")
+    @Sql("/sql/common/cleanup.sql")
+    @Sql("/sql/service/AccountServiceImplDeleteAccountIntegrationTest.sql")
+    @Sql("/sql/service/AccountServiceImplDeleteAccountSelfReplyIntegrationTest.sql")
+    void deleteAccount_withSelfReplyOnly() throws GalleryException {
+      // 自スレッドの返信は退会時にスレッドごと削除されるため、第三者のスレッドから回答本文だけが
+      // 消えることはない。ブロックしてしまうと、動作確認等で自分のお問い合わせに返信した管理者が
+      // 自力で退会できなくなる
+      accountServiceImpl.deleteAccount(
+          new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01"));
+
+      Integer accountCount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.account where account_no=1", Integer.class);
+      assertEquals(0, accountCount);
+
+      // 自己返信もスレッドごと削除されていること
+      Integer replyByAccount =
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_reply_mst where admin_account_no=1",
+              Integer.class);
+      assertEquals(0, replyByAccount);
+    }
+
+    @Test
     @Order(2)
     @DisplayName("異常系：現在のパスワードが一致しない場合は削除されずForbiddenAccountExceptionをthrowする")
     void deleteAccount_currentPassword_mismatch() {

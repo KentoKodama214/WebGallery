@@ -139,26 +139,69 @@ public class InquiryReplyMstMapperTest {
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/mapper/InquiryReplyMstMapperTest.sql")
-  class count {
+  class exists {
     @Test
     @Order(1)
-    @DisplayName("正常系：管理者のアカウント番号に該当する返信の件数を返すこと")
-    void count_byAdminAccountNo() {
-      assertEquals(2, inquiryReplyMstMapper.count(InquiryReplyMstCondition.byAdminAccountNo(1L)));
+    @DisplayName("正常系：他ユーザーのお問い合わせへ投稿した返信がある場合、trueを返すこと")
+    void exists_replyToOthersInquiry() {
+      // アカウント1はアカウント3のお問い合わせ（お問い合わせID:3）へ返信している
+      assertTrue(
+          inquiryReplyMstMapper.exists(
+              InquiryReplyMstCondition.byAdminAccountNoExcludingOwnInquiry(1L)));
     }
 
     @Test
     @Order(2)
-    @DisplayName("正常系：該当する返信がない場合、0を返すこと")
-    void count_notFound() {
-      assertEquals(0, inquiryReplyMstMapper.count(InquiryReplyMstCondition.byAdminAccountNo(2L)));
+    @DisplayName("正常系：自分が起票したお問い合わせへの自己返信しかない場合、falseを返すこと")
+    void exists_onlyReplyToOwnInquiry() {
+      // アカウント4は自分のお問い合わせ（お問い合わせID:4）にしか返信していない。
+      // 自スレッドの返信は退会時にスレッドごと削除されるため、退会をブロックする理由にならない
+      assertFalse(
+          inquiryReplyMstMapper.exists(
+              InquiryReplyMstCondition.byAdminAccountNoExcludingOwnInquiry(4L)));
     }
 
     @Test
     @Order(3)
-    @DisplayName("正常系：お問い合わせの登録者のアカウント番号に該当する返信の件数を返すこと")
-    void count_byInquiryAccountNo() {
-      assertEquals(2, inquiryReplyMstMapper.count(InquiryReplyMstCondition.byInquiryAccountNo(1L)));
+    @DisplayName("正常系：返信を1件も投稿していない場合、falseを返すこと")
+    void exists_noReply() {
+      assertFalse(
+          inquiryReplyMstMapper.exists(
+              InquiryReplyMstCondition.byAdminAccountNoExcludingOwnInquiry(2L)));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：お問い合わせIDに該当する返信の有無を返すこと")
+    void exists_byInquiryId() {
+      assertTrue(inquiryReplyMstMapper.exists(InquiryReplyMstCondition.byInquiryId(1L)));
+      assertFalse(inquiryReplyMstMapper.exists(InquiryReplyMstCondition.byInquiryId(2L)));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：お問い合わせの登録者のアカウント番号に該当する返信の有無を返すこと")
+    void exists_byInquiryAccountNo() {
+      assertTrue(inquiryReplyMstMapper.exists(InquiryReplyMstCondition.byInquiryAccountNo(1L)));
+      assertFalse(inquiryReplyMstMapper.exists(InquiryReplyMstCondition.byInquiryAccountNo(2L)));
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("抽出条件が空の場合はfalseを返すこと（全件を対象にしてしまうのを防ぐガード）")
+    void exists_emptyCondition() {
+      // 抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接
+      // 組み立てられた場合でも「1件でも行があればtrue」にならないこと
+      assertFalse(inquiryReplyMstMapper.exists(InquiryReplyMstCondition.builder().build()));
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("除外条件だけが指定された場合もfalseを返すこと（除外条件は単独では抽出条件にならない）")
+    void exists_onlyExcludingCondition() {
+      assertFalse(
+          inquiryReplyMstMapper.exists(
+              InquiryReplyMstCondition.builder().excludingInquiryAccountNo(1L).build()));
     }
   }
 
@@ -172,10 +215,16 @@ public class InquiryReplyMstMapperTest {
     @Order(1)
     @DisplayName("正常系：お問い合わせの登録者のアカウント番号に紐づく返信を削除すること")
     void delete_byInquiryAccountNo() {
+      // アカウント1が起票したお問い合わせ（お問い合わせID:1）に紐づく返信2件だけが消え、
+      // 他ユーザーのスレッドの返信（返信3・4）は残ること
       assertEquals(
           2, inquiryReplyMstMapper.delete(InquiryReplyMstCondition.byInquiryAccountNo(1L)));
       assertEquals(
           0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_reply_mst WHERE inquiry_id = 1", Integer.class));
+      assertEquals(
+          2,
           jdbcTemplate.queryForObject(
               "SELECT COUNT(*) FROM common.inquiry_reply_mst", Integer.class));
     }
@@ -188,7 +237,7 @@ public class InquiryReplyMstMapperTest {
       // 組み立てられた場合でも全件削除にならないこと
       assertEquals(0, inquiryReplyMstMapper.delete(InquiryReplyMstCondition.builder().build()));
       assertEquals(
-          2,
+          4,
           jdbcTemplate.queryForObject(
               "SELECT COUNT(*) FROM common.inquiry_reply_mst", Integer.class));
     }
@@ -197,9 +246,12 @@ public class InquiryReplyMstMapperTest {
     @Order(3)
     @DisplayName("管理者のアカウント番号は削除条件にならないこと（返信を持つ管理者はアカウント削除自体をブロックする仕様のため）")
     void delete_byAdminAccountNo_isNotSupported() {
-      assertEquals(0, inquiryReplyMstMapper.delete(InquiryReplyMstCondition.byAdminAccountNo(1L)));
       assertEquals(
-          2,
+          0,
+          inquiryReplyMstMapper.delete(
+              InquiryReplyMstCondition.byAdminAccountNoExcludingOwnInquiry(1L)));
+      assertEquals(
+          4,
           jdbcTemplate.queryForObject(
               "SELECT COUNT(*) FROM common.inquiry_reply_mst", Integer.class));
     }

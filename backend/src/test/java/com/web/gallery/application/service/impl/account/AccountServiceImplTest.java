@@ -787,10 +787,10 @@ public class AccountServiceImplTest {
           .delete(any(Account.class));
 
       doNothing().when(fileRepository).deleteByPrefix(new ImageFilePath(accountId + "/"));
-      // 管理者として投稿した返信が無いため削除は許可される
+      // 他ユーザーのお問い合わせへ投稿した返信が無いため削除は許可される
       doReturn(false)
           .when(inquiryReplyMstRepositoryImpl)
-          .existsByAdminAccountNo(new AccountNo(accountNo));
+          .existsReplyToOthersInquiry(new AccountNo(accountNo));
 
       accountServiceImpl.deleteAccount(
           new AccountNo(accountNo), new AccountId(accountId), new Password("password01"));
@@ -870,7 +870,7 @@ public class AccountServiceImplTest {
 
     @Test
     @Order(4)
-    @DisplayName("異常系：管理者として投稿したお問い合わせ返信が残っている場合はBadRequestExceptionをthrowし、削除しない")
+    @DisplayName("異常系：管理者として他ユーザーのお問い合わせへ投稿した返信が残っている場合はBadRequestExceptionをthrowし、削除しない")
     void deleteAccount_with_admin_reply() {
       AccountModel storedAccount =
           AccountModel.builder()
@@ -879,7 +879,9 @@ public class AccountServiceImplTest {
               .build();
       doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
       doReturn(true).when(passwordEncoder).matches("password01", "stored-hash");
-      doReturn(true).when(inquiryReplyMstRepositoryImpl).existsByAdminAccountNo(new AccountNo(1L));
+      doReturn(true)
+          .when(inquiryReplyMstRepositoryImpl)
+          .existsReplyToOthersInquiry(new AccountNo(1L));
 
       // 返信を巻き込んで削除すると無関係な第三者のお問い合わせから回答本文だけが消えるため、
       // 業務ルールとして削除自体を拒否する

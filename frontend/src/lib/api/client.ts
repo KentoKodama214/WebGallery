@@ -990,7 +990,7 @@ export interface InquiryDetail {
 }
 
 /**
- * 自分のお問い合わせ詳細を取得する（未読の返信があれば取得と同時に既読化される）
+ * 自分のお問い合わせ詳細を取得する（副作用なし。既読化は markInquiryAsRead を別途呼ぶ）
  */
 export async function getInquiryDetail(inquiryNo: number): Promise<InquiryDetail> {
   const response = await fetchWithAuth(`/api/v1/inquiries/${seg(inquiryNo)}`);
@@ -998,6 +998,26 @@ export async function getInquiryDetail(inquiryNo: number): Promise<InquiryDetail
     throw new Error(await readErrorMessage(response, "お問い合わせ詳細の取得に失敗しました"));
   }
   return readJson<InquiryDetail>(response);
+}
+
+/** お問い合わせ既読化結果 */
+export interface InquiryReadResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+}
+
+/**
+ * 自分のお問い合わせを既読にする（既に既読の場合はバックエンド側で何もしない）
+ */
+export async function markInquiryAsRead(inquiryNo: number): Promise<InquiryReadResult> {
+  const response = await fetchWithAuth(`/api/v1/inquiries/${seg(inquiryNo)}/read`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "お問い合わせの既読化に失敗しました"));
+  }
+  return readJson<InquiryReadResult>(response);
 }
 
 /** お問い合わせ取り下げ結果 */

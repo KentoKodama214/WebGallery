@@ -29,15 +29,14 @@ public class InquiryReplyMstRepositoryImpl implements InquiryReplyMstRepository 
   }
 
   /**
-   * 指定アカウントが管理者として投稿した返信が存在するかどうかを判定する
+   * 指定アカウントが管理者として、他ユーザーのお問い合わせへ投稿した返信が存在するかどうかを判定する
    *
    * @param adminAccountNo 返信した管理者のアカウント番号
    * @return 1件以上存在する場合、true
    */
   @Override
-  public boolean existsByAdminAccountNo(AccountNo adminAccountNo) {
-    return inquiryReplyMstMapper.count(
-            InquiryReplyMstCondition.byAdminAccountNo(adminAccountNo.value()))
-        > 0;
+  public boolean existsReplyToOthersInquiry(AccountNo adminAccountNo) {
+    return inquiryReplyMstMapper.exists(
+        InquiryReplyMstCondition.byAdminAccountNoExcludingOwnInquiry(adminAccountNo.value()));
   }
 }

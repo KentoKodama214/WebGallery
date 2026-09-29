@@ -185,6 +185,9 @@ public class InquiryControllerTest {
           .andExpect(jsonPath("$.subject").value("件名"))
           .andExpect(jsonPath("$.body").value("本文"))
           .andExpect(jsonPath("$.replyList").isEmpty());
+
+      // GETは安全なメソッドとして扱い、既読化は行わない
+      verify(inquiryService, never()).markInquiryAsRead(any(), any());
     }
 
     @Test
@@ -199,6 +202,32 @@ public class InquiryControllerTest {
 
   @Nested
   @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class markInquiryAsRead {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：お問い合わせを既読にできること")
+    void markInquiryAsRead_success() throws Exception {
+      mockMvc
+          .perform(post("/api/v1/inquiries/1/read"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isSuccess").value(true));
+
+      verify(inquiryService, times(1)).markInquiryAsRead(any(), any());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：お問い合わせが存在しない。InquiryNotFoundExceptionをthrowする")
+    void markInquiryAsRead_InquiryNotFoundException() throws Exception {
+      doThrow(InquiryNotFoundException.class).when(inquiryService).markInquiryAsRead(any(), any());
+
+      mockMvc.perform(post("/api/v1/inquiries/999/read")).andExpect(status().isBadRequest());
+    }
+  }
+
+  @Nested
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class withdrawInquiry {
     @Test

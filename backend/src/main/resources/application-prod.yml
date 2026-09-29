@@ -14,11 +14,13 @@ logging:
 
 app:
   forwarded:
-    # X-Forwarded-For を信頼する「直前の送信元IP」の範囲。本番では既定値（ループバック＋RFC1918全域）を
-    # 使わせず、前段のALB/リバースプロキシが存在するサブネットのCIDRだけに狭めることを必須とする。
-    # 既定値を設けないため、環境変数 TRUSTED_PROXIES が未設定なら起動時にプレースホルダ解決で失敗する
-    # （値の妥当性は ProdConfigValidationRunner がさらに検証する）
-    trusted-proxies: ${TRUSTED_PROXIES}
+    # X-Forwarded-For を信頼する「直前の送信元IP」の範囲。本番では application.yml の既定値
+    # （ループバック＋RFC1918全域）を使わせず、前段のALB/リバースプロキシが存在するサブネットの
+    # CIDRだけに狭めることを必須とする。
+    # 空文字を既定値にしているのは、環境変数 TRUSTED_PROXIES の設定漏れを Spring の
+    # 「Could not resolve placeholder」ではなく ProdConfigValidationRunner の運用者向けメッセージで
+    # 伝えるため。未設定・空文字・不正な正規表現・広すぎる正規表現のいずれも起動時検証で弾かれる
+    trusted-proxies: ${TRUSTED_PROXIES:}
   photo:
     miniUserUpperLimit: ${MINI_USER_UPPER_LIMIT}
     normalUserUpperLimit: ${NORMAL_USER_UPPER_LIMIT}

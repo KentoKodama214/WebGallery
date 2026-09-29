@@ -77,7 +77,8 @@ public class InquiryServiceImpl implements InquiryService {
   /**
    * 自分のお問い合わせの詳細情報（返信を含む）を取得する
    *
-   * <p>未読の返信が存在する場合、取得と同時に既読化する
+   * <p>GETは安全なメソッドであるべきなので、ここでは既読化しない。ブラウザ・プロキシのプリフェッチや リトライ、フロントの再取得で意図せず既読になるのを避けるため、既読化は{@link
+   * #markInquiryAsRead} を呼ぶ明示的なエンドポイントへ分離している
    *
    * @param accountNo アカウント番号
    * @param inquiryNo お問い合わせ番号
@@ -85,19 +86,31 @@ public class InquiryServiceImpl implements InquiryService {
    * @throws GalleryException お問い合わせが存在しなかった場合
    */
   @Override
-  @Transactional(rollbackFor = GalleryException.class)
+  @Transactional(readOnly = true)
   public InquiryDetailModel getInquiryDetail(AccountNo accountNo, InquiryNo inquiryNo)
       throws GalleryException {
+    return inquiryMstRepository.getInquiryDetail(accountNo, inquiryNo);
+  }
+
+  /**
+   * 自分のお問い合わせを既読にする
+   *
+   * <p>既に既読の場合は更新を行わない（何度呼び出しても結果が変わらない冪等な操作）
+   *
+   * @param accountNo アカウント番号
+   * @param inquiryNo お問い合わせ番号
+   * @throws GalleryException 以下のいずれかに該当する場合 ・お問い合わせが存在しない場合 ・既読化に失敗した場合
+   */
+  @Override
+  @Transactional(rollbackFor = GalleryException.class)
+  public void markInquiryAsRead(AccountNo accountNo, InquiryNo inquiryNo) throws GalleryException {
     InquiryDetailModel detail = inquiryMstRepository.getInquiryDetail(accountNo, inquiryNo);
 
     if (Boolean.FALSE.equals(detail.getIsReadByUser())) {
       Inquiry inquiry = Inquiry.reconstruct(detail, detail.getReplyModelList());
       inquiry.markReadByUser();
       inquiryAggregateRepository.markReadByUser(inquiry);
-      return inquiry.getDetail();
     }
-
-    return detail;
   }
 
   /**

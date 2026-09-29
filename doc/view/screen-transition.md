@@ -298,7 +298,9 @@ sequenceDiagram
     User->>List: 件名を選択
     List->>Detail: /inquiry/detail?inquiryNo={no} に遷移
     Detail->>API: GET /api/v1/inquiries/{inquiryNo}
-    API-->>Detail: 詳細・返信一覧を返却（未読の返信があれば同時に既読化）
+    API-->>Detail: 詳細・返信一覧を返却（副作用なし）
+    Detail->>API: POST /api/v1/inquiries/{inquiryNo}/read（表示後に既読化）
+    API-->>Detail: 既読化成功（失敗しても詳細表示は妨げない）
     User->>Detail: 「← back」リンク
     Detail->>List: /inquiry/list に遷移
 
@@ -511,7 +513,8 @@ sequenceDiagram
 | `/api/v1/admin/accounts/{accountNo}/authority` | PUT | 管理者アカウント管理 | なし（一覧更新） |
 | `/api/v1/inquiries` | POST | お問い合わせ投稿 | → お問い合わせ一覧 |
 | `/api/v1/inquiries` | GET | お問い合わせ一覧 | なし（データ表示） |
-| `/api/v1/inquiries/{inquiryNo}` | GET | お問い合わせ詳細 | なし（データ表示、未読返信の既読化） |
+| `/api/v1/inquiries/{inquiryNo}` | GET | お問い合わせ詳細 | なし（データ表示。副作用なし） |
+| `/api/v1/inquiries/{inquiryNo}/read` | POST | お問い合わせ詳細 | なし（未読返信の既読化） |
 | `/api/v1/inquiries/{inquiryNo}/withdrawal` | POST | お問い合わせ詳細 | なし（ステータス更新） |
 | `/api/v1/admin/inquiries` | GET | 管理者お問い合わせ管理 | なし（データ表示） |
 | `/api/v1/admin/inquiries/{inquiryId}` | GET | 管理者お問い合わせ詳細 | なし（データ表示） |
