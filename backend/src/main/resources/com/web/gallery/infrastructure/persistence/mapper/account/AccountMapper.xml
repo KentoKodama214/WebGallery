@@ -208,6 +208,10 @@
 		DELETE FROM
 			common.account
 		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード。
+			     抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接組み立てられた
+			     場合でも1件も消さないようにする -->
+			<if test="accountNo == null and isDeleted == null and accountId == null and accountName == null and password == null and birthdate == null and sexKbn == null and birthplacePrefectureKbnCode == null and residentPrefectureKbnCode == null and freeMemo == null and lastLoginDatetime == null and loginFailureCount == null and isAdminLocked == null"> AND 1 = 0</if>
 			<include refid="accountConditionWhere">
 				<property name="prefix" value=""/>
 			</include>

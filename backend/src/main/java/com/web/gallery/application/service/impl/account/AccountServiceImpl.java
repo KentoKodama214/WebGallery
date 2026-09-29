@@ -17,6 +17,7 @@ import com.web.gallery.application.repository.account.AccountRepository;
 import com.web.gallery.application.repository.account.LoginHistoryRepository;
 import com.web.gallery.application.repository.auth.RefreshTokenRepository;
 import com.web.gallery.application.repository.common.KbnMstRepository;
+import com.web.gallery.application.repository.inquiry.InquiryReplyMstRepository;
 import com.web.gallery.application.repository.photo.FileRepository;
 import com.web.gallery.application.service.account.AccountService;
 import com.web.gallery.domain.constant.Consts;
@@ -78,6 +79,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
   private final RefreshTokenRepository refreshTokenRepository;
   private final LoginHistoryRepository loginHistoryRepository;
   private final KbnMstRepository kbnMstRepository;
+  private final InquiryReplyMstRepository inquiryReplyMstRepository;
   private final PasswordEncoder passwordEncoder;
   private final ReauthenticationThrottle reauthenticationThrottle;
   private final GeoIpResolver geoIpResolver;
@@ -276,16 +278,23 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
    *
    * <p>{@code currentPassword}による本人確認（再認証）を行ったうえで物理削除する
    *
+   * <p>管理者として他ユーザーのお問い合わせへ投稿した返信が残っている場合は削除しない。返信を巻き込んで
+   * 削除すると、無関係な第三者のお問い合わせスレッドから回答本文だけが消え、ステータス（回答済み）と 実データが食い違うため、業務ルールとして禁止する
+   *
    * @param accountNo アカウント番号
    * @param accountId アカウントID
    * @param currentPassword 現在のパスワード
-   * @throws GalleryException 現在のパスワードが一致しない場合
+   * @throws GalleryException 現在のパスワードが一致しない場合、または管理者として投稿した返信が残っている場合
    */
   @Override
   @Transactional(rollbackFor = GalleryException.class)
   public void deleteAccount(AccountNo accountNo, AccountId accountId, Password currentPassword)
       throws GalleryException {
     verifyCurrentPassword(accountNo, accountRepository.getByAccountNo(accountNo), currentPassword);
+
+    if (inquiryReplyMstRepository.existsByAdminAccountNo(accountNo)) {
+      throw ErrorEnum.CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY.toException();
+    }
 
     Account account = Account.forDelete(accountNo);
     accountAggregateRepository.delete(account);

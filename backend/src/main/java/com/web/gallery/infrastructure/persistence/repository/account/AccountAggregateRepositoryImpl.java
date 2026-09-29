@@ -38,7 +38,13 @@ import org.springframework.stereotype.Repository;
  *
  * <p>{@code common.account(account_no)}を参照する外部キーはいずれも{@code ON DELETE RESTRICT}であるため、
  * 参照元テーブルの削除漏れはアカウント本体の物理削除を外部キー違反で失敗させる。テーブル追加時は {@code
- * AccountAggregateRepositoryImplIntegrationTest}の参照元テーブル網羅テストが検出する
+ * AccountAggregateRepositoryImplIntegrationTest}の参照元テーブル網羅テストが検出する。 例外は{@code
+ * common.inquiry_reply_mst.admin_account_no}で、これは削除ではなく {@code
+ * AccountServiceImpl#deleteAccount}が削除自体をブロックする（他ユーザーのお問い合わせから 回答本文だけが消えるのを避けるための業務ルール）。
+ *
+ * <p>外部キーを持たない「閲覧者側」のログ（{@code photo_view_log.account_no} / {@code
+ * photo_list_filter_log.account_no}。未ログインを0で表すセンチネル値のためFKなし）は、
+ * 所有者側の分析データを残したまま退会者の個人データだけを消すため、削除ではなく匿名化する
  */
 @Slf4j
 @Repository
@@ -97,15 +103,21 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
     loginHistoryMapper.delete(LoginHistoryCondition.byAccountNo(accountNo));
     photoListFilterLogMapper.delete(PhotoListFilterLogCondition.byPhotoAccountNo(accountNo));
 
+    // 他人のギャラリーを閲覧した際に「閲覧者」として残したログを匿名化する。閲覧者のアカウント番号は
+    // 外部キーを持たない（未ログインを0で表すセンチネル値）ため放置しても削除は成功してしまい、
+    // 退会後もIPアドレス等が他人の写真のログとして残り続ける
+    photoViewLogMapper.anonymizeViewer(accountNo);
+    photoListFilterLogMapper.anonymizeViewer(accountNo);
+
     // ロケーションマスタを削除（common.account への外部キーがON DELETE RESTRICTのため、
     // 残したままだとアカウント本体の物理削除が外部キー違反になる）
     locationMstMapper.delete(LocationMstCondition.byAccountNo(accountNo));
 
-    // お問い合わせ返信を削除する。inquiry_reply_mst は inquiry_mst と common.account の双方を
-    // ON DELETE RESTRICT で参照するため、お問い合わせ本体・アカウント本体より先に削除する。
-    // 1. このアカウントが管理者として投稿した返信（admin_account_no 参照の解消）
-    // 2. このアカウントが登録したお問い合わせに紐づく返信（inquiry_id 参照の解消）
-    inquiryReplyMstMapper.delete(InquiryReplyMstCondition.byAdminAccountNo(accountNo));
+    // このアカウントが登録したお問い合わせに紐づく返信を削除する（inquiry_id 参照の解消）。
+    // inquiry_reply_mst は inquiry_mst を ON DELETE RESTRICT で参照するため、お問い合わせ本体より先に消す。
+    // このアカウントが「管理者として」投稿した返信（admin_account_no 参照）はここでは消さない。
+    // 他ユーザーのお問い合わせスレッドから回答本文だけが消えてしまうため、
+    // AccountServiceImpl#deleteAccount が削除自体をブロックしている
     inquiryReplyMstMapper.delete(InquiryReplyMstCondition.byInquiryAccountNo(accountNo));
 
     // お問い合わせ本体を削除（common.account への外部キーがON DELETE RESTRICTのため、
