@@ -69,6 +69,23 @@ public class AccountServiceImplIntegrationTest {
   /** S3ストレージアクセスはモックする（統合テストでは実ストレージへ接続しない） */
   @MockitoBean private FileRepository fileRepository;
 
+  /**
+   * DBサーバの現在時刻を取得する
+   *
+   * <p>DB側で{@code NOW()}により書き込まれる時刻を検証する際の境界値として使う。JVM（ホスト）と PostgreSQL（macOSではDocker
+   * Desktopの別VM）はクロックが独立しており、{@link OffsetDateTime#now()}を
+   * 境界値にすると両者のずれ（実測でDB側が数百マイクロ秒遅れる）でアサーションが不安定になるため、 比較する両辺をDBのクロックに揃える。
+   *
+   * <p>トランザクション開始時刻を返す{@code NOW()}ではなく、文の実行時刻を返す {@code
+   * clock_timestamp()}を使う。テスト側のトランザクションは検証対象の処理より前に 開始しているため、{@code NOW()}では正しい境界値にならない。
+   *
+   * @return DBサーバの現在時刻
+   */
+  private OffsetDateTime dbClockNow() {
+    return jdbcTemplate.queryForObject(
+        "SELECT clock_timestamp()", (rs, rowNum) -> rs.getObject(1, OffsetDateTime.class));
+  }
+
   @Nested
   @Order(1)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -989,11 +1006,11 @@ public class AccountServiceImplIntegrationTest {
       AuthenticationFailureBadCredentialsEvent event =
           new AuthenticationFailureBadCredentialsEvent(authentication, exception);
 
-      // handle()はREQUIRES_NEWで本メソッドの呼び出しとは別の物理トランザクションで実行されるため、
-      // DBのNOW()ではなくJavaのOffsetDateTime.now()で挟んだ時間範囲でupdatedAtを検証する
-      OffsetDateTime beforeHandle = OffsetDateTime.now();
+      // updatedAtはAccountMapper.xmlのincrementLoginFailureCountがDBのNOW()で書き込むため、
+      // 境界値もDBのクロックから取得して同一クロック同士で比較する（dbClockNow()を参照）
+      OffsetDateTime beforeHandle = dbClockNow();
       accountServiceImpl.handle(event);
-      OffsetDateTime afterHandle = OffsetDateTime.now();
+      OffsetDateTime afterHandle = dbClockNow();
 
       List<Account> actualData =
           jdbcTemplate.query(
