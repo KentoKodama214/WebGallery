@@ -293,6 +293,32 @@ describe("PhotoList", () => {
     expect(screen.getByTestId("filter-panel").className).not.toMatch(/filterOpen/);
   });
 
+  it("ダイアログとしての属性は展開中だけ付与されること", async () => {
+    mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: samplePhotos });
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(galleryImages()).toHaveLength(2);
+    });
+
+    // パネルは条件付きレンダリングではなく常にDOM上にあるため、閉じている間に
+    // `aria-modal="true"` を残すと背面コンテンツを隠したまま扱う支援技術がある
+    const panel = screen.getByTestId("filter-panel");
+    expect(panel).not.toHaveAttribute("role");
+    expect(panel).not.toHaveAttribute("aria-modal");
+    expect(panel).not.toHaveAttribute("aria-label");
+
+    fireEvent.click(screen.getByTestId("filter-trigger"));
+
+    const openedPanel = screen.getByTestId("filter-panel");
+    expect(openedPanel).toHaveAttribute("role", "dialog");
+    expect(openedPanel).toHaveAttribute("aria-modal", "true");
+    expect(openedPanel).toHaveAttribute("aria-label", "写真の絞り込み");
+
+    fireEvent.click(screen.getByTestId("filter-close-button"));
+    expect(screen.getByTestId("filter-panel")).not.toHaveAttribute("aria-modal");
+  });
+
   it("フィルタートリガーの行（テキスト外の余白）クリックではパネルが開かないこと", async () => {
     mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: samplePhotos });
     render(<PhotoList photoAccountId="user1" />);
@@ -1150,6 +1176,26 @@ describe("PhotoList", () => {
       expect(captionEl.querySelector(".caption_content")).toHaveTextContent(
         `${"あ".repeat(100)}...`
       );
+    });
+
+    it("画像のalt属性も拡大表示と同じ長さに切り詰められること", async () => {
+      mockGetPhotoList.mockResolvedValue({
+        isLast: true,
+        photoList: [
+          { ...samplePhotos[0], caption: `${"あ".repeat(100)}いうえお` },
+          samplePhotos[1],
+        ],
+      });
+      render(<PhotoList photoAccountId="user1" />);
+      await waitFor(() => {
+        expect(document.querySelectorAll(".pswp-gallery__item")).toHaveLength(2);
+      });
+
+      // altだけ全文のままだと、支援技術には全文が読まれる一方で視覚的には100文字で
+      // 切られ、伝わる情報量が食い違う
+      expect(
+        screen.getByAltText(`${"あ".repeat(100)}...`)
+      ).toBeInTheDocument();
     });
 
     it("サロゲートペアを含むキャプションでも文字が壊れずに切り詰められること", async () => {

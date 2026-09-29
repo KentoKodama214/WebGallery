@@ -3,6 +3,7 @@ import { Client } from "pg";
 import { test, expect, type Page } from "@playwright/test";
 import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 import { generateTestAccountId, login, registerAccount } from "../fixtures/auth";
+import { collectCspViolations, cspDirectiveSources } from "../fixtures/csp";
 import { DB_CONFIG } from "../fixtures/db";
 
 /**
@@ -303,9 +304,21 @@ test.describe("写真詳細ページ（撮影場所の地図表示）", () => {
     await login(visitorPage, visitorAccountId);
 
     await test.step("非公開の間は、所有者本人には地図・ロケーション名が表示されること", async () => {
-      await page.goto(detailUrl);
+      // 埋め込みURLがCSPの`frame-src`に許可されていない場合、iframe要素は残ったまま中身だけが
+      // 読み込まれず、画面上はエラーにならない（`toBeVisible`では検出できない）。
+      // `lib/url.ts`が組み立てるパスと`proxy.ts`の`frame-src`が食い違ったら気づけるように、
+      // 実際のsrc・CSPヘッダー・コンソールの違反有無の3点を突き合わせる
+      const cspViolations = collectCspViolations(page);
+      const response = await page.goto(detailUrl);
       await expect(page.getByText(locationName)).toBeVisible();
-      await expect(page.locator('iframe[title="撮影場所の地図"]')).toBeVisible();
+      const mapFrame = page.locator('iframe[title="撮影場所の地図"]');
+      await expect(mapFrame).toBeVisible();
+
+      const mapSrc = await mapFrame.getAttribute("src");
+      expect(mapSrc).toMatch(/^https:\/\/maps\.google\.com\/maps\?/);
+      const csp = response?.headers()["content-security-policy"] ?? "";
+      expect(cspDirectiveSources(csp, "frame-src")).toContain("https://maps.google.com/maps");
+      expect(cspViolations, `CSP 違反:\n${cspViolations.join("\n")}`).toEqual([]);
     });
 
     await test.step("非公開の間は、所有者以外には地図・ロケーション名が表示されないこと", async () => {
