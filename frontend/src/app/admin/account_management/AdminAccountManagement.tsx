@@ -246,17 +246,19 @@ export function AdminAccountManagement() {
 
       {/*
         ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため、常設して
-        中身だけを差し替える（`role="status"` は polite。リージョンが先に存在していることが前提）
+        中身だけを差し替える（`role="status"` は polite。リージョンが先に存在していることが前提）。
+        空のときに `display: none`（`empty:hidden`）にするとアクセシビリティツリーから外れ、
+        「リージョンが先に存在している」という前提を満たせなくなるため、`empty:sr-only` で
+        レイアウト上の余白（親の `gap-4`）からだけ外す（要素自体はツリーに残る）
       */}
-      <p role="status" className="text-green-600 font-medium empty:hidden">
+      <p role="status" className="text-green-600 font-medium empty:sr-only">
         {message}
       </p>
 
-      {actionError && (
-        <p role="alert" className="text-red-500 text-sm">
-          {actionError}
-        </p>
-      )}
+      {/* エラーも同じ理由で常設する（`role="alert"` は assertive） */}
+      <p role="alert" className="text-red-500 text-sm empty:sr-only">
+        {actionError}
+      </p>
 
       <div
         className="w-full max-w-[1100px] overflow-x-auto"
@@ -361,11 +363,9 @@ export function AdminAccountManagement() {
         </table>
       </div>
 
-      {loadMoreError && (
-        <p role="alert" className="text-red-500 text-sm">
-          {loadMoreError}
-        </p>
-      )}
+      <p role="alert" className="text-red-500 text-sm empty:sr-only">
+        {loadMoreError}
+      </p>
 
       {!isLast && (
         <button

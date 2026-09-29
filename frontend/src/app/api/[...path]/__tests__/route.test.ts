@@ -155,6 +155,33 @@ describe("APIプロキシ route", () => {
     }
   });
 
+  it("実クライアントIPを特定できない場合は、プロセスにつき一度だけ警告を出す", async () => {
+    // 警告フラグはモジュールスコープに持つため、他テストの影響を受けないよう読み直す
+    jest.resetModules();
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const { GET: freshGet } = await import("../route");
+      fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+      // fail-closed は正常応答に現れないため、構成ミス（前段の段数と TRUSTED_PROXY_HOPS の
+      // 不一致）に気づけるよう警告だけは出す。リクエストごとに出すとログが溢れるので1回だけ
+      await freshGet(
+        new NextRequest("http://localhost/api/v1/accounts"),
+        ctx(["v1", "accounts"])
+      );
+      await freshGet(
+        new NextRequest("http://localhost/api/v1/accounts"),
+        ctx(["v1", "accounts"])
+      );
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0][0]).toContain("TRUSTED_PROXY_HOPS");
+    } finally {
+      warnSpy.mockRestore();
+      jest.resetModules();
+    }
+  });
+
   it("X-Forwarded-For が空要素のみの場合はバックエンドへ付与しない", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
 

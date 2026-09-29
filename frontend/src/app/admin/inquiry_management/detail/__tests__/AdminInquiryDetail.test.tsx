@@ -68,6 +68,26 @@ describe("AdminInquiryDetail", () => {
     expect(mockGetAdminInquiryDetail).toHaveBeenCalledWith(1);
   });
 
+  it("ライブリージョンはメッセージが無くてもDOM上に存在し、空のとき display:none にならないこと", async () => {
+    mockGetAdminInquiryDetail.mockResolvedValue(sampleDetail);
+
+    render(<AdminInquiryDetail inquiryId={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("写真が表示されない")).toBeInTheDocument();
+    });
+
+    // `display: none` の要素はアクセシビリティツリーから外れ、ライブリージョンとして
+    // 登録されないため、空のときも要素自体は残す（`empty:sr-only`）
+    const status = screen.getByRole("status");
+    expect(status).toBeEmptyDOMElement();
+    expect(status.className).not.toContain("empty:hidden");
+    expect(status.className).toContain("empty:sr-only");
+
+    // 入力欄のエラーは `aria-describedby` の参照先のため、条件付きレンダリングのまま
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("返信を空欄で送信するとエラーが表示され、APIが呼ばれないこと", async () => {
     mockGetAdminInquiryDetail.mockResolvedValue(sampleDetail);
 

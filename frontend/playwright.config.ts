@@ -32,13 +32,15 @@ export default defineConfig({
   // ワーカーごとに使い捨てアカウントを使う設計（fixtures/auth.ts・fixtures/admin.ts）のため
   // 並列実行してもテスト間の競合はない。直列実行（旧: 1）から引き上げて実行時間を短縮する。
   //
-  // ローカルもCIと同じ2に固定する。既定（undefined＝論理CPU数の半分）では、backendのJVM・
+  // ローカルもCIと同じ2を既定にする。既定（undefined＝論理CPU数の半分）では、backendのJVM・
   // Docker（PostgreSQL・MinIO）・devサーバー・ブラウザが同居するローカル環境でCPUが飽和し
   // （8コア機でロードアベレージ102を観測）、ハイドレーション待ちやアップロード後の遷移待ちが
   // 5〜10秒のアサーションに間に合わず不定期に失敗していた。実測では2に下げた方が失敗が
   // 消えるうえ実行時間も短い（chromium単体: 4ワーカーで5.5〜7.0分・4件失敗 →
-  // 2ワーカーで3.0分・0件失敗）。過負荷によるスラッシングで並列度が逆効果になっていた
-  workers: 2,
+  // 2ワーカーで3.0分・0件失敗）。過負荷によるスラッシングで並列度が逆効果になっていた。
+  // この2は8コア機での実測値のため、コア数の多いマシン・CIランナーでは環境変数
+  // `PW_WORKERS` で引き上げられるようにしておく
+  workers: Number(process.env.PW_WORKERS) || 2,
   // CIではPlaywrightの公式GitHub Actions向けレポーターも併用し、失敗箇所をジョブサマリー・
   // チェックにアノテーションとして表示する（htmlレポートのartifactダウンロードのみに頼らない）
   reporter: process.env.CI ? [["html"], ["github"]] : "html",

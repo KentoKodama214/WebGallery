@@ -732,14 +732,16 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       {/*
         フィルターオーバーレイ。展開中は画面全体を覆いEscape・Tab循環・フォーカス復帰を行うため、
         挙動はモーダルダイアログと同じ。role/aria-modalを与え、背面は inert で不活性化して
-        スクリーンリーダーのブラウズモードでも背面へ回り込めないようにする
+        スクリーンリーダーのブラウズモードでも背面へ回り込めないようにする。
+        パネルは条件付きレンダリングではなく常にDOM上にあるため、これらの属性は展開中だけ付ける
+        （`aria-modal="true"` を閉じている間も残すと、背面コンテンツを隠したまま扱う支援技術がある）
       */}
       <div
         ref={filterPanelRef}
         id="photo-list-filter-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="写真の絞り込み"
+        role={isFilterOpen ? "dialog" : undefined}
+        aria-modal={isFilterOpen ? true : undefined}
+        aria-label={isFilterOpen ? "写真の絞り込み" : undefined}
         className={`${styles.filterOverlay} ${isFilterOpen ? styles.filterOpen : ""}`}
         data-testid="filter-panel"
       >
@@ -919,7 +921,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                     >
                       <img
                         src={imageSrc}
-                        alt={photo.caption || "写真"}
+                        // 拡大表示のキャプションと同じ長さに揃える。altだけ全文のままだと、
+                        // 支援技術には最大1000文字（backendの`@Size`上限）が読まれる一方で
+                        // 視覚的には100文字で切られ、伝わる情報量が食い違う
+                        alt={truncateCaption(photo.caption || "") || "写真"}
                         className={styles.picture}
                         onLoad={handleImageLoad}
                       />
