@@ -33,6 +33,14 @@ public interface InquiryReplyMstMapper {
   public Integer delete(InquiryReplyMstCondition condition);
 
   /**
+   * 条件に該当するお問い合わせ返信の件数を取得する
+   *
+   * @param condition {@link InquiryReplyMstCondition}
+   * @return 件数
+   */
+  public int count(InquiryReplyMstCondition condition);
+
+  /**
    * 条件に該当するお問い合わせ返信一覧を、返信番号の昇順で取得する
    *
    * @param condition {@link InquiryReplyMstCondition}

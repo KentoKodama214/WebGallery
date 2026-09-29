@@ -102,6 +102,22 @@ public enum ErrorEnum {
   },
 
   /**
+   * エラーコード：E-C-0006
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY}
+   *
+   * <p>管理者として他ユーザーのお問い合わせへ投稿した返信が残っているアカウントは削除できない。 返信を巻き込んで削除すると、無関係な第三者のお問い合わせスレッドから回答本文だけが消え、
+   * お問い合わせのステータス（回答済み）と実データが食い違ってしまうため、業務ルールとして禁止する
+   */
+  CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY(
+      "E-C-0006", MessageConst.ERR_CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
    * エラーコード：E-I-0001
    *
    * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REGIST_INQUIRY}

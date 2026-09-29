@@ -55,6 +55,12 @@ version = '0.0.1-SNAPSHOT'
 // Spring Bootが11.0.25以降に追従したパッチ版をリリースしたら削除可能
 ext['tomcat.version'] = '11.0.26'
 
+// Spring Boot 4.1.1が管理するJacksonは脆弱性のある2.21.5 / 3.1.5のため、
+// 修正済みバージョンに上書き（GHSA-q4xh-88c3-wmh7 / GHSA-wjgm-6hv5-3cvf / GHSA-gx83-3vf8-gh7j対策）。
+// Spring Bootが追従したパッチ版をリリースしたら削除可能
+ext['jackson-2-bom.version'] = '2.21.7'
+ext['jackson-bom.version'] = '3.1.7'
+
 java {
 	sourceCompatibility = '21'
 }

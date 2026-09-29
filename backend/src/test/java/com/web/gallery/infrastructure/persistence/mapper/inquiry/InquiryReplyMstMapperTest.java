@@ -133,4 +133,75 @@ public class InquiryReplyMstMapperTest {
       assertEquals(0, actual.size());
     }
   }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/mapper/InquiryReplyMstMapperTest.sql")
+  class count {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：管理者のアカウント番号に該当する返信の件数を返すこと")
+    void count_byAdminAccountNo() {
+      assertEquals(2, inquiryReplyMstMapper.count(InquiryReplyMstCondition.byAdminAccountNo(1L)));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：該当する返信がない場合、0を返すこと")
+    void count_notFound() {
+      assertEquals(0, inquiryReplyMstMapper.count(InquiryReplyMstCondition.byAdminAccountNo(2L)));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：お問い合わせの登録者のアカウント番号に該当する返信の件数を返すこと")
+    void count_byInquiryAccountNo() {
+      assertEquals(2, inquiryReplyMstMapper.count(InquiryReplyMstCondition.byInquiryAccountNo(1L)));
+    }
+  }
+
+  @Nested
+  @Order(5)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/mapper/InquiryReplyMstMapperTest.sql")
+  class delete {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：お問い合わせの登録者のアカウント番号に紐づく返信を削除すること")
+    void delete_byInquiryAccountNo() {
+      assertEquals(
+          2, inquiryReplyMstMapper.delete(InquiryReplyMstCondition.byInquiryAccountNo(1L)));
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_reply_mst", Integer.class));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("抽出条件が空の場合は1件も削除しないこと（WHERE句なしの全件削除を防ぐガード）")
+    void delete_emptyCondition_deletesNothing() {
+      // 抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接
+      // 組み立てられた場合でも全件削除にならないこと
+      assertEquals(0, inquiryReplyMstMapper.delete(InquiryReplyMstCondition.builder().build()));
+      assertEquals(
+          2,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_reply_mst", Integer.class));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("管理者のアカウント番号は削除条件にならないこと（返信を持つ管理者はアカウント削除自体をブロックする仕様のため）")
+    void delete_byAdminAccountNo_isNotSupported() {
+      assertEquals(0, inquiryReplyMstMapper.delete(InquiryReplyMstCondition.byAdminAccountNo(1L)));
+      assertEquals(
+          2,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.inquiry_reply_mst", Integer.class));
+    }
+  }
 }

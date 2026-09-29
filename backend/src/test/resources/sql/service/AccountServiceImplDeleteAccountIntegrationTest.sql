@@ -37,9 +37,21 @@ insert into common.refresh_token values(DEFAULT, 2, 'hash-account2', now() + int
 insert into common.login_history (login_history_no, account_no, ip_address, country, region, created_by, created_at) values (1, 1, '198.51.100.1', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
 ALTER SEQUENCE common.login_history_login_history_no_seq RESTART 2;
 
--- photo.photo_list_filter_log (account_no=1の写真一覧絞り込みログ)
+-- photo.photo_list_filter_log
+-- 自分のギャラリーに対する絞り込みログ（photo_account_no=1 なので削除される）
 insert into photo.photo_list_filter_log (photo_list_filter_log_no, photo_account_no, account_no, direction_kbn, is_favorite, tag_list, sort_by, referer, ip_address, country, region, created_by, created_at) values (1, 1, 1, 'vertical', true, '太陽,海', 'favorite', 'https://example.com/', '198.51.100.1', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
-ALTER SEQUENCE photo.photo_list_filter_log_photo_list_filter_log_no_seq RESTART 2;
+-- account_no=1が「閲覧者」としてaccount_no=2のギャラリーで絞り込んだログ。
+-- account_no（閲覧者）はセンチネル値0を取りうるため外部キーを持たず、削除漏れがFK違反にならない。
+-- 所有者（account_no=2）側の分析データは残しつつ、退会者の個人データだけが匿名化されることを検証する
+insert into photo.photo_list_filter_log (photo_list_filter_log_no, photo_account_no, account_no, direction_kbn, is_favorite, tag_list, sort_by, referer, ip_address, country, region, created_by, created_at) values (2, 2, 1, 'horizontal', false, '海,夕焼け', 'photo_at', 'https://example.com/other', '198.51.100.9', 'JP', 'Osaka', 2, '2024-01-02 00:00:00 Asia/Tokyo');
+ALTER SEQUENCE photo.photo_list_filter_log_photo_list_filter_log_no_seq RESTART 3;
+
+-- photo.photo_view_log
+-- 自分の写真に対する他人の閲覧ログ（photo_account_no=1 なので削除される）
+insert into photo.photo_view_log (photo_view_log_no, photo_account_no, photo_no, account_no, referer, ip_address, country, region, created_by, created_at) values (1, 1, 1, 2, 'https://example.com/', '198.51.100.2', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
+-- account_no=1が「閲覧者」としてaccount_no=2の写真を閲覧したログ（匿名化の対象）
+insert into photo.photo_view_log (photo_view_log_no, photo_account_no, photo_no, account_no, referer, ip_address, country, region, created_by, created_at) values (2, 2, 1, 1, 'https://example.com/other', '198.51.100.9', 'JP', 'Osaka', 2, '2024-01-02 00:00:00 Asia/Tokyo');
+ALTER SEQUENCE photo.photo_view_log_photo_view_log_no_seq RESTART 3;
 
 -- common.location_mst (account_no=1のロケーション2件、account_no=2のロケーション1件)
 -- common.account への外部キーが ON DELETE RESTRICT のため、削除漏れがあるとアカウント本体の物理削除が失敗する
@@ -55,5 +67,7 @@ insert into common.inquiry_mst values(DEFAULT, 2, 1, 2, '2000-01-03 09:00:00 Asi
 -- common.inquiry_reply_mst
 -- account_no=2の管理者が、account_no=1のお問い合わせへ返信（inquiry_id 参照の解消が必要）
 insert into common.inquiry_reply_mst values(DEFAULT, (select id from common.inquiry_mst where account_no=1 and inquiry_no=1), 1, 2, 2, '2000-01-01 10:00:00 Asia/Tokyo', '返信本文11');
--- account_no=1の管理者が、account_no=2のお問い合わせへ返信（admin_account_no 参照の解消が必要）
-insert into common.inquiry_reply_mst values(DEFAULT, (select id from common.inquiry_mst where account_no=2 and inquiry_no=1), 1, 1, 1, '2000-01-03 10:00:00 Asia/Tokyo', '返信本文21');
+-- account_no=1が「管理者として」他人のお問い合わせへ投稿した返信は、ここでは作らない。
+-- それが1件でも残っているアカウントは削除自体がブロックされる仕様（他ユーザーのスレッドから
+-- 回答本文だけが消えるのを避けるため）なので、正常系の削除フィクスチャには含められない。
+-- ブロックされることの検証には AccountServiceImplDeleteAccountAdminReplyIntegrationTest.sql を重ねて使う

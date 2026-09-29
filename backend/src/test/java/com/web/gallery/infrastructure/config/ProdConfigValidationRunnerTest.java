@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.lenient;
 
 import com.web.gallery.infrastructure.web.CorsConfig;
+import com.web.gallery.infrastructure.web.TrustedProxyConfig;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,25 +15,21 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties;
-import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class ProdConfigValidationRunnerTest {
 
-  /** {@code X-Forwarded-For}を信頼する送信元範囲のプロパティキー */
-  private static final String INTERNAL_PROXIES_PROPERTY = "server.tomcat.remoteip.internal-proxies";
-
   /** 本番として妥当な信頼プロキシ範囲（ALBのサブネットCIDR相当） */
-  private static final String VALID_INTERNAL_PROXIES = "10\\.0\\.1\\.\\d{1,3}";
+  private static final String VALID_TRUSTED_PROXIES = "10\\.0\\.1\\.\\d{1,3}";
 
   private ProdConfigValidationRunner prodConfigValidationRunner;
-
-  private MockEnvironment environment;
 
   @Mock private CorsConfig corsConfig;
 
@@ -44,12 +41,23 @@ class ProdConfigValidationRunnerTest {
 
   @BeforeEach
   void setUp() {
-    environment = new MockEnvironment();
     // 信頼プロキシ範囲以外の検証に集中できるよう、既定では妥当な値を設定しておく
-    environment.setProperty(INTERNAL_PROXIES_PROPERTY, VALID_INTERNAL_PROXIES);
-    prodConfigValidationRunner =
-        new ProdConfigValidationRunner(
-            corsConfig, s3Config, dataSourceProperties, dataSourceReplicaConfig, environment);
+    prodConfigValidationRunner = runnerWithTrustedProxies(VALID_TRUSTED_PROXIES);
+  }
+
+  /**
+   * 指定した信頼プロキシ範囲を持つ検証ランナーを生成する
+   *
+   * @param trustedProxies {@code app.forwarded.trusted-proxies}の値
+   * @return {@link ProdConfigValidationRunner}
+   */
+  private ProdConfigValidationRunner runnerWithTrustedProxies(String trustedProxies) {
+    return new ProdConfigValidationRunner(
+        corsConfig,
+        s3Config,
+        dataSourceProperties,
+        dataSourceReplicaConfig,
+        new TrustedProxyConfig(trustedProxies));
   }
 
   @Nested
@@ -326,52 +334,74 @@ class ProdConfigValidationRunnerTest {
       @Order(1)
       @DisplayName("前段プロキシのCIDRに絞られていれば検証を通過する")
       void narrowedCidr() {
-        environment.setProperty(INTERNAL_PROXIES_PROPERTY, VALID_INTERNAL_PROXIES);
-
         assertDoesNotThrow(() -> prodConfigValidationRunner.validate());
       }
 
       @Test
       @Order(2)
-      @DisplayName("未設定なら起動失敗する")
-      void notConfigured() {
-        // プロパティを一切持たないEnvironmentで組み直し、「キー自体が存在しない」状態を再現する
-        ProdConfigValidationRunner runnerWithoutProperty =
-            new ProdConfigValidationRunner(
-                corsConfig,
-                s3Config,
-                dataSourceProperties,
-                dataSourceReplicaConfig,
-                new MockEnvironment());
-
-        assertThrows(IllegalStateException.class, runnerWithoutProperty::validate);
+      @DisplayName("IPv6のみを許可する範囲でも検証を通過する")
+      void narrowedIpv6() {
+        assertDoesNotThrow(() -> runnerWithTrustedProxies("fd00:1234::[0-9a-f]{1,4}").validate());
       }
 
       @Test
       @Order(3)
-      @DisplayName("空白のみなら起動失敗する")
-      void blank() {
-        environment.setProperty(INTERNAL_PROXIES_PROPERTY, "   ");
-
-        assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+      @DisplayName("未設定なら起動失敗する")
+      void notConfigured() {
+        assertThrows(IllegalStateException.class, () -> runnerWithTrustedProxies(null).validate());
       }
 
       @Test
       @Order(4)
-      @DisplayName("任意のIPに一致する catch-all（.*）は起動失敗する")
-      void catchAllAnyChar() {
-        environment.setProperty(INTERNAL_PROXIES_PROPERTY, ".*");
-
-        assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+      @DisplayName("空白のみなら起動失敗する")
+      void blank() {
+        assertThrows(IllegalStateException.class, () -> runnerWithTrustedProxies("   ").validate());
       }
 
       @Test
       @Order(5)
-      @DisplayName("前後に空白を含む catch-all（.+）も起動失敗する")
-      void catchAllWithSurroundingWhitespace() {
-        environment.setProperty(INTERNAL_PROXIES_PROPERTY, "  .+  ");
+      @DisplayName("正規表現として不正な値は起動失敗する")
+      void invalidRegex() {
+        // 不正な正規表現を放置すると ForwardedForFilter が「どの送信元も信頼しない」に倒れ、
+        // 実クライアントIPを一切復元できなくなるため、起動時に検出する
+        assertThrows(
+            IllegalStateException.class, () -> runnerWithTrustedProxies("10\\.0\\.[").validate());
+      }
 
-        assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+      /**
+       * グローバルIPに一致してしまう「広すぎる」正規表現を列挙する
+       *
+       * <p>{@code .*}と等価な表記は無数にあるため、禁止文字列のリストではなく実際の照合で弾けることを確かめる
+       *
+       * @return 検証対象の正規表現
+       */
+      static java.util.stream.Stream<String> tooBroadPatterns() {
+        return java.util.stream.Stream.of(
+            ".*",
+            ".+",
+            "[\\s\\S]*",
+            "(.*)",
+            "^.*$",
+            ".{0,}",
+            "[0-9.]*",
+            "\\d+\\.\\d+\\.\\d+\\.\\d+");
+      }
+
+      @ParameterizedTest
+      @MethodSource("tooBroadPatterns")
+      @Order(6)
+      @DisplayName("グローバルIPにも一致する広すぎる正規表現は起動失敗する")
+      void tooBroad(String pattern) {
+        assertThrows(
+            IllegalStateException.class, () -> runnerWithTrustedProxies(pattern).validate());
+      }
+
+      @Test
+      @Order(7)
+      @DisplayName("前後に空白を含む値も trim して判定する")
+      void surroundingWhitespace() {
+        assertThrows(
+            IllegalStateException.class, () -> runnerWithTrustedProxies("  .+  ").validate());
       }
     }
   }

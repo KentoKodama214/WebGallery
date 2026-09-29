@@ -51,6 +51,7 @@ import com.web.gallery.infrastructure.persistence.repository.account.AccountRepo
 import com.web.gallery.infrastructure.persistence.repository.account.LoginHistoryRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.auth.RefreshTokenRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.common.KbnMstRepositoryImpl;
+import com.web.gallery.infrastructure.persistence.repository.inquiry.InquiryReplyMstRepositoryImpl;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -97,6 +98,8 @@ public class AccountServiceImplTest {
   @Mock private LoginHistoryRepositoryImpl loginHistoryRepositoryImpl;
 
   @Mock private KbnMstRepositoryImpl kbnMstRepositoryImpl;
+
+  @Mock private InquiryReplyMstRepositoryImpl inquiryReplyMstRepositoryImpl;
 
   @Mock private PasswordEncoder passwordEncoder;
 
@@ -784,6 +787,10 @@ public class AccountServiceImplTest {
           .delete(any(Account.class));
 
       doNothing().when(fileRepository).deleteByPrefix(new ImageFilePath(accountId + "/"));
+      // 管理者として投稿した返信が無いため削除は許可される
+      doReturn(false)
+          .when(inquiryReplyMstRepositoryImpl)
+          .existsByAdminAccountNo(new AccountNo(accountNo));
 
       accountServiceImpl.deleteAccount(
           new AccountNo(accountNo), new AccountId(accountId), new Password("password01"));
@@ -859,6 +866,34 @@ public class AccountServiceImplTest {
       verify(passwordEncoder, times(1)).matches(eq("password01"), anyString());
       verify(accountAggregateRepositoryImpl, never()).delete(any(Account.class));
       verify(reauthenticationThrottle, times(1)).recordFailure(1L);
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：管理者として投稿したお問い合わせ返信が残っている場合はBadRequestExceptionをthrowし、削除しない")
+    void deleteAccount_with_admin_reply() {
+      AccountModel storedAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .password(new Password("stored-hash"))
+              .build();
+      doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+      doReturn(true).when(passwordEncoder).matches("password01", "stored-hash");
+      doReturn(true).when(inquiryReplyMstRepositoryImpl).existsByAdminAccountNo(new AccountNo(1L));
+
+      // 返信を巻き込んで削除すると無関係な第三者のお問い合わせから回答本文だけが消えるため、
+      // 業務ルールとして削除自体を拒否する
+      assertThrows(
+          BadRequestException.class,
+          () ->
+              accountServiceImpl.deleteAccount(
+                  new AccountNo(1L), new AccountId("aaaaaaaa"), new Password("password01")));
+
+      verify(accountAggregateRepositoryImpl, never()).delete(any(Account.class));
+      verify(fileRepository, never()).deleteByPrefix(any(ImageFilePath.class));
+      verify(applicationEventPublisher, never()).publishEvent(any());
+      // パスワードは一致しているため、再認証の失敗としては記録しない
+      verify(reauthenticationThrottle, never()).recordFailure(1L);
     }
   }
 

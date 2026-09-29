@@ -126,21 +126,23 @@ public class AccountAggregateRepositoryImplTest {
       verify(photoListFilterLogMapper).delete(photoListFilterLogConditionCaptor.capture());
       assertEquals(1L, photoListFilterLogConditionCaptor.getValue().getPhotoAccountNo());
 
+      // 「閲覧者」として残したログ（外部キーを持たないためFK違反にならず放置されうる）は匿名化する
+      verify(photoViewLogMapper).anonymizeViewer(1L);
+      verify(photoListFilterLogMapper).anonymizeViewer(1L);
+
       ArgumentCaptor<LocationMstCondition> locationMstConditionCaptor =
           ArgumentCaptor.forClass(LocationMstCondition.class);
       verify(locationMstMapper).delete(locationMstConditionCaptor.capture());
       assertEquals(1L, locationMstConditionCaptor.getValue().getAccountNo());
 
-      // お問い合わせ返信は「管理者として投稿した分」「自分のお問い合わせに紐づく分」の2回削除する
+      // お問い合わせ返信は「自分のお問い合わせに紐づく分」だけを削除する。
+      // 「管理者として投稿した分」は他ユーザーのスレッドから回答が消えるため削除せず、
+      // AccountServiceImpl#deleteAccount が削除自体をブロックする
       ArgumentCaptor<InquiryReplyMstCondition> inquiryReplyConditionCaptor =
           ArgumentCaptor.forClass(InquiryReplyMstCondition.class);
-      verify(inquiryReplyMstMapper, times(2)).delete(inquiryReplyConditionCaptor.capture());
-      List<InquiryReplyMstCondition> inquiryReplyConditions =
-          inquiryReplyConditionCaptor.getAllValues();
-      assertEquals(1L, inquiryReplyConditions.get(0).getAdminAccountNo());
-      assertNull(inquiryReplyConditions.get(0).getInquiryAccountNo());
-      assertEquals(1L, inquiryReplyConditions.get(1).getInquiryAccountNo());
-      assertNull(inquiryReplyConditions.get(1).getAdminAccountNo());
+      verify(inquiryReplyMstMapper).delete(inquiryReplyConditionCaptor.capture());
+      assertEquals(1L, inquiryReplyConditionCaptor.getValue().getInquiryAccountNo());
+      assertNull(inquiryReplyConditionCaptor.getValue().getAdminAccountNo());
 
       ArgumentCaptor<InquiryMstCondition> inquiryMstConditionCaptor =
           ArgumentCaptor.forClass(InquiryMstCondition.class);
@@ -214,7 +216,7 @@ public class AccountAggregateRepositoryImplTest {
       // ロケーションマスタを削除（アカウントの物理削除に先立って実施）
       inOrder.verify(locationMstMapper).delete(any(LocationMstCondition.class));
       // お問い合わせ返信を削除（お問い合わせ本体・アカウントの物理削除に先立って実施）
-      inOrder.verify(inquiryReplyMstMapper, times(2)).delete(any(InquiryReplyMstCondition.class));
+      inOrder.verify(inquiryReplyMstMapper).delete(any(InquiryReplyMstCondition.class));
       // お問い合わせ本体を削除（アカウントの物理削除に先立って実施）
       inOrder.verify(inquiryMstMapper).delete(any(InquiryMstCondition.class));
       // アカウント権限を削除（アカウントの物理削除に先立って実施）

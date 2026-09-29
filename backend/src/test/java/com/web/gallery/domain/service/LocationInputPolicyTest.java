@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -35,6 +37,20 @@ public class LocationInputPolicyTest {
         new Address("東京都渋谷区"),
         new Latitude(new BigDecimal("35.6812")),
         new Longitude(new BigDecimal("139.7671")));
+  }
+
+  /**
+   * 指定した緯度・経度を持つ位置情報を生成する
+   *
+   * @param latitude 緯度
+   * @param longitude 経度
+   * @return {@link GeoLocation}
+   */
+  private GeoLocation geoLocationOf(String latitude, String longitude) {
+    return new GeoLocation(
+        new Address("東京都渋谷区"),
+        new Latitude(new BigDecimal(latitude)),
+        new Longitude(new BigDecimal(longitude)));
   }
 
   @Nested
@@ -113,6 +129,35 @@ public class LocationInputPolicyTest {
       assertFalse(
           locationInputPolicy.isValid(
               new LocationNo(0L), MANAGEMENT_NAME, DISPLAY_NAME, GeoLocation.empty()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"-90, -180", "90, 180", "0, 0"})
+    @Order(10)
+    @DisplayName("正常系：緯度・経度が境界値（±90 / ±180）でもtrueを返すこと")
+    void isValid_newInput_boundaryCoordinates(String latitude, String longitude) {
+      assertTrue(
+          locationInputPolicy.isValid(
+              null, MANAGEMENT_NAME, DISPLAY_NAME, geoLocationOf(latitude, longitude)));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+      "90.0001, 139.7671",
+      "-90.0001, 139.7671",
+      "35.6812, 180.0001",
+      "35.6812, -180.0001",
+      "12345678, 139.7671",
+      "35.6812, 12345678"
+    })
+    @Order(11)
+    @DisplayName("異常系：緯度・経度が地理的に不正な範囲の場合、falseを返すこと")
+    void isValid_newInput_outOfRangeCoordinates(String latitude, String longitude) {
+      // 範囲外の値は decimal(11,4) の桁数を超えて numeric field overflow（500）になりうるため、
+      // ドメインの不変条件としても弾く（小数第5位以下は従来どおりDB側で丸める）
+      assertFalse(
+          locationInputPolicy.isValid(
+              null, MANAGEMENT_NAME, DISPLAY_NAME, geoLocationOf(latitude, longitude)));
     }
   }
 }

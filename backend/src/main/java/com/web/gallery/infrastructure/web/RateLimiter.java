@@ -2,8 +2,10 @@ package com.web.gallery.infrastructure.web;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -142,12 +144,25 @@ public class RateLimiter {
     if (removeCount <= 0) {
       return;
     }
-    windows.entrySet().stream()
-        .sorted(Comparator.comparingLong(entry -> startEpochMillisOf(entry.getValue())))
-        .limit(removeCount)
-        .map(Map.Entry::getKey)
-        .forEach(windows::remove);
+    // ウィンドウ開始時刻の読み出しはエントリのモニタでの同期が必要なため、ソートの比較ごとに
+    // 読み直すとエントリ数×log(エントリ数)回の同期が発生する。先に1回だけ読み出して固定する
+    List<KeyedStartTime> snapshot = new ArrayList<>(windows.size());
+    for (Map.Entry<String, Window> entry : windows.entrySet()) {
+      snapshot.add(new KeyedStartTime(entry.getKey(), startEpochMillisOf(entry.getValue())));
+    }
+    snapshot.sort(Comparator.comparingLong(KeyedStartTime::startEpochMillis));
+    for (int i = 0; i < removeCount && i < snapshot.size(); i++) {
+      windows.remove(snapshot.get(i).key());
+    }
   }
+
+  /**
+   * 強制間引きの並べ替え用に、キーとウィンドウ開始時刻を読み出した時点の値で保持するレコード
+   *
+   * @param key エントリのキー
+   * @param startEpochMillis 読み出した時点のウィンドウ開始時刻（エポックミリ秒）
+   */
+  private record KeyedStartTime(String key, long startEpochMillis) {}
 
   /**
    * エントリのウィンドウ開始時刻を、そのエントリのモニタで同期して読み出す
