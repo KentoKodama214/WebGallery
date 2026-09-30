@@ -127,6 +127,9 @@ test.describe("写真一覧ページ", () => {
     const filterPanel = page.getByTestId("filter-panel");
     const filterTrigger = page.getByTestId("filter-trigger");
 
+    // パネルは常にDOM上にあるため、閉じている間はダイアログとしての属性を持たないこと
+    await expect(filterPanel).not.toHaveAttribute("aria-modal", "true");
+
     await filterTrigger.click();
     await expect(filterPanel).toHaveClass(/filterOpen/);
     // 挙動がモーダルダイアログと同じであることを示す属性が付いていること

@@ -358,7 +358,15 @@ export function PhotoDetail({
         {/* 詳細情報 */}
         <div style={{ maxWidth: "1000px", margin: "auto" }}>
           {photo.photoJapaneseTitle && (
-            <p style={{ fontSize: "20px", textAlign: "center", margin: "5px 0 1px 0" }}>
+            <p style={{
+              fontSize: "20px",
+              textAlign: "center",
+              margin: "5px 0 1px 0",
+              // 空白を含まない長いタイトルでもコンテナ幅で折り返す（横スクロールを防ぐ）。
+              // 日本語名の列も varchar(100) で任意の文字を受け付けるため、英語タイトルと同じ扱いにする
+              overflowWrap: "break-word",
+              wordBreak: "break-all",
+            }}>
               {photo.photoJapaneseTitle}
             </p>
           )}

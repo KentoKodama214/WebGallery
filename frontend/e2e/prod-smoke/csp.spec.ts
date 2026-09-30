@@ -1,4 +1,5 @@
-import { test, expect, type ConsoleMessage } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { collectCspViolations } from "../fixtures/csp";
 
 /**
  * 本番ビルドでの CSP スモークテスト。
@@ -10,25 +11,12 @@ import { test, expect, type ConsoleMessage } from "@playwright/test";
  * バックエンド・DB を必要としないページに絞り、ビルド＋起動のみで完結させる。
  */
 
-/** CSP 違反・リソース拒否を示すコンソール／ページエラー文言 */
-const CSP_VIOLATION_PATTERN =
-  /Content Security Policy|Refused to (load|apply|execute|connect)|violates the following Content Security Policy/i;
-
 /** 公開（未認証・バックエンド不要で到達可能な）ページ */
 const PUBLIC_PATHS = ["/login", "/register"];
 
 for (const path of PUBLIC_PATHS) {
   test(`${path} で CSP 違反が発生しないこと`, async ({ page }) => {
-    const violations: string[] = [];
-    const collect = (msg: ConsoleMessage) => {
-      if (msg.type() === "error" && CSP_VIOLATION_PATTERN.test(msg.text())) {
-        violations.push(msg.text());
-      }
-    };
-    page.on("console", collect);
-    page.on("pageerror", (err) => {
-      if (CSP_VIOLATION_PATTERN.test(err.message)) violations.push(err.message);
-    });
+    const violations = collectCspViolations(page);
 
     // networkidle は AuthProvider がバックエンド不在の refresh をリトライする分だけ遅延しうるため
     // load を待ち、フォームの描画完了（＝CSS/スクリプトの評価が一巡した決定的なシグナル）を待ってから検証する

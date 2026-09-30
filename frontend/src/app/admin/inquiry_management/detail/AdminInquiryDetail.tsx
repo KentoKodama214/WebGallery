@@ -148,9 +148,12 @@ export function AdminInquiryDetail({ inquiryId }: AdminInquiryDetailProps) {
 
         {/*
           ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため、常設して
-          中身だけを差し替える（`role="status"` は polite。リージョンが先に存在していることが前提）
+          中身だけを差し替える（`role="status"` は polite。リージョンが先に存在していることが前提）。
+          空のときに `display: none`（`empty:hidden`）にするとアクセシビリティツリーから外れ、
+          「リージョンが先に存在している」という前提を満たせなくなるため、`empty:sr-only` で
+          レイアウト上の余白（`mt-2`）からだけ外す（要素自体はツリーに残る）
         */}
-        <p role="status" className="text-green-600 font-medium mt-2 empty:hidden">
+        <p role="status" className="text-green-600 font-medium mt-2 empty:sr-only">
           {message}
         </p>
 
@@ -215,6 +218,12 @@ export function AdminInquiryDetail({ inquiryId }: AdminInquiryDetailProps) {
               aria-describedby={replyError ? "reply-body-error" : undefined}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3] resize-y"
             />
+            {/*
+              入力欄のエラーは `aria-describedby` の参照先のため、ページ全体の通知（上の
+              `role="status"`）とは異なり条件付きレンダリングのままにする。常設すると空の要素を
+              `aria-describedby` が指し続けることになる。挿入と同時の読み上げは
+              `role="alert"`（assertive）が担保する
+            */}
             {replyError && (
               <p id="reply-body-error" role="alert" className="text-[lightcoral] text-xs font-bold mb-2">
                 {replyError}

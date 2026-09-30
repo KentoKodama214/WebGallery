@@ -112,19 +112,53 @@ const TRUSTED_PROXY_HOPS = Math.max(1, Number(process.env.TRUSTED_PROXY_HOPS) ||
  * なってしまう。null を返せばバックエンドは `X-Forwarded-For` を受け取らず、TCP 接続元 IP
  * （＝前段またはこのプロキシ）でレート制限・ログ記録を行うため、安全側に倒れる。
  *
+ * fail-closed が発動していること自体は正常応答に現れないため、最初の1回だけ警告ログを出す
+ * （{@link warnUnresolvedClientIp}）。`TRUSTED_PROXY_HOPS` と実際の構成が食い違うと以後すべての
+ * リクエストが同じ送信元（このプロキシの IP）としてバックエンドに届き、IP 単位のレート制限が
+ * 全ユーザーの合算になってサービス全体が 429 になりうるため、気づけるようにしておく。
+ *
  * @param request 受信したリクエスト
  * @returns 実クライアント IP。特定できなければ null
  */
 function resolveClientIp(request: NextRequest): string | null {
   const forwardedFor = request.headers.get("x-forwarded-for");
-  if (!forwardedFor) return null;
+  if (!forwardedFor) {
+    warnUnresolvedClientIp(0);
+    return null;
+  }
   const hops = forwardedFor
     .split(",")
     .map((value) => value.trim())
     .filter((value) => value !== "");
   // 信頼できる前段の数に届かないチェーンは、どの要素もクライアントが詐称しうるため採用しない
-  if (hops.length < TRUSTED_PROXY_HOPS) return null;
+  if (hops.length < TRUSTED_PROXY_HOPS) {
+    warnUnresolvedClientIp(hops.length);
+    return null;
+  }
   return hops[hops.length - TRUSTED_PROXY_HOPS] ?? null;
+}
+
+/** {@link warnUnresolvedClientIp} を既に出力したかどうか（1プロセスにつき1回だけ出す） */
+let hasWarnedUnresolvedClientIp = false;
+
+/**
+ * 実クライアント IP を特定できなかったことを警告する
+ *
+ * リクエストごとに出すとログが溢れるため、プロセスにつき1回だけ出力する。ローカル実行
+ * （前段プロキシが無い構成）でも1行出るが、本番で `TRUSTED_PROXY_HOPS` の設定漏れ・
+ * 構成変更に気づけないほうが影響が大きいため、環境で出し分けはしない。
+ *
+ * @param hopCount 受信した `X-Forwarded-For` の要素数（ヘッダーが無い場合は0）
+ */
+function warnUnresolvedClientIp(hopCount: number): void {
+  if (hasWarnedUnresolvedClientIp) return;
+  hasWarnedUnresolvedClientIp = true;
+  console.warn(
+    `[api-proxy] X-Forwarded-For から実クライアントIPを特定できませんでした` +
+      `（受信ホップ数: ${hopCount} / TRUSTED_PROXY_HOPS: ${TRUSTED_PROXY_HOPS}）。` +
+      `以後のリクエストはバックエンドから見てすべて同一の送信元になり、IP単位のレート制限が` +
+      `全ユーザーの合算になります。前段プロキシの段数と TRUSTED_PROXY_HOPS が一致しているか確認してください。`
+  );
 }
 
 /** リクエストボディが上限を超えたことを表すエラー */

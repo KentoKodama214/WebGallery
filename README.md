@@ -168,6 +168,7 @@ just db-up
 | `BACKEND_URL` | APIプロキシ（`/api/*`）の転送先バックエンドオリジン | `http://localhost:8080` |
 | `NEXT_PUBLIC_API_BASE_URL` | 別オリジンのバックエンドを直接叩く場合のベースURL | 同一オリジンの `/api` プロキシを使用 |
 | `NEXT_PUBLIC_IMAGE_BASE_URL` | 写真の配信元オリジン（例: `https://cdn.example.com/`）。CSP の `img-src` と `sanitizeImageUrl` の許可オリジンに反映される | **外部ホストからの画像読み込みを一切許可しない**（`img-src 'self' data: blob:`）。本番/検証環境で S3・CloudFront から画像を配信する場合は必ず設定すること。**開発環境（`next dev`）では `http://localhost:9000`（MinIO）が自動許可されるため設定不要** |
+| `TRUSTED_PROXY_HOPS` | `/api/*` プロキシが実クライアント IP を求めるとき、`X-Forwarded-For` の右端から数えて何番目を採用するか（＝このアプリの前段にあり `X-Forwarded-For` を追記する信頼できるプロキシの段数。ALB のみなら `1`、CloudFront + ALB なら `2`）。チェーンがこの数に届かない場合は fail-closed で `X-Forwarded-For` を付与しない | `1` |
 | `PROXY_MAX_CONCURRENCY` | `/api/*` プロキシがバックエンドへ同時中継するリクエスト数の上限。超過分は `503`＋`Retry-After` で即時応答（ロードシェディング） | `100` |
 
 ##### 構成上の注意
@@ -298,6 +299,15 @@ DB・バックエンドを自分で起動済みの場合は、フロントエン
 ```bash
 cd frontend && pnpm test:e2e
 ```
+
+> **並列数**
+> 並列ワーカー数の既定は `2` です（backendのJVM・Docker・devサーバー・ブラウザが同居する環境で
+> CPUが飽和し、待ち時間のアサーションが不定期に落ちるため、8コア機での実測値に合わせています）。
+> コア数の多いマシン・CIランナーでは環境変数 `PW_WORKERS` で引き上げられます。
+>
+> ```bash
+> PW_WORKERS=4 just e2e
+> ```
 
 ## アーキテクチャ
 

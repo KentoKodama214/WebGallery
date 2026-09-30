@@ -172,6 +172,29 @@ describe("PhotoDetail", () => {
     });
   });
 
+  it("日本語タイトルも長い文字列で折り返されること", async () => {
+    // 日本語名の列も varchar(100) で任意の文字を受け付けるため、空白を含まない
+    // ASCII 文字列を入れられる。英語タイトルと同じ折り返し指定が要る
+    const longTitle = "B".repeat(100);
+    mockGetPhotoDetail.mockResolvedValue({
+      ...samplePhoto,
+      photoJapaneseTitle: longTitle,
+    });
+
+    render(
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(longTitle)).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(longTitle)).toHaveStyle({
+      overflowWrap: "break-word",
+      wordBreak: "break-all",
+    });
+  });
+
   it("タグが表示されること", async () => {
     mockGetPhotoDetail.mockResolvedValue(samplePhoto);
 
