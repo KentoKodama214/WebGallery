@@ -99,28 +99,6 @@ export function InquiryList() {
     return date.toLocaleString("ja-JP");
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <p>読み込み中...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
-        <p className="text-red-500">{error}</p>
-        <button
-          onClick={fetchInquiries}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          再読み込み
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col items-center py-8 gap-4">
       <div className="w-full max-w-[800px] flex justify-between items-center px-4">
@@ -133,7 +111,25 @@ export function InquiryList() {
         </Link>
       </div>
 
-      {inquiries.length === 0 ? (
+      {/*
+        取得中・取得失敗でも見出しと新規作成リンク・ライブリージョンは DOM から外さない
+        （画面全体を差し替えると見出しが消え、常設したライブリージョンも作り直される）
+      */}
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <p>読み込み中...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
+          <p className="text-red-500">{error}</p>
+          <button
+            onClick={fetchInquiries}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            再読み込み
+          </button>
+        </div>
+      ) : inquiries.length === 0 ? (
         <p className="text-gray-500">お問い合わせはありません</p>
       ) : (
         <div
@@ -193,13 +189,16 @@ export function InquiryList() {
         </div>
       )}
 
-      {loadMoreError && (
-        <p role="alert" className="text-red-500 text-sm">
-          {loadMoreError}
-        </p>
-      )}
+      {/*
+        ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため常設し、
+        中身だけを差し替える（`role="alert"` は assertive）。空のときは `empty:sr-only` で
+        レイアウト上の余白からだけ外す（`display: none` はアクセシビリティツリーから外れる）
+      */}
+      <p role="alert" className="text-red-500 text-sm empty:sr-only">
+        {loadMoreError}
+      </p>
 
-      {!isLast && (
+      {!isLoading && !error && !isLast && (
         <button
           onClick={handleLoadMore}
           disabled={isLoadingMore}

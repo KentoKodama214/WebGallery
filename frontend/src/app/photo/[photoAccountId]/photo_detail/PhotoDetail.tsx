@@ -477,6 +477,8 @@ export function PhotoDetail({
             width: "90%",
           }}
         >
+          {/* 削除実行中は閉じさせない（Escape / onClose と挙動を揃える）。
+              閉じても削除リクエストは止まらないため、「キャンセルしたのに削除された」を防ぐ */}
           <button
             type="button"
             aria-label="閉じる"
@@ -484,6 +486,7 @@ export function PhotoDetail({
               setShowDeleteConfirm(false);
               setActionError(null);
             }}
+            disabled={isDeleting}
             style={{
               position: "absolute",
               display: "flex",
@@ -516,17 +519,20 @@ export function PhotoDetail({
             )}
             <div style={{ display: "flex", justifyContent: "center", gap: "12px" }}>
               <button
+                type="button"
                 data-dialog-initial-focus
                 onClick={() => {
                   setShowDeleteConfirm(false);
                   setActionError(null);
                 }}
+                disabled={isDeleting}
                 style={{
                   background: "#4b5563",
                   color: "#fff",
                   padding: "8px 16px",
                   border: "none",
-                  cursor: "pointer",
+                  cursor: isDeleting ? "not-allowed" : "pointer",
+                  opacity: isDeleting ? 0.5 : 1,
                 }}
               >
                 キャンセル

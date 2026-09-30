@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { isValidAccountId } from "@/lib/validation";
@@ -19,26 +20,17 @@ export default async function PhotoListPage({
 }) {
   const { photoAccountId } = await params;
 
+  // photoAccountId はURLの動的セグメントで細工可能なため、
+  // Cookie名・APIパスに使う前にアカウントID形式を検証する。
+  // 存在しないリソースは 404 として扱う（`not-found.tsx` が描画される）
+  if (!isValidAccountId(photoAccountId)) {
+    notFound();
+  }
+
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
       <Header />
-      {/* photoAccountId はURLの動的セグメントで細工可能なため、
-          Cookie名・APIパスに使う前にアカウントID形式を検証する */}
-      {isValidAccountId(photoAccountId) ? (
-        <PhotoList photoAccountId={photoAccountId} />
-      ) : (
-        <div
-          style={{
-            minHeight: "100vh",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            color: "#9ca3af",
-          }}
-        >
-          <p>ギャラリーが見つかりません</p>
-        </div>
-      )}
+      <PhotoList photoAccountId={photoAccountId} />
       <Footer />
     </div>
   );

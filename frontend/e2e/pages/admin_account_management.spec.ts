@@ -11,14 +11,10 @@ test.describe("管理者用アカウント管理ページ", () => {
     await page.goto("/admin/account_management");
   });
 
-  test("ページタイトルが正しいこと", async ({ page }) => {
-    await expect(page).toHaveTitle(/アカウント管理/);
-  });
-
-  test("未ログイン状態では管理者権限エラーが表示されること", async ({ page }) => {
-    await expect(page.locator("text=管理者権限がありません")).toBeVisible({
-      timeout: 5000,
-    });
+  test("未ログイン状態では /login へ誘導されること", async ({ page }) => {
+    // 他の保護ページ（お問い合わせ・アカウント設定）と同様に <AuthGuard> で退避させる。
+    // 権限エラー表示のまま行き止まりにしない
+    await expect(page).toHaveURL(/\/login(\?|$)/, { timeout: 10000 });
   });
 });
 

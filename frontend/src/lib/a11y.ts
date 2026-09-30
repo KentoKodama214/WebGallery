@@ -20,7 +20,7 @@ export function onActivateKey(handler: () => void) {
 }
 
 /**
- * ダイアログの外側（＝背景コンテンツ）を `inert` にして、支援技術の仮想カーソルや
+ * ダイアログ相当の要素の外側（＝背景コンテンツ）を `inert` にして、支援技術の仮想カーソルや
  * バックグラウンドのフォーカス移動を遮断する
  *
  * ダイアログのオーバーレイ要素から `document.body` までの経路上で、経路に含まれない
@@ -30,7 +30,7 @@ export function onActivateKey(handler: () => void) {
  * @param overlay ダイアログのオーバーレイ要素（この要素とその子孫はアクティブなまま）
  * @returns 付与した `inert` をすべて元に戻すクリーンアップ関数
  */
-function markBackgroundInert(overlay: HTMLElement): () => void {
+export function markBackgroundInert(overlay: HTMLElement): () => void {
   const marked: HTMLElement[] = [];
   let node: HTMLElement | null = overlay;
   while (node && node.parentElement && node !== document.body) {

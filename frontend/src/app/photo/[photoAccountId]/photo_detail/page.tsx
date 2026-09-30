@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { isValidAccountId } from "@/lib/validation";
@@ -38,18 +39,17 @@ export default async function PhotoDetailPage({
 
   const parsedPhotoNo = parsePositiveInt(photoNo);
 
+  // photoAccountId はURLの動的セグメントで細工可能なため、APIパスに使う前に形式を検証する。
+  // 写真の所有者は photoAccountId（パス）で解決するため accountNo クエリは参照しない。
+  // 存在しないリソースは 404 として扱う（`not-found.tsx` が描画される）
+  if (!isValidAccountId(photoAccountId) || parsedPhotoNo === null) {
+    notFound();
+  }
+
   return (
     <>
       <Header />
-      {/* photoAccountId はURLの動的セグメントで細工可能なため、APIパスに使う前に形式を検証する。
-          写真の所有者は photoAccountId（パス）で解決するため accountNo クエリは参照しない */}
-      {!isValidAccountId(photoAccountId) || parsedPhotoNo === null ? (
-        <div className="min-h-screen bg-black text-white flex justify-center items-center">
-          <p className="text-red-500">写真が見つかりません</p>
-        </div>
-      ) : (
-        <PhotoDetail photoAccountId={photoAccountId} photoNo={parsedPhotoNo} />
-      )}
+      <PhotoDetail photoAccountId={photoAccountId} photoNo={parsedPhotoNo} />
       <Footer />
     </>
   );

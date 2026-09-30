@@ -8,6 +8,11 @@ import { test as authTest, expect as authExpect } from "../fixtures/auth";
  * 多層で行っている画像ファイル検証（Content-Type→マジックバイト→拡張子の順、
  * `PhotoServiceImpl#registPhoto`）、保存APIがサーバーエラーを返した場合の異常系は
  * 未検証だった。本ファイルではそれらのエッジケースを検証する。
+ *
+ * なお、サイズ超過と Content-Type が画像でないファイルはクライアント側（ファイル選択時）で
+ * 拒否するため、サーバーまで到達しない。到達させて検証できるのは「Content-Type は image/* だが
+ * 内容・拡張子が不正」なケースのみで、Content-Type チェック単体は backend の単体テスト
+ * （`ImageFileValidationPolicyTest`）が担う。
  */
 const OVERSIZED_PHOTO = path.join(__dirname, "../fixtures/images/e2e-photo-oversized.png");
 const NON_IMAGE_FILE = path.join(__dirname, "../fixtures/images/e2e-photo-invalid.txt");
@@ -33,32 +38,22 @@ authTest.describe("写真設定ページ（アップロード異常系）", () =
   );
 
   authTest(
-    "画像として不正な内容のファイルを送信すると、Content-Type不正のエラーメッセージが表示されること",
+    "Content-Typeが画像でないファイルを選択すると、選択時点でエラーが表示され画像が追加されないこと",
     async ({ workerPage: page, testUser }) => {
       await page.goto(`/photo/${testUser.accountId}/photo_setting`);
       await authExpect(page.getByTestId("image-input")).toBeAttached();
 
       // input要素の accept="image/*" はファイル選択ダイアログ上のヒントに過ぎず、
-      // setInputFiles によるプログラム的な選択は拡張子・内容を問わず通るため、
-      // クライアント側にファイル内容のチェックがない本アプリでは実際にサーバーまで
-      // 到達させて検証する必要がある
+      // 「すべてのファイル」へ切り替えれば任意の形式を選べる（setInputFiles も同様に通る）。
+      // 最大50MB送信してからサーバーに弾かれるのを避けるため、選択の時点で拒否する。
+      // サーバー側の多層チェック（Content-Type→マジックバイト→拡張子。
+      // `ImageFileValidationPolicy`）は残っており、backend の単体テストで検証している
       await page.getByTestId("image-input").setInputFiles(NON_IMAGE_FILE);
-      await authExpect(page.getByTestId("image-preview-item-0")).toBeVisible();
-      // タイトルは必須項目（backend側の @NotBlank）。未入力だとファイル内容チェックの手前で
-      // 汎用のバリデーションエラーになってしまうため、後続のチェックまで到達させるために入力する
-      await page
-        .getByTestId("japanese-title-input")
-        .fill("Content-Type検証テスト写真");
 
-      await page.getByTestId("submit-button").click();
-
-      // テキストファイルはContent-Typeが image/* にならないため、拡張子チェックより
-      // 手前のContent-Typeチェック（ImageFileValidationPolicy#isAllowedContentType）で弾かれる
-      await authExpect(
-        page.getByRole("alert").filter({ hasText: "許可されていないファイル形式です。" })
-      ).toBeVisible({ timeout: 10000 });
-      // 保存に失敗しているため、一覧へは遷移しない
-      await authExpect(page).toHaveURL(new RegExp(`/photo/${testUser.accountId}/photo_setting$`));
+      await authExpect(page.getByTestId("validation-errors")).toBeVisible();
+      await authExpect(page.getByText("画像ファイルを選択してください")).toBeVisible();
+      // 拒否されるため、プレビューには追加されない
+      await authExpect(page.getByTestId("image-preview-item-0")).toHaveCount(0);
     }
   );
 

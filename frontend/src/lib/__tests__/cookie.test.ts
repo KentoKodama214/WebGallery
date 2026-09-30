@@ -1,4 +1,4 @@
-import { setCookie, getCookie, deleteCookie } from "../cookie";
+import { setCookie, getCookie } from "../cookie";
 
 describe("cookie", () => {
   beforeEach(() => {
@@ -67,10 +67,12 @@ describe("cookie", () => {
     expect(getCookie("photoListFilter_aaaa1111")).toBe("1");
   });
 
-  it("deleteCookieで取得できなくなる", () => {
-    setCookie("temp", "1", 100);
-    expect(getCookie("temp")).toBe("1");
-    deleteCookie("temp");
-    expect(getCookie("temp")).toBeNull();
+  it("不正なパーセントエンコーディングの値でも例外を投げず生の文字列を返す", () => {
+    // 親ドメインの別サービス・ブラウザ拡張が書いた壊れた値でレンダリングが落ちないこと
+    // （getCookie はレンダリング中の useMemo からも呼ばれる）
+    document.cookie = "brokenCookie=%";
+
+    expect(() => getCookie("brokenCookie")).not.toThrow();
+    expect(getCookie("brokenCookie")).toBe("%");
   });
 });

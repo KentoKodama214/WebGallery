@@ -14,6 +14,20 @@ function makeRequest(pathname: string): NextRequest {
   } as unknown as NextRequest;
 }
 
+/**
+ * matcher がそのパスを対象にするか（＝proxy が走り CSP が付くか）を判定する
+ *
+ * Next.js は文字列の matcher を正規表現へ変換して pathname と照合する。この matcher は
+ * path-to-regexp のパラメータ（`:param`）を含まない純粋な正規表現なので、前後を
+ * アンカーした RegExp として評価すれば同じ判定になる。
+ */
+function isProxied(pathname: string): boolean {
+  const matcher = Array.isArray(config.matcher)
+    ? config.matcher[0]
+    : (config.matcher as string);
+  return new RegExp(`^${matcher}$`).test(pathname);
+}
+
 describe("proxy (ルーティング制御)", () => {
   it("ルート(/)は/loginへリダイレクトする", () => {
     const res = proxy(makeRequest("/"));
@@ -28,10 +42,25 @@ describe("proxy (ルーティング制御)", () => {
   });
 
   it("matcherがapiと静的ファイルを除外している", () => {
-    const matcher = Array.isArray(config.matcher)
-      ? config.matcher[0]
-      : config.matcher;
-    expect(matcher).toContain("?!api");
+    expect(isProxied("/api/v1/accounts")).toBe(false);
+    expect(isProxied("/api")).toBe(false);
+    expect(isProxied("/_next/static/chunks/main.js")).toBe(false);
+    expect(isProxied("/_next/image")).toBe(false);
+    expect(isProxied("/favicon.ico")).toBe(false);
+    expect(isProxied("/ui/filter.png")).toBe(false);
+  });
+
+  it("除外語で始まるだけのページパスは除外しない（CSP が付く）", () => {
+    // accountId は半角英数字8〜20文字（lib/validation.ts）なので `api` で始まる値を
+    // 誰でも登録できる。前方一致で除外すると、このページだけ CSP と nonce が
+    // 付かないまま公開されてしまう
+    expect(isProxied("/apiuser1/account_setting")).toBe(true);
+    expect(isProxied("/apitest12/account_setting")).toBe(true);
+    // `favicon.ico` の `.` を任意1文字として扱っていないこと
+    expect(isProxied("/faviconXico")).toBe(true);
+    // 通常のページパスは従来どおり対象
+    expect(isProxied("/login")).toBe(true);
+    expect(isProxied("/photo/testuser1/photo_list")).toBe(true);
   });
 });
 

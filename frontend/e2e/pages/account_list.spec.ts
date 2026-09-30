@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 import { generateSortEarlyTestAccountId, login, registerAccount } from "../fixtures/auth";
 
 test.describe("アカウント一覧ページ", () => {
@@ -24,6 +25,19 @@ test.describe("アカウント一覧ページ", () => {
       timeout: 10000,
     });
     await expect(page.getByRole("columnheader", { name: "ギャラリー" })).toBeVisible();
+  });
+
+  test("アクセシビリティ違反がないこと", async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "chromium",
+      "a11y検証はchromiumプロジェクトのみで実施する"
+    );
+    await page.locator("table").first().waitFor({ state: "visible", timeout: 10000 });
+
+    // color-contrast は一覧テーブルのヘッダー（白文字 × #2196F3 = 3.12:1）に既存の違反があり、
+    // 解消にはアプリ共通の配色変更が必要なため、本検証の対象外とする。
+    // 見出しレベル（page-has-heading-one）・ラベル等は検査する
+    await expectNoAccessibilityViolations(page, { disableRules: ["color-contrast"] });
   });
 });
 

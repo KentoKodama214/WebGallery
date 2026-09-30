@@ -11,14 +11,9 @@ test.describe("管理者用お問い合わせ管理ページ", () => {
     await page.goto("/admin/inquiry_management");
   });
 
-  test("ページタイトルが正しいこと", async ({ page }) => {
-    await expect(page).toHaveTitle(/お問い合わせ管理/);
-  });
-
-  test("未ログイン状態では管理者権限エラーが表示されること", async ({ page }) => {
-    await expect(page.locator("text=管理者権限がありません")).toBeVisible({
-      timeout: 5000,
-    });
+  test("未ログイン状態では /login へ誘導されること", async ({ page }) => {
+    // 他の保護ページ（お問い合わせ・アカウント設定）と同様に <AuthGuard> で退避させる
+    await expect(page).toHaveURL(/\/login(\?|$)/, { timeout: 10000 });
   });
 });
 
@@ -43,21 +38,23 @@ test.describe("管理者用お問い合わせ管理ページ（管理者ログ�
 });
 
 test.describe("管理者用お問い合わせ詳細ページ", () => {
-  test("不正なinquiryIdクエリの場合は『お問い合わせが見つかりません』を表示する", async ({
-    page,
-  }) => {
-    await page.goto("/admin/inquiry_management/detail?inquiryId=abc");
-
-    await expect(page.getByText("お問い合わせが見つかりません")).toBeVisible();
-  });
-
-  test("未ログイン状態では管理者権限エラーが表示されること", async ({ page }) => {
+  test("未ログイン状態では /login へ誘導されること", async ({ page }) => {
     await page.goto("/admin/inquiry_management/detail?inquiryId=1");
 
-    await expect(page.locator("text=管理者権限がありません")).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page).toHaveURL(/\/login(\?|$)/, { timeout: 10000 });
   });
+});
+
+adminTest.describe("管理者用お問い合わせ詳細ページ（管理者ログイン済み）", () => {
+  adminTest(
+    "不正なinquiryIdクエリの場合は『お問い合わせが見つかりません』を表示する",
+    async ({ adminPage: page }) => {
+      // <AuthGuard> 配下のため、パラメータ不正の表示確認にはログイン済みである必要がある
+      await page.goto("/admin/inquiry_management/detail?inquiryId=abc");
+
+      await adminExpect(page.getByText("お問い合わせが見つかりません")).toBeVisible();
+    }
+  );
 });
 
 /** 専用の一般アカウントを登録・ログインし、指定した件名でお問い合わせを送信する */

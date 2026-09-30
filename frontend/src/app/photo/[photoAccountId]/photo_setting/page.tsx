@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { AuthGuard } from "@/lib/auth/AuthGuard";
@@ -47,25 +48,22 @@ export default async function PhotoSettingPage({
   const isPartialEditParams =
     (parsedAccountNo === undefined) !== (parsedPhotoNo === undefined);
 
-  // photoAccountId はURLの動的セグメントで細工可能なため、APIパスに使う前に形式を検証する
-  const isInvalidParams = !isValidAccountId(photoAccountId) || isPartialEditParams;
+  // photoAccountId はURLの動的セグメントで細工可能なため、APIパスに使う前に形式を検証する。
+  // 不正なURLは 404 として扱う（`not-found.tsx` が描画される）
+  if (!isValidAccountId(photoAccountId) || isPartialEditParams) {
+    notFound();
+  }
 
   return (
     <>
       <Header />
-      {isInvalidParams ? (
-        <div className="min-h-screen bg-black text-white flex justify-center items-center">
-          <p className="text-red-500">写真が見つかりません</p>
-        </div>
-      ) : (
-        <AuthGuard>
-          <PhotoSettingForm
-            photoAccountId={photoAccountId}
-            accountNo={parsedAccountNo}
-            photoNo={parsedPhotoNo}
-          />
-        </AuthGuard>
-      )}
+      <AuthGuard>
+        <PhotoSettingForm
+          photoAccountId={photoAccountId}
+          accountNo={parsedAccountNo}
+          photoNo={parsedPhotoNo}
+        />
+      </AuthGuard>
       <Footer />
     </>
   );

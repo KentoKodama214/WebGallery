@@ -18,7 +18,12 @@ import * as apiClient from "@/lib/api/client";
 const mockedApiClient = apiClient as jest.Mocked<typeof apiClient>;
 
 // テスト用JWTトークンを生成（ペイロード: { sub: "testuser1", accountNo: 1, accountName: "Test", role: "USER" }）
-function createTestJwt(sub: string, accountNo: number, exp?: number): string {
+function createTestJwt(
+  sub: string,
+  accountNo: number,
+  exp?: number,
+  iat?: number
+): string {
   const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const payload = btoa(
     JSON.stringify({
@@ -27,6 +32,7 @@ function createTestJwt(sub: string, accountNo: number, exp?: number): string {
       accountName: "Test",
       role: "USER",
       ...(exp !== undefined ? { exp } : {}),
+      ...(iat !== undefined ? { iat } : {}),
     })
   );
   return `${header}.${payload}.signature`;
@@ -152,6 +158,78 @@ describe("AuthProvider", () => {
       expiresIn: 900,
     });
     mockedApiClient.getAccessToken.mockReturnValue(expiredToken);
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+    });
+
+    await user.click(screen.getByText("Login"));
+
+    await waitFor(() => {
+      expect(mockedApiClient.clearAuthState).toHaveBeenCalled();
+    });
+    expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
+  });
+
+  it("端末の時計が大きく進んでいても、発行直後のトークンでログインできること", async () => {
+    mockedApiClient.refresh.mockResolvedValue(false);
+    // 端末の時計が20分進んでいる状況を再現する。サーバーは iat=発行時刻・
+    // exp=iat+15分（accessTokenExpirationMinutes）のトークンを返すが、端末の Date.now()
+    // から見ると exp は既に過ぎている。ここで期限切れと判定すると、正しい資格情報でも
+    // ログインが恒久的に失敗する（サーバー側ではログイン成功が記録されている）
+    const nowSec = Math.floor(Date.now() / 1000);
+    const iat = nowSec - 20 * 60;
+    const freshTokenOnSkewedClock = createTestJwt(
+      "testuser1",
+      1,
+      iat + 15 * 60,
+      iat
+    );
+    mockedApiClient.login.mockResolvedValue({
+      accessToken: freshTokenOnSkewedClock,
+      expiresIn: 900,
+    });
+    mockedApiClient.getAccessToken.mockReturnValue(freshTokenOnSkewedClock);
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading")).toHaveTextContent("false");
+    });
+
+    await user.click(screen.getByText("Login"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
+    });
+    expect(mockedApiClient.clearAuthState).not.toHaveBeenCalled();
+  });
+
+  it("iat より前の exp を持つトークン（サーバー側の異常）はログイン失敗扱いになること", async () => {
+    mockedApiClient.refresh.mockResolvedValue(false);
+    // iat と exp は同じ「サーバーの時計」基準なので、exp <= iat は端末の時計とは
+    // 無関係にサーバー側の異常を示す。この場合だけ期限切れとして扱う
+    const nowSec = Math.floor(Date.now() / 1000);
+    const brokenToken = createTestJwt("testuser1", 1, nowSec, nowSec + 60);
+    mockedApiClient.login.mockResolvedValue({
+      accessToken: brokenToken,
+      expiresIn: 900,
+    });
+    mockedApiClient.getAccessToken.mockReturnValue(brokenToken);
 
     const user = userEvent.setup();
 

@@ -14,10 +14,11 @@ export function Footer({ variant = "dark" }: FooterProps) {
   const textColorClass = variant === "light" ? "text-gray-600" : "text-gray-400";
 
   return (
-    <div
+    // contentinfo ランドマークとして扱われるよう <footer> を使う（<div> ではランドマークにならない）
+    <footer
       className={`fixed bottom-0 right-[5px] h-[30px] w-[200px] text-right text-xs ${textColorClass} z-[1]`}
     >
       <p>&copy; {new Date().getFullYear()} KENTO KODAMA</p>
-    </div>
+    </footer>
   );
 }

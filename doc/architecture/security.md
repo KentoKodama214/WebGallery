@@ -273,17 +273,36 @@ Nominatim（`https://nominatim.openstreetmap.org`）へクリック地点の緯�
 経由でバックエンドと通信する。プロキシは以下を担う。
 
 - 状態変更メソッド（POST/PUT/DELETE/PATCH）に対し、`Sec-Fetch-Site: cross-site` の拒否と
-  `Origin` の自サイト一致検証（CSRF 多層防御。バックエンドの SameSite Cookie と併用）
+  `Origin`（無ければ `Referer`）の自サイト一致検証（CSRF 多層防御。バックエンドの SameSite Cookie と併用）。
+  どちらのヘッダーも無い場合は検証不能として拒否する。
+  照合先の「自サイト」は環境変数 `APP_ORIGIN`（未設定時はリクエスト URL 由来の host。
+  Node が listen しているホストで、`X-Forwarded-Host` には追従しない）から決める。
+  **クライアントが自由に送れる `Host` ヘッダーは使わない**。`Host` を照合先に含めると
+  `Host: evil.example` と `Origin: https://evil.example` を揃えるだけで検証を通過できてしまい、
+  検証として成立しない（ブラウザは `Host` を差し替えられないため典型的なクロスサイト CSRF は
+  防げているが、前段が任意の `Host` を素通しする構成やリクエストスマグリングでは崩れる）。
+  前段にリバースプロキシを置く構成では公開ホストと listen ホストが一致しないため `APP_ORIGIN` が必須で、
+  未設定のままだとプロセスにつき 1 回だけ警告ログ（`[api-proxy] APP_ORIGIN が未設定のため…`）を出す
 - パストラバーサル（`.` / `..` / 空セグメント）の拒否、リクエストボディの上限（6MB）、
   バックエンドへの中継タイムアウト（30 秒）、リダイレクト追従の無効化（`redirect: "manual"`）
-- クライアント由来の転送系ヘッダー（`X-Forwarded-Host` / `X-Forwarded-Proto` / `Forwarded` /
-  `X-Real-IP`）の除去。バックエンドのレート制限が使う `X-Forwarded-For` だけは、前段プロキシ
+- クライアント由来の転送系ヘッダー（`X-Forwarded-Host` / `X-Forwarded-Proto` / `X-Forwarded-Port` /
+  `Forwarded` / `X-Real-IP`、および CDN 各社のクライアント IP ヘッダー `CF-Connecting-IP` /
+  `True-Client-IP` / `X-Client-IP` / `X-Cluster-Client-IP` / `Fastly-Client-IP` /
+  `X-Original-Forwarded-For`）の除去。現在バックエンドが読むのは `X-Forwarded-For` のみ
+  （`ForwardedForFilter`）だが、将来 CDN 由来ヘッダーを参照した際に詐称値が届かないよう
+  まとめて落とす。バックエンドのレート制限が使う `X-Forwarded-For` だけは、前段プロキシ
   （ALB / CloudFront）が付与した値＝実クライアント IP に載せ直してから中継する。
   **ALB / CloudFront はいずれも受信した `X-Forwarded-For` を上書きせず追記する**ため、左端は
   クライアントが自由に指定できる値になる（左端を信頼するとレート制限の回避・ログイン履歴や
   GeoIP の偽装が成立する）。そのため「信頼境界の直前」＝**右端から `TRUSTED_PROXY_HOPS` 個目**
-  （既定 1＝右端）を採用する。CloudFront + ALB のように信頼できる前段を多段構成にする場合は、
-  環境変数 `TRUSTED_PROXY_HOPS` にその段数を設定する。
+  を採用する。環境変数 `TRUSTED_PROXY_HOPS` にその段数を設定する（ALB のみなら 1、
+  CloudFront + ALB なら 2）。
+  **未設定・不正値の既定は 0（前段プロキシを一切信頼しない）**で、`X-Forwarded-For` を
+  バックエンドへ付与しない。既定を 1 にすると、前段プロキシが存在しない構成
+  （`next start` を直接公開する等）で「クライアントが自分で付けた 1 件だけの `X-Forwarded-For`」が
+  そのまま実クライアント IP として採用され、レート制限の回避・ログイン履歴／GeoIP の偽装が
+  成立してしまう（このプロキシはバックエンドの `TRUSTED_PROXIES` に入っているため、
+  フロントが詐称値を保証した形になる）ため、安全側を既定にしている。
   チェーンが `TRUSTED_PROXY_HOPS` に届かない場合（前段を経由していない＝ローカル実行、
   CloudFront をバイパスして ALB を直叩き、VPC 内からの直接到達等）は**左端へフォールバックせず
   `X-Forwarded-For` を付与しない**（fail-closed）。左端は攻撃者が選べる値なのでフォールバックは
@@ -313,6 +332,13 @@ Nominatim（`https://nominatim.openstreetmap.org`）へクリック地点の緯�
 多用するため `'unsafe-inline'` を維持しつつ、本番では `style-src-elem 'self' 'nonce-...'` を併記して
 `<style>`／`<link>` 要素側だけは注入を防ぐ（`style-src-elem` 非対応ブラウザは `style-src` に
 フォールバック）。
+
+CSP を付与する対象は `src/proxy.ts` の `config.matcher` で決まる。除外語（`api` / `_next/static` 等）は
+**必ずセグメント境界（`(?:/|$)`）か終端（`$`）を要求する**こと。単なる前方一致にすると、ルート直下の
+動的セグメント（`app/[accountId]/account_setting`。accountId は半角英数字 8〜20 文字なので `api` で
+始まる値を誰でも登録できる）が巻き込まれ、`/apiuser1/account_setting` のようなページに CSP と nonce が
+一切付かなくなる（静的なセキュリティヘッダーは付くため気づきにくい）。この境界条件は
+`src/__tests__/proxy.test.ts` で固定している。
 
 nonce 方式は SSR 時にリクエストヘッダーから nonce を読むため、**全ページの動的レンダリングが必須**
 （`app/layout.tsx` の `export const dynamic = "force-dynamic"`）。これは nonce 方式 CSP に内在する

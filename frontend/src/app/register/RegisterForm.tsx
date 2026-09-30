@@ -10,6 +10,8 @@ import {
 import type { PrefectureGroup } from "@/lib/api/client";
 import {
   ACCOUNT_ID_PATTERN,
+  ACCOUNT_NAME_MAX_LENGTH,
+  FREE_MEMO_MAX_LENGTH,
   PASSWORD_PATTERN,
   PASSWORD_ERROR_MESSAGE,
   PASSWORD_PLACEHOLDER,
@@ -73,6 +75,12 @@ export function RegisterForm() {
 
     if (!accountName.trim()) {
       newErrors.accountName = "アカウント名を入力してください";
+    } else if (accountName.length > ACCOUNT_NAME_MAX_LENGTH) {
+      newErrors.accountName = `アカウント名は${ACCOUNT_NAME_MAX_LENGTH}文字以内で入力してください`;
+    }
+
+    if (freeMemo.length > FREE_MEMO_MAX_LENGTH) {
+      newErrors.freeMemo = `メモは${FREE_MEMO_MAX_LENGTH}文字以内で入力してください`;
     }
 
     if (!PASSWORD_PATTERN.test(password)) {
@@ -188,6 +196,7 @@ export function RegisterForm() {
               type="text"
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
+              maxLength={ACCOUNT_NAME_MAX_LENGTH}
               onBlur={() => {
                 if (!accountName.trim()) {
                   setErrors((prev) => ({ ...prev, accountName: "アカウント名を入力してください" }));
@@ -296,8 +305,14 @@ export function RegisterForm() {
               type="text"
               value={freeMemo}
               onChange={(e) => setFreeMemo(e.target.value)}
-              className="block w-full p-[10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
+              maxLength={FREE_MEMO_MAX_LENGTH}
+              aria-invalid={errors.freeMemo ? true : undefined}
+              aria-describedby={errors.freeMemo ? "register-free-memo-error" : undefined}
+              className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
+            {errors.freeMemo && (
+              <p id="register-free-memo-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.freeMemo}</p>
+            )}
 
             {submitError && (
               <p className="text-[#C62828] text-xs font-bold mb-2">{submitError}</p>

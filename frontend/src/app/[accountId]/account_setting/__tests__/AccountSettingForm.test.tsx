@@ -147,7 +147,7 @@ describe("AccountSettingForm", () => {
     await user.click(screen.getByRole("button", { name: "登録" }));
 
     await waitFor(() => {
-      expect(screen.getByText("アカウントを登録しました")).toBeInTheDocument();
+      expect(screen.getByText("アカウント情報を更新しました")).toBeInTheDocument();
     });
   });
 
@@ -684,13 +684,13 @@ describe("AccountSettingForm", () => {
     await user.click(screen.getByRole("button", { name: "登録" }));
 
     await waitFor(() => {
-      expect(screen.getByText("アカウントを登録しました")).toBeInTheDocument();
+      expect(screen.getByText("アカウント情報を更新しました")).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "閉じる" }));
 
     await waitFor(() => {
-      expect(screen.queryByText("アカウントを登録しました")).not.toBeInTheDocument();
+      expect(screen.queryByText("アカウント情報を更新しました")).not.toBeInTheDocument();
     });
   });
 });

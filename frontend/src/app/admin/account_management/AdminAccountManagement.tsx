@@ -191,9 +191,11 @@ export function AdminAccountManagement() {
     }
   };
 
+  // 見出しレベル1はどの表示状態でも1つ存在させる（一覧本体を出せない状態でも欠落させない）
   if (isAuthLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
+        <h1 className="sr-only">アカウント管理</h1>
         <p>読み込み中...</p>
       </div>
     );
@@ -202,29 +204,8 @@ export function AdminAccountManagement() {
   if (!isAuthenticated || !isAdmin) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
+        <h1 className="sr-only">アカウント管理</h1>
         <p className="text-red-500">管理者権限がありません。</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <p>読み込み中...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
-        <p className="text-red-500">{error}</p>
-        <button
-          onClick={fetchAccounts}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          再読み込み
-        </button>
       </div>
     );
   }
@@ -260,6 +241,27 @@ export function AdminAccountManagement() {
         {actionError}
       </p>
 
+      {/*
+        一覧の取得中・取得失敗でも、上の見出しとライブリージョンは DOM から外さない。
+        画面全体を差し替えると、常設したライブリージョンごとアンマウントされ、
+        再描画時に「リージョンとメッセージが同時に挿入される」状態に戻ってしまう
+        （= ロック操作後の成功メッセージが読み上げられない）。切り替えるのは一覧本体だけにする
+      */}
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <p>読み込み中...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
+          <p className="text-red-500">{error}</p>
+          <button
+            onClick={fetchAccounts}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            再読み込み
+          </button>
+        </div>
+      ) : (
       <div
         className="w-full max-w-[1100px] overflow-x-auto"
         style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)" }}
@@ -362,12 +364,13 @@ export function AdminAccountManagement() {
           </tbody>
         </table>
       </div>
+      )}
 
       <p role="alert" className="text-red-500 text-sm empty:sr-only">
         {loadMoreError}
       </p>
 
-      {!isLast && (
+      {!isLoading && !error && !isLast && (
         <button
           onClick={handleLoadMore}
           disabled={isLoadingMore}

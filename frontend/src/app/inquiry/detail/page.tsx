@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { InquiryDetail } from "./InquiryDetail";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -34,17 +35,16 @@ export default async function InquiryDetailPage({
   const { inquiryNo } = await searchParams;
   const parsedInquiryNo = parsePositiveInt(inquiryNo);
 
+  // 不正なクエリは 404 として扱う（`not-found.tsx` が描画される）
+  if (parsedInquiryNo === null) {
+    notFound();
+  }
+
   return (
     <>
       <Header />
       <AuthGuard>
-        {parsedInquiryNo === null ? (
-          <div className="flex justify-center items-center min-h-[60vh]">
-            <p className="text-red-500">お問い合わせが見つかりません</p>
-          </div>
-        ) : (
-          <InquiryDetail inquiryNo={parsedInquiryNo} />
-        )}
+        <InquiryDetail inquiryNo={parsedInquiryNo} />
       </AuthGuard>
       <Footer />
     </>

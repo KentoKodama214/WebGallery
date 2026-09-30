@@ -489,6 +489,51 @@ describe("PhotoDetail", () => {
     });
   });
 
+  it("削除実行中はキャンセル・閉じるが無効になること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    // 削除リクエストを保留させ、実行中の状態を観測する
+    let releaseDelete: (() => void) | null = null;
+    mockDeletePhoto.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseDelete = () => resolve({ isSuccess: true });
+        })
+    );
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    fireEvent.click(screen.getByText("削除する"));
+
+    await waitFor(() => {
+      expect(releaseDelete).not.toBeNull();
+    });
+
+    // 閉じても削除リクエストは止まらないため、実行中は閉じさせない
+    // （Escape / onClose 側は既に isDeleting で保護されており、挙動を揃える）
+    expect(screen.getByRole("button", { name: "キャンセル" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "閉じる" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    expect(screen.getByTestId("delete-confirm-dialog")).toBeInTheDocument();
+
+    releaseDelete!();
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/photo/user1/photo_list");
+    });
+  });
+
   it("削除失敗時、確認ダイアログ内にのみエラーが表示され上部バナーと二重表示にならないこと", async () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
