@@ -32,7 +32,7 @@ public interface InquiryService {
   /**
    * 自分のお問い合わせの詳細情報（返信を含む）を取得する
    *
-   * <p>未読の返信が存在する場合、取得と同時に既読化する
+   * <p>副作用を持たない参照専用の処理とし、既読化は{@link #markInquiryAsRead}で明示的に行う
    *
    * @param accountNo アカウント番号
    * @param inquiryNo お問い合わせ番号
@@ -41,6 +41,17 @@ public interface InquiryService {
    */
   InquiryDetailModel getInquiryDetail(AccountNo accountNo, InquiryNo inquiryNo)
       throws GalleryException;
+
+  /**
+   * 自分のお問い合わせを既読にする
+   *
+   * <p>既に既読の場合は何もしない（何度呼び出しても結果が変わらない冪等な操作）
+   *
+   * @param accountNo アカウント番号
+   * @param inquiryNo お問い合わせ番号
+   * @throws GalleryException 以下のいずれかに該当する場合 ・お問い合わせが存在しない場合 ・既読化に失敗した場合
+   */
+  void markInquiryAsRead(AccountNo accountNo, InquiryNo inquiryNo) throws GalleryException;
 
   /**
    * お問い合わせ一覧を取得する（管理者用、全アカウントが対象）

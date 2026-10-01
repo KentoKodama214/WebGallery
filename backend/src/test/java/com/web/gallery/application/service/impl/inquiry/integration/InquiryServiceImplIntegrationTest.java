@@ -136,7 +136,7 @@ public class InquiryServiceImplIntegrationTest {
   class getInquiryDetail {
     @Test
     @Order(1)
-    @DisplayName("正常系：既読済みのお問い合わせは既読化処理を行わずそのまま返すこと")
+    @DisplayName("正常系：既読済みのお問い合わせをそのまま返すこと")
     void getInquiryDetail_alreadyRead() throws GalleryException {
       OffsetDateTime transactionNow =
           jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
@@ -146,7 +146,7 @@ public class InquiryServiceImplIntegrationTest {
 
       assertTrue(actual.getIsReadByUser());
 
-      // 既読化のUPDATEが発生していない（updated_atがフィクスチャ投入時のまま）ことを確認する
+      // UPDATEが発生していない（updated_atがフィクスチャ投入時のまま）ことを確認する
       OffsetDateTime updatedAt =
           jdbcTemplate.queryForObject(
               "SELECT updated_at FROM common.inquiry_mst WHERE id=1", OffsetDateTime.class);
@@ -155,17 +155,17 @@ public class InquiryServiceImplIntegrationTest {
 
     @Test
     @Order(2)
-    @DisplayName("正常系：未読のお問い合わせは取得と同時に既読化されること")
-    void getInquiryDetail_markReadByUser() throws GalleryException {
+    @DisplayName("正常系：未読のお問い合わせを取得しても既読化されないこと（GETに副作用を持たせない）")
+    void getInquiryDetail_doesNotMarkAsRead() throws GalleryException {
       InquiryDetailModel actual =
           inquiryServiceImpl.getInquiryDetail(new AccountNo(1L), new InquiryNo(2L));
 
-      assertTrue(actual.getIsReadByUser());
+      assertFalse(actual.getIsReadByUser());
 
       Boolean isReadByUser =
           jdbcTemplate.queryForObject(
               "SELECT is_read_by_user FROM common.inquiry_mst WHERE id=2", Boolean.class);
-      assertTrue(isReadByUser);
+      assertFalse(isReadByUser);
     }
 
     @Test
@@ -180,6 +180,49 @@ public class InquiryServiceImplIntegrationTest {
 
   @Nested
   @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/service/InquiryServiceImplIntegrationTest.sql")
+  class markInquiryAsRead {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：未読のお問い合わせを既読化すること")
+    void markInquiryAsRead_unread() throws GalleryException {
+      inquiryServiceImpl.markInquiryAsRead(new AccountNo(1L), new InquiryNo(2L));
+
+      Boolean isReadByUser =
+          jdbcTemplate.queryForObject(
+              "SELECT is_read_by_user FROM common.inquiry_mst WHERE id=2", Boolean.class);
+      assertTrue(isReadByUser);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：既読済みのお問い合わせはUPDATEを行わないこと")
+    void markInquiryAsRead_alreadyRead() throws GalleryException {
+      OffsetDateTime transactionNow =
+          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
+
+      inquiryServiceImpl.markInquiryAsRead(new AccountNo(1L), new InquiryNo(1L));
+
+      OffsetDateTime updatedAt =
+          jdbcTemplate.queryForObject(
+              "SELECT updated_at FROM common.inquiry_mst WHERE id=1", OffsetDateTime.class);
+      assertTrue(updatedAt.isBefore(transactionNow));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：お問い合わせが存在しない場合、InquiryNotFoundExceptionをthrowする")
+    void markInquiryAsRead_InquiryNotFoundException() {
+      assertThrows(
+          InquiryNotFoundException.class,
+          () -> inquiryServiceImpl.markInquiryAsRead(new AccountNo(1L), new InquiryNo(999L)));
+    }
+  }
+
+  @Nested
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/service/InquiryServiceImplIntegrationTest.sql")
@@ -210,7 +253,7 @@ public class InquiryServiceImplIntegrationTest {
   }
 
   @Nested
-  @Order(5)
+  @Order(6)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/service/InquiryServiceImplIntegrationTest.sql")
@@ -227,7 +270,7 @@ public class InquiryServiceImplIntegrationTest {
   }
 
   @Nested
-  @Order(6)
+  @Order(7)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/service/InquiryServiceImplIntegrationTest.sql")
@@ -282,7 +325,7 @@ public class InquiryServiceImplIntegrationTest {
   }
 
   @Nested
-  @Order(7)
+  @Order(8)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/service/InquiryServiceImplIntegrationTest.sql")

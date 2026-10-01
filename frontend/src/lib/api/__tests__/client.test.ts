@@ -679,6 +679,13 @@ describe("api/client", () => {
         method: "GET",
       },
       {
+        name: "markInquiryAsRead",
+        call: () => client.markInquiryAsRead(1),
+        defaultMessage: "お問い合わせの既読化に失敗しました",
+        urlIncludes: "/api/v1/inquiries/1/read",
+        method: "POST",
+      },
+      {
         name: "withdrawInquiry",
         call: () => client.withdrawInquiry(1),
         defaultMessage: "お問い合わせの取り下げに失敗しました",

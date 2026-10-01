@@ -149,13 +149,12 @@ just db-up
 | `APP_S3_PUBLIC_BASE_URL` | 署名付き URL のホストをブラウザ到達可能なものへ差し替える場合に指定 | `http://localhost:9000` |
 | `APP_S3_PRESIGN_EXPIRY_SECONDS` | 署名付き URL の有効期限（秒） | `900` |
 | `MINI_USER_UPPER_LIMIT` / `NORMAL_USER_UPPER_LIMIT` | 権限別の写真登録上限 | `10` / `1000` |
-| `FRONTEND_ORIGIN` | CORS 許可オリジン | `http://localhost:3000` |
 | `RATE_LIMIT_ENABLED` | 送信元IP別レート制限の有効化（`test`・E2E は無効） | `true` |
 | `RATE_LIMIT_AUTH_CAPACITY` / `RATE_LIMIT_AUTH_WINDOW_SECONDS` | ログインのしきい値（回数 / ウィンドウ秒） | `30` / `60` |
 | `RATE_LIMIT_REGISTER_CAPACITY` / `RATE_LIMIT_REGISTER_WINDOW_SECONDS` | アカウント登録のしきい値 | `10` / `3600` |
 | `RATE_LIMIT_GENERAL_CAPACITY` / `RATE_LIMIT_GENERAL_WINDOW_SECONDS` | その他 `/api/**` のしきい値 | `300` / `60` |
 | `FRONTEND_ORIGIN` | CORS 許可オリジン（1 値のみ。`prod` では `https://` 必須） | `http://localhost:3000` |
-| `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現（`app.forwarded.trusted-proxies`）。**本番では既定値なし＝必須。ALB のサブネット CIDR に狭める** | 非 `prod`：ループバック＋RFC1918 / `prod`：**なし（必須）** |
+| `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現（`app.forwarded.trusted-proxies`）。**本番では必須。ALB のサブネット CIDR に狭める**（未設定・空文字・広すぎる値は `ProdConfigValidationRunner` が起動時に検出して失敗させる） | 非 `prod`：ループバック＋RFC1918 / `prod`：**空（設定必須）** |
 
 > **IntelliJ IDEA で起動する場合**
 > Dock やランチャーから起動した IntelliJ はシェルの `export` を引き継がないため、`JWT_SECRET` を渡す必要があります。共有の実行構成 `backend/.run/WebGalleryApplication_local.run.xml`（実行構成名「WebGalleryApplication (local)」、プロファイル `local` ＋ ローカル用 `JWT_SECRET` を設定済み）を選択して実行してください。独自の実行構成を使う場合は「Environment variables」に `JWT_SECRET` を追加してください。

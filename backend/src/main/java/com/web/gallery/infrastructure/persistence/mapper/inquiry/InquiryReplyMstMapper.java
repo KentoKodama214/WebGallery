@@ -33,12 +33,12 @@ public interface InquiryReplyMstMapper {
   public Integer delete(InquiryReplyMstCondition condition);
 
   /**
-   * 条件に該当するお問い合わせ返信の件数を取得する
+   * 条件に該当するお問い合わせ返信が存在するかどうかを判定する
    *
    * @param condition {@link InquiryReplyMstCondition}
-   * @return 件数
+   * @return 1件以上存在する場合、true
    */
-  public int count(InquiryReplyMstCondition condition);
+  public boolean exists(InquiryReplyMstCondition condition);
 
   /**
    * 条件に該当するお問い合わせ返信一覧を、返信番号の昇順で取得する

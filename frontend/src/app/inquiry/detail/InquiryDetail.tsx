@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   getInquiryDetail,
+  markInquiryAsRead,
   withdrawInquiry,
   type InquiryDetail as InquiryDetailData,
 } from "@/lib/api/client";
@@ -53,6 +54,15 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
       cancelled = true;
     };
   }, [inquiryNo]);
+
+  // 既読化は詳細取得（GET）の副作用にせず、詳細を表示できたあとに専用APIで明示的に行う。
+  // 未読バッジ表示のための利便機能なので、失敗しても画面にはエラーを出さない（次回表示時に再試行される）。
+  // 依存は真偽値にして、取り下げ等でdetailを差し替えたときに再送しないようにする
+  const isDetailLoaded = detail !== null;
+  useEffect(() => {
+    if (!isDetailLoaded) return;
+    markInquiryAsRead(inquiryNo).catch(() => {});
+  }, [isDetailLoaded, inquiryNo]);
 
   const formatDatetime = (datetime: string): string => {
     const date = new Date(datetime);

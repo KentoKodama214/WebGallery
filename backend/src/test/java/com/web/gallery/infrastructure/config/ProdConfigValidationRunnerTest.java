@@ -360,6 +360,13 @@ class ProdConfigValidationRunnerTest {
 
       @Test
       @Order(5)
+      @DisplayName("空文字なら起動失敗する（application-prod.ymlの既定値が空文字のため、環境変数の設定漏れはここで弾く）")
+      void empty() {
+        assertThrows(IllegalStateException.class, () -> runnerWithTrustedProxies("").validate());
+      }
+
+      @Test
+      @Order(6)
       @DisplayName("正規表現として不正な値は起動失敗する")
       void invalidRegex() {
         // 不正な正規表現を放置すると ForwardedForFilter が「どの送信元も信頼しない」に倒れ、
@@ -389,7 +396,7 @@ class ProdConfigValidationRunnerTest {
 
       @ParameterizedTest
       @MethodSource("tooBroadPatterns")
-      @Order(6)
+      @Order(7)
       @DisplayName("グローバルIPにも一致する広すぎる正規表現は起動失敗する")
       void tooBroad(String pattern) {
         assertThrows(
@@ -397,7 +404,7 @@ class ProdConfigValidationRunnerTest {
       }
 
       @Test
-      @Order(7)
+      @Order(8)
       @DisplayName("前後に空白を含む値も trim して判定する")
       void surroundingWhitespace() {
         assertThrows(

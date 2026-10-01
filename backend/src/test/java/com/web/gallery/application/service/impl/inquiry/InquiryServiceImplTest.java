@@ -147,24 +147,8 @@ public class InquiryServiceImplTest {
   class getInquiryDetail {
     @Test
     @Order(1)
-    @DisplayName("正常系：既読済みの場合、既読化処理を行わない")
-    void getInquiryDetail_alreadyRead() throws GalleryException {
-      InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.REPLIED, true);
-      doReturn(detail)
-          .when(inquiryMstRepositoryImpl)
-          .getInquiryDetail(any(AccountNo.class), any(InquiryNo.class));
-
-      InquiryDetailModel result =
-          inquiryServiceImpl.getInquiryDetail(new AccountNo(1L), new InquiryNo(1L));
-
-      assertEquals(detail, result);
-      verify(inquiryAggregateRepositoryImpl, never()).markReadByUser(any(Inquiry.class));
-    }
-
-    @Test
-    @Order(2)
-    @DisplayName("正常系：未読の返信が存在する場合、既読化する")
-    void getInquiryDetail_markAsRead() throws GalleryException {
+    @DisplayName("正常系：取得した詳細をそのまま返し、既読化処理を行わない（GETに副作用を持たせない）")
+    void getInquiryDetail_hasNoSideEffect() throws GalleryException {
       InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.REPLIED, false);
       doReturn(detail)
           .when(inquiryMstRepositoryImpl)
@@ -173,15 +157,13 @@ public class InquiryServiceImplTest {
       InquiryDetailModel result =
           inquiryServiceImpl.getInquiryDetail(new AccountNo(1L), new InquiryNo(1L));
 
-      assertTrue(result.getIsReadByUser());
-
-      ArgumentCaptor<Inquiry> inquiryCaptor = ArgumentCaptor.forClass(Inquiry.class);
-      verify(inquiryAggregateRepositoryImpl).markReadByUser(inquiryCaptor.capture());
-      assertTrue(inquiryCaptor.getValue().getDetail().getIsReadByUser());
+      assertEquals(detail, result);
+      assertFalse(result.getIsReadByUser());
+      verify(inquiryAggregateRepositoryImpl, never()).markReadByUser(any(Inquiry.class));
     }
 
     @Test
-    @Order(3)
+    @Order(2)
     @DisplayName("異常系：お問い合わせが存在しない場合、InquiryNotFoundExceptionをthrowする")
     void getInquiryDetail_notFound() throws GalleryException {
       doThrow(InquiryNotFoundException.class)
@@ -198,6 +180,56 @@ public class InquiryServiceImplTest {
 
   @Nested
   @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class markInquiryAsRead {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：未読の場合、既読化する")
+    void markInquiryAsRead_unread() throws GalleryException {
+      InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.REPLIED, false);
+      doReturn(detail)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryDetail(any(AccountNo.class), any(InquiryNo.class));
+
+      inquiryServiceImpl.markInquiryAsRead(new AccountNo(1L), new InquiryNo(1L));
+
+      ArgumentCaptor<Inquiry> inquiryCaptor = ArgumentCaptor.forClass(Inquiry.class);
+      verify(inquiryAggregateRepositoryImpl).markReadByUser(inquiryCaptor.capture());
+      assertTrue(inquiryCaptor.getValue().getDetail().getIsReadByUser());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：既読済みの場合、更新を行わない（何度呼んでも結果が変わらない）")
+    void markInquiryAsRead_alreadyRead() throws GalleryException {
+      InquiryDetailModel detail = createDetailModel(InquiryStatusEnum.REPLIED, true);
+      doReturn(detail)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryDetail(any(AccountNo.class), any(InquiryNo.class));
+
+      inquiryServiceImpl.markInquiryAsRead(new AccountNo(1L), new InquiryNo(1L));
+
+      verify(inquiryAggregateRepositoryImpl, never()).markReadByUser(any(Inquiry.class));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：お問い合わせが存在しない場合、InquiryNotFoundExceptionをthrowする")
+    void markInquiryAsRead_notFound() throws GalleryException {
+      doThrow(InquiryNotFoundException.class)
+          .when(inquiryMstRepositoryImpl)
+          .getInquiryDetail(any(AccountNo.class), any(InquiryNo.class));
+
+      assertThrows(
+          InquiryNotFoundException.class,
+          () -> inquiryServiceImpl.markInquiryAsRead(new AccountNo(1L), new InquiryNo(1L)));
+
+      verify(inquiryAggregateRepositoryImpl, never()).markReadByUser(any(Inquiry.class));
+    }
+  }
+
+  @Nested
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getInquiryListForAdmin {
     @Test
@@ -225,7 +257,7 @@ public class InquiryServiceImplTest {
   }
 
   @Nested
-  @Order(5)
+  @Order(6)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getInquiryDetailForAdmin {
     @Test
@@ -244,7 +276,7 @@ public class InquiryServiceImplTest {
   }
 
   @Nested
-  @Order(6)
+  @Order(7)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class replyToInquiry {
     @Test
@@ -316,7 +348,7 @@ public class InquiryServiceImplTest {
   }
 
   @Nested
-  @Order(7)
+  @Order(8)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class withdrawInquiry {
     @Test

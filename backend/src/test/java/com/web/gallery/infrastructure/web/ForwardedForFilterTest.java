@@ -152,6 +152,116 @@ class ForwardedForFilterTest {
   @Nested
   @Order(3)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @DisplayName("X-Forwarded-Forの要素の検証・正規化")
+  class entryValidation {
+
+    /** IPv6も信頼範囲に含む設定（IPv6のチェーンを検証するため） */
+    private static final String TRUSTED_PROXIES_V6 =
+        "10\\.0\\.1\\.\\d{1,3}|2001:db8:1::[0-9a-f]{1,4}";
+
+    @Test
+    @Order(1)
+    @DisplayName("IPアドレスとして読めない値は採用せず、接続元IPのままにする")
+    void rejectsNonIpEntry() throws Exception {
+      // 前段がX-Forwarded-Forを追記せず素通しする構成では、右端がクライアントの指定値になる
+      assertEquals(
+          "10.0.1.5", resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "not-an-ip-address"));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("varchar(45)に収まらない長さの値は採用しない")
+    void rejectsTooLongEntry() throws Exception {
+      assertEquals("10.0.1.5", resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "a".repeat(46)));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("オクテットが範囲外のIPv4もどきは採用しない")
+    void rejectsOutOfRangeIpv4() throws Exception {
+      assertEquals("10.0.1.5", resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "999.1.1.1"));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("ゼロ圧縮が2箇所あるIPv6もどきは採用しない")
+    void rejectsMalformedIpv6() throws Exception {
+      assertEquals("10.0.1.5", resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "2001::db8::1"));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("壊れた要素が現れたら、その左に妥当な値があっても採用しない（チェーンが壊れているとみなす）")
+    void rejectsWholeChainWhenBroken() throws Exception {
+      assertEquals(
+          "10.0.1.5", resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "203.0.113.9, bogus"));
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("IPv4のポート付き表記はポートを剥がして採用する")
+    void stripsPortFromIpv4() throws Exception {
+      assertEquals(
+          "203.0.113.9", resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "203.0.113.9:51234"));
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("IPv6の括弧付き・ポート付き表記は括弧とポートを剥がして採用する")
+    void stripsBracketsAndPortFromIpv6() throws Exception {
+      assertEquals(
+          "2001:db8::1", resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "[2001:db8::1]:443"));
+      assertEquals("2001:db8::1", resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "[2001:db8::1]"));
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("ポート付きで届いた前段プロキシも、剥がした結果で信頼判定して読み飛ばす")
+    void skipsTrustedProxyWithPort() throws Exception {
+      assertEquals(
+          "203.0.113.9",
+          resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "203.0.113.9, 10.0.1.9:40000"));
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("括弧が閉じていない値は採用しない")
+    void rejectsUnclosedBracket() throws Exception {
+      assertEquals("10.0.1.5", resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "[2001:db8::1"));
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("ゾーンID付きのIPv6は採用しない（リンクローカル専用でクライアントIPになり得ない）")
+    void rejectsIpv6WithZoneId() throws Exception {
+      assertEquals("10.0.1.5", resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "fe80::1%eth0"));
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("正規表記のIPv6・IPv4射影アドレスはそのまま採用する")
+    void acceptsValidIpv6() throws Exception {
+      assertEquals(
+          "2001:db8:85a3:0:0:8a2e:370:7334",
+          resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "2001:db8:85a3:0:0:8a2e:370:7334"));
+      assertEquals(
+          "::ffff:203.0.113.9",
+          resolvedRemoteAddr(TRUSTED_PROXIES, "10.0.1.5", "::ffff:203.0.113.9"));
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("IPv6の前段プロキシも信頼判定で読み飛ばせる")
+    void skipsTrustedIpv6Proxy() throws Exception {
+      assertEquals(
+          "203.0.113.9",
+          resolvedRemoteAddr(TRUSTED_PROXIES_V6, "10.0.1.5", "203.0.113.9, 2001:db8:1::a"));
+    }
+  }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("TrustedProxyConfigの正規表現")
   class trustedProxyPattern {
 
@@ -175,7 +285,7 @@ class ForwardedForFilterTest {
   }
 
   @Nested
-  @Order(4)
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @DisplayName("後続へ渡すリクエスト")
   class wrappedRequest {

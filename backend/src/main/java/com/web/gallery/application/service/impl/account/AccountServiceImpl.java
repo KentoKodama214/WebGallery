@@ -279,7 +279,11 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
    * <p>{@code currentPassword}による本人確認（再認証）を行ったうえで物理削除する
    *
    * <p>管理者として他ユーザーのお問い合わせへ投稿した返信が残っている場合は削除しない。返信を巻き込んで
-   * 削除すると、無関係な第三者のお問い合わせスレッドから回答本文だけが消え、ステータス（回答済み）と 実データが食い違うため、業務ルールとして禁止する
+   * 削除すると、無関係な第三者のお問い合わせスレッドから回答本文だけが消え、ステータス（回答済み）と 実データが食い違うため、業務ルールとして禁止する。
+   * 自分が起票したお問い合わせへの自己返信はスレッドごと削除されるため、この判定には含めない
+   *
+   * <p>ブロックされたアカウントを退会させるには、返信を別の管理者へ引き継ぐ運用作業が必要になる （手順は{@code
+   * doc/architecture/security.md}「管理者返信を持つアカウントの退会」を参照）
    *
    * @param accountNo アカウント番号
    * @param accountId アカウントID
@@ -292,7 +296,7 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
       throws GalleryException {
     verifyCurrentPassword(accountNo, accountRepository.getByAccountNo(accountNo), currentPassword);
 
-    if (inquiryReplyMstRepository.existsByAdminAccountNo(accountNo)) {
+    if (inquiryReplyMstRepository.existsReplyToOthersInquiry(accountNo)) {
       throw ErrorEnum.CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY.toException();
     }
 

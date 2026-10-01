@@ -42,6 +42,8 @@ ALTER TABLE common.inquiry_reply_mst
 
 /* Create Indexes */
 CREATE INDEX idx_inquiry_reply_mst_inquiry_id ON common.inquiry_reply_mst (inquiry_id, reply_no);
+-- 退会時の「管理者として投稿した返信が残っているか」の判定用。PostgreSQLは外部キー列に索引を自動作成しない
+CREATE INDEX idx_inquiry_reply_mst_admin_account_no ON common.inquiry_reply_mst (admin_account_no);
 
 
 /* Comments */

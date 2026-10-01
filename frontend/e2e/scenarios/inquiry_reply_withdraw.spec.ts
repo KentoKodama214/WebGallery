@@ -82,7 +82,21 @@ adminTest.describe("お問い合わせのユーザー側返信確認・取り下
         });
       });
 
+      await adminTest.step("詳細を開く前は、ユーザー側の一覧に未読バッジが表示されること", async () => {
+        await userPage.goto("/inquiry/list");
+        const row = userPage.getByRole("row", { name: new RegExp(repliedSubject) });
+        await adminExpect(row.getByText("未読")).toBeVisible({ timeout: 10000 });
+      });
+
       await adminTest.step("ユーザー側の詳細ページに返信内容とステータスが反映されること", async () => {
+        // 既読化はGETの副作用ではなく詳細表示後のPOSTで行うため、次の一覧確認の前に完了を待つ
+        const readResponsePromise = userPage.waitForResponse(
+          (response) =>
+            response.request().method() === "POST" &&
+            /\/api\/v1\/inquiries\/\d+\/read$/.test(response.url()),
+          { timeout: 10000 }
+        );
+
         await userPage.goto(repliedDetailUrl);
         await adminExpect(userPage.getByText(replyBody)).toBeVisible({ timeout: 10000 });
         await adminExpect(userPage.getByText("回答済み")).toBeVisible();
@@ -90,12 +104,17 @@ adminTest.describe("お問い合わせのユーザー側返信確認・取り下
         await adminExpect(
           userPage.getByRole("button", { name: "このお問い合わせを取り下げる" })
         ).toBeVisible();
+
+        const readResponse = await readResponsePromise;
+        adminExpect(readResponse.ok()).toBeTruthy();
       });
 
-      await adminTest.step("ユーザー側の一覧にも返信ありのステータスが反映されること", async () => {
+      await adminTest.step("ユーザー側の一覧に返信ありのステータスが反映され、未読バッジが消えること", async () => {
         await userPage.goto("/inquiry/list");
         const row = userPage.getByRole("row", { name: new RegExp(repliedSubject) });
         await adminExpect(row.getByText("回答あり")).toBeVisible({ timeout: 10000 });
+        // 既読化はGETの副作用ではなく、詳細表示後に呼ばれる POST /api/v1/inquiries/{no}/read が行う
+        await adminExpect(row.getByText("未読")).toHaveCount(0);
       });
 
       await adminTest.step("未対応の問い合わせで取り下げ確認をキャンセルすると取り下げられないこと", async () => {

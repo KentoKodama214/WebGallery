@@ -10,7 +10,7 @@
 | 2 | account_name | アカウント名 | varchar(50) | - | ユーザーの表示名 | account |
 | 3 | account_no | アカウント番号 | bigserial / bigint | (自動採番) / - | アカウントを一意に特定するための番号。accountテーブルではPK（自動採番）、他テーブルでは概ねFK。account_authorityではPK兼FK（accountと1対1）。ただしphoto_list_filter_log・photo_view_logのaccount_noは閲覧者のアカウント番号を表し、未ログインの場合は0（センチネル値のためFKなし） | account, account_authority, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite, login_history, photo_list_filter_log, photo_view_log, inquiry_mst |
 | 4 | address | 住所 | text | '' | 撮影場所の住所 | location_mst |
-| 5 | admin_account_no | 管理者アカウント番号 | bigint | - | 返信した管理者のアカウント番号。common.account(account_no)へのFK | inquiry_reply_mst |
+| 5 | admin_account_no | 管理者アカウント番号 | bigint | - | 返信した管理者のアカウント番号。common.account(account_no)へのFK。退会可否判定（管理者返信の存在確認）用インデックスあり | inquiry_reply_mst |
 | 6 | authority_kbn | 権限区分 | common.authority_enum | - | mini-user/normal-user/special-user/administratorの4段階。写真アップロード上限に影響 | account_authority |
 | 7 | birthdate | 生年月日 | date | '1900-01-01' | 個人情報管理の観点で、必須入力なし、かつ年月まで。データ登録時にすべて1日に変換する | account |
 | 8 | birthplace_prefecture_kbn_code | 出身地都道府県区分コード | varchar(20) | 'none' | kbn_mstの都道府県区分コードを参照。未設定時は'none' | account |
