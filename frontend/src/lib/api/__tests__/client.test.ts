@@ -2,6 +2,8 @@
  * APIクライアント（認証リフレッシュ・エラーメッセージ選別）の単体テスト
  */
 
+import { REFERER_MAX_LENGTH } from "@/lib/validation";
+
 type ClientModule = typeof import("../client");
 
 /** 簡易レスポンスを生成する */
@@ -447,6 +449,80 @@ describe("api/client", () => {
       await expect(client.registerAccount(data)).rejects.toThrow(
         "アカウントの登録に失敗しました"
       );
+    });
+  });
+
+  describe("遷移元URL（referer）の切り詰め", () => {
+    beforeEach(async () => {
+      // 先にログインしてアクセストークンを持たせる（fetchWithAuth の先読みリフレッシュを挟まない）
+      fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
+      await client.login("user", "pass");
+    });
+
+    /** 直近の fetch 呼び出しURLから referer クエリの値を取り出す */
+    const capturedReferer = (): string | null => {
+      const calls = fetchMock.mock.calls;
+      const url = String(calls[calls.length - 1][0]);
+      return new URL(url, "http://localhost").searchParams.get("referer");
+    };
+
+    it("上限以内の referer はそのまま送る", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ isLast: true, photoList: [] })
+      );
+      const referer = `https://example.com/?q=${"a".repeat(100)}`;
+
+      await client.getPhotoList("acc1", { referer });
+
+      expect(capturedReferer()).toBe(referer);
+    });
+
+    it("写真一覧: 上限を超える referer は上限文字数まで切り詰めて送る（400にしない）", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ isLast: true, photoList: [] })
+      );
+      // 流入元サイトが Referrer-Policy: unsafe-url で長いURLを晒すと document.referrer が
+      // 上限を超える。そのまま送るとバックエンドの @Size で 400 になり一覧が表示できない
+      const referer = `https://example.com/?q=${"a".repeat(4000)}`;
+
+      await client.getPhotoList("acc1", { referer });
+
+      expect(capturedReferer()).toHaveLength(REFERER_MAX_LENGTH);
+      expect(capturedReferer()).toBe(referer.slice(0, REFERER_MAX_LENGTH));
+    });
+
+    it("写真詳細: 上限を超える referer は上限文字数まで切り詰めて送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ photoNo: 1 }));
+      const referer = `https://example.com/?q=${"a".repeat(4000)}`;
+
+      await client.getPhotoDetail("acc1", 1, referer);
+
+      expect(capturedReferer()).toHaveLength(REFERER_MAX_LENGTH);
+    });
+
+    it("切り詰めの境界でサロゲートペアを割らない", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ isLast: true, photoList: [] })
+      );
+      // 上限の直前までを1コードユニット文字で埋め、境界に絵文字（2コードユニット）を置く
+      const referer = `${"a".repeat(REFERER_MAX_LENGTH - 1)}😀${"b".repeat(10)}`;
+
+      await client.getPhotoList("acc1", { referer });
+
+      const sent = capturedReferer()!;
+      expect(sent).toHaveLength(REFERER_MAX_LENGTH - 1);
+      // 単独のサロゲートが残っていないこと
+      expect(sent).toBe("a".repeat(REFERER_MAX_LENGTH - 1));
+    });
+
+    it("空文字の referer はクエリに載せない", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ isLast: true, photoList: [] })
+      );
+
+      await client.getPhotoList("acc1", { referer: "" });
+
+      expect(capturedReferer()).toBeNull();
     });
   });
 

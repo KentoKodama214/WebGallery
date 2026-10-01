@@ -17,6 +17,8 @@ import {
 } from "@/lib/api/client";
 import type { PrefectureGroup } from "@/lib/api/client";
 import {
+  ACCOUNT_NAME_MAX_LENGTH,
+  FREE_MEMO_MAX_LENGTH,
   PASSWORD_PATTERN,
   PASSWORD_ERROR_MESSAGE,
   PASSWORD_PLACEHOLDER,
@@ -220,6 +222,12 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
 
     if (!accountName.trim()) {
       newErrors.accountName = "アカウント名を入力してください";
+    } else if (accountName.length > ACCOUNT_NAME_MAX_LENGTH) {
+      newErrors.accountName = `アカウント名は${ACCOUNT_NAME_MAX_LENGTH}文字以内で入力してください`;
+    }
+
+    if (freeMemo.length > FREE_MEMO_MAX_LENGTH) {
+      newErrors.freeMemo = `メモは${FREE_MEMO_MAX_LENGTH}文字以内で入力してください`;
     }
 
     if (newPassword && !PASSWORD_PATTERN.test(newPassword)) {
@@ -485,6 +493,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               type="text"
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
+              maxLength={ACCOUNT_NAME_MAX_LENGTH}
               onBlur={() => {
                 if (!accountName.trim()) {
                   setErrors((prev) => ({ ...prev, accountName: "アカウント名を入力してください" }));
@@ -629,8 +638,14 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               type="text"
               value={freeMemo}
               onChange={(e) => setFreeMemo(e.target.value)}
-              className="block w-full p-[10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
+              maxLength={FREE_MEMO_MAX_LENGTH}
+              aria-invalid={errors.freeMemo ? true : undefined}
+              aria-describedby={errors.freeMemo ? "account-setting-free-memo-error" : undefined}
+              className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
+            {errors.freeMemo && (
+              <p id="account-setting-free-memo-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.freeMemo}</p>
+            )}
 
             {duplicateError && (
               <p key={duplicateErrorSeq} role="alert" className="text-[#C62828] text-xs font-bold mb-2">{duplicateError}</p>
@@ -757,7 +772,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
           >
             &times;
           </button>
-          <p className="text-[#444] text-center">アカウントを登録しました</p>
+          <p className="text-[#444] text-center">アカウント情報を更新しました</p>
         </ModalDialog>
       )}
     </div>

@@ -2,6 +2,8 @@
  * バックエンドAPIとの通信を管理するクライアントモジュール
  */
 
+import { REFERER_MAX_LENGTH } from "@/lib/validation";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 /**
@@ -26,6 +28,33 @@ export class ApiError extends Error {
  * 多層防御としてクライアント側でもパスパラメータをエスケープする。
  */
 const seg = (value: string | number): string => encodeURIComponent(String(value));
+
+/**
+ * 遷移元URL（`document.referrer`）をバックエンドの上限まで切り詰める
+ *
+ * `document.referrer` の内容は流入元サイトが自由に決められる（`Referrer-Policy: unsafe-url`
+ * を指定すれば自サイトの完全なURLが入る）。長さを検証せずに送ると、バックエンドの
+ * `@Size(max = REFERER_MAX_LENGTH)` に弾かれて写真一覧・写真詳細の取得自体が 400 で失敗し、
+ * 「外部サイトが長いURLでリンクしているだけでギャラリーが開けない」状態になる。
+ * 分析ログの用途では流入元が判別できれば十分なため、上限を超える分は切り捨てる。
+ *
+ * 文字数の数え方はバックエンドの `@Size`（Java の `String#length` ＝ UTF-16 コードユニット）
+ * と揃える。切り詰めの境界でサロゲートペアが割れないよう、末尾に単独のハイサロゲートが
+ * 残った場合は1コードユニット分落とす。
+ *
+ * @param value 遷移元URL（未取得の場合は空文字・undefined）
+ * @returns 切り詰め後の遷移元URL。空の場合は undefined（クエリに載せない）
+ */
+function toRefererParam(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  if (value.length <= REFERER_MAX_LENGTH) return value;
+  const truncated = value.slice(0, REFERER_MAX_LENGTH);
+  const lastUnit = truncated.charCodeAt(truncated.length - 1);
+  // 0xD800〜0xDBFF はサロゲートペアの前半。後半が切り落とされた状態を残さない
+  return lastUnit >= 0xd800 && lastUnit <= 0xdbff
+    ? truncated.slice(0, -1)
+    : truncated;
+}
 
 /** メモリ上にアクセストークンを保持 */
 let accessToken: string | null = null;
@@ -635,7 +664,8 @@ export interface PhotoListParams {
   /**
    * 遷移元URL（{@code document.referrer}）。バックエンドの分析ログ記録に使用する。
    * HTTPリクエストのRefererヘッダーは同一ページからのAPI呼び出しのため自ページURLになってしまい、
-   * 外部サイトからの本来の流入元を表せないため、クライアントが明示的に送信する
+   * 外部サイトからの本来の流入元を表せないため、クライアントが明示的に送信する。
+   * 長さは送信時に {@link REFERER_MAX_LENGTH} まで切り詰める（{@link toRefererParam}）
    */
   referer?: string;
   /**
@@ -662,7 +692,8 @@ export async function getPhotoList(
   if (params.sortBy) searchParams.set("sortBy", params.sortBy);
   if (params.pageNo !== undefined) searchParams.set("pageNo", String(params.pageNo));
   if (params.searchExecuted) searchParams.set("searchExecuted", "true");
-  if (params.referer) searchParams.set("referer", params.referer);
+  const referer = toRefererParam(params.referer);
+  if (referer) searchParams.set("referer", referer);
   if (params.logInitialView) searchParams.set("logInitialView", "true");
 
   const query = searchParams.toString();
@@ -715,7 +746,8 @@ export async function getPhotoDetail(
   // お気に入り判定に使うアカウント番号はセッション（JWT）から取得されるため、
   // クライアントからアカウント番号を渡す必要はない
   const searchParams = new URLSearchParams();
-  if (referer) searchParams.set("referer", referer);
+  const refererParam = toRefererParam(referer);
+  if (refererParam) searchParams.set("referer", refererParam);
   const query = searchParams.toString();
   const url = `/api/v1/accounts/${seg(photoAccountId)}/photos/${seg(photoNo)}${query ? `?${query}` : ""}`;
   const response = await fetchWithAuth(url, { signal });

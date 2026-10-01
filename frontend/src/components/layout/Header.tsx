@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import localFont from "next/font/local";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { onActivateKey } from "@/lib/a11y";
+import { markBackgroundInert, onActivateKey } from "@/lib/a11y";
 import styles from "./Header.module.css";
 
 /**
@@ -32,6 +32,7 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
   const toggleMenu = () => {
     setIsOpen((prev) => !prev);
@@ -41,7 +42,9 @@ export function Header() {
     setIsOpen(false);
   };
 
-  // メニュー展開中は Escape で閉じ、Tab フォーカスをメニュー内で循環させる。
+  // メニュー展開中は Escape で閉じ、Tab フォーカスをメニュー内で循環させ、
+  // 背面を `inert` にして支援技術のブラウズモードから隔離する
+  // （挙動はモーダルダイアログと同じなので `ModalDialog` / 写真一覧のフィルターパネルと揃える）。
   // 閉じたときはトグルボタンへフォーカスを戻す。
   useEffect(() => {
     if (!isOpen) return;
@@ -50,6 +53,16 @@ export function Header() {
     // トグルボタンは Header がマウントされている間は同一 DOM ノードのため、
     // effect 実行時に控えてクリーンアップ（＝メニューを閉じた時）のフォーカス復帰に使う
     const toggleButton = buttonRef.current;
+
+    // 背面コンテンツを inert にする。メニューは条件付きレンダリングではなく常にDOM上に
+    // あるため、開いている間だけ付与する。
+    //
+    // 基準にするのはメニューではなく `<header>` 全体。メニューを基準にすると、その兄弟である
+    // ハンバーガーボタン（展開中は「閉じる」操作を担う）まで inert になり、閉じられなくなる
+    const restoreInert = headerRef.current
+      ? markBackgroundInert(headerRef.current)
+      : () => {};
+
     const focusables = menu
       ? Array.from(
           menu.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')
@@ -78,6 +91,7 @@ export function Header() {
     document.addEventListener("keydown", handleKeyDown, true);
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true);
+      restoreInert();
       toggleButton?.focus();
     };
   }, [isOpen]);
@@ -89,7 +103,7 @@ export function Header() {
   };
 
   return (
-    <header>
+    <header ref={headerRef}>
       {/* ハンバーガーボタン */}
       <div
         ref={buttonRef}
@@ -108,10 +122,17 @@ export function Header() {
         <span style={{ top: 20 }}></span>
       </div>
 
-      {/* オーバーレイメニュー */}
+      {/* オーバーレイメニュー。
+          展開中は画面全体を覆いEscape・Tab循環・フォーカス復帰・背面のinert化を行うため、
+          挙動はモーダルダイアログと同じ。メニューは条件付きレンダリングではなく常にDOM上に
+          あるため、これらの属性は展開中だけ付ける
+          （`aria-modal="true"` を閉じている間も残すと、背面コンテンツを隠したまま扱う支援技術がある） */}
       <div
         ref={menuRef}
         id="header-overlay-menu"
+        role={isOpen ? "dialog" : undefined}
+        aria-modal={isOpen ? true : undefined}
+        aria-label={isOpen ? "メニュー" : undefined}
         className={`${styles.overlay} ${isOpen ? styles.open : ""}`}
         data-testid="overlay-menu"
       >

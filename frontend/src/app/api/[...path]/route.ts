@@ -18,7 +18,11 @@ import { type NextRequest, NextResponse } from "next/server";
  *   メモリ上限の担保はこのハンドラー自身で行う）
  * - バックエンドへの中継には 30 秒のタイムアウトを設け、応答が無い場合は 504 を返す
  * - Cookie（refreshToken 等）とバックエンドの Set-Cookie を双方向に転送する
- * - クライアントが詐称しうる転送系ヘッダー（X-Forwarded-* / Forwarded / X-Real-IP）は一旦除去し、
+ * - 状態を変更するメソッドは Origin / Referer を「自オリジン」と照合する。照合先は
+ *   環境変数 `APP_ORIGIN`（未設定時はリクエスト URL 由来の host）で、クライアントが
+ *   詐称できる Host ヘッダーは使わない
+ * - クライアントが詐称しうる転送系ヘッダー（X-Forwarded-* / Forwarded / X-Real-IP / CDN 各社の
+ *   クライアント IP ヘッダー）は一旦除去し、
  *   バックエンドのレート制限が使う X-Forwarded-For だけを、前段プロキシ（ALB / CloudFront）が
  *   付与した値＝実クライアント IP に載せ直してから中継する。ALB / CloudFront は X-Forwarded-For を
  *   上書きせず追記するため、左端ではなく右端側（信頼境界の直前）を採用する（{@link resolveClientIp}）。
@@ -27,6 +31,69 @@ import { type NextRequest, NextResponse } from "next/server";
  */
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
+
+/**
+ * このアプリを公開しているオリジンのホスト（CSRF 検証で `Origin` / `Referer` と照合する）
+ *
+ * 環境変数 `APP_ORIGIN`（例: `https://gallery.example.com`）から取り出す。
+ * 前段にリバースプロキシを置く構成では、Node が listen しているホスト
+ * （`request.nextUrl.host`）と利用者から見た公開ホストが一致しないため、
+ * 公開ホストを明示的に与える必要がある。
+ *
+ * 未設定・不正な場合は null とし、`request.nextUrl.host` にフォールバックする
+ * （{@link resolveSelfHosts}）。
+ */
+const APP_ORIGIN_HOST = (() => {
+  const raw = process.env.APP_ORIGIN;
+  if (!raw) return null;
+  try {
+    return new URL(raw).host || null;
+  } catch {
+    return null;
+  }
+})();
+
+/** {@link warnMissingAppOrigin} を既に出力したかどうか（1プロセスにつき1回だけ出す） */
+let hasWarnedMissingAppOrigin = false;
+
+/**
+ * `APP_ORIGIN` が未設定であることを警告する
+ *
+ * 前段プロキシ配下では `request.nextUrl.host` が内部ホストになるため、
+ * ブラウザが送る `Origin` と一致せず状態変更メソッドがすべて 403 になる。
+ * 設定漏れに気づけるよう、プロセスにつき1回だけ出力する。
+ */
+function warnMissingAppOrigin(): void {
+  if (hasWarnedMissingAppOrigin) return;
+  hasWarnedMissingAppOrigin = true;
+  console.warn(
+    `[api-proxy] APP_ORIGIN が未設定のため、CSRF 検証の自ホストを ` +
+      `リクエストURL（Node が listen しているホスト）から判定します。` +
+      `前段にリバースプロキシを置く構成では公開オリジンと一致せず、` +
+      `状態変更メソッドがすべて 403 になります。APP_ORIGIN を設定してください。`
+  );
+}
+
+/**
+ * CSRF 検証で「自サイト」と認める host の一覧を返す
+ *
+ * **`Host` ヘッダーは使わない。** `Host` はクライアントが自由に送れる値なので、
+ * これを照合先に含めると `Host: evil.example` と `Origin: https://evil.example` を
+ * 揃えるだけで検証を通過できてしまい、検証として成立しない
+ * （ブラウザは `Host` を差し替えられないので典型的な CSRF は防げているが、
+ * 前段が任意の `Host` を素通しする構成やリクエストスマグリングでは崩れる）。
+ *
+ * 明示設定（`APP_ORIGIN`）があればそれだけを信頼し、無ければリクエスト URL 由来の
+ * host（Node が listen しているホスト。`X-Forwarded-Host` には追従しない）を使う。
+ *
+ * @param request 受信したリクエスト
+ * @returns 自サイトと認める host の配列
+ */
+function resolveSelfHosts(request: NextRequest): string[] {
+  if (APP_ORIGIN_HOST) return [APP_ORIGIN_HOST];
+  warnMissingAppOrigin();
+  return request.nextUrl.host ? [request.nextUrl.host] : [];
+}
 
 /**
  * 転送を許可するリクエストボディの最大サイズ（サーブレット上限に合わせて 55MB）
@@ -52,6 +119,11 @@ const BACKEND_TIMEOUT_MS = 90_000;
  * メモリ・接続が枯渇しうる。上限を超えた分は待たせずに 503 で突き放し（ロードシェディング）、
  * 前段の WAF / ロードバランサ側のレート制限と併せて多層で守る。
  * 環境変数 `PROXY_MAX_CONCURRENCY` で上書き可能。
+ *
+ * 数えるのは「バックエンドの応答（ヘッダー）を待っている数」までで、**レスポンス本文の
+ * 転送中は数えない**（{@link proxy} はヘッダー受信時点でカウンタを戻す）。本APIのレスポンスは
+ * 小さなJSONが主で、画像は署名付きURLでS3から直接配信されるため現状は問題にならないが、
+ * 大きなレスポンスを中継するようになったらストリームの完了で戻す実装へ改めること。
  */
 const MAX_CONCURRENT_REQUESTS = Number(process.env.PROXY_MAX_CONCURRENCY) || 100;
 
@@ -67,13 +139,21 @@ const EXCLUDED_REQUEST_HEADERS = new Set([
   "transfer-encoding",
   "accept-encoding",
   // クライアントによる詐称を防ぐため除去する転送系ヘッダー
-  // （バックエンドが IP ベースでレート制限・監査ログ・ロック判定を行う場合の対策）
+  // （バックエンドが IP ベースでレート制限・監査ログ・ロック判定を行う場合の対策）。
+  // 現在バックエンドが読むのは X-Forwarded-For のみ（`ForwardedForFilter`）だが、
+  // CDN 各社が使うクライアント IP ヘッダーも将来の参照に備えてまとめて落とす
   "x-forwarded-for",
   "x-forwarded-host",
   "x-forwarded-proto",
   "x-forwarded-port",
   "x-real-ip",
   "forwarded",
+  "x-original-forwarded-for",
+  "cf-connecting-ip",
+  "true-client-ip",
+  "x-client-ip",
+  "x-cluster-client-ip",
+  "fastly-client-ip",
 ]);
 
 /** クライアントへ返さないレスポンスヘッダー */
@@ -90,9 +170,23 @@ const EXCLUDED_RESPONSE_HEADERS = new Set([
  * `X-Forwarded-For` の**右端から数えて**何個目を実クライアント IP とみなすかを表す。
  * ALB のみを前段に置く標準構成では 1（＝右端が実クライアント IP）。
  * CloudFront + ALB のように信頼できるプロキシを 2 段重ねる場合は 2 を指定する。
- * 環境変数 `TRUSTED_PROXY_HOPS` で上書きする。
+ * 環境変数 `TRUSTED_PROXY_HOPS` で指定する。
+ *
+ * **未設定・不正値の場合は 0（前段プロキシを一切信頼しない）**とし、
+ * `X-Forwarded-For` をバックエンドへ載せ直さない。既定を 1 にすると、前段プロキシが
+ * 存在しない構成（`next start` を直接公開する等）で「クライアントが自分で付けた
+ * 1件だけの `X-Forwarded-For`」がそのまま実クライアント IP として採用され、
+ * バックエンドの IP 単位レート制限の回避・ログイン履歴／GeoIP／アクセスログの偽装が
+ * 成立してしまう（このプロキシはバックエンドの `TRUSTED_PROXIES` に入っているため、
+ * フロントが詐称値を保証した形になる）。安全側の既定を選び、前段プロキシがある構成では
+ * 明示設定を必須にする。
  */
-const TRUSTED_PROXY_HOPS = Math.max(1, Number(process.env.TRUSTED_PROXY_HOPS) || 1);
+const TRUSTED_PROXY_HOPS = (() => {
+  const raw = process.env.TRUSTED_PROXY_HOPS;
+  if (!raw) return 0;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
+})();
 
 /**
  * 実クライアント IP を求める
@@ -121,6 +215,11 @@ const TRUSTED_PROXY_HOPS = Math.max(1, Number(process.env.TRUSTED_PROXY_HOPS) ||
  * @returns 実クライアント IP。特定できなければ null
  */
 function resolveClientIp(request: NextRequest): string | null {
+  // 前段プロキシを信頼しない設定（既定）では、どの値もクライアントが詐称しうるため採用しない
+  if (TRUSTED_PROXY_HOPS === 0) {
+    warnUnresolvedClientIp(0);
+    return null;
+  }
   const forwardedFor = request.headers.get("x-forwarded-for");
   if (!forwardedFor) {
     warnUnresolvedClientIp(0);
@@ -157,7 +256,8 @@ function warnUnresolvedClientIp(hopCount: number): void {
     `[api-proxy] X-Forwarded-For から実クライアントIPを特定できませんでした` +
       `（受信ホップ数: ${hopCount} / TRUSTED_PROXY_HOPS: ${TRUSTED_PROXY_HOPS}）。` +
       `以後のリクエストはバックエンドから見てすべて同一の送信元になり、IP単位のレート制限が` +
-      `全ユーザーの合算になります。前段プロキシの段数と TRUSTED_PROXY_HOPS が一致しているか確認してください。`
+      `全ユーザーの合算になります。前段プロキシ（ALB / CloudFront 等）の段数を ` +
+      `TRUSTED_PROXY_HOPS に設定してください（未設定は「前段を信頼しない」= 0 として扱います）。`
   );
 }
 
@@ -283,11 +383,8 @@ async function forwardToBackend(
       );
     }
 
-    // 自ホスト（リクエスト URL 由来 / Host ヘッダー）
-    const selfHosts = [
-      request.nextUrl.host,
-      request.headers.get("host"),
-    ].filter((h): h is string => !!h);
+    // 自ホスト（クライアントが詐称できる Host ヘッダーは使わない。{@link resolveSelfHosts}）
+    const selfHosts = resolveSelfHosts(request);
 
     /** ヘッダー値（絶対 URL）のホストが自ホストと一致するか。値が無い場合は null */
     const hostMatches = (value: string | null): boolean | null => {

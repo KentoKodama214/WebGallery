@@ -14,6 +14,14 @@ import {
   type PhotoDetailResponse,
 } from "@/lib/api/client";
 import { loginUrlWithRedirect, sanitizeImageUrl } from "@/lib/url";
+import {
+  LOCATION_ADDRESS_MAX_LENGTH,
+  LOCATION_NAME_MAX_LENGTH,
+  PHOTO_CAPTION_MAX_LENGTH,
+  PHOTO_TAG_MAX_SIZE,
+  PHOTO_TITLE_MAX_LENGTH,
+  TAG_NAME_MAX_LENGTH,
+} from "@/lib/validation";
 import { ModalDialog } from "@/components/ui/ModalDialog";
 import { LocationMapPicker } from "./LocationMapPicker";
 
@@ -258,6 +266,14 @@ export function PhotoSettingForm({
     e.target.value = "";
     if (selectedFiles.length === 0) return;
 
+    // accept="image/*" はファイル選択ダイアログの初期フィルタにすぎず、「すべてのファイル」に
+    // 切り替えれば任意の形式を選べる。最終判定はバックエンドだが、最大50MBを送ってから
+    // 弾かれるのを避けるため選択の時点で確認する
+    if (selectedFiles.some((file) => !file.type.startsWith("image/"))) {
+      setValidationErrors(["画像ファイルを選択してください"]);
+      return;
+    }
+
     if (selectedFiles.some((file) => file.size > MAX_IMAGE_FILE_SIZE)) {
       setValidationErrors(["画像ファイルは5MB以下にしてください"]);
       return;
@@ -302,6 +318,12 @@ export function PhotoSettingForm({
    * タグ追加
    */
   const handleAddTag = () => {
+    // バックエンドの `@Size(max = Consts.PHOTO_TAG_MAX_SIZE)` を超える入力は、
+    // 最大50MBのアップロードを終えてから400で弾かれるため、追加の時点で止める
+    if (tags.length >= PHOTO_TAG_MAX_SIZE) {
+      setValidationErrors([`タグは${PHOTO_TAG_MAX_SIZE}件までです`]);
+      return;
+    }
     setTags([
       ...tags,
       { tagNo: nextTagNo, isNew: true, tagJapaneseName: "", tagEnglishName: "" },
@@ -350,6 +372,17 @@ export function PhotoSettingForm({
     if (!photoJapaneseTitle.trim()) {
       errors.push("タイトル（日本語）を入力してください");
     }
+    // 文字数はバックエンドの @Size と対応する定数で確認する（送信してから400で弾かれるのを避ける）
+    const lengthChecks: { value: string; max: number; label: string }[] = [
+      { value: photoJapaneseTitle, max: PHOTO_TITLE_MAX_LENGTH, label: "タイトル（日本語）" },
+      { value: photoEnglishTitle, max: PHOTO_TITLE_MAX_LENGTH, label: "タイトル（英語）" },
+      { value: caption, max: PHOTO_CAPTION_MAX_LENGTH, label: "キャプション" },
+    ];
+    for (const { value, max, label } of lengthChecks) {
+      if (value.length > max) {
+        errors.push(`${label}は${max}文字以内で入力してください`);
+      }
+    }
     if (photoAt) {
       const photoDate = new Date(photoAt);
       if (photoDate > new Date()) {
@@ -369,6 +402,9 @@ export function PhotoSettingForm({
         errors.push(`${label}は正の数値を入力してください`);
       }
     }
+    if (tags.length > PHOTO_TAG_MAX_SIZE) {
+      errors.push(`タグは${PHOTO_TAG_MAX_SIZE}件までです`);
+    }
     for (const tag of tags) {
       if (!tag.tagJapaneseName.trim()) {
         errors.push("タグの日本語名は必須です");
@@ -378,6 +414,13 @@ export function PhotoSettingForm({
         errors.push("タグの日本語名にスペースは使用できません");
         break;
       }
+      if (
+        tag.tagJapaneseName.length > TAG_NAME_MAX_LENGTH ||
+        tag.tagEnglishName.length > TAG_NAME_MAX_LENGTH
+      ) {
+        errors.push(`タグ名は${TAG_NAME_MAX_LENGTH}文字以内で入力してください`);
+        break;
+      }
     }
     if (locationMode === "existing" && selectedLocationNo === "") {
       errors.push("ロケーションを選択してください");
@@ -385,9 +428,16 @@ export function PhotoSettingForm({
     if (locationMode === "new") {
       if (!newManagementName.trim()) {
         errors.push("管理名を入力してください");
+      } else if (newManagementName.length > LOCATION_NAME_MAX_LENGTH) {
+        errors.push(`管理名は${LOCATION_NAME_MAX_LENGTH}文字以内で入力してください`);
       }
       if (!newDisplayName.trim()) {
         errors.push("表示名を入力してください");
+      } else if (newDisplayName.length > LOCATION_NAME_MAX_LENGTH) {
+        errors.push(`表示名は${LOCATION_NAME_MAX_LENGTH}文字以内で入力してください`);
+      }
+      if (newAddress.length > LOCATION_ADDRESS_MAX_LENGTH) {
+        errors.push(`住所は${LOCATION_ADDRESS_MAX_LENGTH}文字以内で入力してください`);
       }
       if (!newLatitude || !newLongitude) {
         errors.push("地図をクリックするか、緯度・経度を入力してください");
@@ -703,6 +753,7 @@ export function PhotoSettingForm({
               type="text"
               value={photoJapaneseTitle}
               onChange={(e) => setPhotoJapaneseTitle(e.target.value)}
+              maxLength={PHOTO_TITLE_MAX_LENGTH}
               aria-required="true"
               className="w-full bg-gray-800 text-white border border-gray-600 p-2"
               data-testid="japanese-title-input"
@@ -719,6 +770,7 @@ export function PhotoSettingForm({
               type="text"
               value={photoEnglishTitle}
               onChange={(e) => setPhotoEnglishTitle(e.target.value)}
+              maxLength={PHOTO_TITLE_MAX_LENGTH}
               className="w-full bg-gray-800 text-white border border-gray-600 p-2"
               data-testid="english-title-input"
             />
@@ -885,6 +937,7 @@ export function PhotoSettingForm({
                   type="text"
                   value={newManagementName}
                   onChange={(e) => setNewManagementName(e.target.value)}
+                  maxLength={LOCATION_NAME_MAX_LENGTH}
                   aria-required="true"
                   aria-describedby="new-location-management-name-help"
                   className="w-full bg-gray-800 text-white border border-gray-600 p-2"
@@ -901,6 +954,7 @@ export function PhotoSettingForm({
                   type="text"
                   value={newDisplayName}
                   onChange={(e) => setNewDisplayName(e.target.value)}
+                  maxLength={LOCATION_NAME_MAX_LENGTH}
                   aria-required="true"
                   aria-describedby="new-location-display-name-help"
                   className="w-full bg-gray-800 text-white border border-gray-600 p-2"
@@ -975,6 +1029,7 @@ export function PhotoSettingForm({
                   id="new-location-address"
                   type="text"
                   value={newAddress}
+                  maxLength={LOCATION_ADDRESS_MAX_LENGTH}
                   onChange={(e) => setNewAddress(e.target.value)}
                   className="w-full bg-gray-800 text-white border border-gray-600 p-2"
                   data-testid="new-location-address-input"
@@ -1013,6 +1068,7 @@ export function PhotoSettingForm({
               id="photo-caption"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
+              maxLength={PHOTO_CAPTION_MAX_LENGTH}
               rows={4}
               className="w-full bg-gray-800 text-white border border-gray-600 p-2"
               data-testid="caption-input"
@@ -1034,6 +1090,7 @@ export function PhotoSettingForm({
                   onChange={(e) =>
                     handleTagChange(tag.tagNo, "tagJapaneseName", e.target.value)
                   }
+                  maxLength={TAG_NAME_MAX_LENGTH}
                   placeholder="タグ名（日本語）*"
                   aria-label={`${index + 1}件目のタグ名（日本語）`}
                   className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
@@ -1045,6 +1102,7 @@ export function PhotoSettingForm({
                   onChange={(e) =>
                     handleTagChange(tag.tagNo, "tagEnglishName", e.target.value)
                   }
+                  maxLength={TAG_NAME_MAX_LENGTH}
                   placeholder="タグ名（英語）"
                   aria-label={`${index + 1}件目のタグ名（英語）`}
                   className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"

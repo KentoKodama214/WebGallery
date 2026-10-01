@@ -169,7 +169,8 @@ just db-up
 | `BACKEND_URL` | APIプロキシ（`/api/*`）の転送先バックエンドオリジン | `http://localhost:8080` |
 | `NEXT_PUBLIC_API_BASE_URL` | 別オリジンのバックエンドを直接叩く場合のベースURL | 同一オリジンの `/api` プロキシを使用 |
 | `NEXT_PUBLIC_IMAGE_BASE_URL` | 写真の配信元オリジン（例: `https://cdn.example.com/`）。CSP の `img-src` と `sanitizeImageUrl` の許可オリジンに反映される | **外部ホストからの画像読み込みを一切許可しない**（`img-src 'self' data: blob:`）。本番/検証環境で S3・CloudFront から画像を配信する場合は必ず設定すること。**開発環境（`next dev`）では `http://localhost:9000`（MinIO）が自動許可されるため設定不要** |
-| `TRUSTED_PROXY_HOPS` | `/api/*` プロキシが実クライアント IP を求めるとき、`X-Forwarded-For` の右端から数えて何番目を採用するか（＝このアプリの前段にあり `X-Forwarded-For` を追記する信頼できるプロキシの段数。ALB のみなら `1`、CloudFront + ALB なら `2`）。チェーンがこの数に届かない場合は fail-closed で `X-Forwarded-For` を付与しない | `1` |
+| `APP_ORIGIN` | このアプリを公開しているオリジン（例: `https://gallery.example.com`）。`/api/*` プロキシの CSRF 検証（`Origin` / `Referer` の照合先）に使う。**前段にリバースプロキシを置く構成では必須**（Node が listen しているホストと公開ホストが一致しないため） | リクエストURL由来のホスト（Node が listen しているホスト）を自オリジンとみなす。前段プロキシ配下では公開オリジンと一致せず、状態変更メソッドがすべて `403` になる（起動後最初の状態変更リクエストで警告ログを1回出力） |
+| `TRUSTED_PROXY_HOPS` | `/api/*` プロキシが実クライアント IP を求めるとき、`X-Forwarded-For` の右端から数えて何番目を採用するか（＝このアプリの前段にあり `X-Forwarded-For` を追記する信頼できるプロキシの段数。ALB のみなら `1`、CloudFront + ALB なら `2`）。チェーンがこの数に届かない場合は fail-closed で `X-Forwarded-For` を付与しない。**前段プロキシがある構成では必須** | `0`（前段プロキシを一切信頼せず、`X-Forwarded-For` をバックエンドへ付与しない）。既定を `1` にすると、前段プロキシが無い構成でクライアントが自分で付けた 1 件だけの `X-Forwarded-For` をそのまま実クライアント IP として採用してしまい、IP 単位レート制限の回避・ログイン履歴／GeoIP の偽装が成立するため、安全側に倒している |
 | `PROXY_MAX_CONCURRENCY` | `/api/*` プロキシがバックエンドへ同時中継するリクエスト数の上限。超過分は `503`＋`Retry-After` で即時応答（ロードシェディング） | `100` |
 
 ##### 構成上の注意
@@ -189,6 +190,12 @@ just db-up
 - **CSRF 対策のスコープ**: `/api/*` プロキシの Origin / `Sec-Fetch-Site` 検証は同一オリジンプロキシ経由でのみ機能する。
   `NEXT_PUBLIC_API_BASE_URL` で別オリジンのバックエンドを直接叩く構成にした場合、この検証はバイパスされるため、
   バックエンド側の CSRF 対策（SameSite Cookie 等）に完全に依存する。
+  照合先の自オリジンは `APP_ORIGIN`（未設定時はリクエストURL由来のホスト）から決める。**クライアントが自由に送れる
+  `Host` ヘッダーは使わない**（`Host` と `Origin` を揃えるだけで検証を通過できてしまうため）。
+- **前段プロキシの前提**: `X-Forwarded-For` を採用するのは `TRUSTED_PROXY_HOPS` を明示設定した場合のみ。
+  未設定（既定）ではバックエンドへ `X-Forwarded-For` を付与しないため、バックエンドは TCP 接続元
+  （＝このプロキシ）の IP でレート制限・監査ログを記録する。前段に ALB / CloudFront を置く本番構成では
+  `APP_ORIGIN` と併せて必ず設定すること。
 
 ### 3. フロントエンドのセットアップ
 

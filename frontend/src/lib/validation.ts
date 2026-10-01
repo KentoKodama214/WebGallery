@@ -56,6 +56,66 @@ export const INQUIRY_SUBJECT_MAX_LENGTH = 100;
 export const INQUIRY_BODY_MAX_LENGTH = 2000;
 
 /**
+ * アカウント名の最大文字数（バックエンドの `AccountRegistRequest` / `AccountUpdateRequest` の
+ * `accountName` に付与された `@Size(max = 50)` と一致させること）
+ */
+export const ACCOUNT_NAME_MAX_LENGTH = 50;
+
+/**
+ * メモ（自由記述）の最大文字数（バックエンドの `freeMemo` の `@Size(max = 1000)` と一致させること）
+ */
+export const FREE_MEMO_MAX_LENGTH = 1000;
+
+/**
+ * 写真タイトル（日本語・英語）の最大文字数
+ *
+ * バックエンドの `PhotoSaveRequest` / `PhotoBulkSaveRequest` の
+ * `photoJapaneseTitle` / `photoEnglishTitle` の `@Size(max = 100)` と一致させること。
+ */
+export const PHOTO_TITLE_MAX_LENGTH = 100;
+
+/**
+ * 写真キャプションの最大文字数（バックエンドの `caption` の `@Size(max = 1000)` と一致させること）
+ */
+export const PHOTO_CAPTION_MAX_LENGTH = 1000;
+
+/**
+ * ロケーション名（管理名・表示名）の最大文字数
+ *
+ * バックエンドの `managementName` / `displayName` の `@Size(max = 100)` と一致させること。
+ */
+export const LOCATION_NAME_MAX_LENGTH = 100;
+
+/**
+ * ロケーション住所の最大文字数（バックエンドの `address` の `@Size(max = 255)` と一致させること）
+ */
+export const LOCATION_ADDRESS_MAX_LENGTH = 255;
+
+/**
+ * タグ名（日本語・英語）の最大文字数
+ *
+ * バックエンドの `Consts.TAG_NAME_MAX_LENGTH`（`PhotoTagSaveRequest` の `@Size`）と一致させること。
+ */
+export const TAG_NAME_MAX_LENGTH = 20;
+
+/**
+ * 1枚の写真に登録できるタグの最大件数
+ *
+ * バックエンドの `Consts.PHOTO_TAG_MAX_SIZE`（`photoTagRegistRequestList` の `@Size`）と
+ * 一致させること。
+ */
+export const PHOTO_TAG_MAX_SIZE = 20;
+
+/**
+ * 分析ログ用に送信する遷移元URL（`document.referrer`）の最大文字数
+ *
+ * バックエンドの `PhotoListRequest#referer` / `PhotoDetailRequest#referer` に付与された
+ * `@Size(max = 2048)`（DBの `photo.photo_view_log.referer` / `photo_list_filter_log.referer`
+ * が `varchar(2048)`）と一致させること。
+ */
+export const REFERER_MAX_LENGTH = 2048;
+
+/**
  * `yyyy-MM-dd` 形式の日付文字列が過去日かどうかを判定する
  *
  * `<input type="date">` の値をローカルタイムの暦日として解釈し、

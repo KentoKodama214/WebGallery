@@ -1,6 +1,12 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { PhotoSettingForm } from "../PhotoSettingForm";
+import {
+  PHOTO_CAPTION_MAX_LENGTH,
+  PHOTO_TAG_MAX_SIZE,
+  PHOTO_TITLE_MAX_LENGTH,
+  TAG_NAME_MAX_LENGTH,
+} from "@/lib/validation";
 
 // モック
 const mockGetPhotoDetail = jest.fn();
@@ -382,6 +388,79 @@ describe("PhotoSettingForm", () => {
     fireEvent.click(screen.getByTestId("remove-tag-1"));
     expect(screen.queryByTestId("tag-entry-1")).not.toBeInTheDocument();
     expect(screen.getByTestId("tag-entry-2")).toBeInTheDocument();
+  });
+
+  it("タグは上限件数を超えて追加できないこと", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("add-tag-button")).toBeInTheDocument();
+    });
+
+    // 上限（バックエンドの Consts.PHOTO_TAG_MAX_SIZE）まで追加できる
+    for (let i = 0; i < PHOTO_TAG_MAX_SIZE; i++) {
+      fireEvent.click(screen.getByTestId("add-tag-button"));
+    }
+    expect(screen.getByTestId(`tag-entry-${PHOTO_TAG_MAX_SIZE}`)).toBeInTheDocument();
+
+    // 上限を超える追加はその場で拒否する（最大50MBを送信してから400で弾かれるのを避ける）
+    fireEvent.click(screen.getByTestId("add-tag-button"));
+    expect(
+      screen.queryByTestId(`tag-entry-${PHOTO_TAG_MAX_SIZE + 1}`)
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("validation-errors")).toHaveTextContent(
+      `タグは${PHOTO_TAG_MAX_SIZE}件までです`
+    );
+  });
+
+  it("タイトル・キャプション・タグ名の入力欄にバックエンドと同じ上限が設定されていること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("add-tag-button")).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("japanese-title-input")).toHaveAttribute(
+      "maxlength",
+      String(PHOTO_TITLE_MAX_LENGTH)
+    );
+    expect(screen.getByTestId("english-title-input")).toHaveAttribute(
+      "maxlength",
+      String(PHOTO_TITLE_MAX_LENGTH)
+    );
+    expect(screen.getByTestId("caption-input")).toHaveAttribute(
+      "maxlength",
+      String(PHOTO_CAPTION_MAX_LENGTH)
+    );
+
+    fireEvent.click(screen.getByTestId("add-tag-button"));
+    expect(screen.getByTestId("tag-japanese-1")).toHaveAttribute(
+      "maxlength",
+      String(TAG_NAME_MAX_LENGTH)
+    );
+    expect(screen.getByTestId("tag-english-1")).toHaveAttribute(
+      "maxlength",
+      String(TAG_NAME_MAX_LENGTH)
+    );
+  });
+
+  it("画像以外のファイルを選択するとその場で拒否されること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("image-input")).toBeInTheDocument();
+    });
+
+    // accept="image/*" は選択ダイアログの初期フィルタにすぎず、任意の形式を選べる
+    const textFile = new File(["dummy"], "note.txt", { type: "text/plain" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [textFile] },
+    });
+
+    expect(screen.getByTestId("validation-errors")).toHaveTextContent(
+      "画像ファイルを選択してください"
+    );
+    expect(screen.queryByTestId("image-preview-item-0")).not.toBeInTheDocument();
   });
 
   it("保存成功後に成功モーダルが登録枚数付きで表示されること", async () => {

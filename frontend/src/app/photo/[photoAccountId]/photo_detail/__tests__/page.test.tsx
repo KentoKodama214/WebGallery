@@ -44,12 +44,11 @@ describe("PhotoDetailPage", () => {
     });
   });
 
-  it("accountIdが不正な形式の場合は「写真が見つかりません」を表示すること", async () => {
-    const ui = await PhotoDetailPage(makeProps("a", { photoNo: "5" }));
-    render(ui);
-
-    expect(screen.getByText("写真が見つかりません")).toBeInTheDocument();
-    expect(screen.queryByTestId("photo-detail")).not.toBeInTheDocument();
+  it("accountIdが不正な形式の場合は404として扱う（notFoundを呼ぶ）", async () => {
+    // 存在しないリソースは 200 でメッセージを出すのではなく 404 として扱う
+    // （`not-found.tsx` が描画され、noindex も付与される）
+    await expect(PhotoDetailPage(makeProps("a", { photoNo: "5" }))).rejects.toThrow();
+    expect(mockPhotoDetail).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -61,12 +60,11 @@ describe("PhotoDetailPage", () => {
     ["指数表記", "1e3"],
     ["16進表記", "0x10"],
     ["前後空白あり", " 5 "],
-  ])("photoNoが%s場合は「写真が見つかりません」を表示すること", async (_label, value) => {
-    const ui = await PhotoDetailPage(makeProps("validaccount1", { photoNo: value }));
-    render(ui);
-
-    expect(screen.getByText("写真が見つかりません")).toBeInTheDocument();
-    expect(screen.queryByTestId("photo-detail")).not.toBeInTheDocument();
+  ])("photoNoが%s場合は404として扱う（notFoundを呼ぶ）", async (_label, value) => {
+    await expect(
+      PhotoDetailPage(makeProps("validaccount1", { photoNo: value }))
+    ).rejects.toThrow();
+    expect(mockPhotoDetail).not.toHaveBeenCalled();
   });
 
   it("Header・Footerを表示すること", async () => {

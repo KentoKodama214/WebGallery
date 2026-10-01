@@ -43,12 +43,13 @@ describe("InquiryDetailPage", () => {
     ["ゼロ", "0"],
     ["負数", "-1"],
     ["小数", "1.5"],
-  ])("inquiryNoが%s場合は「お問い合わせが見つかりません」を表示すること", async (_label, value) => {
-    const ui = await InquiryDetailPage(makeProps({ inquiryNo: value }));
-    render(ui);
-
-    expect(screen.getByText("お問い合わせが見つかりません")).toBeInTheDocument();
-    expect(screen.queryByTestId("inquiry-detail")).not.toBeInTheDocument();
+  ])("inquiryNoが%s場合は404として扱う（notFoundを呼ぶ）", async (_label, value) => {
+    // 存在しないリソースは 200 でメッセージを出すのではなく 404 として扱う
+    // （`not-found.tsx` が描画され、noindex も付与される）
+    await expect(
+      InquiryDetailPage(makeProps({ inquiryNo: value }))
+    ).rejects.toThrow();
+    expect(mockInquiryDetail).not.toHaveBeenCalled();
   });
 
   it("Header・Footerを表示すること", async () => {

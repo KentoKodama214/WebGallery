@@ -72,6 +72,52 @@ describe("AdminAccountManagement", () => {
     });
   });
 
+  it("ロック操作後の一覧再取得中もライブリージョンが同じDOMノードとして残り続けること", async () => {
+    // 一覧の再取得で画面全体を差し替えると、常設したライブリージョンごとアンマウントされ、
+    // 再描画時に「リージョンとメッセージが同時に挿入される」状態へ戻ってしまう（= 読み上げられない）。
+    // 2回目の取得を保留させて再取得中の状態を観測し、同一ノードが維持されることを固定する
+    let releaseSecondFetch: (() => void) | null = null;
+    const listResult = { isLast: true, accountList: [sampleAccount] };
+    mockGetAdminAccountList.mockResolvedValueOnce(listResult).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseSecondFetch = () => resolve(listResult);
+        })
+    );
+    mockLockAccount.mockResolvedValue({
+      httpStatus: 200,
+      isSuccess: true,
+      message: "ロックしました",
+    });
+
+    render(<AdminAccountManagement />);
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+
+    const statusRegion = screen.getByRole("status");
+
+    fireEvent.click(screen.getByRole("button", { name: "強制ロック" }));
+    fireEvent.click(screen.getByRole("button", { name: "実行" }));
+
+    // 再取得中（一覧本体だけがローディング表示に差し替わる）
+    await waitFor(() => {
+      expect(releaseSecondFetch).not.toBeNull();
+    });
+    await waitFor(() => {
+      expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    });
+    expect(screen.getByRole("status")).toBe(statusRegion);
+    expect(statusRegion).toHaveTextContent("ロックしました");
+
+    releaseSecondFetch!();
+    await waitFor(() => {
+      expect(screen.getByText("user1")).toBeInTheDocument();
+    });
+    // 再取得完了後も同じノードのまま（挿入ではなく中身の差し替えで通知されている）
+    expect(screen.getByRole("status")).toBe(statusRegion);
+  });
+
   it("管理者権限がない場合はエラーメッセージが表示されること", async () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,

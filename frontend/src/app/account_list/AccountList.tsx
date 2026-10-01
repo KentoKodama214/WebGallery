@@ -87,33 +87,29 @@ export function AccountList() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <p>読み込み中...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
-        <p className="text-red-500">{error}</p>
-        <button
-          type="button"
-          onClick={handleReload}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          再読み込み
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col items-center py-8 gap-4">
+    <div className="flex flex-col items-center py-8 gap-4 px-4">
+      {/* 見出しレベル1はどの表示状態でも1つ存在させる（一覧の見出しは表組み側にあるためsr-onlyで補う） */}
+      <h1 className="sr-only">アカウント一覧</h1>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <p>読み込み中...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
+          <p className="text-red-500">{error}</p>
+          <button
+            type="button"
+            onClick={handleReload}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            再読み込み
+          </button>
+        </div>
+      ) : (
       <div
-        className="w-[650px]"
+        className="w-full max-w-[650px] overflow-x-auto"
         style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)" }}
       >
         <table className="w-full border-collapse">
@@ -156,14 +152,18 @@ export function AccountList() {
           </tbody>
         </table>
       </div>
-
-      {loadMoreError && (
-        <p role="alert" className="text-red-500 text-sm">
-          {loadMoreError}
-        </p>
       )}
 
-      {!isLast && (
+      {/*
+        ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため常設し、
+        中身だけを差し替える（`role="alert"` は assertive）。空のときは `empty:sr-only` で
+        レイアウト上の余白からだけ外す（`display: none` はアクセシビリティツリーから外れる）
+      */}
+      <p role="alert" className="text-red-500 text-sm empty:sr-only">
+        {loadMoreError}
+      </p>
+
+      {!isLoading && !error && !isLast && (
         <button
           onClick={handleLoadMore}
           disabled={isLoadingMore}

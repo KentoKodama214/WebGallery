@@ -872,23 +872,37 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
           </div>
         )}
 
-        {/* 操作失敗の通知（一覧表示は維持したまま表示する） */}
-        {actionError && (
-          <div
-            role="alert"
-            style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", padding: "8px", color: "#ef4444" }}
-          >
-            <span>{actionError}</span>
-            <button
-              type="button"
-              onClick={() => setActionError(null)}
-              aria-label="閉じる"
-              style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", fontSize: "16px", lineHeight: 1, padding: 0 }}
-            >
-              &times;
-            </button>
-          </div>
-        )}
+        {/* 操作失敗の通知（一覧表示は維持したまま表示する）。
+            ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため、
+            リージョン自体は常設して中身だけを差し替える（`role="alert"` は assertive） */}
+        <div
+          role="alert"
+          // 空のときに `display: none` にするとアクセシビリティツリーから外れ、常設の意味が
+          // なくなる。`empty:sr-only` でレイアウトからだけ外す（要素自体はツリーに残る）
+          className="empty:sr-only"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "12px",
+            padding: actionError ? "8px" : 0,
+            color: "#ef4444",
+          }}
+        >
+          {actionError && (
+            <>
+              <span>{actionError}</span>
+              <button
+                type="button"
+                onClick={() => setActionError(null)}
+                aria-label="閉じる"
+                style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", fontSize: "16px", lineHeight: 1, padding: 0 }}
+              >
+                &times;
+              </button>
+            </>
+          )}
+        </div>
 
         {/* 写真が0件 */}
         {!isLoading && !error && photos.length === 0 && (

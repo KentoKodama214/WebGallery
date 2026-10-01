@@ -118,9 +118,11 @@ export function AdminInquiryManagement() {
     return date.toLocaleString("ja-JP");
   };
 
+  // 見出しレベル1はどの表示状態でも1つ存在させる（一覧本体を出せない状態でも欠落させない）
   if (isAuthLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
+        <h1 className="sr-only">お問い合わせ管理</h1>
         <p>読み込み中...</p>
       </div>
     );
@@ -129,29 +131,8 @@ export function AdminInquiryManagement() {
   if (!isAuthenticated || !isAdmin) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
+        <h1 className="sr-only">お問い合わせ管理</h1>
         <p className="text-red-500">管理者権限がありません。</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <p>読み込み中...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
-        <p className="text-red-500">{error}</p>
-        <button
-          onClick={() => fetchInquiries(statusFilter)}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          再読み込み
-        </button>
       </div>
     );
   }
@@ -178,7 +159,26 @@ export function AdminInquiryManagement() {
         </select>
       </div>
 
-      {inquiries.length === 0 ? (
+      {/*
+        絞り込みの変更や再取得のたびに画面全体を差し替えると、操作中の `<select>` ごと
+        アンマウントされてフォーカスが失われる（キーボード・スクリーンリーダー利用時は
+        フォーカスが body へ戻り、再描画後も戻らない）。切り替えるのは一覧本体だけにする
+      */}
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <p>読み込み中...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
+          <p className="text-red-500">{error}</p>
+          <button
+            onClick={() => fetchInquiries(statusFilter)}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            再読み込み
+          </button>
+        </div>
+      ) : inquiries.length === 0 ? (
         <p className="text-gray-500">お問い合わせはありません</p>
       ) : (
         <div
@@ -245,13 +245,16 @@ export function AdminInquiryManagement() {
         </div>
       )}
 
-      {loadMoreError && (
-        <p role="alert" className="text-red-500 text-sm">
-          {loadMoreError}
-        </p>
-      )}
+      {/*
+        ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため常設し、
+        中身だけを差し替える（`role="alert"` は assertive）。空のときは `empty:sr-only` で
+        レイアウト上の余白からだけ外す（`display: none` はアクセシビリティツリーから外れる）
+      */}
+      <p role="alert" className="text-red-500 text-sm empty:sr-only">
+        {loadMoreError}
+      </p>
 
-      {!isLast && (
+      {!isLoading && !error && !isLast && (
         <button
           onClick={handleLoadMore}
           disabled={isLoadingMore}

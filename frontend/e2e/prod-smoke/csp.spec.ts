@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { collectCspViolations } from "../fixtures/csp";
+import { collectCspViolations, cspDirectiveSources } from "../fixtures/csp";
 
 /**
  * 本番ビルドでの CSP スモークテスト。
  *
  * - 公開ページ（ログイン・登録）で CSP 違反がコンソールに出ないこと
+ * - 本番のみ付与されるディレクティブ（`style-src-elem`）が実際にヘッダーへ入っていること
  * - Tailwind の CSS が実際に適用されること（`style-src-elem` が Next.js の
  *   スタイルシートを誤ってブロックしていないことの確認）
  *
@@ -26,6 +27,25 @@ for (const path of PUBLIC_PATHS) {
     expect(violations, `CSP 違反:\n${violations.join("\n")}`).toEqual([]);
   });
 }
+
+test("本番ビルドでは style-src-elem が nonce と自オリジンに限定されていること", async ({
+  page,
+}) => {
+  // `style-src-elem` は `src/proxy.ts` が本番（NODE_ENV !== "development"）でのみ付与する。
+  // 通常のE2Eは `next dev` 起動のため、このディレクティブの有無を検証できるのはここだけ。
+  // 本番分岐が壊れて付与されなくなっても、CSP違反が出ないため上のテストでは気づけない
+  const response = await page.goto("/login", { waitUntil: "load" });
+  const csp = response?.headers()["content-security-policy"] ?? "";
+
+  const styleSrcElem = cspDirectiveSources(csp, "style-src-elem");
+  expect(styleSrcElem).toContain("'self'");
+  expect(styleSrcElem.some((source) => source.startsWith("'nonce-"))).toBe(true);
+  // <style>/<link> 要素側に 'unsafe-inline' を許してしまうと注入された <style> を防げない
+  expect(styleSrcElem).not.toContain("'unsafe-inline'");
+
+  // style 属性（React の style={{}}）向けのフォールバックは維持されていること
+  expect(cspDirectiveSources(csp, "style-src")).toContain("'unsafe-inline'");
+});
 
 test("ログインページで Tailwind のスタイルが適用されること", async ({ page }) => {
   await page.goto("/login", { waitUntil: "load" });

@@ -17,6 +17,27 @@
 | 11 | お問い合わせ詳細 | `inquiry_detail` | `/inquiry/detail` | 認証必須（本人のみ） |
 | 12 | 管理者お問い合わせ管理 | `admin_inquiry_management` | `/admin/inquiry_management` | 認証必須（管理者のみ） |
 | 13 | 管理者お問い合わせ詳細 | `admin_inquiry_detail` | `/admin/inquiry_management/detail` | 認証必須（管理者のみ） |
+| 14 | ページが見つかりません（404） | `not_found` | 未マッチのURL全般 | 公開 |
+
+### 404 の扱い
+
+URL の動的セグメント・クエリパラメータが不正な場合（アカウントID形式でない `accountId` /
+`photoAccountId`、正の整数でない `photoNo` / `inquiryNo` / `inquiryId`、写真編集用クエリの片方のみ指定等）は、
+ページ内にメッセージを表示するのではなく `notFound()` を呼び**HTTP 404 を返す**（`<meta name="robots"
+content="noindex">` も付与される）。表示内容はルートごとの `not-found.tsx` で、従来と同じ文言を出す。
+
+| 対象ルート | `not-found.tsx` の文言 |
+|---|---|
+| `/photo/{photoAccountId}/photo_list` | ギャラリーが見つかりません |
+| `/photo/{photoAccountId}/photo_detail` | 写真が見つかりません |
+| `/photo/{photoAccountId}/photo_setting` | 写真が見つかりません |
+| `/inquiry/detail` | お問い合わせが見つかりません |
+| `/admin/inquiry_management/detail` | お問い合わせが見つかりません |
+| 上記以外（`/{accountId}/account_setting` 等）・未マッチのURL | ページが見つかりません（ルートの `app/not-found.tsx`） |
+
+認証が必要なページで未ログインの場合は 404 ではなく `<AuthGuard>` が `/login` へ退避させる
+（管理者用の3画面も同様）。パラメータ検証は `<AuthGuard>` より手前で行うため、
+不正なURLは未ログインでも 404 になる。
 
 ---
 
