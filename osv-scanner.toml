@@ -1,0 +1,33 @@
+# OSV-Scanner設定ファイル（.github/workflows/test.ymlの「依存関係の脆弱性スキャン」ジョブから参照）
+#
+# 修正版が未リリースで、かつ依存チェーン上こちらから対処できない脆弱性のみをここに記載する。
+# 修正版が存在する脆弱性は必ずpnpm-lock.yaml側を更新して解消し、ここには追加しない。
+#
+# ignoreUntilを必ず設定し、期限切れとともにスキャンが再度失敗することで棚卸しを強制する。
+# 棚卸し時は各脆弱性の修正版リリース状況を確認し、リリース済みなら依存を更新して該当エントリを削除する。
+
+# braces（ビルド時のみ利用するdevDependency）
+#   深くネストしたブレース展開パターンでAST再帰走査がスタックを食い潰し、
+#   uncaught RangeErrorでNode.jsプロセスが落ちるDoS（CWE-674）。
+#   依存チェーン：eslint-config-next → @next/eslint-plugin-next → fast-glob → micromatch → braces
+#   bracesの最新リリースは3.0.3で、アドバイザリのlast_affectedも3.0.3のため修正版が存在しない。
+#   micromatch 4.0.8（最新）がbraces ^3.0.3を要求しており、fast-glob 3.3.3（最新）も
+#   micromatch ^4.0.8を要求するため、上流を更新しても回避できない。
+#   ESLintに渡すglobパターンはリポジトリ内の設定由来で外部入力を受けないため、実際の影響はない。
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2027-01-31
+reason = "braces 3.0.3が最新リリースで修正版が未提供。ESLint実行時のみ利用するdevDependencyであり、globパターンは自リポジトリの設定由来で外部入力を受けないため影響なし。"
+
+# sprintf-js（テスト実行時のみ利用するdevDependency）
+#   精度指定子を検証せずtoFixed/toExponential/toPrecisionへ渡すため、
+#   ECMAScriptの上限を超える精度値でuncaught RangeErrorを発生させられるDoS。
+#   依存チェーン：jest / ts-jest → babel-plugin-istanbul → @istanbuljs/load-nyc-config
+#                → js-yaml@3 → argparse@1.0.10 → sprintf-js@1.0.3
+#   sprintf-jsの最新リリースは1.1.3で、アドバイザリのlast_affectedも1.1.3のため修正版が存在しない。
+#   さらにargparse@1.0.10がsprintf-js ~1.0.2に固定しており、1.1系へ上げることもできない。
+#   フォーマット文字列はカバレッジ計測ツール内部で生成され外部入力を受けないため、実際の影響はない。
+[[IgnoredVulns]]
+id = "GHSA-hp3w-g68c-fv3c"
+ignoreUntil = 2027-01-31
+reason = "sprintf-js 1.1.3が最新リリースで修正版が未提供、かつargparse@1.0.10が~1.0.2に固定。Jestのカバレッジ計測時のみ利用するdevDependencyで、フォーマット文字列は外部入力を受けないため影響なし。"
