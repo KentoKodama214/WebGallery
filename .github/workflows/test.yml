@@ -124,10 +124,14 @@ jobs:
             https://github.com/google/osv-scanner/releases/download/v2.6.0/osv-scanner_linux_amd64
           chmod +x osv-scanner
 
+      # --configで渡すosv-scanner.tomlには、修正版が未リリースで依存チェーン上こちらから
+      # 対処できない脆弱性の除外設定（IgnoredVulns）を記載している。除外には期限を設定しており、
+      # 期限切れとともにスキャンが再度失敗して棚卸しが促される。
       - name: 依存関係の脆弱性スキャン（backend SBOM・frontend pnpm-lock.yaml）
         run: |
           set +e
           ./osv-scanner scan source \
+            --config=osv-scanner.toml \
             -L backend/build/reports/cyclonedx/application.cdx.json \
             -L frontend/pnpm-lock.yaml \
             --format=markdown --output-file=osv-results.md
