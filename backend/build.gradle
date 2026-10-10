@@ -6,8 +6,8 @@ plugins {
 	id 'com.diffplug.spotless' version '8.10.3'
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
-	id 'org.dddjava.jig-gradle-plugin' version '2026.8.1'
-	id 'org.cyclonedx.bom' version '3.4.1'
+	id 'org.dddjava.jig-gradle-plugin' version '2026.9.1'
+	id 'org.cyclonedx.bom' version '3.5.0'
 }
 
 checkstyle {
@@ -74,7 +74,7 @@ configurations {
 dependencyManagement {
 	imports {
 		mavenBom 'org.springframework.modulith:spring-modulith-bom:2.1.1'
-		mavenBom 'software.amazon.awssdk:bom:2.55.6'
+		mavenBom 'software.amazon.awssdk:bom:2.55.12'
 	}
 }
 
@@ -94,7 +94,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.1.0'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.modelmapper:modelmapper:3.2.6'
+	implementation 'org.modelmapper:modelmapper:3.2.7'
 	implementation 'software.amazon.awssdk:s3'
 	implementation 'software.amazon.awssdk:url-connection-client'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.1.1'
