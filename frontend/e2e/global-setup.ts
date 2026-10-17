@@ -119,6 +119,20 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
       `DELETE FROM photo.photo_tag_mst
         WHERE (account_no, photo_no) IN (SELECT account_no, photo_no FROM target_photos)`
     );
+    // ポートフォリオ写真は写真マスタ・ポートフォリオを、ポートフォリオタグはポートフォリオを参照するため、
+    // 写真マスタ・ポートフォリオより先に削除する
+    await client.query(
+      `DELETE FROM photo.portfolio_photo
+        WHERE account_no IN (SELECT account_no FROM target_accounts)`
+    );
+    await client.query(
+      `DELETE FROM photo.portfolio_tag_mst
+        WHERE account_no IN (SELECT account_no FROM target_accounts)`
+    );
+    await client.query(
+      `DELETE FROM photo.portfolio_mst
+        WHERE account_no IN (SELECT account_no FROM target_accounts)`
+    );
     await client.query(
       `DELETE FROM photo.photo_mst
         WHERE account_no IN (SELECT account_no FROM target_accounts)`
