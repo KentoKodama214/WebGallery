@@ -18,10 +18,14 @@ import com.web.gallery.application.model.photo.PhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoSaveResultModel;
 import com.web.gallery.application.model.photo.PhotoTagModel;
 import com.web.gallery.application.model.photo.PhotoTagModelList;
+import com.web.gallery.application.model.photo.PortfolioModel;
+import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.service.impl.photo.PhotoServiceImpl;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.enumeration.PortfolioStatusEnum;
+import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import com.web.gallery.domain.exception.FileDuplicateException;
 import com.web.gallery.domain.exception.PhotoNotFoundException;
@@ -46,9 +50,12 @@ import com.web.gallery.domain.model.photo.IsLocationPublic;
 import com.web.gallery.domain.model.photo.Iso;
 import com.web.gallery.domain.model.photo.LocationNo;
 import com.web.gallery.domain.model.photo.PhotoAt;
+import com.web.gallery.domain.model.photo.PhotoCount;
 import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.PortfolioNo;
+import com.web.gallery.domain.model.photo.PortfolioTheme;
 import com.web.gallery.domain.model.photo.ShutterSpeed;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
@@ -1049,7 +1056,9 @@ public class PhotoControllerTest {
 
       ArgumentCaptor<PhotoDeleteModelList> photoDeleteModelCaptor =
           ArgumentCaptor.forClass(PhotoDeleteModelList.class);
-      doNothing().when(photoServiceImpl).deletePhotos(photoDeleteModelCaptor.capture());
+      doReturn(PortfolioModelList.empty())
+          .when(photoServiceImpl)
+          .deletePhotos(photoDeleteModelCaptor.capture());
 
       mockMvc
           .perform(
@@ -1059,7 +1068,8 @@ public class PhotoControllerTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.httpStatus").value(200))
           .andExpect(jsonPath("$.isSuccess").value(true))
-          .andExpect(jsonPath("$.message").value("写真削除が完了しました。"));
+          .andExpect(jsonPath("$.message").value("写真削除が完了しました。"))
+          .andExpect(jsonPath("$.revertedPortfolioList").isEmpty());
 
       PhotoDeleteModelList photoDeleteModelList = photoDeleteModelCaptor.getValue();
       assertEquals(1, photoDeleteModelList.size());
@@ -1070,6 +1080,34 @@ public class PhotoControllerTest {
 
     @Test
     @Order(2)
+    @DisplayName("正常系：写真の削除に伴い公開中のポートフォリオを下書きに戻した場合、確認して公開し直すよう促すメッセージと対象を返すこと")
+    void deletePhoto_with_reverted_portfolio() throws Exception {
+      doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
+      doReturn(1L).when(sessionHelper).getAccountNo();
+      doReturn(
+              PortfolioModelList.of(
+                  List.of(revertedPortfolio(1L, "日本の自然"), revertedPortfolio(3L, "光と影"))))
+          .when(photoServiceImpl)
+          .deletePhotos(any(PhotoDeleteModelList.class));
+
+      mockMvc
+          .perform(
+              delete("/api/v1/accounts/aaaaaaaa/photos")
+                  .contentType("application/json")
+                  .content(readJsonFile("delete_photo.json")))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isSuccess").value(true))
+          .andExpect(
+              jsonPath("$.message")
+                  .value("写真削除が完了しました。この写真を使用していたポートフォリオ（日本の自然、光と影）を下書きに戻しました。内容を確認して公開してください。"))
+          .andExpect(jsonPath("$.revertedPortfolioList[0].portfolioNo").value(1))
+          .andExpect(jsonPath("$.revertedPortfolioList[0].theme").value("日本の自然"))
+          .andExpect(jsonPath("$.revertedPortfolioList[1].portfolioNo").value(3))
+          .andExpect(jsonPath("$.revertedPortfolioList[1].theme").value("光と影"));
+    }
+
+    @Test
+    @Order(3)
     @DisplayName("異常系：不正アクセス。ForbiddenAccountExceptionをthrowする")
     void deletePhoto_ForbiddenAccountException() throws Exception {
       doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
@@ -1085,7 +1123,7 @@ public class PhotoControllerTest {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     @DisplayName("異常系：パラメータ不正。BadRequestExceptionをthrowする")
     void deletePhoto_BadRequestException() throws Exception {
       doReturn("aaaaaaaa").when(sessionHelper).getAccountId();
@@ -1101,7 +1139,7 @@ public class PhotoControllerTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     @SuppressWarnings("unchecked")
     @DisplayName("異常系：対象写真が存在しない場合、404を返す")
     void deletePhoto_PhotoNotFoundException() throws Exception {
@@ -1309,5 +1347,23 @@ public class PhotoControllerTest {
 
       mockMvc.perform(get("/api/v1/accounts/aaaaaaaa/photos/999")).andExpect(status().isNotFound());
     }
+  }
+
+  /**
+   * 写真の削除に伴い下書きに戻したポートフォリオを生成する
+   *
+   * @param portfolioNo ポートフォリオ番号
+   * @param theme テーマ
+   * @return {@link PortfolioModel}
+   */
+  private PortfolioModel revertedPortfolio(Long portfolioNo, String theme) {
+    return PortfolioModel.builder()
+        .accountNo(new AccountNo(1L))
+        .portfolioNo(new PortfolioNo(portfolioNo))
+        .theme(new PortfolioTheme(theme))
+        .templateKbn(PortfolioTemplateEnum.FEATURE)
+        .statusKbn(PortfolioStatusEnum.DRAFT)
+        .photoCount(new PhotoCount(2))
+        .build();
   }
 }

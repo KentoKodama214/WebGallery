@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioTagMstMapper">
+	<resultMap id="PortfolioTagMstMap" type="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioTagMst">
+		<result property="id" column="id"/>
+		<result property="accountNo" column="account_no"/>
+		<result property="portfolioNo" column="portfolio_no"/>
+		<result property="tagNo" column="tag_no"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="tagJapaneseName" column="tag_japanese_name"/>
+		<result property="tagEnglishName" column="tag_english_name"/>
+	</resultMap>
+
+	<insert id="insertBulk" parameterType="java.util.List">
+		INSERT INTO
+			photo.portfolio_tag_mst (
+				account_no,
+				portfolio_no,
+				tag_no,
+				created_by,
+				created_at,
+				tag_japanese_name,
+				tag_english_name
+			)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(
+				#{item.accountNo},
+				#{item.portfolioNo},
+				#{item.tagNo},
+				#{item.createdBy},
+				NOW(),
+				#{item.tagJapaneseName},
+				#{item.tagEnglishName}
+			)
+		</foreach>
+	</insert>
+
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioTagMstCondition">
+		DELETE FROM
+			photo.portfolio_tag_mst
+		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード -->
+			<if test="accountNo == null and portfolioNo == null"> AND 1 = 0</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="portfolioNo != null"> AND portfolio_no = #{portfolioNo}</if>
+		</where>
+	</delete>
+
+	<select id="select" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioTagMstCondition" resultMap="PortfolioTagMstMap">
+		SELECT
+			id,
+			account_no,
+			portfolio_no,
+			tag_no,
+			created_by,
+			created_at,
+			tag_japanese_name,
+			tag_english_name
+		FROM
+			photo.portfolio_tag_mst
+		<where>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="portfolioNo != null"> AND portfolio_no = #{portfolioNo}</if>
+		</where>
+		ORDER BY
+			portfolio_no,
+			tag_no
+	</select>
+</mapper>

@@ -1,0 +1,74 @@
+package com.web.gallery.infrastructure.persistence.mapper.photo;
+
+import com.web.gallery.infrastructure.persistence.dto.photo.PortfolioDto;
+import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMst;
+import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstUpdateTarget;
+import java.util.List;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+/** ポートフォリオマスタテーブルのMapperクラス */
+@Mapper
+public interface PortfolioMstMapper {
+  /**
+   * ポートフォリオマスタを登録する
+   *
+   * @param portfolioMst {@link PortfolioMst}
+   * @return 登録件数
+   */
+  public Integer insert(PortfolioMst portfolioMst);
+
+  /**
+   * ポートフォリオマスタを更新する
+   *
+   * @param condition 更新対象の抽出条件
+   * @param target 更新内容
+   * @return 更新件数
+   */
+  public Integer update(
+      @Param("condition") PortfolioMstCondition condition,
+      @Param("target") PortfolioMstUpdateTarget target);
+
+  /**
+   * 条件に該当するポートフォリオマスタを物理削除する
+   *
+   * @param condition 削除対象の抽出条件
+   * @return 削除件数
+   */
+  public Integer delete(PortfolioMstCondition condition);
+
+  /**
+   * アカウントが登録済みの最大のポートフォリオ番号を取得する（論理削除済みを含む）
+   *
+   * @param accountNo アカウント番号
+   * @return 最大のポートフォリオ番号
+   */
+  public Long getMaxPortfolioNo(Long accountNo);
+
+  /**
+   * 条件に該当するポートフォリオ一覧を、写真の枚数とあわせて取得する
+   *
+   * @param condition {@link PortfolioMstCondition}
+   * @return {@link PortfolioDto}のリスト
+   */
+  public List<PortfolioDto> selectList(PortfolioMstCondition condition);
+
+  /**
+   * 条件に該当するポートフォリオマスタを取得する
+   *
+   * @param condition {@link PortfolioMstCondition}
+   * @return {@link PortfolioMst}のリスト
+   */
+  public List<PortfolioMst> select(PortfolioMstCondition condition);
+
+  /**
+   * 指定した写真を使用している、未削除のポートフォリオマスタを取得する
+   *
+   * @param accountNo アカウント番号
+   * @param photoNo 写真番号
+   * @return {@link PortfolioMst}のリスト
+   */
+  public List<PortfolioMst> selectByPhoto(
+      @Param("accountNo") Long accountNo, @Param("photoNo") Long photoNo);
+}

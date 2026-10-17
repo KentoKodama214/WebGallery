@@ -1,0 +1,7 @@
+{
+  "theme": "日本の自然",
+  "templateKbn": "feature",
+  "photoList": [
+    { "photoNo": 1, "photoSettings": { "subTheme": "テーマ未入力" } }
+  ]
+}

@@ -70,4 +70,22 @@ public final class Consts {
 
   /** お問い合わせ本文・返信本文の最大文字数（アノテーション属性で参照するためint型で定義する） */
   public static final int INQUIRY_BODY_MAX_LENGTH = 2000;
+
+  /** ポートフォリオのテーマ・写真ごとのテーマ・サブテーマの最大文字数（アノテーション属性で参照するためint型で定義する） */
+  public static final int PORTFOLIO_THEME_MAX_LENGTH = 100;
+
+  /** ポートフォリオの説明文・写真ごとの説明の最大文字数（アノテーション属性で参照するためint型で定義する） */
+  public static final int PORTFOLIO_DESCRIPTION_MAX_LENGTH = 2000;
+
+  /** グリッド型テンプレートの写真ごとのキャプションの最大文字数 */
+  public static final int PORTFOLIO_CAPTION_MAX_LENGTH = 100;
+
+  /** 1つのポートフォリオに設定できる写真枚数の上限（アノテーション属性で参照するためint型で定義する） */
+  public static final int PORTFOLIO_PHOTO_MAX_SIZE = 100;
+
+  /** 1つのポートフォリオに登録できるタグ数の上限（アノテーション属性で参照するためint型で定義する） */
+  public static final int PORTFOLIO_TAG_MAX_SIZE = 20;
+
+  /** ポートフォリオのテンプレート設定・写真設定のJSON構造の現行バージョン */
+  public static final int PORTFOLIO_SETTINGS_VERSION = 1;
 }
