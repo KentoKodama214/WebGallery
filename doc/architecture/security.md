@@ -437,3 +437,19 @@ nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ�
 - フロントの `sanitizeImageUrl`（`src/lib/url.ts`）と CSP `img-src` は、本番では `https:` かつ
   `NEXT_PUBLIC_IMAGE_BASE_URL` のオリジンに一致する URL のみ許可する（フェイルクローズ）。
   **開発環境（`next dev`）に限り** `http://localhost:9000`（MinIO）を追加で許可し、本番ビルドでは無効。
+
+## portfolio-api（公開ページ向けのポートフォリオ表示API）の防御
+
+`portfolio-api/`（Go・GraphQL）は公開中のポートフォリオを返す読み取り専用の API で、Next.js のサーバーからだけ
+呼び出す前提とし、ブラウザには公開しない（CORS は設定しない）。それでも不特定のクエリを受け付ける GraphQL の性質上、
+以下で攻撃面を抑える。詳細は [portfolio-api](./portfolio-api.md) を参照。
+
+- **公開範囲**：公開中かつ未削除のポートフォリオ・未削除の写真だけを返す。下書き・存在しないポートフォリオ・
+  存在しないアカウントは区別せず `null`（一覧は空）を返し、アカウントの存在有無を推測させない
+- **DB 権限の最小化**：読み取り専用ロール `portfolio_reader`（`db/photo/portfolio_reader.sql`）で接続する。
+  `common.account` は `account_no`・`account_id`、`photo.photo_mst` は表示に必要な列だけに SELECT を許可し、
+  パスワードハッシュ・撮影場所（位置情報）等の列は読めない。書き込みの権限は持たない
+- **クエリの複雑度・深さの上限**（既定 300・8）、本番でのイントロスペクションの無効化、リクエストボディの上限（64KB）
+- **内部エラーの抑止**：リゾルバの内部エラー（DB・ストレージの障害等）はクライアントへ `internal server error` だけを返し、
+  詳細はログにだけ残す
+- **画像**：Java のバックエンドと同じバケット・同じ設定（`APP_S3_*`）で署名付き URL を発行する（上記「画像ストレージと署名付きURL」と同じ前提）

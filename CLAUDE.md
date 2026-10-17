@@ -45,7 +45,16 @@ just e2e
 
 # 本番ビルドに対するCSPスモークテスト（next build + next start）
 just e2e-prod
+
+# portfolio-api（Go。公開ページ向けのポートフォリオ表示API）の単体テスト・結合テスト・静的解析・コード生成・起動
+just go-test
+just go-integrationTest
+just go-lint
+just go-generate
+just go-run
 ```
+
+`portfolio-api/`（Go・GraphQL）は公開ページ向けの読み取り専用APIで、DBへは読み取り専用ロール`portfolio_reader`で接続する。DDLの所有者は`db/`とJava側のままとし、portfolio-apiは書き込みを行わない。詳細は[portfolio-api](doc/architecture/portfolio-api.md)を参照。
 
 ## アーキテクチャ
 

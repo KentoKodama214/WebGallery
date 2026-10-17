@@ -9,6 +9,7 @@ WebGalleryは、Spring Bootベースのオニオンアーキテクチャ（domai
 - [オニオンアーキテクチャ](./onion-architecture.md)
 - [セキュリティ](./security.md)
 - [データソース構成（プライマリ／リードレプリカ）](./datasource.md)
+- [portfolio-api（公開ページ向けのポートフォリオ表示API。Go・GraphQL）](./portfolio-api.md)
 - [モジュール構成・依存関係（Spring Modulith）](../modulith/components.png)
 
 ## Spring Modulithドキュメントの図を生成する手順
