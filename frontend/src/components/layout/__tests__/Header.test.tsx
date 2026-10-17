@@ -98,7 +98,7 @@ describe("Header", () => {
       });
     });
 
-    it("My Gallery・Photographers・Account Setting・Inquiry・Sign Outが表示されること", () => {
+    it("My Gallery・Photographers・Account Setting・Portfolio・Inquiry・Sign Outが表示されること", () => {
       render(<Header />);
 
       expect(screen.getByRole("link", { name: "My Gallery" })).toHaveAttribute(
@@ -112,6 +112,10 @@ describe("Header", () => {
       expect(
         screen.getByRole("link", { name: "Account Setting" })
       ).toHaveAttribute("href", "/testuser1/account_setting");
+      expect(screen.getByRole("link", { name: "Portfolio" })).toHaveAttribute(
+        "href",
+        "/testuser1/portfolio_setting"
+      );
       expect(screen.getByRole("link", { name: "Inquiry" })).toHaveAttribute(
         "href",
         "/inquiry/list"

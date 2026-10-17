@@ -168,6 +168,15 @@ export function Header() {
               </li>
               <li className={styles.menuItem}>
                 <Link
+                  href={`/${user.accountId}/portfolio_setting`}
+                  className={styles.menuLink}
+                  onClick={closeMenu}
+                >
+                  Portfolio
+                </Link>
+              </li>
+              <li className={styles.menuItem}>
+                <Link
                   href="/inquiry/list"
                   className={styles.menuLink}
                   onClick={closeMenu}

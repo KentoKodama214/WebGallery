@@ -17,12 +17,14 @@
 | 11 | お問い合わせ詳細 | `inquiry_detail` | `/inquiry/detail` | 認証必須（本人のみ） |
 | 12 | 管理者お問い合わせ管理 | `admin_inquiry_management` | `/admin/inquiry_management` | 認証必須（管理者のみ） |
 | 13 | 管理者お問い合わせ詳細 | `admin_inquiry_detail` | `/admin/inquiry_management/detail` | 認証必須（管理者のみ） |
-| 14 | ページが見つかりません（404） | `not_found` | 未マッチのURL全般 | 公開 |
+| 14 | ポートフォリオ設定（一覧） | `portfolio_setting` | `/{accountId}/portfolio_setting` | 認証必須（本人のみ） |
+| 15 | ポートフォリオ作成・編集 | `portfolio_edit` | `/{accountId}/portfolio_setting/edit`（編集時は `?portfolioNo=`） | 認証必須（本人のみ） |
+| 16 | ページが見つかりません（404） | `not_found` | 未マッチのURL全般 | 公開 |
 
 ### 404 の扱い
 
 URL の動的セグメント・クエリパラメータが不正な場合（アカウントID形式でない `accountId` /
-`photoAccountId`、正の整数でない `photoNo` / `inquiryNo` / `inquiryId`、写真編集用クエリの片方のみ指定等）は、
+`photoAccountId`、正の整数でない `photoNo` / `inquiryNo` / `inquiryId` / `portfolioNo`（指定した場合のみ）、写真編集用クエリの片方のみ指定等）は、
 ページ内にメッセージを表示するのではなく `notFound()` を呼び**HTTP 404 を返す**（`<meta name="robots"
 content="noindex">` も付与される）。表示内容はルートごとの `not-found.tsx` で、従来と同じ文言を出す。
 
@@ -63,6 +65,8 @@ graph TD
         INQUIRY["お問い合わせ投稿<br/>/inquiry"]
         INQUIRY_LIST["お問い合わせ一覧<br/>/inquiry/list"]
         INQUIRY_DETAIL["お問い合わせ詳細<br/>/inquiry/detail"]
+        PORTFOLIO_SETTING["ポートフォリオ設定<br/>/{id}/portfolio_setting"]
+        PORTFOLIO_EDIT["ポートフォリオ作成・編集<br/>/{id}/portfolio_setting/edit"]
     end
 
     subgraph 管理者画面
@@ -77,6 +81,9 @@ graph TD
     PHOTO_DETAIL -->|← back| PHOTO_LIST
     PHOTO_DETAIL -->|編集アイコン| PHOTO_SETTING
     PHOTO_DETAIL -->|削除成功| PHOTO_LIST
+    PHOTO_DETAIL -->|削除成功・公開中のポートフォリオが下書きに戻った<br/>（通知ダイアログのリンク）| PORTFOLIO_EDIT
+    PORTFOLIO_SETTING -->|新規作成・テーマ選択| PORTFOLIO_EDIT
+    PORTFOLIO_EDIT -->|一覧へ戻る・削除成功| PORTFOLIO_SETTING
     PHOTO_SETTING -->|登録/更新成功| PHOTO_LIST
     PHOTO_SETTING -->|← back| PHOTO_LIST
     ACCOUNT_SETTING -->|← back| PHOTO_LIST
@@ -111,6 +118,7 @@ graph LR
     MENU -->|"Inquiry<br/>（認証済み時）"| INQUIRY_LIST["お問い合わせ一覧<br/>/inquiry/list"]
     MENU -->|"My Gallery<br/>（認証済み時）"| PHOTO_LIST["写真一覧<br/>/photo/{id}/photo_list"]
     MENU -->|"Account Setting<br/>（認証済み時）"| ACCOUNT_SETTING["アカウント設定<br/>/{id}/account_setting"]
+    MENU -->|"Portfolio<br/>（認証済み時）"| PORTFOLIO_SETTING["ポートフォリオ設定<br/>/{id}/portfolio_setting"]
     MENU -->|"Sign Out<br/>（認証済み時）"| LOGOUT["ログアウト → /login"]
 ```
 
@@ -184,9 +192,40 @@ sequenceDiagram
     Note over User, API: 写真削除フロー
     User->>Detail: 削除アイコンをクリック
     Detail->>API: DELETE /api/v1/accounts/{id}/photos
-    API-->>Detail: 削除成功
-    Detail->>Detail: モーダル表示
-    Detail->>List: /photo/{id}/photo_list に遷移
+    API-->>Detail: 削除成功（写真を使用していたポートフォリオから除外し、公開中のものは下書きに戻す）
+    alt 下書きに戻したポートフォリオがない
+        Detail->>List: /photo/{id}/photo_list に遷移
+    else 下書きに戻したポートフォリオがある
+        Detail->>Detail: 「確認して公開してください」の通知ダイアログと、各ポートフォリオの編集画面へのリンクを表示
+        User->>Detail: 「写真一覧へ」を押す、またはリンクで編集画面へ移動
+        Detail->>List: /photo/{id}/photo_list に遷移
+    end
+```
+
+---
+
+## ポートフォリオ設定フロー詳細
+
+```mermaid
+sequenceDiagram
+    actor User as ユーザー
+    participant List as ポートフォリオ設定（一覧）
+    participant Edit as ポートフォリオ作成・編集
+    participant API as REST API
+
+    User->>List: /{id}/portfolio_setting にアクセス
+    List->>API: GET /api/v1/accounts/{id}/portfolios
+    API-->>List: 一覧（下書きを含む）
+    User->>List: 新規作成
+    List->>Edit: /{id}/portfolio_setting/edit に遷移
+    User->>Edit: テーマ・説明文・テンプレート・タグ・写真（自分の写真から選択・並べ替え）・テンプレート固有の設定を入力
+    User->>Edit: 下書きとして登録
+    Edit->>API: POST /api/v1/accounts/{id}/portfolios
+    API-->>Edit: 登録成功（下書き）
+    Edit->>Edit: ?portfolioNo= 付きのURLへ切り替え
+    User->>Edit: 公開する（未保存の変更がある間は押せない）
+    Edit->>API: PUT /api/v1/accounts/{id}/portfolios/{no}/status
+    API-->>Edit: 公開成功（公開に必要な設定が不足している場合はエラーを表示）
 ```
 
 ---
