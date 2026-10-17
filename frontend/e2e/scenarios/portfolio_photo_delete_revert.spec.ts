@@ -1,0 +1,93 @@
+import path from "path";
+import { test, expect } from "@playwright/test";
+import { generateTestAccountId, registerAndLogin } from "../fixtures/auth";
+import { fillStable } from "../fixtures/form";
+
+const PHOTO_1 = path.join(__dirname, "../fixtures/images/e2e-photo-1.png");
+const PHOTO_2 = path.join(__dirname, "../fixtures/images/e2e-photo-2.png");
+
+test.describe("ポートフォリオの公開と、写真削除による下書きへの差し戻し", () => {
+  test("公開中のポートフォリオで使っている写真を削除すると、下書きに戻った旨が表示され、確認して公開し直せること", async ({
+    page,
+  }, testInfo) => {
+    // 写真の枚数・ポートフォリオの状態を前提にするため、共有の workerPage ではなく使い捨てのアカウントを使う
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+    const theme = "E2E日本の自然";
+
+    await test.step("アカウント登録・ログインし、写真を2枚アップロードする", async () => {
+      await registerAndLogin(page, accountId, "E2E Portfolio User");
+      await page.goto(`/photo/${accountId}/photo_setting`);
+      await expect(page.getByTestId("image-input")).toBeAttached();
+      await page.getByTestId("image-input").setInputFiles([PHOTO_1, PHOTO_2]);
+      await expect(page.getByTestId("image-preview-item-1")).toBeVisible();
+      await page.getByTestId("japanese-title-input").fill("E2Eポートフォリオ写真");
+      await page.getByTestId("submit-button").click();
+      await expect(page.getByTestId("success-modal")).toBeVisible({ timeout: 10000 });
+      await page.getByRole("button", { name: "閉じる" }).click();
+      await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list$`), {
+        timeout: 10000,
+      });
+    });
+
+    await test.step("2枚の写真でフィーチャー型のポートフォリオを作成して公開する", async () => {
+      await page.goto(`/${accountId}/portfolio_setting/edit`);
+      await fillStable(page.locator("#portfolio-theme"), theme);
+
+      await page.getByRole("button", { name: "写真を選択" }).click();
+      const dialog = page.getByTestId("photo-picker-dialog");
+      const photoButtons = dialog.getByRole("button", { name: /^写真\d+/ });
+      await expect(photoButtons).toHaveCount(2, { timeout: 10000 });
+      await photoButtons.nth(0).click();
+      await photoButtons.nth(1).click();
+      await dialog.getByRole("button", { name: "完了" }).click();
+
+      // フィーチャー型は全写真にテーマが必要
+      const themeInputs = page.getByPlaceholder("テーマ（公開時は必須）");
+      await expect(themeInputs).toHaveCount(2);
+      await themeInputs.nth(0).fill("京都");
+      await themeInputs.nth(1).fill("静岡");
+
+      await page.getByRole("button", { name: "下書きとして登録" }).click();
+      await expect(page.getByText("ポートフォリオを登録しました。")).toBeVisible({
+        timeout: 10000,
+      });
+
+      await page.getByRole("button", { name: "公開する" }).click();
+      await expect(page.getByText("ポートフォリオを公開しました。")).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.getByTestId("portfolio-status")).toHaveText("公開中");
+    });
+
+    await test.step("ポートフォリオで使っている写真を削除すると、下書きに戻った旨とリンクが表示される", async () => {
+      await page.goto(`/photo/${accountId}/photo_list`);
+      const detailLink = page.locator('a[href*="/photo_detail?photoNo="]').first();
+      await expect(detailLink).toBeAttached({ timeout: 10000 });
+      await page.goto((await detailLink.getAttribute("href"))!);
+
+      await page.getByRole("button", { name: "削除" }).click();
+      await page.getByRole("button", { name: "削除する" }).click();
+
+      const revertedDialog = page.getByTestId("reverted-portfolio-dialog");
+      await expect(revertedDialog).toBeVisible({ timeout: 10000 });
+      await expect(revertedDialog).toContainText(
+        `この写真を使用していたポートフォリオ（${theme}）を下書きに戻しました。内容を確認して公開してください。`
+      );
+      await revertedDialog.getByRole("link", { name: theme }).click();
+    });
+
+    await test.step("編集画面で下書きに戻ったことを確認し、公開し直せる", async () => {
+      await expect(page).toHaveURL(/\/portfolio_setting\/edit\?portfolioNo=\d+$/, {
+        timeout: 10000,
+      });
+      await expect(page.getByTestId("portfolio-status")).toHaveText("下書き", { timeout: 10000 });
+      await expect(page.getByTestId("portfolio-photo-item")).toHaveCount(1);
+
+      await page.getByRole("button", { name: "公開する" }).click();
+      await expect(page.getByText("ポートフォリオを公開しました。")).toBeVisible({
+        timeout: 10000,
+      });
+      await expect(page.getByTestId("portfolio-status")).toHaveText("公開中");
+    });
+  });
+});

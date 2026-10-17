@@ -1,19 +1,28 @@
 import path from "path";
-import { test, expect } from "../fixtures/auth";
+import { test, expect } from "@playwright/test";
+import { generateTestAccountId, registerAndLogin } from "../fixtures/auth";
 
 const PHOTO_1 = path.join(__dirname, "../fixtures/images/e2e-photo-1.png");
 
 test.describe("写真のお気に入り・タグ・編集", () => {
   test("タグ付きで登録した写真をお気に入り登録し、編集後もタグ・お気に入り絞り込みが正しく機能すること", async ({
-    workerPage: page,
-    testUser,
-  }) => {
+    page,
+  }, testInfo) => {
+    // 「登録した写真が一覧に1枚だけ表示される」ことを前提にするため、他テストが写真を登録しうる共有の
+    // workerPage ではなく使い捨てのアカウントを使う（共有アカウントでは、同一ワーカーの別テストが同じ
+    // ファイル名の写真を登録済みの場合に重複エラー（409）になり、写真の枚数の前提も崩れる）
+    const testUser = { accountId: generateTestAccountId(testInfo.workerIndex) };
+
     const originalTitle = "お気に入りタグ編集テスト写真";
     const originalCaption = "編集前のキャプションです";
     const originalTag = "風景";
     const editedTitle = "編集後のタイトル";
     const editedCaption = "編集後のキャプションです";
     const addedTag = "編集後タグ";
+
+    await test.step("アカウント登録・ログインする", async () => {
+      await registerAndLogin(page, testUser.accountId, "E2E Favorite Tag User");
+    });
 
     await test.step("タグを1つ付けて写真を1枚登録する", async () => {
       await page.goto(`/photo/${testUser.accountId}/photo_setting`);
