@@ -461,3 +461,7 @@ Server Component から `src/lib/portfolio-api/client.ts`（`server-only`）経�
 - アカウントID・ポートフォリオ番号はページ側で形式を検証し、不正な値は portfolio-api を呼ばずに 404 とする
 - 画像の URL は他の画面と同じく `sanitizeImageUrl` を通し、許可されない URL は表示しない
 - レスポンスは Next.js でキャッシュしない（署名付きURLの期限切れを返さないため。詳細は [portfolio-api](./portfolio-api.md) の「キャッシュ」）
+- **レート制限はかからない**：公開ページは `/api/*` プロキシを通らないため、バックエンドの `RateLimitFilter` の対象外で、
+  portfolio-api 自身もレート制限を持たない（HTTP サーバーのタイムアウトと、クエリの複雑度・深さの上限のみ）。
+  公開ページへのリクエストは毎回 portfolio-api・DB への問い合わせになるため、本番では前段の WAF / ロードバランサで
+  `/portfolio/**` のレート制限をかけること
