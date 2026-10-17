@@ -42,6 +42,13 @@ DELETE FROM photo.photo_favorite
      OR favorite_photo_account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
 DELETE FROM photo.photo_tag_mst
   WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+-- ポートフォリオ写真・タグはポートフォリオ・写真マスタを外部キーで参照するため、それらより先に削除する
+DELETE FROM photo.portfolio_photo
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+DELETE FROM photo.portfolio_tag_mst
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+DELETE FROM photo.portfolio_mst
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
 DELETE FROM photo.photo_mst
   WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
 DELETE FROM common.location_mst
