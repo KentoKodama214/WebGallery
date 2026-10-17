@@ -453,3 +453,11 @@ nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ�
 - **内部エラーの抑止**：リゾルバの内部エラー（DB・ストレージの障害等）はクライアントへ `internal server error` だけを返し、
   詳細はログにだけ残す
 - **画像**：Java のバックエンドと同じバケット・同じ設定（`APP_S3_*`）で署名付き URL を発行する（上記「画像ストレージと署名付きURL」と同じ前提）
+
+公開ページ（`/portfolio/{accountId}`・`/portfolio/{accountId}/{portfolioNo}`）はログイン不要で、
+Server Component から `src/lib/portfolio-api/client.ts`（`server-only`）経由でだけ portfolio-api を呼ぶ。
+接続先（`PORTFOLIO_API_URL`）は `NEXT_PUBLIC_` を付けない環境変数とし、ブラウザのバンドルには含めない。
+
+- アカウントID・ポートフォリオ番号はページ側で形式を検証し、不正な値は portfolio-api を呼ばずに 404 とする
+- 画像の URL は他の画面と同じく `sanitizeImageUrl` を通し、許可されない URL は表示しない
+- レスポンスは Next.js でキャッシュしない（署名付きURLの期限切れを返さないため。詳細は [portfolio-api](./portfolio-api.md) の「キャッシュ」）

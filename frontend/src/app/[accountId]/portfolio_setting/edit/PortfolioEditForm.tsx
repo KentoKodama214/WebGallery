@@ -417,6 +417,16 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                 {PORTFOLIO_STATUS_LABELS[statusKbn]}
               </span>
             )}
+            {portfolioNo !== undefined && statusKbn === "published" && (
+              <Link
+                href={`/portfolio/${accountId}/${portfolioNo}`}
+                target="_blank"
+                rel="noopener"
+                className="text-blue-700 hover:underline"
+              >
+                公開ページを見る
+              </Link>
+            )}
             <Link href={`/${accountId}/portfolio_setting`} className="text-blue-700 hover:underline">
               一覧へ戻る
             </Link>

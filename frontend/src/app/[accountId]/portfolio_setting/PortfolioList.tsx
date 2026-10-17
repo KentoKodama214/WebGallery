@@ -84,12 +84,22 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
     <div className="flex flex-col items-center py-8 gap-4">
       <div className="w-full max-w-[800px] flex justify-between items-center px-4">
         <h1 className="text-xl font-bold">ポートフォリオ設定</h1>
-        <Link
-          href={`/${accountId}/portfolio_setting/edit`}
-          className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
-        >
-          新規作成
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/portfolio/${accountId}`}
+            target="_blank"
+            rel="noopener"
+            className="text-sm text-blue-700 hover:underline"
+          >
+            公開ページを見る
+          </Link>
+          <Link
+            href={`/${accountId}/portfolio_setting/edit`}
+            className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
+          >
+            新規作成
+          </Link>
+        </div>
       </div>
 
       {isLoading ? (
