@@ -1,0 +1,8 @@
+{
+  "theme": "日本の動物・植物",
+  "templateKbn": "grid",
+  "templateSettings": { "rows": [{ "pattern": "FOUR_EQUAL" }] },
+  "photoList": [
+    { "photoNo": 1 }
+  ]
+}

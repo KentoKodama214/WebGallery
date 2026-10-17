@@ -3,9 +3,18 @@ package com.web.gallery.presentation.response.photo;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.application.model.photo.PhotoSaveResultModel;
+import com.web.gallery.application.model.photo.PortfolioModel;
+import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.domain.enumeration.PortfolioStatusEnum;
+import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
+import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.PhotoCount;
 import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.PortfolioNo;
+import com.web.gallery.domain.model.photo.PortfolioTheme;
 import com.web.gallery.presentation.request.photo.PhotoSaveRequest;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -81,6 +90,55 @@ class PhotoEditResponseTest {
       PhotoEditResponse actual = PhotoEditResponse.of(resultModel, request);
 
       assertEquals("", actual.getImageFilePath());
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class ofDeleted {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：下書きに戻したポートフォリオがない場合、通常の削除完了メッセージと空リストが設定されること")
+    void ofDeleted_noReverted() {
+      PhotoEditResponse actual = PhotoEditResponse.ofDeleted(PortfolioModelList.empty());
+
+      assertEquals(200, actual.getHttpStatus());
+      assertTrue(actual.getIsSuccess());
+      assertEquals("写真削除が完了しました。", actual.getMessage());
+      assertTrue(actual.getRevertedPortfolioList().isEmpty());
+      assertNull(actual.getPhotoNo());
+      assertNull(actual.getImageFilePath());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：下書きに戻したポートフォリオがある場合、テーマを「、」区切りで含む確認を促すメッセージと対象が設定されること")
+    void ofDeleted_withReverted() {
+      PhotoEditResponse actual =
+          PhotoEditResponse.ofDeleted(
+              PortfolioModelList.of(List.of(portfolio(1L, "日本の自然"), portfolio(3L, "光と影"))));
+
+      assertTrue(actual.getIsSuccess());
+      assertEquals(
+          "写真削除が完了しました。この写真を使用していたポートフォリオ（日本の自然、光と影）を下書きに戻しました。内容を確認して公開してください。",
+          actual.getMessage());
+      assertEquals(2, actual.getRevertedPortfolioList().size());
+      assertEquals(1L, actual.getRevertedPortfolioList().get(0).getPortfolioNo());
+      assertEquals("日本の自然", actual.getRevertedPortfolioList().get(0).getTheme());
+      assertEquals(3L, actual.getRevertedPortfolioList().get(1).getPortfolioNo());
+      assertEquals("光と影", actual.getRevertedPortfolioList().get(1).getTheme());
+    }
+
+    private PortfolioModel portfolio(Long portfolioNo, String theme) {
+      return PortfolioModel.builder()
+          .accountNo(new AccountNo(1L))
+          .portfolioNo(new PortfolioNo(portfolioNo))
+          .theme(new PortfolioTheme(theme))
+          .templateKbn(PortfolioTemplateEnum.FEATURE)
+          .statusKbn(PortfolioStatusEnum.DRAFT)
+          .photoCount(new PhotoCount(1))
+          .build();
     }
   }
 }

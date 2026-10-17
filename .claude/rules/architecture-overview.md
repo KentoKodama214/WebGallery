@@ -72,7 +72,7 @@ com.web.gallery
 
 ## Aggregate（集約）の配置
 
-書き込みユースケースの整合性・ライフサイクル管理を担う集約ルート（`Photo`、`Account`、`Inquiry`）は、ユースケース固有の関心事であるため`domain/`ではなく`application/aggregate/`に配置する。`domain/`には値オブジェクトとドメインサービス（Policy）のみを置く。
+書き込みユースケースの整合性・ライフサイクル管理を担う集約ルート（`Photo`、`Account`、`Inquiry`、`Portfolio`）は、ユースケース固有の関心事であるため`domain/`ではなく`application/aggregate/`に配置する。`domain/`には値オブジェクトとドメインサービス（Policy）のみを置く。
 
 ## SchedulerLock関連の例外的な集約
 
@@ -89,7 +89,7 @@ com.web.gallery
 
 機能分割していないパッケージは以下の通り。いずれもクラス数が少なく機能単位に分けるメリットが薄いため、意図的にフラット構成のままとしている。
 
-- `application/aggregate`（`Account`/`Inquiry`/`Photo`の3クラスのみ）
+- `application/aggregate`（`Account`/`Inquiry`/`Photo`/`Portfolio`の4クラスのみ）
 - `application/helper`・`application/config`（ポートインターフェースのみ）
 - `infrastructure/persistence/type_handler`
 - `infrastructure/scheduler`（`lock/`サブパッケージのみ）

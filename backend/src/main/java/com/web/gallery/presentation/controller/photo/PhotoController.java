@@ -6,6 +6,7 @@ import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.application.model.photo.PhotoDetailModelList;
 import com.web.gallery.application.model.photo.PhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoSaveResultModel;
+import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.service.photo.PhotoService;
 import com.web.gallery.domain.constant.ApiRoutes;
 import com.web.gallery.domain.constant.Consts;
@@ -314,7 +315,9 @@ public class PhotoController {
    * @return {@link PhotoEditResponse}
    * @throws GalleryException 以下のいずれかに該当する場合 ・リクエストパラメータが不正の場合 ・写真の所有者以外がリクエストした場合 ・写真の削除に失敗した場合
    */
-  @Operation(summary = "写真削除", description = "指定した写真を削除する")
+  @Operation(
+      summary = "写真削除",
+      description = "指定した写真を削除する。削除した写真を使用していたポートフォリオからは写真を除外し、公開中だったものは下書きに戻してレスポンスで返す")
   @ApiResponse(responseCode = "200", description = "削除成功")
   @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
   @ApiResponse(responseCode = "403", description = "写真の所有者以外によるリクエスト", content = @Content)
@@ -345,8 +348,8 @@ public class PhotoController {
                 photoConverter.toPhotoDeleteModel(
                     photoDeleteRequest, new AccountNo(sessionHelper.getAccountNo()))));
 
-    photoService.deletePhotos(photoDeleteModelList);
+    PortfolioModelList revertedPortfolioModelList = photoService.deletePhotos(photoDeleteModelList);
 
-    return ResponseEntity.ok(PhotoEditResponse.of(MessageConst.DELETE_PHOTO, null, null));
+    return ResponseEntity.ok(PhotoEditResponse.ofDeleted(revertedPortfolioModelList));
   }
 }

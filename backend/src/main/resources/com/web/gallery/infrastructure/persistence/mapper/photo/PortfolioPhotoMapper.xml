@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioPhotoMapper">
+	<resultMap id="PortfolioPhotoDtoMap" type="com.web.gallery.infrastructure.persistence.dto.photo.PortfolioPhotoDto">
+		<result property="accountNo" column="account_no"/>
+		<result property="portfolioNo" column="portfolio_no"/>
+		<result property="photoNo" column="photo_no"/>
+		<result property="displayOrder" column="display_order"/>
+		<result property="photoSettings" column="photo_settings" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler"/>
+		<result property="photoJapaneseTitle" column="photo_japanese_title"/>
+		<result property="imageFilePath" column="image_file_path"/>
+		<result property="directionKbn" column="direction_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.DirectionEnumTypeHandler"/>
+	</resultMap>
+
+	<insert id="insertBulk" parameterType="java.util.List">
+		INSERT INTO
+			photo.portfolio_photo (
+				account_no,
+				portfolio_no,
+				photo_no,
+				created_by,
+				created_at,
+				display_order,
+				photo_settings
+			)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(
+				#{item.accountNo},
+				#{item.portfolioNo},
+				#{item.photoNo},
+				#{item.createdBy},
+				NOW(),
+				#{item.displayOrder},
+				#{item.photoSettings, typeHandler=com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler}
+			)
+		</foreach>
+	</insert>
+
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioPhotoCondition">
+		DELETE FROM
+			photo.portfolio_photo
+		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード -->
+			<if test="accountNo == null and portfolioNo == null and photoNo == null"> AND 1 = 0</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="portfolioNo != null"> AND portfolio_no = #{portfolioNo}</if>
+			<if test="photoNo != null"> AND photo_no = #{photoNo}</if>
+		</where>
+	</delete>
+
+	<select id="selectList" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioPhotoCondition" resultMap="PortfolioPhotoDtoMap">
+		SELECT
+			pp.account_no,
+			pp.portfolio_no,
+			pp.photo_no,
+			pp.display_order,
+			pp.photo_settings,
+			pm.photo_japanese_title,
+			pm.image_file_path,
+			pm.direction_kbn
+		FROM
+			photo.portfolio_photo pp
+		INNER JOIN photo.photo_mst pm ON pm.account_no = pp.account_no AND pm.photo_no = pp.photo_no
+		<where>
+			<if test="accountNo != null"> AND pp.account_no = #{accountNo}</if>
+			<if test="portfolioNo != null"> AND pp.portfolio_no = #{portfolioNo}</if>
+			<if test="photoNo != null"> AND pp.photo_no = #{photoNo}</if>
+		</where>
+		ORDER BY
+			pp.portfolio_no,
+			pp.display_order
+	</select>
+
+	<select id="countAvailablePhotos" resultType="Integer">
+		SELECT
+			COUNT(*)
+		FROM
+			photo.photo_mst
+		WHERE
+			account_no = #{accountNo}
+			AND is_deleted = false
+			AND photo_no IN
+			<foreach collection="photoNoList" item="photoNo" open="(" separator="," close=")">
+				#{photoNo}
+			</foreach>
+	</select>
+</mapper>

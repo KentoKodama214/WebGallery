@@ -1,6 +1,7 @@
 package com.web.gallery.application.service.impl.photo;
 
 import com.web.gallery.application.aggregate.Photo;
+import com.web.gallery.application.aggregate.Portfolio;
 import com.web.gallery.application.config.PhotoConfig;
 import com.web.gallery.application.helper.GeoIpResolver;
 import com.web.gallery.application.model.account.AccountModel;
@@ -19,6 +20,10 @@ import com.web.gallery.application.model.photo.PhotoModelList;
 import com.web.gallery.application.model.photo.PhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoSaveResultModel;
 import com.web.gallery.application.model.photo.PhotoViewLogModel;
+import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioDetailModelList;
+import com.web.gallery.application.model.photo.PortfolioModel;
+import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.repository.account.AccountRepository;
 import com.web.gallery.application.repository.photo.FileRepository;
 import com.web.gallery.application.repository.photo.PhotoAggregateRepository;
@@ -26,6 +31,8 @@ import com.web.gallery.application.repository.photo.PhotoDetailRepository;
 import com.web.gallery.application.repository.photo.PhotoListFilterLogRepository;
 import com.web.gallery.application.repository.photo.PhotoMstRepository;
 import com.web.gallery.application.repository.photo.PhotoViewLogRepository;
+import com.web.gallery.application.repository.photo.PortfolioAggregateRepository;
+import com.web.gallery.application.repository.photo.PortfolioMstRepository;
 import com.web.gallery.application.service.photo.PhotoService;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.ErrorEnum;
@@ -43,6 +50,7 @@ import com.web.gallery.domain.model.photo.MaxFileSizeMb;
 import com.web.gallery.domain.model.photo.PhotoCount;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.PhotoUpperLimits;
+import com.web.gallery.domain.model.photo.PortfolioNo;
 import com.web.gallery.domain.service.ImageFileValidationPolicy;
 import com.web.gallery.domain.service.LocationInputPolicy;
 import com.web.gallery.domain.service.PhotoFileExtensionPolicy;
@@ -52,8 +60,10 @@ import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -84,6 +94,8 @@ public class PhotoServiceImpl implements PhotoService {
   private final PhotoFileExtensionPolicy photoFileExtensionPolicy;
   private final LocationInputPolicy locationInputPolicy;
   private final ApplicationEventPublisher applicationEventPublisher;
+  private final PortfolioMstRepository portfolioMstRepository;
+  private final PortfolioAggregateRepository portfolioAggregateRepository;
 
   /**
    * 写真一覧を、ページング情報に従い取得する
@@ -554,13 +566,20 @@ public class PhotoServiceImpl implements PhotoService {
    * <p>削除対象のS3オブジェクトキーはクライアント送信値を信用せず、写真番号をキーにDB上の値を取得して用いる
    * （クライアント入力によるファイルパス汚染・他オブジェクトの巻き込み削除を防ぐため）
    *
+   * <p>削除した写真を使用しているポートフォリオからは、写真の削除と同じトランザクション内で写真を除外し、公開中だった
+   * ポートフォリオは下書きに戻す（写真の構成が変わり公開ページの表示が崩れうるため、ユーザーに確認してから公開し直してもらう）。
+   * 下書きに戻したポートフォリオは、画面でユーザーに通知するため戻り値で返す
+   *
    * @param photoDeleteModelList {@link PhotoDeleteModelList}
+   * @return 写真の削除に伴い公開から下書きに戻したポートフォリオの一覧
    * @throws GalleryException 写真が存在しない場合、または削除に失敗した場合
    */
   @Override
   @Transactional(rollbackFor = GalleryException.class)
-  public void deletePhotos(PhotoDeleteModelList photoDeleteModelList) throws GalleryException {
+  public PortfolioModelList deletePhotos(PhotoDeleteModelList photoDeleteModelList)
+      throws GalleryException {
     List<ImageFilePath> deletedImageFilePaths = new ArrayList<>();
+    Map<PortfolioNo, PortfolioModel> revertedPortfolios = new LinkedHashMap<>();
     for (PhotoDeleteModel photoDeleteModel : photoDeleteModelList) {
       // 画像ファイルパス（S3オブジェクトキー）はリクエスト値を信用せず、DB上の既存値を用いる
       PhotoDetailModel existing =
@@ -577,12 +596,54 @@ public class PhotoServiceImpl implements PhotoService {
               imageFilePathForDelete);
       photoAggregateRepository.delete(photo);
       deletedImageFilePaths.add(imageFilePathForDelete);
+      removePhotoFromPortfolios(photo.getAccountNo(), photo.getPhotoNo(), revertedPortfolios);
       applicationEventPublisher.publishEvent(
           new PhotoDeletedEvent(photo.getAccountNo(), photo.getPhotoNo()));
     }
 
     // ファイルの物理削除はDBコミット確定後に行う（ロールバック時の不整合を防ぐ）
     deleteFilesAfterCommit(deletedImageFilePaths);
+
+    return PortfolioModelList.of(List.copyOf(revertedPortfolios.values()));
+  }
+
+  /**
+   * 削除した写真を、その写真を使用しているポートフォリオから除外する
+   *
+   * <p>公開中だったポートフォリオは{@link Portfolio#removePhoto}が下書きに戻すため、戻したものを{@code
+   * revertedPortfolios}に追加する（複数枚の削除で同じポートフォリオが重複しないよう、ポートフォリオ番号をキーにする）
+   *
+   * @param accountNo 写真所有者のアカウント番号
+   * @param photoNo 削除した写真の写真番号
+   * @param revertedPortfolios 下書きに戻したポートフォリオ（ポートフォリオ番号をキーとする）
+   * @throws GalleryException ポートフォリオの更新に失敗した場合
+   */
+  private void removePhotoFromPortfolios(
+      AccountNo accountNo, PhotoNo photoNo, Map<PortfolioNo, PortfolioModel> revertedPortfolios)
+      throws GalleryException {
+    PortfolioDetailModelList portfolios =
+        portfolioMstRepository.getPortfolioDetailListByPhoto(accountNo, photoNo);
+    for (PortfolioDetailModel detail : portfolios) {
+      Portfolio portfolio = Portfolio.reconstruct(detail);
+      portfolio.removePhoto(photoNo);
+      portfolioAggregateRepository.update(portfolio);
+
+      if (portfolio.isRevertedToDraft()) {
+        PortfolioDetailModel reverted = portfolio.getDetail();
+        revertedPortfolios.put(
+            portfolio.getPortfolioNo(),
+            PortfolioModel.builder()
+                .accountNo(portfolio.getAccountNo())
+                .portfolioNo(portfolio.getPortfolioNo())
+                .theme(reverted.getTheme())
+                .templateKbn(reverted.getTemplateKbn())
+                .statusKbn(reverted.getStatusKbn())
+                .photoCount(portfolio.getPhotoCount())
+                .createdAt(reverted.getCreatedAt())
+                .updatedAt(reverted.getUpdatedAt())
+                .build());
+      }
+    }
   }
 
   /**

@@ -1,0 +1,11 @@
+{
+  "theme": "光と影（改）",
+  "description": "",
+  "templateKbn": "grid",
+  "templateSettings": { "rows": [{ "pattern": "WIDE_NARROW" }] },
+  "photoList": [
+    { "photoNo": 1, "photoSettings": { "caption": "金閣寺" } },
+    { "photoNo": 2 }
+  ],
+  "tagList": []
+}

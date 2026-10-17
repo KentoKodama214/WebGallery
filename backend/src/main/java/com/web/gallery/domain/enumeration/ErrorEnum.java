@@ -9,6 +9,7 @@ import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.InquiryNotFoundException;
 import com.web.gallery.domain.exception.PhotoNotAdditableException;
 import com.web.gallery.domain.exception.PhotoNotFoundException;
+import com.web.gallery.domain.exception.PortfolioNotFoundException;
 import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.exception.SystemException;
 import com.web.gallery.domain.exception.UpdateFailureException;
@@ -403,6 +404,90 @@ public enum ErrorEnum {
     @Override
     public GalleryException toException() {
       return new RegistFailureException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0019
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_EDIT_PORTFOLIO}
+   */
+  NOT_AUTHORIZED_TO_EDIT_PORTFOLIO("E-P-0019", MessageConst.ERR_NOT_AUTHORIZED_TO_EDIT_PORTFOLIO) {
+    @Override
+    public GalleryException toException() {
+      return new ForbiddenAccountException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0020
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_PORTFOLIO_NOT_FOUND}
+   */
+  PORTFOLIO_NOT_FOUND("E-P-0020", MessageConst.ERR_PORTFOLIO_NOT_FOUND) {
+    @Override
+    public GalleryException toException() {
+      return new PortfolioNotFoundException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0021
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_INVALID_PORTFOLIO_SETTINGS}
+   */
+  INVALID_PORTFOLIO_SETTINGS("E-P-0021", MessageConst.ERR_INVALID_PORTFOLIO_SETTINGS) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0022
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_PORTFOLIO_PHOTO_NOT_AVAILABLE}
+   */
+  PORTFOLIO_PHOTO_NOT_AVAILABLE("E-P-0022", MessageConst.ERR_PORTFOLIO_PHOTO_NOT_AVAILABLE) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0023
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_PORTFOLIO_NOT_PUBLISHABLE}
+   */
+  PORTFOLIO_NOT_PUBLISHABLE("E-P-0023", MessageConst.ERR_PORTFOLIO_NOT_PUBLISHABLE) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0024
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REGIST_PORTFOLIO}
+   */
+  FAIL_TO_REGIST_PORTFOLIO("E-P-0024", MessageConst.ERR_FAIL_TO_REGIST_PORTFOLIO) {
+    @Override
+    public GalleryException toException() {
+      return new RegistFailureException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0025
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_UPDATE_PORTFOLIO}
+   */
+  FAIL_TO_UPDATE_PORTFOLIO("E-P-0025", MessageConst.ERR_FAIL_TO_UPDATE_PORTFOLIO) {
+    @Override
+    public GalleryException toException() {
+      return new UpdateFailureException(this);
     }
   },
 
