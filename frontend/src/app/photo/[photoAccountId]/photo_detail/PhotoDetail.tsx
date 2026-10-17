@@ -10,6 +10,7 @@ import {
   addFavorite,
   deleteFavorite,
   type PhotoDetailResponse,
+  type PhotoEditResult,
 } from "@/lib/api/client";
 import { sanitizeImageUrl, buildGoogleMapEmbedUrl } from "@/lib/url";
 import { ModalDialog } from "@/components/ui/ModalDialog";
@@ -36,6 +37,8 @@ export function PhotoDetail({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFavoriteProcessing, setIsFavoriteProcessing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // 写真の削除に伴い公開から下書きに戻したポートフォリオがある場合の削除結果（通知ダイアログの表示に使う）
+  const [deleteResult, setDeleteResult] = useState<PhotoEditResult | null>(null);
   // お気に入り操作の多重実行防止（setState 反映前の連打・キーリピート対策。
   // PhotoList と同じく ref で即時に弾く）
   const favoriteInFlightRef = useRef(false);
@@ -121,10 +124,16 @@ export function PhotoDetail({
     setIsDeleting(true);
     setActionError(null);
     try {
-      await deletePhoto(photoAccountId, {
+      const result = await deletePhoto(photoAccountId, {
         photoNo: photo.photoNo,
         imageFilePath: photo.imageFilePath,
       });
+      // 公開中のポートフォリオが下書きに戻った場合は、写真一覧へ戻る前に確認・再公開を促す
+      if (result.revertedPortfolioList && result.revertedPortfolioList.length > 0) {
+        setShowDeleteConfirm(false);
+        setDeleteResult(result);
+        return;
+      }
       router.push(`/photo/${photoAccountId}/photo_list`);
     } catch (err) {
       // 削除失敗時は確認ダイアログを開いたままエラーを通知する
@@ -550,6 +559,65 @@ export function PhotoDetail({
                 }}
               >
                 {isDeleting ? "削除中..." : "削除する"}
+              </button>
+            </div>
+          </div>
+        </ModalDialog>
+      )}
+
+      {/* 写真の削除に伴い下書きに戻したポートフォリオの通知ダイアログ。写真は削除済みのため、閉じたら写真一覧へ戻る */}
+      {deleteResult && (
+        <ModalDialog
+          testId="reverted-portfolio-dialog"
+          label="ポートフォリオを下書きに戻しました"
+          initialFocusSelector="[data-dialog-initial-focus]"
+          onClose={() => router.push(`/photo/${photoAccountId}/photo_list`)}
+          overlayStyle={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 50%)",
+            padding: "40px 20px",
+            overflow: "auto",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          containerStyle={{ maxWidth: "500px", width: "90%" }}
+        >
+          <div style={{ background: "#fff", color: "#000", lineHeight: 1.8, padding: "20px" }}>
+            <p role="status" style={{ margin: "0 0 1em 0" }}>
+              {deleteResult.message}
+            </p>
+            <ul style={{ margin: "0 0 1em 0", paddingLeft: "1.2em", listStyle: "disc" }}>
+              {deleteResult.revertedPortfolioList?.map((portfolio) => (
+                <li key={portfolio.portfolioNo}>
+                  <Link
+                    href={`/${photoAccountId}/portfolio_setting/edit?portfolioNo=${portfolio.portfolioNo}`}
+                    style={{ color: "#1565C0", textDecoration: "underline" }}
+                  >
+                    {portfolio.theme}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <button
+                type="button"
+                data-dialog-initial-focus
+                onClick={() => router.push(`/photo/${photoAccountId}/photo_list`)}
+                style={{
+                  background: "#1565C0",
+                  color: "#fff",
+                  padding: "8px 16px",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                写真一覧へ
               </button>
             </div>
           </div>
