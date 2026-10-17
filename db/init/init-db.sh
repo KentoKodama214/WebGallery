@@ -40,6 +40,8 @@ SQL_FILES=(
   "photo/portfolio_mst.sql"
   "photo/portfolio_photo.sql"
   "photo/portfolio_tag_mst.sql"
+  # 読み取り専用ロール（参照するテーブルの作成後に権限を付与する）
+  "photo/portfolio_reader.sql"
 )
 
 for f in "${SQL_FILES[@]}"; do
