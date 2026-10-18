@@ -12,10 +12,15 @@ const ROW_CELLS: Record<GridRowPattern, { flex: number; aspectRatio: string }[]>
     { flex: 1, aspectRatio: "1 / 1" },
     { flex: 1, aspectRatio: "1 / 1" },
   ],
-  // 横長（2:1）と正方形（1:1）を同じ高さで並べるため、横幅を 2:1 にする
+  // 横長（3:2）と縦長（3:4）を同じ高さで並べるため、横幅を 2:1 にする
   WIDE_NARROW: [
-    { flex: 2, aspectRatio: "2 / 1" },
-    { flex: 1, aspectRatio: "1 / 1" },
+    { flex: 2, aspectRatio: "3 / 2" },
+    { flex: 1, aspectRatio: "3 / 4" },
+  ],
+  // 縦長を左に置く以外は WIDE_NARROW と同じ
+  NARROW_WIDE: [
+    { flex: 1, aspectRatio: "3 / 4" },
+    { flex: 2, aspectRatio: "3 / 2" },
   ],
 };
 

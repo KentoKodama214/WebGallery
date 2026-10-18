@@ -41,7 +41,7 @@ describe("ポートフォリオのテンプレート", () => {
     expect(sections[1].querySelectorAll("p")).toHaveLength(0);
   });
 
-  it("グリッド型は行パターンごとに写真を並べ、横長1枚+正方形1枚は横幅を2:1にすること", () => {
+  it("グリッド型は行パターンごとに写真を並べ、横長1枚+縦長1枚は横幅を2:1・縦長を左右どちらにも置けること", () => {
     render(
       <>
         {renderPortfolioLayout({
@@ -55,18 +55,40 @@ describe("ポートフォリオのテンプレート", () => {
                 { photo: photo(5), caption: "" },
               ],
             },
+            {
+              pattern: "NARROW_WIDE",
+              photos: [
+                { photo: photo(6), caption: "" },
+                { photo: photo(7), caption: "" },
+              ],
+            },
           ],
         })}
       </>
     );
 
     const rows = screen.getAllByTestId("grid-row");
-    expect(rows.map((row) => row.dataset.pattern)).toEqual(["THREE_EQUAL", "WIDE_NARROW"]);
+    expect(rows.map((row) => row.dataset.pattern)).toEqual([
+      "THREE_EQUAL",
+      "WIDE_NARROW",
+      "NARROW_WIDE",
+    ]);
     expect(within(rows[0]).getAllByRole("img")).toHaveLength(3);
     const wideNarrow = rows[1].querySelectorAll("figure");
     expect((wideNarrow[0] as HTMLElement).style.flex).toContain("2");
     expect((wideNarrow[1] as HTMLElement).style.flex).toContain("1");
     expect(within(rows[1]).getByText("橋杭岩")).toBeInTheDocument();
+    // 横長は3:2、縦長は3:4で表示する（縦長が右）
+    const wideNarrowImages = within(rows[1]).getAllByRole("img");
+    expect(wideNarrowImages[0].style.getPropertyValue("aspect-ratio")).toBe("3 / 2");
+    expect(wideNarrowImages[1].style.getPropertyValue("aspect-ratio")).toBe("3 / 4");
+    // 縦長が左
+    const narrowWide = rows[2].querySelectorAll("figure");
+    expect((narrowWide[0] as HTMLElement).style.flexGrow).toBe("1");
+    expect((narrowWide[1] as HTMLElement).style.flexGrow).toBe("2");
+    const narrowWideImages = within(rows[2]).getAllByRole("img");
+    expect(narrowWideImages[0].style.getPropertyValue("aspect-ratio")).toBe("3 / 4");
+    expect(narrowWideImages[1].style.getPropertyValue("aspect-ratio")).toBe("3 / 2");
   });
 
   it("画像URLが許可されたオリジンでない場合は、画像の代わりに写真のタイトルを表示すること", () => {

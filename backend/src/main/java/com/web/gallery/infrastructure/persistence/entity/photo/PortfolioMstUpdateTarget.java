@@ -15,9 +15,6 @@ public class PortfolioMstUpdateTarget {
   /** 更新者 */
   private Long updatedBy;
 
-  /** 削除フラグ */
-  private Boolean isDeleted;
-
   /** テーマ */
   private String theme;
 
@@ -75,15 +72,5 @@ public class PortfolioMstUpdateTarget {
         .updatedBy(detail.getAccountNo().value())
         .statusKbn(detail.getStatusKbn())
         .build();
-  }
-
-  /**
-   * 論理削除に伴う更新対象を生成する
-   *
-   * @param accountNo 削除したユーザーのアカウント番号
-   * @return {@link PortfolioMstUpdateTarget}
-   */
-  public static PortfolioMstUpdateTarget forDelete(Long accountNo) {
-    return PortfolioMstUpdateTarget.builder().updatedBy(accountNo).isDeleted(true).build();
   }
 }

@@ -43,7 +43,9 @@ class GridTemplateSettingsPolicyTest {
     @Order(1)
     @DisplayName("正常系：既知の行パターンだけを並べた場合、trueを返すこと")
     void isValidTemplateSettings_knownPatterns() {
-      assertTrue(policy.isValidTemplateSettings(rows("TWO_EQUAL", "THREE_EQUAL", "WIDE_NARROW")));
+      assertTrue(
+          policy.isValidTemplateSettings(
+              rows("TWO_EQUAL", "THREE_EQUAL", "WIDE_NARROW", "NARROW_WIDE")));
     }
 
     @Test

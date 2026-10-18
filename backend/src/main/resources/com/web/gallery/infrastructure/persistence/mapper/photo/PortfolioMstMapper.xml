@@ -10,7 +10,6 @@
 		<result property="createdAt" column="created_at"/>
 		<result property="updatedBy" column="updated_by"/>
 		<result property="updatedAt" column="updated_at"/>
-		<result property="isDeleted" column="is_deleted"/>
 		<result property="theme" column="theme"/>
 		<result property="description" column="description"/>
 		<result property="templateKbn" column="template_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.PortfolioTemplateEnumTypeHandler"/>
@@ -33,7 +32,6 @@
 	<sql id="portfolioMstConditionWhere">
 		<if test="${prefix}accountNo != null"> AND pm.account_no = #{${prefix}accountNo}</if>
 		<if test="${prefix}portfolioNo != null"> AND pm.portfolio_no = #{${prefix}portfolioNo}</if>
-		<if test="${prefix}isDeleted != null"> AND pm.is_deleted = #{${prefix}isDeleted}</if>
 	</sql>
 
 	<sql id="portfolioMstColumns">
@@ -44,7 +42,6 @@
 		pm.created_at,
 		pm.updated_by,
 		pm.updated_at,
-		pm.is_deleted,
 		pm.theme,
 		pm.description,
 		pm.template_kbn,
@@ -62,7 +59,6 @@
 				created_at,
 				updated_by,
 				updated_at,
-				is_deleted,
 				theme,
 				description,
 				template_kbn,
@@ -78,7 +74,6 @@
 				NOW(),
 				#{updatedBy},
 				NOW(),
-				#{isDeleted},
 				#{theme},
 				#{description},
 				#{templateKbn}::photo.portfolio_template_enum,
@@ -94,7 +89,6 @@
 		<set>
 			updated_at = NOW()
 			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy}</if>
-			<if test="target.isDeleted != null"> , is_deleted = #{target.isDeleted}</if>
 			<if test="target.theme != null"> , theme = #{target.theme}</if>
 			<if test="target.description != null"> , description = #{target.description}</if>
 			<if test="target.templateKbn != null"> , template_kbn = #{target.templateKbn}::photo.portfolio_template_enum</if>
@@ -104,7 +98,7 @@
 		</set>
 		<where>
 			<!-- 条件が1つも指定されていない場合にWHERE句なしのUPDATE（全件更新）になるのを防ぐガード -->
-			<if test="condition.accountNo == null and condition.portfolioNo == null and condition.isDeleted == null"> AND 1 = 0</if>
+			<if test="condition.accountNo == null and condition.portfolioNo == null"> AND 1 = 0</if>
 			<include refid="portfolioMstConditionWhere">
 				<property name="prefix" value="condition."/>
 			</include>
@@ -118,7 +112,7 @@
 			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード。
 			     抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接組み立てられた
 			     場合でも1件も消さないようにする -->
-			<if test="accountNo == null and portfolioNo == null and isDeleted == null"> AND 1 = 0</if>
+			<if test="accountNo == null and portfolioNo == null"> AND 1 = 0</if>
 			<include refid="portfolioMstConditionWhere">
 				<property name="prefix" value=""/>
 			</include>
@@ -185,7 +179,6 @@
 			photo.portfolio_mst pm
 		WHERE
 			pm.account_no = #{accountNo}
-			AND pm.is_deleted = false
 			AND EXISTS (
 				SELECT
 					1

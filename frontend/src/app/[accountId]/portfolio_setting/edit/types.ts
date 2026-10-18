@@ -43,18 +43,46 @@ export const GRID_ROW_PATTERN_PHOTO_COUNT: Record<string, number> = {
   TWO_EQUAL: 2,
   THREE_EQUAL: 3,
   WIDE_NARROW: 2,
+  NARROW_WIDE: 2,
 };
 
 /** グリッド型の行パターンの表示名（テンプレート一覧APIの取得前・取得失敗時にも使う） */
 export const GRID_ROW_PATTERN_LABELS: Record<string, string> = {
   TWO_EQUAL: "2枚均等",
   THREE_EQUAL: "3枚均等",
-  WIDE_NARROW: "横長1枚+正方形1枚",
+  WIDE_NARROW: "横長1枚+縦長1枚（縦長が右）",
+  NARROW_WIDE: "縦長1枚+横長1枚（縦長が左）",
 };
 
-/** グリッド型の行パターンごとの、各写真の横幅の比率 */
-export const GRID_ROW_PATTERN_RATIOS: Record<string, number[]> = {
-  TWO_EQUAL: [1, 1],
-  THREE_EQUAL: [1, 1, 1],
-  WIDE_NARROW: [2, 1],
+/** グリッド型の行の、1枠あたりの横幅の比率（flex）と縦横比 */
+export interface GridRowCell {
+  /** 行内での横幅の比率 */
+  flex: number;
+  /** 縦横比（CSS の aspect-ratio） */
+  aspectRatio: string;
+}
+
+/**
+ * グリッド型の行パターンごとの、各枠の横幅の比率と縦横比
+ *
+ * 横長1枚+縦長1枚は横幅を2:1に分け、横長を3:2・縦長を3:4にすると高さが揃う
+ */
+export const GRID_ROW_PATTERN_CELLS: Record<string, GridRowCell[]> = {
+  TWO_EQUAL: [
+    { flex: 1, aspectRatio: "1 / 1" },
+    { flex: 1, aspectRatio: "1 / 1" },
+  ],
+  THREE_EQUAL: [
+    { flex: 1, aspectRatio: "1 / 1" },
+    { flex: 1, aspectRatio: "1 / 1" },
+    { flex: 1, aspectRatio: "1 / 1" },
+  ],
+  WIDE_NARROW: [
+    { flex: 2, aspectRatio: "3 / 2" },
+    { flex: 1, aspectRatio: "3 / 4" },
+  ],
+  NARROW_WIDE: [
+    { flex: 1, aspectRatio: "3 / 4" },
+    { flex: 2, aspectRatio: "3 / 2" },
+  ],
 };

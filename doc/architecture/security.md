@@ -444,7 +444,7 @@ nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ�
 呼び出す前提とし、ブラウザには公開しない（CORS は設定しない）。それでも不特定のクエリを受け付ける GraphQL の性質上、
 以下で攻撃面を抑える。詳細は [portfolio-api](./portfolio-api.md) を参照。
 
-- **公開範囲**：公開中かつ未削除のポートフォリオ・未削除の写真だけを返す。下書き・存在しないポートフォリオ・
+- **公開範囲**：公開中のポートフォリオ・未削除の写真だけを返す（ポートフォリオは削除すると物理削除される）。下書き・存在しないポートフォリオ・
   存在しないアカウントは区別せず `null`（一覧は空）を返し、アカウントの存在有無を推測させない
 - **DB 権限の最小化**：読み取り専用ロール `portfolio_reader`（`db/photo/portfolio_reader.sql`）で接続する。
   `common.account` は `account_no`・`account_id`、`photo.photo_mst` は表示に必要な列だけに SELECT を許可し、

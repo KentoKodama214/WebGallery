@@ -12,7 +12,7 @@ export type PhotoDirection = "VERTICAL" | "HORIZONTAL" | "SQUARE" | "NONE";
 export type PortfolioTemplate = "FEATURE" | "GRID";
 
 /** グリッド型の行パターン */
-export type GridRowPattern = "TWO_EQUAL" | "THREE_EQUAL" | "WIDE_NARROW";
+export type GridRowPattern = "TWO_EQUAL" | "THREE_EQUAL" | "WIDE_NARROW" | "NARROW_WIDE";
 
 /** 写真 */
 export interface PublicPhoto {
