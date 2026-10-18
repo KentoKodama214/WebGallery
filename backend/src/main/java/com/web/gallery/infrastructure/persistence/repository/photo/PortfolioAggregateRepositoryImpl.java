@@ -79,7 +79,7 @@ public class PortfolioAggregateRepositoryImpl implements PortfolioAggregateRepos
     Long portfolioNo = portfolio.getPortfolioNo().value();
 
     if (portfolioMstMapper.update(
-            PortfolioMstCondition.byAccountAndPortfolioNotDeleted(accountNo, portfolioNo),
+            PortfolioMstCondition.byAccountAndPortfolio(accountNo, portfolioNo),
             PortfolioMstUpdateTarget.forUpdate(portfolio.getDetail()))
         < 1) {
       log.warn(
@@ -115,7 +115,7 @@ public class PortfolioAggregateRepositoryImpl implements PortfolioAggregateRepos
     Long portfolioNo = portfolio.getPortfolioNo().value();
 
     if (portfolioMstMapper.update(
-            PortfolioMstCondition.byAccountAndPortfolioNotDeleted(accountNo, portfolioNo),
+            PortfolioMstCondition.byAccountAndPortfolio(accountNo, portfolioNo),
             PortfolioMstUpdateTarget.forStatus(portfolio.getDetail()))
         < 1) {
       log.warn(
@@ -129,7 +129,7 @@ public class PortfolioAggregateRepositoryImpl implements PortfolioAggregateRepos
   /**
    * ポートフォリオ集約を削除する
    *
-   * <p>写真・タグを物理削除したうえでポートフォリオ本体を論理削除する
+   * <p>写真・タグ・ポートフォリオ本体を物理削除する（復元はできない）。写真・タグは外部キーでポートフォリオ本体を参照するため、先に削除する
    *
    * @param portfolio {@link Portfolio}
    * @throws GalleryException ポートフォリオが存在しない（未登録・削除済み）場合
@@ -139,22 +139,21 @@ public class PortfolioAggregateRepositoryImpl implements PortfolioAggregateRepos
     Long accountNo = portfolio.getAccountNo().value();
     Long portfolioNo = portfolio.getPortfolioNo().value();
 
-    if (portfolioMstMapper.update(
-            PortfolioMstCondition.byAccountAndPortfolioNotDeleted(accountNo, portfolioNo),
-            PortfolioMstUpdateTarget.forDelete(accountNo))
+    portfolioPhotoMapper.delete(
+        PortfolioPhotoCondition.byAccountAndPortfolio(accountNo, portfolioNo));
+    portfolioTagMstMapper.delete(
+        PortfolioTagMstCondition.byAccountAndPortfolio(accountNo, portfolioNo));
+    if (portfolioMstMapper.delete(
+            PortfolioMstCondition.byAccountAndPortfolio(accountNo, portfolioNo))
         < 1) {
-      // 対象ポートフォリオが存在しない（未登録・既に削除済み）＝404。競合ではないため409は返さない
+      // 対象ポートフォリオが存在しない（未登録・既に削除済み）＝404。競合ではないため409は返さない。
+      // 例外によりトランザクションがロールバックされるため、写真・タグの削除も取り消される
       log.warn(
           "PortfolioMst: Not Found for delete (AccountNo: {}, PortfolioNo: {})",
           accountNo,
           portfolioNo);
       throw ErrorEnum.PORTFOLIO_NOT_FOUND.toException();
     }
-
-    portfolioPhotoMapper.delete(
-        PortfolioPhotoCondition.byAccountAndPortfolio(accountNo, portfolioNo));
-    portfolioTagMstMapper.delete(
-        PortfolioTagMstCondition.byAccountAndPortfolio(accountNo, portfolioNo));
   }
 
   private void registChildren(Portfolio portfolio) {

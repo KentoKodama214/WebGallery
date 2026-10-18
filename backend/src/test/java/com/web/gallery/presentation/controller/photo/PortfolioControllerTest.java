@@ -319,6 +319,21 @@ class PortfolioControllerTest {
 
     @Test
     @Order(5)
+    @DisplayName("異常系：写真一覧が空（0枚）の場合、下書きでも400を返しServiceを呼び出さないこと")
+    void registPortfolio_emptyPhotoList() throws Exception {
+      mockMvc
+          .perform(
+              post(PORTFOLIOS)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("save_badrequest_empty_photo_list.json")))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
+
+      verify(portfolioService, times(0)).registPortfolio(any());
+    }
+
+    @Test
+    @Order(6)
     @DisplayName("異常系：写真番号が0以下の場合、400を返しServiceを呼び出さないこと")
     void registPortfolio_invalidPhotoNo() throws Exception {
       mockMvc
@@ -332,7 +347,7 @@ class PortfolioControllerTest {
     }
 
     @Test
-    @Order(6)
+    @Order(7)
     @DisplayName("異常系：認証ユーザーと異なるアカウントIDを指定した場合、403を返しServiceを呼び出さないこと")
     void registPortfolio_forbidden() throws Exception {
       doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
@@ -348,7 +363,7 @@ class PortfolioControllerTest {
     }
 
     @Test
-    @Order(7)
+    @Order(8)
     @DisplayName("異常系：テンプレートの設定内容が不正な場合、400とエラーメッセージを返すこと")
     void registPortfolio_invalidSettings() throws Exception {
       doThrow(ErrorEnum.INVALID_PORTFOLIO_SETTINGS.toException())
@@ -366,7 +381,7 @@ class PortfolioControllerTest {
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     @DisplayName("異常系：登録に失敗した場合、409を返すこと")
     void registPortfolio_registFailure() throws Exception {
       doThrow(ErrorEnum.FAIL_TO_REGIST_PORTFOLIO.toException())
@@ -424,6 +439,20 @@ class PortfolioControllerTest {
 
     @Test
     @Order(3)
+    @DisplayName("異常系：写真一覧が空（0枚）の場合、400を返しServiceを呼び出さないこと")
+    void updatePortfolio_emptyPhotoList() throws Exception {
+      mockMvc
+          .perform(
+              put(PORTFOLIOS + "/2")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("save_badrequest_empty_photo_list.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(portfolioService, times(0)).updatePortfolio(any());
+    }
+
+    @Test
+    @Order(4)
     @DisplayName("異常系：認証ユーザーと異なるアカウントIDを指定した場合、403を返しServiceを呼び出さないこと")
     void updatePortfolio_forbidden() throws Exception {
       doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
@@ -439,7 +468,7 @@ class PortfolioControllerTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     @DisplayName("異常系：公開中で更新後の内容が公開できない場合、400とエラーメッセージを返すこと")
     void updatePortfolio_notPublishable() throws Exception {
       doThrow(ErrorEnum.PORTFOLIO_NOT_PUBLISHABLE.toException())
@@ -457,7 +486,7 @@ class PortfolioControllerTest {
     }
 
     @Test
-    @Order(5)
+    @Order(6)
     @DisplayName("異常系：ポートフォリオが存在しない場合、404を返すこと")
     void updatePortfolio_notFound() throws Exception {
       doThrow(ErrorEnum.PORTFOLIO_NOT_FOUND.toException())

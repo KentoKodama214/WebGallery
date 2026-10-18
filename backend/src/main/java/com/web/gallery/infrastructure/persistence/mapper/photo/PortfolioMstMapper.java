@@ -39,7 +39,7 @@ public interface PortfolioMstMapper {
   public Integer delete(PortfolioMstCondition condition);
 
   /**
-   * アカウントが登録済みの最大のポートフォリオ番号を取得する（論理削除済みを含む）
+   * アカウントが登録済みの最大のポートフォリオ番号を取得する
    *
    * @param accountNo アカウント番号
    * @return 最大のポートフォリオ番号

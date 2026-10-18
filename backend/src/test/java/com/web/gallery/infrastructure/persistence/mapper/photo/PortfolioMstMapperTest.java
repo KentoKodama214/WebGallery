@@ -67,7 +67,6 @@ public class PortfolioMstMapperTest {
               .portfolioNo(1L)
               .createdBy(3L)
               .updatedBy(3L)
-              .isDeleted(false)
               .theme("光と影")
               .description("説明文")
               .templateKbn(PortfolioTemplateEnum.GRID)
@@ -97,7 +96,6 @@ public class PortfolioMstMapperTest {
           transactionNow,
           jdbcTemplate.queryForObject(
               "SELECT updated_at FROM photo.portfolio_mst WHERE id = 5", OffsetDateTime.class));
-      assertEquals(false, actual.get("is_deleted"));
       assertEquals("光と影", actual.get("theme"));
       assertEquals("説明文", actual.get("description"));
       assertEquals("grid", actual.get("template_kbn").toString());
@@ -117,14 +115,14 @@ public class PortfolioMstMapperTest {
   class update {
     @Test
     @Order(1)
-    @DisplayName("正常系：アカウント番号・ポートフォリオ番号に該当する未削除の1件だけを、指定した項目で更新すること")
+    @DisplayName("正常系：アカウント番号・ポートフォリオ番号に該当する1件だけを、指定した項目で更新すること")
     void update_success() {
       OffsetDateTime transactionNow =
           jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
 
       Integer actualCount =
           portfolioMstMapper.update(
-              PortfolioMstCondition.byAccountAndPortfolioNotDeleted(1L, 1L),
+              PortfolioMstCondition.byAccountAndPortfolio(1L, 1L),
               PortfolioMstUpdateTarget.builder()
                   .updatedBy(1L)
                   .theme("新テーマ")
@@ -142,7 +140,6 @@ public class PortfolioMstMapperTest {
       assertEquals("新説明", actual.get("description"));
       assertEquals("feature", actual.get("template_kbn").toString());
       assertEquals("draft", actual.get("status_kbn").toString());
-      assertEquals(false, actual.get("is_deleted"));
       assertTrue(isTemplateSettingsEqualTo(1L, "{}"));
       assertEquals(
           transactionNow,
@@ -161,7 +158,7 @@ public class PortfolioMstMapperTest {
     void update_partial() {
       Integer actualCount =
           portfolioMstMapper.update(
-              PortfolioMstCondition.byAccountAndPortfolioNotDeleted(1L, 1L),
+              PortfolioMstCondition.byAccountAndPortfolio(1L, 1L),
               PortfolioMstUpdateTarget.builder()
                   .updatedBy(1L)
                   .statusKbn(PortfolioStatusEnum.DRAFT)
@@ -178,44 +175,18 @@ public class PortfolioMstMapperTest {
 
     @Test
     @Order(3)
-    @DisplayName("正常系：論理削除済みのポートフォリオは、削除済みを除外する条件では更新されないこと")
-    void update_deletedNotUpdated() {
-      Integer actualCount =
-          portfolioMstMapper.update(
-              PortfolioMstCondition.byAccountAndPortfolioNotDeleted(1L, 3L),
-              PortfolioMstUpdateTarget.forDelete(1L));
-
-      assertEquals(0, actualCount);
-    }
-
-    @Test
-    @Order(4)
-    @DisplayName("正常系：論理削除の更新対象で、削除フラグを立てること")
-    void update_logicalDelete() {
-      Integer actualCount =
-          portfolioMstMapper.update(
-              PortfolioMstCondition.byAccountAndPortfolioNotDeleted(1L, 2L),
-              PortfolioMstUpdateTarget.forDelete(1L));
-
-      assertEquals(1, actualCount);
-      assertTrue(
-          jdbcTemplate.queryForObject(
-              "SELECT is_deleted FROM photo.portfolio_mst WHERE id = 2", Boolean.class));
-    }
-
-    @Test
-    @Order(5)
     @DisplayName("異常系：抽出条件が1つも指定されていない場合、全件更新せず0件となること")
     void update_noCondition() {
       Integer actualCount =
           portfolioMstMapper.update(
-              PortfolioMstCondition.builder().build(), PortfolioMstUpdateTarget.forDelete(1L));
+              PortfolioMstCondition.builder().build(),
+              PortfolioMstUpdateTarget.builder().updatedBy(1L).theme("新テーマ").build());
 
       assertEquals(0, actualCount);
       assertEquals(
-          1,
+          0,
           jdbcTemplate.queryForObject(
-              "SELECT COUNT(*) FROM photo.portfolio_mst WHERE is_deleted = true", Integer.class));
+              "SELECT COUNT(*) FROM photo.portfolio_mst WHERE theme = '新テーマ'", Integer.class));
     }
   }
 
@@ -227,7 +198,7 @@ public class PortfolioMstMapperTest {
   class delete {
     @Test
     @Order(1)
-    @DisplayName("正常系：アカウント番号に該当するポートフォリオを、論理削除済みも含めて物理削除すること")
+    @DisplayName("正常系：アカウント番号に該当するポートフォリオをすべて物理削除すること")
     void delete_byAccountNo() {
       // 外部キーで参照するポートフォリオ写真・タグを先に削除しておく
       jdbcTemplate.update("DELETE FROM photo.portfolio_photo WHERE account_no = 1");
@@ -248,6 +219,30 @@ public class PortfolioMstMapperTest {
 
     @Test
     @Order(2)
+    @DisplayName("正常系：アカウント番号・ポートフォリオ番号に該当する1件だけを物理削除すること")
+    void delete_byAccountAndPortfolio() {
+      // 外部キーで参照するポートフォリオ写真を先に削除しておく
+      jdbcTemplate.update(
+          "DELETE FROM photo.portfolio_photo WHERE account_no = 1 AND portfolio_no = 2");
+
+      Integer actualCount =
+          portfolioMstMapper.delete(PortfolioMstCondition.byAccountAndPortfolio(1L, 2L));
+
+      assertEquals(1, actualCount);
+      assertEquals(
+          List.of(1L, 3L),
+          jdbcTemplate.queryForList(
+              "SELECT portfolio_no FROM photo.portfolio_mst WHERE account_no = 1 ORDER BY portfolio_no",
+              Long.class));
+      // 他アカウントの同じ番号のポートフォリオは削除しない
+      assertEquals(
+          1,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.portfolio_mst WHERE account_no = 2", Integer.class));
+    }
+
+    @Test
+    @Order(3)
     @DisplayName("異常系：抽出条件が1つも指定されていない場合、全件削除せず0件となること")
     void delete_noCondition() {
       Integer actualCount = portfolioMstMapper.delete(PortfolioMstCondition.builder().build());
@@ -267,8 +262,8 @@ public class PortfolioMstMapperTest {
   class getMaxPortfolioNo {
     @Test
     @Order(1)
-    @DisplayName("正常系：論理削除済みを含めた最大のポートフォリオ番号を返すこと")
-    void getMaxPortfolioNo_includesDeleted() {
+    @DisplayName("正常系：登録済みの最大のポートフォリオ番号を返すこと")
+    void getMaxPortfolioNo_success() {
       assertEquals(3L, portfolioMstMapper.getMaxPortfolioNo(1L));
     }
 
@@ -288,44 +283,31 @@ public class PortfolioMstMapperTest {
   class selectList {
     @Test
     @Order(1)
-    @DisplayName("正常系：アカウント番号・削除済み除外で絞り込み、更新日時の新しい順に写真の枚数とあわせて取得すること")
-    void selectList_byAccountNoNotDeleted() {
-      List<PortfolioDto> actual =
-          portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNoNotDeleted(1L));
-
-      assertEquals(2, actual.size());
-      PortfolioDto first = actual.get(0);
-      assertEquals(1L, first.getAccountNo());
-      assertEquals(2L, first.getPortfolioNo());
-      assertEquals("ポートフォリオ12", first.getTheme());
-      assertEquals(PortfolioTemplateEnum.FEATURE, first.getTemplateKbn());
-      assertEquals(PortfolioStatusEnum.DRAFT, first.getStatusKbn());
-      assertEquals(1, first.getPhotoCount());
-      PortfolioDto second = actual.get(1);
-      assertEquals(1L, second.getPortfolioNo());
-      assertEquals(PortfolioTemplateEnum.GRID, second.getTemplateKbn());
-      assertEquals(PortfolioStatusEnum.PUBLISHED, second.getStatusKbn());
-      assertEquals(2, second.getPhotoCount());
-      assertTrue(UPDATED_AT_11.isEqual(second.getUpdatedAt()));
-    }
-
-    @Test
-    @Order(2)
-    @DisplayName("正常系：削除フラグを条件に含めない場合、論理削除済みも取得すること")
+    @DisplayName("正常系：アカウント番号で絞り込み、更新日時の新しい順に写真の枚数とあわせて取得すること")
     void selectList_byAccountNo() {
       List<PortfolioDto> actual =
           portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(1L));
 
       assertEquals(List.of(3L, 2L, 1L), actual.stream().map(PortfolioDto::getPortfolioNo).toList());
+      PortfolioDto second = actual.get(1);
+      assertEquals(1L, second.getAccountNo());
+      assertEquals("ポートフォリオ12", second.getTheme());
+      assertEquals(PortfolioTemplateEnum.FEATURE, second.getTemplateKbn());
+      assertEquals(PortfolioStatusEnum.DRAFT, second.getStatusKbn());
+      assertEquals(1, second.getPhotoCount());
+      PortfolioDto third = actual.get(2);
+      assertEquals(PortfolioTemplateEnum.GRID, third.getTemplateKbn());
+      assertEquals(PortfolioStatusEnum.PUBLISHED, third.getStatusKbn());
+      assertEquals(2, third.getPhotoCount());
+      assertTrue(UPDATED_AT_11.isEqual(third.getUpdatedAt()));
     }
 
     @Test
-    @Order(3)
+    @Order(2)
     @DisplayName("正常系：ポートフォリオ番号の条件で絞り込むこと")
     void selectList_byPortfolioNo() {
       List<PortfolioDto> actual =
-          portfolioMstMapper.selectList(
-              PortfolioMstCondition.byAccountAndPortfolioNotDeleted(2L, 1L));
+          portfolioMstMapper.selectList(PortfolioMstCondition.byAccountAndPortfolio(2L, 1L));
 
       assertEquals(1, actual.size());
       assertEquals("ポートフォリオ21", actual.get(0).getTheme());
@@ -333,11 +315,10 @@ public class PortfolioMstMapperTest {
     }
 
     @Test
-    @Order(4)
+    @Order(3)
     @DisplayName("正常系：該当するポートフォリオがない場合、0件となること")
     void selectList_none() {
-      assertTrue(
-          portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNoNotDeleted(3L)).isEmpty());
+      assertTrue(portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(3L)).isEmpty());
     }
   }
 
@@ -352,7 +333,7 @@ public class PortfolioMstMapperTest {
     @DisplayName("正常系：アカウント番号・ポートフォリオ番号で絞り込み、全項目（jsonbを含む）を取得すること")
     void select_success() {
       List<PortfolioMst> actual =
-          portfolioMstMapper.select(PortfolioMstCondition.byAccountAndPortfolioNotDeleted(1L, 1L));
+          portfolioMstMapper.select(PortfolioMstCondition.byAccountAndPortfolio(1L, 1L));
 
       assertEquals(1, actual.size());
       PortfolioMst mst = actual.get(0);
@@ -362,7 +343,6 @@ public class PortfolioMstMapperTest {
       assertEquals(1L, mst.getCreatedBy());
       assertEquals(1L, mst.getUpdatedBy());
       assertTrue(UPDATED_AT_11.isEqual(mst.getUpdatedAt()));
-      assertFalse(mst.getIsDeleted());
       assertEquals("ポートフォリオ11", mst.getTheme());
       assertEquals("説明11", mst.getDescription());
       assertEquals(PortfolioTemplateEnum.GRID, mst.getTemplateKbn());
@@ -374,20 +354,10 @@ public class PortfolioMstMapperTest {
 
     @Test
     @Order(2)
-    @DisplayName("正常系：論理削除済みのポートフォリオは、削除済みを除外する条件では取得しないこと")
-    void select_deletedExcluded() {
-      assertTrue(
-          portfolioMstMapper
-              .select(PortfolioMstCondition.byAccountAndPortfolioNotDeleted(1L, 3L))
-              .isEmpty());
-    }
-
-    @Test
-    @Order(3)
     @DisplayName("正常系：他アカウントのポートフォリオ番号を指定しても取得しないこと（アカウント番号とのAND条件）")
     void select_otherAccount() {
       List<PortfolioMst> actual =
-          portfolioMstMapper.select(PortfolioMstCondition.byAccountAndPortfolioNotDeleted(2L, 2L));
+          portfolioMstMapper.select(PortfolioMstCondition.byAccountAndPortfolio(2L, 2L));
 
       assertTrue(actual.isEmpty());
     }
@@ -401,12 +371,11 @@ public class PortfolioMstMapperTest {
   class selectByPhoto {
     @Test
     @Order(1)
-    @DisplayName("正常系：指定した写真を使用している未削除のポートフォリオを、ポートフォリオ番号順に取得すること")
+    @DisplayName("正常系：指定した写真を使用しているポートフォリオを、ポートフォリオ番号順に取得すること")
     void selectByPhoto_success() {
       List<PortfolioMst> actual = portfolioMstMapper.selectByPhoto(1L, 1L);
 
-      // 論理削除済みのポートフォリオ3も写真1を使用しているが、対象外とする
-      assertEquals(List.of(1L, 2L), actual.stream().map(PortfolioMst::getPortfolioNo).toList());
+      assertEquals(List.of(1L, 2L, 3L), actual.stream().map(PortfolioMst::getPortfolioNo).toList());
       assertEquals(
           Map.of("rows", List.of(Map.of("pattern", "TWO_EQUAL"))),
           actual.get(0).getTemplateSettings());

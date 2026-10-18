@@ -225,7 +225,7 @@ public class PortfolioControllerIntegrationTest {
       Map<String, Object> mst =
           jdbcTemplate.queryForMap(
               "SELECT theme, description, template_kbn::text AS template_kbn,"
-                  + " status_kbn::text AS status_kbn, created_by, updated_by, is_deleted"
+                  + " status_kbn::text AS status_kbn, created_by, updated_by"
                   + " FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 3");
       assertEquals("日本の動物・植物", mst.get("theme"));
       assertEquals("四季の動植物", mst.get("description"));
@@ -233,7 +233,6 @@ public class PortfolioControllerIntegrationTest {
       assertEquals("draft", mst.get("status_kbn"));
       assertEquals(1L, mst.get("created_by"));
       assertEquals(1L, mst.get("updated_by"));
-      assertEquals(false, mst.get("is_deleted"));
       assertEquals(
           transactionNow,
           jdbcTemplate.queryForObject(
@@ -497,7 +496,7 @@ public class PortfolioControllerIntegrationTest {
   class deletePortfolio {
     @Test
     @Order(1)
-    @DisplayName("正常系：ポートフォリオを論理削除し、写真・タグを物理削除する。以降は一覧・詳細で取得できない")
+    @DisplayName("正常系：ポートフォリオ本体・写真・タグを物理削除する。以降は詳細で取得できない")
     void deletePortfolio_success() throws Exception {
       mockMvc
           .perform(
@@ -507,10 +506,11 @@ public class PortfolioControllerIntegrationTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.message").value("ポートフォリオを削除しました。"));
 
-      assertTrue(
+      assertEquals(
+          0,
           jdbcTemplate.queryForObject(
-              "SELECT is_deleted FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 1",
-              Boolean.class));
+              "SELECT COUNT(*) FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 1",
+              Integer.class));
       assertEquals(
           0,
           jdbcTemplate.queryForObject(
@@ -557,7 +557,7 @@ public class PortfolioControllerIntegrationTest {
                   .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.templateList.length()").value(2))
-          .andExpect(jsonPath("$.gridRowPatternList.length()").value(3));
+          .andExpect(jsonPath("$.gridRowPatternList.length()").value(4));
     }
   }
 }

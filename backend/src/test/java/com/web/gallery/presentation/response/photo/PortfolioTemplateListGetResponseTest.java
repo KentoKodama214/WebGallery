@@ -36,17 +36,17 @@ class PortfolioTemplateListGetResponseTest {
               .map(PortfolioTemplateItemResponse::getDisplayName)
               .toList());
       assertEquals(
-          List.of("TWO_EQUAL", "THREE_EQUAL", "WIDE_NARROW"),
+          List.of("TWO_EQUAL", "THREE_EQUAL", "WIDE_NARROW", "NARROW_WIDE"),
           actual.getGridRowPatternList().stream()
               .map(GridRowPatternItemResponse::getPattern)
               .toList());
       assertEquals(
-          List.of(2, 3, 2),
+          List.of(2, 3, 2, 2),
           actual.getGridRowPatternList().stream()
               .map(GridRowPatternItemResponse::getPhotoCount)
               .toList());
       assertEquals(
-          List.of("2枚均等", "3枚均等", "横長1枚+正方形1枚"),
+          List.of("2枚均等", "3枚均等", "横長1枚+縦長1枚（縦長が右）", "縦長1枚+横長1枚（縦長が左）"),
           actual.getGridRowPatternList().stream()
               .map(GridRowPatternItemResponse::getDisplayName)
               .toList());
