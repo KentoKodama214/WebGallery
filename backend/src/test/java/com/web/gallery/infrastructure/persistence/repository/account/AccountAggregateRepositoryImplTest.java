@@ -137,7 +137,6 @@ public class AccountAggregateRepositoryImplTest {
       verify(portfolioMstMapper).delete(portfolioMstConditionCaptor.capture());
       assertEquals(1L, portfolioMstConditionCaptor.getValue().getAccountNo());
       assertNull(portfolioMstConditionCaptor.getValue().getPortfolioNo());
-      assertNull(portfolioMstConditionCaptor.getValue().getIsDeleted());
 
       ArgumentCaptor<PhotoViewLogCondition> photoViewLogConditionCaptor =
           ArgumentCaptor.forClass(PhotoViewLogCondition.class);

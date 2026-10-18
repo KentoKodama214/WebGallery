@@ -53,7 +53,7 @@ class PortfolioMstUpdateTargetTest {
   class forUpdate {
     @Test
     @Order(1)
-    @DisplayName("正常系：内容の更新に必要な項目が設定され、削除フラグは更新対象外（null）となること")
+    @DisplayName("正常系：内容の更新に必要な項目が設定されこと")
     void forUpdate_success() {
       PortfolioMstUpdateTarget actual =
           PortfolioMstUpdateTarget.forUpdate(
@@ -66,8 +66,6 @@ class PortfolioMstUpdateTargetTest {
       assertEquals(Map.of("rows", List.of()), actual.getTemplateSettings());
       assertEquals(1, actual.getSettingsVersion());
       assertEquals(PortfolioStatusEnum.PUBLISHED, actual.getStatusKbn());
-      // 内容の更新では論理削除しないため、削除フラグは「変更なし」としてnullで渡す
-      assertNull(actual.getIsDeleted());
     }
   }
 
@@ -85,34 +83,11 @@ class PortfolioMstUpdateTargetTest {
       assertEquals(1L, actual.getUpdatedBy());
       assertEquals(PortfolioStatusEnum.PUBLISHED, actual.getStatusKbn());
       // 公開状態の変更では内容を変更しないため、他の項目は「変更なし」としてnullで渡す
-      assertNull(actual.getIsDeleted());
       assertNull(actual.getTheme());
       assertNull(actual.getDescription());
       assertNull(actual.getTemplateKbn());
       assertNull(actual.getTemplateSettings());
       assertNull(actual.getSettingsVersion());
-    }
-  }
-
-  @Nested
-  @Order(3)
-  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class forDelete {
-    @Test
-    @Order(1)
-    @DisplayName("正常系：削除フラグ・更新者のみが設定され、それ以外は更新対象外（null）となること")
-    void forDelete_success() {
-      PortfolioMstUpdateTarget actual = PortfolioMstUpdateTarget.forDelete(1L);
-
-      assertEquals(1L, actual.getUpdatedBy());
-      assertTrue(actual.getIsDeleted());
-      // 論理削除では内容・公開状態を変更しないため、他の項目は「変更なし」としてnullで渡す
-      assertNull(actual.getTheme());
-      assertNull(actual.getDescription());
-      assertNull(actual.getTemplateKbn());
-      assertNull(actual.getTemplateSettings());
-      assertNull(actual.getSettingsVersion());
-      assertNull(actual.getStatusKbn());
     }
   }
 }

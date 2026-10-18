@@ -92,7 +92,7 @@ graph TD
     PHOTO_DETAIL -->|削除成功| PHOTO_LIST
     PHOTO_DETAIL -->|削除成功・公開中のポートフォリオが下書きに戻った<br/>（通知ダイアログのリンク）| PORTFOLIO_EDIT
     PORTFOLIO_SETTING -->|新規作成・テーマ選択| PORTFOLIO_EDIT
-    PORTFOLIO_EDIT -->|一覧へ戻る・削除成功| PORTFOLIO_SETTING
+    PORTFOLIO_EDIT -->|一覧へ戻る（左上）・削除成功（復元不可の確認後）| PORTFOLIO_SETTING
     PORTFOLIO_SETTING -->|公開ページを見る（別タブ）| PORTFOLIO_PUBLIC_LIST
     PORTFOLIO_EDIT -->|公開ページを見る（公開中のみ・別タブ）| PORTFOLIO_PUBLIC_DETAIL
     PORTFOLIO_PUBLIC_LIST -->|ポートフォリオ選択| PORTFOLIO_PUBLIC_DETAIL
@@ -232,7 +232,8 @@ sequenceDiagram
     User->>List: 新規作成
     List->>Edit: /{id}/portfolio_setting/edit に遷移
     User->>Edit: テーマ・説明文・テンプレート・タグ・写真（自分の写真から選択・並べ替え）・テンプレート固有の設定を入力
-    User->>Edit: 下書きとして登録
+    User->>Edit: グリッド型は「プレビューを表示」でレイアウトをダイアログで確認
+    User->>Edit: 下書きとして登録（写真が0枚の場合は、下書きでもエラーを表示して登録しない）
     Edit->>API: POST /api/v1/accounts/{id}/portfolios
     API-->>Edit: 登録成功（下書き）
     Edit->>Edit: ?portfolioNo= 付きのURLへ切り替え

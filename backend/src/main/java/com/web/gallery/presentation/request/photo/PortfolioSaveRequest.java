@@ -5,6 +5,7 @@ import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
@@ -46,9 +47,13 @@ public class PortfolioSaveRequest {
       example = "{}")
   private Map<String, Object> templateSettings;
 
-  /** 写真一覧（この並び順が表示順になる） */
+  /**
+   * 写真一覧（この並び順が表示順になる）
+   *
+   * <p>下書きでも1枚以上を必須とする
+   */
   @Schema(description = "写真一覧（この並び順が表示順になる）")
-  @NotNull(message = "{validation.common.notBlank}")
+  @NotEmpty(message = "{validation.portfolio.photoList.notEmpty}")
   @Size(max = Consts.PORTFOLIO_PHOTO_MAX_SIZE, message = "{validation.portfolio.photoList.maxSize}")
   @Valid
   private List<PortfolioPhotoSaveRequest> photoList;

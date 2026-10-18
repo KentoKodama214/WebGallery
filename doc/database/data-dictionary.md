@@ -37,7 +37,7 @@
 | 29 | inquiry_no | お問い合わせ番号 | bigint | - | アカウント単位のお問い合わせ連番。account_noとの複合UNIQUEを構成 | inquiry_mst |
 | 30 | ip_address | 送信元IPアドレス | varchar(45) | - | アクセス元のIPアドレス（IPv6を考慮した最大長） | login_history, photo_list_filter_log, photo_view_log |
 | 31 | is_admin_locked | 管理者ロックフラグ | boolean | false | 管理者が強制ロックした場合にtrue。ログイン失敗回数による自動ロック解除の対象外 | account |
-| 32 | is_deleted | 削除フラグ | boolean | false | 論理削除フラグ。trueの場合は削除済み | account, location_mst, photo_mst, portfolio_mst |
+| 32 | is_deleted | 削除フラグ | boolean | false | 論理削除フラグ。trueの場合は削除済み | account, location_mst, photo_mst |
 | 33 | is_favorite | お気に入り写真のみ絞り込みフラグ | boolean | - | 写真一覧の検索条件として「お気に入りのみ」が指定されたか | photo_list_filter_log |
 | 34 | is_location_public | 位置情報公開フラグ | boolean | false | trueなら撮影場所（緯度経度・住所・表示名）を写真所有者以外にも公開する。falseの場合、写真詳細APIは所有者以外へこれらを返さない | photo_mst |
 | 35 | is_read_by_user | ユーザー既読フラグ | boolean | true | 管理者の返信をユーザーが確認済みかどうか。返信投稿時にfalseへ更新される | inquiry_mst |
@@ -68,7 +68,7 @@
 | 60 | photo_no | 写真番号 | bigint | - | アカウント単位の写真連番。account_noとの複合UNIQUEを構成。portfolio_photoではポートフォリオに設定した写真（photo_mst(account_no, photo_no)へのFK）。写真削除時の参照用に(account_no, photo_no)のインデックスあり | photo_mst, photo_tag_mst, photo_view_log, portfolio_photo |
 | 61 | photo_settings | 写真設定 | jsonb | '{}' | テンプレート固有の写真単位の設定（JSON）。feature: theme/subTheme/description、grid: caption | portfolio_photo |
 | 62 | photo_view_log_no | 写真閲覧ログNo | bigserial | (自動採番) | 写真詳細閲覧ログのPK（自動採番） | photo_view_log |
-| 63 | portfolio_no | ポートフォリオ番号 | bigint | - | アカウント単位のポートフォリオ連番（論理削除済みを含めて採番）。portfolio_mstではaccount_noとの複合UNIQUEを構成し、portfolio_photo・portfolio_tag_mstでは(account_no, portfolio_no)でportfolio_mstへのFK | portfolio_mst, portfolio_photo, portfolio_tag_mst |
+| 63 | portfolio_no | ポートフォリオ番号 | bigint | - | アカウント単位のポートフォリオ連番（登録済みの最大値+1で採番。ポートフォリオは物理削除するため、最大の番号を削除した後は同じ番号が再び使われる）。portfolio_mstではaccount_noとの複合UNIQUEを構成し、portfolio_photo・portfolio_tag_mstでは(account_no, portfolio_no)でportfolio_mstへのFK | portfolio_mst, portfolio_photo, portfolio_tag_mst |
 | 64 | referer | リファラ | varchar(2048) | '' | 遷移元URL（Refererヘッダー）。取得できない場合は空文字 | photo_list_filter_log, photo_view_log |
 | 65 | region | 地域 | varchar(100) | '' | IPアドレスから解決した都道府県等のサブディビジョン名。未解決時は空文字 | login_history, photo_list_filter_log, photo_view_log |
 | 66 | reply_no | 返信番号 | bigint | - | お問い合わせ単位の返信連番。inquiry_idとの複合UNIQUEを構成 | inquiry_reply_mst |
@@ -78,14 +78,14 @@
 | 70 | shutter_speed | シャッタースピード | decimal(10,5) | - | EXIF情報から取得したシャッタースピード（秒単位） | photo_mst |
 | 71 | sort_by | 並び順 | photo.sort_photo_enum | - | photo_at（撮影日順）/favorite（お気に入り数順）/season（季節順） | photo_list_filter_log |
 | 72 | sort_order | 表示順 | int | - | 画面表示時のソート順序 | kbn_mst |
-| 73 | status_kbn | ステータス区分 / 公開状態区分 | common.inquiry_status_enum / photo.portfolio_status_enum | 'unreplied' / 'draft' | inquiry_mstではunreplied（未対応）/replied（回答済み）/withdrawn（取り下げ）。portfolio_mstではdraft（下書き）/published（公開）。公開ページは公開のポートフォリオのみ表示し、写真削除時は公開から下書きへ自動で戻す。(account_no, status_kbn)の部分インデックス（is_deleted = false）あり | inquiry_mst, portfolio_mst |
+| 73 | status_kbn | ステータス区分 / 公開状態区分 | common.inquiry_status_enum / photo.portfolio_status_enum | 'unreplied' / 'draft' | inquiry_mstではunreplied（未対応）/replied（回答済み）/withdrawn（取り下げ）。portfolio_mstではdraft（下書き）/published（公開）。公開ページは公開のポートフォリオのみ表示し、写真削除時は公開から下書きへ自動で戻す。(account_no, status_kbn)のインデックスあり | inquiry_mst, portfolio_mst |
 | 74 | subject | 件名 | varchar(100) | - | お問い合わせの件名。空文字不可 | inquiry_mst |
 | 75 | tag_english_name | タグ名（英語） | varchar(20) | '""' | 写真に付与するタグの英語名（任意入力） | photo_tag_mst, portfolio_tag_mst |
 | 76 | tag_japanese_name | タグ名（日本語） | varchar(20) | - | 写真に付与するタグの日本語名（必須入力） | photo_tag_mst, portfolio_tag_mst |
 | 77 | tag_list | タグリスト | varchar(500) | '' | 写真一覧の検索条件として指定されたタグの生文字列 | photo_list_filter_log |
 | 78 | tag_no | タグ番号 | bigint | - | 写真単位のタグ連番。account_no, photo_noとの複合UNIQUEを構成。portfolio_tag_mstではポートフォリオ単位のタグ連番で、account_no, portfolio_noとの複合UNIQUEを構成 | photo_tag_mst, portfolio_tag_mst |
 | 79 | template_kbn | テンプレート区分 | photo.portfolio_template_enum | - | feature（フィーチャー型）/grid（グリッド型） | portfolio_mst |
-| 80 | template_settings | テンプレート設定 | jsonb | '{}' | テンプレート固有のポートフォリオ単位の設定（JSON）。feature: なし、grid: rows（各行のpatternにTWO_EQUAL/THREE_EQUAL/WIDE_NARROW） | portfolio_mst |
+| 80 | template_settings | テンプレート設定 | jsonb | '{}' | テンプレート固有のポートフォリオ単位の設定（JSON）。feature: なし、grid: rows（各行のpatternにTWO_EQUAL（2枚均等）/THREE_EQUAL（3枚均等）/WIDE_NARROW（横長1枚+縦長1枚。縦長が右）/NARROW_WIDE（縦長1枚+横長1枚。縦長が左）） | portfolio_mst |
 | 81 | theme | テーマ | varchar(100) | - | ポートフォリオのテーマ。空文字不可 | portfolio_mst |
 | 82 | token_hash | トークンハッシュ | varchar(256) | - | リフレッシュトークンをSHA-256でハッシュ化した値。検索用インデックスあり | refresh_token |
 | 83 | token_id | トークンID | bigserial | (自動採番) | リフレッシュトークンのPK（自動採番） | refresh_token |

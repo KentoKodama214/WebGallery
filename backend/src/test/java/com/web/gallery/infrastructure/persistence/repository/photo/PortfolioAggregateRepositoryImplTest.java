@@ -149,7 +149,6 @@ class PortfolioAggregateRepositoryImplTest {
       assertEquals(2L, mst.getPortfolioNo());
       assertEquals(1L, mst.getCreatedBy());
       assertEquals(1L, mst.getUpdatedBy());
-      assertFalse(mst.getIsDeleted());
       assertEquals("日本の自然", mst.getTheme());
       assertEquals("説明文", mst.getDescription());
       assertEquals(PortfolioTemplateEnum.GRID, mst.getTemplateKbn());
@@ -252,7 +251,6 @@ class PortfolioAggregateRepositoryImplTest {
 
       assertEquals(1L, conditionCaptor.getValue().getAccountNo());
       assertEquals(2L, conditionCaptor.getValue().getPortfolioNo());
-      assertFalse(conditionCaptor.getValue().getIsDeleted());
       PortfolioMstUpdateTarget target = targetCaptor.getValue();
       assertEquals(1L, target.getUpdatedBy());
       assertEquals("日本の自然", target.getTheme());
@@ -262,8 +260,6 @@ class PortfolioAggregateRepositoryImplTest {
           Map.of("rows", List.of(Map.of("pattern", "TWO_EQUAL"))), target.getTemplateSettings());
       assertEquals(1, target.getSettingsVersion());
       assertEquals(PortfolioStatusEnum.DRAFT, target.getStatusKbn());
-      // 内容の更新では論理削除しないため、削除フラグは「変更なし」としてnullで渡す
-      assertNull(target.getIsDeleted());
       assertEquals(1L, photoConditionCaptor.getValue().getAccountNo());
       assertEquals(2L, photoConditionCaptor.getValue().getPortfolioNo());
       assertEquals(1L, tagConditionCaptor.getValue().getAccountNo());
@@ -326,7 +322,6 @@ class PortfolioAggregateRepositoryImplTest {
       verify(portfolioMstMapper).update(conditionCaptor.capture(), targetCaptor.capture());
       assertEquals(1L, conditionCaptor.getValue().getAccountNo());
       assertEquals(2L, conditionCaptor.getValue().getPortfolioNo());
-      assertFalse(conditionCaptor.getValue().getIsDeleted());
       assertEquals(1L, targetCaptor.getValue().getUpdatedBy());
       assertEquals(PortfolioStatusEnum.PUBLISHED, targetCaptor.getValue().getStatusKbn());
       // 公開状態の変更では内容を変更しないため、他の項目は「変更なし」としてnullで渡す
@@ -355,51 +350,46 @@ class PortfolioAggregateRepositoryImplTest {
   class delete {
     @Test
     @Order(1)
-    @DisplayName("正常系：ポートフォリオ本体を論理削除し、写真・タグを物理削除すること")
+    @DisplayName("正常系：写真・タグを物理削除したうえで、ポートフォリオ本体を物理削除すること")
     void delete_success() throws Exception {
-      doReturn(1)
-          .when(portfolioMstMapper)
-          .update(any(PortfolioMstCondition.class), any(PortfolioMstUpdateTarget.class));
+      doReturn(1).when(portfolioMstMapper).delete(any(PortfolioMstCondition.class));
 
       portfolioAggregateRepositoryImpl.delete(
           Portfolio.forDelete(new AccountNo(1L), new PortfolioNo(2L)));
 
       ArgumentCaptor<PortfolioMstCondition> conditionCaptor =
           ArgumentCaptor.forClass(PortfolioMstCondition.class);
-      ArgumentCaptor<PortfolioMstUpdateTarget> targetCaptor =
-          ArgumentCaptor.forClass(PortfolioMstUpdateTarget.class);
       ArgumentCaptor<PortfolioPhotoCondition> photoConditionCaptor =
           ArgumentCaptor.forClass(PortfolioPhotoCondition.class);
       ArgumentCaptor<PortfolioTagMstCondition> tagConditionCaptor =
           ArgumentCaptor.forClass(PortfolioTagMstCondition.class);
-      verify(portfolioMstMapper).update(conditionCaptor.capture(), targetCaptor.capture());
-      verify(portfolioPhotoMapper).delete(photoConditionCaptor.capture());
-      verify(portfolioTagMstMapper).delete(tagConditionCaptor.capture());
+      // 写真・タグは外部キーでポートフォリオ本体を参照するため、先に削除する
+      InOrder inOrder = inOrder(portfolioPhotoMapper, portfolioTagMstMapper, portfolioMstMapper);
+      inOrder.verify(portfolioPhotoMapper).delete(photoConditionCaptor.capture());
+      inOrder.verify(portfolioTagMstMapper).delete(tagConditionCaptor.capture());
+      inOrder.verify(portfolioMstMapper).delete(conditionCaptor.capture());
+      verify(portfolioMstMapper, never())
+          .update(any(PortfolioMstCondition.class), any(PortfolioMstUpdateTarget.class));
 
       assertEquals(1L, conditionCaptor.getValue().getAccountNo());
       assertEquals(2L, conditionCaptor.getValue().getPortfolioNo());
-      assertFalse(conditionCaptor.getValue().getIsDeleted());
-      assertTrue(targetCaptor.getValue().getIsDeleted());
-      assertEquals(1L, targetCaptor.getValue().getUpdatedBy());
+      assertEquals(1L, photoConditionCaptor.getValue().getAccountNo());
       assertEquals(2L, photoConditionCaptor.getValue().getPortfolioNo());
+      assertEquals(1L, tagConditionCaptor.getValue().getAccountNo());
       assertEquals(2L, tagConditionCaptor.getValue().getPortfolioNo());
     }
 
     @Test
     @Order(2)
-    @DisplayName("異常系：対象が存在しない（未登録・削除済み）場合、PortfolioNotFoundExceptionをthrowし、写真・タグを削除しないこと")
+    @DisplayName("異常系：対象が存在しない（未登録・削除済み）場合、PortfolioNotFoundExceptionをthrowすること")
     void delete_notFound() {
-      doReturn(0)
-          .when(portfolioMstMapper)
-          .update(any(PortfolioMstCondition.class), any(PortfolioMstUpdateTarget.class));
+      doReturn(0).when(portfolioMstMapper).delete(any(PortfolioMstCondition.class));
 
       assertThrows(
           PortfolioNotFoundException.class,
           () ->
               portfolioAggregateRepositoryImpl.delete(
                   Portfolio.forDelete(new AccountNo(1L), new PortfolioNo(2L))));
-      verify(portfolioPhotoMapper, never()).delete(any(PortfolioPhotoCondition.class));
-      verify(portfolioTagMstMapper, never()).delete(any(PortfolioTagMstCondition.class));
     }
   }
 }

@@ -80,6 +80,30 @@ describe("PortfolioEditForm", () => {
       expect(mockSavePortfolio).not.toHaveBeenCalled();
     });
 
+    it("写真を選択していない場合は、下書きでもエラーを表示し、保存しないこと", async () => {
+      render(<PortfolioEditForm accountId="user1" />);
+
+      fireEvent.change(screen.getByLabelText(/テーマ/, { selector: "#portfolio-theme" }), {
+        target: { value: "日本の自然" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "下書きとして登録" }));
+
+      expect(await screen.findByText("写真を1枚以上選択してください")).toBeInTheDocument();
+      expect(screen.queryByText("テーマを入力してください")).not.toBeInTheDocument();
+      expect(mockSavePortfolio).not.toHaveBeenCalled();
+    });
+
+    it("一覧へ戻るリンクを、見出しより前（左上）に表示すること", () => {
+      render(<PortfolioEditForm accountId="user1" />);
+
+      const backLink = screen.getByRole("link", { name: /ポートフォリオ一覧へ戻る/ });
+      expect(backLink).toHaveAttribute("href", "/user1/portfolio_setting");
+      const heading = screen.getByRole("heading", { level: 1, name: "ポートフォリオ作成" });
+      expect(
+        backLink.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    });
+
     it("選択した写真とフィーチャー型の項目だけを送って下書き登録し、編集用URLへ切り替えること", async () => {
       mockGetPhotoList.mockResolvedValue({
         isLast: true,
@@ -158,6 +182,22 @@ describe("PortfolioEditForm", () => {
         "行の枚数の合計 2枚 / 写真 2枚"
       );
       expect(screen.getByLabelText("タグ1（日本語）")).toHaveValue("自然");
+    });
+
+    it("グリッド型のプレビューは画面内に表示せず、ボタンを押すとダイアログで表示すること", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(gridDetail);
+
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+      expect(screen.queryByTestId("grid-preview")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "プレビューを表示" }));
+      const dialog = screen.getByRole("dialog", { name: "プレビュー" });
+      expect(within(dialog).getByTestId("grid-preview")).toBeInTheDocument();
+      expect(within(dialog).getAllByTestId("grid-preview-row")).toHaveLength(1);
+
+      fireEvent.click(within(dialog).getByRole("button", { name: "閉じる" }));
+      expect(screen.queryByRole("dialog", { name: "プレビュー" })).not.toBeInTheDocument();
     });
 
     it("行を追加すると枚数の不一致を表示し、写真の並べ替えとグリッド型の項目だけを送って更新すること", async () => {
@@ -269,6 +309,7 @@ describe("PortfolioEditForm", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "削除" }));
       expect(screen.getByText("ポートフォリオを削除してもよろしいですか？")).toBeInTheDocument();
+      expect(screen.getByText("削除したポートフォリオは復元できません。")).toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: "削除する" }));
 
       await waitFor(() => {

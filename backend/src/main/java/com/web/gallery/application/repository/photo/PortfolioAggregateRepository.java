@@ -34,7 +34,7 @@ public interface PortfolioAggregateRepository {
   /**
    * ポートフォリオ集約を削除する
    *
-   * <p>写真・タグを物理削除したうえでポートフォリオ本体を論理削除する
+   * <p>写真・タグ・ポートフォリオ本体を物理削除する（復元はできない）
    *
    * @param portfolio {@link Portfolio}
    * @throws GalleryException ポートフォリオが存在しない（未登録・削除済み）場合

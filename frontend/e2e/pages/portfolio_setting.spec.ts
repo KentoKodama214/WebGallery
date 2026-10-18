@@ -57,7 +57,7 @@ authTest.describe("ポートフォリオ設定ページ（ログイン済み）"
   );
 
   authTest(
-    "写真なしの下書きを登録すると編集画面に切り替わり、一覧に下書きとして表示されること",
+    "写真を選択せずに下書き登録しようとするとエラーが表示され、登録されないこと",
     async ({ workerPage: page, testUser }) => {
       const theme = `E2E下書き${Date.now()}`;
       await page.goto(`/${testUser.accountId}/portfolio_setting/edit`);
@@ -65,17 +65,18 @@ authTest.describe("ポートフォリオ設定ページ（ログイン済み）"
 
       await page.getByRole("button", { name: "下書きとして登録" }).click();
 
-      await authExpect(page.getByText("ポートフォリオを登録しました。")).toBeVisible({
+      await authExpect(page.getByText("写真を1枚以上選択してください")).toBeVisible();
+      await authExpect(page).toHaveURL(/\/portfolio_setting\/edit$/);
+
+      // 左上の「一覧へ戻る」から一覧へ戻ると、登録されていないことを確認できる
+      await page.getByRole("link", { name: "ポートフォリオ一覧へ戻る" }).click();
+      await authExpect(page).toHaveURL(new RegExp(`/${testUser.accountId}/portfolio_setting$`), {
         timeout: 10000,
       });
-      await authExpect(page).toHaveURL(/\/portfolio_setting\/edit\?portfolioNo=\d+$/);
-      await authExpect(page.getByTestId("portfolio-status")).toHaveText("下書き");
-
-      await page.getByRole("link", { name: "一覧へ戻る" }).click();
-      const row = page.getByTestId("portfolio-row").filter({ hasText: theme });
-      await authExpect(row).toBeVisible({ timeout: 10000 });
-      await authExpect(row).toContainText("下書き");
-      await authExpect(row).toContainText("0枚");
+      await authExpect(page.getByRole("link", { name: "新規作成" })).toBeVisible({
+        timeout: 10000,
+      });
+      await authExpect(page.getByTestId("portfolio-row").filter({ hasText: theme })).toHaveCount(0);
     }
   );
 
@@ -112,6 +113,12 @@ authTest.describe("ポートフォリオ設定ページ（ログイン済み）"
       await page.getByRole("button", { name: "行を追加" }).click();
       await page.getByRole("button", { name: "タグを追加" }).click();
       await expectNoAccessibilityViolations(page);
+
+      await page.getByRole("button", { name: "プレビューを表示" }).click();
+      await authExpect(page.getByRole("dialog", { name: "プレビュー" })).toBeVisible();
+      await expectNoAccessibilityViolations(page);
+      await page.getByRole("button", { name: "閉じる" }).click();
+      await authExpect(page.getByRole("dialog", { name: "プレビュー" })).toHaveCount(0);
     }
   );
 });
