@@ -118,19 +118,22 @@ const (
 	GridRowPatternTwoEqual GridRowPattern = "TWO_EQUAL"
 	// 3枚を均等幅で並べる
 	GridRowPatternThreeEqual GridRowPattern = "THREE_EQUAL"
-	// 横長1枚と正方形1枚を並べる
+	// 横長1枚（左）と縦長1枚（右）を並べる
 	GridRowPatternWideNarrow GridRowPattern = "WIDE_NARROW"
+	// 縦長1枚（左）と横長1枚（右）を並べる
+	GridRowPatternNarrowWide GridRowPattern = "NARROW_WIDE"
 )
 
 var AllGridRowPattern = []GridRowPattern{
 	GridRowPatternTwoEqual,
 	GridRowPatternThreeEqual,
 	GridRowPatternWideNarrow,
+	GridRowPatternNarrowWide,
 }
 
 func (e GridRowPattern) IsValid() bool {
 	switch e {
-	case GridRowPatternTwoEqual, GridRowPatternThreeEqual, GridRowPatternWideNarrow:
+	case GridRowPatternTwoEqual, GridRowPatternThreeEqual, GridRowPatternWideNarrow, GridRowPatternNarrowWide:
 		return true
 	}
 	return false

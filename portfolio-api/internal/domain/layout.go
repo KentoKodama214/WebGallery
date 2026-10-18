@@ -33,13 +33,16 @@ type GridRowPattern string
 const (
 	GridRowTwoEqual   GridRowPattern = "TWO_EQUAL"
 	GridRowThreeEqual GridRowPattern = "THREE_EQUAL"
+	// GridRowWideNarrow は横長1枚（左）と縦長1枚（右）。
 	GridRowWideNarrow GridRowPattern = "WIDE_NARROW"
+	// GridRowNarrowWide は縦長1枚（左）と横長1枚（右）。
+	GridRowNarrowWide GridRowPattern = "NARROW_WIDE"
 )
 
 // photoCount は行パターンごとの1行あたりの写真の枚数。未知の行パターンは 0 を返す。
 func (p GridRowPattern) photoCount() int {
 	switch p {
-	case GridRowTwoEqual, GridRowWideNarrow:
+	case GridRowTwoEqual, GridRowWideNarrow, GridRowNarrowWide:
 		return 2
 	case GridRowThreeEqual:
 		return 3

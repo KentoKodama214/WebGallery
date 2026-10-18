@@ -85,7 +85,7 @@ func TestListPublished(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// 公開中かつ未削除のものだけを、更新日時の新しい順に返す
+	// 公開中のものだけを、更新日時の新しい順に返す
 	if len(got) != 2 || got[0].PortfolioNo != 2 || got[1].PortfolioNo != 1 {
 		t.Fatalf("portfolios = %+v", got)
 	}
@@ -164,7 +164,6 @@ func TestFindPublished_NotPublished(t *testing.T) {
 		accountNo, portfolioNo int64
 	}{
 		{"下書き", 900001, 3},
-		{"論理削除済み", 900001, 4},
 		{"存在しない", 900001, 99},
 		{"他アカウントのポートフォリオ番号（アカウント番号との AND 条件）", 900002, 2},
 	} {

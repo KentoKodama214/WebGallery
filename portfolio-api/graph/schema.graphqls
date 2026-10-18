@@ -112,8 +112,10 @@ enum GridRowPattern {
   TWO_EQUAL
   "3枚を均等幅で並べる"
   THREE_EQUAL
-  "横長1枚と正方形1枚を並べる"
+  "横長1枚（左）と縦長1枚（右）を並べる"
   WIDE_NARROW
+  "縦長1枚（左）と横長1枚（右）を並べる"
+  NARROW_WIDE
 }
 
 "グリッド型の行"
