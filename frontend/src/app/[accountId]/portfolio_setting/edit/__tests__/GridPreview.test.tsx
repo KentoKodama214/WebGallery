@@ -36,6 +36,25 @@ describe("GridPreview", () => {
     expect(screen.queryByText("空き")).not.toBeInTheDocument();
   });
 
+  it("縦長1枚+横長1枚は、縦長（3:4）を左・横長（3:2）を右に、横幅1:2で並べること", () => {
+    render(<GridPreview photos={[1, 2].map(photo)} rows={["NARROW_WIDE"]} />);
+
+    const cells = Array.from(screen.getByTestId("grid-preview-row").children) as HTMLElement[];
+    expect(cells.map((cell) => cell.textContent)).toEqual(["写真1", "写真2"]);
+    expect(cells[0].style.getPropertyValue("aspect-ratio")).toBe("3 / 4");
+    expect(cells[1].style.getPropertyValue("aspect-ratio")).toBe("3 / 2");
+    expect(cells[0].style.flexGrow).toBe("1");
+    expect(cells[1].style.flexGrow).toBe("2");
+  });
+
+  it("横長1枚+縦長1枚は、横長（3:2）を左・縦長（3:4）を右に並べること", () => {
+    render(<GridPreview photos={[1, 2].map(photo)} rows={["WIDE_NARROW"]} />);
+
+    const cells = Array.from(screen.getByTestId("grid-preview-row").children) as HTMLElement[];
+    expect(cells[0].style.getPropertyValue("aspect-ratio")).toBe("3 / 2");
+    expect(cells[1].style.getPropertyValue("aspect-ratio")).toBe("3 / 4");
+  });
+
   it("写真が足りない場合は空き枠を表示すること", () => {
     render(<GridPreview photos={[photo(1)]} rows={["THREE_EQUAL"]} />);
 

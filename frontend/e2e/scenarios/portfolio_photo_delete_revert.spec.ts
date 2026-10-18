@@ -89,5 +89,18 @@ test.describe("ポートフォリオの公開と、写真削除による下書�
       });
       await expect(page.getByTestId("portfolio-status")).toHaveText("公開中");
     });
+
+    await test.step("ポートフォリオを削除すると、復元できない旨を確認したうえで削除され、一覧から消える", async () => {
+      await page.getByRole("button", { name: "削除", exact: true }).click();
+      await expect(page.getByText("削除したポートフォリオは復元できません。")).toBeVisible();
+      await page.getByRole("button", { name: "削除する" }).click();
+
+      await expect(page).toHaveURL(new RegExp(`/${accountId}/portfolio_setting$`), {
+        timeout: 10000,
+      });
+      await expect(page.getByText("ポートフォリオはありません")).toBeVisible({
+        timeout: 10000,
+      });
+    });
   });
 });

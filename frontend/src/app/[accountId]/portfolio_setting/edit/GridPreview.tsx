@@ -1,7 +1,7 @@
 "use client";
 
 import { sanitizeImageUrl } from "@/lib/url";
-import { GRID_ROW_PATTERN_PHOTO_COUNT, GRID_ROW_PATTERN_RATIOS, type SelectedPhoto } from "./types";
+import { GRID_ROW_PATTERN_CELLS, GRID_ROW_PATTERN_PHOTO_COUNT, type SelectedPhoto } from "./types";
 
 interface GridPreviewProps {
   /** 表示順に並べた写真 */
@@ -20,11 +20,11 @@ export function GridPreview({ photos, rows }: GridPreviewProps) {
   let cursor = 0;
   const rowItems = rows.map((pattern) => {
     const count = GRID_ROW_PATTERN_PHOTO_COUNT[pattern] ?? 0;
-    const ratios = GRID_ROW_PATTERN_RATIOS[pattern] ?? [];
-    const cells = ratios.slice(0, count).map((ratio) => {
+    const shapes = GRID_ROW_PATTERN_CELLS[pattern] ?? [];
+    const cells = shapes.slice(0, count).map((shape) => {
       const photo = photos[cursor];
       cursor++;
-      return { ratio, photo };
+      return { shape, photo };
     });
     return { pattern, cells };
   });
@@ -37,7 +37,7 @@ export function GridPreview({ photos, rows }: GridPreviewProps) {
           {row.cells.map((cell, cellIndex) => (
             <div
               key={cellIndex}
-              style={{ flex: cell.ratio, aspectRatio: cell.ratio === 2 ? "2 / 1" : "1 / 1" }}
+              style={{ flex: cell.shape.flex, aspectRatio: cell.shape.aspectRatio }}
               className="bg-gray-200 overflow-hidden rounded flex items-center justify-center"
             >
               {cell.photo ? (

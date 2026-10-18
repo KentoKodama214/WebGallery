@@ -150,6 +150,7 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
   const [successMessage, setSuccessMessage] = useState("");
   const [showPicker, setShowPicker] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   // 取得リクエストの世代。後着レスポンスが入力中の内容を上書きする競合を防ぐ
   const loadSeqRef = useRef(0);
@@ -283,6 +284,10 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     if (!theme.trim()) {
       nextErrors.theme = "テーマを入力してください";
     }
+    if (photos.length === 0) {
+      // 下書きでも写真のないポートフォリオは保存できない（バックエンドも400で拒否する）
+      nextErrors.photos = "写真を1枚以上選択してください";
+    }
     tags.forEach((tag, index) => {
       if (!tag.tagJapaneseName.trim()) {
         nextErrors[`tag-${index}`] = "タグ（日本語）を入力してください";
@@ -400,6 +405,12 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
   return (
     <div className="flex flex-col items-center py-8 px-4">
       <div className="w-full max-w-[900px] flex flex-col gap-6">
+        <Link
+          href={`/${accountId}/portfolio_setting`}
+          className="text-blue-700 hover:underline text-sm self-start"
+        >
+          &larr; ポートフォリオ一覧へ戻る
+        </Link>
         <div className="flex flex-wrap justify-between items-center gap-2">
           <h1 className="text-xl font-bold">
             {portfolioNo === undefined ? "ポートフォリオ作成" : "ポートフォリオ編集"}
@@ -417,9 +428,6 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                 {PORTFOLIO_STATUS_LABELS[statusKbn]}
               </span>
             )}
-            <Link href={`/${accountId}/portfolio_setting`} className="text-blue-700 hover:underline">
-              一覧へ戻る
-            </Link>
           </div>
         </div>
 
@@ -500,6 +508,11 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
               写真を選択
             </button>
           </div>
+          {errors.photos && (
+            <p id="portfolio-photos-error" className="text-red-700 text-sm">
+              {errors.photos}
+            </p>
+          )}
           {photos.length === 0 ? (
             <p className="text-gray-600 text-sm">写真が選択されていません</p>
           ) : (
@@ -669,8 +682,13 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
             </ol>
             {gridRows.length > 0 && (
               <div>
-                <h3 className="text-sm font-bold mb-2">プレビュー</h3>
-                <GridPreview photos={photos} rows={gridRows} />
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(true)}
+                  className="px-4 py-2 text-sm border border-blue-700 text-blue-700 rounded hover:bg-blue-50"
+                >
+                  プレビューを表示
+                </button>
               </div>
             )}
           </section>
@@ -815,6 +833,37 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
         />
       )}
 
+      {showPreview && (
+        <ModalDialog
+          onClose={() => setShowPreview(false)}
+          labelledBy="grid-preview-heading"
+          initialFocusSelector="[data-dialog-initial-focus]"
+          testId="grid-preview-dialog"
+          overlayClassName="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          containerClassName="bg-white rounded shadow-lg w-full max-w-[900px] max-h-[90vh] flex flex-col"
+        >
+          <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
+            <h2 id="grid-preview-heading" className="font-bold">
+              プレビュー
+            </h2>
+            <button
+              type="button"
+              data-dialog-initial-focus
+              onClick={() => setShowPreview(false)}
+              className="px-4 py-2 text-sm border rounded"
+            >
+              閉じる
+            </button>
+          </div>
+          {/* 写真・行が多いと縦に長くなるため、ダイアログの中だけをスクロールさせる。
+              中にフォーカスできる要素がないため、キーボードでもスクロールできるようにする */}
+          <div className="overflow-y-auto px-6 py-4" tabIndex={0} aria-label="プレビューの内容">
+
+            <GridPreview photos={photos} rows={gridRows} />
+          </div>
+        </ModalDialog>
+      )}
+
       {showDeleteConfirm && (
         <ModalDialog
           onClose={isSubmitting ? undefined : () => setShowDeleteConfirm(false)}
@@ -823,7 +872,8 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
           overlayClassName="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
           containerClassName="bg-white rounded shadow-lg p-6 w-full max-w-[400px]"
         >
-          <p className="mb-4">ポートフォリオを削除してもよろしいですか？</p>
+          <p className="mb-2">ポートフォリオを削除してもよろしいですか？</p>
+          <p className="mb-4 text-sm text-red-700">削除したポートフォリオは復元できません。</p>
           <p role="alert" className="text-red-700 text-sm mb-2 empty:sr-only">
             {deleteError}
           </p>
