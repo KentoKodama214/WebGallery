@@ -92,7 +92,6 @@ class PortfolioMstRepositoryImplTest {
         .createdAt(CREATED_AT)
         .updatedBy(1L)
         .updatedAt(UPDATED_AT)
-        .isDeleted(false)
         .theme("日本の自然")
         .description("説明文")
         .templateKbn(PortfolioTemplateEnum.GRID)
@@ -193,7 +192,6 @@ class PortfolioMstRepositoryImplTest {
       verify(portfolioMstMapper).selectList(conditionCaptor.capture());
       assertEquals(1L, conditionCaptor.getValue().getAccountNo());
       assertNull(conditionCaptor.getValue().getPortfolioNo());
-      assertFalse(conditionCaptor.getValue().getIsDeleted());
 
       assertEquals(1, actual.size());
       PortfolioModel model = actual.get(0);
@@ -243,7 +241,6 @@ class PortfolioMstRepositoryImplTest {
       verify(portfolioMstMapper).select(conditionCaptor.capture());
       assertEquals(1L, conditionCaptor.getValue().getAccountNo());
       assertEquals(2L, conditionCaptor.getValue().getPortfolioNo());
-      assertFalse(conditionCaptor.getValue().getIsDeleted());
       ArgumentCaptor<PortfolioPhotoCondition> photoConditionCaptor =
           ArgumentCaptor.forClass(PortfolioPhotoCondition.class);
       verify(portfolioPhotoMapper).selectList(photoConditionCaptor.capture());

@@ -68,7 +68,6 @@ class PortfolioMstTest {
       assertNull(actual.getCreatedAt());
       assertEquals(1L, actual.getUpdatedBy());
       assertNull(actual.getUpdatedAt());
-      assertFalse(actual.getIsDeleted());
       assertEquals("日本の自然", actual.getTheme());
       assertEquals("説明文", actual.getDescription());
       assertEquals(PortfolioTemplateEnum.GRID, actual.getTemplateKbn());

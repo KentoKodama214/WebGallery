@@ -54,7 +54,7 @@ public class PortfolioMstRepositoryImpl implements PortfolioMstRepository {
   /**
    * アカウント番号から新しいポートフォリオ番号を発番する
    *
-   * <p>論理削除済みのポートフォリオ番号も含めた最大値の次の番号とする（一意制約に論理削除済みの行も含まれるため）
+   * <p>登録済みのポートフォリオ番号の最大値の次の番号とする。ポートフォリオは物理削除するため、 最大の番号のポートフォリオを削除した後に登録すると、その番号が再び使われる
    *
    * @param accountNo アカウント番号
    * @return 新規採番したポートフォリオ番号
@@ -73,8 +73,7 @@ public class PortfolioMstRepositoryImpl implements PortfolioMstRepository {
   @Override
   public PortfolioModelList getPortfolioList(AccountNo accountNo) {
     List<PortfolioDto> dtoList =
-        portfolioMstMapper.selectList(
-            PortfolioMstCondition.byAccountNoNotDeleted(accountNo.value()));
+        portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(accountNo.value()));
     return PortfolioModelList.of(dtoList.stream().map(this::toPortfolioModel).toList());
   }
 
@@ -91,8 +90,7 @@ public class PortfolioMstRepositoryImpl implements PortfolioMstRepository {
       throws GalleryException {
     List<PortfolioMst> portfolioMstList =
         portfolioMstMapper.select(
-            PortfolioMstCondition.byAccountAndPortfolioNotDeleted(
-                accountNo.value(), portfolioNo.value()));
+            PortfolioMstCondition.byAccountAndPortfolio(accountNo.value(), portfolioNo.value()));
     if (portfolioMstList.isEmpty()) {
       log.info(
           "PortfolioMst: Not Found (AccountNo: {}, PortfolioNo: {})",
