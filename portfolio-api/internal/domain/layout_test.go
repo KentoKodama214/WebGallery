@@ -61,10 +61,10 @@ func TestBuildLayout_Grid(t *testing.T) {
 	}{
 		{
 			name:     "行パターンの枚数ずつ、写真を表示順に各行へ割り当てる",
-			settings: rows("TWO_EQUAL", "THREE_EQUAL", "WIDE_NARROW"),
-			photos:   7,
-			want:     []GridRowPattern{GridRowTwoEqual, GridRowThreeEqual, GridRowWideNarrow},
-			wantNos:  [][]int64{{1, 2}, {3, 4, 5}, {6, 7}},
+			settings: rows("TWO_EQUAL", "THREE_EQUAL", "WIDE_NARROW", "NARROW_WIDE"),
+			photos:   9,
+			want:     []GridRowPattern{GridRowTwoEqual, GridRowThreeEqual, GridRowWideNarrow, GridRowNarrowWide},
+			wantNos:  [][]int64{{1, 2}, {3, 4, 5}, {6, 7}, {8, 9}},
 		},
 		{
 			name:     "写真が足りない行以降は表示しない",

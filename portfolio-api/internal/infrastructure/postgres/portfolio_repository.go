@@ -77,7 +77,6 @@ func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64
 		) cover ON true
 		WHERE pm.account_no = $1
 			AND pm.status_kbn = 'published'
-			AND pm.is_deleted = false
 		ORDER BY pm.updated_at DESC, pm.portfolio_no DESC`, accountNo)
 	if err != nil {
 		return nil, err
@@ -141,8 +140,7 @@ func (r *PortfolioRepository) FindPublished(ctx context.Context, accountNo, port
 		FROM photo.portfolio_mst
 		WHERE account_no = $1
 			AND portfolio_no = $2
-			AND status_kbn = 'published'
-			AND is_deleted = false`, accountNo, portfolioNo,
+			AND status_kbn = 'published'`, accountNo, portfolioNo,
 	).Scan(&p.AccountNo, &p.PortfolioNo, &p.Theme, &p.Description, &template, &settings, &p.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil

@@ -14,12 +14,11 @@ insert into photo.photo_mst (account_no, photo_no, created_by, created_at, updat
   (900001, 3, 900001, now(), 900001, now(), true, now(), 0, '900001/3-ccc.jpg', 'c.jpg', '削除済み', '', '', 'vertical', 24, 8.0, 1, 100, false),
   (900002, 1, 900002, now(), 900002, now(), false, now(), 0, '900002/1-ddd.jpg', 'd.jpg', '橋杭岩', '', '', 'horizontal', 24, 8.0, 1, 100, false);
 
-insert into photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, is_deleted, theme, description, template_kbn, template_settings, settings_version, status_kbn) values
-  (900001, 1, 900001, now(), 900001, '2026-02-01 09:00:00+09', false, '光と影', '説明1', 'grid', '{"rows": [{"pattern": "TWO_EQUAL"}]}', 1, 'published'),
-  (900001, 2, 900001, now(), 900001, '2026-03-01 09:00:00+09', false, '日本の自然', '', 'feature', '{}', 1, 'published'),
-  (900001, 3, 900001, now(), 900001, '2026-04-01 09:00:00+09', false, '下書き', '', 'feature', '{}', 1, 'draft'),
-  (900001, 4, 900001, now(), 900001, '2026-05-01 09:00:00+09', true, '削除済み', '', 'feature', '{}', 1, 'published'),
-  (900002, 1, 900002, now(), 900002, '2026-06-01 09:00:00+09', false, '他人', '', 'feature', '{}', 1, 'published');
+insert into photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn) values
+  (900001, 1, 900001, now(), 900001, '2026-02-01 09:00:00+09', '光と影', '説明1', 'grid', '{"rows": [{"pattern": "TWO_EQUAL"}]}', 1, 'published'),
+  (900001, 2, 900001, now(), 900001, '2026-03-01 09:00:00+09', '日本の自然', '', 'feature', '{}', 1, 'published'),
+  (900001, 3, 900001, now(), 900001, '2026-04-01 09:00:00+09', '下書き', '', 'feature', '{}', 1, 'draft'),
+  (900002, 1, 900002, now(), 900002, '2026-06-01 09:00:00+09', '他人', '', 'feature', '{}', 1, 'published');
 
 insert into photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) values
   (900001, 1, 2, 900001, now(), 1, '{"caption": "茶畑"}'),
