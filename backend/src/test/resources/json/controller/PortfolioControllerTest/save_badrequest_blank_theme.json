@@ -1,5 +1,7 @@
 {
   "theme": "",
   "templateKbn": "feature",
-  "photoList": []
+  "photoList": [
+    { "photoNo": 1 }
+  ]
 }

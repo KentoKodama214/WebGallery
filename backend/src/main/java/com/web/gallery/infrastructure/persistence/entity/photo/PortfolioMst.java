@@ -34,9 +34,6 @@ public class PortfolioMst {
   /** 更新日時 */
   private OffsetDateTime updatedAt;
 
-  /** 削除フラグ */
-  private Boolean isDeleted;
-
   /** テーマ */
   private String theme;
 
@@ -75,7 +72,6 @@ public class PortfolioMst {
         .portfolioNo(model.getPortfolioNo().value())
         .createdBy(model.getAccountNo().value())
         .updatedBy(model.getAccountNo().value())
-        .isDeleted(false)
         .theme(model.getTheme().value())
         .description(model.getDescription().value())
         .templateKbn(model.getTemplateKbn())

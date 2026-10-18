@@ -72,11 +72,11 @@ insert into common.inquiry_reply_mst values(DEFAULT, (select id from common.inqu
 -- 回答本文だけが消えるのを避けるため）なので、正常系の削除フィクスチャには含められない。
 -- ブロックされることの検証には AccountServiceImplDeleteAccountAdminReplyIntegrationTest.sql を重ねて使う
 
--- photo.portfolio_mst (account_no=1の公開中・論理削除済みのポートフォリオ各1件、account_no=2のポートフォリオ1件)
+-- photo.portfolio_mst (account_no=1の公開中・下書きのポートフォリオ各1件、account_no=2のポートフォリオ1件)
 -- common.account への外部キーが ON DELETE RESTRICT のため、削除漏れがあるとアカウント本体の物理削除が失敗する
-insert into photo.portfolio_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, 'ポートフォリオ11', '説明11', 'feature', '{}', 1, 'published');
-insert into photo.portfolio_mst values(DEFAULT, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', true, 'ポートフォリオ12', '説明12', 'grid', '{"rows":[]}', 1, 'draft');
-insert into photo.portfolio_mst values(DEFAULT, 2, 1, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2000-01-02 09:00:00 Asia/Tokyo', false, 'ポートフォリオ21', '説明21', 'feature', '{}', 1, 'draft');
+insert into photo.portfolio_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', 'ポートフォリオ11', '説明11', 'feature', '{}', 1, 'published');
+insert into photo.portfolio_mst values(DEFAULT, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', 'ポートフォリオ12', '説明12', 'grid', '{"rows":[]}', 1, 'draft');
+insert into photo.portfolio_mst values(DEFAULT, 2, 1, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2000-01-02 09:00:00 Asia/Tokyo', 'ポートフォリオ21', '説明21', 'feature', '{}', 1, 'draft');
 
 -- photo.portfolio_photo (photo.photo_mst・photo.portfolio_mst を外部キーで参照する)
 insert into photo.portfolio_photo values(DEFAULT, 1, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '{"theme":"テーマ11"}');

@@ -19,8 +19,6 @@ CREATE TABLE photo.portfolio_mst
 	updated_by bigint NOT NULL,
 	-- 更新日時
 	updated_at timestamp with time zone NOT NULL,
-	-- 削除フラグ
-	is_deleted boolean DEFAULT 'false' NOT NULL,
 	-- テーマ: 空文字不可
 	theme varchar(100) NOT NULL,
 	-- 説明文
@@ -53,7 +51,7 @@ ALTER TABLE photo.portfolio_mst
 
 /* Create Indexes */
 -- 公開ページでのアカウント単位の公開中ポートフォリオ取得で使用する
-CREATE INDEX idx_portfolio_mst_account_no_status_kbn ON photo.portfolio_mst (account_no, status_kbn) WHERE is_deleted = false;
+CREATE INDEX idx_portfolio_mst_account_no_status_kbn ON photo.portfolio_mst (account_no, status_kbn);
 
 
 /* Comments */
@@ -65,7 +63,6 @@ COMMENT ON COLUMN photo.portfolio_mst.created_by IS '作成者';
 COMMENT ON COLUMN photo.portfolio_mst.created_at IS '作成日時';
 COMMENT ON COLUMN photo.portfolio_mst.updated_by IS '更新者';
 COMMENT ON COLUMN photo.portfolio_mst.updated_at IS '更新日時';
-COMMENT ON COLUMN photo.portfolio_mst.is_deleted IS '削除フラグ';
 COMMENT ON COLUMN photo.portfolio_mst.theme IS 'テーマ : 空文字不可';
 COMMENT ON COLUMN photo.portfolio_mst.description IS '説明文';
 COMMENT ON COLUMN photo.portfolio_mst.template_kbn IS 'テンプレート区分: feature(フィーチャー型)、grid(グリッド型)';

@@ -22,6 +22,7 @@ class GridRowPatternEnumTest {
     @DisplayName("正常系：Enum名に一致する場合、対応するEnum値を返すこと")
     void fromName_matched() {
       assertEquals(GridRowPatternEnum.WIDE_NARROW, GridRowPatternEnum.fromName("WIDE_NARROW"));
+      assertEquals(GridRowPatternEnum.NARROW_WIDE, GridRowPatternEnum.fromName("NARROW_WIDE"));
     }
 
     @Test
@@ -50,6 +51,7 @@ class GridRowPatternEnumTest {
       assertEquals(2, GridRowPatternEnum.TWO_EQUAL.getPhotoCount());
       assertEquals(3, GridRowPatternEnum.THREE_EQUAL.getPhotoCount());
       assertEquals(2, GridRowPatternEnum.WIDE_NARROW.getPhotoCount());
+      assertEquals(2, GridRowPatternEnum.NARROW_WIDE.getPhotoCount());
     }
   }
 }

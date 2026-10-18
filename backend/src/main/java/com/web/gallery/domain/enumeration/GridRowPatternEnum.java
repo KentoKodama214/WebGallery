@@ -18,8 +18,10 @@ public enum GridRowPatternEnum {
   TWO_EQUAL(2, "2枚均等"),
   /** 3枚を均等幅で並べる */
   THREE_EQUAL(3, "3枚均等"),
-  /** 横長1枚と正方形1枚を並べる */
-  WIDE_NARROW(2, "横長1枚+正方形1枚");
+  /** 横長1枚（左）と縦長1枚（右）を並べる */
+  WIDE_NARROW(2, "横長1枚+縦長1枚（縦長が右）"),
+  /** 縦長1枚（左）と横長1枚（右）を並べる */
+  NARROW_WIDE(2, "縦長1枚+横長1枚（縦長が左）");
 
   /** 1行に配置する写真の枚数 */
   private final Integer photoCount;
