@@ -1,11 +1,14 @@
 package com.web.gallery.application.service.impl.photo;
 
 import com.web.gallery.application.aggregate.Portfolio;
+import com.web.gallery.application.config.PortfolioConfig;
+import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
+import com.web.gallery.application.repository.account.AccountRepository;
 import com.web.gallery.application.repository.photo.FileRepository;
 import com.web.gallery.application.repository.photo.PortfolioAggregateRepository;
 import com.web.gallery.application.repository.photo.PortfolioMstRepository;
@@ -15,7 +18,10 @@ import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.PortfolioCount;
 import com.web.gallery.domain.model.photo.PortfolioNo;
+import com.web.gallery.domain.model.photo.PortfolioUpperLimits;
+import com.web.gallery.domain.service.PortfolioQuotaPolicy;
 import com.web.gallery.domain.service.PortfolioTemplateSettingsPolicy;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +38,10 @@ public class PortfolioServiceImpl implements PortfolioService {
   private final PortfolioMstRepository portfolioMstRepository;
   private final PortfolioAggregateRepository portfolioAggregateRepository;
   private final FileRepository fileRepository;
+  private final AccountRepository accountRepository;
+  private final PortfolioConfig portfolioConfig;
   private final PortfolioTemplateSettingsPolicy portfolioTemplateSettingsPolicy;
+  private final PortfolioQuotaPolicy portfolioQuotaPolicy;
 
   /**
    * 本人のポートフォリオ一覧（下書きを含む）を取得する
@@ -78,13 +87,16 @@ public class PortfolioServiceImpl implements PortfolioService {
   /**
    * ポートフォリオを下書きとして新規登録する
    *
+   * <p>作成済みのポートフォリオ（下書きを含む）の件数が、アカウントの権限区分ごとの上限に達している場合は登録しない
+   *
    * @param requestDetail 登録リクエストのポートフォリオ詳細情報
    * @return 新規採番したポートフォリオ番号
-   * @throws GalleryException 以下のいずれかに該当する場合 ・設定内容が不正な場合 ・設定できない写真が含まれる場合 ・登録に失敗した場合
+   * @throws GalleryException 以下のいずれかに該当する場合 ・作成数が上限に達している場合 ・設定内容が不正な場合 ・設定できない写真が含まれる場合 ・登録に失敗した場合
    */
   @Override
   @Transactional(rollbackFor = GalleryException.class)
   public PortfolioNo registPortfolio(PortfolioDetailModel requestDetail) throws GalleryException {
+    validateQuota(requestDetail.getAccountNo());
     validateContent(requestDetail);
 
     PortfolioNo newPortfolioNo =
@@ -93,6 +105,26 @@ public class PortfolioServiceImpl implements PortfolioService {
     portfolioAggregateRepository.regist(portfolio);
 
     return portfolio.getPortfolioNo();
+  }
+
+  /**
+   * 作成済みのポートフォリオの件数が、アカウントの権限区分ごとの上限に達していないことを検証する
+   *
+   * @param accountNo アカウント番号
+   * @throws GalleryException 作成数が上限に達している場合
+   */
+  private void validateQuota(AccountNo accountNo) throws GalleryException {
+    AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
+    PortfolioUpperLimits upperLimits =
+        new PortfolioUpperLimits(
+            portfolioConfig.getMiniUserUpperLimit(), portfolioConfig.getNormalUserUpperLimit());
+    if (portfolioQuotaPolicy.isReached(
+        accountModel.getAuthorityKbn(),
+        new PortfolioCount(portfolioMstRepository.count(accountNo)),
+        upperLimits)) {
+      log.info("Portfolio: Reached Upper Limit (AccountNo: {})", accountNo.value());
+      throw ErrorEnum.REACHED_PORTFOLIO_LIMIT.toException();
+    }
   }
 
   /**

@@ -34,6 +34,7 @@ import com.web.gallery.presentation.converter.photo.PortfolioConverter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -92,6 +93,33 @@ class PortfolioControllerTest {
             .getInputStream()
             .readAllBytes(),
         StandardCharsets.UTF_8);
+  }
+
+  /**
+   * 写真・タグの件数を指定した登録・更新リクエストのJSONを生成する
+   *
+   * @param photoCount 写真の枚数
+   * @param tagCount タグの件数
+   * @return リクエストのJSON
+   */
+  private String saveJson(int photoCount, int tagCount) {
+    String photoList =
+        String.join(
+            ",",
+            IntStream.rangeClosed(1, photoCount)
+                .mapToObj(no -> "{\"photoNo\":" + no + "}")
+                .toList());
+    String tagList =
+        String.join(
+            ",",
+            IntStream.rangeClosed(1, tagCount)
+                .mapToObj(no -> "{\"tagJapaneseName\":\"タグ" + no + "\"}")
+                .toList());
+    return "{\"theme\":\"日本の自然\",\"templateKbn\":\"feature\",\"photoList\":["
+        + photoList
+        + "],\"tagList\":["
+        + tagList
+        + "]}";
   }
 
   @Nested
@@ -348,6 +376,62 @@ class PortfolioControllerTest {
 
     @Test
     @Order(7)
+    @DisplayName("正常系：写真が上限（200枚）・タグが上限（30件）ちょうどの場合、Serviceを呼び出して登録すること")
+    void registPortfolio_exactlyAtSizeLimit() throws Exception {
+      doReturn(new PortfolioNo(7L)).when(portfolioService).registPortfolio(any());
+
+      mockMvc
+          .perform(
+              post(PORTFOLIOS).contentType(MediaType.APPLICATION_JSON).content(saveJson(200, 30)))
+          .andExpect(status().isOk());
+
+      verify(portfolioService, times(1)).registPortfolio(any());
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("異常系：写真が上限（200枚）を超える場合、400を返しServiceを呼び出さないこと")
+    void registPortfolio_tooManyPhotos() throws Exception {
+      mockMvc
+          .perform(
+              post(PORTFOLIOS).contentType(MediaType.APPLICATION_JSON).content(saveJson(201, 0)))
+          .andExpect(status().isBadRequest());
+
+      verify(portfolioService, times(0)).registPortfolio(any());
+    }
+
+    @Test
+    @Order(9)
+    @DisplayName("異常系：タグが上限（30件）を超える場合、400を返しServiceを呼び出さないこと")
+    void registPortfolio_tooManyTags() throws Exception {
+      mockMvc
+          .perform(
+              post(PORTFOLIOS).contentType(MediaType.APPLICATION_JSON).content(saveJson(1, 31)))
+          .andExpect(status().isBadRequest());
+
+      verify(portfolioService, times(0)).registPortfolio(any());
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("異常系：作成数が上限に達している場合、400と上限に達した旨のメッセージを返すこと")
+    void registPortfolio_reachedLimit() throws Exception {
+      doThrow(ErrorEnum.REACHED_PORTFOLIO_LIMIT.toException())
+          .when(portfolioService)
+          .registPortfolio(any());
+
+      mockMvc
+          .perform(
+              post(PORTFOLIOS)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("save_grid_success.json")))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              jsonPath("$.message").value(ErrorEnum.REACHED_PORTFOLIO_LIMIT.getErrorMessage()));
+    }
+
+    @Test
+    @Order(11)
     @DisplayName("異常系：認証ユーザーと異なるアカウントIDを指定した場合、403を返しServiceを呼び出さないこと")
     void registPortfolio_forbidden() throws Exception {
       doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
@@ -363,7 +447,7 @@ class PortfolioControllerTest {
     }
 
     @Test
-    @Order(8)
+    @Order(12)
     @DisplayName("異常系：テンプレートの設定内容が不正な場合、400とエラーメッセージを返すこと")
     void registPortfolio_invalidSettings() throws Exception {
       doThrow(ErrorEnum.INVALID_PORTFOLIO_SETTINGS.toException())
@@ -381,7 +465,7 @@ class PortfolioControllerTest {
     }
 
     @Test
-    @Order(9)
+    @Order(13)
     @DisplayName("異常系：登録に失敗した場合、409を返すこと")
     void registPortfolio_registFailure() throws Exception {
       doThrow(ErrorEnum.FAIL_TO_REGIST_PORTFOLIO.toException())

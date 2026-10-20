@@ -2,6 +2,11 @@
 insert into common.account values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$password1', '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
 insert into common.account values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1900-01-01', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
 
+-- common.account_authority
+-- account_no=1：mini-user（ポートフォリオの作成数上限は application-test.yml の3個。作成済みは2個）、account_no=2：normal-user
+insert into common.account_authority values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'mini-user');
+insert into common.account_authority values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', 'normal-user');
+
 -- photo.photo_mst (account_no=1の写真3件（写真番号3は論理削除済み）、account_no=2の写真1件)
 insert into photo.photo_mst values(1, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2021-01-01 09:00:00 Asia/Tokyo', 0, '1/1-aaa.jpg', 'DSC11.jpg', '金閣寺', 'Kinkakuji', '', 'horizontal', 24, 8.0, 1, 100, false);
 insert into photo.photo_mst values(2, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2021-02-01 09:00:00 Asia/Tokyo', 0, '1/2-bbb.jpg', 'DSC12.jpg', '原山の茶畑', 'Harayama', '', 'square', 36, 9.0, 2, 200, false);

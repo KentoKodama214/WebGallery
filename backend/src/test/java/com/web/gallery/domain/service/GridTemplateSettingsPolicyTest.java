@@ -2,6 +2,7 @@ package com.web.gallery.domain.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.model.photo.PhotoCount;
 import com.web.gallery.domain.model.photo.TemplateSettings;
 import java.util.Arrays;
@@ -57,20 +58,24 @@ class GridTemplateSettingsPolicyTest {
 
     @Test
     @Order(3)
-    @DisplayName("正常系：行数が上限（100行）ちょうどの場合、trueを返すこと")
+    @DisplayName("正常系：行数が上限（写真枚数の上限と同じ200行）ちょうどの場合、trueを返すこと")
     void isValidTemplateSettings_exactlyAtLimit() {
       assertTrue(
           policy.isValidTemplateSettings(
-              rows(Collections.nCopies(100, "TWO_EQUAL").toArray(String[]::new))));
+              rows(
+                  Collections.nCopies(Consts.PORTFOLIO_PHOTO_MAX_SIZE, "TWO_EQUAL")
+                      .toArray(String[]::new))));
     }
 
     @Test
     @Order(4)
-    @DisplayName("異常系：行数が上限（100行）を超える場合、falseを返すこと")
+    @DisplayName("異常系：行数が上限（写真枚数の上限と同じ200行）を超える場合、falseを返すこと")
     void isValidTemplateSettings_tooManyRows() {
       assertFalse(
           policy.isValidTemplateSettings(
-              rows(Collections.nCopies(101, "TWO_EQUAL").toArray(String[]::new))));
+              rows(
+                  Collections.nCopies(Consts.PORTFOLIO_PHOTO_MAX_SIZE + 1, "TWO_EQUAL")
+                      .toArray(String[]::new))));
     }
 
     @Test

@@ -10,12 +10,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.web.gallery.application.aggregate.Portfolio;
+import com.web.gallery.application.config.PortfolioConfig;
+import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioTagModelList;
+import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.enumeration.PortfolioStatusEnum;
 import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
@@ -28,11 +31,15 @@ import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.PhotoCount;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.domain.model.photo.PortfolioCount;
 import com.web.gallery.domain.model.photo.PortfolioDescription;
 import com.web.gallery.domain.model.photo.PortfolioNo;
 import com.web.gallery.domain.model.photo.PortfolioTheme;
+import com.web.gallery.domain.model.photo.PortfolioUpperLimits;
 import com.web.gallery.domain.model.photo.TemplateSettings;
+import com.web.gallery.domain.service.PortfolioQuotaPolicy;
 import com.web.gallery.domain.service.PortfolioTemplateSettingsPolicy;
+import com.web.gallery.infrastructure.persistence.repository.account.AccountRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.photo.FileRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.photo.PortfolioAggregateRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.photo.PortfolioMstRepositoryImpl;
@@ -66,6 +73,12 @@ class PortfolioServiceImplTest {
   @Mock private FileRepositoryImpl fileRepositoryImpl;
 
   @Mock private PortfolioTemplateSettingsPolicy portfolioTemplateSettingsPolicy;
+
+  @Mock private AccountRepositoryImpl accountRepositoryImpl;
+
+  @Mock private PortfolioConfig portfolioConfig;
+
+  @Mock private PortfolioQuotaPolicy portfolioQuotaPolicy;
 
   private static final AccountNo ACCOUNT_NO = new AccountNo(1L);
 
@@ -106,6 +119,20 @@ class PortfolioServiceImplTest {
   /** 設定の構造・公開可否の判定を、既定ですべて妥当とする */
   @BeforeEach
   void setUpPolicyStub() {
+    // 作成数の上限は、既定では上限に達していない状態とする（上限の判定は registPortfolio の各テストで検証する）
+    lenient()
+        .doReturn(
+            AccountModel.builder().accountNo(ACCOUNT_NO).authorityKbn(AuthorityEnum.MINI).build())
+        .when(accountRepositoryImpl)
+        .getByAccountNo(ACCOUNT_NO);
+    lenient().doReturn(3).when(portfolioConfig).getMiniUserUpperLimit();
+    lenient().doReturn(10).when(portfolioConfig).getNormalUserUpperLimit();
+    lenient().doReturn(0).when(portfolioMstRepositoryImpl).count(ACCOUNT_NO);
+    lenient()
+        .doReturn(false)
+        .when(portfolioQuotaPolicy)
+        .isReached(
+            any(AuthorityEnum.class), any(PortfolioCount.class), any(PortfolioUpperLimits.class));
     lenient()
         .doReturn(true)
         .when(portfolioTemplateSettingsPolicy)
@@ -229,6 +256,40 @@ class PortfolioServiceImplTest {
 
     @Test
     @Order(2)
+    @DisplayName("正常系：作成数の上限の判定に、アカウントの権限区分・作成済みの件数・設定値の上限を渡すこと")
+    void registPortfolio_quotaArguments() throws GalleryException {
+      doReturn(2).when(portfolioMstRepositoryImpl).count(ACCOUNT_NO);
+      doReturn(1).when(portfolioMstRepositoryImpl).countAvailablePhotos(eq(ACCOUNT_NO), any());
+      doReturn(new PortfolioNo(3L)).when(portfolioMstRepositoryImpl).getNewPortfolioNo(ACCOUNT_NO);
+
+      portfolioServiceImpl.registPortfolio(detail(null, null, 3L));
+
+      verify(portfolioQuotaPolicy)
+          .isReached(AuthorityEnum.MINI, new PortfolioCount(2), new PortfolioUpperLimits(3, 10));
+      verify(portfolioAggregateRepositoryImpl).regist(any(Portfolio.class));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：作成数が上限に達している場合、REACHED_PORTFOLIO_LIMITのBadRequestExceptionをthrowし、登録しないこと")
+    void registPortfolio_reachedLimit() throws GalleryException {
+      doReturn(3).when(portfolioMstRepositoryImpl).count(ACCOUNT_NO);
+      doReturn(true)
+          .when(portfolioQuotaPolicy)
+          .isReached(AuthorityEnum.MINI, new PortfolioCount(3), new PortfolioUpperLimits(3, 10));
+
+      BadRequestException exception =
+          assertThrows(
+              BadRequestException.class,
+              () -> portfolioServiceImpl.registPortfolio(detail(null, null, 3L)));
+
+      assertEquals(ErrorEnum.REACHED_PORTFOLIO_LIMIT.getErrorCode(), exception.getErrorCode());
+      verify(portfolioMstRepositoryImpl, never()).getNewPortfolioNo(any(AccountNo.class));
+      verify(portfolioAggregateRepositoryImpl, never()).regist(any(Portfolio.class));
+    }
+
+    @Test
+    @Order(4)
     @DisplayName("正常系：写真が0枚の下書きも登録できること")
     void registPortfolio_noPhoto() throws GalleryException {
       doReturn(0).when(portfolioMstRepositoryImpl).countAvailablePhotos(eq(ACCOUNT_NO), any());
@@ -239,7 +300,7 @@ class PortfolioServiceImplTest {
     }
 
     @Test
-    @Order(3)
+    @Order(5)
     @DisplayName("異常系：同じ写真が重複して指定された場合、INVALID_INPUTのBadRequestExceptionをthrowし、登録しないこと")
     void registPortfolio_duplicatePhoto() throws GalleryException {
       BadRequestException exception =
@@ -252,7 +313,7 @@ class PortfolioServiceImplTest {
     }
 
     @Test
-    @Order(4)
+    @Order(6)
     @DisplayName(
         "異常系：ポートフォリオ単位の設定の構造が不正な場合、INVALID_PORTFOLIO_SETTINGSのBadRequestExceptionをthrowすること")
     void registPortfolio_invalidTemplateSettings() throws GalleryException {
@@ -270,7 +331,7 @@ class PortfolioServiceImplTest {
     }
 
     @Test
-    @Order(5)
+    @Order(7)
     @DisplayName("異常系：写真単位の設定の構造が不正な場合、INVALID_PORTFOLIO_SETTINGSのBadRequestExceptionをthrowすること")
     void registPortfolio_invalidPhotoSettings() throws GalleryException {
       doReturn(false)
@@ -287,7 +348,7 @@ class PortfolioServiceImplTest {
     }
 
     @Test
-    @Order(6)
+    @Order(8)
     @DisplayName(
         "異常系：本人が所有する未削除の写真以外が含まれる場合、PORTFOLIO_PHOTO_NOT_AVAILABLEのBadRequestExceptionをthrowすること")
     void registPortfolio_unavailablePhoto() throws GalleryException {

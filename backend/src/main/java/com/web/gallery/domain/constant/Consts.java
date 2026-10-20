@@ -81,10 +81,10 @@ public final class Consts {
   public static final int PORTFOLIO_CAPTION_MAX_LENGTH = 100;
 
   /** 1つのポートフォリオに設定できる写真枚数の上限（アノテーション属性で参照するためint型で定義する） */
-  public static final int PORTFOLIO_PHOTO_MAX_SIZE = 100;
+  public static final int PORTFOLIO_PHOTO_MAX_SIZE = 200;
 
   /** 1つのポートフォリオに登録できるタグ数の上限（アノテーション属性で参照するためint型で定義する） */
-  public static final int PORTFOLIO_TAG_MAX_SIZE = 20;
+  public static final int PORTFOLIO_TAG_MAX_SIZE = 30;
 
   /** ポートフォリオのテンプレート設定・写真設定のJSON構造の現行バージョン */
   public static final int PORTFOLIO_SETTINGS_VERSION = 1;
