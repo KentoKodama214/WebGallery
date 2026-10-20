@@ -20,6 +20,14 @@ public interface PortfolioMstRepository {
   PortfolioNo getNewPortfolioNo(AccountNo accountNo);
 
   /**
+   * アカウントが作成済みのポートフォリオの件数（下書きを含む）を取得する
+   *
+   * @param accountNo アカウント番号
+   * @return 作成済みの件数
+   */
+  Integer count(AccountNo accountNo);
+
+  /**
    * 本人のポートフォリオ一覧（下書きを含む）を、更新日時の新しい順に取得する
    *
    * @param accountNo アカウント番号

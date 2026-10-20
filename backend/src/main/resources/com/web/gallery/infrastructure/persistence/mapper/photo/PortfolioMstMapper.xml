@@ -128,6 +128,18 @@
 			account_no = #{accountNo}
 	</select>
 
+	<select id="count" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition" resultType="Integer">
+		SELECT
+			COUNT(*)
+		FROM
+			photo.portfolio_mst pm
+		<where>
+			<include refid="portfolioMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+	</select>
+
 	<select id="selectList" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition" resultMap="PortfolioDtoMap">
 		SELECT
 			pm.account_no,

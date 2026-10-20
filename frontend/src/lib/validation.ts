@@ -116,10 +116,10 @@ export const PORTFOLIO_DESCRIPTION_MAX_LENGTH = 2000;
 export const PORTFOLIO_CAPTION_MAX_LENGTH = 100;
 
 /** 1つのポートフォリオに設定できる写真枚数の上限（バックエンドの Consts.PORTFOLIO_PHOTO_MAX_SIZE と一致させること） */
-export const PORTFOLIO_PHOTO_MAX_SIZE = 100;
+export const PORTFOLIO_PHOTO_MAX_SIZE = 200;
 
 /** 1つのポートフォリオに登録できるタグ数の上限（バックエンドの Consts.PORTFOLIO_TAG_MAX_SIZE と一致させること） */
-export const PORTFOLIO_TAG_MAX_SIZE = 20;
+export const PORTFOLIO_TAG_MAX_SIZE = 30;
 
 /**
  * 分析ログ用に送信する遷移元URL（`document.referrer`）の最大文字数

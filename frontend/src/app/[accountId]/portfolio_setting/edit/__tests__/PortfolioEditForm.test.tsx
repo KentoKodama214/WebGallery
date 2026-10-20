@@ -93,6 +93,46 @@ describe("PortfolioEditForm", () => {
       expect(mockSavePortfolio).not.toHaveBeenCalled();
     });
 
+    it("作成数の上限に達している場合は、上限に達した旨を表示し、編集用URLへ切り替えないこと", async () => {
+      mockGetPhotoList.mockResolvedValue({
+        isLast: true,
+        photoList: [
+          { accountNo: 1, photoNo: 11, isFavorite: false, imageFilePath: "", caption: "富士山", directionKbn: "horizontal" },
+        ],
+      });
+      mockSavePortfolio.mockRejectedValue(
+        new Error("作成できるポートフォリオの数が上限に達しています。")
+      );
+
+      render(<PortfolioEditForm accountId="user1" />);
+      fireEvent.change(screen.getByLabelText(/テーマ/, { selector: "#portfolio-theme" }), {
+        target: { value: "日本の自然" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "写真を選択" }));
+      const dialog = await screen.findByTestId("photo-picker-dialog");
+      fireEvent.click(await within(dialog).findByRole("button", { name: "写真11（富士山）" }));
+      fireEvent.click(within(dialog).getByRole("button", { name: "完了" }));
+
+      fireEvent.click(screen.getByRole("button", { name: "下書きとして登録" }));
+
+      expect(
+        await screen.findByText("作成できるポートフォリオの数が上限に達しています。")
+      ).toBeInTheDocument();
+      expect(mockReplace).not.toHaveBeenCalled();
+    });
+
+    it("タグは上限（30件）まで追加でき、上限に達すると追加できないこと", () => {
+      render(<PortfolioEditForm accountId="user1" />);
+
+      const addTag = screen.getByRole("button", { name: "タグを追加" });
+      for (let i = 0; i < 30; i++) {
+        fireEvent.click(addTag);
+      }
+
+      expect(screen.getByLabelText("タグ30（日本語）")).toBeInTheDocument();
+      expect(addTag).toBeDisabled();
+    });
+
     it("一覧へ戻るリンクを、見出しより前（左上）に表示すること", () => {
       render(<PortfolioEditForm accountId="user1" />);
 
