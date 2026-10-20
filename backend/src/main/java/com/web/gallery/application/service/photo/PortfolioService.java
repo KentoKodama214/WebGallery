@@ -32,9 +32,11 @@ public interface PortfolioService {
   /**
    * ポートフォリオを下書きとして新規登録する
    *
+   * <p>作成済みのポートフォリオ（下書きを含む）の件数が、アカウントの権限区分ごとの上限に達している場合は登録しない
+   *
    * @param requestDetail 登録リクエストのポートフォリオ詳細情報
    * @return 新規採番したポートフォリオ番号
-   * @throws GalleryException 以下のいずれかに該当する場合 ・設定内容が不正な場合 ・設定できない写真が含まれる場合 ・登録に失敗した場合
+   * @throws GalleryException 以下のいずれかに該当する場合 ・作成数が上限に達している場合 ・設定内容が不正な場合 ・設定できない写真が含まれる場合 ・登録に失敗した場合
    */
   PortfolioNo registPortfolio(PortfolioDetailModel requestDetail) throws GalleryException;
 

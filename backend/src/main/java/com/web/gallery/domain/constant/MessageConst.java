@@ -72,6 +72,7 @@ public final class MessageConst {
   public static final String ERR_PORTFOLIO_PHOTO_NOT_AVAILABLE = "ポートフォリオに設定できない写真が含まれています。";
   public static final String ERR_PORTFOLIO_NOT_PUBLISHABLE =
       "公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。";
+  public static final String ERR_REACHED_PORTFOLIO_LIMIT = "作成できるポートフォリオの数が上限に達しています。";
   public static final String ERR_FAIL_TO_REGIST_PORTFOLIO = "ポートフォリオ登録でエラーが発生しました。登録をやり直してください。";
   public static final String ERR_FAIL_TO_UPDATE_PORTFOLIO = "ポートフォリオ更新でエラーが発生しました。更新をやり直してください。";
 

@@ -149,6 +149,7 @@ just db-up
 | `APP_S3_PUBLIC_BASE_URL` | 署名付き URL のホストをブラウザ到達可能なものへ差し替える場合に指定 | `http://localhost:9000` |
 | `APP_S3_PRESIGN_EXPIRY_SECONDS` | 署名付き URL の有効期限（秒） | `900` |
 | `MINI_USER_UPPER_LIMIT` / `NORMAL_USER_UPPER_LIMIT` | 権限別の写真登録上限 | `10` / `1000` |
+| `MINI_USER_PORTFOLIO_UPPER_LIMIT` / `NORMAL_USER_PORTFOLIO_UPPER_LIMIT` | 権限別のポートフォリオ作成数上限（下書きを含む。special-user・administratorは上限なし） | `3` / `10` |
 | `RATE_LIMIT_ENABLED` | 送信元IP別レート制限の有効化（`test`・E2E は無効） | `true` |
 | `RATE_LIMIT_AUTH_CAPACITY` / `RATE_LIMIT_AUTH_WINDOW_SECONDS` | ログインのしきい値（回数 / ウィンドウ秒） | `30` / `60` |
 | `RATE_LIMIT_REGISTER_CAPACITY` / `RATE_LIMIT_REGISTER_WINDOW_SECONDS` | アカウント登録のしきい値 | `10` / `3600` |

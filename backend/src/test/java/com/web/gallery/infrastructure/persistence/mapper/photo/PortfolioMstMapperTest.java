@@ -280,6 +280,38 @@ public class PortfolioMstMapperTest {
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/mapper/PortfolioMstMapperTest.sql")
+  class count {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウント番号で絞り込み、下書き・公開中を含めた件数を返すこと")
+    void count_byAccountNo() {
+      assertEquals(3, portfolioMstMapper.count(PortfolioMstCondition.byAccountNo(1L)));
+      assertEquals(1, portfolioMstMapper.count(PortfolioMstCondition.byAccountNo(2L)));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：アカウント番号・ポートフォリオ番号の条件で絞り込むこと")
+    void count_byAccountAndPortfolio() {
+      assertEquals(
+          1, portfolioMstMapper.count(PortfolioMstCondition.byAccountAndPortfolio(1L, 2L)));
+      assertEquals(
+          0, portfolioMstMapper.count(PortfolioMstCondition.byAccountAndPortfolio(2L, 2L)));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：ポートフォリオが未作成のアカウントの場合、0を返すこと")
+    void count_none() {
+      assertEquals(0, portfolioMstMapper.count(PortfolioMstCondition.byAccountNo(3L)));
+    }
+  }
+
+  @Nested
+  @Order(6)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/mapper/PortfolioMstMapperTest.sql")
   class selectList {
     @Test
     @Order(1)
@@ -323,7 +355,7 @@ public class PortfolioMstMapperTest {
   }
 
   @Nested
-  @Order(6)
+  @Order(7)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/mapper/PortfolioMstMapperTest.sql")
@@ -364,7 +396,7 @@ public class PortfolioMstMapperTest {
   }
 
   @Nested
-  @Order(7)
+  @Order(8)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/mapper/PortfolioMstMapperTest.sql")
