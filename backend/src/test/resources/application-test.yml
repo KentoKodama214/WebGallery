@@ -29,6 +29,9 @@ app:
     maxFileSizeMb: 5
     miniUserUpperLimit: 10
     normalUserUpperLimit: 20
+  portfolio:
+    miniUserUpperLimit: 3
+    normalUserUpperLimit: 10
   inquiry:
     inquiryCountPerPage: 5
   s3:

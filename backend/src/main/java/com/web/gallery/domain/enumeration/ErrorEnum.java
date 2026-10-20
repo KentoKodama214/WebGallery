@@ -492,6 +492,18 @@ public enum ErrorEnum {
   },
 
   /**
+   * エラーコード：E-P-0026
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_REACHED_PORTFOLIO_LIMIT}
+   */
+  REACHED_PORTFOLIO_LIMIT("E-P-0026", MessageConst.ERR_REACHED_PORTFOLIO_LIMIT) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
    * エラーコード：E-S-0001
    *
    * <p>エラーメッセージ：{@value MessageConst#ERR_SYSTEM_ERROR}

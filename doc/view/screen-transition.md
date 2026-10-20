@@ -235,7 +235,7 @@ sequenceDiagram
     User->>Edit: グリッド型は「プレビューを表示」でレイアウトをダイアログで確認
     User->>Edit: 下書きとして登録（写真が0枚の場合は、下書きでもエラーを表示して登録しない）
     Edit->>API: POST /api/v1/accounts/{id}/portfolios
-    API-->>Edit: 登録成功（下書き）
+    API-->>Edit: 登録成功（下書き）。作成数が権限ごとの上限（mini-user：3個、normal-user：10個。下書きを含む）に達している場合はエラーを表示
     Edit->>Edit: ?portfolioNo= 付きのURLへ切り替え
     User->>Edit: 公開する（未保存の変更がある間は押せない）
     Edit->>API: PUT /api/v1/accounts/{id}/portfolios/{no}/status
