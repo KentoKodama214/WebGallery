@@ -24,6 +24,10 @@ app:
   photo:
     miniUserUpperLimit: ${MINI_USER_UPPER_LIMIT}
     normalUserUpperLimit: ${NORMAL_USER_UPPER_LIMIT}
+  portfolio:
+    # 権限別のポートフォリオ作成数上限（special-user・administratorは上限なし）
+    miniUserUpperLimit: ${MINI_USER_PORTFOLIO_UPPER_LIMIT}
+    normalUserUpperLimit: ${NORMAL_USER_PORTFOLIO_UPPER_LIMIT}
   s3:
     endpoint: ${APP_S3_ENDPOINT:}
     bucket: ${APP_S3_BUCKET}

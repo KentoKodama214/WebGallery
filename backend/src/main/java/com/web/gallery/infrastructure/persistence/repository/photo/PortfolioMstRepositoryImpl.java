@@ -65,6 +65,17 @@ public class PortfolioMstRepositoryImpl implements PortfolioMstRepository {
   }
 
   /**
+   * アカウントが作成済みのポートフォリオの件数（下書きを含む）を取得する
+   *
+   * @param accountNo アカウント番号
+   * @return 作成済みの件数
+   */
+  @Override
+  public Integer count(AccountNo accountNo) {
+    return portfolioMstMapper.count(PortfolioMstCondition.byAccountNo(accountNo.value()));
+  }
+
+  /**
    * 本人のポートフォリオ一覧（下書きを含む）を、更新日時の新しい順に取得する
    *
    * @param accountNo アカウント番号

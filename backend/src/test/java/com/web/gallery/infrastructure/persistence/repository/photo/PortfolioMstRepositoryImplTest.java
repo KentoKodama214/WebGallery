@@ -169,6 +169,26 @@ class PortfolioMstRepositoryImplTest {
   @Nested
   @Order(2)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class count {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウント番号で絞り込んだ件数をそのまま返すこと")
+    void count_success() {
+      doReturn(3).when(portfolioMstMapper).count(any(PortfolioMstCondition.class));
+
+      assertEquals(3, portfolioMstRepositoryImpl.count(new AccountNo(1L)));
+
+      ArgumentCaptor<PortfolioMstCondition> conditionCaptor =
+          ArgumentCaptor.forClass(PortfolioMstCondition.class);
+      verify(portfolioMstMapper).count(conditionCaptor.capture());
+      assertEquals(1L, conditionCaptor.getValue().getAccountNo());
+      assertNull(conditionCaptor.getValue().getPortfolioNo());
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getPortfolioList {
     @Test
     @Order(1)
@@ -216,7 +236,7 @@ class PortfolioMstRepositoryImplTest {
   }
 
   @Nested
-  @Order(3)
+  @Order(4)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getPortfolioDetail {
     @Test
@@ -314,7 +334,7 @@ class PortfolioMstRepositoryImplTest {
   }
 
   @Nested
-  @Order(4)
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getPortfolioDetailListByPhoto {
     @Test
@@ -353,7 +373,7 @@ class PortfolioMstRepositoryImplTest {
   }
 
   @Nested
-  @Order(5)
+  @Order(6)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class countAvailablePhotos {
     @Test

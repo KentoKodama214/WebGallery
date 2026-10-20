@@ -340,6 +340,33 @@ public class PortfolioControllerIntegrationTest {
           jdbcTemplate.queryForObject(
               "SELECT COUNT(*) FROM photo.portfolio_mst WHERE portfolio_no = 3", Integer.class));
     }
+
+    @Test
+    @Order(6)
+    @DisplayName("異常系：mini-userで作成数が上限（3個）に達している場合、400を返し登録しない")
+    void registPortfolio_reachedLimit() throws Exception {
+      // account_no=1（mini-user）は作成済みが2個のため、1個追加して上限の3個にする
+      jdbcTemplate.update(
+          "INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at,"
+              + " updated_by, updated_at, theme, template_kbn)"
+              + " VALUES (1, 3, 1, NOW(), 1, NOW(), '3個目', 'feature')");
+
+      mockMvc
+          .perform(
+              post(PORTFOLIOS)
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("regist_feature_success.json")))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              jsonPath("$.message").value(ErrorEnum.REACHED_PORTFOLIO_LIMIT.getErrorMessage()));
+
+      assertEquals(
+          3,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.portfolio_mst WHERE account_no = 1", Integer.class));
+    }
   }
 
   @Nested

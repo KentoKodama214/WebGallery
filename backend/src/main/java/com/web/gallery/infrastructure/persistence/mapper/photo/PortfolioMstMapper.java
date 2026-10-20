@@ -47,6 +47,14 @@ public interface PortfolioMstMapper {
   public Long getMaxPortfolioNo(Long accountNo);
 
   /**
+   * 条件に該当するポートフォリオマスタの件数を取得する
+   *
+   * @param condition {@link PortfolioMstCondition}
+   * @return 件数
+   */
+  public Integer count(PortfolioMstCondition condition);
+
+  /**
    * 条件に該当するポートフォリオ一覧を、写真の枚数とあわせて取得する
    *
    * @param condition {@link PortfolioMstCondition}
