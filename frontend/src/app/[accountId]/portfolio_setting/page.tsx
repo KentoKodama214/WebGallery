@@ -27,12 +27,12 @@ export default async function PortfolioSettingPage({
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-[whitesmoke]">
       <Header />
       <AuthGuard>
         <PortfolioList accountId={accountId} />
       </AuthGuard>
       <Footer variant="light" />
-    </>
+    </div>
   );
 }

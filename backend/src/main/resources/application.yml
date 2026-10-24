@@ -37,6 +37,14 @@ server:
     include-exception: false
     whitelabel:
       enabled: false
+  tomcat:
+    # multipart/form-dataの総パート数の上限（Tomcat既定は50で、超過すると413を返す）。
+    # 写真の更新は固定項目（場所の新規登録時で最大17パート）に加えてタグ1件ごとに5パート（accountNo/photoNo/tagNo/
+    # 日英タグ名）を送るため、タグ上限（Consts.PHOTO_TAG_MAX_SIZE=20件）まで付けると117パートになる。
+    # 新規一括登録（写真10枚＋固定項目＋タグ1件ごとに4パート）も含めて収まるよう余裕を持たせる。
+    # 埋め込みTomcat向けの設定のため、WARを外部Tomcatへデプロイする本番構成では
+    # server.xmlのConnectorのmaxPartCountで同等の値を設定する必要がある
+    max-part-count: 200
 
 springdoc:
   api-docs:
