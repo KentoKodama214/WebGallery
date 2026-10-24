@@ -1315,7 +1315,7 @@ export interface PortfolioPhotoCandidate {
 }
 
 /**
- * ポートフォリオに設定する写真を、本人の写真からタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに検索語が部分一致するもので検索する（撮影日時の新しい順）
+ * ポートフォリオに設定する写真を、本人の写真からタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに検索語が部分一致するもので検索する（写真番号の降順）
  */
 export async function searchPortfolioPhotos(
   accountId: string,

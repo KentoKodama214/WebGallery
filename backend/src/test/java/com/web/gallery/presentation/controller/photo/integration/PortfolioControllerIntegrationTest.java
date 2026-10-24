@@ -672,7 +672,7 @@ public class PortfolioControllerIntegrationTest {
           .andExpect(jsonPath("$.photoList[0].imageFilePath").value("https://signed/1/1-aaa.jpg"))
           .andExpect(jsonPath("$.isLast").value(true));
 
-      // 検索語が未指定の場合は、論理削除済みの写真3を除いて撮影日時の新しい順に返す
+      // 検索語が未指定の場合は、論理削除済みの写真3を除いて写真番号の降順に返す
       mockMvc
           .perform(
               get("/api/v1/accounts/aaaaaaaa/portfolio-photos")
