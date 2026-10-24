@@ -21,7 +21,7 @@ insert into photo.portfolio_mst (account_no, portfolio_no, created_by, created_a
   (900002, 1, 900002, now(), 900002, '2026-06-01 09:00:00+09', '他人', '', 'feature', '{}', 1, 'published');
 
 insert into photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) values
-  (900001, 1, 2, 900001, now(), 1, '{"caption": "茶畑"}'),
+  (900001, 1, 2, 900001, now(), 1, '{}'),
   (900001, 1, 1, 900001, now(), 2, '{}'),
   (900001, 1, 3, 900001, now(), 3, '{}'),
   (900001, 3, 1, 900001, now(), 1, '{}'),

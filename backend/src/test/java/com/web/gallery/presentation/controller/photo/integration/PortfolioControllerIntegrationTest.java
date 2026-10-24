@@ -1,5 +1,6 @@
 package com.web.gallery.presentation.controller.photo.integration;
 
+import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -585,6 +586,110 @@ public class PortfolioControllerIntegrationTest {
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.templateList.length()").value(2))
           .andExpect(jsonPath("$.gridRowPatternList.length()").value(4));
+    }
+  }
+
+  @Nested
+  @Order(8)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/controller/PortfolioControllerIntegrationTest.sql")
+  class searchAndLimit {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：一覧をテーマ・タグ名の部分一致で絞り込めること")
+    void getPortfolioList_keywords() throws Exception {
+      mockMvc
+          .perform(
+              get(PORTFOLIOS)
+                  .param("theme", "光")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.portfolioList.length()").value(1))
+          .andExpect(jsonPath("$.portfolioList[0].portfolioNo").value(2));
+
+      mockMvc
+          .perform(
+              get(PORTFOLIOS)
+                  .param("tag", "NATURE")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.portfolioList.length()").value(1))
+          .andExpect(jsonPath("$.portfolioList[0].portfolioNo").value(1));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：mini-userは作成済み（2個）が上限（3個）未満の場合、上限に達していないと返すこと")
+    void getPortfolioUpperLimit_notReached() throws Exception {
+      mockMvc
+          .perform(
+              get(PORTFOLIOS + "/upper-limit")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isReachedUpperLimit").value(false));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：mini-userは作成済みが上限（3個）に達した場合、上限に達していると返すこと")
+    void getPortfolioUpperLimit_reached() throws Exception {
+      // 同一トランザクション内のMyBatisのキャッシュを避けるため、APIを呼び出す前に件数を上限に合わせる
+      jdbcTemplate.update(
+          "INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at,"
+              + " updated_by, updated_at, theme, template_kbn)"
+              + " VALUES (1, 3, 1, NOW(), 1, NOW(), '3個目', 'feature')");
+
+      mockMvc
+          .perform(
+              get(PORTFOLIOS + "/upper-limit")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isReachedUpperLimit").value(true));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：本人の未削除の写真を、タイトルの部分一致で検索できること（画像は署名付きURL）")
+    void searchPortfolioPhotos_byTitle() throws Exception {
+      doAnswer(
+              invocation ->
+                  new ImageFilePath(
+                      "https://signed/" + ((ImageFilePath) invocation.getArgument(0)).value()))
+          .when(fileRepository)
+          .getPresignedUrl(any(ImageFilePath.class));
+
+      mockMvc
+          .perform(
+              get("/api/v1/accounts/aaaaaaaa/portfolio-photos")
+                  .param("title", "金閣")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.photoList.length()").value(1))
+          .andExpect(jsonPath("$.photoList[0].photoNo").value(1))
+          .andExpect(jsonPath("$.photoList[0].photoJapaneseTitle").value("金閣寺"))
+          .andExpect(jsonPath("$.photoList[0].directionKbn").value("horizontal"))
+          .andExpect(jsonPath("$.photoList[0].imageFilePath").value("https://signed/1/1-aaa.jpg"))
+          .andExpect(jsonPath("$.isLast").value(true));
+
+      // 条件が未指定の場合は、論理削除済みの写真3を除いて撮影日時の新しい順に返す
+      mockMvc
+          .perform(
+              get("/api/v1/accounts/aaaaaaaa/portfolio-photos")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.photoList[*].photoNo").value(contains(2, 1)));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：他人のアカウントIDで写真を検索した場合、403を返すこと")
+    void searchPortfolioPhotos_forbidden() throws Exception {
+      mockMvc
+          .perform(
+              get("/api/v1/accounts/bbbbbbbb/portfolio-photos")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
+          .andExpect(status().isForbidden());
     }
   }
 }

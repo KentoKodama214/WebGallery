@@ -85,7 +85,7 @@ func toLayout(layout domain.Layout) (model.PortfolioLayout, error) {
 				if err != nil {
 					return nil, err
 				}
-				photos = append(photos, &model.GridPhoto{Photo: photo, Caption: gridPhoto.Caption})
+				photos = append(photos, &model.GridPhoto{Photo: photo})
 			}
 			rows = append(rows, &model.GridRow{Pattern: pattern, Photos: photos})
 		}

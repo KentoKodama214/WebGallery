@@ -1,7 +1,10 @@
 package com.web.gallery.application.service.photo;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
+import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.PortfolioNo;
@@ -9,12 +12,30 @@ import com.web.gallery.domain.model.photo.PortfolioNo;
 /** ポートフォリオの設定に関するビジネスロジックを扱うServiceクラス */
 public interface PortfolioService {
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を取得する
+   * 本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込んで取得する
    *
-   * @param accountNo アカウント番号
+   * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
    * @return {@link PortfolioModelList}
    */
-  PortfolioModelList getPortfolioList(AccountNo accountNo);
+  PortfolioModelList getPortfolioList(PortfolioListGetModel portfolioListGetModel);
+
+  /**
+   * 作成済みのポートフォリオ（下書きを含む）の件数が、アカウントの権限区分ごとの上限に達しているかを判定する
+   *
+   * @param accountNo アカウント番号
+   * @return 上限に達している（これ以上作成できない）場合、true
+   */
+  Boolean isReachedUpperLimit(AccountNo accountNo);
+
+  /**
+   * ポートフォリオに設定する写真を、本人の未削除の写真からタイトル・撮影場所の名前・タグ名の部分一致で検索する
+   *
+   * <p>写真の画像ファイルパスは署名付きURLに差し替えて返す
+   *
+   * @param portfolioPhotoSearchModel {@link PortfolioPhotoSearchModel}
+   * @return {@link PortfolioPhotoPageModel}
+   */
+  PortfolioPhotoPageModel searchPhotos(PortfolioPhotoSearchModel portfolioPhotoSearchModel);
 
   /**
    * 本人のポートフォリオの詳細情報（写真・タグを含む）を取得する

@@ -34,3 +34,17 @@ insert into photo.portfolio_tag_mst values(1, 1, 1, 1, 1, '2000-01-01 09:00:00 A
 insert into photo.portfolio_tag_mst values(2, 1, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', '風景', '');
 insert into photo.portfolio_tag_mst values(3, 2, 1, 1, 2, '2000-01-04 09:00:00 Asia/Tokyo', '海', 'sea');
 select setval('photo.portfolio_tag_mst_id_seq', (select max(id) from photo.portfolio_tag_mst));
+
+-- ポートフォリオ用の写真検索（selectAvailablePhotos）の検証用
+-- common.location_mst：account_no=1のロケーション1（京都）・ロケーション2（論理削除済みの大阪）、account_no=2のロケーション1（京都）
+insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, '金閣寺_管理', '京都・金閣寺', '住所1', 35.039, 135.729);
+insert into common.location_mst values(DEFAULT, 1, 2, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', true, '大阪城_管理', '大阪城', '住所2', 34.687, 135.525);
+insert into common.location_mst values(DEFAULT, 2, 1, 2, '2000-01-05 09:00:00 Asia/Tokyo', 2, '2000-01-05 09:00:00 Asia/Tokyo', false, '京都駅_管理', '京都駅', '住所3', 34.985, 135.758);
+-- 写真の撮影場所：account_no=1の写真1は論理削除済みのロケーション2、写真2はロケーション1。account_no=2の写真1はロケーション1
+update photo.photo_mst set location_no = 2 where account_no = 1 and photo_no = 1;
+update photo.photo_mst set location_no = 1 where account_no = 1 and photo_no = 2;
+update photo.photo_mst set location_no = 1 where account_no = 2 and photo_no = 1;
+-- photo.photo_tag_mst：「紅葉」をaccount_no=1の写真1・論理削除済みの写真3、account_no=2の写真1に付与
+insert into photo.photo_tag_mst values(DEFAULT, 1, 1, 1, 1, '2000-01-01 10:00:00 Asia/Tokyo', '紅葉', 'autumn');
+insert into photo.photo_tag_mst values(DEFAULT, 1, 3, 1, 1, '2000-01-01 10:00:00 Asia/Tokyo', '紅葉', 'autumn');
+insert into photo.photo_tag_mst values(DEFAULT, 2, 1, 1, 2, '2000-01-01 10:00:00 Asia/Tokyo', '紅葉', 'autumn');

@@ -25,7 +25,7 @@ select setval('photo.portfolio_mst_id_seq', (select max(id) from photo.portfolio
 -- photo.portfolio_photo
 insert into photo.portfolio_photo values(1, 1, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '{"theme": "日本の自然", "subTheme": "京都", "description": "金色に輝く"}');
 insert into photo.portfolio_photo values(2, 1, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 2, '{"theme": "日本の動物・植物"}');
-insert into photo.portfolio_photo values(3, 1, 2, 2, 1, '2000-01-02 09:00:00 Asia/Tokyo', 1, '{"caption": "原山の茶畑"}');
+insert into photo.portfolio_photo values(3, 1, 2, 2, 1, '2000-01-02 09:00:00 Asia/Tokyo', 1, '{}');
 insert into photo.portfolio_photo values(4, 2, 1, 1, 2, '2000-01-03 09:00:00 Asia/Tokyo', 1, '{}');
 select setval('photo.portfolio_photo_id_seq', (select max(id) from photo.portfolio_photo));
 

@@ -58,7 +58,7 @@ export interface GridLayout {
   __typename: "GridLayout";
   rows: {
     pattern: GridRowPattern;
-    photos: { photo: PublicPhoto; caption: string }[];
+    photos: { photo: PublicPhoto }[];
   }[];
 }
 

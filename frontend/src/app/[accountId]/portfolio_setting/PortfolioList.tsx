@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { getPortfolioList, type PortfolioListItem } from "@/lib/api/client";
+import {
+  getPortfolioList,
+  getPortfolioUpperLimit,
+  type PortfolioListFilter,
+  type PortfolioListItem,
+} from "@/lib/api/client";
+import { PORTFOLIO_THEME_MAX_LENGTH, TAG_NAME_MAX_LENGTH } from "@/lib/validation";
 import { PORTFOLIO_STATUS_LABELS, PORTFOLIO_TEMPLATE_LABELS } from "./labels";
 
 interface PortfolioListProps {
@@ -13,6 +19,8 @@ interface PortfolioListProps {
 
 /**
  * 本人のポートフォリオ一覧（下書きを含む）コンポーネント
+ *
+ * テーマ・タグ名（部分一致）で絞り込める。作成数が権限ごとの上限に達している場合は新規作成できない。
  */
 export function PortfolioList({ accountId }: PortfolioListProps) {
   const { user } = useAuth();
@@ -21,6 +29,12 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
   const [portfolios, setPortfolios] = useState<PortfolioListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // 絞り込みの入力値と、一覧の取得に使った（検索ボタンで確定した）条件
+  const [themeInput, setThemeInput] = useState("");
+  const [tagInput, setTagInput] = useState("");
+  const [appliedFilter, setAppliedFilter] = useState<PortfolioListFilter>({});
+  // 作成数が上限に達しているか（取得に失敗した場合は作成を妨げない。バックエンドでも上限を検証する）
+  const [isReachedUpperLimit, setIsReachedUpperLimit] = useState(false);
   // 取得リクエストの世代。後着レスポンスが新しい一覧を上書きする競合を防ぐ
   const loadSeqRef = useRef(0);
 
@@ -48,15 +62,36 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
     };
   }, [isOwner, accountId]);
 
-  /** 取得失敗時の再読み込み */
-  const reload = async () => {
+  // 作成数の上限に達しているかを取得する
+  useEffect(() => {
+    if (!isOwner) return;
+    let cancelled = false;
+    getPortfolioUpperLimit(accountId)
+      .then((data) => {
+        if (!cancelled) setIsReachedUpperLimit(data.isReachedUpperLimit);
+      })
+      .catch(() => {
+        // 取得に失敗しても新規作成は妨げない（作成時にバックエンドが上限を検証する）
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwner, accountId]);
+
+  /**
+   * 指定した条件で一覧を取得し直す
+   *
+   * @param filter 絞り込み条件
+   */
+  const loadList = async (filter: PortfolioListFilter) => {
     const seq = ++loadSeqRef.current;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getPortfolioList(accountId);
+      const data = await getPortfolioList(accountId, filter);
       if (loadSeqRef.current !== seq) return;
       setPortfolios(data);
+      setAppliedFilter(filter);
     } catch (err) {
       if (loadSeqRef.current !== seq) return;
       setError(err instanceof Error ? err.message : "エラーが発生しました");
@@ -64,6 +99,24 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
       if (loadSeqRef.current === seq) setIsLoading(false);
     }
   };
+
+  /** 取得失敗時の再読み込み（直前に確定した条件で取得し直す） */
+  const reload = () => loadList(appliedFilter);
+
+  /** 入力した条件で絞り込む */
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    loadList({ theme: themeInput.trim(), tag: tagInput.trim() });
+  };
+
+  /** 絞り込み条件を解除する */
+  const handleClear = () => {
+    setThemeInput("");
+    setTagInput("");
+    loadList({});
+  };
+
+  const isFiltered = !!appliedFilter.theme || !!appliedFilter.tag;
 
   // ログイン済みだが他人のポートフォリオ設定を開こうとした場合（認可はバックエンドでも実施）
   if (!isOwner) {
@@ -93,14 +146,80 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
           >
             公開ページを見る
           </Link>
-          <Link
-            href={`/${accountId}/portfolio_setting/edit`}
-            className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
-          >
-            新規作成
-          </Link>
+          {isReachedUpperLimit ? (
+            <button
+              type="button"
+              disabled
+              aria-describedby="portfolio-upper-limit-message"
+              className="px-4 py-2 text-sm bg-blue-700 text-white rounded disabled:opacity-50"
+            >
+              新規作成
+            </button>
+          ) : (
+            <Link
+              href={`/${accountId}/portfolio_setting/edit`}
+              className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
+            >
+              新規作成
+            </Link>
+          )}
         </div>
       </div>
+      {isReachedUpperLimit && (
+        <p
+          id="portfolio-upper-limit-message"
+          className="w-full max-w-[800px] px-4 text-sm text-red-700 text-right"
+        >
+          作成できるポートフォリオの数が上限に達しています
+        </p>
+      )}
+
+      <form
+        onSubmit={handleSearch}
+        role="search"
+        aria-label="ポートフォリオの絞り込み"
+        className="w-full max-w-[800px] px-4 flex flex-wrap items-end gap-3"
+      >
+        <div className="flex flex-col">
+          <label htmlFor="portfolio-filter-theme" className="text-sm font-bold mb-1">
+            テーマ
+          </label>
+          <input
+            id="portfolio-filter-theme"
+            type="text"
+            value={themeInput}
+            maxLength={PORTFOLIO_THEME_MAX_LENGTH}
+            onChange={(e) => setThemeInput(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label htmlFor="portfolio-filter-tag" className="text-sm font-bold mb-1">
+            タグ
+          </label>
+          <input
+            id="portfolio-filter-tag"
+            type="text"
+            value={tagInput}
+            maxLength={TAG_NAME_MAX_LENGTH}
+            onChange={(e) => setTagInput(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2"
+          />
+        </div>
+        <button
+          type="submit"
+          className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
+        >
+          検索
+        </button>
+        <button
+          type="button"
+          onClick={handleClear}
+          className="px-4 py-2 text-sm border border-gray-400 rounded hover:bg-gray-50"
+        >
+          クリア
+        </button>
+      </form>
 
       {isLoading ? (
         <div className="flex justify-center items-center min-h-[200px]">
@@ -117,7 +236,9 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
           </button>
         </div>
       ) : portfolios.length === 0 ? (
-        <p className="text-gray-600">ポートフォリオはありません</p>
+        <p className="text-gray-600">
+          {isFiltered ? "条件に一致するポートフォリオはありません" : "ポートフォリオはありません"}
+        </p>
       ) : (
         <div
           className="w-full max-w-[800px] overflow-x-auto"

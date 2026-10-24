@@ -3,7 +3,9 @@ package com.web.gallery.presentation.converter.photo;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
+import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.application.model.photo.PortfolioTagModel;
 import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -14,7 +16,9 @@ import com.web.gallery.domain.model.photo.PortfolioTheme;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TemplateSettings;
+import com.web.gallery.presentation.request.photo.PortfolioListRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSaveRequest;
+import com.web.gallery.presentation.request.photo.PortfolioPhotoSearchRequest;
 import com.web.gallery.presentation.request.photo.PortfolioSaveRequest;
 import com.web.gallery.presentation.request.photo.PortfolioTagSaveRequest;
 import java.util.List;
@@ -149,6 +153,82 @@ class PortfolioConverterTest {
       assertEquals(new PortfolioNo(5L), actual.getPortfolioNo());
       assertEquals(new PortfolioTheme("日本の自然"), actual.getTheme());
       assertEquals(2, actual.getPortfolioPhotoModelList().size());
+    }
+  }
+
+  @Nested
+  @Order(2)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class toPortfolioListGetModel {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：テーマ・タグの前後の空白を除き、ログイン中のアカウント番号とあわせて変換すること")
+    void toPortfolioListGetModel_allFieldsSet() {
+      PortfolioListRequest request = new PortfolioListRequest();
+      request.setTheme(" 自然 ");
+      request.setTag("風景");
+
+      PortfolioListGetModel actual =
+          portfolioConverter.toPortfolioListGetModel(request, new AccountNo(1L));
+
+      assertEquals(new AccountNo(1L), actual.getAccountNo());
+      assertEquals("自然", actual.getTheme());
+      assertEquals("風景", actual.getTag());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：未入力・空白のみの条件はnull（未指定）になること")
+    void toPortfolioListGetModel_optionalFieldsNull() {
+      PortfolioListRequest request = new PortfolioListRequest();
+      request.setTag("　 ");
+
+      PortfolioListGetModel actual =
+          portfolioConverter.toPortfolioListGetModel(request, new AccountNo(1L));
+
+      assertNull(actual.getTheme());
+      assertNull(actual.getTag());
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class toPortfolioPhotoSearchModel {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：タイトル・撮影場所・タグの前後の空白を除き、ページ番号・アカウント番号とあわせて変換すること")
+    void toPortfolioPhotoSearchModel_allFieldsSet() {
+      PortfolioPhotoSearchRequest request = new PortfolioPhotoSearchRequest();
+      request.setTitle(" 金閣 ");
+      request.setLocation("京都");
+      request.setTag("寺");
+      request.setPageNo(3);
+
+      PortfolioPhotoSearchModel actual =
+          portfolioConverter.toPortfolioPhotoSearchModel(request, new AccountNo(1L));
+
+      assertEquals(new AccountNo(1L), actual.getAccountNo());
+      assertEquals("金閣", actual.getTitle());
+      assertEquals("京都", actual.getLocation());
+      assertEquals("寺", actual.getTag());
+      assertEquals(3, actual.getPageNo());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：未入力・空白のみの条件はnull（未指定）、ページ番号は既定値の1になること")
+    void toPortfolioPhotoSearchModel_optionalFieldsNull() {
+      PortfolioPhotoSearchRequest request = new PortfolioPhotoSearchRequest();
+      request.setTitle(" ");
+
+      PortfolioPhotoSearchModel actual =
+          portfolioConverter.toPortfolioPhotoSearchModel(request, new AccountNo(1L));
+
+      assertNull(actual.getTitle());
+      assertNull(actual.getLocation());
+      assertNull(actual.getTag());
+      assertEquals(1, actual.getPageNo());
     }
   }
 }

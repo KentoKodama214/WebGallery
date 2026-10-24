@@ -1239,8 +1239,13 @@ export interface PortfolioTemplateList {
 /**
  * 本人のポートフォリオ一覧（下書きを含む）を取得する
  */
-export async function getPortfolioList(accountId: string): Promise<PortfolioListItem[]> {
-  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}/portfolios`);
+export async function getPortfolioList(
+  accountId: string,
+  filter: PortfolioListFilter = {}
+): Promise<PortfolioListItem[]> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios${toQueryString(filter)}`
+  );
   if (!response.ok) {
     throw new ApiError(
       await readErrorMessage(response, "ポートフォリオ一覧の取得に失敗しました"),
@@ -1248,6 +1253,89 @@ export async function getPortfolioList(accountId: string): Promise<PortfolioList
     );
   }
   return (await readJson<{ portfolioList: PortfolioListItem[] }>(response)).portfolioList;
+}
+
+/** ポートフォリオ一覧の絞り込み条件（いずれも部分一致。未入力の条件は送らない） */
+export interface PortfolioListFilter {
+  /** テーマ */
+  theme?: string;
+  /** タグ名（日本語・英語のいずれか） */
+  tag?: string;
+}
+
+/**
+ * 絞り込み条件をクエリ文字列に変換する（前後の空白を除いて空になる条件は送らない）
+ *
+ * @param params 条件
+ * @returns 先頭に `?` を付けたクエリ文字列。条件がない場合は空文字
+ */
+function toQueryString(params: object): string {
+  const query = new URLSearchParams();
+  Object.entries(params as Record<string, string | number | undefined>).forEach(([key, value]) => {
+    if (value === undefined) return;
+    const text = String(value).trim();
+    if (text !== "") query.set(key, text);
+  });
+  const qs = query.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/**
+ * 本人のポートフォリオの作成数（下書きを含む）が、権限ごとの上限に達しているかを取得する
+ */
+export async function getPortfolioUpperLimit(
+  accountId: string
+): Promise<{ isReachedUpperLimit: boolean }> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/upper-limit`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオの作成上限の取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<{ isReachedUpperLimit: boolean }>(response);
+}
+
+/** ポートフォリオに設定する写真の検索条件（いずれも部分一致。未入力の条件は送らない） */
+export interface PortfolioPhotoSearchFilter {
+  /** 写真のタイトル（日本語・英語のいずれか） */
+  title?: string;
+  /** 撮影場所の名前（表示名・管理名のいずれか） */
+  location?: string;
+  /** タグ名（日本語・英語のいずれか） */
+  tag?: string;
+}
+
+/** ポートフォリオに設定する写真の検索結果の写真 */
+export interface PortfolioPhotoCandidate {
+  photoNo: number;
+  photoJapaneseTitle: string;
+  /** 画像の署名付きURL */
+  imageFilePath: string;
+  /** 向き区分（vertical / horizontal / square / none） */
+  directionKbn: string;
+}
+
+/**
+ * ポートフォリオに設定する写真を、本人の写真からタイトル・撮影場所・タグで検索する（撮影日時の新しい順）
+ */
+export async function searchPortfolioPhotos(
+  accountId: string,
+  filter: PortfolioPhotoSearchFilter,
+  pageNo: number
+): Promise<{ photoList: PortfolioPhotoCandidate[]; isLast: boolean }> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolio-photos${toQueryString({ ...filter, pageNo })}`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "写真の検索に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<{ photoList: PortfolioPhotoCandidate[]; isLast: boolean }>(response);
 }
 
 /**

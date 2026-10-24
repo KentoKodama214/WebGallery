@@ -106,7 +106,7 @@ func TestBuildLayout_Grid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			settings := make([]map[string]any, tt.photos)
 			for i := range settings {
-				settings[i] = map[string]any{"caption": "キャプション"}
+				settings[i] = map[string]any{}
 			}
 			layout, err := BuildLayout(Portfolio{Template: TemplateGrid, TemplateSettings: tt.settings, Photos: portfolioPhotos(settings...)})
 			if err != nil {
@@ -123,9 +123,6 @@ func TestBuildLayout_Grid(t *testing.T) {
 				nos := make([]int64, 0)
 				for _, p := range row.Photos {
 					nos = append(nos, p.Photo.PhotoNo)
-					if p.Caption != "キャプション" {
-						t.Errorf("caption = %q, want %q", p.Caption, "キャプション")
-					}
 				}
 				gotNos = append(gotNos, nos)
 			}
