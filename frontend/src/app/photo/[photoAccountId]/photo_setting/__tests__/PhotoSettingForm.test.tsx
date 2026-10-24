@@ -254,20 +254,53 @@ describe("PhotoSettingForm", () => {
     ).toBeInTheDocument();
   });
 
-  it("新規モードで画像なしの場合にバリデーションエラーが表示されること", async () => {
+  it("新規モードで画像なしの場合は残り枚数の下に警告文が表示され、ページ上部には表示されないこと", async () => {
+    mockGetPhotoUpperLimit.mockResolvedValue({ remainingCount: 5 });
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/今回はあと5枚まで選択できます/)).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
+
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    const imageError = await screen.findByTestId("image-file-error");
+    expect(imageError).toHaveTextContent("画像ファイルを選択してください");
+    // 「今回はあとX枚まで選択できます」の直後に表示されること
+    expect(screen.getByText(/今回はあと5枚まで選択できます/).nextElementSibling).toBe(
+      imageError
+    );
+    expect(screen.queryByTestId("validation-errors")).not.toBeInTheDocument();
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+
+    // 画像を選択すると警告文が消えること
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    expect(screen.queryByTestId("image-file-error")).not.toBeInTheDocument();
+  });
+
+  it("項目別エラー以外のバリデーションエラーはページ上部にrole=alertで表示されること", async () => {
     render(<PhotoSettingForm photoAccountId="user1" />);
 
     await waitFor(() => {
       expect(screen.getByTestId("submit-button")).toBeInTheDocument();
     });
 
+    fireEvent.change(screen.getByTestId("iso-input"), {
+      target: { value: "-1" },
+    });
     fireEvent.click(screen.getByTestId("submit-button"));
 
     await waitFor(() => {
-      expect(screen.getByTestId("validation-errors")).toBeInTheDocument();
-      expect(
-        screen.getByText("画像ファイルを選択してください")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("validation-errors")).toHaveTextContent(
+        "ISOは正の数値を入力してください"
+      );
     });
     // スクリーンリーダーに通知されるようrole="alert"が付与されていること
     expect(screen.getByTestId("validation-errors")).toHaveAttribute(
@@ -291,12 +324,20 @@ describe("PhotoSettingForm", () => {
     });
     fireEvent.click(screen.getByTestId("submit-button"));
 
-    await waitFor(() => {
-      expect(
-        screen.getByText("タイトル（日本語）を入力してください")
-      ).toBeInTheDocument();
-    });
+    // 入力欄の下に警告文を表示し、枠を赤にする。ページ上部には表示しない
+    const titleError = await screen.findByTestId("japanese-title-error");
+    expect(titleError).toHaveTextContent("タイトル（日本語）を入力してください");
+    const titleInput = screen.getByTestId("japanese-title-input");
+    expect(titleInput).toHaveClass("border-red-500");
+    expect(titleInput).toHaveAttribute("aria-invalid", "true");
+    expect(titleInput).toHaveAttribute("aria-describedby", titleError.id);
+    expect(screen.queryByTestId("validation-errors")).not.toBeInTheDocument();
     expect(mockRegistPhotos).not.toHaveBeenCalled();
+
+    // 入力すると警告文と赤枠が解除されること
+    fireEvent.change(titleInput, { target: { value: "テストタイトル" } });
+    expect(screen.queryByTestId("japanese-title-error")).not.toBeInTheDocument();
+    expect(titleInput).not.toHaveClass("border-red-500");
   });
 
   it("保存失敗時のエラーメッセージにrole=alertが付与されること", async () => {
@@ -403,14 +444,24 @@ describe("PhotoSettingForm", () => {
     }
     expect(screen.getByTestId(`tag-entry-${PHOTO_TAG_MAX_SIZE}`)).toBeInTheDocument();
 
-    // 上限を超える追加はその場で拒否する（最大50MBを送信してから400で弾かれるのを避ける）
-    fireEvent.click(screen.getByTestId("add-tag-button"));
+    // 上限に達したらボタンを非活性にし、ボタンの横に上限メッセージを表示する
+    // （最大50MBを送信してから400で弾かれるのを避ける）。ページ上部には表示しない
+    const addTagButton = screen.getByTestId("add-tag-button");
+    expect(addTagButton).toBeDisabled();
+    expect(screen.getByTestId("tag-limit-message")).toHaveTextContent(
+      `タグは${PHOTO_TAG_MAX_SIZE}件までです`
+    );
+    expect(addTagButton.nextElementSibling).toBe(screen.getByTestId("tag-limit-message"));
+    expect(screen.queryByTestId("validation-errors")).not.toBeInTheDocument();
+    fireEvent.click(addTagButton);
     expect(
       screen.queryByTestId(`tag-entry-${PHOTO_TAG_MAX_SIZE + 1}`)
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId("validation-errors")).toHaveTextContent(
-      `タグは${PHOTO_TAG_MAX_SIZE}件までです`
-    );
+
+    // 1件削除すると再び追加できること
+    fireEvent.click(screen.getByTestId("remove-tag-1"));
+    expect(addTagButton).toBeEnabled();
+    expect(screen.queryByTestId("tag-limit-message")).not.toBeInTheDocument();
   });
 
   it("タイトル・キャプション・タグ名の入力欄にバックエンドと同じ上限が設定されていること", async () => {
@@ -1256,13 +1307,32 @@ describe("PhotoSettingForm", () => {
       target: { files: [file] },
     });
 
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
     fireEvent.click(screen.getByTestId("add-tag-button"));
+    fireEvent.click(screen.getByTestId("add-tag-button"));
+    fireEvent.change(screen.getByTestId("tag-japanese-2"), {
+      target: { value: "入力済み" },
+    });
     fireEvent.click(screen.getByTestId("submit-button"));
 
-    await waitFor(() => {
-      expect(screen.getByText("タグの日本語名は必須です")).toBeInTheDocument();
-    });
+    // 未入力のタグの入力欄だけ枠を赤にし、その下に警告文を表示する。ページ上部には表示しない
+    const tagError = await screen.findByTestId("tag-japanese-error-1");
+    expect(tagError).toHaveTextContent("タグの日本語名は必須です");
+    const tagInput = screen.getByTestId("tag-japanese-1");
+    expect(tagInput).toHaveClass("border-red-500");
+    expect(tagInput).toHaveAttribute("aria-invalid", "true");
+    expect(tagInput).toHaveAttribute("aria-describedby", tagError.id);
+    expect(screen.getByTestId("tag-japanese-2")).not.toHaveClass("border-red-500");
+    expect(screen.queryByTestId("tag-japanese-error-2")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("validation-errors")).not.toBeInTheDocument();
     expect(mockRegistPhotos).not.toHaveBeenCalled();
+
+    // 入力すると警告文と赤枠が解除されること
+    fireEvent.change(tagInput, { target: { value: "テストタグ" } });
+    expect(screen.queryByTestId("tag-japanese-error-1")).not.toBeInTheDocument();
+    expect(tagInput).not.toHaveClass("border-red-500");
   });
 
   it("タグの日本語名にスペースを含む場合は送信時にバリデーションエラーになること", async () => {
