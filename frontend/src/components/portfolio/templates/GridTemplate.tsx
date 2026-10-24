@@ -27,7 +27,7 @@ const ROW_CELLS: Record<GridRowPattern, { flex: number; aspectRatio: string }[]>
 /**
  * グリッド型テンプレート
  *
- * 行パターンに従って、1行に2〜3枚の写真を並べる。キャプションは写真の下に表示する。
+ * 行パターンに従って、1行に2〜3枚の写真を並べる。
  */
 export function GridTemplate({ layout }: { layout: GridLayout }) {
   return (
@@ -43,9 +43,6 @@ export function GridTemplate({ layout }: { layout: GridLayout }) {
                   className="w-full object-cover rounded"
                   style={{ aspectRatio: cell.aspectRatio }}
                 />
-                {gridPhoto.caption && (
-                  <figcaption className="text-sm text-gray-700 mt-1">{gridPhoto.caption}</figcaption>
-                )}
               </figure>
             );
           })}

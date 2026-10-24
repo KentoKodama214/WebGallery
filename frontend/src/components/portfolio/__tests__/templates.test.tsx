@@ -47,19 +47,19 @@ describe("ポートフォリオのテンプレート", () => {
         {renderPortfolioLayout({
           __typename: "GridLayout",
           rows: [
-            { pattern: "THREE_EQUAL", photos: [1, 2, 3].map((no) => ({ photo: photo(no), caption: "" })) },
+            { pattern: "THREE_EQUAL", photos: [1, 2, 3].map((no) => ({ photo: photo(no) })) },
             {
               pattern: "WIDE_NARROW",
               photos: [
-                { photo: photo(4), caption: "橋杭岩" },
-                { photo: photo(5), caption: "" },
+                { photo: photo(4) },
+                { photo: photo(5) },
               ],
             },
             {
               pattern: "NARROW_WIDE",
               photos: [
-                { photo: photo(6), caption: "" },
-                { photo: photo(7), caption: "" },
+                { photo: photo(6) },
+                { photo: photo(7) },
               ],
             },
           ],
@@ -77,7 +77,8 @@ describe("ポートフォリオのテンプレート", () => {
     const wideNarrow = rows[1].querySelectorAll("figure");
     expect((wideNarrow[0] as HTMLElement).style.flex).toContain("2");
     expect((wideNarrow[1] as HTMLElement).style.flex).toContain("1");
-    expect(within(rows[1]).getByText("橋杭岩")).toBeInTheDocument();
+    // グリッド型は写真単位の設定を持たないため、キャプションは表示しない
+    expect(rows[1].querySelector("figcaption")).toBeNull();
     // 横長は3:2、縦長は3:4で表示する（縦長が右）
     const wideNarrowImages = within(rows[1]).getAllByRole("img");
     expect(wideNarrowImages[0].style.getPropertyValue("aspect-ratio")).toBe("3 / 2");
@@ -100,8 +101,8 @@ describe("ポートフォリオのテンプレート", () => {
             {
               pattern: "TWO_EQUAL",
               photos: [
-                { photo: { ...photo(1, "外部画像"), url: "https://evil.example.com/x.jpg" }, caption: "" },
-                { photo: photo(2), caption: "" },
+                { photo: { ...photo(1, "外部画像"), url: "https://evil.example.com/x.jpg" } },
+                { photo: photo(2) },
               ],
             },
           ],

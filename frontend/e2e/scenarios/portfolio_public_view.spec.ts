@@ -43,7 +43,6 @@ test.describe("ポートフォリオの公開ページ", () => {
       await photoButtons.nth(1).click();
       await dialog.getByRole("button", { name: "完了" }).click();
 
-      await page.getByPlaceholder("キャプション").first().fill("E2Eキャプション");
       await page.getByRole("button", { name: "行を追加" }).click();
       await expect(page.getByTestId("grid-photo-count")).toContainText("行の枚数の合計 2枚 / 写真 2枚");
 
@@ -76,7 +75,6 @@ test.describe("ポートフォリオの公開ページ", () => {
         const row = visitor.getByTestId("grid-row");
         await expect(row).toHaveCount(1);
         await expect(row).toHaveAttribute("data-pattern", "TWO_EQUAL");
-        await expect(row.getByText("E2Eキャプション")).toBeVisible();
 
         // 署名付きURLの画像が実際に読み込めていること（naturalWidth が 0 なら読み込みに失敗している）
         const images = row.getByRole("img");
