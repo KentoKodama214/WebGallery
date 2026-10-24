@@ -14,6 +14,7 @@ function photo(photoNo: number): SelectedPhoto {
     photoNo,
     imageFilePath: "",
     label: `写真${photoNo}`,
+    directionKbn: "horizontal",
     settings: { ...EMPTY_PHOTO_SETTINGS },
   };
 }
