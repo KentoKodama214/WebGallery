@@ -8,7 +8,7 @@ import {
   type PortfolioPhotoSearchFilter,
 } from "@/lib/api/client";
 import { sanitizeImageUrl } from "@/lib/url";
-import { PORTFOLIO_PHOTO_MAX_SIZE, TAG_NAME_MAX_LENGTH } from "@/lib/validation";
+import { PORTFOLIO_PHOTO_MAX_SIZE } from "@/lib/validation";
 
 /** 写真選択ダイアログで選んだ写真 */
 export interface PickedPhoto {
@@ -18,6 +18,8 @@ export interface PickedPhoto {
   imageFilePath: string;
   /** 一覧・プレビューで表示する写真の名前 */
   label: string;
+  /** 向き区分（vertical / horizontal / square / none） */
+  directionKbn: string;
 }
 
 interface PhotoPickerDialogProps {
@@ -31,33 +33,97 @@ interface PhotoPickerDialogProps {
   onCancel: () => void;
 }
 
-/** 向き区分ごとの写真の枠の縦横比と、向きの表示名 */
-const DIRECTION_FRAMES: Record<string, { aspectRatio: string; label: string }> = {
-  vertical: { aspectRatio: "3 / 4", label: "縦" },
-  horizontal: { aspectRatio: "4 / 3", label: "横" },
-  square: { aspectRatio: "1 / 1", label: "正方形" },
+/** 向き区分ごとの写真の枠の縦横比 */
+const DIRECTION_ASPECT_RATIOS: Record<string, string> = {
+  vertical: "3 / 4",
+  horizontal: "4 / 3",
+  square: "1 / 1",
 };
 
-/** 向きが未設定の写真の枠 */
-const DEFAULT_FRAME = { aspectRatio: "1 / 1", label: "" };
+/** 向きが未設定の写真の枠の縦横比 */
+const DEFAULT_ASPECT_RATIO = "1 / 1";
+
+/** 検索語の最大文字数（写真のタイトル・撮影場所の名前の最大文字数と同じ） */
+const KEYWORD_MAX_LENGTH = 100;
 
 /**
- * 写真の表示名を求める（タイトルが未入力の場合は写真番号）
+ * 検索結果の写真を、選択済みの写真の形に変換する（タイトルが未入力の場合は写真番号を表示名にする）
  *
  * @param photo 検索結果の写真
- * @returns 表示名
+ * @returns 選択した写真
  */
-function toLabel(photo: PortfolioPhotoCandidate): string {
-  return photo.photoJapaneseTitle || `写真${photo.photoNo}`;
+function toPickedPhoto(photo: PortfolioPhotoCandidate): PickedPhoto {
+  return {
+    photoNo: photo.photoNo,
+    imageFilePath: photo.imageFilePath,
+    label: photo.photoJapaneseTitle || `写真${photo.photoNo}`,
+    directionKbn: photo.directionKbn,
+  };
+}
+
+/**
+ * 写真の支援技術向けの名前を求める（タイトルがある場合は写真番号に添える）
+ *
+ * @param photo 選択した写真
+ * @returns 名前（例：写真3（金閣寺））
+ */
+function toAccessibleName(photo: PickedPhoto): string {
+  const numbered = `写真${photo.photoNo}`;
+  return photo.label === numbered ? numbered : `${numbered}（${photo.label}）`;
+}
+
+interface PhotoTileProps {
+  /** 表示する写真 */
+  photo: PickedPhoto;
+  /** 支援技術向けの名前 */
+  ariaLabel: string;
+  /** 押せない状態か */
+  disabled?: boolean;
+  /** 右上に表示するバッジ（選択済みの一覧での表示順） */
+  badge?: number;
+  /** 押したときの処理 */
+  onClick: () => void;
+}
+
+/**
+ * 写真1枚分のボタン（枠は向きに合わせた縦横比で表示する）
+ */
+function PhotoTile({ photo, ariaLabel, disabled, badge, onClick }: PhotoTileProps) {
+  const src = sanitizeImageUrl(photo.imageFilePath);
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={onClick}
+      style={{ aspectRatio: DIRECTION_ASPECT_RATIOS[photo.directionKbn] ?? DEFAULT_ASPECT_RATIO }}
+      className={`relative block h-32 overflow-hidden rounded border-4 bg-gray-200 disabled:opacity-40 ${
+        badge !== undefined ? "border-blue-700" : "border-transparent hover:border-gray-400"
+      }`}
+    >
+      {src ? (
+        <img src={src} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <span className="text-xs text-gray-600">{photo.label}</span>
+      )}
+      {badge !== undefined && (
+        <span className="absolute top-1 right-1 bg-blue-700 text-white text-xs px-1.5 py-0.5 rounded">
+          {badge}
+        </span>
+      )}
+    </button>
+  );
 }
 
 /**
  * ポートフォリオに設定する写真を、自分が登録した写真から選ぶダイアログ
  *
- * 本人専用の写真検索APIをページ単位で取得し、タイトル・撮影場所・タグで絞り込める。
+ * 上段に未選択の写真、下段に選択済みの写真（表示順）を分けて表示する。
+ * 未選択の写真を押すと選択済みの末尾に追加し、選択済みの写真を押すと選択を解除する。
+ * 未選択の写真は本人専用の写真検索APIをページ単位で取得し、1つの検索語で
+ * タイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに部分一致するものに絞り込める。
  * 写真の枠は向き（縦・横・正方形）に合わせた縦横比で表示する。
  * 選択はダイアログの中だけで保持し、「完了」で確定する（「キャンセル」では開く前の選択に戻る）。
- * 新しく選んだ写真は、選んだ順に表示順の末尾へ追加される。
  */
 export function PhotoPickerDialog({
   accountId,
@@ -71,10 +137,8 @@ export function PhotoPickerDialog({
   const [isLast, setIsLast] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // 絞り込みの入力値と、検索に使った（検索ボタンで確定した）条件
-  const [titleInput, setTitleInput] = useState("");
-  const [locationInput, setLocationInput] = useState("");
-  const [tagInput, setTagInput] = useState("");
+  // 検索語の入力値と、検索に使った（検索ボタンで確定した）条件
+  const [keywordInput, setKeywordInput] = useState("");
   const [appliedFilter, setAppliedFilter] = useState<PortfolioPhotoSearchFilter>({});
   // 取得リクエストの世代。後着レスポンスが一覧を上書きする競合を防ぐ
   const loadSeqRef = useRef(0);
@@ -130,25 +194,41 @@ export function PhotoPickerDialog({
   /** 入力した条件で検索し直す */
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    loadPage({ title: titleInput.trim(), location: locationInput.trim(), tag: tagInput.trim() }, 1);
+    loadPage({ keyword: keywordInput.trim() }, 1);
   };
 
   /**
-   * 写真の選択・選択解除を切り替える
+   * 未選択の写真を選択済みの末尾に追加する
    *
    * @param photo 検索結果の写真
    */
-  const toggle = (photo: PortfolioPhotoCandidate) => {
+  const select = (photo: PortfolioPhotoCandidate) => {
     setSelected((prev) =>
-      prev.some((p) => p.photoNo === photo.photoNo)
-        ? prev.filter((p) => p.photoNo !== photo.photoNo)
-        : [...prev, { photoNo: photo.photoNo, imageFilePath: photo.imageFilePath, label: toLabel(photo) }]
+      prev.some((p) => p.photoNo === photo.photoNo) ? prev : [...prev, toPickedPhoto(photo)]
     );
   };
 
+  /**
+   * 選択済みの写真の選択を解除する
+   *
+   * @param photoNo 写真番号
+   */
+  const unselect = (photoNo: number) => {
+    setSelected((prev) => prev.filter((p) => p.photoNo !== photoNo));
+  };
+
+  const selectedPhotoNos = new Set(selected.map((p) => p.photoNo));
+  const unselectedPhotos = photos.filter((photo) => !selectedPhotoNos.has(photo.photoNo));
   const isFull = selected.length >= PORTFOLIO_PHOTO_MAX_SIZE;
-  const isFiltered = !!appliedFilter.title || !!appliedFilter.location || !!appliedFilter.tag;
-  const inputClass = "border border-gray-300 rounded px-2 py-1 text-sm";
+  const isFiltered = !!appliedFilter.keyword;
+
+  /** 未選択の一覧が空のときの案内 */
+  const unselectedEmptyMessage =
+    photos.length > 0
+      ? "未選択の写真はありません"
+      : isFiltered
+        ? "条件に一致する写真がありません"
+        : "登録済みの写真がありません";
 
   return (
     <ModalDialog
@@ -170,34 +250,14 @@ export function PhotoPickerDialog({
         aria-label="写真の絞り込み"
         className="flex flex-wrap items-end gap-2 px-4 py-3 border-b"
       >
-        <label className="flex flex-col text-xs font-bold">
-          タイトル
+        <label className="flex flex-col text-xs font-bold flex-1 min-w-[200px]">
+          検索語（タイトル・場所・住所・タグ）
           <input
             type="text"
-            value={titleInput}
-            maxLength={100}
-            onChange={(e) => setTitleInput(e.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="flex flex-col text-xs font-bold">
-          場所
-          <input
-            type="text"
-            value={locationInput}
-            maxLength={100}
-            onChange={(e) => setLocationInput(e.target.value)}
-            className={inputClass}
-          />
-        </label>
-        <label className="flex flex-col text-xs font-bold">
-          タグ
-          <input
-            type="text"
-            value={tagInput}
-            maxLength={TAG_NAME_MAX_LENGTH}
-            onChange={(e) => setTagInput(e.target.value)}
-            className={inputClass}
+            value={keywordInput}
+            maxLength={KEYWORD_MAX_LENGTH}
+            onChange={(e) => setKeywordInput(e.target.value)}
+            className="border border-gray-300 rounded px-2 py-1 text-sm"
           />
         </label>
         <button
@@ -207,47 +267,28 @@ export function PhotoPickerDialog({
           検索
         </button>
       </form>
-      <div className="p-4 overflow-y-auto flex-1">
-        {photos.length === 0 && !isLoading && !error && (
-          <p className="text-gray-600">
-            {isFiltered ? "条件に一致する写真がありません" : "登録済みの写真がありません"}
-          </p>
+      <section
+        aria-labelledby="photo-picker-unselected-heading"
+        data-testid="photo-picker-unselected"
+        className="p-4 overflow-y-auto flex-1 min-h-[160px]"
+      >
+        <h3 id="photo-picker-unselected-heading" className="text-sm font-bold mb-2">
+          未選択の写真
+        </h3>
+        {unselectedPhotos.length === 0 && !isLoading && !error && (
+          <p className="text-gray-600 text-sm">{unselectedEmptyMessage}</p>
         )}
         <ul className="flex flex-wrap gap-2">
-          {photos.map((photo) => {
-            const order = selected.findIndex((p) => p.photoNo === photo.photoNo);
-            const isSelected = order >= 0;
-            const src = sanitizeImageUrl(photo.imageFilePath);
-            const frame = DIRECTION_FRAMES[photo.directionKbn] ?? DEFAULT_FRAME;
+          {unselectedPhotos.map((photo) => {
+            const picked = toPickedPhoto(photo);
             return (
               <li key={photo.photoNo} data-testid="photo-picker-item" data-direction={photo.directionKbn}>
-                <button
-                  type="button"
-                  aria-pressed={isSelected}
-                  aria-label={`写真${photo.photoNo}${photo.photoJapaneseTitle ? `（${photo.photoJapaneseTitle}）` : ""}`}
-                  disabled={!isSelected && isFull}
-                  onClick={() => toggle(photo)}
-                  style={{ aspectRatio: frame.aspectRatio }}
-                  className={`relative block h-32 overflow-hidden rounded border-4 bg-gray-200 disabled:opacity-40 ${
-                    isSelected ? "border-blue-700" : "border-transparent"
-                  }`}
-                >
-                  {src ? (
-                    <img src={src} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-xs text-gray-600">{toLabel(photo)}</span>
-                  )}
-                  {frame.label && (
-                    <span className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
-                      {frame.label}
-                    </span>
-                  )}
-                  {isSelected && (
-                    <span className="absolute top-1 right-1 bg-blue-700 text-white text-xs px-1.5 py-0.5 rounded">
-                      {order + 1}
-                    </span>
-                  )}
-                </button>
+                <PhotoTile
+                  photo={picked}
+                  ariaLabel={`${toAccessibleName(picked)}を選択`}
+                  disabled={isFull}
+                  onClick={() => select(photo)}
+                />
               </li>
             );
           })}
@@ -267,7 +308,29 @@ export function PhotoPickerDialog({
             </button>
           </div>
         )}
-      </div>
+      </section>
+      <section
+        aria-labelledby="photo-picker-selected-heading"
+        data-testid="photo-picker-selected"
+        className="p-4 border-t overflow-y-auto max-h-[35vh] bg-gray-50"
+      >
+        <h3 id="photo-picker-selected-heading" className="text-sm font-bold mb-2">
+          選択済みの写真（表示順）
+        </h3>
+        {selected.length === 0 && <p className="text-gray-600 text-sm">選択済みの写真はありません</p>}
+        <ul className="flex flex-wrap gap-2">
+          {selected.map((photo, index) => (
+            <li key={photo.photoNo} data-testid="photo-picker-selected-item" data-direction={photo.directionKbn}>
+              <PhotoTile
+                photo={photo}
+                ariaLabel={`${toAccessibleName(photo)}の選択を解除`}
+                badge={index + 1}
+                onClick={() => unselect(photo.photoNo)}
+              />
+            </li>
+          ))}
+        </ul>
+      </section>
       <div className="flex justify-end gap-3 p-4 border-t">
         <button type="button" onClick={onCancel} className="px-4 py-2 border rounded">
           キャンセル

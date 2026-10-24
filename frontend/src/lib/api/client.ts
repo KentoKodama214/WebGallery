@@ -1300,12 +1300,8 @@ export async function getPortfolioUpperLimit(
 
 /** ポートフォリオに設定する写真の検索条件（いずれも部分一致。未入力の条件は送らない） */
 export interface PortfolioPhotoSearchFilter {
-  /** 写真のタイトル（日本語・英語のいずれか） */
-  title?: string;
-  /** 撮影場所の名前（表示名・管理名のいずれか） */
-  location?: string;
-  /** タグ名（日本語・英語のいずれか） */
-  tag?: string;
+  /** 検索語（写真のタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに部分一致） */
+  keyword?: string;
 }
 
 /** ポートフォリオに設定する写真の検索結果の写真 */
@@ -1319,7 +1315,7 @@ export interface PortfolioPhotoCandidate {
 }
 
 /**
- * ポートフォリオに設定する写真を、本人の写真からタイトル・撮影場所・タグで検索する（撮影日時の新しい順）
+ * ポートフォリオに設定する写真を、本人の写真からタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに検索語が部分一致するもので検索する（撮影日時の新しい順）
  */
 export async function searchPortfolioPhotos(
   accountId: string,
