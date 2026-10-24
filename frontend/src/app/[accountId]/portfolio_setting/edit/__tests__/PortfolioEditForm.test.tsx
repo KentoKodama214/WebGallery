@@ -7,7 +7,7 @@ const mockGetPortfolioTemplateList = jest.fn();
 const mockSavePortfolio = jest.fn();
 const mockUpdatePortfolioStatus = jest.fn();
 const mockDeletePortfolio = jest.fn();
-const mockGetPhotoList = jest.fn();
+const mockSearchPortfolioPhotos = jest.fn();
 
 jest.mock("@/lib/api/client", () => ({
   getPortfolioDetail: (...args: unknown[]) => mockGetPortfolioDetail(...args),
@@ -15,7 +15,7 @@ jest.mock("@/lib/api/client", () => ({
   savePortfolio: (...args: unknown[]) => mockSavePortfolio(...args),
   updatePortfolioStatus: (...args: unknown[]) => mockUpdatePortfolioStatus(...args),
   deletePortfolio: (...args: unknown[]) => mockDeletePortfolio(...args),
-  getPhotoList: (...args: unknown[]) => mockGetPhotoList(...args),
+  searchPortfolioPhotos: (...args: unknown[]) => mockSearchPortfolioPhotos(...args),
 }));
 
 const mockUseAuth = jest.fn();
@@ -45,7 +45,7 @@ const gridDetail = {
     {
       photoNo: 5,
       displayOrder: 1,
-      photoSettings: { caption: "金閣寺" },
+      photoSettings: {},
       photoJapaneseTitle: "金閣寺",
       imageFilePath: "",
       directionKbn: "horizontal",
@@ -94,10 +94,10 @@ describe("PortfolioEditForm", () => {
     });
 
     it("作成数の上限に達している場合は、上限に達した旨を表示し、編集用URLへ切り替えないこと", async () => {
-      mockGetPhotoList.mockResolvedValue({
+      mockSearchPortfolioPhotos.mockResolvedValue({
         isLast: true,
         photoList: [
-          { accountNo: 1, photoNo: 11, isFavorite: false, imageFilePath: "", caption: "富士山", directionKbn: "horizontal" },
+          { photoNo: 11, photoJapaneseTitle: "富士山", imageFilePath: "", directionKbn: "horizontal" },
         ],
       });
       mockSavePortfolio.mockRejectedValue(
@@ -124,13 +124,77 @@ describe("PortfolioEditForm", () => {
     it("タグは上限（30件）まで追加でき、上限に達すると追加できないこと", () => {
       render(<PortfolioEditForm accountId="user1" />);
 
-      const addTag = screen.getByRole("button", { name: "タグを追加" });
+      const addTag = screen.getByRole("button", { name: "＋タグを追加" });
       for (let i = 0; i < 30; i++) {
         fireEvent.click(addTag);
       }
 
       expect(screen.getByLabelText("タグ30（日本語）")).toBeInTheDocument();
       expect(addTag).toBeDisabled();
+    });
+
+    it("「＋タグを追加」ボタンは、タグの入力欄より後（タグ欄の下）に表示すること", () => {
+      render(<PortfolioEditForm accountId="user1" />);
+
+      const addTag = screen.getByRole("button", { name: "＋タグを追加" });
+      fireEvent.click(addTag);
+
+      const tagInput = screen.getByLabelText("タグ1（日本語）");
+      expect(
+        tagInput.compareDocumentPosition(addTag) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    });
+
+    it("写真選択ダイアログでキャンセルすると、ダイアログ内で選んだ写真を反映しないこと", async () => {
+      mockSearchPortfolioPhotos.mockResolvedValue({
+        isLast: true,
+        photoList: [
+          { photoNo: 11, photoJapaneseTitle: "富士山", imageFilePath: "", directionKbn: "vertical" },
+        ],
+      });
+
+      render(<PortfolioEditForm accountId="user1" />);
+      fireEvent.click(screen.getByRole("button", { name: "写真を選択" }));
+      const dialog = await screen.findByTestId("photo-picker-dialog");
+      fireEvent.click(await within(dialog).findByRole("button", { name: "写真11（富士山）" }));
+      expect(within(dialog).getByText("選択中 1 / 200枚")).toBeInTheDocument();
+      fireEvent.click(within(dialog).getByRole("button", { name: "キャンセル" }));
+
+      expect(screen.queryByTestId("photo-picker-dialog")).not.toBeInTheDocument();
+      expect(screen.queryAllByTestId("portfolio-photo-item")).toHaveLength(0);
+      expect(screen.getByText("写真が選択されていません")).toBeInTheDocument();
+    });
+
+    it("フィーチャー型のプレビューは、写真ごとにテーマ・サブテーマ・説明をダイアログで表示すること", async () => {
+      mockSearchPortfolioPhotos.mockResolvedValue({
+        isLast: true,
+        photoList: [
+          { photoNo: 11, photoJapaneseTitle: "富士山", imageFilePath: "", directionKbn: "vertical" },
+          { photoNo: 12, photoJapaneseTitle: "茶畑", imageFilePath: "", directionKbn: "horizontal" },
+        ],
+      });
+
+      render(<PortfolioEditForm accountId="user1" />);
+      // 写真がない間はプレビューできない
+      expect(screen.queryByRole("button", { name: "プレビューを表示" })).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "写真を選択" }));
+      const picker = await screen.findByTestId("photo-picker-dialog");
+      fireEvent.click(await within(picker).findByRole("button", { name: "写真11（富士山）" }));
+      fireEvent.click(within(picker).getByRole("button", { name: "写真12（茶畑）" }));
+      fireEvent.click(within(picker).getByRole("button", { name: "完了" }));
+      fireEvent.change(screen.getByLabelText("富士山のテーマ"), { target: { value: "日本の山" } });
+      fireEvent.change(screen.getByLabelText("富士山のサブテーマ"), { target: { value: "静岡" } });
+
+      fireEvent.click(screen.getByRole("button", { name: "プレビューを表示" }));
+
+      const dialog = screen.getByRole("dialog", { name: "プレビュー" });
+      const sections = within(dialog).getAllByTestId("feature-preview-section");
+      expect(sections).toHaveLength(2);
+      expect(within(sections[0]).getByRole("heading", { name: "日本の山" })).toBeInTheDocument();
+      expect(within(sections[0]).getByText("静岡")).toBeInTheDocument();
+      // テーマが未入力の写真は、公開できないことを示す
+      expect(within(sections[1]).getByText(/テーマが未入力です/)).toBeInTheDocument();
     });
 
     it("一覧へ戻るリンクを、見出しより前（左上）に表示すること", () => {
@@ -145,11 +209,11 @@ describe("PortfolioEditForm", () => {
     });
 
     it("選択した写真とフィーチャー型の項目だけを送って下書き登録し、編集用URLへ切り替えること", async () => {
-      mockGetPhotoList.mockResolvedValue({
+      mockSearchPortfolioPhotos.mockResolvedValue({
         isLast: true,
         photoList: [
-          { accountNo: 1, photoNo: 11, isFavorite: false, imageFilePath: "", caption: "富士山", directionKbn: "horizontal" },
-          { accountNo: 1, photoNo: 12, isFavorite: false, imageFilePath: "", caption: "", directionKbn: "square" },
+          { photoNo: 11, photoJapaneseTitle: "富士山", imageFilePath: "", directionKbn: "horizontal" },
+          { photoNo: 12, photoJapaneseTitle: "", imageFilePath: "", directionKbn: "square" },
         ],
       });
       mockSavePortfolio.mockResolvedValue({
@@ -216,7 +280,9 @@ describe("PortfolioEditForm", () => {
       expect(await screen.findByDisplayValue("日本の自然")).toBeInTheDocument();
       expect(mockGetPortfolioDetail).toHaveBeenCalledWith("user1", 3);
       expect(screen.getByTestId("portfolio-status")).toHaveTextContent("公開中");
-      expect(screen.getByLabelText("金閣寺のキャプション")).toHaveValue("金閣寺");
+      // グリッド型は写真単位の設定を持たないため、写真ごとの入力欄を表示しない
+      expect(screen.queryByLabelText("金閣寺のキャプション")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("金閣寺のテーマ")).not.toBeInTheDocument();
       expect(screen.getAllByTestId("grid-row-item")).toHaveLength(1);
       expect(screen.getByTestId("grid-photo-count")).toHaveTextContent(
         "行の枚数の合計 2枚 / 写真 2枚"
@@ -272,7 +338,7 @@ describe("PortfolioEditForm", () => {
             templateSettings: { rows: [{ pattern: "TWO_EQUAL" }, { pattern: "THREE_EQUAL" }] },
             photoList: [
               { photoNo: 8, photoSettings: {} },
-              { photoNo: 5, photoSettings: { caption: "金閣寺" } },
+              { photoNo: 5, photoSettings: {} },
             ],
             tagList: [{ tagJapaneseName: "自然", tagEnglishName: "nature" }],
           },

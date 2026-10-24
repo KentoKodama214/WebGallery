@@ -10,7 +10,6 @@ import {
   getPortfolioTemplateList,
   savePortfolio,
   updatePortfolioStatus,
-  type PhotoListItem,
   type PortfolioDetail,
   type PortfolioSaveData,
   type PortfolioStatusKbn,
@@ -20,15 +19,15 @@ import {
 import { ModalDialog } from "@/components/ui/ModalDialog";
 import { sanitizeImageUrl } from "@/lib/url";
 import {
-  PORTFOLIO_CAPTION_MAX_LENGTH,
   PORTFOLIO_DESCRIPTION_MAX_LENGTH,
   PORTFOLIO_TAG_MAX_SIZE,
   PORTFOLIO_THEME_MAX_LENGTH,
   TAG_NAME_MAX_LENGTH,
 } from "@/lib/validation";
 import { PORTFOLIO_STATUS_LABELS, PORTFOLIO_TEMPLATE_LABELS } from "../labels";
+import { FeaturePreview } from "./FeaturePreview";
 import { GridPreview } from "./GridPreview";
-import { PhotoPickerDialog } from "./PhotoPickerDialog";
+import { PhotoPickerDialog, type PickedPhoto } from "./PhotoPickerDialog";
 import {
   EMPTY_PHOTO_SETTINGS,
   GRID_ROW_PATTERN_LABELS,
@@ -121,7 +120,7 @@ function toFormState(detail: PortfolioDetail) {
 /**
  * ポートフォリオの作成・編集フォーム
  *
- * テンプレートごとに、写真単位の設定（フィーチャー型：テーマ・サブテーマ・説明、グリッド型：キャプション）と
+ * テンプレートごとに、写真単位の設定（フィーチャー型：テーマ・サブテーマ・説明。グリッド型は持たない）と
  * ポートフォリオ単位の設定（グリッド型：行パターン）を入力する。保存は常に下書きの内容として行い、
  * 公開状態は保存済みのポートフォリオに対して別途切り替える（未保存の変更がある間は切り替えさせない）。
  */
@@ -228,24 +227,27 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
   const gridTotalPhotoCount = gridRows.reduce((sum, pattern) => sum + rowPhotoCount(pattern), 0);
 
   /**
-   * 写真選択ダイアログでの選択・選択解除を反映する（選択した写真は表示順の末尾に追加する）
+   * 写真選択ダイアログで確定した選択を反映する
    *
-   * @param photo 写真一覧の写真
+   * 選択済みのままの写真は入力済みの設定を引き継ぎ、新しく選んだ写真は表示順の末尾に追加する
+   * （ダイアログが返す順は、開く前の表示順＋新しく選んだ順）。選択が変わらなかった場合は未保存の変更としない。
+   *
+   * @param picked ダイアログで確定した写真（表示順）
    */
-  const handleTogglePhoto = (photo: PhotoListItem) => {
+  const handleCompletePick = (picked: PickedPhoto[]) => {
+    setShowPicker(false);
+    const isUnchanged =
+      picked.length === photos.length && picked.every((p, i) => p.photoNo === photos[i].photoNo);
+    if (isUnchanged) return;
     markDirty();
     setPhotos((prev) =>
-      prev.some((p) => p.photoNo === photo.photoNo)
-        ? prev.filter((p) => p.photoNo !== photo.photoNo)
-        : [
-            ...prev,
-            {
-              photoNo: photo.photoNo,
-              imageFilePath: photo.imageFilePath,
-              label: photo.caption || `写真${photo.photoNo}`,
-              settings: { ...EMPTY_PHOTO_SETTINGS },
-            },
-          ]
+      picked.map(
+        (p) =>
+          prev.find((photo) => photo.photoNo === p.photoNo) ?? {
+            ...p,
+            settings: { ...EMPTY_PHOTO_SETTINGS },
+          }
+      )
     );
   };
 
@@ -536,7 +538,7 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                       <p className="text-sm text-gray-600">
                         {index + 1}. {photo.label}
                       </p>
-                      {templateKbn === "feature" ? (
+                      {templateKbn === "feature" && (
                         <>
                           <input
                             type="text"
@@ -570,16 +572,6 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                             className={inputClass}
                           />
                         </>
-                      ) : (
-                        <input
-                          type="text"
-                          aria-label={`${photo.label}のキャプション`}
-                          placeholder="キャプション"
-                          value={photo.settings.caption}
-                          maxLength={PORTFOLIO_CAPTION_MAX_LENGTH}
-                          onChange={(e) => updatePhotoSetting(photo.photoNo, "caption", e.target.value)}
-                          className={inputClass}
-                        />
                       )}
                     </div>
                     <div className="flex flex-col gap-1">
@@ -680,38 +672,27 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                 </li>
               ))}
             </ol>
-            {gridRows.length > 0 && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowPreview(true)}
-                  className="px-4 py-2 text-sm border border-blue-700 text-blue-700 rounded hover:bg-blue-50"
-                >
-                  プレビューを表示
-                </button>
-              </div>
-            )}
           </section>
+        )}
+
+        {/* プレビュー（フィーチャー型は写真があるとき、グリッド型は行があるときに表示できる） */}
+        {(templateKbn === "feature" ? photos.length > 0 : gridRows.length > 0) && (
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="px-4 py-2 text-sm border border-blue-700 text-blue-700 rounded hover:bg-blue-50"
+            >
+              プレビューを表示
+            </button>
+          </div>
         )}
 
         {/* タグ */}
         <section className="flex flex-col gap-3" aria-labelledby="portfolio-tags-heading">
-          <div className="flex justify-between items-center">
-            <h2 id="portfolio-tags-heading" className="font-bold">
-              タグ
-            </h2>
-            <button
-              type="button"
-              disabled={tags.length >= PORTFOLIO_TAG_MAX_SIZE}
-              onClick={() => {
-                markDirty();
-                setTags((prev) => [...prev, { tagJapaneseName: "", tagEnglishName: "" }]);
-              }}
-              className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800 disabled:opacity-50"
-            >
-              タグを追加
-            </button>
-          </div>
+          <h2 id="portfolio-tags-heading" className="font-bold">
+            タグ
+          </h2>
           {tags.map((tag, index) => (
             <div key={index} className="flex flex-col gap-1">
               <div className="flex gap-2 items-center">
@@ -762,6 +743,19 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
               )}
             </div>
           ))}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              disabled={tags.length >= PORTFOLIO_TAG_MAX_SIZE}
+              onClick={() => {
+                markDirty();
+                setTags((prev) => [...prev, { tagJapaneseName: "", tagEnglishName: "" }]);
+              }}
+              className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800 disabled:opacity-50"
+            >
+              ＋タグを追加
+            </button>
+          </div>
         </section>
 
         {/*
@@ -827,9 +821,13 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
       {showPicker && (
         <PhotoPickerDialog
           accountId={accountId}
-          selectedPhotoNos={photos.map((photo) => photo.photoNo)}
-          onToggle={handleTogglePhoto}
-          onClose={() => setShowPicker(false)}
+          initialSelected={photos.map(({ photoNo, imageFilePath, label }) => ({
+            photoNo,
+            imageFilePath,
+            label,
+          }))}
+          onComplete={handleCompletePick}
+          onCancel={() => setShowPicker(false)}
         />
       )}
 
@@ -859,7 +857,11 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
               中にフォーカスできる要素がないため、キーボードでもスクロールできるようにする */}
           <div className="overflow-y-auto px-6 py-4" tabIndex={0} aria-label="プレビューの内容">
 
-            <GridPreview photos={photos} rows={gridRows} />
+            {templateKbn === "grid" ? (
+              <GridPreview photos={photos} rows={gridRows} />
+            ) : (
+              <FeaturePreview photos={photos} />
+            )}
           </div>
         </ModalDialog>
       )}

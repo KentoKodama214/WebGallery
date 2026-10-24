@@ -29,7 +29,7 @@ authTest.describe("ポートフォリオ設定ページ（ログイン済み）"
     async ({ workerPage: page, testUser }) => {
       await page.goto(`/photo/${testUser.accountId}/photo_list`);
       await page.getByRole("button", { name: "メニュー" }).click();
-      await page.getByRole("link", { name: "Portfolio" }).click();
+      await page.getByRole("link", { name: "My Portfolio" }).click();
 
       await authExpect(page).toHaveURL(new RegExp(`/${testUser.accountId}/portfolio_setting$`), {
         timeout: 10000,
@@ -111,8 +111,15 @@ authTest.describe("ポートフォリオ設定ページ（ログイン済み）"
       });
       await page.getByRole("radio", { name: "グリッド" }).check();
       await page.getByRole("button", { name: "行を追加" }).click();
-      await page.getByRole("button", { name: "タグを追加" }).click();
+      await page.getByRole("button", { name: "＋タグを追加" }).click();
       await expectNoAccessibilityViolations(page);
+
+      await page.getByRole("button", { name: "写真を選択" }).click();
+      const picker = page.getByTestId("photo-picker-dialog");
+      await authExpect(picker.getByRole("button", { name: "検索" })).toBeVisible();
+      await authExpect(picker.getByText("読み込み中...")).toHaveCount(0, { timeout: 10000 });
+      await expectNoAccessibilityViolations(page);
+      await picker.getByRole("button", { name: "キャンセル" }).click();
 
       await page.getByRole("button", { name: "プレビューを表示" }).click();
       await authExpect(page.getByRole("dialog", { name: "プレビュー" })).toBeVisible();
