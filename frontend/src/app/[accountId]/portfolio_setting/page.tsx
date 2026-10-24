@@ -27,7 +27,6 @@ export default async function PortfolioSettingPage({
   }
 
   return (
-    // アカウント設定ページと同じ背景色にする（body の背景色に依存させない）
     <div className="min-h-screen bg-[whitesmoke]">
       <Header />
       <AuthGuard>
