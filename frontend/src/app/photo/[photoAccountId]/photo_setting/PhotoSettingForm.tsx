@@ -43,6 +43,19 @@ type LocationMode = "none" | "existing" | "new";
 /** 新規一括登録で1回に選択できる写真の最大枚数（バックエンドのConsts.PHOTO_BULK_REGIST_MAX_SIZEと合わせる） */
 const MAX_BULK_REGIST_SIZE = 10;
 
+/** 項目別エラーのキー（画像ファイルの未選択） */
+const IMAGE_ERROR_KEY = "image";
+
+/** 項目別エラーのキー（タイトル（日本語）の未入力） */
+const JAPANESE_TITLE_ERROR_KEY = "photoJapaneseTitle";
+
+/** 項目別エラーのキー（タグの日本語名の未入力。タグごとに保持する） */
+const tagJapaneseErrorKey = (tagNo: number) => `tag-japanese-${tagNo}`;
+
+/** 入力欄の枠線クラス（項目別エラーがある場合は赤枠にする） */
+const fieldBorderClass = (hasError: boolean) =>
+  hasError ? "border-red-500" : "border-gray-600";
+
 /**
  * 入力文字列を有限数へ変換する
  *
@@ -117,6 +130,8 @@ export function PhotoSettingForm({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  // 必須項目の未入力など、ページ上部ではなく該当入力欄の直下に表示するエラー
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("写真を保存しました");
   // 新規一括登録の成功時のみtrue。成功モーダルを閉じたら一覧へ戻る
@@ -287,6 +302,7 @@ export function PhotoSettingForm({
     }
 
     setValidationErrors([]);
+    clearFieldError(IMAGE_ERROR_KEY);
     setImageFiles([...imageFiles, ...selectedFiles]);
     // プレビューは各ファイルのFileReader完了を待たず、まず選択枚数分のプレースホルダーを
     // 追加して即座に一覧へ反映する（完了順が選択順と一致しない場合があるため、インデックスを
@@ -307,6 +323,20 @@ export function PhotoSettingForm({
   };
 
   /**
+   * 項目別エラーを1件取り除く
+   *
+   * @param key 項目別エラーのキー
+   */
+  const clearFieldError = (key: string) => {
+    setFieldErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  /**
    * 選択済み画像の削除（新規登録モードのみ）
    */
   const handleRemoveImage = (index: number) => {
@@ -320,8 +350,8 @@ export function PhotoSettingForm({
   const handleAddTag = () => {
     // バックエンドの `@Size(max = Consts.PHOTO_TAG_MAX_SIZE)` を超える入力は、
     // 最大50MBのアップロードを終えてから400で弾かれるため、追加の時点で止める
+    // （上限到達時はボタン自体を非活性にしているため、通常はここに到達しない）
     if (tags.length >= PHOTO_TAG_MAX_SIZE) {
-      setValidationErrors([`タグは${PHOTO_TAG_MAX_SIZE}件までです`]);
       return;
     }
     setTags([
@@ -336,6 +366,7 @@ export function PhotoSettingForm({
    */
   const handleRemoveTag = (tagNo: number) => {
     setTags(tags.filter((t) => t.tagNo !== tagNo));
+    clearFieldError(tagJapaneseErrorKey(tagNo));
   };
 
   /**
@@ -349,16 +380,22 @@ export function PhotoSettingForm({
     setTags(
       tags.map((t) => (t.tagNo === tagNo ? { ...t, [field]: value } : t))
     );
+    if (field === "tagJapaneseName") {
+      clearFieldError(tagJapaneseErrorKey(tagNo));
+    }
   };
 
   /**
    * バリデーション
+   *
+   * @returns errors: ページ上部に表示するエラー、fieldErrors: 該当入力欄の直下に表示する項目別エラー
    */
-  const validate = (): string[] => {
+  const validate = (): { errors: string[]; fieldErrors: Record<string, string> } => {
     const errors: string[] = [];
+    const newFieldErrors: Record<string, string> = {};
     if (!isEditMode) {
       if (imageFiles.length === 0) {
-        errors.push("画像ファイルを選択してください");
+        newFieldErrors[IMAGE_ERROR_KEY] = "画像ファイルを選択してください";
       }
       if (imageFiles.length > maxSelectable) {
         errors.push(`一度に登録できる写真は${maxSelectable}枚までです`);
@@ -370,7 +407,7 @@ export function PhotoSettingForm({
     // backend側は新規登録・更新のいずれも photoJapaneseTitle に @NotBlank を付与しているため、
     // isEditMode を問わず必須にする
     if (!photoJapaneseTitle.trim()) {
-      errors.push("タイトル（日本語）を入力してください");
+      newFieldErrors[JAPANESE_TITLE_ERROR_KEY] = "タイトル（日本語）を入力してください";
     }
     // 文字数はバックエンドの @Size と対応する定数で確認する（送信してから400で弾かれるのを避ける）
     const lengthChecks: { value: string; max: number; label: string }[] = [
@@ -405,11 +442,14 @@ export function PhotoSettingForm({
     if (tags.length > PHOTO_TAG_MAX_SIZE) {
       errors.push(`タグは${PHOTO_TAG_MAX_SIZE}件までです`);
     }
+    // 未入力は該当するタグすべてに項目別エラーを付け、それ以外のチェックは入力済みのタグのみ行う
     for (const tag of tags) {
       if (!tag.tagJapaneseName.trim()) {
-        errors.push("タグの日本語名は必須です");
-        break;
+        newFieldErrors[tagJapaneseErrorKey(tag.tagNo)] = "タグの日本語名は必須です";
       }
+    }
+    for (const tag of tags) {
+      if (!tag.tagJapaneseName.trim()) continue;
       if (/( |　)/.test(tag.tagJapaneseName)) {
         errors.push("タグの日本語名にスペースは使用できません");
         break;
@@ -454,7 +494,7 @@ export function PhotoSettingForm({
         }
       }
     }
-    return errors;
+    return { errors, fieldErrors: newFieldErrors };
   };
 
   /**
@@ -468,12 +508,14 @@ export function PhotoSettingForm({
       setError("セッションが切れました。お手数ですが再度ログインしてください");
       return;
     }
-    const errors = validate();
-    if (errors.length > 0) {
+    const { errors, fieldErrors: newFieldErrors } = validate();
+    if (errors.length > 0 || Object.keys(newFieldErrors).length > 0) {
       setValidationErrors(errors);
+      setFieldErrors(newFieldErrors);
       return;
     }
     setValidationErrors([]);
+    setFieldErrors({});
     setIsSaving(true);
     setError(null);
 
@@ -724,6 +766,9 @@ export function PhotoSettingForm({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
+                    aria-describedby={
+                      fieldErrors[IMAGE_ERROR_KEY] ? "image-file-error" : undefined
+                    }
                     className="bg-gray-700 text-white px-4 py-2 border border-gray-600 cursor-pointer hover:bg-gray-600"
                   >
                     {imageFiles.length > 0 ? "＋ファイルを追加" : "ファイルを選択"}
@@ -739,6 +784,15 @@ export function PhotoSettingForm({
                     {remainingCount}枚）
                   </p>
                 )}
+                {fieldErrors[IMAGE_ERROR_KEY] && (
+                  <p
+                    id="image-file-error"
+                    className="text-red-500 text-sm mt-1"
+                    data-testid="image-file-error"
+                  >
+                    {fieldErrors[IMAGE_ERROR_KEY]}
+                  </p>
+                )}
               </>
             )}
           </div>
@@ -752,12 +806,30 @@ export function PhotoSettingForm({
               id="photo-japanese-title"
               type="text"
               value={photoJapaneseTitle}
-              onChange={(e) => setPhotoJapaneseTitle(e.target.value)}
+              onChange={(e) => {
+                setPhotoJapaneseTitle(e.target.value);
+                clearFieldError(JAPANESE_TITLE_ERROR_KEY);
+              }}
               maxLength={PHOTO_TITLE_MAX_LENGTH}
               aria-required="true"
-              className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+              aria-invalid={!!fieldErrors[JAPANESE_TITLE_ERROR_KEY]}
+              aria-describedby={
+                fieldErrors[JAPANESE_TITLE_ERROR_KEY] ? "photo-japanese-title-error" : undefined
+              }
+              className={`w-full bg-gray-800 text-white border ${fieldBorderClass(
+                !!fieldErrors[JAPANESE_TITLE_ERROR_KEY]
+              )} p-2`}
               data-testid="japanese-title-input"
             />
+            {fieldErrors[JAPANESE_TITLE_ERROR_KEY] && (
+              <p
+                id="photo-japanese-title-error"
+                className="text-red-500 text-sm mt-1"
+                data-testid="japanese-title-error"
+              >
+                {fieldErrors[JAPANESE_TITLE_ERROR_KEY]}
+              </p>
+            )}
           </div>
 
           {/* タイトル（英語） */}
@@ -1078,56 +1150,88 @@ export function PhotoSettingForm({
           {/* タグ */}
           <fieldset className="mb-6">
             <legend className="text-sm text-gray-400 mb-2">タグ</legend>
-            {tags.map((tag, index) => (
-              <div
-                key={tag.tagNo}
-                className="flex gap-2 mb-2"
-                data-testid={`tag-entry-${tag.tagNo}`}
-              >
-                <input
-                  type="text"
-                  value={tag.tagJapaneseName}
-                  onChange={(e) =>
-                    handleTagChange(tag.tagNo, "tagJapaneseName", e.target.value)
-                  }
-                  maxLength={TAG_NAME_MAX_LENGTH}
-                  placeholder="タグ名（日本語）*"
-                  aria-label={`${index + 1}件目のタグ名（日本語）`}
-                  className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
-                  data-testid={`tag-japanese-${tag.tagNo}`}
-                />
-                <input
-                  type="text"
-                  value={tag.tagEnglishName}
-                  onChange={(e) =>
-                    handleTagChange(tag.tagNo, "tagEnglishName", e.target.value)
-                  }
-                  maxLength={TAG_NAME_MAX_LENGTH}
-                  placeholder="タグ名（英語）"
-                  aria-label={`${index + 1}件目のタグ名（英語）`}
-                  className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
-                  data-testid={`tag-english-${tag.tagNo}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag.tagNo)}
-                  className="bg-red-600 text-white px-3 border-none cursor-pointer hover:bg-red-700"
-                  aria-label={`${index + 1}件目のタグを削除`}
-                  data-testid={`remove-tag-${tag.tagNo}`}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-            <div className="flex justify-center mt-2">
+            {tags.map((tag, index) => {
+              const tagJapaneseError = fieldErrors[tagJapaneseErrorKey(tag.tagNo)];
+              return (
+                <div key={tag.tagNo} className="mb-2">
+                  <div
+                    className="flex gap-2"
+                    data-testid={`tag-entry-${tag.tagNo}`}
+                  >
+                    <input
+                      type="text"
+                      value={tag.tagJapaneseName}
+                      onChange={(e) =>
+                        handleTagChange(tag.tagNo, "tagJapaneseName", e.target.value)
+                      }
+                      maxLength={TAG_NAME_MAX_LENGTH}
+                      placeholder="タグ名（日本語）*"
+                      aria-label={`${index + 1}件目のタグ名（日本語）`}
+                      aria-invalid={!!tagJapaneseError}
+                      aria-describedby={
+                        tagJapaneseError ? `${tagJapaneseErrorKey(tag.tagNo)}-error` : undefined
+                      }
+                      className={`flex-1 bg-gray-800 text-white border ${fieldBorderClass(
+                        !!tagJapaneseError
+                      )} p-2`}
+                      data-testid={`tag-japanese-${tag.tagNo}`}
+                    />
+                    <input
+                      type="text"
+                      value={tag.tagEnglishName}
+                      onChange={(e) =>
+                        handleTagChange(tag.tagNo, "tagEnglishName", e.target.value)
+                      }
+                      maxLength={TAG_NAME_MAX_LENGTH}
+                      placeholder="タグ名（英語）"
+                      aria-label={`${index + 1}件目のタグ名（英語）`}
+                      className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
+                      data-testid={`tag-english-${tag.tagNo}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag.tagNo)}
+                      className="bg-red-600 text-white px-3 border-none cursor-pointer hover:bg-red-700"
+                      aria-label={`${index + 1}件目のタグを削除`}
+                      data-testid={`remove-tag-${tag.tagNo}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  {tagJapaneseError && (
+                    <p
+                      id={`${tagJapaneseErrorKey(tag.tagNo)}-error`}
+                      className="text-red-500 text-sm mt-1"
+                      data-testid={`tag-japanese-error-${tag.tagNo}`}
+                    >
+                      {tagJapaneseError}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+            <div className="flex items-center gap-2 mt-2">
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="bg-transparent border border-gray-500 text-gray-300 px-3 py-1 text-sm cursor-pointer hover:bg-gray-800"
+                disabled={tags.length >= PHOTO_TAG_MAX_SIZE}
+                aria-describedby={
+                  tags.length >= PHOTO_TAG_MAX_SIZE ? "tag-limit-message" : undefined
+                }
+                className="bg-transparent border border-gray-500 text-gray-300 px-3 py-1 text-sm cursor-pointer hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 data-testid="add-tag-button"
               >
                 + タグを追加
               </button>
+              {tags.length >= PHOTO_TAG_MAX_SIZE && (
+                <p
+                  id="tag-limit-message"
+                  className="text-sm text-gray-400"
+                  data-testid="tag-limit-message"
+                >
+                  タグは{PHOTO_TAG_MAX_SIZE}件までです
+                </p>
+              )}
             </div>
           </fieldset>
 
