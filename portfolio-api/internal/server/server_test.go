@@ -97,7 +97,7 @@ const portfolioQuery = `query($no: Int!) {
     layout {
       __typename
       ... on FeatureLayout { sections { theme subTheme description photo { photoNo url direction } } }
-      ... on GridLayout { rows { pattern photos { caption photo { photoNo } } } }
+      ... on GridLayout { rows { pattern photos { photo { photoNo } } } }
     }
   }
 }`
@@ -112,7 +112,7 @@ func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 		2: {
 			Portfolio: domain.Portfolio{PortfolioNo: 2, Theme: "光と影", Template: domain.TemplateGrid, UpdatedAt: updatedAt, Tags: []domain.Tag{}},
 			Layout: domain.GridLayout{Rows: []domain.GridRow{{Pattern: domain.GridRowWideNarrow,
-				Photos: []domain.GridPhoto{{Photo: signedPhoto(1), Caption: "a"}, {Photo: signedPhoto(2)}}}}},
+				Photos: []domain.GridPhoto{{Photo: signedPhoto(1)}, {Photo: signedPhoto(2)}}}}},
 		},
 	}}
 	server := newTestServer(t, query, Options{})
@@ -121,7 +121,7 @@ func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 		1: `{"portfolioNo":1,"theme":"日本の自然","template":"FEATURE","tags":[{"japaneseName":"自然","englishName":"nature"}],` +
 			`"layout":{"__typename":"FeatureLayout","sections":[{"theme":"京都","subTheme":"金閣寺","description":"","photo":{"photoNo":5,"url":"https://signed/5","direction":"SQUARE"}}]}}`,
 		2: `{"portfolioNo":2,"theme":"光と影","template":"GRID","tags":[],` +
-			`"layout":{"__typename":"GridLayout","rows":[{"pattern":"WIDE_NARROW","photos":[{"caption":"a","photo":{"photoNo":1}},{"caption":"","photo":{"photoNo":2}}]}]}}`,
+			`"layout":{"__typename":"GridLayout","rows":[{"pattern":"WIDE_NARROW","photos":[{"photo":{"photoNo":1}},{"photo":{"photoNo":2}}]}]}}`,
 	} {
 		body, _ := json.Marshal(map[string]any{"query": portfolioQuery, "variables": map[string]any{"no": no}})
 		res, err := http.Post(server.URL+"/graphql", "application/json", bytes.NewReader(body))

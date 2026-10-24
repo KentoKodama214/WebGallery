@@ -46,8 +46,6 @@ func (GridLayout) IsPortfolioLayout() {}
 // グリッド型の写真
 type GridPhoto struct {
 	Photo *Photo `json:"photo"`
-	// 未設定の場合は空文字
-	Caption string `json:"caption"`
 }
 
 // グリッド型の行
