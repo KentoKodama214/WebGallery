@@ -249,8 +249,13 @@ public class PortfolioPhotoMapperTest {
 
     @Test
     @Order(1)
-    @DisplayName("正常系：検索語が未指定の場合、本人の未削除の写真を撮影日時の新しい順に、表示に必要な項目とあわせて取得すること")
+    @DisplayName("正常系：検索語が未指定の場合、本人の未削除の写真を写真番号の降順に、表示に必要な項目とあわせて取得すること")
     void selectAvailablePhotos_noCondition() {
+      // 撮影日時の順（写真1が新しい）ではなく、写真番号の降順に並ぶことを確かめる
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET photo_at = '2022-01-01 09:00:00 Asia/Tokyo'"
+              + " WHERE account_no = 1 AND photo_no = 1");
+
       List<PortfolioPhotoDto> actual = portfolioPhotoMapper.selectAvailablePhotos(1L, null, 10, 0);
 
       assertEquals(List.of(2L, 1L), actual.stream().map(PortfolioPhotoDto::getPhotoNo).toList());
