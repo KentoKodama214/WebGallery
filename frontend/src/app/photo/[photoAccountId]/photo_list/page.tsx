@@ -28,7 +28,7 @@ export default async function PhotoListPage({
   }
 
   return (
-    <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
+    <div data-page="photo-list" style={{ backgroundColor: "black", minHeight: "100vh" }}>
       <Header />
       <PhotoList photoAccountId={photoAccountId} />
       <Footer />
