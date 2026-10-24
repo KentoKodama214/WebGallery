@@ -37,10 +37,14 @@ test.describe("ポートフォリオの公開ページ", () => {
 
       await page.getByRole("button", { name: "写真を選択" }).click();
       const dialog = page.getByTestId("photo-picker-dialog");
-      const photoButtons = dialog.getByRole("button", { name: /^写真\d+/ });
+      // 未選択の写真（上段）を押すと選択済み（下段）へ移るため、先頭を2回選ぶ
+      const photoButtons = dialog.getByTestId("photo-picker-unselected").getByRole("button", {
+        name: /^写真\d+.*を選択$/,
+      });
       await expect(photoButtons).toHaveCount(2, { timeout: 10000 });
       await photoButtons.nth(0).click();
-      await photoButtons.nth(1).click();
+      await photoButtons.nth(0).click();
+      await expect(dialog.getByTestId("photo-picker-selected").getByRole("button")).toHaveCount(2);
       await dialog.getByRole("button", { name: "完了" }).click();
 
       await page.getByRole("button", { name: "行を追加" }).click();
