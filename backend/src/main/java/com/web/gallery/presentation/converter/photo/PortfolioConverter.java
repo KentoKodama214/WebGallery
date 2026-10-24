@@ -100,9 +100,7 @@ public class PortfolioConverter {
       PortfolioPhotoSearchRequest request, AccountNo accountNo) {
     return PortfolioPhotoSearchModel.builder()
         .accountNo(accountNo)
-        .title(toKeyword(request.getTitle()))
-        .location(toKeyword(request.getLocation()))
-        .tag(toKeyword(request.getTag()))
+        .keyword(toKeyword(request.getKeyword()))
         .pageNo(request.getPageNo())
         .build();
   }

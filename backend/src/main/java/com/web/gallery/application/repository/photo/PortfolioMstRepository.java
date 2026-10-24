@@ -39,7 +39,7 @@ public interface PortfolioMstRepository {
   PortfolioModelList getPortfolioList(PortfolioListGetModel portfolioListGetModel);
 
   /**
-   * 本人の未削除の写真を、タイトル・撮影場所の名前・タグ名の部分一致で絞り込み、撮影日時の新しい順に1ページ分取得する
+   * 本人の未削除の写真を、検索語がタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに部分一致するもので絞り込み、撮影日時の新しい順に1ページ分取得する
    *
    * @param portfolioPhotoSearchModel {@link PortfolioPhotoSearchModel}（1ページあたりの件数を設定済み）
    * @return {@link PortfolioPhotoPageModel}（画像ファイルパスはオブジェクトキーのまま）

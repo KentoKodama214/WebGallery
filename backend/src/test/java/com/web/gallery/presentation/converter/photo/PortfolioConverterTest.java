@@ -197,37 +197,31 @@ class PortfolioConverterTest {
   class toPortfolioPhotoSearchModel {
     @Test
     @Order(1)
-    @DisplayName("正常系：タイトル・撮影場所・タグの前後の空白を除き、ページ番号・アカウント番号とあわせて変換すること")
+    @DisplayName("正常系：検索語の前後の空白を除き、ページ番号・アカウント番号とあわせて変換すること")
     void toPortfolioPhotoSearchModel_allFieldsSet() {
       PortfolioPhotoSearchRequest request = new PortfolioPhotoSearchRequest();
-      request.setTitle(" 金閣 ");
-      request.setLocation("京都");
-      request.setTag("寺");
+      request.setKeyword(" 金閣 ");
       request.setPageNo(3);
 
       PortfolioPhotoSearchModel actual =
           portfolioConverter.toPortfolioPhotoSearchModel(request, new AccountNo(1L));
 
       assertEquals(new AccountNo(1L), actual.getAccountNo());
-      assertEquals("金閣", actual.getTitle());
-      assertEquals("京都", actual.getLocation());
-      assertEquals("寺", actual.getTag());
+      assertEquals("金閣", actual.getKeyword());
       assertEquals(3, actual.getPageNo());
     }
 
     @Test
     @Order(2)
-    @DisplayName("正常系：未入力・空白のみの条件はnull（未指定）、ページ番号は既定値の1になること")
+    @DisplayName("正常系：空白のみの検索語はnull（未指定）、ページ番号は既定値の1になること")
     void toPortfolioPhotoSearchModel_optionalFieldsNull() {
       PortfolioPhotoSearchRequest request = new PortfolioPhotoSearchRequest();
-      request.setTitle(" ");
+      request.setKeyword(" ");
 
       PortfolioPhotoSearchModel actual =
           portfolioConverter.toPortfolioPhotoSearchModel(request, new AccountNo(1L));
 
-      assertNull(actual.getTitle());
-      assertNull(actual.getLocation());
-      assertNull(actual.getTag());
+      assertNull(actual.getKeyword());
       assertEquals(1, actual.getPageNo());
     }
   }
