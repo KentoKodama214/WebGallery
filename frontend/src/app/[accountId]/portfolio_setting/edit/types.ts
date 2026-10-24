@@ -86,3 +86,20 @@ export const GRID_ROW_PATTERN_CELLS: Record<string, GridRowCell[]> = {
     { flex: 2, aspectRatio: "3 / 2" },
   ],
 };
+
+/** 向き区分ごとの写真の枠の縦横比 */
+export const DIRECTION_ASPECT_RATIOS: Record<string, string> = {
+  vertical: "3 / 4",
+  horizontal: "4 / 3",
+  square: "1 / 1",
+};
+
+/** 向きが未設定の写真の枠の縦横比 */
+export const DEFAULT_ASPECT_RATIO = "1 / 1";
+
+/** 向き区分の表示名（向きが未設定の写真は表示しない） */
+export const DIRECTION_LABELS: Record<string, string> = {
+  vertical: "縦向き",
+  horizontal: "横向き",
+  square: "正方形",
+};

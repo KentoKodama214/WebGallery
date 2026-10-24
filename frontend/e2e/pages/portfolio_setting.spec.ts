@@ -110,7 +110,7 @@ authTest.describe("ポートフォリオ設定ページ（ログイン済み）"
         timeout: 10000,
       });
       await page.getByRole("radio", { name: "グリッド" }).check();
-      await page.getByRole("button", { name: "行を追加" }).click();
+      await page.getByRole("button", { name: "＋行を追加" }).click();
       await page.getByRole("button", { name: "＋タグを追加" }).click();
       await expectNoAccessibilityViolations(page);
 
