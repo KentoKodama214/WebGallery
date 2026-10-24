@@ -13,12 +13,13 @@ export const metadata: Metadata = {
  */
 export default function InquiryListPage() {
   return (
-    <>
+    // アカウント設定ページと同じ背景色にする（body の背景色に依存させない）
+    <div className="min-h-screen bg-[whitesmoke]">
       <Header />
       <AuthGuard>
         <InquiryList />
       </AuthGuard>
-      <Footer />
-    </>
+      <Footer variant="light" />
+    </div>
   );
 }
