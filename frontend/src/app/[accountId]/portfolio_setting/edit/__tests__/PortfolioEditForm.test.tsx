@@ -550,11 +550,16 @@ describe("PortfolioEditForm", () => {
       expect(mockUpdatePortfolioStatus).toHaveBeenLastCalledWith("user1", 3, "published");
       expect(screen.getByTestId("portfolio-status")).toHaveTextContent("公開中");
       expect(screen.getByRole("button", { name: "下書きに戻す" })).toBeInTheDocument();
-      // 公開中になったため、公開ページへのリンクを表示する
-      expect(screen.getByRole("link", { name: "公開ページを見る" })).toHaveAttribute(
-        "href",
-        "/portfolio/user1/3"
-      );
+      // 公開中になったため、「保存する」「下書きに戻す」の下に公開ページへのリンクを表示する
+      const publicLink = screen.getByRole("link", { name: "公開ページを見る" });
+      expect(publicLink).toHaveAttribute("href", "/portfolio/user1/3");
+      expect(
+        isInDocumentOrder(
+          screen.getByRole("button", { name: "保存する" }),
+          screen.getByRole("button", { name: "下書きに戻す" }),
+          publicLink
+        )
+      ).toBe(true);
     });
 
     it("削除を確認すると削除して一覧へ戻ること", async () => {
