@@ -37,6 +37,22 @@ test.describe("ポートフォリオの公開と、写真削除による下書�
       const dialog = page.getByTestId("photo-picker-dialog");
       const photoButtons = dialog.getByRole("button", { name: /^写真\d+/ });
       await expect(photoButtons).toHaveCount(2, { timeout: 10000 });
+
+      // タイトルで絞り込める
+      await dialog.getByLabel("タイトル").fill("該当しないタイトル");
+      await dialog.getByRole("button", { name: "検索" }).click();
+      await expect(dialog.getByText("条件に一致する写真がありません")).toBeVisible({ timeout: 10000 });
+      await dialog.getByLabel("タイトル").fill("E2Eポートフォリオ");
+      await dialog.getByRole("button", { name: "検索" }).click();
+      await expect(photoButtons).toHaveCount(2, { timeout: 10000 });
+
+      // キャンセルすると、ダイアログ内で選んだ写真は反映されない
+      await photoButtons.nth(0).click();
+      await dialog.getByRole("button", { name: "キャンセル" }).click();
+      await expect(page.getByText("写真が選択されていません")).toBeVisible();
+
+      await page.getByRole("button", { name: "写真を選択" }).click();
+      await expect(photoButtons).toHaveCount(2, { timeout: 10000 });
       await photoButtons.nth(0).click();
       await photoButtons.nth(1).click();
       await dialog.getByRole("button", { name: "完了" }).click();
@@ -57,6 +73,23 @@ test.describe("ポートフォリオの公開と、写真削除による下書�
         timeout: 10000,
       });
       await expect(page.getByTestId("portfolio-status")).toHaveText("公開中");
+    });
+
+    await test.step("一覧をテーマで絞り込める", async () => {
+      await page.goto(`/${accountId}/portfolio_setting`);
+      await expect(page.getByTestId("portfolio-row")).toHaveCount(1, { timeout: 10000 });
+
+      await page.getByLabel("テーマ").fill("該当しないテーマ");
+      await page.getByRole("button", { name: "検索" }).click();
+      await expect(page.getByText("条件に一致するポートフォリオはありません")).toBeVisible({
+        timeout: 10000,
+      });
+
+      await page.getByLabel("テーマ").fill("日本");
+      await page.getByRole("button", { name: "検索" }).click();
+      await expect(page.getByTestId("portfolio-row").filter({ hasText: theme })).toHaveCount(1, {
+        timeout: 10000,
+      });
     });
 
     await test.step("ポートフォリオで使っている写真を削除すると、下書きに戻った旨とリンクが表示される", async () => {

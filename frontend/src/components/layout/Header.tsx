@@ -150,6 +150,15 @@ export function Header() {
               </li>
               <li className={styles.menuItem}>
                 <Link
+                  href={`/${user.accountId}/portfolio_setting`}
+                  className={styles.menuLink}
+                  onClick={closeMenu}
+                >
+                  My Portfolio
+                </Link>
+              </li>
+              <li className={styles.menuItem}>
+                <Link
                   href="/account_list"
                   className={styles.menuLink}
                   onClick={closeMenu}
@@ -164,15 +173,6 @@ export function Header() {
                   onClick={closeMenu}
                 >
                   Account Setting
-                </Link>
-              </li>
-              <li className={styles.menuItem}>
-                <Link
-                  href={`/${user.accountId}/portfolio_setting`}
-                  className={styles.menuLink}
-                  onClick={closeMenu}
-                >
-                  Portfolio
                 </Link>
               </li>
               <li className={styles.menuItem}>

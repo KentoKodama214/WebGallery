@@ -2,6 +2,7 @@ package com.web.gallery.presentation.controller.photo;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
 import com.web.gallery.application.service.photo.PortfolioService;
 import com.web.gallery.domain.constant.ApiRoutes;
 import com.web.gallery.domain.constant.MessageConst;
@@ -13,12 +14,16 @@ import com.web.gallery.domain.model.photo.PortfolioNo;
 import com.web.gallery.infrastructure.security.SessionHelper;
 import com.web.gallery.infrastructure.web.ValidationErrorLogger;
 import com.web.gallery.presentation.converter.photo.PortfolioConverter;
+import com.web.gallery.presentation.request.photo.PortfolioListRequest;
+import com.web.gallery.presentation.request.photo.PortfolioPhotoSearchRequest;
 import com.web.gallery.presentation.request.photo.PortfolioSaveRequest;
 import com.web.gallery.presentation.request.photo.PortfolioStatusUpdateRequest;
 import com.web.gallery.presentation.response.photo.PortfolioDetailGetResponse;
 import com.web.gallery.presentation.response.photo.PortfolioEditResponse;
 import com.web.gallery.presentation.response.photo.PortfolioListGetResponse;
+import com.web.gallery.presentation.response.photo.PortfolioPhotoSearchGetResponse;
 import com.web.gallery.presentation.response.photo.PortfolioTemplateListGetResponse;
+import com.web.gallery.presentation.response.photo.PortfolioUpperLimitResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,11 +31,13 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -57,21 +64,88 @@ public class PortfolioController {
    * ポートフォリオ一覧取得
    *
    * @param accountId アカウントID
+   * @param request {@link PortfolioListRequest}（テーマ・タグの絞り込み条件）
+   * @param result バリデーション結果
    * @return {@link PortfolioListGetResponse}
-   * @throws GalleryException 認証ユーザーと異なるアカウントIDの場合
+   * @throws GalleryException 以下のいずれかに該当する場合 ・認証ユーザーと異なるアカウントIDの場合 ・リクエストパラメータが不正な場合
    */
-  @Operation(summary = "ポートフォリオ一覧取得", description = "本人のポートフォリオ一覧（下書きを含む）を更新日時の新しい順に取得する")
+  @Operation(
+      summary = "ポートフォリオ一覧取得",
+      description = "本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、更新日時の新しい順に取得する")
   @ApiResponse(responseCode = "200", description = "取得成功")
+  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
   @ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
   @GetMapping(ApiRoutes.API_PORTFOLIOS)
-  public ResponseEntity<PortfolioListGetResponse> getPortfolioList(@PathVariable String accountId)
+  public ResponseEntity<PortfolioListGetResponse> getPortfolioList(
+      @PathVariable String accountId,
+      @ParameterObject @ModelAttribute @Validated PortfolioListRequest request,
+      BindingResult result)
       throws GalleryException {
     verifyOwner(accountId);
+    verifyNoBindingErrors(result);
 
     PortfolioModelList portfolioModelList =
-        portfolioService.getPortfolioList(new AccountNo(sessionHelper.getAccountNo()));
+        portfolioService.getPortfolioList(
+            portfolioConverter.toPortfolioListGetModel(
+                request, new AccountNo(sessionHelper.getAccountNo())));
 
     return ResponseEntity.ok(PortfolioListGetResponse.from(portfolioModelList));
+  }
+
+  /**
+   * ポートフォリオ作成上限チェック
+   *
+   * @param accountId アカウントID
+   * @return {@link PortfolioUpperLimitResponse}
+   * @throws GalleryException 認証ユーザーと異なるアカウントIDの場合
+   */
+  @Operation(
+      summary = "ポートフォリオ作成上限チェック",
+      description = "作成済みのポートフォリオ（下書きを含む）の件数が、権限区分ごとの上限に達しているかをチェックする")
+  @ApiResponse(responseCode = "200", description = "チェック成功")
+  @ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
+  @GetMapping(ApiRoutes.API_PORTFOLIO_UPPER_LIMIT)
+  public ResponseEntity<PortfolioUpperLimitResponse> getPortfolioUpperLimit(
+      @PathVariable String accountId) throws GalleryException {
+    verifyOwner(accountId);
+
+    return ResponseEntity.ok(
+        PortfolioUpperLimitResponse.of(
+            portfolioService.isReachedUpperLimit(new AccountNo(sessionHelper.getAccountNo()))));
+  }
+
+  /**
+   * ポートフォリオ用の写真検索
+   *
+   * @param accountId アカウントID
+   * @param request {@link PortfolioPhotoSearchRequest}
+   * @param result バリデーション結果
+   * @return {@link PortfolioPhotoSearchGetResponse}
+   * @throws GalleryException 以下のいずれかに該当する場合 ・認証ユーザーと異なるアカウントIDの場合 ・リクエストパラメータが不正な場合
+   */
+  @Operation(
+      summary = "ポートフォリオ用の写真検索",
+      description =
+          "ポートフォリオに設定する写真を、本人の写真からタイトル・撮影場所の名前・タグ名の部分一致で検索する（撮影日時の新しい順）。"
+              + "非公開の撮影場所も検索対象とするため、本人のみが利用できる")
+  @ApiResponse(responseCode = "200", description = "取得成功")
+  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+  @ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
+  @GetMapping(ApiRoutes.API_PORTFOLIO_PHOTOS)
+  public ResponseEntity<PortfolioPhotoSearchGetResponse> searchPortfolioPhotos(
+      @PathVariable String accountId,
+      @ParameterObject @ModelAttribute @Validated PortfolioPhotoSearchRequest request,
+      BindingResult result)
+      throws GalleryException {
+    verifyOwner(accountId);
+    verifyNoBindingErrors(result);
+
+    PortfolioPhotoPageModel pageModel =
+        portfolioService.searchPhotos(
+            portfolioConverter.toPortfolioPhotoSearchModel(
+                request, new AccountNo(sessionHelper.getAccountNo())));
+
+    return ResponseEntity.ok(PortfolioPhotoSearchGetResponse.from(pageModel));
   }
 
   /**

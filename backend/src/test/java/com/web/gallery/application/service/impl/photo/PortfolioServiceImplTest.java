@@ -10,13 +10,17 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.web.gallery.application.aggregate.Portfolio;
+import com.web.gallery.application.config.PhotoConfig;
 import com.web.gallery.application.config.PortfolioConfig;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
+import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
+import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.application.model.photo.PortfolioTagModelList;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
@@ -79,6 +83,8 @@ class PortfolioServiceImplTest {
   @Mock private PortfolioConfig portfolioConfig;
 
   @Mock private PortfolioQuotaPolicy portfolioQuotaPolicy;
+
+  @Mock private PhotoConfig photoConfig;
 
   private static final AccountNo ACCOUNT_NO = new AccountNo(1L);
 
@@ -158,17 +164,82 @@ class PortfolioServiceImplTest {
   class getPortfolioList {
     @Test
     @Order(1)
-    @DisplayName("正常系：Repositoryから取得したポートフォリオ一覧をそのまま返すこと")
+    @DisplayName("正常系：絞り込み条件をRepositoryに渡し、取得したポートフォリオ一覧をそのまま返すこと")
     void getPortfolioList_success() {
+      PortfolioListGetModel condition =
+          PortfolioListGetModel.builder().accountNo(ACCOUNT_NO).theme("自然").tag("風景").build();
       PortfolioModelList expected = PortfolioModelList.empty();
-      doReturn(expected).when(portfolioMstRepositoryImpl).getPortfolioList(ACCOUNT_NO);
+      doReturn(expected).when(portfolioMstRepositoryImpl).getPortfolioList(condition);
 
-      assertSame(expected, portfolioServiceImpl.getPortfolioList(ACCOUNT_NO));
+      assertSame(expected, portfolioServiceImpl.getPortfolioList(condition));
     }
   }
 
   @Nested
   @Order(2)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class isReachedUpperLimit {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントの権限区分・作成済みの件数・設定値の上限で判定した結果を返すこと")
+    void isReachedUpperLimit_success() {
+      doReturn(3).when(portfolioMstRepositoryImpl).count(ACCOUNT_NO);
+      doReturn(true)
+          .when(portfolioQuotaPolicy)
+          .isReached(AuthorityEnum.MINI, new PortfolioCount(3), new PortfolioUpperLimits(3, 10));
+
+      assertTrue(portfolioServiceImpl.isReachedUpperLimit(ACCOUNT_NO));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：上限に達していない場合、falseを返すこと")
+    void isReachedUpperLimit_notReached() {
+      assertFalse(portfolioServiceImpl.isReachedUpperLimit(ACCOUNT_NO));
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class searchPhotos {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：写真一覧と同じ1ページの件数で検索し、画像ファイルパスを署名付きURLに差し替えて返すこと")
+    void searchPhotos_success() {
+      PortfolioPhotoSearchModel condition =
+          PortfolioPhotoSearchModel.builder().accountNo(ACCOUNT_NO).title("金閣").pageNo(2).build();
+      doReturn(20).when(photoConfig).getPhotoCountPerPage();
+      doReturn(
+              PortfolioPhotoPageModel.of(
+                  PortfolioPhotoModelList.of(
+                      List.of(
+                          PortfolioPhotoModel.builder()
+                              .photoNo(new PhotoNo(3L))
+                              .photoSettings(TemplateSettings.empty())
+                              .photoJapaneseTitle(new PhotoJapaneseTitle("金閣寺"))
+                              .imageFilePath(new ImageFilePath("1/3-aaa.jpg"))
+                              .build())),
+                  false))
+          .when(portfolioMstRepositoryImpl)
+          .searchAvailablePhotos(condition.toBuilder().pageSize(20).build());
+      doReturn(new ImageFilePath("https://signed/1/3-aaa.jpg"))
+          .when(fileRepositoryImpl)
+          .getPresignedUrl(new ImageFilePath("1/3-aaa.jpg"));
+
+      PortfolioPhotoPageModel actual = portfolioServiceImpl.searchPhotos(condition);
+
+      assertFalse(actual.getIsLast());
+      assertEquals(1, actual.getPortfolioPhotoModelList().size());
+      assertEquals(
+          new ImageFilePath("https://signed/1/3-aaa.jpg"),
+          actual.getPortfolioPhotoModelList().get(0).getImageFilePath());
+      assertEquals(new PhotoNo(3L), actual.getPortfolioPhotoModelList().get(0).getPhotoNo());
+    }
+  }
+
+  @Nested
+  @Order(4)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getPortfolioDetail {
     @Test
@@ -221,7 +292,7 @@ class PortfolioServiceImplTest {
   }
 
   @Nested
-  @Order(3)
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class registPortfolio {
     @Test
@@ -367,7 +438,7 @@ class PortfolioServiceImplTest {
   }
 
   @Nested
-  @Order(4)
+  @Order(6)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class updatePortfolio {
     @Test
@@ -475,7 +546,7 @@ class PortfolioServiceImplTest {
   }
 
   @Nested
-  @Order(5)
+  @Order(7)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class publishPortfolio {
     @Test
@@ -554,7 +625,7 @@ class PortfolioServiceImplTest {
   }
 
   @Nested
-  @Order(6)
+  @Order(8)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class unpublishPortfolio {
     @Test
@@ -592,7 +663,7 @@ class PortfolioServiceImplTest {
   }
 
   @Nested
-  @Order(7)
+  @Order(9)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class deletePortfolio {
     @Test

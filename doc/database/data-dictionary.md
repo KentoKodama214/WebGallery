@@ -66,7 +66,7 @@
 | 58 | photo_japanese_title | 写真タイトル（日本語） | varchar(100) | - | 写真の日本語タイトル（必須入力） | photo_mst |
 | 59 | photo_list_filter_log_no | 写真一覧絞り込みログNo | bigserial | (自動採番) | 写真一覧絞り込みログのPK（自動採番） | photo_list_filter_log |
 | 60 | photo_no | 写真番号 | bigint | - | アカウント単位の写真連番。account_noとの複合UNIQUEを構成。portfolio_photoではポートフォリオに設定した写真（photo_mst(account_no, photo_no)へのFK）。写真削除時の参照用に(account_no, photo_no)のインデックスあり | photo_mst, photo_tag_mst, photo_view_log, portfolio_photo |
-| 61 | photo_settings | 写真設定 | jsonb | '{}' | テンプレート固有の写真単位の設定（JSON）。feature: theme/subTheme/description、grid: caption | portfolio_photo |
+| 61 | photo_settings | 写真設定 | jsonb | '{}' | テンプレート固有の写真単位の設定（JSON）。feature: theme/subTheme/description、grid: なし（空） | portfolio_photo |
 | 62 | photo_view_log_no | 写真閲覧ログNo | bigserial | (自動採番) | 写真詳細閲覧ログのPK（自動採番） | photo_view_log |
 | 63 | portfolio_no | ポートフォリオ番号 | bigint | - | アカウント単位のポートフォリオ連番（登録済みの最大値+1で採番。ポートフォリオは物理削除するため、最大の番号を削除した後は同じ番号が再び使われる）。portfolio_mstではaccount_noとの複合UNIQUEを構成し、portfolio_photo・portfolio_tag_mstでは(account_no, portfolio_no)でportfolio_mstへのFK | portfolio_mst, portfolio_photo, portfolio_tag_mst |
 | 64 | referer | リファラ | varchar(2048) | '' | 遷移元URL（Refererヘッダー）。取得できない場合は空文字 | photo_list_filter_log, photo_view_log |

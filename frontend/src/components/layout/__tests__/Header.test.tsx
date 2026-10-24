@@ -98,7 +98,7 @@ describe("Header", () => {
       });
     });
 
-    it("My Gallery・Photographers・Account Setting・Portfolio・Inquiry・Sign Outが表示されること", () => {
+    it("My Gallery・My Portfolio・Photographers・Account Setting・Inquiry・Sign Outが、この順に表示されること", () => {
       render(<Header />);
 
       expect(screen.getByRole("link", { name: "My Gallery" })).toHaveAttribute(
@@ -112,7 +112,7 @@ describe("Header", () => {
       expect(
         screen.getByRole("link", { name: "Account Setting" })
       ).toHaveAttribute("href", "/testuser1/account_setting");
-      expect(screen.getByRole("link", { name: "Portfolio" })).toHaveAttribute(
+      expect(screen.getByRole("link", { name: "My Portfolio" })).toHaveAttribute(
         "href",
         "/testuser1/portfolio_setting"
       );
@@ -121,6 +121,17 @@ describe("Header", () => {
         "/inquiry/list"
       );
       expect(screen.getByTestId("logout-button")).toBeInTheDocument();
+      // My Portfolio は My Gallery の直下に表示する
+      expect(
+        screen.getAllByRole("listitem").map((item) => item.textContent?.trim())
+      ).toEqual([
+        "My Gallery",
+        "My Portfolio",
+        "Photographers",
+        "Account Setting",
+        "Inquiry",
+        "Sign Out",
+      ]);
     });
 
     it("Sign Outボタンをクリックするとログアウトして/loginへ遷移すること", async () => {

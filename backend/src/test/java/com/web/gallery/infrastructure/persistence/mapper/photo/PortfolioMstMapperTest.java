@@ -352,6 +352,67 @@ public class PortfolioMstMapperTest {
     void selectList_none() {
       assertTrue(portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(3L)).isEmpty());
     }
+
+    @Test
+    @Order(4)
+    @DisplayName("テーマの条件で、大文字小文字を区別せず部分一致するポートフォリオに絞り込むこと")
+    void selectList_byThemePattern() {
+      List<PortfolioDto> actual =
+          portfolioMstMapper.selectList(
+              PortfolioMstCondition.byAccountNoAndKeywords(1L, "%ポートフォリオ12%", null));
+
+      assertEquals(List.of(2L), actual.stream().map(PortfolioDto::getPortfolioNo).toList());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("タグの条件で、日本語・英語のいずれかに部分一致するタグを持つポートフォリオに絞り込むこと")
+    void selectList_byTagPattern() {
+      assertEquals(
+          List.of(1L),
+          portfolioMstMapper
+              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, null, "%風%"))
+              .stream()
+              .map(PortfolioDto::getPortfolioNo)
+              .toList());
+      assertEquals(
+          List.of(1L),
+          portfolioMstMapper
+              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, null, "%NATURE%"))
+              .stream()
+              .map(PortfolioDto::getPortfolioNo)
+              .toList());
+      // 他アカウントのポートフォリオのタグ（海）は対象外
+      assertTrue(
+          portfolioMstMapper
+              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, null, "%海%"))
+              .isEmpty());
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("テーマ・タグの両方を指定した場合、どちらにも一致するポートフォリオに絞り込むこと（AND条件）")
+    void selectList_byThemeAndTag() {
+      assertTrue(
+          portfolioMstMapper
+              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, "%ポートフォリオ12%", "%自然%"))
+              .isEmpty());
+      assertEquals(
+          1,
+          portfolioMstMapper
+              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, "%ポートフォリオ11%", "%自然%"))
+              .size());
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("エスケープしたワイルドカード文字は、文字そのものとして一致させること")
+    void selectList_escapedWildcard() {
+      assertTrue(
+          portfolioMstMapper
+              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, "%\\_%", null))
+              .isEmpty());
+    }
   }
 
   @Nested

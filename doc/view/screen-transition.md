@@ -131,7 +131,7 @@ graph LR
     MENU -->|"Inquiry<br/>（認証済み時）"| INQUIRY_LIST["お問い合わせ一覧<br/>/inquiry/list"]
     MENU -->|"My Gallery<br/>（認証済み時）"| PHOTO_LIST["写真一覧<br/>/photo/{id}/photo_list"]
     MENU -->|"Account Setting<br/>（認証済み時）"| ACCOUNT_SETTING["アカウント設定<br/>/{id}/account_setting"]
-    MENU -->|"Portfolio<br/>（認証済み時）"| PORTFOLIO_SETTING["ポートフォリオ設定<br/>/{id}/portfolio_setting"]
+    MENU -->|"My Portfolio<br/>（認証済み時。My Galleryの直下）"| PORTFOLIO_SETTING["ポートフォリオ設定<br/>/{id}/portfolio_setting"]
     MENU -->|"Sign Out<br/>（認証済み時）"| LOGOUT["ログアウト → /login"]
 ```
 
@@ -229,10 +229,19 @@ sequenceDiagram
     User->>List: /{id}/portfolio_setting にアクセス
     List->>API: GET /api/v1/accounts/{id}/portfolios
     API-->>List: 一覧（下書きを含む）
+    List->>API: GET /api/v1/accounts/{id}/portfolios/upper-limit
+    API-->>List: 作成数が上限に達しているか（達している場合は「新規作成」を押せず、その旨を表示）
+    User->>List: テーマ・タグで絞り込み（検索）
+    List->>API: GET /api/v1/accounts/{id}/portfolios?theme=&tag=
+    API-->>List: 条件に部分一致する一覧
     User->>List: 新規作成
     List->>Edit: /{id}/portfolio_setting/edit に遷移
-    User->>Edit: テーマ・説明文・テンプレート・タグ・写真（自分の写真から選択・並べ替え）・テンプレート固有の設定を入力
-    User->>Edit: グリッド型は「プレビューを表示」でレイアウトをダイアログで確認
+    User->>Edit: 「写真を選択」で写真選択ダイアログを開く
+    Edit->>API: GET /api/v1/accounts/{id}/portfolio-photos?title=&location=&tag=&pageNo=
+    API-->>Edit: 本人の写真（写真の枠は向きに合わせた縦横比で表示）
+    User->>Edit: 写真を選んで「完了」（「キャンセル」では選択を反映しない）
+    User->>Edit: テーマ・説明文・テンプレート・タグ（「＋タグを追加」）・写真の並べ替え・テンプレート固有の設定を入力（グリッド型は写真ごとの設定なし）
+    User->>Edit: 「プレビューを表示」でレイアウトをダイアログで確認（フィーチャー型・グリッド型）
     User->>Edit: 下書きとして登録（写真が0枚の場合は、下書きでもエラーを表示して登録しない）
     Edit->>API: POST /api/v1/accounts/{id}/portfolios
     API-->>Edit: 登録成功（下書き）。作成数が権限ごとの上限（mini-user：3個、normal-user：10個。下書きを含む）に達している場合はエラーを表示

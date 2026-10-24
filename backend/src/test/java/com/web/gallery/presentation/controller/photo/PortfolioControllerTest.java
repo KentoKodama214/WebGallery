@@ -7,12 +7,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
+import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
+import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.application.model.photo.PortfolioTagModelList;
 import com.web.gallery.application.service.photo.PortfolioService;
+import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.enumeration.PortfolioStatusEnum;
 import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
@@ -142,7 +146,7 @@ class PortfolioControllerTest {
                           .photoCount(new PhotoCount(5))
                           .build())))
           .when(portfolioService)
-          .getPortfolioList(new AccountNo(1L));
+          .getPortfolioList(any());
 
       mockMvc
           .perform(get(PORTFOLIOS))
@@ -152,10 +156,44 @@ class PortfolioControllerTest {
           .andExpect(jsonPath("$.portfolioList[0].templateKbn").value("grid"))
           .andExpect(jsonPath("$.portfolioList[0].statusKbn").value("draft"))
           .andExpect(jsonPath("$.portfolioList[0].photoCount").value(5));
+
+      // 絞り込み条件が未指定の場合は、ログイン中のアカウント番号だけを渡す
+      verify(portfolioService)
+          .getPortfolioList(PortfolioListGetModel.builder().accountNo(new AccountNo(1L)).build());
     }
 
     @Test
     @Order(2)
+    @DisplayName("正常系：テーマ・タグの絞り込み条件を、前後の空白を除いてServiceに渡すこと")
+    void getPortfolioList_keywords() throws Exception {
+      doReturn(PortfolioModelList.empty()).when(portfolioService).getPortfolioList(any());
+
+      mockMvc
+          .perform(get(PORTFOLIOS).param("theme", " 自然 ").param("tag", "風景"))
+          .andExpect(status().isOk());
+
+      verify(portfolioService)
+          .getPortfolioList(
+              PortfolioListGetModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .theme("自然")
+                  .tag("風景")
+                  .build());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：テーマが最大文字数（100文字）を超える場合、400を返しServiceを呼び出さないこと")
+    void getPortfolioList_tooLongTheme() throws Exception {
+      mockMvc
+          .perform(get(PORTFOLIOS).param("theme", "あ".repeat(101)))
+          .andExpect(status().isBadRequest());
+
+      verify(portfolioService, times(0)).getPortfolioList(any());
+    }
+
+    @Test
+    @Order(4)
     @DisplayName("異常系：認証ユーザーと異なるアカウントIDを指定した場合、403を返しServiceを呼び出さないこと")
     void getPortfolioList_forbidden() throws Exception {
       doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
@@ -730,6 +768,121 @@ class PortfolioControllerTest {
           .andExpect(jsonPath("$.gridRowPatternList[1].photoCount").value(3));
 
       verifyNoInteractions(portfolioService);
+    }
+  }
+
+  @Nested
+  @Order(8)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getPortfolioUpperLimit {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：作成数が上限に達しているかを返すこと")
+    void getPortfolioUpperLimit_success() throws Exception {
+      doReturn(true).when(portfolioService).isReachedUpperLimit(new AccountNo(1L));
+
+      mockMvc
+          .perform(get(PORTFOLIOS + "/upper-limit"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isReachedUpperLimit").value(true));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：認証ユーザーと異なるアカウントIDを指定した場合、403を返しServiceを呼び出さないこと")
+    void getPortfolioUpperLimit_forbidden() throws Exception {
+      doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
+
+      mockMvc.perform(get(PORTFOLIOS + "/upper-limit")).andExpect(status().isForbidden());
+
+      verify(portfolioService, times(0)).isReachedUpperLimit(any());
+    }
+  }
+
+  @Nested
+  @Order(9)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class searchPortfolioPhotos {
+    private static final String PORTFOLIO_PHOTOS = "/api/v1/accounts/aaaaaaaa/portfolio-photos";
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：検索条件をServiceに渡し、写真番号・タイトル・画像URL・向きと最後のページかどうかを返すこと")
+    void searchPortfolioPhotos_success() throws Exception {
+      doReturn(
+              PortfolioPhotoPageModel.of(
+                  PortfolioPhotoModelList.of(
+                      List.of(
+                          PortfolioPhotoModel.builder()
+                              .photoNo(new PhotoNo(3L))
+                              .photoSettings(TemplateSettings.empty())
+                              .photoJapaneseTitle(new PhotoJapaneseTitle("金閣寺"))
+                              .imageFilePath(new ImageFilePath("https://signed/1/3-aaa.jpg"))
+                              .directionKbn(DirectionEnum.VERTICAL)
+                              .build())),
+                  true))
+          .when(portfolioService)
+          .searchPhotos(any());
+
+      mockMvc
+          .perform(
+              get(PORTFOLIO_PHOTOS)
+                  .param("title", "金閣")
+                  .param("location", "京都")
+                  .param("tag", " ")
+                  .param("pageNo", "2"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.photoList[0].photoNo").value(3))
+          .andExpect(jsonPath("$.photoList[0].photoJapaneseTitle").value("金閣寺"))
+          .andExpect(jsonPath("$.photoList[0].imageFilePath").value("https://signed/1/3-aaa.jpg"))
+          .andExpect(jsonPath("$.photoList[0].directionKbn").value("vertical"))
+          .andExpect(jsonPath("$.isLast").value(true));
+
+      verify(portfolioService)
+          .searchPhotos(
+              PortfolioPhotoSearchModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .title("金閣")
+                  .location("京都")
+                  .pageNo(2)
+                  .build());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：ページ番号が未指定の場合、1ページ目を検索すること")
+    void searchPortfolioPhotos_defaultPage() throws Exception {
+      doReturn(PortfolioPhotoPageModel.of(PortfolioPhotoModelList.empty(), true))
+          .when(portfolioService)
+          .searchPhotos(any());
+
+      mockMvc.perform(get(PORTFOLIO_PHOTOS)).andExpect(status().isOk());
+
+      verify(portfolioService)
+          .searchPhotos(
+              PortfolioPhotoSearchModel.builder().accountNo(new AccountNo(1L)).pageNo(1).build());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：ページ番号が0以下の場合、400を返しServiceを呼び出さないこと")
+    void searchPortfolioPhotos_invalidPageNo() throws Exception {
+      mockMvc
+          .perform(get(PORTFOLIO_PHOTOS).param("pageNo", "0"))
+          .andExpect(status().isBadRequest());
+
+      verify(portfolioService, times(0)).searchPhotos(any());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：認証ユーザーと異なるアカウントIDを指定した場合、403を返しServiceを呼び出さないこと")
+    void searchPortfolioPhotos_forbidden() throws Exception {
+      doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
+
+      mockMvc.perform(get(PORTFOLIO_PHOTOS)).andExpect(status().isForbidden());
+
+      verify(portfolioService, times(0)).searchPhotos(any());
     }
   }
 }

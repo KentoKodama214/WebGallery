@@ -73,6 +73,61 @@
 			pp.display_order
 	</select>
 
+	<select id="selectAvailablePhotos" resultMap="PortfolioPhotoDtoMap">
+		SELECT
+			ph.photo_no,
+			ph.photo_japanese_title,
+			ph.image_file_path,
+			ph.direction_kbn
+		FROM
+			photo.photo_mst ph
+		WHERE
+			ph.account_no = #{accountNo}
+			AND ph.is_deleted = false
+			<if test="titlePattern != null">
+				AND (
+					ph.photo_japanese_title ILIKE #{titlePattern} ESCAPE '\'
+					OR ph.photo_english_title ILIKE #{titlePattern} ESCAPE '\'
+				)
+			</if>
+			<if test="locationPattern != null">
+				AND EXISTS (
+					SELECT
+						1
+					FROM
+						common.location_mst lm
+					WHERE
+						lm.account_no = ph.account_no
+						AND lm.location_no = ph.location_no
+						AND lm.is_deleted = false
+						AND (
+							lm.display_name ILIKE #{locationPattern} ESCAPE '\'
+							OR lm.management_name ILIKE #{locationPattern} ESCAPE '\'
+						)
+				)
+			</if>
+			<if test="tagPattern != null">
+				AND EXISTS (
+					SELECT
+						1
+					FROM
+						photo.photo_tag_mst ptm
+					WHERE
+						ptm.account_no = ph.account_no
+						AND ptm.photo_no = ph.photo_no
+						AND (
+							ptm.tag_japanese_name ILIKE #{tagPattern} ESCAPE '\'
+							OR ptm.tag_english_name ILIKE #{tagPattern} ESCAPE '\'
+						)
+				)
+			</if>
+		ORDER BY
+			ph.photo_at DESC,
+			ph.photo_no DESC
+		LIMIT #{limit}
+		OFFSET #{offset}
+	</select>
+
 	<select id="countAvailablePhotos" resultType="Integer">
 		SELECT
 			COUNT(*)

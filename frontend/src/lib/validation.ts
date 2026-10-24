@@ -112,9 +112,6 @@ export const PORTFOLIO_THEME_MAX_LENGTH = 100;
 /** ポートフォリオの説明文・写真ごとの説明の最大文字数（バックエンドの Consts.PORTFOLIO_DESCRIPTION_MAX_LENGTH と一致させること） */
 export const PORTFOLIO_DESCRIPTION_MAX_LENGTH = 2000;
 
-/** グリッド型の写真ごとのキャプションの最大文字数（バックエンドの Consts.PORTFOLIO_CAPTION_MAX_LENGTH と一致させること） */
-export const PORTFOLIO_CAPTION_MAX_LENGTH = 100;
-
 /** 1つのポートフォリオに設定できる写真枚数の上限（バックエンドの Consts.PORTFOLIO_PHOTO_MAX_SIZE と一致させること） */
 export const PORTFOLIO_PHOTO_MAX_SIZE = 200;
 

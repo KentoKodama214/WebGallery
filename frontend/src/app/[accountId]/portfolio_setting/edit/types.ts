@@ -20,8 +20,6 @@ export interface PhotoSettingValues {
   subTheme: string;
   /** フィーチャー型：説明 */
   description: string;
-  /** グリッド型：キャプション */
-  caption: string;
 }
 
 /** 未入力の写真単位の設定 */
@@ -29,13 +27,13 @@ export const EMPTY_PHOTO_SETTINGS: PhotoSettingValues = {
   theme: "",
   subTheme: "",
   description: "",
-  caption: "",
 };
 
 /** テンプレートごとに送信する写真単位の設定項目（バックエンドは未知の項目を受け付けない） */
 export const PHOTO_SETTING_KEYS: Record<PortfolioTemplateKbn, (keyof PhotoSettingValues)[]> = {
   feature: ["theme", "subTheme", "description"],
-  grid: ["caption"],
+  // グリッド型は写真単位の設定を持たない
+  grid: [],
 };
 
 /** グリッド型の行パターンごとの1行あたりの写真枚数（テンプレート一覧APIの取得前・取得失敗時にも使う） */
