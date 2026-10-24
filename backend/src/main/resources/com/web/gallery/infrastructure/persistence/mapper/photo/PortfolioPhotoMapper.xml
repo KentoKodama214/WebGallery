@@ -119,7 +119,6 @@
 				)
 			</if>
 		ORDER BY
-			ph.photo_at DESC,
 			ph.photo_no DESC
 		LIMIT #{limit}
 		OFFSET #{offset}
