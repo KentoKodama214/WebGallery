@@ -246,7 +246,7 @@ sequenceDiagram
     Edit->>API: POST /api/v1/accounts/{id}/portfolios
     API-->>Edit: 登録成功（下書き。結果はダイアログで通知）。作成数が権限ごとの上限（mini-user：3個、normal-user：10個。下書きを含む）に達している場合はエラーを表示
     Edit->>Edit: ?portfolioNo= 付きのURLへ切り替え（登録した内容は保持したまま、読み込み直さない）
-    User->>Edit: 公開する（未保存の変更がある間は押せない）
+    User->>Edit: 公開する（未保存の変更がある間は押せない。フィーチャー型でテーマが未入力の写真がある場合は、その欄の下に赤字で警告して送信しない）
     Edit->>API: PUT /api/v1/accounts/{id}/portfolios/{no}/status
     API-->>Edit: 公開成功（結果はダイアログで通知。公開に必要な設定が不足している場合はエラーを表示）
     Edit->>Edit: 「保存する」「下書きに戻す」の下に「公開ページを見る」リンクを表示
