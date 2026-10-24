@@ -228,4 +228,93 @@ public class PortfolioPhotoMapperTest {
       assertEquals(1, portfolioPhotoMapper.countAvailablePhotos(1L, List.of(1L, 99L)));
     }
   }
+
+  @Nested
+  @Order(5)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/mapper/PortfolioPhotoMapperTest.sql")
+  class selectAvailablePhotos {
+    /**
+     * 検索結果の写真番号を取得する
+     *
+     * @param titlePattern タイトルのLIKEパターン
+     * @param locationPattern 撮影場所の名前のLIKEパターン
+     * @param tagPattern タグ名のLIKEパターン
+     * @return 写真番号のリスト（検索結果の順）
+     */
+    private List<Long> photoNos(String titlePattern, String locationPattern, String tagPattern) {
+      return portfolioPhotoMapper
+          .selectAvailablePhotos(1L, titlePattern, locationPattern, tagPattern, 10, 0)
+          .stream()
+          .map(PortfolioPhotoDto::getPhotoNo)
+          .toList();
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：条件が未指定の場合、本人の未削除の写真を撮影日時の新しい順に、表示に必要な項目とあわせて取得すること")
+    void selectAvailablePhotos_noCondition() {
+      List<PortfolioPhotoDto> actual =
+          portfolioPhotoMapper.selectAvailablePhotos(1L, null, null, null, 10, 0);
+
+      assertEquals(List.of(2L, 1L), actual.stream().map(PortfolioPhotoDto::getPhotoNo).toList());
+      PortfolioPhotoDto first = actual.get(0);
+      assertEquals("タイトル12", first.getPhotoJapaneseTitle());
+      assertEquals("1/2-bbb.jpg", first.getImageFilePath());
+      assertEquals(DirectionEnum.SQUARE, first.getDirectionKbn());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("タイトルの条件で、日本語・英語のいずれかに大文字小文字を区別せず部分一致する写真に絞り込むこと")
+    void selectAvailablePhotos_byTitle() {
+      assertEquals(List.of(2L, 1L), photoNos("%タイトル1%", null, null));
+      assertEquals(List.of(1L), photoNos("%TITLE11%", null, null));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("撮影場所の条件で、表示名・管理名のいずれかに部分一致し、論理削除されていない撮影場所の写真に絞り込むこと")
+    void selectAvailablePhotos_byLocation() {
+      assertEquals(List.of(2L), photoNos(null, "%京都%", null));
+      assertEquals(List.of(2L), photoNos(null, "%金閣寺\\_管理%", null));
+      // 写真1の撮影場所（大阪城）は論理削除済み
+      assertEquals(List.of(), photoNos(null, "%大阪%", null));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("タグの条件で、日本語・英語のいずれかに部分一致するタグを持つ、本人の未削除の写真に絞り込むこと")
+    void selectAvailablePhotos_byTag() {
+      // 同じタグを持つ論理削除済みの写真3・他アカウントの写真は含めない
+      assertEquals(List.of(1L), photoNos(null, null, "%紅葉%"));
+      assertEquals(List.of(1L), photoNos(null, null, "%AUTUMN%"));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("複数の条件を指定した場合、すべてに一致する写真に絞り込むこと（AND条件）")
+    void selectAvailablePhotos_and() {
+      assertEquals(List.of(), photoNos("%タイトル12%", null, "%紅葉%"));
+      assertEquals(List.of(1L), photoNos("%タイトル11%", null, "%紅葉%"));
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("エスケープしたワイルドカード文字は、文字そのものとして一致させること")
+    void selectAvailablePhotos_escapedWildcard() {
+      assertEquals(List.of(), photoNos("%\\%%", null, null));
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("取得件数・取得開始位置を指定した場合、その範囲だけを取得すること")
+    void selectAvailablePhotos_paging() {
+      List<PortfolioPhotoDto> actual =
+          portfolioPhotoMapper.selectAvailablePhotos(1L, null, null, null, 1, 1);
+
+      assertEquals(List.of(1L), actual.stream().map(PortfolioPhotoDto::getPhotoNo).toList());
+    }
+  }
 }

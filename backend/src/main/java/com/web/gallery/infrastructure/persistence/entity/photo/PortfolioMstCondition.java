@@ -13,6 +13,12 @@ public class PortfolioMstCondition {
   /** ポートフォリオ番号 */
   private Long portfolioNo;
 
+  /** テーマのLIKEパターン（部分一致。ワイルドカード文字はエスケープ済み） */
+  private String themePattern;
+
+  /** タグ名（日本語・英語）のLIKEパターン（部分一致。ワイルドカード文字はエスケープ済み） */
+  private String tagPattern;
+
   /**
    * アカウント番号・ポートフォリオ番号による抽出条件を生成する
    *
@@ -34,5 +40,24 @@ public class PortfolioMstCondition {
    */
   public static PortfolioMstCondition byAccountNo(Long accountNo) {
     return PortfolioMstCondition.builder().accountNo(accountNo).build();
+  }
+
+  /**
+   * アカウント番号と、テーマ・タグ名の部分一致による抽出条件を生成する
+   *
+   * <p>本人のポートフォリオ一覧の絞り込みに使用する
+   *
+   * @param accountNo アカウント番号
+   * @param themePattern テーマのLIKEパターン（未指定はnull）
+   * @param tagPattern タグ名のLIKEパターン（未指定はnull）
+   * @return {@link PortfolioMstCondition}
+   */
+  public static PortfolioMstCondition byAccountNoAndKeywords(
+      Long accountNo, String themePattern, String tagPattern) {
+    return PortfolioMstCondition.builder()
+        .accountNo(accountNo)
+        .themePattern(themePattern)
+        .tagPattern(tagPattern)
+        .build();
   }
 }

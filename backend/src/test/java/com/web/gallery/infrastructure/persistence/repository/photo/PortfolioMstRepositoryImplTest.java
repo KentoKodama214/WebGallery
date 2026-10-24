@@ -11,9 +11,12 @@ import static org.mockito.Mockito.verify;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioDetailModelList;
+import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
+import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
+import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.application.model.photo.PortfolioTagModel;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.PortfolioStatusEnum;
@@ -189,10 +192,79 @@ class PortfolioMstRepositoryImplTest {
   @Nested
   @Order(3)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class searchAvailablePhotos {
+    /**
+     * 写真の検索結果のDtoを生成する
+     *
+     * @param photoNo 写真番号
+     * @return {@link PortfolioPhotoDto}
+     */
+    private PortfolioPhotoDto photoDto(Long photoNo) {
+      PortfolioPhotoDto dto = new PortfolioPhotoDto();
+      dto.setPhotoNo(photoNo);
+      dto.setPhotoJapaneseTitle("写真" + photoNo);
+      dto.setImageFilePath("1/" + photoNo + "-aaa.jpg");
+      dto.setDirectionKbn(DirectionEnum.VERTICAL);
+      return dto;
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：1ページの件数より1件多く取得し、余った場合は切り捨てて最後のページでないとすること")
+    void searchAvailablePhotos_hasNext() {
+      doReturn(List.of(photoDto(5L), photoDto(4L), photoDto(3L)))
+          .when(portfolioPhotoMapper)
+          .selectAvailablePhotos(1L, "%金閣%", "%京都%", "%寺%", 3, 2);
+
+      PortfolioPhotoPageModel actual =
+          portfolioMstRepositoryImpl.searchAvailablePhotos(
+              PortfolioPhotoSearchModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .title("金閣")
+                  .location("京都")
+                  .tag("寺")
+                  .pageNo(2)
+                  .pageSize(2)
+                  .build());
+
+      assertFalse(actual.getIsLast());
+      assertEquals(2, actual.getPortfolioPhotoModelList().size());
+      PortfolioPhotoModel first = actual.getPortfolioPhotoModelList().get(0);
+      assertEquals(new PhotoNo(5L), first.getPhotoNo());
+      assertEquals(new PhotoJapaneseTitle("写真5"), first.getPhotoJapaneseTitle());
+      assertEquals(new ImageFilePath("1/5-aaa.jpg"), first.getImageFilePath());
+      assertEquals(DirectionEnum.VERTICAL, first.getDirectionKbn());
+      assertEquals(TemplateSettings.empty(), first.getPhotoSettings());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：取得件数が1ページの件数以下の場合、最後のページとし、未指定の条件はnullで渡すこと")
+    void searchAvailablePhotos_last() {
+      doReturn(List.of(photoDto(1L)))
+          .when(portfolioPhotoMapper)
+          .selectAvailablePhotos(1L, null, null, null, 21, 0);
+
+      PortfolioPhotoPageModel actual =
+          portfolioMstRepositoryImpl.searchAvailablePhotos(
+              PortfolioPhotoSearchModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .pageNo(1)
+                  .pageSize(20)
+                  .build());
+
+      assertTrue(actual.getIsLast());
+      assertEquals(1, actual.getPortfolioPhotoModelList().size());
+    }
+  }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getPortfolioList {
     @Test
     @Order(1)
-    @DisplayName("正常系：削除済みを除外する条件で取得し、Dtoの全項目をModelに変換すること")
+    @DisplayName("正常系：絞り込み条件が未指定の場合、アカウント番号だけで取得し、Dtoの全項目をModelに変換すること")
     void getPortfolioList_success() {
       PortfolioDto dto = new PortfolioDto();
       dto.setAccountNo(1L);
@@ -205,13 +277,17 @@ class PortfolioMstRepositoryImplTest {
       dto.setUpdatedAt(UPDATED_AT);
       doReturn(List.of(dto)).when(portfolioMstMapper).selectList(any(PortfolioMstCondition.class));
 
-      PortfolioModelList actual = portfolioMstRepositoryImpl.getPortfolioList(new AccountNo(1L));
+      PortfolioModelList actual =
+          portfolioMstRepositoryImpl.getPortfolioList(
+              PortfolioListGetModel.builder().accountNo(new AccountNo(1L)).build());
 
       ArgumentCaptor<PortfolioMstCondition> conditionCaptor =
           ArgumentCaptor.forClass(PortfolioMstCondition.class);
       verify(portfolioMstMapper).selectList(conditionCaptor.capture());
       assertEquals(1L, conditionCaptor.getValue().getAccountNo());
       assertNull(conditionCaptor.getValue().getPortfolioNo());
+      assertNull(conditionCaptor.getValue().getThemePattern());
+      assertNull(conditionCaptor.getValue().getTagPattern());
 
       assertEquals(1, actual.size());
       PortfolioModel model = actual.get(0);
@@ -231,12 +307,36 @@ class PortfolioMstRepositoryImplTest {
     void getPortfolioList_empty() {
       doReturn(List.of()).when(portfolioMstMapper).selectList(any(PortfolioMstCondition.class));
 
-      assertTrue(portfolioMstRepositoryImpl.getPortfolioList(new AccountNo(1L)).isEmpty());
+      assertTrue(
+          portfolioMstRepositoryImpl
+              .getPortfolioList(
+                  PortfolioListGetModel.builder().accountNo(new AccountNo(1L)).build())
+              .isEmpty());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：テーマ・タグ名を部分一致のLIKEパターンにし、ワイルドカード文字（%・_）とエスケープ文字（\\）をエスケープすること")
+    void getPortfolioList_keywords() {
+      doReturn(List.of()).when(portfolioMstMapper).selectList(any(PortfolioMstCondition.class));
+
+      portfolioMstRepositoryImpl.getPortfolioList(
+          PortfolioListGetModel.builder()
+              .accountNo(new AccountNo(1L))
+              .theme("100%_自然")
+              .tag("a\\b")
+              .build());
+
+      ArgumentCaptor<PortfolioMstCondition> conditionCaptor =
+          ArgumentCaptor.forClass(PortfolioMstCondition.class);
+      verify(portfolioMstMapper).selectList(conditionCaptor.capture());
+      assertEquals("%100\\%\\_自然%", conditionCaptor.getValue().getThemePattern());
+      assertEquals("%a\\\\b%", conditionCaptor.getValue().getTagPattern());
     }
   }
 
   @Nested
-  @Order(4)
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getPortfolioDetail {
     @Test
@@ -334,7 +434,7 @@ class PortfolioMstRepositoryImplTest {
   }
 
   @Nested
-  @Order(5)
+  @Order(6)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class getPortfolioDetailListByPhoto {
     @Test
@@ -373,7 +473,7 @@ class PortfolioMstRepositoryImplTest {
   }
 
   @Nested
-  @Order(6)
+  @Order(7)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class countAvailablePhotos {
     @Test
