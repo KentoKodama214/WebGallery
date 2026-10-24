@@ -284,6 +284,87 @@ describe("api/client", () => {
     });
   });
 
+  describe("ポートフォリオAPI", () => {
+    beforeEach(async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
+      await client.login("user", "pass");
+    });
+
+    it("getPortfolioList は一覧APIを呼び、portfolioList を返す", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ portfolioList: [{ portfolioNo: 1, theme: "日本の自然" }] })
+      );
+
+      const result = await client.getPortfolioList("me");
+
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios");
+      expect(new Headers(init?.headers).get("Authorization")).toBe("Bearer token-1");
+      expect(result).toEqual([{ portfolioNo: 1, theme: "日本の自然" }]);
+    });
+
+    it("savePortfolio はポートフォリオ番号の未指定時に POST、指定時に PUT で JSON を送る", async () => {
+      const data = {
+        theme: "日本の自然",
+        description: "",
+        templateKbn: "grid" as const,
+        templateSettings: { rows: [{ pattern: "TWO_EQUAL" }] },
+        photoList: [{ photoNo: 1, photoSettings: { caption: "金閣寺" } }],
+        tagList: [],
+      };
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioNo: 5 }));
+      await client.savePortfolio("me", data);
+      let [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toMatch(/\/api\/v1\/accounts\/me\/portfolios$/);
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(init?.body as string)).toEqual(data);
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioNo: 5 }));
+      await client.savePortfolio("me", data, 5);
+      [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios/5");
+      expect(init?.method).toBe("PUT");
+    });
+
+    it("updatePortfolioStatus は PUT /status で公開状態を送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioNo: 5 }));
+
+      await client.updatePortfolioStatus("me", 5, "published");
+
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios/5/status");
+      expect(init?.method).toBe("PUT");
+      expect(JSON.parse(init?.body as string)).toEqual({ statusKbn: "published" });
+    });
+
+    it("deletePortfolio は DELETE を送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioNo: 5 }));
+
+      await client.deletePortfolio("me", 5);
+
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios/5");
+      expect(init?.method).toBe("DELETE");
+    });
+
+    it("HTTP エラー時はバックエンドのメッセージと status を持つ ApiError を投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse(
+          { message: "公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。" },
+          { status: 400 }
+        )
+      );
+
+      const err = await client.updatePortfolioStatus("me", 5, "published").catch((e) => e);
+
+      expect(err).toBeInstanceOf(client.ApiError);
+      expect(err.status).toBe(400);
+      expect(err.message).toBe(
+        "公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。"
+      );
+    });
+  });
+
   describe("不正なトークン応答の扱い", () => {
     it("login 応答に文字列 accessToken が無ければ失敗として扱う", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ expiresIn: 3600 }));
