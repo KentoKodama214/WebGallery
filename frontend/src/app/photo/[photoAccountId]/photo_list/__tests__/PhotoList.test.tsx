@@ -48,7 +48,12 @@ class MockPhotoSwipeLightbox {
     ui: { registerElement: (config: Record<string, unknown>) => void };
   } | null = null;
 
-  constructor() {
+  /** 初期化時に渡されたギャラリー要素（クリックを拾う対象のDOM） */
+  gallery: HTMLElement | undefined;
+  destroyed = false;
+
+  constructor(options?: { gallery?: HTMLElement }) {
+    this.gallery = options?.gallery;
     mockLightboxInstances.push(this);
   }
 
@@ -89,7 +94,9 @@ class MockPhotoSwipeLightbox {
     this.changeHandlers.forEach((h) => h());
   }
 
-  destroy() {}
+  destroy() {
+    this.destroyed = true;
+  }
 }
 
 // PhotoSwipe（動的import）をスタブ化する
@@ -663,6 +670,38 @@ describe("PhotoList", () => {
     expect(lastCall[1].searchExecuted).toBe(true);
     // パネルは絞り込み実行で自動的に閉じる
     expect(screen.getByTestId("filter-panel").className).not.toMatch(/filterOpen/);
+  });
+
+  it("絞り込み後に再描画された写真グリッドへライトボックスが張り直されること", async () => {
+    mockGetPhotoList.mockResolvedValueOnce({ isLast: true, photoList: samplePhotos });
+
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(mockLightboxInstances.at(-1)?.pswp).toBeTruthy();
+    });
+    const initialLightbox = mockLightboxInstances.at(-1)!;
+
+    fireEvent.click(screen.getByTestId("filter-trigger"));
+    mockGetPhotoList.mockResolvedValueOnce({
+      isLast: true,
+      photoList: [samplePhotos[0]],
+    });
+    fireEvent.click(screen.getByText("絞り込み"));
+
+    await waitFor(() => {
+      expect(galleryImages()).toHaveLength(1);
+    });
+    // 絞り込み中にグリッドがアンマウントされるため、旧ライトボックスは破棄され、
+    // 新しいグリッド要素に紐づくライトボックスが作られる（旧要素に紐づいたままだと
+    // クリックがリンク本来の動作＝別タブ表示になる）
+    await waitFor(() => {
+      expect(mockLightboxInstances.at(-1)).not.toBe(initialLightbox);
+    });
+    expect(initialLightbox.destroyed).toBe(true);
+    const currentLightbox = mockLightboxInstances.at(-1)!;
+    expect(currentLightbox.gallery?.isConnected).toBe(true);
+    expect(currentLightbox.gallery).toContainElement(galleryImages()[0]);
   });
 
   it("絞り込み実行時にAPIエラーが発生した場合はエラーメッセージが表示されること", async () => {

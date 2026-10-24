@@ -1,3 +1,12 @@
-html, body {
+/*
+ * 写真一覧ページ表示中だけ html/body の背景を黒にする（オーバースクロール時の余白も黒くするため）。
+ *
+ * ルートでimportしたグローバルCSSは、クライアントサイド遷移で別ページへ移っても
+ * 読み込まれたまま残る。`html, body` を無条件に指定すると遷移先（ポートフォリオ設定等）の
+ * 背景まで黒くなり、リロードすると白に戻る不整合が起きるため、写真一覧のルート要素を
+ * 含むときだけ適用する。
+ */
+html:has([data-page="photo-list"]),
+body:has([data-page="photo-list"]) {
   background-color: black !important;
 }

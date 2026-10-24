@@ -223,7 +223,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   }, [photos]);
 
   const isOwner = user?.accountId === photoAccountId;
-  const hasPhotos = photos.length > 0;
+  // 写真グリッド（galleryRef の要素）を描画しているかどうか。絞り込み中は
+  // 読み込み表示に切り替わってグリッドがアンマウントされるため、写真の有無だけでなく
+  // 読み込み・エラー状態も含めて判定する
+  const isGalleryShown = !isLoading && !error && photos.length > 0;
 
   const buildParams = (
     filter: PhotoListFilter,
@@ -426,10 +429,13 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   }, [isOwner, photoAccountId]);
 
   // PhotoSwipe初期化
-  // ライトボックスは開くたびにギャラリーDOMを読み直すため、写真の増減では
-  // 再初期化せず、写真の有無と認証状態が変わったときだけ作り直す
+  // ライトボックスは開くたびにギャラリーDOMを読み直すため、写真の増減（もっと見る）では
+  // 再初期化せず、グリッドの表示有無と認証状態が変わったときだけ作り直す。
+  // 絞り込みではグリッドが一旦アンマウントされて別のDOM要素で再描画されるため、
+  // 作り直さないとライトボックスが旧要素に紐づいたままになり、クリックがリンク本来の
+  // 動作（target="_blank"で別タブ表示）になってしまう
   useEffect(() => {
-    if (!galleryRef.current || !hasPhotos) return;
+    if (!galleryRef.current || !isGalleryShown) return;
 
     let cancelled = false;
     let lightbox: InstanceType<typeof import("photoswipe/lightbox").default> | null = null;
@@ -587,7 +593,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       }
       lightboxRef.current = null;
     };
-  }, [hasPhotos, isAuthenticated]);
+  }, [isGalleryShown, isAuthenticated]);
 
   /**
    * +もっと見る
@@ -914,7 +920,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         )}
 
         {/* 写真グリッド */}
-        {!isLoading && !error && photos.length > 0 && (
+        {isGalleryShown && (
           <div
             ref={galleryRef}
             style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", gap: "10px", margin: "0 auto" }}
