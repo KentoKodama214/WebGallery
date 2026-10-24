@@ -470,6 +470,8 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
   }
 
   const inputClass = "w-full border border-gray-300 rounded px-3 py-2";
+  // 公開に必要な設定の不足（画面側の検証・バックエンドの400のどちらでも同じ文言）は、ボタンの下に表示する
+  const isPublishSettingsError = submitError === PUBLISH_SETTINGS_ERROR;
 
   // プレビューは、表示する内容（フィーチャー型は写真、グリッド型は行）があるときだけ開ける
   const canPreview = templateKbn === "grid" ? gridRows.length > 0 : photos.length > 0;
@@ -872,7 +874,7 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
           ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため常設し、中身だけを差し替える
         */}
         <p role="alert" className="text-red-700 text-sm empty:sr-only">
-          {submitError}
+          {isPublishSettingsError ? "" : submitError}
         </p>
 
         {/* プレビュー・保存・公開状態の切り替え（中央揃え。プレビューは保存ボタンの左に置く） */}
@@ -916,7 +918,11 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                 </button>
               ))}
           </div>
-          {portfolioNo !== undefined && isDirty && (
+          {/* 公開に必要な設定の不足を表示する間は、未保存の変更の案内をその文言に差し替える */}
+          <p role="alert" className="text-sm text-red-700 text-center empty:sr-only">
+            {isPublishSettingsError ? submitError : ""}
+          </p>
+          {portfolioNo !== undefined && isDirty && !isPublishSettingsError && (
             <p className="text-sm text-red-700 text-center">
               公開状態を切り替えるには、先に変更を保存してください
             </p>
