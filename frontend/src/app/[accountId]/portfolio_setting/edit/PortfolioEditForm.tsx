@@ -32,6 +32,9 @@ import {
   EMPTY_PHOTO_SETTINGS,
   GRID_ROW_PATTERN_LABELS,
   GRID_ROW_PATTERN_PHOTO_COUNT,
+  DEFAULT_ASPECT_RATIO,
+  DIRECTION_ASPECT_RATIOS,
+  DIRECTION_LABELS,
   PHOTO_SETTING_KEYS,
   type PhotoSettingValues,
   type SelectedPhoto,
@@ -411,6 +414,31 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
 
   const inputClass = "w-full border border-gray-300 rounded px-3 py-2";
 
+  /** プレビューを表示するボタン（フィーチャー型は「写真を選択」の右、グリッド型は「＋行を追加」の右に置く） */
+  const previewButton = (
+    <button
+      type="button"
+      onClick={() => setShowPreview(true)}
+      className="px-4 py-2 text-sm border border-blue-700 text-blue-700 rounded hover:bg-blue-50"
+    >
+      プレビューを表示
+    </button>
+  );
+
+  /** 「写真を選択」ボタン（フィーチャー型は写真があるときプレビューを右に並べる） */
+  const photoActions = (
+    <div className="flex flex-wrap gap-3">
+      <button
+        type="button"
+        onClick={() => setShowPicker(true)}
+        className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
+      >
+        写真を選択
+      </button>
+      {templateKbn === "feature" && photos.length > 0 && previewButton}
+    </div>
+  );
+
   return (
     <div className="flex flex-col items-center py-8 px-4">
       <div className="w-full max-w-[900px] flex flex-col gap-6">
@@ -421,10 +449,10 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
           &larr; ポートフォリオ一覧へ戻る
         </Link>
         <div className="flex flex-wrap justify-between items-center gap-2">
-          <h1 className="text-xl font-bold">
-            {portfolioNo === undefined ? "ポートフォリオ作成" : "ポートフォリオ編集"}
-          </h1>
           <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold">
+              {portfolioNo === undefined ? "ポートフォリオ作成" : "ポートフォリオ編集"}
+            </h1>
             {portfolioNo !== undefined && (
               <span
                 data-testid="portfolio-status"
@@ -437,20 +465,23 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                 {PORTFOLIO_STATUS_LABELS[statusKbn]}
               </span>
             )}
-            {portfolioNo !== undefined && statusKbn === "published" && (
-              <Link
-                href={`/portfolio/${accountId}/${portfolioNo}`}
-                target="_blank"
-                rel="noopener"
-                className="text-blue-700 hover:underline"
-              >
-                公開ページを見る
-              </Link>
-            )}
           </div>
+          {portfolioNo !== undefined && (
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteError("");
+                setShowDeleteConfirm(true);
+              }}
+              disabled={isSubmitting}
+              className="px-6 py-2 border border-red-500 text-red-700 rounded hover:bg-red-50 disabled:opacity-50"
+            >
+              削除
+            </button>
+          )}
         </div>
 
-        {/* 基本情報 */}
+        {/* 基本情報（テーマ・説明文） */}
         <section className="flex flex-col gap-4">
           <div>
             <label htmlFor="portfolio-theme" className="block font-bold mb-1">
@@ -491,6 +522,80 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
               className={inputClass}
             />
           </div>
+        </section>
+
+        {/* タグ */}
+        <section className="flex flex-col gap-3" aria-labelledby="portfolio-tags-heading">
+          <h2 id="portfolio-tags-heading" className="font-bold">
+            タグ
+          </h2>
+          {tags.map((tag, index) => (
+            <div key={index} className="flex flex-col gap-1">
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  aria-label={`タグ${index + 1}（日本語）`}
+                  placeholder="日本語"
+                  value={tag.tagJapaneseName}
+                  maxLength={TAG_NAME_MAX_LENGTH}
+                  onChange={(e) => {
+                    markDirty();
+                    const value = e.target.value;
+                    setTags((prev) =>
+                      prev.map((t, i) => (i === index ? { ...t, tagJapaneseName: value } : t))
+                    );
+                  }}
+                  className={inputClass}
+                />
+                <input
+                  type="text"
+                  aria-label={`タグ${index + 1}（英語）`}
+                  placeholder="英語"
+                  value={tag.tagEnglishName}
+                  maxLength={TAG_NAME_MAX_LENGTH}
+                  onChange={(e) => {
+                    markDirty();
+                    const value = e.target.value;
+                    setTags((prev) =>
+                      prev.map((t, i) => (i === index ? { ...t, tagEnglishName: value } : t))
+                    );
+                  }}
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  aria-label={`タグ${index + 1}を削除`}
+                  onClick={() => {
+                    markDirty();
+                    setTags((prev) => prev.filter((_, i) => i !== index));
+                  }}
+                  className="px-2 py-1 text-sm border border-red-400 text-red-700 rounded"
+                >
+                  ×
+                </button>
+              </div>
+              {errors[`tag-${index}`] && (
+                <p className="text-red-700 text-sm">{errors[`tag-${index}`]}</p>
+              )}
+            </div>
+          ))}
+          <div>
+            <button
+              type="button"
+              disabled={tags.length >= PORTFOLIO_TAG_MAX_SIZE}
+              onClick={() => {
+                markDirty();
+                setTags((prev) => [...prev, { tagJapaneseName: "", tagEnglishName: "" }]);
+              }}
+              className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800 disabled:opacity-50"
+            >
+              ＋タグを追加
+            </button>
+          </div>
+        </section>
+
+        {/* テンプレート */}
+        <section className="flex flex-col gap-4">
           <fieldset>
             <legend className="font-bold mb-1">テンプレート</legend>
             <div className="flex gap-6">
@@ -513,27 +618,89 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
           </fieldset>
         </section>
 
-        {/* 写真 */}
-        <section className="flex flex-col gap-3" aria-labelledby="portfolio-photos-heading">
-          <div className="flex justify-between items-center">
-            <h2 id="portfolio-photos-heading" className="font-bold">
-              写真（{photos.length}枚）
+        {/* グリッド型の行パターン（テンプレートの下、写真より上） */}
+        {templateKbn === "grid" && (
+          <section className="flex flex-col gap-3" aria-labelledby="portfolio-rows-heading">
+            <h2 id="portfolio-rows-heading" className="font-bold">
+              行の組み合わせ
             </h2>
-            <button
-              type="button"
-              onClick={() => setShowPicker(true)}
-              className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
+            <p
+              data-testid="grid-photo-count"
+              className={
+                gridTotalPhotoCount === photos.length && photos.length > 0
+                  ? "text-sm text-green-700"
+                  : "text-sm text-red-700"
+              }
             >
-              写真を選択
-            </button>
-          </div>
+              行の枚数の合計 {gridTotalPhotoCount}枚 / 写真 {photos.length}枚
+              {gridTotalPhotoCount !== photos.length && "（公開するには一致させてください）"}
+            </p>
+            <ol className="flex flex-col gap-2">
+              {gridRows.map((pattern, index) => (
+                <li key={index} className="flex items-center gap-2" data-testid="grid-row-item">
+                  <span className="text-sm w-12">{index + 1}行目</span>
+                  <select
+                    aria-label={`${index + 1}行目の組み合わせ`}
+                    value={pattern}
+                    onChange={(e) => {
+                      markDirty();
+                      const value = e.target.value;
+                      setGridRows((prev) => prev.map((p, i) => (i === index ? value : p)));
+                    }}
+                    className="border border-gray-300 rounded px-2 py-1"
+                  >
+                    {rowPatternOptions.map((option) => (
+                      <option key={option.pattern} value={option.pattern}>
+                        {option.displayName}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    aria-label={`${index + 1}行目を削除`}
+                    onClick={() => {
+                      markDirty();
+                      setGridRows((prev) => prev.filter((_, i) => i !== index));
+                    }}
+                    className="px-2 py-1 text-sm border border-red-400 text-red-700 rounded"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ol>
+            {/* 行の追加は行の一覧の下に置き、行があるときはプレビューを右に並べる */}
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  markDirty();
+                  setGridRows((prev) => [...prev, DEFAULT_GRID_ROW_PATTERN]);
+                }}
+                className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
+              >
+                ＋行を追加
+              </button>
+              {gridRows.length > 0 && previewButton}
+            </div>
+          </section>
+        )}
+
+        {/* 写真（「写真を選択」は、未選択の間は見出しの下、選択後は写真の一覧の下に置く） */}
+        <section className="flex flex-col gap-3" aria-labelledby="portfolio-photos-heading">
+          <h2 id="portfolio-photos-heading" className="font-bold">
+            写真（{photos.length}枚）
+          </h2>
           {errors.photos && (
             <p id="portfolio-photos-error" className="text-red-700 text-sm">
               {errors.photos}
             </p>
           )}
           {photos.length === 0 ? (
-            <p className="text-gray-600 text-sm">写真が選択されていません</p>
+            <>
+              {photoActions}
+              <p className="text-gray-600 text-sm">写真が選択されていません</p>
+            </>
           ) : (
             <ol className="flex flex-col gap-3">
               {photos.map((photo, index) => {
@@ -544,7 +711,14 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                     data-testid="portfolio-photo-item"
                     className="flex gap-3 border border-gray-200 rounded p-3"
                   >
-                    <div className="w-24 h-24 flex-shrink-0 bg-gray-200 rounded overflow-hidden flex items-center justify-center">
+                    {/* 枠を写真の向きに合わせた縦横比にし、向きの表示名も添える */}
+                    <div
+                      data-testid="portfolio-photo-frame"
+                      style={{
+                        aspectRatio: DIRECTION_ASPECT_RATIOS[photo.directionKbn] ?? DEFAULT_ASPECT_RATIO,
+                      }}
+                      className="h-24 flex-shrink-0 bg-gray-200 rounded overflow-hidden flex items-center justify-center"
+                    >
                       {src ? (
                         <img src={src} alt={photo.label} className="w-full h-full object-cover" />
                       ) : (
@@ -554,6 +728,14 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                     <div className="flex-1 flex flex-col gap-2">
                       <p className="text-sm text-gray-600">
                         {index + 1}. {photo.label}
+                        {DIRECTION_LABELS[photo.directionKbn] && (
+                          <span
+                            data-testid="portfolio-photo-direction"
+                            className="ml-2 inline-block px-1.5 py-0.5 text-xs border border-gray-400 rounded"
+                          >
+                            {DIRECTION_LABELS[photo.directionKbn]}
+                          </span>
+                        )}
                       </p>
                       {templateKbn === "feature" && (
                         <>
@@ -624,155 +806,7 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
               })}
             </ol>
           )}
-        </section>
-
-        {/* グリッド型の行パターン */}
-        {templateKbn === "grid" && (
-          <section className="flex flex-col gap-3" aria-labelledby="portfolio-rows-heading">
-            <div className="flex justify-between items-center">
-              <h2 id="portfolio-rows-heading" className="font-bold">
-                行の組み合わせ
-              </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  markDirty();
-                  setGridRows((prev) => [...prev, DEFAULT_GRID_ROW_PATTERN]);
-                }}
-                className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
-              >
-                行を追加
-              </button>
-            </div>
-            <p
-              data-testid="grid-photo-count"
-              className={
-                gridTotalPhotoCount === photos.length && photos.length > 0
-                  ? "text-sm text-green-700"
-                  : "text-sm text-red-700"
-              }
-            >
-              行の枚数の合計 {gridTotalPhotoCount}枚 / 写真 {photos.length}枚
-              {gridTotalPhotoCount !== photos.length && "（公開するには一致させてください）"}
-            </p>
-            <ol className="flex flex-col gap-2">
-              {gridRows.map((pattern, index) => (
-                <li key={index} className="flex items-center gap-2" data-testid="grid-row-item">
-                  <span className="text-sm w-12">{index + 1}行目</span>
-                  <select
-                    aria-label={`${index + 1}行目の組み合わせ`}
-                    value={pattern}
-                    onChange={(e) => {
-                      markDirty();
-                      const value = e.target.value;
-                      setGridRows((prev) => prev.map((p, i) => (i === index ? value : p)));
-                    }}
-                    className="border border-gray-300 rounded px-2 py-1"
-                  >
-                    {rowPatternOptions.map((option) => (
-                      <option key={option.pattern} value={option.pattern}>
-                        {option.displayName}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    aria-label={`${index + 1}行目を削除`}
-                    onClick={() => {
-                      markDirty();
-                      setGridRows((prev) => prev.filter((_, i) => i !== index));
-                    }}
-                    className="px-2 py-1 text-sm border border-red-400 text-red-700 rounded"
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-
-        {/* プレビュー（フィーチャー型は写真があるとき、グリッド型は行があるときに表示できる） */}
-        {(templateKbn === "feature" ? photos.length > 0 : gridRows.length > 0) && (
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowPreview(true)}
-              className="px-4 py-2 text-sm border border-blue-700 text-blue-700 rounded hover:bg-blue-50"
-            >
-              プレビューを表示
-            </button>
-          </div>
-        )}
-
-        {/* タグ */}
-        <section className="flex flex-col gap-3" aria-labelledby="portfolio-tags-heading">
-          <h2 id="portfolio-tags-heading" className="font-bold">
-            タグ
-          </h2>
-          {tags.map((tag, index) => (
-            <div key={index} className="flex flex-col gap-1">
-              <div className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  aria-label={`タグ${index + 1}（日本語）`}
-                  placeholder="日本語"
-                  value={tag.tagJapaneseName}
-                  maxLength={TAG_NAME_MAX_LENGTH}
-                  onChange={(e) => {
-                    markDirty();
-                    const value = e.target.value;
-                    setTags((prev) =>
-                      prev.map((t, i) => (i === index ? { ...t, tagJapaneseName: value } : t))
-                    );
-                  }}
-                  className={inputClass}
-                />
-                <input
-                  type="text"
-                  aria-label={`タグ${index + 1}（英語）`}
-                  placeholder="英語"
-                  value={tag.tagEnglishName}
-                  maxLength={TAG_NAME_MAX_LENGTH}
-                  onChange={(e) => {
-                    markDirty();
-                    const value = e.target.value;
-                    setTags((prev) =>
-                      prev.map((t, i) => (i === index ? { ...t, tagEnglishName: value } : t))
-                    );
-                  }}
-                  className={inputClass}
-                />
-                <button
-                  type="button"
-                  aria-label={`タグ${index + 1}を削除`}
-                  onClick={() => {
-                    markDirty();
-                    setTags((prev) => prev.filter((_, i) => i !== index));
-                  }}
-                  className="px-2 py-1 text-sm border border-red-400 text-red-700 rounded"
-                >
-                  ×
-                </button>
-              </div>
-              {errors[`tag-${index}`] && (
-                <p className="text-red-700 text-sm">{errors[`tag-${index}`]}</p>
-              )}
-            </div>
-          ))}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              disabled={tags.length >= PORTFOLIO_TAG_MAX_SIZE}
-              onClick={() => {
-                markDirty();
-                setTags((prev) => [...prev, { tagJapaneseName: "", tagEnglishName: "" }]);
-              }}
-              className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800 disabled:opacity-50"
-            >
-              ＋タグを追加
-            </button>
-          </div>
+          {photos.length > 0 && photoActions}
         </section>
 
         {/*
@@ -785,15 +819,16 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
           {successMessage}
         </p>
 
-        <div className="flex flex-wrap gap-3 justify-between">
-          <div className="flex flex-wrap gap-3">
+        {/* 保存・公開状態の切り替え（中央揃え） */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
             <button
               type="button"
               onClick={handleSave}
               disabled={isSubmitting}
               className="px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 disabled:opacity-50"
             >
-              {portfolioNo === undefined ? "下書きとして登録" : "保存"}
+              {portfolioNo === undefined ? "下書きとして登録" : "保存する"}
             </button>
             {portfolioNo !== undefined &&
               (statusKbn === "draft" ? (
@@ -816,23 +851,23 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                 </button>
               ))}
           </div>
-          {portfolioNo !== undefined && (
-            <button
-              type="button"
-              onClick={() => {
-                setDeleteError("");
-                setShowDeleteConfirm(true);
-              }}
-              disabled={isSubmitting}
-              className="px-6 py-2 border border-red-500 text-red-700 rounded hover:bg-red-50 disabled:opacity-50"
+          {portfolioNo !== undefined && isDirty && (
+            <p className="text-sm text-gray-600 text-center">
+              公開状態を切り替えるには、先に変更を保存してください
+            </p>
+          )}
+          {/* 公開中だけ、「保存する」「下書きに戻す」の下に公開ページへのリンクを表示する */}
+          {portfolioNo !== undefined && statusKbn === "published" && (
+            <Link
+              href={`/portfolio/${accountId}/${portfolioNo}`}
+              target="_blank"
+              rel="noopener"
+              className="text-blue-700 hover:underline"
             >
-              削除
-            </button>
+              公開ページを見る
+            </Link>
           )}
         </div>
-        {portfolioNo !== undefined && isDirty && (
-          <p className="text-sm text-gray-600">公開状態を切り替えるには、先に変更を保存してください</p>
-        )}
       </div>
 
       {showPicker && (

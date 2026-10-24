@@ -62,6 +62,20 @@ const gridDetail = {
   tagList: [{ tagNo: 1, tagJapaneseName: "自然", tagEnglishName: "nature" }],
 };
 
+/**
+ * 要素が、文書内でこの順に並んでいるかを判定する
+ *
+ * @param elements 要素（期待する表示順）
+ * @returns この順に並んでいる場合はtrue
+ */
+function isInDocumentOrder(...elements: Element[]): boolean {
+  return elements.every(
+    (element, i) =>
+      i === 0 ||
+      !!(elements[i - 1].compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING)
+  );
+}
+
 describe("PortfolioEditForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -131,6 +145,18 @@ describe("PortfolioEditForm", () => {
 
       expect(screen.getByLabelText("タグ30（日本語）")).toBeInTheDocument();
       expect(addTag).toBeDisabled();
+    });
+
+    it("写真が未選択の間は、「写真を選択」ボタンを写真の見出しの下に表示すること", () => {
+      render(<PortfolioEditForm accountId="user1" />);
+
+      expect(
+        isInDocumentOrder(
+          screen.getByRole("heading", { name: "写真（0枚）" }),
+          screen.getByRole("button", { name: "写真を選択" }),
+          screen.getByText("写真が選択されていません")
+        )
+      ).toBe(true);
     });
 
     it("「＋タグを追加」ボタンは、タグの入力欄より後（タグ欄の下）に表示すること", () => {
@@ -309,6 +335,94 @@ describe("PortfolioEditForm", () => {
   });
 
   describe("編集", () => {
+    it("見出しの右にステータス、同じ行の右端に削除ボタンを表示し、入力欄をテーマ・説明文・タグ・テンプレート・行の組み合わせ・写真の順に並べること", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(gridDetail);
+
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+
+      const heading = screen.getByRole("heading", { name: "ポートフォリオ編集" });
+      const status = screen.getByTestId("portfolio-status");
+      const deleteButton = screen.getByRole("button", { name: "削除" });
+      expect(isInDocumentOrder(heading, status, deleteButton)).toBe(true);
+      // 削除ボタンは見出しと同じ行（保存ボタンより前）にある
+      expect(isInDocumentOrder(deleteButton, screen.getByLabelText(/テーマ/, { selector: "#portfolio-theme" }))).toBe(true);
+
+      expect(
+        isInDocumentOrder(
+          screen.getByLabelText(/テーマ/, { selector: "#portfolio-theme" }),
+          screen.getByLabelText("説明文"),
+          screen.getByRole("heading", { name: "タグ" }),
+          screen.getByRole("button", { name: "＋タグを追加" }),
+          screen.getByRole("group", { name: "テンプレート" }),
+          screen.getByRole("heading", { name: "行の組み合わせ" }),
+          screen.getByRole("heading", { name: "写真（2枚）" })
+        )
+      ).toBe(true);
+    });
+
+    it("行の一覧の下に「＋行を追加」、その右に「プレビューを表示」を表示し、写真の一覧の下に「写真を選択」を表示すること", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(gridDetail);
+
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+
+      const [rowItem] = screen.getAllByTestId("grid-row-item");
+      const addRow = screen.getByRole("button", { name: "＋行を追加" });
+      const preview = screen.getByRole("button", { name: "プレビューを表示" });
+      expect(isInDocumentOrder(rowItem, addRow, preview)).toBe(true);
+      expect(addRow.parentElement).toBe(preview.parentElement);
+
+      const photoItems = screen.getAllByTestId("portfolio-photo-item");
+      expect(
+        isInDocumentOrder(photoItems[photoItems.length - 1], screen.getByRole("button", { name: "写真を選択" }))
+      ).toBe(true);
+    });
+
+    it("選択した写真の枠を向きに合わせた縦横比で表示し、向き（横向き・正方形など）を表示すること", async () => {
+      mockGetPortfolioDetail.mockResolvedValue({
+        ...gridDetail,
+        photoList: [
+          { ...gridDetail.photoList[0], directionKbn: "vertical" },
+          { ...gridDetail.photoList[1], directionKbn: "horizontal" },
+        ],
+      });
+
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+
+      const items = screen.getAllByTestId("portfolio-photo-item");
+      expect(within(items[0]).getByTestId("portfolio-photo-direction")).toHaveTextContent("縦向き");
+      expect(within(items[1]).getByTestId("portfolio-photo-direction")).toHaveTextContent("横向き");
+      expect(
+        items.map((item) =>
+          within(item).getByTestId("portfolio-photo-frame").style.getPropertyValue("aspect-ratio")
+        )
+      ).toEqual(["3 / 4", "4 / 3"]);
+    });
+
+    it("下書きでは「保存する」「公開する」、公開中では「保存する」「下書きに戻す」の順に並べること", async () => {
+      mockGetPortfolioDetail.mockResolvedValueOnce({ ...gridDetail, statusKbn: "draft" });
+      const { unmount } = render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+      expect(
+        isInDocumentOrder(
+          screen.getByRole("button", { name: "保存する" }),
+          screen.getByRole("button", { name: "公開する" })
+        )
+      ).toBe(true);
+      unmount();
+
+      mockGetPortfolioDetail.mockResolvedValueOnce(gridDetail);
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+      expect(
+        isInDocumentOrder(
+          screen.getByRole("button", { name: "保存する" }),
+          screen.getByRole("button", { name: "下書きに戻す" })
+        )
+      ).toBe(true);
+    });
     it("登録済みの内容を読み込み、グリッド型の行の枚数と写真の枚数を表示すること", async () => {
       mockGetPortfolioDetail.mockResolvedValue(gridDetail);
 
@@ -354,7 +468,7 @@ describe("PortfolioEditForm", () => {
       render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
       await screen.findByDisplayValue("日本の自然");
 
-      fireEvent.click(screen.getByRole("button", { name: "行を追加" }));
+      fireEvent.click(screen.getByRole("button", { name: "＋行を追加" }));
       expect(screen.getByTestId("grid-photo-count")).toHaveTextContent(
         "行の枚数の合計 4枚 / 写真 2枚（公開するには一致させてください）"
       );
@@ -363,7 +477,7 @@ describe("PortfolioEditForm", () => {
       });
       fireEvent.click(screen.getByRole("button", { name: "茶畑を上へ移動" }));
 
-      fireEvent.click(screen.getByRole("button", { name: "保存" }));
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }));
 
       await waitFor(() => {
         expect(mockSavePortfolio).toHaveBeenCalledWith(
@@ -436,11 +550,16 @@ describe("PortfolioEditForm", () => {
       expect(mockUpdatePortfolioStatus).toHaveBeenLastCalledWith("user1", 3, "published");
       expect(screen.getByTestId("portfolio-status")).toHaveTextContent("公開中");
       expect(screen.getByRole("button", { name: "下書きに戻す" })).toBeInTheDocument();
-      // 公開中になったため、公開ページへのリンクを表示する
-      expect(screen.getByRole("link", { name: "公開ページを見る" })).toHaveAttribute(
-        "href",
-        "/portfolio/user1/3"
-      );
+      // 公開中になったため、「保存する」「下書きに戻す」の下に公開ページへのリンクを表示する
+      const publicLink = screen.getByRole("link", { name: "公開ページを見る" });
+      expect(publicLink).toHaveAttribute("href", "/portfolio/user1/3");
+      expect(
+        isInDocumentOrder(
+          screen.getByRole("button", { name: "保存する" }),
+          screen.getByRole("button", { name: "下書きに戻す" }),
+          publicLink
+        )
+      ).toBe(true);
     });
 
     it("削除を確認すると削除して一覧へ戻ること", async () => {

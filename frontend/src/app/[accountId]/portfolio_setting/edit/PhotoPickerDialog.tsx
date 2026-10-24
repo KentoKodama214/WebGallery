@@ -9,6 +9,7 @@ import {
 } from "@/lib/api/client";
 import { sanitizeImageUrl } from "@/lib/url";
 import { PORTFOLIO_PHOTO_MAX_SIZE } from "@/lib/validation";
+import { DEFAULT_ASPECT_RATIO, DIRECTION_ASPECT_RATIOS } from "./types";
 
 /** 写真選択ダイアログで選んだ写真 */
 export interface PickedPhoto {
@@ -32,16 +33,6 @@ interface PhotoPickerDialogProps {
   /** 「キャンセル」・Escapeで、選択を変更せずに閉じる */
   onCancel: () => void;
 }
-
-/** 向き区分ごとの写真の枠の縦横比 */
-const DIRECTION_ASPECT_RATIOS: Record<string, string> = {
-  vertical: "3 / 4",
-  horizontal: "4 / 3",
-  square: "1 / 1",
-};
-
-/** 向きが未設定の写真の枠の縦横比 */
-const DEFAULT_ASPECT_RATIO = "1 / 1";
 
 /** 検索語の最大文字数（写真のタイトル・撮影場所の名前の最大文字数と同じ） */
 const KEYWORD_MAX_LENGTH = 100;

@@ -249,7 +249,7 @@ sequenceDiagram
     User->>Edit: 公開する（未保存の変更がある間は押せない）
     Edit->>API: PUT /api/v1/accounts/{id}/portfolios/{no}/status
     API-->>Edit: 公開成功（公開に必要な設定が不足している場合はエラーを表示）
-    Edit->>Edit: 「公開ページを見る」リンクを表示
+    Edit->>Edit: 「保存する」「下書きに戻す」の下に「公開ページを見る」リンクを表示
 ```
 
 ---
