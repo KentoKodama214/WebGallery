@@ -1,0 +1,77 @@
+name: 依存関係の脆弱性スキャン
+
+# PR時のチェックに加え、依存関係を変更していなくても新たに公開された脆弱性を検知できるよう
+# 毎日定期実行する。時刻はDependabotのチェック（.github/dependabot.yml、毎日7:00 JST）に揃える。
+# scheduleのcronはUTCで解釈されるため、22:00 UTC = 7:00 JSTを指定する。
+# 定期実行はデフォルトブランチ（development）に対して行われる
+on:
+  pull_request:
+    branches:
+      - development
+      - staging
+      - master
+  schedule:
+    - cron: '0 22 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-scan:
+    name: 依存関係の脆弱性スキャン
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v7
+
+      - name: JDK 21 セットアップ
+        uses: actions/setup-java@v6
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Gradleセットアップ
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          build-root-directory: backend
+          cache-read-only: false
+
+      - name: backend SBOM生成（CycloneDX）
+        run: ./backend/gradlew -p backend cyclonedxBom
+
+      # OSV-Scanner（https://github.com/google/osv-scanner）はOSVデータベースをAPI経由で都度照会するため、
+      # OWASP Dependency-Checkのように数GB規模のNVDデータベース全体を同期する必要がなく、
+      # スキャン自体は数秒で完了する。frontendはpnpm-lock.yamlを直接解析できるため、
+      # Node.js/pnpmのセットアップやパッケージインストールも不要。
+      - name: OSV-Scannerインストール
+        run: |
+          curl -sL -o osv-scanner \
+            https://github.com/google/osv-scanner/releases/download/v2.6.0/osv-scanner_linux_amd64
+          chmod +x osv-scanner
+
+      # --configで渡すosv-scanner.tomlには、修正版が未リリースで依存チェーン上こちらから
+      # 対処できない脆弱性の除外設定（IgnoredVulns）を記載している。除外には期限を設定しており、
+      # 期限切れとともにスキャンが再度失敗して棚卸しが促される。
+      - name: 依存関係の脆弱性スキャン（backend SBOM・frontend pnpm-lock.yaml・portfolio-api go.mod）
+        run: |
+          set +e
+          ./osv-scanner scan source \
+            --config=osv-scanner.toml \
+            -L backend/build/reports/cyclonedx/application.cdx.json \
+            -L frontend/pnpm-lock.yaml \
+            -L portfolio-api/go.mod \
+            --format=markdown --output-file=osv-results.md
+          exit_code=$?
+          set -e
+          cat osv-results.md >> "$GITHUB_STEP_SUMMARY"
+          exit "$exit_code"
+
+      - name: 脆弱性スキャンレポートアップロード
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: osv-scan-report
+          path: osv-results.md

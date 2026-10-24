@@ -7,7 +7,7 @@
 | Javadocチェック | `checkstyle.yml` | `development`・`staging`・`master`へのPR、手動実行 |
 | フォーマットチェック | `spotless.yml` | `development`・`staging`・`master`へのPR、手動実行 |
 | テスト実行 | `test.yml` | `development`・`staging`・`master`へのPR、手動実行 |
-| 依存関係の脆弱性スキャン | `test.yml`（`dependency-scan`ジョブ） | `development`・`staging`・`master`へのPR、手動実行 |
+| 依存関係の脆弱性スキャン | `dependency-scan.yml` | `development`・`staging`・`master`へのPR、毎日7:00（JST）の定期実行、手動実行 |
 | カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `development`・`staging`・`master`へのPR、手動実行 |
 | 環境昇格PR自動作成・リリースタグ発行 | `promote-branch.yml` | `development`・`staging`へのpush（PRマージ含む） |
 
@@ -22,9 +22,11 @@ checkstyle.yml:
 spotless.yml:
   フォーマットチェック ──────────────────→ (独立)
 
+dependency-scan.yml:
+  依存関係の脆弱性スキャン ──────────────→ (独立)
+
 test.yml:
   本番CSPスモークテスト ────────────────────────→ (独立)
-  依存関係の脆弱性スキャン ─────────────────────→ (独立)
   E2Eテスト（chromium） ───────────────────────→ (独立)
   E2Eテスト（cross-browser） ──────────────────→ (独立)
   フロントエンド単体テスト ─────────────────────┐
@@ -32,8 +34,8 @@ test.yml:
   結合テスト ─────────────────────────────────┴→ (全て成功時) カバレッジレポート
 ```
 
-- Javadocチェック、フォーマットチェック、テスト実行は別ワークフローのため、**並列に実行**される
-- `test.yml`のテストジョブ（フロントエンド単体テスト・単体テスト・結合テスト・E2Eテスト・本番CSPスモークテスト・依存関係の脆弱性スキャン）は互いに依存関係を持たず、すべて**同時に起動**される
+- Javadocチェック、フォーマットチェック、依存関係の脆弱性スキャン、テスト実行は別ワークフローのため、**並列に実行**される
+- `test.yml`のテストジョブ（フロントエンド単体テスト・単体テスト・結合テスト・E2Eテスト・本番CSPスモークテスト）は互いに依存関係を持たず、すべて**同時に起動**される
 - E2Eテストはブラウザ別に2ジョブ（`chromium`・`cross-browser`）へ分割され、**並列に実行**される
 - Javadocチェックの成否はテスト実行に**影響しない**
 - カバレッジレポートはフロントエンド単体テスト・バックエンド単体テスト・結合テストがすべて成功した場合のみ実行される
@@ -51,7 +53,7 @@ test.yml:
 
 ## 手動実行
 
-`checkstyle.yml`・`spotless.yml`・`test.yml`はGitHub Actionsの画面（Actions → 対象ワークフロー → Run workflow）から任意のブランチに対して手動実行できる（`workflow_dispatch`）。手動実行時は`coverage-report`ジョブのPRコメント投稿ステップのみスキップされ（PRに紐付かないため）、それ以外のジョブ・ジョブサマリーへの出力は通常のPR実行と同様に行われる。
+`checkstyle.yml`・`spotless.yml`・`dependency-scan.yml`・`test.yml`はGitHub Actionsの画面（Actions → 対象ワークフロー → Run workflow）から任意のブランチに対して手動実行できる（`workflow_dispatch`）。手動実行時は`coverage-report`ジョブのPRコメント投稿ステップのみスキップされ（PRに紐付かないため）、それ以外のジョブ・ジョブサマリーへの出力は通常のPR実行と同様に行われる。
 
 ## 各ジョブの詳細
 
@@ -86,9 +88,13 @@ Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/ja
 
 オニオンアーキテクチャ（domain → application → infrastructure/presentation）の依存方向違反は、`OnionArchitectureTest`をはじめとする各種ArchUnitテストとしてこの単体テストの一部で検証される。
 
-### 依存関係の脆弱性スキャン (`test.yml` - `dependency-scan`)
+### 依存関係の脆弱性スキャン (`dependency-scan.yml`)
 
-[OSV-Scanner](https://github.com/google/osv-scanner)を使用して、backend・frontendの依存関係（推移的依存を含む）に既知の脆弱性がないかをスキャンする。他のジョブと依存関係を持たず並列に実行される。
+[OSV-Scanner](https://github.com/google/osv-scanner)を使用して、backend・frontendの依存関係（推移的依存を含む）に既知の脆弱性がないかをスキャンする。
+
+依存関係を変更していなくても新たに公開された脆弱性を検知できるよう、PR時に加えて毎日7:00（JST）に`development`ブランチを対象に定期実行する（Dependabotのチェック時刻に揃えている）。`schedule`のcronはUTCで解釈されるため`0 22 * * *`を指定している。定期実行・手動実行だけを単独で行えるよう、`test.yml`から独立したワークフローに分離している。
+
+検知した脆弱性の修正PRは、リポジトリ設定で有効化しているDependabot security updatesが自動作成する（GitHub Advisory Databaseに基づく。`.github/dependabot.yml`のバージョン更新とは別機能で、設定ファイルは不要）。このワークフローは検知とCIの失敗による可視化を担い、修正PRの作成は行わない。
 
 - backend: `./gradlew cyclonedxBom`（CycloneDXプラグイン）でランタイム依存関係全体のSBOM（Software Bill of Materials）を生成し、それをスキャン対象にする
 - frontend: `pnpm-lock.yaml`を直接スキャン対象にする（依存パッケージのインストールは不要）
