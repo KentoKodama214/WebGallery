@@ -105,6 +105,7 @@ function toFormState(detail: PortfolioDetail) {
         photoNo: photo.photoNo,
         imageFilePath: photo.imageFilePath,
         label: photo.photoJapaneseTitle || `写真${photo.photoNo}`,
+        directionKbn: photo.directionKbn,
         settings: toPhotoSettingValues(photo.photoSettings),
       })
     ),
@@ -153,10 +154,15 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
   const [deleteError, setDeleteError] = useState("");
   // 取得リクエストの世代。後着レスポンスが入力中の内容を上書きする競合を防ぐ
   const loadSeqRef = useRef(0);
+  // このフォームで新規登録したポートフォリオ番号。登録後の編集用URLへの切り替えでは、
+  // フォームが保存済みの内容を保持しているため読み込み直さない（読み込みの応答が、
+  // その間に切り替えた公開状態などを登録直後の内容で上書きするのを防ぐ）
+  const registeredPortfolioNoRef = useRef<number | undefined>(undefined);
 
   // 編集時は登録済みの内容を読み込む
   useEffect(() => {
     if (!isOwner || initialPortfolioNo === undefined) return;
+    if (initialPortfolioNo === registeredPortfolioNoRef.current) return;
     const seq = ++loadSeqRef.current;
     const load = async () => {
       try {
@@ -334,6 +340,7 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
       setSuccessMessage(result.message);
       if (portfolioNo === undefined) {
         // 新規登録後は、以降の保存・公開が同じポートフォリオに対して行われるよう編集用URLへ切り替える
+        registeredPortfolioNoRef.current = result.portfolioNo;
         setPortfolioNo(result.portfolioNo);
         router.replace(`/${accountId}/portfolio_setting/edit?portfolioNo=${result.portfolioNo}`);
       }
@@ -821,10 +828,11 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
       {showPicker && (
         <PhotoPickerDialog
           accountId={accountId}
-          initialSelected={photos.map(({ photoNo, imageFilePath, label }) => ({
+          initialSelected={photos.map(({ photoNo, imageFilePath, label, directionKbn }) => ({
             photoNo,
             imageFilePath,
             label,
+            directionKbn,
           }))}
           onComplete={handleCompletePick}
           onCancel={() => setShowPicker(false)}

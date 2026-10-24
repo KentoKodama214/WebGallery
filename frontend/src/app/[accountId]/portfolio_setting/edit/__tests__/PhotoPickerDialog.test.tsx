@@ -20,12 +20,25 @@ function candidate(photoNo: number, directionKbn: string, title = "") {
   return { photoNo, photoJapaneseTitle: title, imageFilePath: "", directionKbn };
 }
 
+/**
+ * 一覧に表示されている写真ボタンの名前を、表示順に取得する
+ *
+ * @param testId 一覧の data-testid
+ * @returns ボタンの名前のリスト
+ */
+function tileNames(testId: string): string[] {
+  return within(screen.getByTestId(testId))
+    .queryAllByRole("button")
+    .filter((button) => button.textContent !== "＋もっと見る")
+    .map((button) => button.getAttribute("aria-label") ?? "");
+}
+
 describe("PhotoPickerDialog", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("写真の枠を向き（縦3:4・横4:3・正方形1:1）に合わせた縦横比で表示し、向きを表示すること", async () => {
+  it("写真の枠を向き（縦3:4・横4:3・正方形1:1）に合わせた縦横比で表示し、向きのラベルは表示しないこと", async () => {
     mockSearchPortfolioPhotos.mockResolvedValue({
       isLast: true,
       photoList: [candidate(1, "vertical"), candidate(2, "horizontal"), candidate(3, "square")],
@@ -42,13 +55,13 @@ describe("PhotoPickerDialog", () => {
       "4 / 3",
       "1 / 1",
     ]);
-    expect(within(items[0]).getByText("縦")).toBeInTheDocument();
-    expect(within(items[1]).getByText("横")).toBeInTheDocument();
-    expect(within(items[2]).getByText("正方形")).toBeInTheDocument();
+    expect(screen.queryByText("縦")).not.toBeInTheDocument();
+    expect(screen.queryByText("横")).not.toBeInTheDocument();
+    expect(screen.queryByText("正方形")).not.toBeInTheDocument();
     expect(mockSearchPortfolioPhotos).toHaveBeenCalledWith("user1", {}, 1);
   });
 
-  it("タイトル・場所・タグで検索し、「もっと見る」では同じ条件で次のページを読み込むこと", async () => {
+  it("1つの検索語で検索し、「もっと見る」では同じ検索語で次のページを読み込むこと", async () => {
     mockSearchPortfolioPhotos
       .mockResolvedValueOnce({ isLast: true, photoList: [candidate(1, "vertical")] })
       .mockResolvedValueOnce({ isLast: false, photoList: [candidate(2, "horizontal", "金閣寺")] })
@@ -59,27 +72,21 @@ describe("PhotoPickerDialog", () => {
     );
     await screen.findAllByTestId("photo-picker-item");
 
-    fireEvent.change(screen.getByLabelText("タイトル"), { target: { value: " 閣寺 " } });
-    fireEvent.change(screen.getByLabelText("場所"), { target: { value: "京都" } });
-    fireEvent.change(screen.getByLabelText("タグ"), { target: { value: "寺" } });
+    // 検索語の入力欄は1つだけ
+    expect(within(screen.getByRole("search")).getAllByRole("textbox")).toHaveLength(1);
+    fireEvent.change(screen.getByLabelText("検索語（タイトル・場所・住所・タグ）"), {
+      target: { value: " 閣寺 " },
+    });
     fireEvent.click(screen.getByRole("button", { name: "検索" }));
 
-    expect(await screen.findByRole("button", { name: "写真2（金閣寺）" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "写真1" })).not.toBeInTheDocument();
-    expect(mockSearchPortfolioPhotos).toHaveBeenLastCalledWith(
-      "user1",
-      { title: "閣寺", location: "京都", tag: "寺" },
-      1
-    );
+    expect(await screen.findByRole("button", { name: "写真2（金閣寺）を選択" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "写真1を選択" })).not.toBeInTheDocument();
+    expect(mockSearchPortfolioPhotos).toHaveBeenLastCalledWith("user1", { keyword: "閣寺" }, 1);
 
     fireEvent.click(screen.getByRole("button", { name: "＋もっと見る" }));
 
-    expect(await screen.findByRole("button", { name: "写真3（銀閣寺）" })).toBeInTheDocument();
-    expect(mockSearchPortfolioPhotos).toHaveBeenLastCalledWith(
-      "user1",
-      { title: "閣寺", location: "京都", tag: "寺" },
-      2
-    );
+    expect(await screen.findByRole("button", { name: "写真3（銀閣寺）を選択" })).toBeInTheDocument();
+    expect(mockSearchPortfolioPhotos).toHaveBeenLastCalledWith("user1", { keyword: "閣寺" }, 2);
   });
 
   it("条件に一致する写真がない場合は、その旨を表示すること", async () => {
@@ -92,13 +99,82 @@ describe("PhotoPickerDialog", () => {
     );
     await screen.findAllByTestId("photo-picker-item");
 
-    fireEvent.change(screen.getByLabelText("タグ"), { target: { value: "存在しない" } });
+    fireEvent.change(screen.getByLabelText("検索語（タイトル・場所・住所・タグ）"), {
+      target: { value: "存在しない" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "検索" }));
 
     expect(await screen.findByText("条件に一致する写真がありません")).toBeInTheDocument();
   });
 
-  it("完了で、開く前の選択（表示順）の後ろに新しく選んだ写真を選んだ順に返し、選択を外した写真は除くこと", async () => {
+  it("未選択の写真を上、選択済みの写真を下に分けて表示し、押すと互いの一覧へ移ること", async () => {
+    mockSearchPortfolioPhotos.mockResolvedValue({
+      isLast: true,
+      photoList: [candidate(1, "vertical", "富士山"), candidate(2, "horizontal"), candidate(3, "square")],
+    });
+
+    render(
+      <PhotoPickerDialog
+        accountId="user1"
+        initialSelected={[{ photoNo: 3, imageFilePath: "", label: "写真3", directionKbn: "square" }]}
+        onComplete={jest.fn()}
+        onCancel={jest.fn()}
+      />
+    );
+    await screen.findAllByTestId("photo-picker-item");
+
+    // 未選択の一覧が選択済みの一覧より前（上）にある
+    const unselected = screen.getByTestId("photo-picker-unselected");
+    const selected = screen.getByTestId("photo-picker-selected");
+    expect(unselected.compareDocumentPosition(selected) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(tileNames("photo-picker-unselected")).toEqual(["写真1（富士山）を選択", "写真2を選択"]);
+    expect(tileNames("photo-picker-selected")).toEqual(["写真3の選択を解除"]);
+
+    // 未選択を押すと選択済みの末尾に追加される
+    fireEvent.click(screen.getByRole("button", { name: "写真1（富士山）を選択" }));
+    expect(tileNames("photo-picker-unselected")).toEqual(["写真2を選択"]);
+    expect(tileNames("photo-picker-selected")).toEqual([
+      "写真3の選択を解除",
+      "写真1（富士山）の選択を解除",
+    ]);
+    expect(within(selected).getByText("2")).toBeInTheDocument();
+    expect(screen.getByText("選択中 2 / 200枚")).toBeInTheDocument();
+
+    // 選択済みを押すと解除され、未選択の一覧（検索結果の順）に戻る
+    fireEvent.click(screen.getByRole("button", { name: "写真3の選択を解除" }));
+    expect(tileNames("photo-picker-unselected")).toEqual(["写真2を選択", "写真3を選択"]);
+    expect(tileNames("photo-picker-selected")).toEqual(["写真1（富士山）の選択を解除"]);
+  });
+
+  it("選択済みの写真がない場合は、その旨を表示すること", async () => {
+    mockSearchPortfolioPhotos.mockResolvedValue({ isLast: true, photoList: [candidate(1, "vertical")] });
+
+    render(
+      <PhotoPickerDialog accountId="user1" initialSelected={[]} onComplete={jest.fn()} onCancel={jest.fn()} />
+    );
+    await screen.findAllByTestId("photo-picker-item");
+
+    expect(
+      within(screen.getByTestId("photo-picker-selected")).getByText("選択済みの写真はありません")
+    ).toBeInTheDocument();
+  });
+
+  it("検索結果がすべて選択済みの場合は、未選択の写真がないことを表示すること", async () => {
+    mockSearchPortfolioPhotos.mockResolvedValue({ isLast: true, photoList: [candidate(1, "vertical")] });
+
+    render(
+      <PhotoPickerDialog
+        accountId="user1"
+        initialSelected={[{ photoNo: 1, imageFilePath: "", label: "写真1", directionKbn: "vertical" }]}
+        onComplete={jest.fn()}
+        onCancel={jest.fn()}
+      />
+    );
+
+    expect(await screen.findByText("未選択の写真はありません")).toBeInTheDocument();
+  });
+
+  it("完了で、選択済みの一覧の順（開く前の選択の後ろに新しく選んだ順）に返し、解除した写真は除くこと", async () => {
     mockSearchPortfolioPhotos.mockResolvedValue({
       isLast: true,
       photoList: [candidate(1, "vertical", "富士山"), candidate(2, "horizontal"), candidate(3, "square")],
@@ -109,8 +185,8 @@ describe("PhotoPickerDialog", () => {
       <PhotoPickerDialog
         accountId="user1"
         initialSelected={[
-          { photoNo: 3, imageFilePath: "", label: "写真3" },
-          { photoNo: 2, imageFilePath: "", label: "写真2" },
+          { photoNo: 3, imageFilePath: "", label: "写真3", directionKbn: "square" },
+          { photoNo: 2, imageFilePath: "", label: "写真2", directionKbn: "horizontal" },
         ]}
         onComplete={onComplete}
         onCancel={jest.fn()}
@@ -119,14 +195,14 @@ describe("PhotoPickerDialog", () => {
     await screen.findAllByTestId("photo-picker-item");
     expect(screen.getByText("選択中 2 / 200枚")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "写真2" }));
-    fireEvent.click(screen.getByRole("button", { name: "写真1（富士山）" }));
+    fireEvent.click(screen.getByRole("button", { name: "写真2の選択を解除" }));
+    fireEvent.click(screen.getByRole("button", { name: "写真1（富士山）を選択" }));
     fireEvent.click(screen.getByRole("button", { name: "完了" }));
 
     await waitFor(() => {
       expect(onComplete).toHaveBeenCalledWith([
-        { photoNo: 3, imageFilePath: "", label: "写真3" },
-        { photoNo: 1, imageFilePath: "", label: "富士山" },
+        { photoNo: 3, imageFilePath: "", label: "写真3", directionKbn: "square" },
+        { photoNo: 1, imageFilePath: "", label: "富士山", directionKbn: "vertical" },
       ]);
     });
   });
@@ -139,7 +215,7 @@ describe("PhotoPickerDialog", () => {
     render(
       <PhotoPickerDialog accountId="user1" initialSelected={[]} onComplete={onComplete} onCancel={onCancel} />
     );
-    fireEvent.click(await screen.findByRole("button", { name: "写真1" }));
+    fireEvent.click(await screen.findByRole("button", { name: "写真1を選択" }));
     fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
 
     expect(onCancel).toHaveBeenCalled();

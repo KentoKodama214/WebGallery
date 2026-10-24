@@ -110,7 +110,7 @@ describe("PortfolioEditForm", () => {
       });
       fireEvent.click(screen.getByRole("button", { name: "写真を選択" }));
       const dialog = await screen.findByTestId("photo-picker-dialog");
-      fireEvent.click(await within(dialog).findByRole("button", { name: "写真11（富士山）" }));
+      fireEvent.click(await within(dialog).findByRole("button", { name: "写真11（富士山）を選択" }));
       fireEvent.click(within(dialog).getByRole("button", { name: "完了" }));
 
       fireEvent.click(screen.getByRole("button", { name: "下書きとして登録" }));
@@ -156,7 +156,7 @@ describe("PortfolioEditForm", () => {
       render(<PortfolioEditForm accountId="user1" />);
       fireEvent.click(screen.getByRole("button", { name: "写真を選択" }));
       const dialog = await screen.findByTestId("photo-picker-dialog");
-      fireEvent.click(await within(dialog).findByRole("button", { name: "写真11（富士山）" }));
+      fireEvent.click(await within(dialog).findByRole("button", { name: "写真11（富士山）を選択" }));
       expect(within(dialog).getByText("選択中 1 / 200枚")).toBeInTheDocument();
       fireEvent.click(within(dialog).getByRole("button", { name: "キャンセル" }));
 
@@ -180,8 +180,8 @@ describe("PortfolioEditForm", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "写真を選択" }));
       const picker = await screen.findByTestId("photo-picker-dialog");
-      fireEvent.click(await within(picker).findByRole("button", { name: "写真11（富士山）" }));
-      fireEvent.click(within(picker).getByRole("button", { name: "写真12（茶畑）" }));
+      fireEvent.click(await within(picker).findByRole("button", { name: "写真11（富士山）を選択" }));
+      fireEvent.click(within(picker).getByRole("button", { name: "写真12（茶畑）を選択" }));
       fireEvent.click(within(picker).getByRole("button", { name: "完了" }));
       fireEvent.change(screen.getByLabelText("富士山のテーマ"), { target: { value: "日本の山" } });
       fireEvent.change(screen.getByLabelText("富士山のサブテーマ"), { target: { value: "静岡" } });
@@ -232,12 +232,9 @@ describe("PortfolioEditForm", () => {
       // 写真を選択する（選択した順に表示順の末尾へ追加される）
       fireEvent.click(screen.getByRole("button", { name: "写真を選択" }));
       const dialog = await screen.findByTestId("photo-picker-dialog");
-      fireEvent.click(await within(dialog).findByRole("button", { name: "写真12" }));
-      fireEvent.click(within(dialog).getByRole("button", { name: "写真11（富士山）" }));
-      expect(within(dialog).getByRole("button", { name: "写真12" })).toHaveAttribute(
-        "aria-pressed",
-        "true"
-      );
+      fireEvent.click(await within(dialog).findByRole("button", { name: "写真12を選択" }));
+      fireEvent.click(within(dialog).getByRole("button", { name: "写真11（富士山）を選択" }));
+      expect(within(dialog).getByRole("button", { name: "写真12の選択を解除" })).toBeInTheDocument();
       fireEvent.click(within(dialog).getByRole("button", { name: "完了" }));
       expect(screen.getAllByTestId("portfolio-photo-item")).toHaveLength(2);
 
@@ -268,6 +265,46 @@ describe("PortfolioEditForm", () => {
       expect(await screen.findByText("ポートフォリオを登録しました。")).toBeInTheDocument();
       // 保存済みになったため、公開状態を切り替えられる
       expect(screen.getByRole("button", { name: "公開する" })).toBeEnabled();
+    });
+
+    it("新規登録後に編集用URLへ切り替わっても登録した内容を読み込み直さず、直後に切り替えた公開状態を保つこと", async () => {
+      mockSearchPortfolioPhotos.mockResolvedValue({
+        isLast: true,
+        photoList: [{ photoNo: 11, photoJapaneseTitle: "富士山", imageFilePath: "", directionKbn: "horizontal" }],
+      });
+      mockSavePortfolio.mockResolvedValue({
+        isSuccess: true,
+        message: "ポートフォリオを登録しました。",
+        portfolioNo: 7,
+      });
+      mockUpdatePortfolioStatus.mockResolvedValue({
+        isSuccess: true,
+        message: "ポートフォリオを公開しました。",
+        portfolioNo: 7,
+      });
+      // 読み込み直した場合は、登録直後（下書き）の内容が返る
+      mockGetPortfolioDetail.mockResolvedValue({ ...gridDetail, portfolioNo: 7, statusKbn: "draft" });
+
+      const { rerender } = render(<PortfolioEditForm accountId="user1" />);
+      fireEvent.change(screen.getByLabelText(/テーマ/, { selector: "#portfolio-theme" }), {
+        target: { value: "日本の山" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "写真を選択" }));
+      const dialog = await screen.findByTestId("photo-picker-dialog");
+      fireEvent.click(await within(dialog).findByRole("button", { name: "写真11（富士山）を選択" }));
+      fireEvent.click(within(dialog).getByRole("button", { name: "完了" }));
+      fireEvent.click(screen.getByRole("button", { name: "下書きとして登録" }));
+      expect(await screen.findByText("ポートフォリオを登録しました。")).toBeInTheDocument();
+
+      // router.replace による編集用URLへの切り替え（ページから渡るポートフォリオ番号が変わる）
+      rerender(<PortfolioEditForm accountId="user1" initialPortfolioNo={7} />);
+      fireEvent.click(screen.getByRole("button", { name: "公開する" }));
+      expect(await screen.findByText("ポートフォリオを公開しました。")).toBeInTheDocument();
+
+      expect(mockGetPortfolioDetail).not.toHaveBeenCalled();
+      expect(mockUpdatePortfolioStatus).toHaveBeenCalledWith("user1", 7, "published");
+      expect(screen.getByTestId("portfolio-status")).toHaveTextContent("公開中");
+      expect(screen.getByDisplayValue("日本の山")).toBeInTheDocument();
     });
   });
 

@@ -35,26 +35,43 @@ test.describe("ポートフォリオの公開と、写真削除による下書�
 
       await page.getByRole("button", { name: "写真を選択" }).click();
       const dialog = page.getByTestId("photo-picker-dialog");
-      const photoButtons = dialog.getByRole("button", { name: /^写真\d+/ });
+      // 上段が未選択の写真、下段が選択済みの写真
+      const photoButtons = dialog.getByTestId("photo-picker-unselected").getByRole("button", {
+        name: /^写真\d+.*を選択$/,
+      });
+      const selectedButtons = dialog.getByTestId("photo-picker-selected").getByRole("button", {
+        name: /^写真\d+.*の選択を解除$/,
+      });
       await expect(photoButtons).toHaveCount(2, { timeout: 10000 });
+      await expect(selectedButtons).toHaveCount(0);
 
-      // タイトルで絞り込める
-      await dialog.getByLabel("タイトル").fill("該当しないタイトル");
+      // 1つの検索語（タイトル・場所・住所・タグ）で絞り込める
+      const keywordInput = dialog.getByLabel("検索語（タイトル・場所・住所・タグ）");
+      await keywordInput.fill("該当しないタイトル");
       await dialog.getByRole("button", { name: "検索" }).click();
       await expect(dialog.getByText("条件に一致する写真がありません")).toBeVisible({ timeout: 10000 });
-      await dialog.getByLabel("タイトル").fill("E2Eポートフォリオ");
+      await keywordInput.fill("E2Eポートフォリオ");
       await dialog.getByRole("button", { name: "検索" }).click();
       await expect(photoButtons).toHaveCount(2, { timeout: 10000 });
 
       // キャンセルすると、ダイアログ内で選んだ写真は反映されない
       await photoButtons.nth(0).click();
+      await expect(selectedButtons).toHaveCount(1);
       await dialog.getByRole("button", { name: "キャンセル" }).click();
       await expect(page.getByText("写真が選択されていません")).toBeVisible();
 
       await page.getByRole("button", { name: "写真を選択" }).click();
       await expect(photoButtons).toHaveCount(2, { timeout: 10000 });
+      // 未選択の写真を押すと選択済みへ移り、選択済みの写真を押すと未選択へ戻る
       await photoButtons.nth(0).click();
-      await photoButtons.nth(1).click();
+      await expect(photoButtons).toHaveCount(1);
+      await expect(selectedButtons).toHaveCount(1);
+      await selectedButtons.nth(0).click();
+      await expect(photoButtons).toHaveCount(2);
+      await expect(selectedButtons).toHaveCount(0);
+      await photoButtons.nth(0).click();
+      await photoButtons.nth(0).click();
+      await expect(selectedButtons).toHaveCount(2);
       await dialog.getByRole("button", { name: "完了" }).click();
 
       // フィーチャー型は全写真にテーマが必要

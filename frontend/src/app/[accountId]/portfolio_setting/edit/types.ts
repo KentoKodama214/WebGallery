@@ -8,6 +8,8 @@ export interface SelectedPhoto {
   imageFilePath: string;
   /** 一覧・プレビューで表示する写真の名前 */
   label: string;
+  /** 向き区分（vertical / horizontal / square / none）。写真選択ダイアログの枠の縦横比に使う */
+  directionKbn: string;
   /** 写真単位のテンプレート設定（テンプレートを切り替えても入力値を保持するため、全テンプレートの項目を持つ） */
   settings: PhotoSettingValues;
 }
