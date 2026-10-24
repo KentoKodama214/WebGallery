@@ -1,6 +1,6 @@
 # WebGallery
 
-写真ギャラリーWebアプリケーションです。ユーザー登録・写真のアップロード・EXIF情報の管理・タグ付け・お気に入り機能などを備えています。
+写真ギャラリーWebアプリケーションです。ユーザー登録・写真のアップロード・EXIF情報の管理・タグ付け・お気に入り機能に加え、自分の写真から作るポートフォリオの公開ページなどを備えています。
 
 ## 目次
 
@@ -35,6 +35,7 @@
 - **タグ機能** - 写真への日本語・英語タグ付け
 - **お気に入り** - 他ユーザーの写真をお気に入り登録
 - **写真一覧** - フィルタリング（方向・タグ）やソート（撮影日・お気に入り数・季節）に対応
+- **ポートフォリオ** - 自分の写真から、テーマ・説明文・タグ・テンプレート（フィーチャー型／グリッド型）を設定したポートフォリオを作成し（作成数は権限ごとに mini-user：3個、normal-user：10個まで。special-user・administratorは上限なし。1つのポートフォリオに写真200枚・タグ30件まで）、公開すると未ログインでも閲覧できる公開ページ（`/portfolio/{accountId}`）に表示される。下書き／公開の状態を持ち、公開中のポートフォリオで使っている写真を削除すると、その写真を外して下書きに戻す
 - **権限管理** - 4段階のユーザー権限によるアップロード枚数制限
 - **管理者機能** - アカウント一覧管理・アカウントロック/ロック解除
 
@@ -92,7 +93,7 @@
 
 - Java 21
 - Docker / Docker Compose
-- [mise](https://mise.jdx.dev/)（Node.jsバージョン管理）
+- [mise](https://mise.jdx.dev/)（Node.js・Goのバージョン管理。`.mise.toml`）
 - [just](https://github.com/casey/just)（タスクランナー）
 
 ```bash
@@ -228,9 +229,14 @@ just backend-run
 
 # フロントエンド
 just front-run
+
+# ポートフォリオ表示API（公開ページ /portfolio/** を表示する場合のみ）
+just go-run
 ```
 
-バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000` でアクセスできます。
+バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000`、ポートフォリオ表示APIは `http://localhost:8081/graphql` でアクセスできます。
+
+> ポートフォリオ表示APIは読み取り専用ロール `portfolio_reader` でDBに接続します。このロールは `db/photo/portfolio_reader.sql` でDBの初期化時にだけ作成されるため、それより前に作成したDBボリュームでは手動で適用してください（[portfolio-api](doc/architecture/portfolio-api.md) 参照）。
 
 ## ローカル動作確認用のダミーデータ投入（任意）
 
@@ -242,7 +248,7 @@ just front-run
 
 実行には `just db-up` でDB・MinIOが起動していることに加え、`convert`（ImageMagick）・`htpasswd`・`openssl` コマンドが必要です（`brew install imagemagick httpd` 等でインストールしてください）。
 
-> **【注意】** 実行するとローカルDB・MinIOの写真関連データ（`account`、`location_mst`、`refresh_token`、`photo_mst`、`photo_tag_mst`、`photo_favorite` および MinIOの `web-gallery-local` バケット内の画像）を全件削除したうえで、以下を新規作成します。
+> **【注意】** 実行するとローカルDB・MinIOの写真関連データ（`account`、`location_mst`、`refresh_token`、`photo_mst`、`photo_tag_mst`、`photo_favorite`、外部キーでこれらを参照するテーブル（`TRUNCATE ... CASCADE`。ポートフォリオの `portfolio_mst`・`portfolio_photo`・`portfolio_tag_mst` 等）および MinIOの `web-gallery-local` バケット内の画像）を全件削除したうえで、以下を新規作成します。
 
 - アカウント3件（`localuser01`: normal-user、`localuser02`: mini-user、`localuser03`: administrator。パスワードは全アカウント共通で `password01`）
 - `localuser01` の写真10枚（縦6枚・横4枚）とロケーション・タグ
@@ -380,6 +386,8 @@ just modulith-doc
 
 REST APIの詳細は `http://localhost:8080/scalar` を参照してください。
 
+公開ページ向けのポートフォリオ表示API（GraphQL）のスキーマは `portfolio-api/graph/schema.graphqls` が正本です。詳細は [`doc/architecture/portfolio-api.md`](doc/architecture/portfolio-api.md) を参照してください。
+
 ## プロジェクト構成
 
 ```
@@ -408,7 +416,7 @@ WebGallery/
 │   ├── modulith/                   # モジュールドキュメント（Spring Modulith自動生成）
 │   └── view/                       # 画面設計書
 ├── scripts/
-│   ├── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド自動起動）
+│   ├── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド・portfolio-api自動起動）
 │   └── seed-local-data.sh          # ローカル動作確認用のダミーデータ投入スクリプト
 ├── portfolio-api/                  # 公開ページ向けのポートフォリオ表示API（Go・GraphQL。doc/architecture/portfolio-api.md）
 ├── frontend/                       # フロントエンド（Next.js）
