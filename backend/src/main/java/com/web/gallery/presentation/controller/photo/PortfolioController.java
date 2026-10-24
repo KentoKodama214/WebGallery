@@ -126,7 +126,7 @@ public class PortfolioController {
   @Operation(
       summary = "ポートフォリオ用の写真検索",
       description =
-          "ポートフォリオに設定する写真を、本人の写真からタイトル・撮影場所の名前・タグ名の部分一致で検索する（撮影日時の新しい順）。"
+          "ポートフォリオに設定する写真を、本人の写真から、タイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに検索語が部分一致するものを検索する（撮影日時の新しい順）。"
               + "非公開の撮影場所も検索対象とするため、本人のみが利用できる")
   @ApiResponse(responseCode = "200", description = "取得成功")
   @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)

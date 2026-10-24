@@ -36,9 +36,9 @@ insert into photo.portfolio_tag_mst values(3, 2, 1, 1, 2, '2000-01-04 09:00:00 A
 select setval('photo.portfolio_tag_mst_id_seq', (select max(id) from photo.portfolio_tag_mst));
 
 -- ポートフォリオ用の写真検索（selectAvailablePhotos）の検証用
--- common.location_mst：account_no=1のロケーション1（京都）・ロケーション2（論理削除済みの大阪）、account_no=2のロケーション1（京都）
-insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, '金閣寺_管理', '京都・金閣寺', '住所1', 35.039, 135.729);
-insert into common.location_mst values(DEFAULT, 1, 2, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', true, '大阪城_管理', '大阪城', '住所2', 34.687, 135.525);
+-- common.location_mst：account_no=1のロケーション1（京都・住所は北区金閣寺町）・ロケーション2（論理削除済みの大阪）、account_no=2のロケーション1（京都）
+insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', false, '金閣寺_管理', '京都・金閣寺', '北区金閣寺町1', 35.039, 135.729);
+insert into common.location_mst values(DEFAULT, 1, 2, 1, '2000-01-05 09:00:00 Asia/Tokyo', 1, '2000-01-05 09:00:00 Asia/Tokyo', true, '大阪城_管理', '大阪城', '中央区大阪城1-1', 34.687, 135.525);
 insert into common.location_mst values(DEFAULT, 2, 1, 2, '2000-01-05 09:00:00 Asia/Tokyo', 2, '2000-01-05 09:00:00 Asia/Tokyo', false, '京都駅_管理', '京都駅', '住所3', 34.985, 135.758);
 -- 写真の撮影場所：account_no=1の写真1は論理削除済みのロケーション2、写真2はロケーション1。account_no=2の写真1はロケーション1
 update photo.photo_mst set location_no = 2 where account_no = 1 and photo_no = 1;

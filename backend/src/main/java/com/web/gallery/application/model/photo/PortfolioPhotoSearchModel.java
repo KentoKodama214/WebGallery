@@ -12,14 +12,8 @@ public class PortfolioPhotoSearchModel {
   /** ログイン中のアカウント番号 */
   @NonNull private AccountNo accountNo;
 
-  /** 写真のタイトル（日本語・英語のいずれかに部分一致。未指定はnull） */
-  private String title;
-
-  /** 撮影場所の名前（管理名・表示名のいずれかに部分一致。未指定はnull） */
-  private String location;
-
-  /** タグ名（日本語・英語のいずれかに部分一致。未指定はnull） */
-  private String tag;
+  /** 検索語（写真のタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに部分一致。未指定はnull） */
+  private String keyword;
 
   /** ページ番号 */
   @NonNull private Integer pageNo;

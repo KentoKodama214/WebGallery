@@ -1,6 +1,5 @@
 package com.web.gallery.presentation.request.photo;
 
-import com.web.gallery.domain.constant.Consts;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
@@ -12,20 +11,10 @@ import lombok.Data;
 @Schema(description = "ポートフォリオ用の写真検索リクエスト")
 @Data
 public class PortfolioPhotoSearchRequest {
-  /** 写真のタイトル（日本語・英語のいずれかに部分一致。写真のタイトルの最大文字数と同じ100文字まで） */
-  @Schema(description = "写真のタイトル（日本語・英語のいずれかに部分一致）", example = "金閣寺")
+  /** 検索語（写真のタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに部分一致。写真のタイトル・撮影場所の名前の最大文字数と同じ100文字まで） */
+  @Schema(description = "検索語（写真のタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに部分一致）", example = "京都")
   @Size(max = 100, message = "{validation.common.max_length}")
-  private String title;
-
-  /** 撮影場所の名前（管理名・表示名のいずれかに部分一致。撮影場所の名前の最大文字数と同じ100文字まで） */
-  @Schema(description = "撮影場所の名前（管理名・表示名のいずれかに部分一致）", example = "京都")
-  @Size(max = 100, message = "{validation.common.max_length}")
-  private String location;
-
-  /** タグ名（日本語・英語のいずれかに部分一致） */
-  @Schema(description = "タグ名（日本語・英語のいずれかに部分一致）", example = "風景")
-  @Size(max = Consts.TAG_NAME_MAX_LENGTH, message = "{validation.common.max_length}")
-  private String tag;
+  private String keyword;
 
   /** ページ番号 */
   @Schema(description = "ページ番号", example = "1")
