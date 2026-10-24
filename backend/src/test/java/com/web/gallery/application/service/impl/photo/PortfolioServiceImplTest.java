@@ -208,7 +208,7 @@ class PortfolioServiceImplTest {
     @DisplayName("正常系：写真一覧と同じ1ページの件数で検索し、画像ファイルパスを署名付きURLに差し替えて返すこと")
     void searchPhotos_success() {
       PortfolioPhotoSearchModel condition =
-          PortfolioPhotoSearchModel.builder().accountNo(ACCOUNT_NO).title("金閣").pageNo(2).build();
+          PortfolioPhotoSearchModel.builder().accountNo(ACCOUNT_NO).keyword("金閣").pageNo(2).build();
       doReturn(20).when(photoConfig).getPhotoCountPerPage();
       doReturn(
               PortfolioPhotoPageModel.of(

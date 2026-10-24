@@ -35,23 +35,20 @@ public interface PortfolioPhotoMapper {
   public List<PortfolioPhotoDto> selectList(PortfolioPhotoCondition condition);
 
   /**
-   * アカウントが所有する未削除の写真を、タイトル・撮影場所の名前・タグ名の部分一致で絞り込み、撮影日時の新しい順に取得する
+   * アカウントが所有する未削除の写真を、検索語がタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに部分一致するもので絞り込み、撮影日時の新しい順に取得する
    *
    * <p>ポートフォリオに設定する写真を選ぶために使用する（本人の写真のみを対象とするため、非公開の撮影場所も検索対象とする）
    *
    * @param accountNo アカウント番号
-   * @param titlePattern タイトル（日本語・英語）のLIKEパターン（未指定はnull）
-   * @param locationPattern 撮影場所の名前（管理名・表示名）のLIKEパターン（未指定はnull）
-   * @param tagPattern タグ名（日本語・英語）のLIKEパターン（未指定はnull）
+   * @param keywordPattern
+   *     検索語のLIKEパターン。タイトル（日本語・英語）・撮影場所の名前（管理名・表示名）・撮影場所の住所・タグ名（日本語・英語）のいずれかに一致する写真を抽出する（未指定はnull）
    * @param limit 取得件数
    * @param offset 取得開始位置
    * @return {@link PortfolioPhotoDto}のリスト（写真番号・タイトル・画像ファイルパス・向きのみ）
    */
   public List<PortfolioPhotoDto> selectAvailablePhotos(
       @Param("accountNo") Long accountNo,
-      @Param("titlePattern") String titlePattern,
-      @Param("locationPattern") String locationPattern,
-      @Param("tagPattern") String tagPattern,
+      @Param("keywordPattern") String keywordPattern,
       @Param("limit") Integer limit,
       @Param("offset") Integer offset);
 
