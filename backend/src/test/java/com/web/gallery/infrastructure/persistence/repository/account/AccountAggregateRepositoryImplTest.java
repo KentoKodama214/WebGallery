@@ -18,6 +18,9 @@ import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavoriteCond
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoListFilterLogCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoViewLogCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioPhotoCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioTagMstCondition;
 import com.web.gallery.infrastructure.persistence.mapper.account.AccountAuthorityMapper;
 import com.web.gallery.infrastructure.persistence.mapper.account.AccountMapper;
 import com.web.gallery.infrastructure.persistence.mapper.account.LoginHistoryMapper;
@@ -30,6 +33,9 @@ import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoListFilterLo
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoTagMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoViewLogMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioMstMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioPhotoMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioTagMstMapper;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -74,6 +80,12 @@ public class AccountAggregateRepositoryImplTest {
 
   @Mock private InquiryReplyMstMapper inquiryReplyMstMapper;
 
+  @Mock private PortfolioMstMapper portfolioMstMapper;
+
+  @Mock private PortfolioPhotoMapper portfolioPhotoMapper;
+
+  @Mock private PortfolioTagMstMapper portfolioTagMstMapper;
+
   @Nested
   @Order(1)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -106,6 +118,25 @@ public class AccountAggregateRepositoryImplTest {
           ArgumentCaptor.forClass(PhotoTagMstCondition.class);
       verify(photoTagMstMapper).delete(tagConditionCaptor.capture());
       assertEquals(1L, tagConditionCaptor.getValue().getAccountNo());
+
+      ArgumentCaptor<PortfolioPhotoCondition> portfolioPhotoConditionCaptor =
+          ArgumentCaptor.forClass(PortfolioPhotoCondition.class);
+      verify(portfolioPhotoMapper).delete(portfolioPhotoConditionCaptor.capture());
+      assertEquals(1L, portfolioPhotoConditionCaptor.getValue().getAccountNo());
+      assertNull(portfolioPhotoConditionCaptor.getValue().getPortfolioNo());
+
+      ArgumentCaptor<PortfolioTagMstCondition> portfolioTagConditionCaptor =
+          ArgumentCaptor.forClass(PortfolioTagMstCondition.class);
+      verify(portfolioTagMstMapper).delete(portfolioTagConditionCaptor.capture());
+      assertEquals(1L, portfolioTagConditionCaptor.getValue().getAccountNo());
+      assertNull(portfolioTagConditionCaptor.getValue().getPortfolioNo());
+
+      // 論理削除済みのポートフォリオも含めて物理削除する（削除フラグを条件に含めない）
+      ArgumentCaptor<PortfolioMstCondition> portfolioMstConditionCaptor =
+          ArgumentCaptor.forClass(PortfolioMstCondition.class);
+      verify(portfolioMstMapper).delete(portfolioMstConditionCaptor.capture());
+      assertEquals(1L, portfolioMstConditionCaptor.getValue().getAccountNo());
+      assertNull(portfolioMstConditionCaptor.getValue().getPortfolioNo());
 
       ArgumentCaptor<PhotoViewLogCondition> photoViewLogConditionCaptor =
           ArgumentCaptor.forClass(PhotoViewLogCondition.class);
@@ -177,7 +208,7 @@ public class AccountAggregateRepositoryImplTest {
     @Test
     @Order(3)
     @DisplayName(
-        "正常系：外部キー制約上必要な順序（お気に入り→タグ→閲覧ログ→写真マスタ→トークン→ログイン履歴/絞込ログ→ロケーション→お問い合わせ返信→お問い合わせ→権限→アカウント本体）で削除すること")
+        "正常系：外部キー制約上必要な順序（お気に入り→タグ→ポートフォリオ写真→ポートフォリオタグ→ポートフォリオ→閲覧ログ→写真マスタ→トークン→ログイン履歴/絞込ログ→ロケーション→お問い合わせ返信→お問い合わせ→権限→アカウント本体）で削除すること")
     void delete_order() {
       doReturn(List.of()).when(photoMstMapper).deletePhotosByAccountNo(1L);
 
@@ -188,6 +219,9 @@ public class AccountAggregateRepositoryImplTest {
           inOrder(
               photoFavoriteMapper,
               photoTagMstMapper,
+              portfolioPhotoMapper,
+              portfolioTagMstMapper,
+              portfolioMstMapper,
               photoViewLogMapper,
               photoMstMapper,
               refreshTokenMapper,
@@ -203,6 +237,12 @@ public class AccountAggregateRepositoryImplTest {
       inOrder.verify(photoFavoriteMapper, times(2)).delete(any(PhotoFavoriteCondition.class));
       // 写真タグを削除
       inOrder.verify(photoTagMstMapper).delete(any(PhotoTagMstCondition.class));
+      // ポートフォリオ写真を削除（写真マスタ・ポートフォリオを外部キーで参照するため、それらに先立って実施）
+      inOrder.verify(portfolioPhotoMapper).delete(any(PortfolioPhotoCondition.class));
+      // ポートフォリオタグを削除（ポートフォリオを外部キーで参照するため、ポートフォリオに先立って実施）
+      inOrder.verify(portfolioTagMstMapper).delete(any(PortfolioTagMstCondition.class));
+      // ポートフォリオを物理削除（アカウントの物理削除に先立って実施）
+      inOrder.verify(portfolioMstMapper).delete(any(PortfolioMstCondition.class));
       // 写真詳細閲覧ログを削除（写真マスタの物理削除に先立って実施）
       inOrder.verify(photoViewLogMapper).delete(any(PhotoViewLogCondition.class));
       // 写真マスタを物理削除

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioMstMapper">
+	<resultMap id="PortfolioMstMap" type="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMst">
+		<result property="id" column="id"/>
+		<result property="accountNo" column="account_no"/>
+		<result property="portfolioNo" column="portfolio_no"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedBy" column="updated_by"/>
+		<result property="updatedAt" column="updated_at"/>
+		<result property="theme" column="theme"/>
+		<result property="description" column="description"/>
+		<result property="templateKbn" column="template_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.PortfolioTemplateEnumTypeHandler"/>
+		<result property="templateSettings" column="template_settings" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler"/>
+		<result property="settingsVersion" column="settings_version"/>
+		<result property="statusKbn" column="status_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.PortfolioStatusEnumTypeHandler"/>
+	</resultMap>
+
+	<resultMap id="PortfolioDtoMap" type="com.web.gallery.infrastructure.persistence.dto.photo.PortfolioDto">
+		<result property="accountNo" column="account_no"/>
+		<result property="portfolioNo" column="portfolio_no"/>
+		<result property="theme" column="theme"/>
+		<result property="templateKbn" column="template_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.PortfolioTemplateEnumTypeHandler"/>
+		<result property="statusKbn" column="status_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.PortfolioStatusEnumTypeHandler"/>
+		<result property="photoCount" column="photo_count"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedAt" column="updated_at"/>
+	</resultMap>
+
+	<sql id="portfolioMstConditionWhere">
+		<if test="${prefix}accountNo != null"> AND pm.account_no = #{${prefix}accountNo}</if>
+		<if test="${prefix}portfolioNo != null"> AND pm.portfolio_no = #{${prefix}portfolioNo}</if>
+		<if test="${prefix}themePattern != null"> AND pm.theme ILIKE #{${prefix}themePattern} ESCAPE '\'</if>
+		<if test="${prefix}tagPattern != null">
+			AND EXISTS (
+				SELECT
+					1
+				FROM
+					photo.portfolio_tag_mst pt
+				WHERE
+					pt.account_no = pm.account_no
+					AND pt.portfolio_no = pm.portfolio_no
+					AND (
+						pt.tag_japanese_name ILIKE #{${prefix}tagPattern} ESCAPE '\'
+						OR pt.tag_english_name ILIKE #{${prefix}tagPattern} ESCAPE '\'
+					)
+			)
+		</if>
+	</sql>
+
+	<sql id="portfolioMstColumns">
+		pm.id,
+		pm.account_no,
+		pm.portfolio_no,
+		pm.created_by,
+		pm.created_at,
+		pm.updated_by,
+		pm.updated_at,
+		pm.theme,
+		pm.description,
+		pm.template_kbn,
+		pm.template_settings,
+		pm.settings_version,
+		pm.status_kbn
+	</sql>
+
+	<insert id="insert" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMst">
+		INSERT INTO
+			photo.portfolio_mst (
+				account_no,
+				portfolio_no,
+				created_by,
+				created_at,
+				updated_by,
+				updated_at,
+				theme,
+				description,
+				template_kbn,
+				template_settings,
+				settings_version,
+				status_kbn
+			)
+		VALUES
+			(
+				#{accountNo},
+				#{portfolioNo},
+				#{createdBy},
+				NOW(),
+				#{updatedBy},
+				NOW(),
+				#{theme},
+				#{description},
+				#{templateKbn}::photo.portfolio_template_enum,
+				#{templateSettings, typeHandler=com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler},
+				#{settingsVersion},
+				#{statusKbn}::photo.portfolio_status_enum
+			)
+	</insert>
+
+	<update id="update">
+		UPDATE
+			photo.portfolio_mst pm
+		<set>
+			updated_at = NOW()
+			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy}</if>
+			<if test="target.theme != null"> , theme = #{target.theme}</if>
+			<if test="target.description != null"> , description = #{target.description}</if>
+			<if test="target.templateKbn != null"> , template_kbn = #{target.templateKbn}::photo.portfolio_template_enum</if>
+			<if test="target.templateSettings != null"> , template_settings = #{target.templateSettings, typeHandler=com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler}</if>
+			<if test="target.settingsVersion != null"> , settings_version = #{target.settingsVersion}</if>
+			<if test="target.statusKbn != null"> , status_kbn = #{target.statusKbn}::photo.portfolio_status_enum</if>
+		</set>
+		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのUPDATE（全件更新）になるのを防ぐガード -->
+			<if test="condition.accountNo == null and condition.portfolioNo == null"> AND 1 = 0</if>
+			<include refid="portfolioMstConditionWhere">
+				<property name="prefix" value="condition."/>
+			</include>
+		</where>
+	</update>
+
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition">
+		DELETE FROM
+			photo.portfolio_mst AS pm
+		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード。
+			     抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接組み立てられた
+			     場合でも1件も消さないようにする -->
+			<if test="accountNo == null and portfolioNo == null"> AND 1 = 0</if>
+			<include refid="portfolioMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+	</delete>
+
+	<select id="getMaxPortfolioNo" parameterType="Long" resultType="Long">
+		SELECT
+			MAX(portfolio_no) AS portfolioNo
+		FROM
+			photo.portfolio_mst
+		WHERE
+			account_no = #{accountNo}
+	</select>
+
+	<select id="count" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition" resultType="Integer">
+		SELECT
+			COUNT(*)
+		FROM
+			photo.portfolio_mst pm
+		<where>
+			<include refid="portfolioMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+	</select>
+
+	<select id="selectList" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition" resultMap="PortfolioDtoMap">
+		SELECT
+			pm.account_no,
+			pm.portfolio_no,
+			pm.theme,
+			pm.template_kbn,
+			pm.status_kbn,
+			(
+				SELECT
+					COUNT(*)
+				FROM
+					photo.portfolio_photo pp
+				WHERE
+					pp.account_no = pm.account_no
+					AND pp.portfolio_no = pm.portfolio_no
+			) AS photo_count,
+			pm.created_at,
+			pm.updated_at
+		FROM
+			photo.portfolio_mst pm
+		<where>
+			<include refid="portfolioMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+		ORDER BY
+			pm.updated_at DESC,
+			pm.portfolio_no DESC
+	</select>
+
+	<select id="select" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition" resultMap="PortfolioMstMap">
+		SELECT
+			<include refid="portfolioMstColumns"/>
+		FROM
+			photo.portfolio_mst pm
+		<where>
+			<include refid="portfolioMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+		ORDER BY
+			pm.portfolio_no
+	</select>
+
+	<select id="selectByPhoto" resultMap="PortfolioMstMap">
+		SELECT
+			<include refid="portfolioMstColumns"/>
+		FROM
+			photo.portfolio_mst pm
+		WHERE
+			pm.account_no = #{accountNo}
+			AND EXISTS (
+				SELECT
+					1
+				FROM
+					photo.portfolio_photo pp
+				WHERE
+					pp.account_no = pm.account_no
+					AND pp.portfolio_no = pm.portfolio_no
+					AND pp.photo_no = #{photoNo}
+			)
+		ORDER BY
+			pm.portfolio_no
+	</select>
+</mapper>

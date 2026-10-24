@@ -61,6 +61,28 @@ public final class ApiRoutes {
   /** 写真登録上限チェックAPI（GET=上限到達チェック） */
   public static final String API_PHOTO_UPPER_LIMIT = API_PHOTOS + "/upper-limit";
 
+  // ポートフォリオ関連
+  /** ポートフォリオAPI（GET=本人の一覧取得（下書きを含む。テーマ・タグで絞り込み可）, POST=下書きとして新規登録） */
+  public static final String API_PORTFOLIOS = API_ACCOUNT + "/portfolios";
+
+  /** ポートフォリオ番号 */
+  public static final String PORTFOLIO_NO = "{portfolioNo}";
+
+  /** 個別ポートフォリオAPI（GET=本人の詳細取得, PUT=更新, DELETE=物理削除） */
+  public static final String API_PORTFOLIO_DETAIL = API_PORTFOLIOS + "/" + PORTFOLIO_NO;
+
+  /** ポートフォリオ公開状態API（PUT=公開・下書きへの切り替え） */
+  public static final String API_PORTFOLIO_STATUS = API_PORTFOLIO_DETAIL + "/status";
+
+  /** ポートフォリオ作成上限チェックAPI（GET=作成数の上限到達チェック） */
+  public static final String API_PORTFOLIO_UPPER_LIMIT = API_PORTFOLIOS + "/upper-limit";
+
+  /** ポートフォリオ用の写真検索API（GET=本人の写真をタイトル・撮影場所・タグで検索） */
+  public static final String API_PORTFOLIO_PHOTOS = API_ACCOUNT + "/portfolio-photos";
+
+  /** ポートフォリオテンプレート一覧API（GET=テンプレート・グリッド型の行パターンの一覧取得） */
+  public static final String API_PORTFOLIO_TEMPLATES = API_PREFIX + "/portfolio-templates";
+
   // お気に入り関連
   /** お気に入りAPI（POST=登録, DELETE=解除） */
   public static final String API_FAVORITES = API_PREFIX + "/photos/favorites";

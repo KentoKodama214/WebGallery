@@ -585,6 +585,12 @@ export interface PhotoDetailResponse {
   photoTagList: PhotoTagItem[];
 }
 
+/** 写真の削除に伴い公開から下書きに戻したポートフォリオ */
+export interface RevertedPortfolioItem {
+  portfolioNo: number;
+  theme: string;
+}
+
 /** 写真編集結果レスポンス */
 export interface PhotoEditResult {
   httpStatus: number;
@@ -592,6 +598,8 @@ export interface PhotoEditResult {
   message: string;
   photoNo: number;
   imageFilePath: string;
+  /** 写真削除時のみ設定。写真の削除に伴い公開から下書きに戻したポートフォリオの一覧 */
+  revertedPortfolioList?: RevertedPortfolioItem[];
 }
 
 /** 写真新規一括登録結果レスポンス */
@@ -1154,4 +1162,277 @@ export async function replyToInquiry(
     throw new Error(await readErrorMessage(response, "返信の登録に失敗しました"));
   }
   return readJson<InquiryReplyResult>(response);
+}
+
+/** ポートフォリオのテンプレート区分 */
+export type PortfolioTemplateKbn = "feature" | "grid";
+
+/** ポートフォリオの公開状態区分 */
+export type PortfolioStatusKbn = "draft" | "published";
+
+/** ポートフォリオ一覧アイテム */
+export interface PortfolioListItem {
+  portfolioNo: number;
+  theme: string;
+  templateKbn: PortfolioTemplateKbn;
+  statusKbn: PortfolioStatusKbn;
+  photoCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** ポートフォリオ詳細の写真 */
+export interface PortfolioPhotoItem {
+  photoNo: number;
+  displayOrder: number;
+  photoSettings: Record<string, unknown>;
+  photoJapaneseTitle: string;
+  imageFilePath: string;
+  directionKbn: string;
+}
+
+/** ポートフォリオ詳細のタグ */
+export interface PortfolioTagItem {
+  tagNo: number;
+  tagJapaneseName: string;
+  tagEnglishName: string;
+}
+
+/** ポートフォリオ詳細 */
+export interface PortfolioDetail {
+  portfolioNo: number;
+  theme: string;
+  description: string;
+  templateKbn: PortfolioTemplateKbn;
+  templateSettings: Record<string, unknown>;
+  statusKbn: PortfolioStatusKbn;
+  createdAt: string;
+  updatedAt: string;
+  photoList: PortfolioPhotoItem[];
+  tagList: PortfolioTagItem[];
+}
+
+/** ポートフォリオ登録・更新リクエスト（写真一覧の並び順が表示順になる） */
+export interface PortfolioSaveData {
+  theme: string;
+  description: string;
+  templateKbn: PortfolioTemplateKbn;
+  templateSettings: Record<string, unknown>;
+  photoList: { photoNo: number; photoSettings: Record<string, unknown> }[];
+  tagList: { tagJapaneseName: string; tagEnglishName: string }[];
+}
+
+/** ポートフォリオ編集結果 */
+export interface PortfolioEditResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+  portfolioNo: number;
+}
+
+/** ポートフォリオのテンプレート一覧 */
+export interface PortfolioTemplateList {
+  templateList: { templateKbn: PortfolioTemplateKbn; displayName: string }[];
+  gridRowPatternList: { pattern: string; displayName: string; photoCount: number }[];
+}
+
+/**
+ * 本人のポートフォリオ一覧（下書きを含む）を取得する
+ */
+export async function getPortfolioList(
+  accountId: string,
+  filter: PortfolioListFilter = {}
+): Promise<PortfolioListItem[]> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios${toQueryString(filter)}`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオ一覧の取得に失敗しました"),
+      response.status
+    );
+  }
+  return (await readJson<{ portfolioList: PortfolioListItem[] }>(response)).portfolioList;
+}
+
+/** ポートフォリオ一覧の絞り込み条件（いずれも部分一致。未入力の条件は送らない） */
+export interface PortfolioListFilter {
+  /** テーマ */
+  theme?: string;
+  /** タグ名（日本語・英語のいずれか） */
+  tag?: string;
+}
+
+/**
+ * 絞り込み条件をクエリ文字列に変換する（前後の空白を除いて空になる条件は送らない）
+ *
+ * @param params 条件
+ * @returns 先頭に `?` を付けたクエリ文字列。条件がない場合は空文字
+ */
+function toQueryString(params: object): string {
+  const query = new URLSearchParams();
+  Object.entries(params as Record<string, string | number | undefined>).forEach(([key, value]) => {
+    if (value === undefined) return;
+    const text = String(value).trim();
+    if (text !== "") query.set(key, text);
+  });
+  const qs = query.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/**
+ * 本人のポートフォリオの作成数（下書きを含む）が、権限ごとの上限に達しているかを取得する
+ */
+export async function getPortfolioUpperLimit(
+  accountId: string
+): Promise<{ isReachedUpperLimit: boolean }> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/upper-limit`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオの作成上限の取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<{ isReachedUpperLimit: boolean }>(response);
+}
+
+/** ポートフォリオに設定する写真の検索条件（いずれも部分一致。未入力の条件は送らない） */
+export interface PortfolioPhotoSearchFilter {
+  /** 検索語（写真のタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに部分一致） */
+  keyword?: string;
+}
+
+/** ポートフォリオに設定する写真の検索結果の写真 */
+export interface PortfolioPhotoCandidate {
+  photoNo: number;
+  photoJapaneseTitle: string;
+  /** 画像の署名付きURL */
+  imageFilePath: string;
+  /** 向き区分（vertical / horizontal / square / none） */
+  directionKbn: string;
+}
+
+/**
+ * ポートフォリオに設定する写真を、本人の写真からタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに検索語が部分一致するもので検索する（写真番号の降順）
+ */
+export async function searchPortfolioPhotos(
+  accountId: string,
+  filter: PortfolioPhotoSearchFilter,
+  pageNo: number
+): Promise<{ photoList: PortfolioPhotoCandidate[]; isLast: boolean }> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolio-photos${toQueryString({ ...filter, pageNo })}`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "写真の検索に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<{ photoList: PortfolioPhotoCandidate[]; isLast: boolean }>(response);
+}
+
+/**
+ * 本人のポートフォリオ詳細を取得する
+ */
+export async function getPortfolioDetail(
+  accountId: string,
+  portfolioNo: number
+): Promise<PortfolioDetail> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/${seg(portfolioNo)}`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオの取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PortfolioDetail>(response);
+}
+
+/**
+ * ポートフォリオを登録（portfolioNo 未指定）または更新する
+ */
+export async function savePortfolio(
+  accountId: string,
+  data: PortfolioSaveData,
+  portfolioNo?: number
+): Promise<PortfolioEditResult> {
+  const base = `/api/v1/accounts/${seg(accountId)}/portfolios`;
+  const response = await fetchWithAuth(
+    portfolioNo === undefined ? base : `${base}/${seg(portfolioNo)}`,
+    {
+      method: portfolioNo === undefined ? "POST" : "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオの保存に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PortfolioEditResult>(response);
+}
+
+/**
+ * ポートフォリオの公開状態を変更する
+ */
+export async function updatePortfolioStatus(
+  accountId: string,
+  portfolioNo: number,
+  statusKbn: PortfolioStatusKbn
+): Promise<PortfolioEditResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/${seg(portfolioNo)}/status`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ statusKbn }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "公開状態の変更に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PortfolioEditResult>(response);
+}
+
+/**
+ * ポートフォリオを削除する
+ */
+export async function deletePortfolio(
+  accountId: string,
+  portfolioNo: number
+): Promise<PortfolioEditResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/${seg(portfolioNo)}`,
+    { method: "DELETE" }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオの削除に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PortfolioEditResult>(response);
+}
+
+/**
+ * ポートフォリオのテンプレート一覧を取得する
+ */
+export async function getPortfolioTemplateList(): Promise<PortfolioTemplateList> {
+  const response = await fetchWithAuth("/api/v1/portfolio-templates");
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, "テンプレート一覧の取得に失敗しました")
+    );
+  }
+  return readJson<PortfolioTemplateList>(response);
 }

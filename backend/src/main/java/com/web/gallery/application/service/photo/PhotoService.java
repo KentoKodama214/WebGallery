@@ -7,6 +7,7 @@ import com.web.gallery.application.model.photo.PhotoDetailModelList;
 import com.web.gallery.application.model.photo.PhotoListGetModel;
 import com.web.gallery.application.model.photo.PhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoSaveResultModel;
+import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
 
@@ -45,10 +46,14 @@ public interface PhotoService {
   /**
    * 写真を削除する
    *
+   * <p>削除した写真を使用しているポートフォリオからは写真を除外し、公開中だったポートフォリオは下書きに戻す
+   *
    * @param photoDeleteModelList {@link PhotoDeleteModelList}
+   * @return 写真の削除に伴い公開から下書きに戻したポートフォリオの一覧
    * @throws GalleryException 削除に失敗した場合
    */
-  void deletePhotos(PhotoDeleteModelList photoDeleteModelList) throws GalleryException;
+  PortfolioModelList deletePhotos(PhotoDeleteModelList photoDeleteModelList)
+      throws GalleryException;
 
   /**
    * 該当アカウントが写真の登録枚数の上限に達しているかチェックする

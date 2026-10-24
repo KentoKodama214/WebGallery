@@ -1,0 +1,63 @@
+package com.web.gallery.infrastructure.persistence.entity.photo;
+
+import lombok.Builder;
+import lombok.Data;
+
+/** ポートフォリオマスタテーブルの抽出条件クラス */
+@Data
+@Builder
+public class PortfolioMstCondition {
+  /** アカウント番号 */
+  private Long accountNo;
+
+  /** ポートフォリオ番号 */
+  private Long portfolioNo;
+
+  /** テーマのLIKEパターン（部分一致。ワイルドカード文字はエスケープ済み） */
+  private String themePattern;
+
+  /** タグ名（日本語・英語）のLIKEパターン（部分一致。ワイルドカード文字はエスケープ済み） */
+  private String tagPattern;
+
+  /**
+   * アカウント番号・ポートフォリオ番号による抽出条件を生成する
+   *
+   * @param accountNo アカウント番号
+   * @param portfolioNo ポートフォリオ番号
+   * @return {@link PortfolioMstCondition}
+   */
+  public static PortfolioMstCondition byAccountAndPortfolio(Long accountNo, Long portfolioNo) {
+    return PortfolioMstCondition.builder().accountNo(accountNo).portfolioNo(portfolioNo).build();
+  }
+
+  /**
+   * アカウント番号による抽出条件を生成する
+   *
+   * <p>本人のポートフォリオ一覧の取得と、アカウント削除時のポートフォリオの一括削除に使用する
+   *
+   * @param accountNo アカウント番号
+   * @return {@link PortfolioMstCondition}
+   */
+  public static PortfolioMstCondition byAccountNo(Long accountNo) {
+    return PortfolioMstCondition.builder().accountNo(accountNo).build();
+  }
+
+  /**
+   * アカウント番号と、テーマ・タグ名の部分一致による抽出条件を生成する
+   *
+   * <p>本人のポートフォリオ一覧の絞り込みに使用する
+   *
+   * @param accountNo アカウント番号
+   * @param themePattern テーマのLIKEパターン（未指定はnull）
+   * @param tagPattern タグ名のLIKEパターン（未指定はnull）
+   * @return {@link PortfolioMstCondition}
+   */
+  public static PortfolioMstCondition byAccountNoAndKeywords(
+      Long accountNo, String themePattern, String tagPattern) {
+    return PortfolioMstCondition.builder()
+        .accountNo(accountNo)
+        .themePattern(themePattern)
+        .tagPattern(tagPattern)
+        .build();
+  }
+}

@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.web.gallery.application.aggregate.Photo;
+import com.web.gallery.application.aggregate.Portfolio;
 import com.web.gallery.application.config.PhotoConfig;
 import com.web.gallery.application.helper.GeoIpResolver;
 import com.web.gallery.application.model.account.AccountModel;
@@ -25,9 +26,17 @@ import com.web.gallery.application.model.photo.PhotoSaveResultModel;
 import com.web.gallery.application.model.photo.PhotoTagModel;
 import com.web.gallery.application.model.photo.PhotoTagModelList;
 import com.web.gallery.application.model.photo.PhotoViewLogModel;
+import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioDetailModelList;
+import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioPhotoModel;
+import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
+import com.web.gallery.application.model.photo.PortfolioTagModelList;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.enumeration.PortfolioStatusEnum;
+import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import com.web.gallery.domain.event.PhotoDeletedEvent;
 import com.web.gallery.domain.event.PhotoRegisteredEvent;
@@ -49,6 +58,7 @@ import com.web.gallery.domain.model.common.LocationDisplayName;
 import com.web.gallery.domain.model.common.Longitude;
 import com.web.gallery.domain.model.common.Referer;
 import com.web.gallery.domain.model.photo.Caption;
+import com.web.gallery.domain.model.photo.DisplayOrder;
 import com.web.gallery.domain.model.photo.ExifData;
 import com.web.gallery.domain.model.photo.FValue;
 import com.web.gallery.domain.model.photo.FavoriteCount;
@@ -67,10 +77,14 @@ import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.PhotoUpperLimits;
+import com.web.gallery.domain.model.photo.PortfolioDescription;
+import com.web.gallery.domain.model.photo.PortfolioNo;
+import com.web.gallery.domain.model.photo.PortfolioTheme;
 import com.web.gallery.domain.model.photo.ShutterSpeed;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TagNo;
+import com.web.gallery.domain.model.photo.TemplateSettings;
 import com.web.gallery.domain.service.ImageFileValidationPolicy;
 import com.web.gallery.domain.service.LocationInputPolicy;
 import com.web.gallery.domain.service.PhotoFileExtensionPolicy;
@@ -82,6 +96,8 @@ import com.web.gallery.infrastructure.persistence.repository.photo.PhotoDetailRe
 import com.web.gallery.infrastructure.persistence.repository.photo.PhotoListFilterLogRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.photo.PhotoMstRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.photo.PhotoViewLogRepositoryImpl;
+import com.web.gallery.infrastructure.persistence.repository.photo.PortfolioAggregateRepositoryImpl;
+import com.web.gallery.infrastructure.persistence.repository.photo.PortfolioMstRepositoryImpl;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -155,6 +171,10 @@ public class PhotoServiceImplTest {
   @Mock private LocationInputPolicy locationInputPolicy;
 
   @Mock private ApplicationEventPublisher applicationEventPublisher;
+
+  @Mock private PortfolioMstRepositoryImpl portfolioMstRepositoryImpl;
+
+  @Mock private PortfolioAggregateRepositoryImpl portfolioAggregateRepositoryImpl;
 
   /**
    * 署名付きURL発行のスタブ。渡されたS3オブジェクトキーをそのまま返すことで、 URL差し替え後もキーベースのアサーションを維持できるようにする（実際のURL生成は {@code
@@ -2094,7 +2114,8 @@ public class PhotoServiceImplTest {
     @DisplayName("正常系：photoDeleteModelListが0件の場合、終了")
     void deletePhotos_photoDeleteModelList_empty() throws GalleryException {
 
-      photoServiceImpl.deletePhotos(PhotoDeleteModelList.empty());
+      PortfolioModelList result = photoServiceImpl.deletePhotos(PhotoDeleteModelList.empty());
+      assertTrue(result.isEmpty());
       verify(photoAggregateRepositoryImpl, never()).delete(any(Photo.class));
       verify(applicationEventPublisher, never()).publishEvent(any());
     }
@@ -2123,6 +2144,10 @@ public class PhotoServiceImplTest {
               })
           .when(photoDetailRepositoryImpl)
           .getPhotoDetail(any(PhotoDetailSearchModel.class));
+      // 削除する写真はどのポートフォリオにも使用されていない
+      doReturn(PortfolioDetailModelList.empty())
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioDetailListByPhoto(any(AccountNo.class), any(PhotoNo.class));
 
       List<PhotoDeleteModel> photoDeleteModelList = new ArrayList<PhotoDeleteModel>();
       photoDeleteModelList.add(
@@ -2138,7 +2163,10 @@ public class PhotoServiceImplTest {
               .imageFilePath(new ImageFilePath("クライアント送信値は無視される"))
               .build());
 
-      photoServiceImpl.deletePhotos(PhotoDeleteModelList.of(photoDeleteModelList));
+      PortfolioModelList result =
+          photoServiceImpl.deletePhotos(PhotoDeleteModelList.of(photoDeleteModelList));
+      assertTrue(result.isEmpty());
+      verify(portfolioAggregateRepositoryImpl, never()).update(any(Portfolio.class));
       verify(photoAggregateRepositoryImpl, times(2)).delete(any(Photo.class));
       verify(fileRepositoryImpl, times(2)).delete(any(ImageFilePath.class));
 
@@ -2171,6 +2199,116 @@ public class PhotoServiceImplTest {
 
     @Test
     @Order(3)
+    @DisplayName("正常系：削除した写真を使用しているポートフォリオから写真を除外し、公開中だったものだけを下書きに戻して返すこと")
+    void deletePhotos_revert_published_portfolio() throws GalleryException {
+      doReturn(
+              PhotoDetailModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .photoNo(new PhotoNo(2L))
+                  .imageFilePath(new ImageFilePath("1/2-abc.jpg"))
+                  .build())
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
+      doReturn(
+              PortfolioDetailModelList.of(
+                  List.of(
+                      portfolioUsingPhotos(1L, PortfolioStatusEnum.PUBLISHED, 1L, 2L, 3L),
+                      portfolioUsingPhotos(2L, PortfolioStatusEnum.DRAFT, 2L))))
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioDetailListByPhoto(new AccountNo(1L), new PhotoNo(2L));
+
+      PortfolioModelList result =
+          photoServiceImpl.deletePhotos(
+              PhotoDeleteModelList.of(
+                  List.of(
+                      PhotoDeleteModel.builder()
+                          .accountNo(new AccountNo(1L))
+                          .photoNo(new PhotoNo(2L))
+                          .imageFilePath(new ImageFilePath("1/2-abc.jpg"))
+                          .build())));
+
+      ArgumentCaptor<Portfolio> portfolioCaptor = ArgumentCaptor.forClass(Portfolio.class);
+      verify(portfolioAggregateRepositoryImpl, times(2)).update(portfolioCaptor.capture());
+      List<Portfolio> updatedPortfolios = portfolioCaptor.getAllValues();
+
+      // 公開中だったポートフォリオ：写真2を除外して表示順を詰め、下書きに戻す
+      Portfolio published = updatedPortfolios.get(0);
+      assertEquals(new PortfolioNo(1L), published.getPortfolioNo());
+      assertEquals(PortfolioStatusEnum.DRAFT, published.getDetail().getStatusKbn());
+      assertEquals(
+          List.of(new PhotoNo(1L), new PhotoNo(3L)),
+          published.getDetail().getPortfolioPhotoModelList().stream()
+              .map(PortfolioPhotoModel::getPhotoNo)
+              .toList());
+      assertEquals(
+          List.of(new DisplayOrder(1), new DisplayOrder(2)),
+          published.getDetail().getPortfolioPhotoModelList().stream()
+              .map(PortfolioPhotoModel::getDisplayOrder)
+              .toList());
+
+      // 下書きだったポートフォリオ：写真を除外するが状態は下書きのまま
+      Portfolio draft = updatedPortfolios.get(1);
+      assertEquals(new PortfolioNo(2L), draft.getPortfolioNo());
+      assertEquals(PortfolioStatusEnum.DRAFT, draft.getDetail().getStatusKbn());
+      assertTrue(draft.getDetail().getPortfolioPhotoModelList().isEmpty());
+
+      // 公開から下書きに戻したものだけを返す
+      assertEquals(1, result.size());
+      assertEquals(new PortfolioNo(1L), result.get(0).getPortfolioNo());
+      assertEquals(new PortfolioTheme("テーマ1"), result.get(0).getTheme());
+      assertEquals(PortfolioStatusEnum.DRAFT, result.get(0).getStatusKbn());
+      assertEquals(new PhotoCount(2), result.get(0).getPhotoCount());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：複数枚の写真の削除で同じポートフォリオが下書きに戻った場合、戻り値に重複して含めないこと")
+    void deletePhotos_revert_without_duplicate() throws GalleryException {
+      doAnswer(
+              invocation -> {
+                PhotoDetailSearchModel searchModel = invocation.getArgument(0);
+                return PhotoDetailModel.builder()
+                    .accountNo(searchModel.getPhotoAccountNo())
+                    .photoNo(searchModel.getPhotoNo())
+                    .imageFilePath(new ImageFilePath("1/" + searchModel.getPhotoNo().value()))
+                    .build();
+              })
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(any(PhotoDetailSearchModel.class));
+      // 1枚目の削除で下書きに戻り、2枚目の削除時点では既に下書きになっている
+      doReturn(
+              PortfolioDetailModelList.of(
+                  List.of(portfolioUsingPhotos(1L, PortfolioStatusEnum.PUBLISHED, 1L, 2L))))
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioDetailListByPhoto(new AccountNo(1L), new PhotoNo(1L));
+      doReturn(
+              PortfolioDetailModelList.of(
+                  List.of(portfolioUsingPhotos(1L, PortfolioStatusEnum.DRAFT, 2L))))
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioDetailListByPhoto(new AccountNo(1L), new PhotoNo(2L));
+
+      PortfolioModelList result =
+          photoServiceImpl.deletePhotos(
+              PhotoDeleteModelList.of(
+                  List.of(
+                      PhotoDeleteModel.builder()
+                          .accountNo(new AccountNo(1L))
+                          .photoNo(new PhotoNo(1L))
+                          .imageFilePath(new ImageFilePath("1/1"))
+                          .build(),
+                      PhotoDeleteModel.builder()
+                          .accountNo(new AccountNo(1L))
+                          .photoNo(new PhotoNo(2L))
+                          .imageFilePath(new ImageFilePath("1/2"))
+                          .build())));
+
+      verify(portfolioAggregateRepositoryImpl, times(2)).update(any(Portfolio.class));
+      assertEquals(1, result.size());
+      assertEquals(new PortfolioNo(1L), result.get(0).getPortfolioNo());
+    }
+
+    @Test
+    @Order(5)
     @DisplayName("異常系：対象写真が存在しない場合、PhotoNotFoundExceptionをthrowする")
     void deletePhotos_PhotoNotFoundException() throws GalleryException {
       doThrow(PhotoNotFoundException.class)
@@ -2190,8 +2328,43 @@ public class PhotoServiceImplTest {
           () -> photoServiceImpl.deletePhotos(PhotoDeleteModelList.of(photoDeleteModelList)));
 
       verify(photoAggregateRepositoryImpl, never()).delete(any(Photo.class));
+      verify(portfolioAggregateRepositoryImpl, never()).update(any(Portfolio.class));
       verify(fileRepositoryImpl, never()).delete(any(ImageFilePath.class));
       verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    /**
+     * 指定した写真を使用しているポートフォリオの詳細情報を生成する
+     *
+     * @param portfolioNo ポートフォリオ番号
+     * @param statusKbn 公開状態区分
+     * @param photoNos 表示順に並べた写真番号
+     * @return {@link PortfolioDetailModel}
+     */
+    private PortfolioDetailModel portfolioUsingPhotos(
+        Long portfolioNo, PortfolioStatusEnum statusKbn, Long... photoNos) {
+      List<PortfolioPhotoModel> photos = new ArrayList<>();
+      for (int i = 0; i < photoNos.length; i++) {
+        photos.add(
+            PortfolioPhotoModel.builder()
+                .accountNo(new AccountNo(1L))
+                .portfolioNo(new PortfolioNo(portfolioNo))
+                .photoNo(new PhotoNo(photoNos[i]))
+                .displayOrder(new DisplayOrder(i + 1))
+                .photoSettings(TemplateSettings.empty())
+                .build());
+      }
+      return PortfolioDetailModel.builder()
+          .accountNo(new AccountNo(1L))
+          .portfolioNo(new PortfolioNo(portfolioNo))
+          .theme(new PortfolioTheme("テーマ" + portfolioNo))
+          .description(new PortfolioDescription(""))
+          .templateKbn(PortfolioTemplateEnum.FEATURE)
+          .templateSettings(TemplateSettings.empty())
+          .statusKbn(statusKbn)
+          .portfolioPhotoModelList(PortfolioPhotoModelList.of(photos))
+          .portfolioTagModelList(PortfolioTagModelList.empty())
+          .build();
     }
   }
 

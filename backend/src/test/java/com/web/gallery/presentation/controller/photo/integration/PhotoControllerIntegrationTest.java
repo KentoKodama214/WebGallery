@@ -1623,6 +1623,72 @@ public class PhotoControllerIntegrationTest {
 
     @Test
     @Order(2)
+    @Sql("/sql/common/cleanup.sql")
+    @Sql("/sql/controller/PhotoControllerIntegrationTest.sql")
+    @Sql("/sql/controller/PhotoControllerDeletePhotoWithPortfolioIntegrationTest.sql")
+    @DisplayName("正常系：削除した写真を使用していた公開中のポートフォリオを下書きに戻し、確認して公開し直すよう促すメッセージと対象を返す")
+    void deletePhoto_revertPublishedPortfolio() throws Exception {
+      AccountModel sessionAccount =
+          AccountModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .accountName(new AccountName("AAAAAAAA"))
+              .password(new Password("$2a$10$password1"))
+              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
+              .build();
+      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
+      Authentication authentication =
+          new UsernamePasswordAuthenticationToken(
+              accountPrincipal, null, accountPrincipal.getAuthorities());
+
+      mockMvc
+          .perform(
+              delete("/api/v1/accounts/aaaaaaaa/photos")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("delete_photo_success.json"))
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                  .with(csrf()))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isSuccess").value(true))
+          .andExpect(
+              jsonPath("$.message")
+                  .value("写真削除が完了しました。この写真を使用していたポートフォリオ（日本の自然）を下書きに戻しました。内容を確認して公開してください。"))
+          .andExpect(jsonPath("$.revertedPortfolioList.length()").value(1))
+          .andExpect(jsonPath("$.revertedPortfolioList[0].portfolioNo").value(1))
+          .andExpect(jsonPath("$.revertedPortfolioList[0].theme").value("日本の自然"));
+
+      // 公開中だったポートフォリオ1：下書きに戻り、写真1を除外して写真2の表示順を1に詰める
+      assertEquals(
+          "draft",
+          jdbcTemplate.queryForObject(
+              "SELECT status_kbn::text FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 1",
+              String.class));
+      assertEquals(
+          List.of(Map.of("photo_no", 2L, "display_order", 1)),
+          jdbcTemplate.queryForList(
+              "SELECT photo_no, display_order FROM photo.portfolio_photo"
+                  + " WHERE account_no = 1 AND portfolio_no = 1 ORDER BY display_order"));
+      // 下書きだったポートフォリオ2：写真1を除外するが、下書きのまま
+      assertEquals(
+          "draft",
+          jdbcTemplate.queryForObject(
+              "SELECT status_kbn::text FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 2",
+              String.class));
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.portfolio_photo WHERE account_no = 1 AND portfolio_no = 2",
+              Integer.class));
+      // 写真1を使用していないポートフォリオ3：公開のまま変更されない
+      assertEquals(
+          "published",
+          jdbcTemplate.queryForObject(
+              "SELECT status_kbn::text FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 3",
+              String.class));
+    }
+
+    @Test
+    @Order(3)
     @DisplayName("異常系：不正アクセス。ForbiddenAccountExceptionをthrowする")
     void deletePhoto_ForbiddenAccountException() throws Exception {
       String photoAccountId = "aaaaaaaa";
@@ -1660,7 +1726,7 @@ public class PhotoControllerIntegrationTest {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     @DisplayName("異常系：パラメータ不正。BadRequestExceptionをthrowする")
     void deletePhoto_BadRequestException() throws Exception {
       String photoAccountId = "aaaaaaaa";
@@ -1695,7 +1761,7 @@ public class PhotoControllerIntegrationTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     @DisplayName("異常系：対象写真が存在しない場合、404を返す")
     void deletePhoto_PhotoNotFoundException() throws Exception {
       String photoAccountId = "aaaaaaaa";

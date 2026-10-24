@@ -37,6 +37,9 @@ SQL_FILES=(
   "photo/photo_favorite.sql"
   "photo/photo_list_filter_log.sql"
   "photo/photo_view_log.sql"
+  "photo/portfolio_mst.sql"
+  "photo/portfolio_photo.sql"
+  "photo/portfolio_tag_mst.sql"
 )
 
 for f in "${SQL_FILES[@]}"; do

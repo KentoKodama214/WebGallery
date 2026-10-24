@@ -11,6 +11,15 @@ public final class MessageConst {
   public static final String REPLY_INQUIRY = "返信を送信しました。";
   public static final String WITHDRAW_INQUIRY = "お問い合わせを取り下げました。";
   public static final String MARK_INQUIRY_AS_READ = "お問い合わせを既読にしました。";
+  public static final String REGIST_PORTFOLIO = "ポートフォリオを登録しました。";
+  public static final String UPDATE_PORTFOLIO = "ポートフォリオを更新しました。";
+  public static final String DELETE_PORTFOLIO = "ポートフォリオを削除しました。";
+  public static final String PUBLISH_PORTFOLIO = "ポートフォリオを公開しました。";
+  public static final String UNPUBLISH_PORTFOLIO = "ポートフォリオを下書きに戻しました。";
+
+  /** 写真削除に伴いポートフォリオを下書きに戻した場合のメッセージ。{@code %s}には下書きに戻したポートフォリオのテーマを「、」区切りで埋め込む */
+  public static final String DELETE_PHOTO_WITH_REVERTED_PORTFOLIO =
+      "写真削除が完了しました。この写真を使用していたポートフォリオ（%s）を下書きに戻しました。内容を確認して公開してください。";
 
   // Warning
   public static final String USER_NOT_FOUND = "ユーザーが見つかりません。";
@@ -57,6 +66,15 @@ public final class MessageConst {
   public static final String ERR_NOT_AUTHORIZED_TO_VIEW_INQUIRY = "お問い合わせを閲覧する権限がありません。";
   public static final String ERR_FAIL_TO_WITHDRAW_INQUIRY = "お問い合わせ取り下げでエラーが発生しました。取り下げをやり直してください。";
   public static final String ERR_CANNOT_REPLY_TO_WITHDRAWN_INQUIRY = "取り下げられたお問い合わせには返信できません。";
+  public static final String ERR_NOT_AUTHORIZED_TO_EDIT_PORTFOLIO = "ポートフォリオを登録・編集する権限がありません。";
+  public static final String ERR_PORTFOLIO_NOT_FOUND = "ポートフォリオが存在しません。";
+  public static final String ERR_INVALID_PORTFOLIO_SETTINGS = "テンプレートの設定内容に誤りがあります。";
+  public static final String ERR_PORTFOLIO_PHOTO_NOT_AVAILABLE = "ポートフォリオに設定できない写真が含まれています。";
+  public static final String ERR_PORTFOLIO_NOT_PUBLISHABLE =
+      "公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。";
+  public static final String ERR_REACHED_PORTFOLIO_LIMIT = "作成できるポートフォリオの数が上限に達しています。";
+  public static final String ERR_FAIL_TO_REGIST_PORTFOLIO = "ポートフォリオ登録でエラーが発生しました。登録をやり直してください。";
+  public static final String ERR_FAIL_TO_UPDATE_PORTFOLIO = "ポートフォリオ更新でエラーが発生しました。更新をやり直してください。";
 
   // Admin
   public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";

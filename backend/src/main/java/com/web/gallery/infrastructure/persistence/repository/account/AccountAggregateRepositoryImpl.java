@@ -14,6 +14,9 @@ import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavoriteCond
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoListFilterLogCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoViewLogCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioPhotoCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioTagMstCondition;
 import com.web.gallery.infrastructure.persistence.mapper.account.AccountAuthorityMapper;
 import com.web.gallery.infrastructure.persistence.mapper.account.AccountMapper;
 import com.web.gallery.infrastructure.persistence.mapper.account.LoginHistoryMapper;
@@ -26,6 +29,9 @@ import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoListFilterLo
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoTagMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoViewLogMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioMstMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioPhotoMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioTagMstMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -63,6 +69,9 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
   private final LocationMstMapper locationMstMapper;
   private final InquiryMstMapper inquiryMstMapper;
   private final InquiryReplyMstMapper inquiryReplyMstMapper;
+  private final PortfolioMstMapper portfolioMstMapper;
+  private final PortfolioPhotoMapper portfolioPhotoMapper;
+  private final PortfolioTagMstMapper portfolioTagMstMapper;
 
   /**
    * アカウント集約を削除する
@@ -81,6 +90,13 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
 
     // 写真タグを削除
     photoTagMstMapper.delete(PhotoTagMstCondition.byAccountNo(accountNo));
+
+    // ポートフォリオ写真・ポートフォリオタグ・ポートフォリオを削除（ポートフォリオ写真は写真マスタを、
+    // ポートフォリオ写真・タグはポートフォリオを外部キー（ON DELETE RESTRICT）で参照するため、
+    // 写真マスタ・アカウントの物理削除に先立って子テーブルから順に実施）
+    portfolioPhotoMapper.delete(PortfolioPhotoCondition.byAccountNo(accountNo));
+    portfolioTagMstMapper.delete(PortfolioTagMstCondition.byAccountNo(accountNo));
+    portfolioMstMapper.delete(PortfolioMstCondition.byAccountNo(accountNo));
 
     // 写真詳細閲覧ログを削除（外部キー制約に抵触しないよう、写真マスタの物理削除に先立って実施）
     photoViewLogMapper.delete(PhotoViewLogCondition.byPhotoAccountNo(accountNo));

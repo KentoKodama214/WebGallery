@@ -9,6 +9,7 @@ import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.InquiryNotFoundException;
 import com.web.gallery.domain.exception.PhotoNotAdditableException;
 import com.web.gallery.domain.exception.PhotoNotFoundException;
+import com.web.gallery.domain.exception.PortfolioNotFoundException;
 import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.exception.UpdateFailureException;
 import com.web.gallery.presentation.controller.account.AccountController;
@@ -18,6 +19,7 @@ import com.web.gallery.presentation.controller.inquiry.AdminInquiryController;
 import com.web.gallery.presentation.controller.inquiry.InquiryController;
 import com.web.gallery.presentation.controller.photo.PhotoController;
 import com.web.gallery.presentation.controller.photo.PhotoFavoriteController;
+import com.web.gallery.presentation.controller.photo.PortfolioController;
 import com.web.gallery.presentation.response.common.BadRequestResponse;
 import com.web.gallery.presentation.response.common.ErrorResponse;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -53,7 +55,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
       KbnMstController.class,
       LocationController.class,
       PhotoFavoriteController.class,
-      PhotoController.class
+      PhotoController.class,
+      PortfolioController.class
     })
 @Component
 public class CommonControllerAdvice {
@@ -181,6 +184,20 @@ public class CommonControllerAdvice {
     ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.BAD_REQUEST);
 
     return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  /**
+   * ポートフォリオが存在しないときに制御するExceptionHandler
+   *
+   * @param exception {@link PortfolioNotFoundException}
+   * @return {@link ErrorResponse}
+   */
+  @ExceptionHandler(PortfolioNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handlePortfolioNotFoundException(
+      PortfolioNotFoundException exception) {
+    ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.NOT_FOUND);
+
+    return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.NOT_FOUND);
   }
 
   /**
