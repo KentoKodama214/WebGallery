@@ -549,7 +549,8 @@ sequenceDiagram
 
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
-| 「新規作成」ボタン | `/{accountId}/portfolio_setting/edit` | リンク |
+| 「新規作成」ボタン | `/{accountId}/portfolio_setting/edit` | リンク（作成数が権限ごとの上限に達している場合は押せず、その旨を表示） |
+| テーマ・タグを入力して「検索」／「クリア」 | 同画面（一覧を絞り込み／解除） | AJAX（部分一致） |
 | テーマ選択 | `/{accountId}/portfolio_setting/edit?portfolioNo={no}` | リンク |
 | 「公開ページを見る」リンク | `/portfolio/{accountId}` | リンク（別タブ） |
 
@@ -557,11 +558,14 @@ sequenceDiagram
 
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
-| 「写真を選択」ボタン | 同画面（写真選択ダイアログ） | AJAX（自分の写真一覧を取得） |
+| 「写真を選択」ボタン | 同画面（写真選択ダイアログ。写真の枠は向きに合わせた縦横比） | AJAX（本人専用の写真検索APIで取得） |
+| 写真選択ダイアログでタイトル・場所・タグを入力して「検索」 | 同画面（写真を絞り込み） | AJAX（部分一致） |
+| 写真選択ダイアログの「完了」／「キャンセル」 | 同画面（選択を反映／反映せずに閉じる） | 画面内表示 |
+| 「＋タグを追加」ボタン（タグ欄の下） | 同画面（タグの入力欄を追加） | 画面内表示 |
 | 「下書きとして登録」（新規）→ 成功 | `/{accountId}/portfolio_setting/edit?portfolioNo={no}` | AJAX → URL置き換え |
 | 「下書きとして登録」・「保存」（写真が0枚） | 同画面（「写真を1枚以上選択してください」を表示） | 画面内表示（送信しない） |
 | 「下書きとして登録」（作成数が権限ごとの上限に達している） | 同画面（「作成できるポートフォリオの数が上限に達しています。」を表示） | 画面内表示（400） |
-| 「プレビューを表示」ボタン（グリッド型） | 同画面（プレビューのダイアログ） | 画面内表示 |
+| 「プレビューを表示」ボタン（フィーチャー型・グリッド型） | 同画面（プレビューのダイアログ） | 画面内表示 |
 | 「保存」（編集）→ 成功 | 同画面（完了メッセージ） | AJAX |
 | 「公開する」／「下書きに戻す」→ 成功 | 同画面（状態バッジ更新・完了メッセージ） | AJAX（未保存の変更がある間は押せない） |
 | 登録・保存・公開状態の変更 → 失敗 | 同画面（エラー表示） | 画面内表示 |
@@ -662,6 +666,9 @@ sequenceDiagram
 | `/api/v1/accounts/{accountId}/portfolios/{portfolioNo}` | PUT | ポートフォリオ作成・編集 | なし（完了メッセージ） |
 | `/api/v1/accounts/{accountId}/portfolios/{portfolioNo}/status` | PUT | ポートフォリオ作成・編集 | なし（状態更新） |
 | `/api/v1/accounts/{accountId}/portfolios/{portfolioNo}` | DELETE | ポートフォリオ作成・編集 | → ポートフォリオ設定（一覧） |
+| `/api/v1/accounts/{accountId}/portfolios?theme=&tag=` | GET | ポートフォリオ設定（一覧） | なし（絞り込み） |
+| `/api/v1/accounts/{accountId}/portfolios/upper-limit` | GET | ポートフォリオ設定（一覧） | なし（「新規作成」の活性・非活性） |
+| `/api/v1/accounts/{accountId}/portfolio-photos` | GET | ポートフォリオ作成・編集（写真選択ダイアログ） | なし（写真の検索・追加読み込み） |
 | `/api/v1/portfolio-templates` | GET | ポートフォリオ作成・編集 | なし（テンプレートの選択肢） |
 | `/api/v1/photos/favorites` | POST | 写真詳細 | なし（状態切替） |
 | `/api/v1/photos/favorites` | DELETE | 写真詳細 | なし（状態切替） |
