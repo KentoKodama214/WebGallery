@@ -71,6 +71,24 @@ describe("PortfolioList", () => {
     expect(screen.getAllByText("5枚")).toHaveLength(2);
   });
 
+  it("公開中のポートフォリオにだけ公開ページへのリンクを表示し、一覧全体の「公開ページを見る」は表示しないこと", async () => {
+    mockGetPortfolioList.mockResolvedValue([
+      samplePortfolio,
+      { ...samplePortfolio, portfolioNo: 1, theme: "光と影", statusKbn: "draft" },
+    ]);
+
+    render(<PortfolioList accountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("portfolio-row")).toHaveLength(2);
+    });
+    const publicLink = screen.getByRole("link", { name: "日本の自然の公開ページ（新しいタブで開く）" });
+    expect(publicLink).toHaveAttribute("href", "/portfolio/user1/2");
+    expect(publicLink).toHaveAttribute("target", "_blank");
+    expect(screen.queryByRole("link", { name: /光と影の公開ページ/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "公開ページを見る" })).not.toBeInTheDocument();
+  });
+
   it("取得に失敗した場合はエラーを表示し、再読み込みで取り直せること", async () => {
     mockGetPortfolioList.mockRejectedValueOnce(new Error("ポートフォリオ一覧の取得に失敗しました"));
     mockGetPortfolioList.mockResolvedValueOnce([samplePortfolio]);

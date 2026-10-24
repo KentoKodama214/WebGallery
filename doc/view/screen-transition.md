@@ -93,7 +93,7 @@ graph TD
     PHOTO_DETAIL -->|削除成功・公開中のポートフォリオが下書きに戻った<br/>（通知ダイアログのリンク）| PORTFOLIO_EDIT
     PORTFOLIO_SETTING -->|新規作成・テーマ選択| PORTFOLIO_EDIT
     PORTFOLIO_EDIT -->|一覧へ戻る（左上）・削除成功（復元不可の確認後）| PORTFOLIO_SETTING
-    PORTFOLIO_SETTING -->|公開ページを見る（別タブ）| PORTFOLIO_PUBLIC_LIST
+    PORTFOLIO_SETTING -->|公開中の行の公開ページリンク（別タブ）| PORTFOLIO_PUBLIC_DETAIL
     PORTFOLIO_EDIT -->|公開ページを見る（公開中のみ・別タブ）| PORTFOLIO_PUBLIC_DETAIL
     PORTFOLIO_PUBLIC_LIST -->|ポートフォリオ選択| PORTFOLIO_PUBLIC_DETAIL
     PORTFOLIO_PUBLIC_DETAIL -->|← {id} のポートフォリオ一覧| PORTFOLIO_PUBLIC_LIST
