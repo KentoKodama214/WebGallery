@@ -1,13 +1,17 @@
 package com.web.gallery.application.service.impl.photo;
 
 import com.web.gallery.application.aggregate.Portfolio;
+import com.web.gallery.application.config.PhotoConfig;
 import com.web.gallery.application.config.PortfolioConfig;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
+import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
+import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.application.repository.account.AccountRepository;
 import com.web.gallery.application.repository.photo.FileRepository;
 import com.web.gallery.application.repository.photo.PortfolioAggregateRepository;
@@ -40,19 +44,56 @@ public class PortfolioServiceImpl implements PortfolioService {
   private final FileRepository fileRepository;
   private final AccountRepository accountRepository;
   private final PortfolioConfig portfolioConfig;
+  private final PhotoConfig photoConfig;
   private final PortfolioTemplateSettingsPolicy portfolioTemplateSettingsPolicy;
   private final PortfolioQuotaPolicy portfolioQuotaPolicy;
 
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を取得する
+   * 本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込んで取得する
    *
-   * @param accountNo アカウント番号
+   * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
    * @return {@link PortfolioModelList}
    */
   @Override
   @Transactional(readOnly = true)
-  public PortfolioModelList getPortfolioList(AccountNo accountNo) {
-    return portfolioMstRepository.getPortfolioList(accountNo);
+  public PortfolioModelList getPortfolioList(PortfolioListGetModel portfolioListGetModel) {
+    return portfolioMstRepository.getPortfolioList(portfolioListGetModel);
+  }
+
+  /**
+   * 作成済みのポートフォリオ（下書きを含む）の件数が、アカウントの権限区分ごとの上限に達しているかを判定する
+   *
+   * @param accountNo アカウント番号
+   * @return 上限に達している（これ以上作成できない）場合、true
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public Boolean isReachedUpperLimit(AccountNo accountNo) {
+    AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
+    return portfolioQuotaPolicy.isReached(
+        accountModel.getAuthorityKbn(),
+        new PortfolioCount(portfolioMstRepository.count(accountNo)),
+        buildUpperLimits());
+  }
+
+  /**
+   * ポートフォリオに設定する写真を、本人の未削除の写真からタイトル・撮影場所の名前・タグ名の部分一致で検索する
+   *
+   * <p>写真の画像ファイルパスは署名付きURLに差し替えて返す。1ページの件数は写真一覧と同じ設定値を使う
+   *
+   * @param portfolioPhotoSearchModel {@link PortfolioPhotoSearchModel}
+   * @return {@link PortfolioPhotoPageModel}
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public PortfolioPhotoPageModel searchPhotos(PortfolioPhotoSearchModel portfolioPhotoSearchModel) {
+    PortfolioPhotoPageModel page =
+        portfolioMstRepository.searchAvailablePhotos(
+            portfolioPhotoSearchModel.toBuilder()
+                .pageSize(photoConfig.getPhotoCountPerPage())
+                .build());
+    return PortfolioPhotoPageModel.of(
+        toSignedPhotoModelList(page.getPortfolioPhotoModelList()), page.getIsLast());
   }
 
   /**
@@ -71,17 +112,27 @@ public class PortfolioServiceImpl implements PortfolioService {
       throws GalleryException {
     PortfolioDetailModel detail = portfolioMstRepository.getPortfolioDetail(accountNo, portfolioNo);
 
+    return detail.toBuilder()
+        .portfolioPhotoModelList(toSignedPhotoModelList(detail.getPortfolioPhotoModelList()))
+        .build();
+  }
+
+  /**
+   * 写真の画像ファイルパス（オブジェクトキー）を署名付きURLに差し替える
+   *
+   * @param photoModelList 画像ファイルパスがオブジェクトキーの{@link PortfolioPhotoModelList}
+   * @return 画像ファイルパスを署名付きURLに差し替えた{@link PortfolioPhotoModelList}
+   */
+  private PortfolioPhotoModelList toSignedPhotoModelList(PortfolioPhotoModelList photoModelList) {
     List<PortfolioPhotoModel> signedPhotos =
-        detail.getPortfolioPhotoModelList().stream()
+        photoModelList.stream()
             .map(
                 photo ->
                     photo.toBuilder()
                         .imageFilePath(fileRepository.getPresignedUrl(photo.getImageFilePath()))
                         .build())
             .toList();
-    return detail.toBuilder()
-        .portfolioPhotoModelList(PortfolioPhotoModelList.of(signedPhotos))
-        .build();
+    return PortfolioPhotoModelList.of(signedPhotos);
   }
 
   /**
@@ -114,17 +165,20 @@ public class PortfolioServiceImpl implements PortfolioService {
    * @throws GalleryException 作成数が上限に達している場合
    */
   private void validateQuota(AccountNo accountNo) throws GalleryException {
-    AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
-    PortfolioUpperLimits upperLimits =
-        new PortfolioUpperLimits(
-            portfolioConfig.getMiniUserUpperLimit(), portfolioConfig.getNormalUserUpperLimit());
-    if (portfolioQuotaPolicy.isReached(
-        accountModel.getAuthorityKbn(),
-        new PortfolioCount(portfolioMstRepository.count(accountNo)),
-        upperLimits)) {
+    if (isReachedUpperLimit(accountNo)) {
       log.info("Portfolio: Reached Upper Limit (AccountNo: {})", accountNo.value());
       throw ErrorEnum.REACHED_PORTFOLIO_LIMIT.toException();
     }
+  }
+
+  /**
+   * 設定値から権限区分ごとのポートフォリオ作成数上限を組み立てる
+   *
+   * @return {@link PortfolioUpperLimits}
+   */
+  private PortfolioUpperLimits buildUpperLimits() {
+    return new PortfolioUpperLimits(
+        portfolioConfig.getMiniUserUpperLimit(), portfolioConfig.getNormalUserUpperLimit());
   }
 
   /**

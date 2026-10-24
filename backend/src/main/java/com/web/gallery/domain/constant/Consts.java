@@ -77,9 +77,6 @@ public final class Consts {
   /** ポートフォリオの説明文・写真ごとの説明の最大文字数（アノテーション属性で参照するためint型で定義する） */
   public static final int PORTFOLIO_DESCRIPTION_MAX_LENGTH = 2000;
 
-  /** グリッド型テンプレートの写真ごとのキャプションの最大文字数 */
-  public static final int PORTFOLIO_CAPTION_MAX_LENGTH = 100;
-
   /** 1つのポートフォリオに設定できる写真枚数の上限（アノテーション属性で参照するためint型で定義する） */
   public static final int PORTFOLIO_PHOTO_MAX_SIZE = 200;
 

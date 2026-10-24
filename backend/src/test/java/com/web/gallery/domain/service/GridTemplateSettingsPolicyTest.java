@@ -126,38 +126,22 @@ class GridTemplateSettingsPolicyTest {
   class isValidPhotoSettings {
     @Test
     @Order(1)
-    @DisplayName("正常系：キャプションを上限文字数ちょうどで指定した場合、trueを返すこと")
-    void isValidPhotoSettings_exactlyAtLimit() {
-      assertTrue(
-          policy.isValidPhotoSettings(new TemplateSettings(Map.of("caption", "あ".repeat(100)))));
-    }
-
-    @Test
-    @Order(2)
     @DisplayName("正常系：項目が1つもない場合、trueを返すこと")
     void isValidPhotoSettings_empty() {
       assertTrue(policy.isValidPhotoSettings(TemplateSettings.empty()));
     }
 
     @Test
+    @Order(2)
+    @DisplayName("異常系：キャプションを指定した場合、グリッド型は写真単位の設定を持たないためfalseを返すこと")
+    void isValidPhotoSettings_caption() {
+      assertFalse(policy.isValidPhotoSettings(new TemplateSettings(Map.of("caption", "金閣寺"))));
+    }
+
+    @Test
     @Order(3)
-    @DisplayName("異常系：キャプションが上限文字数を超える場合、falseを返すこと")
-    void isValidPhotoSettings_tooLong() {
-      assertFalse(
-          policy.isValidPhotoSettings(new TemplateSettings(Map.of("caption", "あ".repeat(101)))));
-    }
-
-    @Test
-    @Order(4)
-    @DisplayName("異常系：キャプションが文字列でない場合、falseを返すこと")
-    void isValidPhotoSettings_notString() {
-      assertFalse(policy.isValidPhotoSettings(new TemplateSettings(Map.of("caption", true))));
-    }
-
-    @Test
-    @Order(5)
-    @DisplayName("異常系：未知の項目（他テンプレートの項目を含む）が指定された場合、falseを返すこと")
-    void isValidPhotoSettings_unknownKey() {
+    @DisplayName("異常系：他テンプレートの項目が指定された場合、falseを返すこと")
+    void isValidPhotoSettings_otherTemplateKey() {
       assertFalse(policy.isValidPhotoSettings(new TemplateSettings(Map.of("theme", "x"))));
     }
   }
