@@ -34,7 +34,6 @@ import {
   GRID_ROW_PATTERN_PHOTO_COUNT,
   DEFAULT_ASPECT_RATIO,
   DIRECTION_ASPECT_RATIOS,
-  DIRECTION_LABELS,
   PHOTO_SETTING_KEYS,
   type PhotoSettingValues,
   type SelectedPhoto,
@@ -150,6 +149,7 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
   const [isDirty, setIsDirty] = useState(initialPortfolioNo === undefined);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
+  // 登録・更新・公開状態の切り替えの結果。空でない間は通知ダイアログを開く
   const [successMessage, setSuccessMessage] = useState("");
   const [showPicker, setShowPicker] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -210,10 +210,9 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     };
   }, [isOwner]);
 
-  /** 入力内容を変更したことを記録し、前回の保存結果の通知を消す */
+  /** 入力内容を変更したことを記録する */
   const markDirty = () => {
     setIsDirty(true);
-    setSuccessMessage("");
   };
 
   const templateOptions: { templateKbn: PortfolioTemplateKbn; displayName: string }[] =
@@ -414,28 +413,34 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
 
   const inputClass = "w-full border border-gray-300 rounded px-3 py-2";
 
-  /** プレビューを表示するボタン（フィーチャー型は「写真を選択」の右、グリッド型は「＋行を追加」の右に置く） */
-  const previewButton = (
-    <button
-      type="button"
-      onClick={() => setShowPreview(true)}
-      className="px-4 py-2 text-sm border border-blue-700 text-blue-700 rounded hover:bg-blue-50"
-    >
-      プレビューを表示
-    </button>
-  );
+  // プレビューは、表示する内容（フィーチャー型は写真、グリッド型は行）があるときだけ開ける
+  const canPreview = templateKbn === "grid" ? gridRows.length > 0 : photos.length > 0;
 
-  /** 「写真を選択」ボタン（フィーチャー型は写真があるときプレビューを右に並べる） */
+  /** 「写真を選択」ボタン（グリッド型は、行の枚数の合計と写真の枚数をボタンの上に表示する） */
   const photoActions = (
-    <div className="flex flex-wrap gap-3">
-      <button
-        type="button"
-        onClick={() => setShowPicker(true)}
-        className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
-      >
-        写真を選択
-      </button>
-      {templateKbn === "feature" && photos.length > 0 && previewButton}
+    <div className="flex flex-col gap-2">
+      {templateKbn === "grid" && (
+        <p
+          data-testid="grid-photo-count"
+          className={
+            gridTotalPhotoCount === photos.length && photos.length > 0
+              ? "text-sm text-green-700"
+              : "text-sm text-red-700"
+          }
+        >
+          行の枚数の合計 {gridTotalPhotoCount}枚 / 写真 {photos.length}枚
+          {gridTotalPhotoCount !== photos.length && "（公開するには一致させてください）"}
+        </p>
+      )}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowPicker(true)}
+          className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
+        >
+          写真を選択
+        </button>
+      </div>
     </div>
   );
 
@@ -624,17 +629,6 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
             <h2 id="portfolio-rows-heading" className="font-bold">
               行の組み合わせ
             </h2>
-            <p
-              data-testid="grid-photo-count"
-              className={
-                gridTotalPhotoCount === photos.length && photos.length > 0
-                  ? "text-sm text-green-700"
-                  : "text-sm text-red-700"
-              }
-            >
-              行の枚数の合計 {gridTotalPhotoCount}枚 / 写真 {photos.length}枚
-              {gridTotalPhotoCount !== photos.length && "（公開するには一致させてください）"}
-            </p>
             <ol className="flex flex-col gap-2">
               {gridRows.map((pattern, index) => (
                 <li key={index} className="flex items-center gap-2" data-testid="grid-row-item">
@@ -669,8 +663,8 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                 </li>
               ))}
             </ol>
-            {/* 行の追加は行の一覧の下に置き、行があるときはプレビューを右に並べる */}
-            <div className="flex flex-wrap gap-3">
+            {/* 行の追加は行の一覧の下に置く */}
+            <div>
               <button
                 type="button"
                 onClick={() => {
@@ -681,7 +675,6 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
               >
                 ＋行を追加
               </button>
-              {gridRows.length > 0 && previewButton}
             </div>
           </section>
         )}
@@ -709,15 +702,15 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                   <li
                     key={photo.photoNo}
                     data-testid="portfolio-photo-item"
-                    className="flex gap-3 border border-gray-200 rounded p-3"
+                    className="flex items-start gap-3 border border-gray-200 rounded p-3"
                   >
-                    {/* 枠を写真の向きに合わせた縦横比にし、向きの表示名も添える */}
+                    {/* 枠の横幅を揃えて右側の入力欄の位置を合わせ、高さは写真の向きに合わせた縦横比で決める */}
                     <div
                       data-testid="portfolio-photo-frame"
                       style={{
                         aspectRatio: DIRECTION_ASPECT_RATIOS[photo.directionKbn] ?? DEFAULT_ASPECT_RATIO,
                       }}
-                      className="h-24 flex-shrink-0 bg-gray-200 rounded overflow-hidden flex items-center justify-center"
+                      className="w-28 flex-shrink-0 bg-gray-200 rounded overflow-hidden flex items-center justify-center"
                     >
                       {src ? (
                         <img src={src} alt={photo.label} className="w-full h-full object-cover" />
@@ -728,14 +721,6 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                     <div className="flex-1 flex flex-col gap-2">
                       <p className="text-sm text-gray-600">
                         {index + 1}. {photo.label}
-                        {DIRECTION_LABELS[photo.directionKbn] && (
-                          <span
-                            data-testid="portfolio-photo-direction"
-                            className="ml-2 inline-block px-1.5 py-0.5 text-xs border border-gray-400 rounded"
-                          >
-                            {DIRECTION_LABELS[photo.directionKbn]}
-                          </span>
-                        )}
                       </p>
                       {templateKbn === "feature" && (
                         <>
@@ -815,13 +800,19 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
         <p role="alert" className="text-red-700 text-sm empty:sr-only">
           {submitError}
         </p>
-        <p role="status" className="text-green-700 text-sm empty:sr-only">
-          {successMessage}
-        </p>
 
-        {/* 保存・公開状態の切り替え（中央揃え） */}
+        {/* プレビュー・保存・公開状態の切り替え（中央揃え。プレビューは保存ボタンの左に置く） */}
         <div className="flex flex-col items-center gap-3">
           <div className="flex flex-wrap justify-center gap-3">
+            {canPreview && (
+              <button
+                type="button"
+                onClick={() => setShowPreview(true)}
+                className="px-6 py-2 border border-blue-700 text-blue-700 rounded hover:bg-blue-50"
+              >
+                プレビューを表示
+              </button>
+            )}
             <button
               type="button"
               onClick={handleSave}
@@ -852,7 +843,7 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
               ))}
           </div>
           {portfolioNo !== undefined && isDirty && (
-            <p className="text-sm text-gray-600 text-center">
+            <p className="text-sm text-red-700 text-center">
               公開状態を切り替えるには、先に変更を保存してください
             </p>
           )}
@@ -904,6 +895,29 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
             ) : (
               <FeaturePreview photos={photos} />
             )}
+          </div>
+        </ModalDialog>
+      )}
+
+      {successMessage && (
+        <ModalDialog
+          testId="portfolio-result-dialog"
+          label="ポートフォリオの保存結果"
+          initialFocusSelector="[data-dialog-initial-focus]"
+          onClose={() => setSuccessMessage("")}
+          overlayClassName="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          containerClassName="bg-white rounded shadow-lg p-6 w-full max-w-[400px]"
+        >
+          <p className="mb-4 text-center">{successMessage}</p>
+          <div className="flex justify-center">
+            <button
+              type="button"
+              data-dialog-initial-focus
+              onClick={() => setSuccessMessage("")}
+              className="px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-800"
+            >
+              閉じる
+            </button>
           </div>
         </ModalDialog>
       )}
