@@ -489,6 +489,77 @@ describe("PhotoDetail", () => {
     });
   });
 
+  it("削除で公開中のポートフォリオが下書きに戻った場合、メッセージと設定画面へのリンクを表示し、写真一覧へは操作後に戻ること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockDeletePhoto.mockResolvedValue({
+      isSuccess: true,
+      message:
+        "写真削除が完了しました。この写真を使用していたポートフォリオ（日本の自然）を下書きに戻しました。内容を確認して公開してください。",
+      revertedPortfolioList: [{ portfolioNo: 3, theme: "日本の自然" }],
+    });
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    fireEvent.click(screen.getByText("削除する"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("reverted-portfolio-dialog")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("delete-confirm-dialog")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/ポートフォリオ（日本の自然）を下書きに戻しました/)
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "日本の自然" })).toHaveAttribute(
+      "href",
+      "/user1/portfolio_setting/edit?portfolioNo=3"
+    );
+    // 確認・再公開を促すため、ダイアログを閉じるまでは写真一覧へ戻らない
+    expect(mockPush).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "写真一覧へ" }));
+    expect(mockPush).toHaveBeenCalledWith("/photo/user1/photo_list");
+  });
+
+  it("削除で下書きに戻したポートフォリオが空の場合、ダイアログを出さずに写真一覧へ戻ること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockDeletePhoto.mockResolvedValue({
+      isSuccess: true,
+      message: "写真削除が完了しました。",
+      revertedPortfolioList: [],
+    });
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    fireEvent.click(screen.getByText("削除する"));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/photo/user1/photo_list");
+    });
+    expect(screen.queryByTestId("reverted-portfolio-dialog")).not.toBeInTheDocument();
+  });
+
   it("削除実行中はキャンセル・閉じるが無効になること", async () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,

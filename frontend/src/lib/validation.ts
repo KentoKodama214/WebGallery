@@ -106,6 +106,18 @@ export const TAG_NAME_MAX_LENGTH = 20;
  */
 export const PHOTO_TAG_MAX_SIZE = 20;
 
+/** ポートフォリオのテーマ・写真ごとのテーマ・サブテーマの最大文字数（バックエンドの Consts.PORTFOLIO_THEME_MAX_LENGTH と一致させること） */
+export const PORTFOLIO_THEME_MAX_LENGTH = 100;
+
+/** ポートフォリオの説明文・写真ごとの説明の最大文字数（バックエンドの Consts.PORTFOLIO_DESCRIPTION_MAX_LENGTH と一致させること） */
+export const PORTFOLIO_DESCRIPTION_MAX_LENGTH = 2000;
+
+/** 1つのポートフォリオに設定できる写真枚数の上限（バックエンドの Consts.PORTFOLIO_PHOTO_MAX_SIZE と一致させること） */
+export const PORTFOLIO_PHOTO_MAX_SIZE = 200;
+
+/** 1つのポートフォリオに登録できるタグ数の上限（バックエンドの Consts.PORTFOLIO_TAG_MAX_SIZE と一致させること） */
+export const PORTFOLIO_TAG_MAX_SIZE = 30;
+
 /**
  * 分析ログ用に送信する遷移元URL（`document.referrer`）の最大文字数
  *
