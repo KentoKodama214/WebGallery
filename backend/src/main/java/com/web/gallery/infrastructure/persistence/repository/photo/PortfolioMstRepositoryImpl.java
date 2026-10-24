@@ -3,10 +3,13 @@ package com.web.gallery.infrastructure.persistence.repository.photo;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioDetailModelList;
+import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
+import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
+import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.application.model.photo.PortfolioTagModel;
 import com.web.gallery.application.model.photo.PortfolioTagModelList;
 import com.web.gallery.application.repository.photo.PortfolioMstRepository;
@@ -37,6 +40,7 @@ import com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioPhotoMap
 import com.web.gallery.infrastructure.persistence.mapper.photo.PortfolioTagMstMapper;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -76,16 +80,79 @@ public class PortfolioMstRepositoryImpl implements PortfolioMstRepository {
   }
 
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を、更新日時の新しい順に取得する
+   * 本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、更新日時の新しい順に取得する
    *
-   * @param accountNo アカウント番号
+   * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
    * @return {@link PortfolioModelList}
    */
   @Override
-  public PortfolioModelList getPortfolioList(AccountNo accountNo) {
+  public PortfolioModelList getPortfolioList(PortfolioListGetModel portfolioListGetModel) {
     List<PortfolioDto> dtoList =
-        portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(accountNo.value()));
+        portfolioMstMapper.selectList(
+            PortfolioMstCondition.byAccountNoAndKeywords(
+                portfolioListGetModel.getAccountNo().value(),
+                toContainsPattern(portfolioListGetModel.getTheme()),
+                toContainsPattern(portfolioListGetModel.getTag())));
     return PortfolioModelList.of(dtoList.stream().map(this::toPortfolioModel).toList());
+  }
+
+  /**
+   * 本人の未削除の写真を、タイトル・撮影場所の名前・タグ名の部分一致で絞り込み、撮影日時の新しい順に1ページ分取得する
+   *
+   * <p>次のページの有無を判定するため、1ページの件数より1件多く取得する
+   *
+   * @param portfolioPhotoSearchModel {@link PortfolioPhotoSearchModel}（1ページあたりの件数を設定済み）
+   * @return {@link PortfolioPhotoPageModel}（画像ファイルパスはオブジェクトキーのまま）
+   */
+  @Override
+  public PortfolioPhotoPageModel searchAvailablePhotos(
+      PortfolioPhotoSearchModel portfolioPhotoSearchModel) {
+    Integer pageSize = portfolioPhotoSearchModel.getPageSize();
+    List<PortfolioPhotoDto> dtoList =
+        portfolioPhotoMapper.selectAvailablePhotos(
+            portfolioPhotoSearchModel.getAccountNo().value(),
+            toContainsPattern(portfolioPhotoSearchModel.getTitle()),
+            toContainsPattern(portfolioPhotoSearchModel.getLocation()),
+            toContainsPattern(portfolioPhotoSearchModel.getTag()),
+            pageSize + 1,
+            (portfolioPhotoSearchModel.getPageNo() - 1) * pageSize);
+    Boolean isLast = dtoList.size() <= pageSize;
+    return PortfolioPhotoPageModel.of(
+        PortfolioPhotoModelList.of(
+            dtoList.stream().limit(pageSize).map(this::toAvailablePhotoModel).toList()),
+        isLast);
+  }
+
+  /**
+   * 検索語を、部分一致のLIKEパターンに変換する
+   *
+   * <p>検索語に含まれるLIKEのワイルドカード文字（{@code %}・{@code _}）とエスケープ文字（{@code \}）は、 文字そのものとして一致させるためエスケープする
+   *
+   * @param keyword 検索語（null許容）
+   * @return LIKEパターン。検索語がnullの場合はnull
+   */
+  private String toContainsPattern(String keyword) {
+    if (Objects.isNull(keyword)) {
+      return null;
+    }
+    String escaped = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    return "%" + escaped + "%";
+  }
+
+  /**
+   * ポートフォリオに設定する写真の検索結果をPortfolioPhotoModelに変換する
+   *
+   * @param dto 写真番号・タイトル・画像ファイルパス・向きのみを持つ{@link PortfolioPhotoDto}
+   * @return {@link PortfolioPhotoModel}（写真単位の設定は空）
+   */
+  private PortfolioPhotoModel toAvailablePhotoModel(PortfolioPhotoDto dto) {
+    return PortfolioPhotoModel.builder()
+        .photoNo(new PhotoNo(dto.getPhotoNo()))
+        .photoSettings(TemplateSettings.empty())
+        .photoJapaneseTitle(new PhotoJapaneseTitle(dto.getPhotoJapaneseTitle()))
+        .imageFilePath(new ImageFilePath(dto.getImageFilePath()))
+        .directionKbn(dto.getDirectionKbn())
+        .build();
   }
 
   /**

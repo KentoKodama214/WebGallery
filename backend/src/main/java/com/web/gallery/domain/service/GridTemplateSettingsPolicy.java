@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * グリッド型テンプレートの設定に関するビジネスルールを判定するドメインサービス
  *
  * <p>グリッド型は、1行に2〜3枚の写真を組み合わせて並べる。ポートフォリオ単位の設定として{@code rows}（行の一覧。各行は {@code pattern}に{@link
- * GridRowPatternEnum}の名前を持つ）を、写真単位の設定として{@code caption}（キャプション）を持つ。 各行は写真を表示順に、行パターンの枚数ずつ消費する
+ * GridRowPatternEnum}の名前を持つ）を持ち、写真単位の設定は持たない。 各行は写真を表示順に、行パターンの枚数ずつ消費する
  */
 @Component
 public class GridTemplateSettingsPolicy {
@@ -24,14 +24,9 @@ public class GridTemplateSettingsPolicy {
   /** 行の項目名：行パターン */
   public static final String KEY_PATTERN = "pattern";
 
-  /** 写真設定の項目名：キャプション */
-  public static final String KEY_CAPTION = "caption";
-
   private static final Set<String> TEMPLATE_SETTING_KEYS = Set.of(KEY_ROWS);
 
   private static final Set<String> ROW_KEYS = Set.of(KEY_PATTERN);
-
-  private static final Set<String> PHOTO_SETTING_KEYS = Set.of(KEY_CAPTION);
 
   /**
    * ポートフォリオ単位の設定が妥当かどうかを判定する
@@ -58,18 +53,13 @@ public class GridTemplateSettingsPolicy {
   /**
    * 写真単位の設定が妥当かどうかを判定する
    *
-   * <p>未知の項目を含まず、キャプションが文字数上限以内の文字列である場合に妥当とする（未入力は許容する）
+   * <p>グリッド型は写真単位の設定を持たないため、空の場合だけを妥当とする
    *
    * @param photoSettings 写真単位の設定
    * @return 妥当な場合、true
    */
   public Boolean isValidPhotoSettings(TemplateSettings photoSettings) {
-    if (!PHOTO_SETTING_KEYS.containsAll(photoSettings.keys())) {
-      return false;
-    }
-    Object caption = photoSettings.get(KEY_CAPTION);
-    return caption == null
-        || (caption instanceof String text && text.length() <= Consts.PORTFOLIO_CAPTION_MAX_LENGTH);
+    return photoSettings.keys().isEmpty();
   }
 
   /**

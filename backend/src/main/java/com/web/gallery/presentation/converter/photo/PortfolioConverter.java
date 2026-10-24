@@ -1,8 +1,10 @@
 package com.web.gallery.presentation.converter.photo;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
+import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.application.model.photo.PortfolioTagModel;
 import com.web.gallery.application.model.photo.PortfolioTagModelList;
 import com.web.gallery.domain.constant.Consts;
@@ -14,7 +16,9 @@ import com.web.gallery.domain.model.photo.PortfolioTheme;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TemplateSettings;
+import com.web.gallery.presentation.request.photo.PortfolioListRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSaveRequest;
+import com.web.gallery.presentation.request.photo.PortfolioPhotoSearchRequest;
 import com.web.gallery.presentation.request.photo.PortfolioSaveRequest;
 import com.web.gallery.presentation.request.photo.PortfolioTagSaveRequest;
 import java.util.List;
@@ -63,6 +67,57 @@ public class PortfolioConverter {
   public PortfolioDetailModel toPortfolioDetailModel(
       PortfolioSaveRequest request, AccountNo accountNo, PortfolioNo portfolioNo) {
     return toPortfolioDetailModel(request, accountNo).toBuilder().portfolioNo(portfolioNo).build();
+  }
+
+  /**
+   * ポートフォリオ一覧の絞り込みリクエストとログイン中のアカウント番号からPortfolioListGetModelを生成する
+   *
+   * <p>前後の空白を除いて空になる条件は、未指定（null）として扱う
+   *
+   * @param request {@link PortfolioListRequest}
+   * @param accountNo ログイン中のアカウント番号
+   * @return {@link PortfolioListGetModel}
+   */
+  public PortfolioListGetModel toPortfolioListGetModel(
+      PortfolioListRequest request, AccountNo accountNo) {
+    return PortfolioListGetModel.builder()
+        .accountNo(accountNo)
+        .theme(toKeyword(request.getTheme()))
+        .tag(toKeyword(request.getTag()))
+        .build();
+  }
+
+  /**
+   * ポートフォリオ用の写真検索リクエストとログイン中のアカウント番号からPortfolioPhotoSearchModelを生成する
+   *
+   * <p>前後の空白を除いて空になる条件は、未指定（null）として扱う
+   *
+   * @param request {@link PortfolioPhotoSearchRequest}
+   * @param accountNo ログイン中のアカウント番号
+   * @return {@link PortfolioPhotoSearchModel}
+   */
+  public PortfolioPhotoSearchModel toPortfolioPhotoSearchModel(
+      PortfolioPhotoSearchRequest request, AccountNo accountNo) {
+    return PortfolioPhotoSearchModel.builder()
+        .accountNo(accountNo)
+        .title(toKeyword(request.getTitle()))
+        .location(toKeyword(request.getLocation()))
+        .tag(toKeyword(request.getTag()))
+        .pageNo(request.getPageNo())
+        .build();
+  }
+
+  /**
+   * 絞り込みの入力値を、前後の空白を除いた検索語に変換する
+   *
+   * @param value 入力値（null許容）
+   * @return 検索語。未入力・空白のみの場合はnull
+   */
+  private String toKeyword(String value) {
+    if (Objects.isNull(value) || value.isBlank()) {
+      return null;
+    }
+    return value.strip();
   }
 
   private PortfolioPhotoModelList toPortfolioPhotoModelList(

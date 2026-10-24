@@ -3,7 +3,10 @@ package com.web.gallery.application.repository.photo;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioDetailModelList;
+import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
+import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.PhotoNo;
@@ -28,12 +31,21 @@ public interface PortfolioMstRepository {
   Integer count(AccountNo accountNo);
 
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を、更新日時の新しい順に取得する
+   * 本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、更新日時の新しい順に取得する
    *
-   * @param accountNo アカウント番号
+   * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
    * @return {@link PortfolioModelList}
    */
-  PortfolioModelList getPortfolioList(AccountNo accountNo);
+  PortfolioModelList getPortfolioList(PortfolioListGetModel portfolioListGetModel);
+
+  /**
+   * 本人の未削除の写真を、タイトル・撮影場所の名前・タグ名の部分一致で絞り込み、撮影日時の新しい順に1ページ分取得する
+   *
+   * @param portfolioPhotoSearchModel {@link PortfolioPhotoSearchModel}（1ページあたりの件数を設定済み）
+   * @return {@link PortfolioPhotoPageModel}（画像ファイルパスはオブジェクトキーのまま）
+   */
+  PortfolioPhotoPageModel searchAvailablePhotos(
+      PortfolioPhotoSearchModel portfolioPhotoSearchModel);
 
   /**
    * 本人のポートフォリオの詳細情報（写真・タグを含む）を取得する
