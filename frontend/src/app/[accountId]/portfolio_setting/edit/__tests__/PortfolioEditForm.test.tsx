@@ -637,9 +637,19 @@ describe("PortfolioEditForm", () => {
       // テーマを入力済みの写真には警告を表示しない
       expect(screen.getByLabelText("金閣寺のテーマ")).toHaveAttribute("aria-invalid", "false");
       expect(screen.getAllByText("公開するにはテーマを入力してください")).toHaveLength(1);
-      expect(screen.getByRole("alert")).toHaveTextContent(
+      // 不足の案内は、プレビュー・保存ボタンの下に中央揃えで表示する
+      const publishError = screen.getByText(
         "公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。"
       );
+      expect(publishError).toHaveAttribute("role", "alert");
+      expect(publishError).toHaveClass("text-center", "text-red-700");
+      expect(
+        isInDocumentOrder(
+          screen.getByRole("button", { name: "プレビューを表示" }),
+          screen.getByRole("button", { name: "保存する" }),
+          publishError
+        )
+      ).toBe(true);
       expect(mockSavePortfolio).not.toHaveBeenCalled();
 
       // テーマを入力すると警告が消え、保存できる
@@ -661,11 +671,38 @@ describe("PortfolioEditForm", () => {
       expect(screen.getByLabelText("茶畑のテーマ")).toHaveAccessibleDescription(
         "公開するにはテーマを入力してください"
       );
-      expect(screen.getByRole("alert")).toHaveTextContent(
-        "公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。"
-      );
+      expect(
+        isInDocumentOrder(
+          screen.getByRole("button", { name: "公開する" }),
+          screen.getByText("公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。")
+        )
+      ).toBe(true);
       expect(mockUpdatePortfolioStatus).not.toHaveBeenCalled();
       expect(screen.getByTestId("portfolio-status")).toHaveTextContent("下書き");
+    });
+
+    it("公開に必要な設定の不足を表示する間は、未保存の変更の案内をその文言に差し替えること", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(featureDetail);
+
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+      fireEvent.change(screen.getByLabelText("説明文"), { target: { value: "変更" } });
+      expect(
+        screen.getByText("公開状態を切り替えるには、先に変更を保存してください")
+      ).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }));
+
+      expect(
+        screen.getByText("公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。")
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("公開状態を切り替えるには、先に変更を保存してください")
+      ).not.toBeInTheDocument();
+      // ボタンの上（ページ上部側）には重ねて表示しない
+      expect(
+        screen.getAllByText("公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。")
+      ).toHaveLength(1);
     });
 
     it("フィーチャー型の下書きを保存するときは、テーマが未入力でも警告せずに保存すること", async () => {
