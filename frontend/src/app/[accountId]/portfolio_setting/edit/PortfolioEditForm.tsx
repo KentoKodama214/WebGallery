@@ -55,6 +55,18 @@ interface TagInput {
 /** 新しく追加する行の既定の行パターン */
 const DEFAULT_GRID_ROW_PATTERN = "TWO_EQUAL";
 
+/** 公開に必要な設定が不足している場合のメッセージ（バックエンドの400と同じ文言） */
+const PUBLISH_SETTINGS_ERROR =
+  "公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。";
+
+/**
+ * 写真のテーマの入力欄のエラーのキー
+ *
+ * @param photoNo 写真番号
+ * @returns エラーのキー
+ */
+const photoThemeErrorKey = (photoNo: number) => `photo-theme-${photoNo}`;
+
 /**
  * 写真単位の設定（JSON）を入力値に変換する。文字列以外の値・未知の項目は無視する
  *
@@ -283,14 +295,46 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
 
   const updatePhotoSetting = (photoNo: number, key: keyof PhotoSettingValues, value: string) => {
     markDirty();
+    if (key === "theme" && errors[photoThemeErrorKey(photoNo)]) {
+      // 公開に必要なテーマの警告は、入力し直したら消す
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[photoThemeErrorKey(photoNo)];
+        return next;
+      });
+    }
     setPhotos((prev) =>
       prev.map((p) => (p.photoNo === photoNo ? { ...p, settings: { ...p.settings, [key]: value } } : p))
     );
   };
 
-  /** 入力内容を検証し、エラーがあれば項目ごとのメッセージを設定する */
-  const validate = (): boolean => {
-    const nextErrors: Record<string, string> = {};
+  /**
+   * 公開に必要な設定が不足している項目のエラーを返す（バックエンドの公開時の検証と同じ条件）
+   *
+   * フィーチャー型は、すべての写真にテーマが必要。グリッド型の行の枚数の不一致は、枚数の表示で示す
+   *
+   * @returns 項目ごとのエラー
+   */
+  const collectPublishErrors = (): Record<string, string> => {
+    const publishErrors: Record<string, string> = {};
+    if (templateKbn === "feature") {
+      photos
+        .filter((photo) => !photo.settings.theme.trim())
+        .forEach((photo) => {
+          publishErrors[photoThemeErrorKey(photo.photoNo)] = "公開するにはテーマを入力してください";
+        });
+    }
+    return publishErrors;
+  };
+
+  /**
+   * 入力内容を検証し、エラーがあれば項目ごとのメッセージを設定する
+   *
+   * @param publishErrors 公開に必要な設定が不足している項目のエラー（公開中のまま保存する場合）
+   * @returns エラーがない場合、true
+   */
+  const validate = (publishErrors: Record<string, string>): boolean => {
+    const nextErrors: Record<string, string> = { ...publishErrors };
     if (!theme.trim()) {
       nextErrors.theme = "テーマを入力してください";
     }
@@ -334,7 +378,13 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     if (isSubmitting) return;
     setSubmitError("");
     setSuccessMessage("");
-    if (!validate()) return;
+    // 公開中のまま保存する場合は、公開に必要な設定も満たしている必要がある（バックエンドも400で拒否する）
+    const publishErrors =
+      portfolioNo !== undefined && statusKbn === "published" ? collectPublishErrors() : {};
+    if (!validate(publishErrors)) {
+      if (Object.keys(publishErrors).length > 0) setSubmitError(PUBLISH_SETTINGS_ERROR);
+      return;
+    }
     setIsSubmitting(true);
     try {
       const result = await savePortfolio(accountId, buildSaveData(), portfolioNo);
@@ -357,6 +407,14 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     if (isSubmitting || portfolioNo === undefined || isDirty) return;
     setSubmitError("");
     setSuccessMessage("");
+    if (nextStatus === "published") {
+      const publishErrors = collectPublishErrors();
+      setErrors(publishErrors);
+      if (Object.keys(publishErrors).length > 0) {
+        setSubmitError(PUBLISH_SETTINGS_ERROR);
+        return;
+      }
+    }
     setIsSubmitting(true);
     try {
       const result = await updatePortfolioStatus(accountId, portfolioNo, nextStatus);
@@ -724,15 +782,31 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                       </p>
                       {templateKbn === "feature" && (
                         <>
-                          <input
-                            type="text"
-                            aria-label={`${photo.label}のテーマ`}
-                            placeholder="テーマ（公開時は必須）"
-                            value={photo.settings.theme}
-                            maxLength={PORTFOLIO_THEME_MAX_LENGTH}
-                            onChange={(e) => updatePhotoSetting(photo.photoNo, "theme", e.target.value)}
-                            className={inputClass}
-                          />
+                          <div>
+                            <input
+                              type="text"
+                              aria-label={`${photo.label}のテーマ`}
+                              placeholder="テーマ（公開時は必須）"
+                              value={photo.settings.theme}
+                              maxLength={PORTFOLIO_THEME_MAX_LENGTH}
+                              aria-invalid={!!errors[photoThemeErrorKey(photo.photoNo)]}
+                              aria-describedby={
+                                errors[photoThemeErrorKey(photo.photoNo)]
+                                  ? `${photoThemeErrorKey(photo.photoNo)}-error`
+                                  : undefined
+                              }
+                              onChange={(e) => updatePhotoSetting(photo.photoNo, "theme", e.target.value)}
+                              className={inputClass}
+                            />
+                            {errors[photoThemeErrorKey(photo.photoNo)] && (
+                              <p
+                                id={`${photoThemeErrorKey(photo.photoNo)}-error`}
+                                className="text-red-700 text-sm mt-1"
+                              >
+                                {errors[photoThemeErrorKey(photo.photoNo)]}
+                              </p>
+                            )}
+                          </div>
                           <input
                             type="text"
                             aria-label={`${photo.label}のサブテーマ`}
