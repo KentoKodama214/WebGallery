@@ -1,0 +1,131 @@
+"""
+公開ページ向けのポートフォリオ表示API
+
+公開状態（published）のポートフォリオだけを返す。下書き・削除済みのポートフォリオと、
+削除済みの写真は返さない。認証は不要（Next.js のサーバーからのみ呼び出す前提）。
+"""
+type Query {
+  "アカウントの公開中のポートフォリオ一覧（更新日時の新しい順）。アカウントが存在しない場合は空の一覧を返す"
+  publishedPortfolios(accountId: ID!): [PortfolioSummary!]!
+
+  "公開中のポートフォリオ。存在しない・公開されていない場合は null を返す"
+  publishedPortfolio(accountId: ID!, portfolioNo: Int!): Portfolio
+}
+
+"日時（RFC 3339）"
+scalar DateTime
+
+"ポートフォリオのテンプレート"
+enum PortfolioTemplate {
+  "フィーチャー型（写真ごとにテーマ・サブテーマ・説明を持つセクションを縦に並べる）"
+  FEATURE
+  "グリッド型（1行に2〜3枚の写真を組み合わせて並べる）"
+  GRID
+}
+
+"写真の向き"
+enum PhotoDirection {
+  VERTICAL
+  HORIZONTAL
+  SQUARE
+  NONE
+}
+
+"写真"
+type Photo {
+  "写真番号"
+  photoNo: Int!
+  "画像の署名付きURL（有効期限あり）"
+  url: String!
+  "写真タイトル（日本語）"
+  japaneseTitle: String!
+  "写真タイトル（英語。未設定の場合は空文字）"
+  englishTitle: String!
+  "写真の向き"
+  direction: PhotoDirection!
+}
+
+"タグ"
+type Tag {
+  japaneseName: String!
+  "未設定の場合は空文字"
+  englishName: String!
+}
+
+"ポートフォリオ一覧の1件分"
+type PortfolioSummary {
+  portfolioNo: Int!
+  theme: String!
+  description: String!
+  template: PortfolioTemplate!
+  tags: [Tag!]!
+  "表示順の先頭の写真（写真が1枚もない場合は null）"
+  coverPhoto: Photo
+  photoCount: Int!
+  updatedAt: DateTime!
+}
+
+"ポートフォリオ"
+type Portfolio {
+  portfolioNo: Int!
+  theme: String!
+  description: String!
+  template: PortfolioTemplate!
+  tags: [Tag!]!
+  updatedAt: DateTime!
+  "テンプレートごとのレイアウト。`__typename` でテンプレートを判別する"
+  layout: PortfolioLayout!
+}
+
+"""
+テンプレートごとのレイアウト
+
+テンプレートを追加する場合は、レイアウトの型を追加してこの union に加える
+"""
+union PortfolioLayout = FeatureLayout | GridLayout
+
+"フィーチャー型のレイアウト"
+type FeatureLayout {
+  "表示順のセクション"
+  sections: [FeatureSection!]!
+}
+
+"フィーチャー型のセクション（写真1枚分）"
+type FeatureSection {
+  photo: Photo!
+  theme: String!
+  "未設定の場合は空文字"
+  subTheme: String!
+  "未設定の場合は空文字"
+  description: String!
+}
+
+"グリッド型のレイアウト"
+type GridLayout {
+  "上から順の行"
+  rows: [GridRow!]!
+}
+
+"グリッド型の行パターン"
+enum GridRowPattern {
+  "2枚を均等幅で並べる"
+  TWO_EQUAL
+  "3枚を均等幅で並べる"
+  THREE_EQUAL
+  "横長1枚（左）と縦長1枚（右）を並べる"
+  WIDE_NARROW
+  "縦長1枚（左）と横長1枚（右）を並べる"
+  NARROW_WIDE
+}
+
+"グリッド型の行"
+type GridRow {
+  pattern: GridRowPattern!
+  "左から順の写真"
+  photos: [GridPhoto!]!
+}
+
+"グリッド型の写真"
+type GridPhoto {
+  photo: Photo!
+}

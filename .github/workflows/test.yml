@@ -91,6 +91,88 @@ jobs:
           name: jacoco-exec-unit
           path: backend/build/jacoco/unitTest.exec
 
+  # portfolio-api（Go。公開ページ向けのポートフォリオ表示API）の静的解析・単体テスト・結合テスト。
+  # 結合テストは本番と同じ読み取り専用ロール（portfolio_reader）で接続するため、
+  # db/photo/portfolio_reader.sql までを流してDBを初期化する
+  portfolio-api-test:
+    name: portfolio-apiテスト
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: web_gallery_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: portfolio-api
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v7
+
+      - name: Go セットアップ
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: portfolio-api/go.mod
+          cache-dependency-path: portfolio-api/go.sum
+
+      - name: フォーマットチェック（gofmt）
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "gofmt で整形されていないファイルがあります:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: 静的解析（go vet）
+        run: go vet -tags integration ./...
+
+      # スキーマ（graph/schema.graphqls）を変更したのに go generate を忘れた場合を検出する
+      - name: GraphQL生成コードの差分チェック
+        run: |
+          go generate ./...
+          git diff --exit-code -- graph/
+
+      - name: 単体テスト実行
+        run: go test ./...
+
+      - name: データベース初期化
+        working-directory: .
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -p 5433 -U postgres -d web_gallery_test -c "CREATE SCHEMA IF NOT EXISTS common;"
+          psql -h localhost -p 5433 -U postgres -d web_gallery_test -c "CREATE SCHEMA IF NOT EXISTS photo;"
+          SQL_FILES=(
+            "db/common/common.type.sql"
+            "db/common/account.sql"
+            "db/common/location_mst.sql"
+            "db/photo/photo.type.sql"
+            "db/photo/photo_mst.sql"
+            "db/photo/portfolio_mst.sql"
+            "db/photo/portfolio_photo.sql"
+            "db/photo/portfolio_tag_mst.sql"
+            "db/photo/portfolio_reader.sql"
+          )
+          for file in "${SQL_FILES[@]}"; do
+            psql -h localhost -p 5433 -U postgres -d web_gallery_test -v ON_ERROR_STOP=1 -f "$file"
+          done
+
+      - name: 結合テスト実行
+        run: go test -tags integration ./...
+
   # 単体テストへのneedsは指定しない。単体テストと結合テスト・E2Eテストの間に成果物の
   # 受け渡しはなく、直列化すると単体テストの所要時間がそのままクリティカルパスに積まれるため、
   # 最初から並列で起動する
@@ -154,6 +236,7 @@ jobs:
             "db/photo/portfolio_mst.sql"
             "db/photo/portfolio_photo.sql"
             "db/photo/portfolio_tag_mst.sql"
+            "db/photo/portfolio_reader.sql"
           )
           for file in "${SQL_FILES[@]}"; do
             psql -h localhost -p 5433 -U postgres -d web_gallery_test -f "$file"
@@ -281,6 +364,7 @@ jobs:
             "db/photo/portfolio_mst.sql"
             "db/photo/portfolio_photo.sql"
             "db/photo/portfolio_tag_mst.sql"
+            "db/photo/portfolio_reader.sql"
           )
           for file in "${SQL_FILES[@]}"; do
             psql -h localhost -p 5432 -U postgres -d web_gallery -f "$file"

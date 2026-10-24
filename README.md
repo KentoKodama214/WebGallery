@@ -77,6 +77,17 @@
 | Node.jsバージョン管理 | mise |
 | タスクランナー | just |
 
+### ポートフォリオ表示API（portfolio-api）
+
+公開ページ向けの読み取り専用の GraphQL API です。詳細は [`doc/architecture/portfolio-api.md`](doc/architecture/portfolio-api.md) を参照してください。
+
+| コンポーネント | 技術 |
+|----------------|------|
+| 言語 | Go 1.27（mise でバージョンを固定） |
+| GraphQL | gqlgen |
+| DBドライバ | pgx v5（読み取り専用ロール `portfolio_reader` で接続） |
+| 画像ストレージ | aws-sdk-go-v2（S3 の署名付きURL発行） |
+
 ## 前提条件
 
 - Java 21
@@ -266,6 +277,15 @@ just backend-clean-build
 ```
 
 ```bash
+# portfolio-api（Go）の単体テスト・結合テスト（結合は要Docker）・静的解析・GraphQLコード生成・ローカル起動
+just go-test
+just go-integrationTest
+just go-lint
+just go-generate
+just go-run
+```
+
+```bash
 # フロントエンドのビルド
 just front-build
 
@@ -362,7 +382,7 @@ REST APIの詳細は `http://localhost:8080/scalar` を参照してください�
 
 ```
 WebGallery/
-├── .mise.toml                     # Node.jsバージョン定義（mise）
+├── .mise.toml                     # Node.js・Goバージョン定義（mise）
 ├── justfile                       # タスクランナー定義（just）
 ├── .github
 │   ├── ISSUE_TEMPLATE
@@ -388,6 +408,7 @@ WebGallery/
 ├── scripts/
 │   ├── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド自動起動）
 │   └── seed-local-data.sh          # ローカル動作確認用のダミーデータ投入スクリプト
+├── portfolio-api/                  # 公開ページ向けのポートフォリオ表示API（Go・GraphQL。doc/architecture/portfolio-api.md）
 ├── frontend/                       # フロントエンド（Next.js）
 │   ├── package.json
 │   ├── pnpm-lock.yaml

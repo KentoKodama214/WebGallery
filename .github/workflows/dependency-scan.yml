@@ -55,13 +55,14 @@ jobs:
       # --configで渡すosv-scanner.tomlには、修正版が未リリースで依存チェーン上こちらから
       # 対処できない脆弱性の除外設定（IgnoredVulns）を記載している。除外には期限を設定しており、
       # 期限切れとともにスキャンが再度失敗して棚卸しが促される。
-      - name: 依存関係の脆弱性スキャン（backend SBOM・frontend pnpm-lock.yaml）
+      - name: 依存関係の脆弱性スキャン（backend SBOM・frontend pnpm-lock.yaml・portfolio-api go.mod）
         run: |
           set +e
           ./osv-scanner scan source \
             --config=osv-scanner.toml \
             -L backend/build/reports/cyclonedx/application.cdx.json \
             -L frontend/pnpm-lock.yaml \
+            -L portfolio-api/go.mod \
             --format=markdown --output-file=osv-results.md
           exit_code=$?
           set -e

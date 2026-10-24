@@ -85,3 +85,24 @@ format-check:
 # backendのコードフォーマット整形（Spotless）
 format:
     ./backend/gradlew -p backend spotlessApply
+
+# portfolio-api（Go。公開ページ向けのポートフォリオ表示API）をローカル環境で起動（要DB・MinIO起動）
+go-run:
+    cd portfolio-api && PORTFOLIO_API_ENV=local mise exec -- go run ./cmd/server
+
+# portfolio-apiの単体テスト
+go-test:
+    cd portfolio-api && mise exec -- go test ./...
+
+# portfolio-apiの結合テスト（要テスト用DB起動。just db-up）
+go-integrationTest:
+    cd portfolio-api && mise exec -- go test -tags integration ./...
+
+# portfolio-apiの静的解析（gofmtの整形漏れ・go vet）
+go-lint:
+    cd portfolio-api && test -z "$(mise exec -- gofmt -l .)" || (mise exec -- gofmt -l . && exit 1)
+    cd portfolio-api && mise exec -- go vet -tags integration ./...
+
+# portfolio-apiのGraphQLコード生成（graph/schema.graphqls を変更したら実行する）
+go-generate:
+    cd portfolio-api && mise exec -- go generate ./...
