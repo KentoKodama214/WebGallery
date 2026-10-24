@@ -144,7 +144,7 @@ func TestFindPublished(t *testing.T) {
 	}
 	// 表示順に並べ、論理削除済みの写真3は含めない
 	wantPhotos := []domain.PortfolioPhoto{
-		{DisplayOrder: 1, Settings: map[string]any{"caption": "茶畑"},
+		{DisplayOrder: 1, Settings: map[string]any{},
 			Photo: domain.Photo{PhotoNo: 2, ImageFilePath: "900001/2-bbb.jpg", JapaneseTitle: "茶畑", Direction: domain.DirectionSquare}},
 		{DisplayOrder: 2, Settings: map[string]any{},
 			Photo: domain.Photo{PhotoNo: 1, ImageFilePath: "900001/1-aaa.jpg", JapaneseTitle: "金閣寺", EnglishTitle: "Kinkakuji", Direction: domain.DirectionHorizontal}},

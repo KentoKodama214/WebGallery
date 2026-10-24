@@ -53,8 +53,7 @@ type ComplexityRoot struct {
 	}
 
 	GridPhoto struct {
-		Caption func(childComplexity int) int
-		Photo   func(childComplexity int) int
+		Photo func(childComplexity int) int
 	}
 
 	GridRow struct {
@@ -168,12 +167,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.GridLayout.Rows(childComplexity), true
 
-	case "GridPhoto.caption":
-		if e.ComplexityRoot.GridPhoto.Caption == nil {
-			break
-		}
-
-		return e.ComplexityRoot.GridPhoto.Caption(childComplexity), true
 	case "GridPhoto.photo":
 		if e.ComplexityRoot.GridPhoto.Photo == nil {
 			break
@@ -457,8 +450,6 @@ func (ec *executionContext) childFields_GridPhoto(ctx context.Context, field gra
 	switch field.Name {
 	case "photo":
 		return ec.fieldContext_GridPhoto_photo(ctx, field)
-	case "caption":
-		return ec.fieldContext_GridPhoto_caption(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type GridPhoto", field.Name)
 }
@@ -962,29 +953,6 @@ func (ec *executionContext) fieldContext_GridPhoto_photo(_ context.Context, fiel
 		},
 	}
 	return fc, nil
-}
-
-func (ec *executionContext) _GridPhoto_caption(ctx context.Context, field graphql.CollectedField, obj *model.GridPhoto) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_GridPhoto_caption(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.Caption, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
-			return ec.marshalNString2string(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_GridPhoto_caption(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("GridPhoto", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _GridRow_pattern(ctx context.Context, field graphql.CollectedField, obj *model.GridRow) (ret graphql.Marshaler) {
@@ -2976,11 +2944,6 @@ func (ec *executionContext) _GridPhoto(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = graphql.MarshalString("GridPhoto")
 		case "photo":
 			out.Values[i] = ec._GridPhoto_photo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "caption":
-			out.Values[i] = ec._GridPhoto_caption(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

@@ -57,10 +57,9 @@ type GridRow struct {
 	Photos  []GridPhoto
 }
 
-// GridPhoto はグリッド型の写真。
+// GridPhoto はグリッド型の写真（グリッド型は写真単位の設定を持たない）。
 type GridPhoto struct {
-	Photo   Photo
-	Caption string
+	Photo Photo
 }
 
 func (FeatureLayout) isLayout() {}
@@ -71,7 +70,6 @@ const (
 	settingTheme       = "theme"
 	settingSubTheme    = "subTheme"
 	settingDescription = "description"
-	settingCaption     = "caption"
 	settingRows        = "rows"
 	settingPattern     = "pattern"
 )
@@ -116,10 +114,7 @@ func buildGridLayout(p Portfolio) GridLayout {
 		}
 		photos := make([]GridPhoto, 0, count)
 		for _, photo := range p.Photos[cursor : cursor+count] {
-			photos = append(photos, GridPhoto{
-				Photo:   photo.Photo,
-				Caption: stringSetting(photo.Settings, settingCaption),
-			})
+			photos = append(photos, GridPhoto{Photo: photo.Photo})
 		}
 		rows = append(rows, GridRow{Pattern: pattern, Photos: photos})
 		cursor += count
