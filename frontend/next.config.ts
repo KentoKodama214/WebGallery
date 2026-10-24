@@ -32,6 +32,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   devIndicators: false,
   experimental: {
+    // セキュリティアドバイザリ対応のためのアップグレードであることを Next.js に伝える
+    agentUpgrade: "security",
     // proxy（旧 middleware）使用時、Next.js はリクエストボディをメモリへ
     // バッファリングする。バックエンドのアップロード上限（サーブレット 55MB。
     // 写真の新規一括登録で最大10枚×5MBを送信できるため）に合わせて上限を設定し、
