@@ -96,10 +96,3 @@ export const DIRECTION_ASPECT_RATIOS: Record<string, string> = {
 
 /** 向きが未設定の写真の枠の縦横比 */
 export const DEFAULT_ASPECT_RATIO = "1 / 1";
-
-/** 向き区分の表示名（向きが未設定の写真は表示しない） */
-export const DIRECTION_LABELS: Record<string, string> = {
-  vertical: "縦向き",
-  horizontal: "横向き",
-  square: "正方形",
-};

@@ -50,10 +50,14 @@ test.describe("ポートフォリオの公開ページ", () => {
       await page.getByRole("button", { name: "行を追加" }).click();
       await expect(page.getByTestId("grid-photo-count")).toContainText("行の枚数の合計 2枚 / 写真 2枚");
 
+      // 登録・公開の結果はダイアログで通知されるため、確認したら閉じて次の操作へ進む
+      const resultDialog = page.getByTestId("portfolio-result-dialog");
       await page.getByRole("button", { name: "下書きとして登録" }).click();
-      await expect(page.getByText("ポートフォリオを登録しました。")).toBeVisible({ timeout: 10000 });
+      await expect(resultDialog).toContainText("ポートフォリオを登録しました。", { timeout: 10000 });
+      await resultDialog.getByRole("button", { name: "閉じる" }).click();
       await page.getByRole("button", { name: "公開する" }).click();
-      await expect(page.getByText("ポートフォリオを公開しました。")).toBeVisible({ timeout: 10000 });
+      await expect(resultDialog).toContainText("ポートフォリオを公開しました。", { timeout: 10000 });
+      await resultDialog.getByRole("button", { name: "閉じる" }).click();
       editUrl = page.url();
     });
 
@@ -101,7 +105,10 @@ test.describe("ポートフォリオの公開ページ", () => {
       await test.step("設定画面で下書きに戻すと、公開ページはすぐに404になる", async () => {
         await page.goto(editUrl);
         await page.getByRole("button", { name: "下書きに戻す" }).click();
-        await expect(page.getByText("ポートフォリオを下書きに戻しました。")).toBeVisible({ timeout: 10000 });
+        await expect(page.getByTestId("portfolio-result-dialog")).toContainText(
+          "ポートフォリオを下書きに戻しました。",
+          { timeout: 10000 }
+        );
 
         // 公開ページは表示のたびに最新の公開状態を取得するため、待たずに反映される
         const response = await visitor.goto(publicUrl);

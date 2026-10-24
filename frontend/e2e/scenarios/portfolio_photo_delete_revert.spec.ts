@@ -80,15 +80,20 @@ test.describe("ポートフォリオの公開と、写真削除による下書�
       await themeInputs.nth(0).fill("京都");
       await themeInputs.nth(1).fill("静岡");
 
+      // 登録・公開の結果はダイアログで通知されるため、確認したら閉じて次の操作へ進む
+      const resultDialog = page.getByTestId("portfolio-result-dialog");
       await page.getByRole("button", { name: "下書きとして登録" }).click();
-      await expect(page.getByText("ポートフォリオを登録しました。")).toBeVisible({
+      await expect(resultDialog).toContainText("ポートフォリオを登録しました。", {
         timeout: 10000,
       });
+      await resultDialog.getByRole("button", { name: "閉じる" }).click();
+      await expect(resultDialog).toHaveCount(0);
 
       await page.getByRole("button", { name: "公開する" }).click();
-      await expect(page.getByText("ポートフォリオを公開しました。")).toBeVisible({
+      await expect(resultDialog).toContainText("ポートフォリオを公開しました。", {
         timeout: 10000,
       });
+      await resultDialog.getByRole("button", { name: "閉じる" }).click();
       await expect(page.getByTestId("portfolio-status")).toHaveText("公開中");
     });
 
@@ -133,10 +138,12 @@ test.describe("ポートフォリオの公開と、写真削除による下書�
       await expect(page.getByTestId("portfolio-status")).toHaveText("下書き", { timeout: 10000 });
       await expect(page.getByTestId("portfolio-photo-item")).toHaveCount(1);
 
+      const resultDialog = page.getByTestId("portfolio-result-dialog");
       await page.getByRole("button", { name: "公開する" }).click();
-      await expect(page.getByText("ポートフォリオを公開しました。")).toBeVisible({
+      await expect(resultDialog).toContainText("ポートフォリオを公開しました。", {
         timeout: 10000,
       });
+      await resultDialog.getByRole("button", { name: "閉じる" }).click();
       await expect(page.getByTestId("portfolio-status")).toHaveText("公開中");
     });
 
