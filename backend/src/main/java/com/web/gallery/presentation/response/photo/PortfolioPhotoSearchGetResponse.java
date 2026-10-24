@@ -12,7 +12,7 @@ import lombok.Data;
 @Builder
 public class PortfolioPhotoSearchGetResponse {
   /** 写真一覧 */
-  @Schema(description = "写真一覧（撮影日時の新しい順）")
+  @Schema(description = "写真一覧（写真番号の降順）")
   private List<PortfolioPhotoSearchItemResponse> photoList;
 
   /** 最後のページかどうか */
