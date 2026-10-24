@@ -212,7 +212,10 @@ describe("PortfolioEditForm", () => {
       fireEvent.change(screen.getByLabelText("富士山のテーマ"), { target: { value: "日本の山" } });
       fireEvent.change(screen.getByLabelText("富士山のサブテーマ"), { target: { value: "静岡" } });
 
-      fireEvent.click(screen.getByRole("button", { name: "プレビューを表示" }));
+      // フィーチャー型でも、プレビューは保存ボタンの左（直前）に置く
+      const preview = screen.getByRole("button", { name: "プレビューを表示" });
+      expect(preview.nextElementSibling).toBe(screen.getByRole("button", { name: "下書きとして登録" }));
+      fireEvent.click(preview);
 
       const dialog = screen.getByRole("dialog", { name: "プレビュー" });
       const sections = within(dialog).getAllByTestId("feature-preview-section");
@@ -288,7 +291,12 @@ describe("PortfolioEditForm", () => {
         );
       });
       expect(mockReplace).toHaveBeenCalledWith("/user1/portfolio_setting/edit?portfolioNo=7");
-      expect(await screen.findByText("ポートフォリオを登録しました。")).toBeInTheDocument();
+      // 登録結果はページ上ではなくダイアログで通知し、閉じると消える
+      const resultDialog = await screen.findByRole("dialog", { name: "ポートフォリオの保存結果" });
+      expect(within(resultDialog).getByText("ポートフォリオを登録しました。")).toBeInTheDocument();
+      fireEvent.click(within(resultDialog).getByRole("button", { name: "閉じる" }));
+      expect(screen.queryByRole("dialog", { name: "ポートフォリオの保存結果" })).not.toBeInTheDocument();
+      expect(screen.queryByText("ポートフォリオを登録しました。")).not.toBeInTheDocument();
       // 保存済みになったため、公開状態を切り替えられる
       expect(screen.getByRole("button", { name: "公開する" })).toBeEnabled();
     });
@@ -321,11 +329,16 @@ describe("PortfolioEditForm", () => {
       fireEvent.click(within(dialog).getByRole("button", { name: "完了" }));
       fireEvent.click(screen.getByRole("button", { name: "下書きとして登録" }));
       expect(await screen.findByText("ポートフォリオを登録しました。")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
 
       // router.replace による編集用URLへの切り替え（ページから渡るポートフォリオ番号が変わる）
       rerender(<PortfolioEditForm accountId="user1" initialPortfolioNo={7} />);
       fireEvent.click(screen.getByRole("button", { name: "公開する" }));
-      expect(await screen.findByText("ポートフォリオを公開しました。")).toBeInTheDocument();
+      expect(
+        within(await screen.findByRole("dialog", { name: "ポートフォリオの保存結果" })).getByText(
+          "ポートフォリオを公開しました。"
+        )
+      ).toBeInTheDocument();
 
       expect(mockGetPortfolioDetail).not.toHaveBeenCalled();
       expect(mockUpdatePortfolioStatus).toHaveBeenCalledWith("user1", 7, "published");
@@ -361,7 +374,7 @@ describe("PortfolioEditForm", () => {
       ).toBe(true);
     });
 
-    it("行の一覧の下に「＋行を追加」、その右に「プレビューを表示」を表示し、写真の一覧の下に「写真を選択」を表示すること", async () => {
+    it("行の一覧の下に「＋行を追加」、写真の一覧の下に枚数の合計と「写真を選択」、保存ボタンの左に「プレビューを表示」を表示すること", async () => {
       mockGetPortfolioDetail.mockResolvedValue(gridDetail);
 
       render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
@@ -369,17 +382,33 @@ describe("PortfolioEditForm", () => {
 
       const [rowItem] = screen.getAllByTestId("grid-row-item");
       const addRow = screen.getByRole("button", { name: "＋行を追加" });
-      const preview = screen.getByRole("button", { name: "プレビューを表示" });
-      expect(isInDocumentOrder(rowItem, addRow, preview)).toBe(true);
-      expect(addRow.parentElement).toBe(preview.parentElement);
-
       const photoItems = screen.getAllByTestId("portfolio-photo-item");
+      const photoCount = screen.getByTestId("grid-photo-count");
+      const pick = screen.getByRole("button", { name: "写真を選択" });
+      const preview = screen.getByRole("button", { name: "プレビューを表示" });
+      const save = screen.getByRole("button", { name: "保存する" });
       expect(
-        isInDocumentOrder(photoItems[photoItems.length - 1], screen.getByRole("button", { name: "写真を選択" }))
+        isInDocumentOrder(rowItem, addRow, photoItems[photoItems.length - 1], photoCount, pick, preview, save)
+      ).toBe(true);
+      expect(preview.nextElementSibling).toBe(save);
+    });
+
+    it("グリッド型で写真が未選択の間も、枚数の合計を「写真を選択」の上に表示すること", async () => {
+      mockGetPortfolioDetail.mockResolvedValue({ ...gridDetail, photoList: [] });
+
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+
+      expect(
+        isInDocumentOrder(
+          screen.getByRole("heading", { name: "写真（0枚）" }),
+          screen.getByTestId("grid-photo-count"),
+          screen.getByRole("button", { name: "写真を選択" })
+        )
       ).toBe(true);
     });
 
-    it("選択した写真の枠を向きに合わせた縦横比で表示し、向き（横向き・正方形など）を表示すること", async () => {
+    it("選択した写真の枠は横幅を揃えて向きに合わせた縦横比で表示し、向きのラベルは表示しないこと", async () => {
       mockGetPortfolioDetail.mockResolvedValue({
         ...gridDetail,
         photoList: [
@@ -391,14 +420,17 @@ describe("PortfolioEditForm", () => {
       render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
       await screen.findByDisplayValue("日本の自然");
 
-      const items = screen.getAllByTestId("portfolio-photo-item");
-      expect(within(items[0]).getByTestId("portfolio-photo-direction")).toHaveTextContent("縦向き");
-      expect(within(items[1]).getByTestId("portfolio-photo-direction")).toHaveTextContent("横向き");
-      expect(
-        items.map((item) =>
-          within(item).getByTestId("portfolio-photo-frame").style.getPropertyValue("aspect-ratio")
-        )
-      ).toEqual(["3 / 4", "4 / 3"]);
+      const frames = screen
+        .getAllByTestId("portfolio-photo-item")
+        .map((item) => within(item).getByTestId("portfolio-photo-frame"));
+      expect(frames.map((frame) => frame.style.getPropertyValue("aspect-ratio"))).toEqual([
+        "3 / 4",
+        "4 / 3",
+      ]);
+      // 横幅は向きによらず同じ（高さだけが縦横比で変わる）
+      frames.forEach((frame) => expect(frame).toHaveClass("w-28"));
+      expect(screen.queryByText("縦向き")).not.toBeInTheDocument();
+      expect(screen.queryByText("横向き")).not.toBeInTheDocument();
     });
 
     it("下書きでは「保存する」「公開する」、公開中では「保存する」「下書きに戻す」の順に並べること", async () => {
@@ -497,6 +529,29 @@ describe("PortfolioEditForm", () => {
         );
       });
       expect(mockReplace).not.toHaveBeenCalled();
+      expect(
+        within(await screen.findByRole("dialog", { name: "ポートフォリオの保存結果" })).getByText(
+          "ポートフォリオを更新しました。"
+        )
+      ).toBeInTheDocument();
+    });
+
+    it("下書きに戻すと、その結果をダイアログで通知すること", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(gridDetail);
+      mockUpdatePortfolioStatus.mockResolvedValue({
+        isSuccess: true,
+        message: "ポートフォリオを下書きに戻しました。",
+        portfolioNo: 3,
+      });
+
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+      fireEvent.click(screen.getByRole("button", { name: "下書きに戻す" }));
+
+      const dialog = await screen.findByRole("dialog", { name: "ポートフォリオの保存結果" });
+      expect(within(dialog).getByText("ポートフォリオを下書きに戻しました。")).toBeInTheDocument();
+      expect(mockUpdatePortfolioStatus).toHaveBeenCalledWith("user1", 3, "draft");
+      expect(screen.getByTestId("portfolio-status")).toHaveTextContent("下書き");
     });
 
     it("下書きの間は公開ページへのリンクを表示しないこと", async () => {
@@ -520,7 +575,7 @@ describe("PortfolioEditForm", () => {
       expect(screen.getByRole("button", { name: "下書きに戻す" })).toBeDisabled();
       expect(
         screen.getByText("公開状態を切り替えるには、先に変更を保存してください")
-      ).toBeInTheDocument();
+      ).toHaveClass("text-red-700");
     });
 
     it("公開状態を切り替えると状態の表示を更新し、失敗した場合はエラーを表示すること", async () => {
@@ -546,7 +601,11 @@ describe("PortfolioEditForm", () => {
       expect(screen.getByTestId("portfolio-status")).toHaveTextContent("下書き");
 
       fireEvent.click(screen.getByRole("button", { name: "公開する" }));
-      expect(await screen.findByText("ポートフォリオを公開しました。")).toBeInTheDocument();
+      expect(
+        within(await screen.findByRole("dialog", { name: "ポートフォリオの保存結果" })).getByText(
+          "ポートフォリオを公開しました。"
+        )
+      ).toBeInTheDocument();
       expect(mockUpdatePortfolioStatus).toHaveBeenLastCalledWith("user1", 3, "published");
       expect(screen.getByTestId("portfolio-status")).toHaveTextContent("公開中");
       expect(screen.getByRole("button", { name: "下書きに戻す" })).toBeInTheDocument();
