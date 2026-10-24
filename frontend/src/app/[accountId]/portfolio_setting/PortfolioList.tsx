@@ -137,23 +137,25 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
     <div className="flex flex-col items-center py-8 gap-4">
       <div className="w-full max-w-[800px] flex justify-between items-center px-4">
         <h1 className="text-xl font-bold">ポートフォリオ設定</h1>
-        {isReachedUpperLimit ? (
-          <button
-            type="button"
-            disabled
-            aria-describedby="portfolio-upper-limit-message"
-            className="px-4 py-2 text-sm bg-blue-700 text-white rounded disabled:opacity-50"
-          >
-            新規作成
-          </button>
-        ) : (
-          <Link
-            href={`/${accountId}/portfolio_setting/edit`}
-            className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
-          >
-            新規作成
-          </Link>
-        )}
+        <div className="flex items-center gap-4">
+          {isReachedUpperLimit ? (
+            <button
+              type="button"
+              disabled
+              aria-describedby="portfolio-upper-limit-message"
+              className="px-4 py-2 text-sm bg-blue-700 text-white rounded disabled:opacity-50"
+            >
+              新規作成
+            </button>
+          ) : (
+            <Link
+              href={`/${accountId}/portfolio_setting/edit`}
+              className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
+            >
+              新規作成
+            </Link>
+          )}
+        </div>
       </div>
       {isReachedUpperLimit && (
         <p
@@ -252,6 +254,9 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
                 <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
                   更新日時
                 </th>
+                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
+                  公開ページ
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -282,6 +287,22 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
                   </td>
                   <td className="py-3 px-4 border border-gray-300">
                     {formatDatetime(portfolio.updatedAt)}
+                  </td>
+                  <td className="py-3 px-4 border border-gray-300">
+                    {/* 公開ページは公開中のポートフォリオだけが閲覧できるため、公開中の行にだけリンクを載せる */}
+                    {portfolio.statusKbn === "published" ? (
+                      <Link
+                        href={`/portfolio/${accountId}/${portfolio.portfolioNo}`}
+                        target="_blank"
+                        rel="noopener"
+                        aria-label={`${portfolio.theme}の公開ページ（新しいタブで開く）`}
+                        className="text-blue-700 hover:underline"
+                      >
+                        表示
+                      </Link>
+                    ) : (
+                      <span className="text-gray-600">-</span>
+                    )}
                   </td>
                 </tr>
               ))}

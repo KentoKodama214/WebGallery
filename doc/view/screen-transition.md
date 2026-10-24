@@ -19,7 +19,9 @@
 | 13 | 管理者お問い合わせ詳細 | `admin_inquiry_detail` | `/admin/inquiry_management/detail` | 認証必須（管理者のみ） |
 | 14 | ポートフォリオ設定（一覧） | `portfolio_setting` | `/{accountId}/portfolio_setting` | 認証必須（本人のみ） |
 | 15 | ポートフォリオ作成・編集 | `portfolio_edit` | `/{accountId}/portfolio_setting/edit`（編集時は `?portfolioNo=`） | 認証必須（本人のみ） |
-| 16 | ページが見つかりません（404） | `not_found` | 未マッチのURL全般 | 公開 |
+| 16 | ポートフォリオ公開ページ（一覧） | `portfolio_public_list` | `/portfolio/{accountId}` | 公開（公開中のポートフォリオのみ） |
+| 17 | ポートフォリオ公開ページ（詳細） | `portfolio_public_detail` | `/portfolio/{accountId}/{portfolioNo}` | 公開（公開中のポートフォリオのみ） |
+| 18 | ページが見つかりません（404） | `not_found` | 未マッチのURL全般 | 公開 |
 
 ### 404 の扱い
 
@@ -35,11 +37,16 @@ content="noindex">` も付与される）。表示内容はルートごとの `n
 | `/photo/{photoAccountId}/photo_setting` | 写真が見つかりません |
 | `/inquiry/detail` | お問い合わせが見つかりません |
 | `/admin/inquiry_management/detail` | お問い合わせが見つかりません |
+| `/portfolio/{accountId}`・`/portfolio/{accountId}/{portfolioNo}` | ポートフォリオが見つかりません |
 | 上記以外（`/{accountId}/account_setting` 等）・未マッチのURL | ページが見つかりません（ルートの `app/not-found.tsx`） |
 
 認証が必要なページで未ログインの場合は 404 ではなく `<AuthGuard>` が `/login` へ退避させる
 （管理者用の3画面も同様）。パラメータ検証は `<AuthGuard>` より手前で行うため、
 不正なURLは未ログインでも 404 になる。
+
+ポートフォリオの公開ページでは、形式が正しくても下書き・削除済み・存在しないポートフォリオの詳細は 404 になる。
+一覧は存在しないアカウントでも 404 にはせず、「公開中のポートフォリオはありません」を表示する
+（portfolio-api がアカウントの存在有無を区別しないため。[portfolio-api](../architecture/portfolio-api.md) 参照）。
 
 ---
 
@@ -67,6 +74,8 @@ graph TD
         INQUIRY_DETAIL["お問い合わせ詳細<br/>/inquiry/detail"]
         PORTFOLIO_SETTING["ポートフォリオ設定<br/>/{id}/portfolio_setting"]
         PORTFOLIO_EDIT["ポートフォリオ作成・編集<br/>/{id}/portfolio_setting/edit"]
+        PORTFOLIO_PUBLIC_LIST["ポートフォリオ公開ページ（一覧）<br/>/portfolio/{id}"]
+        PORTFOLIO_PUBLIC_DETAIL["ポートフォリオ公開ページ（詳細）<br/>/portfolio/{id}/{no}"]
     end
 
     subgraph 管理者画面
@@ -84,6 +93,10 @@ graph TD
     PHOTO_DETAIL -->|削除成功・公開中のポートフォリオが下書きに戻った<br/>（通知ダイアログのリンク）| PORTFOLIO_EDIT
     PORTFOLIO_SETTING -->|新規作成・テーマ選択| PORTFOLIO_EDIT
     PORTFOLIO_EDIT -->|一覧へ戻る（左上）・削除成功（復元不可の確認後）| PORTFOLIO_SETTING
+    PORTFOLIO_SETTING -->|公開中の行の公開ページリンク（別タブ）| PORTFOLIO_PUBLIC_DETAIL
+    PORTFOLIO_EDIT -->|公開ページを見る（公開中のみ・別タブ）| PORTFOLIO_PUBLIC_DETAIL
+    PORTFOLIO_PUBLIC_LIST -->|ポートフォリオ選択| PORTFOLIO_PUBLIC_DETAIL
+    PORTFOLIO_PUBLIC_DETAIL -->|← {id} のポートフォリオ一覧| PORTFOLIO_PUBLIC_LIST
     PHOTO_SETTING -->|登録/更新成功| PHOTO_LIST
     PHOTO_SETTING -->|← back| PHOTO_LIST
     ACCOUNT_SETTING -->|← back| PHOTO_LIST
@@ -236,6 +249,35 @@ sequenceDiagram
     User->>Edit: 公開する（未保存の変更がある間は押せない。フィーチャー型でテーマが未入力の写真がある場合は、その欄の下に赤字で警告して送信しない）
     Edit->>API: PUT /api/v1/accounts/{id}/portfolios/{no}/status
     API-->>Edit: 公開成功（結果はダイアログで通知。公開に必要な設定が不足している場合はエラーを表示）
+    Edit->>Edit: 「保存する」「下書きに戻す」の下に「公開ページを見る」リンクを表示
+```
+
+---
+
+## ポートフォリオ公開ページフロー詳細
+
+公開ページは Server Component で描画し、Next.js のサーバーから portfolio-api（GraphQL）を呼ぶ（ブラウザからは呼ばない）。
+
+```mermaid
+sequenceDiagram
+    actor Visitor as 閲覧者（未ログイン可）
+    participant List as 公開ページ（一覧）
+    participant Detail as 公開ページ（詳細）
+    participant GQL as portfolio-api（GraphQL）
+
+    Visitor->>List: /portfolio/{id} にアクセス
+    List->>GQL: publishedPortfolios(accountId)
+    GQL-->>List: 公開中のポートフォリオ一覧（なければ空）
+    Visitor->>List: ポートフォリオを選択
+    List->>Detail: /portfolio/{id}/{no} に遷移
+    Detail->>GQL: publishedPortfolio(accountId, portfolioNo)
+    alt 公開中
+        GQL-->>Detail: テーマ・説明文・タグ・テンプレートごとのレイアウト（画像は署名付きURL）
+        Detail->>Detail: テンプレート（フィーチャー型・グリッド型）で描画
+    else 下書き・削除済み・存在しない
+        GQL-->>Detail: null
+        Detail->>Detail: 404（ポートフォリオが見つかりません）
+    end
 ```
 
 ---

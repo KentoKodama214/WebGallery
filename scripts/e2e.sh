@@ -9,8 +9,18 @@ cd "$(dirname "$0")/.."
 BACKEND_URL="http://localhost:8080/v3/api-docs"
 BACKEND_LOG="/tmp/webgallery-backend-e2e.log"
 BACKEND_PID=""
+# 公開ページ向けのポートフォリオ表示API（portfolio-api。Go）
+PORTFOLIO_API_URL="http://localhost:8081/healthz"
+PORTFOLIO_API_LOG="/tmp/webgallery-portfolio-api-e2e.log"
+PORTFOLIO_API_BIN="/tmp/webgallery-portfolio-api-e2e"
+PORTFOLIO_API_PID=""
 
 cleanup() {
+  if [ -n "$PORTFOLIO_API_PID" ]; then
+    echo "portfolio-apiを停止します (PID: $PORTFOLIO_API_PID)"
+    kill "$PORTFOLIO_API_PID" 2>/dev/null || true
+    wait "$PORTFOLIO_API_PID" 2>/dev/null || true
+  fi
   if [ -n "$BACKEND_PID" ]; then
     echo "バックエンドを停止します (PID: $BACKEND_PID)"
     kill -- -"$BACKEND_PID" 2>/dev/null || true
@@ -101,6 +111,33 @@ else
     exit 1
   fi
   echo "バックエンドが起動しました"
+fi
+
+if curl -sf "$PORTFOLIO_API_URL" >/dev/null 2>&1; then
+  # portfolio-api は読み取り専用でレート制限も持たないため、起動済みのものをそのまま使う
+  echo "起動済みのportfolio-apiを使用します"
+else
+  echo "portfolio-apiを起動します (PORTFOLIO_API_ENV=local)"
+  # DB には読み取り専用ロール portfolio_reader で接続する（db/photo/portfolio_reader.sql）。
+  # 既存のDBボリュームにロールが未作成の場合は、このSQLを流してから実行すること
+  (cd portfolio-api && mise exec -- go build -o "$PORTFOLIO_API_BIN" ./cmd/server)
+  PORTFOLIO_API_ENV=local "$PORTFOLIO_API_BIN" >"$PORTFOLIO_API_LOG" 2>&1 &
+  PORTFOLIO_API_PID=$!
+
+  READY=false
+  for _ in $(seq 1 30); do
+    if curl -sf "$PORTFOLIO_API_URL" >/dev/null 2>&1; then
+      READY=true
+      break
+    fi
+    sleep 1
+  done
+  if [ "$READY" != "true" ]; then
+    echo "portfolio-apiの起動がタイムアウトしました。ログ: $PORTFOLIO_API_LOG"
+    tail -n 50 "$PORTFOLIO_API_LOG" || true
+    exit 1
+  fi
+  echo "portfolio-apiが起動しました"
 fi
 
 echo "Playwright E2Eテストを実行します"

@@ -443,6 +443,30 @@ jobs:
       - name: Playwrightブラウザインストール
         run: cd frontend && pnpm exec playwright install --with-deps ${{ matrix.browsers }}
 
+      - name: Go セットアップ
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: portfolio-api/go.mod
+          cache-dependency-path: portfolio-api/go.sum
+
+      # 公開ページ（/portfolio/**）が Next.js のサーバーから呼び出す、ポートフォリオ表示API
+      - name: portfolio-apiをバックグラウンドで起動
+        env:
+          PORTFOLIO_API_ENV: local
+        run: |
+          cd portfolio-api && go build -o ../portfolio-api-e2e ./cmd/server && cd ..
+          nohup ./portfolio-api-e2e > portfolio-api-e2e.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8081/healthz > /dev/null; then
+              echo "portfolio-apiが起動しました"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "portfolio-apiの起動がタイムアウトしました"
+          cat portfolio-api-e2e.log
+          exit 1
+
       - name: バックエンドの起動を待機
         run: |
           for i in $(seq 1 60); do
@@ -465,6 +489,13 @@ jobs:
         with:
           name: e2e-backend-log-${{ matrix.name }}
           path: backend-e2e.log
+
+      - name: portfolio-apiログアップロード
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-portfolio-api-log-${{ matrix.name }}
+          path: portfolio-api-e2e.log
 
       - name: Playwrightレポートアップロード
         if: always()

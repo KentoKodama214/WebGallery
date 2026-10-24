@@ -183,6 +183,7 @@ just db-up
 | `APP_ORIGIN` | このアプリを公開しているオリジン（例: `https://gallery.example.com`）。`/api/*` プロキシの CSRF 検証（`Origin` / `Referer` の照合先）に使う。**前段にリバースプロキシを置く構成では必須**（Node が listen しているホストと公開ホストが一致しないため） | リクエストURL由来のホスト（Node が listen しているホスト）を自オリジンとみなす。前段プロキシ配下では公開オリジンと一致せず、状態変更メソッドがすべて `403` になる（起動後最初の状態変更リクエストで警告ログを1回出力） |
 | `TRUSTED_PROXY_HOPS` | `/api/*` プロキシが実クライアント IP を求めるとき、`X-Forwarded-For` の右端から数えて何番目を採用するか（＝このアプリの前段にあり `X-Forwarded-For` を追記する信頼できるプロキシの段数。ALB のみなら `1`、CloudFront + ALB なら `2`）。チェーンがこの数に届かない場合は fail-closed で `X-Forwarded-For` を付与しない。**前段プロキシがある構成では必須** | `0`（前段プロキシを一切信頼せず、`X-Forwarded-For` をバックエンドへ付与しない）。既定を `1` にすると、前段プロキシが無い構成でクライアントが自分で付けた 1 件だけの `X-Forwarded-For` をそのまま実クライアント IP として採用してしまい、IP 単位レート制限の回避・ログイン履歴／GeoIP の偽装が成立するため、安全側に倒している |
 | `PROXY_MAX_CONCURRENCY` | `/api/*` プロキシがバックエンドへ同時中継するリクエスト数の上限。超過分は `503`＋`Retry-After` で即時応答（ロードシェディング） | `100` |
+| `PORTFOLIO_API_URL` | ポートフォリオの公開ページ（`/portfolio/*`）がサーバー側から呼ぶ portfolio-api の GraphQL エンドポイント（ブラウザには公開しない） | `http://localhost:8081/graphql` |
 
 ##### 構成上の注意
 
@@ -299,6 +300,7 @@ just front-test
 ### E2Eテストの実行（要Docker）
 
 フロントエンドの画面操作を通したE2Eテスト（Playwright）を一括実行できます。DB（docker-compose）とバックエンドが未起動の場合は自動的に起動し、終了後に自動起動したバックエンドは停止します。
+ポートフォリオの公開ページのテストのため、portfolio-api（Go、8081番ポート）も同様に未起動ならビルドして起動し、終了後に停止します（Go は mise で導入）。
 
 ```bash
 just e2e
@@ -322,7 +324,7 @@ just e2e
 > そのインスタンスを再利用できます。
 
 DB・バックエンドを自分で起動済みの場合は、フロントエンドのみで直接実行できます（この場合も
-バックエンドは `RATE_LIMIT_ENABLED=false` で起動しておく必要があります）。
+バックエンドは `RATE_LIMIT_ENABLED=false` で起動しておく必要があります。公開ページのテストには `just go-run` で portfolio-api も起動しておいてください）。
 
 ```bash
 cd frontend && pnpm test:e2e
@@ -439,7 +441,9 @@ WebGallery/
 │       │   ├── register/               # アカウント登録ページ（__tests__/にJestテスト）
 │       │   ├── account_list/           # アカウント一覧ページ（__tests__/にJestテスト）
 │       │   ├── [accountId]/
-│       │   │   └── account_setting/    # アカウント設定ページ（__tests__/にJestテスト）
+│       │   │   ├── account_setting/    # アカウント設定ページ（__tests__/にJestテスト）
+│       │   │   └── portfolio_setting/  # ポートフォリオ設定（一覧・作成・編集）ページ（__tests__/にJestテスト）
+│       │   ├── portfolio/[accountId]/  # ポートフォリオ公開ページ（一覧・[portfolioNo]/に詳細。未ログイン可）
 │       │   ├── photo/[photoAccountId]/
 │       │   │   ├── photo_list/         # 写真一覧ページ（PhotoSwipe統合、__tests__/にJestテスト）
 │       │   │   ├── photo_detail/       # 写真詳細ページ（__tests__/にJestテスト）
@@ -455,11 +459,13 @@ WebGallery/
 │       │   │   ├── Header.module.css
 │       │   │   ├── Footer.tsx
 │       │   │   └── fonts/               # セルフホストフォント（woff2）
+│       │   ├── portfolio/               # ポートフォリオ公開ページのテンプレート（templates/。__tests__/にJestテスト）
 │       │   └── ui/                      # 汎用UIコンポーネント
 │       │       └── ModalDialog.tsx      # モーダルダイアログ（__tests__/にJestテスト）
 │       └── lib/
 │           ├── api/
 │           │   └── client.ts            # APIクライアント（__tests__/にJestテスト）
+│           ├── portfolio-api/           # portfolio-api（GraphQL）のサーバー専用クライアント・クエリ・型（__tests__/にJestテスト）
 │           ├── auth/
 │           │   ├── AuthProvider.tsx      # 認証プロバイダー
 │           │   └── __tests__/            # Jestテスト

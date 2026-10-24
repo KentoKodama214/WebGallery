@@ -927,6 +927,17 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
               公開状態を切り替えるには、先に変更を保存してください
             </p>
           )}
+          {/* 公開中だけ、「保存する」「下書きに戻す」の下に公開ページへのリンクを表示する */}
+          {portfolioNo !== undefined && statusKbn === "published" && (
+            <Link
+              href={`/portfolio/${accountId}/${portfolioNo}`}
+              target="_blank"
+              rel="noopener"
+              className="text-blue-700 hover:underline"
+            >
+              公開ページを見る
+            </Link>
+          )}
         </div>
       </div>
 
