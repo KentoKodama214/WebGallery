@@ -28,7 +28,7 @@ public interface PortfolioService {
   Boolean isReachedUpperLimit(AccountNo accountNo);
 
   /**
-   * ポートフォリオに設定する写真を、本人の未削除の写真からタイトル・撮影場所の名前・タグ名の部分一致で検索する
+   * ポートフォリオに設定する写真を、本人の未削除の写真から、タイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに検索語が部分一致するものを検索する
    *
    * <p>写真の画像ファイルパスは署名付きURLに差し替えて返す
    *

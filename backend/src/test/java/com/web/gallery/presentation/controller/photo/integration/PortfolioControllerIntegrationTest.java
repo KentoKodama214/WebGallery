@@ -650,7 +650,7 @@ public class PortfolioControllerIntegrationTest {
 
     @Test
     @Order(4)
-    @DisplayName("正常系：本人の未削除の写真を、タイトルの部分一致で検索できること（画像は署名付きURL）")
+    @DisplayName("正常系：本人の未削除の写真を、検索語のタイトルへの部分一致で検索できること（画像は署名付きURL）")
     void searchPortfolioPhotos_byTitle() throws Exception {
       doAnswer(
               invocation ->
@@ -662,7 +662,7 @@ public class PortfolioControllerIntegrationTest {
       mockMvc
           .perform(
               get("/api/v1/accounts/aaaaaaaa/portfolio-photos")
-                  .param("title", "金閣")
+                  .param("keyword", "金閣")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.photoList.length()").value(1))
@@ -672,7 +672,7 @@ public class PortfolioControllerIntegrationTest {
           .andExpect(jsonPath("$.photoList[0].imageFilePath").value("https://signed/1/1-aaa.jpg"))
           .andExpect(jsonPath("$.isLast").value(true));
 
-      // 条件が未指定の場合は、論理削除済みの写真3を除いて撮影日時の新しい順に返す
+      // 検索語が未指定の場合は、論理削除済みの写真3を除いて撮影日時の新しい順に返す
       mockMvc
           .perform(
               get("/api/v1/accounts/aaaaaaaa/portfolio-photos")

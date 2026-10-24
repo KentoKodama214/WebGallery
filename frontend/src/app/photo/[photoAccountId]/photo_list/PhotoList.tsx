@@ -833,7 +833,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             クリック可能な範囲をアイコンとフィルター条件テキストだけに限定するため、
             レイアウト用の行（filterTriggerRow）と操作要素（filterTrigger）を分ける。
             トリガー自体を行幅いっぱいに広げると、テキストのない右側の余白を
-            クリックしただけでパネルが開いてしまう */}
+            クリックしただけでパネルが開いてしまう。
+            アクセシブルネームは aria-label で上書きせず内容から算出させ、表示中のフィルター条件
+            テキストを必ず含める（WCAG 2.5.3 Label in Name）。操作内容は sr-only のテキストで補う */}
         <div className={styles.filterTriggerRow} data-testid="filter-trigger-row">
           <div
             ref={filterTriggerRef}
@@ -842,7 +844,6 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             onKeyDown={onActivateKey(() => setIsFilterOpen(true))}
             role="button"
             tabIndex={0}
-            aria-label="フィルターを開く"
             aria-expanded={isFilterOpen}
             aria-controls="photo-list-filter-panel"
             data-testid="filter-trigger"
@@ -854,6 +855,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                 alt=""
               />
             </span>
+            <span className="sr-only">フィルターを開く</span>
             <span className={styles.filterText}>{buildFilterText()}</span>
           </div>
         </div>

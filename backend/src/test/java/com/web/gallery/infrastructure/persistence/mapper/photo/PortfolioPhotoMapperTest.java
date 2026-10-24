@@ -238,25 +238,20 @@ public class PortfolioPhotoMapperTest {
     /**
      * 検索結果の写真番号を取得する
      *
-     * @param titlePattern タイトルのLIKEパターン
-     * @param locationPattern 撮影場所の名前のLIKEパターン
-     * @param tagPattern タグ名のLIKEパターン
+     * @param keywordPattern 検索語のLIKEパターン
      * @return 写真番号のリスト（検索結果の順）
      */
-    private List<Long> photoNos(String titlePattern, String locationPattern, String tagPattern) {
-      return portfolioPhotoMapper
-          .selectAvailablePhotos(1L, titlePattern, locationPattern, tagPattern, 10, 0)
-          .stream()
+    private List<Long> photoNos(String keywordPattern) {
+      return portfolioPhotoMapper.selectAvailablePhotos(1L, keywordPattern, 10, 0).stream()
           .map(PortfolioPhotoDto::getPhotoNo)
           .toList();
     }
 
     @Test
     @Order(1)
-    @DisplayName("正常系：条件が未指定の場合、本人の未削除の写真を撮影日時の新しい順に、表示に必要な項目とあわせて取得すること")
+    @DisplayName("正常系：検索語が未指定の場合、本人の未削除の写真を撮影日時の新しい順に、表示に必要な項目とあわせて取得すること")
     void selectAvailablePhotos_noCondition() {
-      List<PortfolioPhotoDto> actual =
-          portfolioPhotoMapper.selectAvailablePhotos(1L, null, null, null, 10, 0);
+      List<PortfolioPhotoDto> actual = portfolioPhotoMapper.selectAvailablePhotos(1L, null, 10, 0);
 
       assertEquals(List.of(2L, 1L), actual.stream().map(PortfolioPhotoDto::getPhotoNo).toList());
       PortfolioPhotoDto first = actual.get(0);
@@ -267,52 +262,56 @@ public class PortfolioPhotoMapperTest {
 
     @Test
     @Order(2)
-    @DisplayName("タイトルの条件で、日本語・英語のいずれかに大文字小文字を区別せず部分一致する写真に絞り込むこと")
+    @DisplayName("検索語がタイトルの日本語・英語のいずれかに大文字小文字を区別せず部分一致する写真を取得すること")
     void selectAvailablePhotos_byTitle() {
-      assertEquals(List.of(2L, 1L), photoNos("%タイトル1%", null, null));
-      assertEquals(List.of(1L), photoNos("%TITLE11%", null, null));
+      assertEquals(List.of(2L, 1L), photoNos("%タイトル1%"));
+      assertEquals(List.of(1L), photoNos("%TITLE11%"));
     }
 
     @Test
     @Order(3)
-    @DisplayName("撮影場所の条件で、表示名・管理名のいずれかに部分一致し、論理削除されていない撮影場所の写真に絞り込むこと")
+    @DisplayName("検索語が撮影場所の表示名・管理名・住所のいずれかに部分一致し、論理削除されていない撮影場所の写真を取得すること")
     void selectAvailablePhotos_byLocation() {
-      assertEquals(List.of(2L), photoNos(null, "%京都%", null));
-      assertEquals(List.of(2L), photoNos(null, "%金閣寺\\_管理%", null));
+      assertEquals(List.of(2L), photoNos("%京都%"));
+      assertEquals(List.of(2L), photoNos("%金閣寺\\_管理%"));
+      assertEquals(List.of(2L), photoNos("%北区%"));
       // 写真1の撮影場所（大阪城）は論理削除済み
-      assertEquals(List.of(), photoNos(null, "%大阪%", null));
+      assertEquals(List.of(), photoNos("%大阪%"));
+      assertEquals(List.of(), photoNos("%中央区%"));
     }
 
     @Test
     @Order(4)
-    @DisplayName("タグの条件で、日本語・英語のいずれかに部分一致するタグを持つ、本人の未削除の写真に絞り込むこと")
+    @DisplayName("検索語がタグ名の日本語・英語のいずれかに部分一致するタグを持つ、本人の未削除の写真を取得すること")
     void selectAvailablePhotos_byTag() {
       // 同じタグを持つ論理削除済みの写真3・他アカウントの写真は含めない
-      assertEquals(List.of(1L), photoNos(null, null, "%紅葉%"));
-      assertEquals(List.of(1L), photoNos(null, null, "%AUTUMN%"));
+      assertEquals(List.of(1L), photoNos("%紅葉%"));
+      assertEquals(List.of(1L), photoNos("%AUTUMN%"));
     }
 
     @Test
     @Order(5)
-    @DisplayName("複数の条件を指定した場合、すべてに一致する写真に絞り込むこと（AND条件）")
-    void selectAvailablePhotos_and() {
-      assertEquals(List.of(), photoNos("%タイトル12%", null, "%紅葉%"));
-      assertEquals(List.of(1L), photoNos("%タイトル11%", null, "%紅葉%"));
+    @DisplayName("検索語がタイトル・撮影場所・タグのいずれか1つに一致すれば取得すること（OR条件）")
+    void selectAvailablePhotos_or() {
+      // 写真1にだけ「金閣寺」のタグを付け、写真2は撮影場所（京都・金閣寺）で一致させる
+      jdbcTemplate.update(
+          "INSERT INTO photo.photo_tag_mst VALUES(DEFAULT, 1, 1, 2, 1,"
+              + " '2000-01-01 10:00:00 Asia/Tokyo', '金閣寺', 'kinkakuji')");
+      assertEquals(List.of(2L, 1L), photoNos("%金閣寺%"));
     }
 
     @Test
     @Order(6)
     @DisplayName("エスケープしたワイルドカード文字は、文字そのものとして一致させること")
     void selectAvailablePhotos_escapedWildcard() {
-      assertEquals(List.of(), photoNos("%\\%%", null, null));
+      assertEquals(List.of(), photoNos("%\\%%"));
     }
 
     @Test
     @Order(7)
     @DisplayName("取得件数・取得開始位置を指定した場合、その範囲だけを取得すること")
     void selectAvailablePhotos_paging() {
-      List<PortfolioPhotoDto> actual =
-          portfolioPhotoMapper.selectAvailablePhotos(1L, null, null, null, 1, 1);
+      List<PortfolioPhotoDto> actual = portfolioPhotoMapper.selectAvailablePhotos(1L, null, 1, 1);
 
       assertEquals(List.of(1L), actual.stream().map(PortfolioPhotoDto::getPhotoNo).toList());
     }

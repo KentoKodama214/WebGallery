@@ -825,12 +825,7 @@ class PortfolioControllerTest {
           .searchPhotos(any());
 
       mockMvc
-          .perform(
-              get(PORTFOLIO_PHOTOS)
-                  .param("title", "金閣")
-                  .param("location", "京都")
-                  .param("tag", " ")
-                  .param("pageNo", "2"))
+          .perform(get(PORTFOLIO_PHOTOS).param("keyword", " 金閣 ").param("pageNo", "2"))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.photoList[0].photoNo").value(3))
           .andExpect(jsonPath("$.photoList[0].photoJapaneseTitle").value("金閣寺"))
@@ -842,8 +837,7 @@ class PortfolioControllerTest {
           .searchPhotos(
               PortfolioPhotoSearchModel.builder()
                   .accountNo(new AccountNo(1L))
-                  .title("金閣")
-                  .location("京都")
+                  .keyword("金閣")
                   .pageNo(2)
                   .build());
     }
@@ -876,6 +870,17 @@ class PortfolioControllerTest {
 
     @Test
     @Order(4)
+    @DisplayName("異常系：検索語が100文字を超える場合、400を返しServiceを呼び出さないこと")
+    void searchPortfolioPhotos_keywordTooLong() throws Exception {
+      mockMvc
+          .perform(get(PORTFOLIO_PHOTOS).param("keyword", "あ".repeat(101)))
+          .andExpect(status().isBadRequest());
+
+      verify(portfolioService, times(0)).searchPhotos(any());
+    }
+
+    @Test
+    @Order(5)
     @DisplayName("異常系：認証ユーザーと異なるアカウントIDを指定した場合、403を返しServiceを呼び出さないこと")
     void searchPortfolioPhotos_forbidden() throws Exception {
       doReturn("bbbbbbbb").when(sessionHelper).getAccountId();

@@ -214,15 +214,13 @@ class PortfolioMstRepositoryImplTest {
     void searchAvailablePhotos_hasNext() {
       doReturn(List.of(photoDto(5L), photoDto(4L), photoDto(3L)))
           .when(portfolioPhotoMapper)
-          .selectAvailablePhotos(1L, "%金閣%", "%京都%", "%寺%", 3, 2);
+          .selectAvailablePhotos(1L, "%金閣%", 3, 2);
 
       PortfolioPhotoPageModel actual =
           portfolioMstRepositoryImpl.searchAvailablePhotos(
               PortfolioPhotoSearchModel.builder()
                   .accountNo(new AccountNo(1L))
-                  .title("金閣")
-                  .location("京都")
-                  .tag("寺")
+                  .keyword("金閣")
                   .pageNo(2)
                   .pageSize(2)
                   .build());
@@ -239,11 +237,11 @@ class PortfolioMstRepositoryImplTest {
 
     @Test
     @Order(2)
-    @DisplayName("正常系：取得件数が1ページの件数以下の場合、最後のページとし、未指定の条件はnullで渡すこと")
+    @DisplayName("正常系：取得件数が1ページの件数以下の場合、最後のページとし、未指定の検索語はnullで渡すこと")
     void searchAvailablePhotos_last() {
       doReturn(List.of(photoDto(1L)))
           .when(portfolioPhotoMapper)
-          .selectAvailablePhotos(1L, null, null, null, 21, 0);
+          .selectAvailablePhotos(1L, null, 21, 0);
 
       PortfolioPhotoPageModel actual =
           portfolioMstRepositoryImpl.searchAvailablePhotos(
