@@ -12,9 +12,6 @@ public class PortfolioListGetModel {
   /** ログイン中のアカウント番号 */
   @NonNull private AccountNo accountNo;
 
-  /** テーマ（部分一致。未指定はnull） */
-  private String theme;
-
-  /** タグ名（日本語・英語のいずれかに部分一致。未指定はnull） */
-  private String tag;
+  /** 検索語（テーマ・タグ名（日本語・英語）のいずれかに部分一致。未指定はnull） */
+  private String keyword;
 }

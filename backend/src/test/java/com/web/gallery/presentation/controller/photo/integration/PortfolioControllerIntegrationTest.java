@@ -723,12 +723,13 @@ public class PortfolioControllerIntegrationTest {
   class searchAndLimit {
     @Test
     @Order(1)
-    @DisplayName("正常系：一覧をテーマ・タグ名の部分一致で絞り込めること")
-    void getPortfolioList_keywords() throws Exception {
+    @DisplayName("正常系：一覧を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込めること")
+    void getPortfolioList_keyword() throws Exception {
+      // テーマに一致
       mockMvc
           .perform(
               get(PORTFOLIOS)
-                  .param("theme", "光")
+                  .param("keyword", "光")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.portfolioList.length()").value(1))
@@ -736,8 +737,9 @@ public class PortfolioControllerIntegrationTest {
 
       mockMvc
           .perform(
+              // タグ（英語名）に大文字・小文字を区別せず一致
               get(PORTFOLIOS)
-                  .param("tag", "NATURE")
+                  .param("keyword", "NATURE")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.portfolioList.length()").value(1))

@@ -317,6 +317,16 @@ describe("api/client", () => {
       expect(result).toEqual([{ portfolioNo: 1, theme: "日本の自然" }]);
     });
 
+    it("getPortfolioList は検索語を keyword のクエリパラメータで送り、未入力の場合は送らない", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioList: [] }));
+      await client.getPortfolioList("me", { keyword: "自然" });
+      expect(new URL(String(fetchMock.mock.calls.at(-1)![0]), "http://localhost").searchParams.get("keyword")).toBe("自然");
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioList: [] }));
+      await client.getPortfolioList("me", { keyword: "" });
+      expect(String(fetchMock.mock.calls.at(-1)![0])).not.toContain("keyword");
+    });
+
     it("savePortfolio はポートフォリオ番号の未指定時に POST、指定時に PUT で JSON を送る", async () => {
       const data = {
         theme: "日本の自然",

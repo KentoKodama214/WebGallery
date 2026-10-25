@@ -65,14 +65,14 @@ public class PortfolioController {
    * ポートフォリオ一覧取得
    *
    * @param accountId アカウントID
-   * @param request {@link PortfolioListRequest}（テーマ・タグの絞り込み条件）
+   * @param request {@link PortfolioListRequest}（検索語の絞り込み条件）
    * @param result バリデーション結果
    * @return {@link PortfolioListGetResponse}
    * @throws GalleryException 以下のいずれかに該当する場合 ・認証ユーザーと異なるアカウントIDの場合 ・リクエストパラメータが不正な場合
    */
   @Operation(
       summary = "ポートフォリオ一覧取得",
-      description = "本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、表示順に取得する")
+      description = "本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込み、表示順に取得する")
   @ApiResponse(responseCode = "200", description = "取得成功")
   @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
   @ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)

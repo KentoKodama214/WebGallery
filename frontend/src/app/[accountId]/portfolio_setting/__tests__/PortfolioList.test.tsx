@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { PortfolioList } from "../PortfolioList";
 
@@ -108,7 +108,22 @@ describe("PortfolioList", () => {
     expect(mockGetPortfolioList).toHaveBeenCalledTimes(2);
   });
 
-  it("テーマ・タグを入力して検索すると、その条件で一覧を取得し直し、クリアで条件を解除すること", async () => {
+  it("テーマ・タグの検索欄は1つで背景が白であること", async () => {
+    mockGetPortfolioList.mockResolvedValue([samplePortfolio]);
+
+    render(<PortfolioList accountId="user1" />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId("portfolio-row")).toHaveLength(1);
+    });
+
+    const search = screen.getByRole("search", { name: "ポートフォリオの絞り込み" });
+    expect(within(search).getAllByRole("textbox")).toHaveLength(1);
+    const input = screen.getByLabelText("テーマ・タグ");
+    expect(input).toHaveAttribute("maxLength", "100");
+    expect(input).toHaveClass("bg-white");
+  });
+
+  it("検索語を入力して検索すると、その条件で一覧を取得し直し、クリアで条件を解除すること", async () => {
     mockGetPortfolioList.mockResolvedValueOnce([samplePortfolio]).mockResolvedValueOnce([]);
     mockGetPortfolioList.mockResolvedValueOnce([samplePortfolio]);
 
@@ -117,14 +132,13 @@ describe("PortfolioList", () => {
       expect(screen.getAllByTestId("portfolio-row")).toHaveLength(1);
     });
 
-    fireEvent.change(screen.getByLabelText("テーマ"), { target: { value: " 自然 " } });
-    fireEvent.change(screen.getByLabelText("タグ"), { target: { value: "風景" } });
+    fireEvent.change(screen.getByLabelText("テーマ・タグ"), { target: { value: " 自然 " } });
     fireEvent.click(screen.getByRole("button", { name: "検索" }));
 
     expect(
       await screen.findByText("条件に一致するポートフォリオはありません")
     ).toBeInTheDocument();
-    expect(mockGetPortfolioList).toHaveBeenLastCalledWith("user1", { theme: "自然", tag: "風景" });
+    expect(mockGetPortfolioList).toHaveBeenLastCalledWith("user1", { keyword: "自然" });
 
     fireEvent.click(screen.getByRole("button", { name: "クリア" }));
 
@@ -132,7 +146,7 @@ describe("PortfolioList", () => {
       expect(screen.getAllByTestId("portfolio-row")).toHaveLength(1);
     });
     expect(mockGetPortfolioList).toHaveBeenLastCalledWith("user1", {});
-    expect(screen.getByLabelText("テーマ")).toHaveValue("");
+    expect(screen.getByLabelText("テーマ・タグ")).toHaveValue("");
   });
 
   it("作成数が上限に達している場合は、新規作成を押せず、上限に達した旨を表示すること", async () => {
@@ -286,7 +300,7 @@ describe("PortfolioList", () => {
         expect(screen.getAllByTestId("portfolio-row")).toHaveLength(3);
       });
 
-      fireEvent.change(screen.getByLabelText("テーマ"), { target: { value: "春" } });
+      fireEvent.change(screen.getByLabelText("テーマ・タグ"), { target: { value: "春" } });
       fireEvent.click(screen.getByRole("button", { name: "検索" }));
 
       await waitFor(() => {

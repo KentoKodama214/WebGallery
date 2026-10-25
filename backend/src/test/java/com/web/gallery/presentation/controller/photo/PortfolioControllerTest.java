@@ -165,29 +165,23 @@ class PortfolioControllerTest {
 
     @Test
     @Order(2)
-    @DisplayName("正常系：テーマ・タグの絞り込み条件を、前後の空白を除いてServiceに渡すこと")
-    void getPortfolioList_keywords() throws Exception {
+    @DisplayName("正常系：検索語を、前後の空白を除いてServiceに渡すこと")
+    void getPortfolioList_keyword() throws Exception {
       doReturn(PortfolioModelList.empty()).when(portfolioService).getPortfolioList(any());
 
-      mockMvc
-          .perform(get(PORTFOLIOS).param("theme", " 自然 ").param("tag", "風景"))
-          .andExpect(status().isOk());
+      mockMvc.perform(get(PORTFOLIOS).param("keyword", " 自然 ")).andExpect(status().isOk());
 
       verify(portfolioService)
           .getPortfolioList(
-              PortfolioListGetModel.builder()
-                  .accountNo(new AccountNo(1L))
-                  .theme("自然")
-                  .tag("風景")
-                  .build());
+              PortfolioListGetModel.builder().accountNo(new AccountNo(1L)).keyword("自然").build());
     }
 
     @Test
     @Order(3)
-    @DisplayName("異常系：テーマが最大文字数（100文字）を超える場合、400を返しServiceを呼び出さないこと")
-    void getPortfolioList_tooLongTheme() throws Exception {
+    @DisplayName("異常系：検索語が最大文字数（100文字）を超える場合、400を返しServiceを呼び出さないこと")
+    void getPortfolioList_tooLongKeyword() throws Exception {
       mockMvc
-          .perform(get(PORTFOLIOS).param("theme", "あ".repeat(101)))
+          .perform(get(PORTFOLIOS).param("keyword", "あ".repeat(101)))
           .andExpect(status().isBadRequest());
 
       verify(portfolioService, times(0)).getPortfolioList(any());

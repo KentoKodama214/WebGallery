@@ -164,18 +164,16 @@ class PortfolioConverterTest {
   class toPortfolioListGetModel {
     @Test
     @Order(1)
-    @DisplayName("正常系：テーマ・タグの前後の空白を除き、ログイン中のアカウント番号とあわせて変換すること")
+    @DisplayName("正常系：検索語の前後の空白を除き、ログイン中のアカウント番号とあわせて変換すること")
     void toPortfolioListGetModel_allFieldsSet() {
       PortfolioListRequest request = new PortfolioListRequest();
-      request.setTheme(" 自然 ");
-      request.setTag("風景");
+      request.setKeyword(" 自然 ");
 
       PortfolioListGetModel actual =
           portfolioConverter.toPortfolioListGetModel(request, new AccountNo(1L));
 
       assertEquals(new AccountNo(1L), actual.getAccountNo());
-      assertEquals("自然", actual.getTheme());
-      assertEquals("風景", actual.getTag());
+      assertEquals("自然", actual.getKeyword());
     }
 
     @Test
@@ -183,13 +181,16 @@ class PortfolioConverterTest {
     @DisplayName("正常系：未入力・空白のみの条件はnull（未指定）になること")
     void toPortfolioListGetModel_optionalFieldsNull() {
       PortfolioListRequest request = new PortfolioListRequest();
-      request.setTag("　 ");
+      request.setKeyword("　 ");
 
       PortfolioListGetModel actual =
           portfolioConverter.toPortfolioListGetModel(request, new AccountNo(1L));
 
-      assertNull(actual.getTheme());
-      assertNull(actual.getTag());
+      assertNull(actual.getKeyword());
+      assertNull(
+          portfolioConverter
+              .toPortfolioListGetModel(new PortfolioListRequest(), new AccountNo(1L))
+              .getKeyword());
     }
   }
 

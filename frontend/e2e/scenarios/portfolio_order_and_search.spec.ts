@@ -116,6 +116,17 @@ test.describe("ポートフォリオの並び順と公開ページの検索", ()
       await expect(page.getByTestId("portfolio-row").nth(1)).toContainText(springTheme);
     });
 
+    await test.step("設定画面の1つの検索欄で、タグに一致するポートフォリオに絞り込める（絞り込み中は並び替え不可）", async () => {
+      await fillStable(page.getByLabel("テーマ・タグ"), "桜");
+      await page.getByRole("button", { name: "検索" }).click();
+      await expect(page.getByTestId("portfolio-row")).toHaveCount(1, { timeout: 10000 });
+      await expect(page.getByTestId("portfolio-row").nth(0)).toContainText(springTheme);
+      await expect(page.getByRole("button", { name: `${springTheme}を上へ移動` })).toBeDisabled();
+
+      await page.getByRole("button", { name: "クリア" }).click();
+      await expect(page.getByTestId("portfolio-row")).toHaveCount(2, { timeout: 10000 });
+    });
+
     // 未ログインの閲覧者として、別のブラウザコンテキストで公開ページを開く
     const visitorContext = await browser.newContext({ baseURL: testInfo.project.use.baseURL });
     const visitor = await visitorContext.newPage();

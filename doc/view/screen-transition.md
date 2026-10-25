@@ -231,9 +231,12 @@ sequenceDiagram
     API-->>List: 一覧（下書きを含む）
     List->>API: GET /api/v1/accounts/{id}/portfolios/upper-limit
     API-->>List: 作成数が上限に達しているか（達している場合は「新規作成」を押せず、その旨を表示）
-    User->>List: テーマ・タグで絞り込み（検索）
-    List->>API: GET /api/v1/accounts/{id}/portfolios?theme=&tag=
-    API-->>List: 条件に部分一致する一覧
+    User->>List: 検索語で絞り込み（検索）
+    List->>API: GET /api/v1/accounts/{id}/portfolios?keyword=
+    API-->>List: テーマ・タグ名のいずれかに部分一致する一覧（OR条件）
+    User->>List: 行の「↑」「↓」で並び替え（絞り込み中は不可）
+    List->>API: PUT /api/v1/accounts/{id}/portfolios/display-order
+    API-->>List: 全件の並び順を保存（一覧が最新でない場合は409となり、一覧を取得し直す）
     User->>List: 新規作成
     List->>Edit: /{id}/portfolio_setting/edit に遷移
     User->>Edit: 「写真を選択」で写真選択ダイアログを開く
@@ -267,7 +270,11 @@ sequenceDiagram
 
     Visitor->>List: /portfolio/{id} にアクセス
     List->>GQL: publishedPortfolios(accountId)
-    GQL-->>List: 公開中のポートフォリオ一覧（なければ空）
+    GQL-->>List: 公開中のポートフォリオ一覧（所有者が設定した表示順。なければ空）
+    Visitor->>List: 検索語（テーマ・タグ）で検索
+    List->>List: /portfolio/{id}?keyword= に遷移（GET）
+    List->>GQL: publishedPortfolios(accountId, keyword)
+    GQL-->>List: テーマ・タグ名のいずれかに部分一致する一覧（OR条件）
     Visitor->>List: ポートフォリオを選択
     List->>Detail: /portfolio/{id}/{no} に遷移
     Detail->>GQL: publishedPortfolio(accountId, portfolioNo)
@@ -550,7 +557,8 @@ sequenceDiagram
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
 | 「新規作成」ボタン | `/{accountId}/portfolio_setting/edit` | リンク（作成数が権限ごとの上限に達している場合は押せず、その旨を表示） |
-| テーマ・タグを入力して「検索」／「クリア」 | 同画面（一覧を絞り込み／解除） | AJAX（部分一致） |
+| 検索語（テーマ・タグ）を入力して「検索」／「クリア」 | 同画面（一覧を絞り込み／解除） | AJAX（テーマ・タグ名のいずれかに部分一致。OR条件） |
+| 行の「並び順」列の「↑」「↓」ボタン | 同画面（並びを入れ替えて保存） | AJAX（絞り込み中は不可。公開ページの一覧も同じ順に並ぶ） |
 | テーマ選択 | `/{accountId}/portfolio_setting/edit?portfolioNo={no}` | リンク |
 | 公開中の行の「公開ページ」列の「表示」リンク | `/portfolio/{accountId}/{portfolioNo}` | リンク（公開中のみ・別タブ） |
 
@@ -581,6 +589,8 @@ sequenceDiagram
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
 | ポートフォリオ選択 | `/portfolio/{accountId}/{portfolioNo}` | リンク |
+| 検索語（テーマ・タグ）を入力して「検索」 | `/portfolio/{accountId}?keyword={検索語}` | フォーム（GET。テーマ・タグ名のいずれかに部分一致。OR条件） |
+| 「クリア」 | `/portfolio/{accountId}` | リンク（検索中のみ表示） |
 | 不正な `accountId` | 404（ポートフォリオが見つかりません） | `notFound()` |
 
 ### ポートフォリオ公開ページ（詳細） (`/portfolio/{accountId}/{portfolioNo}`)

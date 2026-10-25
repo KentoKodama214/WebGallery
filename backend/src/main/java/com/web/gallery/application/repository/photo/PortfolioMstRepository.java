@@ -40,7 +40,7 @@ public interface PortfolioMstRepository {
   PortfolioNoList getPortfolioNoList(AccountNo accountNo);
 
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、表示順に取得する
+   * 本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込み、表示順に取得する
    *
    * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
    * @return {@link PortfolioModelList}

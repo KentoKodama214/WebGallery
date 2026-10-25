@@ -13,7 +13,7 @@ import com.web.gallery.domain.model.photo.PortfolioNo;
 /** ポートフォリオの設定に関するビジネスロジックを扱うServiceクラス */
 public interface PortfolioService {
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込んで取得する
+   * 本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込んで取得する
    *
    * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
    * @return {@link PortfolioModelList}

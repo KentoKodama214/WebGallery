@@ -92,7 +92,7 @@ public class PortfolioMstRepositoryImpl implements PortfolioMstRepository {
   }
 
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、表示順に取得する
+   * 本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込み、表示順に取得する
    *
    * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
    * @return {@link PortfolioModelList}
@@ -101,10 +101,9 @@ public class PortfolioMstRepositoryImpl implements PortfolioMstRepository {
   public PortfolioModelList getPortfolioList(PortfolioListGetModel portfolioListGetModel) {
     List<PortfolioDto> dtoList =
         portfolioMstMapper.selectList(
-            PortfolioMstCondition.byAccountNoAndKeywords(
+            PortfolioMstCondition.byAccountNoAndKeyword(
                 portfolioListGetModel.getAccountNo().value(),
-                toContainsPattern(portfolioListGetModel.getTheme()),
-                toContainsPattern(portfolioListGetModel.getTag())));
+                toContainsPattern(portfolioListGetModel.getKeyword())));
     return PortfolioModelList.of(dtoList.stream().map(this::toPortfolioModel).toList());
   }
 

@@ -84,8 +84,7 @@ public class PortfolioConverter {
       PortfolioListRequest request, AccountNo accountNo) {
     return PortfolioListGetModel.builder()
         .accountNo(accountNo)
-        .theme(toKeyword(request.getTheme()))
-        .tag(toKeyword(request.getTag()))
+        .keyword(toKeyword(request.getKeyword()))
         .build();
   }
 

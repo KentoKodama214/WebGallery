@@ -33,4 +33,6 @@ select setval('photo.portfolio_photo_id_seq', (select max(id) from photo.portfol
 insert into photo.portfolio_tag_mst values(1, 1, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', '自然', 'nature');
 insert into photo.portfolio_tag_mst values(2, 1, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', '風景', '');
 insert into photo.portfolio_tag_mst values(3, 2, 1, 1, 2, '2000-01-04 09:00:00 Asia/Tokyo', '海', 'sea');
+-- account_no=1のポートフォリオ3：他のポートフォリオ（番号2）のテーマに一致するタグ（テーマ・タグのOR条件の確認用）
+insert into photo.portfolio_tag_mst values(4, 1, 3, 1, 1, '2000-01-03 09:00:00 Asia/Tokyo', 'ポートフォリオ12の続編', '');
 select setval('photo.portfolio_tag_mst_id_seq', (select max(id) from photo.portfolio_tag_mst));

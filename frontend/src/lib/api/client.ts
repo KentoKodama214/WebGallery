@@ -1265,12 +1265,10 @@ export async function getPortfolioList(
   return (await readJson<{ portfolioList: PortfolioListItem[] }>(response)).portfolioList;
 }
 
-/** ポートフォリオ一覧の絞り込み条件（いずれも部分一致。未入力の条件は送らない） */
+/** ポートフォリオ一覧の絞り込み条件（未入力の条件は送らない） */
 export interface PortfolioListFilter {
-  /** テーマ */
-  theme?: string;
-  /** タグ名（日本語・英語のいずれか） */
-  tag?: string;
+  /** 検索語（テーマ・タグ名（日本語・英語）のいずれかに部分一致） */
+  keyword?: string;
 }
 
 /**

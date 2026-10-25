@@ -169,7 +169,7 @@ class PortfolioServiceImplTest {
     @DisplayName("正常系：絞り込み条件をRepositoryに渡し、取得したポートフォリオ一覧をそのまま返すこと")
     void getPortfolioList_success() {
       PortfolioListGetModel condition =
-          PortfolioListGetModel.builder().accountNo(ACCOUNT_NO).theme("自然").tag("風景").build();
+          PortfolioListGetModel.builder().accountNo(ACCOUNT_NO).keyword("自然").build();
       PortfolioModelList expected = PortfolioModelList.empty();
       doReturn(expected).when(portfolioMstRepositoryImpl).getPortfolioList(condition);
 

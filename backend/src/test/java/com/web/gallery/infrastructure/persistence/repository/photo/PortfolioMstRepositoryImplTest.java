@@ -285,8 +285,7 @@ class PortfolioMstRepositoryImplTest {
       verify(portfolioMstMapper).selectList(conditionCaptor.capture());
       assertEquals(1L, conditionCaptor.getValue().getAccountNo());
       assertNull(conditionCaptor.getValue().getPortfolioNo());
-      assertNull(conditionCaptor.getValue().getThemePattern());
-      assertNull(conditionCaptor.getValue().getTagPattern());
+      assertNull(conditionCaptor.getValue().getKeywordPattern());
 
       assertEquals(1, actual.size());
       PortfolioModel model = actual.get(0);
@@ -315,22 +314,20 @@ class PortfolioMstRepositoryImplTest {
 
     @Test
     @Order(3)
-    @DisplayName("正常系：テーマ・タグ名を部分一致のLIKEパターンにし、ワイルドカード文字（%・_）とエスケープ文字（\\）をエスケープすること")
-    void getPortfolioList_keywords() {
+    @DisplayName("正常系：検索語を部分一致のLIKEパターンにし、ワイルドカード文字（%・_）とエスケープ文字（\\）をエスケープすること")
+    void getPortfolioList_keyword() {
       doReturn(List.of()).when(portfolioMstMapper).selectList(any(PortfolioMstCondition.class));
 
       portfolioMstRepositoryImpl.getPortfolioList(
           PortfolioListGetModel.builder()
               .accountNo(new AccountNo(1L))
-              .theme("100%_自然")
-              .tag("a\\b")
+              .keyword("100%_自然\\")
               .build());
 
       ArgumentCaptor<PortfolioMstCondition> conditionCaptor =
           ArgumentCaptor.forClass(PortfolioMstCondition.class);
       verify(portfolioMstMapper).selectList(conditionCaptor.capture());
-      assertEquals("%100\\%\\_自然%", conditionCaptor.getValue().getThemePattern());
-      assertEquals("%a\\\\b%", conditionCaptor.getValue().getTagPattern());
+      assertEquals("%100\\%\\_自然\\\\%", conditionCaptor.getValue().getKeywordPattern());
     }
   }
 

@@ -10,7 +10,7 @@ import {
   type PortfolioListFilter,
   type PortfolioListItem,
 } from "@/lib/api/client";
-import { PORTFOLIO_THEME_MAX_LENGTH, TAG_NAME_MAX_LENGTH } from "@/lib/validation";
+import { PORTFOLIO_THEME_MAX_LENGTH } from "@/lib/validation";
 import { PORTFOLIO_STATUS_LABELS, PORTFOLIO_TEMPLATE_LABELS } from "./labels";
 
 interface PortfolioListProps {
@@ -21,7 +21,7 @@ interface PortfolioListProps {
 /**
  * 本人のポートフォリオ一覧（下書きを含む）コンポーネント
  *
- * テーマ・タグ名（部分一致）で絞り込める。作成数が権限ごとの上限に達している場合は新規作成できない。
+ * 1つの検索語で、テーマ・タグ名のいずれかに部分一致するもの（OR条件）に絞り込める。作成数が権限ごとの上限に達している場合は新規作成できない。
  * 一覧は表示順（公開ページの一覧と同じ順）に並び、各行の上下ボタンで並び替えられる。
  * 並び替えは全件の並びを保存するため、絞り込み中は行えない。
  */
@@ -33,8 +33,7 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // 絞り込みの入力値と、一覧の取得に使った（検索ボタンで確定した）条件
-  const [themeInput, setThemeInput] = useState("");
-  const [tagInput, setTagInput] = useState("");
+  const [keywordInput, setKeywordInput] = useState("");
   const [appliedFilter, setAppliedFilter] = useState<PortfolioListFilter>({});
   // 作成数が上限に達しているか（取得に失敗した場合は作成を妨げない。バックエンドでも上限を検証する）
   const [isReachedUpperLimit, setIsReachedUpperLimit] = useState(false);
@@ -138,17 +137,16 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
   /** 入力した条件で絞り込む */
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    loadList({ theme: themeInput.trim(), tag: tagInput.trim() });
+    loadList({ keyword: keywordInput.trim() });
   };
 
   /** 絞り込み条件を解除する */
   const handleClear = () => {
-    setThemeInput("");
-    setTagInput("");
+    setKeywordInput("");
     loadList({});
   };
 
-  const isFiltered = !!appliedFilter.theme || !!appliedFilter.tag;
+  const isFiltered = !!appliedFilter.keyword;
 
   /**
    * ポートフォリオを1つ上・下へ移動し、並び順を保存する
@@ -244,29 +242,16 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
         className="w-full max-w-[800px] px-4 flex flex-wrap items-end gap-3"
       >
         <div className="flex flex-col">
-          <label htmlFor="portfolio-filter-theme" className="text-sm font-bold mb-1">
-            テーマ
+          <label htmlFor="portfolio-filter-keyword" className="text-sm font-bold mb-1">
+            テーマ・タグ
           </label>
           <input
-            id="portfolio-filter-theme"
+            id="portfolio-filter-keyword"
             type="text"
-            value={themeInput}
+            value={keywordInput}
             maxLength={PORTFOLIO_THEME_MAX_LENGTH}
-            onChange={(e) => setThemeInput(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2"
-          />
-        </div>
-        <div className="flex flex-col">
-          <label htmlFor="portfolio-filter-tag" className="text-sm font-bold mb-1">
-            タグ
-          </label>
-          <input
-            id="portfolio-filter-tag"
-            type="text"
-            value={tagInput}
-            maxLength={TAG_NAME_MAX_LENGTH}
-            onChange={(e) => setTagInput(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2"
+            onChange={(e) => setKeywordInput(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 bg-white w-72 max-w-full"
           />
         </div>
         <button
