@@ -92,7 +92,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		PublishedPortfolio  func(childComplexity int, accountID string, portfolioNo int) int
-		PublishedPortfolios func(childComplexity int, accountID string) int
+		PublishedPortfolios func(childComplexity int, accountID string, keyword *string) int
 	}
 
 	Tag struct {
@@ -106,7 +106,7 @@ type ComplexityRoot struct {
 // region    ************************** generated!.gotpl **************************
 
 type QueryResolver interface {
-	PublishedPortfolios(ctx context.Context, accountID string) ([]*model.PortfolioSummary, error)
+	PublishedPortfolios(ctx context.Context, accountID string, keyword *string) ([]*model.PortfolioSummary, error)
 	PublishedPortfolio(ctx context.Context, accountID string, portfolioNo int) (*model.Portfolio, error)
 }
 
@@ -331,7 +331,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.PublishedPortfolios(childComplexity, args["accountId"].(string)), true
+		return e.ComplexityRoot.Query.PublishedPortfolios(childComplexity, args["accountId"].(string), args["keyword"].(*string)), true
 
 	case "Tag.englishName":
 		if e.ComplexityRoot.Tag.EnglishName == nil {
@@ -695,6 +695,14 @@ func (ec *executionContext) field_Query_publishedPortfolios_args(ctx context.Con
 		return nil, err
 	}
 	args["accountId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "keyword",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["keyword"] = arg1
 	return args, nil
 }
 
@@ -1507,7 +1515,7 @@ func (ec *executionContext) _Query_publishedPortfolios(ctx context.Context, fiel
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().PublishedPortfolios(ctx, fc.Args["accountId"].(string))
+			return ec.Resolvers.Query().PublishedPortfolios(ctx, fc.Args["accountId"].(string), fc.Args["keyword"].(*string))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*model.PortfolioSummary) graphql.Marshaler {

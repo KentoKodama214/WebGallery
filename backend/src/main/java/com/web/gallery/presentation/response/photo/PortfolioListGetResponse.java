@@ -12,7 +12,7 @@ import lombok.Data;
 @Builder
 public class PortfolioListGetResponse {
   /** ポートフォリオ一覧 */
-  @Schema(description = "ポートフォリオ一覧（更新日時の新しい順）")
+  @Schema(description = "ポートフォリオ一覧（表示順）")
   private List<PortfolioListItemResponse> portfolioList;
 
   /**

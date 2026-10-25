@@ -16,6 +16,7 @@ public final class MessageConst {
   public static final String DELETE_PORTFOLIO = "ポートフォリオを削除しました。";
   public static final String PUBLISH_PORTFOLIO = "ポートフォリオを公開しました。";
   public static final String UNPUBLISH_PORTFOLIO = "ポートフォリオを下書きに戻しました。";
+  public static final String UPDATE_PORTFOLIO_DISPLAY_ORDER = "ポートフォリオの並び順を更新しました。";
 
   /** 写真削除に伴いポートフォリオを下書きに戻した場合のメッセージ。{@code %s}には下書きに戻したポートフォリオのテーマを「、」区切りで埋め込む */
   public static final String DELETE_PHOTO_WITH_REVERTED_PORTFOLIO =
@@ -75,6 +76,8 @@ public final class MessageConst {
   public static final String ERR_REACHED_PORTFOLIO_LIMIT = "作成できるポートフォリオの数が上限に達しています。";
   public static final String ERR_FAIL_TO_REGIST_PORTFOLIO = "ポートフォリオ登録でエラーが発生しました。登録をやり直してください。";
   public static final String ERR_FAIL_TO_UPDATE_PORTFOLIO = "ポートフォリオ更新でエラーが発生しました。更新をやり直してください。";
+  public static final String ERR_PORTFOLIO_LIST_OUTDATED =
+      "ポートフォリオの一覧が最新ではありません。再読み込みしてから並び替えてください。";
 
   // Admin
   public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";

@@ -16,6 +16,7 @@
 		<result property="templateSettings" column="template_settings" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler"/>
 		<result property="settingsVersion" column="settings_version"/>
 		<result property="statusKbn" column="status_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.PortfolioStatusEnumTypeHandler"/>
+		<result property="displayOrder" column="display_order"/>
 	</resultMap>
 
 	<resultMap id="PortfolioDtoMap" type="com.web.gallery.infrastructure.persistence.dto.photo.PortfolioDto">
@@ -63,7 +64,8 @@
 		pm.template_kbn,
 		pm.template_settings,
 		pm.settings_version,
-		pm.status_kbn
+		pm.status_kbn,
+		pm.display_order
 	</sql>
 
 	<insert id="insert" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMst">
@@ -80,7 +82,8 @@
 				template_kbn,
 				template_settings,
 				settings_version,
-				status_kbn
+				status_kbn,
+				display_order
 			)
 		VALUES
 			(
@@ -95,7 +98,16 @@
 				#{templateKbn}::photo.portfolio_template_enum,
 				#{templateSettings, typeHandler=com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler},
 				#{settingsVersion},
-				#{statusKbn}::photo.portfolio_status_enum
+				#{statusKbn}::photo.portfolio_status_enum,
+				<!-- 新規登録したポートフォリオは並び順の末尾に追加する -->
+				(
+					SELECT
+						COALESCE(MAX(display_order), 0) + 1
+					FROM
+						photo.portfolio_mst
+					WHERE
+						account_no = #{accountNo}
+				)
 			)
 	</insert>
 
@@ -119,6 +131,25 @@
 				<property name="prefix" value="condition."/>
 			</include>
 		</where>
+	</update>
+
+	<!-- 並び替えはポートフォリオの内容の更新ではないため、更新者・更新日時は変更しない
+	     （公開ページ・一覧に表示する更新日時が並び替えで変わらないようにする） -->
+	<update id="updateDisplayOrder">
+		UPDATE
+			photo.portfolio_mst pm
+		SET
+			display_order = o.display_order
+		FROM
+			(
+				VALUES
+				<foreach collection="portfolioNoList" item="portfolioNo" index="index" separator=",">
+					(#{portfolioNo}::bigint, #{index}::int + 1)
+				</foreach>
+			) AS o (portfolio_no, display_order)
+		WHERE
+			pm.account_no = #{accountNo}
+			AND pm.portfolio_no = o.portfolio_no
 	</update>
 
 	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition">
@@ -182,8 +213,19 @@
 			</include>
 		</where>
 		ORDER BY
-			pm.updated_at DESC,
-			pm.portfolio_no DESC
+			pm.display_order,
+			pm.portfolio_no
+	</select>
+
+	<select id="selectPortfolioNoList" parameterType="Long" resultType="Long">
+		SELECT
+			portfolio_no
+		FROM
+			photo.portfolio_mst
+		WHERE
+			account_no = #{accountNo}
+		ORDER BY
+			portfolio_no
 	</select>
 
 	<select id="select" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition" resultMap="PortfolioMstMap">

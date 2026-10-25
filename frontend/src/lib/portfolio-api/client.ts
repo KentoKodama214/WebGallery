@@ -69,12 +69,16 @@ async function request<T>(query: string, variables: Record<string, unknown>): Pr
  * 公開中のポートフォリオ一覧を取得する（アカウントが存在しない場合も空の一覧）
  *
  * @param accountId アカウントID
- * @returns 公開中のポートフォリオ一覧（更新日時の新しい順）
+ * @param keyword 検索語。テーマ・タグ名のいずれかに部分一致するものに絞り込む（空の場合は絞り込まない）
+ * @returns 公開中のポートフォリオ一覧（表示順）
  */
-export async function getPublishedPortfolios(accountId: string): Promise<PublicPortfolioSummary[]> {
+export async function getPublishedPortfolios(
+  accountId: string,
+  keyword = ""
+): Promise<PublicPortfolioSummary[]> {
   const data = await request<{ publishedPortfolios: PublicPortfolioSummary[] }>(
     PUBLISHED_PORTFOLIOS_QUERY,
-    { accountId }
+    { accountId, keyword }
   );
   return data.publishedPortfolios;
 }

@@ -25,12 +25,30 @@ describe("portfolio-api client", () => {
     const [url, init] = fetchMock.mock.calls[0];
     const parsed = new URL(String(url));
     expect(parsed.origin + parsed.pathname).toBe("http://localhost:8081/graphql");
-    expect(parsed.searchParams.get("query")).toContain("publishedPortfolios(accountId: $accountId)");
-    expect(JSON.parse(parsed.searchParams.get("variables")!)).toEqual({ accountId: "owner123" });
+    expect(parsed.searchParams.get("query")).toContain(
+      "publishedPortfolios(accountId: $accountId, keyword: $keyword)"
+    );
+    // 検索語を指定しない場合は空文字（絞り込まない）を送る
+    expect(JSON.parse(parsed.searchParams.get("variables")!)).toEqual({
+      accountId: "owner123",
+      keyword: "",
+    });
     // 署名付きURLの失効後に古いデータを返さないよう、キャッシュしない
     expect(init.cache).toBe("no-store");
     expect(init.next).toBeUndefined();
     expect(init.method).toBeUndefined();
+  });
+
+  it("検索語を変数として送ること", async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ data: { publishedPortfolios: [] } }));
+
+    await getPublishedPortfolios("owner123", "自然");
+
+    const parsed = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(JSON.parse(parsed.searchParams.get("variables")!)).toEqual({
+      accountId: "owner123",
+      keyword: "自然",
+    });
   });
 
   it("ポートフォリオが公開されていない場合は null を返すこと", async () => {

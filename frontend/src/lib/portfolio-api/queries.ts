@@ -7,9 +7,9 @@
 
 const PHOTO_FIELDS = "photoNo url japaneseTitle englishTitle direction";
 
-/** 公開中のポートフォリオ一覧 */
-export const PUBLISHED_PORTFOLIOS_QUERY = `query PublishedPortfolios($accountId: ID!) {
-  publishedPortfolios(accountId: $accountId) {
+/** 公開中のポートフォリオ一覧（keyword でテーマ・タグ名を部分一致で絞り込む） */
+export const PUBLISHED_PORTFOLIOS_QUERY = `query PublishedPortfolios($accountId: ID!, $keyword: String) {
+  publishedPortfolios(accountId: $accountId, keyword: $keyword) {
     portfolioNo theme description template photoCount updatedAt
     tags { japaneseName englishName }
     coverPhoto { ${PHOTO_FIELDS} }

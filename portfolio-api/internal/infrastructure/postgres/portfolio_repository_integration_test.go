@@ -80,16 +80,16 @@ func TestFindAccountNo(t *testing.T) {
 func TestListPublished(t *testing.T) {
 	repo, _ := setup(t)
 
-	got, err := repo.ListPublished(context.Background(), 900001)
+	got, err := repo.ListPublished(context.Background(), 900001, "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// 公開中のものだけを、更新日時の新しい順に返す
-	if len(got) != 2 || got[0].PortfolioNo != 2 || got[1].PortfolioNo != 1 {
+	// 公開中のものだけを、表示順に返す（更新日時の順ではない）
+	if len(got) != 2 || got[0].PortfolioNo != 1 || got[1].PortfolioNo != 2 {
 		t.Fatalf("portfolios = %+v", got)
 	}
-	feature, grid := got[0], got[1]
+	grid, feature := got[0], got[1]
 
 	if feature.Template != domain.TemplateFeature || feature.PhotoCount != 0 || feature.CoverPhoto != nil {
 		t.Errorf("feature summary = %+v", feature)
@@ -119,9 +119,39 @@ func TestListPublished(t *testing.T) {
 func TestListPublished_NoPortfolios(t *testing.T) {
 	repo, _ := setup(t)
 
-	got, err := repo.ListPublished(context.Background(), 999999)
+	got, err := repo.ListPublished(context.Background(), 999999, "")
 	if err != nil || got == nil || len(got) != 0 {
 		t.Errorf("ListPublished = %#v, %v; want empty slice", got, err)
+	}
+}
+
+func TestListPublished_Keyword(t *testing.T) {
+	repo, _ := setup(t)
+
+	cases := []struct {
+		name    string
+		keyword string
+		want    []int64
+	}{
+		{"テーマに部分一致", "光", []int64{1}},
+		{"テーマ・タグ名のいずれかに一致（OR条件）", "自然", []int64{1, 2}},
+		{"タグ英語名に大文字・小文字を区別せず一致", "NATURE", []int64{1}},
+		{"下書きは対象外", "下書き", []int64{}},
+		{"他アカウントは対象外", "海", []int64{}},
+		{"LIKEのワイルドカードは文字そのものとして扱う", "%", []int64{}},
+	}
+	for _, c := range cases {
+		got, err := repo.ListPublished(context.Background(), 900001, c.keyword)
+		if err != nil {
+			t.Fatalf("%s: unexpected error: %v", c.name, err)
+		}
+		gotNos := make([]int64, 0, len(got))
+		for _, s := range got {
+			gotNos = append(gotNos, s.PortfolioNo)
+		}
+		if !reflect.DeepEqual(gotNos, c.want) {
+			t.Errorf("%s: portfolioNos = %v, want %v", c.name, gotNos, c.want)
+		}
 	}
 }
 

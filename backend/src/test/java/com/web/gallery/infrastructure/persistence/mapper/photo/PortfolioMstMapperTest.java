@@ -101,9 +101,39 @@ public class PortfolioMstMapperTest {
       assertEquals("grid", actual.get("template_kbn").toString());
       assertEquals(1, actual.get("settings_version"));
       assertEquals("draft", actual.get("status_kbn").toString());
+      // ポートフォリオが未作成のアカウントでは、表示順は1から始まる
+      assertEquals(1, actual.get("display_order"));
       assertTrue(
           isTemplateSettingsEqualTo(
               5L, "{\"rows\": [{\"pattern\": \"THREE_EQUAL\"}, {\"pattern\": \"WIDE_NARROW\"}]}"));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：表示順は、同じアカウントの既存の表示順の最大値+1（並び順の末尾）となること")
+    void insert_appendsToEnd() {
+      PortfolioMst portfolioMst =
+          PortfolioMst.builder()
+              .accountNo(1L)
+              .portfolioNo(4L)
+              .createdBy(1L)
+              .updatedBy(1L)
+              .theme("4個目")
+              .description("")
+              .templateKbn(PortfolioTemplateEnum.FEATURE)
+              .templateSettings(Map.of())
+              .settingsVersion(1)
+              .statusKbn(PortfolioStatusEnum.DRAFT)
+              .build();
+
+      assertEquals(1, portfolioMstMapper.insert(portfolioMst));
+
+      // account_no=1の表示順は1〜3が使用済み（account_no=2の表示順は影響しない）
+      assertEquals(
+          4,
+          jdbcTemplate.queryForObject(
+              "SELECT display_order FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 4",
+              Integer.class));
     }
   }
 
@@ -315,23 +345,23 @@ public class PortfolioMstMapperTest {
   class selectList {
     @Test
     @Order(1)
-    @DisplayName("正常系：アカウント番号で絞り込み、更新日時の新しい順に写真の枚数とあわせて取得すること")
+    @DisplayName("正常系：アカウント番号で絞り込み、表示順（更新日時の順ではない）に写真の枚数とあわせて取得すること")
     void selectList_byAccountNo() {
       List<PortfolioDto> actual =
           portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(1L));
 
-      assertEquals(List.of(3L, 2L, 1L), actual.stream().map(PortfolioDto::getPortfolioNo).toList());
+      assertEquals(List.of(3L, 1L, 2L), actual.stream().map(PortfolioDto::getPortfolioNo).toList());
       PortfolioDto second = actual.get(1);
       assertEquals(1L, second.getAccountNo());
-      assertEquals("ポートフォリオ12", second.getTheme());
-      assertEquals(PortfolioTemplateEnum.FEATURE, second.getTemplateKbn());
-      assertEquals(PortfolioStatusEnum.DRAFT, second.getStatusKbn());
-      assertEquals(1, second.getPhotoCount());
+      assertEquals(PortfolioTemplateEnum.GRID, second.getTemplateKbn());
+      assertEquals(PortfolioStatusEnum.PUBLISHED, second.getStatusKbn());
+      assertEquals(2, second.getPhotoCount());
+      assertTrue(UPDATED_AT_11.isEqual(second.getUpdatedAt()));
       PortfolioDto third = actual.get(2);
-      assertEquals(PortfolioTemplateEnum.GRID, third.getTemplateKbn());
-      assertEquals(PortfolioStatusEnum.PUBLISHED, third.getStatusKbn());
-      assertEquals(2, third.getPhotoCount());
-      assertTrue(UPDATED_AT_11.isEqual(third.getUpdatedAt()));
+      assertEquals("ポートフォリオ12", third.getTheme());
+      assertEquals(PortfolioTemplateEnum.FEATURE, third.getTemplateKbn());
+      assertEquals(PortfolioStatusEnum.DRAFT, third.getStatusKbn());
+      assertEquals(1, third.getPhotoCount());
     }
 
     @Test
@@ -443,6 +473,7 @@ public class PortfolioMstMapperTest {
           Map.of("rows", List.of(Map.of("pattern", "TWO_EQUAL"))), mst.getTemplateSettings());
       assertEquals(1, mst.getSettingsVersion());
       assertEquals(PortfolioStatusEnum.PUBLISHED, mst.getStatusKbn());
+      assertEquals(2, mst.getDisplayOrder());
     }
 
     @Test
@@ -489,6 +520,77 @@ public class PortfolioMstMapperTest {
     @DisplayName("正常系：どのポートフォリオにも使用されていない写真の場合、0件となること")
     void selectByPhoto_none() {
       assertTrue(portfolioMstMapper.selectByPhoto(1L, 3L).isEmpty());
+    }
+  }
+
+  @Nested
+  @Order(9)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/mapper/PortfolioMstMapperTest.sql")
+  class updateDisplayOrder {
+    private List<Map<String, Object>> displayOrders(Long accountNo) {
+      return jdbcTemplate.queryForList(
+          "SELECT portfolio_no, display_order FROM photo.portfolio_mst"
+              + " WHERE account_no = ? ORDER BY portfolio_no",
+          accountNo);
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：指定したポートフォリオ番号の並び順で、表示順を1から振り直すこと。更新日時は変更しないこと")
+    void updateDisplayOrder_success() {
+      assertEquals(3, portfolioMstMapper.updateDisplayOrder(1L, List.of(2L, 3L, 1L)));
+
+      assertEquals(
+          List.of(
+              Map.of("portfolio_no", 1L, "display_order", 3),
+              Map.of("portfolio_no", 2L, "display_order", 1),
+              Map.of("portfolio_no", 3L, "display_order", 2)),
+          displayOrders(1L));
+      assertTrue(
+          UPDATED_AT_11.isEqual(
+              jdbcTemplate.queryForObject(
+                  "SELECT updated_at FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 1",
+                  OffsetDateTime.class)));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：他アカウントのポートフォリオ番号は更新しないこと（アカウント番号とのAND条件）")
+    void updateDisplayOrder_otherAccount() {
+      // account_no=2にはポートフォリオ番号2・3が存在しないため、ポートフォリオ番号1の1件だけが更新対象となる
+      assertEquals(1, portfolioMstMapper.updateDisplayOrder(2L, List.of(3L, 2L, 1L)));
+
+      assertEquals(List.of(Map.of("portfolio_no", 1L, "display_order", 3)), displayOrders(2L));
+      assertEquals(
+          List.of(
+              Map.of("portfolio_no", 1L, "display_order", 2),
+              Map.of("portfolio_no", 2L, "display_order", 3),
+              Map.of("portfolio_no", 3L, "display_order", 1)),
+          displayOrders(1L));
+    }
+  }
+
+  @Nested
+  @Order(10)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/mapper/PortfolioMstMapperTest.sql")
+  class selectPortfolioNoList {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントのポートフォリオ番号（下書きを含む）を昇順にすべて取得すること")
+    void selectPortfolioNoList_success() {
+      assertEquals(List.of(1L, 2L, 3L), portfolioMstMapper.selectPortfolioNoList(1L));
+      assertEquals(List.of(1L), portfolioMstMapper.selectPortfolioNoList(2L));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：ポートフォリオが未作成のアカウントの場合、0件となること")
+    void selectPortfolioNoList_none() {
+      assertTrue(portfolioMstMapper.selectPortfolioNoList(3L).isEmpty());
     }
   }
 }

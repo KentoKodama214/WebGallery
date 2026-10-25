@@ -1,9 +1,12 @@
 package com.web.gallery.infrastructure.persistence.repository.photo;
 
 import com.web.gallery.application.aggregate.Portfolio;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.repository.photo.PortfolioAggregateRepository;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountNo;
+import com.web.gallery.domain.model.photo.PortfolioNo;
 import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMst;
 import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstUpdateTarget;
@@ -122,6 +125,34 @@ public class PortfolioAggregateRepositoryImpl implements PortfolioAggregateRepos
           "PortfolioMst: Update Failed for status (AccountNo: {}, PortfolioNo: {})",
           accountNo,
           portfolioNo);
+      throw ErrorEnum.FAIL_TO_UPDATE_PORTFOLIO.toException();
+    }
+  }
+
+  /**
+   * アカウントのポートフォリオの表示順を、指定したポートフォリオ番号の並び順で1から振り直す
+   *
+   * <p>ポートフォリオの内容の更新ではないため、更新者・更新日時は変更しない
+   *
+   * @param accountNo アカウント番号
+   * @param portfolioNoList 表示順に並べた、アカウントの全ポートフォリオのポートフォリオ番号
+   * @throws GalleryException 更新件数が指定した件数と一致しない場合（並行して削除された場合等）
+   */
+  @Override
+  public void updateDisplayOrder(AccountNo accountNo, PortfolioNoList portfolioNoList)
+      throws GalleryException {
+    if (portfolioNoList.isEmpty()) {
+      return;
+    }
+    Integer updatedCount =
+        portfolioMstMapper.updateDisplayOrder(
+            accountNo.value(), portfolioNoList.stream().map(PortfolioNo::value).toList());
+    if (!updatedCount.equals(portfolioNoList.size())) {
+      log.warn(
+          "PortfolioMst: Update Failed for display order (AccountNo: {}, Expected: {}, Updated: {})",
+          accountNo.value(),
+          portfolioNoList.size(),
+          updatedCount);
       throw ErrorEnum.FAIL_TO_UPDATE_PORTFOLIO.toException();
     }
   }

@@ -17,6 +17,7 @@ import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
@@ -29,6 +30,7 @@ import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import com.web.gallery.domain.exception.BadRequestException;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.PortfolioNotFoundException;
+import com.web.gallery.domain.exception.UpdateFailureException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.DisplayOrder;
 import com.web.gallery.domain.model.photo.ImageFilePath;
@@ -689,6 +691,47 @@ class PortfolioServiceImplTest {
       assertThrows(
           PortfolioNotFoundException.class,
           () -> portfolioServiceImpl.deletePortfolio(ACCOUNT_NO, PORTFOLIO_NO));
+    }
+  }
+
+  @Nested
+  @Order(10)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class updateDisplayOrder {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：本人の全ポートフォリオを過不足なく指定した場合、指定した並び順で表示順を更新すること")
+    void updateDisplayOrder_success() throws GalleryException {
+      doReturn(PortfolioNoList.from(List.of(1L, 2L, 3L)))
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioNoList(ACCOUNT_NO);
+      PortfolioNoList requested = PortfolioNoList.from(List.of(3L, 1L, 2L));
+
+      portfolioServiceImpl.updateDisplayOrder(ACCOUNT_NO, requested);
+
+      verify(portfolioAggregateRepositoryImpl).updateDisplayOrder(ACCOUNT_NO, requested);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：指定したポートフォリオ番号に過不足・重複がある場合、UpdateFailureExceptionをthrowし更新しないこと")
+    void updateDisplayOrder_mismatch() throws GalleryException {
+      doReturn(PortfolioNoList.from(List.of(1L, 2L, 3L)))
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioNoList(ACCOUNT_NO);
+
+      for (List<Long> requested :
+          List.of(List.of(1L, 2L), List.of(1L, 2L, 3L, 4L), List.of(1L, 2L, 2L, 3L))) {
+        GalleryException exception =
+            assertThrows(
+                UpdateFailureException.class,
+                () ->
+                    portfolioServiceImpl.updateDisplayOrder(
+                        ACCOUNT_NO, PortfolioNoList.from(requested)));
+        assertEquals(ErrorEnum.PORTFOLIO_LIST_OUTDATED.getErrorCode(), exception.getErrorCode());
+      }
+      verify(portfolioAggregateRepositoryImpl, never())
+          .updateDisplayOrder(any(AccountNo.class), any(PortfolioNoList.class));
     }
   }
 }

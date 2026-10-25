@@ -504,6 +504,18 @@ public enum ErrorEnum {
   },
 
   /**
+   * エラーコード：E-P-0027
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_PORTFOLIO_LIST_OUTDATED}
+   */
+  PORTFOLIO_LIST_OUTDATED("E-P-0027", MessageConst.ERR_PORTFOLIO_LIST_OUTDATED) {
+    @Override
+    public GalleryException toException() {
+      return new UpdateFailureException(this);
+    }
+  },
+
+  /**
    * エラーコード：E-S-0001
    *
    * <p>エラーメッセージ：{@value MessageConst#ERR_SYSTEM_ERROR}

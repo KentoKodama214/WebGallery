@@ -3,6 +3,7 @@ package com.web.gallery.application.service.photo;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.domain.exception.GalleryException;
@@ -89,6 +90,16 @@ public interface PortfolioService {
    * @throws GalleryException 以下のいずれかに該当する場合 ・ポートフォリオが存在しない場合 ・更新に失敗した場合
    */
   void unpublishPortfolio(AccountNo accountNo, PortfolioNo portfolioNo) throws GalleryException;
+
+  /**
+   * 本人の全ポートフォリオ（下書きを含む）の表示順を、指定したポートフォリオ番号の並び順に更新する
+   *
+   * @param accountNo アカウント番号
+   * @param portfolioNoList 表示順に並べたポートフォリオ番号（アカウントの全ポートフォリオを過不足・重複なく含むこと）
+   * @throws GalleryException 以下のいずれかに該当する場合 ・指定したポートフォリオ番号がアカウントの全ポートフォリオと一致しない場合 ・更新に失敗した場合
+   */
+  void updateDisplayOrder(AccountNo accountNo, PortfolioNoList portfolioNoList)
+      throws GalleryException;
 
   /**
    * ポートフォリオを削除する

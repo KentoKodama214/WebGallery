@@ -14,6 +14,7 @@ import com.web.gallery.application.model.photo.PortfolioDetailModelList;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
@@ -496,6 +497,22 @@ class PortfolioMstRepositoryImplTest {
 
       assertEquals(0, actual);
       verify(portfolioPhotoMapper, never()).countAvailablePhotos(anyLong(), anyList());
+    }
+  }
+
+  @Nested
+  @Order(8)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getPortfolioNoList {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントのポートフォリオ番号をPortfolioNoListに変換して返すこと")
+    void getPortfolioNoList_success() {
+      doReturn(List.of(1L, 2L, 3L)).when(portfolioMstMapper).selectPortfolioNoList(1L);
+
+      assertEquals(
+          PortfolioNoList.from(List.of(1L, 2L, 3L)),
+          portfolioMstRepositoryImpl.getPortfolioNoList(new AccountNo(1L)));
     }
   }
 }

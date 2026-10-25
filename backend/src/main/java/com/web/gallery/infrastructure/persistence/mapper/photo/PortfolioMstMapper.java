@@ -31,6 +31,16 @@ public interface PortfolioMstMapper {
       @Param("target") PortfolioMstUpdateTarget target);
 
   /**
+   * アカウントのポートフォリオの表示順を、指定したポートフォリオ番号の並び順で1から振り直す
+   *
+   * @param accountNo アカウント番号
+   * @param portfolioNoList 表示順に並べたポートフォリオ番号のリスト（空でないこと）
+   * @return 更新件数
+   */
+  public Integer updateDisplayOrder(
+      @Param("accountNo") Long accountNo, @Param("portfolioNoList") List<Long> portfolioNoList);
+
+  /**
    * 条件に該当するポートフォリオマスタを物理削除する
    *
    * @param condition 削除対象の抽出条件
@@ -61,6 +71,14 @@ public interface PortfolioMstMapper {
    * @return {@link PortfolioDto}のリスト
    */
   public List<PortfolioDto> selectList(PortfolioMstCondition condition);
+
+  /**
+   * アカウントが作成済みのポートフォリオ番号（下書きを含む）をすべて取得する
+   *
+   * @param accountNo アカウント番号
+   * @return ポートフォリオ番号のリスト（昇順）
+   */
+  public List<Long> selectPortfolioNoList(Long accountNo);
 
   /**
    * 条件に該当するポートフォリオマスタを取得する

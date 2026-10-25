@@ -10,6 +10,7 @@ import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
@@ -888,6 +889,85 @@ class PortfolioControllerTest {
       mockMvc.perform(get(PORTFOLIO_PHOTOS)).andExpect(status().isForbidden());
 
       verify(portfolioService, times(0)).searchPhotos(any());
+    }
+  }
+
+  @Nested
+  @Order(10)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class updatePortfolioDisplayOrder {
+    private static final String DISPLAY_ORDER = PORTFOLIOS + "/display-order";
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：指定した並び順のポートフォリオ番号で表示順の更新処理を呼び出すこと")
+    void updatePortfolioDisplayOrder_success() throws Exception {
+      mockMvc
+          .perform(
+              put(DISPLAY_ORDER)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("display_order_success.json")))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isSuccess").value(true))
+          .andExpect(jsonPath("$.message").value("ポートフォリオの並び順を更新しました。"));
+
+      verify(portfolioService)
+          .updateDisplayOrder(new AccountNo(1L), PortfolioNoList.from(List.of(3L, 1L, 2L)));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：ポートフォリオ番号が未指定・空・0以下・nullを含む場合、400を返しServiceを呼び出さないこと")
+    void updatePortfolioDisplayOrder_badRequest() throws Exception {
+      for (String fileName :
+          List.of(
+              "display_order_badrequest_missing.json",
+              "display_order_badrequest_empty.json",
+              "display_order_badrequest_not_positive.json",
+              "display_order_badrequest_null_element.json")) {
+        mockMvc
+            .perform(
+                put(DISPLAY_ORDER)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(readJsonFile(fileName)))
+            .andExpect(status().isBadRequest());
+      }
+
+      verify(portfolioService, times(0)).updateDisplayOrder(any(), any());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：一覧が最新でない場合、409を返すこと")
+    void updatePortfolioDisplayOrder_outdated() throws Exception {
+      doThrow(ErrorEnum.PORTFOLIO_LIST_OUTDATED.toException())
+          .when(portfolioService)
+          .updateDisplayOrder(any(), any());
+
+      mockMvc
+          .perform(
+              put(DISPLAY_ORDER)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("display_order_success.json")))
+          .andExpect(status().isConflict())
+          .andExpect(
+              jsonPath("$.errorCode").value(ErrorEnum.PORTFOLIO_LIST_OUTDATED.getErrorCode()));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：認証ユーザーと異なるアカウントIDを指定した場合、403を返しServiceを呼び出さないこと")
+    void updatePortfolioDisplayOrder_forbidden() throws Exception {
+      doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
+
+      mockMvc
+          .perform(
+              put(DISPLAY_ORDER)
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("display_order_success.json")))
+          .andExpect(status().isForbidden());
+
+      verify(portfolioService, times(0)).updateDisplayOrder(any(), any());
     }
   }
 }

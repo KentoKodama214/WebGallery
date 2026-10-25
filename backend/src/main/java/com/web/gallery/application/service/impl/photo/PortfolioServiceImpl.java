@@ -8,6 +8,7 @@ import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
@@ -242,6 +243,29 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     portfolio.unpublish();
     portfolioAggregateRepository.updateStatus(portfolio);
+  }
+
+  /**
+   * 本人の全ポートフォリオ（下書きを含む）の表示順を、指定したポートフォリオ番号の並び順に更新する
+   *
+   * <p>並び替え画面の表示後にポートフォリオが登録・削除された場合は、古い一覧のまま並び順を確定させないよう更新しない
+   *
+   * @param accountNo アカウント番号
+   * @param portfolioNoList 表示順に並べたポートフォリオ番号（アカウントの全ポートフォリオを過不足・重複なく含むこと）
+   * @throws GalleryException 以下のいずれかに該当する場合 ・指定したポートフォリオ番号がアカウントの全ポートフォリオと一致しない場合 ・更新に失敗した場合
+   */
+  @Override
+  @Transactional(rollbackFor = GalleryException.class)
+  public void updateDisplayOrder(AccountNo accountNo, PortfolioNoList portfolioNoList)
+      throws GalleryException {
+    if (!portfolioNoList.isSameSetAs(portfolioMstRepository.getPortfolioNoList(accountNo))) {
+      log.info(
+          "Portfolio: Display order list mismatch (AccountNo: {}, PortfolioNos: {})",
+          accountNo.value(),
+          portfolioNoList.stream().map(PortfolioNo::value).toList());
+      throw ErrorEnum.PORTFOLIO_LIST_OUTDATED.toException();
+    }
+    portfolioAggregateRepository.updateDisplayOrder(accountNo, portfolioNoList);
   }
 
   /**

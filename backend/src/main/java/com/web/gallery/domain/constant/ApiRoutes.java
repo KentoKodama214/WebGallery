@@ -74,6 +74,9 @@ public final class ApiRoutes {
   /** ポートフォリオ公開状態API（PUT=公開・下書きへの切り替え） */
   public static final String API_PORTFOLIO_STATUS = API_PORTFOLIO_DETAIL + "/status";
 
+  /** ポートフォリオ表示順API（PUT=本人の全ポートフォリオの並び替え） */
+  public static final String API_PORTFOLIO_DISPLAY_ORDER = API_PORTFOLIOS + "/display-order";
+
   /** ポートフォリオ作成上限チェックAPI（GET=作成数の上限到達チェック） */
   public static final String API_PORTFOLIO_UPPER_LIMIT = API_PORTFOLIOS + "/upper-limit";
 

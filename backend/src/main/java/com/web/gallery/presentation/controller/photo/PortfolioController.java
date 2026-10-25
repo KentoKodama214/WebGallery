@@ -14,6 +14,7 @@ import com.web.gallery.domain.model.photo.PortfolioNo;
 import com.web.gallery.infrastructure.security.SessionHelper;
 import com.web.gallery.infrastructure.web.ValidationErrorLogger;
 import com.web.gallery.presentation.converter.photo.PortfolioConverter;
+import com.web.gallery.presentation.request.photo.PortfolioDisplayOrderUpdateRequest;
 import com.web.gallery.presentation.request.photo.PortfolioListRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSearchRequest;
 import com.web.gallery.presentation.request.photo.PortfolioSaveRequest;
@@ -71,7 +72,7 @@ public class PortfolioController {
    */
   @Operation(
       summary = "ポートフォリオ一覧取得",
-      description = "本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、更新日時の新しい順に取得する")
+      description = "本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、表示順に取得する")
   @ApiResponse(responseCode = "200", description = "取得成功")
   @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
   @ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
@@ -287,6 +288,44 @@ public class PortfolioController {
     portfolioService.unpublishPortfolio(accountNo, toPortfolioNo(portfolioNo));
     return ResponseEntity.ok(
         PortfolioEditResponse.of(MessageConst.UNPUBLISH_PORTFOLIO, portfolioNo));
+  }
+
+  /**
+   * ポートフォリオ表示順更新
+   *
+   * @param accountId アカウントID
+   * @param request {@link PortfolioDisplayOrderUpdateRequest}
+   * @param result バリデーション結果
+   * @return {@link PortfolioEditResponse}（ポートフォリオ番号はnull）
+   * @throws GalleryException 以下のいずれかに該当する場合 ・認証ユーザーと異なるアカウントIDの場合 ・リクエストパラメータが不正な場合
+   *     ・指定したポートフォリオ番号が本人の全ポートフォリオと一致しない場合 ・更新に失敗した場合
+   */
+  @Operation(
+      summary = "ポートフォリオ表示順更新",
+      description =
+          "本人の全ポートフォリオ（下書きを含む）の表示順を、指定したポートフォリオ番号の並び順に更新する。"
+              + "ポートフォリオ番号は本人の全ポートフォリオを過不足・重複なく指定する必要がある。更新日時は変更しない")
+  @ApiResponse(responseCode = "200", description = "更新成功")
+  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+  @ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
+  @ApiResponse(
+      responseCode = "409",
+      description = "指定したポートフォリオ番号が本人の全ポートフォリオと一致しない（一覧が最新でない）、または更新失敗",
+      content = @Content)
+  @PutMapping(ApiRoutes.API_PORTFOLIO_DISPLAY_ORDER)
+  public ResponseEntity<PortfolioEditResponse> updatePortfolioDisplayOrder(
+      @PathVariable String accountId,
+      @RequestBody @Validated PortfolioDisplayOrderUpdateRequest request,
+      BindingResult result)
+      throws GalleryException {
+    verifyOwner(accountId);
+    verifyNoBindingErrors(result);
+
+    portfolioService.updateDisplayOrder(
+        new AccountNo(sessionHelper.getAccountNo()), portfolioConverter.toPortfolioNoList(request));
+
+    return ResponseEntity.ok(
+        PortfolioEditResponse.of(MessageConst.UPDATE_PORTFOLIO_DISPLAY_ORDER, null));
   }
 
   /**

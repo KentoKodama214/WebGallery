@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/KentoKodama214/WebGallery/portfolio-api/internal/domain"
@@ -14,6 +15,7 @@ type fakeRepository struct {
 	portfolio  *domain.Portfolio
 	err        error
 	findCalled bool
+	keyword    string
 }
 
 func (f *fakeRepository) FindAccountNo(_ context.Context, accountID string) (int64, bool, error) {
@@ -25,7 +27,8 @@ func (f *fakeRepository) FindAccountNo(_ context.Context, accountID string) (int
 	return no, ok, nil
 }
 
-func (f *fakeRepository) ListPublished(_ context.Context, _ int64) ([]domain.PortfolioSummary, error) {
+func (f *fakeRepository) ListPublished(_ context.Context, _ int64, keyword string) ([]domain.PortfolioSummary, error) {
+	f.keyword = keyword
 	return f.summaries, nil
 }
 
@@ -57,7 +60,7 @@ func TestListPublishedPortfolios(t *testing.T) {
 	}
 	query := NewPortfolioQuery(repo, fakeSigner{})
 
-	got, err := query.ListPublishedPortfolios(context.Background(), "owner123")
+	got, err := query.ListPublishedPortfolios(context.Background(), "owner123", "")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -75,7 +78,7 @@ func TestListPublishedPortfolios(t *testing.T) {
 func TestListPublishedPortfolios_EmptyWhenAccountMissingOrInvalid(t *testing.T) {
 	for _, accountID := range []string{"missing1", "bad"} {
 		repo := &fakeRepository{accounts: map[string]int64{}}
-		got, err := NewPortfolioQuery(repo, fakeSigner{}).ListPublishedPortfolios(context.Background(), accountID)
+		got, err := NewPortfolioQuery(repo, fakeSigner{}).ListPublishedPortfolios(context.Background(), accountID, "")
 		if err != nil {
 			t.Fatalf("%s: unexpected error: %v", accountID, err)
 		}
@@ -85,9 +88,30 @@ func TestListPublishedPortfolios_EmptyWhenAccountMissingOrInvalid(t *testing.T) 
 	}
 	// 形式が不正なアカウントIDは DB へ問い合わせない
 	repo := &fakeRepository{}
-	_, _ = NewPortfolioQuery(repo, fakeSigner{}).ListPublishedPortfolios(context.Background(), "a")
+	_, _ = NewPortfolioQuery(repo, fakeSigner{}).ListPublishedPortfolios(context.Background(), "a", "")
 	if repo.findCalled {
 		t.Error("repository should not be called for invalid account id")
+	}
+}
+
+func TestListPublishedPortfolios_Keyword(t *testing.T) {
+	// 前後の空白を除いてリポジトリへ渡す。空白だけの場合は絞り込まない
+	for input, want := range map[string]string{"  自然 ": "自然", "   ": "", "": ""} {
+		repo := &fakeRepository{accounts: map[string]int64{"owner123": 1}}
+		if _, err := NewPortfolioQuery(repo, fakeSigner{}).ListPublishedPortfolios(context.Background(), "owner123", input); err != nil {
+			t.Fatalf("%q: unexpected error: %v", input, err)
+		}
+		if repo.keyword != want {
+			t.Errorf("%q: keyword = %q, want %q", input, repo.keyword, want)
+		}
+	}
+
+	// 最大文字数を超える検索語は DB へ問い合わせず空の一覧を返す
+	repo := &fakeRepository{accounts: map[string]int64{"owner123": 1}, summaries: []domain.PortfolioSummary{{PortfolioNo: 1}}}
+	got, err := NewPortfolioQuery(repo, fakeSigner{}).ListPublishedPortfolios(
+		context.Background(), "owner123", strings.Repeat("あ", domain.KeywordMaxLength+1))
+	if err != nil || len(got) != 0 || repo.findCalled {
+		t.Errorf("got %v, %v (findCalled=%v); want empty slice without query", got, err, repo.findCalled)
 	}
 }
 

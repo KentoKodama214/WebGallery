@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.application.model.photo.PortfolioTagModel;
@@ -16,6 +17,7 @@ import com.web.gallery.domain.model.photo.PortfolioTheme;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TemplateSettings;
+import com.web.gallery.presentation.request.photo.PortfolioDisplayOrderUpdateRequest;
 import com.web.gallery.presentation.request.photo.PortfolioListRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSaveRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSearchRequest;
@@ -223,6 +225,24 @@ class PortfolioConverterTest {
 
       assertNull(actual.getKeyword());
       assertEquals(1, actual.getPageNo());
+    }
+  }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class toPortfolioNoList {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：リクエストのポートフォリオ番号が、並び順を保ったままPortfolioNoListへ変換されること")
+    void toPortfolioNoList_allFieldsSet() {
+      PortfolioDisplayOrderUpdateRequest request = new PortfolioDisplayOrderUpdateRequest();
+      request.setPortfolioNoList(List.of(3L, 1L, 2L));
+
+      PortfolioNoList actual = portfolioConverter.toPortfolioNoList(request);
+
+      assertEquals(
+          List.of(new PortfolioNo(3L), new PortfolioNo(1L), new PortfolioNo(2L)), actual.toList());
     }
   }
 }

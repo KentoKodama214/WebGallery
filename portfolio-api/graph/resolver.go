@@ -14,7 +14,7 @@ import (
 
 // PortfolioQuery はリゾルバが使うユースケース（テストで差し替えられるようインターフェースで受け取る）。
 type PortfolioQuery interface {
-	ListPublishedPortfolios(ctx context.Context, accountID string) ([]domain.PortfolioSummary, error)
+	ListPublishedPortfolios(ctx context.Context, accountID, keyword string) ([]domain.PortfolioSummary, error)
 	GetPublishedPortfolio(ctx context.Context, accountID string, portfolioNo int64) (*usecase.PublishedPortfolio, error)
 }
 

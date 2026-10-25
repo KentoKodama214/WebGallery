@@ -12,8 +12,12 @@ import (
 )
 
 // PublishedPortfolios is the resolver for the publishedPortfolios field.
-func (r *queryResolver) PublishedPortfolios(ctx context.Context, accountID string) ([]*model.PortfolioSummary, error) {
-	summaries, err := r.PortfolioQuery.ListPublishedPortfolios(ctx, accountID)
+func (r *queryResolver) PublishedPortfolios(ctx context.Context, accountID string, keyword *string) ([]*model.PortfolioSummary, error) {
+	var keywordValue string
+	if keyword != nil {
+		keywordValue = *keyword
+	}
+	summaries, err := r.PortfolioQuery.ListPublishedPortfolios(ctx, accountID, keywordValue)
 	if err != nil {
 		return nil, err
 	}

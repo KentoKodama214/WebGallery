@@ -2,6 +2,7 @@ package com.web.gallery.presentation.converter.photo;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
@@ -16,6 +17,7 @@ import com.web.gallery.domain.model.photo.PortfolioTheme;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TemplateSettings;
+import com.web.gallery.presentation.request.photo.PortfolioDisplayOrderUpdateRequest;
 import com.web.gallery.presentation.request.photo.PortfolioListRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSaveRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSearchRequest;
@@ -85,6 +87,16 @@ public class PortfolioConverter {
         .theme(toKeyword(request.getTheme()))
         .tag(toKeyword(request.getTag()))
         .build();
+  }
+
+  /**
+   * ポートフォリオ表示順の更新リクエストからPortfolioNoListを生成する
+   *
+   * @param request {@link PortfolioDisplayOrderUpdateRequest}（バリデーション済み）
+   * @return 表示順に並べた{@link PortfolioNoList}
+   */
+  public PortfolioNoList toPortfolioNoList(PortfolioDisplayOrderUpdateRequest request) {
+    return PortfolioNoList.from(request.getPortfolioNoList());
   }
 
   /**

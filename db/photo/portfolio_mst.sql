@@ -35,6 +35,8 @@ CREATE TABLE photo.portfolio_mst
 	-- draft: 下書き
 	-- published: 公開
 	status_kbn photo.portfolio_status_enum DEFAULT 'draft' NOT NULL,
+	-- 表示順: アカウント内のポートフォリオの並び順（1始まり。昇順に表示する）
+	display_order int NOT NULL,
 	PRIMARY KEY (id),
 	CONSTRAINT portfolio_no_unique UNIQUE (account_no, portfolio_no)
 ) WITHOUT OIDS;
@@ -69,3 +71,4 @@ COMMENT ON COLUMN photo.portfolio_mst.template_kbn IS 'テンプレート区分:
 COMMENT ON COLUMN photo.portfolio_mst.template_settings IS 'テンプレート設定 : テンプレート固有のポートフォリオ単位の設定（JSON）';
 COMMENT ON COLUMN photo.portfolio_mst.settings_version IS '設定バージョン : template_settings・portfolio_photo.photo_settingsのJSON構造のバージョン';
 COMMENT ON COLUMN photo.portfolio_mst.status_kbn IS '公開状態区分: draft(下書き)、published(公開)';
+COMMENT ON COLUMN photo.portfolio_mst.display_order IS '表示順 : アカウント内のポートフォリオの並び順（1始まり。昇順に表示する）';

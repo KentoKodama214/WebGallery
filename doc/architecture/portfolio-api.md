@@ -38,7 +38,7 @@ Java のバックエンドと同じく、依存は内側（domain）へ向かい
 
 ```graphql
 type Query {
-  publishedPortfolios(accountId: ID!): [PortfolioSummary!]!
+  publishedPortfolios(accountId: ID!, keyword: String): [PortfolioSummary!]!
   publishedPortfolio(accountId: ID!, portfolioNo: Int!): Portfolio
 }
 
@@ -48,6 +48,8 @@ union PortfolioLayout = FeatureLayout | GridLayout
 - 公開状態（`published`）のポートフォリオだけを返します（ポートフォリオは削除すると物理削除される）。下書き・存在しないポートフォリオは
   `publishedPortfolio` が `null`、`publishedPortfolios` は空の一覧になります（アカウントの存在有無も区別しない）
 - 削除済みの写真は返しません
+- `publishedPortfolios` は所有者が設定画面で並べた表示順（`portfolio_mst.display_order`）に返します。
+  `keyword` を指定すると、テーマ・タグ名（日本語・英語）のいずれかに部分一致（大文字・小文字を区別しない）するものに絞り込みます
 - テンプレートごとのレイアウトは `layout` の union 型で返し、`__typename` で判別します
 
 ## テンプレートを追加する手順

@@ -131,6 +131,20 @@ describe("api/client", () => {
       nowSpy.mockRestore();
     });
 
+    it("204（cookieが無い＝未ログイン）が返った場合は未ログイン確定とし、以降のfetchWithAuthはrefreshしない", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse(null, { status: 204 }));
+      expect(await client.refresh()).toBe(false);
+      expect(client.getAccessToken()).toBeNull();
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ data: [] }));
+      await client.fetchWithAuth("/api/v1/accounts");
+
+      const refreshCalls = fetchMock.mock.calls.filter((c) =>
+        String(c[0]).includes("/api/v1/auth/refresh")
+      );
+      expect(refreshCalls.length).toBe(1);
+    });
+
     it("401が返った場合は未ログイン確定とし、以降のfetchWithAuthはrefreshしない", async () => {
       fetchMock.mockResolvedValueOnce(
         makeResponse({ errorMessage: "unauthorized" }, { status: 401 })
@@ -335,6 +349,34 @@ describe("api/client", () => {
       expect(String(url)).toContain("/api/v1/accounts/me/portfolios/5/status");
       expect(init?.method).toBe("PUT");
       expect(JSON.parse(init?.body as string)).toEqual({ statusKbn: "published" });
+    });
+
+    it("updatePortfolioDisplayOrder は PUT /display-order で並び順のポートフォリオ番号を送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ isSuccess: true }));
+
+      await client.updatePortfolioDisplayOrder("me", [3, 1, 2]);
+
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios/display-order");
+      expect(init?.method).toBe("PUT");
+      expect(JSON.parse(init?.body as string)).toEqual({ portfolioNoList: [3, 1, 2] });
+    });
+
+    it("updatePortfolioDisplayOrder は一覧が最新でない場合（409）、メッセージと status を持つ ApiError を投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse(
+          { message: "ポートフォリオの一覧が最新ではありません。再読み込みしてから並び替えてください。" },
+          { status: 409 }
+        )
+      );
+
+      const err = await client.updatePortfolioDisplayOrder("me", [1]).catch((e) => e);
+
+      expect(err).toBeInstanceOf(client.ApiError);
+      expect(err.status).toBe(409);
+      expect(err.message).toBe(
+        "ポートフォリオの一覧が最新ではありません。再読み込みしてから並び替えてください。"
+      );
     });
 
     it("deletePortfolio は DELETE を送る", async () => {

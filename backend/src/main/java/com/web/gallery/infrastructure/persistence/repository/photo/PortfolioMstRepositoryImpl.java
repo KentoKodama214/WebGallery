@@ -6,6 +6,7 @@ import com.web.gallery.application.model.photo.PortfolioDetailModelList;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
@@ -80,7 +81,18 @@ public class PortfolioMstRepositoryImpl implements PortfolioMstRepository {
   }
 
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、更新日時の新しい順に取得する
+   * アカウントが作成済みのポートフォリオ番号（下書きを含む）をすべて取得する
+   *
+   * @param accountNo アカウント番号
+   * @return {@link PortfolioNoList}（ポートフォリオ番号の昇順）
+   */
+  @Override
+  public PortfolioNoList getPortfolioNoList(AccountNo accountNo) {
+    return PortfolioNoList.from(portfolioMstMapper.selectPortfolioNoList(accountNo.value()));
+  }
+
+  /**
+   * 本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、表示順に取得する
    *
    * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
    * @return {@link PortfolioModelList}

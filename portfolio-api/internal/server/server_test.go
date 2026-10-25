@@ -24,10 +24,12 @@ type fakeQuery struct {
 	published map[int64]*usecase.PublishedPortfolio
 	err       error
 	calls     int
+	keyword   string
 }
 
-func (f *fakeQuery) ListPublishedPortfolios(context.Context, string) ([]domain.PortfolioSummary, error) {
+func (f *fakeQuery) ListPublishedPortfolios(_ context.Context, _ string, keyword string) ([]domain.PortfolioSummary, error) {
 	f.calls++
+	f.keyword = keyword
 	return f.summaries, f.err
 }
 
@@ -167,6 +169,17 @@ func TestPublishedPortfolios(t *testing.T) {
 		`{"coverPhoto":null,"photoCount":0,"portfolioNo":1,"template":"FEATURE","updatedAt":"2026-10-01T09:00:00Z"}]`
 	if got := toJSON(res.Data["publishedPortfolios"]); got != want {
 		t.Errorf("publishedPortfolios = %s\nwant %s", got, want)
+	}
+}
+
+func TestPublishedPortfolios_Keyword(t *testing.T) {
+	query := &fakeQuery{summaries: []domain.PortfolioSummary{}}
+	server := newTestServer(t, query, Options{})
+
+	res := post(t, server, `{ publishedPortfolios(accountId: "owner123", keyword: "自然") { portfolioNo } }`)
+
+	if len(res.Errors) != 0 || query.keyword != "自然" {
+		t.Errorf("errors = %+v, keyword = %q; want keyword passed through", res.Errors, query.keyword)
 	}
 }
 

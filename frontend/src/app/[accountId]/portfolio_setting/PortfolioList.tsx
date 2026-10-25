@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import {
   getPortfolioList,
   getPortfolioUpperLimit,
+  updatePortfolioDisplayOrder,
   type PortfolioListFilter,
   type PortfolioListItem,
 } from "@/lib/api/client";
@@ -21,6 +22,8 @@ interface PortfolioListProps {
  * 本人のポートフォリオ一覧（下書きを含む）コンポーネント
  *
  * テーマ・タグ名（部分一致）で絞り込める。作成数が権限ごとの上限に達している場合は新規作成できない。
+ * 一覧は表示順（公開ページの一覧と同じ順）に並び、各行の上下ボタンで並び替えられる。
+ * 並び替えは全件の並びを保存するため、絞り込み中は行えない。
  */
 export function PortfolioList({ accountId }: PortfolioListProps) {
   const { user } = useAuth();
@@ -37,6 +40,35 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
   const [isReachedUpperLimit, setIsReachedUpperLimit] = useState(false);
   // 取得リクエストの世代。後着レスポンスが新しい一覧を上書きする競合を防ぐ
   const loadSeqRef = useRef(0);
+  // 並び順の保存中か（保存中は続けて並び替えできないようにし、保存の順序の入れ違いを防ぐ）
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+  // 並び替えの結果（成功・失敗）のメッセージ
+  const [orderMessage, setOrderMessage] = useState<{ text: string; isError: boolean } | null>(
+    null
+  );
+  // 並び替えた行のボタンへフォーカスを戻すための参照（キー：`{ポートフォリオ番号}-{up|down}`）
+  const moveButtonRefs = useRef(new Map<string, HTMLButtonElement>());
+  // 保存後にフォーカスを戻すボタンのキー
+  const pendingFocusRef = useRef<string | null>(null);
+
+  // 並び替えの保存が終わったら、移動したボタンへフォーカスを戻す
+  // （保存中はボタンを無効にするためフォーカスが外れる）。
+  // 先頭・末尾に達してそのボタンが無効になった場合は、反対方向のボタンへ移す
+  useEffect(() => {
+    const pendingFocus = pendingFocusRef.current;
+    if (!pendingFocus || isSavingOrder) return;
+    pendingFocusRef.current = null;
+    const [portfolioNo, direction] = pendingFocus.split("-");
+    const target = moveButtonRefs.current.get(pendingFocus);
+    const fallback = moveButtonRefs.current.get(
+      `${portfolioNo}-${direction === "up" ? "down" : "up"}`
+    );
+    if (target && !target.disabled) {
+      target.focus();
+    } else if (fallback && !fallback.disabled) {
+      fallback.focus();
+    }
+  }, [isSavingOrder]);
 
   // 初回表示時の読み込み（状態の更新は応答受信後だけに行う）
   useEffect(() => {
@@ -117,6 +149,45 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
   };
 
   const isFiltered = !!appliedFilter.theme || !!appliedFilter.tag;
+
+  /**
+   * ポートフォリオを1つ上・下へ移動し、並び順を保存する
+   *
+   * 画面の並びを先に入れ替え、保存に失敗した場合はサーバーから一覧を取り直す
+   * （一覧の表示後に他のタブ等でポートフォリオが登録・削除されていた場合も、最新の並びに戻る）。
+   *
+   * @param index 移動するポートフォリオの一覧内の位置
+   * @param direction 移動する方向
+   */
+  const movePortfolio = async (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (isFiltered || isSavingOrder || targetIndex < 0 || targetIndex >= portfolios.length) {
+      return;
+    }
+    const reordered = [...portfolios];
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+    const moved = portfolios[index];
+
+    setPortfolios(reordered);
+    setIsSavingOrder(true);
+    setOrderMessage(null);
+    pendingFocusRef.current = `${moved.portfolioNo}-${direction}`;
+    try {
+      await updatePortfolioDisplayOrder(
+        accountId,
+        reordered.map((portfolio) => portfolio.portfolioNo)
+      );
+      setOrderMessage({ text: `「${moved.theme}」の並び順を変更しました`, isError: false });
+    } catch (err) {
+      setOrderMessage({
+        text: err instanceof Error ? err.message : "並び順の更新に失敗しました",
+        isError: true,
+      });
+      await loadList(appliedFilter);
+    } finally {
+      setIsSavingOrder(false);
+    }
+  };
 
   // ログイン済みだが他人のポートフォリオ設定を開こうとした場合（認可はバックエンドでも実施）
   if (!isOwner) {
@@ -213,6 +284,23 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
         </button>
       </form>
 
+      {isFiltered && portfolios.length > 0 && (
+        <p
+          id="portfolio-order-disabled-message"
+          className="w-full max-w-[800px] px-4 text-sm text-gray-700"
+        >
+          絞り込み中は並び替えできません。並び替えるには条件をクリアしてください
+        </p>
+      )}
+      <p
+        role="status"
+        className={`w-full max-w-[800px] px-4 text-sm ${
+          orderMessage?.isError ? "text-red-700" : "text-gray-700"
+        }`}
+      >
+        {orderMessage?.text}
+      </p>
+
       {isLoading ? (
         <div className="flex justify-center items-center min-h-[200px]">
           <p>読み込み中...</p>
@@ -257,10 +345,13 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
                 <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
                   公開ページ
                 </th>
+                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
+                  並び順
+                </th>
               </tr>
             </thead>
             <tbody>
-              {portfolios.map((portfolio) => (
+              {portfolios.map((portfolio, index) => (
                 <tr key={portfolio.portfolioNo} data-testid="portfolio-row">
                   <td className="py-3 px-4 border border-gray-300">
                     <Link
@@ -303,6 +394,35 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
                     ) : (
                       <span className="text-gray-600">-</span>
                     )}
+                  </td>
+                  <td className="py-3 px-4 border border-gray-300">
+                    <div className="flex gap-1">
+                      {(["up", "down"] as const).map((direction) => (
+                        <button
+                          key={direction}
+                          type="button"
+                          ref={(element) => {
+                            const key = `${portfolio.portfolioNo}-${direction}`;
+                            if (element) {
+                              moveButtonRefs.current.set(key, element);
+                            } else {
+                              moveButtonRefs.current.delete(key);
+                            }
+                          }}
+                          onClick={() => movePortfolio(index, direction)}
+                          disabled={
+                            isFiltered ||
+                            isSavingOrder ||
+                            (direction === "up" ? index === 0 : index === portfolios.length - 1)
+                          }
+                          aria-label={`${portfolio.theme}を${direction === "up" ? "上" : "下"}へ移動`}
+                          aria-describedby={isFiltered ? "portfolio-order-disabled-message" : undefined}
+                          className="w-8 h-8 border border-gray-400 rounded hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-transparent"
+                        >
+                          <span aria-hidden="true">{direction === "up" ? "↑" : "↓"}</span>
+                        </button>
+                      ))}
+                    </div>
                   </td>
                 </tr>
               ))}

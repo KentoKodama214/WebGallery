@@ -221,7 +221,7 @@ let refreshInFlight: Promise<boolean> | null = null;
  * リフレッシュにより後発のリクエストが無効化される競合を避ける。
  *
  * セッション状態を "anonymous"（未ログイン確定）へ落とすのは、リフレッシュAPIが
- * 明確に 401/403 を返した場合のみ。ネットワーク例外や 5xx などの一時的な失敗では
+ * 204（リフレッシュトークンの cookie が無い＝未ログイン）または 401/403 を返した場合のみ。ネットワーク例外や 5xx などの一時的な失敗では
  * セッション状態を変更せず、次回のリクエストで再試行できるようにする。
  */
 export function refresh(): Promise<boolean> {
@@ -262,6 +262,16 @@ async function doRefresh(): Promise<boolean> {
       accessToken = null;
       lastRefreshTransientFailureAt = Date.now();
     }
+    return false;
+  }
+
+  // cookie が無い（未ログイン）場合、バックエンドはエラーではなく本文なしの 204 を返す
+  // （未ログインで画面を開くたびにブラウザへ 401 が記録されないようにするため）
+  if (response.status === 204) {
+    if (isStale()) return false;
+    accessToken = null;
+    sessionAuthState = "anonymous";
+    lastRefreshTransientFailureAt = 0;
     return false;
   }
 
@@ -1402,6 +1412,35 @@ export async function updatePortfolioStatus(
     );
   }
   return readJson<PortfolioEditResult>(response);
+}
+
+/**
+ * ポートフォリオの表示順を更新する
+ *
+ * 本人の全ポートフォリオ（下書きを含む）を、表示したい順に過不足なく指定する。
+ * 一覧の表示後にポートフォリオが登録・削除されていた場合は 409 となる。
+ *
+ * @param accountId アカウントID
+ * @param portfolioNoList 表示順に並べたポートフォリオ番号
+ */
+export async function updatePortfolioDisplayOrder(
+  accountId: string,
+  portfolioNoList: number[]
+): Promise<void> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/display-order`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ portfolioNoList }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "並び順の更新に失敗しました"),
+      response.status
+    );
+  }
 }
 
 /**

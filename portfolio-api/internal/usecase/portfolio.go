@@ -13,8 +13,9 @@ import (
 type PortfolioRepository interface {
 	// FindAccountNo はアカウントIDからアカウント番号を取得する。存在しない場合は found=false を返す。
 	FindAccountNo(ctx context.Context, accountID string) (accountNo int64, found bool, err error)
-	// ListPublished はアカウントの公開中のポートフォリオ一覧を、更新日時の新しい順に取得する。
-	ListPublished(ctx context.Context, accountNo int64) ([]domain.PortfolioSummary, error)
+	// ListPublished はアカウントの公開中のポートフォリオ一覧を、表示順に取得する。
+	// keyword が空でない場合は、テーマ・タグ名のいずれかに部分一致するものに絞り込む。
+	ListPublished(ctx context.Context, accountNo int64, keyword string) ([]domain.PortfolioSummary, error)
 	// FindPublished は公開中のポートフォリオを取得する。存在しない・公開されていない場合は nil を返す。
 	FindPublished(ctx context.Context, accountNo, portfolioNo int64) (*domain.Portfolio, error)
 }
@@ -43,10 +44,12 @@ func NewPortfolioQuery(repository PortfolioRepository, signer URLSigner) *Portfo
 
 // ListPublishedPortfolios はアカウントの公開中のポートフォリオ一覧を取得する。
 //
-// アカウントIDの形式が不正な場合・アカウントが存在しない場合は、エラーではなく空の一覧を返す
+// keyword（前後の空白は除く）が空でない場合は、テーマ・タグ名のいずれかに部分一致するものに絞り込む。
+// アカウントIDの形式が不正な場合・アカウントが存在しない場合・検索語が長すぎる場合は、エラーではなく空の一覧を返す
 // （公開ページで「ポートフォリオがない」場合と区別せず、アカウントの存在有無を推測させない）。
-func (q *PortfolioQuery) ListPublishedPortfolios(ctx context.Context, accountID string) ([]domain.PortfolioSummary, error) {
-	if !domain.IsValidAccountID(accountID) {
+func (q *PortfolioQuery) ListPublishedPortfolios(ctx context.Context, accountID, keyword string) ([]domain.PortfolioSummary, error) {
+	normalizedKeyword, ok := domain.NormalizeKeyword(keyword)
+	if !domain.IsValidAccountID(accountID) || !ok {
 		return []domain.PortfolioSummary{}, nil
 	}
 	accountNo, found, err := q.repository.FindAccountNo(ctx, accountID)
@@ -57,7 +60,7 @@ func (q *PortfolioQuery) ListPublishedPortfolios(ctx context.Context, accountID 
 		return []domain.PortfolioSummary{}, nil
 	}
 
-	summaries, err := q.repository.ListPublished(ctx, accountNo)
+	summaries, err := q.repository.ListPublished(ctx, accountNo, normalizedKeyword)
 	if err != nil {
 		return nil, fmt.Errorf("list published portfolios: %w", err)
 	}

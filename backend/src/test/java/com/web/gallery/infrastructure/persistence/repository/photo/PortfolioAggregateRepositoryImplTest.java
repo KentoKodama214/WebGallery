@@ -3,6 +3,7 @@ package com.web.gallery.infrastructure.persistence.repository.photo;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.verify;
 
 import com.web.gallery.application.aggregate.Portfolio;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioTagModel;
@@ -390,6 +392,46 @@ class PortfolioAggregateRepositoryImplTest {
           () ->
               portfolioAggregateRepositoryImpl.delete(
                   Portfolio.forDelete(new AccountNo(1L), new PortfolioNo(2L))));
+    }
+  }
+
+  @Nested
+  @Order(5)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class updateDisplayOrder {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：ポートフォリオ番号を並び順のままLongのリストに変換して表示順を更新すること")
+    void updateDisplayOrder_success() throws Exception {
+      doReturn(3).when(portfolioMstMapper).updateDisplayOrder(1L, List.of(3L, 1L, 2L));
+
+      portfolioAggregateRepositoryImpl.updateDisplayOrder(
+          new AccountNo(1L), PortfolioNoList.from(List.of(3L, 1L, 2L)));
+
+      verify(portfolioMstMapper).updateDisplayOrder(1L, List.of(3L, 1L, 2L));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：ポートフォリオ番号が空の場合、更新しないこと（空のVALUES句によるSQL構文エラーを避ける）")
+    void updateDisplayOrder_empty() throws Exception {
+      portfolioAggregateRepositoryImpl.updateDisplayOrder(
+          new AccountNo(1L), PortfolioNoList.empty());
+
+      verify(portfolioMstMapper, never()).updateDisplayOrder(anyLong(), anyList());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：更新件数が指定した件数と一致しない場合、UpdateFailureExceptionをthrowすること")
+    void updateDisplayOrder_updateFailed() {
+      doReturn(2).when(portfolioMstMapper).updateDisplayOrder(1L, List.of(3L, 1L, 2L));
+
+      assertThrows(
+          UpdateFailureException.class,
+          () ->
+              portfolioAggregateRepositoryImpl.updateDisplayOrder(
+                  new AccountNo(1L), PortfolioNoList.from(List.of(3L, 1L, 2L))));
     }
   }
 }
