@@ -20,6 +20,8 @@ export default defineConfig({
   testIgnore: "**/prod-smoke/**",
   // ローカル実行時に蓄積するE2E生成アカウントを実行前にクリーンアップする（e2e/global-setup.ts）
   globalSetup: require.resolve("./e2e/global-setup"),
+  // テスト実行後にも、実行中に登録したE2E生成アカウントを削除する（e2e/global-teardown.ts）
+  globalTeardown: require.resolve("./e2e/global-teardown"),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   // 1テストあたりの上限。ほとんどのテストは前準備でアカウント登録（BCryptハッシュ化）と
