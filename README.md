@@ -222,7 +222,7 @@ just front-run
 
 ## ローカル動作確認用のダミーデータ投入（任意）
 
-画面での動作確認用に、アカウント・写真・タグ・お気に入りのダミーデータを一括投入できます。
+画面での動作確認用に、アカウント・写真・タグ・お気に入り・ポートフォリオ・お問い合わせのダミーデータを一括投入できます。投入後は、手動でデータを追加しなくても各画面の主要なパターン（ページング、作成数の上限、ロック状態、公開/下書き、未読の返信等）を確認できます。
 
 ```bash
 ./scripts/seed-local-data.sh
@@ -230,12 +230,26 @@ just front-run
 
 実行には `just db-up` でDB・MinIOが起動していることに加え、`convert`（ImageMagick）・`htpasswd`・`openssl` コマンドが必要です（`brew install imagemagick httpd` 等でインストールしてください）。
 
-> **【注意】** 実行するとローカルDB・MinIOの写真関連データ（`account`、`location_mst`、`refresh_token`、`photo_mst`、`photo_tag_mst`、`photo_favorite` および MinIOの `web-gallery-local` バケット内の画像）を全件削除したうえで、以下を新規作成します。
+> **【注意】** 実行するとローカルDBのアカウント関連データ（`account`、`account_authority`、`location_mst`、`refresh_token`、`login_history`、`photo_mst`、`photo_tag_mst`、`photo_favorite`、`photo_view_log`、`photo_list_filter_log`、`portfolio_mst`、`portfolio_photo`、`portfolio_tag_mst`、`inquiry_mst`、`inquiry_reply_mst`）および MinIOの `web-gallery-local` バケット内の画像を全件削除したうえで、以下を新規作成します。パスワードは全アカウント共通で `password01` です。
 
-- アカウント3件（`localuser01`: normal-user、`localuser02`: mini-user、`localuser03`: administrator。パスワードは全アカウント共通で `password01`）
-- `localuser01` の写真10枚（縦6枚・横4枚）とロケーション・タグ
-- `localuser01` の写真に対する各アカウントからのお気に入り（お気に入り数順ソートの検証用に件数を分散）
-- ダミー画像（ImageMagickで生成）のMinIOへのアップロード
+| アカウントID | 権限 | 内容 |
+| --- | --- | --- |
+| `localuser01` | normal-user | 写真25枚（2ページ目あり）＋論理削除済み1枚、ポートフォリオ6件、お問い合わせ22件（2ページ目あり） |
+| `localuser02` | mini-user | データなし（空の一覧表示の確認用） |
+| `localuser03` | administrator | お問い合わせへの返信者（返信が残るため退会不可） |
+| `localuser04` | mini-user | 写真10枚・ポートフォリオ3件（いずれも作成数上限に到達）、お問い合わせ3件 |
+| `localuser05` | special-user | 写真5枚（位置情報の公開/非公開）、ポートフォリオ1件、お問い合わせ2件 |
+| `localuser06` | normal-user | ログイン失敗回数によりロック中 |
+| `localuser07` | normal-user | ロック期間経過済み（ログインすると自動解除） |
+| `localuser08` | normal-user | 管理者ロック中 |
+| `localuser09` | normal-user | ログイン失敗1回（ロック前） |
+| `localuser10` | normal-user | 退会済み（削除フラグ） |
+| `localuser11`〜`25` | normal-user / mini-user | アカウント一覧のページング確認用 |
+
+- 写真：縦・横・正方形、撮影日時を四季・複数年に分散、位置情報の公開/非公開、タグ0件〜20件（上限）、英語タイトル・キャプションの空欄、タイトル100文字（上限）、お気に入り数0〜5件（同数あり）
+- ポートフォリオ（`localuser01`）：フィーチャー型/グリッド型 × 公開中/下書き、公開できない下書き（テーマ未入力、行の枚数と写真の枚数の不一致、写真0枚）、上限値（テーマ100文字・説明文2000文字・タグ30件）。公開中の2件（P1・P3）で写真7を共有しており、削除すると両方が下書きに戻る
+- お問い合わせ：未対応、回答済み（既読/未読）、管理者の返信3件、取り下げ（返信あり/なし）、上限値（件名100文字・本文2000文字）。返信は `localuser03` が投稿
+- ダミー画像（ImageMagickで生成）は、アプリと同じ `{アカウント番号}/{写真番号}-{ランダム}.jpg` のオブジェクトキーでMinIOへアップロード
 
 ## ビルド・テスト
 
