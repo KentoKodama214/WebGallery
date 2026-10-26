@@ -17,9 +17,9 @@ select setval('photo.photo_mst_id_seq', (select max(id) from photo.photo_mst));
 -- photo.portfolio_mst
 -- account_no=1：公開中のフィーチャー型（番号1。写真1・写真2）、下書きのグリッド型（番号2。行の枚数2に対し写真1枚のため公開できない）
 -- account_no=2：下書きのフィーチャー型（番号1）
-insert into photo.portfolio_mst values(1, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', '日本の自然', '日本各地の風景', 'feature', '{}', 1, 'published');
-insert into photo.portfolio_mst values(2, 1, 2, 1, '2000-01-02 09:00:00 Asia/Tokyo', 1, '2001-02-01 09:00:00 Asia/Tokyo', '光と影', '', 'grid', '{"rows": [{"pattern": "TWO_EQUAL"}]}', 1, 'draft');
-insert into photo.portfolio_mst values(3, 2, 1, 2, '2000-01-03 09:00:00 Asia/Tokyo', 2, '2001-01-03 09:00:00 Asia/Tokyo', '海の風景', '', 'feature', '{}', 1, 'draft');
+insert into photo.portfolio_mst values(1, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', '日本の自然', '日本各地の風景', 'feature', '{}', 1, 'published', 1);
+insert into photo.portfolio_mst values(2, 1, 2, 1, '2000-01-02 09:00:00 Asia/Tokyo', 1, '2001-02-01 09:00:00 Asia/Tokyo', '光と影', '', 'grid', '{"rows": [{"pattern": "TWO_EQUAL"}]}', 1, 'draft', 2);
+insert into photo.portfolio_mst values(3, 2, 1, 2, '2000-01-03 09:00:00 Asia/Tokyo', 2, '2001-01-03 09:00:00 Asia/Tokyo', '海の風景', '', 'feature', '{}', 1, 'draft', 1);
 select setval('photo.portfolio_mst_id_seq', (select max(id) from photo.portfolio_mst));
 
 -- photo.portfolio_photo

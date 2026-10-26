@@ -4,7 +4,8 @@ import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioDetailModelList;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
-import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioNoList;
+import com.web.gallery.application.model.photo.PortfolioPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.domain.exception.GalleryException;
@@ -31,12 +32,20 @@ public interface PortfolioMstRepository {
   Integer count(AccountNo accountNo);
 
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、更新日時の新しい順に取得する
+   * アカウントが作成済みのポートフォリオ番号（下書きを含む）をすべて表示順に取得し、並び替えのために行をロックする
    *
-   * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
-   * @return {@link PortfolioModelList}
+   * @param accountNo アカウント番号
+   * @return {@link PortfolioNoList}（表示順）
    */
-  PortfolioModelList getPortfolioList(PortfolioListGetModel portfolioListGetModel);
+  PortfolioNoList getPortfolioNoListForUpdate(AccountNo accountNo);
+
+  /**
+   * 本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込み、表示順に1ページ分取得する
+   *
+   * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可。1ページあたりの件数を設定済み）
+   * @return {@link PortfolioPageModel}
+   */
+  PortfolioPageModel getPortfolioList(PortfolioListGetModel portfolioListGetModel);
 
   /**
    * 本人の未削除の写真を、検索語がタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに部分一致するもので絞り込み、写真番号の降順に1ページ分取得する

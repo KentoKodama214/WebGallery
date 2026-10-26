@@ -12,20 +12,32 @@ import (
 )
 
 // PublishedPortfolios is the resolver for the publishedPortfolios field.
-func (r *queryResolver) PublishedPortfolios(ctx context.Context, accountID string) ([]*model.PortfolioSummary, error) {
-	summaries, err := r.PortfolioQuery.ListPublishedPortfolios(ctx, accountID)
+func (r *queryResolver) PublishedPortfolios(ctx context.Context, accountID string, keyword *string, limit *int, offset *int) (*model.PortfolioSummaryPage, error) {
+	var keywordValue string
+	if keyword != nil {
+		keywordValue = *keyword
+	}
+	// 引数を省略した場合はスキーマの既定値が渡されるが、明示的に null を指定された場合も同じ既定値として扱う
+	limitValue, offsetValue := 20, 0
+	if limit != nil {
+		limitValue = *limit
+	}
+	if offset != nil {
+		offsetValue = *offset
+	}
+	page, err := r.PortfolioQuery.ListPublishedPortfolios(ctx, accountID, keywordValue, limitValue, offsetValue)
 	if err != nil {
 		return nil, err
 	}
-	result := make([]*model.PortfolioSummary, 0, len(summaries))
-	for _, summary := range summaries {
+	portfolios := make([]*model.PortfolioSummary, 0, len(page.Portfolios))
+	for _, summary := range page.Portfolios {
 		converted, err := toPortfolioSummary(summary)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, converted)
+		portfolios = append(portfolios, converted)
 	}
-	return result, nil
+	return &model.PortfolioSummaryPage{Portfolios: portfolios, HasNext: page.HasNext}, nil
 }
 
 // PublishedPortfolio is the resolver for the publishedPortfolio field.

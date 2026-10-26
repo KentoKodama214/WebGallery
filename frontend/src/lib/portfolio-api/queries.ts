@@ -7,12 +7,15 @@
 
 const PHOTO_FIELDS = "photoNo url japaneseTitle englishTitle direction";
 
-/** 公開中のポートフォリオ一覧 */
-export const PUBLISHED_PORTFOLIOS_QUERY = `query PublishedPortfolios($accountId: ID!) {
-  publishedPortfolios(accountId: $accountId) {
-    portfolioNo theme description template photoCount updatedAt
-    tags { japaneseName englishName }
-    coverPhoto { ${PHOTO_FIELDS} }
+/** 公開中のポートフォリオ一覧（keyword でテーマ・タグ名を部分一致で絞り込み、表示順で先頭から最大 limit 件） */
+export const PUBLISHED_PORTFOLIOS_QUERY = `query PublishedPortfolios($accountId: ID!, $keyword: String, $limit: Int) {
+  publishedPortfolios(accountId: $accountId, keyword: $keyword, limit: $limit) {
+    portfolios {
+      portfolioNo theme description template photoCount updatedAt
+      tags { japaneseName englishName }
+      coverPhoto { ${PHOTO_FIELDS} }
+    }
+    hasNext
   }
 }`;
 

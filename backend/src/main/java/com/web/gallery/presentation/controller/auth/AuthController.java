@@ -104,10 +104,18 @@ public class AuthController {
    * <p>リフレッシュトークンもローテーションされるため、新しいトークンをcookieに再設定する
    *
    * @param refreshToken リフレッシュトークン（cookieから取得）
-   * @return {@link AuthLoginResponse}、またはトークン不正時の{@link AuthErrorResponse}
+   * @return {@link AuthLoginResponse}、cookieが無い（未ログイン）場合は204 No Content、トークン不正時の{@link
+   *     AuthErrorResponse}
    */
-  @Operation(summary = "トークンリフレッシュ", description = "リフレッシュトークン（cookie）を使用してアクセストークンを再発行する")
+  @Operation(
+      summary = "トークンリフレッシュ",
+      description =
+          "リフレッシュトークン（cookie）を使用してアクセストークンを再発行する。" + "cookieが無い（未ログイン）場合は、エラーではなく204 No Contentを返す")
   @ApiResponse(responseCode = "200", description = "リフレッシュ成功")
+  @ApiResponse(
+      responseCode = "204",
+      description = "未ログイン（リフレッシュトークンのcookieが無い）",
+      content = @Content)
   @ApiResponse(responseCode = "401", description = "リフレッシュトークンが無効", content = @Content)
   @ApiResponse(responseCode = "423", description = "アカウントロック", content = @Content)
   @PostMapping(ApiRoutes.API_AUTH_REFRESH)
@@ -115,10 +123,10 @@ public class AuthController {
       @CookieValue(name = REFRESH_TOKEN_COOKIE_NAME, required = false) String refreshToken) {
 
     if (refreshToken == null || refreshToken.isEmpty()) {
-      // cookieが無いのは未ログインの正常な状態。例外ハンドラ（INFOログ出力）を経由せず、
-      // 他の認証エラーと同じJSON形式（AuthErrorResponse）で401を返す
-      return ResponseEntity.status(401)
-          .body(AuthErrorResponse.of(MessageConst.ERR_INVALID_REFRESH_TOKEN));
+      // cookieが無いのは未ログインの正常な状態。フロントエンドは画面を開くたびにセッション復元のため
+      // リフレッシュを試みるため、401を返すと未ログインで公開ページ等を開くだけでブラウザにエラーが記録される。
+      // エラーではなく「復元するセッションが無い」ことを204で返す
+      return ResponseEntity.noContent().build();
     }
 
     AuthTokenModel tokenModel = authService.refresh(new RefreshTokenValue(refreshToken));

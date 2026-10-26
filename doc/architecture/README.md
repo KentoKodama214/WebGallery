@@ -3,6 +3,7 @@
 ## 概要
 
 WebGalleryは、Spring Bootベースのオニオンアーキテクチャ（domain → application → infrastructure/presentation）を採用しています。
+ポートフォリオの公開ページ向けには、読み取り専用の GraphQL API（`portfolio-api/`、Go）を別に持ちます。
 
 ## ドキュメント一覧
 

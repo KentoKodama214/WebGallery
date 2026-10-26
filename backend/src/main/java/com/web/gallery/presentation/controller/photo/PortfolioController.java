@@ -1,7 +1,7 @@
 package com.web.gallery.presentation.controller.photo;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
-import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
 import com.web.gallery.application.service.photo.PortfolioService;
 import com.web.gallery.domain.constant.ApiRoutes;
@@ -14,6 +14,7 @@ import com.web.gallery.domain.model.photo.PortfolioNo;
 import com.web.gallery.infrastructure.security.SessionHelper;
 import com.web.gallery.infrastructure.web.ValidationErrorLogger;
 import com.web.gallery.presentation.converter.photo.PortfolioConverter;
+import com.web.gallery.presentation.request.photo.PortfolioDisplayOrderMoveRequest;
 import com.web.gallery.presentation.request.photo.PortfolioListRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSearchRequest;
 import com.web.gallery.presentation.request.photo.PortfolioSaveRequest;
@@ -64,14 +65,14 @@ public class PortfolioController {
    * ポートフォリオ一覧取得
    *
    * @param accountId アカウントID
-   * @param request {@link PortfolioListRequest}（テーマ・タグの絞り込み条件）
+   * @param request {@link PortfolioListRequest}（検索語の絞り込み条件）
    * @param result バリデーション結果
    * @return {@link PortfolioListGetResponse}
    * @throws GalleryException 以下のいずれかに該当する場合 ・認証ユーザーと異なるアカウントIDの場合 ・リクエストパラメータが不正な場合
    */
   @Operation(
       summary = "ポートフォリオ一覧取得",
-      description = "本人のポートフォリオ一覧（下書きを含む）を、テーマ・タグ名の部分一致で絞り込み、更新日時の新しい順に取得する")
+      description = "本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込み、表示順に1ページ分（設定値の件数）取得する")
   @ApiResponse(responseCode = "200", description = "取得成功")
   @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
   @ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
@@ -84,12 +85,12 @@ public class PortfolioController {
     verifyOwner(accountId);
     verifyNoBindingErrors(result);
 
-    PortfolioModelList portfolioModelList =
+    PortfolioPageModel pageModel =
         portfolioService.getPortfolioList(
             portfolioConverter.toPortfolioListGetModel(
                 request, new AccountNo(sessionHelper.getAccountNo())));
 
-    return ResponseEntity.ok(PortfolioListGetResponse.from(portfolioModelList));
+    return ResponseEntity.ok(PortfolioListGetResponse.from(pageModel));
   }
 
   /**
@@ -287,6 +288,45 @@ public class PortfolioController {
     portfolioService.unpublishPortfolio(accountNo, toPortfolioNo(portfolioNo));
     return ResponseEntity.ok(
         PortfolioEditResponse.of(MessageConst.UNPUBLISH_PORTFOLIO, portfolioNo));
+  }
+
+  /**
+   * ポートフォリオ表示順移動
+   *
+   * @param accountId アカウントID
+   * @param portfolioNo ポートフォリオ番号
+   * @param request {@link PortfolioDisplayOrderMoveRequest}
+   * @param result バリデーション結果
+   * @return {@link PortfolioEditResponse}
+   * @throws GalleryException 以下のいずれかに該当する場合 ・認証ユーザーと異なるアカウントIDの場合 ・リクエストパラメータが不正な場合
+   *     ・ポートフォリオが存在しない場合 ・更新に失敗した場合
+   */
+  @Operation(
+      summary = "ポートフォリオ表示順移動",
+      description =
+          "本人のポートフォリオを、表示順（下書きを含む全件の並び）で隣のポートフォリオと入れ替えて1つ上・下へ移動する。"
+              + "先頭を上へ・末尾を下へ移動しようとした場合は何もしない。更新日時は変更しない")
+  @ApiResponse(responseCode = "200", description = "移動成功")
+  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+  @ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
+  @ApiResponse(responseCode = "404", description = "ポートフォリオが存在しない", content = @Content)
+  @ApiResponse(responseCode = "409", description = "更新失敗", content = @Content)
+  @PutMapping(ApiRoutes.API_PORTFOLIO_DISPLAY_ORDER)
+  public ResponseEntity<PortfolioEditResponse> movePortfolioDisplayOrder(
+      @PathVariable String accountId,
+      @PathVariable Long portfolioNo,
+      @RequestBody @Validated PortfolioDisplayOrderMoveRequest request,
+      BindingResult result)
+      throws GalleryException {
+    verifyOwner(accountId);
+    verifyNoBindingErrors(result);
+
+    portfolioService.moveDisplayOrder(
+        portfolioConverter.toPortfolioDisplayOrderMoveModel(
+            request, new AccountNo(sessionHelper.getAccountNo()), toPortfolioNo(portfolioNo)));
+
+    return ResponseEntity.ok(
+        PortfolioEditResponse.of(MessageConst.UPDATE_PORTFOLIO_DISPLAY_ORDER, portfolioNo));
   }
 
   /**

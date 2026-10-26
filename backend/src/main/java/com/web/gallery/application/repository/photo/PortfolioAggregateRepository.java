@@ -1,7 +1,9 @@
 package com.web.gallery.application.repository.photo;
 
 import com.web.gallery.application.aggregate.Portfolio;
+import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountNo;
 
 /** ポートフォリオ集約（{@link Portfolio}）を永続化するRepositoryクラス */
 public interface PortfolioAggregateRepository {
@@ -30,6 +32,16 @@ public interface PortfolioAggregateRepository {
    * @throws GalleryException 更新に失敗した場合
    */
   void updateStatus(Portfolio portfolio) throws GalleryException;
+
+  /**
+   * アカウントのポートフォリオの表示順を、指定したポートフォリオ番号の並び順で1から振り直す
+   *
+   * @param accountNo アカウント番号
+   * @param portfolioNoList 表示順に並べた、アカウントの全ポートフォリオのポートフォリオ番号
+   * @throws GalleryException 更新に失敗した場合
+   */
+  void updateDisplayOrder(AccountNo accountNo, PortfolioNoList portfolioNoList)
+      throws GalleryException;
 
   /**
    * ポートフォリオ集約を削除する
