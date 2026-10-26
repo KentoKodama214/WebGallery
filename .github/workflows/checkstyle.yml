@@ -34,11 +34,11 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Javadocチェック実行
-        run: ./backend/gradlew -p backend checkstyleMain
+        run: ./gallery-api/gradlew -p gallery-api checkstyleMain
 
       - name: チェック結果アップロード
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: checkstyle-report
-          path: backend/build/reports/checkstyle/
+          path: gallery-api/build/reports/checkstyle/

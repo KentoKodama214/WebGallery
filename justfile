@@ -44,27 +44,27 @@ e2e-prod:
 
 # backendアプリケーションの実行（localプロファイル）
 backend-run:
-    ./backend/gradlew -p backend bootRun --args='--spring.profiles.active=local'
+    ./gallery-api/gradlew -p gallery-api bootRun --args='--spring.profiles.active=local'
 
 # backendのビルド
 backend-build:
-    ./backend/gradlew -p backend build
+    ./gallery-api/gradlew -p gallery-api build
 
 # backendの単体テスト実行
 backend-unitTest:
-    ./backend/gradlew -p backend unitTest
+    ./gallery-api/gradlew -p gallery-api unitTest
 
 # backendの結合テスト実行（要Docker）
 backend-integrationTest:
-    ./backend/gradlew -p backend integrationTest
+    ./gallery-api/gradlew -p gallery-api integrationTest
 
 # backendの単体・結合テストをすべて実行（要Docker）
 backend-allTest:
-    ./backend/gradlew -p backend allTest
+    ./gallery-api/gradlew -p gallery-api allTest
 
 # backendのクリーンビルド
 backend-clean-build:
-    ./backend/gradlew -p backend clean build
+    ./gallery-api/gradlew -p gallery-api clean build
 
 # DBドキュメント生成（SchemaSpy、要DB起動）
 db-doc:
@@ -72,19 +72,19 @@ db-doc:
 
 # JIGによるコード構造ドキュメント生成
 jig:
-    ./backend/gradlew -p backend jigReports
+    ./gallery-api/gradlew -p gallery-api jigReports
 
 # Spring Modulithのモジュール構成図・モジュールキャンバス生成
 modulith-doc:
-    ./backend/gradlew -p backend generateModulithDocs
+    ./gallery-api/gradlew -p gallery-api generateModulithDocs
 
 # backendのコードフォーマットチェック（Spotless）
 format-check:
-    ./backend/gradlew -p backend spotlessCheck
+    ./gallery-api/gradlew -p gallery-api spotlessCheck
 
 # backendのコードフォーマット整形（Spotless）
 format:
-    ./backend/gradlew -p backend spotlessApply
+    ./gallery-api/gradlew -p gallery-api spotlessApply
 
 # portfolio-api（Go。公開ページ向けのポートフォリオ表示API）をローカル環境で起動（要DB・MinIO起動）
 go-run:

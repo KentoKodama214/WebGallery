@@ -140,7 +140,7 @@ just db-up
 ### 2. 環境変数の設定
 
 ```bash
-./backend/set-env.sh
+./gallery-api/set-env.sh
 ```
 
 このスクリプトはシェルの設定ファイル（`~/.zshrc` / `~/.bashrc`）に `export` 文を追記します。設定後はシェルを再起動するか `source` してください。
@@ -170,7 +170,7 @@ just db-up
 | `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現（`app.forwarded.trusted-proxies`）。**本番では必須。ALB のサブネット CIDR に狭める**（未設定・空文字・広すぎる値は `ProdConfigValidationRunner` が起動時に検出して失敗させる） | 非 `prod`：ループバック＋RFC1918 / `prod`：**空（設定必須）** |
 
 > **IntelliJ IDEA で起動する場合**
-> Dock やランチャーから起動した IntelliJ はシェルの `export` を引き継がないため、`JWT_SECRET` を渡す必要があります。共有の実行構成 `backend/.run/WebGalleryApplication_local.run.xml`（実行構成名「WebGalleryApplication (local)」、プロファイル `local` ＋ ローカル用 `JWT_SECRET` を設定済み）を選択して実行してください。独自の実行構成を使う場合は「Environment variables」に `JWT_SECRET` を追加してください。
+> Dock やランチャーから起動した IntelliJ はシェルの `export` を引き継がないため、`JWT_SECRET` を渡す必要があります。共有の実行構成 `gallery-api/.run/WebGalleryApplication_local.run.xml`（実行構成名「WebGalleryApplication (local)」、プロファイル `local` ＋ ローカル用 `JWT_SECRET` を設定済み）を選択して実行してください。独自の実行構成を使う場合は「Environment variables」に `JWT_SECRET` を追加してください。
 
 #### フロントエンドの環境変数
 
@@ -289,10 +289,10 @@ just backend-allTest
 #   単体のみ:   build/reports/jacoco/jacocoUnitReport/html/index.html
 #   結合のみ:   build/reports/jacoco/jacocoIntegrationReport/html/index.html
 #   単体＋結合: build/reports/jacoco/jacocoAggregateReport/html/index.html
-./backend/gradlew -p backend unitTest integrationTest jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
+./gallery-api/gradlew -p gallery-api unitTest integrationTest jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
 # WARファイルの生成
-./backend/gradlew -p backend war
+./gallery-api/gradlew -p gallery-api war
 
 # クリーンビルド
 just backend-clean-build
@@ -383,7 +383,7 @@ just db-doc
 just jig
 ```
 
-生成後、`backend/build/jig/index.html` をブラウザで開いてください。
+生成後、`gallery-api/build/jig/index.html` をブラウザで開いてください。
 
 また、Spring Modulithによるモジュール構成図（PlantUML）とモジュールキャンバス（AsciiDoc）を生成できます。
 
@@ -497,7 +497,7 @@ WebGallery/
 │           ├── cookie.ts                # Cookie操作ユーティリティ（__tests__/にJestテスト）
 │           ├── url.ts                   # URL操作ユーティリティ（__tests__/にJestテスト）
 │           └── validation.ts            # 入力バリデーション（__tests__/にJestテスト）
-├── backend/                        # バックエンド（Spring Boot）
+├── gallery-api/                    # バックエンド（Spring Boot）
 │   ├── build.gradle
 │   ├── settings.gradle
 │   ├── gradle.properties           # Gradleビルドキャッシュ等のビルド設定

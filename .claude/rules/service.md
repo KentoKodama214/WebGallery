@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/application/service/**
+  - gallery-api/**/application/service/**
 ---
 
 # Service層のアーキテクチャルール
@@ -35,4 +35,4 @@ paths:
 
 ## 検証
 
-本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/ServiceArchitectureTest.java`のArchUnitテストで機械的に検証される。メソッドシグネチャの検証は`Service`インターフェースのメソッドを対象とし、`UserDetailsService`等の外部インターフェースの実装やSpringの`@EventListener`ハンドラなど、`ServiceImpl`が独自interfaceの契約外に持つメソッドは対象としない。presentation配下全体への依存禁止は、application層全体を対象とする`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`で検証される。
+本ファイルのルールは`gallery-api/src/test/java/com/web/gallery/architecture/ServiceArchitectureTest.java`のArchUnitテストで機械的に検証される。メソッドシグネチャの検証は`Service`インターフェースのメソッドを対象とし、`UserDetailsService`等の外部インターフェースの実装やSpringの`@EventListener`ハンドラなど、`ServiceImpl`が独自interfaceの契約外に持つメソッドは対象としない。presentation配下全体への依存禁止は、application層全体を対象とする`gallery-api/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`で検証される。

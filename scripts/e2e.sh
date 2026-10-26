@@ -90,7 +90,7 @@ else
   DB_PASSWORD="postgres" \
   JWT_SECRET="$E2E_JWT_SECRET" \
   RATE_LIMIT_ENABLED="false" \
-    ./backend/gradlew -p backend bootRun --no-daemon \
+    ./gallery-api/gradlew -p gallery-api bootRun --no-daemon \
     >"$BACKEND_LOG" 2>&1 &
   BACKEND_PID=$!
   set +m

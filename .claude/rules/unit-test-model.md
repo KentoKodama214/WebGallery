@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/application/model/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/application/model/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Modelパッケージの単体テスト規約

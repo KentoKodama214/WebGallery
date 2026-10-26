@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/domain/service/**
+  - gallery-api/**/domain/service/**
 ---
 
 # Policyクラス（ドメインサービス）のアーキテクチャルール
@@ -29,4 +29,4 @@ paths:
 
 ## 検証
 
-本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/PolicyArchitectureTest.java`および`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`のArchUnitテストで機械的に検証される。
+本ファイルのルールは`gallery-api/src/test/java/com/web/gallery/architecture/PolicyArchitectureTest.java`および`gallery-api/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`のArchUnitテストで機械的に検証される。

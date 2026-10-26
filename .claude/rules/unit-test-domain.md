@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/domain/model/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/domain/model/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Domainパッケージの単体テスト規約

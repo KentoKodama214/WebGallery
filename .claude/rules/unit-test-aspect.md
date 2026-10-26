@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/*Aspect*
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/*Aspect*
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Aspectパッケージの単体テスト規約

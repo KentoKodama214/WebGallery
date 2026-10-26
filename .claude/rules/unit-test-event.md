@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/event/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/event/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Eventパッケージの単体テスト規約

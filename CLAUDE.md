@@ -25,7 +25,7 @@ just backend-unitTest
 just backend-run
 
 # WARファイルのビルド
-./backend/gradlew -p backend war
+./gallery-api/gradlew -p gallery-api war
 
 # クリーンビルド
 just backend-clean-build
@@ -90,7 +90,7 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 ### テストデータベース
 
 - 専用データベース：`web_gallery_test`（`application-test.yml`で設定）
-- テスト用SQLフィクスチャは`backend/src/test/resources/sql/`にレイヤー別に整理
+- テスト用SQLフィクスチャは`gallery-api/src/test/resources/sql/`にレイヤー別に整理
 - 統合テストの実行にはDocker PostgreSQLの起動が必要
 
 ### テスト実行
@@ -100,7 +100,7 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 just backend-unitTest
 
 # backendの特定のテストクラスを実行
-./backend/gradlew -p backend unitTest --tests "com.web.gallery.application.service.impl.photo.PhotoServiceImplTest"
+./gallery-api/gradlew -p gallery-api unitTest --tests "com.web.gallery.application.service.impl.photo.PhotoServiceImplTest"
 
 # frontendの単体テスト（Jest）
 just front-test
@@ -150,9 +150,9 @@ just e2e
 10. `application/service/{機能}/`にサービスインターフェース、`application/service/impl/{機能}/`に実装を作成
 11. `presentation/controller/{機能}/`にコントローラーを作成
 12. RequestからModelへの変換ロジックが必要な場合は`presentation/converter/{機能}/`にConverterクラスを作成する（詳細は`.claude/rules/converter.md`）。Controller自身に変換ロジックを持たせない
-13. `backend/src/test/resources/sql/`にテスト用SQLフィクスチャを追加
-14. `backend/src/test/resources/json/controller`にテスト用APIリクエストのjsonを作成
-15. 既存パターンに従って`backend/src/test`にユニットテストと統合テスト、対象コンポーネントの`__tests__/`にfrontendのユニットテスト（Jest）、`frontend/e2e/pages/`または`frontend/e2e/scenarios/`にE2Eテストを追加
+13. `gallery-api/src/test/resources/sql/`にテスト用SQLフィクスチャを追加
+14. `gallery-api/src/test/resources/json/controller`にテスト用APIリクエストのjsonを作成
+15. 既存パターンに従って`gallery-api/src/test`にユニットテストと統合テスト、対象コンポーネントの`__tests__/`にfrontendのユニットテスト（Jest）、`frontend/e2e/pages/`または`frontend/e2e/scenarios/`にE2Eテストを追加
 16. すべてのユニットテスト・統合テスト・E2Eテストを実行して、成功することを確認
 
 ### 重要事項
@@ -160,4 +160,4 @@ just e2e
 - ファイルアップロード上限は1ファイルあたり5MB（`application.yml`の`app.photo.maxFileSizeMb`。サーブレットレベルの`spring.servlet.multipart`は6MB）
 - 写真の実体はS3（ローカル/E2Eはdocker-composeのMinIO）に保存し、DBの`photo_mst.image_file_path`にはサーバ生成の不透明オブジェクトキー（`{アカウント番号}/{写真番号}-{ランダム}.{拡張子}`。変更されうるアカウントIDではなく不変のアカウント番号をプレフィックスに使う）のみを保持する。クライアント送信のファイル名はキーに含めず、表示・重複判定用に`photo_mst.image_file_name`へ別途保持する。閲覧時はService層が署名付きURL（pre-signed GET URL）を発行して返す。ストレージ設定は各プロファイルの`application-{profile}.yml`の`app.s3.*`（環境変数`APP_S3_*` / `AWS_REGION`）で行う
 - プロジェクトはTomcatデプロイ用のWARパッケージング（実行可能JARではない）
-- `backend/build.gradle`のgroupは`com.official`、ベースパッケージは`com.web.gallery`
+- `gallery-api/build.gradle`のgroupは`com.official`、ベースパッケージは`com.web.gallery`

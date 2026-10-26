@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/presentation/request/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/presentation/request/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Requestパッケージの単体テスト規約

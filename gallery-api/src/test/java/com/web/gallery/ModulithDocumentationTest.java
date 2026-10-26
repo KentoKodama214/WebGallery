@@ -9,11 +9,11 @@ import org.springframework.modulith.docs.Documenter;
  *
  * <p>モジュール構成図（PlantUML）とモジュールキャンバス（AsciiDoc）を {@code doc/modulith/} 配下に自動生成する。
  *
- * <p>実行方法: {@code ./backend/gradlew -p backend generateModulithDocs}
+ * <p>実行方法: {@code ./gallery-api/gradlew -p gallery-api generateModulithDocs}
  */
 class ModulithDocumentationTest {
 
-  /** ドキュメント出力先ディレクトリ（backendディレクトリからの相対パス） */
+  /** ドキュメント出力先ディレクトリ（gallery-apiディレクトリからの相対パス） */
   private static final String OUTPUT_DIR = "../doc/modulith";
 
   @Test

@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/type_handler/**
+  - gallery-api/**/type_handler/**
 ---
 
 # TypeHandlerクラスのアーキテクチャルール
@@ -11,4 +11,4 @@ paths:
 
 ## 検証
 
-本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/NamingSuffixArchitectureTest.java`のArchUnitテストで機械的に検証される。
+本ファイルのルールは`gallery-api/src/test/java/com/web/gallery/architecture/NamingSuffixArchitectureTest.java`のArchUnitテストで機械的に検証される。

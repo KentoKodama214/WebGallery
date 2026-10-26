@@ -36,11 +36,11 @@ jobs:
       - name: Gradleセットアップ
         uses: gradle/actions/setup-gradle@v6
         with:
-          build-root-directory: backend
+          build-root-directory: gallery-api
           cache-read-only: false
 
       - name: backend SBOM生成（CycloneDX）
-        run: ./backend/gradlew -p backend cyclonedxBom
+        run: ./gallery-api/gradlew -p gallery-api cyclonedxBom
 
       # OSV-Scanner（https://github.com/google/osv-scanner）はOSVデータベースをAPI経由で都度照会するため、
       # OWASP Dependency-Checkのように数GB規模のNVDデータベース全体を同期する必要がなく、
@@ -60,7 +60,7 @@ jobs:
           set +e
           ./osv-scanner scan source \
             --config=osv-scanner.toml \
-            -L backend/build/reports/cyclonedx/application.cdx.json \
+            -L gallery-api/build/reports/cyclonedx/application.cdx.json \
             -L frontend/pnpm-lock.yaml \
             -L portfolio-api/go.mod \
             --format=markdown --output-file=osv-results.md

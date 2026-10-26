@@ -40,7 +40,7 @@
       "Bash(python3*)",
       "Bash(sed*)",
       "Bash(xargs*)",
-      "Bash(./backend/gradlew*)",
+      "Bash(./gallery-api/gradlew*)",
       "Edit",
       "Write",
       "Read",

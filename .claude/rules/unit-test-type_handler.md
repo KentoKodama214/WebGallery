@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/type_handler/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/type_handler/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # TypeHandlerパッケージの単体テスト規約

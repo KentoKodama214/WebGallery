@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/presentation/response/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/presentation/response/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Responseパッケージの単体テスト規約

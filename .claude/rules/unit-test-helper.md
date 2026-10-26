@@ -1,12 +1,12 @@
 ---
 paths:
-  - backend/src/test/**/infrastructure/helper/**
-  - backend/src/test/**/infrastructure/security/**
-  - backend/src/test/**/scheduler/lock/**
-  - "!backend/src/test/**/*Aspect*"
-  - "!backend/src/test/**/*MapperTest*"
-  - "!backend/src/test/**/*RepositoryImplTest*"
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/infrastructure/helper/**
+  - gallery-api/src/test/**/infrastructure/security/**
+  - gallery-api/src/test/**/scheduler/lock/**
+  - "!gallery-api/src/test/**/*Aspect*"
+  - "!gallery-api/src/test/**/*MapperTest*"
+  - "!gallery-api/src/test/**/*RepositoryImplTest*"
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Helperパッケージの単体テスト規約

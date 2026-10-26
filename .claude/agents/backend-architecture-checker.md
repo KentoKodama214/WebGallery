@@ -9,7 +9,7 @@ model: sonnet
 コードを読み取り、チェック項目に基づいて違反を報告してください。
 **コードの修正は行わず、検出結果の報告のみを行います。**
 
-検査対象ディレクトリ: `backend/src/main/java/com/web/gallery/`
+検査対象ディレクトリ: `gallery-api/src/main/java/com/web/gallery/`
 
 ## ルールファイルの読み込み
 
