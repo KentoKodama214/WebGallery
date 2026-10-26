@@ -416,7 +416,7 @@ WebGallery/
 │   └── workflows
 │       ├── checkstyle.yml          # CheckstyleによるJavadocチェックのGithub Action
 │       ├── dependency-scan.yml     # OSV-Scannerによる依存関係の脆弱性スキャン（PR時・毎日定期実行）のGithub Action
-│       └── test.yml                # テスト実行・カバレッジレポート（JaCoCo）のGithub Action
+│       └── test.yml                # テスト実行・カバレッジレポート（JaCoCo・Go・Jest）のGithub Action
 ├── docker-compose.yml
 ├── docker/
 │   ├── db/                        # DBイメージ用Dockerfile
