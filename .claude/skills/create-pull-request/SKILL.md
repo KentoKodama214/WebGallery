@@ -32,8 +32,11 @@ description: プルリクエストを作成するスキル。「PRを作成し�
      2. `just gallery-api-unitTest` を実行し、成功を確認する。
      3. Docker PostgreSQLが未起動なら `just db-up` を実行してから、`just gallery-api-integrationTest` を実行し、成功を確認する。
      4. `just gallery-api-run` の起動確認: バックグラウンドで `./gallery-api/gradlew -p gallery-api bootRun --args='--spring.profiles.active=local'` を起動し、`curl -sf http://localhost:8080/v3/api-docs` を数秒間隔でポーリングして起動完了を確認する（タイムアウト目安60秒）。確認できたらプロセスを停止する（gradlewは子プロセスを起動するため、プロセスグループごと停止する）。
-     5. `just front-run` の起動確認: バックグラウンドで `cd frontend && mise exec -- pnpm dev` を起動し、`curl -sf http://localhost:3000` などで応答があることを確認する。確認できたらプロセスを停止する。
-     6. `just e2e` を実行し、成功を確認する（DB・backendが未起動の場合は自動起動される）。
+     5. `just portfolio-api-test` を実行し、成功を確認する。
+     6. Docker PostgreSQLが未起動なら `just db-up` を実行してから、`just portfolio-api-integrationTest` を実行し、成功を確認する。
+     7. `just portfolio-api-run` の起動確認: バックグラウンドで `cd portfolio-api && PORTFOLIO_API_ENV=local mise exec -- go run ./cmd/server` を起動し、`curl -sf http://localhost:8081/healthz` を数秒間隔でポーリングして起動完了を確認する（タイムアウト目安60秒）。確認できたらプロセスを停止する（`go run`はビルドしたバイナリを子プロセスとして起動するため、プロセスグループごと停止する）。
+     8. `just front-run` の起動確認: バックグラウンドで `cd frontend && mise exec -- pnpm dev` を起動し、`curl -sf http://localhost:3000` などで応答があることを確認する。確認できたらプロセスを停止する。
+     9. `just e2e` を実行し、成功を確認する（DB・backendが未起動の場合は自動起動される）。
    - すべて成功したら、テンプレートの「検証事項」チェックボックスをすべて `[x]` にする。
 
 ## 4. タイトルと本文の生成

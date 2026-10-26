@@ -70,6 +70,9 @@
 - [ ] `just gallery-api-unitTest` で単体テストが成功することを確認
 - [ ] `just gallery-api-integrationTest` で結合テストが成功することを確認
 - [ ] `just gallery-api-run` で gallery-api の起動が成功することを確認
+- [ ] `just portfolio-api-test` で portfolio-api の単体テストが成功することを確認
+- [ ] `just portfolio-api-integrationTest` で portfolio-api の結合テストが成功することを確認
+- [ ] `just portfolio-api-run` で portfolio-api の起動が成功することを確認
 - [ ] `just front-run` で frontend の起動が成功することを確認
 - [ ] `just e2e` でE2Eテストが成功することを確認
 
