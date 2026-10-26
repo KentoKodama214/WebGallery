@@ -15,8 +15,11 @@ import com.web.gallery.application.config.PortfolioConfig;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioDisplayOrderMoveModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioNoList;
+import com.web.gallery.application.model.photo.PortfolioPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
@@ -24,6 +27,7 @@ import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.application.model.photo.PortfolioTagModelList;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.enumeration.MoveDirectionEnum;
 import com.web.gallery.domain.enumeration.PortfolioStatusEnum;
 import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import com.web.gallery.domain.exception.BadRequestException;
@@ -164,12 +168,15 @@ class PortfolioServiceImplTest {
   class getPortfolioList {
     @Test
     @Order(1)
-    @DisplayName("正常系：絞り込み条件をRepositoryに渡し、取得したポートフォリオ一覧をそのまま返すこと")
+    @DisplayName("正常系：絞り込み条件に設定値の1ページあたりの件数を加えてRepositoryに渡し、取得した1ページ分をそのまま返すこと")
     void getPortfolioList_success() {
+      doReturn(20).when(portfolioConfig).getPortfolioCountPerPage();
       PortfolioListGetModel condition =
-          PortfolioListGetModel.builder().accountNo(ACCOUNT_NO).theme("自然").tag("風景").build();
-      PortfolioModelList expected = PortfolioModelList.empty();
-      doReturn(expected).when(portfolioMstRepositoryImpl).getPortfolioList(condition);
+          PortfolioListGetModel.builder().accountNo(ACCOUNT_NO).keyword("自然").pageNo(2).build();
+      PortfolioPageModel expected = PortfolioPageModel.of(PortfolioModelList.empty(), true);
+      doReturn(expected)
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioList(condition.toBuilder().pageSize(20).build());
 
       assertSame(expected, portfolioServiceImpl.getPortfolioList(condition));
     }
@@ -689,6 +696,64 @@ class PortfolioServiceImplTest {
       assertThrows(
           PortfolioNotFoundException.class,
           () -> portfolioServiceImpl.deletePortfolio(ACCOUNT_NO, PORTFOLIO_NO));
+    }
+  }
+
+  @Nested
+  @Order(10)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class moveDisplayOrder {
+    private PortfolioDisplayOrderMoveModel moveModel(
+        Long portfolioNo, MoveDirectionEnum direction) {
+      return PortfolioDisplayOrderMoveModel.builder()
+          .accountNo(ACCOUNT_NO)
+          .portfolioNo(new PortfolioNo(portfolioNo))
+          .direction(direction)
+          .build();
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：全件の並び（行ロック付きで取得）で隣と入れ替えた並びで、表示順を更新すること")
+    void moveDisplayOrder_success() throws GalleryException {
+      doReturn(PortfolioNoList.from(List.of(3L, 1L, 2L)))
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioNoListForUpdate(ACCOUNT_NO);
+
+      portfolioServiceImpl.moveDisplayOrder(moveModel(1L, MoveDirectionEnum.UP));
+
+      verify(portfolioAggregateRepositoryImpl)
+          .updateDisplayOrder(ACCOUNT_NO, PortfolioNoList.from(List.of(1L, 3L, 2L)));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：先頭を上へ・末尾を下へ移動しようとした場合、更新しないこと")
+    void moveDisplayOrder_boundary() throws GalleryException {
+      doReturn(PortfolioNoList.from(List.of(3L, 1L, 2L)))
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioNoListForUpdate(ACCOUNT_NO);
+
+      portfolioServiceImpl.moveDisplayOrder(moveModel(3L, MoveDirectionEnum.UP));
+      portfolioServiceImpl.moveDisplayOrder(moveModel(2L, MoveDirectionEnum.DOWN));
+
+      verify(portfolioAggregateRepositoryImpl, never())
+          .updateDisplayOrder(any(AccountNo.class), any(PortfolioNoList.class));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：ポートフォリオが存在しない場合、PortfolioNotFoundExceptionをthrowし更新しないこと")
+    void moveDisplayOrder_notFound() throws GalleryException {
+      doReturn(PortfolioNoList.from(List.of(3L, 1L, 2L)))
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioNoListForUpdate(ACCOUNT_NO);
+
+      assertThrows(
+          PortfolioNotFoundException.class,
+          () -> portfolioServiceImpl.moveDisplayOrder(moveModel(9L, MoveDirectionEnum.DOWN)));
+      verify(portfolioAggregateRepositoryImpl, never())
+          .updateDisplayOrder(any(AccountNo.class), any(PortfolioNoList.class));
     }
   }
 }

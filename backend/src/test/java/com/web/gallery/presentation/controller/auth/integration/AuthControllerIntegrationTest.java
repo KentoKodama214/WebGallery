@@ -19,6 +19,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -290,13 +291,13 @@ public class AuthControllerIntegrationTest {
 
     @Test
     @Order(2)
-    @DisplayName("異常系：refreshTokenがない場合、401を共通のJSONエラー形式で返す")
+    @DisplayName("正常系：refreshTokenがない（未ログイン）場合、エラーではなく本文なしの204を返す")
     void refresh_no_cookie() throws Exception {
       mockMvc
           .perform(post("/api/v1/auth/refresh"))
-          .andExpect(status().isUnauthorized())
-          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-          .andExpect(jsonPath("$.message").value("無効なリフレッシュトークンです。"));
+          .andExpect(status().isNoContent())
+          .andExpect(content().string(""))
+          .andExpect(header().doesNotExist(HttpHeaders.SET_COOKIE));
     }
 
     @Test

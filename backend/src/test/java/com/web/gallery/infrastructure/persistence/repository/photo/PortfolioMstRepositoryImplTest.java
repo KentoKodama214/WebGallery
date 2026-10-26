@@ -2,8 +2,10 @@ package com.web.gallery.infrastructure.persistence.repository.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,7 +15,8 @@ import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioDetailModelList;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModel;
-import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioNoList;
+import com.web.gallery.application.model.photo.PortfolioPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
@@ -273,22 +276,28 @@ class PortfolioMstRepositoryImplTest {
       dto.setPhotoCount(3);
       dto.setCreatedAt(CREATED_AT);
       dto.setUpdatedAt(UPDATED_AT);
-      doReturn(List.of(dto)).when(portfolioMstMapper).selectList(any(PortfolioMstCondition.class));
+      doReturn(List.of(dto))
+          .when(portfolioMstMapper)
+          .selectList(any(PortfolioMstCondition.class), anyInt(), anyInt());
 
-      PortfolioModelList actual =
+      PortfolioPageModel actual =
           portfolioMstRepositoryImpl.getPortfolioList(
-              PortfolioListGetModel.builder().accountNo(new AccountNo(1L)).build());
+              PortfolioListGetModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .pageNo(1)
+                  .pageSize(20)
+                  .build());
 
       ArgumentCaptor<PortfolioMstCondition> conditionCaptor =
           ArgumentCaptor.forClass(PortfolioMstCondition.class);
-      verify(portfolioMstMapper).selectList(conditionCaptor.capture());
+      verify(portfolioMstMapper).selectList(conditionCaptor.capture(), eq(21), eq(0));
       assertEquals(1L, conditionCaptor.getValue().getAccountNo());
       assertNull(conditionCaptor.getValue().getPortfolioNo());
-      assertNull(conditionCaptor.getValue().getThemePattern());
-      assertNull(conditionCaptor.getValue().getTagPattern());
+      assertNull(conditionCaptor.getValue().getKeywordPattern());
 
-      assertEquals(1, actual.size());
-      PortfolioModel model = actual.get(0);
+      assertTrue(actual.getIsLast());
+      assertEquals(1, actual.getPortfolioModelList().size());
+      PortfolioModel model = actual.getPortfolioModelList().get(0);
       assertEquals(new AccountNo(1L), model.getAccountNo());
       assertEquals(new PortfolioNo(2L), model.getPortfolioNo());
       assertEquals(new PortfolioTheme("日本の自然"), model.getTheme());
@@ -301,35 +310,81 @@ class PortfolioMstRepositoryImplTest {
 
     @Test
     @Order(2)
-    @DisplayName("正常系：0件の場合、空のリストを返すこと")
+    @DisplayName("正常系：0件の場合、空のリストを最後のページとして返すこと")
     void getPortfolioList_empty() {
-      doReturn(List.of()).when(portfolioMstMapper).selectList(any(PortfolioMstCondition.class));
+      doReturn(List.of())
+          .when(portfolioMstMapper)
+          .selectList(any(PortfolioMstCondition.class), anyInt(), anyInt());
 
-      assertTrue(
-          portfolioMstRepositoryImpl
-              .getPortfolioList(
-                  PortfolioListGetModel.builder().accountNo(new AccountNo(1L)).build())
-              .isEmpty());
+      PortfolioPageModel actual =
+          portfolioMstRepositoryImpl.getPortfolioList(
+              PortfolioListGetModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .pageNo(1)
+                  .pageSize(20)
+                  .build());
+
+      assertTrue(actual.getPortfolioModelList().isEmpty());
+      assertTrue(actual.getIsLast());
     }
 
     @Test
     @Order(3)
-    @DisplayName("正常系：テーマ・タグ名を部分一致のLIKEパターンにし、ワイルドカード文字（%・_）とエスケープ文字（\\）をエスケープすること")
-    void getPortfolioList_keywords() {
-      doReturn(List.of()).when(portfolioMstMapper).selectList(any(PortfolioMstCondition.class));
+    @DisplayName("正常系：1ページの件数より1件多く取得できた場合、1ページ分だけ返し最後のページではないとすること。取得開始位置はページ番号から求めること")
+    void getPortfolioList_hasNext() {
+      List<PortfolioDto> threeDtos =
+          List.of(1L, 2L, 3L).stream()
+              .map(
+                  no -> {
+                    PortfolioDto d = new PortfolioDto();
+                    d.setAccountNo(1L);
+                    d.setPortfolioNo(no);
+                    d.setTheme("テーマ" + no);
+                    d.setTemplateKbn(PortfolioTemplateEnum.FEATURE);
+                    d.setStatusKbn(PortfolioStatusEnum.DRAFT);
+                    d.setPhotoCount(0);
+                    return d;
+                  })
+              .toList();
+      doReturn(threeDtos)
+          .when(portfolioMstMapper)
+          .selectList(any(PortfolioMstCondition.class), anyInt(), anyInt());
+
+      PortfolioPageModel actual =
+          portfolioMstRepositoryImpl.getPortfolioList(
+              PortfolioListGetModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .pageNo(3)
+                  .pageSize(2)
+                  .build());
+
+      verify(portfolioMstMapper).selectList(any(PortfolioMstCondition.class), eq(3), eq(4));
+      assertFalse(actual.getIsLast());
+      assertEquals(
+          List.of(new PortfolioNo(1L), new PortfolioNo(2L)),
+          actual.getPortfolioModelList().stream().map(PortfolioModel::getPortfolioNo).toList());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：検索語を部分一致のLIKEパターンにし、ワイルドカード文字（%・_）とエスケープ文字（\\）をエスケープすること")
+    void getPortfolioList_keyword() {
+      doReturn(List.of())
+          .when(portfolioMstMapper)
+          .selectList(any(PortfolioMstCondition.class), anyInt(), anyInt());
 
       portfolioMstRepositoryImpl.getPortfolioList(
           PortfolioListGetModel.builder()
               .accountNo(new AccountNo(1L))
-              .theme("100%_自然")
-              .tag("a\\b")
+              .keyword("100%_自然\\")
+              .pageNo(1)
+              .pageSize(20)
               .build());
 
       ArgumentCaptor<PortfolioMstCondition> conditionCaptor =
           ArgumentCaptor.forClass(PortfolioMstCondition.class);
-      verify(portfolioMstMapper).selectList(conditionCaptor.capture());
-      assertEquals("%100\\%\\_自然%", conditionCaptor.getValue().getThemePattern());
-      assertEquals("%a\\\\b%", conditionCaptor.getValue().getTagPattern());
+      verify(portfolioMstMapper).selectList(conditionCaptor.capture(), anyInt(), anyInt());
+      assertEquals("%100\\%\\_自然\\\\%", conditionCaptor.getValue().getKeywordPattern());
     }
   }
 
@@ -496,6 +551,22 @@ class PortfolioMstRepositoryImplTest {
 
       assertEquals(0, actual);
       verify(portfolioPhotoMapper, never()).countAvailablePhotos(anyLong(), anyList());
+    }
+  }
+
+  @Nested
+  @Order(8)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getPortfolioNoListForUpdate {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントのポートフォリオ番号を表示順のままPortfolioNoListに変換して返すこと")
+    void getPortfolioNoListForUpdate_success() {
+      doReturn(List.of(3L, 1L, 2L)).when(portfolioMstMapper).selectPortfolioNoListForUpdate(1L);
+
+      assertEquals(
+          PortfolioNoList.from(List.of(3L, 1L, 2L)),
+          portfolioMstRepositoryImpl.getPortfolioNoListForUpdate(new AccountNo(1L)));
     }
   }
 }

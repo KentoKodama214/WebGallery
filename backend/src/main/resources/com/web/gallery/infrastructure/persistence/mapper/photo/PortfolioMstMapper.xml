@@ -16,6 +16,7 @@
 		<result property="templateSettings" column="template_settings" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler"/>
 		<result property="settingsVersion" column="settings_version"/>
 		<result property="statusKbn" column="status_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.PortfolioStatusEnumTypeHandler"/>
+		<result property="displayOrder" column="display_order"/>
 	</resultMap>
 
 	<resultMap id="PortfolioDtoMap" type="com.web.gallery.infrastructure.persistence.dto.photo.PortfolioDto">
@@ -32,20 +33,23 @@
 	<sql id="portfolioMstConditionWhere">
 		<if test="${prefix}accountNo != null"> AND pm.account_no = #{${prefix}accountNo}</if>
 		<if test="${prefix}portfolioNo != null"> AND pm.portfolio_no = #{${prefix}portfolioNo}</if>
-		<if test="${prefix}themePattern != null"> AND pm.theme ILIKE #{${prefix}themePattern} ESCAPE '\'</if>
-		<if test="${prefix}tagPattern != null">
-			AND EXISTS (
-				SELECT
-					1
-				FROM
-					photo.portfolio_tag_mst pt
-				WHERE
-					pt.account_no = pm.account_no
-					AND pt.portfolio_no = pm.portfolio_no
-					AND (
-						pt.tag_japanese_name ILIKE #{${prefix}tagPattern} ESCAPE '\'
-						OR pt.tag_english_name ILIKE #{${prefix}tagPattern} ESCAPE '\'
-					)
+		<!-- 検索語は、テーマ・タグ名（日本語・英語）のいずれかに一致すればよい（OR条件） -->
+		<if test="${prefix}keywordPattern != null">
+			AND (
+				pm.theme ILIKE #{${prefix}keywordPattern} ESCAPE '\'
+				OR EXISTS (
+					SELECT
+						1
+					FROM
+						photo.portfolio_tag_mst pt
+					WHERE
+						pt.account_no = pm.account_no
+						AND pt.portfolio_no = pm.portfolio_no
+						AND (
+							pt.tag_japanese_name ILIKE #{${prefix}keywordPattern} ESCAPE '\'
+							OR pt.tag_english_name ILIKE #{${prefix}keywordPattern} ESCAPE '\'
+						)
+				)
 			)
 		</if>
 	</sql>
@@ -63,7 +67,8 @@
 		pm.template_kbn,
 		pm.template_settings,
 		pm.settings_version,
-		pm.status_kbn
+		pm.status_kbn,
+		pm.display_order
 	</sql>
 
 	<insert id="insert" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMst">
@@ -80,7 +85,8 @@
 				template_kbn,
 				template_settings,
 				settings_version,
-				status_kbn
+				status_kbn,
+				display_order
 			)
 		VALUES
 			(
@@ -95,7 +101,16 @@
 				#{templateKbn}::photo.portfolio_template_enum,
 				#{templateSettings, typeHandler=com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler},
 				#{settingsVersion},
-				#{statusKbn}::photo.portfolio_status_enum
+				#{statusKbn}::photo.portfolio_status_enum,
+				<!-- 新規登録したポートフォリオは並び順の末尾に追加する -->
+				(
+					SELECT
+						COALESCE(MAX(display_order), 0) + 1
+					FROM
+						photo.portfolio_mst
+					WHERE
+						account_no = #{accountNo}
+				)
 			)
 	</insert>
 
@@ -119,6 +134,25 @@
 				<property name="prefix" value="condition."/>
 			</include>
 		</where>
+	</update>
+
+	<!-- 並び替えはポートフォリオの内容の更新ではないため、更新者・更新日時は変更しない
+	     （公開ページ・一覧に表示する更新日時が並び替えで変わらないようにする） -->
+	<update id="updateDisplayOrder">
+		UPDATE
+			photo.portfolio_mst pm
+		SET
+			display_order = o.display_order
+		FROM
+			(
+				VALUES
+				<foreach collection="portfolioNoList" item="portfolioNo" index="index" separator=",">
+					(#{portfolioNo}::bigint, #{index}::int + 1)
+				</foreach>
+			) AS o (portfolio_no, display_order)
+		WHERE
+			pm.account_no = #{accountNo}
+			AND pm.portfolio_no = o.portfolio_no
 	</update>
 
 	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition">
@@ -156,7 +190,7 @@
 		</where>
 	</select>
 
-	<select id="selectList" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition" resultMap="PortfolioDtoMap">
+	<select id="selectList" resultMap="PortfolioDtoMap">
 		SELECT
 			pm.account_no,
 			pm.portfolio_no,
@@ -178,12 +212,28 @@
 			photo.portfolio_mst pm
 		<where>
 			<include refid="portfolioMstConditionWhere">
-				<property name="prefix" value=""/>
+				<property name="prefix" value="condition."/>
 			</include>
 		</where>
 		ORDER BY
-			pm.updated_at DESC,
-			pm.portfolio_no DESC
+			pm.display_order,
+			pm.portfolio_no
+		<if test="limit != null"> LIMIT #{limit}</if>
+		<if test="offset != null"> OFFSET #{offset}</if>
+	</select>
+
+	<!-- 並び替えの対象行をロックし、並行した並び替えが互いの結果を上書きしないようにする -->
+	<select id="selectPortfolioNoListForUpdate" parameterType="Long" resultType="Long">
+		SELECT
+			portfolio_no
+		FROM
+			photo.portfolio_mst
+		WHERE
+			account_no = #{accountNo}
+		ORDER BY
+			display_order,
+			portfolio_no
+		FOR UPDATE
 	</select>
 
 	<select id="select" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition" resultMap="PortfolioMstMap">

@@ -101,9 +101,39 @@ public class PortfolioMstMapperTest {
       assertEquals("grid", actual.get("template_kbn").toString());
       assertEquals(1, actual.get("settings_version"));
       assertEquals("draft", actual.get("status_kbn").toString());
+      // ポートフォリオが未作成のアカウントでは、表示順は1から始まる
+      assertEquals(1, actual.get("display_order"));
       assertTrue(
           isTemplateSettingsEqualTo(
               5L, "{\"rows\": [{\"pattern\": \"THREE_EQUAL\"}, {\"pattern\": \"WIDE_NARROW\"}]}"));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：表示順は、同じアカウントの既存の表示順の最大値+1（並び順の末尾）となること")
+    void insert_appendsToEnd() {
+      PortfolioMst portfolioMst =
+          PortfolioMst.builder()
+              .accountNo(1L)
+              .portfolioNo(4L)
+              .createdBy(1L)
+              .updatedBy(1L)
+              .theme("4個目")
+              .description("")
+              .templateKbn(PortfolioTemplateEnum.FEATURE)
+              .templateSettings(Map.of())
+              .settingsVersion(1)
+              .statusKbn(PortfolioStatusEnum.DRAFT)
+              .build();
+
+      assertEquals(1, portfolioMstMapper.insert(portfolioMst));
+
+      // account_no=1の表示順は1〜3が使用済み（account_no=2の表示順は影響しない）
+      assertEquals(
+          4,
+          jdbcTemplate.queryForObject(
+              "SELECT display_order FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 4",
+              Integer.class));
     }
   }
 
@@ -315,31 +345,48 @@ public class PortfolioMstMapperTest {
   class selectList {
     @Test
     @Order(1)
-    @DisplayName("正常系：アカウント番号で絞り込み、更新日時の新しい順に写真の枚数とあわせて取得すること")
+    @DisplayName("正常系：アカウント番号で絞り込み、表示順（更新日時の順ではない）に写真の枚数とあわせて取得すること")
     void selectList_byAccountNo() {
       List<PortfolioDto> actual =
-          portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(1L));
+          portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(1L), null, null);
 
-      assertEquals(List.of(3L, 2L, 1L), actual.stream().map(PortfolioDto::getPortfolioNo).toList());
+      assertEquals(List.of(3L, 1L, 2L), actual.stream().map(PortfolioDto::getPortfolioNo).toList());
       PortfolioDto second = actual.get(1);
       assertEquals(1L, second.getAccountNo());
-      assertEquals("ポートフォリオ12", second.getTheme());
-      assertEquals(PortfolioTemplateEnum.FEATURE, second.getTemplateKbn());
-      assertEquals(PortfolioStatusEnum.DRAFT, second.getStatusKbn());
-      assertEquals(1, second.getPhotoCount());
+      assertEquals(PortfolioTemplateEnum.GRID, second.getTemplateKbn());
+      assertEquals(PortfolioStatusEnum.PUBLISHED, second.getStatusKbn());
+      assertEquals(2, second.getPhotoCount());
+      assertTrue(UPDATED_AT_11.isEqual(second.getUpdatedAt()));
       PortfolioDto third = actual.get(2);
-      assertEquals(PortfolioTemplateEnum.GRID, third.getTemplateKbn());
-      assertEquals(PortfolioStatusEnum.PUBLISHED, third.getStatusKbn());
-      assertEquals(2, third.getPhotoCount());
-      assertTrue(UPDATED_AT_11.isEqual(third.getUpdatedAt()));
+      assertEquals("ポートフォリオ12", third.getTheme());
+      assertEquals(PortfolioTemplateEnum.FEATURE, third.getTemplateKbn());
+      assertEquals(PortfolioStatusEnum.DRAFT, third.getStatusKbn());
+      assertEquals(1, third.getPhotoCount());
     }
 
     @Test
     @Order(2)
+    @DisplayName("正常系：取得件数の上限・取得開始位置を指定した場合、表示順のその範囲だけを取得すること")
+    void selectList_limitAndOffset() {
+      assertEquals(
+          List.of(3L, 1L),
+          portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(1L), 2, 0).stream()
+              .map(PortfolioDto::getPortfolioNo)
+              .toList());
+      assertEquals(
+          List.of(2L),
+          portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(1L), 2, 2).stream()
+              .map(PortfolioDto::getPortfolioNo)
+              .toList());
+    }
+
+    @Test
+    @Order(3)
     @DisplayName("正常系：ポートフォリオ番号の条件で絞り込むこと")
     void selectList_byPortfolioNo() {
       List<PortfolioDto> actual =
-          portfolioMstMapper.selectList(PortfolioMstCondition.byAccountAndPortfolio(2L, 1L));
+          portfolioMstMapper.selectList(
+              PortfolioMstCondition.byAccountAndPortfolio(2L, 1L), null, null);
 
       assertEquals(1, actual.size());
       assertEquals("ポートフォリオ21", actual.get(0).getTheme());
@@ -347,71 +394,61 @@ public class PortfolioMstMapperTest {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     @DisplayName("正常系：該当するポートフォリオがない場合、0件となること")
     void selectList_none() {
-      assertTrue(portfolioMstMapper.selectList(PortfolioMstCondition.byAccountNo(3L)).isEmpty());
+      assertTrue(
+          portfolioMstMapper
+              .selectList(PortfolioMstCondition.byAccountNo(3L), null, null)
+              .isEmpty());
     }
 
-    @Test
-    @Order(4)
-    @DisplayName("テーマの条件で、大文字小文字を区別せず部分一致するポートフォリオに絞り込むこと")
-    void selectList_byThemePattern() {
-      List<PortfolioDto> actual =
-          portfolioMstMapper.selectList(
-              PortfolioMstCondition.byAccountNoAndKeywords(1L, "%ポートフォリオ12%", null));
-
-      assertEquals(List.of(2L), actual.stream().map(PortfolioDto::getPortfolioNo).toList());
+    /**
+     * 検索語のLIKEパターンで絞り込んだポートフォリオ番号を、表示順のまま取得する
+     *
+     * @param keywordPattern 検索語のLIKEパターン
+     * @return ポートフォリオ番号のリスト
+     */
+    private List<Long> selectByKeyword(String keywordPattern) {
+      return portfolioMstMapper
+          .selectList(PortfolioMstCondition.byAccountNoAndKeyword(1L, keywordPattern), null, null)
+          .stream()
+          .map(PortfolioDto::getPortfolioNo)
+          .toList();
     }
 
     @Test
     @Order(5)
-    @DisplayName("タグの条件で、日本語・英語のいずれかに部分一致するタグを持つポートフォリオに絞り込むこと")
-    void selectList_byTagPattern() {
-      assertEquals(
-          List.of(1L),
-          portfolioMstMapper
-              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, null, "%風%"))
-              .stream()
-              .map(PortfolioDto::getPortfolioNo)
-              .toList());
-      assertEquals(
-          List.of(1L),
-          portfolioMstMapper
-              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, null, "%NATURE%"))
-              .stream()
-              .map(PortfolioDto::getPortfolioNo)
-              .toList());
-      // 他アカウントのポートフォリオのタグ（海）は対象外
-      assertTrue(
-          portfolioMstMapper
-              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, null, "%海%"))
-              .isEmpty());
+    @DisplayName("検索語がテーマに、大文字小文字を区別せず部分一致するポートフォリオに絞り込むこと")
+    void selectList_keywordMatchesTheme() {
+      assertEquals(List.of(1L), selectByKeyword("%ポートフォリオ11%"));
     }
 
     @Test
     @Order(6)
-    @DisplayName("テーマ・タグの両方を指定した場合、どちらにも一致するポートフォリオに絞り込むこと（AND条件）")
-    void selectList_byThemeAndTag() {
-      assertTrue(
-          portfolioMstMapper
-              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, "%ポートフォリオ12%", "%自然%"))
-              .isEmpty());
-      assertEquals(
-          1,
-          portfolioMstMapper
-              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, "%ポートフォリオ11%", "%自然%"))
-              .size());
+    @DisplayName("検索語がタグの日本語・英語のいずれかに部分一致するポートフォリオに絞り込むこと")
+    void selectList_keywordMatchesTag() {
+      assertEquals(List.of(1L), selectByKeyword("%風%"));
+      assertEquals(List.of(1L), selectByKeyword("%NATURE%"));
+      // 他アカウントのポートフォリオのタグ（海）は対象外
+      assertTrue(selectByKeyword("%海%").isEmpty());
     }
 
     @Test
     @Order(7)
+    @DisplayName("検索語がテーマ・タグのいずれかに一致すれば対象とし（OR条件）、表示順に取得すること")
+    void selectList_keywordMatchesThemeOrTag() {
+      // ポートフォリオ2はテーマ、ポートフォリオ3はタグが一致する。表示順はポートフォリオ3（1）→2（3）
+      assertEquals(List.of(3L, 2L), selectByKeyword("%ポートフォリオ12%"));
+      // テーマ・タグのいずれにも一致しない場合は0件
+      assertTrue(selectByKeyword("%該当なし%").isEmpty());
+    }
+
+    @Test
+    @Order(8)
     @DisplayName("エスケープしたワイルドカード文字は、文字そのものとして一致させること")
     void selectList_escapedWildcard() {
-      assertTrue(
-          portfolioMstMapper
-              .selectList(PortfolioMstCondition.byAccountNoAndKeywords(1L, "%\\_%", null))
-              .isEmpty());
+      assertTrue(selectByKeyword("%\\_%").isEmpty());
     }
   }
 
@@ -443,6 +480,7 @@ public class PortfolioMstMapperTest {
           Map.of("rows", List.of(Map.of("pattern", "TWO_EQUAL"))), mst.getTemplateSettings());
       assertEquals(1, mst.getSettingsVersion());
       assertEquals(PortfolioStatusEnum.PUBLISHED, mst.getStatusKbn());
+      assertEquals(2, mst.getDisplayOrder());
     }
 
     @Test
@@ -489,6 +527,78 @@ public class PortfolioMstMapperTest {
     @DisplayName("正常系：どのポートフォリオにも使用されていない写真の場合、0件となること")
     void selectByPhoto_none() {
       assertTrue(portfolioMstMapper.selectByPhoto(1L, 3L).isEmpty());
+    }
+  }
+
+  @Nested
+  @Order(9)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/mapper/PortfolioMstMapperTest.sql")
+  class updateDisplayOrder {
+    private List<Map<String, Object>> displayOrders(Long accountNo) {
+      return jdbcTemplate.queryForList(
+          "SELECT portfolio_no, display_order FROM photo.portfolio_mst"
+              + " WHERE account_no = ? ORDER BY portfolio_no",
+          accountNo);
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：指定したポートフォリオ番号の並び順で、表示順を1から振り直すこと。更新日時は変更しないこと")
+    void updateDisplayOrder_success() {
+      assertEquals(3, portfolioMstMapper.updateDisplayOrder(1L, List.of(2L, 3L, 1L)));
+
+      assertEquals(
+          List.of(
+              Map.of("portfolio_no", 1L, "display_order", 3),
+              Map.of("portfolio_no", 2L, "display_order", 1),
+              Map.of("portfolio_no", 3L, "display_order", 2)),
+          displayOrders(1L));
+      assertTrue(
+          UPDATED_AT_11.isEqual(
+              jdbcTemplate.queryForObject(
+                  "SELECT updated_at FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 1",
+                  OffsetDateTime.class)));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：他アカウントのポートフォリオ番号は更新しないこと（アカウント番号とのAND条件）")
+    void updateDisplayOrder_otherAccount() {
+      // account_no=2にはポートフォリオ番号2・3が存在しないため、ポートフォリオ番号1の1件だけが更新対象となる
+      assertEquals(1, portfolioMstMapper.updateDisplayOrder(2L, List.of(3L, 2L, 1L)));
+
+      assertEquals(List.of(Map.of("portfolio_no", 1L, "display_order", 3)), displayOrders(2L));
+      assertEquals(
+          List.of(
+              Map.of("portfolio_no", 1L, "display_order", 2),
+              Map.of("portfolio_no", 2L, "display_order", 3),
+              Map.of("portfolio_no", 3L, "display_order", 1)),
+          displayOrders(1L));
+    }
+  }
+
+  @Nested
+  @Order(10)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/mapper/PortfolioMstMapperTest.sql")
+  class selectPortfolioNoListForUpdate {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントのポートフォリオ番号（下書きを含む）を表示順にすべて取得すること")
+    void selectPortfolioNoListForUpdate_success() {
+      // account_no=1の表示順はポートフォリオ3（1）→1（2）→2（3）
+      assertEquals(List.of(3L, 1L, 2L), portfolioMstMapper.selectPortfolioNoListForUpdate(1L));
+      assertEquals(List.of(1L), portfolioMstMapper.selectPortfolioNoListForUpdate(2L));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：ポートフォリオが未作成のアカウントの場合、0件となること")
+    void selectPortfolioNoListForUpdate_none() {
+      assertTrue(portfolioMstMapper.selectPortfolioNoListForUpdate(3L).isEmpty());
     }
   }
 }

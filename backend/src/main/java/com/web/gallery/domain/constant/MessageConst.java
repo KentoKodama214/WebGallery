@@ -16,6 +16,7 @@ public final class MessageConst {
   public static final String DELETE_PORTFOLIO = "ポートフォリオを削除しました。";
   public static final String PUBLISH_PORTFOLIO = "ポートフォリオを公開しました。";
   public static final String UNPUBLISH_PORTFOLIO = "ポートフォリオを下書きに戻しました。";
+  public static final String UPDATE_PORTFOLIO_DISPLAY_ORDER = "ポートフォリオの並び順を更新しました。";
 
   /** 写真削除に伴いポートフォリオを下書きに戻した場合のメッセージ。{@code %s}には下書きに戻したポートフォリオのテーマを「、」区切りで埋め込む */
   public static final String DELETE_PHOTO_WITH_REVERTED_PORTFOLIO =

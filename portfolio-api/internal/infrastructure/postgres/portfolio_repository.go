@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -41,11 +42,18 @@ func (r *PortfolioRepository) FindAccountNo(ctx context.Context, accountID strin
 	return accountNo, true, nil
 }
 
-// ListPublished はアカウントの公開中のポートフォリオ一覧を、更新日時の新しい順に取得する。
+// ListPublished はアカウントの公開中のポートフォリオ一覧を、表示順に offset 件目から最大 limit 件取得する。
 //
-// 写真の枚数・先頭の写真は、削除済みの写真を除いて数える。タグはポートフォリオごとに問い合わせず
+// keyword が空でない場合は、テーマ・タグ名（日本語・英語）のいずれかに部分一致（大文字・小文字を区別しない）
+// するものに絞り込む。写真の枚数・先頭の写真は、削除済みの写真を除いて数える。タグはポートフォリオごとに問い合わせず
 // 一括で取得する（一覧の件数に比例してクエリが増える N+1 を避ける）。
-func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64) ([]domain.PortfolioSummary, error) {
+func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64, keyword string, limit, offset int) ([]domain.PortfolioSummary, error) {
+	// 検索語がない場合は NULL を渡し、絞り込み条件全体を無効にする
+	var pattern *string
+	if keyword != "" {
+		p := toContainsPattern(keyword)
+		pattern = &p
+	}
 	rows, err := r.pool.Query(ctx, `
 		SELECT
 			pm.portfolio_no,
@@ -77,7 +85,19 @@ func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64
 		) cover ON true
 		WHERE pm.account_no = $1
 			AND pm.status_kbn = 'published'
-		ORDER BY pm.updated_at DESC, pm.portfolio_no DESC`, accountNo)
+			AND (
+				$2::text IS NULL
+				OR pm.theme ILIKE $2 ESCAPE '\'
+				OR EXISTS (
+					SELECT 1
+					FROM photo.portfolio_tag_mst pt
+					WHERE pt.account_no = pm.account_no
+						AND pt.portfolio_no = pm.portfolio_no
+						AND (pt.tag_japanese_name ILIKE $2 ESCAPE '\' OR pt.tag_english_name ILIKE $2 ESCAPE '\')
+				)
+			)
+		ORDER BY pm.display_order, pm.portfolio_no
+		LIMIT $3 OFFSET $4`, accountNo, pattern, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -229,6 +249,15 @@ func (r *PortfolioRepository) findTags(ctx context.Context, accountNo int64, por
 		result[portfolioNo] = append(result[portfolioNo], tag)
 	}
 	return result, rows.Err()
+}
+
+// toContainsPattern は検索語を部分一致の LIKE パターンに変換する。
+//
+// 検索語に含まれる LIKE のワイルドカード文字（% と _）とエスケープ文字（\）は、文字そのものとして一致させるためエスケープする
+// （Java 側の PortfolioMstRepositoryImpl#toContainsPattern と同じ規則）。
+func toContainsPattern(keyword string) string {
+	escaped := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(keyword)
+	return "%" + escaped + "%"
 }
 
 func tagsOrEmpty(tags []domain.Tag) []domain.Tag {

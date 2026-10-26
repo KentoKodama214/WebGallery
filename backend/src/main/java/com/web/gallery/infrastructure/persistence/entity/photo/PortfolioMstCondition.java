@@ -13,11 +13,12 @@ public class PortfolioMstCondition {
   /** ポートフォリオ番号 */
   private Long portfolioNo;
 
-  /** テーマのLIKEパターン（部分一致。ワイルドカード文字はエスケープ済み） */
-  private String themePattern;
-
-  /** タグ名（日本語・英語）のLIKEパターン（部分一致。ワイルドカード文字はエスケープ済み） */
-  private String tagPattern;
+  /**
+   * 検索語のLIKEパターン（部分一致。ワイルドカード文字はエスケープ済み）
+   *
+   * <p>テーマ・タグ名（日本語・英語）のいずれかに一致するポートフォリオに絞り込む（OR条件）
+   */
+  private String keywordPattern;
 
   /**
    * アカウント番号・ポートフォリオ番号による抽出条件を生成する
@@ -43,21 +44,18 @@ public class PortfolioMstCondition {
   }
 
   /**
-   * アカウント番号と、テーマ・タグ名の部分一致による抽出条件を生成する
+   * アカウント番号と、検索語のテーマ・タグ名への部分一致（OR条件）による抽出条件を生成する
    *
    * <p>本人のポートフォリオ一覧の絞り込みに使用する
    *
    * @param accountNo アカウント番号
-   * @param themePattern テーマのLIKEパターン（未指定はnull）
-   * @param tagPattern タグ名のLIKEパターン（未指定はnull）
+   * @param keywordPattern 検索語のLIKEパターン（未指定はnull）
    * @return {@link PortfolioMstCondition}
    */
-  public static PortfolioMstCondition byAccountNoAndKeywords(
-      Long accountNo, String themePattern, String tagPattern) {
+  public static PortfolioMstCondition byAccountNoAndKeyword(Long accountNo, String keywordPattern) {
     return PortfolioMstCondition.builder()
         .accountNo(accountNo)
-        .themePattern(themePattern)
-        .tagPattern(tagPattern)
+        .keywordPattern(keywordPattern)
         .build();
   }
 }

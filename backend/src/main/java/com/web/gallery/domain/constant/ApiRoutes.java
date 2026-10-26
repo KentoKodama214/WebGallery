@@ -62,7 +62,7 @@ public final class ApiRoutes {
   public static final String API_PHOTO_UPPER_LIMIT = API_PHOTOS + "/upper-limit";
 
   // ポートフォリオ関連
-  /** ポートフォリオAPI（GET=本人の一覧取得（下書きを含む。テーマ・タグで絞り込み可）, POST=下書きとして新規登録） */
+  /** ポートフォリオAPI（GET=本人の一覧取得（下書きを含む。検索語でテーマ・タグを絞り込み可）, POST=下書きとして新規登録） */
   public static final String API_PORTFOLIOS = API_ACCOUNT + "/portfolios";
 
   /** ポートフォリオ番号 */
@@ -73,6 +73,9 @@ public final class ApiRoutes {
 
   /** ポートフォリオ公開状態API（PUT=公開・下書きへの切り替え） */
   public static final String API_PORTFOLIO_STATUS = API_PORTFOLIO_DETAIL + "/status";
+
+  /** ポートフォリオ表示順API（PUT=表示順で隣のポートフォリオと入れ替えて1つ上・下へ移動） */
+  public static final String API_PORTFOLIO_DISPLAY_ORDER = API_PORTFOLIO_DETAIL + "/display-order";
 
   /** ポートフォリオ作成上限チェックAPI（GET=作成数の上限到達チェック） */
   public static final String API_PORTFOLIO_UPPER_LIMIT = API_PORTFOLIOS + "/upper-limit";

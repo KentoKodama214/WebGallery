@@ -22,7 +22,7 @@
 | 14 | description | 説明文 | text | '' | ポートフォリオの説明文 | portfolio_mst |
 | 15 | direction_kbn | 写真の向き | photo.direction_enum | 'none' | vertical（縦）/horizontal（横）/square（正方形）/none（未設定） | photo_mst, photo_list_filter_log |
 | 16 | display_name | 表示名 | text | - | 撮影場所の表示用名称。写真詳細等での表示に使用し、重複可（一意制約はmanagement_name側） | location_mst |
-| 17 | display_order | 表示順 | int | - | ポートフォリオ内の写真の表示順（1始まりの連番）。account_no, portfolio_noとの複合UNIQUEを構成 | portfolio_photo |
+| 17 | display_order | 表示順 | int | - | portfolio_photoではポートフォリオ内の写真の表示順（1始まりの連番）で、account_no, portfolio_noとの複合UNIQUEを構成。portfolio_mstではアカウント内のポートフォリオの並び順（1始まり。新規登録時は末尾＝最大値+1。削除による欠番を許容し、並び替え時に1から振り直す） | portfolio_mst, portfolio_photo |
 | 18 | explanation | 説明 | text | '""' | 区分コードの補足説明 | kbn_mst |
 | 19 | expires_at | 有効期限 | timestamp with time zone | - | リフレッシュトークンの有効期限。期限切れトークン削除の定期実行タスク用インデックスあり | refresh_token |
 | 20 | f_value | F値 | decimal(5,2) | - | EXIF情報から取得した絞り値 | photo_mst |
