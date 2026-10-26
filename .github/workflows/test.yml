@@ -51,8 +51,8 @@ jobs:
           name: jest-coverage-summary
           path: frontend/coverage/coverage-summary.json
 
-  unit-test:
-    name: 単体テスト
+  gallery-api-unit-test:
+    name: gallery-api単体テスト
     runs-on: ubuntu-latest
 
     steps:
@@ -81,7 +81,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: unit-test-results
+          name: gallery-api-unit-test-results
           path: gallery-api/build/reports/tests/unitTest/
 
       - name: カバレッジ実行データアップロード
@@ -91,27 +91,11 @@ jobs:
           name: jacoco-exec-unit
           path: gallery-api/build/jacoco/unitTest.exec
 
-  # portfolio-api（Go。公開ページ向けのポートフォリオ表示API）の静的解析・単体テスト・結合テスト。
-  # 結合テストは本番と同じ読み取り専用ロール（portfolio_reader）で接続するため、
-  # db/photo/portfolio_reader.sql までを流してDBを初期化する
-  portfolio-api-test:
-    name: portfolio-apiテスト
+  # portfolio-api（Go。公開ページ向けのポートフォリオ表示API）の静的解析・単体テスト。
+  # DBを必要としないため、gallery-apiの単体テストと同様にサービスコンテナを起動しない
+  portfolio-api-unit-test:
+    name: portfolio-api単体テスト
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: web_gallery_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     defaults:
       run:
@@ -145,8 +129,51 @@ jobs:
           go generate ./...
           git diff --exit-code -- graph/
 
-      - name: 単体テスト実行
-        run: go test ./...
+      # -coverpkg=./... で、テストを持たないパッケージ（cmd/server等）も含めたモジュール全体を計測対象にする
+      - name: 単体テスト実行（カバレッジ計測）
+        run: go test -coverpkg=./... -coverprofile=unit.out ./...
+
+      - name: カバレッジプロファイルアップロード
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: go-coverage-unit
+          path: portfolio-api/unit.out
+
+  # portfolio-apiの結合テスト。本番と同じ読み取り専用ロール（portfolio_reader）で接続するため、
+  # db/photo/portfolio_reader.sql までを流してDBを初期化する
+  portfolio-api-integration-test:
+    name: portfolio-api結合テスト
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: web_gallery_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: portfolio-api
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v7
+
+      - name: Go セットアップ
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: portfolio-api/go.mod
+          cache-dependency-path: portfolio-api/go.sum
 
       - name: データベース初期化
         working-directory: .
@@ -170,14 +197,26 @@ jobs:
             psql -h localhost -p 5433 -U postgres -d web_gallery_test -v ON_ERROR_STOP=1 -f "$file"
           done
 
-      - name: 結合テスト実行
-        run: go test -tags integration ./...
+      # -tags integration を付けると全パッケージの単体テストも実行対象になり、portfolio-api単体テストと
+      # 重複してカバレッジの区別もつかなくなるため、結合テスト（//go:build integration）を含むパッケージに限定する。
+      # -coverpkg=./... で、テスト対象パッケージ以外を経由して実行されたコードも計測する
+      - name: 結合テスト実行（カバレッジ計測）
+        run: |
+          packages=$(find . -name '*_test.go' -exec grep -l '^//go:build integration' {} + | xargs -n1 dirname | sort -u)
+          go test -tags integration -coverpkg=./... -coverprofile=integration.out $packages
+
+      - name: カバレッジプロファイルアップロード
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: go-coverage-integration
+          path: portfolio-api/integration.out
 
   # 単体テストへのneedsは指定しない。単体テストと結合テスト・E2Eテストの間に成果物の
   # 受け渡しはなく、直列化すると単体テストの所要時間がそのままクリティカルパスに積まれるため、
   # 最初から並列で起動する
-  integration-test:
-    name: 結合テスト
+  gallery-api-integration-test:
+    name: gallery-api結合テスト
     runs-on: ubuntu-latest
 
     services:
@@ -277,7 +316,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: integration-test-results
+          name: gallery-api-integration-test-results
           path: gallery-api/build/reports/tests/integrationTest/
 
       - name: カバレッジ実行データアップロード
@@ -287,7 +326,7 @@ jobs:
           name: jacoco-exec-integration
           path: gallery-api/build/jacoco/integrationTest.exec
 
-  # integration-testと同様にneedsは指定せず、最初から並列で起動する。
+  # gallery-api-integration-testと同様にneedsは指定せず、最初から並列で起動する。
   # ブラウザ別に2つのジョブへ分割し、webkit（Desktop Safari・iPhone 13）のダウンロードと
   # スモークテストの実行をchromium側のクリティカルパスから外す
   e2e-test:
@@ -554,7 +593,12 @@ jobs:
 
   coverage-report:
     name: カバレッジレポート
-    needs: [frontend-unit-test, unit-test, integration-test]
+    needs:
+      - frontend-unit-test
+      - gallery-api-unit-test
+      - gallery-api-integration-test
+      - portfolio-api-unit-test
+      - portfolio-api-integration-test
     runs-on: ubuntu-latest
 
     permissions:
@@ -577,11 +621,25 @@ jobs:
           build-root-directory: gallery-api
           cache-read-only: false
 
+      # portfolio-apiの関数カバレッジの算出（go tool cover -func）に使用する
+      - name: Go セットアップ
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: portfolio-api/go.mod
+          cache-dependency-path: portfolio-api/go.sum
+
       - name: カバレッジ実行データダウンロード
         uses: actions/download-artifact@v8
         with:
           pattern: jacoco-exec-*
           path: gallery-api/build/jacoco
+          merge-multiple: true
+
+      - name: portfolio-apiカバレッジプロファイルダウンロード
+        uses: actions/download-artifact@v8
+        with:
+          pattern: go-coverage-*
+          path: portfolio-api/coverage
           merge-multiple: true
 
       - name: フロントエンドカバレッジ集計データダウンロード
@@ -590,7 +648,7 @@ jobs:
           name: jest-coverage-summary
           path: frontend/coverage
 
-      - name: カバレッジレポート生成（単体 / 結合 / 集約）
+      - name: gallery-apiカバレッジレポート生成（単体 / 結合 / 集約）
         run: ./gallery-api/gradlew -p gallery-api jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
       - name: カバレッジ集計表を生成
@@ -600,6 +658,16 @@ jobs:
             "単体テスト=gallery-api/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml" \
             "結合テスト=gallery-api/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml" \
             > coverage-table.md
+          echo >> coverage-table.md
+          python3 .github/scripts/go_coverage_table.py \
+            --module-dir portfolio-api \
+            --exclude graph/generated.go \
+            --exclude graph/model/models_gen.go \
+            "単体＋結合=portfolio-api/coverage/unit.out,portfolio-api/coverage/integration.out" \
+            "単体テスト=portfolio-api/coverage/unit.out" \
+            "結合テスト=portfolio-api/coverage/integration.out" \
+            >> coverage-table.md
+          echo >> coverage-table.md
           python3 .github/scripts/jest_coverage_table.py \
             frontend/coverage/coverage-summary.json \
             >> coverage-table.md
