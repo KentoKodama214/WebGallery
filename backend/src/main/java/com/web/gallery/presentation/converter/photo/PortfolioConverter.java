@@ -1,8 +1,8 @@
 package com.web.gallery.presentation.converter.photo;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioDisplayOrderMoveModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
-import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
@@ -17,7 +17,7 @@ import com.web.gallery.domain.model.photo.PortfolioTheme;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TemplateSettings;
-import com.web.gallery.presentation.request.photo.PortfolioDisplayOrderUpdateRequest;
+import com.web.gallery.presentation.request.photo.PortfolioDisplayOrderMoveRequest;
 import com.web.gallery.presentation.request.photo.PortfolioListRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSaveRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSearchRequest;
@@ -85,17 +85,25 @@ public class PortfolioConverter {
     return PortfolioListGetModel.builder()
         .accountNo(accountNo)
         .keyword(toKeyword(request.getKeyword()))
+        .pageNo(request.getPageNo())
         .build();
   }
 
   /**
-   * ポートフォリオ表示順の更新リクエストからPortfolioNoListを生成する
+   * ポートフォリオ表示順の移動リクエスト・ログイン中のアカウント番号・パスパラメータのポートフォリオ番号からPortfolioDisplayOrderMoveModelを生成する
    *
-   * @param request {@link PortfolioDisplayOrderUpdateRequest}（バリデーション済み）
-   * @return 表示順に並べた{@link PortfolioNoList}
+   * @param request {@link PortfolioDisplayOrderMoveRequest}（バリデーション済み）
+   * @param accountNo ログイン中のアカウント番号
+   * @param portfolioNo 移動するポートフォリオ番号
+   * @return {@link PortfolioDisplayOrderMoveModel}
    */
-  public PortfolioNoList toPortfolioNoList(PortfolioDisplayOrderUpdateRequest request) {
-    return PortfolioNoList.from(request.getPortfolioNoList());
+  public PortfolioDisplayOrderMoveModel toPortfolioDisplayOrderMoveModel(
+      PortfolioDisplayOrderMoveRequest request, AccountNo accountNo, PortfolioNo portfolioNo) {
+    return PortfolioDisplayOrderMoveModel.builder()
+        .accountNo(accountNo)
+        .portfolioNo(portfolioNo)
+        .direction(request.getDirection())
+        .build();
   }
 
   /**

@@ -2,6 +2,7 @@ package com.web.gallery.application.model.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.domain.enumeration.MoveDirectionEnum;
 import com.web.gallery.domain.model.photo.PortfolioNo;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -43,35 +44,56 @@ class PortfolioNoListTest {
   @Nested
   @Order(2)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class isSameSetAs {
+  class contains {
     @Test
     @Order(1)
-    @DisplayName("正常系：並び順が異なっても同じポートフォリオ番号の集合であればtrueを返すこと")
-    void isSameSetAs_sameSet() {
-      assertTrue(
-          PortfolioNoList.from(List.of(3L, 1L, 2L))
-              .isSameSetAs(PortfolioNoList.from(List.of(1L, 2L, 3L))));
-      assertTrue(PortfolioNoList.empty().isSameSetAs(PortfolioNoList.empty()));
+    @DisplayName("正常系：含まれるポートフォリオ番号はtrue、含まれないものはfalseを返すこと")
+    void contains_success() {
+      PortfolioNoList list = PortfolioNoList.from(List.of(3L, 1L));
+
+      assertTrue(list.contains(new PortfolioNo(1L)));
+      assertFalse(list.contains(new PortfolioNo(2L)));
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class move {
+    private final PortfolioNoList list = PortfolioNoList.from(List.of(3L, 1L, 2L));
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：上へ移動すると1つ前の要素と入れ替わり、元のインスタンスは変更しないこと")
+    void move_up() {
+      PortfolioNoList actual = list.move(new PortfolioNo(1L), MoveDirectionEnum.UP);
+
+      assertEquals(PortfolioNoList.from(List.of(1L, 3L, 2L)), actual);
+      assertEquals(PortfolioNoList.from(List.of(3L, 1L, 2L)), list);
     }
 
     @Test
     @Order(2)
-    @DisplayName("異常系：過不足がある場合、falseを返すこと")
-    void isSameSetAs_differentSet() {
-      PortfolioNoList existing = PortfolioNoList.from(List.of(1L, 2L, 3L));
-
-      assertFalse(PortfolioNoList.from(List.of(1L, 2L)).isSameSetAs(existing));
-      assertFalse(PortfolioNoList.from(List.of(1L, 2L, 3L, 4L)).isSameSetAs(existing));
-      assertFalse(PortfolioNoList.from(List.of(1L, 2L, 4L)).isSameSetAs(existing));
+    @DisplayName("正常系：下へ移動すると1つ後ろの要素と入れ替わること")
+    void move_down() {
+      assertEquals(
+          PortfolioNoList.from(List.of(3L, 2L, 1L)),
+          list.move(new PortfolioNo(1L), MoveDirectionEnum.DOWN));
     }
 
     @Test
     @Order(3)
-    @DisplayName("異常系：重複がある場合、要素の種類が同じでもfalseを返すこと")
-    void isSameSetAs_duplicate() {
-      assertFalse(
-          PortfolioNoList.from(List.of(1L, 2L, 2L, 3L))
-              .isSameSetAs(PortfolioNoList.from(List.of(1L, 2L, 3L))));
+    @DisplayName("正常系：先頭を上へ・末尾を下へ移動しようとした場合、並びを変えないこと")
+    void move_boundary() {
+      assertEquals(list, list.move(new PortfolioNo(3L), MoveDirectionEnum.UP));
+      assertEquals(list, list.move(new PortfolioNo(2L), MoveDirectionEnum.DOWN));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：含まれないポートフォリオ番号を指定した場合、並びを変えないこと")
+    void move_notContained() {
+      assertEquals(list, list.move(new PortfolioNo(9L), MoveDirectionEnum.UP));
     }
   }
 }

@@ -2,13 +2,16 @@
 # ローカル動作確認用のダミーデータ投入スクリプト
 #
 # 【注意】実行するとローカルDB・MinIOの写真関連データを完全にリセットする
-#   - account、account_authority、location_mst、refresh_token、photo_mst、photo_tag_mst、photo_favorite を全件削除
-#     （外部キー制約上、account を削除するには account_authority・location_mst・refresh_token も連鎖して削除する必要がある）
+#   - account、account_authority、location_mst、refresh_token、photo_mst、photo_tag_mst、photo_favorite、
+#     portfolio_mst、portfolio_photo、portfolio_tag_mst を全件削除
+#     （外部キー制約上、account を削除するには account_authority・location_mst・refresh_token・portfolio_mst 等も連鎖して削除する必要がある）
 #   - MinIO（web-gallery-local バケット）内の画像ファイルも全件削除
 # その上で、以下を新規作成する
 #   - アカウント3件（localuser01: normal-user, localuser02: mini-user, localuser03: administrator）
 #   - localuser01 の写真10枚（縦6枚・横4枚）とロケーション・タグ
 #   - localuser01 の写真に対する localuser01/02/03 からのお気に入り（お気に入り数順ソートの検証用に件数を分散）
+#   - localuser01 のポートフォリオ26件（公開中24件・下書き2件。一覧のページング（20件ずつ）の確認用に20件を超える件数にする）
+#     うち1件は、グリッド型の4種類の行パターンをすべて使うポートフォリオ（表示の確認用）
 #   - ダミー画像（ImageMagickで生成）をMinIOへアップロード
 set -euo pipefail
 
@@ -39,9 +42,12 @@ done
 NETWORK=$(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{end}}' "$MINIO_CONTAINER")
 echo "MinIOのDockerネットワーク: $NETWORK"
 
-echo "既存のアカウント・写真関連データを全件削除します（account, account_authority, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite）"
+echo "既存のアカウント・写真・ポートフォリオ関連データを全件削除します（account, account_authority, location_mst, refresh_token, photo_mst, photo_tag_mst, photo_favorite, portfolio_mst, portfolio_photo, portfolio_tag_mst）"
 docker exec -i "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 <<'SQL'
 TRUNCATE TABLE
+  photo.portfolio_tag_mst,
+  photo.portfolio_photo,
+  photo.portfolio_mst,
   photo.photo_favorite,
   photo.photo_tag_mst,
   photo.photo_mst,
@@ -99,6 +105,23 @@ BG_COLORS=("#eef4fb" "#e7eef7" "#fde3ec" "#fce8f1" "#e0f6f7" "#16233f" "#fbe6d4"
 TEXT_COLORS=("#1b3a5c" "#1b3a5c" "#7a2d4d" "#7a2d4d" "#0b4f57" "#eaf2ff" "#6b3410" "#6b3410" "#f5f1e6" "#2f4a1e")
 
 PHOTO_COUNT=10
+
+# --- ポートフォリオデータ定義 ------------------------------------------------------
+# 一覧は20件ずつ表示するため、ページング（「＋もっと見る」）を確認できるよう20件を超える件数にする
+PORTFOLIO_COUNT=25
+# 下書きにするポートフォリオ番号（それ以外は公開中。公開一覧でも20件を超えるようにする）
+DRAFT_PORTFOLIO_NOS=" 10 20 "
+# ポートフォリオの系統（番号順に繰り返し割り当てる）。テーマ・説明文・タグ・使用する写真（写真番号2枚）を系統ごとに定義する
+PORTFOLIO_THEMES=("雪景色" "桜の季節" "海辺の風景" "紅葉めぐり" "街の建築")
+PORTFOLIO_DESCRIPTIONS=("雪に包まれた山と街並みを集めました。" "満開の桜と春の景色を集めました。" "夏の海と港町の風景を集めました。" "色づく渓谷と古都の紅葉を集めました。" "展望タワーや洋館など印象的な建築を集めました。")
+PORTFOLIO_TAGS=("雪:snow,冬:winter" "桜:sakura,春:spring" "海:sea,夏:summer" "紅葉:autumn-leaves,秋:autumn" "建築:architecture")
+PORTFOLIO_PHOTOS=("1,2" "3,4" "5,6" "7,8" "9,10")
+# グリッド型の4種類の行パターンをすべて使うポートフォリオ（上記の系統とは別に、並び順の末尾に1件追加する）。
+# 行パターンと写真番号を上から順に対応させる。横長・縦長を組み合わせる行には、写真の向き（DIRECTIONS）が合うものを使う
+#   2枚均等：写真5（横）・8（横） / 3枚均等：写真6・7・9（縦） / 横長+縦長：写真1（横）・2（縦） / 縦長+横長：写真4（縦）・3（横）
+ALL_GRID_PATTERNS_NO=$((PORTFOLIO_COUNT + 1))
+ALL_GRID_PATTERNS_ROWS='{"rows": [{"pattern": "TWO_EQUAL"}, {"pattern": "THREE_EQUAL"}, {"pattern": "WIDE_NARROW"}, {"pattern": "NARROW_WIDE"}]}'
+ALL_GRID_PATTERNS_PHOTOS=(5 8 6 7 9 1 2 4 3)
 
 # ImageMagickはfontconfig未設定だと文字が描画できないため、既知のフォントファイルを直接指定する
 FONT=""
@@ -171,6 +194,54 @@ SQL
       done
     fi
   done
+
+  # ポートフォリオ：奇数番号はフィーチャー型（写真ごとにテーマを設定）、偶数番号はグリッド型（2枚均等の1行）とし、
+  # いずれも公開できる設定にする。表示順は番号順とし、更新日時は番号が大きいほど新しくする
+  # （更新日時の新しい順ではなく表示順に並ぶことを確認できるようにする）
+  for n in $(seq 1 "$PORTFOLIO_COUNT"); do
+    kind=$(((n - 1) % ${#PORTFOLIO_THEMES[@]}))
+    theme="${PORTFOLIO_THEMES[$kind]} No.$(printf '%02d' "$n")"
+    if [ $((n % 2)) -eq 1 ]; then
+      template="feature"
+      template_settings="{}"
+    else
+      template="grid"
+      template_settings='{"rows": [{"pattern": "TWO_EQUAL"}]}'
+    fi
+    if [[ "$DRAFT_PORTFOLIO_NOS" == *" $n "* ]]; then
+      status="draft"
+    else
+      status="published"
+    fi
+    echo "INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order) VALUES (:u1_account_no, ${n}, 1, now(), 1, now() - interval '$((PORTFOLIO_COUNT - n)) hours', '${theme}', '${PORTFOLIO_DESCRIPTIONS[$kind]}', '${template}', '${template_settings}', 1, '${status}', ${n});"
+
+    IFS=',' read -ra photo_nos <<< "${PORTFOLIO_PHOTOS[$kind]}"
+    order=1
+    for photo_no in "${photo_nos[@]}"; do
+      if [ "$template" = "feature" ]; then
+        photo_settings="{\"theme\": \"${TITLES_JA[$((photo_no - 1))]}\", \"subTheme\": \"${LOCATION_NAMES[$((photo_no - 1))]}\", \"description\": \"${CAPTIONS[$((photo_no - 1))]}\"}"
+      else
+        photo_settings="{}"
+      fi
+      echo "INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES (:u1_account_no, ${n}, ${photo_no}, 1, now(), ${order}, '${photo_settings}');"
+      order=$((order + 1))
+    done
+
+    IFS=',' read -ra tag_list <<< "${PORTFOLIO_TAGS[$kind]}"
+    tag_no=1
+    for tag in "${tag_list[@]}"; do
+      echo "INSERT INTO photo.portfolio_tag_mst (account_no, portfolio_no, tag_no, created_by, created_at, tag_japanese_name, tag_english_name) VALUES (:u1_account_no, ${n}, ${tag_no}, 1, now(), '${tag%%:*}', '${tag##*:}');"
+      tag_no=$((tag_no + 1))
+    done
+  done
+
+  echo "INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order) VALUES (:u1_account_no, ${ALL_GRID_PATTERNS_NO}, 1, now(), 1, now(), 'グリッドの全パターン', '2枚均等・3枚均等・横長+縦長・縦長+横長の4種類の行を、上から順に並べました。', 'grid', '${ALL_GRID_PATTERNS_ROWS}', 1, 'published', ${ALL_GRID_PATTERNS_NO});"
+  order=1
+  for photo_no in "${ALL_GRID_PATTERNS_PHOTOS[@]}"; do
+    echo "INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES (:u1_account_no, ${ALL_GRID_PATTERNS_NO}, ${photo_no}, 1, now(), ${order}, '{}');"
+    order=$((order + 1))
+  done
+  echo "INSERT INTO photo.portfolio_tag_mst (account_no, portfolio_no, tag_no, created_by, created_at, tag_japanese_name, tag_english_name) VALUES (:u1_account_no, ${ALL_GRID_PATTERNS_NO}, 1, 1, now(), 'グリッド', 'grid');"
 } > "$SQL_FILE"
 
 echo "データベースへ投入します"
@@ -189,7 +260,7 @@ cat <<MSG
 投入が完了しました。
 
 ログイン情報（パスワードは全アカウント共通）:
-  localuser01 / password01 (normal-user, 写真10枚保持)
+  localuser01 / password01 (normal-user, 写真10枚・ポートフォリオ26件（公開中24件・下書き2件）保持)
   localuser02 / password01 (mini-user)
   localuser03 / password01 (administrator)
 MSG

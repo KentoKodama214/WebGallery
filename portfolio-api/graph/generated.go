@@ -90,9 +90,14 @@ type ComplexityRoot struct {
 		UpdatedAt   func(childComplexity int) int
 	}
 
+	PortfolioSummaryPage struct {
+		HasNext    func(childComplexity int) int
+		Portfolios func(childComplexity int) int
+	}
+
 	Query struct {
 		PublishedPortfolio  func(childComplexity int, accountID string, portfolioNo int) int
-		PublishedPortfolios func(childComplexity int, accountID string, keyword *string) int
+		PublishedPortfolios func(childComplexity int, accountID string, keyword *string, limit *int, offset *int) int
 	}
 
 	Tag struct {
@@ -106,7 +111,7 @@ type ComplexityRoot struct {
 // region    ************************** generated!.gotpl **************************
 
 type QueryResolver interface {
-	PublishedPortfolios(ctx context.Context, accountID string, keyword *string) ([]*model.PortfolioSummary, error)
+	PublishedPortfolios(ctx context.Context, accountID string, keyword *string, limit *int, offset *int) (*model.PortfolioSummaryPage, error)
 	PublishedPortfolio(ctx context.Context, accountID string, portfolioNo int) (*model.Portfolio, error)
 }
 
@@ -310,6 +315,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.PortfolioSummary.UpdatedAt(childComplexity), true
 
+	case "PortfolioSummaryPage.hasNext":
+		if e.ComplexityRoot.PortfolioSummaryPage.HasNext == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PortfolioSummaryPage.HasNext(childComplexity), true
+	case "PortfolioSummaryPage.portfolios":
+		if e.ComplexityRoot.PortfolioSummaryPage.Portfolios == nil {
+			break
+		}
+
+		return e.ComplexityRoot.PortfolioSummaryPage.Portfolios(childComplexity), true
+
 	case "Query.publishedPortfolio":
 		if e.ComplexityRoot.Query.PublishedPortfolio == nil {
 			break
@@ -331,7 +349,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.PublishedPortfolios(childComplexity, args["accountId"].(string), args["keyword"].(*string)), true
+		return e.ComplexityRoot.Query.PublishedPortfolios(childComplexity, args["accountId"].(string), args["keyword"].(*string), args["limit"].(*int), args["offset"].(*int)), true
 
 	case "Tag.englishName":
 		if e.ComplexityRoot.Tag.EnglishName == nil {
@@ -522,6 +540,16 @@ func (ec *executionContext) childFields_PortfolioSummary(ctx context.Context, fi
 	return nil, fmt.Errorf("no field named %q was found under type PortfolioSummary", field.Name)
 }
 
+func (ec *executionContext) childFields_PortfolioSummaryPage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "portfolios":
+		return ec.fieldContext_PortfolioSummaryPage_portfolios(ctx, field)
+	case "hasNext":
+		return ec.fieldContext_PortfolioSummaryPage_hasNext(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type PortfolioSummaryPage", field.Name)
+}
+
 func (ec *executionContext) childFields_Tag(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "japaneseName":
@@ -703,6 +731,22 @@ func (ec *executionContext) field_Query_publishedPortfolios_args(ctx context.Con
 		return nil, err
 	}
 	args["keyword"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "offset",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg3
 	return args, nil
 }
 
@@ -1505,6 +1549,61 @@ func (ec *executionContext) fieldContext_PortfolioSummary_updatedAt(_ context.Co
 	return graphql.NewScalarFieldContext("PortfolioSummary", field, false, false, errors.New("field of type DateTime does not have child fields"))
 }
 
+func (ec *executionContext) _PortfolioSummaryPage_portfolios(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioSummaryPage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PortfolioSummaryPage_portfolios(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Portfolios, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.PortfolioSummary) graphql.Marshaler {
+			return ec.marshalNPortfolioSummary2ᚕᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐPortfolioSummaryᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PortfolioSummaryPage_portfolios(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioSummaryPage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PortfolioSummary(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioSummaryPage_hasNext(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioSummaryPage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_PortfolioSummaryPage_hasNext(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HasNext, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_PortfolioSummaryPage_hasNext(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("PortfolioSummaryPage", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _Query_publishedPortfolios(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1515,11 +1614,11 @@ func (ec *executionContext) _Query_publishedPortfolios(ctx context.Context, fiel
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().PublishedPortfolios(ctx, fc.Args["accountId"].(string), fc.Args["keyword"].(*string))
+			return ec.Resolvers.Query().PublishedPortfolios(ctx, fc.Args["accountId"].(string), fc.Args["keyword"].(*string), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v []*model.PortfolioSummary) graphql.Marshaler {
-			return ec.marshalNPortfolioSummary2ᚕᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐPortfolioSummaryᚄ(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *model.PortfolioSummaryPage) graphql.Marshaler {
+			return ec.marshalNPortfolioSummaryPage2ᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐPortfolioSummaryPage(ctx, selections, v)
 		},
 		true,
 		true,
@@ -1532,7 +1631,7 @@ func (ec *executionContext) fieldContext_Query_publishedPortfolios(ctx context.C
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.childFields_PortfolioSummary(ctx, field)
+			return ec.childFields_PortfolioSummaryPage(ctx, field)
 		},
 	}
 	defer func() {
@@ -3218,6 +3317,49 @@ func (ec *executionContext) _PortfolioSummary(ctx context.Context, sel ast.Selec
 	return out
 }
 
+var portfolioSummaryPageImplementors = []string{"PortfolioSummaryPage"}
+
+func (ec *executionContext) _PortfolioSummaryPage(ctx context.Context, sel ast.SelectionSet, obj *model.PortfolioSummaryPage) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, portfolioSummaryPageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PortfolioSummaryPage")
+		case "portfolios":
+			out.Values[i] = ec._PortfolioSummaryPage_portfolios(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasNext":
+			out.Values[i] = ec._PortfolioSummaryPage_hasNext(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -3960,6 +4102,16 @@ func (ec *executionContext) marshalNPortfolioSummary2ᚖgithubᚗcomᚋKentoKoda
 	return ec._PortfolioSummary(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPortfolioSummaryPage2ᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐPortfolioSummaryPage(ctx context.Context, sel ast.SelectionSet, v *model.PortfolioSummaryPage) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PortfolioSummaryPage(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNPortfolioTemplate2githubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐPortfolioTemplate(ctx context.Context, v any) (model.PortfolioTemplate, error) {
 	var res model.PortfolioTemplate
 	err := res.UnmarshalGQL(v)
@@ -4179,6 +4331,24 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalInt(*v)
 	return res
 }
 

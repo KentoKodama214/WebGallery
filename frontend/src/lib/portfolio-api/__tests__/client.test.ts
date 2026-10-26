@@ -17,21 +17,24 @@ describe("portfolio-api client", () => {
   });
 
   it("クエリと変数を GET のクエリパラメータで送り、データキャッシュには載せないこと", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: { publishedPortfolios: [{ portfolioNo: 1 }] } }));
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: { publishedPortfolios: { portfolios: [{ portfolioNo: 1 }], hasNext: false } } })
+    );
 
     const result = await getPublishedPortfolios("owner123");
 
-    expect(result).toEqual([{ portfolioNo: 1 }]);
+    expect(result).toEqual({ portfolios: [{ portfolioNo: 1 }], hasNext: false });
     const [url, init] = fetchMock.mock.calls[0];
     const parsed = new URL(String(url));
     expect(parsed.origin + parsed.pathname).toBe("http://localhost:8081/graphql");
     expect(parsed.searchParams.get("query")).toContain(
-      "publishedPortfolios(accountId: $accountId, keyword: $keyword)"
+      "publishedPortfolios(accountId: $accountId, keyword: $keyword, limit: $limit)"
     );
-    // 検索語を指定しない場合は空文字（絞り込まない）を送る
+    // 検索語を指定しない場合は空文字（絞り込まない）、件数を指定しない場合は1ページ分（20件）を送る
     expect(JSON.parse(parsed.searchParams.get("variables")!)).toEqual({
       accountId: "owner123",
       keyword: "",
+      limit: 20,
     });
     // 署名付きURLの失効後に古いデータを返さないよう、キャッシュしない
     expect(init.cache).toBe("no-store");
@@ -39,15 +42,18 @@ describe("portfolio-api client", () => {
     expect(init.method).toBeUndefined();
   });
 
-  it("検索語を変数として送ること", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: { publishedPortfolios: [] } }));
+  it("検索語・取得件数を変数として送ること", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: { publishedPortfolios: { portfolios: [], hasNext: false } } })
+    );
 
-    await getPublishedPortfolios("owner123", "自然");
+    await getPublishedPortfolios("owner123", "自然", 60);
 
     const parsed = new URL(String(fetchMock.mock.calls[0][0]));
     expect(JSON.parse(parsed.searchParams.get("variables")!)).toEqual({
       accountId: "owner123",
       keyword: "自然",
+      limit: 60,
     });
   });
 

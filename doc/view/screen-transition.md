@@ -227,16 +227,19 @@ sequenceDiagram
     participant API as REST API
 
     User->>List: /{id}/portfolio_setting にアクセス
-    List->>API: GET /api/v1/accounts/{id}/portfolios
-    API-->>List: 一覧（下書きを含む）
+    List->>API: GET /api/v1/accounts/{id}/portfolios?pageNo=1
+    API-->>List: 一覧（下書きを含む。表示順に20件）と、最後のページかどうか
     List->>API: GET /api/v1/accounts/{id}/portfolios/upper-limit
     API-->>List: 作成数が上限に達しているか（達している場合は「新規作成」を押せず、その旨を表示）
     User->>List: 検索語で絞り込み（検索）
-    List->>API: GET /api/v1/accounts/{id}/portfolios?keyword=
-    API-->>List: テーマ・タグ名のいずれかに部分一致する一覧（OR条件）
-    User->>List: 行の「↑」「↓」で並び替え（絞り込み中は不可）
-    List->>API: PUT /api/v1/accounts/{id}/portfolios/display-order
-    API-->>List: 全件の並び順を保存（一覧が最新でない場合は409となり、一覧を取得し直す）
+    List->>API: GET /api/v1/accounts/{id}/portfolios?keyword=&pageNo=1
+    API-->>List: テーマ・タグ名のいずれかに部分一致する一覧（OR条件。1ページ目から取得し直す）
+    User->>List: 「＋もっと見る」（最後のページでない場合のみ表示）
+    List->>API: GET /api/v1/accounts/{id}/portfolios?keyword=&pageNo={次のページ}
+    API-->>List: 次の20件（一覧の末尾に追加）
+    User->>List: 行の「↑」「↓」で並び替え（絞り込み中は不可。読み込み済みの最後の行は、続きがある間は下へ移動不可）
+    List->>API: PUT /api/v1/accounts/{id}/portfolios/{no}/display-order
+    API-->>List: 全件の並びで隣のポートフォリオと入れ替えて保存（失敗した場合は一覧を1ページ目から取得し直す）
     User->>List: 新規作成
     List->>Edit: /{id}/portfolio_setting/edit に遷移
     User->>Edit: 「写真を選択」で写真選択ダイアログを開く
@@ -269,12 +272,16 @@ sequenceDiagram
     participant GQL as portfolio-api（GraphQL）
 
     Visitor->>List: /portfolio/{id} にアクセス
-    List->>GQL: publishedPortfolios(accountId)
-    GQL-->>List: 公開中のポートフォリオ一覧（所有者が設定した表示順。なければ空）
+    List->>GQL: publishedPortfolios(accountId, limit: 20)
+    GQL-->>List: 公開中のポートフォリオ一覧（所有者が設定した表示順に20件。なければ空）と、続きがあるかどうか
     Visitor->>List: 検索語（テーマ・タグ）で検索
     List->>List: /portfolio/{id}?keyword= に遷移（GET）
-    List->>GQL: publishedPortfolios(accountId, keyword)
+    List->>GQL: publishedPortfolios(accountId, keyword, limit: 20)
     GQL-->>List: テーマ・タグ名のいずれかに部分一致する一覧（OR条件）
+    Visitor->>List: 「＋もっと見る」（続きがある場合のみ表示）
+    List->>List: /portfolio/{id}?keyword=&page={次のページ} に遷移（スクロール位置は保つ）
+    List->>GQL: publishedPortfolios(accountId, keyword, limit: page × 20)
+    GQL-->>List: 先頭から page × 20 件（続きが下に追加されたように表示される）
     Visitor->>List: ポートフォリオを選択
     List->>Detail: /portfolio/{id}/{no} に遷移
     Detail->>GQL: publishedPortfolio(accountId, portfolioNo)
@@ -558,7 +565,8 @@ sequenceDiagram
 |------|--------|------|
 | 「新規作成」ボタン | `/{accountId}/portfolio_setting/edit` | リンク（作成数が権限ごとの上限に達している場合は押せず、その旨を表示） |
 | 検索語（テーマ・タグ）を入力して「検索」／「クリア」 | 同画面（一覧を絞り込み／解除） | AJAX（テーマ・タグ名のいずれかに部分一致。OR条件） |
-| 行の「並び順」列の「↑」「↓」ボタン | 同画面（並びを入れ替えて保存） | AJAX（絞り込み中は不可。公開ページの一覧も同じ順に並ぶ） |
+| 「＋もっと見る」ボタン | 同画面（次の20件を追加読み込み） | AJAX（最後のページでない場合のみ表示） |
+| 行の「並び順」列の「↑」「↓」ボタン | 同画面（隣のポートフォリオと入れ替えて保存） | AJAX（絞り込み中は不可。読み込み済みの最後の行は、続きがある間は下へ移動不可。公開ページの一覧も同じ順に並ぶ） |
 | テーマ選択 | `/{accountId}/portfolio_setting/edit?portfolioNo={no}` | リンク |
 | 公開中の行の「公開ページ」列の「表示」リンク | `/portfolio/{accountId}/{portfolioNo}` | リンク（公開中のみ・別タブ） |
 
@@ -591,6 +599,7 @@ sequenceDiagram
 | ポートフォリオ選択 | `/portfolio/{accountId}/{portfolioNo}` | リンク |
 | 検索語（テーマ・タグ）を入力して「検索」 | `/portfolio/{accountId}?keyword={検索語}` | フォーム（GET。テーマ・タグ名のいずれかに部分一致。OR条件） |
 | 「クリア」 | `/portfolio/{accountId}` | リンク（検索中のみ表示） |
+| 「＋もっと見る」 | `/portfolio/{accountId}?keyword={検索語}&page={次のページ}` | リンク（続きがある場合のみ表示。先頭から page × 20 件を表示し、スクロール位置は保つ。page の上限は50） |
 | 不正な `accountId` | 404（ポートフォリオが見つかりません） | `notFound()` |
 
 ### ポートフォリオ公開ページ（詳細） (`/portfolio/{accountId}/{portfolioNo}`)

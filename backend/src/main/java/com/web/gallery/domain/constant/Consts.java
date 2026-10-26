@@ -83,13 +83,6 @@ public final class Consts {
   /** 1つのポートフォリオに登録できるタグ数の上限（アノテーション属性で参照するためint型で定義する） */
   public static final int PORTFOLIO_TAG_MAX_SIZE = 30;
 
-  /**
-   * 並び替えで一度に指定できるポートフォリオ数の上限（アノテーション属性で参照するためint型で定義する）
-   *
-   * <p>過大なリクエストを弾くための値。実際に指定できるのはアカウントが作成済みのポートフォリオ数ちょうどとなる
-   */
-  public static final int PORTFOLIO_DISPLAY_ORDER_MAX_SIZE = 1000;
-
   /** ポートフォリオのテンプレート設定・写真設定のJSON構造の現行バージョン */
   public static final int PORTFOLIO_SETTINGS_VERSION = 1;
 }

@@ -1,9 +1,9 @@
 package com.web.gallery.application.service.photo;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioDisplayOrderMoveModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
-import com.web.gallery.application.model.photo.PortfolioModelList;
-import com.web.gallery.application.model.photo.PortfolioNoList;
+import com.web.gallery.application.model.photo.PortfolioPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.domain.exception.GalleryException;
@@ -13,12 +13,12 @@ import com.web.gallery.domain.model.photo.PortfolioNo;
 /** ポートフォリオの設定に関するビジネスロジックを扱うServiceクラス */
 public interface PortfolioService {
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込んで取得する
+   * 本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込み、表示順に1ページ分取得する
    *
    * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
-   * @return {@link PortfolioModelList}
+   * @return {@link PortfolioPageModel}
    */
-  PortfolioModelList getPortfolioList(PortfolioListGetModel portfolioListGetModel);
+  PortfolioPageModel getPortfolioList(PortfolioListGetModel portfolioListGetModel);
 
   /**
    * 作成済みのポートフォリオ（下書きを含む）の件数が、アカウントの権限区分ごとの上限に達しているかを判定する
@@ -92,14 +92,14 @@ public interface PortfolioService {
   void unpublishPortfolio(AccountNo accountNo, PortfolioNo portfolioNo) throws GalleryException;
 
   /**
-   * 本人の全ポートフォリオ（下書きを含む）の表示順を、指定したポートフォリオ番号の並び順に更新する
+   * 本人のポートフォリオを、表示順で隣のポートフォリオと入れ替えて1つ上・下へ移動する
    *
-   * @param accountNo アカウント番号
-   * @param portfolioNoList 表示順に並べたポートフォリオ番号（アカウントの全ポートフォリオを過不足・重複なく含むこと）
-   * @throws GalleryException 以下のいずれかに該当する場合 ・指定したポートフォリオ番号がアカウントの全ポートフォリオと一致しない場合 ・更新に失敗した場合
+   * <p>先頭を上へ・末尾を下へ移動しようとした場合は何もしない
+   *
+   * @param moveModel {@link PortfolioDisplayOrderMoveModel}（アカウント番号・ポートフォリオ番号・移動方向）
+   * @throws GalleryException 以下のいずれかに該当する場合 ・ポートフォリオが存在しない場合 ・更新に失敗した場合
    */
-  void updateDisplayOrder(AccountNo accountNo, PortfolioNoList portfolioNoList)
-      throws GalleryException;
+  void moveDisplayOrder(PortfolioDisplayOrderMoveModel moveModel) throws GalleryException;
 
   /**
    * ポートフォリオを削除する

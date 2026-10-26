@@ -42,6 +42,14 @@ export interface PublicPortfolioSummary {
   updatedAt: string;
 }
 
+/** 公開中のポートフォリオ一覧の1ページ分 */
+export interface PublicPortfolioSummaryPage {
+  /** 表示順のポートフォリオ */
+  portfolios: PublicPortfolioSummary[];
+  /** 続きのポートフォリオがあるかどうか */
+  hasNext: boolean;
+}
+
 /** フィーチャー型のレイアウト */
 export interface FeatureLayout {
   __typename: "FeatureLayout";

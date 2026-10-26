@@ -6,9 +6,10 @@ import com.web.gallery.application.config.PortfolioConfig;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioDisplayOrderMoveModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
-import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.model.photo.PortfolioNoList;
+import com.web.gallery.application.model.photo.PortfolioPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
@@ -50,15 +51,20 @@ public class PortfolioServiceImpl implements PortfolioService {
   private final PortfolioQuotaPolicy portfolioQuotaPolicy;
 
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込んで取得する
+   * 本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込み、表示順に1ページ分取得する
+   *
+   * <p>1ページの件数は設定値（{@link PortfolioConfig#getPortfolioCountPerPage()}）を使う
    *
    * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
-   * @return {@link PortfolioModelList}
+   * @return {@link PortfolioPageModel}
    */
   @Override
   @Transactional(readOnly = true)
-  public PortfolioModelList getPortfolioList(PortfolioListGetModel portfolioListGetModel) {
-    return portfolioMstRepository.getPortfolioList(portfolioListGetModel);
+  public PortfolioPageModel getPortfolioList(PortfolioListGetModel portfolioListGetModel) {
+    return portfolioMstRepository.getPortfolioList(
+        portfolioListGetModel.toBuilder()
+            .pageSize(portfolioConfig.getPortfolioCountPerPage())
+            .build());
   }
 
   /**
@@ -246,26 +252,32 @@ public class PortfolioServiceImpl implements PortfolioService {
   }
 
   /**
-   * 本人の全ポートフォリオ（下書きを含む）の表示順を、指定したポートフォリオ番号の並び順に更新する
+   * 本人のポートフォリオを、表示順で隣のポートフォリオと入れ替えて1つ上・下へ移動する
    *
-   * <p>並び替え画面の表示後にポートフォリオが登録・削除された場合は、古い一覧のまま並び順を確定させないよう更新しない
+   * <p>一覧はページングして表示するため、画面に表示中の一部ではなく、DBの全件の並びをもとに入れ替える。
+   * 全件の行をロックしてから並びを読み、表示順を1から振り直して保存するため、並行した並び替えが互いの結果を上書きしない。 先頭を上へ・末尾を下へ移動しようとした場合は何もしない
    *
-   * @param accountNo アカウント番号
-   * @param portfolioNoList 表示順に並べたポートフォリオ番号（アカウントの全ポートフォリオを過不足・重複なく含むこと）
-   * @throws GalleryException 以下のいずれかに該当する場合 ・指定したポートフォリオ番号がアカウントの全ポートフォリオと一致しない場合 ・更新に失敗した場合
+   * @param moveModel {@link PortfolioDisplayOrderMoveModel}（アカウント番号・ポートフォリオ番号・移動方向）
+   * @throws GalleryException 以下のいずれかに該当する場合 ・ポートフォリオが存在しない場合 ・更新に失敗した場合
    */
   @Override
   @Transactional(rollbackFor = GalleryException.class)
-  public void updateDisplayOrder(AccountNo accountNo, PortfolioNoList portfolioNoList)
-      throws GalleryException {
-    if (!portfolioNoList.isSameSetAs(portfolioMstRepository.getPortfolioNoList(accountNo))) {
+  public void moveDisplayOrder(PortfolioDisplayOrderMoveModel moveModel) throws GalleryException {
+    AccountNo accountNo = moveModel.getAccountNo();
+    PortfolioNo portfolioNo = moveModel.getPortfolioNo();
+    PortfolioNoList current = portfolioMstRepository.getPortfolioNoListForUpdate(accountNo);
+    if (!current.contains(portfolioNo)) {
       log.info(
-          "Portfolio: Display order list mismatch (AccountNo: {}, PortfolioNos: {})",
+          "Portfolio: Not Found for display order (AccountNo: {}, PortfolioNo: {})",
           accountNo.value(),
-          portfolioNoList.stream().map(PortfolioNo::value).toList());
-      throw ErrorEnum.PORTFOLIO_LIST_OUTDATED.toException();
+          portfolioNo.value());
+      throw ErrorEnum.PORTFOLIO_NOT_FOUND.toException();
     }
-    portfolioAggregateRepository.updateDisplayOrder(accountNo, portfolioNoList);
+    PortfolioNoList moved = current.move(portfolioNo, moveModel.getDirection());
+    if (moved.equals(current)) {
+      return;
+    }
+    portfolioAggregateRepository.updateDisplayOrder(accountNo, moved);
   }
 
   /**

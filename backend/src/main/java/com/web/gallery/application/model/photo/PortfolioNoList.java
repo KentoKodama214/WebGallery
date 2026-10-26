@@ -1,10 +1,12 @@
 package com.web.gallery.application.model.photo;
 
+import com.web.gallery.domain.enumeration.MoveDirectionEnum;
 import com.web.gallery.domain.model.photo.PortfolioNo;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -94,17 +96,33 @@ public record PortfolioNoList(List<PortfolioNo> portfolioNoList) implements Iter
   }
 
   /**
-   * 並び順を問わず、同じポートフォリオ番号の集合（重複なし）であるかを判定する
+   * 指定したポートフォリオ番号を含むかどうかを判定する
    *
-   * @param other 比較対象の{@link PortfolioNoList}
-   * @return 双方に重複がなく、同じポートフォリオ番号の集合である場合はtrue
+   * @param portfolioNo {@link PortfolioNo}
+   * @return 含む場合はtrue
    */
-  public Boolean isSameSetAs(PortfolioNoList other) {
-    Set<PortfolioNo> thisSet = Set.copyOf(portfolioNoList);
-    Set<PortfolioNo> otherSet = Set.copyOf(other.toList());
-    return thisSet.size() == portfolioNoList.size()
-        && otherSet.size() == other.size()
-        && thisSet.equals(otherSet);
+  public Boolean contains(PortfolioNo portfolioNo) {
+    return portfolioNoList.contains(portfolioNo);
+  }
+
+  /**
+   * 指定したポートフォリオ番号を、隣の要素と入れ替えて1つ上（前）・下（後ろ）へ移動した新しいPortfolioNoListを生成する
+   *
+   * <p>先頭を上へ・末尾を下へ移動しようとした場合と、含まれないポートフォリオ番号を指定した場合は、並びを変えずに返す
+   *
+   * @param portfolioNo 移動するポートフォリオ番号
+   * @param direction 移動方向
+   * @return 移動後の{@link PortfolioNoList}
+   */
+  public PortfolioNoList move(PortfolioNo portfolioNo, MoveDirectionEnum direction) {
+    int index = portfolioNoList.indexOf(portfolioNo);
+    int targetIndex = direction == MoveDirectionEnum.UP ? index - 1 : index + 1;
+    if (index < 0 || targetIndex < 0 || targetIndex >= portfolioNoList.size()) {
+      return this;
+    }
+    List<PortfolioNo> moved = new ArrayList<>(portfolioNoList);
+    Collections.swap(moved, index, targetIndex);
+    return PortfolioNoList.of(moved);
   }
 
   @Override

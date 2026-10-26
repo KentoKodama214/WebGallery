@@ -7,10 +7,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioDisplayOrderMoveModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
-import com.web.gallery.application.model.photo.PortfolioNoList;
+import com.web.gallery.application.model.photo.PortfolioPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
@@ -19,6 +20,7 @@ import com.web.gallery.application.model.photo.PortfolioTagModelList;
 import com.web.gallery.application.service.photo.PortfolioService;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.enumeration.MoveDirectionEnum;
 import com.web.gallery.domain.enumeration.PortfolioStatusEnum;
 import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -136,16 +138,18 @@ class PortfolioControllerTest {
     @DisplayName("正常系：本人のポートフォリオ一覧（下書きを含む）を取得できること")
     void getPortfolioList_success() throws Exception {
       doReturn(
-              PortfolioModelList.of(
-                  List.of(
-                      PortfolioModel.builder()
-                          .accountNo(new AccountNo(1L))
-                          .portfolioNo(new PortfolioNo(2L))
-                          .theme(new PortfolioTheme("日本の自然"))
-                          .templateKbn(PortfolioTemplateEnum.GRID)
-                          .statusKbn(PortfolioStatusEnum.DRAFT)
-                          .photoCount(new PhotoCount(5))
-                          .build())))
+              PortfolioPageModel.of(
+                  PortfolioModelList.of(
+                      List.of(
+                          PortfolioModel.builder()
+                              .accountNo(new AccountNo(1L))
+                              .portfolioNo(new PortfolioNo(2L))
+                              .theme(new PortfolioTheme("日本の自然"))
+                              .templateKbn(PortfolioTemplateEnum.GRID)
+                              .statusKbn(PortfolioStatusEnum.DRAFT)
+                              .photoCount(new PhotoCount(5))
+                              .build())),
+                  false))
           .when(portfolioService)
           .getPortfolioList(any());
 
@@ -156,24 +160,35 @@ class PortfolioControllerTest {
           .andExpect(jsonPath("$.portfolioList[0].theme").value("日本の自然"))
           .andExpect(jsonPath("$.portfolioList[0].templateKbn").value("grid"))
           .andExpect(jsonPath("$.portfolioList[0].statusKbn").value("draft"))
-          .andExpect(jsonPath("$.portfolioList[0].photoCount").value(5));
+          .andExpect(jsonPath("$.portfolioList[0].photoCount").value(5))
+          .andExpect(jsonPath("$.isLast").value(false));
 
-      // 絞り込み条件が未指定の場合は、ログイン中のアカウント番号だけを渡す
+      // 絞り込み条件・ページ番号が未指定の場合は、ログイン中のアカウント番号と1ページ目を渡す
       verify(portfolioService)
-          .getPortfolioList(PortfolioListGetModel.builder().accountNo(new AccountNo(1L)).build());
+          .getPortfolioList(
+              PortfolioListGetModel.builder().accountNo(new AccountNo(1L)).pageNo(1).build());
     }
 
     @Test
     @Order(2)
-    @DisplayName("正常系：検索語を、前後の空白を除いてServiceに渡すこと")
+    @DisplayName("正常系：検索語（前後の空白を除く）とページ番号をServiceに渡すこと")
     void getPortfolioList_keyword() throws Exception {
-      doReturn(PortfolioModelList.empty()).when(portfolioService).getPortfolioList(any());
+      doReturn(PortfolioPageModel.of(PortfolioModelList.empty(), true))
+          .when(portfolioService)
+          .getPortfolioList(any());
 
-      mockMvc.perform(get(PORTFOLIOS).param("keyword", " 自然 ")).andExpect(status().isOk());
+      mockMvc
+          .perform(get(PORTFOLIOS).param("keyword", " 自然 ").param("pageNo", "2"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.isLast").value(true));
 
       verify(portfolioService)
           .getPortfolioList(
-              PortfolioListGetModel.builder().accountNo(new AccountNo(1L)).keyword("自然").build());
+              PortfolioListGetModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .keyword("自然")
+                  .pageNo(2)
+                  .build());
     }
 
     @Test
@@ -189,6 +204,17 @@ class PortfolioControllerTest {
 
     @Test
     @Order(4)
+    @DisplayName("異常系：ページ番号が0以下・上限（10000）を超える場合、400を返しServiceを呼び出さないこと")
+    void getPortfolioList_invalidPageNo() throws Exception {
+      for (String pageNo : List.of("0", "10001")) {
+        mockMvc.perform(get(PORTFOLIOS).param("pageNo", pageNo)).andExpect(status().isBadRequest());
+      }
+
+      verify(portfolioService, times(0)).getPortfolioList(any());
+    }
+
+    @Test
+    @Order(5)
     @DisplayName("異常系：認証ユーザーと異なるアカウントIDを指定した場合、403を返しServiceを呼び出さないこと")
     void getPortfolioList_forbidden() throws Exception {
       doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
@@ -889,36 +915,39 @@ class PortfolioControllerTest {
   @Nested
   @Order(10)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class updatePortfolioDisplayOrder {
-    private static final String DISPLAY_ORDER = PORTFOLIOS + "/display-order";
+  class movePortfolioDisplayOrder {
+    private static final String DISPLAY_ORDER = PORTFOLIOS + "/2/display-order";
 
     @Test
     @Order(1)
-    @DisplayName("正常系：指定した並び順のポートフォリオ番号で表示順の更新処理を呼び出すこと")
-    void updatePortfolioDisplayOrder_success() throws Exception {
+    @DisplayName("正常系：パスのポートフォリオ番号と移動方向で、表示順の移動処理を呼び出すこと")
+    void movePortfolioDisplayOrder_success() throws Exception {
       mockMvc
           .perform(
               put(DISPLAY_ORDER)
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("display_order_success.json")))
+                  .content(readJsonFile("display_order_up.json")))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.isSuccess").value(true))
-          .andExpect(jsonPath("$.message").value("ポートフォリオの並び順を更新しました。"));
+          .andExpect(jsonPath("$.message").value("ポートフォリオの並び順を更新しました。"))
+          .andExpect(jsonPath("$.portfolioNo").value(2));
 
       verify(portfolioService)
-          .updateDisplayOrder(new AccountNo(1L), PortfolioNoList.from(List.of(3L, 1L, 2L)));
+          .moveDisplayOrder(
+              PortfolioDisplayOrderMoveModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .portfolioNo(new PortfolioNo(2L))
+                  .direction(MoveDirectionEnum.UP)
+                  .build());
     }
 
     @Test
     @Order(2)
-    @DisplayName("異常系：ポートフォリオ番号が未指定・空・0以下・nullを含む場合、400を返しServiceを呼び出さないこと")
-    void updatePortfolioDisplayOrder_badRequest() throws Exception {
+    @DisplayName("異常系：移動方向が未指定・未知の値の場合、400を返しServiceを呼び出さないこと")
+    void movePortfolioDisplayOrder_badRequest() throws Exception {
       for (String fileName :
           List.of(
-              "display_order_badrequest_missing.json",
-              "display_order_badrequest_empty.json",
-              "display_order_badrequest_not_positive.json",
-              "display_order_badrequest_null_element.json")) {
+              "display_order_badrequest_missing.json", "display_order_badrequest_unknown.json")) {
         mockMvc
             .perform(
                 put(DISPLAY_ORDER)
@@ -927,41 +956,40 @@ class PortfolioControllerTest {
             .andExpect(status().isBadRequest());
       }
 
-      verify(portfolioService, times(0)).updateDisplayOrder(any(), any());
+      verify(portfolioService, times(0)).moveDisplayOrder(any());
     }
 
     @Test
     @Order(3)
-    @DisplayName("異常系：一覧が最新でない場合、409を返すこと")
-    void updatePortfolioDisplayOrder_outdated() throws Exception {
-      doThrow(ErrorEnum.PORTFOLIO_LIST_OUTDATED.toException())
+    @DisplayName("異常系：ポートフォリオが存在しない場合、404を返すこと")
+    void movePortfolioDisplayOrder_notFound() throws Exception {
+      doThrow(ErrorEnum.PORTFOLIO_NOT_FOUND.toException())
           .when(portfolioService)
-          .updateDisplayOrder(any(), any());
+          .moveDisplayOrder(any());
 
       mockMvc
           .perform(
               put(DISPLAY_ORDER)
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("display_order_success.json")))
-          .andExpect(status().isConflict())
-          .andExpect(
-              jsonPath("$.errorCode").value(ErrorEnum.PORTFOLIO_LIST_OUTDATED.getErrorCode()));
+                  .content(readJsonFile("display_order_up.json")))
+          .andExpect(status().isNotFound())
+          .andExpect(jsonPath("$.errorCode").value(ErrorEnum.PORTFOLIO_NOT_FOUND.getErrorCode()));
     }
 
     @Test
     @Order(4)
     @DisplayName("異常系：認証ユーザーと異なるアカウントIDを指定した場合、403を返しServiceを呼び出さないこと")
-    void updatePortfolioDisplayOrder_forbidden() throws Exception {
+    void movePortfolioDisplayOrder_forbidden() throws Exception {
       doReturn("bbbbbbbb").when(sessionHelper).getAccountId();
 
       mockMvc
           .perform(
               put(DISPLAY_ORDER)
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("display_order_success.json")))
+                  .content(readJsonFile("display_order_up.json")))
           .andExpect(status().isForbidden());
 
-      verify(portfolioService, times(0)).updateDisplayOrder(any(), any());
+      verify(portfolioService, times(0)).moveDisplayOrder(any());
     }
   }
 }

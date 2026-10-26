@@ -8,13 +8,12 @@ package graph
 import (
 	"context"
 
-	"github.com/KentoKodama214/WebGallery/portfolio-api/internal/domain"
 	"github.com/KentoKodama214/WebGallery/portfolio-api/internal/usecase"
 )
 
 // PortfolioQuery はリゾルバが使うユースケース（テストで差し替えられるようインターフェースで受け取る）。
 type PortfolioQuery interface {
-	ListPublishedPortfolios(ctx context.Context, accountID, keyword string) ([]domain.PortfolioSummary, error)
+	ListPublishedPortfolios(ctx context.Context, accountID, keyword string, limit, offset int) (usecase.PortfolioSummaryPage, error)
 	GetPublishedPortfolio(ctx context.Context, accountID string, portfolioNo int64) (*usecase.PublishedPortfolio, error)
 }
 

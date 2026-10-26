@@ -7,6 +7,7 @@ import com.web.gallery.application.model.photo.PortfolioListGetModel;
 import com.web.gallery.application.model.photo.PortfolioModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.application.model.photo.PortfolioNoList;
+import com.web.gallery.application.model.photo.PortfolioPageModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoModelList;
 import com.web.gallery.application.model.photo.PortfolioPhotoPageModel;
@@ -81,30 +82,40 @@ public class PortfolioMstRepositoryImpl implements PortfolioMstRepository {
   }
 
   /**
-   * アカウントが作成済みのポートフォリオ番号（下書きを含む）をすべて取得する
+   * アカウントが作成済みのポートフォリオ番号（下書きを含む）をすべて表示順に取得し、並び替えのために行をロックする
    *
    * @param accountNo アカウント番号
-   * @return {@link PortfolioNoList}（ポートフォリオ番号の昇順）
+   * @return {@link PortfolioNoList}（表示順）
    */
   @Override
-  public PortfolioNoList getPortfolioNoList(AccountNo accountNo) {
-    return PortfolioNoList.from(portfolioMstMapper.selectPortfolioNoList(accountNo.value()));
+  public PortfolioNoList getPortfolioNoListForUpdate(AccountNo accountNo) {
+    return PortfolioNoList.from(
+        portfolioMstMapper.selectPortfolioNoListForUpdate(accountNo.value()));
   }
 
   /**
-   * 本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込み、表示順に取得する
+   * 本人のポートフォリオ一覧（下書きを含む）を、検索語のテーマ・タグ名いずれかへの部分一致で絞り込み、表示順に1ページ分取得する
    *
-   * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可）
-   * @return {@link PortfolioModelList}
+   * <p>次のページの有無を判定するため、1ページの件数より1件多く取得する
+   *
+   * @param portfolioListGetModel {@link PortfolioListGetModel}（絞り込み条件は未指定可。1ページあたりの件数を設定済み）
+   * @return {@link PortfolioPageModel}
    */
   @Override
-  public PortfolioModelList getPortfolioList(PortfolioListGetModel portfolioListGetModel) {
+  public PortfolioPageModel getPortfolioList(PortfolioListGetModel portfolioListGetModel) {
+    Integer pageSize = portfolioListGetModel.getPageSize();
     List<PortfolioDto> dtoList =
         portfolioMstMapper.selectList(
             PortfolioMstCondition.byAccountNoAndKeyword(
                 portfolioListGetModel.getAccountNo().value(),
-                toContainsPattern(portfolioListGetModel.getKeyword())));
-    return PortfolioModelList.of(dtoList.stream().map(this::toPortfolioModel).toList());
+                toContainsPattern(portfolioListGetModel.getKeyword())),
+            pageSize + 1,
+            (portfolioListGetModel.getPageNo() - 1) * pageSize);
+    Boolean isLast = dtoList.size() <= pageSize;
+    return PortfolioPageModel.of(
+        PortfolioModelList.of(
+            dtoList.stream().limit(pageSize).map(this::toPortfolioModel).toList()),
+        isLast);
   }
 
   /**

@@ -94,6 +94,14 @@ type PortfolioSummary struct {
 	UpdatedAt  time.Time `json:"updatedAt"`
 }
 
+// 公開中のポートフォリオ一覧の1ページ分
+type PortfolioSummaryPage struct {
+	// 表示順のポートフォリオ
+	Portfolios []*PortfolioSummary `json:"portfolios"`
+	// このページより後ろに続きのポートフォリオがあるかどうか
+	HasNext bool `json:"hasNext"`
+}
+
 // 公開ページ向けのポートフォリオ表示API
 //
 // 公開状態（published）のポートフォリオだけを返す。下書き・削除済みのポートフォリオと、

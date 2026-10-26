@@ -80,7 +80,7 @@ func TestFindAccountNo(t *testing.T) {
 func TestListPublished(t *testing.T) {
 	repo, _ := setup(t)
 
-	got, err := repo.ListPublished(context.Background(), 900001, "")
+	got, err := repo.ListPublished(context.Background(), 900001, "", 100, 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -119,9 +119,35 @@ func TestListPublished(t *testing.T) {
 func TestListPublished_NoPortfolios(t *testing.T) {
 	repo, _ := setup(t)
 
-	got, err := repo.ListPublished(context.Background(), 999999, "")
+	got, err := repo.ListPublished(context.Background(), 999999, "", 100, 0)
 	if err != nil || got == nil || len(got) != 0 {
 		t.Errorf("ListPublished = %#v, %v; want empty slice", got, err)
+	}
+}
+
+func TestListPublished_LimitOffset(t *testing.T) {
+	repo, _ := setup(t)
+
+	// 表示順（ポートフォリオ1→2）で offset 件目から最大 limit 件を返す
+	for _, c := range []struct {
+		limit, offset int
+		want          []int64
+	}{
+		{1, 0, []int64{1}},
+		{1, 1, []int64{2}},
+		{10, 2, []int64{}},
+	} {
+		got, err := repo.ListPublished(context.Background(), 900001, "", c.limit, c.offset)
+		if err != nil {
+			t.Fatalf("limit=%d offset=%d: unexpected error: %v", c.limit, c.offset, err)
+		}
+		gotNos := make([]int64, 0, len(got))
+		for _, s := range got {
+			gotNos = append(gotNos, s.PortfolioNo)
+		}
+		if !reflect.DeepEqual(gotNos, c.want) {
+			t.Errorf("limit=%d offset=%d: portfolioNos = %v, want %v", c.limit, c.offset, gotNos, c.want)
+		}
 	}
 }
 
@@ -141,7 +167,7 @@ func TestListPublished_Keyword(t *testing.T) {
 		{"LIKEのワイルドカードは文字そのものとして扱う", "%", []int64{}},
 	}
 	for _, c := range cases {
-		got, err := repo.ListPublished(context.Background(), 900001, c.keyword)
+		got, err := repo.ListPublished(context.Background(), 900001, c.keyword, 100, 0)
 		if err != nil {
 			t.Fatalf("%s: unexpected error: %v", c.name, err)
 		}

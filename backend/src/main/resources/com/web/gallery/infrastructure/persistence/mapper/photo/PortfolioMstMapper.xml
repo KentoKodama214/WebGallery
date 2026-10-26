@@ -190,7 +190,7 @@
 		</where>
 	</select>
 
-	<select id="selectList" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition" resultMap="PortfolioDtoMap">
+	<select id="selectList" resultMap="PortfolioDtoMap">
 		SELECT
 			pm.account_no,
 			pm.portfolio_no,
@@ -212,15 +212,18 @@
 			photo.portfolio_mst pm
 		<where>
 			<include refid="portfolioMstConditionWhere">
-				<property name="prefix" value=""/>
+				<property name="prefix" value="condition."/>
 			</include>
 		</where>
 		ORDER BY
 			pm.display_order,
 			pm.portfolio_no
+		<if test="limit != null"> LIMIT #{limit}</if>
+		<if test="offset != null"> OFFSET #{offset}</if>
 	</select>
 
-	<select id="selectPortfolioNoList" parameterType="Long" resultType="Long">
+	<!-- 並び替えの対象行をロックし、並行した並び替えが互いの結果を上書きしないようにする -->
+	<select id="selectPortfolioNoListForUpdate" parameterType="Long" resultType="Long">
 		SELECT
 			portfolio_no
 		FROM
@@ -228,7 +231,9 @@
 		WHERE
 			account_no = #{accountNo}
 		ORDER BY
+			display_order,
 			portfolio_no
+		FOR UPDATE
 	</select>
 
 	<select id="select" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition" resultMap="PortfolioMstMap">

@@ -1247,14 +1247,19 @@ export interface PortfolioTemplateList {
 }
 
 /**
- * 本人のポートフォリオ一覧（下書きを含む）を取得する
+ * 本人のポートフォリオ一覧（下書きを含む）を、表示順に1ページ分（20件）取得する
+ *
+ * @param accountId アカウントID
+ * @param filter 絞り込み条件
+ * @param pageNo ページ番号（1始まり）
  */
 export async function getPortfolioList(
   accountId: string,
-  filter: PortfolioListFilter = {}
-): Promise<PortfolioListItem[]> {
+  filter: PortfolioListFilter = {},
+  pageNo = 1
+): Promise<{ portfolioList: PortfolioListItem[]; isLast: boolean }> {
   const response = await fetchWithAuth(
-    `/api/v1/accounts/${seg(accountId)}/portfolios${toQueryString(filter)}`
+    `/api/v1/accounts/${seg(accountId)}/portfolios${toQueryString({ ...filter, pageNo })}`
   );
   if (!response.ok) {
     throw new ApiError(
@@ -1262,7 +1267,7 @@ export async function getPortfolioList(
       response.status
     );
   }
-  return (await readJson<{ portfolioList: PortfolioListItem[] }>(response)).portfolioList;
+  return readJson<{ portfolioList: PortfolioListItem[]; isLast: boolean }>(response);
 }
 
 /** ポートフォリオ一覧の絞り込み条件（未入力の条件は送らない） */
@@ -1413,24 +1418,26 @@ export async function updatePortfolioStatus(
 }
 
 /**
- * ポートフォリオの表示順を更新する
+ * ポートフォリオを、表示順で隣のポートフォリオと入れ替えて1つ上・下へ移動する
  *
- * 本人の全ポートフォリオ（下書きを含む）を、表示したい順に過不足なく指定する。
- * 一覧の表示後にポートフォリオが登録・削除されていた場合は 409 となる。
+ * 一覧はページングして表示するため、入れ替えはサーバーが全件の並びをもとに行う。
+ * 先頭を上へ・末尾を下へ移動しようとした場合は何もしない。
  *
  * @param accountId アカウントID
- * @param portfolioNoList 表示順に並べたポートフォリオ番号
+ * @param portfolioNo 移動するポートフォリオ番号
+ * @param direction 移動方向
  */
-export async function updatePortfolioDisplayOrder(
+export async function movePortfolioDisplayOrder(
   accountId: string,
-  portfolioNoList: number[]
+  portfolioNo: number,
+  direction: "up" | "down"
 ): Promise<void> {
   const response = await fetchWithAuth(
-    `/api/v1/accounts/${seg(accountId)}/portfolios/display-order`,
+    `/api/v1/accounts/${seg(accountId)}/portfolios/${seg(portfolioNo)}/display-order`,
     {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ portfolioNoList }),
+      body: JSON.stringify({ direction }),
     }
   );
   if (!response.ok) {

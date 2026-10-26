@@ -16,4 +16,11 @@ public interface PortfolioConfig {
    * @return normal-userのポートフォリオ作成数上限
    */
   Integer getNormalUserUpperLimit();
+
+  /**
+   * ポートフォリオ一覧の1ページあたりの表示件数を取得する
+   *
+   * @return ポートフォリオ一覧の1ページあたりの表示件数
+   */
+  Integer getPortfolioCountPerPage();
 }

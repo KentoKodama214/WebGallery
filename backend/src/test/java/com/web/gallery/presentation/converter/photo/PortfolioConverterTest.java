@@ -3,11 +3,12 @@ package com.web.gallery.presentation.converter.photo;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
+import com.web.gallery.application.model.photo.PortfolioDisplayOrderMoveModel;
 import com.web.gallery.application.model.photo.PortfolioListGetModel;
-import com.web.gallery.application.model.photo.PortfolioNoList;
 import com.web.gallery.application.model.photo.PortfolioPhotoModel;
 import com.web.gallery.application.model.photo.PortfolioPhotoSearchModel;
 import com.web.gallery.application.model.photo.PortfolioTagModel;
+import com.web.gallery.domain.enumeration.MoveDirectionEnum;
 import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.PhotoNo;
@@ -17,7 +18,7 @@ import com.web.gallery.domain.model.photo.PortfolioTheme;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TemplateSettings;
-import com.web.gallery.presentation.request.photo.PortfolioDisplayOrderUpdateRequest;
+import com.web.gallery.presentation.request.photo.PortfolioDisplayOrderMoveRequest;
 import com.web.gallery.presentation.request.photo.PortfolioListRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSaveRequest;
 import com.web.gallery.presentation.request.photo.PortfolioPhotoSearchRequest;
@@ -164,21 +165,25 @@ class PortfolioConverterTest {
   class toPortfolioListGetModel {
     @Test
     @Order(1)
-    @DisplayName("正常系：検索語の前後の空白を除き、ログイン中のアカウント番号とあわせて変換すること")
+    @DisplayName("正常系：検索語の前後の空白を除き、ページ番号・ログイン中のアカウント番号とあわせて変換すること")
     void toPortfolioListGetModel_allFieldsSet() {
       PortfolioListRequest request = new PortfolioListRequest();
       request.setKeyword(" 自然 ");
+      request.setPageNo(3);
 
       PortfolioListGetModel actual =
           portfolioConverter.toPortfolioListGetModel(request, new AccountNo(1L));
 
       assertEquals(new AccountNo(1L), actual.getAccountNo());
       assertEquals("自然", actual.getKeyword());
+      assertEquals(3, actual.getPageNo());
+      // 1ページあたりの件数はService層が設定値から設定する
+      assertNull(actual.getPageSize());
     }
 
     @Test
     @Order(2)
-    @DisplayName("正常系：未入力・空白のみの条件はnull（未指定）になること")
+    @DisplayName("正常系：未入力・空白のみの条件はnull（未指定）、ページ番号は既定値の1になること")
     void toPortfolioListGetModel_optionalFieldsNull() {
       PortfolioListRequest request = new PortfolioListRequest();
       request.setKeyword("　 ");
@@ -187,6 +192,7 @@ class PortfolioConverterTest {
           portfolioConverter.toPortfolioListGetModel(request, new AccountNo(1L));
 
       assertNull(actual.getKeyword());
+      assertEquals(1, actual.getPageNo());
       assertNull(
           portfolioConverter
               .toPortfolioListGetModel(new PortfolioListRequest(), new AccountNo(1L))
@@ -232,18 +238,21 @@ class PortfolioConverterTest {
   @Nested
   @Order(4)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class toPortfolioNoList {
+  class toPortfolioDisplayOrderMoveModel {
     @Test
     @Order(1)
-    @DisplayName("正常系：リクエストのポートフォリオ番号が、並び順を保ったままPortfolioNoListへ変換されること")
-    void toPortfolioNoList_allFieldsSet() {
-      PortfolioDisplayOrderUpdateRequest request = new PortfolioDisplayOrderUpdateRequest();
-      request.setPortfolioNoList(List.of(3L, 1L, 2L));
+    @DisplayName("正常系：移動方向・ログイン中のアカウント番号・パスパラメータのポートフォリオ番号を変換すること")
+    void toPortfolioDisplayOrderMoveModel_allFieldsSet() {
+      PortfolioDisplayOrderMoveRequest request = new PortfolioDisplayOrderMoveRequest();
+      request.setDirection(MoveDirectionEnum.DOWN);
 
-      PortfolioNoList actual = portfolioConverter.toPortfolioNoList(request);
+      PortfolioDisplayOrderMoveModel actual =
+          portfolioConverter.toPortfolioDisplayOrderMoveModel(
+              request, new AccountNo(1L), new PortfolioNo(2L));
 
-      assertEquals(
-          List.of(new PortfolioNo(3L), new PortfolioNo(1L), new PortfolioNo(2L)), actual.toList());
+      assertEquals(new AccountNo(1L), actual.getAccountNo());
+      assertEquals(new PortfolioNo(2L), actual.getPortfolioNo());
+      assertEquals(MoveDirectionEnum.DOWN, actual.getDirection());
     }
   }
 }

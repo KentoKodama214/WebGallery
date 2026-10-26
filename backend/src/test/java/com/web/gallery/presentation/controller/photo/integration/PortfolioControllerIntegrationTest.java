@@ -579,9 +579,7 @@ public class PortfolioControllerIntegrationTest {
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
   @Sql("/sql/controller/PortfolioControllerIntegrationTest.sql")
-  class updatePortfolioDisplayOrder {
-    private static final String DISPLAY_ORDER = PORTFOLIOS + "/display-order";
-
+  class movePortfolioDisplayOrder {
     private List<Map<String, Object>> displayOrders() {
       return jdbcTemplate.queryForList(
           "SELECT portfolio_no, display_order FROM photo.portfolio_mst"
@@ -590,23 +588,24 @@ public class PortfolioControllerIntegrationTest {
 
     @Test
     @Order(1)
-    @DisplayName("正常系：指定した並び順で表示順を1から振り直し、一覧がその順になる。更新日時は変更しない")
-    void updatePortfolioDisplayOrder_success() throws Exception {
+    @DisplayName("正常系：隣のポートフォリオと入れ替えて表示順を振り直し、一覧がその順になる。更新日時は変更しない")
+    void movePortfolioDisplayOrder_success() throws Exception {
       Map<String, Object> before =
           jdbcTemplate.queryForMap(
               "SELECT updated_at, updated_by FROM photo.portfolio_mst"
-                  + " WHERE account_no = 1 AND portfolio_no = 1");
+                  + " WHERE account_no = 1 AND portfolio_no = 2");
 
       mockMvc
           .perform(
-              put(DISPLAY_ORDER)
+              put(PORTFOLIOS + "/2/display-order")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
                   .with(csrf())
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("display_order_success.json")))
+                  .content(readJsonFile("display_order_up.json")))
           .andExpect(status().isOk())
           .andExpect(jsonPath("$.isSuccess").value(true))
-          .andExpect(jsonPath("$.message").value("ポートフォリオの並び順を更新しました。"));
+          .andExpect(jsonPath("$.message").value("ポートフォリオの並び順を更新しました。"))
+          .andExpect(jsonPath("$.portfolioNo").value(2));
 
       assertEquals(
           List.of(
@@ -617,7 +616,7 @@ public class PortfolioControllerIntegrationTest {
           before,
           jdbcTemplate.queryForMap(
               "SELECT updated_at, updated_by FROM photo.portfolio_mst"
-                  + " WHERE account_no = 1 AND portfolio_no = 1"));
+                  + " WHERE account_no = 1 AND portfolio_no = 2"));
       // 他人のポートフォリオの表示順は変更しない
       assertEquals(
           1,
@@ -633,17 +632,16 @@ public class PortfolioControllerIntegrationTest {
 
     @Test
     @Order(2)
-    @DisplayName("異常系：ポートフォリオ番号が空の場合、400を返し表示順を変更しない")
-    void updatePortfolioDisplayOrder_empty() throws Exception {
+    @DisplayName("正常系：末尾を下へ移動しようとした場合、表示順を変更しない")
+    void movePortfolioDisplayOrder_boundary() throws Exception {
       mockMvc
           .perform(
-              put(DISPLAY_ORDER)
+              put(PORTFOLIOS + "/2/display-order")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
                   .with(csrf())
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("display_order_empty.json")))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
+                  .content(readJsonFile("display_order_down.json")))
+          .andExpect(status().isOk());
 
       assertEquals(
           List.of(
@@ -654,21 +652,32 @@ public class PortfolioControllerIntegrationTest {
 
     @Test
     @Order(3)
-    @DisplayName("異常系：本人の全ポートフォリオを過不足なく指定していない場合、409を返し表示順を変更しない")
-    void updatePortfolioDisplayOrder_missing() throws Exception {
-      for (String fileName :
-          List.of("display_order_missing.json", "display_order_duplicate.json")) {
-        mockMvc
-            .perform(
-                put(DISPLAY_ORDER)
-                    .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
-                    .with(csrf())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(readJsonFile(fileName)))
-            .andExpect(status().isConflict())
-            .andExpect(
-                jsonPath("$.errorCode").value(ErrorEnum.PORTFOLIO_LIST_OUTDATED.getErrorCode()));
-      }
+    @DisplayName("異常系：移動方向が未知の値の場合、400を返す")
+    void movePortfolioDisplayOrder_badRequest() throws Exception {
+      mockMvc
+          .perform(
+              put(PORTFOLIOS + "/2/display-order")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("display_order_unknown.json")))
+          .andExpect(status().isBadRequest())
+          .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：存在しない・他人のポートフォリオを指定した場合、404を返し表示順を変更しない")
+    void movePortfolioDisplayOrder_notFound() throws Exception {
+      mockMvc
+          .perform(
+              put(PORTFOLIOS + "/9/display-order")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("display_order_up.json")))
+          .andExpect(status().isNotFound())
+          .andExpect(jsonPath("$.errorCode").value(ErrorEnum.PORTFOLIO_NOT_FOUND.getErrorCode()));
 
       assertEquals(
           List.of(
@@ -678,18 +687,18 @@ public class PortfolioControllerIntegrationTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     @DisplayName("異常系：他人のアカウントIDを指定した場合、403を返す")
-    void updatePortfolioDisplayOrder_forbidden() throws Exception {
+    void movePortfolioDisplayOrder_forbidden() throws Exception {
       mockMvc
           .perform(
-              put(DISPLAY_ORDER)
+              put(PORTFOLIOS + "/2/display-order")
                   .with(
                       SecurityMockMvcRequestPostProcessors.authentication(
                           createAuthentication(2L, "bbbbbbbb")))
                   .with(csrf())
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("display_order_success.json")))
+                  .content(readJsonFile("display_order_up.json")))
           .andExpect(status().isForbidden())
           .andExpect(
               jsonPath("$.errorCode")
@@ -748,6 +757,36 @@ public class PortfolioControllerIntegrationTest {
 
     @Test
     @Order(2)
+    @DisplayName("正常系：一覧は1ページ20件ずつ表示順に返し、続きがある間は最後のページではないと返すこと")
+    void getPortfolioList_paging() throws Exception {
+      // 既存の2件（表示順1・2）に加え、表示順3〜22の20件を追加して計22件にする
+      jdbcTemplate.update(
+          "INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at,"
+              + " updated_by, updated_at, theme, template_kbn, display_order)"
+              + " SELECT 1, n, 1, NOW(), 1, NOW(), 'ページング' || n, 'feature', n"
+              + " FROM generate_series(3, 22) AS n");
+
+      mockMvc
+          .perform(
+              get(PORTFOLIOS).with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.portfolioList.length()").value(20))
+          .andExpect(jsonPath("$.portfolioList[0].portfolioNo").value(1))
+          .andExpect(jsonPath("$.portfolioList[19].portfolioNo").value(20))
+          .andExpect(jsonPath("$.isLast").value(false));
+
+      mockMvc
+          .perform(
+              get(PORTFOLIOS)
+                  .param("pageNo", "2")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.portfolioList[*].portfolioNo", contains(21, 22)))
+          .andExpect(jsonPath("$.isLast").value(true));
+    }
+
+    @Test
+    @Order(3)
     @DisplayName("正常系：mini-userは作成済み（2個）が上限（3個）未満の場合、上限に達していないと返すこと")
     void getPortfolioUpperLimit_notReached() throws Exception {
       mockMvc
@@ -759,7 +798,7 @@ public class PortfolioControllerIntegrationTest {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     @DisplayName("正常系：mini-userは作成済みが上限（3個）に達した場合、上限に達していると返すこと")
     void getPortfolioUpperLimit_reached() throws Exception {
       // 同一トランザクション内のMyBatisのキャッシュを避けるため、APIを呼び出す前に件数を上限に合わせる
@@ -777,7 +816,7 @@ public class PortfolioControllerIntegrationTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     @DisplayName("正常系：本人の未削除の写真を、検索語のタイトルへの部分一致で検索できること（画像は署名付きURL）")
     void searchPortfolioPhotos_byTitle() throws Exception {
       doAnswer(
@@ -810,7 +849,7 @@ public class PortfolioControllerIntegrationTest {
     }
 
     @Test
-    @Order(5)
+    @Order(6)
     @DisplayName("異常系：他人のアカウントIDで写真を検索した場合、403を返すこと")
     void searchPortfolioPhotos_forbidden() throws Exception {
       mockMvc

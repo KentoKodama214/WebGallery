@@ -24,6 +24,30 @@ function toKeyword(value: string | string[] | undefined): string {
   return (keyword ?? "").trim();
 }
 
+/** 1ページ（「＋もっと見る」1回）あたりの表示件数 */
+const PORTFOLIO_COUNT_PER_PAGE = 20;
+
+/**
+ * 表示するページ数の上限
+ *
+ * 先頭から読み込み済みの件数をまとめて取り直すため、portfolio-api が一度に返せる件数の上限（1000件）を超えないようにする
+ */
+const MAX_PAGE = 1000 / PORTFOLIO_COUNT_PER_PAGE;
+
+/**
+ * クエリパラメータのページ番号（読み込み済みのページ数）を取り出す
+ *
+ * 正の整数でない値は1ページ目、上限を超える値は上限のページとして扱う。
+ *
+ * @param value クエリパラメータ `page` の値
+ * @returns ページ番号（1〜{@link MAX_PAGE}）
+ */
+function toPage(value: string | string[] | undefined): number {
+  const page = Array.isArray(value) ? value[0] : value;
+  if (!page || !/^\d+$/.test(page)) return 1;
+  return Math.min(Math.max(Number(page), 1), MAX_PAGE);
+}
+
 /**
  * 公開ページのタイトル
  */
@@ -35,19 +59,33 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 /**
  * 公開中のポートフォリオ一覧ページ（未ログインでも閲覧できる）
  *
- * 一覧は所有者が設定した表示順に並ぶ。検索語（クエリパラメータ `keyword`）を指定すると、
+ * 一覧は所有者が設定した表示順に20件ずつ並ぶ。検索語（クエリパラメータ `keyword`）を指定すると、
  * テーマ・タグ名のいずれかに部分一致するものに絞り込む。
+ *
+ * 「＋もっと見る」は `page`（読み込み済みのページ数）を1つ進めたURLへのリンクで、先頭から page × 20 件をまとめて描画する。
+ * スクロール位置は保つため、続きが下に追加されたように表示される（JavaScriptなしでも動き、URLを共有すれば同じ件数まで表示できる）。
  */
 export default async function PublicPortfolioListPage({ params, searchParams }: PageProps) {
   const { accountId } = await params;
-  const keyword = toKeyword((await searchParams).keyword);
+  const query = await searchParams;
+  const keyword = toKeyword(query.keyword);
+  const page = toPage(query.page);
 
   // accountId はURLの動的セグメントで細工可能なため、API に渡す前に形式を検証する
   if (!isValidAccountId(accountId)) {
     notFound();
   }
 
-  const portfolios = await getPublishedPortfolios(accountId, keyword);
+  const { portfolios, hasNext } = await getPublishedPortfolios(
+    accountId,
+    keyword,
+    page * PORTFOLIO_COUNT_PER_PAGE
+  );
+  // 検索語を保ったまま、次のページまで表示するURL
+  const nextPageQuery = new URLSearchParams({
+    ...(keyword ? { keyword } : {}),
+    page: String(page + 1),
+  });
 
   return (
     <>
@@ -139,6 +177,17 @@ export default async function PublicPortfolioListPage({ params, searchParams }: 
                 </li>
               ))}
             </ul>
+          )}
+          {hasNext && portfolios.length > 0 && (
+            <div className="flex justify-center">
+              <Link
+                href={`/portfolio/${accountId}?${nextPageQuery.toString()}`}
+                scroll={false}
+                className="px-6 py-2 text-sm border border-gray-400 rounded hover:bg-gray-50"
+              >
+                ＋もっと見る
+              </Link>
+            </div>
           )}
         </div>
       </div>

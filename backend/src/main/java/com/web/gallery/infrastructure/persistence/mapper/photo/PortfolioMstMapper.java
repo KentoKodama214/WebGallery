@@ -65,20 +65,25 @@ public interface PortfolioMstMapper {
   public Integer count(PortfolioMstCondition condition);
 
   /**
-   * 条件に該当するポートフォリオ一覧を、写真の枚数とあわせて取得する
+   * 条件に該当するポートフォリオ一覧を、写真の枚数とあわせて表示順に取得する
    *
    * @param condition {@link PortfolioMstCondition}
+   * @param limit 取得件数の上限（nullの場合は全件）
+   * @param offset 取得開始位置（nullの場合は先頭から）
    * @return {@link PortfolioDto}のリスト
    */
-  public List<PortfolioDto> selectList(PortfolioMstCondition condition);
+  public List<PortfolioDto> selectList(
+      @Param("condition") PortfolioMstCondition condition,
+      @Param("limit") Integer limit,
+      @Param("offset") Integer offset);
 
   /**
-   * アカウントが作成済みのポートフォリオ番号（下書きを含む）をすべて取得する
+   * アカウントが作成済みのポートフォリオ番号（下書きを含む）をすべて表示順に取得し、行をロックする（SELECT ... FOR UPDATE）
    *
    * @param accountNo アカウント番号
-   * @return ポートフォリオ番号のリスト（昇順）
+   * @return ポートフォリオ番号のリスト（表示順）
    */
-  public List<Long> selectPortfolioNoList(Long accountNo);
+  public List<Long> selectPortfolioNoListForUpdate(Long accountNo);
 
   /**
    * 条件に該当するポートフォリオマスタを取得する

@@ -42,12 +42,12 @@ func (r *PortfolioRepository) FindAccountNo(ctx context.Context, accountID strin
 	return accountNo, true, nil
 }
 
-// ListPublished はアカウントの公開中のポートフォリオ一覧を、表示順に取得する。
+// ListPublished はアカウントの公開中のポートフォリオ一覧を、表示順に offset 件目から最大 limit 件取得する。
 //
 // keyword が空でない場合は、テーマ・タグ名（日本語・英語）のいずれかに部分一致（大文字・小文字を区別しない）
 // するものに絞り込む。写真の枚数・先頭の写真は、削除済みの写真を除いて数える。タグはポートフォリオごとに問い合わせず
 // 一括で取得する（一覧の件数に比例してクエリが増える N+1 を避ける）。
-func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64, keyword string) ([]domain.PortfolioSummary, error) {
+func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64, keyword string, limit, offset int) ([]domain.PortfolioSummary, error) {
 	// 検索語がない場合は NULL を渡し、絞り込み条件全体を無効にする
 	var pattern *string
 	if keyword != "" {
@@ -96,7 +96,8 @@ func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64
 						AND (pt.tag_japanese_name ILIKE $2 ESCAPE '\' OR pt.tag_english_name ILIKE $2 ESCAPE '\')
 				)
 			)
-		ORDER BY pm.display_order, pm.portfolio_no`, accountNo, pattern)
+		ORDER BY pm.display_order, pm.portfolio_no
+		LIMIT $3 OFFSET $4`, accountNo, pattern, limit, offset)
 	if err != nil {
 		return nil, err
 	}
