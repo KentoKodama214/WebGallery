@@ -15,4 +15,7 @@ public class PortfolioConfigImpl implements PortfolioConfig {
 
   /** normal-userのポートフォリオ作成数上限 */
   private final Integer normalUserUpperLimit;
+
+  /** ポートフォリオ一覧の1ページあたりの表示件数 */
+  private final Integer portfolioCountPerPage;
 }

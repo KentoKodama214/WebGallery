@@ -1,6 +1,6 @@
 package com.web.gallery.presentation.response.photo;
 
-import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioPageModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.Builder;
@@ -12,18 +12,26 @@ import lombok.Data;
 @Builder
 public class PortfolioListGetResponse {
   /** ポートフォリオ一覧 */
-  @Schema(description = "ポートフォリオ一覧（更新日時の新しい順）")
+  @Schema(description = "ポートフォリオ一覧（表示順）")
   private List<PortfolioListItemResponse> portfolioList;
 
+  /** 最後のページかどうか */
+  @Schema(description = "最後のページかどうか")
+  private Boolean isLast;
+
   /**
-   * PortfolioModelListからPortfolioListGetResponseを生成する
+   * PortfolioPageModelからPortfolioListGetResponseを生成する
    *
-   * @param modelList {@link PortfolioModelList}
+   * @param pageModel {@link PortfolioPageModel}
    * @return {@link PortfolioListGetResponse}
    */
-  public static PortfolioListGetResponse from(PortfolioModelList modelList) {
+  public static PortfolioListGetResponse from(PortfolioPageModel pageModel) {
     return PortfolioListGetResponse.builder()
-        .portfolioList(modelList.stream().map(PortfolioListItemResponse::from).toList())
+        .portfolioList(
+            pageModel.getPortfolioModelList().stream()
+                .map(PortfolioListItemResponse::from)
+                .toList())
+        .isLast(pageModel.getIsLast())
         .build();
   }
 }

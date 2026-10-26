@@ -567,6 +567,15 @@ describe("PortfolioEditForm", () => {
       expect(screen.getByTestId("portfolio-status")).toHaveTextContent("下書き");
     });
 
+    it("下書きの間は公開ページへのリンクを表示しないこと", async () => {
+      mockGetPortfolioDetail.mockResolvedValue({ ...gridDetail, statusKbn: "draft" });
+
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+
+      expect(screen.queryByRole("link", { name: "公開ページを見る" })).not.toBeInTheDocument();
+    });
+
     it("未保存の変更がある間は公開状態を切り替えられないこと", async () => {
       mockGetPortfolioDetail.mockResolvedValue(gridDetail);
 
@@ -613,6 +622,16 @@ describe("PortfolioEditForm", () => {
       expect(mockUpdatePortfolioStatus).toHaveBeenLastCalledWith("user1", 3, "published");
       expect(screen.getByTestId("portfolio-status")).toHaveTextContent("公開中");
       expect(screen.getByRole("button", { name: "下書きに戻す" })).toBeInTheDocument();
+      // 公開中になったため、「保存する」「下書きに戻す」の下に公開ページへのリンクを表示する
+      const publicLink = screen.getByRole("link", { name: "公開ページを見る" });
+      expect(publicLink).toHaveAttribute("href", "/portfolio/user1/3");
+      expect(
+        isInDocumentOrder(
+          screen.getByRole("button", { name: "保存する" }),
+          screen.getByRole("button", { name: "下書きに戻す" }),
+          publicLink
+        )
+      ).toBe(true);
     });
 
     it("フィーチャー型を公開中のまま保存するとき、テーマが未入力の写真の欄の下に赤字で警告し、保存しないこと", async () => {

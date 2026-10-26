@@ -219,20 +219,23 @@ public class AuthControllerTest {
 
     @Test
     @Order(2)
-    @DisplayName("異常系：refreshTokenがnullの場合、401を返す")
+    @DisplayName("正常系：refreshTokenがnull（未ログイン）の場合、エラーではなく204を返す")
     void refresh_no_cookie() throws Exception {
-      mockMvc.perform(post("/api/v1/auth/refresh")).andExpect(status().isUnauthorized());
+      mockMvc
+          .perform(post("/api/v1/auth/refresh"))
+          .andExpect(status().isNoContent())
+          .andExpect(content().string(""));
 
       verify(authServiceImpl, times(0)).refresh(any(RefreshTokenValue.class));
     }
 
     @Test
     @Order(3)
-    @DisplayName("異常系：refreshTokenが空の場合、401を返す")
+    @DisplayName("正常系：refreshTokenが空（未ログイン）の場合、エラーではなく204を返す")
     void refresh_empty_cookie() throws Exception {
       mockMvc
           .perform(post("/api/v1/auth/refresh").cookie(new Cookie("refreshToken", "")))
-          .andExpect(status().isUnauthorized());
+          .andExpect(status().isNoContent());
 
       verify(authServiceImpl, times(0)).refresh(any(RefreshTokenValue.class));
     }

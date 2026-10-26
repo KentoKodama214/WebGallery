@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.application.model.photo.PortfolioModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
+import com.web.gallery.application.model.photo.PortfolioPageModel;
 import com.web.gallery.domain.enumeration.PortfolioStatusEnum;
 import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -56,8 +57,10 @@ class PortfolioListGetResponseTest {
                       .photoCount(new PhotoCount(0))
                       .build()));
 
-      PortfolioListGetResponse actual = PortfolioListGetResponse.from(modelList);
+      PortfolioListGetResponse actual =
+          PortfolioListGetResponse.from(PortfolioPageModel.of(modelList, false));
 
+      assertFalse(actual.getIsLast());
       assertEquals(2, actual.getPortfolioList().size());
       PortfolioListItemResponse first = actual.getPortfolioList().get(0);
       assertEquals(2L, first.getPortfolioNo());
@@ -78,8 +81,11 @@ class PortfolioListGetResponseTest {
     @Order(2)
     @DisplayName("異常系：ポートフォリオが0件の場合、空リストとなること")
     void from_empty() {
-      assertTrue(
-          PortfolioListGetResponse.from(PortfolioModelList.empty()).getPortfolioList().isEmpty());
+      PortfolioListGetResponse actual =
+          PortfolioListGetResponse.from(PortfolioPageModel.of(PortfolioModelList.empty(), true));
+
+      assertTrue(actual.getPortfolioList().isEmpty());
+      assertTrue(actual.getIsLast());
     }
   }
 }

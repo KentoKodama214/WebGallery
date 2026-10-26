@@ -38,7 +38,7 @@ Java のバックエンドと同じく、依存は内側（domain）へ向かい
 
 ```graphql
 type Query {
-  publishedPortfolios(accountId: ID!): [PortfolioSummary!]!
+  publishedPortfolios(accountId: ID!, keyword: String, limit: Int = 20, offset: Int = 0): PortfolioSummaryPage!
   publishedPortfolio(accountId: ID!, portfolioNo: Int!): Portfolio
 }
 
@@ -48,6 +48,11 @@ union PortfolioLayout = FeatureLayout | GridLayout
 - 公開状態（`published`）のポートフォリオだけを返します（ポートフォリオは削除すると物理削除される）。下書き・存在しないポートフォリオは
   `publishedPortfolio` が `null`、`publishedPortfolios` は空の一覧になります（アカウントの存在有無も区別しない）
 - 削除済みの写真は返しません
+- `publishedPortfolios` は所有者が設定画面で並べた表示順（`portfolio_mst.display_order`）に返します。
+  `keyword` を指定すると、テーマ・タグ名（日本語・英語）のいずれかに部分一致（大文字・小文字を区別しない）するものに絞り込みます
+- `publishedPortfolios` は表示順で `offset` 件目から最大 `limit` 件（`portfolios`）と、続きがあるかどうか（`hasNext`）を返します。
+  `limit` は 1〜1000、`offset` は 0〜200000 で、範囲外の場合は空の一覧を返します。公開ページは「＋もっと見る」のたびに先頭から
+  読み込み済みの件数（ページ数 × 20件）をまとめて取得します
 - テンプレートごとのレイアウトは `layout` の union 型で返し、`__typename` で判別します
 
 ## テンプレートを追加する手順
@@ -58,7 +63,12 @@ union PortfolioLayout = FeatureLayout | GridLayout
    1. `internal/domain` にレイアウトの型を追加し、`BuildLayout` の分岐に加える
    2. `graph/schema.graphqls` にレイアウトの型を追加して `PortfolioLayout` の union に加え、`just go-generate` で再生成する
    3. `graph/mapper.go` の `toLayout`・`toTemplate` に変換を加える
-3. Next.js：設定画面の入力と、公開ページのテンプレートのコンポーネントを追加する
+3. Next.js：
+   1. 設定画面（`src/app/[accountId]/portfolio_setting/edit/`）に、テンプレート固有の設定の入力を追加する
+   2. `src/lib/portfolio-api/types.ts` にレイアウトの型を追加して `PortfolioLayout` に加え、
+      `queries.ts` の `layout` にインラインフラグメント（`... on XxxLayout { ... }`）を加える。型・クエリは手書きのため、スキーマと揃えること
+   3. `src/components/portfolio/templates/` にテンプレートのコンポーネントを追加し、`registry.tsx` の `TEMPLATE_RENDERERS` に加える
+      （`PortfolioLayout` の全ての `__typename` を網羅しないと型エラーになる）。未対応の型を受け取った場合は「このポートフォリオは表示できません」を表示する
 
 ## セキュリティ
 
@@ -75,9 +85,15 @@ union PortfolioLayout = FeatureLayout | GridLayout
 
 ## キャッシュ
 
-GET（`/graphql?query=...`）でも問い合わせできるため、Next.js 側で URL 単位にキャッシュできます。
-レスポンスに含む画像の署名付きURLには有効期限（`APP_S3_PRESIGN_EXPIRY_SECONDS`、既定 900 秒）があるため、
-キャッシュの再検証間隔はこれより短くしてください。
+公開ページ（`frontend/src/lib/portfolio-api/client.ts`）は GET（`/graphql?query=...`）で問い合わせ、
+**Next.js 側ではキャッシュしません**（`cache: "no-store"`）。
+
+レスポンスに含む画像の署名付きURLには有効期限（`APP_S3_PRESIGN_EXPIRY_SECONDS`、既定 900 秒）があります。
+Next.js のデータキャッシュは stale-while-revalidate のため、再検証間隔を有効期限より短くしても、
+しばらくアクセスのなかったページでは期限切れの URL を一度返してしまい、画像が表示されません。
+そのため毎リクエストで問い合わせて URL を発行し直します。公開状態の変更（下書きへの戻し等）も即座に反映されます。
+
+キャッシュを導入する場合は、署名付きURLを含まない形（画像のキーだけをキャッシュし、URL はリクエストごとに発行する等）にしてください。
 
 ## 環境変数
 
@@ -97,6 +113,11 @@ GET（`/graphql?query=...`）でも問い合わせできるため、Next.js 側�
 | `PORTFOLIO_API_MAX_QUERY_DEPTH` | `8` | クエリの深さの上限 |
 
 本番では `portfolio_reader` ロールのパスワードを、`db/photo/portfolio_reader.sql` のローカル用の値から変更してください。
+
+`db/photo/portfolio_reader.sql` はDBの初期化時（ボリュームが空のとき）にだけ実行されます。
+このファイルの追加より前に作成したローカルのDBボリュームでは、`psql` で手動実行するか、ボリュームを作り直してください。
+
+Next.js（公開ページ）からの接続先は `PORTFOLIO_API_URL`（既定 `http://localhost:8081/graphql`）で設定します。
 
 ## エンドポイント
 

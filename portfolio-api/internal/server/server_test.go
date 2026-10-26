@@ -23,12 +23,19 @@ type fakeQuery struct {
 	summaries []domain.PortfolioSummary
 	published map[int64]*usecase.PublishedPortfolio
 	err       error
+	hasNext   bool
 	calls     int
+	keyword   string
+	limit     int
+	offset    int
 }
 
-func (f *fakeQuery) ListPublishedPortfolios(context.Context, string) ([]domain.PortfolioSummary, error) {
+func (f *fakeQuery) ListPublishedPortfolios(_ context.Context, _ string, keyword string, limit, offset int) (usecase.PortfolioSummaryPage, error) {
 	f.calls++
-	return f.summaries, f.err
+	f.keyword = keyword
+	f.limit = limit
+	f.offset = offset
+	return usecase.PortfolioSummaryPage{Portfolios: f.summaries, HasNext: f.hasNext}, f.err
 }
 
 func (f *fakeQuery) GetPublishedPortfolio(_ context.Context, _ string, portfolioNo int64) (*usecase.PublishedPortfolio, error) {
@@ -159,28 +166,54 @@ func TestPublishedPortfolios(t *testing.T) {
 	server := newTestServer(t, &fakeQuery{summaries: []domain.PortfolioSummary{
 		{PortfolioNo: 2, Theme: "光と影", Template: domain.TemplateGrid, UpdatedAt: updatedAt, PhotoCount: 4, CoverPhoto: &cover, Tags: []domain.Tag{}},
 		{PortfolioNo: 1, Theme: "日本の自然", Template: domain.TemplateFeature, UpdatedAt: updatedAt, Tags: []domain.Tag{}},
-	}}, Options{})
+	}, hasNext: true}, Options{})
 
-	res := post(t, server, `{ publishedPortfolios(accountId: "owner123") { portfolioNo template photoCount updatedAt coverPhoto { photoNo url } } }`)
+	res := post(t, server, `{ publishedPortfolios(accountId: "owner123") { portfolios { portfolioNo template photoCount updatedAt coverPhoto { photoNo url } } hasNext } }`)
 
-	want := `[{"coverPhoto":{"photoNo":3,"url":"https://signed/3"},"photoCount":4,"portfolioNo":2,"template":"GRID","updatedAt":"2026-10-01T09:00:00Z"},` +
-		`{"coverPhoto":null,"photoCount":0,"portfolioNo":1,"template":"FEATURE","updatedAt":"2026-10-01T09:00:00Z"}]`
+	want := `{"hasNext":true,"portfolios":[{"coverPhoto":{"photoNo":3,"url":"https://signed/3"},"photoCount":4,"portfolioNo":2,"template":"GRID","updatedAt":"2026-10-01T09:00:00Z"},` +
+		`{"coverPhoto":null,"photoCount":0,"portfolioNo":1,"template":"FEATURE","updatedAt":"2026-10-01T09:00:00Z"}]}`
 	if got := toJSON(res.Data["publishedPortfolios"]); got != want {
 		t.Errorf("publishedPortfolios = %s\nwant %s", got, want)
+	}
+}
+
+func TestPublishedPortfolios_Keyword(t *testing.T) {
+	query := &fakeQuery{summaries: []domain.PortfolioSummary{}}
+	server := newTestServer(t, query, Options{})
+
+	res := post(t, server, `{ publishedPortfolios(accountId: "owner123", keyword: "自然") { portfolios { portfolioNo } } }`)
+
+	if len(res.Errors) != 0 || query.keyword != "自然" {
+		t.Errorf("errors = %+v, keyword = %q; want keyword passed through", res.Errors, query.keyword)
+	}
+}
+
+func TestPublishedPortfolios_LimitOffset(t *testing.T) {
+	// 省略した場合はスキーマの既定値（20件・先頭から）を渡す
+	query := &fakeQuery{summaries: []domain.PortfolioSummary{}}
+	server := newTestServer(t, query, Options{})
+	post(t, server, `{ publishedPortfolios(accountId: "owner123") { hasNext } }`)
+	if query.limit != 20 || query.offset != 0 {
+		t.Errorf("default limit/offset = %d/%d, want 20/0", query.limit, query.offset)
+	}
+
+	res := post(t, server, `{ publishedPortfolios(accountId: "owner123", limit: 40, offset: 20) { hasNext } }`)
+	if len(res.Errors) != 0 || query.limit != 40 || query.offset != 20 {
+		t.Errorf("errors = %+v, limit/offset = %d/%d; want 40/20 passed through", res.Errors, query.limit, query.offset)
 	}
 }
 
 func TestGetTransport(t *testing.T) {
 	server := newTestServer(t, &fakeQuery{summaries: []domain.PortfolioSummary{}}, Options{})
 
-	q := url.Values{"query": {`{ publishedPortfolios(accountId: "owner123") { portfolioNo } }`}}
+	q := url.Values{"query": {`{ publishedPortfolios(accountId: "owner123") { portfolios { portfolioNo } } }`}}
 	res, err := http.Get(server.URL + "/graphql?" + q.Encode())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer res.Body.Close()
 	body, _ := io.ReadAll(res.Body)
-	if res.StatusCode != http.StatusOK || string(body) != `{"data":{"publishedPortfolios":[]}}` {
+	if res.StatusCode != http.StatusOK || string(body) != `{"data":{"publishedPortfolios":{"portfolios":[]}}}` {
 		t.Errorf("status=%d body=%s", res.StatusCode, body)
 	}
 }
@@ -229,7 +262,7 @@ func TestComplexityLimit(t *testing.T) {
 	query := &fakeQuery{}
 	server := newTestServer(t, query, Options{MaxQueryComplexity: 3})
 
-	res := post(t, server, `{ publishedPortfolios(accountId: "owner123") { portfolioNo theme description template } }`)
+	res := post(t, server, `{ publishedPortfolios(accountId: "owner123") { portfolios { portfolioNo theme description template } } }`)
 
 	if len(res.Errors) == 0 || !strings.Contains(res.Errors[0].Message, "complexity") {
 		t.Errorf("errors = %+v", res.Errors)
@@ -242,7 +275,7 @@ func TestComplexityLimit(t *testing.T) {
 func TestInternalErrorIsHidden(t *testing.T) {
 	server := newTestServer(t, &fakeQuery{err: errors.New("dial tcp 10.0.0.1:5432: connection refused")}, Options{})
 
-	res := post(t, server, `{ publishedPortfolios(accountId: "owner123") { portfolioNo } }`)
+	res := post(t, server, `{ publishedPortfolios(accountId: "owner123") { portfolios { portfolioNo } } }`)
 
 	if len(res.Errors) != 1 || res.Errors[0].Message != "internal server error" {
 		t.Errorf("errors = %+v, want only the generic message", res.Errors)
@@ -252,7 +285,7 @@ func TestInternalErrorIsHidden(t *testing.T) {
 func TestRequestBodyLimit(t *testing.T) {
 	query := &fakeQuery{}
 	server := newTestServer(t, query, Options{})
-	body := `{"query":"{ publishedPortfolios(accountId: \"owner123\") { portfolioNo } }","variables":{"pad":"` +
+	body := `{"query":"{ publishedPortfolios(accountId: \"owner123\") { portfolios { portfolioNo } } }","variables":{"pad":"` +
 		strings.Repeat("a", maxRequestBodyBytes) + `"}}`
 
 	// 申告サイズ（Content-Length）が上限を超える場合は 413

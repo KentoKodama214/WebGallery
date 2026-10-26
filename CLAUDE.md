@@ -40,7 +40,7 @@ just front-run
 just front-build
 just lint
 
-# E2Eテスト一括実行（DB・backendを自動起動）
+# E2Eテスト一括実行（DB・backend・portfolio-apiを自動起動）
 just e2e
 
 # 本番ビルドに対するCSPスモークテスト（next build + next start）
@@ -105,7 +105,7 @@ just backend-unitTest
 # frontendの単体テスト（Jest）
 just front-test
 
-# frontendのE2Eテスト（Playwright、DB・backendを自動起動）
+# frontendのE2Eテスト（Playwright、DB・backend・portfolio-apiを自動起動）
 just e2e
 ```
 
