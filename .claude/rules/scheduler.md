@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/scheduler/**
+  - gallery-api/**/scheduler/**
 ---
 
 # Schedulerクラスのアーキテクチャルール
@@ -83,9 +83,9 @@ public void purgeExpiredRefreshTokens() {
 ## 検証
 
 命名規則、`@Component` 付与、`@Scheduled` の `zone`、`@ConditionalOnProperty` の `prefix`、repository・mapper・entity・dto・
-aggregate・service.implへの依存禁止は`backend/src/test/java/com/web/gallery/architecture/SchedulerArchitectureTest.java` の
+aggregate・service.implへの依存禁止は`gallery-api/src/test/java/com/web/gallery/architecture/SchedulerArchitectureTest.java` の
 ArchUnit テストで機械的に検証される。presentation配下全体への依存禁止は、infrastructure層全体を対象とする
-`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`で検証される。
+`gallery-api/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`で検証される。
 ただし `@RequiredArgsConstructor` の Lombok アノテーション規約は、コンパイラが `RetentionPolicy.SOURCE` で完全に除去し
 バイトコードに一切残らないため、バイトコード解析である ArchUnit では原理的に検証不可能であり、`backend-architecture-checker`
 によるレビューで担保する。

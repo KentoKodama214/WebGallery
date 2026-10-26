@@ -45,7 +45,7 @@ test.yml:
 ## 実行時間の最適化
 
 - **同時実行の制御**：`concurrency`により、同一ブランチへ連続してpushした場合は古い実行をキャンセルし、最新のコミットのみを検証する
-- **Gradleキャッシュ**：`gradle/actions/setup-gradle`で依存関係とビルドキャッシュ（`org.gradle.caching=true`、`backend/gradle.properties`）をキャッシュする。同一PRへ追加pushした際、入力が変わっていないタスク（`compileJava`・`compileTestJava`・`unitTest`・`integrationTest`等）は出力がキャッシュから復元され再実行されない。JaCoCoの実行データ（`*.exec`）とテストレポートもタスク出力としてキャッシュされるため、キャッシュヒット時もカバレッジ集計に影響しない
+- **Gradleキャッシュ**：`gradle/actions/setup-gradle`で依存関係とビルドキャッシュ（`org.gradle.caching=true`、`gallery-api/gradle.properties`）をキャッシュする。同一PRへ追加pushした際、入力が変わっていないタスク（`compileJava`・`compileTestJava`・`unitTest`・`integrationTest`等）は出力がキャッシュから復元され再実行されない。JaCoCoの実行データ（`*.exec`）とテストレポートもタスク出力としてキャッシュされるため、キャッシュヒット時もカバレッジ集計に影響しない
 - **Playwrightブラウザキャッシュ**：`~/.cache/ms-playwright`をキャッシュし、ブラウザバイナリのダウンロードを省略する（`--with-deps`によるOSライブラリの導入は毎回実行される）
 - **E2Eジョブのステップ並行化**：バックエンドの起動（Gradleの起動・コンパイル・Spring Bootの初期化）に1分近くかかるため、データベース初期化の直後にバックグラウンドで起動し、MinIOの起動とフロントエンドのセットアップを並行して進める。起動完了の待機はE2Eテストの直前に行う
 - **E2Eのルート暖機**：`next dev`はページルート・APIプロキシルートを初回リクエスト時にオンデマンドでコンパイルする。ブラウザ別にジョブを分割したことで`webkit-smoke`・`mobile-smoke`は先行するchromium実行による暖機を当てにできなくなったため、`e2e/global-setup.ts`の`warmUpRoutes`でテスト開始前に主要ルートを一度叩いてコンパイル済みにする
@@ -71,7 +71,7 @@ Checkstyleを使用して、`src/main/java`配下の全クラス・全メソッ�
 
 ### フォーマットチェック (`spotless.yml`)
 
-Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/java`配下の全Javaファイルが整形済みかをチェックする（`spotlessCheck`）。未整形の場合はローカルで`./backend/gradlew -p backend spotlessApply`（または`just format`）を実行して修正する。
+Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/java`配下の全Javaファイルが整形済みかをチェックする（`spotlessCheck`）。未整形の場合はローカルで`./gallery-api/gradlew -p gallery-api spotlessApply`（または`just format`）を実行して修正する。
 
 **チェック内容:**
 - Google Java Formatによるコードスタイル（インデント・改行位置等）

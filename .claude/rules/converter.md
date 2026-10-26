@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/presentation/converter/**
+  - gallery-api/**/presentation/converter/**
 ---
 
 # Converterクラスのアーキテクチャルール
@@ -45,4 +45,4 @@ Dto/Entity → Modelの変換（`infrastructure/persistence/`側）は本パタ�
 
 ## 検証
 
-本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/ConverterArchitectureTest.java`のArchUnitテストで機械的に検証される。
+本ファイルのルールは`gallery-api/src/test/java/com/web/gallery/architecture/ConverterArchitectureTest.java`のArchUnitテストで機械的に検証される。

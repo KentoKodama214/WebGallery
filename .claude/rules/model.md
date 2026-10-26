@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/application/model/**
+  - gallery-api/**/application/model/**
 ---
 
 # Modelクラスのアーキテクチャルール
@@ -38,4 +38,4 @@ paths:
 
 ## 検証
 
-`@NonNull`の付与、および`XxxModelList`がrecordかつ`Iterable`を実装していることは`backend/src/test/java/com/web/gallery/architecture/ModelArchitectureTest.java`のArchUnitテストで機械的に検証される。ただし`@Value`/`@Builder`のLombokアノテーション規約は、コンパイラが`RetentionPolicy.SOURCE`で完全に除去しバイトコードに一切残らないため、バイトコード解析であるArchUnitでは原理的に検証不可能であり、`backend-architecture-checker`によるレビューで担保する。
+`@NonNull`の付与、および`XxxModelList`がrecordかつ`Iterable`を実装していることは`gallery-api/src/test/java/com/web/gallery/architecture/ModelArchitectureTest.java`のArchUnitテストで機械的に検証される。ただし`@Value`/`@Builder`のLombokアノテーション規約は、コンパイラが`RetentionPolicy.SOURCE`で完全に除去しバイトコードに一切残らないため、バイトコード解析であるArchUnitでは原理的に検証不可能であり、`backend-architecture-checker`によるレビューで担保する。

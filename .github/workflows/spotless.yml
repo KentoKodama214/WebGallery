@@ -34,4 +34,4 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: フォーマットチェック実行
-        run: ./backend/gradlew -p backend spotlessCheck
+        run: ./gallery-api/gradlew -p gallery-api spotlessCheck

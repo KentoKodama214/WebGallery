@@ -21,7 +21,7 @@ description: Next.js (pnpm/npm) と Java Spring Boot (Gradle) の依存ライブ
      - `pnpm test` を実行。
 
 ## 3. バックエンドの更新手順（target: backend）
-   - ディレクトリ移動: `cd backend`
+   - ディレクトリ移動: `cd gallery-api`
    - 更新確認: `./gradlew dependencyUpdates -DoutputFormatter=json` を実行。
    - レポート読み込み: `build/dependencyUpdates/report.json` を読み込み、`outdated.dependencies` を解析。
    - 編集: `build.gradle` のバージョン記述を更新。

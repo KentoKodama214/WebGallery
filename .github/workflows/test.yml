@@ -68,28 +68,28 @@ jobs:
       - name: Gradleセットアップ
         uses: gradle/actions/setup-gradle@v6
         with:
-          build-root-directory: backend
+          build-root-directory: gallery-api
           # デフォルトブランチ以外では読み取り専用になるため明示的に書き込みを許可する。
           # 同一PRへ追加pushした際に、変更のないモジュールのコンパイル結果（compileJava・
           # compileTestJava）やテストタスクの出力をビルドキャッシュから復元できる
           cache-read-only: false
 
       - name: 単体テスト実行
-        run: ./backend/gradlew -p backend unitTest
+        run: ./gallery-api/gradlew -p gallery-api unitTest
 
       - name: テスト結果アップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: unit-test-results
-          path: backend/build/reports/tests/unitTest/
+          path: gallery-api/build/reports/tests/unitTest/
 
       - name: カバレッジ実行データアップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: jacoco-exec-unit
-          path: backend/build/jacoco/unitTest.exec
+          path: gallery-api/build/jacoco/unitTest.exec
 
   # portfolio-api（Go。公開ページ向けのポートフォリオ表示API）の静的解析・単体テスト・結合テスト。
   # 結合テストは本番と同じ読み取り専用ロール（portfolio_reader）で接続するため、
@@ -208,7 +208,7 @@ jobs:
       - name: Gradleセットアップ
         uses: gradle/actions/setup-gradle@v6
         with:
-          build-root-directory: backend
+          build-root-directory: gallery-api
           cache-read-only: false
 
       - name: データベース初期化
@@ -271,21 +271,21 @@ jobs:
             cgr.dev/chainguard/minio:latest mb --ignore-existing local/test-bucket
 
       - name: 結合テスト実行
-        run: ./backend/gradlew -p backend integrationTest
+        run: ./gallery-api/gradlew -p gallery-api integrationTest
 
       - name: テスト結果アップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: integration-test-results
-          path: backend/build/reports/tests/integrationTest/
+          path: gallery-api/build/reports/tests/integrationTest/
 
       - name: カバレッジ実行データアップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: jacoco-exec-integration
-          path: backend/build/jacoco/integrationTest.exec
+          path: gallery-api/build/jacoco/integrationTest.exec
 
   # integration-testと同様にneedsは指定せず、最初から並列で起動する。
   # ブラウザ別に2つのジョブへ分割し、webkit（Desktop Safari・iPhone 13）のダウンロードと
@@ -336,7 +336,7 @@ jobs:
       - name: Gradleセットアップ
         uses: gradle/actions/setup-gradle@v6
         with:
-          build-root-directory: backend
+          build-root-directory: gallery-api
           cache-read-only: false
 
       - name: データベース初期化
@@ -384,7 +384,7 @@ jobs:
           # 本番向けのレート制限が誤検知する（scripts/e2e.shのローカル実行と同様に無効化する）
           RATE_LIMIT_ENABLED: "false"
         run: |
-          SPRING_PROFILES_ACTIVE=local nohup ./backend/gradlew -p backend bootRun --no-daemon > backend-e2e.log 2>&1 &
+          SPRING_PROFILES_ACTIVE=local nohup ./gallery-api/gradlew -p gallery-api bootRun --no-daemon > backend-e2e.log 2>&1 &
 
       # 写真アップロードのE2Eシナリオが実接続する画像ストレージ（S3互換）。
       # GitHub Actionsのservicesはコンテナ起動時のcommand引数を指定できず、
@@ -574,14 +574,14 @@ jobs:
       - name: Gradleセットアップ
         uses: gradle/actions/setup-gradle@v6
         with:
-          build-root-directory: backend
+          build-root-directory: gallery-api
           cache-read-only: false
 
       - name: カバレッジ実行データダウンロード
         uses: actions/download-artifact@v8
         with:
           pattern: jacoco-exec-*
-          path: backend/build/jacoco
+          path: gallery-api/build/jacoco
           merge-multiple: true
 
       - name: フロントエンドカバレッジ集計データダウンロード
@@ -591,14 +591,14 @@ jobs:
           path: frontend/coverage
 
       - name: カバレッジレポート生成（単体 / 結合 / 集約）
-        run: ./backend/gradlew -p backend jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
+        run: ./gallery-api/gradlew -p gallery-api jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
       - name: カバレッジ集計表を生成
         run: |
           python3 .github/scripts/jacoco_coverage_table.py \
-            "単体＋結合=backend/build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml" \
-            "単体テスト=backend/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml" \
-            "結合テスト=backend/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml" \
+            "単体＋結合=gallery-api/build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml" \
+            "単体テスト=gallery-api/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml" \
+            "結合テスト=gallery-api/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml" \
             > coverage-table.md
           python3 .github/scripts/jest_coverage_table.py \
             frontend/coverage/coverage-summary.json \

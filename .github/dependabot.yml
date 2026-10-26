@@ -2,7 +2,7 @@ version: 2
 updates:
   # backend（Gradle）
   - package-ecosystem: "gradle"
-    directory: "/backend"
+    directory: "/gallery-api"
     schedule:
       interval: "daily"
       time: "07:00"

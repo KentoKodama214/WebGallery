@@ -1,8 +1,8 @@
 ---
 paths:
-  - backend/src/test/**/infrastructure/config/**
-  - backend/src/test/**/infrastructure/web/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/infrastructure/config/**
+  - gallery-api/src/test/**/infrastructure/web/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Configパッケージの単体テスト規約

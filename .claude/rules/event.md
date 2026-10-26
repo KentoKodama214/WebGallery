@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/event/**
+  - gallery-api/**/event/**
 ---
 
 # Eventクラスのアーキテクチャルール
@@ -29,4 +29,4 @@ paths:
 
 ## 検証
 
-本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/EventArchitectureTest.java`のArchUnitテストで機械的に検証される。
+本ファイルのルールは`gallery-api/src/test/java/com/web/gallery/architecture/EventArchitectureTest.java`のArchUnitテストで機械的に検証される。

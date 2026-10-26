@@ -140,7 +140,7 @@ just db-up
 ### 2. 環境変数の設定
 
 ```bash
-./backend/set-env.sh
+./gallery-api/set-env.sh
 ```
 
 このスクリプトはシェルの設定ファイル（`~/.zshrc` / `~/.bashrc`）に `export` 文を追記します。設定後はシェルを再起動するか `source` してください。
@@ -170,7 +170,7 @@ just db-up
 | `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現（`app.forwarded.trusted-proxies`）。**本番では必須。ALB のサブネット CIDR に狭める**（未設定・空文字・広すぎる値は `ProdConfigValidationRunner` が起動時に検出して失敗させる） | 非 `prod`：ループバック＋RFC1918 / `prod`：**空（設定必須）** |
 
 > **IntelliJ IDEA で起動する場合**
-> Dock やランチャーから起動した IntelliJ はシェルの `export` を引き継がないため、`JWT_SECRET` を渡す必要があります。共有の実行構成 `backend/.run/WebGalleryApplication_local.run.xml`（実行構成名「WebGalleryApplication (local)」、プロファイル `local` ＋ ローカル用 `JWT_SECRET` を設定済み）を選択して実行してください。独自の実行構成を使う場合は「Environment variables」に `JWT_SECRET` を追加してください。
+> Dock やランチャーから起動した IntelliJ はシェルの `export` を引き継がないため、`JWT_SECRET` を渡す必要があります。共有の実行構成 `gallery-api/.run/WebGalleryApplication_local.run.xml`（実行構成名「WebGalleryApplication (local)」、プロファイル `local` ＋ ローカル用 `JWT_SECRET` を設定済み）を選択して実行してください。独自の実行構成を使う場合は「Environment variables」に `JWT_SECRET` を追加してください。
 
 #### フロントエンドの環境変数
 
@@ -225,13 +225,13 @@ just front-setup
 
 ```bash
 # バックエンド
-just backend-run
+just gallery-api-run
 
 # フロントエンド
 just front-run
 
 # ポートフォリオ表示API（公開ページ /portfolio/** を表示する場合のみ）
-just go-run
+just portfolio-api-run
 ```
 
 バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000`、ポートフォリオ表示APIは `http://localhost:8081/graphql` でアクセスできます。
@@ -274,37 +274,37 @@ just go-run
 
 ```bash
 # ビルド
-just backend-build
+just gallery-api-build
 
 # 単体テストの実行
-just backend-unitTest
+just gallery-api-unitTest
 
 # 統合テストの実行（要Docker）
-just backend-integrationTest
+just gallery-api-integrationTest
 
 # 全テストの実行（要Docker）
-just backend-allTest
+just gallery-api-allTest
 
 # カバレッジレポートの生成（要Docker）
 #   単体のみ:   build/reports/jacoco/jacocoUnitReport/html/index.html
 #   結合のみ:   build/reports/jacoco/jacocoIntegrationReport/html/index.html
 #   単体＋結合: build/reports/jacoco/jacocoAggregateReport/html/index.html
-./backend/gradlew -p backend unitTest integrationTest jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
+./gallery-api/gradlew -p gallery-api unitTest integrationTest jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
 # WARファイルの生成
-./backend/gradlew -p backend war
+./gallery-api/gradlew -p gallery-api war
 
 # クリーンビルド
-just backend-clean-build
+just gallery-api-clean-build
 ```
 
 ```bash
 # portfolio-api（Go）の単体テスト・結合テスト（結合は要Docker）・静的解析・GraphQLコード生成・ローカル起動
-just go-test
-just go-integrationTest
-just go-lint
-just go-generate
-just go-run
+just portfolio-api-test
+just portfolio-api-integrationTest
+just portfolio-api-lint
+just portfolio-api-generate
+just portfolio-api-run
 ```
 
 ```bash
@@ -331,7 +331,7 @@ just e2e
 
 > **バックエンドを起動したままにしない**
 > E2Eはテストごとにアカウントを登録するため、**レート制限を無効化した専用設定
-> （`RATE_LIMIT_ENABLED=false`）で起動したバックエンドが必要**です。`just backend-run` 等で
+> （`RATE_LIMIT_ENABLED=false`）で起動したバックエンドが必要**です。`just gallery-api-run` 等で
 > 手動起動したインスタンス（既定は `RATE_LIMIT_ENABLED=true`）が8080に残っていると、
 > アカウント登録の上限（`app.rate-limit.register`＝10件/3600秒）に達して11件目以降が
 > `429` になり、**多数のテストがまとめて失敗**します。
@@ -345,7 +345,7 @@ just e2e
 > そのインスタンスを再利用できます。
 
 DB・バックエンドを自分で起動済みの場合は、フロントエンドのみで直接実行できます（この場合も
-バックエンドは `RATE_LIMIT_ENABLED=false` で起動しておく必要があります。公開ページのテストには `just go-run` で portfolio-api も起動しておいてください）。
+バックエンドは `RATE_LIMIT_ENABLED=false` で起動しておく必要があります。公開ページのテストには `just portfolio-api-run` で portfolio-api も起動しておいてください）。
 
 ```bash
 cd frontend && pnpm test:e2e
@@ -383,7 +383,7 @@ just db-doc
 just jig
 ```
 
-生成後、`backend/build/jig/index.html` をブラウザで開いてください。
+生成後、`gallery-api/build/jig/index.html` をブラウザで開いてください。
 
 また、Spring Modulithによるモジュール構成図（PlantUML）とモジュールキャンバス（AsciiDoc）を生成できます。
 
@@ -497,7 +497,7 @@ WebGallery/
 │           ├── cookie.ts                # Cookie操作ユーティリティ（__tests__/にJestテスト）
 │           ├── url.ts                   # URL操作ユーティリティ（__tests__/にJestテスト）
 │           └── validation.ts            # 入力バリデーション（__tests__/にJestテスト）
-├── backend/                        # バックエンド（Spring Boot）
+├── gallery-api/                    # バックエンド（Spring Boot）
 │   ├── build.gradle
 │   ├── settings.gradle
 │   ├── gradle.properties           # Gradleビルドキャッシュ等のビルド設定

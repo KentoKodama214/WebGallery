@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/domain/model/**
+  - gallery-api/**/domain/model/**
 ---
 
 # Domainクラスのアーキテクチャルール
@@ -17,4 +17,4 @@ paths:
 
 ## 検証
 
-`Serializable`実装（`ImageFile`を除く）は`backend/src/test/java/com/web/gallery/architecture/DomainArchitectureTest.java`のArchUnitテストで機械的に検証される。
+`Serializable`実装（`ImageFile`を除く）は`gallery-api/src/test/java/com/web/gallery/architecture/DomainArchitectureTest.java`のArchUnitテストで機械的に検証される。

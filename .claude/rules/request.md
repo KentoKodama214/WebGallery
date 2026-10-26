@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/presentation/request/**
+  - gallery-api/**/presentation/request/**
 ---
 
 # Requestクラスのアーキテクチャルール
@@ -19,4 +19,4 @@ paths:
 
 ## 検証
 
-本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/RequestArchitectureTest.java`のArchUnitテストで機械的に検証される。
+本ファイルのルールは`gallery-api/src/test/java/com/web/gallery/architecture/RequestArchitectureTest.java`のArchUnitテストで機械的に検証される。

@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/application/aggregate/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/application/aggregate/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Aggregateパッケージの単体テスト規約

@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/src/main/java/com/web/gallery/**
+  - gallery-api/src/main/java/com/web/gallery/**
 ---
 
 # オニオンアーキテクチャ全体像
@@ -49,7 +49,7 @@ com.web.gallery
 - **infrastructure・presentation**: `domain`・`application`に依存してよい
 - **infrastructure と presentation は互いに外側同士（アダプタ同士）であり、一方向のみ許可する**: presentationはinfrastructureに依存してよいが、infrastructureからpresentationへの依存は禁止する（例: ControllerがSessionHelper・ClientIpResolver等のinfrastructureクラスを直接使うのは許容されるが、逆方向は不可）
 
-この依存方向は`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`のArchUnitテストで機械的に検証される。
+この依存方向は`gallery-api/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`のArchUnitテストで機械的に検証される。
 
 ## Service→Infrastructureの依存逆転を避けるポート化
 

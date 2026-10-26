@@ -42,29 +42,29 @@ e2e:
 e2e-prod:
     cd frontend && mise exec -- pnpm test:e2e:prod
 
-# backendアプリケーションの実行（localプロファイル）
-backend-run:
-    ./backend/gradlew -p backend bootRun --args='--spring.profiles.active=local'
+# gallery-apiアプリケーションの実行（localプロファイル）
+gallery-api-run:
+    ./gallery-api/gradlew -p gallery-api bootRun --args='--spring.profiles.active=local'
 
-# backendのビルド
-backend-build:
-    ./backend/gradlew -p backend build
+# gallery-apiのビルド
+gallery-api-build:
+    ./gallery-api/gradlew -p gallery-api build
 
-# backendの単体テスト実行
-backend-unitTest:
-    ./backend/gradlew -p backend unitTest
+# gallery-apiの単体テスト実行
+gallery-api-unitTest:
+    ./gallery-api/gradlew -p gallery-api unitTest
 
-# backendの結合テスト実行（要Docker）
-backend-integrationTest:
-    ./backend/gradlew -p backend integrationTest
+# gallery-apiの結合テスト実行（要Docker）
+gallery-api-integrationTest:
+    ./gallery-api/gradlew -p gallery-api integrationTest
 
-# backendの単体・結合テストをすべて実行（要Docker）
-backend-allTest:
-    ./backend/gradlew -p backend allTest
+# gallery-apiの単体・結合テストをすべて実行（要Docker）
+gallery-api-allTest:
+    ./gallery-api/gradlew -p gallery-api allTest
 
-# backendのクリーンビルド
-backend-clean-build:
-    ./backend/gradlew -p backend clean build
+# gallery-apiのクリーンビルド
+gallery-api-clean-build:
+    ./gallery-api/gradlew -p gallery-api clean build
 
 # DBドキュメント生成（SchemaSpy、要DB起動）
 db-doc:
@@ -72,37 +72,37 @@ db-doc:
 
 # JIGによるコード構造ドキュメント生成
 jig:
-    ./backend/gradlew -p backend jigReports
+    ./gallery-api/gradlew -p gallery-api jigReports
 
 # Spring Modulithのモジュール構成図・モジュールキャンバス生成
 modulith-doc:
-    ./backend/gradlew -p backend generateModulithDocs
+    ./gallery-api/gradlew -p gallery-api generateModulithDocs
 
-# backendのコードフォーマットチェック（Spotless）
+# gallery-apiのコードフォーマットチェック（Spotless）
 format-check:
-    ./backend/gradlew -p backend spotlessCheck
+    ./gallery-api/gradlew -p gallery-api spotlessCheck
 
-# backendのコードフォーマット整形（Spotless）
+# gallery-apiのコードフォーマット整形（Spotless）
 format:
-    ./backend/gradlew -p backend spotlessApply
+    ./gallery-api/gradlew -p gallery-api spotlessApply
 
 # portfolio-api（Go。公開ページ向けのポートフォリオ表示API）をローカル環境で起動（要DB・MinIO起動）
-go-run:
+portfolio-api-run:
     cd portfolio-api && PORTFOLIO_API_ENV=local mise exec -- go run ./cmd/server
 
 # portfolio-apiの単体テスト
-go-test:
+portfolio-api-test:
     cd portfolio-api && mise exec -- go test ./...
 
 # portfolio-apiの結合テスト（要テスト用DB起動。just db-up）
-go-integrationTest:
+portfolio-api-integrationTest:
     cd portfolio-api && mise exec -- go test -tags integration ./...
 
 # portfolio-apiの静的解析（gofmtの整形漏れ・go vet）
-go-lint:
+portfolio-api-lint:
     cd portfolio-api && test -z "$(mise exec -- gofmt -l .)" || (mise exec -- gofmt -l . && exit 1)
     cd portfolio-api && mise exec -- go vet -tags integration ./...
 
 # portfolio-apiのGraphQLコード生成（graph/schema.graphqls を変更したら実行する）
-go-generate:
+portfolio-api-generate:
     cd portfolio-api && mise exec -- go generate ./...

@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/*RepositoryImplTest*
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/*RepositoryImplTest*
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Repositoryパッケージの単体テスト規約

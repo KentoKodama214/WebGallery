@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/enumeration/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/enumeration/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Enumerationパッケージの単体テスト規約

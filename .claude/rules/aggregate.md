@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/application/aggregate/**
+  - gallery-api/**/application/aggregate/**
 ---
 
 # 集約（Aggregate）クラスのアーキテクチャルール
@@ -29,4 +29,4 @@ paths:
 
 ## 検証
 
-コンストラクタのprivate化、publicなsetterの非公開、mapper・entity・dto・repository.implへの依存禁止は`backend/src/test/java/com/web/gallery/architecture/AggregateArchitectureTest.java`のArchUnitテストで機械的に検証される。presentation配下全体への依存禁止は、application層全体を対象とする`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`（`applicationShouldNotDependOnOuterLayers`）で検証される。
+コンストラクタのprivate化、publicなsetterの非公開、mapper・entity・dto・repository.implへの依存禁止は`gallery-api/src/test/java/com/web/gallery/architecture/AggregateArchitectureTest.java`のArchUnitテストで機械的に検証される。presentation配下全体への依存禁止は、application層全体を対象とする`gallery-api/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`（`applicationShouldNotDependOnOuterLayers`）で検証される。

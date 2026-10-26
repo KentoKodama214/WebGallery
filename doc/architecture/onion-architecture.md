@@ -59,7 +59,7 @@ graph TB
 | infrastructure | 永続化・セキュリティ・スケジューラ等の技術詳細。domain・applicationに依存してよい | `infrastructure/persistence/{entity,dto,mapper,repository}/{機能}/`, `infrastructure/persistence/type_handler/`, `infrastructure/scheduler/`, `infrastructure/security/`, `infrastructure/web/`, `infrastructure/helper/`, `infrastructure/config/` |
 | presentation | REST API。domain・applicationに依存してよく、infrastructureにも一方向で依存できる | `presentation/controller/{機能}/`, `presentation/request/{機能}/`, `presentation/response/{機能}/`, `presentation/converter/{機能}/` |
 
-依存方向は`backend/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`のArchUnitテストで機械的に検証されます。
+依存方向は`gallery-api/src/test/java/com/web/gallery/architecture/OnionArchitectureTest.java`のArchUnitテストで機械的に検証されます。
 
 ## 設計方針
 

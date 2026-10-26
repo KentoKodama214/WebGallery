@@ -1,8 +1,8 @@
 ---
 paths:
-  - backend/src/test/**/scheduler/**
-  - "!backend/src/test/**/scheduler/lock/**"
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/scheduler/**
+  - "!gallery-api/src/test/**/scheduler/lock/**"
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Schedulerパッケージの単体テスト規約

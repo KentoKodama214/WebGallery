@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/presentation/response/**
+  - gallery-api/**/presentation/response/**
 ---
 
 # Responseクラスのアーキテクチャルール
@@ -20,4 +20,4 @@ paths:
 
 ## 検証
 
-本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/ResponseArchitectureTest.java`のArchUnitテストで機械的に検証される。
+本ファイルのルールは`gallery-api/src/test/java/com/web/gallery/architecture/ResponseArchitectureTest.java`のArchUnitテストで機械的に検証される。
