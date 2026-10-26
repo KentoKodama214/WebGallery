@@ -122,7 +122,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Go セットアップ
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: portfolio-api/go.mod
           cache-dependency-path: portfolio-api/go.sum
