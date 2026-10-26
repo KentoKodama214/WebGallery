@@ -4,7 +4,7 @@ plugins {
 	id 'checkstyle'
 	id 'jacoco'
 	id 'com.diffplug.spotless' version '8.10.4'
-	id 'org.springframework.boot' version '4.1.1'
+	id 'org.springframework.boot' version '4.1.2'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id 'org.dddjava.jig-gradle-plugin' version '2026.9.1'
 	id 'org.cyclonedx.bom' version '3.5.1'
@@ -73,8 +73,8 @@ configurations {
 
 dependencyManagement {
 	imports {
-		mavenBom 'org.springframework.modulith:spring-modulith-bom:2.1.1'
-		mavenBom 'software.amazon.awssdk:bom:2.57.1'
+		mavenBom 'org.springframework.modulith:spring-modulith-bom:2.1.2'
+		mavenBom 'software.amazon.awssdk:bom:2.57.3'
 	}
 }
 
@@ -94,7 +94,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.1.0'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.modelmapper:modelmapper:3.2.7'
+	implementation 'org.modelmapper:modelmapper:3.2.8'
 	implementation 'software.amazon.awssdk:s3'
 	implementation 'software.amazon.awssdk:url-connection-client'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.1.1'

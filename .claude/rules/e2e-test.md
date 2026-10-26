@@ -9,7 +9,7 @@ paths:
 
 - ページ単位の検証は`pages/`に、複数ページにまたがるシナリオ（ログイン→操作→別ページでの確認等）は`scenarios/`に配置すること
 - 本番ビルド専用のスモークテスト（CSP等、`next dev`では検証できないもの）は`prod-smoke/`に配置し、`playwright.prod.config.ts`からのみ実行すること（通常の`playwright.config.ts`は`testIgnore`で除外する）
-- 共通のヘルパー・フィクスチャは`fixtures/`に配置すること（`auth.ts`＝一般アカウント認証、`admin.ts`＝管理者アカウント認証、`db.ts`＝DB接続情報、`a11y.ts`＝アクセシビリティ検証、`form.ts`＝フォーム入力ヘルパー）
+- 共通のヘルパー・フィクスチャは`fixtures/`に配置すること（`auth.ts`＝一般アカウント認証、`admin.ts`＝管理者アカウント認証、`db.ts`＝DB接続情報、`cleanup.ts`＝E2E生成アカウントの一括削除、`a11y.ts`＝アクセシビリティ検証、`form.ts`＝フォーム入力ヘルパー）
 - テスト用画像・不正ファイルは`fixtures/images/`に配置すること
 
 ## 命名規則
@@ -22,7 +22,7 @@ paths:
 - バックエンドはログイン時に同一アカウントの既存セッションを全て失効させるため（`AuthServiceImpl#login`）、認証必須のテストで単一の共有アカウントを複数ワーカーが使い回すと並列実行時にセッションを奪い合って401になる。ワーカーごとに使い捨てアカウントを1つだけ登録・ログインし、そのワーカー内の全テストで同一の`workerPage`/`adminPage`（同一ブラウザコンテキスト）を使い回すこと（`fixtures/auth.ts`の`workerPage`、`fixtures/admin.ts`の`adminPage`）
 - 「写真0件の状態を検証したい」等、共有の`workerPage`の状態（他テストが写真を登録済み等）を前提にできない検証は、`generateTestAccountId`で個別に使い捨てアカウントを登録すること
 - UI操作だけでは到達できない状態（管理者権限の初期付与、撮影場所の紐付け等）に限り、`fixtures/db.ts`の`DB_CONFIG`を用いてDBを直接更新してよい。UI経由で再現できる状態をDB直接更新で代替しないこと
-- アカウント一覧のページング境界値等、ソート順への依存があるテストは`generateSortEarlyTestAccountId`のように既存データより辞書順で先頭に来るIDを使い、ローカルでのE2E生成アカウント蓄積の影響を受けないようにすること（蓄積分は`global-setup.ts`が実行前に一括削除する）
+- アカウント一覧のページング境界値等、ソート順への依存があるテストは`generateSortEarlyTestAccountId`のように既存データより辞書順で先頭に来るIDを使い、ローカルでのE2E生成アカウント蓄積の影響を受けないようにすること（E2E生成アカウントは`global-teardown.ts`が実行後に、中断時等の取り残し分は`global-setup.ts`が実行前に一括削除する）
 
 ## クロスブラウザ・視覚回帰・アクセシビリティ検証の適用範囲
 
