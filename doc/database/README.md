@@ -83,3 +83,4 @@ docker compose --profile docs run --rm schemaspy
 16. `photo/portfolio_mst.sql` - ポートフォリオマスタテーブル
 17. `photo/portfolio_photo.sql` - ポートフォリオ写真テーブル
 18. `photo/portfolio_tag_mst.sql` - ポートフォリオタグマスタテーブル
+19. `photo/portfolio_reader.sql` - portfolio-api 用の読み取り専用ロール `portfolio_reader`（表示に必要なテーブル・列の SELECT のみを付与）
