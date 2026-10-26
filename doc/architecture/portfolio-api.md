@@ -61,7 +61,7 @@ union PortfolioLayout = FeatureLayout | GridLayout
    テンプレート固有の設定を検証する Policy を追加し、`PortfolioTemplateSettingsPolicy` の振り分けに加える
 2. portfolio-api：
    1. `internal/domain` にレイアウトの型を追加し、`BuildLayout` の分岐に加える
-   2. `graph/schema.graphqls` にレイアウトの型を追加して `PortfolioLayout` の union に加え、`just go-generate` で再生成する
+   2. `graph/schema.graphqls` にレイアウトの型を追加して `PortfolioLayout` の union に加え、`just portfolio-api-generate` で再生成する
    3. `graph/mapper.go` の `toLayout`・`toTemplate` に変換を加える
 3. Next.js：
    1. 設定画面（`src/app/[accountId]/portfolio_setting/edit/`）に、テンプレート固有の設定の入力を追加する
@@ -129,11 +129,11 @@ Next.js（公開ページ）からの接続先は `PORTFOLIO_API_URL`（既定 `
 ## 開発コマンド
 
 ```bash
-just go-run              # ローカル環境で起動（要 just db-up）
-just go-test             # 単体テスト
-just go-integrationTest  # 結合テスト（テスト用DB 5433 に読み取り専用ロールで接続）
-just go-lint             # gofmt・go vet
-just go-generate         # GraphQL のコード生成（schema.graphqls を変更したら実行）
+just portfolio-api-run              # ローカル環境で起動（要 just db-up）
+just portfolio-api-test             # 単体テスト
+just portfolio-api-integrationTest  # 結合テスト（テスト用DB 5433 に読み取り専用ロールで接続）
+just portfolio-api-lint             # gofmt・go vet
+just portfolio-api-generate         # GraphQL のコード生成（schema.graphqls を変更したら実行）
 ```
 
 本番用のイメージは `docker build -t portfolio-api ./portfolio-api` でビルドできます（distroless、非root）。

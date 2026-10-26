@@ -66,10 +66,10 @@
     他に実施した検証は、「何を、どう確かめたか」を具体的に書く
 -->
 
-- [ ] `just backend-build` でbackendのビルドが成功することを確認
-- [ ] `just backend-unitTest` で単体テストが成功することを確認
-- [ ] `just backend-integrationTest` で結合テストが成功することを確認
-- [ ] `just backend-run` で backend の起動が成功することを確認
+- [ ] `just gallery-api-build` でgallery-apiのビルドが成功することを確認
+- [ ] `just gallery-api-unitTest` で単体テストが成功することを確認
+- [ ] `just gallery-api-integrationTest` で結合テストが成功することを確認
+- [ ] `just gallery-api-run` で gallery-api の起動が成功することを確認
 - [ ] `just front-run` で frontend の起動が成功することを確認
 - [ ] `just e2e` でE2Eテストが成功することを確認
 

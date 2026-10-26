@@ -16,19 +16,19 @@ just db-up
 just db-down
 
 # backendのビルド
-just backend-build
+just gallery-api-build
 
 # backendの単体テスト実行
-just backend-unitTest
+just gallery-api-unitTest
 
 # backendアプリケーションの実行
-just backend-run
+just gallery-api-run
 
 # WARファイルのビルド
 ./gallery-api/gradlew -p gallery-api war
 
 # クリーンビルド
-just backend-clean-build
+just gallery-api-clean-build
 
 # backendのコードフォーマットチェック・整形（Spotless + Google Java Format）
 just format-check
@@ -47,11 +47,11 @@ just e2e
 just e2e-prod
 
 # portfolio-api（Go。公開ページ向けのポートフォリオ表示API）の単体テスト・結合テスト・静的解析・コード生成・起動
-just go-test
-just go-integrationTest
-just go-lint
-just go-generate
-just go-run
+just portfolio-api-test
+just portfolio-api-integrationTest
+just portfolio-api-lint
+just portfolio-api-generate
+just portfolio-api-run
 ```
 
 `portfolio-api/`（Go・GraphQL）は公開ページ向けの読み取り専用APIで、DBへは読み取り専用ロール`portfolio_reader`で接続する。DDLの所有者は`db/`とJava側のままとし、portfolio-apiは書き込みを行わない。詳細は[portfolio-api](doc/architecture/portfolio-api.md)を参照。
@@ -97,7 +97,7 @@ API仕様はアプリケーション起動後、Scalar UI（`/scalar`）また�
 
 ```bash
 # backendの単体テスト実行
-just backend-unitTest
+just gallery-api-unitTest
 
 # backendの特定のテストクラスを実行
 ./gallery-api/gradlew -p gallery-api unitTest --tests "com.web.gallery.application.service.impl.photo.PhotoServiceImplTest"

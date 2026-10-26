@@ -225,13 +225,13 @@ just front-setup
 
 ```bash
 # バックエンド
-just backend-run
+just gallery-api-run
 
 # フロントエンド
 just front-run
 
 # ポートフォリオ表示API（公開ページ /portfolio/** を表示する場合のみ）
-just go-run
+just portfolio-api-run
 ```
 
 バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000`、ポートフォリオ表示APIは `http://localhost:8081/graphql` でアクセスできます。
@@ -274,16 +274,16 @@ just go-run
 
 ```bash
 # ビルド
-just backend-build
+just gallery-api-build
 
 # 単体テストの実行
-just backend-unitTest
+just gallery-api-unitTest
 
 # 統合テストの実行（要Docker）
-just backend-integrationTest
+just gallery-api-integrationTest
 
 # 全テストの実行（要Docker）
-just backend-allTest
+just gallery-api-allTest
 
 # カバレッジレポートの生成（要Docker）
 #   単体のみ:   build/reports/jacoco/jacocoUnitReport/html/index.html
@@ -295,16 +295,16 @@ just backend-allTest
 ./gallery-api/gradlew -p gallery-api war
 
 # クリーンビルド
-just backend-clean-build
+just gallery-api-clean-build
 ```
 
 ```bash
 # portfolio-api（Go）の単体テスト・結合テスト（結合は要Docker）・静的解析・GraphQLコード生成・ローカル起動
-just go-test
-just go-integrationTest
-just go-lint
-just go-generate
-just go-run
+just portfolio-api-test
+just portfolio-api-integrationTest
+just portfolio-api-lint
+just portfolio-api-generate
+just portfolio-api-run
 ```
 
 ```bash
@@ -331,7 +331,7 @@ just e2e
 
 > **バックエンドを起動したままにしない**
 > E2Eはテストごとにアカウントを登録するため、**レート制限を無効化した専用設定
-> （`RATE_LIMIT_ENABLED=false`）で起動したバックエンドが必要**です。`just backend-run` 等で
+> （`RATE_LIMIT_ENABLED=false`）で起動したバックエンドが必要**です。`just gallery-api-run` 等で
 > 手動起動したインスタンス（既定は `RATE_LIMIT_ENABLED=true`）が8080に残っていると、
 > アカウント登録の上限（`app.rate-limit.register`＝10件/3600秒）に達して11件目以降が
 > `429` になり、**多数のテストがまとめて失敗**します。
@@ -345,7 +345,7 @@ just e2e
 > そのインスタンスを再利用できます。
 
 DB・バックエンドを自分で起動済みの場合は、フロントエンドのみで直接実行できます（この場合も
-バックエンドは `RATE_LIMIT_ENABLED=false` で起動しておく必要があります。公開ページのテストには `just go-run` で portfolio-api も起動しておいてください）。
+バックエンドは `RATE_LIMIT_ENABLED=false` で起動しておく必要があります。公開ページのテストには `just portfolio-api-run` で portfolio-api も起動しておいてください）。
 
 ```bash
 cd frontend && pnpm test:e2e
