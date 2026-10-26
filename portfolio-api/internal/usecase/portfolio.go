@@ -13,8 +13,9 @@ import (
 type PortfolioRepository interface {
 	// FindAccountNo はアカウントIDからアカウント番号を取得する。存在しない場合は found=false を返す。
 	FindAccountNo(ctx context.Context, accountID string) (accountNo int64, found bool, err error)
-	// ListPublished はアカウントの公開中のポートフォリオ一覧を、更新日時の新しい順に取得する。
-	ListPublished(ctx context.Context, accountNo int64) ([]domain.PortfolioSummary, error)
+	// ListPublished はアカウントの公開中のポートフォリオ一覧を、表示順に offset 件目から最大 limit 件取得する。
+	// keyword が空でない場合は、テーマ・タグ名のいずれかに部分一致するものに絞り込む。
+	ListPublished(ctx context.Context, accountNo int64, keyword string, limit, offset int) ([]domain.PortfolioSummary, error)
 	// FindPublished は公開中のポートフォリオを取得する。存在しない・公開されていない場合は nil を返す。
 	FindPublished(ctx context.Context, accountNo, portfolioNo int64) (*domain.Portfolio, error)
 }
@@ -22,6 +23,13 @@ type PortfolioRepository interface {
 // URLSigner は画像のオブジェクトキーから、ブラウザが直接取得できる署名付きURLを発行する。
 type URLSigner interface {
 	Sign(ctx context.Context, objectKey string) (string, error)
+}
+
+// PortfolioSummaryPage は公開中のポートフォリオ一覧の1ページ分。
+type PortfolioSummaryPage struct {
+	Portfolios []domain.PortfolioSummary
+	// HasNext は、このページより後ろに続きのポートフォリオがあるかどうか。
+	HasNext bool
 }
 
 // PublishedPortfolio は公開中のポートフォリオと、テンプレートごとのレイアウト。
@@ -41,35 +49,43 @@ func NewPortfolioQuery(repository PortfolioRepository, signer URLSigner) *Portfo
 	return &PortfolioQuery{repository: repository, signer: signer}
 }
 
-// ListPublishedPortfolios はアカウントの公開中のポートフォリオ一覧を取得する。
+// ListPublishedPortfolios はアカウントの公開中のポートフォリオ一覧を、表示順に offset 件目から最大 limit 件取得する。
 //
-// アカウントIDの形式が不正な場合・アカウントが存在しない場合は、エラーではなく空の一覧を返す
-// （公開ページで「ポートフォリオがない」場合と区別せず、アカウントの存在有無を推測させない）。
-func (q *PortfolioQuery) ListPublishedPortfolios(ctx context.Context, accountID string) ([]domain.PortfolioSummary, error) {
-	if !domain.IsValidAccountID(accountID) {
-		return []domain.PortfolioSummary{}, nil
+// keyword（前後の空白は除く）が空でない場合は、テーマ・タグ名のいずれかに部分一致するものに絞り込む。
+// アカウントIDの形式が不正な場合・アカウントが存在しない場合・検索語が長すぎる場合・取得件数や取得開始位置が範囲外の場合は、
+// エラーではなく空の一覧を返す（公開ページで「ポートフォリオがない」場合と区別せず、アカウントの存在有無を推測させない）。
+func (q *PortfolioQuery) ListPublishedPortfolios(ctx context.Context, accountID, keyword string, limit, offset int) (PortfolioSummaryPage, error) {
+	empty := PortfolioSummaryPage{Portfolios: []domain.PortfolioSummary{}}
+	normalizedKeyword, ok := domain.NormalizeKeyword(keyword)
+	if !domain.IsValidAccountID(accountID) || !ok || !domain.IsValidPortfolioPage(limit, offset) {
+		return empty, nil
 	}
 	accountNo, found, err := q.repository.FindAccountNo(ctx, accountID)
 	if err != nil {
-		return nil, fmt.Errorf("find account: %w", err)
+		return PortfolioSummaryPage{}, fmt.Errorf("find account: %w", err)
 	}
 	if !found {
-		return []domain.PortfolioSummary{}, nil
+		return empty, nil
 	}
 
-	summaries, err := q.repository.ListPublished(ctx, accountNo)
+	// 続きの有無を判定するため、1件多く取得する
+	summaries, err := q.repository.ListPublished(ctx, accountNo, normalizedKeyword, limit+1, offset)
 	if err != nil {
-		return nil, fmt.Errorf("list published portfolios: %w", err)
+		return PortfolioSummaryPage{}, fmt.Errorf("list published portfolios: %w", err)
+	}
+	hasNext := len(summaries) > limit
+	if hasNext {
+		summaries = summaries[:limit]
 	}
 	for i := range summaries {
 		if summaries[i].CoverPhoto == nil {
 			continue
 		}
 		if err := q.signPhoto(ctx, summaries[i].CoverPhoto); err != nil {
-			return nil, err
+			return PortfolioSummaryPage{}, err
 		}
 	}
-	return summaries, nil
+	return PortfolioSummaryPage{Portfolios: summaries, HasNext: hasNext}, nil
 }
 
 // GetPublishedPortfolio は公開中のポートフォリオを、テンプレートごとのレイアウトとあわせて取得する。

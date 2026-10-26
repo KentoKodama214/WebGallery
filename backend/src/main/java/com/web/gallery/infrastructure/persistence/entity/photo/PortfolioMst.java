@@ -60,6 +60,9 @@ public class PortfolioMst {
    */
   private PortfolioStatusEnum statusKbn;
 
+  /** 表示順（新規登録時はSQLで並び順の末尾の値を設定する） */
+  private Integer displayOrder;
+
   /**
    * 新規登録用のPortfolioDetailModelからPortfolioMstエンティティを生成する
    *

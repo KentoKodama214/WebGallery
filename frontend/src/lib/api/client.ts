@@ -221,7 +221,7 @@ let refreshInFlight: Promise<boolean> | null = null;
  * リフレッシュにより後発のリクエストが無効化される競合を避ける。
  *
  * セッション状態を "anonymous"（未ログイン確定）へ落とすのは、リフレッシュAPIが
- * 明確に 401/403 を返した場合のみ。ネットワーク例外や 5xx などの一時的な失敗では
+ * 204（リフレッシュトークンの cookie が無い＝未ログイン）または 401/403 を返した場合のみ。ネットワーク例外や 5xx などの一時的な失敗では
  * セッション状態を変更せず、次回のリクエストで再試行できるようにする。
  */
 export function refresh(): Promise<boolean> {
@@ -262,6 +262,16 @@ async function doRefresh(): Promise<boolean> {
       accessToken = null;
       lastRefreshTransientFailureAt = Date.now();
     }
+    return false;
+  }
+
+  // cookie が無い（未ログイン）場合、バックエンドはエラーではなく本文なしの 204 を返す
+  // （未ログインで画面を開くたびにブラウザへ 401 が記録されないようにするため）
+  if (response.status === 204) {
+    if (isStale()) return false;
+    accessToken = null;
+    sessionAuthState = "anonymous";
+    lastRefreshTransientFailureAt = 0;
     return false;
   }
 
@@ -1237,14 +1247,19 @@ export interface PortfolioTemplateList {
 }
 
 /**
- * 本人のポートフォリオ一覧（下書きを含む）を取得する
+ * 本人のポートフォリオ一覧（下書きを含む）を、表示順に1ページ分（20件）取得する
+ *
+ * @param accountId アカウントID
+ * @param filter 絞り込み条件
+ * @param pageNo ページ番号（1始まり）
  */
 export async function getPortfolioList(
   accountId: string,
-  filter: PortfolioListFilter = {}
-): Promise<PortfolioListItem[]> {
+  filter: PortfolioListFilter = {},
+  pageNo = 1
+): Promise<{ portfolioList: PortfolioListItem[]; isLast: boolean }> {
   const response = await fetchWithAuth(
-    `/api/v1/accounts/${seg(accountId)}/portfolios${toQueryString(filter)}`
+    `/api/v1/accounts/${seg(accountId)}/portfolios${toQueryString({ ...filter, pageNo })}`
   );
   if (!response.ok) {
     throw new ApiError(
@@ -1252,15 +1267,13 @@ export async function getPortfolioList(
       response.status
     );
   }
-  return (await readJson<{ portfolioList: PortfolioListItem[] }>(response)).portfolioList;
+  return readJson<{ portfolioList: PortfolioListItem[]; isLast: boolean }>(response);
 }
 
-/** ポートフォリオ一覧の絞り込み条件（いずれも部分一致。未入力の条件は送らない） */
+/** ポートフォリオ一覧の絞り込み条件（未入力の条件は送らない） */
 export interface PortfolioListFilter {
-  /** テーマ */
-  theme?: string;
-  /** タグ名（日本語・英語のいずれか） */
-  tag?: string;
+  /** 検索語（テーマ・タグ名（日本語・英語）のいずれかに部分一致） */
+  keyword?: string;
 }
 
 /**
@@ -1402,6 +1415,37 @@ export async function updatePortfolioStatus(
     );
   }
   return readJson<PortfolioEditResult>(response);
+}
+
+/**
+ * ポートフォリオを、表示順で隣のポートフォリオと入れ替えて1つ上・下へ移動する
+ *
+ * 一覧はページングして表示するため、入れ替えはサーバーが全件の並びをもとに行う。
+ * 先頭を上へ・末尾を下へ移動しようとした場合は何もしない。
+ *
+ * @param accountId アカウントID
+ * @param portfolioNo 移動するポートフォリオ番号
+ * @param direction 移動方向
+ */
+export async function movePortfolioDisplayOrder(
+  accountId: string,
+  portfolioNo: number,
+  direction: "up" | "down"
+): Promise<void> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/${seg(portfolioNo)}/display-order`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ direction }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "並び順の更新に失敗しました"),
+      response.status
+    );
+  }
 }
 
 /**

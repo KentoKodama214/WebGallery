@@ -31,6 +31,16 @@ public interface PortfolioMstMapper {
       @Param("target") PortfolioMstUpdateTarget target);
 
   /**
+   * アカウントのポートフォリオの表示順を、指定したポートフォリオ番号の並び順で1から振り直す
+   *
+   * @param accountNo アカウント番号
+   * @param portfolioNoList 表示順に並べたポートフォリオ番号のリスト（空でないこと）
+   * @return 更新件数
+   */
+  public Integer updateDisplayOrder(
+      @Param("accountNo") Long accountNo, @Param("portfolioNoList") List<Long> portfolioNoList);
+
+  /**
    * 条件に該当するポートフォリオマスタを物理削除する
    *
    * @param condition 削除対象の抽出条件
@@ -55,12 +65,25 @@ public interface PortfolioMstMapper {
   public Integer count(PortfolioMstCondition condition);
 
   /**
-   * 条件に該当するポートフォリオ一覧を、写真の枚数とあわせて取得する
+   * 条件に該当するポートフォリオ一覧を、写真の枚数とあわせて表示順に取得する
    *
    * @param condition {@link PortfolioMstCondition}
+   * @param limit 取得件数の上限（nullの場合は全件）
+   * @param offset 取得開始位置（nullの場合は先頭から）
    * @return {@link PortfolioDto}のリスト
    */
-  public List<PortfolioDto> selectList(PortfolioMstCondition condition);
+  public List<PortfolioDto> selectList(
+      @Param("condition") PortfolioMstCondition condition,
+      @Param("limit") Integer limit,
+      @Param("offset") Integer offset);
+
+  /**
+   * アカウントが作成済みのポートフォリオ番号（下書きを含む）をすべて表示順に取得し、行をロックする（SELECT ... FOR UPDATE）
+   *
+   * @param accountNo アカウント番号
+   * @return ポートフォリオ番号のリスト（表示順）
+   */
+  public List<Long> selectPortfolioNoListForUpdate(Long accountNo);
 
   /**
    * 条件に該当するポートフォリオマスタを取得する

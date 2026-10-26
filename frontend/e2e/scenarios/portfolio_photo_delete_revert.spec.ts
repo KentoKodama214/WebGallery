@@ -97,17 +97,17 @@ test.describe("ポートフォリオの公開と、写真削除による下書�
       await expect(page.getByTestId("portfolio-status")).toHaveText("公開中");
     });
 
-    await test.step("一覧をテーマで絞り込める", async () => {
+    await test.step("一覧を検索語（テーマ）で絞り込める", async () => {
       await page.goto(`/${accountId}/portfolio_setting`);
       await expect(page.getByTestId("portfolio-row")).toHaveCount(1, { timeout: 10000 });
 
-      await page.getByLabel("テーマ").fill("該当しないテーマ");
+      await page.getByLabel("テーマ・タグ").fill("該当しないテーマ");
       await page.getByRole("button", { name: "検索" }).click();
       await expect(page.getByText("条件に一致するポートフォリオはありません")).toBeVisible({
         timeout: 10000,
       });
 
-      await page.getByLabel("テーマ").fill("日本");
+      await page.getByLabel("テーマ・タグ").fill("日本");
       await page.getByRole("button", { name: "検索" }).click();
       await expect(page.getByTestId("portfolio-row").filter({ hasText: theme })).toHaveCount(1, {
         timeout: 10000,

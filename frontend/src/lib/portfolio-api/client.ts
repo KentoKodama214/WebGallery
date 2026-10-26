@@ -1,6 +1,6 @@
 import "server-only";
 import { PUBLISHED_PORTFOLIO_QUERY, PUBLISHED_PORTFOLIOS_QUERY } from "./queries";
-import type { PublicPortfolio, PublicPortfolioSummary } from "./types";
+import type { PublicPortfolio, PublicPortfolioSummaryPage } from "./types";
 
 /**
  * portfolio-api（公開ページ向けのポートフォリオ表示API。GraphQL）のクライアント
@@ -66,15 +66,21 @@ async function request<T>(query: string, variables: Record<string, unknown>): Pr
 }
 
 /**
- * 公開中のポートフォリオ一覧を取得する（アカウントが存在しない場合も空の一覧）
+ * 公開中のポートフォリオ一覧を、表示順で先頭から最大 limit 件取得する（アカウントが存在しない場合も空の一覧）
  *
  * @param accountId アカウントID
- * @returns 公開中のポートフォリオ一覧（更新日時の新しい順）
+ * @param keyword 検索語。テーマ・タグ名のいずれかに部分一致するものに絞り込む（空の場合は絞り込まない）
+ * @param limit 取得する件数の上限（portfolio-api が受け付けるのは 1〜1000）
+ * @returns 公開中のポートフォリオ一覧（表示順）と、続きがあるかどうか
  */
-export async function getPublishedPortfolios(accountId: string): Promise<PublicPortfolioSummary[]> {
-  const data = await request<{ publishedPortfolios: PublicPortfolioSummary[] }>(
+export async function getPublishedPortfolios(
+  accountId: string,
+  keyword = "",
+  limit = 20
+): Promise<PublicPortfolioSummaryPage> {
+  const data = await request<{ publishedPortfolios: PublicPortfolioSummaryPage }>(
     PUBLISHED_PORTFOLIOS_QUERY,
-    { accountId }
+    { accountId, keyword, limit }
   );
   return data.publishedPortfolios;
 }

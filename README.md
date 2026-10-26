@@ -1,6 +1,6 @@
 # WebGallery
 
-写真ギャラリーWebアプリケーションです。ユーザー登録・写真のアップロード・EXIF情報の管理・タグ付け・お気に入り機能などを備えています。
+写真ギャラリーWebアプリケーションです。ユーザー登録・写真のアップロード・EXIF情報の管理・タグ付け・お気に入り機能に加え、自分の写真から作るポートフォリオの公開ページなどを備えています。
 
 ## 目次
 
@@ -35,6 +35,7 @@
 - **タグ機能** - 写真への日本語・英語タグ付け
 - **お気に入り** - 他ユーザーの写真をお気に入り登録
 - **写真一覧** - フィルタリング（方向・タグ）やソート（撮影日・お気に入り数・季節）に対応
+- **ポートフォリオ** - 自分の写真から、テーマ・説明文・タグ・テンプレート（フィーチャー型／グリッド型）を設定したポートフォリオを作成し（作成数の上限は mini-user・normal-user ごとに環境変数 `MINI_USER_PORTFOLIO_UPPER_LIMIT` / `NORMAL_USER_PORTFOLIO_UPPER_LIMIT` で決まる。special-user・administratorは上限なし。1つのポートフォリオに写真200枚・タグ30件まで）、公開すると未ログインでも閲覧できる公開ページ（`/portfolio/{accountId}`）に表示される。下書き／公開の状態を持ち、公開中のポートフォリオで使っている写真を削除すると、その写真を外して下書きに戻す
 - **権限管理** - 4段階のユーザー権限によるアップロード枚数制限
 - **管理者機能** - アカウント一覧管理・アカウントロック/ロック解除
 
@@ -92,7 +93,7 @@
 
 - Java 21
 - Docker / Docker Compose
-- [mise](https://mise.jdx.dev/)（Node.jsバージョン管理）
+- [mise](https://mise.jdx.dev/)（Node.js・Goのバージョン管理。`.mise.toml`）
 - [just](https://github.com/casey/just)（タスクランナー）
 
 ```bash
@@ -228,9 +229,14 @@ just backend-run
 
 # フロントエンド
 just front-run
+
+# ポートフォリオ表示API（公開ページ /portfolio/** を表示する場合のみ）
+just go-run
 ```
 
-バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000` でアクセスできます。
+バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000`、ポートフォリオ表示APIは `http://localhost:8081/graphql` でアクセスできます。
+
+> ポートフォリオ表示APIは読み取り専用ロール `portfolio_reader` でDBに接続します。このロールは `db/photo/portfolio_reader.sql` でDBの初期化時にだけ作成されるため、それより前に作成したDBボリュームでは手動で適用してください（[portfolio-api](doc/architecture/portfolio-api.md) 参照）。
 
 ## ローカル動作確認用のダミーデータ投入（任意）
 
@@ -250,7 +256,7 @@ just front-run
 | `localuser02` | mini-user | データなし（空の一覧表示の確認用） |
 | `localuser03` | administrator | お問い合わせへの返信者（返信が残るため退会不可） |
 | `localuser04` | mini-user | 写真10枚・ポートフォリオ3件（いずれも作成数上限に到達）、お問い合わせ3件 |
-| `localuser05` | special-user | 写真5枚（位置情報の公開/非公開）、ポートフォリオ1件、お問い合わせ2件 |
+| `localuser05` | special-user | 写真5枚（位置情報の公開/非公開）、ポートフォリオ22件（公開ページのページング確認用）、お問い合わせ2件 |
 | `localuser06` | normal-user | ログイン失敗回数によりロック中 |
 | `localuser07` | normal-user | ロック期間経過済み（ログインすると自動解除） |
 | `localuser08` | normal-user | 管理者ロック中 |
@@ -260,6 +266,7 @@ just front-run
 
 - 写真：縦・横・正方形、撮影日時を四季・複数年に分散、位置情報の公開/非公開、タグ0件〜20件（上限）、英語タイトル・キャプションの空欄、タイトル100文字（上限）、お気に入り数0〜5件（同数あり）
 - ポートフォリオ（`localuser01`）：フィーチャー型/グリッド型 × 公開中/下書き、公開できない下書き（テーマ未入力、行の枚数と写真の枚数の不一致、写真0枚）、上限値（テーマ100文字・説明文2000文字・タグ30件）。公開中の2件（P1・P3）で写真7を共有しており、削除すると両方が下書きに戻る
+- ポートフォリオ（`localuser05`）：一覧のページング（20件ずつ）の確認用に公開中22件。表示順は番号順で、更新日時は番号が大きいほど新しい（更新日時ではなく表示順に並ぶことの確認用）
 - お問い合わせ：未対応、回答済み（既読/未読）、管理者の返信3件、取り下げ（返信あり/なし）、上限値（件名100文字・本文2000文字）。返信は `localuser03` が投稿
 - ダミー画像（ImageMagickで生成）は、アプリと同じ `{アカウント番号}/{写真番号}-{ランダム}.jpg` のオブジェクトキーでMinIOへアップロード
 
@@ -394,6 +401,8 @@ just modulith-doc
 
 REST APIの詳細は `http://localhost:8080/scalar` を参照してください。
 
+公開ページ向けのポートフォリオ表示API（GraphQL）のスキーマは `portfolio-api/graph/schema.graphqls` が正本です。詳細は [`doc/architecture/portfolio-api.md`](doc/architecture/portfolio-api.md) を参照してください。
+
 ## プロジェクト構成
 
 ```
@@ -422,7 +431,7 @@ WebGallery/
 │   ├── modulith/                   # モジュールドキュメント（Spring Modulith自動生成）
 │   └── view/                       # 画面設計書
 ├── scripts/
-│   ├── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド自動起動）
+│   ├── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド・portfolio-api自動起動）
 │   └── seed-local-data.sh          # ローカル動作確認用のダミーデータ投入スクリプト
 ├── portfolio-api/                  # 公開ページ向けのポートフォリオ表示API（Go・GraphQL。doc/architecture/portfolio-api.md）
 ├── frontend/                       # フロントエンド（Next.js）

@@ -19,6 +19,9 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 1. ログイン時に `POST /api/v1/auth/login` でアクセストークン（レスポンスボディ）とリフレッシュトークン（HttpOnly cookie）を発行
 2. APIリクエストには `Authorization: Bearer {accessToken}` ヘッダーを付与
 3. アクセストークン期限切れ時は `POST /api/v1/auth/refresh` でトークンを再発行
+   - フロントエンドは画面を開くたびにセッション復元のためリフレッシュを試みる。リフレッシュトークンの cookie が無い（未ログイン）場合は、
+     エラーではなく本文なしの `204 No Content` を返す（未ログインで公開ページ等を開くだけでブラウザに 401 が記録されないようにするため）。
+     cookie があってトークンが無効な場合は従来どおり 401 を返す
 4. ログアウト時は `POST /api/v1/auth/logout` でリフレッシュトークンを無効化
 
 リフレッシュトークンはリフレッシュのたびにローテーション（旧トークンを無効化し新トークンを発行）する。
@@ -462,3 +465,7 @@ Server Component から `src/lib/portfolio-api/client.ts`（`server-only`）経�
 - アカウントID・ポートフォリオ番号はページ側で形式を検証し、不正な値は portfolio-api を呼ばずに 404 とする
 - 画像の URL は他の画面と同じく `sanitizeImageUrl` を通し、許可されない URL は表示しない
 - レスポンスは Next.js でキャッシュしない（署名付きURLの期限切れを返さないため。詳細は [portfolio-api](./portfolio-api.md) の「キャッシュ」）
+- **レート制限はかからない**：公開ページは `/api/*` プロキシを通らないため、バックエンドの `RateLimitFilter` の対象外で、
+  portfolio-api 自身もレート制限を持たない（HTTP サーバーのタイムアウトと、クエリの複雑度・深さの上限のみ）。
+  公開ページへのリクエストは毎回 portfolio-api・DB への問い合わせになるため、本番では前段の WAF / ロードバランサで
+  `/portfolio/**` のレート制限をかけること

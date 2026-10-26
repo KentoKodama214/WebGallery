@@ -131,6 +131,20 @@ describe("api/client", () => {
       nowSpy.mockRestore();
     });
 
+    it("204（cookieが無い＝未ログイン）が返った場合は未ログイン確定とし、以降のfetchWithAuthはrefreshしない", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse(null, { status: 204 }));
+      expect(await client.refresh()).toBe(false);
+      expect(client.getAccessToken()).toBeNull();
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ data: [] }));
+      await client.fetchWithAuth("/api/v1/accounts");
+
+      const refreshCalls = fetchMock.mock.calls.filter((c) =>
+        String(c[0]).includes("/api/v1/auth/refresh")
+      );
+      expect(refreshCalls.length).toBe(1);
+    });
+
     it("401が返った場合は未ログイン確定とし、以降のfetchWithAuthはrefreshしない", async () => {
       fetchMock.mockResolvedValueOnce(
         makeResponse({ errorMessage: "unauthorized" }, { status: 401 })
@@ -290,17 +304,38 @@ describe("api/client", () => {
       await client.login("user", "pass");
     });
 
-    it("getPortfolioList は一覧APIを呼び、portfolioList を返す", async () => {
+    it("getPortfolioList は一覧APIを1ページ目で呼び、portfolioList と isLast を返す", async () => {
       fetchMock.mockResolvedValueOnce(
-        makeResponse({ portfolioList: [{ portfolioNo: 1, theme: "日本の自然" }] })
+        makeResponse({ portfolioList: [{ portfolioNo: 1, theme: "日本の自然" }], isLast: false })
       );
 
       const result = await client.getPortfolioList("me");
 
       const [url, init] = fetchMock.mock.calls.at(-1)!;
       expect(String(url)).toContain("/api/v1/accounts/me/portfolios");
+      expect(new URL(String(url), "http://localhost").searchParams.get("pageNo")).toBe("1");
       expect(new Headers(init?.headers).get("Authorization")).toBe("Bearer token-1");
-      expect(result).toEqual([{ portfolioNo: 1, theme: "日本の自然" }]);
+      expect(result).toEqual({ portfolioList: [{ portfolioNo: 1, theme: "日本の自然" }], isLast: false });
+    });
+
+    it("getPortfolioList はページ番号を pageNo のクエリパラメータで送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioList: [], isLast: true }));
+
+      await client.getPortfolioList("me", { keyword: "自然" }, 3);
+
+      const params = new URL(String(fetchMock.mock.calls.at(-1)![0]), "http://localhost").searchParams;
+      expect(params.get("pageNo")).toBe("3");
+      expect(params.get("keyword")).toBe("自然");
+    });
+
+    it("getPortfolioList は検索語を keyword のクエリパラメータで送り、未入力の場合は送らない", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioList: [] }));
+      await client.getPortfolioList("me", { keyword: "自然" });
+      expect(new URL(String(fetchMock.mock.calls.at(-1)![0]), "http://localhost").searchParams.get("keyword")).toBe("自然");
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioList: [] }));
+      await client.getPortfolioList("me", { keyword: "" });
+      expect(String(fetchMock.mock.calls.at(-1)![0])).not.toContain("keyword");
     });
 
     it("savePortfolio はポートフォリオ番号の未指定時に POST、指定時に PUT で JSON を送る", async () => {
@@ -335,6 +370,29 @@ describe("api/client", () => {
       expect(String(url)).toContain("/api/v1/accounts/me/portfolios/5/status");
       expect(init?.method).toBe("PUT");
       expect(JSON.parse(init?.body as string)).toEqual({ statusKbn: "published" });
+    });
+
+    it("movePortfolioDisplayOrder は PUT /{portfolioNo}/display-order で移動方向を送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ isSuccess: true, portfolioNo: 5 }));
+
+      await client.movePortfolioDisplayOrder("me", 5, "up");
+
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios/5/display-order");
+      expect(init?.method).toBe("PUT");
+      expect(JSON.parse(init?.body as string)).toEqual({ direction: "up" });
+    });
+
+    it("movePortfolioDisplayOrder は HTTP エラー時にメッセージと status を持つ ApiError を投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ message: "ポートフォリオが存在しません。" }, { status: 404 })
+      );
+
+      const err = await client.movePortfolioDisplayOrder("me", 9, "down").catch((e: unknown) => e);
+
+      expect(err).toBeInstanceOf(client.ApiError);
+      expect((err as InstanceType<typeof client.ApiError>).status).toBe(404);
+      expect((err as Error).message).toBe("ポートフォリオが存在しません。");
     });
 
     it("deletePortfolio は DELETE を送る", async () => {

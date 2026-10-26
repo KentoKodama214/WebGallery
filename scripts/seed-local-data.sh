@@ -9,7 +9,7 @@
 # その上で、画面の全パターンを手動でのデータ追加なしに確認できるよう、以下を新規作成する
 #   - アカウント25件（権限4種、ロック状態・退会済み、一覧のページング用のダミー）
 #   - localuser01・04・05 の写真（縦・横・正方形、位置情報の公開/非公開、タグ0〜20件、論理削除済み等）とロケーション・タグ・お気に入り
-#   - localuser01・04・05 のポートフォリオ（フィーチャー型/グリッド型 × 公開/下書き、公開不可の状態、上限値の文字列・タグ等）
+#   - localuser01・04・05 のポートフォリオ（フィーチャー型/グリッド型 × 公開/下書き、公開不可の状態、上限値の文字列・タグ、一覧のページング等）
 #   - localuser01・04・05 のお問い合わせと管理者（localuser03）の返信（未対応/回答済み（既読・未読）/取り下げ、複数返信、上限値の文字列等）
 #   - ダミー画像（ImageMagickで生成）をMinIOへアップロード
 set -euo pipefail
@@ -263,8 +263,8 @@ echo "ダミー画像と投入用SQLを生成します"
   # grid: template_settings の rows に行パターン（行の枚数の合計＝写真の枚数で公開可能）、photo_settings は {}
   cat <<'SQL'
 -- localuser01 P1: フィーチャー型・公開中（写真7は P3 と共有し、削除時に両方が下書きへ戻ることを確認する）
-INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn)
-VALUES (:u1_account_no, 1, :u1_account_no, now() - interval '30 days', :u1_account_no, now() - interval '2 days', '日本の四季', '春夏秋冬の風景を、季節の移ろいに沿って紹介します。', 'feature', '{}', 1, 'published');
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
+VALUES (:u1_account_no, 1, :u1_account_no, now() - interval '30 days', :u1_account_no, now() - interval '2 days', '日本の四季', '春夏秋冬の風景を、季節の移ろいに沿って紹介します。', 'feature', '{}', 1, 'published', 1);
 INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES
   (:u1_account_no, 1, 3, :u1_account_no, now(), 1, '{"theme": "春", "subTheme": "桜の季節", "description": "吉野の山を埋め尽くす桜並木。"}'),
   (:u1_account_no, 1, 11, :u1_account_no, now(), 2, '{"theme": "春の空", "subTheme": "", "description": ""}'),
@@ -277,8 +277,8 @@ INSERT INTO photo.portfolio_tag_mst (account_no, portfolio_no, tag_no, created_b
   (:u1_account_no, 1, 3, :u1_account_no, now(), '日本', '');
 
 -- localuser01 P2: フィーチャー型・下書き（テーマ未入力の写真があるため公開できない）
-INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn)
-VALUES (:u1_account_no, 2, :u1_account_no, now() - interval '20 days', :u1_account_no, now() - interval '1 day', '冬の北海道', '', 'feature', '{}', 1, 'draft');
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
+VALUES (:u1_account_no, 2, :u1_account_no, now() - interval '20 days', :u1_account_no, now() - interval '1 day', '冬の北海道', '', 'feature', '{}', 1, 'draft', 2);
 INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES
   (:u1_account_no, 2, 1, :u1_account_no, now(), 1, '{"theme": "雪山", "subTheme": "ニセコの朝"}'),
   (:u1_account_no, 2, 13, :u1_account_no, now(), 2, '{"theme": "", "subTheme": "テーマ未入力"}'),
@@ -287,9 +287,9 @@ INSERT INTO photo.portfolio_tag_mst (account_no, portfolio_no, tag_no, created_b
   (:u1_account_no, 2, 1, :u1_account_no, now(), '冬', 'winter');
 
 -- localuser01 P3: グリッド型・公開中（全行パターンを使用。2 + 3 + 2 + 2 = 9枚）
-INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn)
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
 VALUES (:u1_account_no, 3, :u1_account_no, now() - interval '15 days', :u1_account_no, now() - interval '3 days', '色彩のコレクション', '色をテーマに、構図の異なる写真を組み合わせました。', 'grid',
-  '{"rows": [{"pattern": "TWO_EQUAL"}, {"pattern": "THREE_EQUAL"}, {"pattern": "WIDE_NARROW"}, {"pattern": "NARROW_WIDE"}]}', 1, 'published');
+  '{"rows": [{"pattern": "TWO_EQUAL"}, {"pattern": "THREE_EQUAL"}, {"pattern": "WIDE_NARROW"}, {"pattern": "NARROW_WIDE"}]}', 1, 'published', 3);
 INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES
   (:u1_account_no, 3, 11, :u1_account_no, now(), 1, '{}'),
   (:u1_account_no, 3, 14, :u1_account_no, now(), 2, '{}'),
@@ -305,9 +305,9 @@ INSERT INTO photo.portfolio_tag_mst (account_no, portfolio_no, tag_no, created_b
   (:u1_account_no, 3, 2, :u1_account_no, now(), 'グリッド', 'grid');
 
 -- localuser01 P4: グリッド型・下書き（行の枚数の合計5枚と写真4枚が一致しないため公開できない）
-INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn)
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
 VALUES (:u1_account_no, 4, :u1_account_no, now() - interval '10 days', :u1_account_no, now() - interval '10 days', '夜と光', '', 'grid',
-  '{"rows": [{"pattern": "TWO_EQUAL"}, {"pattern": "THREE_EQUAL"}]}', 1, 'draft');
+  '{"rows": [{"pattern": "TWO_EQUAL"}, {"pattern": "THREE_EQUAL"}]}', 1, 'draft', 4);
 INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES
   (:u1_account_no, 4, 17, :u1_account_no, now(), 1, '{}'),
   (:u1_account_no, 4, 20, :u1_account_no, now(), 2, '{}'),
@@ -315,13 +315,13 @@ INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_b
   (:u1_account_no, 4, 24, :u1_account_no, now(), 4, '{}');
 
 -- localuser01 P5: フィーチャー型・下書き（写真0枚・タグ0件・説明文なし）
-INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn)
-VALUES (:u1_account_no, 5, :u1_account_no, now() - interval '5 days', :u1_account_no, now() - interval '5 days', '作成途中のポートフォリオ', '', 'feature', '{}', 1, 'draft');
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
+VALUES (:u1_account_no, 5, :u1_account_no, now() - interval '5 days', :u1_account_no, now() - interval '5 days', '作成途中のポートフォリオ', '', 'feature', '{}', 1, 'draft', 5);
 
 -- localuser01 P6: グリッド型・下書き（公開可能な状態。テーマ100文字・説明文2000文字・タグ30件の上限値）
-INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn)
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
 VALUES (:u1_account_no, 6, :u1_account_no, now() - interval '1 day', :u1_account_no, now() - interval '1 hour', repeat('長', 100), repeat(E'説明文の行です。\n', 222) || repeat('説', 2), 'grid',
-  '{"rows": [{"pattern": "TWO_EQUAL"}, {"pattern": "TWO_EQUAL"}]}', 1, 'draft');
+  '{"rows": [{"pattern": "TWO_EQUAL"}, {"pattern": "TWO_EQUAL"}]}', 1, 'draft', 6);
 INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES
   (:u1_account_no, 6, 2, :u1_account_no, now(), 1, '{}'),
   (:u1_account_no, 6, 4, :u1_account_no, now(), 2, '{}'),
@@ -332,19 +332,19 @@ SELECT :u1_account_no, 6, n, :u1_account_no, now(), 'タグ' || lpad(n::text, 2,
 FROM generate_series(1, 30) AS n;
 
 -- localuser04（mini-user）: ポートフォリオの作成数上限（ローカルは3件）に達した状態
-INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn) VALUES
-  (:u4_account_no, 1, :u4_account_no, now() - interval '9 days', :u4_account_no, now() - interval '9 days', 'ミニの散歩', '近所の散歩道で撮った写真です。', 'feature', '{}', 1, 'published'),
-  (:u4_account_no, 2, :u4_account_no, now() - interval '8 days', :u4_account_no, now() - interval '8 days', '下書きグリッド', '', 'grid', '{"rows": []}', 1, 'draft'),
-  (:u4_account_no, 3, :u4_account_no, now() - interval '7 days', :u4_account_no, now() - interval '7 days', '下書きフィーチャー', '', 'feature', '{}', 1, 'draft');
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order) VALUES
+  (:u4_account_no, 1, :u4_account_no, now() - interval '9 days', :u4_account_no, now() - interval '9 days', 'ミニの散歩', '近所の散歩道で撮った写真です。', 'feature', '{}', 1, 'published', 1),
+  (:u4_account_no, 2, :u4_account_no, now() - interval '8 days', :u4_account_no, now() - interval '8 days', '下書きグリッド', '', 'grid', '{"rows": []}', 1, 'draft', 2),
+  (:u4_account_no, 3, :u4_account_no, now() - interval '7 days', :u4_account_no, now() - interval '7 days', '下書きフィーチャー', '', 'feature', '{}', 1, 'draft', 3);
 INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES
   (:u4_account_no, 1, 1, :u4_account_no, now(), 1, '{"theme": "朝の散歩道"}'),
   (:u4_account_no, 1, 2, :u4_account_no, now(), 2, '{"theme": "夕方の散歩道", "subTheme": "帰り道"}'),
   (:u4_account_no, 3, 3, :u4_account_no, now(), 1, '{"theme": "途中"}');
 
 -- localuser05（special-user）: グリッド型・公開中（2 + 3 = 5枚）
-INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn)
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
 VALUES (:u5_account_no, 1, :u5_account_no, now() - interval '12 days', :u5_account_no, now() - interval '12 days', '灯台と砂丘', '海辺の風景を巡る旅の記録です。', 'grid',
-  '{"rows": [{"pattern": "TWO_EQUAL"}, {"pattern": "THREE_EQUAL"}]}', 1, 'published');
+  '{"rows": [{"pattern": "TWO_EQUAL"}, {"pattern": "THREE_EQUAL"}]}', 1, 'published', 1);
 INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES
   (:u5_account_no, 1, 1, :u5_account_no, now(), 1, '{}'),
   (:u5_account_no, 1, 2, :u5_account_no, now(), 2, '{}'),
@@ -353,6 +353,17 @@ INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_b
   (:u5_account_no, 1, 5, :u5_account_no, now(), 5, '{}');
 INSERT INTO photo.portfolio_tag_mst (account_no, portfolio_no, tag_no, created_by, created_at, tag_japanese_name, tag_english_name) VALUES
   (:u5_account_no, 1, 1, :u5_account_no, now(), '旅', 'travel');
+
+-- localuser05 P2〜P22: 一覧のページング確認用（1ページ20件。P1と合わせて公開中22件。special-userのため作成数上限なし）
+-- 表示順は番号順とし、更新日時は番号が大きいほど新しくする（更新日時の新しい順ではなく表示順に並ぶことを確認できるようにする）
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
+SELECT :u5_account_no, n, :u5_account_no, now() - interval '11 days', :u5_account_no, now() - ((23 - n) || ' hours')::interval,
+  'ページング確認用のポートフォリオ' || n, 'ポートフォリオ一覧のページング確認用のポートフォリオです。', 'grid',
+  '{"rows": [{"pattern": "TWO_EQUAL"}]}', 1, 'published', n
+FROM generate_series(2, 22) AS n;
+INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings)
+SELECT :u5_account_no, n, (n + d) % 5 + 1, :u5_account_no, now(), d + 1, '{}'
+FROM generate_series(2, 22) AS n, generate_series(0, 1) AS d;
 SQL
 
   # --- お問い合わせ -------------------------------------------------------------------
@@ -460,7 +471,7 @@ cat <<MSG
   localuser02 mini-user      データなし（空の一覧表示の確認用）
   localuser03 administrator  お問い合わせへの返信者（返信が残るため退会不可）
   localuser04 mini-user      写真10枚・ポートフォリオ3件（いずれも作成数上限に到達）・お問い合わせ3件
-  localuser05 special-user   写真5枚・ポートフォリオ1件・お問い合わせ2件（作成数上限なし）
+  localuser05 special-user   写真5枚・ポートフォリオ22件（公開ページのページング確認用）・お問い合わせ2件（作成数上限なし）
   localuser06 normal-user    ログイン失敗回数によりロック中
   localuser07 normal-user    ロック期間経過済み（ログインすると自動解除）
   localuser08 normal-user    管理者ロック中
