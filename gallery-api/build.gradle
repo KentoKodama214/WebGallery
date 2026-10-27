@@ -97,7 +97,7 @@ dependencies {
 	implementation 'org.modelmapper:modelmapper:3.2.8'
 	implementation 'software.amazon.awssdk:s3'
 	implementation 'software.amazon.awssdk:url-connection-client'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.1.1'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.2.0'
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 	// IPアドレスから国・地域を解決するGeoLite2（MaxMind）用リーダー
 	implementation 'com.maxmind.geoip2:geoip2:5.2.0'
