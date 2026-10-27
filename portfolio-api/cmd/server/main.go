@@ -21,6 +21,7 @@ import (
 	"github.com/KentoKodama214/WebGallery/portfolio-api/internal/usecase"
 )
 
+// main はサーバーを起動し、異常終了した場合はエラーをログに出力して終了コード 1 で終了する。
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	if err := run(logger); err != nil {
@@ -29,6 +30,15 @@ func main() {
 	}
 }
 
+// run は設定の読み込み・依存関係の組み立てを行って HTTP サーバーを起動し、停止するまで待つ。
+//
+// SIGINT・SIGTERM を受け取った場合は、処理中のリクエストを最大10秒待ってから停止する。
+//
+// 引数:
+//   - logger: 起動・停止を記録し、GraphQL の内部エラーの記録にも使うロガー
+//
+// 戻り値:
+//   - 設定の読み込み・DB の接続設定・サーバーの起動・停止に失敗した場合はエラー。正常に停止した場合は nil
 func run(logger *slog.Logger) error {
 	cfg, err := config.Load()
 	if err != nil {

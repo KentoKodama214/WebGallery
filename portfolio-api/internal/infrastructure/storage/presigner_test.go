@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+// TestPresigner_Sign は、PublicBaseURL を設定した場合に、署名付きURLのホストが PublicBaseURL になり、
+// パス形式（/バケット/キー）で発行されること、有効期限（X-Amz-Expires）が設定値になり、署名が付くことを検証する。
 func TestPresigner_Sign(t *testing.T) {
 	presigner := NewPresigner(Config{
 		Region:          "ap-northeast-1",
@@ -39,6 +41,7 @@ func TestPresigner_Sign(t *testing.T) {
 	}
 }
 
+// TestPresigner_FallsBackToEndpoint は、PublicBaseURL が未設定の場合に、署名付きURLのホストが Endpoint になることを検証する。
 func TestPresigner_FallsBackToEndpoint(t *testing.T) {
 	presigner := NewPresigner(Config{
 		Region: "ap-northeast-1", Bucket: "bucket", AccessKey: "k", SecretKey: "s",

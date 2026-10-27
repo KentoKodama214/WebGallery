@@ -5,10 +5,24 @@ import (
 	"testing"
 )
 
+// photo はテスト用の写真を作る。
+//
+// 引数:
+//   - no: 写真番号
+//
+// 戻り値:
+//   - 写真番号だけが異なるテスト用の写真（横向き）
 func photo(no int64) Photo {
 	return Photo{PhotoNo: no, ImageFilePath: "1/key", JapaneseTitle: "写真", Direction: DirectionHorizontal}
 }
 
+// portfolioPhotos はテスト用のポートフォリオの写真の一覧を作る。
+//
+// 引数:
+//   - settings: 写真ごとの写真単位のテンプレート設定（指定した数だけ写真を作る）
+//
+// 戻り値:
+//   - 写真番号・表示順を 1 から順に振った写真の一覧
 func portfolioPhotos(settings ...map[string]any) []PortfolioPhoto {
 	photos := make([]PortfolioPhoto, 0, len(settings))
 	for i, s := range settings {
@@ -17,6 +31,13 @@ func portfolioPhotos(settings ...map[string]any) []PortfolioPhoto {
 	return photos
 }
 
+// rows はグリッド型のポートフォリオ単位のテンプレート設定を作る。
+//
+// 引数:
+//   - patterns: 上から順に並べる行の行パターン
+//
+// 戻り値:
+//   - rows に行パターンの一覧を持つテンプレート設定
 func rows(patterns ...string) map[string]any {
 	list := make([]any, 0, len(patterns))
 	for _, p := range patterns {
@@ -25,6 +46,9 @@ func rows(patterns ...string) map[string]any {
 	return map[string]any{"rows": list}
 }
 
+// TestBuildLayout_Feature は、フィーチャー型のポートフォリオから写真1枚につき1セクションのレイアウトが
+// 表示順に組み立てられ、写真単位の設定のテーマ・サブテーマ・説明文がセクションに設定されることを検証する。
+// 未設定の項目・文字列以外の値は空文字になり、他テンプレートの項目は無視されることも検証する。
 func TestBuildLayout_Feature(t *testing.T) {
 	p := Portfolio{
 		Template: TemplateFeature,
@@ -51,13 +75,16 @@ func TestBuildLayout_Feature(t *testing.T) {
 	}
 }
 
+// TestBuildLayout_Grid は、グリッド型のポートフォリオで、行パターンの枚数ずつ写真が表示順に各行へ割り当てられること、
+// 設定の不整合（写真が足りない・余る、未知の行パターン、行の一覧が未設定、行がオブジェクトでない）があっても
+// エラーにせず、表示できる行までのレイアウトが組み立てられることを検証する。
 func TestBuildLayout_Grid(t *testing.T) {
 	tests := []struct {
-		name     string
-		settings map[string]any
-		photos   int
-		want     []GridRowPattern
-		wantNos  [][]int64
+		name     string           // テストケースの説明
+		settings map[string]any   // ポートフォリオ単位のテンプレート設定
+		photos   int              // ポートフォリオに設定する写真の枚数
+		want     []GridRowPattern // 期待する行パターンの一覧（上から順）
+		wantNos  [][]int64        // 期待する行ごとの写真番号（左から順）
 	}{
 		{
 			name:     "行パターンの枚数ずつ、写真を表示順に各行へ割り当てる",
@@ -136,20 +163,23 @@ func TestBuildLayout_Grid(t *testing.T) {
 	}
 }
 
+// TestBuildLayout_UnknownTemplate は、未知のテンプレートの場合にエラーになることを検証する。
 func TestBuildLayout_UnknownTemplate(t *testing.T) {
 	if _, err := BuildLayout(Portfolio{Template: "slideshow"}); err == nil {
 		t.Error("expected error for unknown template")
 	}
 }
 
+// TestIsValidAccountID は、アカウントIDが半角英数字8〜20文字の場合は true、
+// 文字数が範囲外・記号を含む・空文字・全角の場合は false になることを検証する。
 func TestIsValidAccountID(t *testing.T) {
 	tests := map[string]bool{
-		"abcd1234":              true,
-		"abcdefghij1234567890":  true,
+		"abcd1234":              true,  // 8文字（下限）
+		"abcdefghij1234567890":  true,  // 20文字（上限）
 		"abc1234":               false, // 7文字
 		"abcdefghij12345678901": false, // 21文字
-		"abcd-1234":             false,
-		"":                      false,
+		"abcd-1234":             false, // 記号を含む
+		"":                      false, // 空文字
 		"ａｂｃｄ１２３４":              false, // 全角
 	}
 	for accountID, want := range tests {

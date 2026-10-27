@@ -26,12 +26,14 @@ const (
 
 // Config はアプリケーションの設定。
 type Config struct {
+	// Env は実行環境（PORTFOLIO_API_ENV。未設定の場合は本番）。
 	Env Env
 	// Port は HTTP サーバーの待ち受けポート。
 	Port string
 	// DatabaseURL は PostgreSQL の接続文字列（読み取り専用ロール portfolio_reader で接続する）。
 	DatabaseURL string
-	Storage     storage.Config
+	// Storage は署名付きURLの発行に使う S3 の設定。
+	Storage storage.Config
 	// MaxQueryComplexity は GraphQL クエリの複雑度の上限。
 	MaxQueryComplexity int
 	// MaxQueryDepth は GraphQL クエリのネストの深さの上限。
@@ -39,15 +41,32 @@ type Config struct {
 }
 
 // IntrospectionEnabled は GraphQL のイントロスペクションを許可するかどうか（ローカル環境のみ許可する）。
+//
+// 戻り値:
+//   - 実行環境がローカルの場合は true、本番の場合は false
 func (c Config) IntrospectionEnabled() bool {
 	return c.Env == EnvLocal
 }
 
 // Load は環境変数から設定を読み込む。
+//
+// 戻り値:
+//   - 読み込んだ設定
+//   - 環境変数の値が不正な場合・必須の設定がない場合はエラー
 func Load() (Config, error) {
 	return load(os.Getenv)
 }
 
+// load は環境変数を取得する関数を使って設定を読み込む（テストで環境変数を差し替えられるよう Load から切り出している）。
+//
+// 未設定の項目には既定値を使い、ローカル用の既定値は実行環境がローカルの場合にだけ適用する。
+//
+// 引数:
+//   - getenv: 環境変数名から値を取得する関数（未設定の場合は空文字を返すもの）
+//
+// 戻り値:
+//   - 読み込んだ設定
+//   - 実行環境が未知の場合・整数の設定値が正の整数でない場合・必須の設定（DB の接続文字列、S3 のバケット・認証情報）がない場合はエラー
 func load(getenv func(string) string) (Config, error) {
 	env := Env(valueOr(getenv("PORTFOLIO_API_ENV"), string(EnvProd)))
 	if env != EnvLocal && env != EnvProd {
@@ -106,6 +125,14 @@ func load(getenv func(string) string) (Config, error) {
 	return cfg, nil
 }
 
+// valueOr は値が空文字の場合に代わりの値を返す。
+//
+// 引数:
+//   - value: 環境変数から取得した値
+//   - fallback: value が空文字の場合に使う値
+//
+// 戻り値:
+//   - value が空文字の場合は fallback、それ以外は value
 func valueOr(value, fallback string) string {
 	if value == "" {
 		return fallback
@@ -113,6 +140,16 @@ func valueOr(value, fallback string) string {
 	return value
 }
 
+// intValue は環境変数から正の整数の設定値を読み込む。
+//
+// 引数:
+//   - getenv: 環境変数名から値を取得する関数
+//   - name: 読み込む環境変数名
+//   - fallback: 環境変数が未設定の場合に使う値
+//
+// 戻り値:
+//   - 環境変数の値（未設定の場合は fallback）
+//   - 値が整数でない・0以下の場合はエラー
 func intValue(getenv func(string) string, name string, fallback int) (int, error) {
 	raw := getenv(name)
 	if raw == "" {

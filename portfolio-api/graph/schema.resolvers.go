@@ -12,6 +12,19 @@ import (
 )
 
 // PublishedPortfolios is the resolver for the publishedPortfolios field.
+//
+// アカウントの公開中のポートフォリオ一覧を1ページ分取得し、GraphQL のモデルへ変換する。
+//
+// 引数:
+//   - ctx: キャンセル・タイムアウトを伝えるコンテキスト
+//   - accountID: ポートフォリオを所有するアカウントのアカウントID
+//   - keyword: 絞り込みの検索語（nil の場合は絞り込まない）
+//   - limit: 一度に取得する件数（nil の場合は 20）
+//   - offset: 取得開始位置（nil の場合は 0）
+//
+// 戻り値:
+//   - 表示順に並べたポートフォリオと続きの有無
+//   - ユースケースが失敗した場合・未知のテンプレート等で変換できない場合はエラー
 func (r *queryResolver) PublishedPortfolios(ctx context.Context, accountID string, keyword *string, limit *int, offset *int) (*model.PortfolioSummaryPage, error) {
 	var keywordValue string
 	if keyword != nil {
@@ -41,6 +54,17 @@ func (r *queryResolver) PublishedPortfolios(ctx context.Context, accountID strin
 }
 
 // PublishedPortfolio is the resolver for the publishedPortfolio field.
+//
+// 公開中のポートフォリオをレイアウトとあわせて取得し、GraphQL のモデルへ変換する。
+//
+// 引数:
+//   - ctx: キャンセル・タイムアウトを伝えるコンテキスト
+//   - accountID: ポートフォリオを所有するアカウントのアカウントID
+//   - portfolioNo: 取得するポートフォリオのポートフォリオ番号
+//
+// 戻り値:
+//   - 公開中のポートフォリオ。存在しない・公開されていない場合は nil（GraphQL では null）
+//   - ユースケースが失敗した場合・未知のテンプレート等で変換できない場合はエラー
 func (r *queryResolver) PublishedPortfolio(ctx context.Context, accountID string, portfolioNo int) (*model.Portfolio, error) {
 	published, err := r.PortfolioQuery.GetPublishedPortfolio(ctx, accountID, int64(portfolioNo))
 	if err != nil || published == nil {

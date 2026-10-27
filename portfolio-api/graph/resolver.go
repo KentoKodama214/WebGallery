@@ -13,11 +13,14 @@ import (
 
 // PortfolioQuery はリゾルバが使うユースケース（テストで差し替えられるようインターフェースで受け取る）。
 type PortfolioQuery interface {
+	// ListPublishedPortfolios はアカウントの公開中のポートフォリオ一覧を1ページ分取得する（usecase.PortfolioQuery を参照）。
 	ListPublishedPortfolios(ctx context.Context, accountID, keyword string, limit, offset int) (usecase.PortfolioSummaryPage, error)
+	// GetPublishedPortfolio は公開中のポートフォリオをレイアウトとあわせて取得する。取得できない場合は nil を返す。
 	GetPublishedPortfolio(ctx context.Context, accountID string, portfolioNo int64) (*usecase.PublishedPortfolio, error)
 }
 
 // Resolver はリゾルバの依存関係を保持する。
 type Resolver struct {
+	// PortfolioQuery は公開中のポートフォリオを取得するユースケース。
 	PortfolioQuery PortfolioQuery
 }

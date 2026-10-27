@@ -19,17 +19,27 @@ import (
 	"github.com/KentoKodama214/WebGallery/portfolio-api/internal/usecase"
 )
 
+// fakeQuery はテスト用の graph.PortfolioQuery。あらかじめ設定した値を返し、呼び出し回数と受け取った引数を記録する。
 type fakeQuery struct {
+	// summaries は ListPublishedPortfolios が返すポートフォリオ一覧。
 	summaries []domain.PortfolioSummary
+	// published はポートフォリオ番号ごとに GetPublishedPortfolio が返すポートフォリオ（ないものは nil を返す）。
 	published map[int64]*usecase.PublishedPortfolio
-	err       error
-	hasNext   bool
-	calls     int
-	keyword   string
-	limit     int
-	offset    int
+	// err は各メソッドが返すエラー（nil の場合はエラーにしない）。
+	err error
+	// hasNext は ListPublishedPortfolios が返す続きの有無。
+	hasNext bool
+	// calls はリゾルバからユースケースが呼び出された回数（クエリが実行されなかったことの検証に使う）。
+	calls int
+	// keyword は ListPublishedPortfolios が最後に受け取った検索語。
+	keyword string
+	// limit は ListPublishedPortfolios が最後に受け取った取得件数。
+	limit int
+	// offset は ListPublishedPortfolios が最後に受け取った取得開始位置。
+	offset int
 }
 
+// ListPublishedPortfolios は呼び出し回数と受け取った引数を記録し、summaries・hasNext・err を返す。
 func (f *fakeQuery) ListPublishedPortfolios(_ context.Context, _ string, keyword string, limit, offset int) (usecase.PortfolioSummaryPage, error) {
 	f.calls++
 	f.keyword = keyword
@@ -38,6 +48,7 @@ func (f *fakeQuery) ListPublishedPortfolios(_ context.Context, _ string, keyword
 	return usecase.PortfolioSummaryPage{Portfolios: f.summaries, HasNext: f.hasNext}, f.err
 }
 
+// GetPublishedPortfolio は呼び出し回数を記録し、err が設定されていればそれを、なければ published から引いたポートフォリオを返す。
 func (f *fakeQuery) GetPublishedPortfolio(_ context.Context, _ string, portfolioNo int64) (*usecase.PublishedPortfolio, error) {
 	f.calls++
 	if f.err != nil {
@@ -46,16 +57,38 @@ func (f *fakeQuery) GetPublishedPortfolio(_ context.Context, _ string, portfolio
 	return f.published[portfolioNo], nil
 }
 
-type fakeHealth struct{ err error }
+// fakeHealth はテスト用の HealthChecker。
+type fakeHealth struct {
+	// err は Ping が返すエラー（nil の場合は疎通できたものとする）。
+	err error
+}
 
+// Ping は err を返す。
 func (f fakeHealth) Ping(context.Context) error { return f.err }
 
+// updatedAt はテスト用のポートフォリオの最終更新日時。
 var updatedAt = time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC)
 
+// signedPhoto は署名付きURLを設定済みのテスト用の写真を作る。
+//
+// 引数:
+//   - no: 写真番号（0〜9。URL の末尾に使う）
+//
+// 戻り値:
+//   - URL が "https://signed/{写真番号}" の写真（正方形）
 func signedPhoto(no int64) domain.Photo {
 	return domain.Photo{PhotoNo: no, URL: "https://signed/" + string(rune('0'+no)), JapaneseTitle: "金閣寺", Direction: domain.DirectionSquare}
 }
 
+// newTestServer は fakeQuery を使う GraphQL ハンドラでテスト用の HTTP サーバーを起動する（テスト終了時に停止する）。
+//
+// 引数:
+//   - t: テストの状態
+//   - query: リゾルバが使うユースケース
+//   - opts: GraphQL ハンドラの設定（複雑度・深さの上限が 0 の場合は本番の既定値 300・8 を使い、ログは捨てる）
+//
+// 戻り値:
+//   - 起動したテスト用の HTTP サーバー
 func newTestServer(t *testing.T, query *fakeQuery, opts Options) *httptest.Server {
 	t.Helper()
 	if opts.MaxQueryComplexity == 0 {
@@ -71,13 +104,26 @@ func newTestServer(t *testing.T, query *fakeQuery, opts Options) *httptest.Serve
 	return server
 }
 
+// gqlResponse は GraphQL のレスポンス。
 type gqlResponse struct {
-	Data   map[string]any `json:"data"`
+	// Data はクエリの結果（エラーで実行されなかった場合は nil）。
+	Data map[string]any `json:"data"`
+	// Errors はクエリのエラー（エラーがない場合は空）。
 	Errors []struct {
+		// Message はエラーメッセージ。
 		Message string `json:"message"`
 	} `json:"errors"`
 }
 
+// post は GraphQL のクエリを POST で送信し、レスポンスをデコードして返す。
+//
+// 引数:
+//   - t: テストの状態（送信・デコードに失敗した場合はテストを失敗させる）
+//   - server: 送信先のテスト用の HTTP サーバー
+//   - query: 送信する GraphQL のクエリ（変数なし）
+//
+// 戻り値:
+//   - デコードした GraphQL のレスポンス
 func post(t *testing.T, server *httptest.Server, query string) gqlResponse {
 	t.Helper()
 	body, _ := json.Marshal(map[string]any{"query": query})
@@ -93,11 +139,19 @@ func post(t *testing.T, server *httptest.Server, query string) gqlResponse {
 	return decoded
 }
 
+// toJSON は値を JSON の文字列にする（マップのキーが整列されるため、レスポンスの比較に使う）。
+//
+// 引数:
+//   - v: JSON にする値
+//
+// 戻り値:
+//   - JSON の文字列（変換に失敗した場合は空文字）
 func toJSON(v any) string {
 	b, _ := json.Marshal(v)
 	return string(b)
 }
 
+// portfolioQuery は publishedPortfolio をレイアウト（FeatureLayout・GridLayout の両方）まで取得するクエリ。変数 no にポートフォリオ番号を渡す。
 const portfolioQuery = `query($no: Int!) {
   publishedPortfolio(accountId: "owner123", portfolioNo: $no) {
     portfolioNo theme template tags { japaneseName englishName }
@@ -109,6 +163,8 @@ const portfolioQuery = `query($no: Int!) {
   }
 }`
 
+// TestPublishedPortfolio_LayoutUnion は、publishedPortfolio のレイアウトが、テンプレートに応じて
+// FeatureLayout・GridLayout のいずれかの型（__typename）で返り、各型のフィールド・タグ・列挙値が正しく変換されることを検証する。
 func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 	query := &fakeQuery{published: map[int64]*usecase.PublishedPortfolio{
 		1: {
@@ -151,6 +207,8 @@ func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 	}
 }
 
+// TestPublishedPortfolio_NullWhenNotPublished は、ユースケースがポートフォリオを返さない（公開されていない等）場合に、
+// エラーなしで publishedPortfolio が null になることを検証する。
 func TestPublishedPortfolio_NullWhenNotPublished(t *testing.T) {
 	server := newTestServer(t, &fakeQuery{}, Options{})
 
@@ -161,6 +219,8 @@ func TestPublishedPortfolio_NullWhenNotPublished(t *testing.T) {
 	}
 }
 
+// TestPublishedPortfolios は、publishedPortfolios がユースケースの返した順にポートフォリオを返し、
+// 先頭の写真がない場合は coverPhoto が null になること、hasNext・更新日時（RFC 3339）が正しく返ることを検証する。
 func TestPublishedPortfolios(t *testing.T) {
 	cover := signedPhoto(3)
 	server := newTestServer(t, &fakeQuery{summaries: []domain.PortfolioSummary{
@@ -177,6 +237,7 @@ func TestPublishedPortfolios(t *testing.T) {
 	}
 }
 
+// TestPublishedPortfolios_Keyword は、publishedPortfolios の keyword 引数がそのままユースケースへ渡されることを検証する。
 func TestPublishedPortfolios_Keyword(t *testing.T) {
 	query := &fakeQuery{summaries: []domain.PortfolioSummary{}}
 	server := newTestServer(t, query, Options{})
@@ -188,6 +249,8 @@ func TestPublishedPortfolios_Keyword(t *testing.T) {
 	}
 }
 
+// TestPublishedPortfolios_LimitOffset は、publishedPortfolios の limit・offset を省略した場合はスキーマの既定値（20・0）が、
+// 指定した場合はその値がユースケースへ渡されることを検証する。
 func TestPublishedPortfolios_LimitOffset(t *testing.T) {
 	// 省略した場合はスキーマの既定値（20件・先頭から）を渡す
 	query := &fakeQuery{summaries: []domain.PortfolioSummary{}}
@@ -203,6 +266,7 @@ func TestPublishedPortfolios_LimitOffset(t *testing.T) {
 	}
 }
 
+// TestGetTransport は、GET でクエリ（URL の query パラメータ）を送信した場合も、200 でクエリの結果が返ることを検証する。
 func TestGetTransport(t *testing.T) {
 	server := newTestServer(t, &fakeQuery{summaries: []domain.PortfolioSummary{}}, Options{})
 
@@ -218,6 +282,7 @@ func TestGetTransport(t *testing.T) {
 	}
 }
 
+// TestIntrospection は、イントロスペクションが無効の場合はエラーになり、有効の場合はエラーなしで実行できることを検証する。
 func TestIntrospection(t *testing.T) {
 	const introspection = `{ __schema { queryType { name } } }`
 
@@ -232,6 +297,8 @@ func TestIntrospection(t *testing.T) {
 	}
 }
 
+// TestDepthLimit は、フラグメントを展開した深さが上限を超えるクエリは、深さと上限を示すエラーになりリゾルバが呼び出されないこと、
+// 上限以内の深さのクエリは実行できることを検証する。
 func TestDepthLimit(t *testing.T) {
 	query := &fakeQuery{}
 	server := newTestServer(t, query, Options{MaxQueryDepth: 4})
@@ -258,6 +325,7 @@ func TestDepthLimit(t *testing.T) {
 	}
 }
 
+// TestComplexityLimit は、複雑度が上限を超えるクエリは複雑度のエラーになり、リゾルバが呼び出されないことを検証する。
 func TestComplexityLimit(t *testing.T) {
 	query := &fakeQuery{}
 	server := newTestServer(t, query, Options{MaxQueryComplexity: 3})
@@ -272,6 +340,8 @@ func TestComplexityLimit(t *testing.T) {
 	}
 }
 
+// TestInternalErrorIsHidden は、リゾルバで内部エラー（DB の接続エラー等）が発生した場合に、
+// エラーの詳細（接続先等）を返さず、固定の文言 "internal server error" だけを返すことを検証する。
 func TestInternalErrorIsHidden(t *testing.T) {
 	server := newTestServer(t, &fakeQuery{err: errors.New("dial tcp 10.0.0.1:5432: connection refused")}, Options{})
 
@@ -282,6 +352,8 @@ func TestInternalErrorIsHidden(t *testing.T) {
 	}
 }
 
+// TestRequestBodyLimit は、リクエストボディが上限を超える場合に、Content-Length で申告していれば 413 になり、
+// 申告していない（chunked）場合も読み込みを上限で打ち切ってエラーを返すこと、どちらもリゾルバが呼び出されないことを検証する。
 func TestRequestBodyLimit(t *testing.T) {
 	query := &fakeQuery{}
 	server := newTestServer(t, query, Options{})
@@ -317,13 +389,14 @@ func TestRequestBodyLimit(t *testing.T) {
 	}
 }
 
+// TestHealthz は、/healthz が依存先（DB）に疎通できる場合は 200、できない場合は 503 を返すことを検証する。
 func TestHealthz(t *testing.T) {
 	handler := NewGraphQLHandler(&graph.Resolver{PortfolioQuery: &fakeQuery{}}, Options{
 		MaxQueryComplexity: 300, MaxQueryDepth: 8, Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
 	for health, want := range map[fakeHealth]int{
-		{}:                        http.StatusOK,
-		{err: errors.New("down")}: http.StatusServiceUnavailable,
+		{}:                        http.StatusOK,                 // 疎通できる
+		{err: errors.New("down")}: http.StatusServiceUnavailable, // 疎通できない
 	} {
 		rec := httptest.NewRecorder()
 		NewMux(handler, health).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
