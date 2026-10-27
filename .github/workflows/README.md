@@ -30,15 +30,17 @@ test.yml:
   E2Eテスト（chromium） ───────────────────────→ (独立)
   E2Eテスト（cross-browser） ──────────────────→ (独立)
   フロントエンド単体テスト ─────────────────────┐
-  単体テスト ─────────────────────────────────┤
-  結合テスト ─────────────────────────────────┴→ (全て成功時) カバレッジレポート
+  gallery-api単体テスト ──────────────────────┤
+  gallery-api結合テスト ──────────────────────┤
+  portfolio-api単体テスト ────────────────────┤
+  portfolio-api結合テスト ────────────────────┴→ (全て成功時) カバレッジレポート
 ```
 
 - Javadocチェック、フォーマットチェック、依存関係の脆弱性スキャン、テスト実行は別ワークフローのため、**並列に実行**される
-- `test.yml`のテストジョブ（フロントエンド単体テスト・単体テスト・結合テスト・E2Eテスト・本番CSPスモークテスト）は互いに依存関係を持たず、すべて**同時に起動**される
+- `test.yml`のテストジョブ（フロントエンド単体テスト・gallery-api単体テスト・gallery-api結合テスト・portfolio-api単体テスト・portfolio-api結合テスト・E2Eテスト・本番CSPスモークテスト）は互いに依存関係を持たず、すべて**同時に起動**される
 - E2Eテストはブラウザ別に2ジョブ（`chromium`・`cross-browser`）へ分割され、**並列に実行**される
 - Javadocチェックの成否はテスト実行に**影響しない**
-- カバレッジレポートはフロントエンド単体テスト・バックエンド単体テスト・結合テストがすべて成功した場合のみ実行される
+- カバレッジレポートはフロントエンド単体テスト・gallery-api・portfolio-apiの単体テスト・結合テストがすべて成功した場合のみ実行される
 
 以前は結合テスト・E2Eテストを`needs: unit-test`で単体テストの成功後に起動していたが、ジョブ間で成果物の受け渡しがなく、単体テストの所要時間がそのままクリティカルパスに積まれていたため並列化した。単体テストが失敗した場合に結合テスト・E2Eテストが無駄に実行されるが、結果が返るまでの時間を優先する。
 
@@ -82,7 +84,7 @@ Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/ja
 
 `frontend`ディレクトリで`pnpm lint`（ESLint）と`pnpm test --coverage`（Jest）を実行する。バックエンドの単体テストとは独立して並列に実行される。カバレッジ集計データ（`coverage/coverage-summary.json`）はアーティファクト（`jest-coverage-summary`）としてアップロードされ、`coverage-report`ジョブで使用される。
 
-### 単体テスト (`test.yml` - `unit-test`)
+### gallery-api単体テスト (`test.yml` - `gallery-api-unit-test`)
 
 `./gradlew unitTest`を実行し、結合テスト(`*IntegrationTest*`)とMapperテスト(`*MapperTest*`、実DB接続が必要な`@MybatisTest`)を除く単体テストを実行する。
 
@@ -101,9 +103,17 @@ Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/ja
 
 OSV-Scanner CLIはGitHub Releaseからバイナリを直接ダウンロードして使用する（外部Actionは不使用）。以前はOWASP Dependency-Checkを使用していたが、NVD（米国の脆弱性データベース）データベース全体の同期が必要でCI実行時間が長時間化する問題があったため、OSVデータベースをAPI照会するOSV-Scannerに置き換えた。脆弱性が1件でも見つかった場合はジョブが失敗する（重大度による絞り込みは行わない）。スキャン結果はMarkdown形式でジョブサマリーに出力し、同じ内容をアーティファクトとしてもアップロードする。
 
-### 結合テスト (`test.yml` - `integration-test`)
+### gallery-api結合テスト (`test.yml` - `gallery-api-integration-test`)
 
 PostgreSQLサービスコンテナとMinIO（S3互換ストレージ）を起動し、`./gradlew integrationTest`を実行する。他のテストジョブと依存関係を持たず並列に実行される。
+
+### portfolio-api単体テスト (`test.yml` - `portfolio-api-unit-test`)
+
+`portfolio-api`ディレクトリで、フォーマットチェック（`gofmt -l`）・静的解析（`go vet -tags integration`）・GraphQL生成コードの差分チェック（`go generate`後の`git diff`）を行ったうえで、`go test -coverpkg=./... ./...`で単体テストを実行する。DBは使用しない。カバレッジプロファイル（`unit.out`）はアーティファクト（`go-coverage-unit`）としてアップロードされ、`coverage-report`ジョブで使用される。
+
+### portfolio-api結合テスト (`test.yml` - `portfolio-api-integration-test`)
+
+PostgreSQLサービスコンテナを起動し、`db/photo/portfolio_reader.sql`までを流してDBを初期化したうえで、本番と同じ読み取り専用ロール（`portfolio_reader`）で接続する結合テストを実行する。`-tags integration`を付けると全パッケージの単体テストも実行対象になるため、結合テスト（`//go:build integration`）を含むパッケージに限定して`go test -tags integration -coverpkg=./...`を実行する。カバレッジプロファイル（`integration.out`）はアーティファクト（`go-coverage-integration`）としてアップロードされる。
 
 ### E2Eテスト (`test.yml` - `e2e-test`)
 
@@ -126,7 +136,7 @@ E2Eテストは `next dev` で起動するため、本番でのみ付与され�
 
 ### カバレッジレポート (`test.yml` - `coverage-report`)
 
-**バックエンド（JaCoCo）:** 単体テスト・結合テストの各ジョブがアップロードしたJaCoCoの実行データ（`unitTest.exec` / `integrationTest.exec`）をダウンロードし、以下の3種類のレポート（XML/HTML）を生成する。
+**gallery-api（JaCoCo）:** gallery-api単体テスト・gallery-api結合テストの各ジョブがアップロードしたJaCoCoの実行データ（`unitTest.exec` / `integrationTest.exec`）をダウンロードし、以下の3種類のレポート（XML/HTML）を生成する。
 
 | レポート | Gradleタスク | 対象 |
 |---|---|---|
@@ -136,11 +146,18 @@ E2Eテストは `next dev` で起動するため、本番でのみ付与され�
 
 生成した3つのXMLを `.github/scripts/jacoco_coverage_table.py` で解析し、3行（単体＋結合／単体／結合）×各カバレッジ指標（命令・分岐・行・メソッド・クラス）のMarkdown表を作成する。
 
+**portfolio-api（Go）:** portfolio-api単体テスト・portfolio-api結合テストの各ジョブがアップロードしたカバレッジプロファイル（`unit.out` / `integration.out`）をダウンロードし、`.github/scripts/go_coverage_table.py` で3行（単体＋結合／単体／結合）×各カバレッジ指標（ステートメント・関数）のMarkdown表を作成する。
+
+- `-coverpkg`指定時にテストバイナリごとに重複して出力される同一ブロックは、いずれかでカバーされていればカバー済みとして統合する。単体＋結合は2つのプロファイルを同じ方法で統合して算出する
+- 結合テストのプロファイルには、テスト対象パッケージが依存しないパッケージのブロックが出力されない。JaCoCoと同様に全行の分母をモジュール全体に揃えるため、いずれかのプロファイルに含まれるブロックの和集合を共通の分母とする
+- 関数カバレッジは統合したプロファイルを`go tool cover -func`に渡し、1文でも実行された関数をカバー済みとして数える（ソースの解析が必要なため、このジョブでもGoをセットアップする）
+- gqlgenの生成コード（`graph/generated.go`・`graph/model/models_gen.go`）は集計から除外する。`graph/schema.resolvers.go`も生成マーカーを持つが、リゾルバの実装は手書きのため集計に含める
+
 **フロントエンド（Jest）:** フロントエンド単体テストジョブがアップロードしたIstanbulのカバレッジ集計データ（`coverage-summary.json`）をダウンロードし、`.github/scripts/jest_coverage_table.py` で解析して各カバレッジ指標（ステートメント・分岐・関数・行）のMarkdown表を作成する。`jest.config.js`の`collectCoverageFrom`で`src/**/*.{ts,tsx}`を対象にしているため、テストが一度もimportしないファイルも未カバーとして集計に含まれる。
 
-バックエンド・フロントエンド双方の表を連結し、**1つのPRコメント**として投稿し（`<!-- jacoco-coverage-report -->` マーカーで既存コメントを検索し、あればGitHub API経由で更新、なければ新規作成）、同じ内容をジョブサマリーにも出力する。
+gallery-api・portfolio-api・フロントエンドの表を連結し、**1つのPRコメント**として投稿し（`<!-- jacoco-coverage-report -->` マーカーで既存コメントを検索し、あればGitHub API経由で更新、なければ新規作成）、同じ内容をジョブサマリーにも出力する。
 
-フロントエンド単体テスト・バックエンド単体テスト・結合テストがすべて成功した場合のみ実行される。しきい値による失敗は設定していない（可視化のみ）。外部Actionは使用せず、`gh` CLI と Python 標準ライブラリのみで完結する。
+フロントエンド単体テスト・gallery-api・portfolio-apiの単体テスト・結合テストがすべて成功した場合のみ実行される。しきい値による失敗は設定していない（可視化のみ）。外部Actionは使用せず、`gh` CLI・Python 標準ライブラリ・Goツールチェーン（`go tool cover`）のみで完結する。
 
 ### 環境昇格PR自動作成・リリースタグ発行 (`promote-branch.yml`)
 
