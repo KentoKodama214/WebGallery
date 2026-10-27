@@ -13,6 +13,7 @@ import (
 // 複雑度の上限（extension.FixedComplexityLimit）だけでは、各階層の要素数が少ない深いネストを
 // 十分に抑えられないため、深さも別に制限する。フラグメントは展開した深さで数える。
 type DepthLimit struct {
+	// Max はクエリのネストの深さ（フィールドの階層数）の上限。
 	Max int
 }
 
@@ -28,6 +29,12 @@ func (DepthLimit) ExtensionName() string { return "DepthLimit" }
 func (DepthLimit) Validate(graphql.ExecutableSchema) error { return nil }
 
 // MutateOperationContext はクエリの深さが上限を超える場合にエラーを返し、実行させない。
+//
+// 引数:
+//   - oc: 実行しようとしているクエリの情報（Operation が nil の場合は検証しない）
+//
+// 戻り値:
+//   - 深さが Max を超える場合はエラー、それ以外は nil
 func (d DepthLimit) MutateOperationContext(_ context.Context, oc *graphql.OperationContext) *gqlerror.Error {
 	if oc.Operation == nil {
 		return nil
@@ -40,6 +47,13 @@ func (d DepthLimit) MutateOperationContext(_ context.Context, oc *graphql.Operat
 
 // selectionSetDepth は選択セットの深さ（フィールドの階層数）を返す。
 // visiting はフラグメントの循環参照で無限に再帰しないための訪問中のフラグメント名（検証済みのクエリでは循環しない）。
+//
+// 引数:
+//   - selectionSet: 深さを数える選択セット
+//   - visiting: 訪問中のフラグメント名（再帰の中で追加・削除する）
+//
+// 戻り値:
+//   - 選択セットの深さ。フィールドは1階層と数え、フラグメントは展開した深さで数える（空の場合は 0）
 func selectionSetDepth(selectionSet ast.SelectionSet, visiting map[string]bool) int {
 	maxDepth := 0
 	for _, selection := range selectionSet {

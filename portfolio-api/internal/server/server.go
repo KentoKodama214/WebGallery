@@ -31,14 +31,19 @@ const internalErrorMessage = "internal server error"
 
 // Options は GraphQL ハンドラの設定。
 type Options struct {
-	MaxQueryComplexity   int
-	MaxQueryDepth        int
+	// MaxQueryComplexity は GraphQL クエリの複雑度の上限（超えるクエリは実行しない）。
+	MaxQueryComplexity int
+	// MaxQueryDepth は GraphQL クエリのネストの深さの上限（超えるクエリは実行しない）。
+	MaxQueryDepth int
+	// IntrospectionEnabled は GraphQL のイントロスペクションを許可するかどうか。
 	IntrospectionEnabled bool
-	Logger               *slog.Logger
+	// Logger はリゾルバの内部エラー・panic を記録するロガー。
+	Logger *slog.Logger
 }
 
 // HealthChecker は依存先（DB）の疎通を確認する。
 type HealthChecker interface {
+	// Ping は依存先へ接続できるかどうかを確認する。接続できない場合はエラーを返す。
 	Ping(ctx context.Context) error
 }
 
@@ -46,6 +51,13 @@ type HealthChecker interface {
 //
 // GET でもクエリを受け付ける（Next.js 側で URL 単位にキャッシュできるようにするため）。
 // 書き込み操作（Mutation）を持たないスキーマのため、GET を許可しても状態は変化しない。
+//
+// 引数:
+//   - resolver: GraphQL のリゾルバ
+//   - opts: クエリの複雑度・深さの上限、イントロスペクションの可否、ロガー
+//
+// 戻り値:
+//   - リクエストボディのサイズを制限したうえで GraphQL のクエリを実行する HTTP ハンドラ
 func NewGraphQLHandler(resolver *graph.Resolver, opts Options) http.Handler {
 	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 	srv.AddTransport(transport.GET{})
@@ -87,6 +99,13 @@ func NewGraphQLHandler(resolver *graph.Resolver, opts Options) http.Handler {
 }
 
 // NewMux は GraphQL（/graphql）とヘルスチェック（/healthz）のルーティングを組み立てる。
+//
+// 引数:
+//   - graphqlHandler: GET・POST /graphql を処理するハンドラ
+//   - health: GET /healthz で疎通を確認する依存先
+//
+// 戻り値:
+//   - ルーティングを登録した ServeMux（/healthz は疎通できれば 200、できなければ 503 を返す）
 func NewMux(graphqlHandler http.Handler, health HealthChecker) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.Handle("GET /graphql", graphqlHandler)

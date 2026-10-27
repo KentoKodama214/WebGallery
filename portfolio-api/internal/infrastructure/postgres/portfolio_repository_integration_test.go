@@ -23,6 +23,14 @@ const (
 	defaultAdminURL  = "postgres://postgres:postgres@localhost:5433/web_gallery_test?sslmode=disable"
 )
 
+// envOr は環境変数の値を返し、未設定の場合は代わりの値を返す。
+//
+// 引数:
+//   - name: 環境変数名
+//   - fallback: 環境変数が未設定の場合に使う値
+//
+// 戻り値:
+//   - 環境変数の値（未設定の場合は fallback）
 func envOr(name, fallback string) string {
 	if value := os.Getenv(name); value != "" {
 		return value
@@ -30,6 +38,12 @@ func envOr(name, fallback string) string {
 	return fallback
 }
 
+// execFile は SQL ファイルを読み込んで実行する（失敗した場合はテストを中断する）。
+//
+// 引数:
+//   - t: テストの状態
+//   - pool: SQL を実行する接続（フィクスチャの投入・削除は管理者ユーザーの接続を使う）
+//   - path: 実行する SQL ファイルのパス
 func execFile(t *testing.T, pool *pgxpool.Pool, path string) {
 	t.Helper()
 	sql, err := os.ReadFile(path)
@@ -42,6 +56,15 @@ func execFile(t *testing.T, pool *pgxpool.Pool, path string) {
 }
 
 // setup はフィクスチャを投入し、読み取り専用ロールで接続したリポジトリを返す。
+//
+// 投入前に前回のフィクスチャを削除し、テスト終了時にも削除して接続を閉じる。
+//
+// 引数:
+//   - t: テストの状態
+//
+// 戻り値:
+//   - 読み取り専用ロールで接続したリポジトリ
+//   - リポジトリと同じ読み取り専用ロールの接続（権限の検証に使う）
 func setup(t *testing.T) (*PortfolioRepository, *pgxpool.Pool) {
 	t.Helper()
 	ctx := context.Background()
@@ -63,6 +86,8 @@ func setup(t *testing.T) (*PortfolioRepository, *pgxpool.Pool) {
 	return NewPortfolioRepository(reader), reader
 }
 
+// TestFindAccountNo は、存在するアカウントIDの場合はアカウント番号と found=true を返し、
+// 存在しないアカウントIDの場合はエラーにせず found=false を返すことを検証する。
 func TestFindAccountNo(t *testing.T) {
 	repo, _ := setup(t)
 	ctx := context.Background()
@@ -77,6 +102,9 @@ func TestFindAccountNo(t *testing.T) {
 	}
 }
 
+// TestListPublished は、アカウントの公開中のポートフォリオだけを表示順に返し、
+// テンプレート・テーマ・説明文・更新日時、写真の枚数（論理削除済みの写真を除く）・先頭の写真（表示順の先頭）、
+// タグ（タグ番号順。タグがない場合は空のスライス）が正しく取得できることを検証する。
 func TestListPublished(t *testing.T) {
 	repo, _ := setup(t)
 
@@ -116,6 +144,7 @@ func TestListPublished(t *testing.T) {
 	}
 }
 
+// TestListPublished_NoPortfolios は、公開中のポートフォリオがないアカウントの場合に、エラーにせず空のスライス（nil ではない）を返すことを検証する。
 func TestListPublished_NoPortfolios(t *testing.T) {
 	repo, _ := setup(t)
 
@@ -125,17 +154,19 @@ func TestListPublished_NoPortfolios(t *testing.T) {
 	}
 }
 
+// TestListPublished_LimitOffset は、表示順で offset 件目から最大 limit 件を返し、
+// offset が件数以上の場合は空のスライスを返すことを検証する。
 func TestListPublished_LimitOffset(t *testing.T) {
 	repo, _ := setup(t)
 
 	// 表示順（ポートフォリオ1→2）で offset 件目から最大 limit 件を返す
 	for _, c := range []struct {
-		limit, offset int
-		want          []int64
+		limit, offset int     // 取得件数・取得開始位置
+		want          []int64 // 期待するポートフォリオ番号（表示順）
 	}{
-		{1, 0, []int64{1}},
-		{1, 1, []int64{2}},
-		{10, 2, []int64{}},
+		{1, 0, []int64{1}}, // 先頭の1件
+		{1, 1, []int64{2}}, // 2件目から1件
+		{10, 2, []int64{}}, // 件数を超える取得開始位置は空
 	} {
 		got, err := repo.ListPublished(context.Background(), 900001, "", c.limit, c.offset)
 		if err != nil {
@@ -151,13 +182,16 @@ func TestListPublished_LimitOffset(t *testing.T) {
 	}
 }
 
+// TestListPublished_Keyword は、検索語がテーマ・タグ名（日本語・英語）のいずれかに部分一致（大文字・小文字を区別しない）する
+// ポートフォリオだけを返し、下書き・他アカウントのポートフォリオは一致しても返さないこと、
+// LIKE のワイルドカード文字を文字そのものとして扱うことを検証する。
 func TestListPublished_Keyword(t *testing.T) {
 	repo, _ := setup(t)
 
 	cases := []struct {
-		name    string
-		keyword string
-		want    []int64
+		name    string  // テストケースの説明
+		keyword string  // 絞り込みの検索語
+		want    []int64 // 期待するポートフォリオ番号（表示順）
 	}{
 		{"テーマに部分一致", "光", []int64{1}},
 		{"テーマ・タグ名のいずれかに一致（OR条件）", "自然", []int64{1, 2}},
@@ -181,6 +215,8 @@ func TestListPublished_Keyword(t *testing.T) {
 	}
 }
 
+// TestFindPublished は、公開中のポートフォリオを取得でき、テーマ・テンプレート・ポートフォリオ単位の設定、
+// 表示順に並べた写真（論理削除済みの写真を除き、写真単位の設定は空のマップ）、タグが正しく取得できることを検証する。
 func TestFindPublished(t *testing.T) {
 	repo, _ := setup(t)
 
@@ -213,11 +249,13 @@ func TestFindPublished(t *testing.T) {
 	}
 }
 
+// TestFindPublished_NotPublished は、下書きの場合・存在しない場合・他アカウントのポートフォリオ番号を指定した場合に、
+// エラーにせず nil を返すことを検証する。
 func TestFindPublished_NotPublished(t *testing.T) {
 	repo, _ := setup(t)
 	for _, c := range []struct {
-		name                   string
-		accountNo, portfolioNo int64
+		name                   string // テストケースの説明
+		accountNo, portfolioNo int64  // 取得するアカウント番号・ポートフォリオ番号
 	}{
 		{"下書き", 900001, 3},
 		{"存在しない", 900001, 99},
@@ -230,6 +268,8 @@ func TestFindPublished_NotPublished(t *testing.T) {
 	}
 }
 
+// TestReaderRoleCannotReadPrivateColumns は、読み取り専用ロールが非公開の列（パスワード・住所・位置情報の公開設定）を読み取れず
+// permission denied になること、テーブルを更新できないことを検証する。
 func TestReaderRoleCannotReadPrivateColumns(t *testing.T) {
 	_, reader := setup(t)
 	ctx := context.Background()

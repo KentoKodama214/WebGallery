@@ -9,6 +9,13 @@ const (
 )
 
 // IsValidPortfolioPage は一覧の取得件数・取得開始位置が許容範囲内かどうかを判定する。
+//
+// 引数:
+//   - limit: 一度に取得する件数
+//   - offset: 取得開始位置（先頭から読み飛ばす件数）
+//
+// 戻り値:
+//   - limit が 1〜PortfolioPageMaxLimit、かつ offset が 0〜PortfolioPageMaxOffset の場合は true、それ以外は false
 func IsValidPortfolioPage(limit, offset int) bool {
 	return limit >= 1 && limit <= PortfolioPageMaxLimit && offset >= 0 && offset <= PortfolioPageMaxOffset
 }

@@ -11,6 +11,14 @@ import (
 // ドメインモデルを GraphQL のモデルへ変換する。
 // 未知のテンプレート・向き・行パターンは、表示側で誤った型として扱われないようエラーにする。
 
+// toPortfolioSummary はポートフォリオ一覧の1件分を GraphQL のモデルへ変換する。
+//
+// 引数:
+//   - s: 公開中のポートフォリオ一覧の1件分（先頭の写真には署名付きURLを設定済み）
+//
+// 戻り値:
+//   - GraphQL のポートフォリオ一覧の1件分（写真がない場合は CoverPhoto が nil）
+//   - テンプレート・先頭の写真の向きが未知の場合はエラー
 func toPortfolioSummary(s domain.PortfolioSummary) (*model.PortfolioSummary, error) {
 	template, err := toTemplate(s.Template)
 	if err != nil {
@@ -35,6 +43,14 @@ func toPortfolioSummary(s domain.PortfolioSummary) (*model.PortfolioSummary, err
 	return result, nil
 }
 
+// toPortfolio は公開中のポートフォリオを GraphQL のモデルへ変換する。
+//
+// 引数:
+//   - p: 公開中のポートフォリオとレイアウト
+//
+// 戻り値:
+//   - GraphQL のポートフォリオ
+//   - テンプレート・レイアウトが変換できない場合はエラー
 func toPortfolio(p usecase.PublishedPortfolio) (*model.Portfolio, error) {
 	template, err := toTemplate(p.Portfolio.Template)
 	if err != nil {
@@ -55,6 +71,14 @@ func toPortfolio(p usecase.PublishedPortfolio) (*model.Portfolio, error) {
 	}, nil
 }
 
+// toLayout はテンプレートごとのレイアウトを GraphQL のユニオン型（PortfolioLayout）へ変換する。
+//
+// 引数:
+//   - layout: domain.FeatureLayout または domain.GridLayout
+//
+// 戻り値:
+//   - model.FeatureLayout または model.GridLayout
+//   - 未知のレイアウトの型・行パターン・写真の向きの場合はエラー
 func toLayout(layout domain.Layout) (model.PortfolioLayout, error) {
 	switch l := layout.(type) {
 	case domain.FeatureLayout:
@@ -95,6 +119,14 @@ func toLayout(layout domain.Layout) (model.PortfolioLayout, error) {
 	}
 }
 
+// toPhoto は写真を GraphQL のモデルへ変換する（オブジェクトキーは渡さず、署名付きURLだけを渡す）。
+//
+// 引数:
+//   - p: 署名付きURLを設定済みの写真
+//
+// 戻り値:
+//   - GraphQL の写真
+//   - 写真の向きが未知の場合はエラー
 func toPhoto(p domain.Photo) (*model.Photo, error) {
 	direction, ok := map[domain.Direction]model.PhotoDirection{
 		domain.DirectionVertical:   model.PhotoDirectionVertical,
@@ -114,6 +146,14 @@ func toPhoto(p domain.Photo) (*model.Photo, error) {
 	}, nil
 }
 
+// toTemplate はテンプレート区分を GraphQL の列挙型へ変換する。
+//
+// 引数:
+//   - template: テンプレート区分（DB の値）
+//
+// 戻り値:
+//   - GraphQL のテンプレート（FEATURE・GRID）
+//   - テンプレートが未知の場合はエラー
 func toTemplate(template domain.TemplateKbn) (model.PortfolioTemplate, error) {
 	switch template {
 	case domain.TemplateFeature:
@@ -125,6 +165,13 @@ func toTemplate(template domain.TemplateKbn) (model.PortfolioTemplate, error) {
 	}
 }
 
+// toTags はタグの一覧を GraphQL のモデルへ変換する。
+//
+// 引数:
+//   - tags: ポートフォリオのタグ
+//
+// 戻り値:
+//   - 同じ順に並べた GraphQL のタグ（tags が空・nil の場合は空のスライス）
 func toTags(tags []domain.Tag) []*model.Tag {
 	result := make([]*model.Tag, 0, len(tags))
 	for _, tag := range tags {
