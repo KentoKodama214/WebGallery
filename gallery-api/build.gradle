@@ -22,6 +22,9 @@ configurations.checkstyle {
 		// Checkstyle（doxia-core経由）が脆弱性のあるplexus-utils:3.3.0を推移的に含むため、
 		// 修正済みバージョンに強制（GHSA-6fmv-xxpf-w3cw対策）
 		force 'org.codehaus.plexus:plexus-utils:4.1.0'
+		// Checkstyle 10.26.1が脆弱性のあるguava:33.4.8-jreを推移的に含むため、
+		// 修正済みバージョンに強制（GHSA-xxph-c9ww-hj94対策）
+		force 'com.google.guava:guava:33.7.2-jre'
 	}
 }
 

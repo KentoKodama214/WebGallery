@@ -42,13 +42,9 @@ func (r *queryResolver) PublishedPortfolios(ctx context.Context, accountID strin
 	if err != nil {
 		return nil, err
 	}
-	portfolios := make([]*model.PortfolioSummary, 0, len(page.Portfolios))
-	for _, summary := range page.Portfolios {
-		converted, err := toPortfolioSummary(summary)
-		if err != nil {
-			return nil, err
-		}
-		portfolios = append(portfolios, converted)
+	portfolios, err := mapSlice(page.Portfolios, toPortfolioSummary)
+	if err != nil {
+		return nil, err
 	}
 	return &model.PortfolioSummaryPage{Portfolios: portfolios, HasNext: page.HasNext}, nil
 }

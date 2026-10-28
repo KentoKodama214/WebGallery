@@ -81,12 +81,12 @@ func NewPortfolioQuery(repository PortfolioRepository, signer URLSigner) *Portfo
 func (q *PortfolioQuery) ListPublishedPortfolios(ctx context.Context, accountID, keyword string, limit, offset int) (PortfolioSummaryPage, error) {
 	empty := PortfolioSummaryPage{Portfolios: []domain.PortfolioSummary{}}
 	normalizedKeyword, ok := domain.NormalizeKeyword(keyword)
-	if !domain.IsValidAccountID(accountID) || !ok || !domain.IsValidPortfolioPage(limit, offset) {
+	if !ok || !domain.IsValidPortfolioPage(limit, offset) {
 		return empty, nil
 	}
-	accountNo, found, err := q.repository.FindAccountNo(ctx, accountID)
+	accountNo, found, err := q.resolveAccountNo(ctx, accountID)
 	if err != nil {
-		return PortfolioSummaryPage{}, fmt.Errorf("find account: %w", err)
+		return PortfolioSummaryPage{}, err
 	}
 	if !found {
 		return empty, nil
@@ -125,12 +125,12 @@ func (q *PortfolioQuery) ListPublishedPortfolios(ctx context.Context, accountID,
 //   - 公開中のポートフォリオ（写真には署名付きURLを設定済み）とレイアウト。取得できない場合は nil
 //   - DB への問い合わせ・署名付きURLの発行・レイアウトの組み立てに失敗した場合はエラー
 func (q *PortfolioQuery) GetPublishedPortfolio(ctx context.Context, accountID string, portfolioNo int64) (*PublishedPortfolio, error) {
-	if !domain.IsValidAccountID(accountID) || portfolioNo <= 0 {
+	if portfolioNo <= 0 {
 		return nil, nil
 	}
-	accountNo, found, err := q.repository.FindAccountNo(ctx, accountID)
+	accountNo, found, err := q.resolveAccountNo(ctx, accountID)
 	if err != nil {
-		return nil, fmt.Errorf("find account: %w", err)
+		return nil, err
 	}
 	if !found {
 		return nil, nil
@@ -154,6 +154,27 @@ func (q *PortfolioQuery) GetPublishedPortfolio(ctx context.Context, accountID st
 		return nil, err
 	}
 	return &PublishedPortfolio{Portfolio: *portfolio, Layout: layout}, nil
+}
+
+// resolveAccountNo はアカウントIDの形式を検証したうえで、アカウント番号を取得する。
+//
+// 引数:
+//   - ctx: キャンセル・タイムアウトを伝えるコンテキスト
+//   - accountID: ポートフォリオを所有するアカウントのアカウントID
+//
+// 戻り値:
+//   - アカウント番号（取得できない場合は 0）
+//   - アカウントが存在する場合は true。アカウントIDの形式が不正な場合・存在しない場合は false（DB へは問い合わせない・エラーにしない）
+//   - DB への問い合わせに失敗した場合はエラー
+func (q *PortfolioQuery) resolveAccountNo(ctx context.Context, accountID string) (int64, bool, error) {
+	if !domain.IsValidAccountID(accountID) {
+		return 0, false, nil
+	}
+	accountNo, found, err := q.repository.FindAccountNo(ctx, accountID)
+	if err != nil {
+		return 0, false, fmt.Errorf("find account: %w", err)
+	}
+	return accountNo, found, nil
 }
 
 // signPhoto は写真のオブジェクトキーから署名付きURLを発行し、写真の URL に設定する。

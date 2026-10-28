@@ -82,41 +82,65 @@ func toPortfolio(p usecase.PublishedPortfolio) (*model.Portfolio, error) {
 func toLayout(layout domain.Layout) (model.PortfolioLayout, error) {
 	switch l := layout.(type) {
 	case domain.FeatureLayout:
-		sections := make([]*model.FeatureSection, 0, len(l.Sections))
-		for _, section := range l.Sections {
+		sections, err := mapSlice(l.Sections, func(section domain.FeatureSection) (*model.FeatureSection, error) {
 			photo, err := toPhoto(section.Photo)
 			if err != nil {
 				return nil, err
 			}
-			sections = append(sections, &model.FeatureSection{
+			return &model.FeatureSection{
 				Photo:       photo,
 				Theme:       section.Theme,
 				SubTheme:    section.SubTheme,
 				Description: section.Description,
-			})
+			}, nil
+		})
+		if err != nil {
+			return nil, err
 		}
 		return model.FeatureLayout{Sections: sections}, nil
 	case domain.GridLayout:
-		rows := make([]*model.GridRow, 0, len(l.Rows))
-		for _, row := range l.Rows {
-			pattern := model.GridRowPattern(row.Pattern)
-			if !pattern.IsValid() {
-				return nil, fmt.Errorf("unknown grid row pattern: %q", row.Pattern)
-			}
-			photos := make([]*model.GridPhoto, 0, len(row.Photos))
-			for _, gridPhoto := range row.Photos {
-				photo, err := toPhoto(gridPhoto.Photo)
-				if err != nil {
-					return nil, err
-				}
-				photos = append(photos, &model.GridPhoto{Photo: photo})
-			}
-			rows = append(rows, &model.GridRow{Pattern: pattern, Photos: photos})
+		rows, err := mapSlice(l.Rows, toGridRow)
+		if err != nil {
+			return nil, err
 		}
 		return model.GridLayout{Rows: rows}, nil
 	default:
 		return nil, fmt.Errorf("unknown layout type: %T", layout)
 	}
+}
+
+// toGridRow はグリッド型の行を GraphQL のモデルへ変換する。
+//
+// 引数:
+//   - row: グリッド型の行
+//
+// 戻り値:
+//   - GraphQL のグリッド型の行
+//   - 行パターン・写真の向きが未知の場合はエラー
+func toGridRow(row domain.GridRow) (*model.GridRow, error) {
+	pattern := model.GridRowPattern(row.Pattern)
+	if !pattern.IsValid() {
+		return nil, fmt.Errorf("unknown grid row pattern: %q", row.Pattern)
+	}
+	photos, err := mapSlice(row.Photos, func(gridPhoto domain.GridPhoto) (*model.GridPhoto, error) {
+		photo, err := toPhoto(gridPhoto.Photo)
+		if err != nil {
+			return nil, err
+		}
+		return &model.GridPhoto{Photo: photo}, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &model.GridRow{Pattern: pattern, Photos: photos}, nil
+}
+
+// photoDirections は写真の向き（DB の値）と GraphQL の列挙型の対応。
+var photoDirections = map[domain.Direction]model.PhotoDirection{
+	domain.DirectionVertical:   model.PhotoDirectionVertical,
+	domain.DirectionHorizontal: model.PhotoDirectionHorizontal,
+	domain.DirectionSquare:     model.PhotoDirectionSquare,
+	domain.DirectionNone:       model.PhotoDirectionNone,
 }
 
 // toPhoto は写真を GraphQL のモデルへ変換する（オブジェクトキーは渡さず、署名付きURLだけを渡す）。
@@ -128,12 +152,7 @@ func toLayout(layout domain.Layout) (model.PortfolioLayout, error) {
 //   - GraphQL の写真
 //   - 写真の向きが未知の場合はエラー
 func toPhoto(p domain.Photo) (*model.Photo, error) {
-	direction, ok := map[domain.Direction]model.PhotoDirection{
-		domain.DirectionVertical:   model.PhotoDirectionVertical,
-		domain.DirectionHorizontal: model.PhotoDirectionHorizontal,
-		domain.DirectionSquare:     model.PhotoDirectionSquare,
-		domain.DirectionNone:       model.PhotoDirectionNone,
-	}[p.Direction]
+	direction, ok := photoDirections[p.Direction]
 	if !ok {
 		return nil, fmt.Errorf("unknown photo direction: %q", p.Direction)
 	}
@@ -178,4 +197,25 @@ func toTags(tags []domain.Tag) []*model.Tag {
 		result = append(result, &model.Tag{JapaneseName: tag.JapaneseName, EnglishName: tag.EnglishName})
 	}
 	return result
+}
+
+// mapSlice はスライスの要素を順に変換する。1件でも変換に失敗した場合は、そこで打ち切ってエラーを返す。
+//
+// 引数:
+//   - in: 変換元のスライス
+//   - convert: 要素1件分の変換
+//
+// 戻り値:
+//   - 同じ順に並べた変換後のスライス（in が空・nil の場合は空のスライス。GraphQL で null ではなく [] を返すため）
+//   - 変換に失敗した場合は最初のエラー
+func mapSlice[T, U any](in []T, convert func(T) (U, error)) ([]U, error) {
+	out := make([]U, 0, len(in))
+	for _, v := range in {
+		converted, err := convert(v)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, converted)
+	}
+	return out, nil
 }
