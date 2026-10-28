@@ -87,6 +87,7 @@ graph TD
     end
 
     ACCOUNT_LIST -->|ギャラリーボタン| PHOTO_LIST
+    ACCOUNT_LIST -->|ポートフォリオを見る| PORTFOLIO_PUBLIC_LIST
     PHOTO_LIST -->|写真選択| PHOTO_DETAIL
     PHOTO_LIST -->|＋写真追加| PHOTO_SETTING
     PHOTO_DETAIL -->|← back| PHOTO_LIST
@@ -501,12 +502,13 @@ sequenceDiagram
 
 ### アカウント一覧 (`/account_list`)
 
-一覧にはアカウント名と「ギャラリーを見る」リンクのみを表示し、アカウントID（ログインID）は
+一覧にはアカウント名と「ギャラリーを見る」「ポートフォリオを見る」リンクのみを表示し、アカウントID（ログインID）は
 画面に表示しない（他ユーザーのログインID列挙を避けるため）。
 
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
 | 「ギャラリー」ボタン | `/photo/{accountId}/photo_list` | リンク |
+| 「ポートフォリオを見る」リンク | `/portfolio/{accountId}` | リンク |
 | メニュー「Sign In」 | `/login` | リンク（未認証時） |
 | メニュー「My Gallery」 | `/photo/{accountId}/photo_list` | リンク（認証済み時） |
 | メニュー「Sign Out」 | `/login` | ログアウト |

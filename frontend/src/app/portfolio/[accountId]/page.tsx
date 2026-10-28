@@ -155,7 +155,8 @@ export default async function PublicPortfolioListPage({ params, searchParams }: 
                         aria-hidden="true"
                       />
                     )}
-                    <h2 className="text-lg font-bold text-blue-700 group-hover:underline">
+                    {/* テーマは2行まで表示し、収まらない分は「…」で切る */}
+                    <h2 className="text-lg font-bold text-blue-700 group-hover:underline line-clamp-2 break-words">
                       {portfolio.theme}
                     </h2>
                   </Link>

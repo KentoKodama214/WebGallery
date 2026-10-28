@@ -11,7 +11,7 @@ import {
   type PortfolioListItem,
 } from "@/lib/api/client";
 import { PORTFOLIO_THEME_MAX_LENGTH } from "@/lib/validation";
-import { PORTFOLIO_STATUS_LABELS, PORTFOLIO_TEMPLATE_LABELS } from "./labels";
+import { PORTFOLIO_STATUS_LABELS } from "./labels";
 
 interface PortfolioListProps {
   /** URLのアカウントID */
@@ -249,12 +249,6 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
     );
   }
 
-  const formatDatetime = (datetime: string): string => {
-    const date = new Date(datetime);
-    if (Number.isNaN(date.getTime())) return "-";
-    return date.toLocaleString("ja-JP");
-  };
-
   return (
     <div className="flex flex-col items-center py-8 gap-4">
       <div className="w-full max-w-[800px] flex justify-between items-center px-4">
@@ -362,28 +356,20 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
           className="w-full max-w-[800px] overflow-x-auto"
           style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)" }}
         >
-          <table className="w-full border-collapse bg-white">
+          {/* 状態・公開ページ・並び順は折り返さない固定幅とし、残りの幅をテーマに充てる */}
+          <table className="w-full table-fixed border-collapse bg-white">
             <thead>
               <tr style={{ backgroundColor: "#1565C0" }}>
                 <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
                   テーマ
                 </th>
-                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
-                  テンプレート
-                </th>
-                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
-                  写真
-                </th>
-                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
+                <th className="w-24 py-3 px-4 text-center text-white font-bold border border-gray-300 whitespace-nowrap">
                   状態
                 </th>
-                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
-                  更新日時
-                </th>
-                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
+                <th className="w-32 py-3 px-4 text-center text-white font-bold border border-gray-300 whitespace-nowrap">
                   公開ページ
                 </th>
-                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
+                <th className="w-28 py-3 px-4 text-center text-white font-bold border border-gray-300 whitespace-nowrap">
                   並び順
                 </th>
               </tr>
@@ -392,18 +378,16 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
               {portfolios.map((portfolio, index) => (
                 <tr key={portfolio.portfolioNo} data-testid="portfolio-row">
                   <td className="py-3 px-4 border border-gray-300">
+                    {/* テーマは1行に収め、収まらない分は「…」で切る */}
                     <Link
                       href={`/${accountId}/portfolio_setting/edit?portfolioNo=${portfolio.portfolioNo}`}
-                      className="text-blue-700 hover:underline"
+                      title={portfolio.theme}
+                      className="block truncate text-blue-700 hover:underline"
                     >
                       {portfolio.theme}
                     </Link>
                   </td>
-                  <td className="py-3 px-4 border border-gray-300">
-                    {PORTFOLIO_TEMPLATE_LABELS[portfolio.templateKbn] ?? portfolio.templateKbn}
-                  </td>
-                  <td className="py-3 px-4 border border-gray-300">{portfolio.photoCount}枚</td>
-                  <td className="py-3 px-4 border border-gray-300">
+                  <td className="py-3 px-4 border border-gray-300 whitespace-nowrap text-center">
                     <span
                       className={
                         portfolio.statusKbn === "published"
@@ -414,10 +398,7 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
                       {PORTFOLIO_STATUS_LABELS[portfolio.statusKbn] ?? portfolio.statusKbn}
                     </span>
                   </td>
-                  <td className="py-3 px-4 border border-gray-300">
-                    {formatDatetime(portfolio.updatedAt)}
-                  </td>
-                  <td className="py-3 px-4 border border-gray-300">
+                  <td className="py-3 px-4 border border-gray-300 whitespace-nowrap text-center">
                     {/* 公開ページは公開中のポートフォリオだけが閲覧できるため、公開中の行にだけリンクを載せる */}
                     {portfolio.statusKbn === "published" ? (
                       <Link
@@ -433,8 +414,8 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
                       <span className="text-gray-600">-</span>
                     )}
                   </td>
-                  <td className="py-3 px-4 border border-gray-300">
-                    <div className="flex gap-1">
+                  <td className="py-3 px-4 border border-gray-300 whitespace-nowrap">
+                    <div className="flex justify-center gap-1">
                       {(["up", "down"] as const).map((direction) => (
                         <button
                           key={direction}

@@ -11,6 +11,12 @@ test.describe("アカウント一覧ページ", () => {
     await expect(page).toHaveTitle(/アカウント一覧/);
   });
 
+  test("ページ上部に「写真家」のタイトルが表示されること", async ({ page }) => {
+    await expect(page.getByRole("heading", { level: 1, name: "写真家" })).toBeVisible({
+      timeout: 10000,
+    });
+  });
+
   test("未ログイン状態ではヘッダーメニューにSign Inが表示されること", async ({ page }) => {
     await page.getByTestId("hamburger-button").click();
     const menu = page.getByTestId("overlay-menu");
@@ -25,6 +31,7 @@ test.describe("アカウント一覧ページ", () => {
       timeout: 10000,
     });
     await expect(page.getByRole("columnheader", { name: "ギャラリー" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "ポートフォリオ" })).toBeVisible();
   });
 
   test("アクセシビリティ違反がないこと", async ({ page }, testInfo) => {
@@ -88,6 +95,10 @@ test.describe("アカウント一覧ページ（ログイン済み）", () => {
 
     const row = await revealAccountRow(page, accountName);
     await expect(row).toBeVisible();
+    await expect(row.getByRole("link", { name: "ポートフォリオを見る" })).toHaveAttribute(
+      "href",
+      `/portfolio/${accountId}`
+    );
 
     await row.getByRole("link", { name: "ギャラリーを見る" }).click();
     await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list$`), {

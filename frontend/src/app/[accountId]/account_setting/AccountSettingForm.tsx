@@ -475,7 +475,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
             className="bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-5"
           >
             <h1 className="text-[#444] text-[1.2em] font-bold mt-[10px] mb-[30px] border-b border-[#eee] pb-5">
-              Account Setting
+              アカウント設定
             </h1>
 
             <label htmlFor="account-setting-id" className="block text-[#444] text-sm mb-1">アカウントID</label>
