@@ -65,7 +65,7 @@ func run(logger *slog.Logger) error {
 
 	httpServer := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           server.NewMux(graphqlHandler, repository),
+		Handler:           server.NewMux(graphqlHandler, pool),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      30 * time.Second,
