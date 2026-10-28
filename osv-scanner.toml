@@ -31,3 +31,15 @@ reason = "braces 3.0.3が最新リリースで修正版が未提供。ESLint実�
 id = "GHSA-hp3w-g68c-fv3c"
 ignoreUntil = 2027-01-31
 reason = "sprintf-js 1.1.3が最新リリースで修正版が未提供、かつargparse@1.0.10が~1.0.2に固定。Jestのカバレッジ計測時のみ利用するdevDependencyで、フォーマット文字列は外部入力を受けないため影響なし。"
+
+# deepmerge（テスト実行時のみ利用するdevDependency）
+#   mergeObject()が書き込むキーを検証しないため、細工したオブジェクトをマージすると
+#   戻り値のプロトタイプに攻撃者が制御するプロパティを注入できる（prototype poisoning）。
+#   依存チェーン：jest / ts-jest → @jest/core / jest-cli → jest-config → deepmerge@4.3.1
+#   deepmergeの最新リリースは4.3.1で、アドバイザリのlast_affectedも4.3.1のため修正版が存在しない。
+#   jest-config 30.5.2（最新）もdeepmerge ^4.3.1を要求しており、上流を更新しても回避できない。
+#   jest-configはJestの既定値・プリセットと自リポジトリのJest設定のマージにのみ使い、外部入力を受けないため、実際の影響はない。
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-01-31
+reason = "deepmerge 4.3.1が最新リリースで修正版が未提供、かつjest-config 30.5.2（最新）が^4.3.1を要求。Jestの設定読み込み時のみ利用するdevDependencyで、マージ対象は自リポジトリのJest設定のため影響なし。"
