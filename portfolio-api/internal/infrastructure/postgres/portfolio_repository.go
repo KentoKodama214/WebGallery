@@ -7,9 +7,7 @@ package postgres
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -128,11 +126,7 @@ func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	summaries := make([]domain.PortfolioSummary, 0)
-	portfolioNos := make([]int64, 0)
-	for rows.Next() {
+	summaries, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (domain.PortfolioSummary, error) {
 		var (
 			s          domain.PortfolioSummary
 			template   string
@@ -143,9 +137,9 @@ func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64
 			coverEn    *string
 			coverDir   *string
 		)
-		if err := rows.Scan(&s.PortfolioNo, &s.Theme, &s.Description, &template, &s.UpdatedAt,
+		if err := row.Scan(&s.PortfolioNo, &s.Theme, &s.Description, &template, &s.UpdatedAt,
 			&photoCount, &coverNo, &coverPath, &coverJa, &coverEn, &coverDir); err != nil {
-			return nil, err
+			return s, err
 		}
 		s.Template = domain.TemplateKbn(template)
 		s.PhotoCount = int(photoCount)
@@ -158,13 +152,16 @@ func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64
 				Direction:     domain.Direction(*coverDir),
 			}
 		}
-		summaries = append(summaries, s)
-		portfolioNos = append(portfolioNos, s.PortfolioNo)
-	}
-	if err := rows.Err(); err != nil {
+		return s, nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
+	portfolioNos := make([]int64, 0, len(summaries))
+	for _, s := range summaries {
+		portfolioNos = append(portfolioNos, s.PortfolioNo)
+	}
 	tags, err := r.findTags(ctx, accountNo, portfolioNos)
 	if err != nil {
 		return nil, err
@@ -249,24 +246,20 @@ func (r *PortfolioRepository) findPhotos(ctx context.Context, accountNo, portfol
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	photos := make([]domain.PortfolioPhoto, 0)
-	for rows.Next() {
+	return pgx.CollectRows(rows, func(row pgx.CollectableRow) (domain.PortfolioPhoto, error) {
 		var (
 			pp        domain.PortfolioPhoto
 			settings  map[string]any
 			direction string
 		)
-		if err := rows.Scan(&pp.DisplayOrder, &settings, &pp.Photo.PhotoNo, &pp.Photo.ImageFilePath,
+		if err := row.Scan(&pp.DisplayOrder, &settings, &pp.Photo.PhotoNo, &pp.Photo.ImageFilePath,
 			&pp.Photo.JapaneseTitle, &pp.Photo.EnglishTitle, &direction); err != nil {
-			return nil, err
+			return pp, err
 		}
 		pp.Settings = settingsOrEmpty(settings)
 		pp.Photo.Direction = domain.Direction(direction)
-		photos = append(photos, pp)
-	}
-	return photos, rows.Err()
+		return pp, nil
+	})
 }
 
 // findTags は複数のポートフォリオのタグを一括で取得し、ポートフォリオ番号ごとにタグ番号順でまとめる。
@@ -292,18 +285,23 @@ func (r *PortfolioRepository) findTags(ctx context.Context, accountNo int64, por
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var (
-			portfolioNo int64
-			tag         domain.Tag
-		)
-		if err := rows.Scan(&portfolioNo, &tag.JapaneseName, &tag.EnglishName); err != nil {
-			return nil, err
-		}
-		result[portfolioNo] = append(result[portfolioNo], tag)
+	// ポートフォリオ番号とタグの組（行の順＝ポートフォリオ番号・タグ番号順）
+	type portfolioTag struct {
+		portfolioNo int64
+		tag         domain.Tag
 	}
-	return result, rows.Err()
+	portfolioTags, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (portfolioTag, error) {
+		var pt portfolioTag
+		err := row.Scan(&pt.portfolioNo, &pt.tag.JapaneseName, &pt.tag.EnglishName)
+		return pt, err
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, pt := range portfolioTags {
+		result[pt.portfolioNo] = append(result[pt.portfolioNo], pt.tag)
+	}
+	return result, nil
 }
 
 // toContainsPattern は検索語を部分一致の LIKE パターンに変換する。
@@ -347,20 +345,4 @@ func settingsOrEmpty(settings map[string]any) map[string]any {
 		return map[string]any{}
 	}
 	return settings
-}
-
-// Ping は DB への接続を確認する（ヘルスチェック用）。
-//
-// 引数:
-//   - ctx: キャンセル・タイムアウトを伝えるコンテキスト（さらに2秒のタイムアウトを設ける）
-//
-// 戻り値:
-//   - 接続できない場合・2秒以内に応答がない場合はエラー
-func (r *PortfolioRepository) Ping(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-	if err := r.pool.Ping(ctx); err != nil {
-		return fmt.Errorf("ping database: %w", err)
-	}
-	return nil
 }
