@@ -89,8 +89,10 @@ export function AccountList() {
 
   return (
     <div className="flex flex-col items-center py-8 gap-4 px-4">
-      {/* 見出しレベル1はどの表示状態でも1つ存在させる（一覧の見出しは表組み側にあるためsr-onlyで補う） */}
-      <h1 className="sr-only">アカウント一覧</h1>
+      {/* 見出しレベル1はどの表示状態でも1つ存在させる（取得中・取得失敗でもDOMから外さない） */}
+      <div className="w-full max-w-[650px] flex items-center px-4">
+        <h1 className="text-xl font-bold">写真家</h1>
+      </div>
 
       {isLoading ? (
         <div className="flex justify-center items-center min-h-[200px]">
@@ -121,6 +123,9 @@ export function AccountList() {
               <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
                 ギャラリー
               </th>
+              <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
+                ポートフォリオ
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -145,6 +150,14 @@ export function AccountList() {
                     className="text-blue-600 hover:underline"
                   >
                     ギャラリーを見る
+                  </Link>
+                </td>
+                <td className="py-3 px-4 border border-gray-300">
+                  <Link
+                    href={`/portfolio/${account.accountId}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    ポートフォリオを見る
                   </Link>
                 </td>
               </tr>

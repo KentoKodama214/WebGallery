@@ -136,16 +136,17 @@ export function InquiryList() {
           className="w-full max-w-[800px] overflow-x-auto"
           style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)" }}
         >
-          <table className="w-full border-collapse bg-white">
+          {/* ステータス・投稿日時は折り返さない固定幅とし、残りの幅を件名に充てる */}
+          <table className="w-full table-fixed border-collapse bg-white">
             <thead>
               <tr style={{ backgroundColor: "#2196F3" }}>
                 <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
                   件名
                 </th>
-                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
+                <th className="w-32 py-3 px-4 text-center text-white font-bold border border-gray-300 whitespace-nowrap">
                   ステータス
                 </th>
-                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
+                <th className="w-52 py-3 px-4 text-left text-white font-bold border border-gray-300 whitespace-nowrap">
                   投稿日時
                 </th>
               </tr>
@@ -154,19 +155,23 @@ export function InquiryList() {
               {inquiries.map((inquiry) => (
                 <tr key={inquiry.inquiryNo}>
                   <td className="py-3 px-4 border border-gray-300">
-                    <Link
-                      href={`/inquiry/detail?inquiryNo=${inquiry.inquiryNo}`}
-                      className="text-[#2196F3] hover:underline"
-                    >
-                      {inquiry.subject}
-                    </Link>
-                    {inquiry.statusKbn === "replied" && !inquiry.isReadByUser && (
-                      <span className="ml-2 inline-block px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">
-                        未読
-                      </span>
-                    )}
+                    {/* 件名は1行に収め、収まらない分は「…」で切る（未読バッジは縮めない） */}
+                    <div className="flex items-center min-w-0">
+                      <Link
+                        href={`/inquiry/detail?inquiryNo=${inquiry.inquiryNo}`}
+                        title={inquiry.subject}
+                        className="truncate text-[#2196F3] hover:underline"
+                      >
+                        {inquiry.subject}
+                      </Link>
+                      {inquiry.statusKbn === "replied" && !inquiry.isReadByUser && (
+                        <span className="ml-2 shrink-0 inline-block px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">
+                          未読
+                        </span>
+                      )}
+                    </div>
                   </td>
-                  <td className="py-3 px-4 border border-gray-300">
+                  <td className="py-3 px-4 border border-gray-300 whitespace-nowrap text-center">
                     <span
                       className={
                         inquiry.statusKbn === "replied"
@@ -179,7 +184,7 @@ export function InquiryList() {
                       {STATUS_LABELS[inquiry.statusKbn] ?? inquiry.statusKbn}
                     </span>
                   </td>
-                  <td className="py-3 px-4 border border-gray-300">
+                  <td className="py-3 px-4 border border-gray-300 whitespace-nowrap">
                     {formatDatetime(inquiry.createdAt)}
                   </td>
                 </tr>

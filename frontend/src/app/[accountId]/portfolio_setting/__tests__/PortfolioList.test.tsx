@@ -54,7 +54,7 @@ describe("PortfolioList", () => {
     );
   });
 
-  it("一覧にテーマ（編集画面へのリンク）・テンプレート・写真の枚数・公開状態が表示されること", async () => {
+  it("一覧にテーマ（編集画面へのリンク）・公開状態が表示され、テンプレート・写真の枚数・更新日時は表示されないこと", async () => {
     mockGetPortfolioList.mockResolvedValue(
       page([
         samplePortfolio,
@@ -71,11 +71,14 @@ describe("PortfolioList", () => {
       "href",
       "/user1/portfolio_setting/edit?portfolioNo=2"
     );
-    expect(screen.getByText("グリッド")).toBeInTheDocument();
-    expect(screen.getByText("フィーチャー")).toBeInTheDocument();
     expect(screen.getByText("公開中")).toBeInTheDocument();
     expect(screen.getByText("下書き")).toBeInTheDocument();
-    expect(screen.getAllByText("5枚")).toHaveLength(2);
+    expect(screen.queryByRole("columnheader", { name: "テンプレート" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "写真" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "更新日時" })).not.toBeInTheDocument();
+    expect(screen.queryByText("グリッド")).not.toBeInTheDocument();
+    expect(screen.queryByText("フィーチャー")).not.toBeInTheDocument();
+    expect(screen.queryByText("5枚")).not.toBeInTheDocument();
   });
 
   it("公開中のポートフォリオにだけ公開ページへのリンクを表示し、一覧全体の「公開ページを見る」は表示しないこと", async () => {

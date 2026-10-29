@@ -93,7 +93,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     expect(screen.getByDisplayValue("testuser1")).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     // 出身地と居住地の2つのselectにそれぞれ同じ都道府県が表示される
@@ -121,7 +121,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     const accountIdInput = screen.getByDisplayValue("testuser1");
@@ -141,7 +141,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "登録" }));
@@ -164,7 +164,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
@@ -187,7 +187,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.type(
@@ -209,7 +209,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "アカウント削除" }));
@@ -247,7 +247,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "アカウント削除" }));
@@ -273,7 +273,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "登録" }));
@@ -298,7 +298,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "登録" }));
@@ -322,7 +322,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
@@ -360,7 +360,7 @@ describe("AccountSettingForm", () => {
     const { unmount } = render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
@@ -388,7 +388,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     expect(
@@ -417,7 +417,7 @@ describe("AccountSettingForm", () => {
 
     const { unmount } = render(<AccountSettingForm accountId="testuser1" />);
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     // 2回失敗（クールダウン上限=3 には未達なのでクールダウン表示は出ない）
@@ -431,7 +431,7 @@ describe("AccountSettingForm", () => {
     unmount();
     render(<AccountSettingForm accountId="testuser1" />);
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
     await submitWrongPassword();
 
@@ -450,7 +450,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "登録" }));
@@ -469,7 +469,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
@@ -502,7 +502,7 @@ describe("AccountSettingForm", () => {
     await user.click(screen.getByRole("button", { name: "再読み込み" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
   });
 
@@ -520,7 +520,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     const birthdateInput = screen.getByLabelText("生年月日");
@@ -545,7 +545,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     const nameInput = screen.getByLabelText("アカウント名");
@@ -569,7 +569,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
@@ -597,7 +597,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.selectOptions(screen.getByLabelText("性別"), "woman");
@@ -627,7 +627,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "アカウント削除" }));
@@ -646,7 +646,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "アカウント削除" }));
@@ -678,7 +678,7 @@ describe("AccountSettingForm", () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     await waitFor(() => {
-      expect(screen.getByText("Account Setting")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "登録" }));
