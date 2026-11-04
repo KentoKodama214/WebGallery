@@ -2,6 +2,7 @@
 #
 # 修正版が未リリースで、かつ依存チェーン上こちらから対処できない脆弱性のみをここに記載する。
 # 修正版が存在する脆弱性は必ずpnpm-lock.yaml側を更新して解消し、ここには追加しない。
+# 例外として、修正版が依存元の要求範囲外のメジャーバージョンにしかなく、強制すると依存元が動作しなくなるものに限り記載してよい。
 #
 # ignoreUntilを必ず設定し、期限切れとともにスキャンが再度失敗することで棚卸しを強制する。
 # 棚卸し時は各脆弱性の修正版リリース状況を確認し、リリース済みなら依存を更新して該当エントリを削除する。
@@ -43,3 +44,28 @@ reason = "sprintf-js 1.1.3が最新リリースで修正版が未提供、かつ
 id = "GHSA-gcqx-w48m-w2h4"
 ignoreUntil = 2027-01-31
 reason = "deepmerge 4.3.1が最新リリースで修正版が未提供、かつjest-config 30.5.2（最新）が^4.3.1を要求。Jestの設定読み込み時のみ利用するdevDependencyで、マージ対象は自リポジトリのJest設定のため影響なし。"
+
+# glob（テスト実行時のみ利用するdevDependency）
+#   AbortSignalで走査を中断しても、中断分岐でreturnしていないためバックグラウンドでディレクトリの再帰走査が続く（9.0.0〜13.0.6）。
+#   依存チェーン：jest / ts-jest → @jest/reporters・jest-config・jest-runtime → glob@13.0.6
+#                jest / ts-jest → @jest/transform → babel-plugin-istanbul → test-exclude@7 → glob@10.5.0
+#   修正版は新メジャーの14.0.2のみ。jest 30.5.2（最新）・test-exclude 8.0.0（最新）ともglob ^13.0.6を要求しており、上流を更新しても回避できない。
+#   Jestはsignalを渡さず、globパターンも自リポジトリのJest設定由来で外部入力を受けないため、実際の影響はない。
+[[IgnoredVulns]]
+id = "GHSA-3g3m-2fjr-6pw4"
+ignoreUntil = 2026-12-31
+reason = "修正版はglob 14（新メジャー）のみで、jest 30.5.2・test-exclude 8.0.0（いずれも最新）がglob ^13を要求。Jest実行時のみ利用するdevDependencyで、signalを使わずglobパターンも外部入力を受けないため影響なし。"
+
+# minimatch（ビルド・テスト時のみ利用するdevDependency）
+#   optimizationLevel >= 2のとき、**/../ を含むパターンでglobPartsが増殖し、続く二乗オーダーの比較でCPU・メモリを消費するDoS。
+#   依存チェーン：eslint / eslint-config-next配下の各プラグイン → minimatch@3.1.5
+#                jest配下（glob・test-exclude等） → minimatch@9.0.9 / 10.2.6
+#   修正版は新メジャーの11.0.1のみ（マッチングエンジンを刷新しており、旧メジャーへのバックポートはしないと明言されている）。
+#   eslint 10.14.0（最新）・@eslint/config-array 0.23.5（最新）・test-exclude 8.0.0（最新）はいずれもminimatch ^10を要求する。
+#   さらにminimatch 11はデフォルトエクスポートを持たず、`import minimatch from 'minimatch'`で利用するeslint 9系に
+#   pnpm.overridesで強制すると動作しなくなるため、上流を更新しても回避できない。
+#   ESLint・Jestに渡すglobパターンは自リポジトリの設定由来で外部入力を受けないため、実際の影響はない。
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2026-12-31
+reason = "修正版はminimatch 11（新メジャー、デフォルトエクスポート廃止）のみで、eslint 10.14.0・test-exclude 8.0.0（いずれも最新）がminimatch ^10を要求。ESLint・Jest実行時のみ利用するdevDependencyで、globパターンは外部入力を受けないため影響なし。"
