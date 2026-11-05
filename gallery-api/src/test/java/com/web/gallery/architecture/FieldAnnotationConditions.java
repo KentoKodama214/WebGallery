@@ -54,9 +54,8 @@ final class FieldAnnotationConditions {
         boolean hasAnnotatedField =
             javaClass.getFields().stream()
                 .flatMap(field -> field.getAnnotations().stream())
-                .anyMatch(
-                    annotation ->
-                        AllowedTypes.isInPackage(annotation.getRawType(), annotationPackage));
+                .anyMatch(annotation ->
+                    AllowedTypes.isInPackage(annotation.getRawType(), annotationPackage));
         if (!hasAnnotatedField) {
           events.add(
               SimpleConditionEvent.violated(

@@ -148,13 +148,12 @@ public class SecurityConfig {
         .headers(SecurityConfig::applyApiResponseHeaders)
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(
-            authorize ->
-                authorize
-                    .requestMatchers("/actuator/health", "/actuator/health/**")
-                    .permitAll()
-                    .anyRequest()
-                    .hasRole("ADMIN"))
+        .authorizeHttpRequests(authorize ->
+            authorize
+                .requestMatchers("/actuator/health", "/actuator/health/**")
+                .permitAll()
+                .anyRequest()
+                .hasRole("ADMIN"))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
@@ -176,44 +175,42 @@ public class SecurityConfig {
         .headers(SecurityConfig::applyApiResponseHeaders)
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(
-            authorizeRequests ->
-                authorizeRequests
-                    // 認証API
-                    .requestMatchers(ApiRoutes.API_AUTH_LOGIN)
-                    .permitAll()
-                    .requestMatchers(ApiRoutes.API_AUTH_REFRESH)
-                    .permitAll()
-                    .requestMatchers(ApiRoutes.API_AUTH_LOGOUT)
-                    .permitAll()
-                    // アカウント登録（POST）とアカウント一覧（GET）は公開
-                    .requestMatchers(HttpMethod.GET, ApiRoutes.API_ACCOUNTS)
-                    .permitAll()
-                    .requestMatchers(HttpMethod.POST, ApiRoutes.API_ACCOUNTS)
-                    .permitAll()
-                    // 写真登録上限チェックは認証必須（{photoNo}パス変数がupper-limitにもマッチするため、
-                    // 写真詳細の公開ルールより先に判定する）
-                    .requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTO_UPPER_LIMIT)
-                    .authenticated()
-                    // 写真一覧・詳細の閲覧（GET）は公開
-                    .requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTOS)
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTO_DETAIL)
-                    .permitAll()
-                    // 都道府県一覧は公開
-                    .requestMatchers(ApiRoutes.API_PREFECTURES)
-                    .permitAll()
-                    // 管理者APIはADMINロール必須（AOPアスペクトに加えた多層防御）
-                    .requestMatchers(ApiRoutes.API_ADMIN_PREFIX + "/**")
-                    .hasRole("ADMIN")
-                    // それ以外は認証必須
-                    .anyRequest()
-                    .authenticated())
-        .exceptionHandling(
-            exceptionHandling ->
-                exceptionHandling
-                    .authenticationEntryPoint(restAuthenticationEntryPoint)
-                    .accessDeniedHandler(restAccessDeniedHandler))
+        .authorizeHttpRequests(authorizeRequests ->
+            authorizeRequests
+                // 認証API
+                .requestMatchers(ApiRoutes.API_AUTH_LOGIN)
+                .permitAll()
+                .requestMatchers(ApiRoutes.API_AUTH_REFRESH)
+                .permitAll()
+                .requestMatchers(ApiRoutes.API_AUTH_LOGOUT)
+                .permitAll()
+                // アカウント登録（POST）とアカウント一覧（GET）は公開
+                .requestMatchers(HttpMethod.GET, ApiRoutes.API_ACCOUNTS)
+                .permitAll()
+                .requestMatchers(HttpMethod.POST, ApiRoutes.API_ACCOUNTS)
+                .permitAll()
+                // 写真登録上限チェックは認証必須（{photoNo}パス変数がupper-limitにもマッチするため、
+                // 写真詳細の公開ルールより先に判定する）
+                .requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTO_UPPER_LIMIT)
+                .authenticated()
+                // 写真一覧・詳細の閲覧（GET）は公開
+                .requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTOS)
+                .permitAll()
+                .requestMatchers(HttpMethod.GET, ApiRoutes.API_PHOTO_DETAIL)
+                .permitAll()
+                // 都道府県一覧は公開
+                .requestMatchers(ApiRoutes.API_PREFECTURES)
+                .permitAll()
+                // 管理者APIはADMINロール必須（AOPアスペクトに加えた多層防御）
+                .requestMatchers(ApiRoutes.API_ADMIN_PREFIX + "/**")
+                .hasRole("ADMIN")
+                // それ以外は認証必須
+                .anyRequest()
+                .authenticated())
+        .exceptionHandling(exceptionHandling ->
+            exceptionHandling
+                .authenticationEntryPoint(restAuthenticationEntryPoint)
+                .accessDeniedHandler(restAccessDeniedHandler))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         // レート制限は認証・認可より前に適用し、上限超過リクエストで無駄な認証処理をさせない
         .addFilterBefore(rateLimitFilter, JwtAuthenticationFilter.class);
@@ -253,14 +250,13 @@ public class SecurityConfig {
         .headers(SecurityConfig::applyApiResponseHeaders)
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(
-            authorize ->
-                authorize
-                    .dispatcherTypeMatchers(
-                        DispatcherType.ERROR, DispatcherType.ASYNC, DispatcherType.FORWARD)
-                    .permitAll()
-                    .anyRequest()
-                    .denyAll());
+        .authorizeHttpRequests(authorize ->
+            authorize
+                .dispatcherTypeMatchers(
+                    DispatcherType.ERROR, DispatcherType.ASYNC, DispatcherType.FORWARD)
+                .permitAll()
+                .anyRequest()
+                .denyAll());
     return http.build();
   }
 }

@@ -143,10 +143,9 @@ class FileRepositoryImplIntegrationTest {
                 .contents()
                 .isEmpty());
         // プレフィックス配下でないオブジェクトは削除されないこと
-        assertDoesNotThrow(
-            () ->
-                s3Client.headObject(
-                    HeadObjectRequest.builder().bucket(bucket).key(keyOutsidePrefix).build()));
+        assertDoesNotThrow(() ->
+            s3Client.headObject(
+                HeadObjectRequest.builder().bucket(bucket).key(keyOutsidePrefix).build()));
       } finally {
         deleteQuietly(keyOutsidePrefix);
       }

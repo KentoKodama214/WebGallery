@@ -57,9 +57,8 @@ public record KbnMstModelList(List<KbnMstModel> kbnMstModelList) implements Iter
   public KbnMstModelList filterByKbnGroupJapaneseName(String kbnGroupJapaneseName) {
     return KbnMstModelList.of(
         kbnMstModelList.stream()
-            .filter(
-                kbnMstModel ->
-                    kbnMstModel.getKbnGroupJapaneseName().value().equals(kbnGroupJapaneseName))
+            .filter(kbnMstModel ->
+                kbnMstModel.getKbnGroupJapaneseName().value().equals(kbnGroupJapaneseName))
             .toList());
   }
 

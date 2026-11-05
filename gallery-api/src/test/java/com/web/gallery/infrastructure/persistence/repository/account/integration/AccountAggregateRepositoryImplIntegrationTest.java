@@ -377,18 +377,18 @@ public class AccountAggregateRepositoryImplIntegrationTest {
       // 乗らないまま他のテストクラスへ残留しないよう、明示的にTRUNCATE（CASCADE）して物理コミットする
       jdbcTemplate.execute(
           """
-					TRUNCATE TABLE
-						photo.photo_favorite,
-						photo.photo_tag_mst,
-						photo.photo_mst,
-						common.inquiry_reply_mst,
-						common.inquiry_mst,
-						common.refresh_token,
-						common.location_mst,
-						common.account,
-						common.kbn_mst
-					CASCADE
-					""");
+          TRUNCATE TABLE
+          	photo.photo_favorite,
+          	photo.photo_tag_mst,
+          	photo.photo_mst,
+          	common.inquiry_reply_mst,
+          	common.inquiry_mst,
+          	common.refresh_token,
+          	common.location_mst,
+          	common.account,
+          	common.kbn_mst
+          CASCADE
+          """);
       TestTransaction.flagForCommit();
       TestTransaction.end();
     }
