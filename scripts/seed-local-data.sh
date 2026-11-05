@@ -3,7 +3,7 @@
 #
 # 【注意】実行するとローカルDB・MinIOのアカウント関連データを完全にリセットする
 #   - account、account_authority、location_mst、refresh_token、login_history、
-#     photo_mst、photo_tag_mst、photo_favorite、photo_view_log、photo_list_filter_log、
+#     photo_mst、photo_tag_mst、photo_favorite、photo_view_log、photo_moderation_log、photo_list_filter_log、
 #     portfolio_mst、portfolio_photo、portfolio_tag_mst、inquiry_mst、inquiry_reply_mst を全件削除
 #   - MinIO（web-gallery-local バケット）内の画像ファイルも全件削除
 # その上で、画面の全パターンを手動でのデータ追加なしに確認できるよう、以下を新規作成する
@@ -50,6 +50,7 @@ TRUNCATE TABLE
   photo.portfolio_mst,
   photo.photo_list_filter_log,
   photo.photo_view_log,
+  photo.photo_moderation_log,
   photo.photo_favorite,
   photo.photo_tag_mst,
   photo.photo_mst,

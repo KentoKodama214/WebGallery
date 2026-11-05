@@ -5,6 +5,10 @@ import com.web.gallery.application.aggregate.Portfolio;
 import com.web.gallery.application.config.PhotoConfig;
 import com.web.gallery.application.helper.GeoIpResolver;
 import com.web.gallery.application.model.account.AccountModel;
+import com.web.gallery.application.model.photo.AdminPhotoGetModel;
+import com.web.gallery.application.model.photo.AdminPhotoListGetModel;
+import com.web.gallery.application.model.photo.AdminPhotoModelList;
+import com.web.gallery.application.model.photo.AdminPhotoPageModel;
 import com.web.gallery.application.model.photo.FileModel;
 import com.web.gallery.application.model.photo.PhotoDeleteModel;
 import com.web.gallery.application.model.photo.PhotoDeleteModelList;
@@ -20,6 +24,7 @@ import com.web.gallery.application.model.photo.PhotoModelList;
 import com.web.gallery.application.model.photo.PhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoSaveResultModel;
 import com.web.gallery.application.model.photo.PhotoViewLogModel;
+import com.web.gallery.application.model.photo.PhotoVisibilityChangeModel;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioDetailModelList;
 import com.web.gallery.application.model.photo.PortfolioModel;
@@ -549,6 +554,8 @@ public class PhotoServiceImpl implements PhotoService {
     PhotoDetailModel existing =
         photoDetailRepository.getPhotoDetail(
             PhotoDetailSearchModel.builder()
+                // 所有者本人として取得する（管理者により非公開にされた写真も本人は編集できるため）
+                .accountNo(photoDetailModel.getAccountNo())
                 .photoAccountNo(photoDetailModel.getAccountNo())
                 .photoNo(photoDetailModel.getPhotoNo())
                 .build());
@@ -585,6 +592,8 @@ public class PhotoServiceImpl implements PhotoService {
       PhotoDetailModel existing =
           photoDetailRepository.getPhotoDetail(
               PhotoDetailSearchModel.builder()
+                  // 所有者本人として取得する（管理者により非公開にされた写真も本人は削除できるため）
+                  .accountNo(photoDeleteModel.getAccountNo())
                   .photoAccountNo(photoDeleteModel.getAccountNo())
                   .photoNo(photoDeleteModel.getPhotoNo())
                   .build());
@@ -644,6 +653,68 @@ public class PhotoServiceImpl implements PhotoService {
                 .build());
       }
     }
+  }
+
+  /**
+   * 全アカウントの写真一覧を、ページング情報に従い取得する（管理者用）
+   *
+   * <p>管理者により非公開にされた写真も含めて取得し、画像ファイルパスは署名付きURLへ差し替えて返す
+   *
+   * @param adminPhotoListGetModel {@link AdminPhotoListGetModel}
+   * @return {@link AdminPhotoPageModel}
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public AdminPhotoPageModel getPhotoListForAdmin(AdminPhotoListGetModel adminPhotoListGetModel) {
+    AdminPhotoPageModel adminPhotoPageModel =
+        photoDetailRepository.getPhotoListForAdmin(
+            AdminPhotoGetModel.of(adminPhotoListGetModel, photoConfig.getPhotoCountPerPage()));
+
+    return AdminPhotoPageModel.of(
+        AdminPhotoModelList.of(
+            adminPhotoPageModel.getAdminPhotoModelList().stream()
+                .map(
+                    adminPhotoModel ->
+                        adminPhotoModel.toBuilder()
+                            .imageFilePath(
+                                fileRepository.getPresignedUrl(adminPhotoModel.getImageFilePath()))
+                            .build())
+                .toList()),
+        adminPhotoPageModel.getIsLast());
+  }
+
+  /**
+   * 管理者により写真を非公開にする、または非公開を解除する
+   *
+   * <p>写真マスタの管理者非公開フラグの更新と、操作履歴（写真モデレーションログ）の登録を同一トランザクションで行う。
+   * 画像ファイル（S3オブジェクト）は削除しない（誤判定時に解除で元に戻せるようにするため）
+   *
+   * @param photoVisibilityChangeModel {@link PhotoVisibilityChangeModel}
+   * @throws GalleryException 写真が存在しない場合
+   */
+  @Override
+  @Transactional(rollbackFor = GalleryException.class)
+  public void changePhotoVisibilityByAdmin(PhotoVisibilityChangeModel photoVisibilityChangeModel)
+      throws GalleryException {
+    Photo photo =
+        Photo.forModeration(
+            photoVisibilityChangeModel.getPhotoAccountNo(),
+            photoVisibilityChangeModel.getPhotoNo());
+    if (photoVisibilityChangeModel.getIsHiddenByAdmin().value()) {
+      photo.hideByAdmin(
+          photoVisibilityChangeModel.getAdminAccountNo(), photoVisibilityChangeModel.getReason());
+    } else {
+      photo.unhideByAdmin(
+          photoVisibilityChangeModel.getAdminAccountNo(), photoVisibilityChangeModel.getReason());
+    }
+    photoAggregateRepository.changeVisibility(photo);
+    log.info(
+        "Photo visibility changed by admin (accountNo: {}, photoNo: {}, isHiddenByAdmin: {},"
+            + " adminAccountNo: {})",
+        photo.getAccountNo().value(),
+        photo.getPhotoNo().value(),
+        photo.getHiddenByAdmin().value(),
+        photo.getModeratorAccountNo().value());
   }
 
   /**

@@ -16,6 +16,7 @@ import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMstCondi
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavoriteCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoListFilterLogCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoModerationLogCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoViewLogCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition;
@@ -30,6 +31,7 @@ import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryMstMappe
 import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryReplyMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoFavoriteMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoListFilterLogMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoModerationLogMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoTagMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoViewLogMapper;
@@ -73,6 +75,7 @@ public class AccountAggregateRepositoryImplTest {
   @Mock private PhotoListFilterLogMapper photoListFilterLogMapper;
 
   @Mock private PhotoViewLogMapper photoViewLogMapper;
+  @Mock private PhotoModerationLogMapper photoModerationLogMapper;
 
   @Mock private LocationMstMapper locationMstMapper;
 
@@ -143,6 +146,11 @@ public class AccountAggregateRepositoryImplTest {
       verify(photoViewLogMapper).delete(photoViewLogConditionCaptor.capture());
       assertEquals(1L, photoViewLogConditionCaptor.getValue().getPhotoAccountNo());
 
+      ArgumentCaptor<PhotoModerationLogCondition> photoModerationLogConditionCaptor =
+          ArgumentCaptor.forClass(PhotoModerationLogCondition.class);
+      verify(photoModerationLogMapper).delete(photoModerationLogConditionCaptor.capture());
+      assertEquals(1L, photoModerationLogConditionCaptor.getValue().getPhotoAccountNo());
+
       verify(photoMstMapper).deletePhotosByAccountNo(1L);
 
       verify(refreshTokenMapper).revokeAllByAccountNo(1L, 1L);
@@ -208,7 +216,7 @@ public class AccountAggregateRepositoryImplTest {
     @Test
     @Order(3)
     @DisplayName(
-        "正常系：外部キー制約上必要な順序（お気に入り→タグ→ポートフォリオ写真→ポートフォリオタグ→ポートフォリオ→閲覧ログ→写真マスタ→トークン→ログイン履歴/絞込ログ→ロケーション→お問い合わせ返信→お問い合わせ→権限→アカウント本体）で削除すること")
+        "正常系：外部キー制約上必要な順序（お気に入り→タグ→ポートフォリオ写真→ポートフォリオタグ→ポートフォリオ→閲覧ログ→モデレーションログ→写真マスタ→トークン→ログイン履歴/絞込ログ→ロケーション→お問い合わせ返信→お問い合わせ→権限→アカウント本体）で削除すること")
     void delete_order() {
       doReturn(List.of()).when(photoMstMapper).deletePhotosByAccountNo(1L);
 
@@ -223,6 +231,7 @@ public class AccountAggregateRepositoryImplTest {
               portfolioTagMstMapper,
               portfolioMstMapper,
               photoViewLogMapper,
+              photoModerationLogMapper,
               photoMstMapper,
               refreshTokenMapper,
               loginHistoryMapper,
@@ -245,6 +254,8 @@ public class AccountAggregateRepositoryImplTest {
       inOrder.verify(portfolioMstMapper).delete(any(PortfolioMstCondition.class));
       // 写真詳細閲覧ログを削除（写真マスタの物理削除に先立って実施）
       inOrder.verify(photoViewLogMapper).delete(any(PhotoViewLogCondition.class));
+      // 写真モデレーションログを削除（写真マスタの物理削除に先立って実施）
+      inOrder.verify(photoModerationLogMapper).delete(any(PhotoModerationLogCondition.class));
       // 写真マスタを物理削除
       inOrder.verify(photoMstMapper).deletePhotosByAccountNo(1L);
       // リフレッシュトークンを失効

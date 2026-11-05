@@ -84,6 +84,8 @@
 		WHERE
 			ph.account_no = #{accountNo}
 			AND ph.is_deleted = false
+			<!-- 管理者により非公開にされた写真は公開ページに出せないため、ポートフォリオの写真候補から除外する -->
+			AND ph.is_hidden_by_admin = false
 			<if test="keywordPattern != null">
 				AND (
 					ph.photo_japanese_title ILIKE #{keywordPattern} ESCAPE '\'
@@ -132,6 +134,7 @@
 		WHERE
 			account_no = #{accountNo}
 			AND is_deleted = false
+			AND is_hidden_by_admin = false
 			AND photo_no IN
 			<foreach collection="photoNoList" item="photoNo" open="(" separator="," close=")">
 				#{photoNo}

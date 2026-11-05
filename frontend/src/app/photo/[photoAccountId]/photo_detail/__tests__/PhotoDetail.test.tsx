@@ -103,6 +103,29 @@ describe("PhotoDetail", () => {
     expect(screen.getByRole("img")).toHaveAttribute("src", "/photos/test.jpg");
   });
 
+  it("管理者により非公開にされた写真の場合、本人以外には表示されない旨を通知すること", async () => {
+    mockGetPhotoDetail.mockResolvedValue({ ...samplePhoto, isHiddenByAdmin: true });
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("hidden-by-admin-notice")).toHaveTextContent(
+        "この写真は管理者により非公開にされています。"
+      );
+    });
+  });
+
+  it("管理者により非公開にされていない写真の場合、非公開の通知を表示しないこと", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("テスト写真")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("hidden-by-admin-notice")).not.toBeInTheDocument();
+  });
+
   it("許可されない画像URLの場合は img を出さず代替表示になること", async () => {
     mockGetPhotoDetail.mockResolvedValue({
       ...samplePhoto,

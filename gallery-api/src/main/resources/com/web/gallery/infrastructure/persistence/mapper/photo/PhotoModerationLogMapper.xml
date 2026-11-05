@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.photo.PhotoModerationLogMapper">
+
+	<insert id="insert" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PhotoModerationLog">
+		INSERT INTO photo.photo_moderation_log (
+			photo_account_no,
+			photo_no,
+			admin_account_no,
+			is_hidden,
+			reason,
+			created_by,
+			created_at
+		) VALUES (
+			#{photoAccountNo},
+			#{photoNo},
+			#{adminAccountNo},
+			#{isHidden},
+			#{reason},
+			#{createdBy},
+			COALESCE(#{createdAt}, NOW())
+		)
+	</insert>
+
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.PhotoModerationLogCondition">
+		DELETE FROM
+			photo.photo_moderation_log
+		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード -->
+			<if test="photoAccountNo == null"> AND 1 = 0</if>
+			<if test="photoAccountNo != null"> AND photo_account_no = #{photoAccountNo}</if>
+		</where>
+	</delete>
+
+</mapper>

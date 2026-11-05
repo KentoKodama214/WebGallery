@@ -593,6 +593,8 @@ export interface PhotoDetailResponse {
   shutterSpeed: number | null;
   iso: number | null;
   photoTagList: PhotoTagItem[];
+  /** 管理者により非公開にされているか（非公開の写真は所有者本人にのみ返るため、true になるのは本人の閲覧時のみ） */
+  isHiddenByAdmin?: boolean;
 }
 
 /** 写真の削除に伴い公開から下書きに戻したポートフォリオ */
@@ -635,6 +637,8 @@ export interface PhotoListItem {
   imageFilePath: string;
   caption: string;
   directionKbn: string;
+  /** 管理者により非公開にされているか（非公開の写真は所有者本人の一覧にのみ含まれる） */
+  isHiddenByAdmin?: boolean;
 }
 
 /** 写真一覧レスポンス */
@@ -965,6 +969,88 @@ export async function updateAccountAuthority(
     throw new Error(await readErrorMessage(response, "権限の変更に失敗しました"));
   }
   return readJson<AdminAccountAuthorityUpdateResult>(response);
+}
+
+/** 管理者用写真一覧アイテム */
+export interface AdminPhotoListItem {
+  accountNo: number;
+  accountId: string;
+  accountName: string;
+  photoNo: number;
+  photoJapaneseTitle: string;
+  /** 署名付きURL */
+  imageFilePath: string;
+  isHiddenByAdmin: boolean;
+  createdAt: string;
+}
+
+/** 管理者用写真一覧レスポンス */
+export interface AdminPhotoListGetResponse {
+  isLast: boolean;
+  photoList: AdminPhotoListItem[];
+}
+
+/** 管理者用写真一覧の絞り込み条件 */
+export interface AdminPhotoListParams {
+  /** 写真所有者のアカウントID（未指定の場合は全アカウント） */
+  accountId?: string;
+  /** 管理者非公開フラグ（未指定の場合は公開・非公開の両方） */
+  isHiddenByAdmin?: boolean;
+  pageNo?: number;
+}
+
+/** 管理者による写真の公開状態変更結果 */
+export interface AdminPhotoVisibilityUpdateResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+}
+
+/**
+ * 管理者用写真一覧取得（管理者により非公開にされた写真を含む、全アカウントの写真を登録日時の新しい順に取得する）
+ */
+export async function getAdminPhotoList(
+  params: AdminPhotoListParams = {}
+): Promise<AdminPhotoListGetResponse> {
+  const searchParams = new URLSearchParams();
+  if (params.accountId) searchParams.set("accountId", params.accountId);
+  if (params.isHiddenByAdmin !== undefined) {
+    searchParams.set("isHiddenByAdmin", String(params.isHiddenByAdmin));
+  }
+  searchParams.set("pageNo", String(params.pageNo ?? 1));
+  const response = await fetchWithAuth(`/api/v1/admin/photos?${searchParams.toString()}`);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "写真一覧の取得に失敗しました"));
+  }
+  return readJson<AdminPhotoListGetResponse>(response);
+}
+
+/**
+ * 管理者による写真の公開状態変更（非公開・非公開解除）
+ */
+export async function updateAdminPhotoVisibility(
+  accountNo: number,
+  photoNo: number,
+  isHiddenByAdmin: boolean,
+  reason: string
+): Promise<AdminPhotoVisibilityUpdateResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/admin/photos/${seg(accountNo)}/${seg(photoNo)}/visibility`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isHiddenByAdmin, reason }),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(
+        response,
+        isHiddenByAdmin ? "写真の非公開に失敗しました" : "写真の非公開解除に失敗しました"
+      )
+    );
+  }
+  return readJson<AdminPhotoVisibilityUpdateResult>(response);
 }
 
 /** お問い合わせステータス区分 */

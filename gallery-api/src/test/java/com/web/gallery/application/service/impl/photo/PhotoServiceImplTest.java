@@ -9,6 +9,11 @@ import com.web.gallery.application.aggregate.Portfolio;
 import com.web.gallery.application.config.PhotoConfig;
 import com.web.gallery.application.helper.GeoIpResolver;
 import com.web.gallery.application.model.account.AccountModel;
+import com.web.gallery.application.model.photo.AdminPhotoGetModel;
+import com.web.gallery.application.model.photo.AdminPhotoListGetModel;
+import com.web.gallery.application.model.photo.AdminPhotoModel;
+import com.web.gallery.application.model.photo.AdminPhotoModelList;
+import com.web.gallery.application.model.photo.AdminPhotoPageModel;
 import com.web.gallery.application.model.photo.FileModel;
 import com.web.gallery.application.model.photo.PhotoDeleteModel;
 import com.web.gallery.application.model.photo.PhotoDeleteModelList;
@@ -26,6 +31,7 @@ import com.web.gallery.application.model.photo.PhotoSaveResultModel;
 import com.web.gallery.application.model.photo.PhotoTagModel;
 import com.web.gallery.application.model.photo.PhotoTagModelList;
 import com.web.gallery.application.model.photo.PhotoViewLogModel;
+import com.web.gallery.application.model.photo.PhotoVisibilityChangeModel;
 import com.web.gallery.application.model.photo.PortfolioDetailModel;
 import com.web.gallery.application.model.photo.PortfolioDetailModelList;
 import com.web.gallery.application.model.photo.PortfolioModelList;
@@ -48,6 +54,7 @@ import com.web.gallery.domain.exception.PhotoNotFoundException;
 import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.exception.UpdateFailureException;
 import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Address;
 import com.web.gallery.domain.model.common.GeoLocation;
@@ -67,10 +74,12 @@ import com.web.gallery.domain.model.photo.ImageFile;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.IsFavorite;
 import com.web.gallery.domain.model.photo.IsFavoriteOnly;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.IsLocationPublic;
 import com.web.gallery.domain.model.photo.Iso;
 import com.web.gallery.domain.model.photo.LocationNo;
 import com.web.gallery.domain.model.photo.MaxFileSizeMb;
+import com.web.gallery.domain.model.photo.ModerationReason;
 import com.web.gallery.domain.model.photo.PhotoAt;
 import com.web.gallery.domain.model.photo.PhotoCount;
 import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
@@ -2103,6 +2112,28 @@ public class PhotoServiceImplTest {
       verify(photoAggregateRepositoryImpl, never()).regist(any(Photo.class));
       verify(photoAggregateRepositoryImpl, never()).update(any(Photo.class));
     }
+
+    @Test
+    @Order(21)
+    @DisplayName("正常系：更新時の既存写真の取得は所有者本人として行うこと（管理者により非公開にされた写真も本人は更新できるようにするため）")
+    void savePhotos_updatePhoto_lookupAsOwner() throws GalleryException {
+      doReturn(new PhotoNo(5L)).when(photoMstRepositoryImpl).getNewPhotoNo(new AccountNo(1L));
+      ArgumentCaptor<PhotoDetailSearchModel> searchModelCaptor =
+          ArgumentCaptor.forClass(PhotoDetailSearchModel.class);
+      doReturn(
+              PhotoDetailModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .imageFilePath(new ImageFilePath("1/2-existing.jpg"))
+                  .build())
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(searchModelCaptor.capture());
+
+      photoServiceImpl.savePhotos(PhotoDetailModelList.of(List.of(createUpdatePhoto())));
+
+      PhotoDetailSearchModel searchModel = searchModelCaptor.getValue();
+      assertEquals(new AccountNo(1L), searchModel.getAccountNo());
+      assertEquals(new AccountNo(1L), searchModel.getPhotoAccountNo());
+    }
   }
 
   @Nested
@@ -2333,6 +2364,39 @@ public class PhotoServiceImplTest {
       verify(applicationEventPublisher, never()).publishEvent(any());
     }
 
+    @Test
+    @Order(6)
+    @DisplayName("正常系：削除対象の写真の取得は所有者本人として行うこと（管理者により非公開にされた写真も本人は削除できるようにするため）")
+    void deletePhotos_lookupAsOwner() throws GalleryException {
+      ArgumentCaptor<PhotoDetailSearchModel> searchModelCaptor =
+          ArgumentCaptor.forClass(PhotoDetailSearchModel.class);
+      doReturn(
+              PhotoDetailModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .photoNo(new PhotoNo(1L))
+                  .imageFilePath(new ImageFilePath("1/1-hidden.jpg"))
+                  .build())
+          .when(photoDetailRepositoryImpl)
+          .getPhotoDetail(searchModelCaptor.capture());
+      doReturn(PortfolioDetailModelList.empty())
+          .when(portfolioMstRepositoryImpl)
+          .getPortfolioDetailListByPhoto(any(AccountNo.class), any(PhotoNo.class));
+
+      photoServiceImpl.deletePhotos(
+          PhotoDeleteModelList.of(
+              List.of(
+                  PhotoDeleteModel.builder()
+                      .accountNo(new AccountNo(1L))
+                      .photoNo(new PhotoNo(1L))
+                      .imageFilePath(new ImageFilePath("クライアント送信値は無視される"))
+                      .build())));
+
+      PhotoDetailSearchModel searchModel = searchModelCaptor.getValue();
+      assertEquals(new AccountNo(1L), searchModel.getAccountNo());
+      assertEquals(new AccountNo(1L), searchModel.getPhotoAccountNo());
+      verify(photoAggregateRepositoryImpl).delete(any(Photo.class));
+    }
+
     /**
      * 指定した写真を使用しているポートフォリオの詳細情報を生成する
      *
@@ -2449,6 +2513,131 @@ public class PhotoServiceImplTest {
       verify(photoQuotaPolicy)
           .remainingCount(
               eq(AuthorityEnum.NORMAL), eq(new PhotoCount(3)), any(PhotoUpperLimits.class));
+    }
+  }
+
+  @Nested
+  @Order(7)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getPhotoListForAdmin {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：ページング情報を組み立ててRepositoryに渡し、画像ファイルパスを署名付きURLへ差し替えて返すこと")
+    void getPhotoListForAdmin_success() {
+      doReturn(20).when(photoConfig).getPhotoCountPerPage();
+      ArgumentCaptor<AdminPhotoGetModel> getModelCaptor =
+          ArgumentCaptor.forClass(AdminPhotoGetModel.class);
+      AdminPhotoModel adminPhotoModel =
+          AdminPhotoModel.builder()
+              .accountNo(new AccountNo(1L))
+              .accountId(new AccountId("aaaaaaaa"))
+              .accountName(new AccountName("テストユーザー"))
+              .photoNo(new PhotoNo(3L))
+              .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル"))
+              .imageFilePath(new ImageFilePath("1/3-abc.jpg"))
+              .isHiddenByAdmin(new IsHiddenByAdmin(true))
+              .createdAt(OffsetDateTime.parse("2026-11-01T10:00:00+09:00"))
+              .build();
+      doReturn(AdminPhotoPageModel.of(AdminPhotoModelList.of(List.of(adminPhotoModel)), true))
+          .when(photoDetailRepositoryImpl)
+          .getPhotoListForAdmin(getModelCaptor.capture());
+      doReturn(new ImageFilePath("https://signed.example/1/3-abc.jpg"))
+          .when(fileRepositoryImpl)
+          .getPresignedUrl(new ImageFilePath("1/3-abc.jpg"));
+
+      AdminPhotoPageModel actual =
+          photoServiceImpl.getPhotoListForAdmin(
+              AdminPhotoListGetModel.builder()
+                  .accountId(new AccountId("aaaaaaaa"))
+                  .isHiddenByAdmin(new IsHiddenByAdmin(true))
+                  .pageNo(2)
+                  .build());
+
+      AdminPhotoGetModel getModel = getModelCaptor.getValue();
+      assertEquals(new AccountId("aaaaaaaa"), getModel.getAccountId());
+      assertEquals(new IsHiddenByAdmin(true), getModel.getIsHiddenByAdmin());
+      assertEquals(21, getModel.getLimit());
+      assertEquals(20, getModel.getOffset());
+
+      assertTrue(actual.getIsLast());
+      assertEquals(1, actual.getAdminPhotoModelList().size());
+      AdminPhotoModel actualModel = actual.getAdminPhotoModelList().get(0);
+      assertEquals(
+          new ImageFilePath("https://signed.example/1/3-abc.jpg"), actualModel.getImageFilePath());
+      assertEquals(new PhotoNo(3L), actualModel.getPhotoNo());
+      assertTrue(actualModel.getIsHiddenByAdmin().value());
+    }
+  }
+
+  @Nested
+  @Order(8)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class changePhotoVisibilityByAdmin {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：非公開にする場合、管理者非公開フラグがtrueの写真集約を永続化すること")
+    void changePhotoVisibilityByAdmin_hide() throws GalleryException {
+      ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
+      doNothing().when(photoAggregateRepositoryImpl).changeVisibility(photoCaptor.capture());
+
+      photoServiceImpl.changePhotoVisibilityByAdmin(createVisibilityChangeModel(true, "不適切な画像のため"));
+
+      Photo photo = photoCaptor.getValue();
+      assertEquals(new AccountNo(1L), photo.getAccountNo());
+      assertEquals(new PhotoNo(3L), photo.getPhotoNo());
+      assertTrue(photo.getHiddenByAdmin().value());
+      assertEquals(new AccountNo(99L), photo.getModeratorAccountNo());
+      assertEquals(new ModerationReason("不適切な画像のため"), photo.getModerationReason());
+      // 画像ファイル（S3オブジェクト）は削除しない
+      verify(fileRepositoryImpl, never()).delete(any(ImageFilePath.class));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：非公開を解除する場合、管理者非公開フラグがfalseの写真集約を永続化すること")
+    void changePhotoVisibilityByAdmin_unhide() throws GalleryException {
+      ArgumentCaptor<Photo> photoCaptor = ArgumentCaptor.forClass(Photo.class);
+      doNothing().when(photoAggregateRepositoryImpl).changeVisibility(photoCaptor.capture());
+
+      photoServiceImpl.changePhotoVisibilityByAdmin(createVisibilityChangeModel(false, "誤判定だったため"));
+
+      Photo photo = photoCaptor.getValue();
+      assertFalse(photo.getHiddenByAdmin().value());
+      assertEquals(new AccountNo(99L), photo.getModeratorAccountNo());
+      assertEquals(new ModerationReason("誤判定だったため"), photo.getModerationReason());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：写真が存在しない場合、PhotoNotFoundExceptionをthrowする")
+    void changePhotoVisibilityByAdmin_PhotoNotFoundException() throws GalleryException {
+      doThrow(PhotoNotFoundException.class)
+          .when(photoAggregateRepositoryImpl)
+          .changeVisibility(any(Photo.class));
+
+      assertThrows(
+          PhotoNotFoundException.class,
+          () ->
+              photoServiceImpl.changePhotoVisibilityByAdmin(
+                  createVisibilityChangeModel(true, "不適切な画像のため")));
+    }
+
+    /**
+     * 写真番号3（所有者のアカウント番号1）に対する、管理者（アカウント番号99）の公開状態変更Modelを生成する
+     *
+     * @param isHiddenByAdmin 非公開にする場合はtrue
+     * @param reason 理由
+     * @return {@link PhotoVisibilityChangeModel}
+     */
+    private PhotoVisibilityChangeModel createVisibilityChangeModel(
+        boolean isHiddenByAdmin, String reason) {
+      return PhotoVisibilityChangeModel.builder()
+          .photoAccountNo(new AccountNo(1L))
+          .photoNo(new PhotoNo(3L))
+          .adminAccountNo(new AccountNo(99L))
+          .isHiddenByAdmin(new IsHiddenByAdmin(isHiddenByAdmin))
+          .reason(new ModerationReason(reason))
+          .build();
     }
   }
 }

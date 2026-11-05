@@ -12,6 +12,7 @@ import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMstCondi
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavoriteCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoListFilterLogCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoModerationLogCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoViewLogCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioMstCondition;
@@ -26,6 +27,7 @@ import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryMstMappe
 import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryReplyMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoFavoriteMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoListFilterLogMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoModerationLogMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoTagMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoViewLogMapper;
@@ -66,6 +68,7 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
   private final LoginHistoryMapper loginHistoryMapper;
   private final PhotoListFilterLogMapper photoListFilterLogMapper;
   private final PhotoViewLogMapper photoViewLogMapper;
+  private final PhotoModerationLogMapper photoModerationLogMapper;
   private final LocationMstMapper locationMstMapper;
   private final InquiryMstMapper inquiryMstMapper;
   private final InquiryReplyMstMapper inquiryReplyMstMapper;
@@ -100,6 +103,10 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
 
     // 写真詳細閲覧ログを削除（外部キー制約に抵触しないよう、写真マスタの物理削除に先立って実施）
     photoViewLogMapper.delete(PhotoViewLogCondition.byPhotoAccountNo(accountNo));
+
+    // 自分の写真に対する管理者の非公開・解除の操作履歴を削除（外部キー制約に抵触しないよう、写真マスタの
+    // 物理削除に先立って実施）。このアカウントが「管理者として」操作した履歴は外部キーを持たないため残す
+    photoModerationLogMapper.delete(PhotoModerationLogCondition.byPhotoAccountNo(accountNo));
 
     // 写真マスタを物理削除し、削除時点で未削除だった写真番号を取得
     // SELECTとDELETEの間のTOCTOUギャップを無くすため単一SQLでアトミックに実施し、

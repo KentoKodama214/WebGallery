@@ -28,4 +28,12 @@ public interface PhotoAggregateRepository {
    * @throws GalleryException 削除に失敗した場合
    */
   void delete(Photo photo) throws GalleryException;
+
+  /**
+   * 管理者による写真の公開状態の変更を永続化する
+   *
+   * @param photo {@link Photo}（{@link Photo#forModeration}で生成し、変更内容を設定済みのもの）
+   * @throws GalleryException 写真が存在しない場合
+   */
+  void changeVisibility(Photo photo) throws GalleryException;
 }

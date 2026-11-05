@@ -6,7 +6,9 @@ import com.web.gallery.application.model.photo.PhotoTagModelList;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.ImageFile;
 import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.LocationNo;
+import com.web.gallery.domain.model.photo.ModerationReason;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.TagNo;
 import java.util.ArrayList;
@@ -30,6 +32,15 @@ public class Photo {
 
   /** 削除する画像ファイルパス（削除時のみ設定） */
   private final ImageFilePath imageFilePathForDelete;
+
+  /** 管理者非公開フラグ（管理者による公開状態変更時のみ設定） */
+  private IsHiddenByAdmin hiddenByAdmin;
+
+  /** 公開状態を変更した管理者のアカウント番号（管理者による公開状態変更時のみ設定） */
+  private AccountNo moderatorAccountNo;
+
+  /** 公開状態を変更した理由（管理者による公開状態変更時のみ設定） */
+  private ModerationReason moderationReason;
 
   private Photo(
       AccountNo accountNo,
@@ -89,6 +100,53 @@ public class Photo {
     Photo photo = new Photo(accountNo, photoNo, null, imageFilePathForDelete);
     photo.markAsDeleted();
     return photo;
+  }
+
+  /**
+   * 管理者による公開状態変更用のPhotoを生成する
+   *
+   * <p>生成後に{@link #hideByAdmin}または{@link #unhideByAdmin}で変更内容を設定する
+   *
+   * @param accountNo 写真所有者のアカウント番号
+   * @param photoNo 写真番号
+   * @return {@link Photo}
+   */
+  public static Photo forModeration(AccountNo accountNo, PhotoNo photoNo) {
+    return new Photo(accountNo, photoNo, null, null);
+  }
+
+  /**
+   * 管理者により写真を非公開にする
+   *
+   * @param adminAccountNo 操作する管理者のアカウント番号
+   * @param reason 非公開にする理由
+   */
+  public void hideByAdmin(AccountNo adminAccountNo, ModerationReason reason) {
+    changeVisibilityByAdmin(new IsHiddenByAdmin(true), adminAccountNo, reason);
+  }
+
+  /**
+   * 管理者により写真の非公開を解除する
+   *
+   * @param adminAccountNo 操作する管理者のアカウント番号
+   * @param reason 非公開を解除する理由
+   */
+  public void unhideByAdmin(AccountNo adminAccountNo, ModerationReason reason) {
+    changeVisibilityByAdmin(new IsHiddenByAdmin(false), adminAccountNo, reason);
+  }
+
+  /**
+   * 管理者による公開状態の変更内容を設定する
+   *
+   * @param hiddenByAdmin 変更後の管理者非公開フラグ
+   * @param adminAccountNo 操作する管理者のアカウント番号
+   * @param reason 変更理由
+   */
+  private void changeVisibilityByAdmin(
+      IsHiddenByAdmin hiddenByAdmin, AccountNo adminAccountNo, ModerationReason reason) {
+    this.hiddenByAdmin = Objects.requireNonNull(hiddenByAdmin);
+    this.moderatorAccountNo = Objects.requireNonNull(adminAccountNo);
+    this.moderationReason = Objects.requireNonNull(reason);
   }
 
   /**
@@ -191,6 +249,35 @@ public class Photo {
    */
   public ImageFilePath getImageFilePathForDelete() {
     return imageFilePathForDelete;
+  }
+
+  /**
+   * 管理者非公開フラグを取得する
+   *
+   * <p>{@link #hideByAdmin}・{@link #unhideByAdmin}を呼び出す前はnull
+   *
+   * @return {@link IsHiddenByAdmin}
+   */
+  public IsHiddenByAdmin getHiddenByAdmin() {
+    return hiddenByAdmin;
+  }
+
+  /**
+   * 公開状態を変更した管理者のアカウント番号を取得する
+   *
+   * @return {@link AccountNo}
+   */
+  public AccountNo getModeratorAccountNo() {
+    return moderatorAccountNo;
+  }
+
+  /**
+   * 公開状態を変更した理由を取得する
+   *
+   * @return {@link ModerationReason}
+   */
+  public ModerationReason getModerationReason() {
+    return moderationReason;
   }
 
   /**

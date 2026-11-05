@@ -80,6 +80,9 @@ public class PhotoMst {
   /** 位置情報公開フラグ */
   private Boolean isLocationPublic;
 
+  /** 管理者非公開フラグ */
+  private Boolean isHiddenByAdmin;
+
   /**
    * 写真登録用のPhotoDetailModelからPhotoMstエンティティを生成する
    *

@@ -1,5 +1,7 @@
 package com.web.gallery.application.service.photo;
 
+import com.web.gallery.application.model.photo.AdminPhotoListGetModel;
+import com.web.gallery.application.model.photo.AdminPhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoDeleteModelList;
 import com.web.gallery.application.model.photo.PhotoDetailGetModel;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
@@ -7,6 +9,7 @@ import com.web.gallery.application.model.photo.PhotoDetailModelList;
 import com.web.gallery.application.model.photo.PhotoListGetModel;
 import com.web.gallery.application.model.photo.PhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoSaveResultModel;
+import com.web.gallery.application.model.photo.PhotoVisibilityChangeModel;
 import com.web.gallery.application.model.photo.PortfolioModelList;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
@@ -70,4 +73,21 @@ public interface PhotoService {
    * @return 残り登録可能枚数。上限が存在しない権限区分の場合はnull
    */
   Integer getRemainingPhotoCount(AccountNo accountNo);
+
+  /**
+   * 全アカウントの写真一覧を、ページング情報に従い取得する（管理者用）
+   *
+   * @param adminPhotoListGetModel {@link AdminPhotoListGetModel}
+   * @return {@link AdminPhotoPageModel}
+   */
+  AdminPhotoPageModel getPhotoListForAdmin(AdminPhotoListGetModel adminPhotoListGetModel);
+
+  /**
+   * 管理者により写真を非公開にする、または非公開を解除する
+   *
+   * @param photoVisibilityChangeModel {@link PhotoVisibilityChangeModel}
+   * @throws GalleryException 写真が存在しない場合
+   */
+  void changePhotoVisibilityByAdmin(PhotoVisibilityChangeModel photoVisibilityChangeModel)
+      throws GalleryException;
 }
