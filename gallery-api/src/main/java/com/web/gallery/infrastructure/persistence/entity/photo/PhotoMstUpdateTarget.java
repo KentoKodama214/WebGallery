@@ -1,5 +1,6 @@
 package com.web.gallery.infrastructure.persistence.entity.photo;
 
+import com.web.gallery.application.aggregate.Photo;
 import com.web.gallery.application.model.photo.PhotoDeleteModel;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.domain.constant.Consts;
@@ -62,6 +63,9 @@ public class PhotoMstUpdateTarget {
   /** 位置情報公開フラグ */
   private Boolean isLocationPublic;
 
+  /** 管理者非公開フラグ */
+  private Boolean isHiddenByAdmin;
+
   /**
    * 写真更新用のPhotoDetailModelから更新対象を生成する
    *
@@ -110,6 +114,21 @@ public class PhotoMstUpdateTarget {
     return PhotoMstUpdateTarget.builder()
         .updatedBy(model.getAccountNo().value())
         .isDeleted(true)
+        .build();
+  }
+
+  /**
+   * 管理者による公開状態変更用の更新対象を生成する
+   *
+   * <p>更新者は操作した管理者とし、管理者非公開フラグ以外の項目は更新しない
+   *
+   * @param photo {@link Photo}（{@link Photo#forModeration}で生成し、変更内容を設定済みのもの）
+   * @return {@link PhotoMstUpdateTarget}
+   */
+  public static PhotoMstUpdateTarget forVisibilityChange(Photo photo) {
+    return PhotoMstUpdateTarget.builder()
+        .updatedBy(photo.getModeratorAccountNo().value())
+        .isHiddenByAdmin(photo.getHiddenByAdmin().value())
         .build();
   }
 }

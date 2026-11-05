@@ -6,6 +6,7 @@ import com.web.gallery.domain.model.photo.Caption;
 import com.web.gallery.domain.model.photo.FavoriteCount;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.IsFavorite;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.PhotoAt;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import lombok.Builder;
@@ -46,4 +47,7 @@ public class PhotoModel {
 
   /** 写真タグリスト */
   @NonNull private PhotoTagModelList photoTagModelList;
+
+  /** 管理者非公開フラグ（所有者本人以外には非公開の写真自体を返さないため、実質的に本人向けの表示用） */
+  private IsHiddenByAdmin isHiddenByAdmin;
 }

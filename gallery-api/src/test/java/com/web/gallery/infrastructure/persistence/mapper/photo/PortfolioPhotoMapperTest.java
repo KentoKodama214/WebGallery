@@ -227,6 +227,16 @@ public class PortfolioPhotoMapperTest {
     void countAvailablePhotos_notExists() {
       assertEquals(1, portfolioPhotoMapper.countAvailablePhotos(1L, List.of(1L, 99L)));
     }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：管理者により非公開にされた写真は数えないこと（公開ページに出せないため）")
+    void countAvailablePhotos_excludesHiddenByAdmin() {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true WHERE account_no = 1 AND photo_no = 2");
+
+      assertEquals(1, portfolioPhotoMapper.countAvailablePhotos(1L, List.of(1L, 2L)));
+    }
   }
 
   @Nested
@@ -319,6 +329,16 @@ public class PortfolioPhotoMapperTest {
       List<PortfolioPhotoDto> actual = portfolioPhotoMapper.selectAvailablePhotos(1L, null, 1, 1);
 
       assertEquals(List.of(1L), actual.stream().map(PortfolioPhotoDto::getPhotoNo).toList());
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("正常系：管理者により非公開にされた写真は候補に含めないこと（公開ページに出せないため）")
+    void selectAvailablePhotos_excludesHiddenByAdmin() {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true WHERE account_no = 1 AND photo_no = 2");
+
+      assertEquals(List.of(1L), photoNos(null));
     }
   }
 }

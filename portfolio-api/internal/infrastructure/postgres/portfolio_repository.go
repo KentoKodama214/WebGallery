@@ -59,7 +59,7 @@ func (r *PortfolioRepository) FindAccountNo(ctx context.Context, accountID strin
 // ListPublished はアカウントの公開中のポートフォリオ一覧を、表示順に offset 件目から最大 limit 件取得する。
 //
 // keyword が空でない場合は、テーマ・タグ名（日本語・英語）のいずれかに部分一致（大文字・小文字を区別しない）
-// するものに絞り込む。写真の枚数・先頭の写真は、削除済みの写真を除いて数える。タグはポートフォリオごとに問い合わせず
+// するものに絞り込む。写真の枚数・先頭の写真は、削除済み・管理者により非公開にされた写真を除いて数える。タグはポートフォリオごとに問い合わせず
 // 一括で取得する（一覧の件数に比例してクエリが増える N+1 を避ける）。
 //
 // 引数:
@@ -90,7 +90,7 @@ func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64
 				SELECT COUNT(*)
 				FROM photo.portfolio_photo pp
 				INNER JOIN photo.photo_mst ph
-					ON ph.account_no = pp.account_no AND ph.photo_no = pp.photo_no AND ph.is_deleted = false
+					ON ph.account_no = pp.account_no AND ph.photo_no = pp.photo_no AND ph.is_deleted = false AND ph.is_hidden_by_admin = false
 				WHERE pp.account_no = pm.account_no AND pp.portfolio_no = pm.portfolio_no
 			) AS photo_count,
 			cover.photo_no,
@@ -103,7 +103,7 @@ func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64
 			SELECT ph.photo_no, ph.image_file_path, ph.photo_japanese_title, ph.photo_english_title, ph.direction_kbn
 			FROM photo.portfolio_photo pp
 			INNER JOIN photo.photo_mst ph
-				ON ph.account_no = pp.account_no AND ph.photo_no = pp.photo_no AND ph.is_deleted = false
+				ON ph.account_no = pp.account_no AND ph.photo_no = pp.photo_no AND ph.is_deleted = false AND ph.is_hidden_by_admin = false
 			WHERE pp.account_no = pm.account_no AND pp.portfolio_no = pm.portfolio_no
 			ORDER BY pp.display_order
 			LIMIT 1
@@ -172,7 +172,7 @@ func (r *PortfolioRepository) ListPublished(ctx context.Context, accountNo int64
 	return summaries, nil
 }
 
-// FindPublished は公開中のポートフォリオを、表示順の写真（削除済みを除く）・タグとあわせて取得する。
+// FindPublished は公開中のポートフォリオを、表示順の写真（削除済み・管理者により非公開にされた写真を除く）・タグとあわせて取得する。
 //
 // 引数:
 //   - ctx: キャンセル・タイムアウトを伝えるコンテキスト
@@ -226,7 +226,7 @@ func (r *PortfolioRepository) FindPublished(ctx context.Context, accountNo, port
 //   - portfolioNo: 写真を取得するポートフォリオのポートフォリオ番号
 //
 // 戻り値:
-//   - 表示順に並べた写真（削除済みの写真は含めない。写真がない場合は空のスライス）
+//   - 表示順に並べた写真（削除済み・管理者により非公開にされた写真は含めない。写真がない場合は空のスライス）
 //   - DB への問い合わせに失敗した場合はエラー
 func (r *PortfolioRepository) findPhotos(ctx context.Context, accountNo, portfolioNo int64) ([]domain.PortfolioPhoto, error) {
 	rows, err := r.pool.Query(ctx, `
@@ -240,7 +240,7 @@ func (r *PortfolioRepository) findPhotos(ctx context.Context, accountNo, portfol
 			ph.direction_kbn::text
 		FROM photo.portfolio_photo pp
 		INNER JOIN photo.photo_mst ph
-			ON ph.account_no = pp.account_no AND ph.photo_no = pp.photo_no AND ph.is_deleted = false
+			ON ph.account_no = pp.account_no AND ph.photo_no = pp.photo_no AND ph.is_deleted = false AND ph.is_hidden_by_admin = false
 		WHERE pp.account_no = $1 AND pp.portfolio_no = $2
 		ORDER BY pp.display_order`, accountNo, portfolioNo)
 	if err != nil {

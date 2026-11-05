@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.web.gallery.application.model.photo.AdminPhotoGetModel;
+import com.web.gallery.application.model.photo.AdminPhotoModel;
+import com.web.gallery.application.model.photo.AdminPhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.application.model.photo.PhotoDetailSearchModel;
 import com.web.gallery.application.model.photo.PhotoGetModel;
@@ -13,9 +16,13 @@ import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.PhotoNotFoundException;
+import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.IsFavoriteOnly;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.infrastructure.persistence.dto.photo.AdminPhotoDto;
+import com.web.gallery.infrastructure.persistence.dto.photo.AdminPhotoListGetDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDetailDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDetailGetDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDto;
@@ -597,6 +604,149 @@ public class PhotoDetailRepositoryImplTest {
           PhotoNotFoundException.class,
           () -> photoDetailRepositoryImpl.getPhotoDetail(photoDetailSearchModel));
       verify(photoTagMstMapper, never()).select(any(PhotoTagMstCondition.class));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：管理者により非公開にされた写真（所有者本人の閲覧時のみ取得される）の場合、管理者非公開フラグがtrueのModelを返すこと")
+    void getPhotoDetail_hiddenByAdmin() throws GalleryException {
+      PhotoDetailDto photoDetailDto = new PhotoDetailDto();
+      photoDetailDto.setAccountNo(1L);
+      photoDetailDto.setPhotoNo(1L);
+      photoDetailDto.setIsFavorite(false);
+      photoDetailDto.setPhotoAt(OffsetDateTime.of(2021, 1, 1, 9, 0, 0, 0, ZoneOffset.ofHours(9)));
+      photoDetailDto.setLocationNo(0L);
+      photoDetailDto.setImageFilePath("1/1-abc.jpg");
+      photoDetailDto.setPhotoJapaneseTitle("");
+      photoDetailDto.setPhotoEnglishTitle("");
+      photoDetailDto.setCaption("");
+      photoDetailDto.setDirectionKbn(DirectionEnum.VERTICAL);
+      photoDetailDto.setFocalLength(0);
+      photoDetailDto.setFValue(BigDecimal.ZERO);
+      photoDetailDto.setShutterSpeed(BigDecimal.ZERO);
+      photoDetailDto.setIso(0);
+      photoDetailDto.setIsHiddenByAdmin(true);
+      ArgumentCaptor<PhotoDetailGetDto> photoDetailGetDtoCaptor =
+          ArgumentCaptor.forClass(PhotoDetailGetDto.class);
+      doReturn(photoDetailDto)
+          .when(photoDetailMapper)
+          .getPhotoDetail(photoDetailGetDtoCaptor.capture());
+      doReturn(new ArrayList<PhotoTagMst>())
+          .when(photoTagMstMapper)
+          .select(any(PhotoTagMstCondition.class));
+
+      PhotoDetailModel actual =
+          photoDetailRepositoryImpl.getPhotoDetail(
+              PhotoDetailSearchModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .photoAccountNo(new AccountNo(1L))
+                  .photoNo(new PhotoNo(1L))
+                  .build());
+
+      assertTrue(photoDetailGetDtoCaptor.getValue().getIncludeHiddenByAdmin());
+      assertTrue(actual.getIsHiddenByAdmin().value());
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getPhotoListForAdmin {
+    /**
+     * 管理者用写真一覧の1件分のDtoを生成する
+     *
+     * @param photoNo 写真番号
+     * @param isHiddenByAdmin 管理者非公開フラグ
+     * @return {@link AdminPhotoDto}
+     */
+    private AdminPhotoDto createAdminPhotoDto(Long photoNo, Boolean isHiddenByAdmin) {
+      AdminPhotoDto dto = new AdminPhotoDto();
+      dto.setAccountNo(1L);
+      dto.setAccountId("aaaaaaaa");
+      dto.setAccountName("AAAAAAAA");
+      dto.setPhotoNo(photoNo);
+      dto.setPhotoJapaneseTitle("タイトル" + photoNo);
+      dto.setImageFilePath("1/" + photoNo + "-abc.jpg");
+      dto.setIsHiddenByAdmin(isHiddenByAdmin);
+      dto.setCreatedAt(OffsetDateTime.of(2026, 11, 1, 10, 0, 0, 0, ZoneOffset.ofHours(9)));
+      return dto;
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：取得件数が上限未満の場合、最後のページとして全件をModelに変換して返すこと")
+    void getPhotoListForAdmin_last_page() {
+      ArgumentCaptor<AdminPhotoListGetDto> dtoCaptor =
+          ArgumentCaptor.forClass(AdminPhotoListGetDto.class);
+      doReturn(List.of(createAdminPhotoDto(2L, true), createAdminPhotoDto(1L, false)))
+          .when(photoDetailMapper)
+          .getPhotoListForAdmin(dtoCaptor.capture());
+
+      AdminPhotoPageModel actual =
+          photoDetailRepositoryImpl.getPhotoListForAdmin(
+              AdminPhotoGetModel.builder()
+                  .accountId(new AccountId("aaaaaaaa"))
+                  .isHiddenByAdmin(new IsHiddenByAdmin(true))
+                  .limit(3)
+                  .offset(0)
+                  .build());
+
+      assertEquals("aaaaaaaa", dtoCaptor.getValue().getAccountId());
+      assertTrue(dtoCaptor.getValue().getIsHiddenByAdmin());
+      assertEquals(3, dtoCaptor.getValue().getLimit());
+      assertEquals(0, dtoCaptor.getValue().getOffset());
+
+      assertTrue(actual.getIsLast());
+      assertEquals(2, actual.getAdminPhotoModelList().size());
+      AdminPhotoModel first = actual.getAdminPhotoModelList().get(0);
+      assertEquals(new AccountNo(1L), first.getAccountNo());
+      assertEquals("aaaaaaaa", first.getAccountId().value());
+      assertEquals("AAAAAAAA", first.getAccountName().value());
+      assertEquals(new PhotoNo(2L), first.getPhotoNo());
+      assertEquals("タイトル2", first.getPhotoJapaneseTitle().value());
+      assertEquals("1/2-abc.jpg", first.getImageFilePath().value());
+      assertTrue(first.getIsHiddenByAdmin().value());
+      assertEquals(
+          OffsetDateTime.of(2026, 11, 1, 10, 0, 0, 0, ZoneOffset.ofHours(9)), first.getCreatedAt());
+      assertFalse(actual.getAdminPhotoModelList().get(1).getIsHiddenByAdmin().value());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：取得件数が上限と同じ場合、最後のページではなく、上限より1件少ない件数に切り詰めて返すこと")
+    void getPhotoListForAdmin_has_next_page() {
+      doReturn(
+              List.of(
+                  createAdminPhotoDto(3L, false),
+                  createAdminPhotoDto(2L, false),
+                  createAdminPhotoDto(1L, false)))
+          .when(photoDetailMapper)
+          .getPhotoListForAdmin(any(AdminPhotoListGetDto.class));
+
+      AdminPhotoPageModel actual =
+          photoDetailRepositoryImpl.getPhotoListForAdmin(
+              AdminPhotoGetModel.builder().limit(3).offset(0).build());
+
+      assertFalse(actual.getIsLast());
+      assertEquals(2, actual.getAdminPhotoModelList().size());
+      assertEquals(new PhotoNo(3L), actual.getAdminPhotoModelList().get(0).getPhotoNo());
+      assertEquals(new PhotoNo(2L), actual.getAdminPhotoModelList().get(1).getPhotoNo());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：0件の場合、最後のページとして空の一覧を返すこと")
+    void getPhotoListForAdmin_empty() {
+      doReturn(List.of())
+          .when(photoDetailMapper)
+          .getPhotoListForAdmin(any(AdminPhotoListGetDto.class));
+
+      AdminPhotoPageModel actual =
+          photoDetailRepositoryImpl.getPhotoListForAdmin(
+              AdminPhotoGetModel.builder().limit(3).offset(0).build());
+
+      assertTrue(actual.getIsLast());
+      assertTrue(actual.getAdminPhotoModelList().isEmpty());
     }
   }
 }

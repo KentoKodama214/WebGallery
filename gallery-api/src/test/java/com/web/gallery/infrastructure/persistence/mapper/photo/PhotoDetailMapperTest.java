@@ -3,6 +3,8 @@ package com.web.gallery.infrastructure.persistence.mapper.photo;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.domain.enumeration.DirectionEnum;
+import com.web.gallery.infrastructure.persistence.dto.photo.AdminPhotoDto;
+import com.web.gallery.infrastructure.persistence.dto.photo.AdminPhotoListGetDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDetailDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDetailGetDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDto;
@@ -232,6 +234,77 @@ public class PhotoDetailMapperTest {
       assertEquals(2L, actual.get(1).getPhotoNo());
       assertEquals(1, actual.get(1).getFavoriteCount());
     }
+
+    @Test
+    @Order(10)
+    @DisplayName("正常系：所有者本人以外が閲覧する場合、管理者により非公開にされた写真は含めないこと")
+    void getPhotoList_hiddenByAdmin_excluded_for_others() {
+      PhotoListGetDto photoSelectDto = new PhotoListGetDto();
+      photoSelectDto.setAccountNo(1L);
+      photoSelectDto.setPhotoAccountNo(2L);
+      photoSelectDto.setIncludeHiddenByAdmin(false);
+      photoSelectDto.setLimit(100);
+      photoSelectDto.setOffset(0);
+
+      List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
+
+      assertEquals(List.of(1L, 2L), actual.stream().map(PhotoDto::getPhotoNo).sorted().toList());
+      assertTrue(actual.stream().noneMatch(PhotoDto::getIsHiddenByAdmin));
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("正常系：未ログインで閲覧する場合、管理者により非公開にされた写真は含めないこと")
+    void getPhotoList_hiddenByAdmin_excluded_for_anonymous() {
+      PhotoListGetDto photoSelectDto = new PhotoListGetDto();
+      photoSelectDto.setAccountNo(null);
+      photoSelectDto.setPhotoAccountNo(2L);
+      photoSelectDto.setIncludeHiddenByAdmin(false);
+      photoSelectDto.setLimit(100);
+      photoSelectDto.setOffset(0);
+
+      List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
+
+      assertEquals(List.of(1L, 2L), actual.stream().map(PhotoDto::getPhotoNo).sorted().toList());
+    }
+
+    @Test
+    @Order(12)
+    @DisplayName("正常系：所有者本人が閲覧する場合、管理者により非公開にされた写真も含め、管理者非公開フラグを返すこと")
+    void getPhotoList_hiddenByAdmin_included_for_owner() {
+      PhotoListGetDto photoSelectDto = new PhotoListGetDto();
+      photoSelectDto.setAccountNo(2L);
+      photoSelectDto.setPhotoAccountNo(2L);
+      photoSelectDto.setIncludeHiddenByAdmin(true);
+      photoSelectDto.setLimit(100);
+      photoSelectDto.setOffset(0);
+
+      List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
+
+      List<PhotoDto> sorted =
+          actual.stream().sorted(Comparator.comparing(PhotoDto::getPhotoNo)).toList();
+      assertEquals(List.of(1L, 2L, 3L), sorted.stream().map(PhotoDto::getPhotoNo).toList());
+      assertFalse(sorted.get(0).getIsHiddenByAdmin());
+      assertFalse(sorted.get(1).getIsHiddenByAdmin());
+      assertTrue(sorted.get(2).getIsHiddenByAdmin());
+    }
+
+    @Test
+    @Order(13)
+    @DisplayName("正常系：お気に入り数順の場合も、所有者本人以外には管理者により非公開にされた写真を含めないこと")
+    void getPhotoList_sortBy_favorite_hiddenByAdmin_excluded() {
+      PhotoListGetDto photoSelectDto = new PhotoListGetDto();
+      photoSelectDto.setAccountNo(1L);
+      photoSelectDto.setPhotoAccountNo(2L);
+      photoSelectDto.setIncludeHiddenByAdmin(false);
+      photoSelectDto.setSortBy("FAVORITE");
+      photoSelectDto.setLimit(100);
+      photoSelectDto.setOffset(0);
+
+      List<PhotoDto> actual = photoDetailMapper.getPhotoList(photoSelectDto);
+
+      assertEquals(List.of(1L, 2L), actual.stream().map(PhotoDto::getPhotoNo).sorted().toList());
+    }
   }
 
   @Nested
@@ -283,6 +356,128 @@ public class PhotoDetailMapperTest {
 
       PhotoDetailDto actual = photoDetailMapper.getPhotoDetail(photoGetDto);
       assertNull(actual);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：所有者本人以外が閲覧する場合、管理者により非公開にされた写真は取得できないこと")
+    void getPhotoDetail_hiddenByAdmin_not_found_for_others() {
+      PhotoDetailGetDto photoGetDto = new PhotoDetailGetDto();
+      photoGetDto.setAccountNo(1L);
+      photoGetDto.setPhotoAccountNo(2L);
+      photoGetDto.setPhotoNo(3L);
+      photoGetDto.setIncludeHiddenByAdmin(false);
+
+      assertNull(photoDetailMapper.getPhotoDetail(photoGetDto));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：所有者本人が閲覧する場合、管理者により非公開にされた写真も取得でき、管理者非公開フラグがtrueであること")
+    void getPhotoDetail_hiddenByAdmin_found_for_owner() {
+      PhotoDetailGetDto photoGetDto = new PhotoDetailGetDto();
+      photoGetDto.setAccountNo(2L);
+      photoGetDto.setPhotoAccountNo(2L);
+      photoGetDto.setPhotoNo(3L);
+      photoGetDto.setIncludeHiddenByAdmin(true);
+
+      PhotoDetailDto actual = photoDetailMapper.getPhotoDetail(photoGetDto);
+
+      assertEquals(3L, actual.getPhotoNo());
+      assertEquals("タイトル23", actual.getPhotoJapaneseTitle());
+      assertTrue(actual.getIsHiddenByAdmin());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：管理者により非公開にされていない写真は、管理者非公開フラグがfalseであること")
+    void getPhotoDetail_not_hidden() {
+      PhotoDetailGetDto photoGetDto = new PhotoDetailGetDto();
+      photoGetDto.setAccountNo(1L);
+      photoGetDto.setPhotoAccountNo(2L);
+      photoGetDto.setPhotoNo(1L);
+      photoGetDto.setIncludeHiddenByAdmin(false);
+
+      assertFalse(photoDetailMapper.getPhotoDetail(photoGetDto).getIsHiddenByAdmin());
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/mapper/PhotoDetailMapperTest.sql")
+  class getPhotoListForAdmin {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：絞り込みなしの場合、全アカウントの削除されていない写真を、管理者により非公開にされた写真も含めて登録日時の新しい順に取得すること")
+    void getPhotoListForAdmin_all() {
+      AdminPhotoListGetDto dto = new AdminPhotoListGetDto();
+      dto.setLimit(100);
+      dto.setOffset(0);
+
+      List<AdminPhotoDto> actual = photoDetailMapper.getPhotoListForAdmin(dto);
+
+      // 論理削除済みのaccount1・photo3は含めない。登録日時が同じ場合はアカウント番号の昇順・写真番号の降順
+      assertEquals(
+          List.of("2-3", "1-2", "1-1", "2-2", "2-1", "4-4", "4-3", "4-2", "4-1"),
+          actual.stream().map(dto1 -> dto1.getAccountNo() + "-" + dto1.getPhotoNo()).toList());
+
+      AdminPhotoDto first = actual.getFirst();
+      assertEquals(2L, first.getAccountNo());
+      assertEquals("bbbbbbbb", first.getAccountId());
+      assertEquals("BBBBBBBB", first.getAccountName());
+      assertEquals(3L, first.getPhotoNo());
+      assertEquals("タイトル23", first.getPhotoJapaneseTitle());
+      assertEquals("https://www.xxx.com/DSC666.jpg", first.getImageFilePath());
+      assertTrue(first.getIsHiddenByAdmin());
+      assertEquals(
+          OffsetDateTime.of(2000, 1, 3, 0, 0, 0, 0, ZoneOffset.ofHours(0)), first.getCreatedAt());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：管理者非公開フラグで絞り込んだ場合、該当する写真のみを取得すること")
+    void getPhotoListForAdmin_filterByHidden() {
+      AdminPhotoListGetDto dto = new AdminPhotoListGetDto();
+      dto.setIsHiddenByAdmin(true);
+      dto.setLimit(100);
+      dto.setOffset(0);
+
+      List<AdminPhotoDto> actual = photoDetailMapper.getPhotoListForAdmin(dto);
+
+      assertEquals(1, actual.size());
+      assertEquals(2L, actual.getFirst().getAccountNo());
+      assertEquals(3L, actual.getFirst().getPhotoNo());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：アカウントIDで絞り込んだ場合、そのアカウントの写真のみを取得すること")
+    void getPhotoListForAdmin_filterByAccountId() {
+      AdminPhotoListGetDto dto = new AdminPhotoListGetDto();
+      dto.setAccountId("bbbbbbbb");
+      dto.setLimit(100);
+      dto.setOffset(0);
+
+      List<AdminPhotoDto> actual = photoDetailMapper.getPhotoListForAdmin(dto);
+
+      assertEquals(List.of(3L, 2L, 1L), actual.stream().map(AdminPhotoDto::getPhotoNo).toList());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：取得件数上限と取得開始位置に従って取得すること")
+    void getPhotoListForAdmin_paging() {
+      AdminPhotoListGetDto dto = new AdminPhotoListGetDto();
+      dto.setLimit(2);
+      dto.setOffset(1);
+
+      List<AdminPhotoDto> actual = photoDetailMapper.getPhotoListForAdmin(dto);
+
+      assertEquals(
+          List.of("1-2", "1-1"),
+          actual.stream().map(dto1 -> dto1.getAccountNo() + "-" + dto1.getPhotoNo()).toList());
     }
   }
 }

@@ -185,6 +185,19 @@ public class AccountAggregateRepositoryImplIntegrationTest {
               Integer.class);
       assertEquals(1, remainingFilterLogForOther);
 
+      // 自分の写真に対する管理者の操作履歴は、写真マスタの物理削除に先立って削除されていること
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_moderation_log WHERE photo_account_no=1",
+              Integer.class));
+      // 「管理者として」他人の写真を操作した履歴は残ること（admin_account_noは外部キーを持たない）
+      assertEquals(
+          1,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_moderation_log WHERE admin_account_no=1",
+              Integer.class));
+
       // 削除時点で未削除だった写真番号が記録されていること
       assertFalse(account.getDeletedPhotoNoList().isEmpty());
       assertTrue(account.getDeletedPhotoNoList().toList().contains(new PhotoNo(1L)));

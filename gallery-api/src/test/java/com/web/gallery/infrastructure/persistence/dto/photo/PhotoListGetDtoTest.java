@@ -88,5 +88,38 @@ class PhotoListGetDtoTest {
 
       assertNull(actual.getDirectionKbn());
     }
+
+    @Test
+    @Order(6)
+    @DisplayName("正常系：ログイン中のアカウント番号が写真のアカウント番号と一致する場合、管理者により非公開にされた写真も取得対象に含めること")
+    void from_owner() {
+      PhotoGetModel model = baseBuilder().accountNo(new AccountNo(1L)).build();
+
+      PhotoListGetDto actual = PhotoListGetDto.from(model);
+
+      assertTrue(actual.getIncludeHiddenByAdmin());
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("正常系：ログイン中のアカウント番号が写真のアカウント番号と異なる場合、管理者により非公開にされた写真は取得対象に含めないこと")
+    void from_notOwner() {
+      PhotoGetModel model = baseBuilder().accountNo(new AccountNo(2L)).build();
+
+      PhotoListGetDto actual = PhotoListGetDto.from(model);
+
+      assertFalse(actual.getIncludeHiddenByAdmin());
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("正常系：未ログインの場合、管理者により非公開にされた写真は取得対象に含めないこと")
+    void from_anonymous() {
+      PhotoGetModel model = baseBuilder().accountNo(null).build();
+
+      PhotoListGetDto actual = PhotoListGetDto.from(model);
+
+      assertFalse(actual.getIncludeHiddenByAdmin());
+    }
   }
 }

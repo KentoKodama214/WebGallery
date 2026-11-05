@@ -39,6 +39,10 @@ public class PhotoListResponse {
   @Schema(description = "向き区分")
   private DirectionEnum directionKbn;
 
+  /** 管理者非公開フラグ（非公開の写真は所有者本人の一覧にのみ含まれる） */
+  @Schema(description = "管理者により非公開にされているか（所有者本人の一覧でのみtrueになりうる）")
+  private Boolean isHiddenByAdmin;
+
   /**
    * PhotoModelからPhotoListResponseを生成する
    *
@@ -53,6 +57,7 @@ public class PhotoListResponse {
         .imageFilePath(model.getImageFilePath().value())
         .caption(model.getCaption().value())
         .directionKbn(model.getDirectionKbn())
+        .isHiddenByAdmin(model.getIsHiddenByAdmin() != null && model.getIsHiddenByAdmin().value())
         .build();
   }
 }

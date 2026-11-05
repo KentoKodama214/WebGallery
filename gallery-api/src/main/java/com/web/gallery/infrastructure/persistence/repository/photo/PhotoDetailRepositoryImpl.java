@@ -1,5 +1,9 @@
 package com.web.gallery.infrastructure.persistence.repository.photo;
 
+import com.web.gallery.application.model.photo.AdminPhotoGetModel;
+import com.web.gallery.application.model.photo.AdminPhotoModel;
+import com.web.gallery.application.model.photo.AdminPhotoModelList;
+import com.web.gallery.application.model.photo.AdminPhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.application.model.photo.PhotoDetailSearchModel;
 import com.web.gallery.application.model.photo.PhotoGetModel;
@@ -12,6 +16,8 @@ import com.web.gallery.application.repository.photo.PhotoDetailRepository;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Address;
 import com.web.gallery.domain.model.common.GeoLocation;
@@ -25,6 +31,7 @@ import com.web.gallery.domain.model.photo.FavoriteCount;
 import com.web.gallery.domain.model.photo.FocalLength;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.IsFavorite;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.IsLocationPublic;
 import com.web.gallery.domain.model.photo.Iso;
 import com.web.gallery.domain.model.photo.LocationNo;
@@ -36,6 +43,8 @@ import com.web.gallery.domain.model.photo.ShutterSpeed;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.domain.model.photo.TagNo;
+import com.web.gallery.infrastructure.persistence.dto.photo.AdminPhotoDto;
+import com.web.gallery.infrastructure.persistence.dto.photo.AdminPhotoListGetDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDetailDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDetailGetDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDto;
@@ -114,6 +123,7 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
         .caption(new Caption(dto.getCaption()))
         .directionKbn(dto.getDirectionKbn())
         .photoTagModelList(photoTagModelList)
+        .isHiddenByAdmin(toIsHiddenByAdmin(dto.getIsHiddenByAdmin()))
         .build();
   }
 
@@ -200,7 +210,60 @@ public class PhotoDetailRepositoryImpl implements PhotoDetailRepository {
                     : null,
                 dto.getIso() != null && dto.getIso() != 0 ? new Iso(dto.getIso()) : null))
         .photoTagModelList(photoTagModelList)
+        .isHiddenByAdmin(toIsHiddenByAdmin(dto.getIsHiddenByAdmin()))
         .build();
+  }
+
+  /**
+   * 全アカウントの写真の一覧を、ページング情報に従い取得する（管理者用）
+   *
+   * <p>最後のページかどうかを判定するため、DBからは1ページあたりの表示件数より1件多く取得し、 実際に返す件数が上限を超えていた場合は表示件数分のみに切り詰める
+   *
+   * @param adminPhotoGetModel {@link AdminPhotoGetModel}
+   * @return {@link AdminPhotoPageModel}
+   */
+  @Override
+  public AdminPhotoPageModel getPhotoListForAdmin(AdminPhotoGetModel adminPhotoGetModel) {
+    List<AdminPhotoDto> adminPhotoDtoList =
+        photoDetailMapper.getPhotoListForAdmin(AdminPhotoListGetDto.from(adminPhotoGetModel));
+
+    Boolean isLast = adminPhotoDtoList.size() < adminPhotoGetModel.getLimit();
+    List<AdminPhotoDto> pageDtoList =
+        isLast
+            ? adminPhotoDtoList
+            : adminPhotoDtoList.subList(0, adminPhotoGetModel.getLimit() - 1);
+
+    return AdminPhotoPageModel.of(
+        AdminPhotoModelList.of(pageDtoList.stream().map(this::toAdminPhotoModel).toList()), isLast);
+  }
+
+  /**
+   * AdminPhotoDtoからAdminPhotoModelを組み立てる
+   *
+   * @param dto {@link AdminPhotoDto}
+   * @return {@link AdminPhotoModel}
+   */
+  private AdminPhotoModel toAdminPhotoModel(AdminPhotoDto dto) {
+    return AdminPhotoModel.builder()
+        .accountNo(new AccountNo(dto.getAccountNo()))
+        .accountId(new AccountId(dto.getAccountId()))
+        .accountName(new AccountName(dto.getAccountName()))
+        .photoNo(new PhotoNo(dto.getPhotoNo()))
+        .photoJapaneseTitle(new PhotoJapaneseTitle(dto.getPhotoJapaneseTitle()))
+        .imageFilePath(new ImageFilePath(dto.getImageFilePath()))
+        .isHiddenByAdmin(new IsHiddenByAdmin(dto.getIsHiddenByAdmin()))
+        .createdAt(dto.getCreatedAt())
+        .build();
+  }
+
+  /**
+   * DBから取得した管理者非公開フラグを値オブジェクトに変換する
+   *
+   * @param isHiddenByAdmin 管理者非公開フラグ（未取得の場合はnull）
+   * @return {@link IsHiddenByAdmin}（未取得の場合はnull）
+   */
+  private IsHiddenByAdmin toIsHiddenByAdmin(Boolean isHiddenByAdmin) {
+    return isHiddenByAdmin != null ? new IsHiddenByAdmin(isHiddenByAdmin) : null;
   }
 
   /**

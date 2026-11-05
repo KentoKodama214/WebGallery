@@ -53,6 +53,12 @@ insert into photo.photo_view_log (photo_view_log_no, photo_account_no, photo_no,
 insert into photo.photo_view_log (photo_view_log_no, photo_account_no, photo_no, account_no, referer, ip_address, country, region, created_by, created_at) values (2, 2, 1, 1, 'https://example.com/other', '198.51.100.9', 'JP', 'Osaka', 2, '2024-01-02 00:00:00 Asia/Tokyo');
 ALTER SEQUENCE photo.photo_view_log_photo_view_log_no_seq RESTART 3;
 
+-- photo.photo_moderation_log (photo_mst(account_no, photo_no) を外部キーで参照する)
+-- 1件目：account_no=1の写真に対する管理者（account_no=2）の操作履歴（account_no=1の削除時に消える）
+-- 2件目：account_no=1が「管理者として」account_no=2の写真を操作した履歴（admin_account_noは外部キーを持たないため残る）
+insert into photo.photo_moderation_log (photo_account_no, photo_no, admin_account_no, is_hidden, reason, created_by, created_at) values(1, 1, 2, true, '不適切な画像のため', 2, '2000-01-03 09:00:00 Asia/Tokyo');
+insert into photo.photo_moderation_log (photo_account_no, photo_no, admin_account_no, is_hidden, reason, created_by, created_at) values(2, 1, 1, true, '不適切な画像のため', 1, '2000-01-03 09:00:00 Asia/Tokyo');
+
 -- common.location_mst (account_no=1のロケーション2件、account_no=2のロケーション1件)
 -- common.account への外部キーが ON DELETE RESTRICT のため、削除漏れがあるとアカウント本体の物理削除が失敗する
 insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, 'ロケーション11_管理用', 'ロケーション11', '東京都千代田区', 35.6812, 139.7671);

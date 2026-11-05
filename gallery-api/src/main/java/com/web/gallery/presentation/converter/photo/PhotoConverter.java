@@ -1,11 +1,13 @@
 package com.web.gallery.presentation.converter.photo;
 
+import com.web.gallery.application.model.photo.AdminPhotoListGetModel;
 import com.web.gallery.application.model.photo.PhotoDeleteModel;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.application.model.photo.PhotoFavoriteModel;
 import com.web.gallery.application.model.photo.PhotoListGetModel;
 import com.web.gallery.application.model.photo.PhotoTagModel;
 import com.web.gallery.application.model.photo.PhotoTagModelList;
+import com.web.gallery.application.model.photo.PhotoVisibilityChangeModel;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.model.account.AccountId;
@@ -24,14 +26,18 @@ import com.web.gallery.domain.model.photo.ImageFile;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.IsFavorite;
 import com.web.gallery.domain.model.photo.IsFavoriteOnly;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.IsLocationPublic;
 import com.web.gallery.domain.model.photo.LocationNo;
+import com.web.gallery.domain.model.photo.ModerationReason;
 import com.web.gallery.domain.model.photo.PhotoAt;
 import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
+import com.web.gallery.presentation.request.photo.AdminPhotoListRequest;
+import com.web.gallery.presentation.request.photo.AdminPhotoVisibilityUpdateRequest;
 import com.web.gallery.presentation.request.photo.PhotoBulkSaveRequest;
 import com.web.gallery.presentation.request.photo.PhotoDeleteRequest;
 import com.web.gallery.presentation.request.photo.PhotoFavoriteDeleteRequest;
@@ -309,6 +315,46 @@ public class PhotoConverter {
         .tagEnglishName(
             new TagEnglishName(
                 Optional.ofNullable(request.getTagEnglishName()).orElse(Consts.STRING_EMPTY)))
+        .build();
+  }
+
+  /**
+   * 管理者用写真一覧リクエストからAdminPhotoListGetModelを生成する
+   *
+   * @param request {@link AdminPhotoListRequest}
+   * @return {@link AdminPhotoListGetModel}
+   */
+  public AdminPhotoListGetModel toAdminPhotoListGetModel(AdminPhotoListRequest request) {
+    return AdminPhotoListGetModel.builder()
+        .accountId(request.getAccountId() != null ? new AccountId(request.getAccountId()) : null)
+        .isHiddenByAdmin(
+            request.getIsHiddenByAdmin() != null
+                ? new IsHiddenByAdmin(request.getIsHiddenByAdmin())
+                : null)
+        .pageNo(request.getPageNo())
+        .build();
+  }
+
+  /**
+   * 管理者用写真公開状態変更リクエストからPhotoVisibilityChangeModelを生成する
+   *
+   * @param request {@link AdminPhotoVisibilityUpdateRequest}
+   * @param photoAccountNo 写真所有者のアカウント番号
+   * @param photoNo 写真番号
+   * @param adminAccountNo ログイン中の管理者のアカウント番号
+   * @return {@link PhotoVisibilityChangeModel}
+   */
+  public PhotoVisibilityChangeModel toPhotoVisibilityChangeModel(
+      AdminPhotoVisibilityUpdateRequest request,
+      Long photoAccountNo,
+      Long photoNo,
+      AccountNo adminAccountNo) {
+    return PhotoVisibilityChangeModel.builder()
+        .photoAccountNo(new AccountNo(photoAccountNo))
+        .photoNo(new PhotoNo(photoNo))
+        .adminAccountNo(adminAccountNo)
+        .isHiddenByAdmin(new IsHiddenByAdmin(request.getIsHiddenByAdmin()))
+        .reason(new ModerationReason(request.getReason()))
         .build();
   }
 }

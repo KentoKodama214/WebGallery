@@ -37,6 +37,8 @@ class PhotoDetailGetDtoTest {
       assertEquals(2L, actual.getAccountNo());
       assertEquals(1L, actual.getPhotoAccountNo());
       assertEquals(1L, actual.getPhotoNo());
+      // 閲覧者（アカウント番号2）が所有者（アカウント番号1）ではないため、管理者により非公開にされた写真は含めない
+      assertFalse(actual.getIncludeHiddenByAdmin());
     }
 
     @Test
@@ -48,6 +50,18 @@ class PhotoDetailGetDtoTest {
       PhotoDetailGetDto actual = PhotoDetailGetDto.from(model);
 
       assertNull(actual.getAccountNo());
+      assertFalse(actual.getIncludeHiddenByAdmin());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：ログイン中のアカウント番号が写真のアカウント番号と一致する場合、管理者により非公開にされた写真も取得対象に含めること")
+    void from_owner() {
+      PhotoDetailSearchModel model = baseBuilder().accountNo(new AccountNo(1L)).build();
+
+      PhotoDetailGetDto actual = PhotoDetailGetDto.from(model);
+
+      assertTrue(actual.getIncludeHiddenByAdmin());
     }
   }
 }

@@ -52,6 +52,8 @@ CREATE TABLE photo.photo_mst
 	iso int NOT NULL,
 	-- 位置情報公開フラグ: trueなら撮影場所（緯度経度・住所・表示名）を本人以外にも公開する
 	is_location_public boolean DEFAULT 'false' NOT NULL,
+	-- 管理者非公開フラグ: trueなら管理者により非公開にされており、所有者本人以外には表示しない
+	is_hidden_by_admin boolean DEFAULT 'false' NOT NULL,
 	PRIMARY KEY (id),
 	CONSTRAINT photo_no_unique UNIQUE (account_no, photo_no)
 ) WITHOUT OIDS;
@@ -95,3 +97,4 @@ COMMENT ON COLUMN photo.photo_mst.f_value IS 'F値';
 COMMENT ON COLUMN photo.photo_mst.shutter_speed IS 'シャッタースピード : 単位：秒 1日が86400秒 1/4000秒が0.00025秒';
 COMMENT ON COLUMN photo.photo_mst.iso IS 'ISO';
 COMMENT ON COLUMN photo.photo_mst.is_location_public IS '位置情報公開フラグ : trueなら撮影場所（緯度経度・住所・ロケーション名）を本人以外にも公開する';
+COMMENT ON COLUMN photo.photo_mst.is_hidden_by_admin IS '管理者非公開フラグ : trueなら管理者により非公開にされており、所有者本人以外には表示しない';

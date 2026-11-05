@@ -11,6 +11,7 @@
 		<result column="imageFilePath" property="imageFilePath"/>
 		<result column="caption" property="caption"/>
 		<result column="directionKbn" property="directionKbn"/>
+		<result column="isHiddenByAdmin" property="isHiddenByAdmin"/>
 	</resultMap>
 
 	<resultMap id="PhotoDetailDtoResultMap" type="com.web.gallery.infrastructure.persistence.dto.photo.PhotoDetailDto">
@@ -33,11 +34,27 @@
 		<result column="shutterSpeed" property="shutterSpeed"/>
 		<result column="iso" property="iso"/>
 		<result column="isLocationPublic" property="isLocationPublic"/>
+		<result column="isHiddenByAdmin" property="isHiddenByAdmin"/>
+	</resultMap>
+
+	<resultMap id="AdminPhotoDtoResultMap" type="com.web.gallery.infrastructure.persistence.dto.photo.AdminPhotoDto">
+		<result column="accountNo" property="accountNo"/>
+		<result column="accountId" property="accountId"/>
+		<result column="accountName" property="accountName"/>
+		<result column="photoNo" property="photoNo"/>
+		<result column="photoJapaneseTitle" property="photoJapaneseTitle"/>
+		<result column="imageFilePath" property="imageFilePath"/>
+		<result column="isHiddenByAdmin" property="isHiddenByAdmin"/>
+		<result column="createdAt" property="createdAt"/>
 	</resultMap>
 
 	<sql id="photoListFilterWhere">
 		photo_mst.account_no = #{photoAccountNo} AND
 		photo_mst.is_deleted = false
+		<if test="!includeHiddenByAdmin">
+			<!-- 管理者により非公開にされた写真は、所有者本人以外には返さない -->
+			AND photo_mst.is_hidden_by_admin = false
+		</if>
 		<if test="directionKbn != null">
 			AND photo_mst.direction_kbn = #{directionKbn}::photo.direction_enum
 		</if>
@@ -117,7 +134,8 @@
 					photo_mst.photo_at AS photoAt,
 					photo_mst.image_file_path AS imageFilePath,
 					photo_mst.caption AS caption,
-					photo_mst.direction_kbn AS directionKbn
+					photo_mst.direction_kbn AS directionKbn,
+					photo_mst.is_hidden_by_admin AS isHiddenByAdmin
 				FROM
 					photo.photo_mst photo_mst
 				LEFT JOIN countOfFavorite ON
@@ -138,7 +156,8 @@
 						photo_mst.photo_at,
 						photo_mst.image_file_path,
 						photo_mst.caption,
-						photo_mst.direction_kbn
+						photo_mst.direction_kbn,
+						photo_mst.is_hidden_by_admin
 					FROM
 						photo.photo_mst photo_mst
 					<where>
@@ -174,7 +193,8 @@
 					pagedPhotos.photo_at AS photoAt,
 					pagedPhotos.image_file_path AS imageFilePath,
 					pagedPhotos.caption AS caption,
-					pagedPhotos.direction_kbn AS directionKbn
+					pagedPhotos.direction_kbn AS directionKbn,
+					pagedPhotos.is_hidden_by_admin AS isHiddenByAdmin
 				FROM
 					pagedPhotos
 				<include refid="photoListOrderBy">
@@ -213,7 +233,8 @@
 			photo_mst.f_value AS fValue,
 			photo_mst.shutter_speed AS shutterSpeed,
 			photo_mst.iso AS iso,
-			photo_mst.is_location_public AS isLocationPublic
+			photo_mst.is_location_public AS isLocationPublic,
+			photo_mst.is_hidden_by_admin AS isHiddenByAdmin
 		FROM
 			photo.photo_mst photo_mst
 		LEFT JOIN common.location_mst location_mst ON
@@ -224,5 +245,37 @@
 			photo_mst.account_no = #{photoAccountNo} AND
 			photo_mst.photo_no = #{photoNo} AND
 			photo_mst.is_deleted = false
+			<if test="!includeHiddenByAdmin">
+				<!-- 管理者により非公開にされた写真は、所有者本人以外には返さない -->
+				AND photo_mst.is_hidden_by_admin = false
+			</if>
+	</select>
+
+	<!-- 管理者用の全アカウントの写真一覧。管理者により非公開にされた写真も含め、登録日時の新しい順に取得する -->
+	<select id="getPhotoListForAdmin" parameterType="com.web.gallery.infrastructure.persistence.dto.photo.AdminPhotoListGetDto" resultMap="AdminPhotoDtoResultMap">
+		SELECT
+			photo_mst.account_no AS accountNo,
+			account.account_id AS accountId,
+			account.account_name AS accountName,
+			photo_mst.photo_no AS photoNo,
+			photo_mst.photo_japanese_title AS photoJapaneseTitle,
+			photo_mst.image_file_path AS imageFilePath,
+			photo_mst.is_hidden_by_admin AS isHiddenByAdmin,
+			photo_mst.created_at AS createdAt
+		FROM
+			photo.photo_mst photo_mst
+		INNER JOIN common.account account ON
+			account.account_no = photo_mst.account_no
+		<where>
+			photo_mst.is_deleted = false
+			<if test="accountId != null">
+				AND account.account_id = #{accountId}
+			</if>
+			<if test="isHiddenByAdmin != null">
+				AND photo_mst.is_hidden_by_admin = #{isHiddenByAdmin}
+			</if>
+		</where>
+		ORDER BY photo_mst.created_at DESC, photo_mst.account_no ASC, photo_mst.photo_no DESC
+		LIMIT #{limit} OFFSET #{offset}
 	</select>
 </mapper>

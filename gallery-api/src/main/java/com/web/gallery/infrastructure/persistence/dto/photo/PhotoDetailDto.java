@@ -68,4 +68,7 @@ public class PhotoDetailDto {
 
   /** 位置情報公開フラグ */
   private Boolean isLocationPublic;
+
+  /** 管理者非公開フラグ */
+  private Boolean isHiddenByAdmin;
 }

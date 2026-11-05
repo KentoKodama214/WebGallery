@@ -17,6 +17,7 @@ import com.web.gallery.presentation.controller.account.AdminAccountController;
 import com.web.gallery.presentation.controller.auth.AuthController;
 import com.web.gallery.presentation.controller.inquiry.AdminInquiryController;
 import com.web.gallery.presentation.controller.inquiry.InquiryController;
+import com.web.gallery.presentation.controller.photo.AdminPhotoController;
 import com.web.gallery.presentation.controller.photo.PhotoController;
 import com.web.gallery.presentation.controller.photo.PhotoFavoriteController;
 import com.web.gallery.presentation.controller.photo.PortfolioController;
@@ -50,6 +51,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
       AccountController.class,
       AdminAccountController.class,
       AdminInquiryController.class,
+      AdminPhotoController.class,
       AuthController.class,
       InquiryController.class,
       KbnMstController.class,

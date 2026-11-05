@@ -103,7 +103,7 @@ func TestFindAccountNo(t *testing.T) {
 }
 
 // TestListPublished は、アカウントの公開中のポートフォリオだけを表示順に返し、
-// テンプレート・テーマ・説明文・更新日時、写真の枚数（論理削除済みの写真を除く）・先頭の写真（表示順の先頭）、
+// テンプレート・テーマ・説明文・更新日時、写真の枚数（論理削除済み・管理者により非公開にされた写真を除く）・先頭の写真（表示順の先頭）、
 // タグ（タグ番号順。タグがない場合は空のスライス）が正しく取得できることを検証する。
 func TestListPublished(t *testing.T) {
 	repo, _ := setup(t)
@@ -126,7 +126,7 @@ func TestListPublished(t *testing.T) {
 		t.Errorf("feature tags = %#v, want empty slice", feature.Tags)
 	}
 
-	// 論理削除済みの写真は枚数に含めない。先頭の写真は表示順の先頭
+	// 論理削除済みの写真3・管理者により非公開にされた写真4は枚数に含めない。先頭の写真は表示順の先頭
 	if grid.Template != domain.TemplateGrid || grid.Theme != "光と影" || grid.Description != "説明1" || grid.PhotoCount != 2 {
 		t.Errorf("grid summary = %+v", grid)
 	}
@@ -234,7 +234,7 @@ func TestFindPublished(t *testing.T) {
 	if !reflect.DeepEqual(got.TemplateSettings, wantSettings) {
 		t.Errorf("template settings = %#v", got.TemplateSettings)
 	}
-	// 表示順に並べ、論理削除済みの写真3は含めない
+	// 表示順に並べ、論理削除済みの写真3・管理者により非公開にされた写真4は含めない
 	wantPhotos := []domain.PortfolioPhoto{
 		{DisplayOrder: 1, Settings: map[string]any{},
 			Photo: domain.Photo{PhotoNo: 2, ImageFilePath: "900001/2-bbb.jpg", JapaneseTitle: "茶畑", Direction: domain.DirectionSquare}},

@@ -334,7 +334,7 @@ public class PortfolioServiceImpl implements PortfolioService {
         portfolioMstRepository.countAvailablePhotos(
             detail.getAccountNo(), PhotoNoList.of(photoNos));
     if (availableCount != photoNos.size()) {
-      // 他人の写真・削除済みの写真・存在しない写真番号を指定された場合
+      // 他人の写真・削除済みの写真・管理者により非公開にされた写真・存在しない写真番号を指定された場合
       log.info(
           "Portfolio: Unavailable photo (AccountNo: {}, PhotoNos: {})",
           detail.getAccountNo().value(),

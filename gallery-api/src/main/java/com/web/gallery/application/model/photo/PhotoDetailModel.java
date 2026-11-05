@@ -10,6 +10,7 @@ import com.web.gallery.domain.model.photo.ExifData;
 import com.web.gallery.domain.model.photo.ImageFile;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.IsFavorite;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.IsLocationPublic;
 import com.web.gallery.domain.model.photo.LocationNo;
 import com.web.gallery.domain.model.photo.PhotoAt;
@@ -78,6 +79,9 @@ public class PhotoDetailModel {
 
   /** 写真タグリスト */
   private PhotoTagModelList photoTagModelList;
+
+  /** 管理者非公開フラグ（所有者本人以外には非公開の写真自体を返さないため、実質的に本人向けの表示用） */
+  private IsHiddenByAdmin isHiddenByAdmin;
 
   /**
    * 位置情報を取得する。未設定の場合は全項目未設定のGeoLocationを返す

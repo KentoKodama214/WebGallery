@@ -24,12 +24,14 @@ import com.web.gallery.domain.model.common.Longitude;
 import com.web.gallery.domain.model.photo.ImageFile;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.LocationNo;
+import com.web.gallery.domain.model.photo.ModerationReason;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
 import com.web.gallery.infrastructure.persistence.entity.common.LocationMst;
 import com.web.gallery.infrastructure.persistence.entity.common.LocationMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavoriteCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoModerationLog;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoMst;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoMstUpdateTarget;
@@ -37,6 +39,7 @@ import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMst;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.infrastructure.persistence.mapper.common.LocationMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoFavoriteMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoModerationLogMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoTagMstMapper;
 import java.util.List;
@@ -69,6 +72,8 @@ public class PhotoAggregateRepositoryImplTest {
   @Mock private PhotoFavoriteMapper photoFavoriteMapper;
 
   @Mock private LocationMstMapper locationMstMapper;
+
+  @Mock private PhotoModerationLogMapper photoModerationLogMapper;
 
   private PhotoDetailModel buildDetail(
       AccountNo accountNo, PhotoNo photoNo, ImageFilePath imageFilePath, PhotoTagModelList tags) {
@@ -520,6 +525,67 @@ public class PhotoAggregateRepositoryImplTest {
           .update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
 
       assertThrows(PhotoNotFoundException.class, () -> photoAggregateRepositoryImpl.delete(photo));
+    }
+  }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class changeVisibility {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：未削除の写真の管理者非公開フラグを更新してから、操作履歴を写真モデレーションログに登録すること")
+    void changeVisibility_success() throws GalleryException {
+      Photo photo = Photo.forModeration(new AccountNo(1L), new PhotoNo(5L));
+      photo.hideByAdmin(new AccountNo(99L), new ModerationReason("不適切な画像のため"));
+
+      ArgumentCaptor<PhotoMstCondition> conditionCaptor =
+          ArgumentCaptor.forClass(PhotoMstCondition.class);
+      ArgumentCaptor<PhotoMstUpdateTarget> targetCaptor =
+          ArgumentCaptor.forClass(PhotoMstUpdateTarget.class);
+      doReturn(1).when(photoMstMapper).update(conditionCaptor.capture(), targetCaptor.capture());
+      ArgumentCaptor<PhotoModerationLog> logCaptor =
+          ArgumentCaptor.forClass(PhotoModerationLog.class);
+      doReturn(1).when(photoModerationLogMapper).insert(logCaptor.capture());
+
+      photoAggregateRepositoryImpl.changeVisibility(photo);
+
+      InOrder inOrder = inOrder(photoMstMapper, photoModerationLogMapper);
+      inOrder
+          .verify(photoMstMapper)
+          .update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+      inOrder.verify(photoModerationLogMapper).insert(any(PhotoModerationLog.class));
+
+      assertEquals(1L, conditionCaptor.getValue().getAccountNo());
+      assertEquals(5L, conditionCaptor.getValue().getPhotoNo());
+      assertFalse(conditionCaptor.getValue().getIsDeleted());
+
+      assertEquals(99L, targetCaptor.getValue().getUpdatedBy());
+      assertTrue(targetCaptor.getValue().getIsHiddenByAdmin());
+      assertNull(targetCaptor.getValue().getIsDeleted());
+
+      PhotoModerationLog log = logCaptor.getValue();
+      assertEquals(1L, log.getPhotoAccountNo());
+      assertEquals(5L, log.getPhotoNo());
+      assertEquals(99L, log.getAdminAccountNo());
+      assertTrue(log.getIsHidden());
+      assertEquals("不適切な画像のため", log.getReason());
+      assertEquals(99L, log.getCreatedBy());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：更新件数が0件（写真が未登録・削除済み）の場合、PhotoNotFoundExceptionをthrowし、操作履歴を登録しないこと")
+    void changeVisibility_PhotoNotFoundException() {
+      Photo photo = Photo.forModeration(new AccountNo(1L), new PhotoNo(5L));
+      photo.unhideByAdmin(new AccountNo(99L), new ModerationReason("誤判定だったため"));
+      doReturn(0)
+          .when(photoMstMapper)
+          .update(any(PhotoMstCondition.class), any(PhotoMstUpdateTarget.class));
+
+      assertThrows(
+          PhotoNotFoundException.class, () -> photoAggregateRepositoryImpl.changeVisibility(photo));
+      verify(photoModerationLogMapper, never()).insert(any(PhotoModerationLog.class));
     }
   }
 }

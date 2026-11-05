@@ -14,6 +14,7 @@ import com.web.gallery.domain.model.photo.LocationNo;
 import com.web.gallery.infrastructure.persistence.entity.common.LocationMst;
 import com.web.gallery.infrastructure.persistence.entity.common.LocationMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavoriteCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.PhotoModerationLog;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoMst;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoMstUpdateTarget;
@@ -21,6 +22,7 @@ import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMst;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoTagMstCondition;
 import com.web.gallery.infrastructure.persistence.mapper.common.LocationMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoFavoriteMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoModerationLogMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoTagMstMapper;
 import java.util.List;
@@ -32,8 +34,8 @@ import org.springframework.stereotype.Repository;
 /**
  * 写真集約（{@link Photo}）を永続化するRepositoryの実装クラス
  *
- * <p>PhotoMst・PhotoTagMst・PhotoFavorite・LocationMstの4テーブルへの永続化を、写真の登録・更新・削除という
- * ユースケース単位で整合性のある1操作としてまとめる。他のRepositoryには依存せず、Mapperを直接操作する
+ * <p>PhotoMst・PhotoTagMst・PhotoFavorite・LocationMst・PhotoModerationLogの5テーブルへの永続化を、写真の登録・更新・削除・
+ * 管理者による公開状態変更というユースケース単位で整合性のある1操作としてまとめる。他のRepositoryには依存せず、Mapperを直接操作する
  */
 @Slf4j
 @Repository
@@ -44,6 +46,7 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
   private final PhotoTagMstMapper photoTagMstMapper;
   private final PhotoFavoriteMapper photoFavoriteMapper;
   private final LocationMstMapper locationMstMapper;
+  private final PhotoModerationLogMapper photoModerationLogMapper;
 
   /**
    * 写真集約を新規登録する
@@ -148,6 +151,32 @@ public class PhotoAggregateRepositoryImpl implements PhotoAggregateRepository {
           photo.getPhotoNo().value());
       throw ErrorEnum.PHOTO_NOT_FOUND.toException();
     }
+  }
+
+  /**
+   * 管理者による写真の公開状態の変更を永続化する
+   *
+   * <p>写真マスタの管理者非公開フラグを更新し、操作履歴を写真モデレーションログに登録する
+   *
+   * @param photo {@link Photo}（{@link Photo#forModeration}で生成し、変更内容を設定済みのもの）
+   * @throws GalleryException 写真が存在しない（未登録・削除済み）場合
+   */
+  @Override
+  public void changeVisibility(Photo photo) throws GalleryException {
+    PhotoMstCondition condition =
+        PhotoMstCondition.byAccountAndPhotoNotDeleted(
+            photo.getAccountNo().value(), photo.getPhotoNo().value());
+    PhotoMstUpdateTarget target = PhotoMstUpdateTarget.forVisibilityChange(photo);
+
+    if (photoMstMapper.update(condition, target) < 1) {
+      log.warn(
+          "PhotoMst: Not Found for visibility change (AccountNo: {}, PhotoNo: {})",
+          photo.getAccountNo().value(),
+          photo.getPhotoNo().value());
+      throw ErrorEnum.PHOTO_NOT_FOUND.toException();
+    }
+
+    photoModerationLogMapper.insert(PhotoModerationLog.from(photo));
   }
 
   /**

@@ -58,6 +58,10 @@ public class PhotoDetailGetResponse {
   @Schema(description = "位置情報公開フラグ")
   private Boolean isLocationPublic;
 
+  /** 管理者非公開フラグ（非公開の写真は所有者本人にのみ返る） */
+  @Schema(description = "管理者により非公開にされているか（所有者本人の場合のみtrueになりうる）")
+  private Boolean isHiddenByAdmin;
+
   /** 画像ファイルパス */
   @Schema(description = "画像ファイルパス")
   private String imageFilePath;
@@ -132,6 +136,7 @@ public class PhotoDetailGetResponse {
         .displayName(model.getDisplayName() != null ? model.getDisplayName().value() : null)
         .isLocationPublic(
             model.getIsLocationPublic() != null ? model.getIsLocationPublic().value() : null)
+        .isHiddenByAdmin(model.getIsHiddenByAdmin() != null && model.getIsHiddenByAdmin().value())
         .imageFilePath(model.getImageFilePath().value())
         .photoJapaneseTitle(
             model.getPhotoJapaneseTitle() != null ? model.getPhotoJapaneseTitle().value() : null)

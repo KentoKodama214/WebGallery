@@ -339,6 +339,24 @@ export function PhotoDetail({
 
       {/* メインコンテンツ */}
       <div style={{ padding: "70px 5% 5% 5%", overflow: "auto" }}>
+        {/* 管理者により非公開にされた写真（所有者本人にのみ返る）であることの通知 */}
+        {photo.isHiddenByAdmin && (
+          <p
+            data-testid="hidden-by-admin-notice"
+            style={{
+              maxWidth: "1000px",
+              margin: "0 auto 12px auto",
+              padding: "8px 12px",
+              background: "#7f1d1d",
+              color: "#fff",
+              borderRadius: "4px",
+              fontSize: "14px",
+              textAlign: "center",
+            }}
+          >
+            この写真は管理者により非公開にされています。あなた以外には表示されません。
+          </p>
+        )}
         {/* 画像 */}
         <div>
           {imageSrc ? (

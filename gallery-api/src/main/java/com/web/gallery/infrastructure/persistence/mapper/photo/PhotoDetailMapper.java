@@ -1,5 +1,7 @@
 package com.web.gallery.infrastructure.persistence.mapper.photo;
 
+import com.web.gallery.infrastructure.persistence.dto.photo.AdminPhotoDto;
+import com.web.gallery.infrastructure.persistence.dto.photo.AdminPhotoListGetDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDetailDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDetailGetDto;
 import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDto;
@@ -25,4 +27,12 @@ public interface PhotoDetailMapper {
    * @return {@link PhotoDetailDto}
    */
   public PhotoDetailDto getPhotoDetail(PhotoDetailGetDto photoGetDto);
+
+  /**
+   * 管理者用に全アカウントの写真の一覧を取得する
+   *
+   * @param adminPhotoListGetDto {@link AdminPhotoListGetDto}
+   * @return {@link AdminPhotoDto}のリスト
+   */
+  public List<AdminPhotoDto> getPhotoListForAdmin(AdminPhotoListGetDto adminPhotoListGetDto);
 }
