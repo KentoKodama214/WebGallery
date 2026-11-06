@@ -215,12 +215,11 @@ public class ReauthenticationThrottleImplTest {
 
       // エントリ数の上限（10万）を超えるまで新規アカウントの失敗を積む。
       // 間引き（全走査＋スナップショットソート）が Comparator 契約違反の例外を出さずに完了すること。
-      assertDoesNotThrow(
-          () -> {
-            for (long accountNo = 1L; accountNo <= 100_005L; accountNo++) {
-              throttle.recordFailure(accountNo);
-            }
-          });
+      assertDoesNotThrow(() -> {
+        for (long accountNo = 1L; accountNo <= 100_005L; accountNo++) {
+          throttle.recordFailure(accountNo);
+        }
+      });
 
       // 間引きが起きても、ロックアウト中の被害者アカウントは削除されない
       assertTrue(throttle.isLockedOut(999_999L));
@@ -245,12 +244,11 @@ public class ReauthenticationThrottleImplTest {
       assertTrue(throttle.isLockedOut(999_999L));
 
       // 残りのエントリを積んで上限に到達させ、期限切れエントリの間引きを発生させる
-      assertDoesNotThrow(
-          () -> {
-            for (long accountNo = 50_001L; accountNo <= 100_005L; accountNo++) {
-              throttle.recordFailure(accountNo);
-            }
-          });
+      assertDoesNotThrow(() -> {
+        for (long accountNo = 50_001L; accountNo <= 100_005L; accountNo++) {
+          throttle.recordFailure(accountNo);
+        }
+      });
 
       assertTrue(throttle.isLockedOut(999_999L));
     }
@@ -270,16 +268,15 @@ public class ReauthenticationThrottleImplTest {
       try {
         for (int i = 0; i < threadCount; i++) {
           long base = 200_000L + (long) i * 1_000L;
-          executor.submit(
-              () -> {
-                try {
-                  for (long accountNo = base; accountNo < base + 1_000L; accountNo++) {
-                    throttle.recordFailure(accountNo);
-                  }
-                } finally {
-                  latch.countDown();
-                }
-              });
+          executor.submit(() -> {
+            try {
+              for (long accountNo = base; accountNo < base + 1_000L; accountNo++) {
+                throttle.recordFailure(accountNo);
+              }
+            } finally {
+              latch.countDown();
+            }
+          });
         }
         assertTrue(latch.await(30, TimeUnit.SECONDS));
       } finally {

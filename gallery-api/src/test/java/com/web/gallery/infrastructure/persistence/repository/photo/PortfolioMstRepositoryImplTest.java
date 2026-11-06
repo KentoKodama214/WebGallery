@@ -334,17 +334,16 @@ class PortfolioMstRepositoryImplTest {
     void getPortfolioList_hasNext() {
       List<PortfolioDto> threeDtos =
           List.of(1L, 2L, 3L).stream()
-              .map(
-                  no -> {
-                    PortfolioDto d = new PortfolioDto();
-                    d.setAccountNo(1L);
-                    d.setPortfolioNo(no);
-                    d.setTheme("テーマ" + no);
-                    d.setTemplateKbn(PortfolioTemplateEnum.FEATURE);
-                    d.setStatusKbn(PortfolioStatusEnum.DRAFT);
-                    d.setPhotoCount(0);
-                    return d;
-                  })
+              .map(no -> {
+                PortfolioDto d = new PortfolioDto();
+                d.setAccountNo(1L);
+                d.setPortfolioNo(no);
+                d.setTheme("テーマ" + no);
+                d.setTemplateKbn(PortfolioTemplateEnum.FEATURE);
+                d.setStatusKbn(PortfolioStatusEnum.DRAFT);
+                d.setPhotoCount(0);
+                return d;
+              })
               .toList();
       doReturn(threeDtos)
           .when(portfolioMstMapper)

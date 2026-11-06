@@ -133,11 +133,10 @@ public class PortfolioServiceImpl implements PortfolioService {
   private PortfolioPhotoModelList toSignedPhotoModelList(PortfolioPhotoModelList photoModelList) {
     List<PortfolioPhotoModel> signedPhotos =
         photoModelList.stream()
-            .map(
-                photo ->
-                    photo.toBuilder()
-                        .imageFilePath(fileRepository.getPresignedUrl(photo.getImageFilePath()))
-                        .build())
+            .map(photo ->
+                photo.toBuilder()
+                    .imageFilePath(fileRepository.getPresignedUrl(photo.getImageFilePath()))
+                    .build())
             .toList();
     return PortfolioPhotoModelList.of(signedPhotos);
   }
@@ -318,10 +317,9 @@ public class PortfolioServiceImpl implements PortfolioService {
         portfolioTemplateSettingsPolicy.isValidTemplateSettings(
                 templateKbn, detail.getTemplateSettings())
             && detail.getPortfolioPhotoModelList().stream()
-                .allMatch(
-                    photo ->
-                        portfolioTemplateSettingsPolicy.isValidPhotoSettings(
-                            templateKbn, photo.getPhotoSettings()));
+                .allMatch(photo ->
+                    portfolioTemplateSettingsPolicy.isValidPhotoSettings(
+                        templateKbn, photo.getPhotoSettings()));
     if (!isValidSettings) {
       log.info(
           "Portfolio: Invalid settings (AccountNo: {}, TemplateKbn: {})",
@@ -357,10 +355,9 @@ public class PortfolioServiceImpl implements PortfolioService {
         portfolioTemplateSettingsPolicy.isPublishable(
                 templateKbn, detail.getTemplateSettings(), portfolio.getPhotoCount())
             && detail.getPortfolioPhotoModelList().stream()
-                .allMatch(
-                    photo ->
-                        portfolioTemplateSettingsPolicy.isPublishablePhotoSettings(
-                            templateKbn, photo.getPhotoSettings()));
+                .allMatch(photo ->
+                    portfolioTemplateSettingsPolicy.isPublishablePhotoSettings(
+                        templateKbn, photo.getPhotoSettings()));
     if (!isPublishable) {
       log.info(
           "Portfolio: Not publishable (AccountNo: {}, PortfolioNo: {})",

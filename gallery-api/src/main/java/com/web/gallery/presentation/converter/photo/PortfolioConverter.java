@@ -144,12 +144,11 @@ public class PortfolioConverter {
     }
     return PortfolioPhotoModelList.of(
         requestList.stream()
-            .map(
-                request ->
-                    PortfolioPhotoModel.builder()
-                        .photoNo(new PhotoNo(request.getPhotoNo()))
-                        .photoSettings(toTemplateSettings(request.getPhotoSettings()))
-                        .build())
+            .map(request ->
+                PortfolioPhotoModel.builder()
+                    .photoNo(new PhotoNo(request.getPhotoNo()))
+                    .photoSettings(toTemplateSettings(request.getPhotoSettings()))
+                    .build())
             .toList());
   }
 
@@ -168,18 +167,17 @@ public class PortfolioConverter {
     }
     return PortfolioTagModelList.of(
         requestList.stream()
-            .map(
-                request ->
-                    PortfolioTagModel.builder()
-                        .tagJapaneseName(
-                            new TagJapaneseName(
-                                Optional.ofNullable(request.getTagJapaneseName())
-                                    .orElse(Consts.STRING_EMPTY)))
-                        .tagEnglishName(
-                            new TagEnglishName(
-                                Optional.ofNullable(request.getTagEnglishName())
-                                    .orElse(Consts.STRING_EMPTY)))
-                        .build())
+            .map(request ->
+                PortfolioTagModel.builder()
+                    .tagJapaneseName(
+                        new TagJapaneseName(
+                            Optional.ofNullable(request.getTagJapaneseName())
+                                .orElse(Consts.STRING_EMPTY)))
+                    .tagEnglishName(
+                        new TagEnglishName(
+                            Optional.ofNullable(request.getTagEnglishName())
+                                .orElse(Consts.STRING_EMPTY)))
+                    .build())
             .toList());
   }
 

@@ -288,15 +288,14 @@ public class PhotoController {
     PhotoDetailModelList photoDetailModelList =
         PhotoDetailModelList.of(
             photoBulkSaveRequest.getImageFiles().stream()
-                .map(
-                    imageFile ->
-                        photoConverter.toPhotoDetailModelForBulkRegist(
-                            photoBulkSaveRequest,
-                            imageFile,
-                            photoDirectionResolver.resolve(imageFile),
-                            photoExifDataMergePolicy.merge(
-                                photoExifExtractor.extract(imageFile), clientSubmittedExifData),
-                            accountNo))
+                .map(imageFile ->
+                    photoConverter.toPhotoDetailModelForBulkRegist(
+                        photoBulkSaveRequest,
+                        imageFile,
+                        photoDirectionResolver.resolve(imageFile),
+                        photoExifDataMergePolicy.merge(
+                            photoExifExtractor.extract(imageFile), clientSubmittedExifData),
+                        accountNo))
                 .toList());
 
     photoService.savePhotos(photoDetailModelList);

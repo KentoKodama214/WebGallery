@@ -191,14 +191,13 @@ public class ReauthenticationThrottleImpl implements ReauthenticationThrottle {
     }
 
     // まず期限切れを掃除する
-    attempts.forEach(
-        (key, attempt) -> {
-          synchronized (attempt) {
-            if (isExpired(attempt)) {
-              attempts.remove(key, attempt);
-            }
-          }
-        });
+    attempts.forEach((key, attempt) -> {
+      synchronized (attempt) {
+        if (isExpired(attempt)) {
+          attempts.remove(key, attempt);
+        }
+      }
+    });
     // なお上限を超えるなら、ロックアウト中でないものを古い順に間引く（足りなければロックアウト中も対象）
     int keepCount = MAX_ENTRIES / EVICTION_KEEP_RATIO_DENOMINATOR * EVICTION_KEEP_RATIO_NUMERATOR;
     int evictCount = attempts.size() - keepCount;
@@ -208,15 +207,14 @@ public class ReauthenticationThrottleImpl implements ReauthenticationThrottle {
     // ソート中に別スレッドが Attempt を更新しても Comparator 契約違反にならないよう、
     // 並べ替えキーをモニタ下で1度だけスナップショットしてからソートする
     attempts.entrySet().stream()
-        .map(
-            entry -> {
-              synchronized (entry.getValue()) {
-                int order =
-                    entry.getValue().count >= maxFailures && !isExpired(entry.getValue()) ? 1 : 0;
-                return new EvictionCandidate(
-                    entry.getKey(), order, entry.getValue().lastFailureAtMillis);
-              }
-            })
+        .map(entry -> {
+          synchronized (entry.getValue()) {
+            int order =
+                entry.getValue().count >= maxFailures && !isExpired(entry.getValue()) ? 1 : 0;
+            return new EvictionCandidate(
+                entry.getKey(), order, entry.getValue().lastFailureAtMillis);
+          }
+        })
         .sorted(
             Comparator.comparingInt(EvictionCandidate::lockedOutOrder)
                 .thenComparingLong(EvictionCandidate::lastFailureAtMillis))

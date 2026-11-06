@@ -158,10 +158,9 @@ public class PortfolioControllerIntegrationTest {
     @Order(1)
     @DisplayName("正常系：写真（署名付きURL・写真タイトル・向き）・写真単位の設定・タグを表示順に取得できる")
     void getPortfolioDetail_success() throws Exception {
-      doAnswer(
-              invocation ->
-                  new ImageFilePath(
-                      "https://signed/" + ((ImageFilePath) invocation.getArgument(0)).value()))
+      doAnswer(invocation ->
+              new ImageFilePath(
+                  "https://signed/" + ((ImageFilePath) invocation.getArgument(0)).value()))
           .when(fileRepository)
           .getPresignedUrl(any(ImageFilePath.class));
 
@@ -819,10 +818,9 @@ public class PortfolioControllerIntegrationTest {
     @Order(5)
     @DisplayName("正常系：本人の未削除の写真を、検索語のタイトルへの部分一致で検索できること（画像は署名付きURL）")
     void searchPortfolioPhotos_byTitle() throws Exception {
-      doAnswer(
-              invocation ->
-                  new ImageFilePath(
-                      "https://signed/" + ((ImageFilePath) invocation.getArgument(0)).value()))
+      doAnswer(invocation ->
+              new ImageFilePath(
+                  "https://signed/" + ((ImageFilePath) invocation.getArgument(0)).value()))
           .when(fileRepository)
           .getPresignedUrl(any(ImageFilePath.class));
 

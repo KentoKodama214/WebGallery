@@ -159,12 +159,10 @@ public class PhotoServiceImpl implements PhotoService {
   private PhotoModelList toPresignedUrls(PhotoModelList photoModelList) {
     return PhotoModelList.of(
         photoModelList.stream()
-            .map(
-                photoModel ->
-                    photoModel.toBuilder()
-                        .imageFilePath(
-                            fileRepository.getPresignedUrl(photoModel.getImageFilePath()))
-                        .build())
+            .map(photoModel ->
+                photoModel.toBuilder()
+                    .imageFilePath(fileRepository.getPresignedUrl(photoModel.getImageFilePath()))
+                    .build())
             .toList());
   }
 
