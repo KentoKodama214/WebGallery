@@ -1,7 +1,7 @@
 "use client";
 
 import { sanitizeImageUrl } from "@/lib/url";
-import type { SelectedPhoto } from "./types";
+import { HIDDEN_BY_ADMIN_LABEL, type SelectedPhoto } from "./types";
 
 interface FeaturePreviewProps {
   /** 表示順に並べた写真 */
@@ -13,6 +13,7 @@ interface FeaturePreviewProps {
  *
  * 写真1枚ごとに、写真とテーマ・サブテーマ・説明のセクションを、左右を交互に入れ替えて並べる
  * （公開ページのフィーチャー型テンプレートと同じ並び）。テーマが未入力の写真は、公開できないことを示す。
+ * 管理者により非公開にされた写真は、外す必要があることが分かるよう写真に表示する。
  */
 export function FeaturePreview({ photos }: FeaturePreviewProps) {
   return (
@@ -28,7 +29,15 @@ export function FeaturePreview({ photos }: FeaturePreviewProps) {
               index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
             }`}
           >
-            <div className="md:w-1/2 bg-gray-200 rounded overflow-hidden flex items-center justify-center min-h-[120px]">
+            <div className="relative md:w-1/2 bg-gray-200 rounded overflow-hidden flex items-center justify-center min-h-[120px]">
+              {photo.isHiddenByAdmin && (
+                <span
+                  data-testid={`feature-preview-hidden-badge-${photo.photoNo}`}
+                  className="absolute top-1 left-1 px-1.5 py-0.5 text-xs text-white bg-red-600 rounded"
+                >
+                  {HIDDEN_BY_ADMIN_LABEL}
+                </span>
+              )}
               {src ? (
                 <img src={src} alt={photo.label} className="w-full h-auto object-contain" />
               ) : (

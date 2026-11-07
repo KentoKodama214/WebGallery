@@ -210,6 +210,44 @@ func TestGetPublishedPortfolio(t *testing.T) {
 	}
 }
 
+// TestGetPublishedPortfolio_HiddenByAdmin は、管理者により非公開にされた写真には署名付きURLを発行せず、
+// グリッド型のレイアウトでその写真の枠が空き枠（Photo が nil）になり、行の構成が保たれることを検証する。
+func TestGetPublishedPortfolio_HiddenByAdmin(t *testing.T) {
+	repo := &fakeRepository{
+		accounts: map[string]int64{"owner123": 1},
+		portfolio: &domain.Portfolio{
+			AccountNo:        1,
+			PortfolioNo:      3,
+			Template:         domain.TemplateGrid,
+			TemplateSettings: map[string]any{"rows": []any{map[string]any{"pattern": "TWO_EQUAL"}}},
+			Photos: []domain.PortfolioPhoto{
+				{Photo: domain.Photo{PhotoNo: 4}, HiddenByAdmin: true},
+				{Photo: domain.Photo{PhotoNo: 5, ImageFilePath: "1/5.jpg", Direction: domain.DirectionSquare}},
+			},
+		},
+	}
+	query := NewPortfolioQuery(repo, fakeSigner{})
+
+	got, err := query.GetPublishedPortfolio(context.Background(), "owner123", 3)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// fakeSigner は空のオブジェクトキーでも URL を返すため、URL が空のままなら署名していない
+	if got.Portfolio.Photos[0].Photo.URL != "" {
+		t.Errorf("hidden photo url = %q, want empty", got.Portfolio.Photos[0].Photo.URL)
+	}
+	grid, ok := got.Layout.(domain.GridLayout)
+	if !ok || len(grid.Rows) != 1 || len(grid.Rows[0].Photos) != 2 {
+		t.Fatalf("layout = %#v", got.Layout)
+	}
+	if grid.Rows[0].Photos[0].Photo != nil {
+		t.Errorf("hidden slot = %#v, want nil", grid.Rows[0].Photos[0].Photo)
+	}
+	if p := grid.Rows[0].Photos[1].Photo; p == nil || p.URL != "https://signed/1/5.jpg" {
+		t.Errorf("visible slot = %#v", p)
+	}
+}
+
 // TestGetPublishedPortfolio_NilWhenNotFound は、ポートフォリオが公開されていない・存在しない場合、アカウントが存在しない場合、
 // アカウントIDの形式・ポートフォリオ番号が不正な場合に、エラーではなく nil を返すことを検証する。
 func TestGetPublishedPortfolio_NilWhenNotFound(t *testing.T) {

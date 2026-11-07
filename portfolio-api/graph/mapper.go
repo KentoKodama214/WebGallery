@@ -123,7 +123,11 @@ func toGridRow(row domain.GridRow) (*model.GridRow, error) {
 		return nil, fmt.Errorf("unknown grid row pattern: %q", row.Pattern)
 	}
 	photos, err := mapSlice(row.Photos, func(gridPhoto domain.GridPhoto) (*model.GridPhoto, error) {
-		photo, err := toPhoto(gridPhoto.Photo)
+		if gridPhoto.Photo == nil {
+			// 管理者により非公開にされた写真の枠は、写真を null にした空き枠として返す
+			return &model.GridPhoto{Photo: nil}, nil
+		}
+		photo, err := toPhoto(*gridPhoto.Photo)
 		if err != nil {
 			return nil, err
 		}

@@ -144,6 +144,10 @@ func (q *PortfolioQuery) GetPublishedPortfolio(ctx context.Context, accountID st
 		return nil, nil
 	}
 	for i := range portfolio.Photos {
+		if portfolio.Photos[i].HiddenByAdmin {
+			// 管理者により非公開にされた写真は公開ページに出さないため、署名付きURLを発行しない
+			continue
+		}
 		if err := q.signPhoto(ctx, &portfolio.Photos[i].Photo); err != nil {
 			return nil, err
 		}

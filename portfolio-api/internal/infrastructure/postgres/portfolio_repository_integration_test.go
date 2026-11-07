@@ -234,12 +234,15 @@ func TestFindPublished(t *testing.T) {
 	if !reflect.DeepEqual(got.TemplateSettings, wantSettings) {
 		t.Errorf("template settings = %#v", got.TemplateSettings)
 	}
-	// 表示順に並べ、論理削除済みの写真3・管理者により非公開にされた写真4は含めない
+	// 表示順に並べ、論理削除済みの写真3は含めない。管理者により非公開にされた写真4は、
+	// グリッド型の枠を保つためフラグを立てて含め、写真番号以外（オブジェクトキー・タイトル等）は持たない
 	wantPhotos := []domain.PortfolioPhoto{
 		{DisplayOrder: 1, Settings: map[string]any{},
 			Photo: domain.Photo{PhotoNo: 2, ImageFilePath: "900001/2-bbb.jpg", JapaneseTitle: "茶畑", Direction: domain.DirectionSquare}},
 		{DisplayOrder: 2, Settings: map[string]any{},
 			Photo: domain.Photo{PhotoNo: 1, ImageFilePath: "900001/1-aaa.jpg", JapaneseTitle: "金閣寺", EnglishTitle: "Kinkakuji", Direction: domain.DirectionHorizontal}},
+		{DisplayOrder: 4, Settings: map[string]any{}, HiddenByAdmin: true,
+			Photo: domain.Photo{PhotoNo: 4}},
 	}
 	if !reflect.DeepEqual(got.Photos, wantPhotos) {
 		t.Errorf("photos = %+v\nwant %+v", got.Photos, wantPhotos)

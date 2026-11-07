@@ -1285,6 +1285,8 @@ export interface PortfolioPhotoItem {
   photoJapaneseTitle: string;
   imageFilePath: string;
   directionKbn: string;
+  /** 管理者により非公開にされているか（trueの写真は公開ページに表示されず、外さないと保存できない） */
+  isHiddenByAdmin?: boolean;
 }
 
 /** ポートフォリオ詳細のタグ */

@@ -47,7 +47,8 @@ union PortfolioLayout = FeatureLayout | GridLayout
 
 - 公開状態（`published`）のポートフォリオだけを返します（ポートフォリオは削除すると物理削除される）。下書き・存在しないポートフォリオは
   `publishedPortfolio` が `null`、`publishedPortfolios` は空の一覧になります（アカウントの存在有無も区別しない）
-- 削除済みの写真は返しません
+- 削除済み・管理者により非公開にされた写真は返しません（一覧の写真の枚数・先頭の写真にも含めない）。
+  グリッド型は行の構成を保つため、非公開の写真の枠を `GridPhoto.photo` が `null` の空き枠として返します
 - `publishedPortfolios` は所有者が設定画面で並べた表示順（`portfolio_mst.display_order`）に返します。
   `keyword` を指定すると、テーマ・タグ名（日本語・英語）のいずれかに部分一致（大文字・小文字を区別しない）するものに絞り込みます
 - `publishedPortfolios` は表示順で `offset` 件目から最大 `limit` 件（`portfolios`）と、続きがあるかどうか（`hasNext`）を返します。

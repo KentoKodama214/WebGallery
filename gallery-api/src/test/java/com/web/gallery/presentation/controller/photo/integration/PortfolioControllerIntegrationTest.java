@@ -437,6 +437,32 @@ public class PortfolioControllerIntegrationTest {
 
     @Test
     @Order(3)
+    @DisplayName("異常系：管理者により非公開にされた写真が含まれる場合、400を返し更新しない")
+    void updatePortfolio_hiddenByAdminPhoto() throws Exception {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true WHERE account_no = 1 AND photo_no = 2");
+
+      mockMvc
+          .perform(
+              put(PORTFOLIOS + "/2")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("update_grid_publishable.json")))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              jsonPath("$.message")
+                  .value(ErrorEnum.PORTFOLIO_PHOTO_NOT_AVAILABLE.getErrorMessage()));
+
+      assertNotEquals(
+          "光と影（改）",
+          jdbcTemplate.queryForObject(
+              "SELECT theme FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 2",
+              String.class));
+    }
+
+    @Test
+    @Order(4)
     @DisplayName("異常系：存在しないポートフォリオ番号を指定した場合、404を返す")
     void updatePortfolio_notFound() throws Exception {
       mockMvc

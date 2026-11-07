@@ -28,6 +28,7 @@ const ROW_CELLS: Record<GridRowPattern, { flex: number; aspectRatio: string }[]>
  * グリッド型テンプレート
  *
  * 行パターンに従って、1行に2〜3枚の写真を並べる。
+ * 管理者により非公開にされた写真の枠（photo が null）は、行の構成を保つため同じ大きさの空き枠にする。
  */
 export function GridTemplate({ layout }: { layout: GridLayout }) {
   return (
@@ -36,6 +37,17 @@ export function GridTemplate({ layout }: { layout: GridLayout }) {
         <div key={rowIndex} className="flex gap-3" data-testid="grid-row" data-pattern={row.pattern}>
           {row.photos.map((gridPhoto, cellIndex) => {
             const cell = ROW_CELLS[row.pattern][cellIndex] ?? { flex: 1, aspectRatio: "1 / 1" };
+            if (gridPhoto.photo === null) {
+              return (
+                <div
+                  key={`empty-${cellIndex}`}
+                  aria-hidden="true"
+                  data-testid="grid-empty-cell"
+                  className="min-w-0"
+                  style={{ flex: cell.flex, aspectRatio: cell.aspectRatio }}
+                />
+              );
+            }
             return (
               <figure key={gridPhoto.photo.photoNo} className="m-0 min-w-0" style={{ flex: cell.flex }}>
                 <PortfolioPhotoImage

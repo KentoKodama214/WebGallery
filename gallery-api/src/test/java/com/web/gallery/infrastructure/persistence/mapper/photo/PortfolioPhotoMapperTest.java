@@ -158,6 +158,7 @@ public class PortfolioPhotoMapperTest {
       assertEquals("タイトル12", first.getPhotoJapaneseTitle());
       assertEquals("1/2-bbb.jpg", first.getImageFilePath());
       assertEquals(DirectionEnum.SQUARE, first.getDirectionKbn());
+      assertFalse(first.getIsHiddenByAdmin());
       PortfolioPhotoDto second = actual.get(1);
       assertEquals(1L, second.getPhotoNo());
       assertEquals(2, second.getDisplayOrder());
@@ -190,6 +191,21 @@ public class PortfolioPhotoMapperTest {
 
     @Test
     @Order(4)
+    @DisplayName("正常系：管理者により非公開にされた写真も除外せず、管理者非公開フラグを付けて取得すること")
+    void selectList_includesHiddenByAdmin() {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true WHERE account_no = 1 AND photo_no = 2");
+
+      List<PortfolioPhotoDto> actual =
+          portfolioPhotoMapper.selectList(PortfolioPhotoCondition.byAccountAndPortfolio(1L, 1L));
+
+      assertEquals(List.of(2L, 1L), actual.stream().map(PortfolioPhotoDto::getPhotoNo).toList());
+      assertTrue(actual.get(0).getIsHiddenByAdmin());
+      assertFalse(actual.get(1).getIsHiddenByAdmin());
+    }
+
+    @Test
+    @Order(5)
     @DisplayName("正常系：該当する写真がない場合、0件となること")
     void selectList_none() {
       assertTrue(

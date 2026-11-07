@@ -43,9 +43,10 @@ type GridLayout struct {
 
 func (GridLayout) IsPortfolioLayout() {}
 
-// グリッド型の写真
+// グリッド型の写真の枠
 type GridPhoto struct {
-	Photo *Photo `json:"photo"`
+	// 枠に並べる写真。管理者により非公開にされた写真の枠は null（行の構成を保つため、枠だけを空けて表示する）
+	Photo *Photo `json:"photo,omitempty"`
 }
 
 // グリッド型の行
@@ -105,7 +106,7 @@ type PortfolioSummaryPage struct {
 // 公開ページ向けのポートフォリオ表示API
 //
 // 公開状態（published）のポートフォリオだけを返す。下書き・削除済みのポートフォリオと、
-// 削除済みの写真は返さない。認証は不要（Next.js のサーバーからのみ呼び出す前提）。
+// 削除済み・管理者により非公開にされた写真は返さない。認証は不要（Next.js のサーバーからのみ呼び出す前提）。
 type Query struct {
 }
 

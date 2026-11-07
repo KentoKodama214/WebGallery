@@ -166,6 +166,7 @@ const portfolioQuery = `query($no: Int!) {
 // TestPublishedPortfolio_LayoutUnion は、publishedPortfolio のレイアウトが、テンプレートに応じて
 // FeatureLayout・GridLayout のいずれかの型（__typename）で返り、各型のフィールド・タグ・列挙値が正しく変換されることを検証する。
 func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
+	gridPhoto := signedPhoto(1)
 	query := &fakeQuery{published: map[int64]*usecase.PublishedPortfolio{
 		1: {
 			Portfolio: domain.Portfolio{PortfolioNo: 1, Theme: "日本の自然", Template: domain.TemplateFeature, UpdatedAt: updatedAt,
@@ -175,7 +176,8 @@ func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 		2: {
 			Portfolio: domain.Portfolio{PortfolioNo: 2, Theme: "光と影", Template: domain.TemplateGrid, UpdatedAt: updatedAt, Tags: []domain.Tag{}},
 			Layout: domain.GridLayout{Rows: []domain.GridRow{{Pattern: domain.GridRowWideNarrow,
-				Photos: []domain.GridPhoto{{Photo: signedPhoto(1)}, {Photo: signedPhoto(2)}}}}},
+				// 管理者により非公開にされた写真の枠は Photo が nil（null として返す）
+				Photos: []domain.GridPhoto{{Photo: &gridPhoto}, {Photo: nil}}}}},
 		},
 	}}
 	server := newTestServer(t, query, Options{})
@@ -184,7 +186,7 @@ func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 		1: `{"portfolioNo":1,"theme":"日本の自然","template":"FEATURE","tags":[{"japaneseName":"自然","englishName":"nature"}],` +
 			`"layout":{"__typename":"FeatureLayout","sections":[{"theme":"京都","subTheme":"金閣寺","description":"","photo":{"photoNo":5,"url":"https://signed/5","direction":"SQUARE"}}]}}`,
 		2: `{"portfolioNo":2,"theme":"光と影","template":"GRID","tags":[],` +
-			`"layout":{"__typename":"GridLayout","rows":[{"pattern":"WIDE_NARROW","photos":[{"photo":{"photoNo":1}},{"photo":{"photoNo":2}}]}]}}`,
+			`"layout":{"__typename":"GridLayout","rows":[{"pattern":"WIDE_NARROW","photos":[{"photo":{"photoNo":1}},{"photo":null}]}]}}`,
 	} {
 		body, _ := json.Marshal(map[string]any{"query": portfolioQuery, "variables": map[string]any{"no": no}})
 		res, err := http.Post(server.URL+"/graphql", "application/json", bytes.NewReader(body))

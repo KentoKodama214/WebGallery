@@ -28,6 +28,7 @@ import com.web.gallery.domain.exception.PortfolioNotFoundException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.DisplayOrder;
 import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.PhotoCount;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
@@ -126,6 +127,7 @@ class PortfolioMstRepositoryImplTest {
     dto.setPhotoJapaneseTitle("タイトル" + photoNo);
     dto.setImageFilePath("1/" + photoNo + "-abc.jpg");
     dto.setDirectionKbn(DirectionEnum.SQUARE);
+    dto.setIsHiddenByAdmin(false);
     return dto;
   }
 
@@ -399,7 +401,9 @@ class PortfolioMstRepositoryImplTest {
       doReturn(List.of(portfolioMst(2L, Map.of("rows", List.of(Map.of("pattern", "TWO_EQUAL"))))))
           .when(portfolioMstMapper)
           .select(any(PortfolioMstCondition.class));
-      doReturn(List.of(photoDto(5L, 1, Map.of("caption", "金閣寺")), photoDto(3L, 2, null)))
+      PortfolioPhotoDto hiddenPhotoDto = photoDto(3L, 2, null);
+      hiddenPhotoDto.setIsHiddenByAdmin(true);
+      doReturn(List.of(photoDto(5L, 1, Map.of("caption", "金閣寺")), hiddenPhotoDto))
           .when(portfolioPhotoMapper)
           .selectList(any(PortfolioPhotoCondition.class));
       doReturn(List.of(tag()))
@@ -441,9 +445,14 @@ class PortfolioMstRepositoryImplTest {
       assertEquals(new PhotoJapaneseTitle("タイトル5"), photo.getPhotoJapaneseTitle());
       assertEquals(new ImageFilePath("1/5-abc.jpg"), photo.getImageFilePath());
       assertEquals(DirectionEnum.SQUARE, photo.getDirectionKbn());
+      assertEquals(new IsHiddenByAdmin(false), photo.getIsHiddenByAdmin());
       // DB上の写真設定がnullの場合は項目なしとして扱う
       assertEquals(
           TemplateSettings.empty(), actual.getPortfolioPhotoModelList().get(1).getPhotoSettings());
+      // 管理者により非公開にされた写真も除外せず、フラグを付けて返す
+      assertEquals(
+          new IsHiddenByAdmin(true),
+          actual.getPortfolioPhotoModelList().get(1).getIsHiddenByAdmin());
 
       PortfolioTagModel tagModel = actual.getPortfolioTagModelList().get(0);
       assertEquals(new AccountNo(1L), tagModel.getAccountNo());

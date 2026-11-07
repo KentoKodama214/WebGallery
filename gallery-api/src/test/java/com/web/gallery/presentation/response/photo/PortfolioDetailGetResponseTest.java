@@ -13,6 +13,7 @@ import com.web.gallery.domain.enumeration.PortfolioTemplateEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.DisplayOrder;
 import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.PortfolioDescription;
@@ -72,6 +73,7 @@ class PortfolioDetailGetResponseTest {
                               .photoJapaneseTitle(new PhotoJapaneseTitle("金閣寺"))
                               .imageFilePath(new ImageFilePath("https://signed/1/3.jpg"))
                               .directionKbn(DirectionEnum.HORIZONTAL)
+                              .isHiddenByAdmin(new IsHiddenByAdmin(true))
                               .build())))
               .portfolioTagModelList(
                   PortfolioTagModelList.of(
@@ -103,6 +105,7 @@ class PortfolioDetailGetResponseTest {
       assertEquals("金閣寺", photo.getPhotoJapaneseTitle());
       assertEquals("https://signed/1/3.jpg", photo.getImageFilePath());
       assertEquals(DirectionEnum.HORIZONTAL, photo.getDirectionKbn());
+      assertTrue(photo.getIsHiddenByAdmin());
 
       assertEquals(1, actual.getTagList().size());
       PortfolioTagItemResponse tag = actual.getTagList().get(0);
