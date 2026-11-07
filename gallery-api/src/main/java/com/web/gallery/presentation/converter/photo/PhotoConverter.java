@@ -80,14 +80,12 @@ public class PhotoConverter {
     //   ここで除外しないと「全角スペースの大量指定」で相関サブクエリを無制限に増やせてしまう）
     List<String> tagList =
         tagsOpt
-            .map(
-                tag ->
-                    Arrays.stream(
-                            tag.replace(Consts.FULL_SPACE, Consts.HALF_SPACE)
-                                .split(Consts.HALF_SPACE))
-                        .filter(t -> !t.isEmpty())
-                        .limit(Consts.TAG_LIST_MAX_SIZE)
-                        .collect(Collectors.toCollection(ArrayList::new)))
+            .map(tag ->
+                Arrays.stream(
+                        tag.replace(Consts.FULL_SPACE, Consts.HALF_SPACE).split(Consts.HALF_SPACE))
+                    .filter(t -> !t.isEmpty())
+                    .limit(Consts.TAG_LIST_MAX_SIZE)
+                    .collect(Collectors.toCollection(ArrayList::new)))
             .orElseGet(ArrayList::new);
 
     return PhotoListGetModel.builder()

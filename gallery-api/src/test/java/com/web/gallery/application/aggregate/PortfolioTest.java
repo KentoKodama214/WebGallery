@@ -144,11 +144,10 @@ class PortfolioTest {
       assertEquals(
           List.of(new DisplayOrder(1), new DisplayOrder(2), new DisplayOrder(3)),
           photos.stream().map(PortfolioPhotoModel::getDisplayOrder).toList());
-      photos.forEach(
-          photo -> {
-            assertEquals(new AccountNo(1L), photo.getAccountNo());
-            assertEquals(new PortfolioNo(5L), photo.getPortfolioNo());
-          });
+      photos.forEach(photo -> {
+        assertEquals(new AccountNo(1L), photo.getAccountNo());
+        assertEquals(new PortfolioNo(5L), photo.getPortfolioNo());
+      });
       assertEquals(new TemplateSettings(Map.of("caption", "c")), photos.get(0).getPhotoSettings());
 
       List<PortfolioTagModel> tags = detail.getPortfolioTagModelList().toList();
@@ -156,11 +155,10 @@ class PortfolioTest {
           List.of(new TagNo(1L), new TagNo(2L)),
           tags.stream().map(PortfolioTagModel::getTagNo).toList());
       assertEquals(new TagJapaneseName("風景"), tags.get(1).getTagJapaneseName());
-      tags.forEach(
-          tag -> {
-            assertEquals(new AccountNo(1L), tag.getAccountNo());
-            assertEquals(new PortfolioNo(5L), tag.getPortfolioNo());
-          });
+      tags.forEach(tag -> {
+        assertEquals(new AccountNo(1L), tag.getAccountNo());
+        assertEquals(new PortfolioNo(5L), tag.getPortfolioNo());
+      });
     }
 
     @Test

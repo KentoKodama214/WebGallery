@@ -309,9 +309,8 @@ class FileRepositoryImplTest {
                   .build())
           .when(s3Client)
           .listObjectsV2(
-              argThat(
-                  (ListObjectsV2Request req) ->
-                      req != null && "token-1".equals(req.continuationToken())));
+              argThat((ListObjectsV2Request req) ->
+                  req != null && "token-1".equals(req.continuationToken())));
 
       newRepository().deleteByPrefix(new ImageFilePath("aaaaaaaa/"));
 

@@ -106,12 +106,11 @@ class PortfolioServiceImplTest {
       PortfolioNo portfolioNo, PortfolioStatusEnum statusKbn, Long... photoNos) {
     List<PortfolioPhotoModel> photos =
         Arrays.stream(photoNos)
-            .map(
-                photoNo ->
-                    PortfolioPhotoModel.builder()
-                        .photoNo(new PhotoNo(photoNo))
-                        .photoSettings(new TemplateSettings(Map.of("theme", "テーマ" + photoNo)))
-                        .build())
+            .map(photoNo ->
+                PortfolioPhotoModel.builder()
+                    .photoNo(new PhotoNo(photoNo))
+                    .photoSettings(new TemplateSettings(Map.of("theme", "テーマ" + photoNo)))
+                    .build())
             .toList();
     return PortfolioDetailModel.builder()
         .accountNo(ACCOUNT_NO)

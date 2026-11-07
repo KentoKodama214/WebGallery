@@ -61,10 +61,9 @@ public record PhotoTagModelList(List<PhotoTagModel> photoTagModelList)
   public PhotoTagModelList filterByPhoto(AccountNo accountNo, PhotoNo photoNo) {
     return PhotoTagModelList.of(
         photoTagModelList.stream()
-            .filter(
-                photoTagModel ->
-                    photoTagModel.getAccountNo().value().equals(accountNo.value())
-                        && Objects.equals(photoTagModel.getPhotoNo().value(), photoNo.value()))
+            .filter(photoTagModel ->
+                photoTagModel.getAccountNo().value().equals(accountNo.value())
+                    && Objects.equals(photoTagModel.getPhotoNo().value(), photoNo.value()))
             .toList());
   }
 

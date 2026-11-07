@@ -22,11 +22,10 @@ final class MethodExistenceConditions {
       public void check(JavaClass javaClass, ConditionEvents events) {
         boolean hasFactoryMethod =
             javaClass.getMethods().stream()
-                .anyMatch(
-                    method ->
-                        methodNames.contains(method.getName())
-                            && method.getModifiers().contains(JavaModifier.STATIC)
-                            && method.getModifiers().contains(JavaModifier.PUBLIC));
+                .anyMatch(method ->
+                    methodNames.contains(method.getName())
+                        && method.getModifiers().contains(JavaModifier.STATIC)
+                        && method.getModifiers().contains(JavaModifier.PUBLIC));
         if (!hasFactoryMethod) {
           events.add(
               SimpleConditionEvent.violated(
