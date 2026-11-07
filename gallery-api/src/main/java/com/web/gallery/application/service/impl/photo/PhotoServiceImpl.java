@@ -671,12 +671,11 @@ public class PhotoServiceImpl implements PhotoService {
     return AdminPhotoPageModel.of(
         AdminPhotoModelList.of(
             adminPhotoPageModel.getAdminPhotoModelList().stream()
-                .map(
-                    adminPhotoModel ->
-                        adminPhotoModel.toBuilder()
-                            .imageFilePath(
-                                fileRepository.getPresignedUrl(adminPhotoModel.getImageFilePath()))
-                            .build())
+                .map(adminPhotoModel ->
+                    adminPhotoModel.toBuilder()
+                        .imageFilePath(
+                            fileRepository.getPresignedUrl(adminPhotoModel.getImageFilePath()))
+                        .build())
                 .toList()),
         adminPhotoPageModel.getIsLast());
   }
