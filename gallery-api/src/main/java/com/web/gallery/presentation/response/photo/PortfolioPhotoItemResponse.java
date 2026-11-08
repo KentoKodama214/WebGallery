@@ -40,6 +40,10 @@ public class PortfolioPhotoItemResponse {
   @Schema(description = "向き区分")
   private DirectionEnum directionKbn;
 
+  /** 管理者非公開フラグ */
+  @Schema(description = "管理者により非公開にされているか（trueの写真は公開ページに表示されず、保存もできないため外す必要がある）")
+  private Boolean isHiddenByAdmin;
+
   /**
    * PortfolioPhotoModelからPortfolioPhotoItemResponseを生成する
    *
@@ -54,6 +58,7 @@ public class PortfolioPhotoItemResponse {
         .photoJapaneseTitle(model.getPhotoJapaneseTitle().value())
         .imageFilePath(model.getImageFilePath().value())
         .directionKbn(model.getDirectionKbn())
+        .isHiddenByAdmin(model.getIsHiddenByAdmin() != null && model.getIsHiddenByAdmin().value())
         .build();
   }
 }

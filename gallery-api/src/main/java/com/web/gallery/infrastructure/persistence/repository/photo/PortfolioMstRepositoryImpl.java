@@ -20,6 +20,7 @@ import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.DisplayOrder;
 import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.PhotoCount;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
@@ -283,6 +284,7 @@ public class PortfolioMstRepositoryImpl implements PortfolioMstRepository {
         .photoJapaneseTitle(new PhotoJapaneseTitle(dto.getPhotoJapaneseTitle()))
         .imageFilePath(new ImageFilePath(dto.getImageFilePath()))
         .directionKbn(dto.getDirectionKbn())
+        .isHiddenByAdmin(new IsHiddenByAdmin(dto.getIsHiddenByAdmin()))
         .build();
   }
 

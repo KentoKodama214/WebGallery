@@ -71,6 +71,9 @@ public final class Consts {
   /** お問い合わせ本文・返信本文の最大文字数（アノテーション属性で参照するためint型で定義する） */
   public static final int INQUIRY_BODY_MAX_LENGTH = 2000;
 
+  /** 管理者が写真を非公開・非公開解除する理由の最大文字数（DBの varchar(500) に合わせる。アノテーション属性で参照するためint型で定義する） */
+  public static final int MODERATION_REASON_MAX_LENGTH = 500;
+
   /** ポートフォリオのテーマ・写真ごとのテーマ・サブテーマの最大文字数（アノテーション属性で参照するためint型で定義する） */
   public static final int PORTFOLIO_THEME_MAX_LENGTH = 100;
 

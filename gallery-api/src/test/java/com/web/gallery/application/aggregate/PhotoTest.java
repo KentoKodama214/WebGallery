@@ -8,6 +8,7 @@ import com.web.gallery.application.model.photo.PhotoTagModelList;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.Caption;
 import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.ModerationReason;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.TagEnglishName;
 import com.web.gallery.domain.model.photo.TagJapaneseName;
@@ -191,6 +192,90 @@ public class PhotoTest {
       assertEquals(ownerAccountNo, photo.getPhotoTagModelList().get(1).getAccountNo());
       assertEquals(photoNo, photo.getPhotoTagModelList().get(0).getPhotoNo());
       assertEquals(photoNo, photo.getPhotoTagModelList().get(1).getPhotoNo());
+    }
+  }
+
+  @Nested
+  @Order(5)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class forModeration {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：生成直後は写真の識別子のみを保持し、公開状態の変更内容は未設定であること")
+    void forModeration_success() {
+      AccountNo accountNo = new AccountNo(1L);
+      PhotoNo photoNo = new PhotoNo(5L);
+
+      Photo photo = Photo.forModeration(accountNo, photoNo);
+
+      assertEquals(accountNo, photo.getAccountNo());
+      assertEquals(photoNo, photo.getPhotoNo());
+      assertNull(photo.getDetail());
+      assertNull(photo.getImageFilePathForDelete());
+      assertFalse(photo.isDeleted());
+      assertNull(photo.getHiddenByAdmin());
+      assertNull(photo.getModeratorAccountNo());
+      assertNull(photo.getModerationReason());
+    }
+  }
+
+  @Nested
+  @Order(6)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class hideByAdmin {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：管理者非公開フラグがtrueになり、操作した管理者と理由が保持されること")
+    void hideByAdmin_success() {
+      AccountNo adminAccountNo = new AccountNo(99L);
+      ModerationReason reason = new ModerationReason("不適切な画像のため");
+      Photo photo = Photo.forModeration(new AccountNo(1L), new PhotoNo(5L));
+
+      photo.hideByAdmin(adminAccountNo, reason);
+
+      assertTrue(photo.getHiddenByAdmin().value());
+      assertEquals(adminAccountNo, photo.getModeratorAccountNo());
+      assertEquals(reason, photo.getModerationReason());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：理由がnullの場合、NullPointerExceptionをスローすること")
+    void hideByAdmin_nullReason() {
+      Photo photo = Photo.forModeration(new AccountNo(1L), new PhotoNo(5L));
+
+      assertThrows(NullPointerException.class, () -> photo.hideByAdmin(new AccountNo(99L), null));
+    }
+  }
+
+  @Nested
+  @Order(7)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class unhideByAdmin {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：管理者非公開フラグがfalseになり、操作した管理者と理由が保持されること")
+    void unhideByAdmin_success() {
+      AccountNo adminAccountNo = new AccountNo(99L);
+      ModerationReason reason = new ModerationReason("誤判定だったため");
+      Photo photo = Photo.forModeration(new AccountNo(1L), new PhotoNo(5L));
+
+      photo.unhideByAdmin(adminAccountNo, reason);
+
+      assertFalse(photo.getHiddenByAdmin().value());
+      assertEquals(adminAccountNo, photo.getModeratorAccountNo());
+      assertEquals(reason, photo.getModerationReason());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：操作する管理者がnullの場合、NullPointerExceptionをスローすること")
+    void unhideByAdmin_nullAdmin() {
+      Photo photo = Photo.forModeration(new AccountNo(1L), new PhotoNo(5L));
+
+      assertThrows(
+          NullPointerException.class,
+          () -> photo.unhideByAdmin(null, new ModerationReason("誤判定だったため")));
     }
   }
 }

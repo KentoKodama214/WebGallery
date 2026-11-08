@@ -81,4 +81,6 @@ public final class MessageConst {
   public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";
   public static final String LOCK_ACCOUNT = "アカウントをロックしました。";
   public static final String UPDATE_ACCOUNT_AUTHORITY = "アカウントの権限を変更しました。";
+  public static final String HIDE_PHOTO = "写真を非公開にしました。";
+  public static final String UNHIDE_PHOTO = "写真の非公開を解除しました。";
 }

@@ -22,6 +22,7 @@
 | 16 | ポートフォリオ公開ページ（一覧） | `portfolio_public_list` | `/portfolio/{accountId}` | 公開（公開中のポートフォリオのみ） |
 | 17 | ポートフォリオ公開ページ（詳細） | `portfolio_public_detail` | `/portfolio/{accountId}/{portfolioNo}` | 公開（公開中のポートフォリオのみ） |
 | 18 | ページが見つかりません（404） | `not_found` | 未マッチのURL全般 | 公開 |
+| 19 | 管理者写真管理 | `admin_photo_management` | `/admin/photo_management` | 認証必須（管理者のみ） |
 
 ### 404 の扱い
 
@@ -41,7 +42,7 @@ content="noindex">` も付与される）。表示内容はルートごとの `n
 | 上記以外（`/{accountId}/account_setting` 等）・未マッチのURL | ページが見つかりません（ルートの `app/not-found.tsx`） |
 
 認証が必要なページで未ログインの場合は 404 ではなく `<AuthGuard>` が `/login` へ退避させる
-（管理者用の3画面も同様）。パラメータ検証は `<AuthGuard>` より手前で行うため、
+（管理者用の4画面も同様）。パラメータ検証は `<AuthGuard>` より手前で行うため、
 不正なURLは未ログインでも 404 になる。
 
 ポートフォリオの公開ページでは、形式が正しくても下書き・削除済み・存在しないポートフォリオの詳細は 404 になる。
@@ -84,6 +85,7 @@ graph TD
         ADMIN_ACCOUNT["管理者アカウント管理<br/>/admin/account_management"]
         ADMIN_INQUIRY["管理者お問い合わせ管理<br/>/admin/inquiry_management"]
         ADMIN_INQUIRY_DETAIL["管理者お問い合わせ詳細<br/>/admin/inquiry_management/detail"]
+        ADMIN_PHOTO["管理者写真管理<br/>/admin/photo_management"]
     end
 
     ACCOUNT_LIST -->|ギャラリーボタン| PHOTO_LIST
@@ -475,6 +477,47 @@ sequenceDiagram
 
 ---
 
+## 管理者写真管理フロー
+
+不適切な画像の通報は既存のお問い合わせで受け付け、管理者が写真管理画面から該当の写真を非公開にする。
+非公開にした写真は所有者本人以外（未ログインを含む）には写真一覧・写真詳細・公開ポートフォリオで表示されず、
+所有者本人には写真一覧で「管理者により非公開」のバッジ、写真詳細で通知を表示する。
+公開ポートフォリオのグリッド型では、非公開の写真の枠だけを空けて行の構成を保つ。
+ポートフォリオ編集画面では、非公開の写真に「管理者により非公開」のバッジと外すよう案内を表示し（プレビューにもバッジを表示）、
+外すまで保存・公開できない。
+
+```mermaid
+sequenceDiagram
+    actor Admin as 管理者
+    participant Management as 管理者写真管理画面
+    participant API as REST API
+
+    Admin->>Management: /admin/photo_management にアクセス
+    Management->>API: GET /api/v1/admin/photos
+    API-->>Management: 全アカウントの写真一覧返却（非公開の写真を含む。登録日時の新しい順）
+    Admin->>Management: アカウントID・公開状態で絞り込み
+    Management->>API: GET /api/v1/admin/photos?accountId={id}&isHiddenByAdmin={bool}
+    API-->>Management: 絞り込み結果返却
+
+    alt 非公開にする
+        Admin->>Management: 「非公開にする」ボタンをクリック
+        Management->>Management: 確認ダイアログ表示（理由の入力必須）
+        Admin->>Management: 理由を入力して「実行」
+        Management->>API: PUT /api/v1/admin/photos/{accountNo}/{photoNo}/visibility（isHiddenByAdmin=true）
+        API-->>Management: 成功（操作履歴を記録）
+        Management->>Management: 該当の写真の状態のみ更新（リードレプリカの遅延を避けるため一覧は再取得しない）
+    else 非公開を解除
+        Admin->>Management: 「非公開を解除」ボタンをクリック
+        Management->>Management: 確認ダイアログ表示（理由の入力必須）
+        Admin->>Management: 理由を入力して「実行」
+        Management->>API: PUT /api/v1/admin/photos/{accountNo}/{photoNo}/visibility（isHiddenByAdmin=false）
+        API-->>Management: 成功（操作履歴を記録）
+        Management->>Management: 該当の写真の状態のみ更新
+    end
+```
+
+---
+
 ## 遷移詳細テーブル
 
 ### ルート (`/`)
@@ -668,6 +711,15 @@ sequenceDiagram
 
 取り下げ済み（`statusKbn: withdrawn`）のお問い合わせは、返信フォームの代わりに「返信できません」という案内文のみを表示する（管理者は内容の確認のみ可能）。
 
+### 管理者写真管理 (`/admin/photo_management`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| アカウントID検索・公開状態絞り込み | 同画面（一覧更新） | AJAX |
+| 非公開にする／非公開を解除 → 成功 | 同画面（該当の写真の状態を更新） | AJAX |
+| 非公開にする／非公開を解除 → 失敗 | 同画面（エラー表示） | 画面内表示 |
+| サムネイル選択 | 画像（別タブ） | リンク |
+
 ---
 
 ## REST API（画面遷移に関連するもの）
@@ -712,6 +764,8 @@ sequenceDiagram
 | `/api/v1/admin/inquiries` | GET | 管理者お問い合わせ管理 | なし（データ表示） |
 | `/api/v1/admin/inquiries/{inquiryId}` | GET | 管理者お問い合わせ詳細 | なし（データ表示） |
 | `/api/v1/admin/inquiries/{inquiryId}/replies` | POST | 管理者お問い合わせ詳細 | なし（詳細再取得） |
+| `/api/v1/admin/photos` | GET | 管理者写真管理 | なし（データ表示） |
+| `/api/v1/admin/photos/{accountNo}/{photoNo}/visibility` | PUT | 管理者写真管理 | なし（該当の写真の状態を更新） |
 
 ポートフォリオ公開ページ（`/portfolio/**`）は上記の REST API を使わず、Next.js のサーバー（Server Component）から
 portfolio-api の GraphQL（`publishedPortfolios`・`publishedPortfolio`）を呼ぶ。詳細は [portfolio-api](../architecture/portfolio-api.md) を参照。

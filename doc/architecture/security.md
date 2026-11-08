@@ -36,7 +36,7 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 | 認証API（`/api/v1/auth/**`） | 公開 |
 | アカウント登録（`POST /api/v1/accounts`） | 公開 |
 | アカウント一覧（`GET /api/v1/accounts`） | 公開（アカウント名のみ表示。詳細は下記） |
-| 写真の閲覧（`GET /api/v1/accounts/{id}/photos`、`GET /api/v1/accounts/{id}/photos/{photoNo}`） | 公開 |
+| 写真の閲覧（`GET /api/v1/accounts/{id}/photos`、`GET /api/v1/accounts/{id}/photos/{photoNo}`） | 公開（管理者により非公開にされた写真は所有者本人にのみ返す。詳細は下記） |
 | 写真登録上限チェック（`GET /api/v1/accounts/{id}/photos/upper-limit`） | 認証必須（本人のみ） |
 | ロケーション一覧（`GET /api/v1/accounts/{id}/locations`） | 認証必須（本人のみ） |
 | 都道府県一覧（`GET /api/v1/prefectures`） | 公開 |
@@ -49,6 +49,23 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 | パスワード変更・アカウント削除 | 認証必須（本人のみ）＋ 現在のパスワードによる再認証 |
 | Actuatorヘルスチェック（`GET /actuator/health`） | 公開 |
 | Actuatorメトリクス（`GET /actuator/metrics/**`） | 認証必須（ADMINロール。コネクション数等の内部情報を含むため） |
+| 管理者用写真一覧（`GET /api/v1/admin/photos`）・写真の公開状態変更（`PUT /api/v1/admin/photos/{accountNo}/{photoNo}/visibility`） | 認証必須（ADMINロール。`/api/v1/admin/**`の`hasRole("ADMIN")`と`@RequireAdminAuthority`の二重チェック） |
+
+### 管理者による写真の非公開
+
+不適切な画像がアップロードされた場合に、管理者が写真を非公開にできる（管理者画面 `/admin/photo_management`）。
+ユーザーからの通報は既存のお問い合わせで受け付け、管理者が写真一覧から該当の写真を探して操作する。
+
+- 非公開にした写真（`photo.photo_mst.is_hidden_by_admin = true`）は、写真一覧・写真詳細・公開ポートフォリオ（portfolio-api）で
+  **所有者本人以外には返さない**（未ログインを含む）。所有者本人には「管理者により非公開」の表示付きで返す
+- 公開ポートフォリオのグリッド型では、行の構成を保つため非公開の写真の枠だけを空き枠（GraphQL の `GridPhoto.photo` が null）にする。
+  空き枠には写真番号・タイトル・画像URLを含めない。フィーチャー型では非公開の写真のセクションを表示しない
+- 所有者本人は非公開の写真を編集・削除できるが、非公開を解除できるのは管理者のみ。ポートフォリオの写真候補には出さず、
+  ポートフォリオ編集画面では非公開の写真に外すよう案内を表示する。非公開の写真を含むポートフォリオは保存時・公開時に画面で止め、
+  保存時はバックエンドも「ポートフォリオに設定できない写真が含まれています」として拒否する
+- 操作は理由（必須・500文字以内）とともに `photo.photo_moderation_log` に記録する。理由は管理者のみが参照し、所有者には表示しない
+- 画像ファイル（S3オブジェクト）は削除しない（誤判定時に解除で元に戻せるようにするため）。そのため、**非公開にする前に発行済みの
+  署名付きURLは有効期限が切れるまでアクセスできる**
 
 ### レート制限（`RateLimitFilter`）
 

@@ -34,6 +34,12 @@ export async function deleteE2eTestAccounts(): Promise<void> {
         WHERE (photo_account_no, photo_no) IN (SELECT account_no, photo_no FROM target_photos)
            OR account_no IN (SELECT account_no FROM target_accounts)`
     );
+    // 管理者による写真の非公開・解除の操作履歴（E2E管理者が操作した分を含む。admin_account_noは外部キーを持たない）
+    await client.query(
+      `DELETE FROM photo.photo_moderation_log
+        WHERE (photo_account_no, photo_no) IN (SELECT account_no, photo_no FROM target_photos)
+           OR admin_account_no IN (SELECT account_no FROM target_accounts)`
+    );
     await client.query(
       `DELETE FROM photo.photo_favorite
         WHERE account_no IN (SELECT account_no FROM target_accounts)

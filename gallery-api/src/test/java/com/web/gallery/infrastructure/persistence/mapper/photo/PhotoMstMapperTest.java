@@ -12,6 +12,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -275,6 +276,7 @@ public class PhotoMstMapperTest {
                       .shutterSpeed(rs.getBigDecimal("shutter_speed"))
                       .iso(rs.getInt("iso"))
                       .isLocationPublic(rs.getBoolean("is_location_public"))
+                      .isHiddenByAdmin(rs.getBoolean("is_hidden_by_admin"))
                       .build());
 
       assertEquals(1, actualData.size());
@@ -300,6 +302,8 @@ public class PhotoMstMapperTest {
       assertEquals(0, BigDecimal.valueOf(0.01).compareTo(actualData.getFirst().getShutterSpeed()));
       assertEquals(200, actualData.getFirst().getIso());
       assertFalse(actualData.getFirst().getIsLocationPublic());
+      // 新規登録時は管理者により非公開にされていない状態で登録される
+      assertFalse(actualData.getFirst().getIsHiddenByAdmin());
     }
   }
 
@@ -1012,6 +1016,33 @@ public class PhotoMstMapperTest {
       assertEquals(0, BigDecimal.valueOf(8.0).compareTo(actualData.get(0).getFValue()));
       assertEquals(0, BigDecimal.valueOf(1).compareTo(actualData.get(0).getShutterSpeed()));
       assertEquals(1000, actualData.get(0).getIso());
+    }
+
+    @Test
+    @Order(19)
+    @DisplayName("正常系：管理者非公開フラグのみを指定した場合、管理者非公開フラグと更新者のみが更新されること")
+    void update_isHiddenByAdmin() {
+      PhotoMstCondition conditionPhotoMst = PhotoMstCondition.byAccountAndPhotoNotDeleted(1L, 1L);
+      PhotoMstUpdateTarget targetPhotoMst =
+          PhotoMstUpdateTarget.builder().updatedBy(99L).isHiddenByAdmin(true).build();
+
+      Integer actual = photoMstMapper.update(conditionPhotoMst, targetPhotoMst);
+      assertEquals(1, actual);
+
+      Map<String, Object> actualRow =
+          jdbcTemplate.queryForMap(
+              "SELECT updated_by, is_hidden_by_admin, iso, photo_japanese_title"
+                  + " FROM photo.photo_mst WHERE account_no = 1 AND photo_no = 1");
+      assertEquals(99L, actualRow.get("updated_by"));
+      assertEquals(true, actualRow.get("is_hidden_by_admin"));
+      assertEquals(100, actualRow.get("iso"));
+      assertEquals("タイトル11", actualRow.get("photo_japanese_title"));
+      assertEquals(
+          false,
+          jdbcTemplate.queryForObject(
+              "SELECT is_hidden_by_admin FROM photo.photo_mst WHERE account_no = 1 AND photo_no ="
+                  + " 2",
+              Boolean.class));
     }
   }
 

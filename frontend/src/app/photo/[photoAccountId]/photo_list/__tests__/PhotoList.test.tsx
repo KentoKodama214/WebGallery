@@ -189,6 +189,21 @@ describe("PhotoList", () => {
     expect(images[1]).toHaveAttribute("src", "/photos/photo2.jpg");
   });
 
+  it("管理者により非公開にされた写真（所有者本人の一覧にのみ含まれる）には非公開の表示が付くこと", async () => {
+    mockGetPhotoList.mockResolvedValue({
+      isLast: true,
+      photoList: [{ ...samplePhotos[0], isHiddenByAdmin: true }, samplePhotos[1]],
+    });
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("hidden-by-admin-badge-1-1")).toHaveTextContent(
+        "管理者により非公開"
+      );
+    });
+    expect(screen.queryByTestId("hidden-by-admin-badge-1-2")).not.toBeInTheDocument();
+  });
+
   it("許可されない画像URLの写真はリンク化されず代替表示になること", async () => {
     mockGetPhotoList.mockResolvedValue({
       isLast: true,

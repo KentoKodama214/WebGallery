@@ -11,6 +11,7 @@
 		<result property="photoJapaneseTitle" column="photo_japanese_title"/>
 		<result property="imageFilePath" column="image_file_path"/>
 		<result property="directionKbn" column="direction_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.DirectionEnumTypeHandler"/>
+		<result property="isHiddenByAdmin" column="is_hidden_by_admin"/>
 	</resultMap>
 
 	<insert id="insertBulk" parameterType="java.util.List">
@@ -59,7 +60,9 @@
 			pp.photo_settings,
 			pm.photo_japanese_title,
 			pm.image_file_path,
-			pm.direction_kbn
+			pm.direction_kbn,
+			<!-- 管理者により非公開にされた写真は、編集画面で外すよう案内するために取得する（除外はしない） -->
+			pm.is_hidden_by_admin
 		FROM
 			photo.portfolio_photo pp
 		INNER JOIN photo.photo_mst pm ON pm.account_no = pp.account_no AND pm.photo_no = pp.photo_no
@@ -84,6 +87,8 @@
 		WHERE
 			ph.account_no = #{accountNo}
 			AND ph.is_deleted = false
+			<!-- 管理者により非公開にされた写真は公開ページに出せないため、ポートフォリオの写真候補から除外する -->
+			AND ph.is_hidden_by_admin = false
 			<if test="keywordPattern != null">
 				AND (
 					ph.photo_japanese_title ILIKE #{keywordPattern} ESCAPE '\'
@@ -132,6 +137,7 @@
 		WHERE
 			account_no = #{accountNo}
 			AND is_deleted = false
+			AND is_hidden_by_admin = false
 			AND photo_no IN
 			<foreach collection="photoNoList" item="photoNo" open="(" separator="," close=")">
 				#{photoNo}

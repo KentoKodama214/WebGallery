@@ -1003,10 +1003,10 @@ func (ec *executionContext) _GridPhoto_photo(ctx context.Context, field graphql.
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.Photo) graphql.Marshaler {
-			return ec.marshalNPhoto2ᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐPhoto(ctx, selections, v)
+			return ec.marshalOPhoto2ᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐPhoto(ctx, selections, v)
 		},
 		true,
-		true,
+		false,
 	)
 }
 func (ec *executionContext) fieldContext_GridPhoto_photo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3064,7 +3064,7 @@ func (ec *executionContext) _GridPhoto(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = graphql.MarshalString("GridPhoto")
 		case "photo":
 			out.Values[i] = ec._GridPhoto_photo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:

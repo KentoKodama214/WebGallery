@@ -57,9 +57,10 @@ docker compose --profile docs run --rm schemaspy
 | 11 | photo | photo_favorite | 写真お気に入り |
 | 12 | photo | photo_list_filter_log | 写真一覧絞り込みログ |
 | 13 | photo | photo_view_log | 写真詳細閲覧ログ |
-| 14 | photo | portfolio_mst | ポートフォリオマスタ |
-| 15 | photo | portfolio_photo | ポートフォリオ写真 |
-| 16 | photo | portfolio_tag_mst | ポートフォリオタグマスタ |
+| 14 | photo | photo_moderation_log | 写真モデレーションログ |
+| 15 | photo | portfolio_mst | ポートフォリオマスタ |
+| 16 | photo | portfolio_photo | ポートフォリオ写真 |
+| 17 | photo | portfolio_tag_mst | ポートフォリオタグマスタ |
 
 ## DB初期化
 
@@ -80,7 +81,8 @@ docker compose --profile docs run --rm schemaspy
 13. `photo/photo_favorite.sql` - 写真お気に入りテーブル
 14. `photo/photo_list_filter_log.sql` - 写真一覧絞り込みログテーブル
 15. `photo/photo_view_log.sql` - 写真詳細閲覧ログテーブル
-16. `photo/portfolio_mst.sql` - ポートフォリオマスタテーブル
-17. `photo/portfolio_photo.sql` - ポートフォリオ写真テーブル
-18. `photo/portfolio_tag_mst.sql` - ポートフォリオタグマスタテーブル
-19. `photo/portfolio_reader.sql` - portfolio-api 用の読み取り専用ロール `portfolio_reader`（表示に必要なテーブル・列の SELECT のみを付与）
+16. `photo/photo_moderation_log.sql` - 写真モデレーションログテーブル
+17. `photo/portfolio_mst.sql` - ポートフォリオマスタテーブル
+18. `photo/portfolio_photo.sql` - ポートフォリオ写真テーブル
+19. `photo/portfolio_tag_mst.sql` - ポートフォリオタグマスタテーブル
+20. `photo/portfolio_reader.sql` - portfolio-api 用の読み取り専用ロール `portfolio_reader`（表示に必要なテーブル・列の SELECT のみを付与）

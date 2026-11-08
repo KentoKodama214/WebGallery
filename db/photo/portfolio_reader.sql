@@ -19,7 +19,7 @@ GRANT USAGE ON SCHEMA common, photo TO portfolio_reader;
 GRANT SELECT (account_no, account_id) ON common.account TO portfolio_reader;
 
 -- 写真は表示に必要な列だけを読ませる（撮影場所等の非公開になりうる情報の列は読ませない）
-GRANT SELECT (account_no, photo_no, is_deleted, image_file_path, photo_japanese_title, photo_english_title, direction_kbn)
+GRANT SELECT (account_no, photo_no, is_deleted, is_hidden_by_admin, image_file_path, photo_japanese_title, photo_english_title, direction_kbn)
 	ON photo.photo_mst TO portfolio_reader;
 
 GRANT SELECT ON photo.portfolio_mst, photo.portfolio_photo, photo.portfolio_tag_mst TO portfolio_reader;

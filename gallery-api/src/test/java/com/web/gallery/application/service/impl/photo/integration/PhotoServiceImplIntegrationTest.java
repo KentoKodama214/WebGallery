@@ -7,6 +7,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.web.gallery.application.model.photo.AdminPhotoListGetModel;
+import com.web.gallery.application.model.photo.AdminPhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoDeleteModel;
 import com.web.gallery.application.model.photo.PhotoDeleteModelList;
 import com.web.gallery.application.model.photo.PhotoDetailGetModel;
@@ -17,6 +19,7 @@ import com.web.gallery.application.model.photo.PhotoPageModel;
 import com.web.gallery.application.model.photo.PhotoSaveResultModel;
 import com.web.gallery.application.model.photo.PhotoTagModel;
 import com.web.gallery.application.model.photo.PhotoTagModelList;
+import com.web.gallery.application.model.photo.PhotoVisibilityChangeModel;
 import com.web.gallery.application.repository.photo.FileRepository;
 import com.web.gallery.application.service.impl.photo.PhotoServiceImpl;
 import com.web.gallery.domain.constant.Consts;
@@ -37,7 +40,9 @@ import com.web.gallery.domain.model.photo.FocalLength;
 import com.web.gallery.domain.model.photo.ImageFile;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.IsFavoriteOnly;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.Iso;
+import com.web.gallery.domain.model.photo.ModerationReason;
 import com.web.gallery.domain.model.photo.PhotoAt;
 import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
@@ -54,6 +59,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -684,6 +690,90 @@ public class PhotoServiceImplIntegrationTest {
               Integer.class);
       assertEquals(1, logCount);
     }
+
+    @Test
+    @Order(13)
+    @DisplayName("正常系：所有者本人以外が閲覧する場合、管理者により非公開にされた写真は一覧に含めないこと")
+    void getPhotoList_hiddenByAdmin_excluded_for_others() throws GalleryException {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true WHERE account_no = 1 AND photo_no = 9");
+
+      PhotoPageModel actual =
+          photoServiceImpl.getPhotoList(
+              PhotoListGetModel.builder()
+                  .accountNo(new AccountNo(2L))
+                  .photoAccountId(new AccountId("aaaaaaaa"))
+                  .directionKbn(DirectionEnum.NONE)
+                  .isFavoriteOnly(new IsFavoriteOnly(false))
+                  .tagList(new ArrayList<String>())
+                  .sortBy(SortPhotoEnum.PHOTO_AT)
+                  .pageNo(1)
+                  .searchExecuted(false)
+                  .logInitialView(false)
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
+                  .build());
+
+      // 撮影日時が最も新しい写真9が除外され、次に新しい写真8が先頭になる
+      assertEquals(new PhotoNo(8L), actual.getPhotoModelList().get(0).getPhotoNo());
+      assertTrue(
+          actual.getPhotoModelList().stream()
+              .noneMatch(photo -> photo.getPhotoNo().equals(new PhotoNo(9L))));
+    }
+
+    @Test
+    @Order(14)
+    @DisplayName("正常系：未ログインで閲覧する場合、管理者により非公開にされた写真は一覧に含めないこと")
+    void getPhotoList_hiddenByAdmin_excluded_for_anonymous() throws GalleryException {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true WHERE account_no = 1 AND photo_no = 9");
+
+      PhotoPageModel actual =
+          photoServiceImpl.getPhotoList(
+              PhotoListGetModel.builder()
+                  .accountNo(null)
+                  .photoAccountId(new AccountId("aaaaaaaa"))
+                  .directionKbn(DirectionEnum.NONE)
+                  .isFavoriteOnly(new IsFavoriteOnly(false))
+                  .tagList(new ArrayList<String>())
+                  .sortBy(SortPhotoEnum.PHOTO_AT)
+                  .pageNo(1)
+                  .searchExecuted(false)
+                  .logInitialView(false)
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
+                  .build());
+
+      assertEquals(new PhotoNo(8L), actual.getPhotoModelList().get(0).getPhotoNo());
+    }
+
+    @Test
+    @Order(15)
+    @DisplayName("正常系：所有者本人が閲覧する場合、管理者により非公開にされた写真も一覧に含め、管理者非公開フラグがtrueであること")
+    void getPhotoList_hiddenByAdmin_included_for_owner() throws GalleryException {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true WHERE account_no = 1 AND photo_no = 9");
+
+      PhotoPageModel actual =
+          photoServiceImpl.getPhotoList(
+              PhotoListGetModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .photoAccountId(new AccountId("aaaaaaaa"))
+                  .directionKbn(DirectionEnum.NONE)
+                  .isFavoriteOnly(new IsFavoriteOnly(false))
+                  .tagList(new ArrayList<String>())
+                  .sortBy(SortPhotoEnum.PHOTO_AT)
+                  .pageNo(1)
+                  .searchExecuted(false)
+                  .logInitialView(false)
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
+                  .build());
+
+      assertEquals(new PhotoNo(9L), actual.getPhotoModelList().get(0).getPhotoNo());
+      assertTrue(actual.getPhotoModelList().get(0).getIsHiddenByAdmin().value());
+      assertFalse(actual.getPhotoModelList().get(1).getIsHiddenByAdmin().value());
+    }
   }
 
   @Nested
@@ -842,6 +932,53 @@ public class PhotoServiceImplIntegrationTest {
       PhotoDetailModel actual = photoServiceImpl.getPhotoDetail(photoDetailGetModel);
       assertNotNull(actual.getLocationNo());
       assertNotNull(actual.getDisplayName());
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName(
+        "異常系：所有者本人以外が管理者により非公開にされた写真の詳細を取得しようとした場合、PhotoNotFoundExceptionをthrowし、閲覧ログを記録しないこと")
+    void getPhotoDetail_hiddenByAdmin_not_found_for_others() {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true WHERE account_no = 1 AND photo_no = 9");
+
+      assertThrows(
+          PhotoNotFoundException.class,
+          () ->
+              photoServiceImpl.getPhotoDetail(
+                  PhotoDetailGetModel.builder()
+                      .accountNo(new AccountNo(2L))
+                      .photoAccountId(new AccountId("aaaaaaaa"))
+                      .photoNo(new PhotoNo(9L))
+                      .ipAddress(new IpAddress("203.0.113.1"))
+                      .referer(new Referer(""))
+                      .build()));
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_view_log WHERE photo_account_no = 1 AND photo_no = 9",
+              Integer.class));
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("正常系：所有者本人は管理者により非公開にされた写真の詳細を取得でき、管理者非公開フラグがtrueであること")
+    void getPhotoDetail_hiddenByAdmin_found_for_owner() throws GalleryException {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true WHERE account_no = 1 AND photo_no = 9");
+
+      PhotoDetailModel actual =
+          photoServiceImpl.getPhotoDetail(
+              PhotoDetailGetModel.builder()
+                  .accountNo(new AccountNo(1L))
+                  .photoAccountId(new AccountId("aaaaaaaa"))
+                  .photoNo(new PhotoNo(9L))
+                  .ipAddress(new IpAddress("203.0.113.1"))
+                  .referer(new Referer(""))
+                  .build());
+
+      assertEquals(new PhotoNo(9L), actual.getPhotoNo());
+      assertTrue(actual.getIsHiddenByAdmin().value());
     }
   }
 
@@ -1800,6 +1937,29 @@ public class PhotoServiceImplIntegrationTest {
       verify(fileRepository, times(1))
           .delete(new ImageFilePath("https://www.xxx.com/aaaaaaaa/DSC11.jpg"));
     }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：所有者本人は管理者により非公開にされた写真を削除できること")
+    void deletePhotos_hiddenByAdmin() throws GalleryException {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true WHERE account_no = 1 AND photo_no = 9");
+
+      photoServiceImpl.deletePhotos(
+          PhotoDeleteModelList.of(
+              List.of(
+                  PhotoDeleteModel.builder()
+                      .accountNo(new AccountNo(1L))
+                      .photoNo(new PhotoNo(9L))
+                      .imageFilePath(new ImageFilePath("クライアント送信値は無視される"))
+                      .build())));
+
+      assertEquals(
+          true,
+          jdbcTemplate.queryForObject(
+              "SELECT is_deleted FROM photo.photo_mst WHERE account_no = 1 AND photo_no = 9",
+              Boolean.class));
+    }
   }
 
   @Nested
@@ -1861,6 +2021,117 @@ public class PhotoServiceImplIntegrationTest {
     void isReachedUpperLimit_administrator() {
       AccountNo accountNo = new AccountNo(6L);
       assertFalse(photoServiceImpl.isReachedUpperLimit(accountNo));
+    }
+  }
+
+  @Nested
+  @Order(6)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/service/PhotoServiceImplIntegrationTest.sql")
+  class getPhotoListForAdmin {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：管理者非公開フラグで絞り込んだ場合、全アカウントのうち非公開にされた写真のみを取得すること")
+    void getPhotoListForAdmin_filterByHidden() {
+      jdbcTemplate.update(
+          "UPDATE photo.photo_mst SET is_hidden_by_admin = true"
+              + " WHERE (account_no = 1 AND photo_no = 9) OR (account_no = 2 AND photo_no = 1)");
+
+      AdminPhotoPageModel actual =
+          photoServiceImpl.getPhotoListForAdmin(
+              AdminPhotoListGetModel.builder()
+                  .isHiddenByAdmin(new IsHiddenByAdmin(true))
+                  .pageNo(1)
+                  .build());
+
+      assertTrue(actual.getIsLast());
+      assertEquals(
+          List.of("aaaaaaaa-9", "bbbbbbbb-1"),
+          actual.getAdminPhotoModelList().stream()
+              .map(photo -> photo.getAccountId().value() + "-" + photo.getPhotoNo().value())
+              .sorted()
+              .toList());
+      assertTrue(
+          actual.getAdminPhotoModelList().stream()
+              .allMatch(photo -> photo.getIsHiddenByAdmin().value()));
+    }
+  }
+
+  @Nested
+  @Order(7)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  @Sql("/sql/service/PhotoServiceImplIntegrationTest.sql")
+  class changePhotoVisibilityByAdmin {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：非公開にした後に解除すると、写真マスタの管理者非公開フラグが切り替わり、操作ごとに履歴が登録されること")
+    void changePhotoVisibilityByAdmin_hide_then_unhide() throws GalleryException {
+      photoServiceImpl.changePhotoVisibilityByAdmin(
+          PhotoVisibilityChangeModel.builder()
+              .photoAccountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(9L))
+              .adminAccountNo(new AccountNo(2L))
+              .isHiddenByAdmin(new IsHiddenByAdmin(true))
+              .reason(new ModerationReason("不適切な画像のため"))
+              .build());
+
+      Map<String, Object> hiddenRow =
+          jdbcTemplate.queryForMap(
+              "SELECT is_hidden_by_admin, updated_by, is_deleted FROM photo.photo_mst"
+                  + " WHERE account_no = 1 AND photo_no = 9");
+      assertEquals(true, hiddenRow.get("is_hidden_by_admin"));
+      assertEquals(2L, hiddenRow.get("updated_by"));
+      assertEquals(false, hiddenRow.get("is_deleted"));
+
+      photoServiceImpl.changePhotoVisibilityByAdmin(
+          PhotoVisibilityChangeModel.builder()
+              .photoAccountNo(new AccountNo(1L))
+              .photoNo(new PhotoNo(9L))
+              .adminAccountNo(new AccountNo(2L))
+              .isHiddenByAdmin(new IsHiddenByAdmin(false))
+              .reason(new ModerationReason("誤判定だったため"))
+              .build());
+
+      assertEquals(
+          false,
+          jdbcTemplate.queryForObject(
+              "SELECT is_hidden_by_admin FROM photo.photo_mst WHERE account_no = 1 AND photo_no = 9",
+              Boolean.class));
+      List<Map<String, Object>> logs =
+          jdbcTemplate.queryForList(
+              "SELECT admin_account_no, is_hidden, reason, created_by FROM photo.photo_moderation_log"
+                  + " WHERE photo_account_no = 1 AND photo_no = 9 ORDER BY photo_moderation_log_no");
+      assertEquals(2, logs.size());
+      assertEquals(2L, logs.get(0).get("admin_account_no"));
+      assertEquals(true, logs.get(0).get("is_hidden"));
+      assertEquals("不適切な画像のため", logs.get(0).get("reason"));
+      assertEquals(2L, logs.get(0).get("created_by"));
+      assertEquals(false, logs.get(1).get("is_hidden"));
+      assertEquals("誤判定だったため", logs.get(1).get("reason"));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：写真が存在しない場合、PhotoNotFoundExceptionをthrowし、履歴を登録しないこと")
+    void changePhotoVisibilityByAdmin_PhotoNotFoundException() {
+      assertThrows(
+          PhotoNotFoundException.class,
+          () ->
+              photoServiceImpl.changePhotoVisibilityByAdmin(
+                  PhotoVisibilityChangeModel.builder()
+                      .photoAccountNo(new AccountNo(1L))
+                      .photoNo(new PhotoNo(999L))
+                      .adminAccountNo(new AccountNo(2L))
+                      .isHiddenByAdmin(new IsHiddenByAdmin(true))
+                      .reason(new ModerationReason("不適切な画像のため"))
+                      .build()));
+
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.photo_moderation_log", Integer.class));
     }
   }
 }

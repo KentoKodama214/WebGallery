@@ -64,14 +64,14 @@ func (p GridRowPattern) photoCount() int {
 type GridRow struct {
 	// Pattern は行パターン（1行に並べる写真の枚数と配置）。
 	Pattern GridRowPattern
-	// Photos は行に左から順に並べる写真（枚数は行パターンの枚数と一致する）。
+	// Photos は行に左から順に並べる写真の枠（枚数は行パターンの枚数と一致する）。
 	Photos []GridPhoto
 }
 
-// GridPhoto はグリッド型の写真（グリッド型は写真単位の設定を持たない）。
+// GridPhoto はグリッド型の写真の枠（グリッド型は写真単位の設定を持たない）。
 type GridPhoto struct {
-	// Photo は行に並べる写真。
-	Photo Photo
+	// Photo は枠に並べる写真。管理者により非公開にされた写真の枠は nil（空き枠として表示する）。
+	Photo *Photo
 }
 
 // isLayout は FeatureLayout を Layout として扱えるようにするためのマーカー（他パッケージの型が Layout を実装できないようにする）。
@@ -115,6 +115,7 @@ func BuildLayout(p Portfolio) (Layout, error) {
 // buildFeatureLayout はフィーチャー型のレイアウトを組み立てる。
 //
 // 写真1枚につき1セクションとし、写真単位の設定からテーマ・サブテーマ・説明文を取り出す。
+// 管理者により非公開にされた写真のセクションは表示しない。
 //
 // 引数:
 //   - p: フィーチャー型のポートフォリオ
@@ -124,6 +125,9 @@ func BuildLayout(p Portfolio) (Layout, error) {
 func buildFeatureLayout(p Portfolio) FeatureLayout {
 	sections := make([]FeatureSection, 0, len(p.Photos))
 	for _, photo := range p.Photos {
+		if photo.HiddenByAdmin {
+			continue
+		}
 		sections = append(sections, FeatureSection{
 			Photo:       photo.Photo,
 			Theme:       stringSetting(photo.Settings, settingTheme),
@@ -137,6 +141,7 @@ func buildFeatureLayout(p Portfolio) FeatureLayout {
 // buildGridLayout はグリッド型のレイアウトを組み立てる。
 //
 // ポートフォリオ単位の設定の行パターンを先頭から順に見て、写真を表示順に行パターンの枚数ずつ各行へ割り当てる。
+// 管理者により非公開にされた写真も枠を1つ使い、その枠は空き枠（Photo が nil）にする（後ろの写真を詰めて行の構成を崩さないため）。
 //
 // 引数:
 //   - p: グリッド型のポートフォリオ
@@ -154,7 +159,11 @@ func buildGridLayout(p Portfolio) GridLayout {
 		}
 		photos := make([]GridPhoto, 0, count)
 		for _, photo := range p.Photos[cursor : cursor+count] {
-			photos = append(photos, GridPhoto{Photo: photo.Photo})
+			if photo.HiddenByAdmin {
+				photos = append(photos, GridPhoto{Photo: nil})
+				continue
+			}
+			photos = append(photos, GridPhoto{Photo: &photo.Photo})
 		}
 		rows = append(rows, GridRow{Pattern: pattern, Photos: photos})
 		cursor += count

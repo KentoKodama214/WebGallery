@@ -12,6 +12,7 @@ import com.web.gallery.domain.model.photo.Caption;
 import com.web.gallery.domain.model.photo.FavoriteCount;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.IsFavorite;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.PhotoAt;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import java.time.OffsetDateTime;
@@ -66,6 +67,7 @@ class PhotoListGetResponseTest {
             .caption(new Caption("キャプション3"))
             .directionKbn(DirectionEnum.HORIZONTAL)
             .photoTagModelList(PhotoTagModelList.empty())
+            .isHiddenByAdmin(new IsHiddenByAdmin(true))
             .build());
 
     return PhotoModelList.of(photoList);
@@ -108,6 +110,9 @@ class PhotoListGetResponseTest {
           "https://localhost:8080/image/aaaaaaaa/DSC333.jpg",
           actual.getPhotoList().get(2).getImageFilePath());
       assertEquals("キャプション3", actual.getPhotoList().get(2).getCaption());
+      // 管理者非公開フラグは、未設定の場合falseとし、設定されている場合はその値を返す
+      assertFalse(actual.getPhotoList().get(0).getIsHiddenByAdmin());
+      assertTrue(actual.getPhotoList().get(2).getIsHiddenByAdmin());
       assertEquals(DirectionEnum.HORIZONTAL, actual.getPhotoList().get(2).getDirectionKbn());
     }
 

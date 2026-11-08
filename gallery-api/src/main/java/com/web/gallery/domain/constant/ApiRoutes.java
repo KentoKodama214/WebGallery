@@ -140,4 +140,12 @@ public final class ApiRoutes {
 
   /** 管理者用お問い合わせ返信API（POST=返信登録） */
   public static final String API_ADMIN_INQUIRY_REPLY = API_ADMIN_INQUIRY_DETAIL + "/replies";
+
+  // 管理者用写真関連
+  /** 管理者用写真一覧API（GET=全アカウントの写真一覧取得） */
+  public static final String API_ADMIN_PHOTOS = API_ADMIN_PREFIX + "/photos";
+
+  /** 管理者用写真公開状態変更API（PUT=非公開・非公開解除） */
+  public static final String API_ADMIN_PHOTO_VISIBILITY =
+      API_ADMIN_PHOTOS + "/" + ACCOUNT_NO + "/" + PHOTO_NO + "/visibility";
 }

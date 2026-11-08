@@ -2,10 +2,12 @@ package com.web.gallery.presentation.converter.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.model.photo.AdminPhotoListGetModel;
 import com.web.gallery.application.model.photo.PhotoDeleteModel;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.application.model.photo.PhotoFavoriteModel;
 import com.web.gallery.application.model.photo.PhotoListGetModel;
+import com.web.gallery.application.model.photo.PhotoVisibilityChangeModel;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.enumeration.SortPhotoEnum;
@@ -15,6 +17,8 @@ import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.domain.model.common.Referer;
 import com.web.gallery.domain.model.photo.ExifData;
 import com.web.gallery.domain.model.photo.PhotoNo;
+import com.web.gallery.presentation.request.photo.AdminPhotoListRequest;
+import com.web.gallery.presentation.request.photo.AdminPhotoVisibilityUpdateRequest;
 import com.web.gallery.presentation.request.photo.PhotoBulkSaveRequest;
 import com.web.gallery.presentation.request.photo.PhotoDeleteRequest;
 import com.web.gallery.presentation.request.photo.PhotoFavoriteDeleteRequest;
@@ -447,6 +451,63 @@ class PhotoConverterTest {
       assertEquals(DirectionEnum.HORIZONTAL, actual.getDirectionKbn());
       assertEquals(50, actual.getExifData().focalLength().value());
       assertEquals(1, actual.getPhotoTagModelList().size());
+    }
+  }
+
+  @Nested
+  @Order(7)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class toAdminPhotoListGetModel {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：絞り込み条件が設定されている場合、それぞれ値オブジェクトに変換されること")
+    void toAdminPhotoListGetModel_withFilter() {
+      AdminPhotoListRequest request = new AdminPhotoListRequest();
+      request.setAccountId("aaaaaaaa");
+      request.setIsHiddenByAdmin(true);
+      request.setPageNo(2);
+
+      AdminPhotoListGetModel actual = photoConverter.toAdminPhotoListGetModel(request);
+
+      assertEquals("aaaaaaaa", actual.getAccountId().value());
+      assertTrue(actual.getIsHiddenByAdmin().value());
+      assertEquals(2, actual.getPageNo());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：絞り込み条件が未設定の場合、それぞれnullになること")
+    void toAdminPhotoListGetModel_withoutFilter() {
+      AdminPhotoListRequest request = new AdminPhotoListRequest();
+
+      AdminPhotoListGetModel actual = photoConverter.toAdminPhotoListGetModel(request);
+
+      assertNull(actual.getAccountId());
+      assertNull(actual.getIsHiddenByAdmin());
+      assertEquals(1, actual.getPageNo());
+    }
+  }
+
+  @Nested
+  @Order(8)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class toPhotoVisibilityChangeModel {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：パスパラメータ・リクエスト・ログイン中の管理者のアカウント番号から変換されること")
+    void toPhotoVisibilityChangeModel_success() {
+      AdminPhotoVisibilityUpdateRequest request = new AdminPhotoVisibilityUpdateRequest();
+      request.setIsHiddenByAdmin(true);
+      request.setReason("不適切な画像のため");
+
+      PhotoVisibilityChangeModel actual =
+          photoConverter.toPhotoVisibilityChangeModel(request, 1L, 3L, new AccountNo(99L));
+
+      assertEquals(new AccountNo(1L), actual.getPhotoAccountNo());
+      assertEquals(3L, actual.getPhotoNo().value());
+      assertEquals(new AccountNo(99L), actual.getAdminAccountNo());
+      assertTrue(actual.getIsHiddenByAdmin().value());
+      assertEquals("不適切な画像のため", actual.getReason().value());
     }
   }
 }

@@ -92,6 +92,34 @@ describe("ポートフォリオのテンプレート", () => {
     expect(narrowWideImages[1].style.getPropertyValue("aspect-ratio")).toBe("3 / 2");
   });
 
+  it("グリッド型で管理者により非公開にされた写真の枠（photo が null）は、同じ大きさの空き枠にして行の構成を保つこと", () => {
+    render(
+      <>
+        {renderPortfolioLayout({
+          __typename: "GridLayout",
+          rows: [
+            { pattern: "WIDE_NARROW", photos: [{ photo: null }, { photo: photo(2) }] },
+            { pattern: "TWO_EQUAL", photos: [{ photo: photo(3) }, { photo: photo(4) }] },
+          ],
+        })}
+      </>
+    );
+
+    const rows = screen.getAllByTestId("grid-row");
+    expect(rows).toHaveLength(2);
+    // 空き枠は横長の枠の位置・大きさのまま残り、画像は表示しない
+    const emptyCell = within(rows[0]).getByTestId("grid-empty-cell");
+    expect(emptyCell).toBe(rows[0].firstElementChild);
+    expect(emptyCell.style.flexGrow).toBe("2");
+    expect(emptyCell.style.getPropertyValue("aspect-ratio")).toBe("3 / 2");
+    expect(emptyCell).toHaveAttribute("aria-hidden", "true");
+    const images = within(rows[0]).getAllByRole("img");
+    expect(images).toHaveLength(1);
+    expect(images[0].style.getPropertyValue("aspect-ratio")).toBe("3 / 4");
+    // 後ろの行の写真は詰めずにそのまま並べる
+    expect(within(rows[1]).getAllByRole("img")).toHaveLength(2);
+  });
+
   it("画像URLが許可されたオリジンでない場合は、画像の代わりに写真のタイトルを表示すること", () => {
     render(
       <>

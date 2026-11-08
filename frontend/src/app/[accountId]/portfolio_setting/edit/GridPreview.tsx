@@ -1,7 +1,12 @@
 "use client";
 
 import { sanitizeImageUrl } from "@/lib/url";
-import { GRID_ROW_PATTERN_CELLS, GRID_ROW_PATTERN_PHOTO_COUNT, type SelectedPhoto } from "./types";
+import {
+  GRID_ROW_PATTERN_CELLS,
+  GRID_ROW_PATTERN_PHOTO_COUNT,
+  HIDDEN_BY_ADMIN_LABEL,
+  type SelectedPhoto,
+} from "./types";
 
 interface GridPreviewProps {
   /** 表示順に並べた写真 */
@@ -15,6 +20,7 @@ interface GridPreviewProps {
  *
  * 各行は写真を表示順に、行パターンの枚数ずつ消費する。行の枚数の合計と写真の枚数が
  * 一致しない場合（公開できない状態）は、空き枠・行に割り当てられていない写真をそれぞれ示す。
+ * 管理者により非公開にされた写真は、外す必要があることが分かるよう枠に表示する。
  */
 export function GridPreview({ photos, rows }: GridPreviewProps) {
   let cursor = 0;
@@ -38,8 +44,16 @@ export function GridPreview({ photos, rows }: GridPreviewProps) {
             <div
               key={cellIndex}
               style={{ flex: cell.shape.flex, aspectRatio: cell.shape.aspectRatio }}
-              className="bg-gray-200 overflow-hidden rounded flex items-center justify-center"
+              className="relative bg-gray-200 overflow-hidden rounded flex items-center justify-center"
             >
+              {cell.photo?.isHiddenByAdmin && (
+                <span
+                  data-testid={`grid-preview-hidden-badge-${cell.photo.photoNo}`}
+                  className="absolute top-1 left-1 px-1.5 py-0.5 text-xs text-white bg-red-600 rounded"
+                >
+                  {HIDDEN_BY_ADMIN_LABEL}
+                </span>
+              )}
               {cell.photo ? (
                 sanitizeImageUrl(cell.photo.imageFilePath) ? (
                   <img

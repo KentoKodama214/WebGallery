@@ -66,7 +66,8 @@ export interface GridLayout {
   __typename: "GridLayout";
   rows: {
     pattern: GridRowPattern;
-    photos: { photo: PublicPhoto }[];
+    /** 左から順の写真の枠（管理者により非公開にされた写真の枠は photo が null） */
+    photos: { photo: PublicPhoto | null }[];
   }[];
 }
 

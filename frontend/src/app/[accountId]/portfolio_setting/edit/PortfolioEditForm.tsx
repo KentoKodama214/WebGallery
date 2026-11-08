@@ -34,6 +34,9 @@ import {
   GRID_ROW_PATTERN_PHOTO_COUNT,
   DEFAULT_ASPECT_RATIO,
   DIRECTION_ASPECT_RATIOS,
+  HIDDEN_BY_ADMIN_LABEL,
+  HIDDEN_BY_ADMIN_PHOTO_ERROR,
+  HIDDEN_BY_ADMIN_PUBLISH_ERROR,
   PHOTO_SETTING_KEYS,
   type PhotoSettingValues,
   type SelectedPhoto,
@@ -121,6 +124,7 @@ function toFormState(detail: PortfolioDetail) {
         label: photo.photoJapaneseTitle || `写真${photo.photoNo}`,
         directionKbn: photo.directionKbn,
         settings: toPhotoSettingValues(photo.photoSettings),
+        isHiddenByAdmin: photo.isHiddenByAdmin ?? false,
       })
     ),
     tags: detail.tagList.map(
@@ -341,6 +345,9 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     if (photos.length === 0) {
       // 下書きでも写真のないポートフォリオは保存できない（バックエンドも400で拒否する）
       nextErrors.photos = "写真を1枚以上選択してください";
+    } else if (photos.some((photo) => photo.isHiddenByAdmin)) {
+      // 管理者により非公開にされた写真は公開ページに出せないため保存できない（バックエンドも400で拒否する）
+      nextErrors.photos = HIDDEN_BY_ADMIN_PHOTO_ERROR;
     }
     tags.forEach((tag, index) => {
       if (!tag.tagJapaneseName.trim()) {
@@ -408,6 +415,11 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     setSubmitError("");
     setSuccessMessage("");
     if (nextStatus === "published") {
+      if (photos.some((photo) => photo.isHiddenByAdmin)) {
+        // 管理者により非公開にされた写真は公開ページに出せないため、外して保存するまで公開しない
+        setErrors({ photos: HIDDEN_BY_ADMIN_PUBLISH_ERROR });
+        return;
+      }
       const publishErrors = collectPublishErrors();
       setErrors(publishErrors);
       if (Object.keys(publishErrors).length > 0) {
@@ -782,6 +794,19 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                       <p className="text-sm text-gray-600">
                         {index + 1}. {photo.label}
                       </p>
+                      {photo.isHiddenByAdmin && (
+                        <div
+                          data-testid={`portfolio-photo-hidden-notice-${photo.photoNo}`}
+                          className="flex flex-col items-start gap-1 text-sm text-red-700"
+                        >
+                          <span className="px-1.5 py-0.5 text-xs text-white bg-red-600 rounded">
+                            {HIDDEN_BY_ADMIN_LABEL}
+                          </span>
+                          <p>
+                            この写真は管理者により非公開にされたため、公開ページに表示されません。「×」で外してください。
+                          </p>
+                        </div>
+                      )}
                       {templateKbn === "feature" && (
                         <>
                           <div>

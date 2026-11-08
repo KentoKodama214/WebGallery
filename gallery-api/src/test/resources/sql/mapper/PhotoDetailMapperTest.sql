@@ -25,6 +25,8 @@ insert into photo.photo_mst values(DEFAULT, 1, 2, 1, '2000-01-01 09:00:00 Asia/T
 insert into photo.photo_mst values(DEFAULT, 1, 3, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', true,  '2021-03-01 09:00:00 Asia/Tokyo', 3, 'https://www.xxx.com/DSC333.jpg', 'DSC333.jpg', 'タイトル13', 'title13', 'キャプション13', 'horizontal', 50, 10.0, 3,  400, true);
 insert into photo.photo_mst values(DEFAULT, 2, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2022-01-01 09:00:00 Asia/Tokyo', 4, 'https://www.xxx.com/DSC444.jpg', 'DSC444.jpg', 'タイトル21', 'title21', 'キャプション21', 'horizontal', 80, 12.0, 5,  800, true);
 insert into photo.photo_mst values(DEFAULT, 2, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2022-02-01 09:00:00 Asia/Tokyo', 5, 'https://www.xxx.com/DSC555.jpg', 'DSC555.jpg', 'タイトル22', 'title22', 'キャプション22', 'horizontal', 90, 16.0, 10, 1200, true);
+-- account2のphoto3：管理者により非公開にされた写真（所有者本人以外には返さないことの検証用。登録日時が最も新しい）
+insert into photo.photo_mst values(DEFAULT, 2, 3, 2, '2000-01-03 09:00:00 Asia/Tokyo', 2, '2000-01-03 09:00:00 Asia/Tokyo', false, '2022-03-01 09:00:00 Asia/Tokyo', 0, 'https://www.xxx.com/DSC666.jpg', 'DSC666.jpg', 'タイトル23', 'title23', 'キャプション23', 'vertical', 50, 10.0, 3,  400, false, true);
 
 -- account4：季節・時期順ソートで月日が同じ場合に年降順となることの検証用（同じ12/25で年違い3件 + 比較用の11/20）
 insert into photo.photo_mst values(DEFAULT, 4, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2021-12-25 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/DSC311.jpg', 'DSC311.jpg', 'タイトル31', 'title31', 'キャプション31', 'horizontal', 24, 8.0, 1, 100, true);

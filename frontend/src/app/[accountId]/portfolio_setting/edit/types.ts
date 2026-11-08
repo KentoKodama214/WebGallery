@@ -12,7 +12,20 @@ export interface SelectedPhoto {
   directionKbn: string;
   /** 写真単位のテンプレート設定（テンプレートを切り替えても入力値を保持するため、全テンプレートの項目を持つ） */
   settings: PhotoSettingValues;
+  /** 管理者により非公開にされた写真か（写真選択ダイアログでは選べないため、保存済みの写真でのみtrueになりうる） */
+  isHiddenByAdmin?: boolean;
 }
+
+/** 管理者により非公開にされた写真であることの表示名 */
+export const HIDDEN_BY_ADMIN_LABEL = "管理者により非公開";
+
+/** 管理者により非公開にされた写真が含まれる場合のエラー（外すまで保存できない） */
+export const HIDDEN_BY_ADMIN_PHOTO_ERROR =
+  "管理者により非公開にされた写真が含まれています。外してから保存してください";
+
+/** 管理者により非公開にされた写真が含まれる場合の、公開時のエラー（外して保存するまで公開できない） */
+export const HIDDEN_BY_ADMIN_PUBLISH_ERROR =
+  "管理者により非公開にされた写真が含まれています。外して保存してから公開してください";
 
 /** 写真単位のテンプレート設定の入力値 */
 export interface PhotoSettingValues {

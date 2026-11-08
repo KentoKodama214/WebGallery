@@ -4,6 +4,7 @@ import com.web.gallery.domain.enumeration.DirectionEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.photo.DisplayOrder;
 import com.web.gallery.domain.model.photo.ImageFilePath;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.domain.model.photo.PortfolioNo;
@@ -17,7 +18,8 @@ import lombok.Value;
  *
  * <p>{@code accountNo}・{@code portfolioNo}・{@code displayOrder}は登録・更新リクエストからの生成時は未設定（null）となり、
  * 集約ルート（{@link com.web.gallery.application.aggregate.Portfolio}）が所有者・並び順に応じて設定する。 {@code
- * photoJapaneseTitle}・{@code imageFilePath}・{@code directionKbn}は詳細取得時のみ設定される表示用の写真情報
+ * photoJapaneseTitle}・{@code imageFilePath}・{@code directionKbn}・{@code
+ * isHiddenByAdmin}は詳細取得時のみ設定される表示用の写真情報
  */
 @Value
 @Builder(toBuilder = true)
@@ -49,4 +51,7 @@ public class PortfolioPhotoModel {
    * <p>{@link DirectionEnum}
    */
   private DirectionEnum directionKbn;
+
+  /** 管理者非公開フラグ（詳細取得時のみ設定。非公開の写真は編集画面で外すよう案内する） */
+  private IsHiddenByAdmin isHiddenByAdmin;
 }

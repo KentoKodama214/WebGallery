@@ -2,6 +2,7 @@ package com.web.gallery.infrastructure.persistence.entity.photo;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.web.gallery.application.aggregate.Photo;
 import com.web.gallery.application.model.photo.PhotoDeleteModel;
 import com.web.gallery.application.model.photo.PhotoDetailModel;
 import com.web.gallery.domain.enumeration.DirectionEnum;
@@ -14,6 +15,7 @@ import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.IsLocationPublic;
 import com.web.gallery.domain.model.photo.Iso;
 import com.web.gallery.domain.model.photo.LocationNo;
+import com.web.gallery.domain.model.photo.ModerationReason;
 import com.web.gallery.domain.model.photo.PhotoAt;
 import com.web.gallery.domain.model.photo.PhotoEnglishTitle;
 import com.web.gallery.domain.model.photo.PhotoJapaneseTitle;
@@ -121,6 +123,42 @@ class PhotoMstUpdateTargetTest {
 
       assertEquals(1L, actual.getUpdatedBy());
       assertTrue(actual.getIsDeleted());
+    }
+  }
+
+  @Nested
+  @Order(3)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class forVisibilityChange {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：非公開にする場合、管理者非公開フラグがtrue、更新者が操作した管理者になり、他の項目は更新対象にしないこと")
+    void forVisibilityChange_hide() {
+      Photo photo = Photo.forModeration(new AccountNo(1L), new PhotoNo(5L));
+      photo.hideByAdmin(new AccountNo(99L), new ModerationReason("不適切な画像のため"));
+
+      PhotoMstUpdateTarget actual = PhotoMstUpdateTarget.forVisibilityChange(photo);
+
+      assertEquals(99L, actual.getUpdatedBy());
+      assertTrue(actual.getIsHiddenByAdmin());
+      assertNull(actual.getIsDeleted());
+      assertNull(actual.getPhotoAt());
+      assertNull(actual.getLocationNo());
+      assertNull(actual.getPhotoJapaneseTitle());
+      assertNull(actual.getIsLocationPublic());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：非公開を解除する場合、管理者非公開フラグがfalseになること")
+    void forVisibilityChange_unhide() {
+      Photo photo = Photo.forModeration(new AccountNo(1L), new PhotoNo(5L));
+      photo.unhideByAdmin(new AccountNo(99L), new ModerationReason("誤判定だったため"));
+
+      PhotoMstUpdateTarget actual = PhotoMstUpdateTarget.forVisibilityChange(photo);
+
+      assertEquals(99L, actual.getUpdatedBy());
+      assertFalse(actual.getIsHiddenByAdmin());
     }
   }
 }

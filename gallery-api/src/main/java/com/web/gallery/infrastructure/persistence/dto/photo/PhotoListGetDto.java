@@ -16,6 +16,13 @@ public class PhotoListGetDto {
   private Long photoAccountNo;
 
   /**
+   * 管理者により非公開にされた写真も取得対象に含めるならtrue
+   *
+   * <p>閲覧者が写真の所有者本人である場合のみtrue（本人以外・未ログインには非公開の写真を返さない）
+   */
+  private Boolean includeHiddenByAdmin;
+
+  /**
    * 向き区分（絞り込み不要の場合はnull）
    *
    * <p>{@link DirectionEnum}
@@ -47,6 +54,8 @@ public class PhotoListGetDto {
     PhotoListGetDto dto = new PhotoListGetDto();
     dto.setAccountNo(Objects.nonNull(model.getAccountNo()) ? model.getAccountNo().value() : null);
     dto.setPhotoAccountNo(model.getPhotoAccountNo().value());
+    dto.setIncludeHiddenByAdmin(
+        Objects.nonNull(dto.getAccountNo()) && dto.getAccountNo().equals(dto.getPhotoAccountNo()));
     dto.setDirectionKbn(
         DirectionEnum.NONE.equals(model.getDirectionKbn()) ? null : model.getDirectionKbn());
     dto.setIsFavoriteOnly(

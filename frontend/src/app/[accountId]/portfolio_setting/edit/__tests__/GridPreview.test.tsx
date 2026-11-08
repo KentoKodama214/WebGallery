@@ -62,6 +62,17 @@ describe("GridPreview", () => {
     expect(screen.getAllByText("空き")).toHaveLength(2);
   });
 
+  it("管理者により非公開にされた写真の枠に、その旨のバッジを表示すること", () => {
+    render(
+      <GridPreview photos={[photo(1), { ...photo(2), isHiddenByAdmin: true }]} rows={["TWO_EQUAL"]} />
+    );
+
+    const cells = Array.from(screen.getByTestId("grid-preview-row").children) as HTMLElement[];
+    expect(cells[1]).toContainElement(screen.getByTestId("grid-preview-hidden-badge-2"));
+    expect(screen.getByTestId("grid-preview-hidden-badge-2")).toHaveTextContent("管理者により非公開");
+    expect(screen.queryByTestId("grid-preview-hidden-badge-1")).not.toBeInTheDocument();
+  });
+
   it("写真が余る場合は、行に割り当てられていない写真の枚数を表示すること", () => {
     render(<GridPreview photos={[1, 2, 3].map(photo)} rows={["TWO_EQUAL"]} />);
 

@@ -75,16 +75,36 @@ func TestBuildLayout_Feature(t *testing.T) {
 	}
 }
 
+// TestBuildLayout_FeatureHiddenByAdmin は、フィーチャー型で管理者により非公開にされた写真のセクションを表示しないことを検証する。
+func TestBuildLayout_FeatureHiddenByAdmin(t *testing.T) {
+	photos := portfolioPhotos(map[string]any{"theme": "日本の自然"}, map[string]any{"theme": "非公開"}, map[string]any{"theme": "光と影"})
+	photos[1].HiddenByAdmin = true
+
+	layout, err := BuildLayout(Portfolio{Template: TemplateFeature, Photos: photos})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := FeatureLayout{Sections: []FeatureSection{
+		{Photo: photo(1), Theme: "日本の自然"},
+		{Photo: photo(3), Theme: "光と影"},
+	}}
+	if !reflect.DeepEqual(layout, want) {
+		t.Errorf("layout = %#v, want %#v", layout, want)
+	}
+}
+
 // TestBuildLayout_Grid は、グリッド型のポートフォリオで、行パターンの枚数ずつ写真が表示順に各行へ割り当てられること、
 // 設定の不整合（写真が足りない・余る、未知の行パターン、行の一覧が未設定、行がオブジェクトでない）があっても
 // エラーにせず、表示できる行までのレイアウトが組み立てられることを検証する。
+// 管理者により非公開にされた写真は枠を使ったまま空き枠になり、後ろの写真が詰まらないことも検証する。
 func TestBuildLayout_Grid(t *testing.T) {
 	tests := []struct {
 		name     string           // テストケースの説明
 		settings map[string]any   // ポートフォリオ単位のテンプレート設定
 		photos   int              // ポートフォリオに設定する写真の枚数
+		hidden   []int64          // 管理者により非公開にされた写真の写真番号
 		want     []GridRowPattern // 期待する行パターンの一覧（上から順）
-		wantNos  [][]int64        // 期待する行ごとの写真番号（左から順）
+		wantNos  [][]int64        // 期待する行ごとの写真番号（左から順。空き枠は 0）
 	}{
 		{
 			name:     "行パターンの枚数ずつ、写真を表示順に各行へ割り当てる",
@@ -92,6 +112,22 @@ func TestBuildLayout_Grid(t *testing.T) {
 			photos:   9,
 			want:     []GridRowPattern{GridRowTwoEqual, GridRowThreeEqual, GridRowWideNarrow, GridRowNarrowWide},
 			wantNos:  [][]int64{{1, 2}, {3, 4, 5}, {6, 7}, {8, 9}},
+		},
+		{
+			name:     "管理者により非公開にされた写真の枠だけを空け、後ろの写真を詰めずに行の構成を保つ",
+			settings: rows("TWO_EQUAL", "THREE_EQUAL", "TWO_EQUAL"),
+			photos:   7,
+			hidden:   []int64{2, 7},
+			want:     []GridRowPattern{GridRowTwoEqual, GridRowThreeEqual, GridRowTwoEqual},
+			wantNos:  [][]int64{{1, 0}, {3, 4, 5}, {6, 0}},
+		},
+		{
+			name:     "行の写真がすべて非公開の場合も、行を空き枠のまま残す",
+			settings: rows("TWO_EQUAL", "TWO_EQUAL"),
+			photos:   4,
+			hidden:   []int64{1, 2},
+			want:     []GridRowPattern{GridRowTwoEqual, GridRowTwoEqual},
+			wantNos:  [][]int64{{0, 0}, {3, 4}},
 		},
 		{
 			name:     "写真が足りない行以降は表示しない",
@@ -135,7 +171,11 @@ func TestBuildLayout_Grid(t *testing.T) {
 			for i := range settings {
 				settings[i] = map[string]any{}
 			}
-			layout, err := BuildLayout(Portfolio{Template: TemplateGrid, TemplateSettings: tt.settings, Photos: portfolioPhotos(settings...)})
+			photos := portfolioPhotos(settings...)
+			for _, no := range tt.hidden {
+				photos[no-1].HiddenByAdmin = true
+			}
+			layout, err := BuildLayout(Portfolio{Template: TemplateGrid, TemplateSettings: tt.settings, Photos: photos})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -149,6 +189,10 @@ func TestBuildLayout_Grid(t *testing.T) {
 				gotPatterns = append(gotPatterns, row.Pattern)
 				nos := make([]int64, 0)
 				for _, p := range row.Photos {
+					if p.Photo == nil {
+						nos = append(nos, 0)
+						continue
+					}
 					nos = append(nos, p.Photo.PhotoNo)
 				}
 				gotNos = append(gotNos, nos)

@@ -18,6 +18,7 @@ import com.web.gallery.domain.model.photo.FValue;
 import com.web.gallery.domain.model.photo.FocalLength;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.IsFavorite;
+import com.web.gallery.domain.model.photo.IsHiddenByAdmin;
 import com.web.gallery.domain.model.photo.IsLocationPublic;
 import com.web.gallery.domain.model.photo.Iso;
 import com.web.gallery.domain.model.photo.LocationNo;
@@ -78,6 +79,7 @@ class PhotoDetailGetResponseTest {
                         new Longitude(new BigDecimal("139.767125"))))
                 .displayName(new LocationDisplayName("渋谷駅"))
                 .isLocationPublic(new IsLocationPublic(true))
+                .isHiddenByAdmin(new IsHiddenByAdmin(true))
                 .imageFilePath(new ImageFilePath("path/to/image.jpg"))
                 .photoJapaneseTitle(new PhotoJapaneseTitle("タイトル"))
                 .photoEnglishTitle(new PhotoEnglishTitle("title"))
@@ -104,6 +106,7 @@ class PhotoDetailGetResponseTest {
         assertEquals(new BigDecimal("139.767125"), actual.getLongitude());
         assertEquals("渋谷駅", actual.getDisplayName());
         assertTrue(actual.getIsLocationPublic());
+        assertTrue(actual.getIsHiddenByAdmin());
         assertEquals("path/to/image.jpg", actual.getImageFilePath());
         assertEquals("タイトル", actual.getPhotoJapaneseTitle());
         assertEquals("title", actual.getPhotoEnglishTitle());
@@ -138,6 +141,8 @@ class PhotoDetailGetResponseTest {
         assertNull(actual.getLongitude());
         assertNull(actual.getDisplayName());
         assertNull(actual.getIsLocationPublic());
+        // 管理者非公開フラグは未設定の場合falseを返す
+        assertFalse(actual.getIsHiddenByAdmin());
         assertNull(actual.getPhotoJapaneseTitle());
         assertNull(actual.getPhotoEnglishTitle());
         assertNull(actual.getCaption());

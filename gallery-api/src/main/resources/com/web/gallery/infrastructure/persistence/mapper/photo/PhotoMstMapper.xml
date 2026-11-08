@@ -23,6 +23,7 @@
 		<result property="shutterSpeed" column="shutter_speed"/>
 		<result property="iso" column="iso"/>
 		<result property="isLocationPublic" column="is_location_public"/>
+		<result property="isHiddenByAdmin" column="is_hidden_by_admin"/>
 	</resultMap>
 
 	<sql id="photoMstConditionWhere">
@@ -77,7 +78,8 @@
 				f_value,
 				shutter_speed,
 				iso,
-				is_location_public
+				is_location_public,
+				is_hidden_by_admin
 			)
 		VALUES
 			(
@@ -100,7 +102,8 @@
 				#{fValue},
 				#{shutterSpeed},
 				#{iso},
-				#{isLocationPublic}
+				#{isLocationPublic},
+				false
 			)
 	</insert>
 
@@ -124,6 +127,7 @@
 			<if test="target.shutterSpeed != null"> , shutter_speed = #{target.shutterSpeed}</if>
 			<if test="target.iso != null"> , iso = #{target.iso}</if>
 			<if test="target.isLocationPublic != null"> , is_location_public = #{target.isLocationPublic}</if>
+			<if test="target.isHiddenByAdmin != null"> , is_hidden_by_admin = #{target.isHiddenByAdmin}</if>
 		</set>
 		<where>
 			<include refid="photoMstConditionWhere">

@@ -48,6 +48,9 @@ type PortfolioPhoto struct {
 	DisplayOrder int
 	// Settings は写真単位のテンプレート設定（portfolio_photo.photo_settings の JSON）。
 	Settings map[string]any
+	// HiddenByAdmin は管理者により非公開にされた写真かどうか（photo_mst.is_hidden_by_admin）。
+	// true の場合、公開ページには写真を出さないため、Photo は写真番号以外を持たない。
+	HiddenByAdmin bool
 }
 
 // Tag はポートフォリオのタグ。
@@ -74,7 +77,8 @@ type Portfolio struct {
 	TemplateSettings map[string]any
 	// UpdatedAt はポートフォリオの最終更新日時。
 	UpdatedAt time.Time
-	// Photos は表示順に並べた写真（削除済みの写真は含まない）。
+	// Photos は表示順に並べた写真（削除済みの写真は含まない。管理者により非公開にされた写真は、
+	// グリッド型で行の構成を保つため HiddenByAdmin を立てて含める）。
 	Photos []PortfolioPhoto
 	// Tags はタグ番号順に並べたタグ（タグがない場合は空のスライス）。
 	Tags []Tag

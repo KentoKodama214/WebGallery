@@ -34,4 +34,7 @@ public class PhotoDto {
    * <p>{@link DirectionEnum}
    */
   private DirectionEnum directionKbn;
+
+  /** 管理者非公開フラグ */
+  private Boolean isHiddenByAdmin;
 }

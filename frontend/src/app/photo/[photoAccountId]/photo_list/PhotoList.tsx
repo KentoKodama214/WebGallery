@@ -977,6 +977,25 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                     </p>
                   </div>
                 </div>
+                {/* 管理者により非公開にされた写真（所有者本人の一覧にのみ含まれる）であることの表示 */}
+                {photo.isHiddenByAdmin && (
+                  <span
+                    data-testid={`hidden-by-admin-badge-${photo.accountNo}-${photo.photoNo}`}
+                    style={{
+                      position: "absolute",
+                      top: "8px",
+                      left: "8px",
+                      padding: "2px 6px",
+                      fontSize: "12px",
+                      color: "#fff",
+                      background: "rgba(220, 38, 38, 0.9)",
+                      borderRadius: "4px",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    管理者により非公開
+                  </span>
+                )}
                 {/* お気に入りアイコン（認証済みのみ、ホバー時に右下表示） */}
                 {isAuthenticated && (
                   <button
