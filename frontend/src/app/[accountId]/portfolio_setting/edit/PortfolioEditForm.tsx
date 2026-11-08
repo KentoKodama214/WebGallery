@@ -36,6 +36,7 @@ import {
   DIRECTION_ASPECT_RATIOS,
   HIDDEN_BY_ADMIN_LABEL,
   HIDDEN_BY_ADMIN_PHOTO_ERROR,
+  HIDDEN_BY_ADMIN_PUBLISH_ERROR,
   PHOTO_SETTING_KEYS,
   type PhotoSettingValues,
   type SelectedPhoto,
@@ -414,6 +415,11 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     setSubmitError("");
     setSuccessMessage("");
     if (nextStatus === "published") {
+      if (photos.some((photo) => photo.isHiddenByAdmin)) {
+        // 管理者により非公開にされた写真は公開ページに出せないため、外して保存するまで公開しない
+        setErrors({ photos: HIDDEN_BY_ADMIN_PUBLISH_ERROR });
+        return;
+      }
       const publishErrors = collectPublishErrors();
       setErrors(publishErrors);
       if (Object.keys(publishErrors).length > 0) {
@@ -789,15 +795,17 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                         {index + 1}. {photo.label}
                       </p>
                       {photo.isHiddenByAdmin && (
-                        <p
+                        <div
                           data-testid={`portfolio-photo-hidden-notice-${photo.photoNo}`}
-                          className="text-sm text-red-700"
+                          className="flex flex-col items-start gap-1 text-sm text-red-700"
                         >
-                          <span className="inline-block mr-2 px-1.5 py-0.5 text-xs text-white bg-red-600 rounded">
+                          <span className="px-1.5 py-0.5 text-xs text-white bg-red-600 rounded">
                             {HIDDEN_BY_ADMIN_LABEL}
                           </span>
-                          この写真は管理者により非公開にされたため、公開ページに表示されません。「×」で外してください。
-                        </p>
+                          <p>
+                            この写真は管理者により非公開にされたため、公開ページに表示されません。「×」で外してください。
+                          </p>
+                        </div>
                       )}
                       {templateKbn === "feature" && (
                         <>

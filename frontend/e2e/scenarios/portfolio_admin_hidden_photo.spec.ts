@@ -7,7 +7,7 @@ const PHOTO_1 = path.join(__dirname, "../fixtures/images/e2e-photo-1.png");
 const PHOTO_2 = path.join(__dirname, "../fixtures/images/e2e-photo-2.png");
 
 test.describe("ポートフォリオで使っている写真を管理者が非公開にした場合の表示", () => {
-  test("公開ページのグリッドは非公開の写真の枠だけを空けて行の構成を保ち、編集画面では外すよう案内して外すまで保存できないこと", async ({
+  test("公開ページのグリッドは非公開の写真の枠だけを空けて行の構成を保ち、編集画面では外すよう案内して外すまで保存・公開できないこと", async ({
     adminPage,
     browser,
   }, testInfo) => {
@@ -108,7 +108,7 @@ test.describe("ポートフォリオで使っている写真を管理者が非�
         await expect(row.getByRole("img")).toHaveCount(1);
       });
 
-      await test.step("編集画面では、非公開の写真にその旨と外すよう案内が表示され、外すまで保存できないこと", async () => {
+      await test.step("編集画面では、非公開の写真にその旨と外すよう案内が表示され、外すまで保存・公開できないこと", async () => {
         await ownerPage.goto(editUrl);
         await expect(ownerPage.getByTestId("portfolio-photo-item")).toHaveCount(2, { timeout: 10000 });
         const notices = ownerPage.locator('[data-testid^="portfolio-photo-hidden-notice-"]');
@@ -127,6 +127,20 @@ test.describe("ポートフォリオで使っている写真を管理者が非�
           ownerPage.getByText("管理者により非公開にされた写真が含まれています。外してから保存してください")
         ).toBeVisible();
         await expect(ownerPage.getByTestId("portfolio-result-dialog")).toHaveCount(0);
+
+        // 下書きに戻すと、非公開の写真を外すまで公開できない
+        const resultDialog = ownerPage.getByTestId("portfolio-result-dialog");
+        await ownerPage.getByRole("button", { name: "下書きに戻す" }).click();
+        await expect(resultDialog).toContainText("ポートフォリオを下書きに戻しました。", {
+          timeout: 10000,
+        });
+        await resultDialog.getByRole("button", { name: "閉じる" }).click();
+        await ownerPage.getByRole("button", { name: "公開する" }).click();
+        await expect(
+          ownerPage.getByText("管理者により非公開にされた写真が含まれています。外して保存してから公開してください")
+        ).toBeVisible();
+        await expect(resultDialog).toHaveCount(0);
+        await expect(ownerPage.getByTestId("portfolio-status")).toHaveText("下書き");
 
         // 非公開の写真を外すと案内が消える
         await ownerPage

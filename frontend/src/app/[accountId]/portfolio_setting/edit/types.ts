@@ -23,6 +23,10 @@ export const HIDDEN_BY_ADMIN_LABEL = "管理者により非公開";
 export const HIDDEN_BY_ADMIN_PHOTO_ERROR =
   "管理者により非公開にされた写真が含まれています。外してから保存してください";
 
+/** 管理者により非公開にされた写真が含まれる場合の、公開時のエラー（外して保存するまで公開できない） */
+export const HIDDEN_BY_ADMIN_PUBLISH_ERROR =
+  "管理者により非公開にされた写真が含まれています。外して保存してから公開してください";
+
 /** 写真単位のテンプレート設定の入力値 */
 export interface PhotoSettingValues {
   /** フィーチャー型：テーマ */

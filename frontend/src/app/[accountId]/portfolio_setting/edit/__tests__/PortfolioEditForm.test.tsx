@@ -566,6 +566,10 @@ describe("PortfolioEditForm", () => {
       const notice = screen.getByTestId("portfolio-photo-hidden-notice-8");
       expect(notice).toHaveTextContent("管理者により非公開");
       expect(notice).toHaveTextContent("「×」で外してください");
+      // 「管理者により非公開」の表示と案内文は横に並べず上下に表示する
+      expect(notice).toHaveClass("flex-col");
+      expect(notice.children[0]).toHaveTextContent(/^管理者により非公開$/);
+      expect(notice.children[1]).toHaveTextContent("「×」で外してください");
       expect(screen.queryByTestId("portfolio-photo-hidden-notice-5")).not.toBeInTheDocument();
 
       // プレビューでも非公開の写真が分かること
@@ -592,6 +596,26 @@ describe("PortfolioEditForm", () => {
           3
         );
       });
+    });
+
+    it("管理者により非公開にされた写真が含まれる下書きは、公開しないこと", async () => {
+      mockGetPortfolioDetail.mockResolvedValue({
+        ...gridDetail,
+        statusKbn: "draft",
+        photoList: [gridDetail.photoList[0], { ...gridDetail.photoList[1], isHiddenByAdmin: true }],
+      });
+
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+      await screen.findByDisplayValue("日本の自然");
+
+      fireEvent.click(screen.getByRole("button", { name: "公開する" }));
+      expect(
+        await screen.findByText(
+          "管理者により非公開にされた写真が含まれています。外して保存してから公開してください"
+        )
+      ).toBeInTheDocument();
+      expect(mockUpdatePortfolioStatus).not.toHaveBeenCalled();
+      expect(screen.getByTestId("portfolio-status")).toHaveTextContent("下書き");
     });
 
     it("下書きに戻すと、その結果をダイアログで通知すること", async () => {
