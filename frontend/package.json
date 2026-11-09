@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "leaflet": "^1.9.4",
-    "next": "16.4.4",
+    "next": "16.4.5",
     "photoswipe": "^5.4.4",
     "react": "19.3.1",
     "react-dom": "19.3.1"
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@jest/globals": "^30.5.2",
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
@@ -34,7 +34,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.4.4",
+    "eslint-config-next": "16.4.5",
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
     "pg": "^8.23.1",
