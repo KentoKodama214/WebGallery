@@ -137,9 +137,10 @@ just e2e
    プライマリキーは`bigserial`型、日時は`timestamp with time zone`型で、すべてのカラムに必ず`NOT NULL`制約を付与する
 4. テーブルを追加した場合
    1. `db/init`の`init-db.sh`と`init-test-db.sh`のSQL_FILESに追加したテーブルのSQLファイルを追加する
-   2. `doc/database/README.md`に追加したテーブルを追記
-   3. `doc/database/data-dictionary.md`に追加したカラムがなければ追記
-   4. `infrastructure/persistence/entity/{機能}/`にエンティティを作成
+   2. `.github/workflows/test.yml`の各ジョブの「データベース初期化」のSQL_FILESのうち、追加したテーブルを使うジョブ（gallery-api結合テスト・E2E等）に、`init-db.sh`と同じ順序でSQLファイルを追加する（CIは`db/init`のスクリプトを使わず、ジョブごとにSQLファイルを列挙しているため）
+   3. `doc/database/README.md`に追加したテーブルを追記
+   4. `doc/database/data-dictionary.md`に追加したカラムがなければ追記
+   5. `infrastructure/persistence/entity/{機能}/`にエンティティを作成
 5. カラムを追加・修正した場合
    1. `doc/database/data-dictionary.md`にカラムを追加・修正
    2. `infrastructure/persistence/entity/{機能}/`の該当テーブルのエンティティを追加・修正
