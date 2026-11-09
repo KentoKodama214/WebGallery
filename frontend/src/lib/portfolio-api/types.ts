@@ -9,7 +9,7 @@
 export type PhotoDirection = "VERTICAL" | "HORIZONTAL" | "SQUARE" | "NONE";
 
 /** ポートフォリオのテンプレート */
-export type PortfolioTemplate = "FEATURE" | "GRID";
+export type PortfolioTemplate = "FEATURE" | "GRID" | "FRAME";
 
 /** グリッド型の行パターン */
 export type GridRowPattern = "TWO_EQUAL" | "THREE_EQUAL" | "WIDE_NARROW" | "NARROW_WIDE";
@@ -71,8 +71,51 @@ export interface GridLayout {
   }[];
 }
 
+/** 額縁型のメッセージ枠のフォント */
+export type FrameFontFamily = "GOTHIC" | "MINCHO" | "MARU" | "HANDWRITING" | "SERIF" | "SCRIPT";
+
+/** 額縁型のメッセージ枠の揃え */
+export type FrameTextAlign = "LEFT" | "CENTER" | "RIGHT";
+
+/** 額縁型のレイアウト（位置・大きさ・太さ・文字サイズは額縁に対する %） */
+export interface FrameLayout {
+  __typename: "FrameLayout";
+  /** 額縁の横幅（mm。縦横比の算出に使う） */
+  width: number;
+  /** 額縁の縦幅（mm） */
+  height: number;
+  backgroundColor: string;
+  borderColor: string;
+  borderWidth: number;
+  /** 写真枠（管理者により非公開にされた写真の枠は photo が null） */
+  slots: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation: number;
+    borderColor: string;
+    borderWidth: number;
+    shadow: boolean;
+    photo: PublicPhoto | null;
+  }[];
+  /** 文面を入力したメッセージ枠 */
+  texts: {
+    x: number;
+    y: number;
+    width: number;
+    rotation: number;
+    fontFamily: FrameFontFamily;
+    fontSize: number;
+    color: string;
+    align: FrameTextAlign;
+    bold: boolean;
+    text: string;
+  }[];
+}
+
 /** テンプレートごとのレイアウト（`__typename` で判別する） */
-export type PortfolioLayout = FeatureLayout | GridLayout;
+export type PortfolioLayout = FeatureLayout | GridLayout | FrameLayout;
 
 /** 公開中のポートフォリオ */
 export interface PublicPortfolio {

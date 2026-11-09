@@ -15,3 +15,7 @@ insert into photo.photo_tag_mst values(DEFAULT, 1, 1, 1, 1, '2000-01-01 10:00:00
 -- photo.photo_favorite
 insert into photo.photo_favorite values(DEFAULT, 1, 1, 1, 1, now());
 insert into photo.photo_favorite values(DEFAULT, 2, 1, 1, 1, now());
+
+-- photo.frame_template_mst（account_no=1の額縁テンプレートはアカウント削除で消え、account_no=2の額縁テンプレートは残る）
+insert into photo.frame_template_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', '額縁11', '{}');
+insert into photo.frame_template_mst values(DEFAULT, 2, 1, 2, '2000-01-01 09:00:00 Asia/Tokyo', 2, '2000-01-01 09:00:00 Asia/Tokyo', '額縁21', '{}');

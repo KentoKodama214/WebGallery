@@ -42,13 +42,18 @@ type Query {
   publishedPortfolio(accountId: ID!, portfolioNo: Int!): Portfolio
 }
 
-union PortfolioLayout = FeatureLayout | GridLayout
+union PortfolioLayout = FeatureLayout | GridLayout | FrameLayout
 ```
 
 - 公開状態（`published`）のポートフォリオだけを返します（ポートフォリオは削除すると物理削除される）。下書き・存在しないポートフォリオは
   `publishedPortfolio` が `null`、`publishedPortfolios` は空の一覧になります（アカウントの存在有無も区別しない）
 - 削除済み・管理者により非公開にされた写真は返しません（一覧の写真の枚数・先頭の写真にも含めない）。
-  グリッド型は行の構成を保つため、非公開の写真の枠を `GridPhoto.photo` が `null` の空き枠として返します
+  グリッド型は行の構成を保つため、非公開の写真の枠を `GridPhoto.photo` が `null` の空き枠として返します。
+  額縁型も同じく、非公開の写真の枠を `FrameSlot.photo` が `null` の空き枠として返します
+- 額縁型（`FrameLayout`）は、ポートフォリオの `template_settings.frame`（選択時にコピーした額縁定義）から組み立てます。
+  額縁テンプレート（`frame_template_mst`）は参照しないため、読み取り専用ロールへの権限の追加は不要です。
+  位置・大きさ・太さ・文字サイズは額縁に対する % で返し、未設定・範囲外・形式が不正な値（色は `#RRGGBB` 以外）は既定値・範囲内の値にして返します。
+  メッセージ枠は文面が空のものを返しません
 - `publishedPortfolios` は所有者が設定画面で並べた表示順（`portfolio_mst.display_order`）に返します。
   `keyword` を指定すると、テーマ・タグ名（日本語・英語）のいずれかに部分一致（大文字・小文字を区別しない）するものに絞り込みます
 - `publishedPortfolios` は表示順で `offset` 件目から最大 `limit` 件（`portfolios`）と、続きがあるかどうか（`hasNext`）を返します。

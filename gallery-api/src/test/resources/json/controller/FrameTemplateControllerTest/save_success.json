@@ -1,0 +1,16 @@
+{
+  "templateName": "四つ切 3枚組",
+  "frameDefinition": {
+    "size": { "width": 364, "height": 257 },
+    "background": { "color": "#f5f0e6" },
+    "border": { "color": "#3b2a1a", "width": 4 },
+    "slots": [
+      { "x": 6, "y": 10, "width": 28, "height": 60, "rotation": -3, "borderColor": "#ffffff", "borderWidth": 1, "shadow": true },
+      { "x": 36, "y": 10, "width": 28, "height": 60 },
+      { "x": 66, "y": 10, "width": 28, "height": 60, "rotation": 2.5 }
+    ],
+    "texts": [
+      { "x": 10, "y": 80, "width": 80, "fontFamily": "mincho", "fontSize": 3, "color": "#333333", "align": "center", "bold": true }
+    ]
+  }
+}

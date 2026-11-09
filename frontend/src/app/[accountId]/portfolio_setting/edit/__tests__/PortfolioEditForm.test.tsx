@@ -8,6 +8,7 @@ const mockSavePortfolio = jest.fn();
 const mockUpdatePortfolioStatus = jest.fn();
 const mockDeletePortfolio = jest.fn();
 const mockSearchPortfolioPhotos = jest.fn();
+const mockGetFrameTemplateList = jest.fn();
 
 jest.mock("@/lib/api/client", () => ({
   getPortfolioDetail: (...args: unknown[]) => mockGetPortfolioDetail(...args),
@@ -16,6 +17,7 @@ jest.mock("@/lib/api/client", () => ({
   updatePortfolioStatus: (...args: unknown[]) => mockUpdatePortfolioStatus(...args),
   deletePortfolio: (...args: unknown[]) => mockDeletePortfolio(...args),
   searchPortfolioPhotos: (...args: unknown[]) => mockSearchPortfolioPhotos(...args),
+  getFrameTemplateList: (...args: unknown[]) => mockGetFrameTemplateList(...args),
 }));
 
 const mockUseAuth = jest.fn();
@@ -71,6 +73,55 @@ const featureDetail = {
     { ...gridDetail.photoList[0], photoSettings: { theme: "京都" } },
     { ...gridDetail.photoList[1], photoSettings: {} },
   ],
+};
+
+/** 額縁定義（写真枠の数・メッセージ枠の数を指定する） */
+function frameDefinition(slotCount: number, textCount: number, color = "#f5f0e6") {
+  return {
+    size: { width: 366, height: 254 },
+    background: { color },
+    border: { color: "#3b2a1a", width: 2.5 },
+    slots: Array.from({ length: slotCount }, (_, i) => ({
+      x: 5 + i * 30,
+      y: 10,
+      width: 25,
+      height: 60,
+      rotation: 0,
+      borderColor: "#ffffff",
+      borderWidth: 1,
+      shadow: true,
+    })),
+    texts: Array.from({ length: textCount }, (_, i) => ({
+      x: 10,
+      y: 75 + i * 10,
+      width: 80,
+      rotation: 0,
+      fontFamily: "mincho",
+      fontSize: 3,
+      color: "#333333",
+      align: "center",
+      bold: false,
+    })),
+  };
+}
+
+/** 額縁テンプレート一覧の1件 */
+function frameTemplate(frameTemplateNo: number, templateName: string, definition: Record<string, unknown>) {
+  return {
+    frameTemplateNo,
+    templateName,
+    frameDefinition: definition,
+    createdAt: "2026-01-01T00:00:00+09:00",
+    updatedAt: "2026-01-01T00:00:00+09:00",
+  };
+}
+
+/** 額縁型・下書きのポートフォリオ詳細（額縁テンプレート1をコピー済み。写真枠2・メッセージ枠1） */
+const frameDetail = {
+  ...gridDetail,
+  statusKbn: "draft" as const,
+  templateKbn: "frame" as const,
+  templateSettings: { frameTemplateNo: 1, frame: frameDefinition(2, 1), messages: ["春の訪れ"] },
 };
 
 /**
@@ -847,5 +898,144 @@ describe("PortfolioEditForm", () => {
 
     expect(screen.getByText("この操作を行う権限がありません")).toBeInTheDocument();
     expect(mockGetPortfolioDetail).not.toHaveBeenCalled();
+  });
+  describe("額縁型", () => {
+    beforeEach(() => {
+      mockGetFrameTemplateList.mockResolvedValue({
+        frameTemplateList: [
+          frameTemplate(1, "横長 2枚組", frameDefinition(2, 1, "#000000")),
+          frameTemplate(2, "3枚組・メッセージ2", frameDefinition(3, 2)),
+        ],
+      });
+    });
+
+    it("額縁型を選ぶと額縁テンプレートを取得し、選んだ額縁をコピーしてプレビュー・メッセージの入力欄を表示すること", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(gridDetail);
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+
+      fireEvent.click(await screen.findByRole("radio", { name: "額縁" }));
+      const select = await screen.findByRole("combobox", { name: "額縁テンプレート" });
+      expect(mockGetFrameTemplateList).toHaveBeenCalledWith("user1");
+      expect(screen.queryByTestId("frame-preview")).not.toBeInTheDocument();
+
+      fireEvent.change(select, { target: { value: "2" } });
+      fireEvent.click(screen.getByRole("button", { name: "この額縁を使う" }));
+
+      expect(screen.getByTestId("applied-frame")).toHaveTextContent("使用中の額縁：3枚組・メッセージ2");
+      expect(within(screen.getByTestId("frame-preview")).getAllByTestId("frame-slot")).toHaveLength(3);
+      expect(screen.getByLabelText("メッセージ1")).toBeInTheDocument();
+      expect(screen.getByLabelText("メッセージ2")).toBeInTheDocument();
+      // 写真2枚に対して写真枠が3つのため、公開するには一致させる必要がある
+      expect(screen.getByTestId("frame-photo-count")).toHaveTextContent(
+        "写真枠 3枠 / 写真 2枚（公開するには一致させてください）"
+      );
+    });
+
+    it("保存すると、コピーした額縁定義・コピー元の額縁テンプレート番号・メッセージの文面を送り、写真単位の設定は送らないこと", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(gridDetail);
+      mockSavePortfolio.mockResolvedValue({ message: "ポートフォリオを更新しました。", portfolioNo: 3 });
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+
+      fireEvent.click(await screen.findByRole("radio", { name: "額縁" }));
+      await screen.findByRole("combobox", { name: "額縁テンプレート" });
+      fireEvent.click(screen.getByRole("button", { name: "この額縁を使う" }));
+      fireEvent.change(screen.getByLabelText("メッセージ1"), { target: { value: "京都の秋" } });
+      expect(screen.getByTestId("frame-photo-count")).toHaveTextContent("写真枠 2枠 / 写真 2枚");
+      expect(within(screen.getByTestId("frame-preview")).getByText("京都の秋")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }));
+
+      await waitFor(() => expect(mockSavePortfolio).toHaveBeenCalled());
+      const data = mockSavePortfolio.mock.calls[0][1];
+      expect(data.templateKbn).toBe("frame");
+      expect(data.templateSettings.frameTemplateNo).toBe(1);
+      expect(data.templateSettings.messages).toEqual(["京都の秋"]);
+      expect(data.templateSettings.frame.background).toEqual({ color: "#000000" });
+      expect(data.templateSettings.frame.slots).toHaveLength(2);
+      expect(data.photoList).toEqual([
+        { photoNo: 5, photoSettings: {} },
+        { photoNo: 8, photoSettings: {} },
+      ]);
+    });
+
+    it("額縁を選んでいない場合はエラーを表示し、保存しないこと", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(gridDetail);
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+
+      fireEvent.click(await screen.findByRole("radio", { name: "額縁" }));
+      await screen.findByRole("combobox", { name: "額縁テンプレート" });
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }));
+
+      expect(
+        await screen.findByText("額縁テンプレートを選んで「この額縁を使う」を押してください")
+      ).toBeInTheDocument();
+      expect(mockSavePortfolio).not.toHaveBeenCalled();
+    });
+
+    it("額縁テンプレートがない場合は、作成画面へのリンクを表示すること", async () => {
+      mockGetFrameTemplateList.mockResolvedValue({ frameTemplateList: [] });
+      mockGetPortfolioDetail.mockResolvedValue(gridDetail);
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+
+      fireEvent.click(await screen.findByRole("radio", { name: "額縁" }));
+
+      expect(await screen.findByRole("link", { name: "額縁テンプレートを作成" })).toHaveAttribute(
+        "href",
+        "/user1/portfolio_setting/frame_templates/edit"
+      );
+    });
+
+    it("額縁型のポートフォリオは、コピー済みの額縁と文面を読み込み、額縁テンプレートが変更されていてもコピーした額縁のまま保存すること", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(frameDetail);
+      mockSavePortfolio.mockResolvedValue({ message: "ポートフォリオを更新しました。", portfolioNo: 3 });
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+
+      expect(await screen.findByLabelText("メッセージ1")).toHaveValue("春の訪れ");
+      expect(await screen.findByTestId("applied-frame")).toHaveTextContent("使用中の額縁：横長 2枚組");
+      expect(screen.getByRole("combobox", { name: "額縁テンプレート" })).toHaveValue("1");
+
+      fireEvent.change(screen.getByLabelText(/テーマ/, { selector: "#portfolio-theme" }), {
+        target: { value: "日本の自然（改）" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }));
+
+      await waitFor(() => expect(mockSavePortfolio).toHaveBeenCalled());
+      // 額縁テンプレート1の現在の背景（#000000）ではなく、コピー済みの背景のまま
+      expect(mockSavePortfolio.mock.calls[0][1].templateSettings.frame.background).toEqual({ color: "#f5f0e6" });
+      expect(mockSavePortfolio.mock.calls[0][1].templateSettings.messages).toEqual(["春の訪れ"]);
+    });
+
+    it("コピー元の額縁テンプレートが削除されている場合は、コピーした額縁を使用中として表示し、選択欄は先頭を選んでおくこと", async () => {
+      mockGetPortfolioDetail.mockResolvedValue({
+        ...frameDetail,
+        templateSettings: { ...frameDetail.templateSettings, frameTemplateNo: 9 },
+      });
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+
+      expect(await screen.findByTestId("applied-frame")).toHaveTextContent("使用中の額縁：選択時にコピーした額縁");
+      expect(await screen.findByRole("combobox", { name: "額縁テンプレート" })).toHaveValue("1");
+    });
+
+    it("額縁を選び直すと、入力済みの文面をメッセージ枠の順に引き継ぐこと", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(frameDetail);
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+
+      const select = await screen.findByRole("combobox", { name: "額縁テンプレート" });
+      fireEvent.change(select, { target: { value: "2" } });
+      fireEvent.click(screen.getByRole("button", { name: "この額縁を使う" }));
+
+      expect(screen.getByLabelText("メッセージ1")).toHaveValue("春の訪れ");
+      expect(screen.getByLabelText("メッセージ2")).toHaveValue("");
+    });
+
+    it("プレビューでは、写真を表示順に写真枠へ当てはめた額縁を表示すること", async () => {
+      mockGetPortfolioDetail.mockResolvedValue(frameDetail);
+      render(<PortfolioEditForm accountId="user1" initialPortfolioNo={3} />);
+
+      fireEvent.click(await screen.findByRole("button", { name: "プレビューを表示" }));
+
+      const dialog = screen.getByRole("dialog", { name: "プレビュー" });
+      expect(within(dialog).getAllByTestId("frame-slot")).toHaveLength(2);
+      expect(within(dialog).getByText("春の訪れ")).toBeInTheDocument();
+    });
   });
 });

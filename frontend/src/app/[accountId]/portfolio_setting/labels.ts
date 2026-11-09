@@ -10,4 +10,5 @@ export const PORTFOLIO_STATUS_LABELS: Record<PortfolioStatusKbn, string> = {
 export const PORTFOLIO_TEMPLATE_LABELS: Record<PortfolioTemplateKbn, string> = {
   feature: "フィーチャー",
   grid: "グリッド",
+  frame: "額縁",
 };

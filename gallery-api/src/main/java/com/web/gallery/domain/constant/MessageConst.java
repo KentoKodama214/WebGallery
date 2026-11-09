@@ -17,6 +17,9 @@ public final class MessageConst {
   public static final String PUBLISH_PORTFOLIO = "ポートフォリオを公開しました。";
   public static final String UNPUBLISH_PORTFOLIO = "ポートフォリオを下書きに戻しました。";
   public static final String UPDATE_PORTFOLIO_DISPLAY_ORDER = "ポートフォリオの並び順を更新しました。";
+  public static final String REGIST_FRAME_TEMPLATE = "額縁テンプレートを登録しました。";
+  public static final String UPDATE_FRAME_TEMPLATE = "額縁テンプレートを更新しました。";
+  public static final String DELETE_FRAME_TEMPLATE = "額縁テンプレートを削除しました。";
 
   /** 写真削除に伴いポートフォリオを下書きに戻した場合のメッセージ。{@code %s}には下書きに戻したポートフォリオのテーマを「、」区切りで埋め込む */
   public static final String DELETE_PHOTO_WITH_REVERTED_PORTFOLIO =
@@ -76,6 +79,15 @@ public final class MessageConst {
   public static final String ERR_REACHED_PORTFOLIO_LIMIT = "作成できるポートフォリオの数が上限に達しています。";
   public static final String ERR_FAIL_TO_REGIST_PORTFOLIO = "ポートフォリオ登録でエラーが発生しました。登録をやり直してください。";
   public static final String ERR_FAIL_TO_UPDATE_PORTFOLIO = "ポートフォリオ更新でエラーが発生しました。更新をやり直してください。";
+  public static final String ERR_NOT_AUTHORIZED_TO_EDIT_FRAME_TEMPLATE =
+      "額縁テンプレートを登録・編集する権限がありません。";
+  public static final String ERR_FRAME_TEMPLATE_NOT_FOUND = "額縁テンプレートが存在しません。";
+  public static final String ERR_INVALID_FRAME_DEFINITION = "額縁の設定内容に誤りがあります。";
+  public static final String ERR_REACHED_FRAME_TEMPLATE_LIMIT = "作成できる額縁テンプレートの数が上限に達しています。";
+  public static final String ERR_FAIL_TO_REGIST_FRAME_TEMPLATE =
+      "額縁テンプレート登録でエラーが発生しました。登録をやり直してください。";
+  public static final String ERR_FAIL_TO_UPDATE_FRAME_TEMPLATE =
+      "額縁テンプレート更新でエラーが発生しました。更新をやり直してください。";
 
   // Admin
   public static final String UNLOCK_ACCOUNT = "アカウントのロックを解除しました。";

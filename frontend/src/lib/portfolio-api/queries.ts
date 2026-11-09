@@ -28,6 +28,11 @@ export const PUBLISHED_PORTFOLIO_QUERY = `query PublishedPortfolio($accountId: I
       __typename
       ... on FeatureLayout { sections { theme subTheme description photo { ${PHOTO_FIELDS} } } }
       ... on GridLayout { rows { pattern photos { photo { ${PHOTO_FIELDS} } } } }
+      ... on FrameLayout {
+        width height backgroundColor borderColor borderWidth
+        slots { x y width height rotation borderColor borderWidth shadow photo { ${PHOTO_FIELDS} } }
+        texts { x y width rotation fontFamily fontSize color align bold text }
+      }
     }
   }
 }`;

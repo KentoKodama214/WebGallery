@@ -5,6 +5,7 @@ import com.web.gallery.domain.exception.BadRequestException;
 import com.web.gallery.domain.exception.FavoriteNotFoundException;
 import com.web.gallery.domain.exception.FileDuplicateException;
 import com.web.gallery.domain.exception.ForbiddenAccountException;
+import com.web.gallery.domain.exception.FrameTemplateNotFoundException;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.InquiryNotFoundException;
 import com.web.gallery.domain.exception.PhotoNotAdditableException;
@@ -18,6 +19,7 @@ import com.web.gallery.presentation.controller.auth.AuthController;
 import com.web.gallery.presentation.controller.inquiry.AdminInquiryController;
 import com.web.gallery.presentation.controller.inquiry.InquiryController;
 import com.web.gallery.presentation.controller.photo.AdminPhotoController;
+import com.web.gallery.presentation.controller.photo.FrameTemplateController;
 import com.web.gallery.presentation.controller.photo.PhotoController;
 import com.web.gallery.presentation.controller.photo.PhotoFavoriteController;
 import com.web.gallery.presentation.controller.photo.PortfolioController;
@@ -53,6 +55,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
       AdminInquiryController.class,
       AdminPhotoController.class,
       AuthController.class,
+      FrameTemplateController.class,
       InquiryController.class,
       KbnMstController.class,
       LocationController.class,
@@ -197,6 +200,20 @@ public class CommonControllerAdvice {
   @ExceptionHandler(PortfolioNotFoundException.class)
   public ResponseEntity<ErrorResponse> handlePortfolioNotFoundException(
       PortfolioNotFoundException exception) {
+    ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.NOT_FOUND);
+
+    return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.NOT_FOUND);
+  }
+
+  /**
+   * 額縁テンプレートが存在しないときに制御するExceptionHandler
+   *
+   * @param exception {@link FrameTemplateNotFoundException}
+   * @return {@link ErrorResponse}
+   */
+  @ExceptionHandler(FrameTemplateNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleFrameTemplateNotFoundException(
+      FrameTemplateNotFoundException exception) {
     ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.NOT_FOUND);
 
     return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.NOT_FOUND);

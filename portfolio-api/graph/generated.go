@@ -47,6 +47,41 @@ type ComplexityRoot struct {
 		Theme       func(childComplexity int) int
 	}
 
+	FrameLayout struct {
+		BackgroundColor func(childComplexity int) int
+		BorderColor     func(childComplexity int) int
+		BorderWidth     func(childComplexity int) int
+		Height          func(childComplexity int) int
+		Slots           func(childComplexity int) int
+		Texts           func(childComplexity int) int
+		Width           func(childComplexity int) int
+	}
+
+	FrameSlot struct {
+		BorderColor func(childComplexity int) int
+		BorderWidth func(childComplexity int) int
+		Height      func(childComplexity int) int
+		Photo       func(childComplexity int) int
+		Rotation    func(childComplexity int) int
+		Shadow      func(childComplexity int) int
+		Width       func(childComplexity int) int
+		X           func(childComplexity int) int
+		Y           func(childComplexity int) int
+	}
+
+	FrameText struct {
+		Align      func(childComplexity int) int
+		Bold       func(childComplexity int) int
+		Color      func(childComplexity int) int
+		FontFamily func(childComplexity int) int
+		FontSize   func(childComplexity int) int
+		Rotation   func(childComplexity int) int
+		Text       func(childComplexity int) int
+		Width      func(childComplexity int) int
+		X          func(childComplexity int) int
+		Y          func(childComplexity int) int
+	}
+
 	GridLayout struct {
 		Rows func(childComplexity int) int
 	}
@@ -163,6 +198,165 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FeatureSection.Theme(childComplexity), true
+
+	case "FrameLayout.backgroundColor":
+		if e.ComplexityRoot.FrameLayout.BackgroundColor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameLayout.BackgroundColor(childComplexity), true
+	case "FrameLayout.borderColor":
+		if e.ComplexityRoot.FrameLayout.BorderColor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameLayout.BorderColor(childComplexity), true
+	case "FrameLayout.borderWidth":
+		if e.ComplexityRoot.FrameLayout.BorderWidth == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameLayout.BorderWidth(childComplexity), true
+	case "FrameLayout.height":
+		if e.ComplexityRoot.FrameLayout.Height == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameLayout.Height(childComplexity), true
+	case "FrameLayout.slots":
+		if e.ComplexityRoot.FrameLayout.Slots == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameLayout.Slots(childComplexity), true
+	case "FrameLayout.texts":
+		if e.ComplexityRoot.FrameLayout.Texts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameLayout.Texts(childComplexity), true
+	case "FrameLayout.width":
+		if e.ComplexityRoot.FrameLayout.Width == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameLayout.Width(childComplexity), true
+
+	case "FrameSlot.borderColor":
+		if e.ComplexityRoot.FrameSlot.BorderColor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameSlot.BorderColor(childComplexity), true
+	case "FrameSlot.borderWidth":
+		if e.ComplexityRoot.FrameSlot.BorderWidth == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameSlot.BorderWidth(childComplexity), true
+	case "FrameSlot.height":
+		if e.ComplexityRoot.FrameSlot.Height == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameSlot.Height(childComplexity), true
+	case "FrameSlot.photo":
+		if e.ComplexityRoot.FrameSlot.Photo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameSlot.Photo(childComplexity), true
+	case "FrameSlot.rotation":
+		if e.ComplexityRoot.FrameSlot.Rotation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameSlot.Rotation(childComplexity), true
+	case "FrameSlot.shadow":
+		if e.ComplexityRoot.FrameSlot.Shadow == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameSlot.Shadow(childComplexity), true
+	case "FrameSlot.width":
+		if e.ComplexityRoot.FrameSlot.Width == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameSlot.Width(childComplexity), true
+	case "FrameSlot.x":
+		if e.ComplexityRoot.FrameSlot.X == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameSlot.X(childComplexity), true
+	case "FrameSlot.y":
+		if e.ComplexityRoot.FrameSlot.Y == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameSlot.Y(childComplexity), true
+
+	case "FrameText.align":
+		if e.ComplexityRoot.FrameText.Align == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.Align(childComplexity), true
+	case "FrameText.bold":
+		if e.ComplexityRoot.FrameText.Bold == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.Bold(childComplexity), true
+	case "FrameText.color":
+		if e.ComplexityRoot.FrameText.Color == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.Color(childComplexity), true
+	case "FrameText.fontFamily":
+		if e.ComplexityRoot.FrameText.FontFamily == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.FontFamily(childComplexity), true
+	case "FrameText.fontSize":
+		if e.ComplexityRoot.FrameText.FontSize == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.FontSize(childComplexity), true
+	case "FrameText.rotation":
+		if e.ComplexityRoot.FrameText.Rotation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.Rotation(childComplexity), true
+	case "FrameText.text":
+		if e.ComplexityRoot.FrameText.Text == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.Text(childComplexity), true
+	case "FrameText.width":
+		if e.ComplexityRoot.FrameText.Width == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.Width(childComplexity), true
+	case "FrameText.x":
+		if e.ComplexityRoot.FrameText.X == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.X(childComplexity), true
+	case "FrameText.y":
+		if e.ComplexityRoot.FrameText.Y == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.Y(childComplexity), true
 
 	case "GridLayout.rows":
 		if e.ComplexityRoot.GridLayout.Rows == nil {
@@ -463,6 +657,56 @@ func (ec *executionContext) childFields_FeatureSection(ctx context.Context, fiel
 		return ec.fieldContext_FeatureSection_description(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type FeatureSection", field.Name)
+}
+
+func (ec *executionContext) childFields_FrameSlot(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "x":
+		return ec.fieldContext_FrameSlot_x(ctx, field)
+	case "y":
+		return ec.fieldContext_FrameSlot_y(ctx, field)
+	case "width":
+		return ec.fieldContext_FrameSlot_width(ctx, field)
+	case "height":
+		return ec.fieldContext_FrameSlot_height(ctx, field)
+	case "rotation":
+		return ec.fieldContext_FrameSlot_rotation(ctx, field)
+	case "borderColor":
+		return ec.fieldContext_FrameSlot_borderColor(ctx, field)
+	case "borderWidth":
+		return ec.fieldContext_FrameSlot_borderWidth(ctx, field)
+	case "shadow":
+		return ec.fieldContext_FrameSlot_shadow(ctx, field)
+	case "photo":
+		return ec.fieldContext_FrameSlot_photo(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FrameSlot", field.Name)
+}
+
+func (ec *executionContext) childFields_FrameText(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "x":
+		return ec.fieldContext_FrameText_x(ctx, field)
+	case "y":
+		return ec.fieldContext_FrameText_y(ctx, field)
+	case "width":
+		return ec.fieldContext_FrameText_width(ctx, field)
+	case "rotation":
+		return ec.fieldContext_FrameText_rotation(ctx, field)
+	case "fontFamily":
+		return ec.fieldContext_FrameText_fontFamily(ctx, field)
+	case "fontSize":
+		return ec.fieldContext_FrameText_fontSize(ctx, field)
+	case "color":
+		return ec.fieldContext_FrameText_color(ctx, field)
+	case "align":
+		return ec.fieldContext_FrameText_align(ctx, field)
+	case "bold":
+		return ec.fieldContext_FrameText_bold(ctx, field)
+	case "text":
+		return ec.fieldContext_FrameText_text(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type FrameText", field.Name)
 }
 
 func (ec *executionContext) childFields_GridPhoto(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -956,6 +1200,631 @@ func (ec *executionContext) _FeatureSection_description(ctx context.Context, fie
 }
 func (ec *executionContext) fieldContext_FeatureSection_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("FeatureSection", field, false, false, "String")
+}
+
+func (ec *executionContext) _FrameLayout_width(ctx context.Context, field graphql.CollectedField, obj *model.FrameLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameLayout_width(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Width, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameLayout_width(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameLayout", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameLayout_height(ctx context.Context, field graphql.CollectedField, obj *model.FrameLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameLayout_height(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Height, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameLayout_height(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameLayout", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameLayout_backgroundColor(ctx context.Context, field graphql.CollectedField, obj *model.FrameLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameLayout_backgroundColor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BackgroundColor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameLayout_backgroundColor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameLayout", field, false, false, "String")
+}
+
+func (ec *executionContext) _FrameLayout_borderColor(ctx context.Context, field graphql.CollectedField, obj *model.FrameLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameLayout_borderColor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BorderColor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameLayout_borderColor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameLayout", field, false, false, "String")
+}
+
+func (ec *executionContext) _FrameLayout_borderWidth(ctx context.Context, field graphql.CollectedField, obj *model.FrameLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameLayout_borderWidth(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BorderWidth, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameLayout_borderWidth(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameLayout", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameLayout_slots(ctx context.Context, field graphql.CollectedField, obj *model.FrameLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameLayout_slots(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Slots, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.FrameSlot) graphql.Marshaler {
+			return ec.marshalNFrameSlot2ᚕᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameSlotᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameLayout_slots(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FrameLayout",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_FrameSlot(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FrameLayout_texts(ctx context.Context, field graphql.CollectedField, obj *model.FrameLayout) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameLayout_texts(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Texts, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.FrameText) graphql.Marshaler {
+			return ec.marshalNFrameText2ᚕᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameTextᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameLayout_texts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FrameLayout",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_FrameText(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FrameSlot_x(ctx context.Context, field graphql.CollectedField, obj *model.FrameSlot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameSlot_x(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.X, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameSlot_x(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameSlot", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameSlot_y(ctx context.Context, field graphql.CollectedField, obj *model.FrameSlot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameSlot_y(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Y, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameSlot_y(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameSlot", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameSlot_width(ctx context.Context, field graphql.CollectedField, obj *model.FrameSlot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameSlot_width(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Width, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameSlot_width(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameSlot", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameSlot_height(ctx context.Context, field graphql.CollectedField, obj *model.FrameSlot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameSlot_height(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Height, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameSlot_height(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameSlot", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameSlot_rotation(ctx context.Context, field graphql.CollectedField, obj *model.FrameSlot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameSlot_rotation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Rotation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameSlot_rotation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameSlot", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameSlot_borderColor(ctx context.Context, field graphql.CollectedField, obj *model.FrameSlot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameSlot_borderColor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BorderColor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameSlot_borderColor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameSlot", field, false, false, "String")
+}
+
+func (ec *executionContext) _FrameSlot_borderWidth(ctx context.Context, field graphql.CollectedField, obj *model.FrameSlot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameSlot_borderWidth(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BorderWidth, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameSlot_borderWidth(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameSlot", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameSlot_shadow(ctx context.Context, field graphql.CollectedField, obj *model.FrameSlot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameSlot_shadow(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Shadow, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameSlot_shadow(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameSlot", field, false, false, "Boolean")
+}
+
+func (ec *executionContext) _FrameSlot_photo(ctx context.Context, field graphql.CollectedField, obj *model.FrameSlot) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameSlot_photo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Photo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Photo) graphql.Marshaler {
+			return ec.marshalOPhoto2ᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐPhoto(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_FrameSlot_photo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "FrameSlot",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Photo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _FrameText_x(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_x(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.X, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_x(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameText_y(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_y(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Y, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_y(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameText_width(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_width(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Width, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_width(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameText_rotation(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_rotation(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Rotation, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_rotation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameText_fontFamily(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_fontFamily(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FontFamily, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.FrameFontFamily) graphql.Marshaler {
+			return ec.marshalNFrameFontFamily2githubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameFontFamily(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_fontFamily(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "FrameFontFamily")
+}
+
+func (ec *executionContext) _FrameText_fontSize(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_fontSize(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FontSize, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_fontSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "Float")
+}
+
+func (ec *executionContext) _FrameText_color(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_color(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Color, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_color(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "String")
+}
+
+func (ec *executionContext) _FrameText_align(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_align(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Align, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.FrameTextAlign) graphql.Marshaler {
+			return ec.marshalNFrameTextAlign2githubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameTextAlign(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_align(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "FrameTextAlign")
+}
+
+func (ec *executionContext) _FrameText_bold(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_bold(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Bold, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_bold(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "Boolean")
+}
+
+func (ec *executionContext) _FrameText_text(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_text(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Text, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_text(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "String")
 }
 
 func (ec *executionContext) _GridLayout_rows(ctx context.Context, field graphql.CollectedField, obj *model.GridLayout) (ret graphql.Marshaler) {
@@ -2917,6 +3786,13 @@ func (ec *executionContext) _PortfolioLayout(ctx context.Context, sel ast.Select
 			return graphql.Null
 		}
 		return ec._GridLayout(ctx, sel, obj)
+	case model.FrameLayout:
+		return ec._FrameLayout(ctx, sel, &obj)
+	case *model.FrameLayout:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._FrameLayout(ctx, sel, obj)
 	case model.FeatureLayout:
 		return ec._FeatureLayout(ctx, sel, &obj)
 	case *model.FeatureLayout:
@@ -2998,6 +3874,220 @@ func (ec *executionContext) _FeatureSection(ctx context.Context, sel ast.Selecti
 			}
 		case "description":
 			out.Values[i] = ec._FeatureSection_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
+
+	return out
+}
+
+var frameLayoutImplementors = []string{"FrameLayout", "PortfolioLayout"}
+
+func (ec *executionContext) _FrameLayout(ctx context.Context, sel ast.SelectionSet, obj *model.FrameLayout) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, frameLayoutImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := graphql.NewDeferredGroup(ctx)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FrameLayout")
+		case "width":
+			out.Values[i] = ec._FrameLayout_width(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "height":
+			out.Values[i] = ec._FrameLayout_height(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "backgroundColor":
+			out.Values[i] = ec._FrameLayout_backgroundColor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "borderColor":
+			out.Values[i] = ec._FrameLayout_borderColor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "borderWidth":
+			out.Values[i] = ec._FrameLayout_borderWidth(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "slots":
+			out.Values[i] = ec._FrameLayout_slots(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "texts":
+			out.Values[i] = ec._FrameLayout_texts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
+
+	return out
+}
+
+var frameSlotImplementors = []string{"FrameSlot"}
+
+func (ec *executionContext) _FrameSlot(ctx context.Context, sel ast.SelectionSet, obj *model.FrameSlot) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, frameSlotImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := graphql.NewDeferredGroup(ctx)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FrameSlot")
+		case "x":
+			out.Values[i] = ec._FrameSlot_x(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "y":
+			out.Values[i] = ec._FrameSlot_y(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "width":
+			out.Values[i] = ec._FrameSlot_width(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "height":
+			out.Values[i] = ec._FrameSlot_height(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rotation":
+			out.Values[i] = ec._FrameSlot_rotation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "borderColor":
+			out.Values[i] = ec._FrameSlot_borderColor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "borderWidth":
+			out.Values[i] = ec._FrameSlot_borderWidth(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "shadow":
+			out.Values[i] = ec._FrameSlot_shadow(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "photo":
+			out.Values[i] = ec._FrameSlot_photo(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
+
+	return out
+}
+
+var frameTextImplementors = []string{"FrameText"}
+
+func (ec *executionContext) _FrameText(ctx context.Context, sel ast.SelectionSet, obj *model.FrameText) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, frameTextImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := graphql.NewDeferredGroup(ctx)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("FrameText")
+		case "x":
+			out.Values[i] = ec._FrameText_x(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "y":
+			out.Values[i] = ec._FrameText_y(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "width":
+			out.Values[i] = ec._FrameText_width(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rotation":
+			out.Values[i] = ec._FrameText_rotation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fontFamily":
+			out.Values[i] = ec._FrameText_fontFamily(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fontSize":
+			out.Values[i] = ec._FrameText_fontSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "color":
+			out.Values[i] = ec._FrameText_color(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "align":
+			out.Values[i] = ec._FrameText_align(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bold":
+			out.Values[i] = ec._FrameText_bold(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "text":
+			out.Values[i] = ec._FrameText_text(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3856,6 +4946,88 @@ func (ec *executionContext) marshalNFeatureSection2ᚖgithubᚗcomᚋKentoKodama
 		return graphql.Null
 	}
 	return ec._FeatureSection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v any) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		graphql.AddInvalidNullFromMarshaler(ctx, "Float!")
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) unmarshalNFrameFontFamily2githubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameFontFamily(ctx context.Context, v any) (model.FrameFontFamily, error) {
+	var res model.FrameFontFamily
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFrameFontFamily2githubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameFontFamily(ctx context.Context, sel ast.SelectionSet, v model.FrameFontFamily) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNFrameSlot2ᚕᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameSlotᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FrameSlot) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNFrameSlot2ᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameSlot(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNFrameSlot2ᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameSlot(ctx context.Context, sel ast.SelectionSet, v *model.FrameSlot) graphql.Marshaler {
+	if v == nil {
+		graphql.AddInvalidNullError(ctx, "FrameSlot!")
+		return graphql.Null
+	}
+	return ec._FrameSlot(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNFrameText2ᚕᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameTextᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FrameText) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNFrameText2ᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameText(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNFrameText2ᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameText(ctx context.Context, sel ast.SelectionSet, v *model.FrameText) graphql.Marshaler {
+	if v == nil {
+		graphql.AddInvalidNullError(ctx, "FrameText!")
+		return graphql.Null
+	}
+	return ec._FrameText(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFrameTextAlign2githubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameTextAlign(ctx context.Context, v any) (model.FrameTextAlign, error) {
+	var res model.FrameTextAlign
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFrameTextAlign2githubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐFrameTextAlign(ctx context.Context, sel ast.SelectionSet, v model.FrameTextAlign) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNGridPhoto2ᚕᚖgithubᚗcomᚋKentoKodama214ᚋWebGalleryᚋportfolioᚑapiᚋgraphᚋmodelᚐGridPhotoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GridPhoto) graphql.Marshaler {

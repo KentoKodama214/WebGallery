@@ -254,6 +254,12 @@ export function PortfolioList({ accountId }: PortfolioListProps) {
       <div className="w-full max-w-[800px] flex justify-between items-center px-4">
         <h1 className="text-xl font-bold">ポートフォリオ設定</h1>
         <div className="flex items-center gap-4">
+          <Link
+            href={`/${accountId}/portfolio_setting/frame_templates`}
+            className="px-4 py-2 text-sm border border-blue-700 text-blue-700 rounded hover:bg-blue-50"
+          >
+            額縁テンプレート
+          </Link>
           {isReachedUpperLimit ? (
             <button
               type="button"

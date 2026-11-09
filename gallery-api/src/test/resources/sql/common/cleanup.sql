@@ -2,6 +2,7 @@ TRUNCATE TABLE
 	photo.portfolio_photo,
 	photo.portfolio_tag_mst,
 	photo.portfolio_mst,
+	photo.frame_template_mst,
 	photo.photo_favorite,
 	photo.photo_tag_mst,
 	photo.photo_mst,

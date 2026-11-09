@@ -151,7 +151,7 @@ func toJSON(v any) string {
 	return string(b)
 }
 
-// portfolioQuery は publishedPortfolio をレイアウト（FeatureLayout・GridLayout の両方）まで取得するクエリ。変数 no にポートフォリオ番号を渡す。
+// portfolioQuery は publishedPortfolio をレイアウト（FeatureLayout・GridLayout・FrameLayout のすべて）まで取得するクエリ。変数 no にポートフォリオ番号を渡す。
 const portfolioQuery = `query($no: Int!) {
   publishedPortfolio(accountId: "owner123", portfolioNo: $no) {
     portfolioNo theme template tags { japaneseName englishName }
@@ -159,12 +159,17 @@ const portfolioQuery = `query($no: Int!) {
       __typename
       ... on FeatureLayout { sections { theme subTheme description photo { photoNo url direction } } }
       ... on GridLayout { rows { pattern photos { photo { photoNo } } } }
+      ... on FrameLayout {
+        width height backgroundColor borderColor borderWidth
+        slots { x y width height rotation borderColor borderWidth shadow photo { photoNo } }
+        texts { x y width rotation fontFamily fontSize color align bold text }
+      }
     }
   }
 }`
 
 // TestPublishedPortfolio_LayoutUnion は、publishedPortfolio のレイアウトが、テンプレートに応じて
-// FeatureLayout・GridLayout のいずれかの型（__typename）で返り、各型のフィールド・タグ・列挙値が正しく変換されることを検証する。
+// FeatureLayout・GridLayout・FrameLayout のいずれかの型（__typename）で返り、各型のフィールド・タグ・列挙値が正しく変換されることを検証する。
 func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 	gridPhoto := signedPhoto(1)
 	query := &fakeQuery{published: map[int64]*usecase.PublishedPortfolio{
@@ -179,6 +184,16 @@ func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 				// 管理者により非公開にされた写真の枠は Photo が nil（null として返す）
 				Photos: []domain.GridPhoto{{Photo: &gridPhoto}, {Photo: nil}}}}},
 		},
+		3: {
+			Portfolio: domain.Portfolio{PortfolioNo: 3, Theme: "組写真", Template: domain.TemplateFrame, UpdatedAt: updatedAt, Tags: []domain.Tag{}},
+			Layout: domain.FrameLayout{Width: 364, Height: 257, BackgroundColor: "#f5f0e6", BorderColor: "#3b2a1a", BorderWidth: 4,
+				Slots: []domain.FrameSlot{
+					{X: 5, Y: 10, Width: 40, Height: 60, Rotation: -3, BorderColor: "#ffffff", BorderWidth: 1, Shadow: true, Photo: &gridPhoto},
+					// 管理者により非公開にされた写真の枠は Photo が nil（null として返す）
+					{X: 55, Y: 10, Width: 40, Height: 60, BorderColor: "#ffffff"},
+				},
+				Texts: []domain.FrameText{{X: 10, Y: 80, Width: 80, FontFamily: "mincho", FontSize: 3, Color: "#333333", Align: "center", Bold: true, Text: "春の訪れ"}}},
+		},
 	}}
 	server := newTestServer(t, query, Options{})
 
@@ -187,6 +202,11 @@ func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 			`"layout":{"__typename":"FeatureLayout","sections":[{"theme":"京都","subTheme":"金閣寺","description":"","photo":{"photoNo":5,"url":"https://signed/5","direction":"SQUARE"}}]}}`,
 		2: `{"portfolioNo":2,"theme":"光と影","template":"GRID","tags":[],` +
 			`"layout":{"__typename":"GridLayout","rows":[{"pattern":"WIDE_NARROW","photos":[{"photo":{"photoNo":1}},{"photo":null}]}]}}`,
+		3: `{"portfolioNo":3,"theme":"組写真","template":"FRAME","tags":[],` +
+			`"layout":{"__typename":"FrameLayout","width":364,"height":257,"backgroundColor":"#f5f0e6","borderColor":"#3b2a1a","borderWidth":4,` +
+			`"slots":[{"x":5,"y":10,"width":40,"height":60,"rotation":-3,"borderColor":"#ffffff","borderWidth":1,"shadow":true,"photo":{"photoNo":1}},` +
+			`{"x":55,"y":10,"width":40,"height":60,"rotation":0,"borderColor":"#ffffff","borderWidth":0,"shadow":false,"photo":null}],` +
+			`"texts":[{"x":10,"y":80,"width":80,"rotation":0,"fontFamily":"MINCHO","fontSize":3,"color":"#333333","align":"CENTER","bold":true,"text":"春の訪れ"}]}}`,
 	} {
 		body, _ := json.Marshal(map[string]any{"query": portfolioQuery, "variables": map[string]any{"no": no}})
 		res, err := http.Post(server.URL+"/graphql", "application/json", bytes.NewReader(body))
