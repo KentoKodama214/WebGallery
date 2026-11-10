@@ -31,8 +31,12 @@ describe("FrameCanvas", () => {
     );
 
     const canvas = screen.getByRole("img", { name: "組写真：金閣寺" });
-    expect(canvas).toHaveStyle({ aspectRatio: "366 / 254", backgroundColor: "#3b2a1a", padding: "2.5cqw" });
-    expect(within(canvas).getByTestId("frame-mat")).toHaveStyle({ backgroundColor: "#f5f0e6" });
+    expect(canvas).toHaveStyle({ aspectRatio: "366 / 254", backgroundColor: "#3b2a1a" });
+    // 外枠の太さは額縁自身の padding ではなく台紙の inset で指定する（cqw を額縁の横幅に対する % として解決させるため）
+    expect(canvas.style.padding).toBe("");
+    const mat = within(canvas).getByTestId("frame-mat");
+    expect(mat).toHaveStyle({ backgroundColor: "#f5f0e6" });
+    expect(mat.style.inset).toBe("2.5cqw");
 
     const slotElement = screen.getByTestId("frame-slot");
     expect(slotElement).toHaveStyle({ left: "10%", top: "20%", width: "30%", height: "40%", transform: "rotate(-5deg)" });

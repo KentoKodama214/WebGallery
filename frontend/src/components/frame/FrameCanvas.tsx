@@ -107,14 +107,17 @@ export function FrameCanvas({
         aspectRatio: `${size.width} / ${size.height}`,
         containerType: "inline-size",
         backgroundColor: borderColor,
-        padding: `${borderWidth}cqw`,
         boxShadow: "0 6px 18px rgba(0, 0, 0, 0.25)",
       }}
     >
+      {/*
+        外枠の太さは額縁の横幅に対する % のため、台紙を額縁の内側に絶対配置し、inset で外枠の分だけ内側に寄せる
+        （額縁自身の padding に cqw を使うと、額縁ではなく親のコンテナ（なければ画面）の幅が基準になるため）
+      */}
       <div
         data-testid="frame-mat"
-        className="relative w-full h-full overflow-hidden"
-        style={{ backgroundColor }}
+        className="absolute overflow-hidden"
+        style={{ inset: `${borderWidth}cqw`, backgroundColor }}
       >
         {slots.map((slot, index) => {
           const src = slot.photo ? sanitizeImageUrl(slot.photo.url) : "";
