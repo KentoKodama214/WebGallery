@@ -23,6 +23,8 @@
 | 17 | ポートフォリオ公開ページ（詳細） | `portfolio_public_detail` | `/portfolio/{accountId}/{portfolioNo}` | 公開（公開中のポートフォリオのみ） |
 | 18 | ページが見つかりません（404） | `not_found` | 未マッチのURL全般 | 公開 |
 | 19 | 管理者写真管理 | `admin_photo_management` | `/admin/photo_management` | 認証必須（管理者のみ） |
+| 20 | 額縁テンプレート（一覧） | `frame_templates` | `/{accountId}/portfolio_setting/frame_templates` | 認証必須（本人のみ） |
+| 21 | 額縁テンプレート作成・編集 | `frame_template_edit` | `/{accountId}/portfolio_setting/frame_templates/edit`（編集時は `?frameTemplateNo=`） | 認証必須（本人のみ） |
 
 ### 404 の扱い
 
@@ -77,6 +79,8 @@ graph TD
         INQUIRY_DETAIL["お問い合わせ詳細<br/>/inquiry/detail"]
         PORTFOLIO_SETTING["ポートフォリオ設定<br/>/{id}/portfolio_setting"]
         PORTFOLIO_EDIT["ポートフォリオ作成・編集<br/>/{id}/portfolio_setting/edit"]
+        FRAME_TEMPLATES["額縁テンプレート（一覧）<br/>/{id}/portfolio_setting/frame_templates"]
+        FRAME_TEMPLATE_EDIT["額縁テンプレート作成・編集<br/>/{id}/portfolio_setting/frame_templates/edit"]
         PORTFOLIO_PUBLIC_LIST["ポートフォリオ公開ページ（一覧）<br/>/portfolio/{id}"]
         PORTFOLIO_PUBLIC_DETAIL["ポートフォリオ公開ページ（詳細）<br/>/portfolio/{id}/{no}"]
     end
@@ -97,6 +101,9 @@ graph TD
     PHOTO_DETAIL -->|削除成功| PHOTO_LIST
     PHOTO_DETAIL -->|削除成功・公開中のポートフォリオが下書きに戻った<br/>（通知ダイアログのリンク）| PORTFOLIO_EDIT
     PORTFOLIO_SETTING -->|新規作成・テーマ選択| PORTFOLIO_EDIT
+    PORTFOLIO_SETTING -->|額縁テンプレート| FRAME_TEMPLATES
+    FRAME_TEMPLATES -->|新規作成・編集| FRAME_TEMPLATE_EDIT
+    PORTFOLIO_EDIT -->|額縁テンプレートを管理・作成（額縁型）| FRAME_TEMPLATES
     PORTFOLIO_EDIT -->|一覧へ戻る（左上）・削除成功（復元不可の確認後）| PORTFOLIO_SETTING
     PORTFOLIO_SETTING -->|公開中の行の公開ページリンク（別タブ）| PORTFOLIO_PUBLIC_DETAIL
     PORTFOLIO_EDIT -->|公開ページを見る（公開中のみ・別タブ）| PORTFOLIO_PUBLIC_DETAIL
@@ -611,6 +618,7 @@ sequenceDiagram
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
 | 「新規作成」ボタン | `/{accountId}/portfolio_setting/edit` | リンク（作成数が権限ごとの上限に達している場合は押せず、その旨を表示） |
+| 「額縁テンプレート」ボタン（「新規作成」の左） | `/{accountId}/portfolio_setting/frame_templates` | リンク |
 | 検索語（テーマ・タグ）を入力して「検索」／「クリア」 | 同画面（一覧を絞り込み／解除） | AJAX（テーマ・タグ名のいずれかに部分一致。OR条件） |
 | 「＋もっと見る」ボタン | 同画面（次の20件を追加読み込み） | AJAX（最後のページでない場合のみ表示） |
 | 行の「並び順」列の「↑」「↓」ボタン | 同画面（隣のポートフォリオと入れ替えて保存） | AJAX（絞り込み中は不可。読み込み済みの最後の行は、続きがある間は下へ移動不可。公開ページの一覧も同じ順に並ぶ） |
@@ -630,7 +638,10 @@ sequenceDiagram
 | 「下書きとして登録」・「保存する」（写真が0枚） | 同画面（「写真を1枚以上選択してください」を表示） | 画面内表示（送信しない） |
 | 「下書きとして登録」（作成数が権限ごとの上限に達している） | 同画面（「作成できるポートフォリオの数が上限に達しています。」を表示） | 画面内表示（400） |
 | 「＋行を追加」ボタン（グリッド型。行の組み合わせの下） | 同画面（行を追加） | 画面内表示 |
-| 「プレビューを表示」ボタン（フィーチャー型・グリッド型とも「保存する」（新規は「下書きとして登録」）の左） | 同画面（プレビューのダイアログ） | 画面内表示 |
+| 額縁型：額縁テンプレートを選んで「この額縁を使う」 | 同画面（額縁定義をポートフォリオへコピーし、写真を表示順に写真枠へ当てはめた見本・メッセージ枠ごとの文面の入力欄を表示。写真の上に「写真枠 N枠 / 写真 M枚」を表示） | 画面内表示（額縁テンプレート一覧APIで取得。テンプレートを後から変更・削除しても、コピーした額縁は変わらない） |
+| 額縁型：額縁を選ばずに「下書きとして登録」・「保存する」 | 同画面（「額縁テンプレートを選んで「この額縁を使う」を押してください」を表示） | 画面内表示（送信しない） |
+| 額縁型：「額縁テンプレートを管理」・「額縁テンプレートを作成」リンク（額縁テンプレートが0件の場合） | `/{accountId}/portfolio_setting/frame_templates`・`/{accountId}/portfolio_setting/frame_templates/edit` | リンク |
+| 「プレビューを表示」ボタン（どのテンプレートも「保存する」（新規は「下書きとして登録」）の左） | 同画面（プレビューのダイアログ） | 画面内表示 |
 | 「保存する」（編集）→ 成功 | 同画面（完了ダイアログ） | AJAX |
 | 「公開する」／「下書きに戻す」→ 成功 | 同画面（状態バッジ更新・完了ダイアログ） | AJAX（未保存の変更がある間は押せず、その旨を赤字で表示） |
 | 登録・保存・公開状態の変更 → 失敗 | 同画面（エラー表示） | 画面内表示 |
@@ -638,6 +649,29 @@ sequenceDiagram
 | 「削除」（見出しの右端）→ 確認ダイアログ（復元できない旨を表示）→「削除する」→ 成功 | `/{accountId}/portfolio_setting` | AJAX → 遷移（物理削除） |
 | 「公開ページを見る」リンク（「保存する」「下書きに戻す」の下） | `/portfolio/{accountId}/{portfolioNo}` | リンク（公開中のみ・別タブ） |
 | 「← ポートフォリオ一覧へ戻る」リンク（左上） | `/{accountId}/portfolio_setting` | リンク |
+
+### 額縁テンプレート（一覧） (`/{accountId}/portfolio_setting/frame_templates`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 「新規作成」ボタン | `/{accountId}/portfolio_setting/frame_templates/edit` | リンク（作成数が上限の50個に達している場合は押せず、その旨を表示） |
+| 「編集」ボタン | `/{accountId}/portfolio_setting/frame_templates/edit?frameTemplateNo={no}` | リンク |
+| 「削除」ボタン → 確認ダイアログ（選択済みのポートフォリオはコピーした額縁で表示され続ける旨を表示）→「削除する」 | 同画面（一覧から取り除く） | AJAX（物理削除。失敗時はダイアログを開いたままエラーを表示） |
+| 「← ポートフォリオ設定へ戻る」リンク（左上） | `/{accountId}/portfolio_setting` | リンク |
+
+### 額縁テンプレート作成・編集 (`/{accountId}/portfolio_setting/frame_templates/edit`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 「＋写真枠」・「＋メッセージ枠」ボタン | 同画面（枠を追加して選択。写真枠30個・メッセージ枠10個まで） | 画面内表示 |
+| キャンバスの枠をドラッグ／右下のつまみ／上のつまみ | 同画面（枠を移動／大きさを変更／回転。Shiftキーで15°刻み、0°付近は吸着。移動・大きさの変更中は、枠の端・中央が額縁の端・中央や他の枠の端・中央に近づくと吸着して補助線を表示。Altキーを押している間は吸着しない） | 画面内表示 |
+| 選択中の枠で矢印キー（Shiftキーで大きく移動）／Delete・Backspaceキー | 同画面（枠を移動／削除） | 画面内表示 |
+| 右側のパネル（何も選択していない間は額縁全体：サイズ・向き・背景・外枠。写真枠：位置・大きさ・傾き・枠線・影。メッセージ枠：位置・幅・傾き・フォント・文字サイズ・色・揃え・太字・斜体・確認用の文面（保存しない）） | 同画面（キャンバスに反映） | 画面内表示 |
+| 「登録する」（新規）→ 成功 | `/{accountId}/portfolio_setting/frame_templates/edit?frameTemplateNo={no}`（完了ダイアログ） | AJAX → URL置き換え |
+| 「保存する」（編集）→ 成功 | 同画面（完了ダイアログ） | AJAX |
+| 「登録する」・「保存する」（テンプレート名が未入力・写真枠が0個） | 同画面（エラー表示） | 画面内表示（送信しない） |
+| 「削除」（見出しの右端）→ 確認ダイアログ →「削除する」→ 成功 | `/{accountId}/portfolio_setting/frame_templates` | AJAX → 遷移（物理削除） |
+| 「← 額縁テンプレート一覧へ戻る」リンク（左上） | `/{accountId}/portfolio_setting/frame_templates` | リンク |
 
 ### ポートフォリオ公開ページ（一覧） (`/portfolio/{accountId}`)
 

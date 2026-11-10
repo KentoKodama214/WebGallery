@@ -4,12 +4,13 @@
 # 【注意】実行するとローカルDB・MinIOのアカウント関連データを完全にリセットする
 #   - account、account_authority、location_mst、refresh_token、login_history、
 #     photo_mst、photo_tag_mst、photo_favorite、photo_view_log、photo_moderation_log、photo_list_filter_log、
-#     portfolio_mst、portfolio_photo、portfolio_tag_mst、inquiry_mst、inquiry_reply_mst を全件削除
+#     portfolio_mst、portfolio_photo、portfolio_tag_mst、frame_template_mst、inquiry_mst、inquiry_reply_mst を全件削除
 #   - MinIO（web-gallery-local バケット）内の画像ファイルも全件削除
 # その上で、画面の全パターンを手動でのデータ追加なしに確認できるよう、以下を新規作成する
 #   - アカウント25件（権限4種、ロック状態・退会済み、一覧のページング用のダミー）
 #   - localuser01・04・05 の写真（縦・横・正方形、位置情報の公開/非公開、タグ0〜20件、論理削除済み等）とロケーション・タグ・お気に入り
-#   - localuser01・04・05 のポートフォリオ（フィーチャー型/グリッド型 × 公開/下書き、公開不可の状態、上限値の文字列・タグ、一覧のページング等）
+#   - localuser01・04・05 のポートフォリオ（フィーチャー型/グリッド型/額縁型 × 公開/下書き、公開不可の状態、上限値の文字列・タグ、一覧のページング等）
+#   - localuser01 の額縁テンプレート（サイズ・写真枠の数と傾き・メッセージ枠の有無が異なる3種類）
 #   - localuser01・04・05 のお問い合わせと管理者（localuser03）の返信（未対応/回答済み（既読・未読）/取り下げ、複数返信、上限値の文字列等）
 #   - ダミー画像（ImageMagickで生成）をMinIOへアップロード
 set -euo pipefail
@@ -48,6 +49,7 @@ TRUNCATE TABLE
   photo.portfolio_tag_mst,
   photo.portfolio_photo,
   photo.portfolio_mst,
+  photo.frame_template_mst,
   photo.photo_list_filter_log,
   photo.photo_view_log,
   photo.photo_moderation_log,
@@ -262,6 +264,8 @@ echo "ダミー画像と投入用SQLを生成します"
   # --- ポートフォリオ ---------------------------------------------------------------
   # feature: template_settings は {}、写真ごとの photo_settings に theme/subTheme/description（公開にはtheme必須）
   # grid: template_settings の rows に行パターン（行の枚数の合計＝写真の枚数で公開可能）、photo_settings は {}
+  # frame: template_settings に選択時にコピーした額縁定義（frame）・コピー元の番号（frameTemplateNo）・メッセージ枠ごとの文面（messages）、
+  #        photo_settings は {}。写真は表示順に写真枠へ当てはめ、写真枠の数＝写真の枚数で公開可能
   cat <<'SQL'
 -- localuser01 P1: フィーチャー型・公開中（写真7は P3 と共有し、削除時に両方が下書きへ戻ることを確認する）
 INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
@@ -331,6 +335,93 @@ INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_b
 INSERT INTO photo.portfolio_tag_mst (account_no, portfolio_no, tag_no, created_by, created_at, tag_japanese_name, tag_english_name)
 SELECT :u1_account_no, 6, n, :u1_account_no, now(), 'タグ' || lpad(n::text, 2, '0'), 'tag' || lpad(n::text, 2, '0')
 FROM generate_series(1, 30) AS n;
+
+-- localuser01 額縁テンプレート（位置・大きさは額縁に対する%、外枠・枠線の太さと文字サイズは額縁の横幅に対する%）
+-- T1: 四つ切・縦長（254×305mm）、木目調の外枠、写真枠3（上に大きく1枚・下に2枚。傾きなし）、メッセージ枠2（明朝の太字タイトル・ゴシックの添え書き）
+-- T2: A3・横長（420×297mm）、暗い背景、写真枠5（傾き・影ありのコラージュ）、メッセージ枠3（手書き風・筆記体の斜体・小さな右揃えのクレジット。傾きあり）
+-- T3: 正方形（300×300mm）、白い背景に金色の太い外枠、写真枠4（2×2。細い黒枠・影なし）、メッセージ枠なし
+INSERT INTO photo.frame_template_mst (account_no, frame_template_no, created_by, created_at, updated_by, updated_at, template_name, frame_definition) VALUES
+  (:u1_account_no, 1, :u1_account_no, now() - interval '25 days', :u1_account_no, now() - interval '4 days', '四つ切 縦 3枚組', '{
+    "size": {"width": 254, "height": 305},
+    "background": {"color": "#f5f0e6"},
+    "border": {"color": "#3b2a1a", "width": 4},
+    "slots": [
+      {"x": 6, "y": 5, "width": 88, "height": 45, "rotation": 0, "borderColor": "#ffffff", "borderWidth": 0.8, "shadow": true},
+      {"x": 6, "y": 54, "width": 42, "height": 30, "rotation": 0, "borderColor": "#ffffff", "borderWidth": 0.8, "shadow": true},
+      {"x": 52, "y": 54, "width": 42, "height": 30, "rotation": 0, "borderColor": "#ffffff", "borderWidth": 0.8, "shadow": true}
+    ],
+    "texts": [
+      {"x": 6, "y": 87, "width": 88, "rotation": 0, "fontFamily": "mincho", "fontSize": 4, "color": "#3b2a1a", "align": "center", "bold": true, "italic": false},
+      {"x": 6, "y": 93.5, "width": 88, "rotation": 0, "fontFamily": "gothic", "fontSize": 2, "color": "#6b5b4b", "align": "center", "bold": false, "italic": false}
+    ]
+  }'),
+  (:u1_account_no, 2, :u1_account_no, now() - interval '18 days', :u1_account_no, now() - interval '18 days', 'A3 横 コラージュ 5枚組', '{
+    "size": {"width": 420, "height": 297},
+    "background": {"color": "#1f2937"},
+    "border": {"color": "#111111", "width": 2},
+    "slots": [
+      {"x": 4, "y": 8, "width": 30, "height": 40, "rotation": -6, "borderColor": "#ffffff", "borderWidth": 1.2, "shadow": true},
+      {"x": 36, "y": 5, "width": 28, "height": 52, "rotation": 3, "borderColor": "#ffffff", "borderWidth": 1.2, "shadow": true},
+      {"x": 67, "y": 10, "width": 29, "height": 38, "rotation": -2.5, "borderColor": "#ffffff", "borderWidth": 1.2, "shadow": true},
+      {"x": 8, "y": 54, "width": 26, "height": 38, "rotation": 5, "borderColor": "#ffffff", "borderWidth": 1.2, "shadow": true},
+      {"x": 63, "y": 54, "width": 32, "height": 36, "rotation": -4, "borderColor": "#ffffff", "borderWidth": 1.2, "shadow": true}
+    ],
+    "texts": [
+      {"x": 36, "y": 63, "width": 26, "rotation": -3, "fontFamily": "handwriting", "fontSize": 2.8, "color": "#fef3c7", "align": "center", "bold": false, "italic": false},
+      {"x": 36, "y": 75, "width": 26, "rotation": 0, "fontFamily": "script", "fontSize": 1.8, "color": "#e5e7eb", "align": "center", "bold": false, "italic": true},
+      {"x": 50, "y": 93, "width": 46, "rotation": 0, "fontFamily": "gothic", "fontSize": 1.2, "color": "#9ca3af", "align": "right", "bold": false, "italic": false}
+    ]
+  }'),
+  (:u1_account_no, 3, :u1_account_no, now() - interval '6 days', :u1_account_no, now() - interval '6 days', '正方形 2×2 グリッド', '{
+    "size": {"width": 300, "height": 300},
+    "background": {"color": "#ffffff"},
+    "border": {"color": "#c8a96a", "width": 6},
+    "slots": [
+      {"x": 5, "y": 5, "width": 43, "height": 43, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.3, "shadow": false},
+      {"x": 52, "y": 5, "width": 43, "height": 43, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.3, "shadow": false},
+      {"x": 5, "y": 52, "width": 43, "height": 43, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.3, "shadow": false},
+      {"x": 52, "y": 52, "width": 43, "height": 43, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.3, "shadow": false}
+    ],
+    "texts": []
+  }');
+
+-- localuser01 P7〜P9: 額縁型。template_settings の frame は選択時にコピーした額縁テンプレートの額縁定義と同じにする
+-- P7: 額縁型・公開中（T1。写真3枚＝写真枠3。メッセージ2件とも入力）
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
+SELECT :u1_account_no, 7, :u1_account_no, now() - interval '9 days', :u1_account_no, now() - interval '4 hours', '季節のかけら', '一枚の額に、移ろう季節の光と色を組み合わせました。', 'frame',
+  jsonb_build_object('frameTemplateNo', 1, 'frame', frame_definition, 'messages', '["季節のかけら", "夕焼け・桜・彼岸花。移ろう光と色を、三枚の写真で一枚の額に。"]'::jsonb), 1, 'published', 7
+FROM photo.frame_template_mst WHERE account_no = :u1_account_no AND frame_template_no = 1;
+INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES
+  (:u1_account_no, 7, 15, :u1_account_no, now(), 1, '{}'),
+  (:u1_account_no, 7, 4, :u1_account_no, now(), 2, '{}'),
+  (:u1_account_no, 7, 22, :u1_account_no, now(), 3, '{}');
+INSERT INTO photo.portfolio_tag_mst (account_no, portfolio_no, tag_no, created_by, created_at, tag_japanese_name, tag_english_name) VALUES
+  (:u1_account_no, 7, 1, :u1_account_no, now(), '組写真', 'photo-set'),
+  (:u1_account_no, 7, 2, :u1_account_no, now(), '四季', 'seasons');
+
+-- P8: 額縁型・公開中（T2。写真5枚＝写真枠5。3件目のメッセージは空のため表示しない）
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
+SELECT :u1_account_no, 8, :u1_account_no, now() - interval '7 days', :u1_account_no, now() - interval '2 hours', '夏の記憶', '', 'frame',
+  jsonb_build_object('frameTemplateNo', 2, 'frame', frame_definition, 'messages', '["また、あの夏へ。", "Summer memories, collected one by one.", ""]'::jsonb), 1, 'published', 8
+FROM photo.frame_template_mst WHERE account_no = :u1_account_no AND frame_template_no = 2;
+INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES
+  (:u1_account_no, 8, 11, :u1_account_no, now(), 1, '{}'),
+  (:u1_account_no, 8, 10, :u1_account_no, now(), 2, '{}'),
+  (:u1_account_no, 8, 12, :u1_account_no, now(), 3, '{}'),
+  (:u1_account_no, 8, 19, :u1_account_no, now(), 4, '{}'),
+  (:u1_account_no, 8, 24, :u1_account_no, now(), 5, '{}');
+INSERT INTO photo.portfolio_tag_mst (account_no, portfolio_no, tag_no, created_by, created_at, tag_japanese_name, tag_english_name) VALUES
+  (:u1_account_no, 8, 1, :u1_account_no, now(), '夏', 'summer');
+
+-- P9: 額縁型・下書き（T3。写真枠4に対して写真3枚のため公開できない。メッセージ枠なし）
+INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order)
+SELECT :u1_account_no, 9, :u1_account_no, now() - interval '3 days', :u1_account_no, now() - interval '3 days', '緑と光の4枚組', '', 'frame',
+  jsonb_build_object('frameTemplateNo', 3, 'frame', frame_definition, 'messages', '[]'::jsonb), 1, 'draft', 9
+FROM photo.frame_template_mst WHERE account_no = :u1_account_no AND frame_template_no = 3;
+INSERT INTO photo.portfolio_photo (account_no, portfolio_no, photo_no, created_by, created_at, display_order, photo_settings) VALUES
+  (:u1_account_no, 9, 14, :u1_account_no, now(), 1, '{}'),
+  (:u1_account_no, 9, 23, :u1_account_no, now(), 2, '{}'),
+  (:u1_account_no, 9, 21, :u1_account_no, now(), 3, '{}');
 
 -- localuser04（mini-user）: ポートフォリオの作成数上限（ローカルは3件）に達した状態
 INSERT INTO photo.portfolio_mst (account_no, portfolio_no, created_by, created_at, updated_by, updated_at, theme, description, template_kbn, template_settings, settings_version, status_kbn, display_order) VALUES
@@ -468,7 +559,7 @@ cat <<MSG
 投入が完了しました。
 
 ログイン情報（パスワードは全アカウント共通で ${PASSWORD_PLAIN}）:
-  localuser01 normal-user    写真25枚（＋論理削除済み1枚）・ポートフォリオ6件・お問い合わせ22件
+  localuser01 normal-user    写真25枚（＋論理削除済み1枚）・ポートフォリオ9件（うち額縁型3件）・額縁テンプレート3件・お問い合わせ22件
   localuser02 mini-user      データなし（空の一覧表示の確認用）
   localuser03 administrator  お問い合わせへの返信者（返信が残るため退会不可）
   localuser04 mini-user      写真10枚・ポートフォリオ3件（いずれも作成数上限に到達）・お問い合わせ3件

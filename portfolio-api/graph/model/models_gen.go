@@ -35,6 +35,72 @@ type FeatureSection struct {
 	Description string `json:"description"`
 }
 
+// 額縁型のレイアウト（1枚の額縁に複数の写真・メッセージを自由に配置した組写真）
+//
+// 位置・大きさ・太さ・文字サイズは、表示する画面の幅によらず同じ比率で描画できるよう、額縁に対する % で返す
+type FrameLayout struct {
+	// 額縁の横幅（mm）。縦横比の算出に使う
+	Width float64 `json:"width"`
+	// 額縁の縦幅（mm）
+	Height float64 `json:"height"`
+	// 額縁の背景（台紙）の色（#RRGGBB）
+	BackgroundColor string `json:"backgroundColor"`
+	// 額縁の外枠の色（#RRGGBB）
+	BorderColor string `json:"borderColor"`
+	// 額縁の外枠の太さ（額縁の横幅に対する %。0 の場合は外枠なし）
+	BorderWidth float64 `json:"borderWidth"`
+	// 写真枠（写真を表示順に1枚ずつ割り当てたもの）
+	Slots []*FrameSlot `json:"slots"`
+	// 文面を入力したメッセージ枠
+	Texts []*FrameText `json:"texts"`
+}
+
+func (FrameLayout) IsPortfolioLayout() {}
+
+// 額縁型の写真枠
+type FrameSlot struct {
+	// 左端の位置（額縁に対する %）
+	X float64 `json:"x"`
+	// 上端の位置（額縁に対する %）
+	Y float64 `json:"y"`
+	// 横幅（額縁に対する %）
+	Width float64 `json:"width"`
+	// 縦幅（額縁に対する %）
+	Height float64 `json:"height"`
+	// 傾き（度。時計回りが正）
+	Rotation float64 `json:"rotation"`
+	// 枠線の色（#RRGGBB）
+	BorderColor string `json:"borderColor"`
+	// 枠線の太さ（額縁の横幅に対する %。0 の場合は枠線なし）
+	BorderWidth float64 `json:"borderWidth"`
+	// 影を付けるかどうか
+	Shadow bool `json:"shadow"`
+	// 枠に当てはめる写真。管理者により非公開にされた写真の枠は null（組写真の構成を保つため、枠だけを空けて表示する）
+	Photo *Photo `json:"photo,omitempty"`
+}
+
+// 額縁型のメッセージ枠
+type FrameText struct {
+	// 左端の位置（額縁に対する %）
+	X float64 `json:"x"`
+	// 上端の位置（額縁に対する %）
+	Y float64 `json:"y"`
+	// 横幅（額縁に対する %。文面はこの幅で折り返す）
+	Width float64 `json:"width"`
+	// 傾き（度。時計回りが正）
+	Rotation   float64         `json:"rotation"`
+	FontFamily FrameFontFamily `json:"fontFamily"`
+	// 文字サイズ（額縁の横幅に対する %）
+	FontSize float64 `json:"fontSize"`
+	// 文字の色（#RRGGBB）
+	Color  string         `json:"color"`
+	Align  FrameTextAlign `json:"align"`
+	Bold   bool           `json:"bold"`
+	Italic bool           `json:"italic"`
+	// 文面
+	Text string `json:"text"`
+}
+
 // グリッド型のレイアウト
 type GridLayout struct {
 	// 上から順の行
@@ -115,6 +181,134 @@ type Tag struct {
 	JapaneseName string `json:"japaneseName"`
 	// 未設定の場合は空文字
 	EnglishName string `json:"englishName"`
+}
+
+// 額縁型のメッセージ枠のフォント
+type FrameFontFamily string
+
+const (
+	// ゴシック体
+	FrameFontFamilyGothic FrameFontFamily = "GOTHIC"
+	// 明朝体
+	FrameFontFamilyMincho FrameFontFamily = "MINCHO"
+	// 丸ゴシック体
+	FrameFontFamilyMaru FrameFontFamily = "MARU"
+	// 手書き風
+	FrameFontFamilyHandwriting FrameFontFamily = "HANDWRITING"
+	// セリフ体（欧文）
+	FrameFontFamilySerif FrameFontFamily = "SERIF"
+	// 筆記体（欧文）
+	FrameFontFamilyScript FrameFontFamily = "SCRIPT"
+)
+
+var AllFrameFontFamily = []FrameFontFamily{
+	FrameFontFamilyGothic,
+	FrameFontFamilyMincho,
+	FrameFontFamilyMaru,
+	FrameFontFamilyHandwriting,
+	FrameFontFamilySerif,
+	FrameFontFamilyScript,
+}
+
+func (e FrameFontFamily) IsValid() bool {
+	switch e {
+	case FrameFontFamilyGothic, FrameFontFamilyMincho, FrameFontFamilyMaru, FrameFontFamilyHandwriting, FrameFontFamilySerif, FrameFontFamilyScript:
+		return true
+	}
+	return false
+}
+
+func (e FrameFontFamily) String() string {
+	return string(e)
+}
+
+func (e *FrameFontFamily) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FrameFontFamily(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FrameFontFamily", str)
+	}
+	return nil
+}
+
+func (e FrameFontFamily) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FrameFontFamily) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FrameFontFamily) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// 額縁型のメッセージ枠の揃え
+type FrameTextAlign string
+
+const (
+	FrameTextAlignLeft   FrameTextAlign = "LEFT"
+	FrameTextAlignCenter FrameTextAlign = "CENTER"
+	FrameTextAlignRight  FrameTextAlign = "RIGHT"
+)
+
+var AllFrameTextAlign = []FrameTextAlign{
+	FrameTextAlignLeft,
+	FrameTextAlignCenter,
+	FrameTextAlignRight,
+}
+
+func (e FrameTextAlign) IsValid() bool {
+	switch e {
+	case FrameTextAlignLeft, FrameTextAlignCenter, FrameTextAlignRight:
+		return true
+	}
+	return false
+}
+
+func (e FrameTextAlign) String() string {
+	return string(e)
+}
+
+func (e *FrameTextAlign) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FrameTextAlign(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FrameTextAlign", str)
+	}
+	return nil
+}
+
+func (e FrameTextAlign) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FrameTextAlign) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FrameTextAlign) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 // グリッド型の行パターン
@@ -249,16 +443,19 @@ const (
 	PortfolioTemplateFeature PortfolioTemplate = "FEATURE"
 	// グリッド型（1行に2〜3枚の写真を組み合わせて並べる）
 	PortfolioTemplateGrid PortfolioTemplate = "GRID"
+	// 額縁型（1枚の額縁に複数の写真・メッセージを自由に配置した組写真）
+	PortfolioTemplateFrame PortfolioTemplate = "FRAME"
 )
 
 var AllPortfolioTemplate = []PortfolioTemplate{
 	PortfolioTemplateFeature,
 	PortfolioTemplateGrid,
+	PortfolioTemplateFrame,
 }
 
 func (e PortfolioTemplate) IsValid() bool {
 	switch e {
-	case PortfolioTemplateFeature, PortfolioTemplateGrid:
+	case PortfolioTemplateFeature, PortfolioTemplateGrid, PortfolioTemplateFrame:
 		return true
 	}
 	return false

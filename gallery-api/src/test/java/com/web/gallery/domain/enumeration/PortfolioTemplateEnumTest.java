@@ -32,6 +32,13 @@ class PortfolioTemplateEnumTest {
     }
 
     @Test
+    @Order(5)
+    @DisplayName("正常系：額縁型のDB保存値に一致する場合、額縁型を返すこと")
+    void fromValue_frame() {
+      assertEquals(PortfolioTemplateEnum.FRAME, PortfolioTemplateEnum.fromValue("frame"));
+    }
+
+    @Test
     @Order(3)
     @DisplayName("異常系：nullを指定した場合、別の値として扱わずnullを返すこと")
     void fromValue_null() {

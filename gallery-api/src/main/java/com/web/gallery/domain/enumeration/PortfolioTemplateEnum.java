@@ -22,7 +22,10 @@ public enum PortfolioTemplateEnum {
   FEATURE("feature", "フィーチャー"),
   /** グリッド型（1行に2〜3枚の写真を組み合わせて並べる） */
   @JsonProperty("grid")
-  GRID("grid", "グリッド");
+  GRID("grid", "グリッド"),
+  /** 額縁型（アカウントで作成した額縁テンプレートの写真枠に写真を当てはめて1枚の組写真にする） */
+  @JsonProperty("frame")
+  FRAME("frame", "額縁");
 
   /** DBに保持する値 */
   private final String dbValue;

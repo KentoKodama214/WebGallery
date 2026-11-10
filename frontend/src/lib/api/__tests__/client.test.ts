@@ -395,6 +395,51 @@ describe("api/client", () => {
       expect((err as Error).message).toBe("ポートフォリオが存在しません。");
     });
 
+    it("getFrameTemplateList・getFrameTemplate は本人の額縁テンプレートを GET で取得する", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ frameTemplateList: [] }));
+      await client.getFrameTemplateList("me");
+      const [listUrl, listInit] = fetchMock.mock.calls.at(-1)!;
+      expect(String(listUrl)).toMatch(/\/api\/v1\/accounts\/me\/frame-templates$/);
+      expect(listInit?.method ?? "GET").toBe("GET");
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ frameTemplateNo: 2 }));
+      const template = await client.getFrameTemplate("me", 2);
+      const [detailUrl] = fetchMock.mock.calls.at(-1)!;
+      expect(String(detailUrl)).toContain("/api/v1/accounts/me/frame-templates/2");
+      expect(template.frameTemplateNo).toBe(2);
+    });
+
+    it("saveFrameTemplate は額縁テンプレート番号の未指定時に POST、指定時に PUT で JSON を送る", async () => {
+      const data = { templateName: "四つ切 3枚組", frameDefinition: { size: { width: 305, height: 254 } } };
+      fetchMock.mockResolvedValueOnce(makeResponse({ frameTemplateNo: 3 }));
+      await client.saveFrameTemplate("me", data);
+      let [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toMatch(/\/api\/v1\/accounts\/me\/frame-templates$/);
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(init?.body as string)).toEqual(data);
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ frameTemplateNo: 3 }));
+      await client.saveFrameTemplate("me", data, 3);
+      [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/frame-templates/3");
+      expect(init?.method).toBe("PUT");
+    });
+
+    it("deleteFrameTemplate は DELETE を送り、HTTP エラー時はメッセージと status を持つ ApiError を投げる", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ frameTemplateNo: 3 }));
+      await client.deleteFrameTemplate("me", 3);
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/frame-templates/3");
+      expect(init?.method).toBe("DELETE");
+
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ errorMessage: "額縁テンプレートが存在しません。" }, { status: 404 })
+      );
+      const err = await client.deleteFrameTemplate("me", 3).catch((e) => e);
+      expect(err).toBeInstanceOf(client.ApiError);
+      expect(err.status).toBe(404);
+    });
+
     it("deletePortfolio は DELETE を送る", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ portfolioNo: 5 }));
 

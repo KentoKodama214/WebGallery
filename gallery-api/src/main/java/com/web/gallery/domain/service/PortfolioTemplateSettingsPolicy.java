@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
  * ポートフォリオのテンプレート固有の設定に関するビジネスルールを、テンプレートに応じて判定するドメインサービス
  *
  * <p>判定そのものはテンプレートごとのPolicy（{@link FeatureTemplateSettingsPolicy}・{@link
- * GridTemplateSettingsPolicy}）に委譲する。テンプレートを追加した場合は、{@link PortfolioTemplateEnum}の値を
- * 網羅するswitch式のコンパイルエラーに従って、ここに委譲先を追加する
+ * GridTemplateSettingsPolicy}・{@link FrameTemplateSettingsPolicy}）に委譲する。テンプレートを追加した場合は、{@link
+ * PortfolioTemplateEnum}の値を 網羅するswitch式のコンパイルエラーに従って、ここに委譲先を追加する
  *
  * <p>検証は2段階に分かれる。下書き保存時は設定の構造（未知の項目・型・文字数）のみを判定し、設定途中の不整合
  * （グリッド型の行の枚数の合計と写真の枚数の不一致等）は許容する。公開時・公開中の更新時は、加えて表示に必要な設定が 揃っているかを判定する
@@ -22,6 +22,7 @@ public class PortfolioTemplateSettingsPolicy {
 
   private final FeatureTemplateSettingsPolicy featureTemplateSettingsPolicy;
   private final GridTemplateSettingsPolicy gridTemplateSettingsPolicy;
+  private final FrameTemplateSettingsPolicy frameTemplateSettingsPolicy;
 
   /**
    * ポートフォリオ単位の設定の構造が妥当かどうかを判定する
@@ -35,6 +36,7 @@ public class PortfolioTemplateSettingsPolicy {
     return switch (templateKbn) {
       case FEATURE -> featureTemplateSettingsPolicy.isValidTemplateSettings(templateSettings);
       case GRID -> gridTemplateSettingsPolicy.isValidTemplateSettings(templateSettings);
+      case FRAME -> frameTemplateSettingsPolicy.isValidTemplateSettings(templateSettings);
     };
   }
 
@@ -50,6 +52,7 @@ public class PortfolioTemplateSettingsPolicy {
     return switch (templateKbn) {
       case FEATURE -> featureTemplateSettingsPolicy.isValidPhotoSettings(photoSettings);
       case GRID -> gridTemplateSettingsPolicy.isValidPhotoSettings(photoSettings);
+      case FRAME -> frameTemplateSettingsPolicy.isValidPhotoSettings(photoSettings);
     };
   }
 
@@ -66,6 +69,7 @@ public class PortfolioTemplateSettingsPolicy {
     return switch (templateKbn) {
       case FEATURE -> featureTemplateSettingsPolicy.isPublishable(templateSettings, photoCount);
       case GRID -> gridTemplateSettingsPolicy.isPublishable(templateSettings, photoCount);
+      case FRAME -> frameTemplateSettingsPolicy.isPublishable(templateSettings, photoCount);
     };
   }
 
@@ -81,6 +85,7 @@ public class PortfolioTemplateSettingsPolicy {
     return switch (templateKbn) {
       case FEATURE -> featureTemplateSettingsPolicy.isPublishablePhotoSettings(photoSettings);
       case GRID -> gridTemplateSettingsPolicy.isPublishablePhotoSettings(photoSettings);
+      case FRAME -> frameTemplateSettingsPolicy.isPublishablePhotoSettings(photoSettings);
     };
   }
 }

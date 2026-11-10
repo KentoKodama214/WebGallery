@@ -28,6 +28,8 @@ enum PortfolioTemplate {
   FEATURE
   "グリッド型（1行に2〜3枚の写真を組み合わせて並べる）"
   GRID
+  "額縁型（1枚の額縁に複数の写真・メッセージを自由に配置した組写真）"
+  FRAME
 }
 
 "写真の向き"
@@ -97,7 +99,7 @@ type Portfolio {
 
 テンプレートを追加する場合は、レイアウトの型を追加してこの union に加える
 """
-union PortfolioLayout = FeatureLayout | GridLayout
+union PortfolioLayout = FeatureLayout | GridLayout | FrameLayout
 
 "フィーチャー型のレイアウト"
 type FeatureLayout {
@@ -144,4 +146,93 @@ type GridRow {
 type GridPhoto {
   "枠に並べる写真。管理者により非公開にされた写真の枠は null（行の構成を保つため、枠だけを空けて表示する）"
   photo: Photo
+}
+
+"""
+額縁型のレイアウト（1枚の額縁に複数の写真・メッセージを自由に配置した組写真）
+
+位置・大きさ・太さ・文字サイズは、表示する画面の幅によらず同じ比率で描画できるよう、額縁に対する % で返す
+"""
+type FrameLayout {
+  "額縁の横幅（mm）。縦横比の算出に使う"
+  width: Float!
+  "額縁の縦幅（mm）"
+  height: Float!
+  "額縁の背景（台紙）の色（#RRGGBB）"
+  backgroundColor: String!
+  "額縁の外枠の色（#RRGGBB）"
+  borderColor: String!
+  "額縁の外枠の太さ（額縁の横幅に対する %。0 の場合は外枠なし）"
+  borderWidth: Float!
+  "写真枠（写真を表示順に1枚ずつ割り当てたもの）"
+  slots: [FrameSlot!]!
+  "文面を入力したメッセージ枠"
+  texts: [FrameText!]!
+}
+
+"額縁型の写真枠"
+type FrameSlot {
+  "左端の位置（額縁に対する %）"
+  x: Float!
+  "上端の位置（額縁に対する %）"
+  y: Float!
+  "横幅（額縁に対する %）"
+  width: Float!
+  "縦幅（額縁に対する %）"
+  height: Float!
+  "傾き（度。時計回りが正）"
+  rotation: Float!
+  "枠線の色（#RRGGBB）"
+  borderColor: String!
+  "枠線の太さ（額縁の横幅に対する %。0 の場合は枠線なし）"
+  borderWidth: Float!
+  "影を付けるかどうか"
+  shadow: Boolean!
+  "枠に当てはめる写真。管理者により非公開にされた写真の枠は null（組写真の構成を保つため、枠だけを空けて表示する）"
+  photo: Photo
+}
+
+"額縁型のメッセージ枠のフォント"
+enum FrameFontFamily {
+  "ゴシック体"
+  GOTHIC
+  "明朝体"
+  MINCHO
+  "丸ゴシック体"
+  MARU
+  "手書き風"
+  HANDWRITING
+  "セリフ体（欧文）"
+  SERIF
+  "筆記体（欧文）"
+  SCRIPT
+}
+
+"額縁型のメッセージ枠の揃え"
+enum FrameTextAlign {
+  LEFT
+  CENTER
+  RIGHT
+}
+
+"額縁型のメッセージ枠"
+type FrameText {
+  "左端の位置（額縁に対する %）"
+  x: Float!
+  "上端の位置（額縁に対する %）"
+  y: Float!
+  "横幅（額縁に対する %。文面はこの幅で折り返す）"
+  width: Float!
+  "傾き（度。時計回りが正）"
+  rotation: Float!
+  fontFamily: FrameFontFamily!
+  "文字サイズ（額縁の横幅に対する %）"
+  fontSize: Float!
+  "文字の色（#RRGGBB）"
+  color: String!
+  align: FrameTextAlign!
+  bold: Boolean!
+  italic: Boolean!
+  "文面"
+  text: String!
 }

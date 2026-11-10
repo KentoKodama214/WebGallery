@@ -26,6 +26,7 @@ CREATE TABLE photo.portfolio_mst
 	-- テンプレート区分:
 	-- feature: フィーチャー型
 	-- grid: グリッド型
+	-- frame: 額縁型
 	template_kbn photo.portfolio_template_enum NOT NULL,
 	-- テンプレート設定: テンプレート固有のポートフォリオ単位の設定（JSON）
 	template_settings jsonb DEFAULT '{}' NOT NULL,
@@ -67,7 +68,7 @@ COMMENT ON COLUMN photo.portfolio_mst.updated_by IS '更新者';
 COMMENT ON COLUMN photo.portfolio_mst.updated_at IS '更新日時';
 COMMENT ON COLUMN photo.portfolio_mst.theme IS 'テーマ : 空文字不可';
 COMMENT ON COLUMN photo.portfolio_mst.description IS '説明文';
-COMMENT ON COLUMN photo.portfolio_mst.template_kbn IS 'テンプレート区分: feature(フィーチャー型)、grid(グリッド型)';
+COMMENT ON COLUMN photo.portfolio_mst.template_kbn IS 'テンプレート区分: feature(フィーチャー型)、grid(グリッド型)、frame(額縁型)';
 COMMENT ON COLUMN photo.portfolio_mst.template_settings IS 'テンプレート設定 : テンプレート固有のポートフォリオ単位の設定（JSON）';
 COMMENT ON COLUMN photo.portfolio_mst.settings_version IS '設定バージョン : template_settings・portfolio_photo.photo_settingsのJSON構造のバージョン';
 COMMENT ON COLUMN photo.portfolio_mst.status_kbn IS '公開状態区分: draft(下書き)、published(公開)';
