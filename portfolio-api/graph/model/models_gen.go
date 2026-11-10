@@ -93,9 +93,10 @@ type FrameText struct {
 	// 文字サイズ（額縁の横幅に対する %）
 	FontSize float64 `json:"fontSize"`
 	// 文字の色（#RRGGBB）
-	Color string         `json:"color"`
-	Align FrameTextAlign `json:"align"`
-	Bold  bool           `json:"bold"`
+	Color  string         `json:"color"`
+	Align  FrameTextAlign `json:"align"`
+	Bold   bool           `json:"bold"`
+	Italic bool           `json:"italic"`
 	// 文面
 	Text string `json:"text"`
 }

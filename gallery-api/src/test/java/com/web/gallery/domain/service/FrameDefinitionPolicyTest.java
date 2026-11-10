@@ -97,25 +97,17 @@ class FrameDefinitionPolicyTest {
                               true)),
                   "texts",
                       List.of(
-                          Map.of(
-                              "x",
-                              50,
-                              "y",
-                              80,
-                              "width",
-                              40,
-                              "rotation",
-                              0,
-                              "fontFamily",
-                              "script",
-                              "fontSize",
-                              3,
-                              "color",
-                              "#000000",
-                              "align",
-                              "right",
-                              "bold",
-                              false))));
+                          Map.ofEntries(
+                              Map.entry("x", 50),
+                              Map.entry("y", 80),
+                              Map.entry("width", 40),
+                              Map.entry("rotation", 0),
+                              Map.entry("fontFamily", "script"),
+                              Map.entry("fontSize", 3),
+                              Map.entry("color", "#000000"),
+                              Map.entry("align", "right"),
+                              Map.entry("bold", false),
+                              Map.entry("italic", true)))));
 
       assertTrue(policy.isValid(definition));
     }
@@ -317,10 +309,11 @@ class FrameDefinitionPolicyTest {
 
     @Test
     @Order(26)
-    @DisplayName("異常系：揃えが選択肢にない、太字が真偽値でない場合、不正と判定すること")
+    @DisplayName("異常系：揃えが選択肢にない、太字・斜体が真偽値でない場合、不正と判定すること")
     void isValid_textDecorationInvalid() {
       assertFalse(policy.isValid(withText(Map.of("align", "justify"))));
       assertFalse(policy.isValid(withText(Map.of("bold", 1))));
+      assertFalse(policy.isValid(withText(Map.of("italic", "true"))));
     }
 
     @Test

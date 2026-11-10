@@ -162,7 +162,7 @@ const portfolioQuery = `query($no: Int!) {
       ... on FrameLayout {
         width height backgroundColor borderColor borderWidth
         slots { x y width height rotation borderColor borderWidth shadow photo { photoNo } }
-        texts { x y width rotation fontFamily fontSize color align bold text }
+        texts { x y width rotation fontFamily fontSize color align bold italic text }
       }
     }
   }
@@ -192,7 +192,7 @@ func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 					// 管理者により非公開にされた写真の枠は Photo が nil（null として返す）
 					{X: 55, Y: 10, Width: 40, Height: 60, BorderColor: "#ffffff"},
 				},
-				Texts: []domain.FrameText{{X: 10, Y: 80, Width: 80, FontFamily: "mincho", FontSize: 3, Color: "#333333", Align: "center", Bold: true, Text: "春の訪れ"}}},
+				Texts: []domain.FrameText{{X: 10, Y: 80, Width: 80, FontFamily: "mincho", FontSize: 3, Color: "#333333", Align: "center", Bold: true, Italic: true, Text: "春の訪れ"}}},
 		},
 	}}
 	server := newTestServer(t, query, Options{})
@@ -206,7 +206,7 @@ func TestPublishedPortfolio_LayoutUnion(t *testing.T) {
 			`"layout":{"__typename":"FrameLayout","width":364,"height":257,"backgroundColor":"#f5f0e6","borderColor":"#3b2a1a","borderWidth":4,` +
 			`"slots":[{"x":5,"y":10,"width":40,"height":60,"rotation":-3,"borderColor":"#ffffff","borderWidth":1,"shadow":true,"photo":{"photoNo":1}},` +
 			`{"x":55,"y":10,"width":40,"height":60,"rotation":0,"borderColor":"#ffffff","borderWidth":0,"shadow":false,"photo":null}],` +
-			`"texts":[{"x":10,"y":80,"width":80,"rotation":0,"fontFamily":"MINCHO","fontSize":3,"color":"#333333","align":"CENTER","bold":true,"text":"春の訪れ"}]}}`,
+			`"texts":[{"x":10,"y":80,"width":80,"rotation":0,"fontFamily":"MINCHO","fontSize":3,"color":"#333333","align":"CENTER","bold":true,"italic":true,"text":"春の訪れ"}]}}`,
 	} {
 		body, _ := json.Marshal(map[string]any{"query": portfolioQuery, "variables": map[string]any{"no": no}})
 		res, err := http.Post(server.URL+"/graphql", "application/json", bytes.NewReader(body))

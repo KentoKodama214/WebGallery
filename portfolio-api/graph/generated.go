@@ -75,6 +75,7 @@ type ComplexityRoot struct {
 		Color      func(childComplexity int) int
 		FontFamily func(childComplexity int) int
 		FontSize   func(childComplexity int) int
+		Italic     func(childComplexity int) int
 		Rotation   func(childComplexity int) int
 		Text       func(childComplexity int) int
 		Width      func(childComplexity int) int
@@ -327,6 +328,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.FrameText.FontSize(childComplexity), true
+	case "FrameText.italic":
+		if e.ComplexityRoot.FrameText.Italic == nil {
+			break
+		}
+
+		return e.ComplexityRoot.FrameText.Italic(childComplexity), true
 	case "FrameText.rotation":
 		if e.ComplexityRoot.FrameText.Rotation == nil {
 			break
@@ -703,6 +710,8 @@ func (ec *executionContext) childFields_FrameText(ctx context.Context, field gra
 		return ec.fieldContext_FrameText_align(ctx, field)
 	case "bold":
 		return ec.fieldContext_FrameText_bold(ctx, field)
+	case "italic":
+		return ec.fieldContext_FrameText_italic(ctx, field)
 	case "text":
 		return ec.fieldContext_FrameText_text(ctx, field)
 	}
@@ -1801,6 +1810,29 @@ func (ec *executionContext) _FrameText_bold(ctx context.Context, field graphql.C
 	)
 }
 func (ec *executionContext) fieldContext_FrameText_bold(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("FrameText", field, false, false, "Boolean")
+}
+
+func (ec *executionContext) _FrameText_italic(ctx context.Context, field graphql.CollectedField, obj *model.FrameText) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_FrameText_italic(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Italic, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_FrameText_italic(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("FrameText", field, false, false, "Boolean")
 }
 
@@ -4083,6 +4115,11 @@ func (ec *executionContext) _FrameText(ctx context.Context, sel ast.SelectionSet
 			}
 		case "bold":
 			out.Values[i] = ec._FrameText_bold(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "italic":
+			out.Values[i] = ec._FrameText_italic(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

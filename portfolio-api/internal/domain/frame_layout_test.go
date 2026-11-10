@@ -34,7 +34,7 @@ func TestBuildLayout_Frame(t *testing.T) {
 			},
 			"texts": []any{
 				map[string]any{"x": 10.0, "y": 80.0, "width": 80.0, "rotation": 2.0, "fontFamily": "script",
-					"fontSize": 4.5, "color": "#000000", "align": "right", "bold": true},
+					"fontSize": 4.5, "color": "#000000", "align": "right", "bold": true, "italic": true},
 			},
 		}, "春の訪れ"),
 		Photos: portfolioPhotos(map[string]any{}, map[string]any{}),
@@ -53,7 +53,7 @@ func TestBuildLayout_Frame(t *testing.T) {
 			{X: 55, Y: 10, Width: 40, Height: 60, BorderColor: defaultSlotBorderColor, Photo: &photo2},
 		},
 		Texts: []FrameText{
-			{X: 10, Y: 80, Width: 80, Rotation: 2, FontFamily: "script", FontSize: 4.5, Color: "#000000", Align: "right", Bold: true, Text: "春の訪れ"},
+			{X: 10, Y: 80, Width: 80, Rotation: 2, FontFamily: "script", FontSize: 4.5, Color: "#000000", Align: "right", Bold: true, Italic: true, Text: "春の訪れ"},
 		},
 	}
 	if !reflect.DeepEqual(layout, want) {

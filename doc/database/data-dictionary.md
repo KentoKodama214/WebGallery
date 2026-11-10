@@ -29,7 +29,7 @@
 | 21 | favorite_photo_account_no | 写真所有者のアカウント番号 | bigint | - | お気に入り対象の写真を所有するアカウント番号。photo_mst(account_no)へのFK。(favorite_photo_account_no, favorite_photo_no)の複合インデックスあり | photo_favorite |
 | 22 | favorite_photo_no | お気に入り写真番号 | bigint | - | お気に入り対象の写真番号。photo_mst(photo_no)へのFK。(favorite_photo_account_no, favorite_photo_no)の複合インデックスあり | photo_favorite |
 | 23 | focal_length | 焦点距離 | int | - | EXIF情報から取得した焦点距離（mm単位） | photo_mst |
-| 24 | frame_definition | 額縁定義 | jsonb | '{}' | 額縁のサイズ（size.width/height。mm）・背景（background.color）・外枠（border.color/width）・写真枠（slots。位置・大きさ・傾き・枠線・影）・メッセージ枠（texts。位置・幅・傾き・フォント・文字サイズ・色・揃え・太字）の定義（JSON）。ポートフォリオで選択するとportfolio_mst.template_settingsにコピーされるため、テンプレートの変更・削除は既存のポートフォリオに影響しない | frame_template_mst |
+| 24 | frame_definition | 額縁定義 | jsonb | '{}' | 額縁のサイズ（size.width/height。mm）・背景（background.color）・外枠（border.color/width）・写真枠（slots。位置・大きさ・傾き・枠線・影）・メッセージ枠（texts。位置・幅・傾き・フォント・文字サイズ・色・揃え・太字・斜体）の定義（JSON）。ポートフォリオで選択するとportfolio_mst.template_settingsにコピーされるため、テンプレートの変更・削除は既存のポートフォリオに影響しない | frame_template_mst |
 | 25 | frame_template_no | 額縁テンプレート番号 | bigint | - | アカウント単位の額縁テンプレート連番（登録済みの最大値+1で採番）。account_noとの複合UNIQUEを構成 | frame_template_mst |
 | 26 | free_memo | フリーメモ | text | '""' | ユーザーが自由に入力できるメモ欄 | account |
 | 27 | id | ID | bigserial | (自動採番) | サロゲートキー（自動採番） | location_mst, photo_mst, photo_tag_mst, photo_favorite, inquiry_mst, inquiry_reply_mst, portfolio_mst, portfolio_photo, portfolio_tag_mst, frame_template_mst |

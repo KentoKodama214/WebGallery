@@ -232,6 +232,7 @@ type FrameText {
   color: String!
   align: FrameTextAlign!
   bold: Boolean!
+  italic: Boolean!
   "文面"
   text: String!
 }

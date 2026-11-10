@@ -195,6 +195,7 @@ func toFrameLayout(layout domain.FrameLayout) (model.FrameLayout, error) {
 			Color:      text.Color,
 			Align:      align,
 			Bold:       text.Bold,
+			Italic:     text.Italic,
 			Text:       text.Text,
 		}, nil
 	})

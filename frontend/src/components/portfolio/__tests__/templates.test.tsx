@@ -168,6 +168,7 @@ describe("ポートフォリオのテンプレート", () => {
               color: "#333333",
               align: "CENTER",
               bold: false,
+              italic: true,
               text: "春の訪れ",
             },
           ],
@@ -182,7 +183,7 @@ describe("ポートフォリオのテンプレート", () => {
     expect(within(slots[0]).getByAltText("金閣寺")).toHaveAttribute("src", "/photos/1.jpg");
     expect(slots[0]).toHaveStyle({ transform: "rotate(-3deg)" });
     const text = screen.getByText("春の訪れ");
-    expect(text).toHaveStyle({ textAlign: "center" });
+    expect(text).toHaveStyle({ textAlign: "center", fontStyle: "italic" });
     expect(text.style.fontFamily).toContain("Mincho");
   });
 

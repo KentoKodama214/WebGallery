@@ -13,6 +13,7 @@ const text = {
   color: "#333333",
   align: "center" as const,
   bold: true,
+  italic: true,
 };
 
 describe("FrameCanvas", () => {
@@ -39,7 +40,7 @@ describe("FrameCanvas", () => {
 
     const textElement = screen.getByTestId("frame-text");
     expect(textElement).toHaveTextContent("春の訪れ");
-    expect(textElement).toHaveStyle({ fontSize: "3cqw", textAlign: "center", fontWeight: "700", color: "#333333" });
+    expect(textElement).toHaveStyle({ fontSize: "3cqw", textAlign: "center", fontWeight: "700", fontStyle: "italic", color: "#333333" });
     expect(textElement.style.fontFamily).toContain("Mincho");
   });
 

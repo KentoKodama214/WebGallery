@@ -110,6 +110,7 @@ export interface FrameLayout {
     color: string;
     align: FrameTextAlign;
     bold: boolean;
+    italic: boolean;
     text: string;
   }[];
 }

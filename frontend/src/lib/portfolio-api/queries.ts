@@ -31,7 +31,7 @@ export const PUBLISHED_PORTFOLIO_QUERY = `query PublishedPortfolio($accountId: I
       ... on FrameLayout {
         width height backgroundColor borderColor borderWidth
         slots { x y width height rotation borderColor borderWidth shadow photo { ${PHOTO_FIELDS} } }
-        texts { x y width rotation fontFamily fontSize color align bold text }
+        texts { x y width rotation fontFamily fontSize color align bold italic text }
       }
     }
   }

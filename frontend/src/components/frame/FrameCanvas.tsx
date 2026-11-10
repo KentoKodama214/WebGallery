@@ -164,6 +164,7 @@ export function FrameCanvas({
                 color: text.color,
                 textAlign: text.align,
                 fontWeight: text.bold ? 700 : 400,
+                fontStyle: text.italic ? "italic" : "normal",
                 whiteSpace: "pre-wrap",
                 overflowWrap: "anywhere",
               }}

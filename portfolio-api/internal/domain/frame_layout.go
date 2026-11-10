@@ -61,6 +61,8 @@ type FrameText struct {
 	Align string
 	// Bold は太字にするかどうか。
 	Bold bool
+	// Italic は斜体にするかどうか。
+	Italic bool
 	// Text はポートフォリオごとに入力した文面。
 	Text string
 }
@@ -93,6 +95,7 @@ const (
 	frameFontSize    = "fontSize"
 	frameAlign       = "align"
 	frameBold        = "bold"
+	frameItalic      = "italic"
 )
 
 // 額縁定義の値が未設定・不正な場合に使う既定値
@@ -177,6 +180,7 @@ func buildFrameLayout(p Portfolio) FrameLayout {
 			Color:      colorSetting(text, frameColor, defaultTextColor),
 			Align:      choiceSetting(text, frameAlign, FrameTextAligns, defaultAlign),
 			Bold:       boolSetting(text, frameBold),
+			Italic:     boolSetting(text, frameItalic),
 			Text:       message,
 		})
 	}

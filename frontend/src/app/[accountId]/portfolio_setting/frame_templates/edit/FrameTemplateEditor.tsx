@@ -167,17 +167,6 @@ export function FrameTemplateEditor({ accountId, initialFrameTemplateNo }: Frame
     setSelection(null);
   };
 
-  const moveSlot = (index: number, offset: -1 | 1) => {
-    const target = index + offset;
-    if (target < 0 || target >= definition.slots.length) return;
-    setDefinition((prev) => {
-      const slots = [...prev.slots];
-      [slots[index], slots[target]] = [slots[target], slots[index]];
-      return { ...prev, slots };
-    });
-    setSelection({ kind: "slot", index: target });
-  };
-
   const validate = (): boolean => {
     const nextErrors: Record<string, string> = {};
     if (!templateName.trim()) {
@@ -364,7 +353,6 @@ export function FrameTemplateEditor({ accountId, initialFrameTemplateNo }: Frame
                   return next;
                 })
               }
-              onMoveSlot={moveSlot}
               onDuplicate={duplicate}
               onDelete={remove}
             />

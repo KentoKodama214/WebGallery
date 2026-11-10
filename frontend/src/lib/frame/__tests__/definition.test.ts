@@ -1,10 +1,12 @@
 import {
+  FRAME_SIZE_PRESETS,
   FRAME_SLOT_MAX_SIZE,
   FRAME_TEXT_MAX_SIZE,
   clamp,
   createDefaultDefinition,
   createSlot,
   createText,
+  findFrameSizePresetIndex,
   parseFrameDefinition,
   round,
   toFontFamilyCss,
@@ -26,6 +28,26 @@ describe("frame/definition", () => {
       expect(round(1.26)).toBe(1.3);
       expect(round(1.234, 2)).toBe(1.23);
       expect(round(1.5, 0)).toBe(2);
+    });
+  });
+
+  describe("findFrameSizePresetIndex", () => {
+    const labelOf = (width: number, height: number) =>
+      FRAME_SIZE_PRESETS[findFrameSizePresetIndex({ width, height })]?.label;
+
+    it("A判は横向き・縦向きを別の選択肢として当てはめること", () => {
+      expect(labelOf(297, 210)).toBe("A4 横（297×210mm）");
+      expect(labelOf(210, 297)).toBe("A4 縦（210×297mm）");
+      expect(labelOf(420, 297)).toBe("A3 横（420×297mm）");
+      expect(labelOf(297, 420)).toBe("A3 縦（297×420mm）");
+      expect(labelOf(594, 420)).toBe("A2 横（594×420mm）");
+      expect(labelOf(420, 594)).toBe("A2 縦（420×594mm）");
+    });
+
+    it("写真用紙の判は縦横を入れ替えたサイズも同じ選択肢に当てはめ、どれにも当てはまらなければ -1 を返すこと", () => {
+      expect(labelOf(305, 254)).toBe("四つ切（305×254mm）");
+      expect(labelOf(254, 305)).toBe("四つ切（305×254mm）");
+      expect(findFrameSizePresetIndex({ width: 500, height: 400 })).toBe(-1);
     });
   });
 
@@ -63,7 +85,7 @@ describe("frame/definition", () => {
           { x: 5, y: 10, width: 40, height: 60, rotation: -3, borderColor: "#ffffff", borderWidth: 1, shadow: true },
         ],
         texts: [
-          { x: 10, y: 80, width: 80, rotation: 2, fontFamily: "script", fontSize: 4, color: "#000000", align: "right", bold: true },
+          { x: 10, y: 80, width: 80, rotation: 2, fontFamily: "script", fontSize: 4, color: "#000000", align: "right", bold: true, italic: true },
         ],
       };
 
@@ -84,7 +106,7 @@ describe("frame/definition", () => {
       expect(parsed.slots).toEqual([
         { x: 0, y: 100, width: 1, height: 40, rotation: 180, borderColor: "#ffffff", borderWidth: 0, shadow: false },
       ]);
-      expect(parsed.texts[0]).toMatchObject({ fontFamily: "gothic", align: "left", fontSize: 30, color: "#333333", bold: false });
+      expect(parsed.texts[0]).toMatchObject({ fontFamily: "gothic", align: "left", fontSize: 30, color: "#333333", bold: false, italic: false });
     });
 
     it("写真枠・メッセージ枠は上限の数までとし、オブジェクトでない値は空の額縁定義として扱うこと", () => {

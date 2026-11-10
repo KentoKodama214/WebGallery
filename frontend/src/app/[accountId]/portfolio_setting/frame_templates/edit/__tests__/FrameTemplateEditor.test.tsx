@@ -62,12 +62,17 @@ function numberValue(label: RegExp): number {
   return Number((screen.getByLabelText(label) as HTMLInputElement).value);
 }
 
+/** 選択欄で、表示名に対応する選択肢の値を取得する */
+function selectValueOf(select: HTMLElement, label: string): string {
+  return within(select).getByRole("option", { name: label }).getAttribute("value")!;
+}
+
 /** 保存したリクエストの額縁定義 */
 function savedDefinition() {
   return mockSaveFrameTemplate.mock.calls.at(-1)![1].frameDefinition as {
     size: { width: number; height: number };
     slots: { x: number; y: number; width: number; height: number; rotation: number }[];
-    texts: { fontFamily: string; bold: boolean }[];
+    texts: { fontFamily: string; bold: boolean; italic: boolean }[];
   };
 }
 
@@ -194,6 +199,26 @@ describe("FrameTemplateEditor", () => {
       expect(box).toHaveStyle({ left: "65%", top: "20%" });
     });
 
+    it("ドラッグ中は他の枠の端に近づくと吸着して補助線を表示し、ドラッグを終えると補助線を消すこと", async () => {
+      mockGetFrameTemplate.mockResolvedValue(savedTemplate);
+      render(<FrameTemplateEditor accountId="user1" initialFrameTemplateNo={4} />);
+
+      // 写真枠2（左 55%）を 49.6%（496px）左へ動かすと左端が 5.4% になり、写真枠1の左端（5%）に吸着する
+      const box = await screen.findByRole("button", { name: "写真枠2" });
+      fireEvent.pointerDown(box, { button: 0, pointerId: 1, clientX: 600, clientY: 100 });
+      fireEvent.pointerMove(box, { pointerId: 1, clientX: 104, clientY: 100 });
+      expect(numberValue(/^左/)).toBe(5);
+      expect(screen.getAllByTestId("frame-guide-vertical").map((guide) => guide.style.left)).toContain("5%");
+
+      // Alt キーを押している間は吸着しない
+      fireEvent.pointerMove(box, { pointerId: 1, clientX: 104, clientY: 100, altKey: true });
+      expect(numberValue(/^左/)).toBe(5.4);
+
+      fireEvent.pointerUp(box, { pointerId: 1 });
+      expect(screen.queryByTestId("frame-guide-vertical")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("frame-guide-horizontal")).not.toBeInTheDocument();
+    });
+
     it("右下のつまみをドラッグすると写真枠の大きさを、上のつまみをドラッグすると傾きを変えること", async () => {
       mockGetFrameTemplate.mockResolvedValue(savedTemplate);
       render(<FrameTemplateEditor accountId="user1" initialFrameTemplateNo={4} />);
@@ -239,41 +264,86 @@ describe("FrameTemplateEditor", () => {
   });
 
   describe("設定パネル", () => {
-    it("額縁のサイズを選ぶと向きを保ったまま変更し、向きを切り替えると縦横を入れ替えること", async () => {
+    it("写真用紙の判は向きを保ったまま変更し、向きを切り替えると縦横を入れ替えること", async () => {
+      mockGetFrameTemplate.mockResolvedValue(savedTemplate);
+      render(<FrameTemplateEditor accountId="user1" initialFrameTemplateNo={4} />);
+
+      const sizeSelect = await screen.findByLabelText("サイズ");
+      expect(sizeSelect).toHaveDisplayValue("四つ切（305×254mm）");
+      fireEvent.click(screen.getByLabelText("縦長"));
+      expect(sizeSelect).toHaveDisplayValue("四つ切（305×254mm）");
+      fireEvent.change(sizeSelect, { target: { value: selectValueOf(sizeSelect, "半切（432×356mm）") } });
+      expect(numberValue(/^横（mm）/)).toBe(356);
+      expect(numberValue(/^縦（mm）/)).toBe(432);
+    });
+
+    it("A判は選んだ向きのまま変更し、向きを切り替えると反対向きの選択肢になること", async () => {
       mockGetFrameTemplate.mockResolvedValue(savedTemplate);
       mockSaveFrameTemplate.mockResolvedValue({ message: "額縁テンプレートを更新しました。", frameTemplateNo: 4 });
       render(<FrameTemplateEditor accountId="user1" initialFrameTemplateNo={4} />);
 
       const sizeSelect = await screen.findByLabelText("サイズ");
-      expect(sizeSelect).toHaveDisplayValue("四つ切（305×254mm）");
-      fireEvent.change(sizeSelect, { target: { value: "6" } });
-      expect(numberValue(/^横（mm）/)).toBe(420);
-      expect(numberValue(/^縦（mm）/)).toBe(297);
-      fireEvent.click(screen.getByLabelText("縦長"));
+      fireEvent.change(sizeSelect, { target: { value: selectValueOf(sizeSelect, "A3 縦（297×420mm）") } });
       expect(numberValue(/^横（mm）/)).toBe(297);
       expect(numberValue(/^縦（mm）/)).toBe(420);
+      expect(screen.getByLabelText("縦長")).toBeChecked();
+      fireEvent.click(screen.getByLabelText("横長"));
+      expect(sizeSelect).toHaveDisplayValue("A3 横（420×297mm）");
+      fireEvent.change(sizeSelect, { target: { value: selectValueOf(sizeSelect, "A2 縦（420×594mm）") } });
+      expect(numberValue(/^横（mm）/)).toBe(420);
+      expect(numberValue(/^縦（mm）/)).toBe(594);
+      fireEvent.change(sizeSelect, { target: { value: selectValueOf(sizeSelect, "A4 縦（210×297mm）") } });
+      expect(numberValue(/^横（mm）/)).toBe(210);
+      expect(numberValue(/^縦（mm）/)).toBe(297);
 
       fireEvent.click(screen.getByRole("button", { name: "保存する" }));
       await waitFor(() => expect(mockSaveFrameTemplate).toHaveBeenCalled());
-      expect(savedDefinition().size).toEqual({ width: 297, height: 420 });
+      expect(savedDefinition().size).toEqual({ width: 210, height: 297 });
       expect(mockSaveFrameTemplate.mock.calls[0][2]).toBe(4);
     });
 
-    it("写真枠の順番を入れ替えると、写真を当てはめる順が入れ替わること", async () => {
+    it("数値の入力欄は空欄・範囲外の途中の値も入力でき、確定時に範囲内へ収めること", async () => {
       mockGetFrameTemplate.mockResolvedValue(savedTemplate);
       mockSaveFrameTemplate.mockResolvedValue({ message: "額縁テンプレートを更新しました。", frameTemplateNo: 4 });
       render(<FrameTemplateEditor accountId="user1" initialFrameTemplateNo={4} />);
 
-      fireEvent.focus(await screen.findByRole("button", { name: "写真枠2" }));
-      fireEvent.click(screen.getByRole("button", { name: "順番を前へ" }));
-      expect(screen.getByRole("heading", { name: "写真枠1" })).toBeInTheDocument();
+      // 横（mm）：消して打ち直す途中の値（空欄・最小値未満の「4」）も表示し、範囲内の「420」になった時点で反映する
+      const widthInput = (await screen.findByLabelText(/^横（mm）/)) as HTMLInputElement;
+      fireEvent.focus(widthInput);
+      fireEvent.change(widthInput, { target: { value: "" } });
+      expect(widthInput.value).toBe("");
+      fireEvent.change(widthInput, { target: { value: "4" } });
+      expect(widthInput.value).toBe("4");
+      fireEvent.change(widthInput, { target: { value: "420" } });
+      fireEvent.blur(widthInput);
+      expect(numberValue(/^横（mm）/)).toBe(420);
+
+      // 縦（mm）：範囲外の値は確定時（Enter キー）に範囲内へ収める
+      const heightInput = screen.getByLabelText(/^縦（mm）/) as HTMLInputElement;
+      fireEvent.change(heightInput, { target: { value: "10" } });
+      fireEvent.keyDown(heightInput, { key: "Enter" });
+      expect(numberValue(/^縦（mm）/)).toBe(50);
+
+      // 外枠の太さ：空欄のまま確定すると元の値に戻す
+      const borderInput = screen.getByLabelText(/^外枠の太さ/) as HTMLInputElement;
+      fireEvent.change(borderInput, { target: { value: "" } });
+      fireEvent.blur(borderInput);
+      expect(numberValue(/^外枠の太さ/)).toBe(4);
+
+      // 写真枠の傾き：マイナスの値も入力できる
+      fireEvent.focus(screen.getByRole("button", { name: "写真枠1" }));
+      const rotationInput = screen.getByLabelText(/^傾き/) as HTMLInputElement;
+      fireEvent.change(rotationInput, { target: { value: "-12.5" } });
+      fireEvent.blur(rotationInput);
+      expect(numberValue(/^傾き/)).toBe(-12.5);
 
       fireEvent.click(screen.getByRole("button", { name: "保存する" }));
       await waitFor(() => expect(mockSaveFrameTemplate).toHaveBeenCalled());
-      expect(savedDefinition().slots.map((slot) => slot.x)).toEqual([55, 5]);
+      expect(savedDefinition().size).toEqual({ width: 420, height: 50 });
+      expect(savedDefinition().slots[0].rotation).toBe(-12.5);
     });
 
-    it("メッセージ枠のフォント・太字を変更でき、確認用の文面はキャンバスに表示するが保存しないこと", async () => {
+    it("メッセージ枠のフォント・太字・斜体を変更でき、確認用の文面はキャンバスに表示するが保存しないこと", async () => {
       mockGetFrameTemplate.mockResolvedValue(savedTemplate);
       mockSaveFrameTemplate.mockResolvedValue({ message: "額縁テンプレートを更新しました。", frameTemplateNo: 4 });
       render(<FrameTemplateEditor accountId="user1" initialFrameTemplateNo={4} />);
@@ -281,12 +351,14 @@ describe("FrameTemplateEditor", () => {
       fireEvent.focus(await screen.findByRole("button", { name: "メッセージ枠1" }));
       fireEvent.change(screen.getByLabelText("フォント"), { target: { value: "script" } });
       fireEvent.click(screen.getByLabelText("太字"));
+      fireEvent.click(screen.getByLabelText("斜体"));
       fireEvent.change(screen.getByLabelText("確認用の文面"), { target: { value: "Spring has come" } });
       expect(screen.getByTestId("frame-text")).toHaveTextContent("Spring has come");
+      expect(screen.getByTestId("frame-text")).toHaveStyle({ fontWeight: "700", fontStyle: "italic" });
 
       fireEvent.click(screen.getByRole("button", { name: "保存する" }));
       await waitFor(() => expect(mockSaveFrameTemplate).toHaveBeenCalled());
-      expect(savedDefinition().texts[0]).toMatchObject({ fontFamily: "script", bold: true });
+      expect(savedDefinition().texts[0]).toMatchObject({ fontFamily: "script", bold: true, italic: true });
       expect(JSON.stringify(mockSaveFrameTemplate.mock.calls[0][1])).not.toContain("Spring has come");
     });
 

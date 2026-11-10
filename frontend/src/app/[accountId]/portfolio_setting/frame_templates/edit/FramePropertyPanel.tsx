@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import {
   FRAME_FONT_OPTIONS,
   FRAME_LIMITS,
@@ -8,6 +8,7 @@ import {
   FRAME_SIZE_PRESETS,
   FRAME_TEXT_ALIGN_OPTIONS,
   clamp,
+  findFrameSizePresetIndex,
   round,
   type FrameDefinition,
   type FrameFontFamily,
@@ -31,10 +32,30 @@ interface NumberFieldProps {
 /**
  * 数値の入力欄
  *
- * 入力途中の値（空欄等）で定義を壊さないよう、数値として解釈できた値だけを範囲内に収めて反映する。
+ * 入力中は入力された文字をそのまま表示し（空欄・範囲外の途中の値も打てるようにする）、範囲内の数値になった時点で定義に反映する。
+ * フォーカスを外すか Enter キーで確定し、範囲外の値は範囲内に収め、数値として解釈できない値は元に戻す。
  */
 function NumberField({ label, value, min, max, step = 0.1, unit, onChange }: NumberFieldProps) {
   const id = useId();
+  /**
+   * 入力中の文字と、その時点で定義に反映済みの値（入力中でなければ null とし、定義の値を表示する）。
+   * 入力中にキャンバスの操作等で値が変わった場合は、古い入力で上書きしないよう入力中の文字を捨てる
+   */
+  const [draft, setDraft] = useState<{ text: string; base: number } | null>(null);
+  const draftText = draft !== null && draft.base === value ? draft.text : null;
+
+  const commit = () => {
+    if (draftText === null) {
+      setDraft(null);
+      return;
+    }
+    const parsed = Number(draftText);
+    if (draftText.trim() !== "" && Number.isFinite(parsed)) {
+      onChange(round(clamp(parsed, min, max, value), 2));
+    }
+    setDraft(null);
+  };
+
   return (
     <div className="flex flex-col">
       <label htmlFor={id} className="text-xs text-gray-700 mb-0.5">
@@ -44,14 +65,24 @@ function NumberField({ label, value, min, max, step = 0.1, unit, onChange }: Num
       <input
         id={id}
         type="number"
-        value={value}
+        value={draftText ?? value}
         min={min}
         max={max}
         step={step}
         onChange={(e) => {
-          const parsed = Number(e.target.value);
-          if (e.target.value === "" || !Number.isFinite(parsed)) return;
-          onChange(round(clamp(parsed, min, max, value), 2));
+          const text = e.target.value;
+          const parsed = Number(text);
+          if (text.trim() !== "" && Number.isFinite(parsed) && parsed >= min && parsed <= max) {
+            const next = round(parsed, 2);
+            setDraft({ text, base: next });
+            onChange(next);
+            return;
+          }
+          setDraft({ text, base: value });
+        }}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
         }}
         className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
       />
@@ -93,8 +124,6 @@ interface FramePropertyPanelProps {
   onChangeSlot: (index: number, change: Partial<FrameSlot>) => void;
   onChangeText: (index: number, change: Partial<FrameText>) => void;
   onChangeSampleText: (index: number, value: string) => void;
-  /** 選択中の写真枠の、写真を当てはめる順を1つ前・後ろへ移す */
-  onMoveSlot: (index: number, offset: -1 | 1) => void;
   onDuplicate: (selection: FrameSelection) => void;
   onDelete: (selection: FrameSelection) => void;
 }
@@ -113,18 +142,11 @@ export function FramePropertyPanel({
   onChangeSlot,
   onChangeText,
   onChangeSampleText,
-  onMoveSlot,
   onDuplicate,
   onDelete,
 }: FramePropertyPanelProps) {
   const isPortrait = definition.size.height > definition.size.width;
-  const presetIndex = FRAME_SIZE_PRESETS.findIndex(
-    (preset) =>
-      Math.max(preset.size.width, preset.size.height) ===
-        Math.max(definition.size.width, definition.size.height) &&
-      Math.min(preset.size.width, preset.size.height) ===
-        Math.min(definition.size.width, definition.size.height)
-  );
+  const presetIndex = findFrameSizePresetIndex(definition.size);
   const sizePresetId = useId();
   const fontId = useId();
   const alignId = useId();
@@ -141,24 +163,6 @@ export function FramePropertyPanel({
         <p className="text-xs text-gray-600">
           ポートフォリオでは、表示順の{index + 1}枚目の写真がこの枠に当てはまります。
         </p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            disabled={index === 0}
-            onClick={() => onMoveSlot(index, -1)}
-            className="px-2 py-1 text-sm border rounded disabled:opacity-40"
-          >
-            順番を前へ
-          </button>
-          <button
-            type="button"
-            disabled={index === definition.slots.length - 1}
-            onClick={() => onMoveSlot(index, 1)}
-            className="px-2 py-1 text-sm border rounded disabled:opacity-40"
-          >
-            順番を後ろへ
-          </button>
-        </div>
         <div className="grid grid-cols-2 gap-2">
           <NumberField label="左" unit="%" value={slot.x} min={0} max={100} onChange={(x) => onChangeSlot(index, { x })} />
           <NumberField label="上" unit="%" value={slot.y} min={0} max={100} onChange={(y) => onChangeSlot(index, { y })} />
@@ -307,6 +311,14 @@ export function FramePropertyPanel({
           />
           太字
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={text.italic}
+            onChange={(e) => onChangeText(index, { italic: e.target.checked })}
+          />
+          斜体
+        </label>
         <ElementActions selection={selection} onDuplicate={onDuplicate} onDelete={onDelete} />
       </section>
     );
@@ -327,6 +339,10 @@ export function FramePropertyPanel({
           onChange={(e) => {
             const preset = FRAME_SIZE_PRESETS[Number(e.target.value)];
             if (!preset) return;
+            if (preset.oriented) {
+              onChangeDefinition((prev) => ({ ...prev, size: { ...preset.size } }));
+              return;
+            }
             const long = Math.max(preset.size.width, preset.size.height);
             const short = Math.min(preset.size.width, preset.size.height);
             onChangeDefinition((prev) => ({

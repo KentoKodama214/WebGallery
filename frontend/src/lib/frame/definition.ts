@@ -54,6 +54,7 @@ export interface FrameText {
   color: string;
   align: FrameTextAlign;
   bold: boolean;
+  italic: boolean;
 }
 
 /** 額縁定義 */
@@ -141,18 +142,43 @@ export const FRAME_TEXT_ALIGN_OPTIONS: { value: FrameTextAlign; label: string }[
   { value: "right", label: "右揃え" },
 ];
 
-/** 額縁のサイズの選択肢（写真展で一般的な額のサイズ。横長で持ち、縦長は縦横を入れ替える） */
-export const FRAME_SIZE_PRESETS: { label: string; size: FrameSize }[] = [
+/**
+ * 額縁のサイズの選択肢（写真展で一般的な額のサイズ）
+ *
+ * 写真用紙の判（六つ切等）は横長で持ち、縦長は縦横を入れ替える（向きは「横長・縦長」の切り替えに従う）。
+ * A判は横向き・縦向きを別の選択肢として持ち（{@code oriented}）、選んだ向きのまま使う。
+ */
+export const FRAME_SIZE_PRESETS: { label: string; size: FrameSize; oriented?: boolean }[] = [
   { label: "六つ切（254×203mm）", size: { width: 254, height: 203 } },
   { label: "四つ切（305×254mm）", size: { width: 305, height: 254 } },
   { label: "ワイド四つ切（366×254mm）", size: { width: 366, height: 254 } },
   { label: "半切（432×356mm）", size: { width: 432, height: 356 } },
   { label: "全紙（560×457mm）", size: { width: 560, height: 457 } },
-  { label: "A4（297×210mm）", size: { width: 297, height: 210 } },
-  { label: "A3（420×297mm）", size: { width: 420, height: 297 } },
-  { label: "A2（594×420mm）", size: { width: 594, height: 420 } },
+  { label: "A4 横（297×210mm）", size: { width: 297, height: 210 }, oriented: true },
+  { label: "A4 縦（210×297mm）", size: { width: 210, height: 297 }, oriented: true },
+  { label: "A3 横（420×297mm）", size: { width: 420, height: 297 }, oriented: true },
+  { label: "A3 縦（297×420mm）", size: { width: 297, height: 420 }, oriented: true },
+  { label: "A2 横（594×420mm）", size: { width: 594, height: 420 }, oriented: true },
+  { label: "A2 縦（420×594mm）", size: { width: 420, height: 594 }, oriented: true },
   { label: "正方形（300×300mm）", size: { width: 300, height: 300 } },
 ];
+
+/**
+ * 額縁のサイズに当てはまる選択肢の位置を取得する
+ *
+ * 向きを持つ選択肢（A判）は縦横が一致するものだけ、それ以外は縦横を入れ替えたものも当てはまるとする。
+ *
+ * @param size 額縁のサイズ
+ * @returns {@link FRAME_SIZE_PRESETS} 内の位置（当てはまらなければ -1）
+ */
+export function findFrameSizePresetIndex(size: FrameSize): number {
+  return FRAME_SIZE_PRESETS.findIndex((preset) =>
+    preset.oriented
+      ? preset.size.width === size.width && preset.size.height === size.height
+      : Math.max(preset.size.width, preset.size.height) === Math.max(size.width, size.height) &&
+        Math.min(preset.size.width, preset.size.height) === Math.min(size.width, size.height)
+  );
+}
 
 /**
  * フォントの選択肢から CSS の font-family を取得する
@@ -201,6 +227,7 @@ export function createText(index: number): FrameText {
     color: "#333333",
     align: "center",
     bold: false,
+    italic: false,
   };
 }
 
@@ -319,6 +346,7 @@ export function parseFrameDefinition(value: unknown): FrameDefinition {
         color: toColor(text.color, "#333333"),
         align: (alignValues.includes(text.align as string) ? text.align : "left") as FrameTextAlign,
         bold: text.bold === true,
+        italic: text.italic === true,
       })),
   };
 }
@@ -356,6 +384,7 @@ export function toFrameDefinitionJson(definition: FrameDefinition): Record<strin
       color: text.color,
       align: text.align,
       bold: text.bold,
+      italic: text.italic,
     })),
   };
 }

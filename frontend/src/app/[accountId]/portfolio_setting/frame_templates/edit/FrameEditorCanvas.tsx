@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, type KeyboardEvent, type PointerEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { FrameCanvas, frameBoxStyle } from "@/components/frame/FrameCanvas";
 import { FRAME_LIMITS, clamp, round, type FrameDefinition } from "@/lib/frame/definition";
+import { NO_GUIDES, snapMove, snapResize, type FrameGuides, type GuideBox } from "@/lib/frame/guides";
 
 /** 選択中の要素（写真枠・メッセージ枠の種類と、定義内の位置） */
 export interface FrameSelection {
@@ -58,6 +59,9 @@ const KEY_STEP_LARGE = 5;
 /** 回転の角度を 0° に吸着させる範囲（度） */
 const ROTATION_SNAP = 2;
 
+/** 枠の端・中央を補助線に吸着させる範囲（画面上の px） */
+const GUIDE_SNAP_PX = 6;
+
 /** メッセージ枠の操作用の枠の高さ（%）。メッセージ枠は高さを持たないため、文字サイズから見積もる */
 function textBoxHeight(fontSize: number, definition: FrameDefinition): number {
   // 文字サイズは額縁の横幅に対する %。台紙の縦幅に対する % に直し、1行分の行の高さ（1.5倍）にする
@@ -68,8 +72,10 @@ function textBoxHeight(fontSize: number, definition: FrameDefinition): number {
  * 額縁テンプレートの編集キャンバス
  *
  * 額縁の上に写真枠・メッセージ枠の操作用の枠を重ね、ドラッグで移動、右下のハンドルで大きさの変更、
- * 上部のハンドルで回転（Shift キーで 15° 刻み、0° 付近は吸着）ができる。選択中の要素は矢印キーで移動
- * （Shift キーで大きく移動）、Delete・Backspace キーで削除できる。写真枠には写真を当てはめる順の番号を表示する。
+ * 上部のハンドルで回転（Shift キーで 15° 刻み、0° 付近は吸着）ができる。移動・大きさの変更中は、枠の端・中央が
+ * 額縁の端・中央や他の枠の端・中央に近づくと吸着し、揃っている位置に補助線を表示する（Alt キーを押している間は吸着しない。
+ * 傾けた枠の大きさの変更は吸着しない）。選択中の要素は矢印キーで移動（Shift キーで大きく移動）、Delete・Backspace キーで
+ * 削除できる。写真枠には写真を当てはめる順の番号を表示する。
  */
 export function FrameEditorCanvas({
   definition,
@@ -80,6 +86,8 @@ export function FrameEditorCanvas({
   onDelete,
 }: FrameEditorCanvasProps) {
   const dragRef = useRef<DragState | null>(null);
+  /** ドラッグ中に表示する補助線 */
+  const [guides, setGuides] = useState<FrameGuides>(NO_GUIDES);
 
   const boxOf = (target: FrameSelection) => {
     if (target.kind === "slot") {
@@ -95,6 +103,14 @@ export function FrameEditorCanvas({
       rotation: text.rotation,
     };
   };
+
+  /** 操作中の要素以外の枠（補助線の吸着先） */
+  const otherBoxes = (target: FrameSelection): GuideBox[] => [
+    ...definition.slots.map((_, index) => ({ kind: "slot" as const, index })),
+    ...definition.texts.map((_, index) => ({ kind: "text" as const, index })),
+  ]
+    .filter((other) => other.kind !== target.kind || other.index !== target.index)
+    .map((other) => boxOf(other));
 
   const startDrag = (event: PointerEvent<HTMLElement>, target: FrameSelection, mode: DragMode) => {
     if (event.button !== 0) return;
@@ -126,10 +142,19 @@ export function FrameEditorCanvas({
     if (!drag || drag.pointerId !== event.pointerId) return;
     const dx = ((event.clientX - drag.startClientX) / drag.matWidth) * 100;
     const dy = ((event.clientY - drag.startClientY) / drag.matHeight) * 100;
+    const threshold = event.altKey
+      ? { x: 0, y: 0 }
+      : { x: (GUIDE_SNAP_PX / drag.matWidth) * 100, y: (GUIDE_SNAP_PX / drag.matHeight) * 100 };
     if (drag.mode === "move") {
+      const snapped = snapMove(
+        { x: drag.start.x + dx, y: drag.start.y + dy, width: drag.start.width, height: drag.start.height },
+        otherBoxes(drag.selection),
+        threshold
+      );
+      setGuides(snapped.guides);
       onChangeBox(drag.selection, {
-        x: round(clamp(drag.start.x + dx, 0, 100, drag.start.x)),
-        y: round(clamp(drag.start.y + dy, 0, 100, drag.start.y)),
+        x: round(clamp(snapped.x, 0, 100, drag.start.x), 2),
+        y: round(clamp(snapped.y, 0, 100, drag.start.y), 2),
       });
       return;
     }
@@ -140,13 +165,26 @@ export function FrameEditorCanvas({
       const pxY = event.clientY - drag.startClientY;
       const localX = pxX * Math.cos(radian) - pxY * Math.sin(radian);
       const localY = pxX * Math.sin(radian) + pxY * Math.cos(radian);
-      const change: FrameBoxChange = {
-        width: round(clamp(drag.start.width + (localX / drag.matWidth) * 100, FRAME_LIMITS.boxSizeMin, 100, drag.start.width)),
-      };
-      if (drag.selection.kind === "slot") {
-        change.height = round(
-          clamp(drag.start.height + (localY / drag.matHeight) * 100, FRAME_LIMITS.boxSizeMin, 100, drag.start.height)
+      const resizeHeight = drag.selection.kind === "slot";
+      let width = drag.start.width + (localX / drag.matWidth) * 100;
+      let height = resizeHeight ? drag.start.height + (localY / drag.matHeight) * 100 : drag.start.height;
+      // 傾けた枠は右端・下端が台紙の縦横と揃わないため、吸着させない
+      if (drag.start.rotation === 0) {
+        const snapped = snapResize(
+          { x: drag.start.x, y: drag.start.y, width, height },
+          otherBoxes(drag.selection),
+          threshold,
+          resizeHeight
         );
+        width = snapped.width;
+        height = snapped.height;
+        setGuides(snapped.guides);
+      }
+      const change: FrameBoxChange = {
+        width: round(clamp(width, FRAME_LIMITS.boxSizeMin, 100, drag.start.width), 2),
+      };
+      if (resizeHeight) {
+        change.height = round(clamp(height, FRAME_LIMITS.boxSizeMin, 100, drag.start.height), 2);
       }
       onChangeBox(drag.selection, change);
       return;
@@ -168,6 +206,7 @@ export function FrameEditorCanvas({
   const endDrag = (event: PointerEvent<HTMLElement>) => {
     if (dragRef.current?.pointerId === event.pointerId) {
       dragRef.current = null;
+      setGuides(NO_GUIDES);
     }
   };
 
@@ -296,6 +335,24 @@ export function FrameEditorCanvas({
             </div>
           );
         })}
+        {guides.vertical.map((position) => (
+          <span
+            key={`vertical-${position}`}
+            aria-hidden="true"
+            data-testid="frame-guide-vertical"
+            className="absolute top-0 bottom-0 border-l border-dashed border-pink-500 pointer-events-none"
+            style={{ left: `${position}%`, zIndex: 3 }}
+          />
+        ))}
+        {guides.horizontal.map((position) => (
+          <span
+            key={`horizontal-${position}`}
+            aria-hidden="true"
+            data-testid="frame-guide-horizontal"
+            className="absolute left-0 right-0 border-t border-dashed border-pink-500 pointer-events-none"
+            style={{ top: `${position}%`, zIndex: 3 }}
+          />
+        ))}
       </FrameCanvas>
     </div>
   );

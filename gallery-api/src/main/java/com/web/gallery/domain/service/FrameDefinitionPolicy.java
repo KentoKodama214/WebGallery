@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
  *       borderWidth}（枠線。額縁の横幅に対する%）・{@code shadow}（影）
  *   <li>{@code texts}（任意）：メッセージ枠の一覧。{@code x}・{@code y}・{@code width}（額縁に対する%）・{@code rotation}・
  *       {@code fontFamily}（フォント）・{@code fontSize}（額縁の横幅に対する%）・{@code color}・{@code
- *       align}（揃え）・{@code bold}（太字）
+ *       align}（揃え）・{@code bold}（太字）・{@code italic}（斜体）
  * </ul>
  *
  * <p>位置・大きさを額縁に対する%で持つことで、表示する画面の幅によらず同じ比率で描画できるようにする。 写真は表示順に写真枠へ割り当て、メッセージの文面はポートフォリオごとに入力する
@@ -66,7 +66,17 @@ public class FrameDefinitionPolicy {
       Set.of("x", "y", "width", "height", "rotation", "borderColor", "borderWidth", "shadow");
 
   private static final Set<String> TEXT_KEYS =
-      Set.of("x", "y", "width", "rotation", "fontFamily", "fontSize", "color", "align", "bold");
+      Set.of(
+          "x",
+          "y",
+          "width",
+          "rotation",
+          "fontFamily",
+          "fontSize",
+          "color",
+          "align",
+          "bold",
+          "italic");
 
   private static final Pattern COLOR_PATTERN = Pattern.compile("^#[0-9a-fA-F]{6}$");
 
@@ -204,7 +214,8 @@ public class FrameDefinitionPolicy {
         && isOptionalColor(textMap.get("color"))
         && (textMap.get("align") == null
             || textMap.get("align") instanceof String align && TEXT_ALIGNS.contains(align))
-        && isOptionalBoolean(textMap.get("bold"));
+        && isOptionalBoolean(textMap.get("bold"))
+        && isOptionalBoolean(textMap.get("italic"));
   }
 
   /**
