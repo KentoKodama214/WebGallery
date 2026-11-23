@@ -1,9 +1,17 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getPasskeyAuthenticationOptions } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import type { User } from "@/lib/auth/AuthProvider";
+import {
+  PasskeyCancelledError,
+  getPasskeyCredential,
+  isConditionalMediationAvailable,
+  isPasskeySupported,
+} from "@/lib/auth/passkey";
 import { safeRedirectPath } from "@/lib/url";
 
 /** ライブラリ等の外部購読はないため、購読関数は何もしない */
@@ -17,8 +25,19 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
+  const { login, loginWithPasskey } = useAuth();
   const router = useRouter();
+  // ユーザー名欄のオートフィルからパスキーを選べるようにする待機（Conditional UI）の中止用
+  const conditionalAbortRef = useRef<AbortController | null>(null);
+
+  // パスキー非対応のブラウザ（WebAuthn 非対応・非安全なコンテキスト）ではボタンを出さない。
+  // SSR/ハイドレーション時は false を返して不整合を避ける。
+  const passkeySupported = useSyncExternalStore(
+    subscribeNoop,
+    () => isPasskeySupported(),
+    () => false
+  );
 
   // アカウント削除完了後にこの画面へ退避してきた場合の通知（?deleted=1）。
   // クエリはクライアントでのみ参照し、SSR/ハイドレーション時は false を返して不整合を避ける。
@@ -29,6 +48,90 @@ export function LoginForm() {
   );
 
   /**
+   * ログイン後の画面へ遷移する
+   *
+   * 遷移先アカウントIDは入力値ではなくトークンの sub を採用し、セッション復元経路（AuthProvider）と揃える
+   */
+  const redirectAfterLogin = useCallback(
+    (loggedInUser: User | undefined, fallbackAccountId: string) => {
+      const targetAccountId = loggedInUser?.accountId ?? fallbackAccountId;
+      const redirect =
+        typeof window !== "undefined"
+          ? safeRedirectPath(new URLSearchParams(window.location.search).get("redirect"))
+          : null;
+      router.push(redirect ?? `/photo/${targetAccountId}/photo_list`);
+    },
+    [router]
+  );
+
+  /**
+   * 認証器が返した認証レスポンスでログインし、ログイン後の画面へ遷移する
+   *
+   * @param credential 認証レスポンス（`PublicKeyCredential#toJSON()` の形式の JSON 文字列）
+   */
+  const completePasskeyLogin = useCallback(
+    async (credential: string) => {
+      setError("");
+      setIsPasskeyLoading(true);
+      try {
+        const loggedInUser = await loginWithPasskey(credential);
+        redirectAfterLogin(loggedInUser, "");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "パスキーによる認証に失敗しました");
+      } finally {
+        setIsPasskeyLoading(false);
+      }
+    },
+    [loginWithPasskey, redirectAfterLogin]
+  );
+
+  // 対応ブラウザでは、ユーザー名欄のオートフィル候補にパスキーを表示する（Conditional UI）。
+  // 選ばれるまで待機し続けるため、画面を離れる・ボタン操作に切り替える際は中止する
+  useEffect(() => {
+    if (!passkeySupported) return;
+    const controller = new AbortController();
+    conditionalAbortRef.current = controller;
+    (async () => {
+      if (!(await isConditionalMediationAvailable()) || controller.signal.aborted) return;
+      let credential: string;
+      try {
+        const options = await getPasskeyAuthenticationOptions();
+        credential = await getPasskeyCredential(options, {
+          conditional: true,
+          signal: controller.signal,
+        });
+      } catch {
+        // 待ち受けの開始・中止・キャンセルの失敗は表示しない。利用者はまだ何も操作しておらず、
+        // ボタンやパスワードでのログインはそのまま使えるため（パスキーが選ばれた後の失敗のみ表示する）
+        return;
+      }
+      if (controller.signal.aborted) return;
+      await completePasskeyLogin(credential);
+    })();
+    return () => controller.abort();
+  }, [passkeySupported, completePasskeyLogin]);
+
+  /**
+   * 「パスキーでログイン」ボタン
+   */
+  const handlePasskeyLogin = async () => {
+    // オートフィル待ちが残っていると新しいパスキー要求が拒否されるため、先に中止する
+    conditionalAbortRef.current?.abort();
+    setError("");
+    let credential: string;
+    try {
+      const options = await getPasskeyAuthenticationOptions();
+      credential = await getPasskeyCredential(options, { conditional: false, signal: undefined });
+    } catch (err) {
+      // 利用者自身によるキャンセルは失敗として表示しない
+      if (err instanceof PasskeyCancelledError) return;
+      setError(err instanceof Error ? err.message : "パスキーによる認証に失敗しました");
+      return;
+    }
+    await completePasskeyLogin(credential);
+  };
+
+  /**
    * ログイン
    */
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,15 +140,8 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      // ログイン後の遷移先アカウントIDは入力値ではなくトークンの sub を採用し、
-      // セッション復元経路（AuthProvider）と揃える
       const loggedInUser = await login(accountId, password);
-      const targetAccountId = loggedInUser?.accountId ?? accountId;
-      const redirect =
-        typeof window !== "undefined"
-          ? safeRedirectPath(new URLSearchParams(window.location.search).get("redirect"))
-          : null;
-      router.push(redirect ?? `/photo/${targetAccountId}/photo_list`);
+      redirectAfterLogin(loggedInUser, accountId);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -93,7 +189,8 @@ export function LoginForm() {
             name="username"
             placeholder="User ID"
             autoFocus
-            autoComplete="username"
+            // "webauthn" を付けると、対応ブラウザでオートフィル候補にパスキーが並ぶ（Conditional UI）
+            autoComplete="username webauthn"
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             className="block w-full p-[15px_10px] mb-[10px] border border-[#ddd] rounded-sm text-[#444] transition-all duration-200 outline-none focus:border-[#2196F3] focus:border-l-[35px]"
@@ -122,13 +219,24 @@ export function LoginForm() {
             </p>
           )}
 
+          {passkeySupported && (
+            <button
+              type="button"
+              onClick={handlePasskeyLogin}
+              disabled={isLoading || isPasskeyLoading}
+              className="block w-full p-[10px] mt-[10px] mb-[10px] border border-[#1565C0] rounded-sm text-[#1565C0] bg-white cursor-pointer transition-all duration-100 hover:bg-[#E3F2FD] disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isPasskeyLoading ? "認証しています…" : "パスキーでログイン"}
+            </button>
+          )}
+
           <Link href="/register" className="text-[0.8em] text-[#1565C0] no-underline">
             Create an account
           </Link>
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isPasskeyLoading}
             className="absolute left-0 bottom-0 w-full h-[60px] max-h-[60px] bg-[#1565C0] text-white border-none border-b-[7px] border-b-[rgba(0,0,0,0.1)] rounded-b-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#1565C0] focus:border-b-[4px] disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {isLoading ? (

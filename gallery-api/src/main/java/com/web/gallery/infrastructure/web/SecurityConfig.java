@@ -184,6 +184,10 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(ApiRoutes.API_AUTH_LOGOUT)
                 .permitAll()
+                .requestMatchers(ApiRoutes.API_AUTH_PASSKEY_OPTIONS)
+                .permitAll()
+                .requestMatchers(ApiRoutes.API_AUTH_PASSKEY_LOGIN)
+                .permitAll()
                 // アカウント登録（POST）とアカウント一覧（GET）は公開
                 .requestMatchers(HttpMethod.GET, ApiRoutes.API_ACCOUNTS)
                 .permitAll()

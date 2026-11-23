@@ -37,6 +37,17 @@ insert into common.refresh_token values(DEFAULT, 2, 'hash-account2', now() + int
 insert into common.login_history (login_history_no, account_no, ip_address, country, region, created_by, created_at) values (1, 1, '198.51.100.1', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
 ALTER SEQUENCE common.login_history_login_history_no_seq RESTART 2;
 
+-- common.passkey_user_handle / common.passkey_credential (account_no=1・account_no=2それぞれのパスキー)
+insert into common.passkey_user_handle (account_no, user_handle, created_by, created_at) values (1, 'handle-account1', 1, now());
+insert into common.passkey_user_handle (account_no, user_handle, created_by, created_at) values (2, 'handle-account2', 2, now());
+insert into common.passkey_credential (account_no, credential_id, attested_credential_data, sign_count, transports, is_backup_eligible, is_backed_up, is_uv_initialized, passkey_name, last_used_at, created_by, created_at, updated_by, updated_at) values (1, 'credential-account1', '\x01'::bytea, 0, 'internal', true, true, true, 'account1のパスキー', now(), 1, now(), 1, now());
+insert into common.passkey_credential (account_no, credential_id, attested_credential_data, sign_count, transports, is_backup_eligible, is_backed_up, is_uv_initialized, passkey_name, last_used_at, created_by, created_at, updated_by, updated_at) values (2, 'credential-account2', '\x02'::bytea, 0, 'internal', true, true, true, 'account2のパスキー', now(), 2, now(), 2, now());
+
+-- common.webauthn_challenge（account_no=1の登録用チャレンジの残骸・未ログインで発行された認証用チャレンジ）
+-- 外部キーを持たないため削除漏れがFK違反にならない。退会者の登録用チャレンジだけが消え、認証用（account_no=0）は残ることを検証する
+insert into common.webauthn_challenge (challenge, purpose_kbn, account_no, expires_at, created_by, created_at) values ('challenge-account1', 'registration', 1, now() + interval '5 minutes', 1, now());
+insert into common.webauthn_challenge (challenge, purpose_kbn, account_no, expires_at, created_by, created_at) values ('challenge-anonymous', 'authentication', 0, now() + interval '5 minutes', 0, now());
+
 -- photo.photo_list_filter_log
 -- 自分のギャラリーに対する絞り込みログ（photo_account_no=1 なので削除される）
 insert into photo.photo_list_filter_log (photo_list_filter_log_no, photo_account_no, account_no, direction_kbn, is_favorite, tag_list, sort_by, referer, ip_address, country, region, created_by, created_at) values (1, 1, 1, 'vertical', true, '太陽,海', 'favorite', 'https://example.com/', '198.51.100.1', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');

@@ -26,6 +26,7 @@ import {
   isPastDate,
 } from "@/lib/validation";
 import { ModalDialog } from "@/components/ui/ModalDialog";
+import { PasskeySection } from "./PasskeySection";
 
 /** 再認証（現在のパスワード）に連続して失敗した場合に操作を一時停止する回数 */
 const REAUTH_MAX_ATTEMPTS = 3;
@@ -674,6 +675,8 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               )}
             </button>
           </form>
+
+          <PasskeySection accountId={accountId} />
 
           <div className="mt-6 bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-5">
             <p className="text-[#444] text-sm mb-3">アカウントを削除すると、登録した写真やお気に入りはすべて削除され、復旧できなくなります。</p>

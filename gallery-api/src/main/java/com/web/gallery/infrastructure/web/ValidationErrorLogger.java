@@ -13,9 +13,13 @@ import org.springframework.validation.FieldError;
  */
 public final class ValidationErrorLogger {
 
-  /** 入力値をマスクして出力する機微フィールド名 */
+  /**
+   * 入力値をマスクして出力する機微フィールド名
+   *
+   * <p>{@code credential}（パスキーの登録・認証レスポンス）は資格情報そのものではないが、署名を含み最大数十KBに なりうるため、ログの肥大化を避ける目的でマスクする
+   */
   private static final Set<String> SENSITIVE_FIELD_NAMES =
-      Set.of("password", "newPassword", "currentPassword");
+      Set.of("password", "newPassword", "currentPassword", "credential");
 
   /** マスク後の表示文字列 */
   private static final String MASKED_VALUE = "***";

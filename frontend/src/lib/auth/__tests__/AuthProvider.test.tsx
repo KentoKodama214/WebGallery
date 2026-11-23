@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "../AuthProvider";
 // APIクライアントのモック
 jest.mock("@/lib/api/client", () => ({
   login: jest.fn(),
+  loginWithPasskey: jest.fn(),
   logout: jest.fn(),
   refresh: jest.fn(),
   getAccessToken: jest.fn(),
@@ -39,7 +40,7 @@ function createTestJwt(
 }
 
 function TestComponent() {
-  const { user, isAuthenticated, isLoading, login, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, login, loginWithPasskey, logout } = useAuth();
 
   return (
     <div>
@@ -48,6 +49,9 @@ function TestComponent() {
       <p data-testid="user">{user?.accountId || "null"}</p>
       <button onClick={() => login("testuser1", "password1").catch(() => {})}>
         Login
+      </button>
+      <button onClick={() => loginWithPasskey('{"id":"cred"}').catch(() => {})}>
+        PasskeyLogin
       </button>
       <button onClick={() => logout()}>Logout</button>
     </div>
@@ -282,6 +286,51 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
       expect(screen.getByTestId("user")).toHaveTextContent("testuser1");
     });
+  });
+
+  it("パスキーでのログイン成功時に、トークン由来のユーザー情報が設定されること", async () => {
+    mockedApiClient.loginWithPasskey.mockResolvedValue({
+      accessToken: "token",
+      expiresIn: 900,
+    });
+    mockedApiClient.getAccessToken.mockReturnValue(createTestJwt("testuser1", 1));
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(screen.getByTestId("loading")).toHaveTextContent("false"));
+
+    await user.click(screen.getByText("PasskeyLogin"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
+      expect(screen.getByTestId("user")).toHaveTextContent("testuser1");
+    });
+    expect(mockedApiClient.loginWithPasskey).toHaveBeenCalledWith('{"id":"cred"}');
+  });
+
+  it("パスキーでのログインで発行トークンを解釈できない場合は失敗となり認証状態がクリアされること", async () => {
+    mockedApiClient.loginWithPasskey.mockResolvedValue({
+      accessToken: "invalid",
+      expiresIn: 900,
+    });
+    mockedApiClient.getAccessToken.mockReturnValue("invalid-token");
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+    await waitFor(() => expect(screen.getByTestId("loading")).toHaveTextContent("false"));
+
+    await user.click(screen.getByText("PasskeyLogin"));
+
+    await waitFor(() => expect(mockedApiClient.clearAuthState).toHaveBeenCalled());
+    expect(screen.getByTestId("authenticated")).toHaveTextContent("false");
   });
 
   it("ログアウト時にユーザー情報がクリアされること", async () => {

@@ -30,7 +30,7 @@ test.describe("アカウント設定の再認証クールダウン（現在の�
 
       for (let i = 0; i < 3; i++) {
         await page.getByLabel("現在のパスワード").fill("WrongPass999");
-        await page.getByRole("button", { name: "登録" }).click();
+        await page.getByRole("button", { name: "登録", exact: true }).click();
 
         await expect(
           page.getByRole("alert").filter({ hasText: "現在のパスワードが正しくありません" })
@@ -42,7 +42,7 @@ test.describe("アカウント設定の再認証クールダウン（現在の�
           hasText: "現在のパスワードの確認に連続して失敗しました。しばらく待ってから再度お試しください。",
         })
       ).toBeVisible();
-      await expect(page.getByRole("button", { name: "登録" })).toBeDisabled();
+      await expect(page.getByRole("button", { name: "登録", exact: true })).toBeDisabled();
     });
 
     await test.step("クールダウン中は、パスワード変更と共有される再認証カウンタによりアカウント削除の実行ボタンも無効化されること", async () => {
@@ -90,7 +90,7 @@ test.describe("アカウント設定の再認証クールダウン（現在の�
 
       await page.getByLabel("新しいパスワード").fill(newPassword);
       await page.getByLabel("現在のパスワード").fill(TEST_USER_PASSWORD);
-      await page.getByRole("button", { name: "登録" }).click();
+      await page.getByRole("button", { name: "登録", exact: true }).click();
 
       await expect(page).toHaveURL(/\/login(\?|$)/, { timeout: 10000 });
     });

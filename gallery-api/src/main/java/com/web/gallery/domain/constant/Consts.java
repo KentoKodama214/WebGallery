@@ -3,6 +3,7 @@ package com.web.gallery.domain.constant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 
 /** デフォルト値を管理するクラス */
 public final class Consts {
@@ -88,4 +89,34 @@ public final class Consts {
 
   /** ポートフォリオのテンプレート設定・写真設定のJSON構造の現行バージョン */
   public static final int PORTFOLIO_SETTINGS_VERSION = 1;
+
+  /** 1アカウントに登録できるパスキー数の上限 */
+  public static final int PASSKEY_MAX_COUNT = 10;
+
+  /** パスキー名の最大文字数（アノテーション属性で参照するためint型で定義する） */
+  public static final int PASSKEY_NAME_MAX_LENGTH = 50;
+
+  /**
+   * パスキーの登録・認証レスポンスJSONの最大文字数（アノテーション属性で参照するためint型で定義する）
+   *
+   * <p>クレデンシャルIDは最大1023バイト、公開鍵・attestationを含めても通常は数KBに収まるため、余裕を持たせた上限とする
+   */
+  public static final int PASSKEY_RESPONSE_JSON_MAX_LENGTH = 32768;
+
+  /** WebAuthnチャレンジの乱数のバイト数（W3C WebAuthnの推奨は16バイト以上） */
+  public static final int WEBAUTHN_CHALLENGE_BYTES = 32;
+
+  /** パスキーのユーザーハンドル（WebAuthnのuser.id）の乱数のバイト数（仕様上の上限は64バイト） */
+  public static final int PASSKEY_USER_HANDLE_BYTES = 32;
+
+  /**
+   * パスキーで受け付ける公開鍵の署名アルゴリズム（COSEアルゴリズム識別子、優先順）
+   *
+   * <p>-7=ES256（ほぼすべての認証器が対応）、-8=EdDSA（一部のセキュリティキー）、-257=RS256（Windows Hello等）。
+   * 登録オプション（pubKeyCredParams）と登録レスポンスの検証の双方でこの一覧を使う
+   */
+  public static final List<Long> PASSKEY_PUBLIC_KEY_ALGORITHMS = List.of(-7L, -8L, -257L);
+
+  /** 認証前でアカウントが未確定であることを表すアカウント番号（WebAuthnの認証用チャレンジで使用する） */
+  public static final long ACCOUNT_NO_UNKNOWN = 0L;
 }

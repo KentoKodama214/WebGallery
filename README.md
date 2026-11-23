@@ -163,10 +163,11 @@ just db-up
 | `MINI_USER_UPPER_LIMIT` / `NORMAL_USER_UPPER_LIMIT` | 権限別の写真登録上限 | `10` / `1000` |
 | `MINI_USER_PORTFOLIO_UPPER_LIMIT` / `NORMAL_USER_PORTFOLIO_UPPER_LIMIT` | 権限別のポートフォリオ作成数上限（下書きを含む。special-user・administratorは上限なし） | `3` / `10` |
 | `RATE_LIMIT_ENABLED` | 送信元IP別レート制限の有効化（`test`・E2E は無効） | `true` |
-| `RATE_LIMIT_AUTH_CAPACITY` / `RATE_LIMIT_AUTH_WINDOW_SECONDS` | ログインのしきい値（回数 / ウィンドウ秒） | `30` / `60` |
+| `RATE_LIMIT_AUTH_CAPACITY` / `RATE_LIMIT_AUTH_WINDOW_SECONDS` | ログイン（パスワード・パスキー）とパスキー認証オプション発行のしきい値（回数 / ウィンドウ秒） | `30` / `60` |
 | `RATE_LIMIT_REGISTER_CAPACITY` / `RATE_LIMIT_REGISTER_WINDOW_SECONDS` | アカウント登録のしきい値 | `10` / `3600` |
 | `RATE_LIMIT_GENERAL_CAPACITY` / `RATE_LIMIT_GENERAL_WINDOW_SECONDS` | その他 `/api/**` のしきい値 | `300` / `60` |
-| `FRONTEND_ORIGIN` | CORS 許可オリジン（1 値のみ。`prod` では `https://` 必須） | `http://localhost:3000` |
+| `FRONTEND_ORIGIN` | CORS 許可オリジン、およびパスキーの登録・認証を許可する origin（1 値のみ。`prod` では `https://` 必須） | `http://localhost:3000` |
+| `WEBAUTHN_RP_ID` | パスキーを紐づけるドメイン（`app.webauthn.rp-id`。スキーム・ポートなし。`FRONTEND_ORIGIN` のホストと一致するかその親ドメイン）。**本番では必須**（未設定・`localhost`・IP アドレスは起動時に失敗） | `local`：`localhost` / `development`・`prod`：**設定必須** |
 | `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現（`app.forwarded.trusted-proxies`）。**本番では必須。ALB のサブネット CIDR に狭める**（未設定・空文字・広すぎる値は `ProdConfigValidationRunner` が起動時に検出して失敗させる） | 非 `prod`：ループバック＋RFC1918 / `prod`：**空（設定必須）** |
 
 > **IntelliJ IDEA で起動する場合**

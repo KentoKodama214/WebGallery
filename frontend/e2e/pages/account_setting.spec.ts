@@ -77,7 +77,7 @@ authTest.describe("アカウント設定ページ（ログイン済み・本人�
         await authExpect(page.getByLabel("アカウント名")).toHaveValue("E2E Auth User");
 
         await page.getByLabel("アカウント名").fill("E2E Server Error Update");
-        await page.getByRole("button", { name: "登録" }).click();
+        await page.getByRole("button", { name: "登録", exact: true }).click();
 
         // 5xx応答時はレスポンス本文のメッセージを使わず、固定のフォールバック文言を表示する仕様
         // （frontend/src/lib/api/client.ts の readErrorMessage）

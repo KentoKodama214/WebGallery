@@ -8,6 +8,7 @@ TRUNCATE TABLE
 	common.inquiry_reply_mst,
 	common.inquiry_mst,
 	common.refresh_token,
+	common.webauthn_challenge,
 	common.location_mst,
 	common.account,
 	common.kbn_mst

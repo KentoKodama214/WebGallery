@@ -39,3 +39,9 @@ app:
   cors:
     allowed-origins:
       - ${FRONTEND_ORIGIN}
+  webauthn:
+    # パスキーを紐づけるドメイン（例: gallery.example.com）。本番ではフロントエンドの公開ドメインを必ず設定する。
+    # 空文字を既定値にしているのは、設定漏れを ProdConfigValidationRunner の運用者向けメッセージで伝えるため
+    rp-id: ${WEBAUTHN_RP_ID:}
+    allowed-origins:
+      - ${FRONTEND_ORIGIN}

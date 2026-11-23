@@ -93,6 +93,20 @@ export async function deleteE2eTestAccounts(): Promise<void> {
       `DELETE FROM common.login_history
         WHERE account_no IN (SELECT account_no FROM target_accounts)`
     );
+    // パスキー関連。webauthn_challenge は認証用チャレンジで account_no=0 を取るため外部キーを持たないが、
+    // 登録用チャレンジの残骸が残らないよう併せて削除する
+    await client.query(
+      `DELETE FROM common.passkey_credential
+        WHERE account_no IN (SELECT account_no FROM target_accounts)`
+    );
+    await client.query(
+      `DELETE FROM common.passkey_user_handle
+        WHERE account_no IN (SELECT account_no FROM target_accounts)`
+    );
+    await client.query(
+      `DELETE FROM common.webauthn_challenge
+        WHERE account_no IN (SELECT account_no FROM target_accounts)`
+    );
     await client.query(
       `DELETE FROM common.location_mst
         WHERE account_no IN (SELECT account_no FROM target_accounts)`

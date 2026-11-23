@@ -16,7 +16,10 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=()",
+    // パスキー（WebAuthn）の作成・利用は自オリジンのみに許可する（iframe 等に埋め込まれた他オリジンからは使わせない）。
+    // 既定値も self だが、意図を明示しておく
+    value:
+      "camera=(), microphone=(), geolocation=(), publickey-credentials-create=(self), publickey-credentials-get=(self)",
   },
   // HSTS は HTTPS 配信される本番のみ付与する
   ...(isDev

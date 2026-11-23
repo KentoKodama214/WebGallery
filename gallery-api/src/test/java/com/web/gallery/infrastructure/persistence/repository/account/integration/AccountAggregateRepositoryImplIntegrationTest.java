@@ -106,6 +106,30 @@ public class AccountAggregateRepositoryImplIntegrationTest {
               "SELECT COUNT(*) FROM common.login_history where account_no=1", Integer.class);
       assertEquals(0, loginHistoryCount);
 
+      // パスキー・ユーザーハンドルが削除され、account_no=2のものは残っていること
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.passkey_credential where account_no=1", Integer.class));
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.passkey_user_handle where account_no=1", Integer.class));
+      assertEquals(
+          1,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.passkey_credential where account_no=2", Integer.class));
+
+      // 退会者の登録用チャレンジの残骸は削除され、未ログインで発行された認証用チャレンジ（account_no=0）は残ること
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.webauthn_challenge where account_no=1", Integer.class));
+      assertEquals(
+          1,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.webauthn_challenge where account_no=0", Integer.class));
+
       // 写真一覧絞り込みログが削除されたことを確認
       Integer photoListFilterLogCount =
           jdbcTemplate.queryForObject(
@@ -397,6 +421,7 @@ public class AccountAggregateRepositoryImplIntegrationTest {
           	common.inquiry_reply_mst,
           	common.inquiry_mst,
           	common.refresh_token,
+          	common.webauthn_challenge,
           	common.location_mst,
           	common.account,
           	common.kbn_mst

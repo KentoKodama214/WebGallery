@@ -52,6 +52,11 @@ public final class MessageConst {
   public static final String ERR_REFRESH_TOKEN_EXPIRED = "リフレッシュトークンの有効期限が切れています。";
   public static final String ERR_BAD_CREDENTIALS = "アカウントIDまたはパスワードが間違っています。";
   public static final String ERR_ACCOUNT_LOCKED = "アカウントがロックされています。";
+  public static final String ERR_PASSKEY_AUTHENTICATION_FAILED = "パスキーによる認証に失敗しました。";
+  public static final String ERR_PASSKEY_NOT_FOUND = "パスキーが存在しません。";
+  public static final String ERR_INVALID_PASSKEY_REGISTRATION = "パスキーの登録に失敗しました。もう一度お試しください。";
+  public static final String ERR_DUPLICATE_PASSKEY = "このパスキーは既に登録されています。";
+  public static final String ERR_REACHED_PASSKEY_LIMIT = "パスキーの登録数が上限に達しています。";
   public static final String ERR_IMAGE_FILE_REQUIRED = "新規登録時は画像ファイルの指定が必須です。";
   public static final String ERR_UNSUPPORTED_IMAGE_CONTENT_TYPE = "許可されていないファイル形式です。";
   public static final String ERR_INVALID_IMAGE_SIGNATURE = "画像ファイルの内容が不正です。";

@@ -23,6 +23,12 @@ public final class ApiRoutes {
   /** 認証ログアウトAPI */
   public static final String API_AUTH_LOGOUT = API_AUTH_PREFIX + "/logout";
 
+  /** パスキー認証オプション発行API（POST=チャレンジ等の発行。未ログインで呼び出す） */
+  public static final String API_AUTH_PASSKEY_OPTIONS = API_AUTH_PREFIX + "/passkey/options";
+
+  /** パスキーログインAPI（POST=認証レスポンスの検証とトークン発行） */
+  public static final String API_AUTH_PASSKEY_LOGIN = API_AUTH_PREFIX + "/passkey/login";
+
   // アカウント関連
   /** アカウントAPI（POST=登録） */
   public static final String API_ACCOUNTS = API_PREFIX + "/accounts";
@@ -40,6 +46,30 @@ public final class ApiRoutes {
 
   /** ロケーション一覧API（GET=本人のロケーションマスタ一覧取得） */
   public static final String API_LOCATIONS = API_ACCOUNT + "/locations";
+
+  /** パスキー一覧・登録API（GET=本人のパスキー一覧取得、POST=登録レスポンスの検証と登録） */
+  public static final String API_PASSKEYS = API_ACCOUNT + "/passkeys";
+
+  /**
+   * パスキー登録オプション発行API（POST=現在のパスワードによる再認証のうえチャレンジ等を発行）
+   *
+   * <p>本人確認情報をリクエストボディで受け取るため、GETではなくPOSTとする
+   */
+  public static final String API_PASSKEY_REGISTRATION_OPTIONS =
+      API_PASSKEYS + "/registration-options";
+
+  /** パスキー番号 */
+  public static final String PASSKEY_NO = "{passkeyNo}";
+
+  /** 個別パスキーAPI（PUT=パスキー名の変更） */
+  public static final String API_PASSKEY = API_PASSKEYS + "/" + PASSKEY_NO;
+
+  /**
+   * パスキー削除API（POST=現在のパスワードによる再認証のうえ削除）
+   *
+   * <p>アカウント削除APIと同じく、本人確認情報をリクエストボディで受け取るためPOSTのサブリソースとする
+   */
+  public static final String API_PASSKEY_DELETION = API_PASSKEY + "/deletion";
 
   /** 写真アカウントID */
   public static final String PHOTO_ACCOUNT_ID = "{photoAccountId}";

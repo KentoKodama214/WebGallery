@@ -23,7 +23,7 @@ test.describe("アカウント設定の更新（プロフィール変更〜パ�
     await test.step("アカウント名を変更して保存すると完了モーダルが表示され、リロード後も反映されていること", async () => {
       await page.goto(`/${accountId}/account_setting`);
       await page.getByLabel("アカウント名").fill(updatedAccountName);
-      await page.getByRole("button", { name: "登録" }).click();
+      await page.getByRole("button", { name: "登録", exact: true }).click();
 
       await expect(page.getByRole("dialog", { name: "アカウント更新完了" })).toBeVisible({
         timeout: 10000,
@@ -36,7 +36,7 @@ test.describe("アカウント設定の更新（プロフィール変更〜パ�
 
     await test.step("現在のパスワードを入力せずに新しいパスワードだけ入力すると検証エラーが表示されること", async () => {
       await page.getByLabel("新しいパスワード").fill(newPassword);
-      await page.getByRole("button", { name: "登録" }).click();
+      await page.getByRole("button", { name: "登録", exact: true }).click();
 
       await expect(page.getByText("現在のパスワードを入力してください")).toBeVisible();
       // クライアント側検証で送信されないため、プロフィール変更ページに留まる
@@ -45,7 +45,7 @@ test.describe("アカウント設定の更新（プロフィール変更〜パ�
 
     await test.step("誤った現在のパスワードでパスワード変更しようとするとエラーが表示されること", async () => {
       await page.getByLabel("現在のパスワード").fill("WrongPass999");
-      await page.getByRole("button", { name: "登録" }).click();
+      await page.getByRole("button", { name: "登録", exact: true }).click();
 
       await expect(
         page.getByRole("alert").filter({ hasText: "現在のパスワードが正しくありません" })
@@ -55,7 +55,7 @@ test.describe("アカウント設定の更新（プロフィール変更〜パ�
 
     await test.step("正しい現在のパスワードでパスワードを変更すると、ログインページへ遷移すること", async () => {
       await page.getByLabel("現在のパスワード").fill(TEST_USER_PASSWORD);
-      await page.getByRole("button", { name: "登録" }).click();
+      await page.getByRole("button", { name: "登録", exact: true }).click();
 
       await expect(page).toHaveURL(/\/login(\?|$)/, { timeout: 10000 });
     });

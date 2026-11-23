@@ -7,18 +7,29 @@ import static org.mockito.Mockito.*;
 import com.web.gallery.application.aggregate.Account;
 import com.web.gallery.application.config.AccountConfig;
 import com.web.gallery.application.config.LoginConfig;
+import com.web.gallery.application.config.WebAuthnConfig;
 import com.web.gallery.application.helper.GeoIpResolver;
+import com.web.gallery.application.helper.WebAuthnVerifier;
 import com.web.gallery.application.model.account.AccountGetModel;
 import com.web.gallery.application.model.account.AccountListGetModel;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.account.AccountModelList;
 import com.web.gallery.application.model.account.AccountPageModel;
 import com.web.gallery.application.model.account.LoginHistoryModel;
+import com.web.gallery.application.model.auth.LoginContextModel;
+import com.web.gallery.application.model.auth.PasskeyAttestationModel;
+import com.web.gallery.application.model.auth.PasskeyCredentialModel;
+import com.web.gallery.application.model.auth.PasskeyCredentialModelList;
+import com.web.gallery.application.model.auth.PasskeyRegistrationOptionsModel;
+import com.web.gallery.application.model.auth.WebAuthnChallengeModel;
 import com.web.gallery.application.model.common.KbnMstModelList;
 import com.web.gallery.application.model.photo.PhotoNoList;
 import com.web.gallery.application.repository.photo.FileRepository;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
+import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.enumeration.LoginMethodEnum;
+import com.web.gallery.domain.enumeration.WebAuthnChallengePurposeEnum;
 import com.web.gallery.domain.event.AccountAuthorityChangedEvent;
 import com.web.gallery.domain.event.AccountDeletedEvent;
 import com.web.gallery.domain.event.AccountLockedEvent;
@@ -29,6 +40,8 @@ import com.web.gallery.domain.event.PhotoDeletedEvent;
 import com.web.gallery.domain.exception.BadRequestException;
 import com.web.gallery.domain.exception.ForbiddenAccountException;
 import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.PasskeyNotFoundException;
+import com.web.gallery.domain.exception.PasskeyVerificationException;
 import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.exception.UpdateFailureException;
 import com.web.gallery.domain.model.account.AccountId;
@@ -40,6 +53,19 @@ import com.web.gallery.domain.model.account.IsAdminLocked;
 import com.web.gallery.domain.model.account.LoginFailureCount;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
+import com.web.gallery.domain.model.auth.AttestedCredentialData;
+import com.web.gallery.domain.model.auth.CredentialId;
+import com.web.gallery.domain.model.auth.IsBackedUp;
+import com.web.gallery.domain.model.auth.IsBackupEligible;
+import com.web.gallery.domain.model.auth.IsUvInitialized;
+import com.web.gallery.domain.model.auth.PasskeyChallenge;
+import com.web.gallery.domain.model.auth.PasskeyName;
+import com.web.gallery.domain.model.auth.PasskeyNo;
+import com.web.gallery.domain.model.auth.PasskeyResponseJson;
+import com.web.gallery.domain.model.auth.PasskeyTransports;
+import com.web.gallery.domain.model.auth.PasskeyUserHandle;
+import com.web.gallery.domain.model.auth.SignCount;
+import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.domain.model.common.IpGeoLocation;
 import com.web.gallery.domain.model.common.IsDeleted;
@@ -49,7 +75,10 @@ import com.web.gallery.domain.model.photo.PhotoNo;
 import com.web.gallery.infrastructure.persistence.repository.account.AccountAggregateRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.account.AccountRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.account.LoginHistoryRepositoryImpl;
+import com.web.gallery.infrastructure.persistence.repository.auth.PasskeyCredentialRepositoryImpl;
+import com.web.gallery.infrastructure.persistence.repository.auth.PasskeyUserHandleRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.auth.RefreshTokenRepositoryImpl;
+import com.web.gallery.infrastructure.persistence.repository.auth.WebAuthnChallengeRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.common.KbnMstRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.inquiry.InquiryReplyMstRepositoryImpl;
 import java.time.Clock;
@@ -115,6 +144,16 @@ public class AccountServiceImplTest {
   @Mock private Clock clock;
 
   @Mock private ApplicationEventPublisher applicationEventPublisher;
+
+  @Mock private PasskeyCredentialRepositoryImpl passkeyCredentialRepositoryImpl;
+
+  @Mock private PasskeyUserHandleRepositoryImpl passkeyUserHandleRepositoryImpl;
+
+  @Mock private WebAuthnChallengeRepositoryImpl webAuthnChallengeRepositoryImpl;
+
+  @Mock private WebAuthnVerifier webAuthnVerifier;
+
+  @Mock private WebAuthnConfig webAuthnConfig;
 
   @BeforeEach
   void setUpClock() {
@@ -981,7 +1020,7 @@ public class AccountServiceImplTest {
 
     @Test
     @Order(3)
-    @DisplayName("正常系：認証情報にIPアドレスが設定されている場合、ログイン履歴が記録されること")
+    @DisplayName("正常系：認証情報にIPアドレス・ログイン方式が設定されている場合、ログイン履歴が記録されること")
     void handle_recordsLoginHistory() throws GalleryException {
       String username = "aaaaaaaa";
       String password = "AAAAAAAA";
@@ -989,7 +1028,7 @@ public class AccountServiceImplTest {
 
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(username, password, new ArrayList<>());
-      authentication.setDetails(ipAddress);
+      authentication.setDetails(LoginContextModel.of(ipAddress, LoginMethodEnum.PASSKEY));
       AuthenticationSuccessEvent event = new AuthenticationSuccessEvent(authentication);
 
       AccountModel account = AccountModel.builder().accountNo(new AccountNo(1L)).build();
@@ -1006,6 +1045,7 @@ public class AccountServiceImplTest {
       LoginHistoryModel loginHistoryModel = loginHistoryModelCaptor.getValue();
       assertEquals(new AccountNo(1L), loginHistoryModel.getAccountNo());
       assertEquals(ipAddress, loginHistoryModel.getIpAddress());
+      assertEquals(LoginMethodEnum.PASSKEY, loginHistoryModel.getLoginMethodKbn());
     }
 
     @Test
@@ -1151,7 +1191,7 @@ public class AccountServiceImplTest {
 
       UsernamePasswordAuthenticationToken authentication =
           new UsernamePasswordAuthenticationToken(username, password, new ArrayList<>());
-      authentication.setDetails(ipAddress);
+      authentication.setDetails(LoginContextModel.of(ipAddress, LoginMethodEnum.PASSWORD));
 
       String message = "Invalid username or password";
       BadCredentialsException exception = new BadCredentialsException(message);
@@ -1308,6 +1348,412 @@ public class AccountServiceImplTest {
       assertThrows(
           UpdateFailureException.class,
           () -> accountServiceImpl.updateAccountAuthority(accountModel));
+    }
+  }
+
+  /**
+   * パスキー関連テスト用の、パスワード照合に成功するアカウントをスタブする
+   *
+   * @return スタブしたアカウント
+   */
+  private AccountModel stubAccountForReauth() {
+    AccountModel storedAccount =
+        AccountModel.builder()
+            .accountNo(new AccountNo(1L))
+            .accountId(new AccountId("aaaaaaaa"))
+            .accountName(new AccountName("テストユーザー"))
+            .password(new Password("stored-hash"))
+            .build();
+    doReturn(storedAccount).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+    lenient().doReturn(true).when(passwordEncoder).matches("password01", "stored-hash");
+    return storedAccount;
+  }
+
+  /**
+   * テスト用のパスキーを生成する
+   *
+   * @param passkeyNo パスキー番号
+   * @param credentialId クレデンシャルID
+   * @return {@link PasskeyCredentialModel}
+   */
+  private PasskeyCredentialModel passkey(long passkeyNo, String credentialId) {
+    return PasskeyCredentialModel.builder()
+        .passkeyNo(new PasskeyNo(passkeyNo))
+        .accountNo(new AccountNo(1L))
+        .credentialId(new CredentialId(credentialId))
+        .attestedCredentialData(new AttestedCredentialData(new byte[] {1}))
+        .signCount(new SignCount(0L))
+        .transports(new PasskeyTransports("internal"))
+        .isBackupEligible(new IsBackupEligible(true))
+        .isBackedUp(new IsBackedUp(true))
+        .isUvInitialized(new IsUvInitialized(true))
+        .passkeyName(new PasskeyName("MacBook"))
+        .build();
+  }
+
+  @Nested
+  @Order(14)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class createPasskeyRegistrationOptions {
+    @BeforeEach
+    void setUpWebAuthnConfig() {
+      lenient().doReturn("localhost").when(webAuthnConfig).getRpId();
+      lenient().doReturn("WebGallery").when(webAuthnConfig).getRpName();
+      lenient().doReturn(300).when(webAuthnConfig).getChallengeTimeoutSeconds();
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：本人確認に成功した場合、登録用チャレンジを保存し、登録済みのクレデンシャルを除外対象として返すこと")
+    void createPasskeyRegistrationOptions_success() throws GalleryException {
+      stubAccountForReauth();
+      doReturn(1).when(passkeyCredentialRepositoryImpl).countByAccountNo(new AccountNo(1L));
+      PasskeyChallenge challenge = new PasskeyChallenge("challenge-1");
+      doReturn(challenge).when(webAuthnVerifier).generateChallenge();
+      doReturn(new PasskeyUserHandle("handle-1"))
+          .when(passkeyUserHandleRepositoryImpl)
+          .findByAccountNo(new AccountNo(1L));
+      doReturn(PasskeyCredentialModelList.of(List.of(passkey(1L, "credential-1"))))
+          .when(passkeyCredentialRepositoryImpl)
+          .findByAccountNo(new AccountNo(1L));
+
+      PasskeyRegistrationOptionsModel actual =
+          accountServiceImpl.createPasskeyRegistrationOptions(
+              new AccountNo(1L), new Password("password01"));
+
+      assertEquals(challenge, actual.getChallenge());
+      assertEquals("localhost", actual.getRpId().value());
+      assertEquals("WebGallery", actual.getRpName().value());
+      assertEquals(new PasskeyUserHandle("handle-1"), actual.getUserHandle());
+      assertEquals(new AccountId("aaaaaaaa"), actual.getAccountId());
+      assertEquals(new AccountName("テストユーザー"), actual.getAccountName());
+      assertEquals(List.of(new CredentialId("credential-1")), actual.getExcludeCredentialIds());
+      assertEquals(300_000L, actual.getTimeoutMillis().value());
+
+      ArgumentCaptor<WebAuthnChallengeModel> captor =
+          ArgumentCaptor.forClass(WebAuthnChallengeModel.class);
+      verify(webAuthnChallengeRepositoryImpl).save(captor.capture());
+      assertEquals(WebAuthnChallengePurposeEnum.REGISTRATION, captor.getValue().getPurposeKbn());
+      assertEquals(new AccountNo(1L), captor.getValue().getAccountNo());
+      assertEquals(
+          OffsetDateTime.now(clock).plusSeconds(300), captor.getValue().getExpiresAt().value());
+      verify(passkeyUserHandleRepositoryImpl, never()).saveIfAbsent(any(), any());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：ユーザーハンドルが未発行の場合、発行して保存したものを返すこと")
+    void createPasskeyRegistrationOptions_issueUserHandle() throws GalleryException {
+      stubAccountForReauth();
+      doReturn(0).when(passkeyCredentialRepositoryImpl).countByAccountNo(new AccountNo(1L));
+      doReturn(new PasskeyChallenge("challenge-1")).when(webAuthnVerifier).generateChallenge();
+      PasskeyUserHandle generated = new PasskeyUserHandle("generated-handle");
+      doReturn(generated).when(webAuthnVerifier).generateUserHandle();
+      doReturn(null, generated)
+          .when(passkeyUserHandleRepositoryImpl)
+          .findByAccountNo(new AccountNo(1L));
+      doReturn(PasskeyCredentialModelList.empty())
+          .when(passkeyCredentialRepositoryImpl)
+          .findByAccountNo(new AccountNo(1L));
+
+      PasskeyRegistrationOptionsModel actual =
+          accountServiceImpl.createPasskeyRegistrationOptions(
+              new AccountNo(1L), new Password("password01"));
+
+      assertEquals(generated, actual.getUserHandle());
+      assertTrue(actual.getExcludeCredentialIds().isEmpty());
+      verify(passkeyUserHandleRepositoryImpl).saveIfAbsent(new AccountNo(1L), generated);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：現在のパスワードが一致しない場合、ForbiddenAccountExceptionをスローし、チャレンジを発行しないこと")
+    void createPasskeyRegistrationOptions_passwordMismatch() {
+      stubAccountForReauth();
+      doReturn(false).when(passwordEncoder).matches("wrong", "stored-hash");
+
+      ForbiddenAccountException exception =
+          assertThrows(
+              ForbiddenAccountException.class,
+              () ->
+                  accountServiceImpl.createPasskeyRegistrationOptions(
+                      new AccountNo(1L), new Password("wrong")));
+      assertEquals(ErrorEnum.CURRENT_PASSWORD_MISMATCH.getErrorCode(), exception.getErrorCode());
+      verify(webAuthnChallengeRepositoryImpl, never()).save(any());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：パスキーの登録数が上限に達している場合、BadRequestExceptionをスローし、チャレンジを発行しないこと")
+    void createPasskeyRegistrationOptions_reachedLimit() {
+      stubAccountForReauth();
+      doReturn(Consts.PASSKEY_MAX_COUNT)
+          .when(passkeyCredentialRepositoryImpl)
+          .countByAccountNo(new AccountNo(1L));
+
+      BadRequestException exception =
+          assertThrows(
+              BadRequestException.class,
+              () ->
+                  accountServiceImpl.createPasskeyRegistrationOptions(
+                      new AccountNo(1L), new Password("password01")));
+      assertEquals(ErrorEnum.REACHED_PASSKEY_LIMIT.getErrorCode(), exception.getErrorCode());
+      verify(webAuthnChallengeRepositoryImpl, never()).save(any());
+    }
+  }
+
+  @Nested
+  @Order(15)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class registerPasskey {
+    private static final PasskeyResponseJson JSON = new PasskeyResponseJson("{\"id\":\"x\"}");
+    private static final PasskeyChallenge CHALLENGE = new PasskeyChallenge("challenge-1");
+
+    private PasskeyAttestationModel attestation;
+
+    @BeforeEach
+    void setUp() {
+      attestation =
+          PasskeyAttestationModel.builder()
+              .credentialId(new CredentialId("credential-new"))
+              .attestedCredentialData(new AttestedCredentialData(new byte[] {9}))
+              .signCount(new SignCount(0L))
+              .transports(new PasskeyTransports("hybrid,internal"))
+              .isBackupEligible(new IsBackupEligible(true))
+              .isBackedUp(new IsBackedUp(true))
+              .isUvInitialized(new IsUvInitialized(true))
+              .build();
+    }
+
+    private void stubVerification(AccountNo challengeOwner) {
+      doReturn(CHALLENGE).when(webAuthnVerifier).readRegistrationChallenge(JSON);
+      doReturn(attestation).when(webAuthnVerifier).verifyRegistration(JSON, CHALLENGE);
+      doReturn(
+              WebAuthnChallengeModel.of(
+                  CHALLENGE,
+                  WebAuthnChallengePurposeEnum.REGISTRATION,
+                  challengeOwner,
+                  new ExpiresAt(OffsetDateTime.now(clock).plusMinutes(5))))
+          .when(webAuthnChallengeRepositoryImpl)
+          .consumeForRegistration(CHALLENGE);
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：検証に成功した場合、パスキーを登録して登録したパスキーを返すこと")
+    void registerPasskey_success() throws GalleryException {
+      stubVerification(new AccountNo(1L));
+      doReturn(0).when(passkeyCredentialRepositoryImpl).countByAccountNo(new AccountNo(1L));
+      PasskeyCredentialModel saved = passkey(5L, "credential-new");
+      doReturn(null, saved)
+          .when(passkeyCredentialRepositoryImpl)
+          .findByCredentialId(new CredentialId("credential-new"));
+
+      PasskeyCredentialModel actual =
+          accountServiceImpl.registerPasskey(new AccountNo(1L), JSON, new PasskeyName("iPhone"));
+
+      assertEquals(saved, actual);
+      verify(accountRepositoryImpl).lockForUpdate(new AccountNo(1L));
+      ArgumentCaptor<PasskeyCredentialModel> captor =
+          ArgumentCaptor.forClass(PasskeyCredentialModel.class);
+      verify(passkeyCredentialRepositoryImpl).save(captor.capture());
+      assertEquals(new AccountNo(1L), captor.getValue().getAccountNo());
+      assertEquals(new CredentialId("credential-new"), captor.getValue().getCredentialId());
+      assertEquals(new PasskeyName("iPhone"), captor.getValue().getPasskeyName());
+      assertEquals(new PasskeyTransports("hybrid,internal"), captor.getValue().getTransports());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：登録レスポンスの検証に失敗した場合、BadRequestExceptionをスローし、チャレンジを消費しないこと")
+    void registerPasskey_verificationFailed() {
+      doReturn(CHALLENGE).when(webAuthnVerifier).readRegistrationChallenge(JSON);
+      doThrow(new PasskeyVerificationException("origin mismatch"))
+          .when(webAuthnVerifier)
+          .verifyRegistration(JSON, CHALLENGE);
+
+      BadRequestException exception =
+          assertThrows(
+              BadRequestException.class,
+              () ->
+                  accountServiceImpl.registerPasskey(
+                      new AccountNo(1L), JSON, new PasskeyName("iPhone")));
+      assertEquals(ErrorEnum.INVALID_PASSKEY_REGISTRATION.getErrorCode(), exception.getErrorCode());
+      verify(webAuthnChallengeRepositoryImpl, never()).consumeForRegistration(any());
+      verify(passkeyCredentialRepositoryImpl, never()).save(any());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：チャレンジが未発行・使用済み・期限切れの場合、BadRequestExceptionをスローすること")
+    void registerPasskey_challengeNotAvailable() {
+      doReturn(CHALLENGE).when(webAuthnVerifier).readRegistrationChallenge(JSON);
+      doReturn(attestation).when(webAuthnVerifier).verifyRegistration(JSON, CHALLENGE);
+      doReturn(null).when(webAuthnChallengeRepositoryImpl).consumeForRegistration(CHALLENGE);
+
+      BadRequestException exception =
+          assertThrows(
+              BadRequestException.class,
+              () ->
+                  accountServiceImpl.registerPasskey(
+                      new AccountNo(1L), JSON, new PasskeyName("iPhone")));
+      assertEquals(ErrorEnum.INVALID_PASSKEY_REGISTRATION.getErrorCode(), exception.getErrorCode());
+      verify(passkeyCredentialRepositoryImpl, never()).save(any());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：他のアカウントに発行されたチャレンジの場合、BadRequestExceptionをスローすること")
+    void registerPasskey_challengeOfOtherAccount() {
+      stubVerification(new AccountNo(2L));
+
+      BadRequestException exception =
+          assertThrows(
+              BadRequestException.class,
+              () ->
+                  accountServiceImpl.registerPasskey(
+                      new AccountNo(1L), JSON, new PasskeyName("iPhone")));
+      assertEquals(ErrorEnum.INVALID_PASSKEY_REGISTRATION.getErrorCode(), exception.getErrorCode());
+      verify(passkeyCredentialRepositoryImpl, never()).save(any());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：パスキーの登録数が上限に達している場合、BadRequestExceptionをスローすること")
+    void registerPasskey_reachedLimit() {
+      stubVerification(new AccountNo(1L));
+      doReturn(Consts.PASSKEY_MAX_COUNT)
+          .when(passkeyCredentialRepositoryImpl)
+          .countByAccountNo(new AccountNo(1L));
+
+      BadRequestException exception =
+          assertThrows(
+              BadRequestException.class,
+              () ->
+                  accountServiceImpl.registerPasskey(
+                      new AccountNo(1L), JSON, new PasskeyName("iPhone")));
+      assertEquals(ErrorEnum.REACHED_PASSKEY_LIMIT.getErrorCode(), exception.getErrorCode());
+      verify(passkeyCredentialRepositoryImpl, never()).save(any());
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("異常系：登録済みのクレデンシャルの場合、RegistFailureExceptionをスローすること")
+    void registerPasskey_duplicate() {
+      stubVerification(new AccountNo(1L));
+      doReturn(0).when(passkeyCredentialRepositoryImpl).countByAccountNo(new AccountNo(1L));
+      doReturn(passkey(5L, "credential-new"))
+          .when(passkeyCredentialRepositoryImpl)
+          .findByCredentialId(new CredentialId("credential-new"));
+
+      RegistFailureException exception =
+          assertThrows(
+              RegistFailureException.class,
+              () ->
+                  accountServiceImpl.registerPasskey(
+                      new AccountNo(1L), JSON, new PasskeyName("iPhone")));
+      assertEquals(ErrorEnum.DUPLICATE_PASSKEY.getErrorCode(), exception.getErrorCode());
+      verify(passkeyCredentialRepositoryImpl, never()).save(any());
+    }
+  }
+
+  @Nested
+  @Order(16)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class getPasskeyList {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：アカウントのパスキー一覧をRepositoryから取得して返すこと")
+    void getPasskeyList_success() {
+      PasskeyCredentialModelList list =
+          PasskeyCredentialModelList.of(List.of(passkey(1L, "credential-1")));
+      doReturn(list).when(passkeyCredentialRepositoryImpl).findByAccountNo(new AccountNo(1L));
+
+      assertEquals(list, accountServiceImpl.getPasskeyList(new AccountNo(1L)));
+    }
+  }
+
+  @Nested
+  @Order(17)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class renamePasskey {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：自身のパスキーの名前を変更すること")
+    void renamePasskey_success() throws GalleryException {
+      doReturn(1)
+          .when(passkeyCredentialRepositoryImpl)
+          .rename(new AccountNo(1L), new PasskeyNo(5L), new PasskeyName("新しい名前"));
+
+      assertDoesNotThrow(() ->
+          accountServiceImpl.renamePasskey(
+              new AccountNo(1L), new PasskeyNo(5L), new PasskeyName("新しい名前")));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：自身のパスキーとして存在しない場合、PasskeyNotFoundExceptionをスローすること")
+    void renamePasskey_notFound() {
+      doReturn(0)
+          .when(passkeyCredentialRepositoryImpl)
+          .rename(new AccountNo(1L), new PasskeyNo(99L), new PasskeyName("新しい名前"));
+
+      assertThrows(
+          PasskeyNotFoundException.class,
+          () ->
+              accountServiceImpl.renamePasskey(
+                  new AccountNo(1L), new PasskeyNo(99L), new PasskeyName("新しい名前")));
+    }
+  }
+
+  @Nested
+  @Order(18)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class deletePasskey {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：本人確認に成功した場合、自身のパスキーを削除すること")
+    void deletePasskey_success() throws GalleryException {
+      stubAccountForReauth();
+      doReturn(1)
+          .when(passkeyCredentialRepositoryImpl)
+          .delete(new AccountNo(1L), new PasskeyNo(5L));
+
+      accountServiceImpl.deletePasskey(
+          new AccountNo(1L), new PasskeyNo(5L), new Password("password01"));
+
+      verify(passkeyCredentialRepositoryImpl).delete(new AccountNo(1L), new PasskeyNo(5L));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：現在のパスワードが一致しない場合、ForbiddenAccountExceptionをスローし、削除しないこと")
+    void deletePasskey_passwordMismatch() {
+      stubAccountForReauth();
+      doReturn(false).when(passwordEncoder).matches("wrong", "stored-hash");
+
+      assertThrows(
+          ForbiddenAccountException.class,
+          () ->
+              accountServiceImpl.deletePasskey(
+                  new AccountNo(1L), new PasskeyNo(5L), new Password("wrong")));
+      verify(passkeyCredentialRepositoryImpl, never()).delete(any(), any());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：自身のパスキーとして存在しない場合、PasskeyNotFoundExceptionをスローすること")
+    void deletePasskey_notFound() {
+      stubAccountForReauth();
+      doReturn(0)
+          .when(passkeyCredentialRepositoryImpl)
+          .delete(new AccountNo(1L), new PasskeyNo(99L));
+
+      assertThrows(
+          PasskeyNotFoundException.class,
+          () ->
+              accountServiceImpl.deletePasskey(
+                  new AccountNo(1L), new PasskeyNo(99L), new Password("password01")));
     }
   }
 }

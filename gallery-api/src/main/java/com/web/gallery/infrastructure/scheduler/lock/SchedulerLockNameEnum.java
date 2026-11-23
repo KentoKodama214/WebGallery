@@ -17,7 +17,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum SchedulerLockNameEnum {
   /** 有効期限切れリフレッシュトークンの削除処理 */
-  REFRESH_TOKEN_CLEANUP(4_001L, "有効期限切れリフレッシュトークンの削除");
+  REFRESH_TOKEN_CLEANUP(4_001L, "有効期限切れリフレッシュトークンの削除"),
+
+  /** 有効期限切れWebAuthnチャレンジの削除処理 */
+  WEBAUTHN_CHALLENGE_CLEANUP(4_002L, "有効期限切れWebAuthnチャレンジの削除");
 
   /** アドバイザリーロックのキー値（{@code bigint}） */
   private final long lockKey;

@@ -27,3 +27,7 @@ app:
   cors:
     allowed-origins:
       - ${FRONTEND_ORIGIN}
+  webauthn:
+    rp-id: ${WEBAUTHN_RP_ID}
+    allowed-origins:
+      - ${FRONTEND_ORIGIN}

@@ -3,6 +3,7 @@ package com.web.gallery.infrastructure.persistence.repository.account.integratio
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.application.model.account.LoginHistoryModel;
+import com.web.gallery.domain.enumeration.LoginMethodEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Country;
 import com.web.gallery.domain.model.common.IpAddress;
@@ -44,6 +45,7 @@ public class LoginHistoryRepositoryImplIntegrationTest {
                 .ipAddress(rs.getString("ip_address"))
                 .country(rs.getString("country"))
                 .region(rs.getString("region"))
+                .loginMethodKbn(LoginMethodEnum.getOrDefault(rs.getString("login_method_kbn")))
                 .createdBy(rs.getLong("created_by"))
                 .createdAt(rs.getObject("created_at", OffsetDateTime.class))
                 .build(),
@@ -64,7 +66,8 @@ public class LoginHistoryRepositoryImplIntegrationTest {
           LoginHistoryModel.of(
               new AccountNo(1L),
               new IpAddress("203.0.113.1"),
-              new IpGeoLocation(new Country("JP"), new Region("Tokyo")));
+              new IpGeoLocation(new Country("JP"), new Region("Tokyo")),
+              LoginMethodEnum.PASSWORD);
 
       loginHistoryRepositoryImpl.save(model);
 
@@ -73,6 +76,7 @@ public class LoginHistoryRepositoryImplIntegrationTest {
       assertEquals("203.0.113.1", actual.getFirst().getIpAddress());
       assertEquals("JP", actual.getFirst().getCountry());
       assertEquals("Tokyo", actual.getFirst().getRegion());
+      assertEquals(LoginMethodEnum.PASSWORD, actual.getFirst().getLoginMethodKbn());
       // created_byはログイン試行者自身のアカウント番号
       assertEquals(1L, actual.getFirst().getCreatedBy());
       assertNotNull(actual.getFirst().getCreatedAt());
@@ -84,7 +88,10 @@ public class LoginHistoryRepositoryImplIntegrationTest {
     void save_success_with_empty_geo() {
       LoginHistoryModel model =
           LoginHistoryModel.of(
-              new AccountNo(1L), new IpAddress("198.51.100.99"), IpGeoLocation.empty());
+              new AccountNo(1L),
+              new IpAddress("198.51.100.99"),
+              IpGeoLocation.empty(),
+              LoginMethodEnum.PASSKEY);
 
       loginHistoryRepositoryImpl.save(model);
 
@@ -92,6 +99,7 @@ public class LoginHistoryRepositoryImplIntegrationTest {
       assertEquals(1, actual.size());
       assertEquals("", actual.getFirst().getCountry());
       assertEquals("", actual.getFirst().getRegion());
+      assertEquals(LoginMethodEnum.PASSKEY, actual.getFirst().getLoginMethodKbn());
     }
   }
 

@@ -1,5 +1,6 @@
 package com.web.gallery.infrastructure.config;
 
+import com.web.gallery.application.config.WebAuthnConfig;
 import com.web.gallery.infrastructure.web.CorsConfig;
 import com.web.gallery.infrastructure.web.TrustedProxyConfig;
 import java.net.URI;
@@ -68,6 +69,8 @@ public class ProdConfigValidationRunner implements ApplicationRunner {
 
   private final TrustedProxyConfig trustedProxyConfig;
 
+  private final WebAuthnConfig webAuthnConfig;
+
   /**
    * 起動完了時に本番設定の検証を実行する
    *
@@ -90,6 +93,43 @@ public class ProdConfigValidationRunner implements ApplicationRunner {
     validateHttpsUrl("app.s3.public-base-url", s3Config.getPublicBaseUrl());
     validateReplicaUrl(dataSourceReplicaConfig.getUrl());
     validateTrustedProxies(trustedProxyConfig.getTrustedProxies());
+    validateWebAuthn(webAuthnConfig.getRpId(), webAuthnConfig.getAllowedOrigins());
+  }
+
+  /**
+   * パスキー（WebAuthn）のRP ID・許可するoriginが本番として妥当かを検証する
+   *
+   * <p>RP IDとoriginのホストの整合性は全プロファイル共通で{@code WebAuthnConfigImpl}が検証済み。 ここでは本番でのみ禁止すべき構成 （{@code
+   * localhost}・IPアドレスのRP ID、HTTPSでないorigin）を弾く。 WebAuthnはブラウザが安全なコンテキスト（HTTPS）でしか動作させず、 RP
+   * IDにIPアドレスは使えないため、こうした誤設定ではパスキーの登録・認証がすべて失敗する
+   *
+   * @param rpId {@code app.webauthn.rp-id}（環境変数 {@code WEBAUTHN_RP_ID}）の値
+   * @param allowedOrigins {@code app.webauthn.allowed-origins}（環境変数 {@code FRONTEND_ORIGIN}）の値
+   * @throws IllegalStateException 妥当でない場合
+   */
+  private void validateWebAuthn(String rpId, List<String> allowedOrigins) {
+    if (!StringUtils.hasText(rpId)) {
+      throw new IllegalStateException(
+          "本番プロファイルでは app.webauthn.rp-id（環境変数 WEBAUTHN_RP_ID）にフロントエンドの公開ドメインを設定する必要があります");
+    }
+    if ("localhost".equalsIgnoreCase(rpId)
+        || rpId.toLowerCase().endsWith(".localhost")
+        || rpId.matches("[0-9.]+")
+        || rpId.contains(":")) {
+      throw new IllegalStateException(
+          "本番プロファイルの app.webauthn.rp-id に localhost・IPアドレスは指定できません: " + rpId);
+    }
+    if (CollectionUtils.isEmpty(allowedOrigins)) {
+      throw new IllegalStateException(
+          "本番プロファイルでは app.webauthn.allowed-origins（環境変数 FRONTEND_ORIGIN）を1件以上設定する必要があります");
+    }
+    for (String origin : allowedOrigins) {
+      URI uri = parseUri("app.webauthn.allowed-origins", origin);
+      if (!"https".equalsIgnoreCase(uri.getScheme())) {
+        throw new IllegalStateException(
+            "本番プロファイルの app.webauthn.allowed-origins は https:// のオリジンである必要があります: " + origin);
+      }
+    }
   }
 
   /**

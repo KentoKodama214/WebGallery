@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.auth.PasskeyUserHandleMapper">
+
+	<resultMap id="PasskeyUserHandleMap" type="com.web.gallery.infrastructure.persistence.entity.auth.PasskeyUserHandle">
+		<result property="passkeyUserHandleNo" column="passkey_user_handle_no"/>
+		<result property="accountNo" column="account_no"/>
+		<result property="userHandle" column="user_handle"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+	</resultMap>
+
+	<!-- 同一アカウントの最初のパスキー登録が並行した場合でも1件だけ残す（account_noのUNIQUE制約で競合を吸収する） -->
+	<insert id="insertIfAbsent" parameterType="com.web.gallery.infrastructure.persistence.entity.auth.PasskeyUserHandle">
+		INSERT INTO common.passkey_user_handle (
+			account_no,
+			user_handle,
+			created_by,
+			created_at
+		) VALUES (
+			#{accountNo},
+			#{userHandle},
+			#{createdBy},
+			COALESCE(#{createdAt}, NOW())
+		)
+		ON CONFLICT (account_no) DO NOTHING
+	</insert>
+
+	<select id="select" parameterType="com.web.gallery.infrastructure.persistence.entity.auth.PasskeyUserHandleCondition" resultMap="PasskeyUserHandleMap">
+		SELECT
+			passkey_user_handle_no,
+			account_no,
+			user_handle,
+			created_by,
+			created_at
+		FROM
+			common.passkey_user_handle
+		<where>
+			<if test="accountNo == null"> AND 1 = 0</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+		</where>
+	</select>
+
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.auth.PasskeyUserHandleCondition">
+		DELETE FROM
+			common.passkey_user_handle
+		<where>
+			<if test="accountNo == null"> AND 1 = 0</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+		</where>
+	</delete>
+
+</mapper>

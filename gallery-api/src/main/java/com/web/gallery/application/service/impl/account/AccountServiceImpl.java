@@ -4,18 +4,29 @@ import com.web.gallery.application.AccountPrincipal;
 import com.web.gallery.application.aggregate.Account;
 import com.web.gallery.application.config.AccountConfig;
 import com.web.gallery.application.config.LoginConfig;
+import com.web.gallery.application.config.WebAuthnConfig;
 import com.web.gallery.application.helper.GeoIpResolver;
 import com.web.gallery.application.helper.ReauthenticationThrottle;
+import com.web.gallery.application.helper.WebAuthnVerifier;
 import com.web.gallery.application.model.account.AccountGetModel;
 import com.web.gallery.application.model.account.AccountListGetModel;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.account.AccountPageModel;
 import com.web.gallery.application.model.account.LoginHistoryModel;
+import com.web.gallery.application.model.auth.LoginContextModel;
+import com.web.gallery.application.model.auth.PasskeyAttestationModel;
+import com.web.gallery.application.model.auth.PasskeyCredentialModel;
+import com.web.gallery.application.model.auth.PasskeyCredentialModelList;
+import com.web.gallery.application.model.auth.PasskeyRegistrationOptionsModel;
+import com.web.gallery.application.model.auth.WebAuthnChallengeModel;
 import com.web.gallery.application.model.common.KbnMstModelList;
 import com.web.gallery.application.repository.account.AccountAggregateRepository;
 import com.web.gallery.application.repository.account.AccountRepository;
 import com.web.gallery.application.repository.account.LoginHistoryRepository;
+import com.web.gallery.application.repository.auth.PasskeyCredentialRepository;
+import com.web.gallery.application.repository.auth.PasskeyUserHandleRepository;
 import com.web.gallery.application.repository.auth.RefreshTokenRepository;
+import com.web.gallery.application.repository.auth.WebAuthnChallengeRepository;
 import com.web.gallery.application.repository.common.KbnMstRepository;
 import com.web.gallery.application.repository.inquiry.InquiryReplyMstRepository;
 import com.web.gallery.application.repository.photo.FileRepository;
@@ -23,6 +34,7 @@ import com.web.gallery.application.service.account.AccountService;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.ErrorEnum;
+import com.web.gallery.domain.enumeration.WebAuthnChallengePurposeEnum;
 import com.web.gallery.domain.event.AccountAuthorityChangedEvent;
 import com.web.gallery.domain.event.AccountDeletedEvent;
 import com.web.gallery.domain.event.AccountLockedEvent;
@@ -31,15 +43,25 @@ import com.web.gallery.domain.event.AccountUnlockedEvent;
 import com.web.gallery.domain.event.AccountUpdatedEvent;
 import com.web.gallery.domain.event.PhotoDeletedEvent;
 import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.PasskeyVerificationException;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.Password;
-import com.web.gallery.domain.model.common.IpAddress;
+import com.web.gallery.domain.model.auth.PasskeyChallenge;
+import com.web.gallery.domain.model.auth.PasskeyName;
+import com.web.gallery.domain.model.auth.PasskeyNo;
+import com.web.gallery.domain.model.auth.PasskeyResponseJson;
+import com.web.gallery.domain.model.auth.PasskeyTimeoutMillis;
+import com.web.gallery.domain.model.auth.PasskeyUserHandle;
+import com.web.gallery.domain.model.auth.RelyingPartyId;
+import com.web.gallery.domain.model.auth.RelyingPartyName;
+import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.domain.model.common.IpGeoLocation;
 import com.web.gallery.domain.model.common.KbnClassCode;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import com.web.gallery.domain.model.photo.PhotoNo;
 import java.time.Clock;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,6 +104,11 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
   private final InquiryReplyMstRepository inquiryReplyMstRepository;
   private final PasswordEncoder passwordEncoder;
   private final ReauthenticationThrottle reauthenticationThrottle;
+  private final PasskeyCredentialRepository passkeyCredentialRepository;
+  private final PasskeyUserHandleRepository passkeyUserHandleRepository;
+  private final WebAuthnChallengeRepository webAuthnChallengeRepository;
+  private final WebAuthnVerifier webAuthnVerifier;
+  private final WebAuthnConfig webAuthnConfig;
   private final GeoIpResolver geoIpResolver;
   private final LoginConfig loginConfig;
   private final AccountConfig accountConfig;
@@ -315,6 +342,169 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
   }
 
   /**
+   * パスキー登録の開始時に、クライアントへ渡すオプション（チャレンジ等）を発行する
+   *
+   * <p>アクセストークンを盗んだ攻撃者が自分のパスキーを登録して居座るのを防ぐため、 {@code currentPassword}による本人確認（再認証）を必須とする。
+   * 発行したチャレンジは呼び出したアカウントに紐づき、有効期間内に1度だけ登録に使用できる
+   *
+   * @param accountNo アカウント番号（セッション由来）
+   * @param currentPassword 現在のパスワード
+   * @return {@link PasskeyRegistrationOptionsModel}
+   * @throws GalleryException 現在のパスワードが一致しない場合、またはパスキーの登録数が上限に達している場合
+   */
+  @Override
+  @Transactional(rollbackFor = GalleryException.class)
+  public PasskeyRegistrationOptionsModel createPasskeyRegistrationOptions(
+      AccountNo accountNo, Password currentPassword) throws GalleryException {
+    AccountModel accountModel = accountRepository.getByAccountNo(accountNo);
+    verifyCurrentPassword(accountNo, accountModel, currentPassword);
+
+    if (passkeyCredentialRepository.countByAccountNo(accountNo) >= Consts.PASSKEY_MAX_COUNT) {
+      throw ErrorEnum.REACHED_PASSKEY_LIMIT.toException();
+    }
+
+    PasskeyChallenge challenge = webAuthnVerifier.generateChallenge();
+    webAuthnChallengeRepository.save(
+        WebAuthnChallengeModel.of(
+            challenge,
+            WebAuthnChallengePurposeEnum.REGISTRATION,
+            accountNo,
+            new ExpiresAt(
+                OffsetDateTime.now(clock)
+                    .plusSeconds(webAuthnConfig.getChallengeTimeoutSeconds()))));
+
+    return PasskeyRegistrationOptionsModel.builder()
+        .challenge(challenge)
+        .rpId(new RelyingPartyId(webAuthnConfig.getRpId()))
+        .rpName(new RelyingPartyName(webAuthnConfig.getRpName()))
+        .userHandle(getOrCreateUserHandle(accountNo))
+        .accountId(accountModel.getAccountId())
+        .accountName(accountModel.getAccountName())
+        .excludeCredentialIds(
+            passkeyCredentialRepository.findByAccountNo(accountNo).toCredentialIdList())
+        .timeoutMillis(
+            new PasskeyTimeoutMillis(webAuthnConfig.getChallengeTimeoutSeconds() * 1000L))
+        .build();
+  }
+
+  /**
+   * パスキーの登録レスポンスを検証し、パスキーを登録する
+   *
+   * <p>チャレンジは{@link #createPasskeyRegistrationOptions}で同じアカウントに発行され、未使用かつ有効期限内である必要がある
+   * （本人確認を経ずに発行されたチャレンジや他人のチャレンジでは登録できない）。
+   *
+   * @param accountNo アカウント番号（セッション由来）
+   * @param registrationResponseJson 登録レスポンス（{@code PublicKeyCredential#toJSON()}の形式）
+   * @param passkeyName パスキー名
+   * @return 登録した{@link PasskeyCredentialModel}
+   * @throws GalleryException 登録レスポンスの検証に失敗した場合、登録済みのパスキーの場合、または登録数が上限に達している場合
+   */
+  @Override
+  @Transactional(rollbackFor = GalleryException.class)
+  public PasskeyCredentialModel registerPasskey(
+      AccountNo accountNo, PasskeyResponseJson registrationResponseJson, PasskeyName passkeyName)
+      throws GalleryException {
+    PasskeyAttestationModel attestation;
+    try {
+      // 署名・origin・RP ID・UV等の検証（DBを更新しない）を先に行い、通過したものだけチャレンジを消費する
+      PasskeyChallenge challenge =
+          webAuthnVerifier.readRegistrationChallenge(registrationResponseJson);
+      attestation = webAuthnVerifier.verifyRegistration(registrationResponseJson, challenge);
+      WebAuthnChallengeModel storedChallenge =
+          webAuthnChallengeRepository.consumeForRegistration(challenge);
+      if (storedChallenge == null || !accountNo.equals(storedChallenge.getAccountNo())) {
+        throw new PasskeyVerificationException(
+            "Passkey registration challenge is not available for this account");
+      }
+    } catch (PasskeyVerificationException e) {
+      log.info(
+          "Passkey registration verification failed. (accountNo: {}, reason: {})",
+          accountNo.value(),
+          e.getMessage());
+      throw ErrorEnum.INVALID_PASSKEY_REGISTRATION.toException();
+    }
+
+    // 同一アカウントの登録を直列化し、登録数の上限チェックをすり抜けないようにする
+    accountRepository.lockForUpdate(accountNo);
+    if (passkeyCredentialRepository.countByAccountNo(accountNo) >= Consts.PASSKEY_MAX_COUNT) {
+      throw ErrorEnum.REACHED_PASSKEY_LIMIT.toException();
+    }
+    if (passkeyCredentialRepository.findByCredentialId(attestation.getCredentialId()) != null) {
+      throw ErrorEnum.DUPLICATE_PASSKEY.toException();
+    }
+
+    passkeyCredentialRepository.save(
+        PasskeyCredentialModel.forRegist(accountNo, attestation, passkeyName));
+    return passkeyCredentialRepository.findByCredentialId(attestation.getCredentialId());
+  }
+
+  /**
+   * アカウントに登録されているパスキーを登録日時の昇順で取得する
+   *
+   * @param accountNo アカウント番号（セッション由来）
+   * @return {@link PasskeyCredentialModelList}
+   */
+  @Override
+  @Transactional(readOnly = true)
+  public PasskeyCredentialModelList getPasskeyList(AccountNo accountNo) {
+    return passkeyCredentialRepository.findByAccountNo(accountNo);
+  }
+
+  /**
+   * パスキー名を変更する
+   *
+   * @param accountNo アカウント番号（セッション由来）
+   * @param passkeyNo パスキー番号
+   * @param passkeyName 変更後のパスキー名
+   * @throws GalleryException 自身のパスキーとして存在しない場合
+   */
+  @Override
+  @Transactional(rollbackFor = GalleryException.class)
+  public void renamePasskey(AccountNo accountNo, PasskeyNo passkeyNo, PasskeyName passkeyName)
+      throws GalleryException {
+    if (passkeyCredentialRepository.rename(accountNo, passkeyNo, passkeyName) == 0) {
+      throw ErrorEnum.PASSKEY_NOT_FOUND.toException();
+    }
+  }
+
+  /**
+   * パスキーを削除する
+   *
+   * <p>ログイン手段を失わせる操作のため、{@code currentPassword}による本人確認（再認証）を必須とする
+   *
+   * @param accountNo アカウント番号（セッション由来）
+   * @param passkeyNo パスキー番号
+   * @param currentPassword 現在のパスワード
+   * @throws GalleryException 現在のパスワードが一致しない場合、または自身のパスキーとして存在しない場合
+   */
+  @Override
+  @Transactional(rollbackFor = GalleryException.class)
+  public void deletePasskey(AccountNo accountNo, PasskeyNo passkeyNo, Password currentPassword)
+      throws GalleryException {
+    verifyCurrentPassword(accountNo, accountRepository.getByAccountNo(accountNo), currentPassword);
+    if (passkeyCredentialRepository.delete(accountNo, passkeyNo) == 0) {
+      throw ErrorEnum.PASSKEY_NOT_FOUND.toException();
+    }
+  }
+
+  /**
+   * アカウントのパスキー用ユーザーハンドルを取得する。未発行であれば発行する
+   *
+   * <p>同一アカウントで同時に発行された場合でも、先に登録された1件に揃える
+   *
+   * @param accountNo アカウント番号
+   * @return {@link PasskeyUserHandle}
+   */
+  private PasskeyUserHandle getOrCreateUserHandle(AccountNo accountNo) {
+    PasskeyUserHandle userHandle = passkeyUserHandleRepository.findByAccountNo(accountNo);
+    if (userHandle != null) {
+      return userHandle;
+    }
+    passkeyUserHandleRepository.saveIfAbsent(accountNo, webAuthnVerifier.generateUserHandle());
+    return passkeyUserHandleRepository.findByAccountNo(accountNo);
+  }
+
+  /**
    * 現在のパスワードによる本人確認（再認証）を行う
    *
    * <p>パスワード変更・アカウント削除といった機微な操作の前に呼び出し、 アクセストークンの有効性だけでなく現在のパスワードの入力を要求することで、
@@ -514,16 +704,19 @@ public class AccountServiceImpl implements UserDetailsService, AccountService {
    * ログイン履歴を記録する（ログイン成功時のみ）
    *
    * <p>存在しないアカウントIDへのログイン試行は対象外（呼び出し元でaccountModelがnullでないことを確認済み）。
-   * IPアドレスはAuthServiceImpl#loginがAuthenticationのdetailsに設定したものを取り出す
+   * IPアドレス・ログイン方式は、AuthServiceImpl#login（パスワード）・AuthServiceImpl#loginWithPasskey（パスキー）が
+   * Authenticationのdetailsに設定したものを取り出す
    *
-   * @param authentication 認証結果（{@link IpAddress}をdetailsに保持する）
+   * @param authentication 認証結果（{@link LoginContextModel}をdetailsに保持する）
    * @param accountNo アカウント番号
    */
   private void recordLoginHistory(Authentication authentication, AccountNo accountNo) {
-    if (!(authentication.getDetails() instanceof IpAddress ipAddress)) {
+    if (!(authentication.getDetails() instanceof LoginContextModel loginContext)) {
       return;
     }
-    IpGeoLocation geoLocation = geoIpResolver.resolve(ipAddress);
-    loginHistoryRepository.save(LoginHistoryModel.of(accountNo, ipAddress, geoLocation));
+    IpGeoLocation geoLocation = geoIpResolver.resolve(loginContext.getIpAddress());
+    loginHistoryRepository.save(
+        LoginHistoryModel.of(
+            accountNo, loginContext.getIpAddress(), geoLocation, loginContext.getLoginMethodKbn()));
   }
 }

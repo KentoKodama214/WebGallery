@@ -2,6 +2,10 @@
  * バックエンドAPIとの通信を管理するクライアントモジュール
  */
 
+import type {
+  PasskeyAuthenticationOptionsJSON,
+  PasskeyRegistrationOptionsJSON,
+} from "@/lib/auth/passkey";
 import { REFERER_MAX_LENGTH } from "@/lib/validation";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -164,6 +168,40 @@ export function clearAuthState(): void {
 }
 
 /**
+ * ログイン系 API（パスワード・パスキー）の応答を検証し、認証状態を確定させる
+ *
+ * @param response ログイン系 API のレスポンス
+ * @param fallback 失敗時の既定メッセージ
+ * @returns アクセストークンと有効期限
+ */
+async function applyLoginResponse(
+  response: Response,
+  fallback: string
+): Promise<{ accessToken: string; expiresIn: number }> {
+  if (!response.ok) {
+    throw new ApiError(await readErrorMessage(response, fallback), response.status);
+  }
+
+  const data = await readJson<{ accessToken: string; expiresIn: number }>(
+    response
+  );
+  // 応答に文字列のアクセストークンが含まれない場合はログイン失敗として扱う
+  // （壊れた応答で「認証済みだがトークン無し」状態に陥るのを防ぐ）
+  if (typeof data.accessToken !== "string" || data.accessToken === "") {
+    throw new Error(
+      "サーバーからの応答を解釈できませんでした。時間をおいて再度お試しください"
+    );
+  }
+  // 先にトークンを確定させてから世代を進める。これ以降、開始済みのリフレッシュ
+  // 応答は世代不一致で破棄され、このログイン結果を上書きできない。
+  accessToken = data.accessToken;
+  sessionAuthState = "authenticated";
+  lastRefreshTransientFailureAt = 0;
+  authEpoch++;
+  return data;
+}
+
+/**
  * ログインAPIを呼び出す
  */
 export async function login(
@@ -184,27 +222,56 @@ export async function login(
     throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
   }
 
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "ログインに失敗しました"));
-  }
+  return applyLoginResponse(response, "ログインに失敗しました");
+}
 
-  const data = await readJson<{ accessToken: string; expiresIn: number }>(
-    response
-  );
-  // 応答に文字列のアクセストークンが含まれない場合はログイン失敗として扱う
-  // （壊れた応答で「認証済みだがトークン無し」状態に陥るのを防ぐ）
-  if (typeof data.accessToken !== "string" || data.accessToken === "") {
-    throw new Error(
-      "サーバーからの応答を解釈できませんでした。時間をおいて再度お試しください"
+/**
+ * パスキー認証オプション（チャレンジ等）を発行する
+ *
+ * 未ログインで呼び出す公開 API のため、生 fetch を使う
+ */
+export async function getPasskeyAuthenticationOptions(): Promise<PasskeyAuthenticationOptionsJSON> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/auth/passkey/options`, {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      credentials: "include",
+    });
+  } catch {
+    throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
+  }
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキーによるログインを開始できませんでした"),
+      response.status
     );
   }
-  // 先にトークンを確定させてから世代を進める。これ以降、開始済みのリフレッシュ
-  // 応答は世代不一致で破棄され、このログイン結果を上書きできない。
-  accessToken = data.accessToken;
-  sessionAuthState = "authenticated";
-  lastRefreshTransientFailureAt = 0;
-  authEpoch++;
-  return data;
+  return readJson<PasskeyAuthenticationOptionsJSON>(response);
+}
+
+/**
+ * パスキーログインAPIを呼び出す
+ *
+ * @param credential 認証レスポンス（`PublicKeyCredential#toJSON()` の形式の JSON 文字列）
+ */
+export async function loginWithPasskey(
+  credential: string
+): Promise<{ accessToken: string; expiresIn: number }> {
+  // 認証の起点となる呼び出しのため、パスワードログインと同じく生 fetch を使う
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/auth/passkey/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ credential }),
+    });
+  } catch {
+    throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
+  }
+
+  return applyLoginResponse(response, "パスキーによる認証に失敗しました");
 }
 
 /**
@@ -458,6 +525,140 @@ export async function updateAccount(
     );
   }
   return readJson<AccountUpdateResult>(response);
+}
+
+/** 登録済みパスキー（公開鍵等の技術的な値は含まない） */
+export interface PasskeyItem {
+  passkeyNo: number;
+  passkeyName: string;
+  /** iCloud キーチェーン・Google パスワードマネージャー等で複数の端末に同期されるパスキーか */
+  isSynced: boolean;
+  createdAt: string | null;
+  lastUsedAt: string | null;
+}
+
+/** パスキー一覧レスポンス */
+export interface PasskeyListResponse {
+  passkeys: PasskeyItem[];
+  /** 登録できるパスキー数の上限 */
+  maxCount: number;
+}
+
+/**
+ * 本人のパスキー一覧を取得する
+ */
+export async function getPasskeys(accountId: string): Promise<PasskeyListResponse> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}/passkeys`);
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキー一覧の取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PasskeyListResponse>(response);
+}
+
+/**
+ * パスキー登録オプション（チャレンジ等）を発行する
+ *
+ * アクセストークンを盗んだ第三者が自分のパスキーを登録して居座るのを防ぐため、
+ * 現在のパスワードによる本人確認が必要（リクエストボディで送る）
+ */
+export async function createPasskeyRegistrationOptions(
+  accountId: string,
+  currentPassword: string
+): Promise<PasskeyRegistrationOptionsJSON> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/passkeys/registration-options`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキーの登録を開始できませんでした"),
+      response.status
+    );
+  }
+  return readJson<PasskeyRegistrationOptionsJSON>(response);
+}
+
+/**
+ * パスキーを登録する
+ *
+ * @param credential 登録レスポンス（`PublicKeyCredential#toJSON()` の形式の JSON 文字列）
+ * @param passkeyName パスキー名
+ */
+export async function registerPasskey(
+  accountId: string,
+  credential: string,
+  passkeyName: string
+): Promise<PasskeyItem> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}/passkeys`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential, passkeyName }),
+  });
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキーの登録に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PasskeyItem>(response);
+}
+
+/**
+ * パスキー名を変更する
+ */
+export async function renamePasskey(
+  accountId: string,
+  passkeyNo: number,
+  passkeyName: string
+): Promise<void> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/passkeys/${seg(passkeyNo)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passkeyName }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキー名の変更に失敗しました"),
+      response.status
+    );
+  }
+}
+
+/**
+ * パスキーを削除する
+ *
+ * ログイン手段を失わせる操作のため、現在のパスワードによる本人確認が必要。
+ * アカウント削除と同じ理由で DELETE ではなく POST のサブリソースを呼び出す
+ */
+export async function deletePasskey(
+  accountId: string,
+  passkeyNo: number,
+  currentPassword: string
+): Promise<void> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/passkeys/${seg(passkeyNo)}/deletion`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPassword }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキーの削除に失敗しました"),
+      response.status
+    );
+  }
 }
 
 /**

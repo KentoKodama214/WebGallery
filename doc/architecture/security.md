@@ -13,6 +13,7 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 | アクセストークン有効期限 | 15分 |
 | リフレッシュトークン有効期限 | 7日 |
 | アカウントロック | ログイン失敗3回でロック |
+| パスキー | WebAuthn（webauthn4j）。discoverable credential・ユーザー検証（生体認証/PIN）必須・attestationなし |
 
 ## 認証フロー
 
@@ -29,11 +30,73 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 既定30秒。複数タブ・ネットワーク瞬断による正常系のリトライを想定）内であれば当該リクエストのみ拒否し、
 猶予時間を超えていれば盗用の疑いとして該当アカウントの全リフレッシュトークンを失効させる。
 
+## パスキー（WebAuthn）認証
+
+パスワードに加えて、パスキーでもログインできる（パスワードは引き続き使える）。パスキーはフィッシングサイトでは
+動作せず（originに紐づく）、端末の生体認証・PINによるユーザー検証を必須とするため、単体で多要素認証相当になる。
+検証は webauthn4j（`WebAuthnVerifierImpl`）で行い、Spring Security 組み込みの `http.webAuthn()` は使わない
+（HttpSession 前提・固定パス・可変のアカウントIDをキーにする等、ステートレスJWT構成と合わないため）。
+
+### ログイン（`POST /api/v1/auth/passkey/options` → `POST /api/v1/auth/passkey/login`）
+
+1. 認証オプションを発行する。アカウントを特定しない（`allowCredentials` は空）ため、未ログインの誰でも呼び出せ、
+   アカウントIDの存在も漏れない。チャレンジ（32バイト乱数）は `common.webauthn_challenge` に保存する
+2. ブラウザが端末のパスキーで署名し、認証レスポンス（`PublicKeyCredential#toJSON()`）を送る
+3. サーバはクレデンシャルIDでパスキーを引き当て（行ロック）、チャレンジを `DELETE ... RETURNING` で1度だけ消費し
+   （未発行・使用済み・期限切れ・用途違いは拒否）、署名・origin・RP ID・ユーザー検証・署名カウンタを検証する
+4. 成功するとパスワードログインと同じトークン（アクセストークン＋リフレッシュトークンcookie）を発行し、
+   既存のリフレッシュトークンを全失効させる（同時セッション制限）
+
+- **ロック**：管理者ロック中・ログイン失敗回数の上限到達中のアカウントは、パスキーでもログインできない（423）。
+  失敗回数ロックは、パスワードと同じく最終失敗から一定時間経過すれば自動解除する
+- **失敗回数**：パスキーの検証失敗はログイン失敗回数に加算しない（署名の総当たりは成立せず、加算すると
+  第三者が本人をロックさせる嫌がらせに使えるため）。失敗理由（未登録・期限切れ・署名不正・カウンタ巻き戻り等）は
+  ログにのみ出し、クライアントへは一律「パスキーによる認証に失敗しました。」（401）を返す
+- **ログイン履歴**：成功時はパスワードと同じ認証成功イベントを発行し、`login_history.login_method_kbn` に
+  `passkey` として記録する（パスワードログインは `password`）
+- **署名カウンタ**：保存値以下に巻き戻った場合はクローンされた認証器の疑いとして拒否する。
+  同期パスキー（iCloudキーチェーン等）は常に0を返すため、保存値・提示値がともに0の場合は許容する
+- **ユーザーハンドル**：WebAuthnの `user.id` には、アカウントIDのような変更されうる値・個人情報ではなく、
+  `common.passkey_user_handle` に保持するサーバ生成の乱数を使う。認証器が返したユーザーハンドルが
+  パスキーの所有者と一致しない場合は拒否する
+
+### 登録・管理（`/api/v1/accounts/{id}/passkeys/**`、本人のみ）
+
+| 操作 | API | 本人確認 |
+|------|-----|----------|
+| 一覧 | `GET /passkeys` | アクセストークンのみ |
+| 登録オプション発行 | `POST /passkeys/registration-options` | `currentPassword` による再認証 |
+| 登録 | `POST /passkeys` | 登録オプションで発行された、同じアカウント向けの未使用チャレンジが必要 |
+| 名前変更 | `PUT /passkeys/{passkeyNo}` | アクセストークンのみ |
+| 削除 | `POST /passkeys/{passkeyNo}/deletion` | `currentPassword` による再認証 |
+
+- 登録オプションの発行に再認証を求めるのは、アクセストークンを盗んだ攻撃者が自分のパスキーを登録して
+  居座る（パスワード変更後もログインし続ける）のを防ぐため。再認証は既存の `ReauthenticationThrottle` の対象
+- 登録時は、検証（DBを更新しない）を通過したレスポンスについてのみチャレンジを消費する。登録数は1アカウント10件まで
+  （`Consts.PASSKEY_MAX_COUNT`）。同一クレデンシャルの二重登録は409
+- 他人のパスキーの名前変更・削除は、存在しない扱い（404）とする
+- 退会時は、パスキー・ユーザーハンドルに加えて、外部キーを持たない登録用チャレンジの残骸も削除する
+  （`AccountAggregateRepositoryImpl#delete`）
+- 期限切れのチャレンジは `WebAuthnChallengeCleanupScheduler` が毎時削除する
+
+### 設定（`app.webauthn.*`）
+
+| プロパティ | 環境変数 | 説明 |
+|---|---|---|
+| `rp-id` | `WEBAUTHN_RP_ID` | パスキーを紐づけるドメイン（スキーム・ポートなし）。ローカルは `localhost` |
+| `allowed-origins` | `FRONTEND_ORIGIN` | 登録・認証を許可するorigin。ホストはRP IDと一致するかそのサブドメインである必要がある |
+| `rp-name` | - | パスキーマネージャーに表示されるサービス名（`WebGallery`） |
+| `challenge-timeout-seconds` | - | チャレンジの有効期間（既定300秒）。クライアントへ渡すタイムアウトにも使う |
+
+RP ID とoriginの整合性は全プロファイルで `WebAuthnConfigImpl` が起動時に検証する。本番プロファイルでは
+加えて `ProdConfigValidationRunner` が、RP IDの未設定・`localhost`・IPアドレス、`https://` 以外のoriginを
+検出して起動を失敗させる。
+
 ## アクセス制御
 
 | リソース | アクセス制御 |
 |----------|--------------|
-| 認証API（`/api/v1/auth/**`） | 公開 |
+| 認証API（`/api/v1/auth/**`。パスキーの認証オプション発行・パスキーログインを含む） | 公開 |
 | アカウント登録（`POST /api/v1/accounts`） | 公開 |
 | アカウント一覧（`GET /api/v1/accounts`） | 公開（アカウント名のみ表示。詳細は下記） |
 | 写真の閲覧（`GET /api/v1/accounts/{id}/photos`、`GET /api/v1/accounts/{id}/photos/{photoNo}`） | 公開（管理者により非公開にされた写真は所有者本人にのみ返す。詳細は下記） |
@@ -47,6 +110,9 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 | お気に入り登録・解除 | 認証必須 |
 | アカウント詳細取得・更新 | 認証必須（本人のみ） |
 | パスワード変更・アカウント削除 | 認証必須（本人のみ）＋ 現在のパスワードによる再認証 |
+| パスキー一覧・名前変更（`GET /api/v1/accounts/{id}/passkeys`、`PUT .../passkeys/{passkeyNo}`） | 認証必須（本人のみ） |
+| パスキー登録オプション発行・削除（`POST .../passkeys/registration-options`、`POST .../passkeys/{passkeyNo}/deletion`） | 認証必須（本人のみ）＋ 現在のパスワードによる再認証 |
+| パスキー登録（`POST /api/v1/accounts/{id}/passkeys`） | 認証必須（本人のみ）＋ 本人向けに発行された未使用のチャレンジ |
 | Actuatorヘルスチェック（`GET /actuator/health`） | 公開 |
 | Actuatorメトリクス（`GET /actuator/metrics/**`） | 認証必須（ADMINロール。コネクション数等の内部情報を含むため） |
 | 管理者用写真一覧（`GET /api/v1/admin/photos`）・写真の公開状態変更（`PUT /api/v1/admin/photos/{accountNo}/{photoNo}/visibility`） | 認証必須（ADMINロール。`/api/v1/admin/**`の`hasRole("ADMIN")`と`@RequireAdminAuthority`の二重チェック） |
@@ -75,7 +141,7 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 
 | カテゴリ | 対象 | 既定しきい値 | 環境変数 |
 |---|---|---|---|
-| `AUTH` | `POST /api/v1/auth/login` | 30 回 / 60 秒 | `RATE_LIMIT_AUTH_*` |
+| `AUTH` | `POST /api/v1/auth/login`、`POST /api/v1/auth/passkey/options`、`POST /api/v1/auth/passkey/login`（同じ枠を共有） | 30 回 / 60 秒 | `RATE_LIMIT_AUTH_*` |
 | `REGISTER` | `POST /api/v1/accounts` | 10 回 / 3600 秒 | `RATE_LIMIT_REGISTER_*` |
 | `GENERAL` | 上記以外の `/api/**`（リフレッシュ・アップロード等） | 300 回 / 60 秒 | `RATE_LIMIT_GENERAL_*` |
 
@@ -203,7 +269,8 @@ APM に記録されやすく（`Authorization` と違い）マスク対象から
 ### バリデーションエラーのログ
 
 リクエストのバリデーション失敗をログ出力する際、機微フィールド（`password` /
-`newPassword` / `currentPassword`）の入力値は `***` にマスクする
+`newPassword` / `currentPassword`）の入力値は `***` にマスクする。パスキーの登録・認証レスポンス（`credential`）も、
+資格情報ではないが最大数十KBになりうるためマスクする
 （`infrastructure/web/ValidationErrorLogger`）。ログ集約基盤に平文の資格情報を残さないため。
 
 ### 信頼するプロキシと発信元IPの復元

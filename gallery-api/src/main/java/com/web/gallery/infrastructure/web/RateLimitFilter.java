@@ -102,7 +102,11 @@ public class RateLimitFilter extends OncePerRequestFilter {
     String uri = request.getRequestURI();
     // ログインのみ厳格な枠にする。トークンリフレッシュは128bitのランダムトークンで
     // 総当たり不能なため GENERAL 枠で足りる（正常系では15分ごとに1回程度）
-    if (uri.equals(ApiRoutes.API_AUTH_LOGIN)) {
+    // パスキーの認証オプション発行は未ログインでDBへチャレンジを書き込むため、ログインと同じ枠で絞る
+    // （ログイン・パスキーログイン・オプション発行は同じ枠を共有する）
+    if (uri.equals(ApiRoutes.API_AUTH_LOGIN)
+        || uri.equals(ApiRoutes.API_AUTH_PASSKEY_OPTIONS)
+        || uri.equals(ApiRoutes.API_AUTH_PASSKEY_LOGIN)) {
       return Category.AUTH;
     }
     if ("POST".equalsIgnoreCase(request.getMethod()) && uri.equals(ApiRoutes.API_ACCOUNTS)) {

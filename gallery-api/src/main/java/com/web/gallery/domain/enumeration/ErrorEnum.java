@@ -7,6 +7,7 @@ import com.web.gallery.domain.exception.FileDuplicateException;
 import com.web.gallery.domain.exception.ForbiddenAccountException;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.InquiryNotFoundException;
+import com.web.gallery.domain.exception.PasskeyNotFoundException;
 import com.web.gallery.domain.exception.PhotoNotAdditableException;
 import com.web.gallery.domain.exception.PhotoNotFoundException;
 import com.web.gallery.domain.exception.PortfolioNotFoundException;
@@ -112,6 +113,57 @@ public enum ErrorEnum {
    */
   CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY(
       "E-C-0006", MessageConst.ERR_CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-C-0007
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_PASSKEY_NOT_FOUND}
+   */
+  PASSKEY_NOT_FOUND("E-C-0007", MessageConst.ERR_PASSKEY_NOT_FOUND) {
+    @Override
+    public GalleryException toException() {
+      return new PasskeyNotFoundException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-C-0008
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_INVALID_PASSKEY_REGISTRATION}
+   *
+   * <p>チャレンジの期限切れ・使用済み、origin・RP IDの不一致、ユーザー検証の欠如、署名の不正など、
+   * 登録レスポンスの検証に失敗した場合。失敗理由はログにのみ出し、クライアントへは区別して返さない
+   */
+  INVALID_PASSKEY_REGISTRATION("E-C-0008", MessageConst.ERR_INVALID_PASSKEY_REGISTRATION) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-C-0009
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_DUPLICATE_PASSKEY}
+   */
+  DUPLICATE_PASSKEY("E-C-0009", MessageConst.ERR_DUPLICATE_PASSKEY) {
+    @Override
+    public GalleryException toException() {
+      return new RegistFailureException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-C-0010
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_REACHED_PASSKEY_LIMIT}
+   */
+  REACHED_PASSKEY_LIMIT("E-C-0010", MessageConst.ERR_REACHED_PASSKEY_LIMIT) {
     @Override
     public GalleryException toException() {
       return new BadRequestException(this);

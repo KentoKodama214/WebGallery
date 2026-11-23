@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.lenient;
 
+import com.web.gallery.application.config.WebAuthnConfig;
 import com.web.gallery.infrastructure.web.CorsConfig;
 import com.web.gallery.infrastructure.web.TrustedProxyConfig;
 import java.util.List;
@@ -39,8 +40,15 @@ class ProdConfigValidationRunnerTest {
 
   @Mock private DataSourceReplicaConfig dataSourceReplicaConfig;
 
+  @Mock private WebAuthnConfig webAuthnConfig;
+
   @BeforeEach
   void setUp() {
+    // パスキー設定以外の検証に集中できるよう、既定では本番として妥当な値を返す
+    lenient().when(webAuthnConfig.getRpId()).thenReturn("gallery.example.com");
+    lenient()
+        .when(webAuthnConfig.getAllowedOrigins())
+        .thenReturn(List.of("https://gallery.example.com"));
     // 信頼プロキシ範囲以外の検証に集中できるよう、既定では妥当な値を設定しておく
     prodConfigValidationRunner = runnerWithTrustedProxies(VALID_TRUSTED_PROXIES);
   }
@@ -57,7 +65,8 @@ class ProdConfigValidationRunnerTest {
         s3Config,
         dataSourceProperties,
         dataSourceReplicaConfig,
-        new TrustedProxyConfig(trustedProxies));
+        new TrustedProxyConfig(trustedProxies),
+        webAuthnConfig);
   }
 
   @Nested
@@ -409,6 +418,72 @@ class ProdConfigValidationRunnerTest {
       void surroundingWhitespace() {
         assertThrows(
             IllegalStateException.class, () -> runnerWithTrustedProxies("  .+  ").validate());
+      }
+    }
+
+    @Nested
+    @Order(5)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    @DisplayName("パスキー（WebAuthn）のRP ID・許可するoriginの検証")
+    class webAuthn {
+
+      @BeforeEach
+      void setUp() {
+        // パスキー設定以外の検証で落ちないよう、CORS許可オリジンには妥当な値を設定する
+        lenient()
+            .when(corsConfig.getAllowedOrigins())
+            .thenReturn(List.of("https://gallery.example.com"));
+      }
+
+      @Test
+      @Order(1)
+      @DisplayName("公開ドメインのRP IDと https のoriginなら検証を通過する")
+      void valid() {
+        assertDoesNotThrow(() -> prodConfigValidationRunner.validate());
+      }
+
+      static java.util.stream.Stream<String> invalidRpIds() {
+        return java.util.stream.Stream.of(
+            "", "   ", "localhost", "LOCALHOST", "app.localhost", "127.0.0.1", "::1");
+      }
+
+      @ParameterizedTest
+      @MethodSource("invalidRpIds")
+      @Order(2)
+      @DisplayName("RP IDが未設定・localhost・IPアドレスなら起動失敗する")
+      void invalidRpId(String rpId) {
+        lenient().when(webAuthnConfig.getRpId()).thenReturn(rpId);
+
+        assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+      }
+
+      @Test
+      @Order(3)
+      @DisplayName("RP IDがnullなら起動失敗する")
+      void nullRpId() {
+        lenient().when(webAuthnConfig.getRpId()).thenReturn(null);
+
+        assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+      }
+
+      @Test
+      @Order(4)
+      @DisplayName("originが未設定なら起動失敗する")
+      void emptyOrigins() {
+        lenient().when(webAuthnConfig.getAllowedOrigins()).thenReturn(List.of());
+
+        assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
+      }
+
+      @Test
+      @Order(5)
+      @DisplayName("http のoriginは起動失敗する")
+      void httpOrigin() {
+        lenient()
+            .when(webAuthnConfig.getAllowedOrigins())
+            .thenReturn(List.of("http://gallery.example.com"));
+
+        assertThrows(IllegalStateException.class, () -> prodConfigValidationRunner.validate());
       }
     }
   }

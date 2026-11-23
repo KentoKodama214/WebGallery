@@ -9,13 +9,18 @@ import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.InvalidRefreshTokenException;
+import com.web.gallery.domain.exception.PasskeyVerificationException;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.Password;
+import com.web.gallery.domain.model.auth.PasskeyResponseJson;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
 import com.web.gallery.infrastructure.web.ClientIpResolver;
+import com.web.gallery.infrastructure.web.ValidationErrorLogger;
 import com.web.gallery.presentation.request.auth.AuthLoginRequest;
+import com.web.gallery.presentation.request.auth.PasskeyLoginRequest;
 import com.web.gallery.presentation.response.auth.AuthErrorResponse;
 import com.web.gallery.presentation.response.auth.AuthLoginResponse;
+import com.web.gallery.presentation.response.auth.PasskeyAuthenticationOptionsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -96,6 +101,65 @@ public class AuthController {
     return ResponseEntity.ok()
         .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
         .body(response);
+  }
+
+  /**
+   * パスキー認証オプションの発行
+   *
+   * @return {@link PasskeyAuthenticationOptionsResponse}
+   */
+  @Operation(
+      summary = "パスキー認証オプション発行",
+      description =
+          "パスキーでログインするためのチャレンジ等（PublicKeyCredentialRequestOptionsJSON）を発行する。"
+              + "アカウントを特定しない（discoverable credential）ため、allowCredentialsは常に空")
+  @ApiResponse(responseCode = "200", description = "発行成功")
+  @PostMapping(ApiRoutes.API_AUTH_PASSKEY_OPTIONS)
+  public ResponseEntity<PasskeyAuthenticationOptionsResponse> passkeyOptions() {
+    return ResponseEntity.ok(
+        PasskeyAuthenticationOptionsResponse.from(
+            authService.createPasskeyAuthenticationOptions()));
+  }
+
+  /**
+   * パスキーによるログイン認証
+   *
+   * @param passkeyLoginRequest {@link PasskeyLoginRequest}
+   * @param result PasskeyLoginRequestのバインディング結果
+   * @param request リクエスト（ログイン履歴記録用の送信元IPアドレス取得に使用）
+   * @return {@link AuthLoginResponse}
+   * @throws GalleryException リクエストパラメータが不正の場合
+   */
+  @Operation(summary = "パスキーログイン", description = "パスキーの認証レスポンスを検証し、JWTトークンを発行する（パスワードログインと同じ形式で返す）")
+  @ApiResponse(responseCode = "200", description = "認証成功")
+  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+  @ApiResponse(responseCode = "401", description = "認証失敗（パスキーの検証に失敗）", content = @Content)
+  @ApiResponse(responseCode = "423", description = "アカウントロック", content = @Content)
+  @PostMapping(ApiRoutes.API_AUTH_PASSKEY_LOGIN)
+  public ResponseEntity<AuthLoginResponse> passkeyLogin(
+      @RequestBody @Validated PasskeyLoginRequest passkeyLoginRequest,
+      BindingResult result,
+      HttpServletRequest request)
+      throws GalleryException {
+
+    if (result.hasErrors()) {
+      ValidationErrorLogger.logFieldErrors(log, result);
+      throw ErrorEnum.INVALID_INPUT.toException();
+    }
+
+    AuthTokenModel tokenModel =
+        authService.loginWithPasskey(
+            new PasskeyResponseJson(passkeyLoginRequest.getCredential()),
+            clientIpResolver.resolve(request));
+
+    ResponseCookie refreshTokenCookie =
+        createRefreshTokenCookie(
+            tokenModel.getRefreshToken().value(),
+            jwtConfig.getRefreshTokenExpirationDays() * 24 * 60 * 60L);
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
+        .body(AuthLoginResponse.from(tokenModel));
   }
 
   /**
@@ -189,6 +253,22 @@ public class AuthController {
   public ResponseEntity<AuthErrorResponse> handleLocked(LockedException exception) {
     log.info("Account locked: {}", exception.getMessage());
     return ResponseEntity.status(423).body(AuthErrorResponse.of(MessageConst.ERR_ACCOUNT_LOCKED));
+  }
+
+  /**
+   * パスキーの検証失敗時のExceptionHandler
+   *
+   * <p>失敗理由（未登録のクレデンシャル・チャレンジの期限切れ・署名不正・署名カウンタの巻き戻り等）はログにのみ残し、 クライアントへは一律のメッセージを返す
+   *
+   * @param exception {@link PasskeyVerificationException}
+   * @return 401 Unauthorized
+   */
+  @ExceptionHandler(PasskeyVerificationException.class)
+  public ResponseEntity<AuthErrorResponse> handlePasskeyVerification(
+      PasskeyVerificationException exception) {
+    log.info("Passkey authentication failed: {}", exception.getMessage());
+    return ResponseEntity.status(401)
+        .body(AuthErrorResponse.of(MessageConst.ERR_PASSKEY_AUTHENTICATION_FAILED));
   }
 
   /**

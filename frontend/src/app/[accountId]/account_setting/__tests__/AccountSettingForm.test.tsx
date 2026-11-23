@@ -29,6 +29,14 @@ jest.mock("@/lib/auth/AuthProvider", () => ({
   }),
 }));
 
+// パスキー管理セクションは独自に API を呼ぶため、このテストではスタブに差し替える
+// （セクション自体の挙動は PasskeySection.test.tsx で検証する）
+jest.mock("../PasskeySection", () => ({
+  PasskeySection: ({ accountId }: { accountId: string }) => (
+    <div data-testid="passkey-section">{accountId}</div>
+  ),
+}));
+
 const mockGetAccount = jest.fn();
 const mockUpdateAccount = jest.fn();
 const mockGetPrefectures = jest.fn();
@@ -102,6 +110,12 @@ describe("AccountSettingForm", () => {
     expect(screen.getByDisplayValue("テストメモ")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "登録" })).toBeInTheDocument();
     expect(screen.getByText("← back")).toBeInTheDocument();
+  });
+
+  it("パスキー管理セクションが対象アカウントIDで配置されること", async () => {
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    expect(await screen.findByTestId("passkey-section")).toHaveTextContent("testuser1");
   });
 
   it("都道府県が正しく表示されること", async () => {

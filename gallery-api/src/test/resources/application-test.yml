@@ -68,3 +68,7 @@ app:
   cors:
     allowed-origins:
       - http://localhost:3000
+  webauthn:
+    rp-id: localhost
+    allowed-origins:
+      - http://localhost:3000

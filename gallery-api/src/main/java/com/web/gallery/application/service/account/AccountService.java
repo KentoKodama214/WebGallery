@@ -3,10 +3,16 @@ package com.web.gallery.application.service.account;
 import com.web.gallery.application.model.account.AccountListGetModel;
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.account.AccountPageModel;
+import com.web.gallery.application.model.auth.PasskeyCredentialModel;
+import com.web.gallery.application.model.auth.PasskeyCredentialModelList;
+import com.web.gallery.application.model.auth.PasskeyRegistrationOptionsModel;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.Password;
+import com.web.gallery.domain.model.auth.PasskeyName;
+import com.web.gallery.domain.model.auth.PasskeyNo;
+import com.web.gallery.domain.model.auth.PasskeyResponseJson;
 
 /** アカウントに関するビジネスロジックを行うServiceクラス */
 public interface AccountService {
@@ -92,5 +98,59 @@ public interface AccountService {
    * @throws GalleryException 現在のパスワードが一致しない場合
    */
   void deleteAccount(AccountNo accountNo, AccountId accountId, Password currentPassword)
+      throws GalleryException;
+
+  /**
+   * パスキー登録の開始時に、クライアントへ渡すオプション（チャレンジ等）を発行する
+   *
+   * @param accountNo アカウント番号
+   * @param currentPassword 現在のパスワード（本人確認に使用する）
+   * @return {@link PasskeyRegistrationOptionsModel}
+   * @throws GalleryException 現在のパスワードが一致しない場合、またはパスキーの登録数が上限に達している場合
+   */
+  PasskeyRegistrationOptionsModel createPasskeyRegistrationOptions(
+      AccountNo accountNo, Password currentPassword) throws GalleryException;
+
+  /**
+   * パスキーの登録レスポンスを検証し、パスキーを登録する
+   *
+   * @param accountNo アカウント番号
+   * @param registrationResponseJson 登録レスポンス（{@code PublicKeyCredential#toJSON()}の形式）
+   * @param passkeyName パスキー名
+   * @return 登録した{@link PasskeyCredentialModel}
+   * @throws GalleryException 登録レスポンスの検証に失敗した場合、登録済みのパスキーの場合、または登録数が上限に達している場合
+   */
+  PasskeyCredentialModel registerPasskey(
+      AccountNo accountNo, PasskeyResponseJson registrationResponseJson, PasskeyName passkeyName)
+      throws GalleryException;
+
+  /**
+   * アカウントに登録されているパスキーを取得する
+   *
+   * @param accountNo アカウント番号
+   * @return {@link PasskeyCredentialModelList}
+   */
+  PasskeyCredentialModelList getPasskeyList(AccountNo accountNo);
+
+  /**
+   * パスキー名を変更する
+   *
+   * @param accountNo アカウント番号
+   * @param passkeyNo パスキー番号
+   * @param passkeyName 変更後のパスキー名
+   * @throws GalleryException 自身のパスキーとして存在しない場合
+   */
+  void renamePasskey(AccountNo accountNo, PasskeyNo passkeyNo, PasskeyName passkeyName)
+      throws GalleryException;
+
+  /**
+   * パスキーを削除する
+   *
+   * @param accountNo アカウント番号
+   * @param passkeyNo パスキー番号
+   * @param currentPassword 現在のパスワード（本人確認に使用する）
+   * @throws GalleryException 現在のパスワードが一致しない場合、または自身のパスキーとして存在しない場合
+   */
+  void deletePasskey(AccountNo accountNo, PasskeyNo passkeyNo, Password currentPassword)
       throws GalleryException;
 }

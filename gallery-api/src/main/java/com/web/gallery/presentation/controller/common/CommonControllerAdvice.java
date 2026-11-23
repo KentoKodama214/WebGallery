@@ -7,6 +7,7 @@ import com.web.gallery.domain.exception.FileDuplicateException;
 import com.web.gallery.domain.exception.ForbiddenAccountException;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.InquiryNotFoundException;
+import com.web.gallery.domain.exception.PasskeyNotFoundException;
 import com.web.gallery.domain.exception.PhotoNotAdditableException;
 import com.web.gallery.domain.exception.PhotoNotFoundException;
 import com.web.gallery.domain.exception.PortfolioNotFoundException;
@@ -14,6 +15,7 @@ import com.web.gallery.domain.exception.RegistFailureException;
 import com.web.gallery.domain.exception.UpdateFailureException;
 import com.web.gallery.presentation.controller.account.AccountController;
 import com.web.gallery.presentation.controller.account.AdminAccountController;
+import com.web.gallery.presentation.controller.account.PasskeyController;
 import com.web.gallery.presentation.controller.auth.AuthController;
 import com.web.gallery.presentation.controller.inquiry.AdminInquiryController;
 import com.web.gallery.presentation.controller.inquiry.InquiryController;
@@ -56,6 +58,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
       InquiryController.class,
       KbnMstController.class,
       LocationController.class,
+      PasskeyController.class,
       PhotoFavoriteController.class,
       PhotoController.class,
       PortfolioController.class
@@ -141,6 +144,20 @@ public class CommonControllerAdvice {
   @ExceptionHandler(PhotoNotFoundException.class)
   public ResponseEntity<ErrorResponse> handlePhotoNotFoundException(
       PhotoNotFoundException exception) {
+    ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.NOT_FOUND);
+
+    return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.NOT_FOUND);
+  }
+
+  /**
+   * パスキーが存在しない（他人のパスキーを含む）ときに制御するExceptionHandler
+   *
+   * @param exception {@link PasskeyNotFoundException}
+   * @return {@link ErrorResponse}
+   */
+  @ExceptionHandler(PasskeyNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handlePasskeyNotFoundException(
+      PasskeyNotFoundException exception) {
     ErrorResponse errorResponse = ErrorResponse.of(exception, HttpStatus.NOT_FOUND);
 
     return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.NOT_FOUND);

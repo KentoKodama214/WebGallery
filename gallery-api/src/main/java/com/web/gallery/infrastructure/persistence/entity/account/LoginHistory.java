@@ -1,6 +1,7 @@
 package com.web.gallery.infrastructure.persistence.entity.account;
 
 import com.web.gallery.application.model.account.LoginHistoryModel;
+import com.web.gallery.domain.enumeration.LoginMethodEnum;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.Data;
@@ -30,6 +31,9 @@ public class LoginHistory {
   /** 地域（未解決時は空文字） */
   private String region;
 
+  /** ログイン方式区分 */
+  private LoginMethodEnum loginMethodKbn;
+
   /** 作成者 */
   private Long createdBy;
 
@@ -52,6 +56,7 @@ public class LoginHistory {
                 : "")
         .region(
             model.getGeoLocation().region() != null ? model.getGeoLocation().region().value() : "")
+        .loginMethodKbn(model.getLoginMethodKbn())
         .createdBy(model.getAccountNo().value())
         .build();
   }

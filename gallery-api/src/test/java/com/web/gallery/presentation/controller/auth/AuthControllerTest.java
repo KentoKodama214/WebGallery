@@ -1,18 +1,25 @@
 package com.web.gallery.presentation.controller.auth;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.web.gallery.application.config.JwtConfig;
 import com.web.gallery.application.model.auth.AuthTokenModel;
+import com.web.gallery.application.model.auth.PasskeyAuthenticationOptionsModel;
 import com.web.gallery.application.service.impl.auth.AuthServiceImpl;
 import com.web.gallery.domain.exception.InvalidRefreshTokenException;
+import com.web.gallery.domain.exception.PasskeyVerificationException;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.auth.AccessToken;
 import com.web.gallery.domain.model.auth.ExpiresIn;
+import com.web.gallery.domain.model.auth.PasskeyChallenge;
+import com.web.gallery.domain.model.auth.PasskeyResponseJson;
+import com.web.gallery.domain.model.auth.PasskeyTimeoutMillis;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
+import com.web.gallery.domain.model.auth.RelyingPartyId;
 import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.infrastructure.web.ClientIpResolver;
 import com.web.gallery.presentation.controller.common.CommonControllerAdvice;
@@ -296,6 +303,135 @@ public class AuthControllerTest {
           .andExpect(header().exists("Set-Cookie"));
 
       verify(authServiceImpl, times(0)).logout(any(RefreshTokenValue.class));
+    }
+  }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class passkeyOptions {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：パスキー認証オプションをPublicKeyCredentialRequestOptionsJSONの形式で返す")
+    void passkeyOptions_success() throws Exception {
+      doReturn(
+              PasskeyAuthenticationOptionsModel.builder()
+                  .challenge(new PasskeyChallenge("challenge-1"))
+                  .rpId(new RelyingPartyId("localhost"))
+                  .timeoutMillis(new PasskeyTimeoutMillis(300_000L))
+                  .build())
+          .when(authServiceImpl)
+          .createPasskeyAuthenticationOptions();
+
+      mockMvc
+          .perform(post("/api/v1/auth/passkey/options"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.challenge").value("challenge-1"))
+          .andExpect(jsonPath("$.rpId").value("localhost"))
+          .andExpect(jsonPath("$.timeout").value(300000))
+          .andExpect(jsonPath("$.userVerification").value("required"))
+          .andExpect(jsonPath("$.allowCredentials").isEmpty());
+    }
+  }
+
+  @Nested
+  @Order(5)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class passkeyLogin {
+    private static final PasskeyResponseJson CREDENTIAL =
+        new PasskeyResponseJson("{\"id\":\"credential-1\",\"type\":\"public-key\"}");
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：パスキーログインに成功した場合、アクセストークンとリフレッシュトークンのcookieを返す")
+    void passkeyLogin_success() throws Exception {
+      doReturn(
+              AuthTokenModel.builder()
+                  .accessToken(new AccessToken("test-access-token"))
+                  .refreshToken(new RefreshTokenValue("test-refresh-token"))
+                  .expiresIn(new ExpiresIn(900L))
+                  .build())
+          .when(authServiceImpl)
+          .loginWithPasskey(CREDENTIAL, TEST_IP_ADDRESS);
+      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
+
+      mockMvc
+          .perform(
+              post("/api/v1/auth/passkey/login")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("passkeyLogin_success.json")))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.accessToken").value("test-access-token"))
+          .andExpect(jsonPath("$.expiresIn").value(900))
+          .andExpect(
+              header().string("Set-Cookie", containsString("refreshToken=test-refresh-token")))
+          .andExpect(header().string("Set-Cookie", containsString("HttpOnly")));
+
+      verify(authServiceImpl, times(1)).loginWithPasskey(CREDENTIAL, TEST_IP_ADDRESS);
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：認証レスポンスが空の場合、400を返す")
+    void passkeyLogin_credential_blank() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/auth/passkey/login")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("passkeyLogin_badrequest_blank_credential.json")))
+          .andExpect(status().isBadRequest());
+
+      verify(authServiceImpl, times(0)).loginWithPasskey(any(), any());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：パスキーの検証に失敗した場合、失敗理由を出さず401を返す")
+    void passkeyLogin_verification_failed() throws Exception {
+      doThrow(new PasskeyVerificationException("Unknown passkey credential"))
+          .when(authServiceImpl)
+          .loginWithPasskey(CREDENTIAL, TEST_IP_ADDRESS);
+
+      mockMvc
+          .perform(
+              post("/api/v1/auth/passkey/login")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("passkeyLogin_success.json")))
+          .andExpect(status().isUnauthorized())
+          .andExpect(jsonPath("$.message").value("パスキーによる認証に失敗しました。"))
+          .andExpect(header().doesNotExist("Set-Cookie"));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：アカウントがロックされている場合、423を返す")
+    void passkeyLogin_locked() throws Exception {
+      doThrow(new LockedException("locked"))
+          .when(authServiceImpl)
+          .loginWithPasskey(CREDENTIAL, TEST_IP_ADDRESS);
+
+      mockMvc
+          .perform(
+              post("/api/v1/auth/passkey/login")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("passkeyLogin_success.json")))
+          .andExpect(status().isLocked());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：アカウントが無効の場合、401を返す")
+    void passkeyLogin_disabled() throws Exception {
+      doThrow(new DisabledException("disabled"))
+          .when(authServiceImpl)
+          .loginWithPasskey(CREDENTIAL, TEST_IP_ADDRESS);
+
+      mockMvc
+          .perform(
+              post("/api/v1/auth/passkey/login")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("passkeyLogin_success.json")))
+          .andExpect(status().isUnauthorized());
     }
   }
 }
