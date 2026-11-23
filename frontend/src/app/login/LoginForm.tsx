@@ -224,7 +224,7 @@ export function LoginForm() {
               type="button"
               onClick={handlePasskeyLogin}
               disabled={isLoading || isPasskeyLoading}
-              className="block w-full p-[10px] mt-[10px] mb-[10px] border border-[#1565C0] rounded-sm text-[#1565C0] bg-white cursor-pointer transition-all duration-100 hover:bg-[#E3F2FD] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="block w-full p-[10px] mt-[10px] mb-[10px] border border-[#1565C0] rounded-sm text-[#1565C0] bg-white cursor-pointer transition-colors duration-100 hover:bg-[#E3F2FD] disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isPasskeyLoading ? "認証しています…" : "パスキーでログイン"}
             </button>

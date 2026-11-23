@@ -299,7 +299,7 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
         type="button"
         onClick={() => openDialog({ kind: "register" })}
         disabled={isLoading || !!loadError || !passkeySupported || reachedLimit}
-        className="w-full h-[44px] bg-[#1565C0] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#1565C0] disabled:opacity-70 disabled:cursor-not-allowed"
+        className="w-full h-[44px] bg-[#1565C0] text-white border-none rounded-sm cursor-pointer transition-shadow duration-100 hover:shadow-[0px_1px_3px_#1565C0] disabled:opacity-70 disabled:cursor-not-allowed"
       >
         パスキーを登録
       </button>
