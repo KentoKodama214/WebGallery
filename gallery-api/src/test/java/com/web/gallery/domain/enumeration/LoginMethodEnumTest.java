@@ -35,14 +35,14 @@ class LoginMethodEnumTest {
     @Order(3)
     @DisplayName("異常系：nullを指定した場合、PASSWORDを返すこと")
     void getOrDefault_null() {
-      assertEquals(LoginMethodEnum.PASSWORD, LoginMethodEnum.getOrDefault(null));
+      assertEquals(LoginMethodEnum.PASSKEY, LoginMethodEnum.getOrDefault(null));
     }
 
     @Test
     @Order(4)
     @DisplayName("異常系：該当するEnum値がない場合、PASSWORDを返すこと")
     void getOrDefault_unmatched() {
-      assertEquals(LoginMethodEnum.PASSWORD, LoginMethodEnum.getOrDefault("unknown"));
+      assertEquals(LoginMethodEnum.PASSKEY, LoginMethodEnum.getOrDefault("unknown"));
     }
   }
 }

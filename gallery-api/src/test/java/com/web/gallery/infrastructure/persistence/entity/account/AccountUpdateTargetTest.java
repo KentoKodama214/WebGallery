@@ -13,7 +13,6 @@ import com.web.gallery.domain.model.account.FreeMemo;
 import com.web.gallery.domain.model.account.IsAdminLocked;
 import com.web.gallery.domain.model.account.LastLoginDatetime;
 import com.web.gallery.domain.model.account.LoginFailureCount;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -24,16 +23,12 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class AccountUpdateTargetTest {
-
-  @Mock private PasswordEncoder passwordEncoder;
 
   @Nested
   @Order(1)
@@ -47,7 +42,6 @@ class AccountUpdateTargetTest {
           AccountModel.builder()
               .accountId(new AccountId("testuser01"))
               .accountName(new AccountName("テストユーザー"))
-              .password(new Password("plainPassword"))
               .birthdate(new BirthDate(LocalDate.of(1990, 1, 1)))
               .sexKbn(SexEnum.MAN)
               .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido"))
@@ -56,13 +50,11 @@ class AccountUpdateTargetTest {
               .lastLoginDatetime(new LastLoginDatetime(OffsetDateTime.now()))
               .loginFailureCount(new LoginFailureCount(2))
               .build();
-      doReturn("encodedPassword").when(passwordEncoder).encode("plainPassword");
 
-      AccountUpdateTarget actual = AccountUpdateTarget.fromForUpdate(model, passwordEncoder);
+      AccountUpdateTarget actual = AccountUpdateTarget.fromForUpdate(model);
 
       assertEquals("testuser01", actual.getAccountId());
       assertEquals("テストユーザー", actual.getAccountName());
-      assertEquals("encodedPassword", actual.getPassword());
       assertEquals(LocalDate.of(1990, 1, 1), actual.getBirthdate());
       assertEquals(SexEnum.MAN, actual.getSexKbn());
       assertEquals("Hokkaido", actual.getBirthplacePrefectureKbnCode());
@@ -78,18 +70,16 @@ class AccountUpdateTargetTest {
     void fromForUpdate_allFieldsAbsent() {
       AccountModel model = AccountModel.builder().build();
 
-      AccountUpdateTarget actual = AccountUpdateTarget.fromForUpdate(model, passwordEncoder);
+      AccountUpdateTarget actual = AccountUpdateTarget.fromForUpdate(model);
 
       assertNull(actual.getAccountId());
       assertNull(actual.getAccountName());
-      assertNull(actual.getPassword());
       assertNull(actual.getBirthdate());
       assertNull(actual.getBirthplacePrefectureKbnCode());
       assertNull(actual.getResidentPrefectureKbnCode());
       assertNull(actual.getFreeMemo());
       assertNull(actual.getLastLoginDatetime());
       assertNull(actual.getLoginFailureCount());
-      verify(passwordEncoder, never()).encode(anyString());
     }
   }
 

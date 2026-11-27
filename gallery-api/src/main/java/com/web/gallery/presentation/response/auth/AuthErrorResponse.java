@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @Schema(description = "認証エラーレスポンス")
 public record AuthErrorResponse(
-    @Schema(description = "エラーメッセージ", example = "アカウントIDまたはパスワードが間違っています。") String message) {
+    @Schema(description = "エラーメッセージ", example = "パスキーによる認証に失敗しました。") String message) {
 
   /**
    * エラーメッセージからエラーレスポンスを生成する

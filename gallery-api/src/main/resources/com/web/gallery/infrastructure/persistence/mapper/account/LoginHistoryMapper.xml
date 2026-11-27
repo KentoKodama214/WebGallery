@@ -18,7 +18,7 @@
 			#{ipAddress},
 			COALESCE(#{country}, ''),
 			COALESCE(#{region}, ''),
-			COALESCE(#{loginMethodKbn}::common.login_method_enum, 'password'),
+			COALESCE(#{loginMethodKbn}::common.login_method_enum, 'passkey'),
 			#{createdBy},
 			COALESCE(#{createdAt}, NOW())
 		)

@@ -30,7 +30,7 @@ public final class MessageConst {
   public static final String ERR_FAIL_TO_REGIST_ACCOUNT = "アカウント登録でエラーが発生しました。登録をやり直してください。";
   public static final String ERR_FAIL_TO_UPDATE_ACCOUNT = "アカウント更新でエラーが発生しました。更新をやり直してください。";
   public static final String ERR_NOT_AUTHORIZED_TO_EDIT_ACCOUNT = "アカウントを編集する権限がありません。";
-  public static final String ERR_CURRENT_PASSWORD_MISMATCH = "現在のパスワードが正しくありません。";
+  public static final String ERR_REAUTHENTICATION_FAILED = "パスキーによる本人確認に失敗しました。";
   public static final String ERR_CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY =
       "管理者として投稿したお問い合わせ返信が残っているため、アカウントを削除できません。運営へお問い合わせください。";
   public static final String ERR_FAIL_TO_REGIST_PHOTO = "写真登録でエラーが発生しました。登録をやり直してください。";
@@ -50,13 +50,16 @@ public final class MessageConst {
   public static final String ERR_FAIL_TO_DELETE_ACCOUNT = "アカウント削除でエラーが発生しました。削除をやり直してください。";
   public static final String ERR_INVALID_REFRESH_TOKEN = "無効なリフレッシュトークンです。";
   public static final String ERR_REFRESH_TOKEN_EXPIRED = "リフレッシュトークンの有効期限が切れています。";
-  public static final String ERR_BAD_CREDENTIALS = "アカウントIDまたはパスワードが間違っています。";
+  public static final String ERR_BAD_CREDENTIALS = "認証に失敗しました。";
   public static final String ERR_ACCOUNT_LOCKED = "アカウントがロックされています。";
   public static final String ERR_PASSKEY_AUTHENTICATION_FAILED = "パスキーによる認証に失敗しました。";
   public static final String ERR_PASSKEY_NOT_FOUND = "パスキーが存在しません。";
   public static final String ERR_INVALID_PASSKEY_REGISTRATION = "パスキーの登録に失敗しました。もう一度お試しください。";
   public static final String ERR_DUPLICATE_PASSKEY = "このパスキーは既に登録されています。";
   public static final String ERR_REACHED_PASSKEY_LIMIT = "パスキーの登録数が上限に達しています。";
+  public static final String ERR_CANNOT_DELETE_LAST_PASSKEY = "最後のパスキーは削除できません。先に別のパスキーを登録してください。";
+  public static final String ERR_DUPLICATE_ACCOUNT_ID = "このアカウントIDは既に使われています。";
+  public static final String ERR_INVALID_RECOVERY_CODE = "アカウントIDまたはリカバリーコードが正しくありません。";
   public static final String ERR_IMAGE_FILE_REQUIRED = "新規登録時は画像ファイルの指定が必須です。";
   public static final String ERR_UNSUPPORTED_IMAGE_CONTENT_TYPE = "許可されていないファイル形式です。";
   public static final String ERR_INVALID_IMAGE_SIGNATURE = "画像ファイルの内容が不正です。";

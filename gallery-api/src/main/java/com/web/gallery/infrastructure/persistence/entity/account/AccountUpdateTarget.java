@@ -6,7 +6,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 /** アカウントテーブルの更新対象クラス */
 @Data
@@ -23,9 +22,6 @@ public class AccountUpdateTarget {
 
   /** アカウント名 */
   private String accountName;
-
-  /** パスワード */
-  private String password;
 
   /** 生年月日 */
   private LocalDate birthdate;
@@ -59,11 +55,9 @@ public class AccountUpdateTarget {
    * アカウント更新用のAccountModelから更新対象を生成する
    *
    * @param model {@link AccountModel}
-   * @param passwordEncoder {@link PasswordEncoder}
    * @return {@link AccountUpdateTarget}
    */
-  public static AccountUpdateTarget fromForUpdate(
-      AccountModel model, PasswordEncoder passwordEncoder) {
+  public static AccountUpdateTarget fromForUpdate(AccountModel model) {
     // Modelに値がある項目だけを更新対象に含める（AccountMapper.xmlのUPDATEは target.xxx != null の項目のみSET句に出す）。
     // 未指定項目をセンチネル値で埋めると、プロフィール更新のたびに last_login_datetime や
     // login_failure_count まで書き換わり、監査情報の破壊やロックカウンタの意図しないリセットを招くため、
@@ -88,10 +82,6 @@ public class AccountUpdateTarget {
             .loginFailureCount(
                 model.getLoginFailureCount() != null ? model.getLoginFailureCount().value() : null)
             .build();
-
-    if (model.getPassword() != null) {
-      target.setPassword(passwordEncoder.encode(model.getPassword().value()));
-    }
 
     return target;
   }

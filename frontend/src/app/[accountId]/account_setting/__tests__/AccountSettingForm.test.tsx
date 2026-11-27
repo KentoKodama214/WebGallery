@@ -21,7 +21,6 @@ jest.mock("@/lib/auth/loginRedirect", () => ({
 
 jest.mock("@/lib/auth/AuthProvider", () => ({
   useAuth: () => ({
-    login: jest.fn(),
     user: { accountId: "testuser1" },
     isAuthenticated: true,
     isLoading: false,
@@ -35,6 +34,19 @@ jest.mock("../PasskeySection", () => ({
   PasskeySection: ({ accountId }: { accountId: string }) => (
     <div data-testid="passkey-section">{accountId}</div>
   ),
+}));
+
+// リカバリーコード管理セクションも同様にスタブへ差し替える（RecoveryCodeSection.test.tsx で検証する）
+jest.mock("../RecoveryCodeSection", () => ({
+  RecoveryCodeSection: ({ accountId }: { accountId: string }) => (
+    <div data-testid="recovery-code-section">{accountId}</div>
+  ),
+}));
+
+// 退会前のパスキーによる本人確認（navigator.credentials.get を伴う）はスタブに差し替える
+const mockReauthenticate = jest.fn();
+jest.mock("@/lib/auth/reauthenticate", () => ({
+  reauthenticateWithPasskey: (...args: unknown[]) => mockReauthenticate(...args),
 }));
 
 const mockGetAccount = jest.fn();
@@ -92,8 +104,8 @@ const mockPrefectureData = [
 describe("AccountSettingForm", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    window.sessionStorage.clear();
     mockGetAccount.mockResolvedValue(mockAccountData);
+    mockReauthenticate.mockResolvedValue('{"id":"reauth"}');
     mockGetPrefectures.mockResolvedValue(mockPrefectureData);
   });
 
@@ -112,10 +124,19 @@ describe("AccountSettingForm", () => {
     expect(screen.getByText("← back")).toBeInTheDocument();
   });
 
-  it("パスキー管理セクションが対象アカウントIDで配置されること", async () => {
+  it("パスワードの入力欄を持たないこと", async () => {
+    render(<AccountSettingForm accountId="testuser1" />);
+
+    await screen.findByRole("heading", { name: "アカウント設定" });
+    expect(screen.queryByLabelText("現在のパスワード")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("新しいパスワード")).not.toBeInTheDocument();
+  });
+
+  it("パスキー管理・リカバリーコード管理のセクションが対象アカウントIDで配置されること", async () => {
     render(<AccountSettingForm accountId="testuser1" />);
 
     expect(await screen.findByTestId("passkey-section")).toHaveTextContent("testuser1");
+    expect(screen.getByTestId("recovery-code-section")).toHaveTextContent("testuser1");
   });
 
   it("都道府県が正しく表示されること", async () => {
@@ -147,7 +168,6 @@ describe("AccountSettingForm", () => {
       httpStatus: 200,
       isDuplicateAccountId: false,
       isAccountIdChanged: false,
-      isPasswordChanged: false,
       message: "",
     });
 
@@ -165,58 +185,7 @@ describe("AccountSettingForm", () => {
     });
   });
 
-  it("パスワード変更時にログアウトしてログインページへリダイレクトされること", async () => {
-    mockUpdateAccount.mockResolvedValue({
-      httpStatus: 200,
-      isDuplicateAccountId: false,
-      isAccountIdChanged: false,
-      isPasswordChanged: true,
-      message: "",
-    });
-
-    const user = userEvent.setup();
-    render(<AccountSettingForm accountId="testuser1" />);
-
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
-    });
-
-    const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
-    await user.type(passwordInput, "newpassword1");
-    await user.type(screen.getByLabelText("現在のパスワード"), "oldpassword1");
-    await user.click(screen.getByRole("button", { name: "登録" }));
-
-    await waitFor(() => {
-      expect(mockLogout).toHaveBeenCalled();
-      expect(mockPush).toHaveBeenCalledWith("/login");
-    });
-    expect(mockUpdateAccount).toHaveBeenCalledWith(
-      "testuser1",
-      expect.objectContaining({ newPassword: "newpassword1", currentPassword: "oldpassword1" })
-    );
-  });
-
-  it("新しいパスワード入力時に現在のパスワードが未入力だとエラーになり送信されないこと", async () => {
-    const user = userEvent.setup();
-    render(<AccountSettingForm accountId="testuser1" />);
-
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
-    });
-
-    await user.type(
-      screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"),
-      "newpassword1"
-    );
-    await user.click(screen.getByRole("button", { name: "登録" }));
-
-    expect(
-      await screen.findByText("現在のパスワードを入力してください")
-    ).toBeInTheDocument();
-    expect(mockUpdateAccount).not.toHaveBeenCalled();
-  });
-
-  it("アカウント削除は現在のパスワード入力後に実行され、ログアウトされること", async () => {
+  it("アカウント削除は「はい」でパスキーによる本人確認を行ってから実行され、ログアウトされること", async () => {
     mockDeleteAccount.mockResolvedValue(undefined);
 
     const user = userEvent.setup();
@@ -228,18 +197,15 @@ describe("AccountSettingForm", () => {
 
     await user.click(screen.getByRole("button", { name: "アカウント削除" }));
     const dialog = within(screen.getByRole("dialog"));
-    // パスワード未入力で「はい」を押すとエラーになり、削除は呼ばれない
-    await user.click(dialog.getByRole("button", { name: "はい" }));
-    expect(
-      await dialog.findByText("現在のパスワードを入力してください")
-    ).toBeInTheDocument();
-    expect(mockDeleteAccount).not.toHaveBeenCalled();
+    // パスワードの入力欄は無く、パスキーで本人確認する旨を案内する
+    expect(dialog.queryByLabelText("現在のパスワード")).not.toBeInTheDocument();
+    expect(dialog.getByText(/本人確認のためにパスキー/)).toBeInTheDocument();
 
-    await user.type(dialog.getByLabelText("現在のパスワード"), "mypassword1");
     await user.click(dialog.getByRole("button", { name: "はい" }));
 
     await waitFor(() => {
-      expect(mockDeleteAccount).toHaveBeenCalledWith("testuser1", "mypassword1");
+      expect(mockReauthenticate).toHaveBeenCalledWith("testuser1");
+      expect(mockDeleteAccount).toHaveBeenCalledWith("testuser1", '{"id":"reauth"}');
       expect(mockLogout).toHaveBeenCalled();
     });
     // 退避元（本人専用ページ）を redirect クエリに載せず、削除完了ページへ退避させる
@@ -253,6 +219,43 @@ describe("AccountSettingForm", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("本人確認でパスキーの操作をキャンセルした場合は、エラーを表示せず削除もしないこと", async () => {
+    const { PasskeyCancelledError } = jest.requireActual("@/lib/auth/passkey");
+    mockReauthenticate.mockRejectedValueOnce(new PasskeyCancelledError());
+
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+    await screen.findByRole("heading", { name: "アカウント設定" });
+
+    await user.click(screen.getByRole("button", { name: "アカウント削除" }));
+    const dialog = within(screen.getByRole("dialog"));
+    await user.click(dialog.getByRole("button", { name: "はい" }));
+
+    await waitFor(() => {
+      expect(dialog.getByRole("button", { name: "はい" })).toBeEnabled();
+    });
+    expect(dialog.queryByRole("alert")).not.toBeInTheDocument();
+    expect(mockDeleteAccount).not.toHaveBeenCalled();
+  });
+
+  it("本人確認に失敗した場合は、ダイアログを開いたままエラーを表示すること", async () => {
+    mockDeleteAccount.mockRejectedValueOnce(
+      new ApiError("パスキーによる本人確認に失敗しました。", 403)
+    );
+
+    const user = userEvent.setup();
+    render(<AccountSettingForm accountId="testuser1" />);
+    await screen.findByRole("heading", { name: "アカウント設定" });
+
+    await user.click(screen.getByRole("button", { name: "アカウント削除" }));
+    const dialog = within(screen.getByRole("dialog"));
+    await user.click(dialog.getByRole("button", { name: "はい" }));
+
+    expect(await dialog.findByRole("alert")).toHaveTextContent(
+      "パスキーによる本人確認に失敗しました。"
+    );
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
   it("アカウント削除の logout が失敗しても /login?deleted=1 へ遷移すること", async () => {
     mockDeleteAccount.mockResolvedValue(undefined);
     mockLogout.mockRejectedValueOnce(new Error("network"));
@@ -266,7 +269,6 @@ describe("AccountSettingForm", () => {
 
     await user.click(screen.getByRole("button", { name: "アカウント削除" }));
     const dialog = within(screen.getByRole("dialog"));
-    await user.type(dialog.getByLabelText("現在のパスワード"), "mypassword1");
     await user.click(dialog.getByRole("button", { name: "はい" }));
 
     await waitFor(() => {
@@ -279,7 +281,6 @@ describe("AccountSettingForm", () => {
       httpStatus: 200,
       isDuplicateAccountId: true,
       isAccountIdChanged: true,
-      isPasswordChanged: false,
       message: "",
     });
 
@@ -304,7 +305,6 @@ describe("AccountSettingForm", () => {
       httpStatus: 200,
       isDuplicateAccountId: true,
       isAccountIdChanged: true,
-      isPasswordChanged: false,
       message: "",
     });
 
@@ -327,133 +327,6 @@ describe("AccountSettingForm", () => {
     });
   });
 
-  it("現在のパスワードの確認に連続失敗するとクールダウン表示になり、以降の送信が止まること", async () => {
-    mockUpdateAccount.mockRejectedValue(
-      new ApiError("現在のパスワードが正しくありません", 403)
-    );
-
-    const user = userEvent.setup();
-    render(<AccountSettingForm accountId="testuser1" />);
-
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
-    });
-
-    const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
-    const currentInput = screen.getByLabelText("現在のパスワード");
-
-    for (let i = 0; i < 3; i++) {
-      await user.clear(passwordInput);
-      await user.type(passwordInput, "newpassword1");
-      await user.clear(currentInput);
-      await user.type(currentInput, "wrongpass1");
-      await user.click(screen.getByRole("button", { name: "登録" }));
-      await waitFor(() => {
-        expect(
-          screen.getByText("現在のパスワードが正しくありません")
-        ).toBeInTheDocument();
-      });
-    }
-
-    expect(mockUpdateAccount).toHaveBeenCalledTimes(3);
-    expect(
-      await screen.findByText(/しばらく待ってから再度お試しください/)
-    ).toBeInTheDocument();
-
-    // クールダウン中は送信ボタンが無効化され、API は呼ばれない
-    await user.click(screen.getByRole("button", { name: "登録" }));
-    expect(mockUpdateAccount).toHaveBeenCalledTimes(3);
-  });
-
-  it("再認証クールダウンは sessionStorage に保存され、再マウント後も維持されること", async () => {
-    mockUpdateAccount.mockRejectedValue(
-      new ApiError("現在のパスワードが正しくありません", 403)
-    );
-
-    const user = userEvent.setup();
-    const { unmount } = render(<AccountSettingForm accountId="testuser1" />);
-
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
-    });
-
-    const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
-    const currentInput = screen.getByLabelText("現在のパスワード");
-
-    for (let i = 0; i < 3; i++) {
-      await user.clear(passwordInput);
-      await user.type(passwordInput, "newpassword1");
-      await user.clear(currentInput);
-      await user.type(currentInput, "wrongpass1");
-      await user.click(screen.getByRole("button", { name: "登録" }));
-      await waitFor(() => {
-        expect(
-          screen.getByText("現在のパスワードが正しくありません")
-        ).toBeInTheDocument();
-      });
-    }
-
-    expect(
-      await screen.findByText(/しばらく待ってから再度お試しください/)
-    ).toBeInTheDocument();
-
-    // 別のインスタンスとして再マウントしてもクールダウン表示が復元される
-    unmount();
-    render(<AccountSettingForm accountId="testuser1" />);
-
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
-    });
-
-    expect(
-      await screen.findByText(/しばらく待ってから再度お試しください/)
-    ).toBeInTheDocument();
-  });
-
-  it("クールダウン未満の失敗カウントも再マウントをまたいで維持されること", async () => {
-    mockUpdateAccount.mockRejectedValue(
-      new ApiError("現在のパスワードが正しくありません", 403)
-    );
-
-    const user = userEvent.setup();
-    const submitWrongPassword = async () => {
-      await user.clear(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"));
-      await user.type(screen.getByPlaceholderText("英字と数字を含む半角8〜72文字"), "newpassword1");
-      await user.clear(screen.getByLabelText("現在のパスワード"));
-      await user.type(screen.getByLabelText("現在のパスワード"), "wrongpass1");
-      await user.click(screen.getByRole("button", { name: "登録" }));
-      await waitFor(() => {
-        expect(
-          screen.getByText("現在のパスワードが正しくありません")
-        ).toBeInTheDocument();
-      });
-    };
-
-    const { unmount } = render(<AccountSettingForm accountId="testuser1" />);
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
-    });
-
-    // 2回失敗（クールダウン上限=3 には未達なのでクールダウン表示は出ない）
-    await submitWrongPassword();
-    await submitWrongPassword();
-    expect(
-      screen.queryByText(/しばらく待ってから再度お試しください/)
-    ).not.toBeInTheDocument();
-
-    // 再マウント後の1回でクールダウンに入る＝失敗カウント(2)が復元されている
-    unmount();
-    render(<AccountSettingForm accountId="testuser1" />);
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
-    });
-    await submitWrongPassword();
-
-    expect(
-      await screen.findByText(/しばらく待ってから再度お試しください/)
-    ).toBeInTheDocument();
-  });
-
   it("アカウント名が空の場合にバリデーションエラーが表示されること", async () => {
     mockGetAccount.mockResolvedValue({
       ...mockAccountData,
@@ -472,27 +345,6 @@ describe("AccountSettingForm", () => {
     await waitFor(() => {
       expect(
         screen.getByText("アカウント名を入力してください")
-      ).toBeInTheDocument();
-    });
-
-    expect(mockUpdateAccount).not.toHaveBeenCalled();
-  });
-
-  it("パスワードが不正な形式の場合にバリデーションエラーが表示されること", async () => {
-    const user = userEvent.setup();
-    render(<AccountSettingForm accountId="testuser1" />);
-
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
-    });
-
-    const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
-    await user.type(passwordInput, "short");
-    await user.click(screen.getByRole("button", { name: "登録" }));
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("英字と数字を含む半角8〜72文字で入力してください")
       ).toBeInTheDocument();
     });
 
@@ -578,32 +430,11 @@ describe("AccountSettingForm", () => {
     });
   });
 
-  it("新しいパスワード入力後、現在のパスワードが未入力のままフォーカスを外すとエラーが表示されること", async () => {
-    const user = userEvent.setup();
-    render(<AccountSettingForm accountId="testuser1" />);
-
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "アカウント設定" })).toBeInTheDocument();
-    });
-
-    const passwordInput = screen.getByPlaceholderText("英字と数字を含む半角8〜72文字");
-    await user.type(passwordInput, "newpassword1");
-
-    const currentPasswordInput = screen.getByLabelText("現在のパスワード");
-    await user.click(currentPasswordInput);
-    await user.tab();
-
-    await waitFor(() => {
-      expect(screen.getByText("現在のパスワードを入力してください")).toBeInTheDocument();
-    });
-  });
-
   it("性別・出身地・居住地・メモを変更すると更新APIへ反映されること", async () => {
     mockUpdateAccount.mockResolvedValue({
       httpStatus: 200,
       isDuplicateAccountId: false,
       isAccountIdChanged: false,
-      isPasswordChanged: false,
       message: "",
     });
 
@@ -655,7 +486,10 @@ describe("AccountSettingForm", () => {
     expect(mockDeleteAccount).not.toHaveBeenCalled();
   });
 
-  it("削除確認モーダルをEscapeキーで閉じられ、入力値がリセットされること", async () => {
+  it("削除確認モーダルをEscapeキーで閉じられ、表示中のエラーがリセットされること", async () => {
+    mockDeleteAccount.mockRejectedValueOnce(
+      new ApiError("パスキーによる本人確認に失敗しました。", 403)
+    );
     const user = userEvent.setup();
     render(<AccountSettingForm accountId="testuser1" />);
 
@@ -665,26 +499,24 @@ describe("AccountSettingForm", () => {
 
     await user.click(screen.getByRole("button", { name: "アカウント削除" }));
     const dialog = screen.getByRole("dialog", { name: "アカウント削除の確認" });
-
-    await user.type(within(dialog).getByLabelText("現在のパスワード"), "password01");
+    await user.click(within(dialog).getByRole("button", { name: "はい" }));
+    await within(dialog).findByRole("alert");
     await user.keyboard("{Escape}");
 
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 
-    // 再度開いたとき、パスワードが破棄されていること
+    // 再度開いたとき、前回のエラーが破棄されていること
     await user.click(screen.getByRole("button", { name: "アカウント削除" }));
     const reopenedDialog = screen.getByRole("dialog", { name: "アカウント削除の確認" });
-    expect(within(reopenedDialog).getByLabelText("現在のパスワード")).toHaveValue("");
+    expect(within(reopenedDialog).queryByRole("alert")).not.toBeInTheDocument();
   });
-
   it("更新完了モーダルの閉じるボタンでモーダルを閉じられること", async () => {
     mockUpdateAccount.mockResolvedValue({
       httpStatus: 200,
       isDuplicateAccountId: false,
       isAccountIdChanged: false,
-      isPasswordChanged: false,
       message: "",
     });
 

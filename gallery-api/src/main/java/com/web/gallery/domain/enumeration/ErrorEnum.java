@@ -94,9 +94,11 @@ public enum ErrorEnum {
   /**
    * エラーコード：E-C-0005
    *
-   * <p>エラーメッセージ：{@value MessageConst#ERR_CURRENT_PASSWORD_MISMATCH}
+   * <p>エラーメッセージ：{@value MessageConst#ERR_REAUTHENTICATION_FAILED}
+   *
+   * <p>重要操作の前のパスキーによる本人確認（再認証）に失敗した場合。失敗理由はログにのみ出し、クライアントへは区別して返さない
    */
-  CURRENT_PASSWORD_MISMATCH("E-C-0005", MessageConst.ERR_CURRENT_PASSWORD_MISMATCH) {
+  REAUTHENTICATION_FAILED("E-C-0005", MessageConst.ERR_REAUTHENTICATION_FAILED) {
     @Override
     public GalleryException toException() {
       return new ForbiddenAccountException(this);
@@ -167,6 +169,32 @@ public enum ErrorEnum {
     @Override
     public GalleryException toException() {
       return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-C-0011
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_CANNOT_DELETE_LAST_PASSKEY}
+   *
+   * <p>パスキーがログインの唯一の手段のため、最後の1件は削除させない（リカバリーコードしかログイン手段が残らなくなるのを防ぐ）
+   */
+  CANNOT_DELETE_LAST_PASSKEY("E-C-0011", MessageConst.ERR_CANNOT_DELETE_LAST_PASSKEY) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-C-0012
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_DUPLICATE_ACCOUNT_ID}
+   */
+  DUPLICATE_ACCOUNT_ID("E-C-0012", MessageConst.ERR_DUPLICATE_ACCOUNT_ID) {
+    @Override
+    public GalleryException toException() {
+      return new RegistFailureException(this);
     }
   },
 

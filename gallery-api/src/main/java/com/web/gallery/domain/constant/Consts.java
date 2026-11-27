@@ -117,6 +117,22 @@ public final class Consts {
    */
   public static final List<Long> PASSKEY_PUBLIC_KEY_ALGORITHMS = List.of(-7L, -8L, -257L);
 
-  /** 認証前でアカウントが未確定であることを表すアカウント番号（WebAuthnの認証用チャレンジで使用する） */
+  /** 1回に発行するリカバリーコードの個数 */
+  public static final int RECOVERY_CODE_COUNT = 10;
+
+  /**
+   * リカバリーコードの文字数（区切りのハイフンを除く）
+   *
+   * <p>32種類の文字（{@link #RECOVERY_CODE_ALPHABET}）×16文字＝80ビットの乱数とし、オンラインでの総当たりを現実的に不可能にする
+   */
+  public static final int RECOVERY_CODE_LENGTH = 16;
+
+  /** リカバリーコードに使う文字（読み間違えやすいI・L・O・Uを除いたCrockfordのBase32） */
+  public static final String RECOVERY_CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+  /** リカバリーコード入力欄の最大文字数（ハイフン・空白の混入を許容した上限。アノテーション属性で参照するためint型で定義する） */
+  public static final int RECOVERY_CODE_INPUT_MAX_LENGTH = 64;
+
+  /** 認証前でアカウントが未確定であることを表すアカウント番号（WebAuthnの認証用・新規登録用チャレンジで使用する） */
   public static final long ACCOUNT_NO_UNKNOWN = 0L;
 }

@@ -46,7 +46,7 @@ public class LoginHistoryRepositoryImplTest {
               new AccountNo(1L),
               new IpAddress("127.0.0.1"),
               new IpGeoLocation(new Country("JP"), new Region("Tokyo")),
-              LoginMethodEnum.PASSWORD);
+              LoginMethodEnum.PASSKEY);
 
       ArgumentCaptor<LoginHistory> captor = ArgumentCaptor.forClass(LoginHistory.class);
       doReturn(1).when(loginHistoryMapper).insert(captor.capture());
@@ -70,7 +70,7 @@ public class LoginHistoryRepositoryImplTest {
               new AccountNo(1L),
               new IpAddress("127.0.0.1"),
               IpGeoLocation.empty(),
-              LoginMethodEnum.PASSWORD);
+              LoginMethodEnum.PASSKEY);
 
       ArgumentCaptor<LoginHistory> captor = ArgumentCaptor.forClass(LoginHistory.class);
       doReturn(1).when(loginHistoryMapper).insert(captor.capture());

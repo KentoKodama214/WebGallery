@@ -6,6 +6,7 @@
 |---|--------|----------|---------|-------------|
 | 1 | ログイン | `login` | `/login` | 公開 |
 | 2 | アカウント登録 | `account_register` | `/register` | 公開 |
+| 2-1 | リカバリーコードで復旧 | `recovery` | `/recovery` | 公開 |
 | 3 | アカウント一覧 | `account_list` | `/account_list` | 公開 |
 | 4 | アカウント設定 | `account_setting` | `/{accountId}/account_setting` | 認証必須（本人のみ） |
 | 5 | 写真一覧 | `photo_list` | `/photo/{photoAccountId}/photo_list` | 公開 |
@@ -62,7 +63,9 @@ graph TD
         LOGIN -->|ログイン成功| PHOTO_LIST
         LOGIN -->|ログイン失敗| LOGIN
         LOGIN -->|アカウント作成リンク| REGISTER["アカウント登録\n/register"]
-        REGISTER -->|登録成功| LOGIN
+        REGISTER -->|登録成功（リカバリーコードの保管後）| LOGIN
+        LOGIN -->|パスキーを失った場合のリンク| RECOVERY["リカバリーコードで復旧\n/recovery"]
+        RECOVERY -->|復旧成功| ACCOUNT_SETTING_R["アカウント設定\n/{id}/account_setting"]
         REGISTER -->|← back| LOGIN
     end
 
@@ -149,6 +152,7 @@ sequenceDiagram
     actor User as ユーザー
     participant Login as ログイン画面
     participant Register as アカウント登録画面
+    participant Recovery as 復旧画面
     participant API as REST API
     participant PhotoList as 写真一覧画面
 
@@ -157,16 +161,34 @@ sequenceDiagram
     User->>Login: アカウント作成リンクをクリック
     Login->>Register: /register に遷移
     User->>Register: フォーム入力・送信
-    Register->>API: POST /api/v1/accounts
-    API-->>Register: 登録成功
-    Register->>Register: モーダル表示
+    Register->>API: POST /api/v1/accounts/signup-options
+    API-->>Register: 新規登録オプション（チャレンジ・ユーザーハンドル）
+    Register->>Register: 端末でパスキーを作成（生体認証・PIN）
+    Register->>API: POST /api/v1/accounts（登録レスポンス＋プロフィール）
+    API-->>Register: 登録成功（リカバリーコード10個）
+    Register->>Register: リカバリーコードを表示（コピー・ダウンロード）
+    User->>Register: 「保管しました」をクリック
     Register->>Login: /login に遷移
 
-    Note over User, PhotoList: ログインフロー
-    User->>Login: 認証情報を入力・送信
-    Login->>API: POST /api/v1/auth/login
+    Note over User, PhotoList: ログインフロー（パスキーのみ）
+    User->>Login: 「パスキーでログイン」をクリック
+    Login->>API: POST /api/v1/auth/passkey/options
+    API-->>Login: 認証オプション（チャレンジ）
+    Login->>Login: 端末のパスキーで署名（生体認証・PIN）
+    Login->>API: POST /api/v1/auth/passkey/login
     API-->>Login: JWT発行（アクセストークン + リフレッシュトークン）
     Login->>PhotoList: /photo/{id}/photo_list にリダイレクト
+
+    Note over User, PhotoList: リカバリーコードによる復旧フロー（パスキーをすべて失った場合）
+    User->>Login: 「パスキーを失った場合」リンクをクリック
+    Login->>Recovery: /recovery に遷移
+    User->>Recovery: アカウントID・リカバリーコードを入力・送信
+    Recovery->>API: POST /api/v1/auth/recovery/options
+    API-->>Recovery: 新しいパスキーの登録オプション（コードは使用済みになる）
+    Recovery->>Recovery: 端末に新しいパスキーを作成
+    Recovery->>API: POST /api/v1/auth/recovery/login
+    API-->>Recovery: パスキー登録・JWT発行
+    Recovery->>Recovery: /{id}/account_setting に遷移
 ```
 
 ---
@@ -317,11 +339,6 @@ sequenceDiagram
         Setting->>API: PUT /api/v1/accounts/{id}
         API-->>Setting: 更新成功
         Setting->>Setting: モーダル表示（5秒で自動クローズ）
-    else パスワード変更
-        Setting->>API: PUT /api/v1/accounts/{id}
-        API-->>Setting: 更新成功
-        Setting->>Setting: ログアウト
-        Setting->>Login: /login に遷移
     else 更新失敗（アカウントID重複）
         Setting->>API: PUT /api/v1/accounts/{id}
         API-->>Setting: エラー返却
@@ -332,7 +349,10 @@ sequenceDiagram
     User->>Setting: アカウント削除ボタンをクリック
     Setting->>Setting: 確認ダイアログ表示
     User->>Setting: 「はい」をクリック
-    Setting->>API: DELETE /api/v1/accounts/{id}
+    Setting->>API: POST /api/v1/accounts/{id}/reauthentication-options
+    API-->>Setting: 本人確認オプション（本人のパスキーに限定）
+    Setting->>Setting: 端末のパスキーで署名（生体認証・PIN）
+    Setting->>API: POST /api/v1/accounts/{id}/deletion（本人確認の認証レスポンス）
     API-->>Setting: 削除成功
     Setting->>Setting: ログアウト
     Setting->>Setting: 削除完了モーダル表示
@@ -530,17 +550,27 @@ sequenceDiagram
 
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
-| ログイン成功 | `/photo/{accountId}/photo_list` | AJAX（POST /api/v1/auth/login） |
+| パスキーでのログイン成功 | `/photo/{accountId}/photo_list` | AJAX（POST /api/v1/auth/passkey/options → passkey/login） |
 | ログイン失敗 | `/login`（エラー表示） | 画面内表示 |
+| パスキーの選択をキャンセル | `/login`（エラー表示なし） | 画面内 |
 | 「アカウント作成」リンク | `/register` | リンク |
+| 「パスキーを失った場合」リンク | `/recovery` | リンク |
 
 ### アカウント登録 (`/register`)
 
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
-| 登録成功 | `/login` | AJAX → モーダル → フォーム送信 |
+| 登録成功 | `/login` | AJAX（signup-options → 端末でパスキー作成 → accounts） → リカバリーコード表示モーダル → 「保管しました」 |
 | 登録失敗（重複） | `/register`（エラー表示） | 画面内表示 |
 | 登録失敗（その他） | 同画面（エラー表示） | 画面内表示 |
+| 「← back」リンク | `/login` | リンク |
+
+### リカバリーコードで復旧 (`/recovery`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 復旧成功 | `/{accountId}/account_setting` | AJAX（recovery/options → 端末でパスキー作成 → recovery/login） |
+| 復旧失敗（アカウントID・コード不正、ロック中） | `/recovery`（エラー表示） | 画面内表示 |
 | 「← back」リンク | `/login` | リンク |
 
 ### アカウント一覧 (`/account_list`)
@@ -561,7 +591,7 @@ sequenceDiagram
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
 | 更新成功 | 同画面（モーダル表示） | AJAX |
-| パスワード変更 | `/login` | AJAX → ログアウト → リダイレクト |
+| パスキーの登録・削除、リカバリーコードの再発行 | 同画面 | パスキーによる本人確認 → AJAX |
 | 更新失敗（重複） | 同画面（エラー表示） | 画面内表示 |
 | 更新失敗（その他） | 同画面（エラー表示） | 画面内表示 |
 | アカウント削除 → 成功 | `/login` | AJAX → ログアウト → モーダル → 3秒後リダイレクト |

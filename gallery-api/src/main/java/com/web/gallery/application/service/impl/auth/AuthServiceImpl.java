@@ -11,33 +11,40 @@ import com.web.gallery.application.model.auth.AuthTokenModel;
 import com.web.gallery.application.model.auth.LoginContextModel;
 import com.web.gallery.application.model.auth.PasskeyAssertionModel;
 import com.web.gallery.application.model.auth.PasskeyAssertionResultModel;
+import com.web.gallery.application.model.auth.PasskeyAttestationModel;
 import com.web.gallery.application.model.auth.PasskeyAuthenticationOptionsModel;
 import com.web.gallery.application.model.auth.PasskeyCredentialModel;
+import com.web.gallery.application.model.auth.PasskeyRegistrationOptionsModel;
 import com.web.gallery.application.model.auth.RefreshTokenModel;
 import com.web.gallery.application.model.auth.WebAuthnChallengeModel;
 import com.web.gallery.application.repository.account.AccountRepository;
 import com.web.gallery.application.repository.auth.PasskeyCredentialRepository;
 import com.web.gallery.application.repository.auth.PasskeyUserHandleRepository;
+import com.web.gallery.application.repository.auth.RecoveryCodeRepository;
 import com.web.gallery.application.repository.auth.RefreshTokenRepository;
 import com.web.gallery.application.repository.auth.WebAuthnChallengeRepository;
 import com.web.gallery.application.service.auth.AuthService;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.constant.MessageConst;
+import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.enumeration.LoginMethodEnum;
 import com.web.gallery.domain.enumeration.WebAuthnChallengePurposeEnum;
 import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.InvalidRecoveryCodeException;
 import com.web.gallery.domain.exception.InvalidRefreshTokenException;
 import com.web.gallery.domain.exception.PasskeyVerificationException;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.auth.LastUsedAt;
 import com.web.gallery.domain.model.auth.PasskeyChallenge;
+import com.web.gallery.domain.model.auth.PasskeyName;
 import com.web.gallery.domain.model.auth.PasskeyResponseJson;
 import com.web.gallery.domain.model.auth.PasskeyTimeoutMillis;
 import com.web.gallery.domain.model.auth.PasskeyUserHandle;
+import com.web.gallery.domain.model.auth.RecoveryCode;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
 import com.web.gallery.domain.model.auth.RelyingPartyId;
+import com.web.gallery.domain.model.auth.RelyingPartyName;
 import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.domain.model.common.TokenHash;
@@ -46,15 +53,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.OffsetDateTime;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,7 +73,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
-  private final AuthenticationManager authenticationManager;
   private final JwtTokenProvider jwtTokenProvider;
   private final JwtConfig jwtConfig;
   private final LoginConfig loginConfig;
@@ -77,13 +81,13 @@ public class AuthServiceImpl implements AuthService {
   private final PasskeyCredentialRepository passkeyCredentialRepository;
   private final PasskeyUserHandleRepository passkeyUserHandleRepository;
   private final WebAuthnChallengeRepository webAuthnChallengeRepository;
+  private final RecoveryCodeRepository recoveryCodeRepository;
   private final WebAuthnVerifier webAuthnVerifier;
   private final WebAuthnConfig webAuthnConfig;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final Clock clock;
 
   public AuthServiceImpl(
-      @Lazy AuthenticationManager authenticationManager,
       JwtTokenProvider jwtTokenProvider,
       JwtConfig jwtConfig,
       LoginConfig loginConfig,
@@ -92,11 +96,11 @@ public class AuthServiceImpl implements AuthService {
       PasskeyCredentialRepository passkeyCredentialRepository,
       PasskeyUserHandleRepository passkeyUserHandleRepository,
       WebAuthnChallengeRepository webAuthnChallengeRepository,
+      RecoveryCodeRepository recoveryCodeRepository,
       WebAuthnVerifier webAuthnVerifier,
       WebAuthnConfig webAuthnConfig,
       ApplicationEventPublisher applicationEventPublisher,
       Clock clock) {
-    this.authenticationManager = authenticationManager;
     this.jwtTokenProvider = jwtTokenProvider;
     this.jwtConfig = jwtConfig;
     this.loginConfig = loginConfig;
@@ -105,36 +109,11 @@ public class AuthServiceImpl implements AuthService {
     this.passkeyCredentialRepository = passkeyCredentialRepository;
     this.passkeyUserHandleRepository = passkeyUserHandleRepository;
     this.webAuthnChallengeRepository = webAuthnChallengeRepository;
+    this.recoveryCodeRepository = recoveryCodeRepository;
     this.webAuthnVerifier = webAuthnVerifier;
     this.webAuthnConfig = webAuthnConfig;
     this.applicationEventPublisher = applicationEventPublisher;
     this.clock = clock;
-  }
-
-  /**
-   * ログイン認証を行い、トークンを発行する
-   *
-   * @param accountId アカウントID
-   * @param password パスワード
-   * @param ipAddress 送信元IPアドレス（ログイン履歴に記録するため、認証結果に伝播させる）
-   * @return {@link AuthTokenModel}
-   */
-  @Override
-  @Transactional
-  public AuthTokenModel login(AccountId accountId, Password password, IpAddress ipAddress) {
-    // 同一アカウントIDへのログイン試行をDBレベルで直列化し、
-    // 「ロックアウト判定 → 失敗回数加算」の間の競合による失敗回数上限のバイパスを防ぐ
-    accountRepository.lockForLoginAttempt(accountId);
-
-    rejectIfLocked(accountRepository.getByAccountId(accountId));
-
-    // IPアドレス・ログイン方式をdetailsに載せて認証イベント（成功/失敗）に伝播させ、ログイン履歴の記録（AccountServiceImpl）で使用する
-    UsernamePasswordAuthenticationToken authRequest =
-        new UsernamePasswordAuthenticationToken(accountId.value(), password.value());
-    authRequest.setDetails(LoginContextModel.of(ipAddress, LoginMethodEnum.PASSWORD));
-    Authentication authentication = authenticationManager.authenticate(authRequest);
-
-    return issueTokens((AccountPrincipal) authentication.getPrincipal());
   }
 
   /**
@@ -161,6 +140,7 @@ public class AuthServiceImpl implements AuthService {
     return PasskeyAuthenticationOptionsModel.builder()
         .challenge(challenge)
         .rpId(new RelyingPartyId(webAuthnConfig.getRpId()))
+        .allowCredentialIds(List.of())
         .timeoutMillis(
             new PasskeyTimeoutMillis(webAuthnConfig.getChallengeTimeoutSeconds() * 1000L))
         .build();
@@ -169,7 +149,7 @@ public class AuthServiceImpl implements AuthService {
   /**
    * パスキーの認証レスポンスを検証し、トークンを発行する
    *
-   * <p>パスワードログインと同様に、管理者ロック中・ログイン失敗回数の上限到達中のアカウントは拒否する （失敗回数によるロックは一定時間経過後に自動解除する）。
+   * <p>管理者ロック中・ログイン失敗回数の上限到達中のアカウントは拒否する （失敗回数によるロックは一定時間経過後に自動解除する）。
    * パスキーの検証失敗はログイン失敗回数に加算しない（署名の総当たりは成立せず、 加算すると第三者が公開されたクレデンシャルIDで本人をロックさせる嫌がらせに使えるため）。
    *
    * @param authenticationResponseJson 認証レスポンス（{@code PublicKeyCredential#toJSON()}の形式）
@@ -210,7 +190,7 @@ public class AuthServiceImpl implements AuthService {
       throw new PasskeyVerificationException("Passkey user handle mismatch");
     }
 
-    // パスワードログインと同じく、同一アカウントへのログイン試行を直列化してからロック状態を判定する
+    // 同一アカウントへのログイン試行を直列化してからロック状態を判定する
     accountRepository.lockForLoginAttempt(accountModel.getAccountId());
     accountModel = accountRepository.getByAccountNo(credential.getAccountNo());
     if (accountModel == null) {
@@ -229,14 +209,124 @@ public class AuthServiceImpl implements AuthService {
     passkeyCredentialRepository.updateAuthenticationResult(
         credential.withAuthenticationResult(result, new LastUsedAt(OffsetDateTime.now(clock))));
 
-    // パスワードログインと同じ認証成功イベントを発行し、ログイン失敗回数のリセット・最終ログイン日時の更新・
-    // ログイン履歴の記録（AccountServiceImpl#handle）を共通化する
-    UsernamePasswordAuthenticationToken authentication =
-        UsernamePasswordAuthenticationToken.authenticated(
-            principal, null, principal.getAuthorities());
-    authentication.setDetails(LoginContextModel.of(ipAddress, LoginMethodEnum.PASSKEY));
-    applicationEventPublisher.publishEvent(new AuthenticationSuccessEvent(authentication));
+    publishLoginSuccess(principal, ipAddress, LoginMethodEnum.PASSKEY);
+    return issueTokens(principal);
+  }
 
+  /**
+   * リカバリーコードで本人確認し、新しいパスキーを作成するためのオプション（チャレンジ等）を発行する
+   *
+   * <p>照合したリカバリーコードはこの時点で使用済み（削除）にする。発行したチャレンジは当該アカウントに紐づき、 有効期間内に1度だけ{@link
+   * #loginWithRecoveryCode}で使用できる。
+   *
+   * <p>管理者ロック中・ログイン失敗回数の上限到達中のアカウントは、パスキーでのログインと同じく拒否する。
+   * コードは80ビットの乱数でオンラインの総当たりは成立しないため、照合の失敗はログイン失敗回数に加算しない
+   * （加算すると、公開されているアカウントIDを使って第三者が本人をロックさせる嫌がらせに使えるため）。
+   *
+   * @param accountId アカウントID
+   * @param recoveryCode リカバリーコード
+   * @return {@link PasskeyRegistrationOptionsModel}
+   * @throws InvalidRecoveryCodeException アカウントが存在しない・無効、またはコードが一致しない（使用済みを含む）場合
+   * @throws LockedException アカウントがロックされている場合
+   */
+  @Override
+  @Transactional
+  public PasskeyRegistrationOptionsModel createRecoveryOptions(
+      AccountId accountId, RecoveryCode recoveryCode) {
+    // 同一アカウントへの試行を直列化し、ロック判定とコードの消費の間の競合を防ぐ
+    accountRepository.lockForLoginAttempt(accountId);
+    AccountModel accountModel = accountRepository.getByAccountId(accountId);
+    if (accountModel == null) {
+      throw new InvalidRecoveryCodeException("Recovery target account not found");
+    }
+    rejectIfLocked(accountModel);
+    if (!new AccountPrincipal(accountModel, loginConfig.getFailCount()).isEnabled()) {
+      throw new InvalidRecoveryCodeException("Recovery target account is disabled");
+    }
+
+    AccountNo accountNo = accountModel.getAccountNo();
+    if (!recoveryCodeRepository.consume(accountNo, recoveryCode)) {
+      throw new InvalidRecoveryCodeException("Recovery code mismatch");
+    }
+
+    PasskeyChallenge challenge = webAuthnVerifier.generateChallenge();
+    webAuthnChallengeRepository.save(
+        WebAuthnChallengeModel.of(
+            challenge,
+            WebAuthnChallengePurposeEnum.RECOVERY,
+            accountNo,
+            new ExpiresAt(
+                OffsetDateTime.now(clock)
+                    .plusSeconds(webAuthnConfig.getChallengeTimeoutSeconds()))));
+
+    return PasskeyRegistrationOptionsModel.builder()
+        .challenge(challenge)
+        .rpId(new RelyingPartyId(webAuthnConfig.getRpId()))
+        .rpName(new RelyingPartyName(webAuthnConfig.getRpName()))
+        .userHandle(getOrCreateUserHandle(accountNo))
+        .accountId(accountModel.getAccountId())
+        .accountName(accountModel.getAccountName())
+        .excludeCredentialIds(
+            passkeyCredentialRepository.findByAccountNo(accountNo).toCredentialIdList())
+        .timeoutMillis(
+            new PasskeyTimeoutMillis(webAuthnConfig.getChallengeTimeoutSeconds() * 1000L))
+        .build();
+  }
+
+  /**
+   * 復旧用のパスキーの登録レスポンスを検証してパスキーを登録し、トークンを発行する
+   *
+   * <p>チャレンジは{@link #createRecoveryOptions}で発行され、未使用かつ有効期限内である必要がある。 復旧を妨げないよう、パスキーの登録数の上限（{@link
+   * Consts#PASSKEY_MAX_COUNT}）は適用しない。 ログイン履歴にはリカバリーコードによる復旧として記録する
+   *
+   * @param registrationResponseJson 登録レスポンス（{@code PublicKeyCredential#toJSON()}の形式）
+   * @param passkeyName パスキー名
+   * @param ipAddress 送信元IPアドレス（ログイン履歴に記録する）
+   * @return {@link AuthTokenModel}
+   * @throws PasskeyVerificationException 登録レスポンスの検証に失敗した場合
+   * @throws LockedException アカウントがロックされている場合
+   * @throws DisabledException アカウントが無効の場合
+   * @throws GalleryException 登録済みのパスキーの場合
+   */
+  @Override
+  @Transactional(rollbackFor = GalleryException.class)
+  public AuthTokenModel loginWithRecoveryCode(
+      PasskeyResponseJson registrationResponseJson, PasskeyName passkeyName, IpAddress ipAddress)
+      throws GalleryException {
+    // 署名・origin・RP ID・UV等の検証（DBを更新しない）を先に行い、通過したものだけチャレンジを消費する
+    PasskeyChallenge challenge =
+        webAuthnVerifier.readRegistrationChallenge(registrationResponseJson);
+    PasskeyAttestationModel attestation =
+        webAuthnVerifier.verifyRegistration(registrationResponseJson, challenge);
+    WebAuthnChallengeModel storedChallenge =
+        webAuthnChallengeRepository.consumeForRecovery(challenge);
+    if (storedChallenge == null || storedChallenge.getAccountNo() == null) {
+      throw new PasskeyVerificationException("Passkey recovery challenge is not available");
+    }
+
+    AccountModel accountModel = accountRepository.getByAccountNo(storedChallenge.getAccountNo());
+    if (accountModel == null) {
+      throw new PasskeyVerificationException("Recovery target account not found");
+    }
+    accountRepository.lockForLoginAttempt(accountModel.getAccountId());
+    accountModel = accountRepository.getByAccountNo(storedChallenge.getAccountNo());
+    if (accountModel == null) {
+      throw new PasskeyVerificationException("Recovery target account not found");
+    }
+    rejectIfLocked(accountModel);
+
+    AccountPrincipal principal = new AccountPrincipal(accountModel, loginConfig.getFailCount());
+    if (!principal.isEnabled()) {
+      throw new DisabledException(MessageConst.ERR_BAD_CREDENTIALS);
+    }
+
+    if (passkeyCredentialRepository.findByCredentialId(attestation.getCredentialId()) != null) {
+      throw ErrorEnum.DUPLICATE_PASSKEY.toException();
+    }
+    passkeyCredentialRepository.save(
+        PasskeyCredentialModel.forRegist(accountModel.getAccountNo(), attestation, passkeyName));
+
+    publishLoginSuccess(principal, ipAddress, LoginMethodEnum.RECOVERY_CODE);
     return issueTokens(principal);
   }
 
@@ -341,6 +431,39 @@ public class AuthServiceImpl implements AuthService {
   @Transactional
   public void purgeExpiredWebAuthnChallenges() {
     webAuthnChallengeRepository.deleteExpired();
+  }
+
+  /**
+   * 認証成功イベントを発行する
+   *
+   * <p>ログイン失敗回数のリセット・最終ログイン日時の更新・ログイン履歴の記録（AccountServiceImpl#handle）を、 ログイン方式によらず共通化する
+   *
+   * @param principal 認証済みの{@link AccountPrincipal}
+   * @param ipAddress 送信元IPアドレス
+   * @param loginMethod ログイン方式
+   */
+  private void publishLoginSuccess(
+      AccountPrincipal principal, IpAddress ipAddress, LoginMethodEnum loginMethod) {
+    UsernamePasswordAuthenticationToken authentication =
+        UsernamePasswordAuthenticationToken.authenticated(
+            principal, null, principal.getAuthorities());
+    authentication.setDetails(LoginContextModel.of(ipAddress, loginMethod));
+    applicationEventPublisher.publishEvent(new AuthenticationSuccessEvent(authentication));
+  }
+
+  /**
+   * アカウントのパスキー用ユーザーハンドルを取得する。未発行であれば発行する
+   *
+   * @param accountNo アカウント番号
+   * @return {@link PasskeyUserHandle}
+   */
+  private PasskeyUserHandle getOrCreateUserHandle(AccountNo accountNo) {
+    PasskeyUserHandle userHandle = passkeyUserHandleRepository.findByAccountNo(accountNo);
+    if (userHandle != null) {
+      return userHandle;
+    }
+    passkeyUserHandleRepository.saveIfAbsent(accountNo, webAuthnVerifier.generateUserHandle());
+    return passkeyUserHandleRepository.findByAccountNo(accountNo);
   }
 
   /**

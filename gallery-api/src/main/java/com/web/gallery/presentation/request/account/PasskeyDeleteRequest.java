@@ -1,5 +1,6 @@
 package com.web.gallery.presentation.request.account;
 
+import com.web.gallery.domain.constant.Consts;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -10,12 +11,13 @@ import lombok.Data;
 @Data
 public class PasskeyDeleteRequest {
   /**
-   * 現在のパスワード
+   * 本人確認用の認証レスポンス
    *
-   * <p>本人確認（再認証）に用いる。ログイン手段を失わせる操作のため必須。
+   * <p>本人確認オプション発行API（{@code /reauthentication-options}）で発行したチャレンジに、本人のパスキーで署名した {@code
+   * navigator.credentials.get()}の結果を{@code toJSON()}し、さらにJSON文字列にしたもの。 ログイン手段を失わせる操作のため必須。
    */
-  @Schema(description = "現在のパスワード", example = "password01")
+  @Schema(description = "本人確認用の認証レスポンス（PublicKeyCredential#toJSON()のJSON文字列）")
   @NotBlank(message = "{validation.common.notBlank}")
-  @Size(max = 72, message = "{validation.common.max_length}")
-  private String currentPassword;
+  @Size(max = Consts.PASSKEY_RESPONSE_JSON_MAX_LENGTH, message = "{validation.common.max_length}")
+  private String credential;
 }

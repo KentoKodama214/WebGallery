@@ -100,14 +100,20 @@ public class RateLimitFilter extends OncePerRequestFilter {
    */
   private Category resolveCategory(HttpServletRequest request) {
     String uri = request.getRequestURI();
-    // ログインのみ厳格な枠にする。トークンリフレッシュは128bitのランダムトークンで
+    // ログイン・復旧のみ厳格な枠にする。トークンリフレッシュは128bitのランダムトークンで
     // 総当たり不能なため GENERAL 枠で足りる（正常系では15分ごとに1回程度）
-    // パスキーの認証オプション発行は未ログインでDBへチャレンジを書き込むため、ログインと同じ枠で絞る
-    // （ログイン・パスキーログイン・オプション発行は同じ枠を共有する）
-    if (uri.equals(ApiRoutes.API_AUTH_LOGIN)
-        || uri.equals(ApiRoutes.API_AUTH_PASSKEY_OPTIONS)
-        || uri.equals(ApiRoutes.API_AUTH_PASSKEY_LOGIN)) {
+    // パスキーの認証オプション・復旧オプションの発行は未ログインでDBへチャレンジを書き込むため、ログインと同じ枠で絞る
+    // （パスキーログイン・復旧とそれらのオプション発行は同じ枠を共有する）
+    if (uri.equals(ApiRoutes.API_AUTH_PASSKEY_OPTIONS)
+        || uri.equals(ApiRoutes.API_AUTH_PASSKEY_LOGIN)
+        || uri.equals(ApiRoutes.API_AUTH_RECOVERY_OPTIONS)
+        || uri.equals(ApiRoutes.API_AUTH_RECOVERY_LOGIN)) {
       return Category.AUTH;
+    }
+    // 新規登録オプションの発行は未ログインでDBへチャレンジを書き込むため、アカウント登録と同じ枠で絞る
+    if ("POST".equalsIgnoreCase(request.getMethod())
+        && uri.equals(ApiRoutes.API_ACCOUNT_SIGNUP_OPTIONS)) {
+      return Category.REGISTER;
     }
     if ("POST".equalsIgnoreCase(request.getMethod()) && uri.equals(ApiRoutes.API_ACCOUNTS)) {
       return Category.REGISTER;

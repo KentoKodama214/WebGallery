@@ -2,38 +2,40 @@ package com.web.gallery.presentation.controller.account;
 
 import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.account.AccountPageModel;
+import com.web.gallery.application.model.auth.RecoveryCodeList;
 import com.web.gallery.application.service.account.AccountService;
 import com.web.gallery.domain.constant.ApiRoutes;
 import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.domain.model.account.Password;
+import com.web.gallery.domain.model.auth.PasskeyName;
+import com.web.gallery.domain.model.auth.PasskeyResponseJson;
 import com.web.gallery.infrastructure.security.SessionHelper;
 import com.web.gallery.infrastructure.web.ValidationErrorLogger;
 import com.web.gallery.presentation.converter.account.AccountConverter;
 import com.web.gallery.presentation.request.account.AccountDeleteRequest;
 import com.web.gallery.presentation.request.account.AccountListRequest;
 import com.web.gallery.presentation.request.account.AccountRegistRequest;
+import com.web.gallery.presentation.request.account.AccountSignupOptionsRequest;
 import com.web.gallery.presentation.request.account.AccountUpdateRequest;
 import com.web.gallery.presentation.response.account.AccountDetailResponse;
 import com.web.gallery.presentation.response.account.AccountListGetResponse;
 import com.web.gallery.presentation.response.account.AccountRegistResponse;
 import com.web.gallery.presentation.response.account.AccountUpdateResponse;
+import com.web.gallery.presentation.response.account.PasskeyRegistrationOptionsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -115,17 +117,57 @@ public class AccountController {
   }
 
   /**
+   * アカウント新規登録オプションの発行
+   *
+   * @param request {@link AccountSignupOptionsRequest}
+   * @param result AccountSignupOptionsRequestのバインディング結果
+   * @return {@link PasskeyRegistrationOptionsResponse}
+   * @throws GalleryException リクエストパラメータが不正な場合、アカウントIDが既に使われている場合
+   */
+  @Operation(
+      summary = "アカウント新規登録オプション発行",
+      description =
+          "アカウントと同時に登録する最初のパスキーを作成するためのチャレンジ等（PublicKeyCredentialCreationOptionsJSON）を発行する")
+  @ApiResponse(responseCode = "200", description = "発行成功")
+  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
+  @ApiResponse(responseCode = "409", description = "アカウントIDが既に使用されている", content = @Content)
+  @PostMapping(ApiRoutes.API_ACCOUNT_SIGNUP_OPTIONS)
+  public ResponseEntity<PasskeyRegistrationOptionsResponse> signupOptions(
+      @RequestBody @Validated AccountSignupOptionsRequest request, BindingResult result)
+      throws GalleryException {
+
+    if (result.hasErrors()) {
+      ValidationErrorLogger.logFieldErrors(log, result);
+      throw ErrorEnum.INVALID_INPUT.toException();
+    }
+
+    return ResponseEntity.ok(
+        PasskeyRegistrationOptionsResponse.from(
+            accountService.createSignupOptions(
+                new AccountId(request.getAccountId()), new AccountName(request.getAccountName()))));
+  }
+
+  /**
    * アカウント登録
    *
    * @param accountRegistRequest {@link AccountRegistRequest}
    * @param result AccountRegistRequestのバインディング結果
-   * @return {@link AccountRegistResponse}
-   * @throws GalleryException 以下のいずれかに該当する場合 ・リクエストパラメータが不正の場合 ・一意制約違反でアカウントの登録に失敗した場合
+   * @return {@link AccountRegistResponse}（発行したリカバリーコードを含む）
+   * @throws GalleryException 以下のいずれかに該当する場合 ・リクエストパラメータが不正の場合 ・パスキーの登録レスポンスの検証に失敗した場合
+   *     ・アカウントIDが既に使われている場合
    */
-  @Operation(summary = "アカウント登録", description = "新規アカウントを登録する")
+  @Operation(
+      summary = "アカウント登録",
+      description = "最初のパスキーの登録レスポンスを検証し、新規アカウントとパスキーを登録する。あわせてリカバリーコードを発行して返す（再表示不可）")
   @ApiResponse(responseCode = "200", description = "登録成功")
-  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
-  @ApiResponse(responseCode = "409", description = "アカウントIDが既に使用されている", content = @Content)
+  @ApiResponse(
+      responseCode = "400",
+      description = "リクエストパラメータ不正・パスキーの登録レスポンスの検証失敗",
+      content = @Content)
+  @ApiResponse(
+      responseCode = "409",
+      description = "アカウントIDが既に使用されている・登録済みのパスキー",
+      content = @Content)
   @PostMapping(ApiRoutes.API_ACCOUNTS)
   public ResponseEntity<AccountRegistResponse> register(
       @RequestBody @Validated AccountRegistRequest accountRegistRequest, BindingResult result)
@@ -138,8 +180,12 @@ public class AccountController {
 
     AccountModel accountModel = accountConverter.toAccountModelForRegist(accountRegistRequest);
 
-    Boolean isSuccess = accountService.registAccount(accountModel);
-    return ResponseEntity.ok(AccountRegistResponse.of(isSuccess, Consts.STRING_EMPTY));
+    RecoveryCodeList recoveryCodes =
+        accountService.registAccount(
+            accountModel,
+            new PasskeyResponseJson(accountRegistRequest.getCredential()),
+            new PasskeyName(accountRegistRequest.getPasskeyName().strip()));
+    return ResponseEntity.ok(AccountRegistResponse.of(true, Consts.STRING_EMPTY, recoveryCodes));
   }
 
   /**
@@ -151,13 +197,10 @@ public class AccountController {
    * @return {@link AccountUpdateResponse}
    * @throws GalleryException 以下のいずれかに該当する場合 ・リクエストパラメータが不正の場合 ・更新に失敗した場合
    */
-  @Operation(summary = "アカウント更新", description = "アカウント情報を更新する（パスワード変更時は現在のパスワードによる再認証が必要）")
+  @Operation(summary = "アカウント更新", description = "アカウント情報を更新する")
   @ApiResponse(responseCode = "200", description = "更新成功")
   @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
-  @ApiResponse(
-      responseCode = "403",
-      description = "認証ユーザーと異なるアカウントIDを指定、または現在のパスワード不一致",
-      content = @Content)
+  @ApiResponse(responseCode = "403", description = "認証ユーザーと異なるアカウントIDを指定", content = @Content)
   @ApiResponse(responseCode = "409", description = "変更後のアカウントIDが既に使用されている", content = @Content)
   @SecurityRequirement(name = "Bearer")
   @PutMapping(ApiRoutes.API_ACCOUNT)
@@ -167,29 +210,8 @@ public class AccountController {
       BindingResult result)
       throws GalleryException {
 
-    // 新しいパスワードは未指定（JSONでnull）でも空文字と同様に「変更なし」として扱う
-    String newPassword =
-        Objects.requireNonNullElse(accountUpdateRequest.getNewPassword(), Consts.STRING_EMPTY);
-    String currentPassword =
-        Objects.requireNonNullElse(accountUpdateRequest.getCurrentPassword(), Consts.STRING_EMPTY);
-
     if (result.hasErrors()) {
       ValidationErrorLogger.logFieldErrors(log, result);
-
-      List<String> fieldList =
-          result.getFieldErrors().stream().map(FieldError::getField).distinct().toList();
-
-      if (!(fieldList.size() == 1
-          && "newPassword".equals(fieldList.getFirst())
-          && newPassword.isEmpty())) {
-        // 新しいパスワードが空欄で他にパラメータ不正がない場合は、スキップ
-        // 新しいパスワード以外や新しいパスワードの入力に不正がある場合は、例外
-        throw ErrorEnum.INVALID_INPUT.toException();
-      }
-    }
-
-    // パスワードを変更する場合は現在のパスワードの入力を必須とする（本人確認はService層で実施）
-    if (!newPassword.isEmpty() && currentPassword.isEmpty()) {
       throw ErrorEnum.INVALID_INPUT.toException();
     }
 
@@ -197,38 +219,34 @@ public class AccountController {
         accountConverter.toAccountModelForUpdate(
             accountUpdateRequest, sessionHelper.getAccountNo());
 
-    Boolean isDuplicateAccountId =
-        accountService.updateAccount(
-            accountModel, currentPassword.isEmpty() ? null : new Password(currentPassword));
+    Boolean isDuplicateAccountId = accountService.updateAccount(accountModel);
 
     return ResponseEntity.ok(
         AccountUpdateResponse.of(
             isDuplicateAccountId,
             !accountUpdateRequest.getAccountId().equals(sessionHelper.getAccountId()),
-            !newPassword.isEmpty(),
             Consts.STRING_EMPTY));
   }
 
   /**
    * アカウント削除
    *
-   * <p>本人確認に用いる「現在のパスワード」はリクエストボディ（JSON）で受け取る。 DELETEのボディは一部の中継経路で破棄されうること、および現在のパスワードのような機微情報を
-   * アクセスログ・APM・WAF等に記録されやすいカスタムヘッダーに載せないことの両方を満たすため、 DELETEではなく {@code POST
-   * /api/v1/accounts/{accountId}/deletion} のサブリソースとして提供する。
+   * <p>本人確認に用いるパスキーの認証レスポンスはリクエストボディ（JSON）で受け取る。 DELETEのボディは一部の中継経路で破棄されうるため、 DELETEではなく {@code
+   * POST /api/v1/accounts/{accountId}/deletion} のサブリソースとして提供する。
    *
    * @param accountId アカウントID
    * @param accountDeleteRequest {@link AccountDeleteRequest}
    * @param result AccountDeleteRequestのバインディング結果
    * @return {@link ResponseEntity}
-   * @throws GalleryException 以下のいずれかに該当する場合 ・認証ユーザーと異なるアカウントIDの場合 ・現在のパスワードが未入力・上限超過の場合
-   *     ・現在のパスワードが一致しない場合
+   * @throws GalleryException 以下のいずれかに該当する場合 ・認証ユーザーと異なるアカウントIDの場合 ・リクエストパラメータが不正の場合
+   *     ・パスキーによる本人確認に失敗した場合
    */
-  @Operation(summary = "アカウント削除", description = "現在のパスワードによる再認証のうえ、アカウントと関連データをすべて物理削除する")
+  @Operation(summary = "アカウント削除", description = "パスキーによる再認証のうえ、アカウントと関連データをすべて物理削除する")
   @ApiResponse(responseCode = "200", description = "削除成功")
   @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
   @ApiResponse(
       responseCode = "403",
-      description = "認証ユーザーと異なるアカウントIDを指定、または現在のパスワード不一致",
+      description = "認証ユーザーと異なるアカウントIDを指定、またはパスキーによる本人確認の失敗",
       content = @Content)
   @SecurityRequirement(name = "Bearer")
   @PostMapping(ApiRoutes.API_ACCOUNT_DELETION)
@@ -250,7 +268,7 @@ public class AccountController {
     accountService.deleteAccount(
         new AccountNo(sessionHelper.getAccountNo()),
         new AccountId(accountId),
-        new Password(accountDeleteRequest.getCurrentPassword()));
+        new PasskeyResponseJson(accountDeleteRequest.getCredential()));
 
     return ResponseEntity.ok().build();
   }

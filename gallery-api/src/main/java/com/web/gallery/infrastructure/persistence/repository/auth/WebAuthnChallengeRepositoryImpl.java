@@ -6,6 +6,7 @@ import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.WebAuthnChallengePurposeEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.auth.PasskeyChallenge;
+import com.web.gallery.domain.model.auth.PasskeyUserHandle;
 import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallenge;
 import com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallengeCondition;
@@ -41,6 +42,21 @@ public class WebAuthnChallengeRepositoryImpl implements WebAuthnChallengeReposit
     return consume(challenge, WebAuthnChallengePurposeEnum.AUTHENTICATION);
   }
 
+  @Override
+  public WebAuthnChallengeModel consumeForSignup(PasskeyChallenge challenge) {
+    return consume(challenge, WebAuthnChallengePurposeEnum.SIGNUP);
+  }
+
+  @Override
+  public WebAuthnChallengeModel consumeForReauthentication(PasskeyChallenge challenge) {
+    return consume(challenge, WebAuthnChallengePurposeEnum.REAUTHENTICATION);
+  }
+
+  @Override
+  public WebAuthnChallengeModel consumeForRecovery(PasskeyChallenge challenge) {
+    return consume(challenge, WebAuthnChallengePurposeEnum.RECOVERY);
+  }
+
   /**
    * 有効期限内かつ用途が一致するチャレンジを取得し、同時に削除する
    *
@@ -68,12 +84,18 @@ public class WebAuthnChallengeRepositoryImpl implements WebAuthnChallengeReposit
    * @return {@link WebAuthnChallengeModel}
    */
   private WebAuthnChallengeModel toWebAuthnChallengeModel(WebAuthnChallenge entity) {
-    return WebAuthnChallengeModel.of(
-        new PasskeyChallenge(entity.getChallenge()),
-        entity.getPurposeKbn(),
-        entity.getAccountNo() == Consts.ACCOUNT_NO_UNKNOWN
-            ? null
-            : new AccountNo(entity.getAccountNo()),
-        new ExpiresAt(entity.getExpiresAt()));
+    return WebAuthnChallengeModel.builder()
+        .challenge(new PasskeyChallenge(entity.getChallenge()))
+        .purposeKbn(entity.getPurposeKbn())
+        .accountNo(
+            entity.getAccountNo() == Consts.ACCOUNT_NO_UNKNOWN
+                ? null
+                : new AccountNo(entity.getAccountNo()))
+        .userHandle(
+            entity.getUserHandle() == null || entity.getUserHandle().isEmpty()
+                ? null
+                : new PasskeyUserHandle(entity.getUserHandle()))
+        .expiresAt(new ExpiresAt(entity.getExpiresAt()))
+        .build();
   }
 }

@@ -67,7 +67,7 @@ public class LoginHistoryRepositoryImplIntegrationTest {
               new AccountNo(1L),
               new IpAddress("203.0.113.1"),
               new IpGeoLocation(new Country("JP"), new Region("Tokyo")),
-              LoginMethodEnum.PASSWORD);
+              LoginMethodEnum.PASSKEY);
 
       loginHistoryRepositoryImpl.save(model);
 
@@ -76,7 +76,7 @@ public class LoginHistoryRepositoryImplIntegrationTest {
       assertEquals("203.0.113.1", actual.getFirst().getIpAddress());
       assertEquals("JP", actual.getFirst().getCountry());
       assertEquals("Tokyo", actual.getFirst().getRegion());
-      assertEquals(LoginMethodEnum.PASSWORD, actual.getFirst().getLoginMethodKbn());
+      assertEquals(LoginMethodEnum.PASSKEY, actual.getFirst().getLoginMethodKbn());
       // created_byはログイン試行者自身のアカウント番号
       assertEquals(1L, actual.getFirst().getCreatedBy());
       assertNotNull(actual.getFirst().getCreatedAt());

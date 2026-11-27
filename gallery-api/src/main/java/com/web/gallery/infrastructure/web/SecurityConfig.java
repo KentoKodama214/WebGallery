@@ -10,14 +10,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -46,29 +42,6 @@ public class SecurityConfig {
   private final RestAccessDeniedHandler restAccessDeniedHandler;
 
   private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
-
-  /**
-   * bcryptアルゴリズムでハッシュ化を行うエンコーダのオブジェクトを生成します
-   *
-   * @return PasswordEncoderオブジェクト
-   */
-  @Bean
-  PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
-  }
-
-  /**
-   * AuthenticationManagerのBeanを公開します
-   *
-   * @param authenticationConfiguration 認証設定
-   * @return AuthenticationManagerオブジェクト
-   * @throws Exception
-   */
-  @Bean
-  AuthenticationManager authenticationManager(
-      AuthenticationConfiguration authenticationConfiguration) throws Exception {
-    return authenticationConfiguration.getAuthenticationManager();
-  }
 
   /**
    * CORS設定を定義します
@@ -178,8 +151,6 @@ public class SecurityConfig {
         .authorizeHttpRequests(authorizeRequests ->
             authorizeRequests
                 // 認証API
-                .requestMatchers(ApiRoutes.API_AUTH_LOGIN)
-                .permitAll()
                 .requestMatchers(ApiRoutes.API_AUTH_REFRESH)
                 .permitAll()
                 .requestMatchers(ApiRoutes.API_AUTH_LOGOUT)
@@ -188,7 +159,13 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(ApiRoutes.API_AUTH_PASSKEY_LOGIN)
                 .permitAll()
-                // アカウント登録（POST）とアカウント一覧（GET）は公開
+                .requestMatchers(ApiRoutes.API_AUTH_RECOVERY_OPTIONS)
+                .permitAll()
+                .requestMatchers(ApiRoutes.API_AUTH_RECOVERY_LOGIN)
+                .permitAll()
+                // アカウント登録（POST）・新規登録オプション発行（POST）とアカウント一覧（GET）は公開
+                .requestMatchers(HttpMethod.POST, ApiRoutes.API_ACCOUNT_SIGNUP_OPTIONS)
+                .permitAll()
                 .requestMatchers(HttpMethod.GET, ApiRoutes.API_ACCOUNTS)
                 .permitAll()
                 .requestMatchers(HttpMethod.POST, ApiRoutes.API_ACCOUNTS)

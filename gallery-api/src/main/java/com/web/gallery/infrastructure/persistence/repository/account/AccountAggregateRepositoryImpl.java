@@ -9,6 +9,7 @@ import com.web.gallery.infrastructure.persistence.entity.account.AccountConditio
 import com.web.gallery.infrastructure.persistence.entity.account.LoginHistoryCondition;
 import com.web.gallery.infrastructure.persistence.entity.auth.PasskeyCredentialCondition;
 import com.web.gallery.infrastructure.persistence.entity.auth.PasskeyUserHandleCondition;
+import com.web.gallery.infrastructure.persistence.entity.auth.RecoveryCodeCondition;
 import com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallengeCondition;
 import com.web.gallery.infrastructure.persistence.entity.common.LocationMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMstCondition;
@@ -26,6 +27,7 @@ import com.web.gallery.infrastructure.persistence.mapper.account.AccountMapper;
 import com.web.gallery.infrastructure.persistence.mapper.account.LoginHistoryMapper;
 import com.web.gallery.infrastructure.persistence.mapper.auth.PasskeyCredentialMapper;
 import com.web.gallery.infrastructure.persistence.mapper.auth.PasskeyUserHandleMapper;
+import com.web.gallery.infrastructure.persistence.mapper.auth.RecoveryCodeMapper;
 import com.web.gallery.infrastructure.persistence.mapper.auth.RefreshTokenMapper;
 import com.web.gallery.infrastructure.persistence.mapper.auth.WebAuthnChallengeMapper;
 import com.web.gallery.infrastructure.persistence.mapper.common.LocationMstMapper;
@@ -74,6 +76,7 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
   private final PasskeyCredentialMapper passkeyCredentialMapper;
   private final PasskeyUserHandleMapper passkeyUserHandleMapper;
   private final WebAuthnChallengeMapper webAuthnChallengeMapper;
+  private final RecoveryCodeMapper recoveryCodeMapper;
   private final LoginHistoryMapper loginHistoryMapper;
   private final PhotoListFilterLogMapper photoListFilterLogMapper;
   private final PhotoViewLogMapper photoViewLogMapper;
@@ -131,9 +134,10 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
     // リフレッシュトークンを失効
     refreshTokenMapper.revokeAllByAccountNo(accountNo, accountNo);
 
-    // パスキー・ユーザーハンドルを削除し、登録用チャレンジの残骸も消す
+    // パスキー・ユーザーハンドル・リカバリーコードを削除し、アカウントに紐づくチャレンジの残骸も消す
     // （チャレンジのaccount_noは認証用で0を取るため外部キーが無く、削除漏れが外部キー違反として検出されない）
     passkeyCredentialMapper.delete(PasskeyCredentialCondition.byAccountNo(accountNo));
+    recoveryCodeMapper.delete(RecoveryCodeCondition.byAccountNo(accountNo));
     passkeyUserHandleMapper.delete(PasskeyUserHandleCondition.byAccountNo(accountNo));
     webAuthnChallengeMapper.delete(WebAuthnChallengeCondition.byAccountNo(accountNo));
 

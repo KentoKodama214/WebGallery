@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -91,15 +92,36 @@ class RateLimitFilterTest {
 
     @Test
     @Order(3)
-    @DisplayName("ログインパスは AUTH カテゴリのキーで判定する")
+    @DisplayName("パスキーログイン・復旧のパスは AUTH カテゴリのキーで判定する")
     void loginUsesAuthCategory() throws Exception {
       when(rateLimiter.tryAcquire(eq("203.0.113.9|AUTH"), any())).thenReturn(true);
-      MockHttpServletResponse response = new MockHttpServletResponse();
+
+      for (String path :
+          new String[] {
+            "/api/v1/auth/passkey/options",
+            "/api/v1/auth/passkey/login",
+            "/api/v1/auth/recovery/options",
+            "/api/v1/auth/recovery/login"
+          }) {
+        rateLimitFilter.doFilter(
+            request("POST", path), new MockHttpServletResponse(), new MockFilterChain());
+      }
+
+      verify(rateLimiter, times(4)).tryAcquire(eq("203.0.113.9|AUTH"), any());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("新規登録オプション発行POSTは REGISTER カテゴリのキーで判定する")
+    void signupOptionsUsesRegisterCategory() throws Exception {
+      when(rateLimiter.tryAcquire(eq("203.0.113.9|REGISTER"), any())).thenReturn(true);
 
       rateLimitFilter.doFilter(
-          request("POST", "/api/v1/auth/login"), response, new MockFilterChain());
+          request("POST", "/api/v1/accounts/signup-options"),
+          new MockHttpServletResponse(),
+          new MockFilterChain());
 
-      verify(rateLimiter).tryAcquire(eq("203.0.113.9|AUTH"), any());
+      verify(rateLimiter).tryAcquire(eq("203.0.113.9|REGISTER"), any());
     }
 
     @Test

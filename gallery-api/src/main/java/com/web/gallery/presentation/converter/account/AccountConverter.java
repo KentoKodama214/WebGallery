@@ -9,7 +9,6 @@ import com.web.gallery.domain.model.account.BirthDate;
 import com.web.gallery.domain.model.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.model.account.FreeMemo;
 import com.web.gallery.domain.model.account.LoginFailureCount;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import com.web.gallery.presentation.request.account.AccountListRequest;
 import com.web.gallery.presentation.request.account.AccountRegistRequest;
@@ -40,7 +39,6 @@ public class AccountConverter {
     return AccountModel.builder()
         .accountId(new AccountId(request.getAccountId()))
         .accountName(new AccountName(request.getAccountName()))
-        .password(new Password(request.getPassword()))
         .birthdate(request.getBirthdate() != null ? new BirthDate(request.getBirthdate()) : null)
         .sexKbn(request.getSexKbn())
         .birthplacePrefectureKbnCode(
@@ -68,10 +66,6 @@ public class AccountConverter {
         .accountNo(new AccountNo(accountNo))
         .accountId(new AccountId(request.getAccountId()))
         .accountName(new AccountName(request.getAccountName()))
-        .password(
-            request.getNewPassword() == null || request.getNewPassword().isEmpty()
-                ? null
-                : new Password(request.getNewPassword()))
         .birthdate(request.getBirthdate() != null ? new BirthDate(request.getBirthdate()) : null)
         .sexKbn(request.getSexKbn())
         .birthplacePrefectureKbnCode(

@@ -29,6 +29,9 @@ public class WebAuthnChallenge {
   /** アカウント番号 */
   private Long accountNo;
 
+  /** ユーザーハンドル（新規登録用のみ。それ以外は空文字） */
+  private String userHandle;
+
   /** 有効期限 */
   private OffsetDateTime expiresAt;
 
@@ -49,13 +52,15 @@ public class WebAuthnChallenge {
         .challenge(model.getChallenge().value())
         .purposeKbn(model.getPurposeKbn())
         .accountNo(accountNoOf(model))
+        .userHandle(
+            model.getUserHandle() != null ? model.getUserHandle().value() : Consts.STRING_EMPTY)
         .expiresAt(model.getExpiresAt().value())
         .createdBy(accountNoOf(model))
         .build();
   }
 
   /**
-   * DBに保存するアカウント番号を返す（認証用でアカウントが未確定の場合は{@link Consts#ACCOUNT_NO_UNKNOWN}）
+   * DBに保存するアカウント番号を返す（認証用・新規登録用でアカウントが未確定の場合は{@link Consts#ACCOUNT_NO_UNKNOWN}）
    *
    * @param model {@link WebAuthnChallengeModel}
    * @return アカウント番号

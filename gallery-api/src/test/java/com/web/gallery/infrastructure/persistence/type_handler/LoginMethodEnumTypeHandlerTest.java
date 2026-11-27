@@ -53,12 +53,12 @@ class LoginMethodEnumTypeHandlerTest {
     @Order(1)
     @DisplayName("正常系：DB保存値がPASSWORDに対応する場合、PASSWORDを返すこと")
     void getNullableResultByColumnName_password() throws SQLException {
-      doReturn(LoginMethodEnum.PASSWORD.getDbValue()).when(resultSet).getString("login_method_kbn");
+      doReturn(LoginMethodEnum.PASSKEY.getDbValue()).when(resultSet).getString("login_method_kbn");
 
       LoginMethodEnum actual =
           loginMethodEnumTypeHandler.getNullableResult(resultSet, "login_method_kbn");
 
-      assertEquals(LoginMethodEnum.PASSWORD, actual);
+      assertEquals(LoginMethodEnum.PASSKEY, actual);
     }
 
     @Test
@@ -100,10 +100,10 @@ class LoginMethodEnumTypeHandlerTest {
     @Order(1)
     @DisplayName("正常系：DB保存値に一致するEnum値を返すこと")
     void getNullableResultByColumnIndex_matched() throws SQLException {
-      doReturn(LoginMethodEnum.PASSWORD.getDbValue()).when(resultSet).getString(1);
+      doReturn(LoginMethodEnum.PASSKEY.getDbValue()).when(resultSet).getString(1);
 
       assertEquals(
-          LoginMethodEnum.PASSWORD, loginMethodEnumTypeHandler.getNullableResult(resultSet, 1));
+          LoginMethodEnum.PASSKEY, loginMethodEnumTypeHandler.getNullableResult(resultSet, 1));
     }
   }
 

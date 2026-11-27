@@ -21,7 +21,9 @@ MINIO_CONTAINER="web-gallery-minio"
 DB_NAME="web_gallery"
 DB_USER="postgres"
 BUCKET="web-gallery-local"
-PASSWORD_PLAIN="password01"
+# ログインはパスキーのみのため、各アカウントに既知のリカバリーコード（SEED-CODE-0000-0001〜0010）を投入する。
+# 初回は復旧画面（/recovery）からこのコードを使って、手元の端末にパスキーを登録してログインする
+RECOVERY_CODE_PREFIX="SEED-CODE-0000-00"
 
 echo "前提条件を確認します"
 for name in "$DB_CONTAINER" "$MINIO_CONTAINER"; do
@@ -30,7 +32,7 @@ for name in "$DB_CONTAINER" "$MINIO_CONTAINER"; do
     exit 1
   fi
 done
-for cmd in convert htpasswd openssl; do
+for cmd in convert openssl; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     echo "コマンド '$cmd' が見つかりません。インストールしてから再実行してください" >&2
     exit 1
@@ -57,6 +59,10 @@ TRUNCATE TABLE
   common.location_mst,
   common.login_history,
   common.refresh_token,
+  common.recovery_code,
+  common.passkey_credential,
+  common.passkey_user_handle,
+  common.webauthn_challenge,
   common.account_authority,
   common.account
 RESTART IDENTITY CASCADE;
@@ -67,8 +73,6 @@ docker run --rm --network "$NETWORK" --entrypoint /bin/sh minio/mc:latest -c "
   mc alias set local http://minio:9000 minioadmin minioadmin >/dev/null &&
   mc rm --recursive --force --dangerous local/${BUCKET}/ >/dev/null 2>&1 || true
 "
-
-PASSWORD_HASH=$(htpasswd -bnBC 10 "" "$PASSWORD_PLAIN" | cut -d: -f2)
 
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
@@ -216,8 +220,10 @@ echo "ダミー画像と投入用SQLを生成します"
 {
   # created_by/updated_by は監査用の作成者IDとして1を使う（全件クリア直後のためlocaluser01自身のaccount_noと一致する）
   while IFS='|' read -r key account_id account_name authority is_deleted failure_count admin_locked updated_ago login_ago birthdate sex birthplace resident memo; do
-    echo "INSERT INTO common.account (created_by, created_at, updated_by, updated_at, is_deleted, account_id, account_name, password, birthdate, sex_kbn, birthplace_prefecture_kbn_code, resident_prefecture_kbn_code, free_memo, last_login_datetime, login_failure_count, is_admin_locked) VALUES (1, now() - interval '90 days', 1, now() - interval '${updated_ago}', ${is_deleted}, '${account_id}', $(q "$account_name"), '${PASSWORD_HASH}', '${birthdate}', '${sex}', '${birthplace}', '${resident}', $(q "$memo"), now() - interval '${login_ago}', ${failure_count}, ${admin_locked}) RETURNING account_no \\gset ${key}_"
+    echo "INSERT INTO common.account (created_by, created_at, updated_by, updated_at, is_deleted, account_id, account_name, birthdate, sex_kbn, birthplace_prefecture_kbn_code, resident_prefecture_kbn_code, free_memo, last_login_datetime, login_failure_count, is_admin_locked) VALUES (1, now() - interval '90 days', 1, now() - interval '${updated_ago}', ${is_deleted}, '${account_id}', $(q "$account_name"), '${birthdate}', '${sex}', '${birthplace}', '${resident}', $(q "$memo"), now() - interval '${login_ago}', ${failure_count}, ${admin_locked}) RETURNING account_no \\gset ${key}_"
     echo "INSERT INTO common.account_authority VALUES (:${key}_account_no, 1, now(), 1, now(), '${authority}');"
+    # リカバリーコードはハッシュ（ハイフンを除き大文字に揃えた値のSHA-256）のみを保存する（RecoveryCode#toHash と同じ）
+    echo "INSERT INTO common.recovery_code (account_no, code_hash, created_by, created_at) SELECT :${key}_account_no, encode(sha256(convert_to(replace('${RECOVERY_CODE_PREFIX}', '-', '') || lpad(n::text, 2, '0'), 'UTF8')), 'hex'), :${key}_account_no, now() FROM generate_series(1, 10) AS n;"
   done <<< "$ACCOUNT_ROWS"
 
   while IFS='|' read -r owner location_no display_name address lat lon; do
@@ -467,7 +473,12 @@ cat <<MSG
 
 投入が完了しました。
 
-ログイン情報（パスワードは全アカウント共通で ${PASSWORD_PLAIN}）:
+ログイン方法：ログインはパスキーのみです。初回は復旧画面（/recovery）で、アカウントIDと
+リカバリーコード（全アカウント共通で ${RECOVERY_CODE_PREFIX}01 〜 ${RECOVERY_CODE_PREFIX}10。各1回だけ使えます）を
+入力して手元の端末にパスキーを登録すると、以後はそのパスキーでログインできます。
+（ロック中・退会済みのアカウントは復旧できません）
+
+アカウント:
   localuser01 normal-user    写真25枚（＋論理削除済み1枚）・ポートフォリオ6件・お問い合わせ22件
   localuser02 mini-user      データなし（空の一覧表示の確認用）
   localuser03 administrator  お問い合わせへの返信者（返信が残るため退会不可）

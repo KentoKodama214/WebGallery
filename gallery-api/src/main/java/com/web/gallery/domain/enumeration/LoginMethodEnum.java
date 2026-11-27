@@ -12,12 +12,12 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum LoginMethodEnum {
-  /** パスワード */
-  @JsonProperty("password")
-  PASSWORD("password"),
   /** パスキー */
   @JsonProperty("passkey")
-  PASSKEY("passkey");
+  PASSKEY("passkey"),
+  /** リカバリーコードによる復旧（リカバリーコードで本人確認し、新しいパスキーを登録してログインした） */
+  @JsonProperty("recovery_code")
+  RECOVERY_CODE("recovery_code");
 
   /** DBに保持する値 */
   private final String dbValue;
@@ -25,7 +25,7 @@ public enum LoginMethodEnum {
   /**
    * 名称からEnumを取得する
    *
-   * <p>該当するEnumがなければ、デフォルトでPASSWORDを返す
+   * <p>該当するEnumがなければ、デフォルトでPASSKEYを返す
    *
    * @param value 値
    * @return {@link LoginMethodEnum}
@@ -35,6 +35,6 @@ public enum LoginMethodEnum {
     return Arrays.stream(LoginMethodEnum.values())
         .filter(e -> e.getDbValue().equals(value) || e.name().equals(value))
         .findFirst()
-        .orElse(LoginMethodEnum.PASSWORD);
+        .orElse(LoginMethodEnum.PASSKEY);
   }
 }

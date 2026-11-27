@@ -21,7 +21,6 @@ import com.web.gallery.domain.model.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.model.account.FreeMemo;
 import com.web.gallery.domain.model.account.LastLoginDatetime;
 import com.web.gallery.domain.model.account.LoginFailureCount;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import com.web.gallery.infrastructure.persistence.dto.account.AccountDto;
 import com.web.gallery.infrastructure.persistence.entity.account.Account;
@@ -50,7 +49,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
@@ -61,8 +59,6 @@ public class AccountRepositoryImplTest {
   @Mock private AccountMapper accountMapper;
 
   @Mock private AccountAuthorityMapper accountAuthorityMapper;
-
-  @Mock private PasswordEncoder passwordEncoder;
 
   @Nested
   @Order(1)
@@ -81,7 +77,6 @@ public class AccountRepositoryImplTest {
       account.setIsDeleted(false);
       account.setAccountId("aaaaaaaa");
       account.setAccountName("AAAAAAAA");
-      account.setPassword("$2a$10$password1");
       account.setBirthdate(LocalDate.of(1991, 2, 14));
       account.setSexKbn(SexEnum.NONE);
       account.setBirthplacePrefectureKbnCode("");
@@ -109,7 +104,6 @@ public class AccountRepositoryImplTest {
       assertEquals(account.getAccountNo(), actual.getAccountNo().value());
       assertEquals(account.getAccountId(), actual.getAccountId().value());
       assertEquals(account.getAccountName(), actual.getAccountName().value());
-      assertEquals(account.getPassword(), actual.getPassword().value());
       assertEquals(account.getBirthdate(), actual.getBirthdate().value());
       assertEquals(account.getSexKbn(), actual.getSexKbn());
       assertEquals(
@@ -158,7 +152,6 @@ public class AccountRepositoryImplTest {
       account.setIsDeleted(false);
       account.setAccountId("aaaaaaaa");
       account.setAccountName("AAAAAAAA");
-      account.setPassword("$2a$10$password1");
       account.setBirthdate(LocalDate.of(1991, 2, 14));
       account.setSexKbn(SexEnum.NONE);
       account.setBirthplacePrefectureKbnCode("");
@@ -186,7 +179,6 @@ public class AccountRepositoryImplTest {
       assertEquals(account.getAccountNo(), actual.getAccountNo().value());
       assertEquals(account.getAccountId(), actual.getAccountId().value());
       assertEquals(account.getAccountName(), actual.getAccountName().value());
-      assertEquals(account.getPassword(), actual.getPassword().value());
       assertEquals(account.getBirthdate(), actual.getBirthdate().value());
       assertEquals(account.getSexKbn(), actual.getSexKbn());
       assertEquals(
@@ -230,7 +222,6 @@ public class AccountRepositoryImplTest {
           AccountModel.builder()
               .accountId(new AccountId("aaaaaaaa"))
               .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("aaaaaaaa"))
               .build();
 
       ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
@@ -239,7 +230,6 @@ public class AccountRepositoryImplTest {
       doReturn(1L).when(accountMapper).nextAccountNo();
       doReturn(1).when(accountMapper).insert(accountCaptor.capture());
       doReturn(1).when(accountAuthorityMapper).insert(accountAuthorityCaptor.capture());
-      doReturn("$2a$10$password1").when(passwordEncoder).encode("aaaaaaaa");
 
       accountRepositoryImpl.regist(accountModel);
 
@@ -253,7 +243,6 @@ public class AccountRepositoryImplTest {
       assertEquals(null, accountCapture.getIsDeleted());
       assertEquals("aaaaaaaa", accountCapture.getAccountId());
       assertEquals("AAAAAAAA", accountCapture.getAccountName());
-      assertEquals("$2a$10$password1", accountCapture.getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), accountCapture.getBirthdate());
       assertEquals(SexEnum.NONE, accountCapture.getSexKbn());
       assertEquals("none", accountCapture.getBirthplacePrefectureKbnCode());
@@ -280,7 +269,6 @@ public class AccountRepositoryImplTest {
           AccountModel.builder()
               .accountId(new AccountId("aaaaaaaa"))
               .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("aaaaaaaa"))
               .birthdate(new BirthDate(LocalDate.of(1991, 2, 14)))
               .sexKbn(SexEnum.WOMAN)
               .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido"))
@@ -294,7 +282,6 @@ public class AccountRepositoryImplTest {
       doReturn(1L).when(accountMapper).nextAccountNo();
       doReturn(1).when(accountMapper).insert(accountCaptor.capture());
       doReturn(1).when(accountAuthorityMapper).insert(accountAuthorityCaptor.capture());
-      doReturn("$2a$10$password1").when(passwordEncoder).encode("aaaaaaaa");
 
       accountRepositoryImpl.regist(accountModel);
 
@@ -308,7 +295,6 @@ public class AccountRepositoryImplTest {
       assertEquals(null, accountCapture.getIsDeleted());
       assertEquals("aaaaaaaa", accountCapture.getAccountId());
       assertEquals("AAAAAAAA", accountCapture.getAccountName());
-      assertEquals("$2a$10$password1", accountCapture.getPassword());
       assertEquals(LocalDate.of(1991, 2, 14), accountCapture.getBirthdate());
       assertEquals(SexEnum.WOMAN, accountCapture.getSexKbn());
       assertEquals("Hokkaido", accountCapture.getBirthplacePrefectureKbnCode());
@@ -333,12 +319,10 @@ public class AccountRepositoryImplTest {
           AccountModel.builder()
               .accountId(new AccountId("aaaaaaaa"))
               .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("aaaaaaaa"))
               .build();
 
       ArgumentCaptor<Account> accountCaptor = ArgumentCaptor.forClass(Account.class);
       doThrow(DuplicateKeyException.class).when(accountMapper).insert(accountCaptor.capture());
-      doReturn("$2a$10$password1").when(passwordEncoder).encode("aaaaaaaa");
 
       assertThrows(RegistFailureException.class, () -> accountRepositoryImpl.regist(accountModel));
 
@@ -353,7 +337,6 @@ public class AccountRepositoryImplTest {
       assertEquals(null, accountCapture.getIsDeleted());
       assertEquals("aaaaaaaa", accountCapture.getAccountId());
       assertEquals("AAAAAAAA", accountCapture.getAccountName());
-      assertEquals("$2a$10$password1", accountCapture.getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), accountCapture.getBirthdate());
       assertEquals(SexEnum.NONE, accountCapture.getSexKbn());
       assertEquals("none", accountCapture.getBirthplacePrefectureKbnCode());
@@ -402,7 +385,6 @@ public class AccountRepositoryImplTest {
       assertEquals(null, targetAccountCapture.getIsDeleted());
       assertEquals("aaaaaaaa", targetAccountCapture.getAccountId());
       assertEquals("AAAAAAAA", targetAccountCapture.getAccountName());
-      assertEquals(null, targetAccountCapture.getPassword());
       // 未指定項目は「変更なし」としてnullが渡る（センチネル値で上書きしない）
       assertEquals(null, targetAccountCapture.getBirthdate());
       assertEquals(null, targetAccountCapture.getSexKbn());
@@ -422,7 +404,6 @@ public class AccountRepositoryImplTest {
               .accountNo(new AccountNo(1L))
               .accountId(new AccountId("aaaaaaaa"))
               .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("aaaaaaaa"))
               .birthdate(new BirthDate(LocalDate.of(1991, 2, 14)))
               .sexKbn(SexEnum.WOMAN)
               .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido"))
@@ -441,7 +422,6 @@ public class AccountRepositoryImplTest {
       doReturn(1)
           .when(accountMapper)
           .update(cndAccountCaptor.capture(), targetAccountCaptor.capture());
-      doReturn("$2a$10$password1").when(passwordEncoder).encode("aaaaaaaa");
 
       accountRepositoryImpl.update(accountModel);
 
@@ -454,7 +434,6 @@ public class AccountRepositoryImplTest {
       assertEquals(null, targetAccountCapture.getIsDeleted());
       assertEquals("aaaaaaaa", targetAccountCapture.getAccountId());
       assertEquals("AAAAAAAA", targetAccountCapture.getAccountName());
-      assertEquals("$2a$10$password1", targetAccountCapture.getPassword());
       assertEquals(LocalDate.of(1991, 2, 14), targetAccountCapture.getBirthdate());
       assertEquals(SexEnum.WOMAN, targetAccountCapture.getSexKbn());
       assertEquals("Hokkaido", targetAccountCapture.getBirthplacePrefectureKbnCode());
@@ -496,7 +475,6 @@ public class AccountRepositoryImplTest {
       assertEquals(null, targetAccountCapture.getIsDeleted());
       assertEquals("aaaaaaaa", targetAccountCapture.getAccountId());
       assertEquals("AAAAAAAA", targetAccountCapture.getAccountName());
-      assertEquals(null, targetAccountCapture.getPassword());
       // 未指定項目は「変更なし」としてnullが渡る（センチネル値で上書きしない）
       assertEquals(null, targetAccountCapture.getBirthdate());
       assertEquals(null, targetAccountCapture.getSexKbn());
@@ -537,7 +515,6 @@ public class AccountRepositoryImplTest {
       assertEquals(null, targetAccountCapture.getIsDeleted());
       assertEquals("aaaaaaaa", targetAccountCapture.getAccountId());
       assertEquals("AAAAAAAA", targetAccountCapture.getAccountName());
-      assertEquals(null, targetAccountCapture.getPassword());
       // 未指定項目は「変更なし」としてnullが渡る（センチネル値で上書きしない）
       assertEquals(null, targetAccountCapture.getBirthdate());
       assertEquals(null, targetAccountCapture.getSexKbn());
@@ -578,7 +555,6 @@ public class AccountRepositoryImplTest {
       assertEquals(null, targetAccountCapture.getIsDeleted());
       assertEquals(null, targetAccountCapture.getAccountId());
       assertEquals(null, targetAccountCapture.getAccountName());
-      assertEquals(null, targetAccountCapture.getPassword());
       assertEquals(null, targetAccountCapture.getBirthdate());
       assertEquals(null, targetAccountCapture.getSexKbn());
       assertEquals(null, targetAccountCapture.getBirthplacePrefectureKbnCode());
@@ -620,7 +596,6 @@ public class AccountRepositoryImplTest {
       assertEquals(null, targetAccountCapture.getIsDeleted());
       assertEquals(null, targetAccountCapture.getAccountId());
       assertEquals(null, targetAccountCapture.getAccountName());
-      assertEquals(null, targetAccountCapture.getPassword());
       assertEquals(null, targetAccountCapture.getBirthdate());
       assertEquals(null, targetAccountCapture.getSexKbn());
       assertEquals(null, targetAccountCapture.getBirthplacePrefectureKbnCode());
@@ -659,7 +634,6 @@ public class AccountRepositoryImplTest {
       assertEquals(null, targetAccountCapture.getIsDeleted());
       assertEquals(null, targetAccountCapture.getAccountId());
       assertEquals(null, targetAccountCapture.getAccountName());
-      assertEquals(null, targetAccountCapture.getPassword());
       assertEquals(null, targetAccountCapture.getBirthdate());
       assertEquals(null, targetAccountCapture.getSexKbn());
       assertEquals(null, targetAccountCapture.getBirthplacePrefectureKbnCode());
@@ -814,7 +788,6 @@ public class AccountRepositoryImplTest {
       account1.setIsDeleted(false);
       account1.setAccountId("aaaaaaaa");
       account1.setAccountName("AAAAAAAA");
-      account1.setPassword("$2a$10$password1");
       account1.setBirthdate(LocalDate.of(1991, 1, 1));
       account1.setSexKbn(SexEnum.MAN);
       account1.setBirthplacePrefectureKbnCode("Hokkaido");
@@ -833,7 +806,6 @@ public class AccountRepositoryImplTest {
       account2.setIsDeleted(false);
       account2.setAccountId("bbbbbbbb");
       account2.setAccountName("BBBBBBBB");
-      account2.setPassword("$2a$10$password2");
       account2.setBirthdate(LocalDate.of(1991, 2, 1));
       account2.setSexKbn(SexEnum.WOMAN);
       account2.setBirthplacePrefectureKbnCode("Iwate");
@@ -870,7 +842,6 @@ public class AccountRepositoryImplTest {
       assertEquals(new AccountNo(1L), actualAccountModel1.getAccountNo());
       assertEquals(new AccountId("aaaaaaaa"), actualAccountModel1.getAccountId());
       assertEquals(new AccountName("AAAAAAAA"), actualAccountModel1.getAccountName());
-      assertEquals(new Password("$2a$10$password1"), actualAccountModel1.getPassword());
       assertEquals(new BirthDate(LocalDate.of(1991, 1, 1)), actualAccountModel1.getBirthdate());
       assertEquals(SexEnum.MAN, actualAccountModel1.getSexKbn());
       assertEquals(
@@ -894,7 +865,6 @@ public class AccountRepositoryImplTest {
       assertEquals(new AccountNo(2L), actualAccountModel2.getAccountNo());
       assertEquals(new AccountId("bbbbbbbb"), actualAccountModel2.getAccountId());
       assertEquals(new AccountName("BBBBBBBB"), actualAccountModel2.getAccountName());
-      assertEquals(new Password("$2a$10$password2"), actualAccountModel2.getPassword());
       assertEquals(new BirthDate(LocalDate.of(1991, 2, 1)), actualAccountModel2.getBirthdate());
       assertEquals(SexEnum.WOMAN, actualAccountModel2.getSexKbn());
       assertEquals(
@@ -938,7 +908,6 @@ public class AccountRepositoryImplTest {
       account1.setAccountNo(1L);
       account1.setAccountId("aaaaaaaa");
       account1.setAccountName("AAAAAAAA");
-      account1.setPassword("$2a$10$password1");
       account1.setIsDeleted(false);
       account1.setSexKbn(SexEnum.NONE);
       account1.setBirthplacePrefectureKbnCode("none");
@@ -950,7 +919,6 @@ public class AccountRepositoryImplTest {
       account2.setAccountNo(2L);
       account2.setAccountId("bbbbbbbb");
       account2.setAccountName("BBBBBBBB");
-      account2.setPassword("$2a$10$password2");
       account2.setIsDeleted(false);
       account2.setSexKbn(SexEnum.NONE);
       account2.setBirthplacePrefectureKbnCode("none");
@@ -987,7 +955,6 @@ public class AccountRepositoryImplTest {
       account1.setAccountNo(1L);
       account1.setAccountId("aaaaaaaa");
       account1.setAccountName("AAAAAAAA");
-      account1.setPassword("$2a$10$password1");
       account1.setIsDeleted(false);
       account1.setSexKbn(SexEnum.NONE);
       account1.setBirthplacePrefectureKbnCode("none");
@@ -999,7 +966,6 @@ public class AccountRepositoryImplTest {
       account2.setAccountNo(2L);
       account2.setAccountId("bbbbbbbb");
       account2.setAccountName("BBBBBBBB");
-      account2.setPassword("$2a$10$password2");
       account2.setIsDeleted(true);
       account2.setSexKbn(SexEnum.NONE);
       account2.setBirthplacePrefectureKbnCode("none");
@@ -1035,7 +1001,6 @@ public class AccountRepositoryImplTest {
       account1.setAccountNo(1L);
       account1.setAccountId("aaaaaaaa");
       account1.setAccountName("AAAAAAAA");
-      account1.setPassword("$2a$10$password1");
       account1.setIsDeleted(false);
       account1.setSexKbn(SexEnum.NONE);
       account1.setBirthplacePrefectureKbnCode("none");
@@ -1047,7 +1012,6 @@ public class AccountRepositoryImplTest {
       account2.setAccountNo(2L);
       account2.setAccountId("bbbbbbbb");
       account2.setAccountName("BBBBBBBB");
-      account2.setPassword("$2a$10$password2");
       account2.setIsDeleted(false);
       account2.setSexKbn(SexEnum.NONE);
       account2.setBirthplacePrefectureKbnCode("none");

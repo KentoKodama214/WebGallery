@@ -10,16 +10,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * 現在のパスワードによる本人確認（再認証）の失敗回数を、アカウント単位でインメモリに数えるHelperクラス
+ * パスキーによる本人確認（再認証）の失敗回数を、アカウント単位でインメモリに数えるHelperクラス
  *
- * <p>アクセストークンを盗んだ攻撃者がパスワード変更・アカウント削除エンドポイント経由で {@code currentPassword} をオンラインで総当たりするのを抑止する。
+ * <p>パスキーの署名は総当たりで成立しないが、アクセストークンを盗んだ攻撃者が重要操作のエンドポイントを繰り返し叩き、
+ * 本人確認の試行（チャレンジの発行・検証）を大量に行うのを抑止する（多層防御）。
  *
- * <p>ログイン失敗回数（{@code login_failure_count}）への相乗り加算は、パスワード変更・削除処理が
+ * <p>ログイン失敗回数（{@code login_failure_count}）への相乗り加算は、重要操作の処理が
  * 例外でロールバックされる文脈で独立トランザクション書き込みを行うことになり、統合テストで {@code common.account}
  * の排他ロックとデッドロックするため採用していない。判定の入口では {@code login_failure_count} と管理者ロックも参照する（{@code
  * AccountServiceImpl#isReauthLocked}）。
  *
- * <p>カウンタはプロセスローカルで、再起動で消える。総当たりは BCrypt 照合律速で低速なため許容する。 上限は {@code
+ * <p>カウンタはプロセスローカルで、再起動で消える。署名の総当たりは成立しないため許容する。 上限は {@code
  * auth.reauth.max-failures}（既定5）、ロックアウト時間は {@code auth.reauth.lockout-minutes}（既定15分）で調整できる。
  *
  * <p>スレッド安全性：エントリ（{@link Attempt}）ごとにそのインスタンスのモニタで参照・更新を直列化する。 {@code isLockedOut} と {@code

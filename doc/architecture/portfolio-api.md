@@ -76,7 +76,7 @@ union PortfolioLayout = FeatureLayout | GridLayout
 | 対策 | 内容 |
 |---|---|
 | 公開範囲 | 公開中のポートフォリオだけを返す（クエリの WHERE 句で常に `status_kbn = 'published'`。写真は `photo_mst.is_deleted = false` のものだけを結合する） |
-| DB 権限 | 読み取り専用ロール `portfolio_reader`。`common.account` は `account_no`・`account_id` の列だけ、`photo.photo_mst` は表示に必要な列だけ SELECT を許可し、パスワード・撮影場所等は読めない |
+| DB 権限 | 読み取り専用ロール `portfolio_reader`。`common.account` は `account_no`・`account_id` の列だけ、`photo.photo_mst` は表示に必要な列だけ SELECT を許可し、個人情報・撮影場所等は読めない |
 | クエリの複雑度 | `PORTFOLIO_API_MAX_QUERY_COMPLEXITY`（既定 300）を超えるクエリは実行しない |
 | クエリの深さ | `PORTFOLIO_API_MAX_QUERY_DEPTH`（既定 8）を超えるクエリは実行しない（フラグメントは展開して数える） |
 | イントロスペクション | ローカル環境（`PORTFOLIO_API_ENV=local`）以外では無効 |

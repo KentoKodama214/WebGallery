@@ -16,6 +16,7 @@ import com.web.gallery.domain.exception.UpdateFailureException;
 import com.web.gallery.presentation.controller.account.AccountController;
 import com.web.gallery.presentation.controller.account.AdminAccountController;
 import com.web.gallery.presentation.controller.account.PasskeyController;
+import com.web.gallery.presentation.controller.account.RecoveryCodeController;
 import com.web.gallery.presentation.controller.auth.AuthController;
 import com.web.gallery.presentation.controller.inquiry.AdminInquiryController;
 import com.web.gallery.presentation.controller.inquiry.InquiryController;
@@ -59,6 +60,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
       KbnMstController.class,
       LocationController.class,
       PasskeyController.class,
+      RecoveryCodeController.class,
       PhotoFavoriteController.class,
       PhotoController.class,
       PortfolioController.class

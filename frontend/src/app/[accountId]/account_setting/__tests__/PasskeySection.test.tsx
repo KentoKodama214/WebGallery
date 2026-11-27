@@ -9,6 +9,7 @@ const mockRegisterPasskey = jest.fn();
 const mockRenamePasskey = jest.fn();
 const mockDeletePasskey = jest.fn();
 const mockCreatePasskeyCredential = jest.fn();
+const mockReauthenticate = jest.fn();
 let mockPasskeySupported = true;
 
 jest.mock("@/lib/api/client", () => {
@@ -39,6 +40,11 @@ jest.mock("@/lib/auth/passkey", () => {
   };
 });
 
+// 本人確認（navigator.credentials.get を伴う）はスタブに差し替える
+jest.mock("@/lib/auth/reauthenticate", () => ({
+  reauthenticateWithPasskey: (...args: unknown[]) => mockReauthenticate(...args),
+}));
+
 const { ApiError } = jest.requireMock("@/lib/api/client") as {
   ApiError: new (message: string, status: number) => Error;
 };
@@ -66,6 +72,7 @@ describe("PasskeySection", () => {
     jest.clearAllMocks();
     mockPasskeySupported = true;
     mockGetPasskeys.mockResolvedValue({ passkeys: [PASSKEY_MAC, PASSKEY_KEY], maxCount: 10 });
+    mockReauthenticate.mockResolvedValue('{"id":"reauth"}');
   });
 
   it("登録済みのパスキーを一覧表示し、同期パスキーには印を付けること", async () => {
@@ -105,7 +112,7 @@ describe("PasskeySection", () => {
     expect(mockGetPasskeys).toHaveBeenCalledTimes(2);
   });
 
-  it("本人確認のうえ端末でパスキーを作成し、登録後に一覧を再取得すること", async () => {
+  it("登録済みのパスキーで本人確認のうえ端末で新しいパスキーを作成し、登録後に一覧を再取得すること", async () => {
     mockCreateOptions.mockResolvedValueOnce({ challenge: "c" });
     mockCreatePasskeyCredential.mockResolvedValueOnce('{"id":"cred"}');
     mockRegisterPasskey.mockResolvedValueOnce({ passkeyNo: 3, passkeyName: "iPhone" });
@@ -114,20 +121,20 @@ describe("PasskeySection", () => {
     render(<PasskeySection accountId="testuser1" />);
     await user.click(await screen.findByRole("button", { name: "パスキーを登録" }));
     const dialog = screen.getByRole("dialog", { name: "パスキーの登録" });
+    expect(within(dialog).queryByLabelText("現在のパスワード")).not.toBeInTheDocument();
     await user.type(within(dialog).getByLabelText("パスキー名"), "  iPhone  ");
-    await user.type(within(dialog).getByLabelText("現在のパスワード"), "password01");
     await user.click(within(dialog).getByRole("button", { name: "登録" }));
 
     expect(await screen.findByRole("status")).toHaveTextContent("パスキーを登録しました");
-    expect(mockCreateOptions).toHaveBeenCalledWith("testuser1", "password01");
+    expect(mockReauthenticate).toHaveBeenCalledWith("testuser1");
+    expect(mockCreateOptions).toHaveBeenCalledWith("testuser1", '{"id":"reauth"}');
     expect(mockCreatePasskeyCredential).toHaveBeenCalledWith({ challenge: "c" });
     // 前後の空白を除いた名前で登録する
     expect(mockRegisterPasskey).toHaveBeenCalledWith("testuser1", '{"id":"cred"}', "iPhone");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     await waitFor(() => expect(mockGetPasskeys).toHaveBeenCalledTimes(2));
   });
-
-  it("パスキー名・現在のパスワードが未入力の場合は、APIを呼ばずにエラーを表示すること", async () => {
+  it("パスキー名が未入力の場合は、本人確認もAPIも呼ばずにエラーを表示すること", async () => {
     const user = userEvent.setup();
 
     render(<PasskeySection accountId="testuser1" />);
@@ -136,32 +143,27 @@ describe("PasskeySection", () => {
     await user.click(within(dialog).getByRole("button", { name: "登録" }));
 
     expect(within(dialog).getByRole("alert")).toHaveTextContent("パスキー名を入力してください");
-
-    await user.type(within(dialog).getByLabelText("パスキー名"), "iPhone");
-    await user.click(within(dialog).getByRole("button", { name: "登録" }));
-
-    expect(within(dialog).getByRole("alert")).toHaveTextContent("現在のパスワードを入力してください");
+    expect(mockReauthenticate).not.toHaveBeenCalled();
     expect(mockCreateOptions).not.toHaveBeenCalled();
   });
-
-  it("現在のパスワードが一致しない場合は、端末でのパスキー作成に進まずエラーを表示すること", async () => {
-    mockCreateOptions.mockRejectedValueOnce(new ApiError("現在のパスワードが正しくありません。", 403));
+  it("本人確認に失敗した場合は、端末でのパスキー作成に進まずエラーを表示すること", async () => {
+    mockCreateOptions.mockRejectedValueOnce(
+      new ApiError("パスキーによる本人確認に失敗しました。", 403)
+    );
     const user = userEvent.setup();
 
     render(<PasskeySection accountId="testuser1" />);
     await user.click(await screen.findByRole("button", { name: "パスキーを登録" }));
     const dialog = screen.getByRole("dialog", { name: "パスキーの登録" });
     await user.type(within(dialog).getByLabelText("パスキー名"), "iPhone");
-    await user.type(within(dialog).getByLabelText("現在のパスワード"), "wrong");
     await user.click(within(dialog).getByRole("button", { name: "登録" }));
 
     expect(await within(dialog).findByRole("alert")).toHaveTextContent(
-      "現在のパスワードが正しくありません。"
+      "パスキーによる本人確認に失敗しました。"
     );
     expect(mockCreatePasskeyCredential).not.toHaveBeenCalled();
     expect(mockRegisterPasskey).not.toHaveBeenCalled();
   });
-
   it("端末でのパスキー作成をキャンセルした場合は、登録せずダイアログに留まること", async () => {
     mockCreateOptions.mockResolvedValueOnce({ challenge: "c" });
     mockCreatePasskeyCredential.mockRejectedValueOnce(new PasskeyCancelledError());
@@ -171,11 +173,10 @@ describe("PasskeySection", () => {
     await user.click(await screen.findByRole("button", { name: "パスキーを登録" }));
     const dialog = screen.getByRole("dialog", { name: "パスキーの登録" });
     await user.type(within(dialog).getByLabelText("パスキー名"), "iPhone");
-    await user.type(within(dialog).getByLabelText("現在のパスワード"), "password01");
     await user.click(within(dialog).getByRole("button", { name: "登録" }));
 
     expect(await within(dialog).findByRole("alert")).toHaveTextContent(
-      "パスキーの作成がキャンセルされました"
+      "パスキーの操作がキャンセルされました"
     );
     expect(mockRegisterPasskey).not.toHaveBeenCalled();
   });
@@ -218,36 +219,63 @@ describe("PasskeySection", () => {
     await waitFor(() => expect(mockGetPasskeys).toHaveBeenCalledTimes(2));
   });
 
-  it("本人確認のうえパスキーを削除し、削除後に一覧を再取得すること", async () => {
+  it("パスキーで本人確認のうえパスキーを削除し、削除後に一覧を再取得すること", async () => {
     mockDeletePasskey.mockResolvedValueOnce(undefined);
     const user = userEvent.setup();
 
     render(<PasskeySection accountId="testuser1" />);
     await user.click(await screen.findByRole("button", { name: "セキュリティキーを削除" }));
     const dialog = screen.getByRole("dialog", { name: "パスキーの削除の確認" });
-    await user.type(within(dialog).getByLabelText("現在のパスワード"), "password01");
+    expect(within(dialog).queryByLabelText("現在のパスワード")).not.toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "削除" }));
 
     expect(await screen.findByRole("status")).toHaveTextContent("パスキーを削除しました");
-    expect(mockDeletePasskey).toHaveBeenCalledWith("testuser1", 2, "password01");
+    expect(mockReauthenticate).toHaveBeenCalledWith("testuser1");
+    expect(mockDeletePasskey).toHaveBeenCalledWith("testuser1", 2, '{"id":"reauth"}');
     await waitFor(() => expect(mockGetPasskeys).toHaveBeenCalledTimes(2));
   });
 
-  it("削除で現在のパスワードが一致しない場合は、ダイアログにエラーを表示すること", async () => {
-    mockDeletePasskey.mockRejectedValueOnce(new ApiError("現在のパスワードが正しくありません。", 403));
+  it("削除の本人確認でパスキーの操作をキャンセルした場合は、エラーを表示せず削除もしないこと", async () => {
+    mockReauthenticate.mockRejectedValueOnce(new PasskeyCancelledError());
     const user = userEvent.setup();
 
     render(<PasskeySection accountId="testuser1" />);
     await user.click(await screen.findByRole("button", { name: "セキュリティキーを削除" }));
     const dialog = screen.getByRole("dialog", { name: "パスキーの削除の確認" });
-    await user.type(within(dialog).getByLabelText("現在のパスワード"), "wrong");
+    await user.click(within(dialog).getByRole("button", { name: "削除" }));
+
+    await waitFor(() => {
+      expect(within(dialog).getByRole("button", { name: "削除" })).toBeEnabled();
+    });
+    expect(within(dialog).queryByRole("alert")).not.toBeInTheDocument();
+    expect(mockDeletePasskey).not.toHaveBeenCalled();
+  });
+
+  it("パスキーが1件だけの場合は削除ボタンを無効にし、案内を表示すること", async () => {
+    mockGetPasskeys.mockResolvedValueOnce({ passkeys: [PASSKEY_MAC], maxCount: 10 });
+
+    render(<PasskeySection accountId="testuser1" />);
+
+    expect(
+      await screen.findByRole("button", { name: "MacBookのTouch IDを削除" })
+    ).toBeDisabled();
+    expect(screen.getByText(/最後のパスキーは削除できません/)).toBeInTheDocument();
+  });
+  it("削除で本人確認に失敗した場合は、ダイアログにエラーを表示すること", async () => {
+    mockDeletePasskey.mockRejectedValueOnce(
+      new ApiError("パスキーによる本人確認に失敗しました。", 403)
+    );
+    const user = userEvent.setup();
+
+    render(<PasskeySection accountId="testuser1" />);
+    await user.click(await screen.findByRole("button", { name: "セキュリティキーを削除" }));
+    const dialog = screen.getByRole("dialog", { name: "パスキーの削除の確認" });
     await user.click(within(dialog).getByRole("button", { name: "削除" }));
 
     expect(await within(dialog).findByRole("alert")).toHaveTextContent(
-      "現在のパスワードが正しくありません。"
+      "パスキーによる本人確認に失敗しました。"
     );
   });
-
   it("削除対象が既に削除済み（404）の場合は、ダイアログを閉じて一覧を再取得すること", async () => {
     mockDeletePasskey.mockRejectedValueOnce(new ApiError("パスキーが存在しません。", 404));
     const user = userEvent.setup();
@@ -255,7 +283,6 @@ describe("PasskeySection", () => {
     render(<PasskeySection accountId="testuser1" />);
     await user.click(await screen.findByRole("button", { name: "セキュリティキーを削除" }));
     const dialog = screen.getByRole("dialog", { name: "パスキーの削除の確認" });
-    await user.type(within(dialog).getByLabelText("現在のパスワード"), "password01");
     await user.click(within(dialog).getByRole("button", { name: "削除" }));
 
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());

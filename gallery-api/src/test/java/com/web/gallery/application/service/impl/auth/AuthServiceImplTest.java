@@ -15,8 +15,11 @@ import com.web.gallery.application.model.auth.AuthTokenModel;
 import com.web.gallery.application.model.auth.LoginContextModel;
 import com.web.gallery.application.model.auth.PasskeyAssertionModel;
 import com.web.gallery.application.model.auth.PasskeyAssertionResultModel;
+import com.web.gallery.application.model.auth.PasskeyAttestationModel;
 import com.web.gallery.application.model.auth.PasskeyAuthenticationOptionsModel;
 import com.web.gallery.application.model.auth.PasskeyCredentialModel;
+import com.web.gallery.application.model.auth.PasskeyCredentialModelList;
+import com.web.gallery.application.model.auth.PasskeyRegistrationOptionsModel;
 import com.web.gallery.application.model.auth.RefreshTokenModel;
 import com.web.gallery.application.model.auth.WebAuthnChallengeModel;
 import com.web.gallery.domain.constant.Consts;
@@ -24,6 +27,8 @@ import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.enumeration.LoginMethodEnum;
 import com.web.gallery.domain.enumeration.WebAuthnChallengePurposeEnum;
+import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.InvalidRecoveryCodeException;
 import com.web.gallery.domain.exception.InvalidRefreshTokenException;
 import com.web.gallery.domain.exception.PasskeyVerificationException;
 import com.web.gallery.domain.model.account.AccountId;
@@ -31,7 +36,6 @@ import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.IsAdminLocked;
 import com.web.gallery.domain.model.account.LoginFailureCount;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.auth.AttestedCredentialData;
 import com.web.gallery.domain.model.auth.CredentialId;
 import com.web.gallery.domain.model.auth.IsBackedUp;
@@ -43,6 +47,7 @@ import com.web.gallery.domain.model.auth.PasskeyNo;
 import com.web.gallery.domain.model.auth.PasskeyResponseJson;
 import com.web.gallery.domain.model.auth.PasskeyTransports;
 import com.web.gallery.domain.model.auth.PasskeyUserHandle;
+import com.web.gallery.domain.model.auth.RecoveryCode;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
 import com.web.gallery.domain.model.auth.SignCount;
 import com.web.gallery.domain.model.common.ExpiresAt;
@@ -54,6 +59,7 @@ import com.web.gallery.domain.model.common.UpdatedAt;
 import com.web.gallery.infrastructure.persistence.repository.account.AccountRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.auth.PasskeyCredentialRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.auth.PasskeyUserHandleRepositoryImpl;
+import com.web.gallery.infrastructure.persistence.repository.auth.RecoveryCodeRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.auth.RefreshTokenRepositoryImpl;
 import com.web.gallery.infrastructure.persistence.repository.auth.WebAuthnChallengeRepositoryImpl;
 import java.time.Clock;
@@ -72,13 +78,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
-import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
@@ -86,8 +88,6 @@ import org.springframework.test.context.ActiveProfiles;
 class AuthServiceImplTest {
 
   @InjectMocks private AuthServiceImpl authServiceImpl;
-
-  @Mock private AuthenticationManager authenticationManager;
 
   @Mock private JwtTokenProvider jwtTokenProvider;
 
@@ -105,6 +105,8 @@ class AuthServiceImplTest {
 
   @Mock private WebAuthnChallengeRepositoryImpl webAuthnChallengeRepositoryImpl;
 
+  @Mock private RecoveryCodeRepositoryImpl recoveryCodeRepositoryImpl;
+
   @Mock private WebAuthnVerifier webAuthnVerifier;
 
   @Mock private WebAuthnConfig webAuthnConfig;
@@ -117,302 +119,6 @@ class AuthServiceImplTest {
   void setUpClock() {
     lenient().when(clock.instant()).thenReturn(Instant.now());
     lenient().when(clock.getZone()).thenReturn(Consts.JST);
-  }
-
-  @Nested
-  @Order(1)
-  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class login {
-
-    @Test
-    @Order(1)
-    @DisplayName("正常系：ログインに成功し、トークンが返されること")
-    void login_success() {
-      String accountId = "testuser1";
-      String password = "password1";
-
-      AccountPrincipal principal = mock(AccountPrincipal.class);
-      doReturn(1L).when(principal).getAccountNo();
-
-      Authentication authentication = mock(Authentication.class);
-      doReturn(principal).when(authentication).getPrincipal();
-      doReturn(authentication)
-          .when(authenticationManager)
-          .authenticate(any(UsernamePasswordAuthenticationToken.class));
-
-      doReturn("access-token").when(jwtTokenProvider).generateAccessToken(principal);
-      doReturn("refresh-token").when(jwtTokenProvider).generateRefreshToken();
-      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
-      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
-
-      AuthTokenModel result =
-          authServiceImpl.login(
-              new AccountId(accountId), new Password(password), new IpAddress("127.0.0.1"));
-
-      assertNotNull(result);
-      assertEquals("access-token", result.getAccessToken().value());
-      assertEquals("refresh-token", result.getRefreshToken().value());
-      assertEquals(900L, result.getExpiresIn().value());
-
-      verify(refreshTokenRepositoryImpl).revokeAllByAccountNo(new AccountNo(1L));
-      ArgumentCaptor<RefreshTokenModel> refreshTokenModelCaptor =
-          ArgumentCaptor.forClass(RefreshTokenModel.class);
-      verify(refreshTokenRepositoryImpl).save(refreshTokenModelCaptor.capture());
-      assertEquals(
-          OffsetDateTime.now(clock).plusDays(7),
-          refreshTokenModelCaptor.getValue().getExpiresAt().value());
-    }
-
-    @Test
-    @Order(2)
-    @DisplayName("正常系：ログイン失敗回数が未設定（null）のアカウントはロック状態と判定されず、ログインに成功すること")
-    void login_success_loginFailureCountNull() {
-      String accountId = "testuser1";
-      String password = "password1";
-
-      AccountModel accountModel =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .updatedAt(new UpdatedAt(OffsetDateTime.now(clock)))
-              .build();
-      doReturn(accountModel).when(accountRepositoryImpl).getByAccountId(new AccountId(accountId));
-
-      AccountPrincipal principal = mock(AccountPrincipal.class);
-      doReturn(1L).when(principal).getAccountNo();
-
-      Authentication authentication = mock(Authentication.class);
-      doReturn(principal).when(authentication).getPrincipal();
-      doReturn(authentication)
-          .when(authenticationManager)
-          .authenticate(any(UsernamePasswordAuthenticationToken.class));
-
-      doReturn("access-token").when(jwtTokenProvider).generateAccessToken(principal);
-      doReturn("refresh-token").when(jwtTokenProvider).generateRefreshToken();
-      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
-      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
-
-      AuthTokenModel result =
-          authServiceImpl.login(
-              new AccountId(accountId), new Password(password), new IpAddress("127.0.0.1"));
-
-      assertNotNull(result);
-      assertEquals("access-token", result.getAccessToken().value());
-    }
-
-    @Test
-    @Order(3)
-    @DisplayName("異常系：パスワードが間違っている場合は例外がスローされること")
-    void login_badCredentials() {
-      doThrow(new BadCredentialsException("Bad credentials"))
-          .when(authenticationManager)
-          .authenticate(any(UsernamePasswordAuthenticationToken.class));
-
-      assertThrows(
-          BadCredentialsException.class,
-          () -> {
-            authServiceImpl.login(
-                new AccountId("testuser1"),
-                new Password("wrongpassword"),
-                new IpAddress("127.0.0.1"));
-          });
-    }
-
-    @Test
-    @Order(4)
-    @DisplayName("異常系：アカウントがロックされている場合は例外がスローされること")
-    void login_accountLocked() {
-      doThrow(new LockedException("Account is locked"))
-          .when(authenticationManager)
-          .authenticate(any(UsernamePasswordAuthenticationToken.class));
-
-      assertThrows(
-          LockedException.class,
-          () -> {
-            authServiceImpl.login(
-                new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
-          });
-    }
-
-    @Test
-    @Order(5)
-    @DisplayName("異常系：ロック中かつ最終更新から自動解除時間が経過していない場合は例外がスローされ、認証は行われないこと")
-    void login_accountLocked_within_lockDuration() {
-      doReturn(3).when(loginConfig).getFailCount();
-      doReturn(30).when(loginConfig).getLockDurationMinutes();
-
-      AccountModel lockedModel =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .loginFailureCount(new LoginFailureCount(3))
-              .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(5)))
-              .build();
-      doReturn(lockedModel).when(accountRepositoryImpl).getByAccountId(new AccountId("testuser1"));
-
-      assertThrows(
-          LockedException.class,
-          () -> {
-            authServiceImpl.login(
-                new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
-          });
-
-      verify(authenticationManager, never())
-          .authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    @Order(6)
-    @DisplayName("正常系：ロック中でも最終更新から自動解除時間が経過していればロックが解除され、ログインに成功すること")
-    void login_accountLocked_after_lockDuration_autoReleased() throws Exception {
-      doReturn(3).when(loginConfig).getFailCount();
-      doReturn(30).when(loginConfig).getLockDurationMinutes();
-
-      AccountModel lockedModel =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .loginFailureCount(new LoginFailureCount(3))
-              .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(31)))
-              .build();
-      doReturn(lockedModel).when(accountRepositoryImpl).getByAccountId(new AccountId("testuser1"));
-
-      AccountPrincipal principal = mock(AccountPrincipal.class);
-      doReturn(1L).when(principal).getAccountNo();
-      Authentication authentication = mock(Authentication.class);
-      doReturn(principal).when(authentication).getPrincipal();
-      doReturn(authentication)
-          .when(authenticationManager)
-          .authenticate(any(UsernamePasswordAuthenticationToken.class));
-      doReturn("access-token").when(jwtTokenProvider).generateAccessToken(principal);
-      doReturn("refresh-token").when(jwtTokenProvider).generateRefreshToken();
-      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
-      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
-
-      AuthTokenModel result =
-          authServiceImpl.login(
-              new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
-
-      assertNotNull(result);
-      ArgumentCaptor<AccountModel> unlockCaptor = ArgumentCaptor.forClass(AccountModel.class);
-      verify(accountRepositoryImpl).updateLoginFailureCount(unlockCaptor.capture());
-      assertEquals(0, unlockCaptor.getValue().getLoginFailureCount().value());
-    }
-
-    @Test
-    @Order(7)
-    @DisplayName("正常系：ロック解除の更新に失敗してもログイン処理は継続し、ログインに成功すること")
-    void login_accountLocked_after_lockDuration_releaseLockFails_loginStillSucceeds()
-        throws Exception {
-      doReturn(3).when(loginConfig).getFailCount();
-      doReturn(30).when(loginConfig).getLockDurationMinutes();
-
-      AccountModel lockedModel =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .loginFailureCount(new LoginFailureCount(3))
-              .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(31)))
-              .build();
-      doReturn(lockedModel).when(accountRepositoryImpl).getByAccountId(new AccountId("testuser1"));
-      doThrow(ErrorEnum.FAIL_TO_UPDATE_ACCOUNT.toException())
-          .when(accountRepositoryImpl)
-          .updateLoginFailureCount(any(AccountModel.class));
-
-      AccountPrincipal principal = mock(AccountPrincipal.class);
-      doReturn(1L).when(principal).getAccountNo();
-      Authentication authentication = mock(Authentication.class);
-      doReturn(principal).when(authentication).getPrincipal();
-      doReturn(authentication)
-          .when(authenticationManager)
-          .authenticate(any(UsernamePasswordAuthenticationToken.class));
-      doReturn("access-token").when(jwtTokenProvider).generateAccessToken(principal);
-      doReturn("refresh-token").when(jwtTokenProvider).generateRefreshToken();
-      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
-      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
-
-      AuthTokenModel result =
-          authServiceImpl.login(
-              new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
-
-      assertNotNull(result);
-      assertEquals("access-token", result.getAccessToken().value());
-      verify(accountRepositoryImpl).updateLoginFailureCount(any(AccountModel.class));
-    }
-
-    @Test
-    @Order(8)
-    @DisplayName("異常系：管理者ロックされている場合は、最終更新から自動解除時間が経過していても解除されず例外がスローされること")
-    void login_adminLocked_notAutoReleased() throws Exception {
-      AccountModel adminLockedModel =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .loginFailureCount(new LoginFailureCount(0))
-              .isAdminLocked(new IsAdminLocked(true))
-              .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(999)))
-              .build();
-      doReturn(adminLockedModel)
-          .when(accountRepositoryImpl)
-          .getByAccountId(new AccountId("testuser1"));
-
-      assertThrows(
-          LockedException.class,
-          () -> {
-            authServiceImpl.login(
-                new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
-          });
-
-      verify(authenticationManager, never())
-          .authenticate(any(UsernamePasswordAuthenticationToken.class));
-      verify(accountRepositoryImpl, never()).updateLoginFailureCount(any(AccountModel.class));
-    }
-
-    @Test
-    @Order(9)
-    @DisplayName("異常系：ロック中で最終更新日時が未設定の場合は自動解除できず例外がスローされること")
-    void login_locked_updatedAtNull_notAutoReleased() {
-      doReturn(3).when(loginConfig).getFailCount();
-
-      AccountModel lockedModel =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .loginFailureCount(new LoginFailureCount(3))
-              .build();
-      doReturn(lockedModel).when(accountRepositoryImpl).getByAccountId(new AccountId("testuser1"));
-
-      assertThrows(
-          LockedException.class,
-          () -> {
-            authServiceImpl.login(
-                new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
-          });
-
-      verify(authenticationManager, never())
-          .authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
-    @Order(10)
-    @DisplayName("正常系：パスワードログインでは、IPアドレスとログイン方式（パスワード）を認証リクエストのdetailsに載せること")
-    void login_setsPasswordLoginContext() {
-      AccountPrincipal principal = mock(AccountPrincipal.class);
-      doReturn(1L).when(principal).getAccountNo();
-      Authentication authentication = mock(Authentication.class);
-      doReturn(principal).when(authentication).getPrincipal();
-      doReturn(authentication)
-          .when(authenticationManager)
-          .authenticate(any(UsernamePasswordAuthenticationToken.class));
-      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
-      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
-      doReturn("access-token").when(jwtTokenProvider).generateAccessToken(principal);
-      doReturn("refresh-token").when(jwtTokenProvider).generateRefreshToken();
-
-      authServiceImpl.login(
-          new AccountId("testuser1"), new Password("password1"), new IpAddress("127.0.0.1"));
-
-      ArgumentCaptor<UsernamePasswordAuthenticationToken> captor =
-          ArgumentCaptor.forClass(UsernamePasswordAuthenticationToken.class);
-      verify(authenticationManager).authenticate(captor.capture());
-      assertEquals(
-          LoginContextModel.of(new IpAddress("127.0.0.1"), LoginMethodEnum.PASSWORD),
-          captor.getValue().getDetails());
-    }
   }
 
   @Nested
@@ -755,6 +461,8 @@ class AuthServiceImplTest {
       assertEquals(challenge, actual.getChallenge());
       assertEquals("localhost", actual.getRpId().value());
       assertEquals(300_000L, actual.getTimeoutMillis().value());
+      // ログインではアカウントを特定しないため、allowCredentialsは空
+      assertTrue(actual.getAllowCredentialIds().isEmpty());
 
       ArgumentCaptor<WebAuthnChallengeModel> captor =
           ArgumentCaptor.forClass(WebAuthnChallengeModel.class);
@@ -1093,6 +801,264 @@ class AuthServiceImplTest {
       authServiceImpl.purgeExpiredWebAuthnChallenges();
 
       verify(webAuthnChallengeRepositoryImpl).deleteExpired();
+    }
+  }
+
+  @Nested
+  @Order(8)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class createRecoveryOptions {
+    private static final AccountId ACCOUNT_ID = new AccountId("testuser1");
+    private static final RecoveryCode CODE = new RecoveryCode("ABCD-EFGH-JKMN-PQRS");
+
+    private AccountModel account(int loginFailureCount, boolean adminLocked, boolean deleted) {
+      return AccountModel.builder()
+          .accountNo(new AccountNo(1L))
+          .accountId(ACCOUNT_ID)
+          .accountName(new AccountName("テストユーザー"))
+          .authorityKbn(AuthorityEnum.NORMAL)
+          .loginFailureCount(new LoginFailureCount(loginFailureCount))
+          .isAdminLocked(new IsAdminLocked(adminLocked))
+          .isDeleted(new IsDeleted(deleted))
+          .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(5)))
+          .build();
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：リカバリーコードが一致した場合、コードを消費し、アカウントに紐づく復旧用チャレンジで登録オプションを返すこと")
+    void createRecoveryOptions_success() {
+      doReturn(account(0, false, false)).when(accountRepositoryImpl).getByAccountId(ACCOUNT_ID);
+      doReturn(3).when(loginConfig).getFailCount();
+      doReturn(true).when(recoveryCodeRepositoryImpl).consume(new AccountNo(1L), CODE);
+      PasskeyChallenge challenge = new PasskeyChallenge("challenge-1");
+      doReturn(challenge).when(webAuthnVerifier).generateChallenge();
+      doReturn(300).when(webAuthnConfig).getChallengeTimeoutSeconds();
+      doReturn("localhost").when(webAuthnConfig).getRpId();
+      doReturn("Web Gallery").when(webAuthnConfig).getRpName();
+      doReturn(new PasskeyUserHandle("handle-1"))
+          .when(passkeyUserHandleRepositoryImpl)
+          .findByAccountNo(new AccountNo(1L));
+      doReturn(PasskeyCredentialModelList.empty())
+          .when(passkeyCredentialRepositoryImpl)
+          .findByAccountNo(new AccountNo(1L));
+
+      PasskeyRegistrationOptionsModel actual =
+          authServiceImpl.createRecoveryOptions(ACCOUNT_ID, CODE);
+
+      assertEquals(challenge, actual.getChallenge());
+      assertEquals(new PasskeyUserHandle("handle-1"), actual.getUserHandle());
+      assertEquals(ACCOUNT_ID, actual.getAccountId());
+      verify(accountRepositoryImpl).lockForLoginAttempt(ACCOUNT_ID);
+
+      ArgumentCaptor<WebAuthnChallengeModel> captor =
+          ArgumentCaptor.forClass(WebAuthnChallengeModel.class);
+      verify(webAuthnChallengeRepositoryImpl).save(captor.capture());
+      assertEquals(WebAuthnChallengePurposeEnum.RECOVERY, captor.getValue().getPurposeKbn());
+      assertEquals(new AccountNo(1L), captor.getValue().getAccountNo());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：アカウントが存在しない場合、InvalidRecoveryCodeExceptionをスローし、チャレンジを発行しないこと")
+    void createRecoveryOptions_accountNotFound() {
+      doReturn(null).when(accountRepositoryImpl).getByAccountId(ACCOUNT_ID);
+
+      assertThrows(
+          InvalidRecoveryCodeException.class,
+          () -> authServiceImpl.createRecoveryOptions(ACCOUNT_ID, CODE));
+      verify(recoveryCodeRepositoryImpl, never()).consume(any(), any());
+      verify(webAuthnChallengeRepositoryImpl, never()).save(any());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：リカバリーコードが一致しない（使用済みを含む）場合、InvalidRecoveryCodeExceptionをスローし、ログイン失敗回数に加算しないこと")
+    void createRecoveryOptions_codeMismatch() throws Exception {
+      doReturn(account(0, false, false)).when(accountRepositoryImpl).getByAccountId(ACCOUNT_ID);
+      doReturn(3).when(loginConfig).getFailCount();
+      doReturn(false).when(recoveryCodeRepositoryImpl).consume(new AccountNo(1L), CODE);
+
+      assertThrows(
+          InvalidRecoveryCodeException.class,
+          () -> authServiceImpl.createRecoveryOptions(ACCOUNT_ID, CODE));
+      verify(webAuthnChallengeRepositoryImpl, never()).save(any());
+      verify(accountRepositoryImpl, never()).incrementLoginFailureCount(any());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：管理者ロック中の場合、LockedExceptionをスローし、リカバリーコードを消費しないこと")
+    void createRecoveryOptions_adminLocked() {
+      doReturn(account(0, true, false)).when(accountRepositoryImpl).getByAccountId(ACCOUNT_ID);
+      lenient().doReturn(3).when(loginConfig).getFailCount();
+
+      assertThrows(
+          LockedException.class, () -> authServiceImpl.createRecoveryOptions(ACCOUNT_ID, CODE));
+      verify(recoveryCodeRepositoryImpl, never()).consume(any(), any());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：無効（削除済み）のアカウントの場合、InvalidRecoveryCodeExceptionをスローすること")
+    void createRecoveryOptions_disabled() {
+      doReturn(account(0, false, true)).when(accountRepositoryImpl).getByAccountId(ACCOUNT_ID);
+      doReturn(3).when(loginConfig).getFailCount();
+
+      assertThrows(
+          InvalidRecoveryCodeException.class,
+          () -> authServiceImpl.createRecoveryOptions(ACCOUNT_ID, CODE));
+      verify(recoveryCodeRepositoryImpl, never()).consume(any(), any());
+    }
+  }
+
+  @Nested
+  @Order(9)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class loginWithRecoveryCode {
+    private static final PasskeyResponseJson JSON = new PasskeyResponseJson("{\"id\":\"x\"}");
+    private static final IpAddress IP = new IpAddress("127.0.0.1");
+    private static final PasskeyChallenge CHALLENGE = new PasskeyChallenge("challenge-1");
+    private static final PasskeyName NAME = new PasskeyName("新しいiPhone");
+
+    private PasskeyAttestationModel attestation;
+
+    @BeforeEach
+    void setUp() {
+      attestation =
+          PasskeyAttestationModel.builder()
+              .credentialId(new CredentialId("credential-new"))
+              .attestedCredentialData(new AttestedCredentialData(new byte[] {1}))
+              .signCount(new SignCount(0L))
+              .transports(new PasskeyTransports("internal"))
+              .isBackupEligible(new IsBackupEligible(true))
+              .isBackedUp(new IsBackedUp(false))
+              .isUvInitialized(new IsUvInitialized(true))
+              .build();
+    }
+
+    private AccountModel account(int loginFailureCount, boolean adminLocked) {
+      return AccountModel.builder()
+          .accountNo(new AccountNo(1L))
+          .accountId(new AccountId("testuser1"))
+          .accountName(new AccountName("テストユーザー"))
+          .authorityKbn(AuthorityEnum.NORMAL)
+          .loginFailureCount(new LoginFailureCount(loginFailureCount))
+          .isAdminLocked(new IsAdminLocked(adminLocked))
+          .isDeleted(new IsDeleted(false))
+          .updatedAt(new UpdatedAt(OffsetDateTime.now(clock).minusMinutes(5)))
+          .build();
+    }
+
+    private void stubVerification(WebAuthnChallengeModel storedChallenge) {
+      doReturn(CHALLENGE).when(webAuthnVerifier).readRegistrationChallenge(JSON);
+      doReturn(attestation).when(webAuthnVerifier).verifyRegistration(JSON, CHALLENGE);
+      doReturn(storedChallenge).when(webAuthnChallengeRepositoryImpl).consumeForRecovery(CHALLENGE);
+    }
+
+    private WebAuthnChallengeModel recoveryChallenge() {
+      return WebAuthnChallengeModel.of(
+          CHALLENGE,
+          WebAuthnChallengePurposeEnum.RECOVERY,
+          new AccountNo(1L),
+          new ExpiresAt(OffsetDateTime.now(clock).plusMinutes(5)));
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：新しいパスキーを登録し、リカバリーコードによる復旧として認証成功イベントを発行してトークンを返すこと")
+    void loginWithRecoveryCode_success() throws Exception {
+      stubVerification(recoveryChallenge());
+      doReturn(account(0, false)).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+      doReturn(3).when(loginConfig).getFailCount();
+      doReturn(null)
+          .when(passkeyCredentialRepositoryImpl)
+          .findByCredentialId(new CredentialId("credential-new"));
+      doReturn("access-token").when(jwtTokenProvider).generateAccessToken(any());
+      doReturn("refresh-token").when(jwtTokenProvider).generateRefreshToken();
+      doReturn(7).when(jwtConfig).getRefreshTokenExpirationDays();
+      doReturn(15).when(jwtConfig).getAccessTokenExpirationMinutes();
+
+      AuthTokenModel actual = authServiceImpl.loginWithRecoveryCode(JSON, NAME, IP);
+
+      assertEquals("access-token", actual.getAccessToken().value());
+      verify(accountRepositoryImpl).lockForLoginAttempt(new AccountId("testuser1"));
+
+      ArgumentCaptor<PasskeyCredentialModel> credentialCaptor =
+          ArgumentCaptor.forClass(PasskeyCredentialModel.class);
+      verify(passkeyCredentialRepositoryImpl).save(credentialCaptor.capture());
+      assertEquals(new AccountNo(1L), credentialCaptor.getValue().getAccountNo());
+      assertEquals(NAME, credentialCaptor.getValue().getPasskeyName());
+
+      ArgumentCaptor<AuthenticationSuccessEvent> eventCaptor =
+          ArgumentCaptor.forClass(AuthenticationSuccessEvent.class);
+      verify(applicationEventPublisher).publishEvent(eventCaptor.capture());
+      assertEquals(
+          LoginContextModel.of(IP, LoginMethodEnum.RECOVERY_CODE),
+          eventCaptor.getValue().getAuthentication().getDetails());
+      verify(refreshTokenRepositoryImpl).revokeAllByAccountNo(new AccountNo(1L));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：復旧用チャレンジが未発行・使用済み・期限切れの場合、PasskeyVerificationExceptionをスローしパスキーを登録しないこと")
+    void loginWithRecoveryCode_challengeNotAvailable() throws Exception {
+      stubVerification(null);
+
+      assertThrows(
+          PasskeyVerificationException.class,
+          () -> authServiceImpl.loginWithRecoveryCode(JSON, NAME, IP));
+      verify(passkeyCredentialRepositoryImpl, never()).save(any());
+      verify(refreshTokenRepositoryImpl, never()).save(any());
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("異常系：登録レスポンスの検証に失敗した場合、PasskeyVerificationExceptionをスローしチャレンジを消費しないこと")
+    void loginWithRecoveryCode_verificationFailed() throws Exception {
+      doReturn(CHALLENGE).when(webAuthnVerifier).readRegistrationChallenge(JSON);
+      doThrow(new PasskeyVerificationException("origin mismatch"))
+          .when(webAuthnVerifier)
+          .verifyRegistration(JSON, CHALLENGE);
+
+      assertThrows(
+          PasskeyVerificationException.class,
+          () -> authServiceImpl.loginWithRecoveryCode(JSON, NAME, IP));
+      verify(webAuthnChallengeRepositoryImpl, never()).consumeForRecovery(any());
+      verify(passkeyCredentialRepositoryImpl, never()).save(any());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：管理者ロック中の場合、LockedExceptionをスローしパスキーを登録しないこと")
+    void loginWithRecoveryCode_adminLocked() throws Exception {
+      stubVerification(recoveryChallenge());
+      doReturn(account(0, true)).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+      lenient().doReturn(3).when(loginConfig).getFailCount();
+
+      assertThrows(
+          LockedException.class, () -> authServiceImpl.loginWithRecoveryCode(JSON, NAME, IP));
+      verify(passkeyCredentialRepositoryImpl, never()).save(any());
+      verify(applicationEventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：登録済みのパスキーの場合、GalleryException（パスキー重複）をスローすること")
+    void loginWithRecoveryCode_duplicatePasskey() throws Exception {
+      stubVerification(recoveryChallenge());
+      doReturn(account(0, false)).when(accountRepositoryImpl).getByAccountNo(new AccountNo(1L));
+      doReturn(3).when(loginConfig).getFailCount();
+      doReturn(PasskeyCredentialModel.forRegist(new AccountNo(1L), attestation, NAME))
+          .when(passkeyCredentialRepositoryImpl)
+          .findByCredentialId(new CredentialId("credential-new"));
+
+      GalleryException exception =
+          assertThrows(
+              GalleryException.class, () -> authServiceImpl.loginWithRecoveryCode(JSON, NAME, IP));
+      assertEquals(ErrorEnum.DUPLICATE_PASSKEY.getErrorCode(), exception.getErrorCode());
+      verify(passkeyCredentialRepositoryImpl, never()).save(any());
+      verify(refreshTokenRepositoryImpl, never()).save(any());
     }
   }
 }

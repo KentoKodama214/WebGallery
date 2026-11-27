@@ -1,7 +1,8 @@
 {
 	"accountId": "aaaaaaaa",
 	"accountName": "AAAAAAAA",
-	"password": "password01",
+	"credential": "{\"id\":\"credential-1\",\"type\":\"public-key\"}",
+	"passkeyName": "MacBookのTouch ID",
 	"birthdate": "2000-01-01",
 	"sexKbn": "woman",
 	"birthplacePrefectureKbnCode": "Hokkaido",

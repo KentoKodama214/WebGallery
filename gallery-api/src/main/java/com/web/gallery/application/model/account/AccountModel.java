@@ -11,7 +11,6 @@ import com.web.gallery.domain.model.account.FreeMemo;
 import com.web.gallery.domain.model.account.IsAdminLocked;
 import com.web.gallery.domain.model.account.LastLoginDatetime;
 import com.web.gallery.domain.model.account.LoginFailureCount;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.model.common.IsDeleted;
 import com.web.gallery.domain.model.common.UpdatedAt;
@@ -38,9 +37,6 @@ public class AccountModel {
 
   /** アカウント名 */
   private AccountName accountName;
-
-  /** パスワード */
-  private Password password;
 
   /** 生年月日 */
   private BirthDate birthdate;

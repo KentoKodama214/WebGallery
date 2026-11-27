@@ -11,7 +11,6 @@ import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.BirthDate;
 import com.web.gallery.domain.model.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.model.account.FreeMemo;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
@@ -21,22 +20,17 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class AccountTest {
 
-  @Mock private PasswordEncoder passwordEncoder;
-
   private AccountModel.AccountModelBuilder baseBuilder() {
     return AccountModel.builder()
         .accountId(new AccountId("testuser01"))
-        .accountName(new AccountName("テストユーザー"))
-        .password(new Password("plainPassword"));
+        .accountName(new AccountName("テストユーザー"));
   }
 
   @Nested
@@ -55,16 +49,14 @@ class AccountTest {
               .residentPrefectureKbnCode(new ResidentPrefectureKbnCode("Tokyo"))
               .freeMemo(new FreeMemo("memo"))
               .build();
-      doReturn("encodedPassword").when(passwordEncoder).encode("plainPassword");
 
-      Account actual = Account.from(model, passwordEncoder, 1L);
+      Account actual = Account.from(model, 1L);
 
       assertEquals(1L, actual.getAccountNo());
       assertEquals(0L, actual.getCreatedBy());
       assertEquals(0L, actual.getUpdatedBy());
       assertEquals("testuser01", actual.getAccountId());
       assertEquals("テストユーザー", actual.getAccountName());
-      assertEquals("encodedPassword", actual.getPassword());
       assertEquals(LocalDate.of(1990, 1, 1), actual.getBirthdate());
       assertEquals(SexEnum.MAN, actual.getSexKbn());
       assertEquals("Hokkaido", actual.getBirthplacePrefectureKbnCode());
@@ -80,9 +72,8 @@ class AccountTest {
     @DisplayName("正常系：未設定項目のみの場合、デフォルト値が反映されること")
     void from_allFieldsAbsent() {
       AccountModel model = baseBuilder().build();
-      doReturn("encodedPassword").when(passwordEncoder).encode("plainPassword");
 
-      Account actual = Account.from(model, passwordEncoder, 1L);
+      Account actual = Account.from(model, 1L);
 
       assertEquals(Consts.MIN_LOCAL_DATE, actual.getBirthdate());
       assertEquals(SexEnum.NONE, actual.getSexKbn());

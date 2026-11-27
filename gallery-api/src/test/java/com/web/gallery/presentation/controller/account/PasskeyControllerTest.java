@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import com.web.gallery.application.model.auth.PasskeyAuthenticationOptionsModel;
 import com.web.gallery.application.model.auth.PasskeyCredentialModel;
 import com.web.gallery.application.model.auth.PasskeyCredentialModelList;
 import com.web.gallery.application.model.auth.PasskeyRegistrationOptionsModel;
@@ -13,7 +14,6 @@ import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.auth.AttestedCredentialData;
 import com.web.gallery.domain.model.auth.CredentialId;
 import com.web.gallery.domain.model.auth.IsBackedUp;
@@ -58,6 +58,10 @@ public class PasskeyControllerTest {
   private static final String SELF = "aaaaaaaa";
   private static final String OTHER = "bbbbbbbb";
   private static final AccountNo ACCOUNT_NO = new AccountNo(1L);
+
+  /** 本人確認用の認証レスポンス（json/controller/PasskeyControllerTest/*_success.jsonと同じ値） */
+  private static final PasskeyResponseJson REAUTH_CREDENTIAL =
+      new PasskeyResponseJson("{\"id\":\"credential-1\",\"type\":\"public-key\"}");
 
   @InjectMocks private PasskeyController passkeyController;
 
@@ -147,7 +151,7 @@ public class PasskeyControllerTest {
   class createRegistrationOptions {
     @Test
     @Order(1)
-    @DisplayName("正常系：現在のパスワードを渡して登録オプションを発行し、PublicKeyCredentialCreationOptionsJSONの形式で返すこと")
+    @DisplayName("正常系：本人確認の認証レスポンスを渡して登録オプションを発行し、PublicKeyCredentialCreationOptionsJSONの形式で返すこと")
     void createRegistrationOptions_success() throws Exception {
       doReturn(
               PasskeyRegistrationOptionsModel.builder()
@@ -161,7 +165,7 @@ public class PasskeyControllerTest {
                   .timeoutMillis(new PasskeyTimeoutMillis(300_000L))
                   .build())
           .when(accountService)
-          .createPasskeyRegistrationOptions(ACCOUNT_NO, new Password("password01"));
+          .createPasskeyRegistrationOptions(ACCOUNT_NO, REAUTH_CREDENTIAL);
 
       mockMvc
           .perform(
@@ -185,14 +189,14 @@ public class PasskeyControllerTest {
 
     @Test
     @Order(2)
-    @DisplayName("異常系：現在のパスワードが空の場合、400を返すこと")
-    void createRegistrationOptions_password_blank() throws Exception {
+    @DisplayName("異常系：本人確認の認証レスポンスが空の場合、400を返すこと")
+    void createRegistrationOptions_credential_blank() throws Exception {
       mockMvc
           .perform(
               post("/api/v1/accounts/" + SELF + "/passkeys/registration-options")
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(
-                      readJsonFile("createRegistrationOptions_badrequest_blank_password.json")))
+                      readJsonFile("createRegistrationOptions_badrequest_blank_credential.json")))
           .andExpect(status().isBadRequest());
 
       verify(accountService, times(0)).createPasskeyRegistrationOptions(any(), any());
@@ -214,11 +218,11 @@ public class PasskeyControllerTest {
 
     @Test
     @Order(4)
-    @DisplayName("異常系：現在のパスワードが一致しない場合、403を返すこと")
-    void createRegistrationOptions_passwordMismatch() throws Exception {
-      doThrow(ErrorEnum.CURRENT_PASSWORD_MISMATCH.toException())
+    @DisplayName("異常系：本人確認に失敗した場合、403を返すこと")
+    void createRegistrationOptions_reauthenticationFailed() throws Exception {
+      doThrow(ErrorEnum.REAUTHENTICATION_FAILED.toException())
           .when(accountService)
-          .createPasskeyRegistrationOptions(ACCOUNT_NO, new Password("password01"));
+          .createPasskeyRegistrationOptions(ACCOUNT_NO, REAUTH_CREDENTIAL);
 
       mockMvc
           .perform(
@@ -227,7 +231,7 @@ public class PasskeyControllerTest {
                   .content(readJsonFile("createRegistrationOptions_success.json")))
           .andExpect(status().isForbidden())
           .andExpect(
-              jsonPath("$.errorCode").value(ErrorEnum.CURRENT_PASSWORD_MISMATCH.getErrorCode()));
+              jsonPath("$.errorCode").value(ErrorEnum.REAUTHENTICATION_FAILED.getErrorCode()));
     }
 
     @Test
@@ -236,7 +240,7 @@ public class PasskeyControllerTest {
     void createRegistrationOptions_reachedLimit() throws Exception {
       doThrow(ErrorEnum.REACHED_PASSKEY_LIMIT.toException())
           .when(accountService)
-          .createPasskeyRegistrationOptions(ACCOUNT_NO, new Password("password01"));
+          .createPasskeyRegistrationOptions(ACCOUNT_NO, REAUTH_CREDENTIAL);
 
       mockMvc
           .perform(
@@ -424,7 +428,7 @@ public class PasskeyControllerTest {
   class deletePasskey {
     @Test
     @Order(1)
-    @DisplayName("正常系：現在のパスワードを渡してパスキーを削除すること")
+    @DisplayName("正常系：本人確認の認証レスポンスを渡してパスキーを削除すること")
     void deletePasskey_success() throws Exception {
       mockMvc
           .perform(
@@ -434,18 +438,18 @@ public class PasskeyControllerTest {
           .andExpect(status().isOk());
 
       verify(accountService, times(1))
-          .deletePasskey(ACCOUNT_NO, new PasskeyNo(5L), new Password("password01"));
+          .deletePasskey(ACCOUNT_NO, new PasskeyNo(5L), REAUTH_CREDENTIAL);
     }
 
     @Test
     @Order(2)
-    @DisplayName("異常系：現在のパスワードが空の場合、400を返すこと")
-    void deletePasskey_password_blank() throws Exception {
+    @DisplayName("異常系：本人確認の認証レスポンスが空の場合、400を返すこと")
+    void deletePasskey_credential_blank() throws Exception {
       mockMvc
           .perform(
               post("/api/v1/accounts/" + SELF + "/passkeys/5/deletion")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("deletePasskey_badrequest_blank_password.json")))
+                  .content(readJsonFile("deletePasskey_badrequest_blank_credential.json")))
           .andExpect(status().isBadRequest());
 
       verify(accountService, times(0)).deletePasskey(any(), any(), any());
@@ -479,6 +483,64 @@ public class PasskeyControllerTest {
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(readJsonFile("deletePasskey_success.json")))
           .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：最後の1件のパスキーの場合、400を返すこと")
+    void deletePasskey_lastPasskey() throws Exception {
+      doThrow(ErrorEnum.CANNOT_DELETE_LAST_PASSKEY.toException())
+          .when(accountService)
+          .deletePasskey(any(), any(), any());
+
+      mockMvc
+          .perform(
+              post("/api/v1/accounts/" + SELF + "/passkeys/5/deletion")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("deletePasskey_success.json")))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              jsonPath("$.message").value(ErrorEnum.CANNOT_DELETE_LAST_PASSKEY.getErrorMessage()));
+    }
+  }
+
+  @Nested
+  @Order(6)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class createReauthenticationOptions {
+    @Test
+    @Order(1)
+    @DisplayName("正常系：本人確認オプションを、本人のパスキーに限定したPublicKeyCredentialRequestOptionsJSONの形式で返すこと")
+    void createReauthenticationOptions_success() throws Exception {
+      doReturn(
+              PasskeyAuthenticationOptionsModel.builder()
+                  .challenge(new PasskeyChallenge("reauth-challenge"))
+                  .rpId(new RelyingPartyId("localhost"))
+                  .allowCredentialIds(List.of(new CredentialId("credential-1")))
+                  .timeoutMillis(new PasskeyTimeoutMillis(300_000L))
+                  .build())
+          .when(accountService)
+          .createReauthenticationOptions(ACCOUNT_NO);
+
+      mockMvc
+          .perform(post("/api/v1/accounts/" + SELF + "/reauthentication-options"))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.challenge").value("reauth-challenge"))
+          .andExpect(jsonPath("$.rpId").value("localhost"))
+          .andExpect(jsonPath("$.allowCredentials[0].id").value("credential-1"))
+          .andExpect(jsonPath("$.allowCredentials[0].type").value("public-key"))
+          .andExpect(jsonPath("$.userVerification").value("required"));
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：本人以外のアカウントIDの場合、403を返すこと")
+    void createReauthenticationOptions_otherAccount() throws Exception {
+      mockMvc
+          .perform(post("/api/v1/accounts/" + OTHER + "/reauthentication-options"))
+          .andExpect(status().isForbidden());
+
+      verify(accountService, times(0)).createReauthenticationOptions(any());
     }
   }
 }

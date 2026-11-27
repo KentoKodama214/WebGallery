@@ -35,6 +35,7 @@ async function warmUpRoutes(baseURL: string): Promise<void> {
   const paths = [
     "/login",
     "/register",
+    "/recovery",
     "/photo/warmup/photo_list",
     "/photo/warmup/photo_setting",
     "/photo/warmup/photo_detail?photoNo=1",

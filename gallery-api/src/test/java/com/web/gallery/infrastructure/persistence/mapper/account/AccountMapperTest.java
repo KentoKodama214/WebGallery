@@ -59,7 +59,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(false);
       expectedAccount.setAccountId("aaaaaaaa");
       expectedAccount.setAccountName("AAAAAAAA");
-      expectedAccount.setPassword("$2a$10$password1");
       expectedAccount.setBirthdate(LocalDate.of(1991, 2, 14));
       expectedAccount.setSexKbn(SexEnum.NONE);
       expectedAccount.setBirthplacePrefectureKbnCode("none");
@@ -96,7 +95,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(true);
       expectedAccount.setAccountId("iiiiiiii");
       expectedAccount.setAccountName("IIIIIIII");
-      expectedAccount.setPassword("$2a$10$password9");
       expectedAccount.setBirthdate(LocalDate.of(1900, 1, 1));
       expectedAccount.setSexKbn(SexEnum.NONE);
       expectedAccount.setBirthplacePrefectureKbnCode("none");
@@ -133,7 +131,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(false);
       expectedAccount.setAccountId("aaaaaaaa");
       expectedAccount.setAccountName("AAAAAAAA");
-      expectedAccount.setPassword("$2a$10$password1");
       expectedAccount.setBirthdate(LocalDate.of(1991, 2, 14));
       expectedAccount.setSexKbn(SexEnum.NONE);
       expectedAccount.setBirthplacePrefectureKbnCode("none");
@@ -170,44 +167,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(false);
       expectedAccount.setAccountId("aaaaaaaa");
       expectedAccount.setAccountName("AAAAAAAA");
-      expectedAccount.setPassword("$2a$10$password1");
-      expectedAccount.setBirthdate(LocalDate.of(1991, 2, 14));
-      expectedAccount.setSexKbn(SexEnum.NONE);
-      expectedAccount.setBirthplacePrefectureKbnCode("none");
-      expectedAccount.setResidentPrefectureKbnCode("none");
-      expectedAccount.setFreeMemo("");
-      expectedAccount.setAuthorityKbn(AuthorityEnum.ADMINISTRATOR);
-      expectedAccount.setLastLoginDatetime(
-          OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
-      expectedAccount.setLoginFailureCount(0);
-      expectedAccount.setIsAdminLocked(false);
-
-      List<AccountDto> expected = new ArrayList<AccountDto>();
-      expected.add(expectedAccount);
-
-      assertEquals(1, actual.size());
-      assertEquals(expected, actual);
-    }
-
-    @Test
-    @Order(5)
-    @DisplayName("正常系：パスワードでのselectで1件の場合")
-    void select_by_password() {
-      AccountCondition account = AccountCondition.builder().password("$2a$10$password1").build();
-      List<AccountDto> actual = accountMapper.select(account);
-
-      AccountDto expectedAccount = new AccountDto();
-      expectedAccount.setAccountNo(1L);
-      expectedAccount.setCreatedBy(1L);
-      expectedAccount.setCreatedAt(
-          OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
-      expectedAccount.setUpdatedBy(1L);
-      expectedAccount.setUpdatedAt(
-          OffsetDateTime.of(2001, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)));
-      expectedAccount.setIsDeleted(false);
-      expectedAccount.setAccountId("aaaaaaaa");
-      expectedAccount.setAccountName("AAAAAAAA");
-      expectedAccount.setPassword("$2a$10$password1");
       expectedAccount.setBirthdate(LocalDate.of(1991, 2, 14));
       expectedAccount.setSexKbn(SexEnum.NONE);
       expectedAccount.setBirthplacePrefectureKbnCode("none");
@@ -245,7 +204,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(false);
       expectedAccount.setAccountId("aaaaaaaa");
       expectedAccount.setAccountName("AAAAAAAA");
-      expectedAccount.setPassword("$2a$10$password1");
       expectedAccount.setBirthdate(LocalDate.of(1991, 2, 14));
       expectedAccount.setSexKbn(SexEnum.NONE);
       expectedAccount.setBirthplacePrefectureKbnCode("none");
@@ -282,7 +240,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(false);
       expectedAccount.setAccountId("bbbbbbbb");
       expectedAccount.setAccountName("BBBBBBBB");
-      expectedAccount.setPassword("$2a$10$password2");
       expectedAccount.setBirthdate(LocalDate.of(1900, 1, 1));
       expectedAccount.setSexKbn(SexEnum.MAN);
       expectedAccount.setBirthplacePrefectureKbnCode("none");
@@ -320,7 +277,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(false);
       expectedAccount.setAccountId("cccccccc");
       expectedAccount.setAccountName("CCCCCCCC");
-      expectedAccount.setPassword("$2a$10$password3");
       expectedAccount.setBirthdate(LocalDate.of(1900, 1, 1));
       expectedAccount.setSexKbn(SexEnum.NONE);
       expectedAccount.setBirthplacePrefectureKbnCode("Hokkaido");
@@ -358,7 +314,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(false);
       expectedAccount.setAccountId("dddddddd");
       expectedAccount.setAccountName("DDDDDDDD");
-      expectedAccount.setPassword("$2a$10$password4");
       expectedAccount.setBirthdate(LocalDate.of(1900, 1, 1));
       expectedAccount.setSexKbn(SexEnum.NONE);
       expectedAccount.setBirthplacePrefectureKbnCode("none");
@@ -395,7 +350,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(false);
       expectedAccount.setAccountId("eeeeeeee");
       expectedAccount.setAccountName("EEEEEEEE");
-      expectedAccount.setPassword("$2a$10$password5");
       expectedAccount.setBirthdate(LocalDate.of(1900, 1, 1));
       expectedAccount.setSexKbn(SexEnum.NONE);
       expectedAccount.setBirthplacePrefectureKbnCode("none");
@@ -435,7 +389,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(false);
       expectedAccount.setAccountId("gggggggg");
       expectedAccount.setAccountName("GGGGGGGG");
-      expectedAccount.setPassword("$2a$10$password7");
       expectedAccount.setBirthdate(LocalDate.of(1900, 1, 1));
       expectedAccount.setSexKbn(SexEnum.NONE);
       expectedAccount.setBirthplacePrefectureKbnCode("none");
@@ -472,7 +425,6 @@ public class AccountMapperTest {
       expectedAccount.setIsDeleted(false);
       expectedAccount.setAccountId("hhhhhhhh");
       expectedAccount.setAccountName("HHHHHHHH");
-      expectedAccount.setPassword("$2a$10$password8");
       expectedAccount.setBirthdate(LocalDate.of(1900, 1, 1));
       expectedAccount.setSexKbn(SexEnum.NONE);
       expectedAccount.setBirthplacePrefectureKbnCode("none");
@@ -528,7 +480,6 @@ public class AccountMapperTest {
       expectedAccount1.setIsDeleted(false);
       expectedAccount1.setAccountId("llllllll");
       expectedAccount1.setAccountName("LLLLLLLL");
-      expectedAccount1.setPassword("$2a$10$password12");
       expectedAccount1.setBirthdate(LocalDate.of(1900, 1, 1));
       expectedAccount1.setSexKbn(SexEnum.WOMAN);
       expectedAccount1.setBirthplacePrefectureKbnCode("Okinawa");
@@ -565,8 +516,6 @@ public class AccountMapperTest {
 
       assertEquals(2, actual.size());
       // パスワードハッシュはDBから取得しない
-      assertNull(actual.get(0).getPassword());
-      assertNull(actual.get(1).getPassword());
       // account_id ASC でソートされ、offset/limit が適用される
       assertEquals("aaaaaaaa", actual.get(0).getAccountId());
       assertEquals("bbbbbbbb", actual.get(1).getAccountId());
@@ -624,15 +573,6 @@ public class AccountMapperTest {
     @DisplayName("正常系：アカウント名でのcount")
     void count_by_accountName() {
       AccountCondition account = AccountCondition.builder().accountName("AAAAAAAA").build();
-      Integer actual = accountMapper.count(account);
-      assertEquals(1, actual);
-    }
-
-    @Test
-    @Order(5)
-    @DisplayName("正常系：パスワードでのcount")
-    void count_by_password() {
-      AccountCondition account = AccountCondition.builder().password("$2a$10$password1").build();
       Integer actual = accountMapper.count(account);
       assertEquals(1, actual);
     }
@@ -761,7 +701,6 @@ public class AccountMapperTest {
               .isDeleted(false)
               .accountId("aaaaaaaa")
               .accountName("AAAAAAAA")
-              .password("$2a$10$password1")
               .birthdate(LocalDate.of(1991, 2, 14))
               .sexKbn(SexEnum.WOMAN)
               .birthplacePrefectureKbnCode("Hokkaido")
@@ -790,7 +729,6 @@ public class AccountMapperTest {
                       .isDeleted(rs.getBoolean("is_deleted"))
                       .accountId(rs.getString("account_id"))
                       .accountName(rs.getString("account_name"))
-                      .password(rs.getString("password"))
                       .birthdate(rs.getObject("birthdate", LocalDate.class))
                       .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -810,7 +748,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
       assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.WOMAN, actualData.getFirst().getSexKbn());
       assertEquals("Hokkaido", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -842,7 +779,6 @@ public class AccountMapperTest {
                   .isDeleted(rs.getBoolean("is_deleted"))
                   .accountId(rs.getString("account_id"))
                   .accountName(rs.getString("account_name"))
-                  .password(rs.getString("password"))
                   .birthdate(rs.getObject("birthdate", LocalDate.class))
                   .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                   .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -878,7 +814,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
       assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -914,7 +849,6 @@ public class AccountMapperTest {
       assertTrue(actualData.getFirst().getIsDeleted());
       assertEquals("iiiiiiii", actualData.getFirst().getAccountId());
       assertEquals("IIIIIIII", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password9", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -950,7 +884,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
       assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -987,44 +920,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
       assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
-      assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
-      assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
-      assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
-      assertEquals("none", actualData.getFirst().getResidentPrefectureKbnCode());
-      assertEquals("", actualData.getFirst().getFreeMemo());
-      assertEquals(
-          OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
-          actualData.getFirst().getLastLoginDatetime());
-      assertEquals(1, actualData.getFirst().getLoginFailureCount());
-    }
-
-    @Test
-    @Order(5)
-    @DisplayName("正常系：パスワードでのupdate")
-    void update_by_password() {
-      AccountCondition conditionAccount =
-          AccountCondition.builder().password("$2a$10$password1").build();
-      AccountUpdateTarget targetAccount =
-          AccountUpdateTarget.builder().loginFailureCount(1).build();
-      OffsetDateTime transactionNow =
-          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-      Integer actual = accountMapper.update(conditionAccount, targetAccount);
-      assertEquals(1, actual);
-
-      List<Account> actualData = getAccountList("password='$2a$10$password1'");
-      assertEquals(1, actualData.size());
-      assertEquals(1L, actualData.getFirst().getAccountNo());
-      assertEquals(1L, actualData.getFirst().getCreatedBy());
-      assertEquals(
-          OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
-          actualData.getFirst().getCreatedAt());
-      assertEquals(1L, actualData.getFirst().getUpdatedBy());
-      assertEquals(transactionNow, actualData.getFirst().getUpdatedAt());
-      assertFalse(actualData.getFirst().getIsDeleted());
-      assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
-      assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -1061,7 +956,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
       assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -1097,7 +991,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("bbbbbbbb", actualData.getFirst().getAccountId());
       assertEquals("BBBBBBBB", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password2", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.MAN, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -1134,7 +1027,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("cccccccc", actualData.getFirst().getAccountId());
       assertEquals("CCCCCCCC", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password3", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("Hokkaido", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -1171,7 +1063,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("dddddddd", actualData.getFirst().getAccountId());
       assertEquals("DDDDDDDD", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password4", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -1207,7 +1098,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("eeeeeeee", actualData.getFirst().getAccountId());
       assertEquals("EEEEEEEE", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password5", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -1247,7 +1137,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("gggggggg", actualData.getFirst().getAccountId());
       assertEquals("GGGGGGGG", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password7", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -1283,7 +1172,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("hhhhhhhh", actualData.getFirst().getAccountId());
       assertEquals("HHHHHHHH", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password8", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -1340,7 +1228,6 @@ public class AccountMapperTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("llllllll", actualData.getFirst().getAccountId());
       assertEquals("LLLLLLLL", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password12", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.WOMAN, actualData.getFirst().getSexKbn());
       assertEquals("Okinawa", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -1380,7 +1267,6 @@ public class AccountMapperTest {
                   .isDeleted(rs.getBoolean("is_deleted"))
                   .accountId(rs.getString("account_id"))
                   .accountName(rs.getString("account_name"))
-                  .password(rs.getString("password"))
                   .birthdate(rs.getObject("birthdate", LocalDate.class))
                   .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                   .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -1449,22 +1335,6 @@ public class AccountMapperTest {
       assertEquals(0, actualData.size());
 
       List<Account> actualRestData = getAccountList("account_name<>'AAAAAAAA'");
-      assertEquals(11, actualRestData.size());
-    }
-
-    @Test
-    @Order(5)
-    @DisplayName("正常系：パスワードでのdelete")
-    void delete_by_password() {
-      AccountCondition deleteAccount =
-          AccountCondition.builder().password("$2a$10$password1").build();
-      Integer actual = accountMapper.delete(deleteAccount);
-      assertEquals(1, actual);
-
-      List<Account> actualData = getAccountList("password='$2a$10$password1'");
-      assertEquals(0, actualData.size());
-
-      List<Account> actualRestData = getAccountList("password<>'$2a$10$password1'");
       assertEquals(11, actualRestData.size());
     }
 

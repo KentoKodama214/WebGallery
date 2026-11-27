@@ -63,11 +63,13 @@ public class AccountPrincipal implements UserDetails {
   /**
    * パスワードを取得する
    *
-   * @return パスワード
+   * <p>ログインはパスキーのみで行い、パスワードは保持しないため常にnullを返す
+   *
+   * @return null
    */
   @Override
   public String getPassword() {
-    return accountModel.getPassword().value();
+    return null;
   }
 
   /**

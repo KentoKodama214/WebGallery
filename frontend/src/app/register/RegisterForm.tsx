@@ -1,34 +1,48 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  registerAccount,
   getPrefectures,
+  getSignupOptions,
+  registerAccount,
 } from "@/lib/api/client";
 import type { PrefectureGroup } from "@/lib/api/client";
+import {
+  PasskeyCancelledError,
+  createPasskeyCredential,
+  isPasskeySupported,
+} from "@/lib/auth/passkey";
 import {
   ACCOUNT_ID_PATTERN,
   ACCOUNT_NAME_MAX_LENGTH,
   FREE_MEMO_MAX_LENGTH,
-  PASSWORD_PATTERN,
-  PASSWORD_ERROR_MESSAGE,
-  PASSWORD_PLACEHOLDER,
+  PASSKEY_NAME_MAX_LENGTH,
   clearError,
   isPastDate,
 } from "@/lib/validation";
 import { ModalDialog } from "@/components/ui/ModalDialog";
+import { RecoveryCodeList } from "@/components/auth/RecoveryCodeList";
+
+/** ライブラリ等の外部購読はないため、購読関数は何もしない */
+const subscribeNoop = () => () => {};
+
+/** 最初のパスキーの名前の初期値 */
+const DEFAULT_PASSKEY_NAME = "最初のパスキー";
 
 /**
  * アカウント登録フォームコンポーネント
+ *
+ * ログインはパスキーのみで行うため、アカウントと同時に最初のパスキーを端末に作成して登録する。
+ * 登録後に表示するリカバリーコードは、パスキーをすべて失ったときの唯一の復旧手段のため、保管を促す
  */
 export function RegisterForm() {
   const router = useRouter();
 
   const [accountId, setAccountId] = useState("");
   const [accountName, setAccountName] = useState("");
-  const [password, setPassword] = useState("");
+  const [passkeyName, setPasskeyName] = useState(DEFAULT_PASSKEY_NAME);
   const [birthdate, setBirthdate] = useState("");
   const [sexKbn, setSexKbn] = useState("none");
   const [birthplacePrefectureKbnCode, setBirthplacePrefectureKbnCode] = useState("none");
@@ -38,14 +52,20 @@ export function RegisterForm() {
   const [prefectureGroups, setPrefectureGroups] = useState<PrefectureGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  // 登録完了後はログインページへ遷移するまでフォームの再送信を禁止する
-  const [isCompleted, setIsCompleted] = useState(false);
+  // 登録完了後に一度だけ表示するリカバリーコード（null の間は未登録）
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
+  const isCompleted = recoveryCodes !== null;
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState("");
 
-  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // パスキー非対応のブラウザ（WebAuthn 非対応・非安全なコンテキスト）では登録できない。
+  // SSR/ハイドレーション時は true を返し、対応ブラウザで注意書きがちらつかないようにする。
+  const passkeySupported = useSyncExternalStore(
+    subscribeNoop,
+    () => isPasskeySupported(),
+    () => true
+  );
 
   useEffect(() => {
     getPrefectures()
@@ -54,13 +74,6 @@ export function RegisterForm() {
         // 都道府県取得失敗時は空のまま続行
       })
       .finally(() => setIsLoading(false));
-  }, []);
-
-  // アンマウント時に遷移タイマーを破棄する
-  useEffect(() => {
-    return () => {
-      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
-    };
   }, []);
 
   /**
@@ -83,8 +96,8 @@ export function RegisterForm() {
       newErrors.freeMemo = `メモは${FREE_MEMO_MAX_LENGTH}文字以内で入力してください`;
     }
 
-    if (!PASSWORD_PATTERN.test(password)) {
-      newErrors.password = PASSWORD_ERROR_MESSAGE;
+    if (!passkeyName.trim()) {
+      newErrors.passkeyName = "パスキー名を入力してください";
     }
 
     if (birthdate && !isPastDate(birthdate)) {
@@ -96,11 +109,11 @@ export function RegisterForm() {
   };
 
   /**
-   * 登録する
+   * 登録する（新規登録オプションの発行 → 端末でパスキーを作成 → アカウントとパスキーを登録）
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 登録完了後（遷移待ち）の二重送信を防ぐ
+    // 登録完了後の二重送信を防ぐ
     if (isSubmitting || isCompleted) return;
     setSubmitError("");
 
@@ -109,30 +122,26 @@ export function RegisterForm() {
     setIsSubmitting(true);
 
     try {
+      const options = await getSignupOptions(accountId, accountName);
+      const credential = await createPasskeyCredential(options);
       const result = await registerAccount({
         accountId,
         accountName,
-        password,
         birthdate: birthdate || null,
         sexKbn,
         birthplacePrefectureKbnCode,
         residentPrefectureKbnCode,
         freeMemo,
+        credential,
+        passkeyName: passkeyName.trim(),
       });
-
-      if (!result.isSuccess) {
-        // バックエンドは登録失敗時（アカウントID重複）にmessageを返さないため既定文言を使う
-        setSubmitError(result.message || "このアカウントIDは既に使われています");
-        return;
-      }
-
-      setIsCompleted(true);
-      setShowModal(true);
-      redirectTimerRef.current = setTimeout(() => {
-        router.push("/login");
-      }, 5000);
+      setRecoveryCodes(result.recoveryCodes ?? []);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "登録に失敗しました");
+      if (err instanceof PasskeyCancelledError) {
+        setSubmitError("パスキーの作成がキャンセルされました。もう一度お試しください");
+      } else {
+        setSubmitError(err instanceof Error ? err.message : "登録に失敗しました");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -212,27 +221,27 @@ export function RegisterForm() {
               <p id="register-account-name-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.accountName}</p>
             )}
 
-            <label htmlFor="register-password" className="block text-[#444] text-sm mb-1 mt-2">パスワード</label>
+            <label htmlFor="register-passkey-name" className="block text-[#444] text-sm mb-1 mt-2">パスキー名</label>
             <input
-              id="register-password"
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onBlur={() => {
-                if (!PASSWORD_PATTERN.test(password)) {
-                  setErrors((prev) => ({ ...prev, password: PASSWORD_ERROR_MESSAGE }));
-                } else {
-                  setErrors((prev) => clearError(prev, "password"));
-                }
+              id="register-passkey-name"
+              type="text"
+              value={passkeyName}
+              onChange={(e) => {
+                setPasskeyName(e.target.value);
+                setErrors((prev) => clearError(prev, "passkeyName"));
               }}
-              placeholder={PASSWORD_PLACEHOLDER}
-              aria-invalid={errors.password ? true : undefined}
-              aria-describedby={errors.password ? "register-password-error" : undefined}
+              maxLength={PASSKEY_NAME_MAX_LENGTH}
+              placeholder="例：MacBookのTouch ID"
+              aria-invalid={errors.passkeyName ? true : undefined}
+              aria-describedby={errors.passkeyName ? "register-passkey-name-error" : "register-passkey-name-hint"}
               className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
             />
-            {errors.password && (
-              <p id="register-password-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.password}</p>
+            {errors.passkeyName ? (
+              <p id="register-passkey-name-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.passkeyName}</p>
+            ) : (
+              <p id="register-passkey-name-hint" className="text-[#666] text-xs mb-2">
+                ログインにはパスワードの代わりにパスキー（端末の指紋・顔認証・PIN）を使います。「登録」を押すと、この端末にパスキーを作成します。
+              </p>
             )}
 
             <label htmlFor="register-birthdate" className="block text-[#444] text-sm mb-1 mt-2">生年月日</label>
@@ -314,13 +323,19 @@ export function RegisterForm() {
               <p id="register-free-memo-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.freeMemo}</p>
             )}
 
+            {!passkeySupported && (
+              <p className="text-[#C62828] text-xs font-bold mb-2">
+                このブラウザはパスキーに対応していないため、アカウントを登録できません
+              </p>
+            )}
+
             {submitError && (
-              <p className="text-[#C62828] text-xs font-bold mb-2">{submitError}</p>
+              <p role="alert" className="text-[#C62828] text-xs font-bold mb-2">{submitError}</p>
             )}
 
             <button
               type="submit"
-              disabled={isSubmitting || isCompleted}
+              disabled={isSubmitting || isCompleted || !passkeySupported}
               className="w-full h-[50px] bg-[#1565C0] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#1565C0] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
             >
               {isSubmitting ? (
@@ -333,15 +348,27 @@ export function RegisterForm() {
         </div>
       </div>
 
-      {showModal && (
+      {recoveryCodes !== null && (
         <ModalDialog
           label="アカウント登録完了"
+          initialFocusSelector="[data-dialog-initial-focus]"
           overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
-          containerClassName="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]"
+          containerClassName="bg-white rounded-md p-6 shadow-lg relative max-w-[360px] w-[90%] max-h-[90vh] overflow-y-auto"
         >
-          <p className="text-[#444] text-center">
-            アカウントを登録しました。<br />ログインページへ移動します。
+          <p className="text-[#444] text-sm font-bold mb-2">アカウントを登録しました</p>
+          <p className="text-[#444] text-xs mb-3">
+            下のリカバリーコードは、パスキーをすべて失ったときに新しいパスキーを登録するための唯一の手段です。
+            この画面を閉じると二度と表示できないため、安全な場所に保管してください（各コードは1回だけ使えます）。
           </p>
+          <RecoveryCodeList codes={recoveryCodes} accountId={accountId} />
+          <button
+            type="button"
+            data-dialog-initial-focus
+            onClick={() => router.push("/login")}
+            className="w-full h-[40px] mt-2 bg-[#1565C0] text-white border-none rounded-sm cursor-pointer"
+          >
+            保管しました（ログインへ）
+          </button>
         </ModalDialog>
       )}
     </div>

@@ -14,7 +14,6 @@ import com.web.gallery.domain.enumeration.InquiryStatusEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMst;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -58,7 +57,6 @@ public class InquiryControllerIntegrationTest {
             .accountNo(new AccountNo(accountNo))
             .accountId(new AccountId(accountId))
             .accountName(new AccountName(accountId.toUpperCase()))
-            .password(new Password("$2a$10$password1"))
             .authorityKbn(AuthorityEnum.MINI)
             .build();
     AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);

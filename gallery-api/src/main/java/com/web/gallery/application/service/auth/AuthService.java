@@ -2,9 +2,12 @@ package com.web.gallery.application.service.auth;
 
 import com.web.gallery.application.model.auth.AuthTokenModel;
 import com.web.gallery.application.model.auth.PasskeyAuthenticationOptionsModel;
+import com.web.gallery.application.model.auth.PasskeyRegistrationOptionsModel;
+import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountId;
-import com.web.gallery.domain.model.account.Password;
+import com.web.gallery.domain.model.auth.PasskeyName;
 import com.web.gallery.domain.model.auth.PasskeyResponseJson;
+import com.web.gallery.domain.model.auth.RecoveryCode;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
 import com.web.gallery.domain.model.common.IpAddress;
 
@@ -16,16 +19,6 @@ import com.web.gallery.domain.model.common.IpAddress;
  * @since 1.0.0
  */
 public interface AuthService {
-  /**
-   * ログイン認証を行い、トークンを発行する
-   *
-   * @param accountId アカウントID
-   * @param password パスワード
-   * @param ipAddress 送信元IPアドレス（ログイン履歴に記録するため、認証結果に伝播させる）
-   * @return {@link AuthTokenModel}
-   */
-  AuthTokenModel login(AccountId accountId, Password password, IpAddress ipAddress);
-
   /**
    * パスキー認証の開始時に、クライアントへ渡すオプション（チャレンジ等）を発行する
    *
@@ -42,6 +35,31 @@ public interface AuthService {
    */
   AuthTokenModel loginWithPasskey(
       PasskeyResponseJson authenticationResponseJson, IpAddress ipAddress);
+
+  /**
+   * リカバリーコードで本人確認し、新しいパスキーを作成するためのオプション（チャレンジ等）を発行する
+   *
+   * <p>パスキーをすべて失った利用者の復旧に使う。照合したリカバリーコードはこの時点で使用済みにする
+   *
+   * @param accountId アカウントID
+   * @param recoveryCode リカバリーコード
+   * @return {@link PasskeyRegistrationOptionsModel}
+   */
+  PasskeyRegistrationOptionsModel createRecoveryOptions(
+      AccountId accountId, RecoveryCode recoveryCode);
+
+  /**
+   * 復旧用のパスキーの登録レスポンスを検証してパスキーを登録し、トークンを発行する
+   *
+   * @param registrationResponseJson 登録レスポンス（{@code PublicKeyCredential#toJSON()}の形式）
+   * @param passkeyName パスキー名
+   * @param ipAddress 送信元IPアドレス（ログイン履歴に記録する）
+   * @return {@link AuthTokenModel}
+   * @throws GalleryException 登録済みのパスキーの場合
+   */
+  AuthTokenModel loginWithRecoveryCode(
+      PasskeyResponseJson registrationResponseJson, PasskeyName passkeyName, IpAddress ipAddress)
+      throws GalleryException;
 
   /**
    * リフレッシュトークンを検証し、新しいアクセストークンを発行する

@@ -12,12 +12,21 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum WebAuthnChallengePurposeEnum {
-  /** パスキー登録 */
+  /** パスキー追加登録（ログイン中のアカウントへの2件目以降の登録） */
   @JsonProperty("registration")
   REGISTRATION("registration"),
-  /** パスキー認証 */
+  /** パスキー認証（ログイン） */
   @JsonProperty("authentication")
-  AUTHENTICATION("authentication");
+  AUTHENTICATION("authentication"),
+  /** アカウント新規登録（アカウントと最初のパスキーを同時に登録する） */
+  @JsonProperty("signup")
+  SIGNUP("signup"),
+  /** 重要操作（パスキーの登録・削除、退会、リカバリーコードの再発行）の前の本人確認 */
+  @JsonProperty("reauthentication")
+  REAUTHENTICATION("reauthentication"),
+  /** リカバリーコードによる復旧（新しいパスキーを登録してログインする） */
+  @JsonProperty("recovery")
+  RECOVERY("recovery");
 
   /** DBに保持する値 */
   private final String dbValue;

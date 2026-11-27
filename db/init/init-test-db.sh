@@ -33,6 +33,7 @@ SQL_FILES=(
   "common/passkey_user_handle.sql"
   "common/passkey_credential.sql"
   "common/webauthn_challenge.sql"
+  "common/recovery_code.sql"
   # photoスキーマ: 型定義 → テーブル定義（外部キー依存順）
   "photo/photo.type.sql"
   "photo/photo_mst.sql"

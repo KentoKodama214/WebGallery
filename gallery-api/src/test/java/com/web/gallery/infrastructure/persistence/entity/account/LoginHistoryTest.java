@@ -54,7 +54,7 @@ class LoginHistoryTest {
               new AccountNo(1L),
               new IpAddress("203.0.113.1"),
               IpGeoLocation.empty(),
-              LoginMethodEnum.PASSWORD);
+              LoginMethodEnum.PASSKEY);
 
       LoginHistory actual = LoginHistory.from(model);
 

@@ -44,13 +44,13 @@ describe("api/client", () => {
     client = await import("../client");
   });
 
-  describe("login / readErrorMessage", () => {
+  describe("loginWithPasskey / readErrorMessage", () => {
     it("成功時にアクセストークンを保持する", async () => {
       fetchMock.mockResolvedValueOnce(
         makeResponse({ accessToken: "token-1", expiresIn: 3600 })
       );
 
-      const result = await client.login("user", "pass");
+      const result = await client.loginWithPasskey("{}");
 
       expect(result.accessToken).toBe("token-1");
       expect(client.getAccessToken()).toBe("token-1");
@@ -64,21 +64,21 @@ describe("api/client", () => {
         )
       );
 
-      await expect(client.login("user", "pass")).rejects.toThrow(
-        "ログインに失敗しました"
+      await expect(client.loginWithPasskey("{}")).rejects.toThrow(
+        "パスキーによる認証に失敗しました"
       );
     });
 
     it("4xxエラー時はバックエンドのerrorMessageを採用する", async () => {
       fetchMock.mockResolvedValueOnce(
         makeResponse(
-          { errorMessage: "アカウントIDまたはパスワードが間違っています。" },
-          { status: 401 }
+          { errorMessage: "アカウントがロックされています。" },
+          { status: 423 }
         )
       );
 
-      await expect(client.login("user", "pass")).rejects.toThrow(
-        "アカウントIDまたはパスワードが間違っています。"
+      await expect(client.loginWithPasskey("{}")).rejects.toThrow(
+        "アカウントがロックされています。"
       );
     });
   });
@@ -173,7 +173,7 @@ describe("api/client", () => {
       fetchMock.mockResolvedValueOnce(
         makeResponse({ accessToken: "login-token", expiresIn: 3600 })
       );
-      await client.login("user", "pass");
+      await client.loginWithPasskey("{}");
       expect(client.getAccessToken()).toBe("login-token");
 
       // 遅れて refresh が 401 で返る（古い世代なので状態を書き換えない）
@@ -201,7 +201,7 @@ describe("api/client", () => {
       fetchMock.mockResolvedValueOnce(
         makeResponse({ accessToken: "old-token" })
       );
-      await client.login("user", "pass");
+      await client.loginWithPasskey("{}");
 
       // 1回目の本リクエスト: 401
       fetchMock.mockResolvedValueOnce(makeResponse({}, { status: 401 }));
@@ -222,7 +222,7 @@ describe("api/client", () => {
 
     it("リフレッシュ後の再リクエストも401なら認証状態をクリアする", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "old-token" }));
-      await client.login("user", "pass");
+      await client.loginWithPasskey("{}");
 
       // 本リクエスト: 401 → refresh 成功 → リトライも 401
       fetchMock.mockResolvedValueOnce(makeResponse({}, { status: 401 }));
@@ -247,20 +247,18 @@ describe("api/client", () => {
   describe("updateAccount / deleteAccount のエラー", () => {
     beforeEach(async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
-      await client.login("user", "pass");
+      await client.loginWithPasskey("{}");
     });
 
     it("updateAccount は HTTP エラー時に status 付きの ApiError を投げる", async () => {
       fetchMock.mockResolvedValueOnce(
-        makeResponse({ errorMessage: "現在のパスワードが正しくありません" }, { status: 403 })
+        makeResponse({ errorMessage: "アカウントを編集する権限がありません。" }, { status: 403 })
       );
 
       const err = await client
         .updateAccount("me", {
           accountId: "me",
           accountName: "n",
-          newPassword: "newpassword1",
-          currentPassword: "wrong",
           birthdate: null,
           sexKbn: "none",
           birthplacePrefectureKbnCode: "none",
@@ -271,37 +269,37 @@ describe("api/client", () => {
 
       expect(err).toBeInstanceOf(client.ApiError);
       expect(err.status).toBe(403);
-      expect(err.message).toBe("現在のパスワードが正しくありません");
+      expect(err.message).toBe("アカウントを編集する権限がありません。");
     });
 
     it("deleteAccount は HTTP エラー時に status 付きの ApiError を投げる", async () => {
       fetchMock.mockResolvedValueOnce(
-        makeResponse({ errorMessage: "現在のパスワードが正しくありません" }, { status: 403 })
+        makeResponse({ errorMessage: "パスキーによる本人確認に失敗しました。" }, { status: 403 })
       );
 
-      const err = await client.deleteAccount("me", "wrong").catch((e) => e);
+      const err = await client.deleteAccount("me", '{"id":"cred"}').catch((e) => e);
 
       expect(err).toBeInstanceOf(client.ApiError);
       expect(err.status).toBe(403);
     });
 
-    it("deleteAccount は POST /deletion で現在のパスワードを JSON ボディで送る", async () => {
+    it("deleteAccount は POST /deletion で本人確認の認証レスポンスを JSON ボディで送る", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({}, { status: 200 }));
 
-      await client.deleteAccount("me", "password01");
+      await client.deleteAccount("me", '{"id":"cred"}');
 
       const [url, init] = fetchMock.mock.calls.at(-1)!;
       expect(String(url)).toContain("/api/v1/accounts/me/deletion");
       expect(init?.method).toBe("POST");
       expect(new Headers(init?.headers).get("Content-Type")).toBe("application/json");
-      expect(JSON.parse(init?.body as string)).toEqual({ currentPassword: "password01" });
+      expect(JSON.parse(init?.body as string)).toEqual({ credential: '{"id":"cred"}' });
     });
   });
 
   describe("ポートフォリオAPI", () => {
     beforeEach(async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
-      await client.login("user", "pass");
+      await client.loginWithPasskey("{}");
     });
 
     it("getPortfolioList は一覧APIを1ページ目で呼び、portfolioList と isLast を返す", async () => {
@@ -426,7 +424,7 @@ describe("api/client", () => {
   describe("不正なトークン応答の扱い", () => {
     it("login 応答に文字列 accessToken が無ければ失敗として扱う", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ expiresIn: 3600 }));
-      await expect(client.login("user", "pass")).rejects.toThrow();
+      await expect(client.loginWithPasskey("{}")).rejects.toThrow();
       expect(client.getAccessToken()).toBeNull();
     });
 
@@ -439,7 +437,7 @@ describe("api/client", () => {
 
     it("login でネットワーク例外が発生した場合は接続エラーメッセージを投げる", async () => {
       fetchMock.mockRejectedValueOnce(new Error("network"));
-      await expect(client.login("user", "pass")).rejects.toThrow(
+      await expect(client.loginWithPasskey("{}")).rejects.toThrow(
         "サーバーに接続できませんでした。時間をおいて再度お試しください"
       );
     });
@@ -486,7 +484,7 @@ describe("api/client", () => {
   describe("logout", () => {
     it("ログアウトAPIを呼び出し、成功時に認証状態をクリアする", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
-      await client.login("user", "pass");
+      await client.loginWithPasskey("{}");
 
       fetchMock.mockResolvedValueOnce(makeResponse({}, { status: 200 }));
       await client.logout();
@@ -499,7 +497,7 @@ describe("api/client", () => {
 
     it("ログアウトAPIが例外を投げても認証状態はクリアされる", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
-      await client.login("user", "pass");
+      await client.loginWithPasskey("{}");
 
       fetchMock.mockRejectedValueOnce(new Error("network"));
       await client.logout();
@@ -511,7 +509,7 @@ describe("api/client", () => {
   describe("readErrorMessage / readJson のフォールバック", () => {
     beforeEach(async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
-      await client.login("user", "pass");
+      await client.loginWithPasskey("{}");
     });
 
     it("エラー応答の本文が空の場合は既定メッセージを使う", async () => {
@@ -564,30 +562,78 @@ describe("api/client", () => {
     const data: Parameters<ClientModule["registerAccount"]>[0] = {
       accountId: "newuser",
       accountName: "新規ユーザー",
-      password: "password01",
       birthdate: null,
       sexKbn: "none",
       birthplacePrefectureKbnCode: "none",
       residentPrefectureKbnCode: "none",
       freeMemo: "",
+      credential: '{"id":"cred"}',
+      passkeyName: "MacBook",
     };
 
-    it("成功時は登録結果を返す", async () => {
+    it("成功時は登録結果（リカバリーコードを含む）を返し、パスキーの登録レスポンスを送る", async () => {
       fetchMock.mockResolvedValueOnce(
-        makeResponse({ httpStatus: 201, isSuccess: true, message: "ok" })
+        makeResponse({
+          httpStatus: 200,
+          isSuccess: true,
+          message: "",
+          recoveryCodes: ["ABCD-EFGH-JKMN-PQRS"],
+        })
       );
       const result = await client.registerAccount(data);
-      expect(result.isSuccess).toBe(true);
+      expect(result.recoveryCodes).toEqual(["ABCD-EFGH-JKMN-PQRS"]);
       const [url, init] = fetchMock.mock.calls.at(-1)!;
       expect(String(url)).toContain("/api/v1/accounts");
       expect(init?.method).toBe("POST");
+      expect(JSON.parse(init?.body as string)).toMatchObject({
+        credential: '{"id":"cred"}',
+        passkeyName: "MacBook",
+      });
+      expect(JSON.parse(init?.body as string)).not.toHaveProperty("password");
     });
 
-    it("エラー時は既定メッセージを投げる", async () => {
+    it("エラー時は status 付きの ApiError で既定メッセージを投げる", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({}, { status: 400 }));
+      await expect(client.registerAccount(data)).rejects.toMatchObject({
+        status: 400,
+        message: "アカウントの登録に失敗しました",
+      });
+    });
+
+    it("ネットワーク例外の場合は接続エラーのメッセージを投げる", async () => {
+      fetchMock.mockRejectedValueOnce(new Error("network"));
       await expect(client.registerAccount(data)).rejects.toThrow(
-        "アカウントの登録に失敗しました"
+        "サーバーに接続できませんでした"
       );
+    });
+  });
+
+  describe("getSignupOptions（未ログインで呼び出す生fetch）", () => {
+    it("アカウントID・アカウント名を送り、登録オプションを返す", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ challenge: "c", user: { id: "u" } }));
+
+      const actual = await client.getSignupOptions("newuser1", "新規ユーザー");
+
+      expect(actual.challenge).toBe("c");
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/signup-options");
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(init?.body as string)).toEqual({
+        accountId: "newuser1",
+        accountName: "新規ユーザー",
+      });
+      expect(new Headers(init?.headers).get("Authorization")).toBeNull();
+    });
+
+    it("アカウントIDが既に使われている場合は 409 の ApiError でバックエンドのメッセージを投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ errorMessage: "このアカウントIDは既に使われています。" }, { status: 409 })
+      );
+
+      await expect(client.getSignupOptions("newuser1", "n")).rejects.toMatchObject({
+        status: 409,
+        message: "このアカウントIDは既に使われています。",
+      });
     });
   });
 
@@ -595,7 +641,7 @@ describe("api/client", () => {
     beforeEach(async () => {
       // 先にログインしてアクセストークンを持たせる（fetchWithAuth の先読みリフレッシュを挟まない）
       fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
-      await client.login("user", "pass");
+      await client.loginWithPasskey("{}");
     });
 
     /** 直近の fetch 呼び出しURLから referer クエリの値を取り出す */
@@ -668,7 +714,7 @@ describe("api/client", () => {
   describe("認証付きAPI関数群", () => {
     beforeEach(async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
-      await client.login("user", "pass");
+      await client.loginWithPasskey("{}");
     });
 
     type Case = {
@@ -933,6 +979,51 @@ describe("api/client", () => {
     });
   });
 
+  describe("リカバリーコードによる復旧", () => {
+    it("復旧オプションの発行はアカウントIDとリカバリーコードを送る（未ログインの生fetch）", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ challenge: "c" }));
+
+      const actual = await client.getRecoveryOptions("testuser1", "abcd-efgh-jkmn-pqrs");
+
+      expect(actual.challenge).toBe("c");
+      expect(fetchMock.mock.calls[0][0]).toContain("/api/v1/auth/recovery/options");
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+        accountId: "testuser1",
+        recoveryCode: "abcd-efgh-jkmn-pqrs",
+      });
+      expect(new Headers(fetchMock.mock.calls[0][1].headers).get("Authorization")).toBeNull();
+    });
+
+    it("復旧オプションの発行で 401 の場合はバックエンドのメッセージを投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse(
+          { message: "アカウントIDまたはリカバリーコードが正しくありません。" },
+          { status: 401 }
+        )
+      );
+
+      await expect(client.getRecoveryOptions("testuser1", "x")).rejects.toMatchObject({
+        status: 401,
+        message: "アカウントIDまたはリカバリーコードが正しくありません。",
+      });
+    });
+
+    it("復旧ログインは登録レスポンスとパスキー名を送り、アクセストークンを保持する", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ accessToken: "recovery-token", expiresIn: 900 })
+      );
+
+      await client.loginWithRecoveryCode('{"id":"cred"}', "新しいiPhone");
+
+      expect(client.getAccessToken()).toBe("recovery-token");
+      expect(fetchMock.mock.calls[0][0]).toContain("/api/v1/auth/recovery/login");
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+        credential: '{"id":"cred"}',
+        passkeyName: "新しいiPhone",
+      });
+    });
+  });
+
   describe("パスキー管理", () => {
     beforeEach(() => {
       client.setAccessToken("token-1");
@@ -950,27 +1041,44 @@ describe("api/client", () => {
       );
     });
 
-    it("登録オプションの発行は現在のパスワードをボディで送る", async () => {
+    it("本人確認オプションの発行は、アクセストークン付きで本人確認オプションAPIを POST で呼ぶ", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ challenge: "c", allowCredentials: [{ id: "a", type: "public-key" }] })
+      );
+
+      const actual = await client.getReauthenticationOptions("testuser1");
+
+      expect(actual.allowCredentials).toEqual([{ id: "a", type: "public-key" }]);
+      expect(fetchMock.mock.calls[0][0]).toContain(
+        "/api/v1/accounts/testuser1/reauthentication-options"
+      );
+      expect(fetchMock.mock.calls[0][1].method).toBe("POST");
+      expect(new Headers(fetchMock.mock.calls[0][1].headers).get("Authorization")).toBe(
+        "Bearer token-1"
+      );
+    });
+
+    it("登録オプションの発行は本人確認の認証レスポンスをボディで送る", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ challenge: "c" }));
 
-      await client.createPasskeyRegistrationOptions("testuser1", "password01");
+      await client.createPasskeyRegistrationOptions("testuser1", '{"id":"reauth"}');
 
       expect(fetchMock.mock.calls[0][0]).toContain(
         "/api/v1/accounts/testuser1/passkeys/registration-options"
       );
       expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
-        currentPassword: "password01",
+        credential: '{"id":"reauth"}',
       });
     });
 
     it("登録オプションの発行で 403 の場合は status 付きの ApiError を投げる", async () => {
       fetchMock.mockResolvedValueOnce(
-        makeResponse({ errorMessage: "現在のパスワードが正しくありません。" }, { status: 403 })
+        makeResponse({ errorMessage: "パスキーによる本人確認に失敗しました。" }, { status: 403 })
       );
 
       await expect(
-        client.createPasskeyRegistrationOptions("testuser1", "wrong")
-      ).rejects.toMatchObject({ status: 403, message: "現在のパスワードが正しくありません。" });
+        client.createPasskeyRegistrationOptions("testuser1", "{}")
+      ).rejects.toMatchObject({ status: 403, message: "パスキーによる本人確認に失敗しました。" });
     });
 
     it("登録は登録レスポンスとパスキー名を送る", async () => {
@@ -996,17 +1104,17 @@ describe("api/client", () => {
       expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ passkeyName: "iPhone" });
     });
 
-    it("削除は POST のサブリソースへ現在のパスワードを送る", async () => {
+    it("削除は POST のサブリソースへ本人確認の認証レスポンスを送る", async () => {
       fetchMock.mockResolvedValueOnce(makeResponse(null));
 
-      await client.deletePasskey("testuser1", 5, "password01");
+      await client.deletePasskey("testuser1", 5, '{"id":"reauth"}');
 
       expect(fetchMock.mock.calls[0][0]).toContain(
         "/api/v1/accounts/testuser1/passkeys/5/deletion"
       );
       expect(fetchMock.mock.calls[0][1].method).toBe("POST");
       expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
-        currentPassword: "password01",
+        credential: '{"id":"reauth"}',
       });
     });
 
@@ -1015,8 +1123,62 @@ describe("api/client", () => {
         makeResponse({ errorMessage: "パスキーが存在しません。" }, { status: 404 })
       );
 
-      await expect(client.deletePasskey("testuser1", 99, "password01")).rejects.toMatchObject({
+      await expect(client.deletePasskey("testuser1", 99, "{}")).rejects.toMatchObject({
         status: 404,
+      });
+    });
+
+    it("最後の1件の削除で 400 の場合はバックエンドのメッセージを投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse(
+          { message: "最後のパスキーは削除できません。先に別のパスキーを登録してください。" },
+          { status: 400 }
+        )
+      );
+
+      await expect(client.deletePasskey("testuser1", 1, "{}")).rejects.toMatchObject({
+        status: 400,
+        message: "最後のパスキーは削除できません。先に別のパスキーを登録してください。",
+      });
+    });
+  });
+
+  describe("リカバリーコード管理", () => {
+    beforeEach(() => {
+      client.setAccessToken("token-1");
+    });
+
+    it("状態の取得はアクセストークン付きで未使用件数を取得する", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ remainingCount: 7, issueCount: 10 }));
+
+      const actual = await client.getRecoveryCodeStatus("testuser1");
+
+      expect(actual).toEqual({ remainingCount: 7, issueCount: 10 });
+      expect(fetchMock.mock.calls[0][0]).toContain("/api/v1/accounts/testuser1/recovery-codes");
+      expect(new Headers(fetchMock.mock.calls[0][1].headers).get("Authorization")).toBe(
+        "Bearer token-1"
+      );
+    });
+
+    it("再発行は本人確認の認証レスポンスを POST で送り、発行したコードを返す", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ recoveryCodes: ["ABCD-EFGH-JKMN-PQRS"] }));
+
+      const actual = await client.regenerateRecoveryCodes("testuser1", '{"id":"reauth"}');
+
+      expect(actual).toEqual(["ABCD-EFGH-JKMN-PQRS"]);
+      expect(fetchMock.mock.calls[0][1].method).toBe("POST");
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+        credential: '{"id":"reauth"}',
+      });
+    });
+
+    it("再発行で 403 の場合は status 付きの ApiError を投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ errorMessage: "パスキーによる本人確認に失敗しました。" }, { status: 403 })
+      );
+
+      await expect(client.regenerateRecoveryCodes("testuser1", "{}")).rejects.toMatchObject({
+        status: 403,
       });
     });
   });

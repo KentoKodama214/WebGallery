@@ -8,7 +8,7 @@ import org.springframework.validation.FieldError;
 /**
  * リクエストのバリデーションエラーをログ出力するためのHelperクラス
  *
- * <p>パスワード等の機微なフィールドは、入力値（{@link FieldError#getRejectedValue()}）を
+ * <p>パスキーの応答・リカバリーコード等の機微なフィールドは、入力値（{@link FieldError#getRejectedValue()}）を
  * そのまま出力するとログ集約基盤に平文の資格情報が残るため、値をマスクして出力する。
  */
 public final class ValidationErrorLogger {
@@ -18,8 +18,7 @@ public final class ValidationErrorLogger {
    *
    * <p>{@code credential}（パスキーの登録・認証レスポンス）は資格情報そのものではないが、署名を含み最大数十KBに なりうるため、ログの肥大化を避ける目的でマスクする
    */
-  private static final Set<String> SENSITIVE_FIELD_NAMES =
-      Set.of("password", "newPassword", "currentPassword", "credential");
+  private static final Set<String> SENSITIVE_FIELD_NAMES = Set.of("credential", "recoveryCode");
 
   /** マスク後の表示文字列 */
   private static final String MASKED_VALUE = "***";
@@ -48,7 +47,7 @@ public final class ValidationErrorLogger {
   /**
    * フィールド名が機微フィールドかどうかを判定する
    *
-   * <p>ネストしたパス（{@code parent.password} や {@code list[0].password}）にも対応するため、 末尾のセグメントで判定する。
+   * <p>ネストしたパス（{@code parent.credential} や {@code list[0].credential}）にも対応するため、 末尾のセグメントで判定する。
    *
    * @param field フィールド名（バインドパス）
    * @return 機微フィールドの場合true

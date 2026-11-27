@@ -15,10 +15,10 @@ import {
   createPasskeyCredential,
   isPasskeySupported,
 } from "@/lib/auth/passkey";
+import { reauthenticateWithPasskey } from "@/lib/auth/reauthenticate";
+import { PASSKEY_NAME_MAX_LENGTH } from "@/lib/validation";
 import { ModalDialog } from "@/components/ui/ModalDialog";
 
-/** パスキー名の最大文字数（バックエンドの `Consts.PASSKEY_NAME_MAX_LENGTH` と揃える） */
-export const PASSKEY_NAME_MAX_LENGTH = 50;
 
 /** ライブラリ等の外部購読はないため、購読関数は何もしない */
 const subscribeNoop = () => () => {};
@@ -53,7 +53,8 @@ interface PasskeySectionProps {
  * アカウント設定画面のパスキー管理セクション
  *
  * パスキーの一覧・登録・名前変更・削除を行う。登録と削除はアクセストークンの漏洩時の被害を限定するため、
- * 現在のパスワードによる本人確認を必要とする（バックエンドで検証する）。
+ * 登録済みのパスキーによる本人確認（生体認証・PIN）を必要とする（バックエンドで検証する）。
+ * パスキーがログインの唯一の手段のため、最後の1件は削除させない。
  */
 export function PasskeySection({ accountId }: PasskeySectionProps) {
   const [passkeys, setPasskeys] = useState<PasskeyItem[]>([]);
@@ -62,7 +63,6 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
   const [loadError, setLoadError] = useState("");
   const [notice, setNotice] = useState("");
   const [dialog, setDialog] = useState<DialogState>({ kind: "none" });
-  const [dialogPassword, setDialogPassword] = useState("");
   const [dialogName, setDialogName] = useState("");
   const [dialogError, setDialogError] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -106,7 +106,6 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
 
   const openDialog = (next: DialogState) => {
     setDialog(next);
-    setDialogPassword("");
     setDialogError("");
     setDialogName(next.kind === "rename" ? next.passkey.passkeyName : "");
     setNotice("");
@@ -115,15 +114,16 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
   const closeDialog = () => {
     if (isProcessing) return;
     setDialog({ kind: "none" });
-    setDialogPassword("");
     setDialogName("");
     setDialogError("");
   };
 
   const reachedLimit = maxCount !== null && passkeys.length >= maxCount;
+  // パスキーはログインの唯一の手段のため、最後の1件は削除させない
+  const isLastPasskey = passkeys.length <= 1;
 
   /**
-   * パスキーの登録（本人確認 → 端末でのパスキー作成 → 登録）
+   * パスキーの登録（登録済みのパスキーで本人確認 → 端末で新しいパスキーを作成 → 登録）
    */
   const handleRegister = async () => {
     const name = dialogName.trim();
@@ -131,14 +131,11 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
       setDialogError("パスキー名を入力してください");
       return;
     }
-    if (!dialogPassword) {
-      setDialogError("現在のパスワードを入力してください");
-      return;
-    }
     setIsProcessing(true);
     setDialogError("");
     try {
-      const options = await createPasskeyRegistrationOptions(accountId, dialogPassword);
+      const reauthCredential = await reauthenticateWithPasskey(accountId);
+      const options = await createPasskeyRegistrationOptions(accountId, reauthCredential);
       const credential = await createPasskeyCredential(options);
       await registerPasskey(accountId, credential, name);
       setDialog({ kind: "none" });
@@ -146,7 +143,7 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
       reload();
     } catch (err) {
       if (err instanceof PasskeyCancelledError) {
-        setDialogError("パスキーの作成がキャンセルされました");
+        setDialogError("パスキーの操作がキャンセルされました");
       } else {
         setDialogError(err instanceof Error ? err.message : "パスキーの登録に失敗しました");
       }
@@ -179,17 +176,14 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
   };
 
   /**
-   * パスキーの削除（本人確認のうえ）
+   * パスキーの削除（パスキーで本人確認のうえ）
    */
   const handleDelete = async (passkey: PasskeyItem) => {
-    if (!dialogPassword) {
-      setDialogError("現在のパスワードを入力してください");
-      return;
-    }
     setIsProcessing(true);
     setDialogError("");
     try {
-      await deletePasskey(accountId, passkey.passkeyNo, dialogPassword);
+      const reauthCredential = await reauthenticateWithPasskey(accountId);
+      await deletePasskey(accountId, passkey.passkeyNo, reauthCredential);
       setDialog({ kind: "none" });
       setNotice("パスキーを削除しました");
       reload();
@@ -200,6 +194,8 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
         reload();
         return;
       }
+      // 利用者自身によるパスキー操作のキャンセルは失敗として表示しない
+      if (err instanceof PasskeyCancelledError) return;
       setDialogError(err instanceof Error ? err.message : "パスキーの削除に失敗しました");
     } finally {
       setIsProcessing(false);
@@ -215,8 +211,8 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
         パスキー
       </h2>
       <p className="text-[#444] text-xs mb-3">
-        パスキーを登録すると、パスワードの代わりに端末の指紋・顔認証・PINでログインできます。
-        フィッシングサイトでは使えないため、パスワードより安全です。
+        端末の指紋・顔認証・PINでログインします。端末を紛失しても困らないよう、
+        複数の端末にパスキーを登録しておくことをおすすめします。
       </p>
 
       {notice && (
@@ -276,8 +272,9 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
                 <button
                   type="button"
                   onClick={() => openDialog({ kind: "delete", passkey })}
+                  disabled={isLastPasskey}
                   aria-label={`${passkey.passkeyName}を削除`}
-                  className="text-xs text-[#C62828] bg-transparent border-none cursor-pointer p-0 underline"
+                  className="text-xs text-[#C62828] bg-transparent border-none cursor-pointer p-0 underline disabled:text-[#999] disabled:no-underline disabled:cursor-not-allowed"
                 >
                   削除
                 </button>
@@ -287,6 +284,11 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
         </ul>
       )}
 
+      {!isLoading && !loadError && passkeys.length === 1 && (
+        <p className="text-[#666] text-xs mb-2">
+          最後のパスキーは削除できません。削除するには、先に別のパスキーを登録してください
+        </p>
+      )}
       {!passkeySupported && (
         <p className="text-[#666] text-xs mb-2">このブラウザはパスキーに対応していないため、登録できません</p>
       )}
@@ -319,7 +321,7 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
             }}
           >
             <p className="text-[#444] text-sm mb-3">
-              本人確認のため現在のパスワードを入力してください。続けて、端末の画面に従ってパスキーを作成します。
+              「登録」を押すと、まず登録済みのパスキーで本人確認を行い、続けて端末の画面に従って新しいパスキーを作成します。
             </p>
             <label htmlFor="passkey-register-name" className="block text-[#444] text-sm mb-1">
               パスキー名
@@ -332,20 +334,6 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
               value={dialogName}
               onChange={(e) => {
                 setDialogName(e.target.value);
-                setDialogError("");
-              }}
-              className="block w-full p-[10px] mb-2 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
-            />
-            <label htmlFor="passkey-register-password" className="block text-[#444] text-sm mb-1">
-              現在のパスワード
-            </label>
-            <input
-              id="passkey-register-password"
-              type="password"
-              autoComplete="current-password"
-              value={dialogPassword}
-              onChange={(e) => {
-                setDialogPassword(e.target.value);
                 setDialogError("");
               }}
               className="block w-full p-[10px] mb-2 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
@@ -433,7 +421,7 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
       {dialog.kind === "delete" && (
         <ModalDialog
           label="パスキーの削除の確認"
-          initialFocusSelector="#passkey-delete-password"
+          initialFocusSelector="[data-dialog-initial-focus]"
           onClose={closeDialog}
           overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
           containerClassName="bg-white rounded-md p-6 shadow-lg relative max-w-[320px] w-[90%]"
@@ -447,20 +435,9 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
             <p className="text-[#444] text-sm mb-3 break-all">
               「{dialog.passkey.passkeyName}」を削除すると、このパスキーではログインできなくなります。よろしいですか？
             </p>
-            <label htmlFor="passkey-delete-password" className="block text-[#444] text-sm mb-1">
-              現在のパスワード
-            </label>
-            <input
-              id="passkey-delete-password"
-              type="password"
-              autoComplete="current-password"
-              value={dialogPassword}
-              onChange={(e) => {
-                setDialogPassword(e.target.value);
-                setDialogError("");
-              }}
-              className="block w-full p-[10px] mb-2 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
-            />
+            <p className="text-[#666] text-xs mb-3">
+              「削除」を押すと、本人確認のためにパスキー（生体認証・PIN）を求められます。
+            </p>
             {dialogError && (
               <p role="alert" className="text-[#C62828] text-xs font-bold mb-2">
                 {dialogError}
@@ -469,6 +446,7 @@ export function PasskeySection({ accountId }: PasskeySectionProps) {
             <div className="flex gap-3">
               <button
                 type="button"
+                data-dialog-initial-focus
                 onClick={closeDialog}
                 disabled={isProcessing}
                 className="flex-1 h-[40px] bg-gray-300 text-[#444] border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"

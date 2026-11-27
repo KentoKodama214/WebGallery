@@ -8,6 +8,7 @@ import com.web.gallery.application.model.auth.WebAuthnChallengeModel;
 import com.web.gallery.domain.enumeration.WebAuthnChallengePurposeEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.auth.PasskeyChallenge;
+import com.web.gallery.domain.model.auth.PasskeyUserHandle;
 import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallenge;
 import com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallengeCondition;
@@ -72,6 +73,26 @@ class WebAuthnChallengeRepositoryImplTest {
       assertEquals(1L, captor.getValue().getAccountNo());
       assertEquals(EXPIRES_AT, captor.getValue().getExpiresAt());
       assertEquals(1L, captor.getValue().getCreatedBy());
+      // 新規登録用以外はユーザーハンドルを空文字で保存する
+      assertEquals("", captor.getValue().getUserHandle());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("正常系：新規登録用はアカウント番号0とユーザーハンドルを保存すること")
+    void save_signup() {
+      webAuthnChallengeRepositoryImpl.save(
+          WebAuthnChallengeModel.forSignup(
+              new PasskeyChallenge("challenge-1"),
+              new PasskeyUserHandle("handle-1"),
+              new ExpiresAt(EXPIRES_AT)));
+
+      ArgumentCaptor<WebAuthnChallenge> captor = ArgumentCaptor.forClass(WebAuthnChallenge.class);
+      verify(webAuthnChallengeMapper).insert(captor.capture());
+      assertEquals(WebAuthnChallengePurposeEnum.SIGNUP, captor.getValue().getPurposeKbn());
+      assertEquals(0L, captor.getValue().getAccountNo());
+      assertEquals("handle-1", captor.getValue().getUserHandle());
+      assertEquals(0L, captor.getValue().getCreatedBy());
     }
   }
 
@@ -81,7 +102,7 @@ class WebAuthnChallengeRepositoryImplTest {
   class consumeForRegistration {
     @Test
     @Order(1)
-    @DisplayName("正常系：チャレンジと登録用の用途区分を条件に消費し、Modelへ変換すること")
+    @DisplayName("正常系：チャレンジと用途区分を条件に消費し、Modelへ変換すること")
     void consumeForRegistration_found() {
       doReturn(List.of(entity(WebAuthnChallengePurposeEnum.REGISTRATION, 1L)))
           .when(webAuthnChallengeMapper)
@@ -100,46 +121,43 @@ class WebAuthnChallengeRepositoryImplTest {
       assertEquals(new PasskeyChallenge("challenge-1"), actual.getChallenge());
       assertEquals(WebAuthnChallengePurposeEnum.REGISTRATION, actual.getPurposeKbn());
       assertEquals(new AccountNo(1L), actual.getAccountNo());
+      // 新規登録用以外はユーザーハンドルを持たない（空文字はnullへ変換する）
+      assertNull(actual.getUserHandle());
       assertEquals(EXPIRES_AT, actual.getExpiresAt().value());
-    }
-
-    @Test
-    @Order(2)
-    @DisplayName("異常系：該当しない（未発行・使用済み・期限切れ・用途違い）場合、nullを返すこと")
-    void consumeForRegistration_notFound() {
-      doReturn(List.of()).when(webAuthnChallengeMapper).consume(any());
-
-      assertNull(
-          webAuthnChallengeRepositoryImpl.consumeForRegistration(new PasskeyChallenge("none")));
     }
   }
 
   @Nested
   @Order(3)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-  class consumeForAuthentication {
+  class consumeForSignup {
     @Test
     @Order(1)
-    @DisplayName("正常系：認証用の用途区分を条件に消費し、アカウント番号0をアカウント未確定（null）へ変換すること")
-    void consumeForAuthentication_found() {
-      doReturn(List.of(entity(WebAuthnChallengePurposeEnum.AUTHENTICATION, 0L)))
-          .when(webAuthnChallengeMapper)
-          .consume(any());
+    @DisplayName("正常系：アカウント番号0をアカウント未確定（null）へ、ユーザーハンドルを値オブジェクトへ変換すること")
+    void consumeForSignup_found() {
+      WebAuthnChallenge signup = entity(WebAuthnChallengePurposeEnum.SIGNUP, 0L);
+      signup.setUserHandle("handle-1");
+      doReturn(List.of(signup)).when(webAuthnChallengeMapper).consume(any());
 
       WebAuthnChallengeModel actual =
-          webAuthnChallengeRepositoryImpl.consumeForAuthentication(
-              new PasskeyChallenge("challenge-1"));
+          webAuthnChallengeRepositoryImpl.consumeForSignup(new PasskeyChallenge("challenge-1"));
 
       ArgumentCaptor<WebAuthnChallengeCondition> captor =
           ArgumentCaptor.forClass(WebAuthnChallengeCondition.class);
       verify(webAuthnChallengeMapper).consume(captor.capture());
-      assertEquals(WebAuthnChallengePurposeEnum.AUTHENTICATION, captor.getValue().getPurposeKbn());
+      assertEquals(WebAuthnChallengePurposeEnum.SIGNUP, captor.getValue().getPurposeKbn());
       assertNull(actual.getAccountNo());
+      assertEquals(new PasskeyUserHandle("handle-1"), actual.getUserHandle());
     }
+  }
 
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  class consumeForAuthentication {
     @Test
-    @Order(2)
-    @DisplayName("異常系：該当しない場合、nullを返すこと")
+    @Order(1)
+    @DisplayName("異常系：該当しない（未発行・使用済み・期限切れ・用途違い）場合、nullを返すこと")
     void consumeForAuthentication_notFound() {
       doReturn(List.of()).when(webAuthnChallengeMapper).consume(any());
 
@@ -149,7 +167,7 @@ class WebAuthnChallengeRepositoryImplTest {
   }
 
   @Nested
-  @Order(4)
+  @Order(5)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class deleteExpired {
     @Test

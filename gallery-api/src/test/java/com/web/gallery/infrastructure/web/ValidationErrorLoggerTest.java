@@ -48,13 +48,13 @@ class ValidationErrorLoggerTest {
       Logger log = mock(Logger.class);
       BindingResult bindingResult = mock(BindingResult.class);
       FieldError fieldError = mock(FieldError.class);
-      doReturn("password").when(fieldError).getField();
+      doReturn("recoveryCode").when(fieldError).getField();
       doReturn("too short").when(fieldError).getDefaultMessage();
       doReturn(List.of(fieldError)).when(bindingResult).getFieldErrors();
 
       ValidationErrorLogger.logFieldErrors(log, bindingResult);
 
-      verify(log, times(1)).info(anyString(), eq("password"), eq("***"), eq("too short"));
+      verify(log, times(1)).info(anyString(), eq("recoveryCode"), eq("***"), eq("too short"));
     }
 
     @Test
@@ -64,14 +64,13 @@ class ValidationErrorLoggerTest {
       Logger log = mock(Logger.class);
       BindingResult bindingResult = mock(BindingResult.class);
       FieldError fieldError = mock(FieldError.class);
-      doReturn("account.newPassword").when(fieldError).getField();
+      doReturn("request.credential").when(fieldError).getField();
       doReturn("too short").when(fieldError).getDefaultMessage();
       doReturn(List.of(fieldError)).when(bindingResult).getFieldErrors();
 
       ValidationErrorLogger.logFieldErrors(log, bindingResult);
 
-      verify(log, times(1))
-          .info(anyString(), eq("account.newPassword"), eq("***"), eq("too short"));
+      verify(log, times(1)).info(anyString(), eq("request.credential"), eq("***"), eq("too short"));
     }
 
     @Test

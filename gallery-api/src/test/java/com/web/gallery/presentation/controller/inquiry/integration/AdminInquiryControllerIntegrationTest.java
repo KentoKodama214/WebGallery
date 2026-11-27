@@ -14,7 +14,6 @@ import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMst;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -58,7 +57,6 @@ public class AdminInquiryControllerIntegrationTest {
             .accountNo(new AccountNo(1L))
             .accountId(new AccountId("aaaaaaaa"))
             .accountName(new AccountName("AAAAAAAA"))
-            .password(new Password("$2a$10$password1"))
             .authorityKbn(AuthorityEnum.ADMINISTRATOR)
             .build();
     AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
@@ -72,7 +70,6 @@ public class AdminInquiryControllerIntegrationTest {
             .accountNo(new AccountNo(2L))
             .accountId(new AccountId("bbbbbbbb"))
             .accountName(new AccountName("BBBBBBBB"))
-            .password(new Password("$2a$10$password2"))
             .authorityKbn(AuthorityEnum.MINI)
             .build();
     AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);

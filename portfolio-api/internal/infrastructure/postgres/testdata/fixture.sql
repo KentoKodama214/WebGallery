@@ -5,8 +5,8 @@
 --   ポートフォリオ2：公開中のフィーチャー型（写真なし、更新日時が最も新しい。表示順2）
 --   ポートフォリオ3：下書き、ポートフォリオ4：論理削除済み（いずれも公開ページには出さない）
 -- account_no=900002（goitother1）：公開中のポートフォリオ1（他アカウントのデータが混ざらないことの確認用）
-insert into common.account values(900001, 900001, '2026-01-01 09:00:00 Asia/Tokyo', 900001, '2026-01-01 09:00:00 Asia/Tokyo', false, 'goitowner1', 'Go Owner', '$2a$10$password1', '1900-01-01', 'none', 'none', 'none', '', '2026-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(900002, 900002, '2026-01-01 09:00:00 Asia/Tokyo', 900002, '2026-01-01 09:00:00 Asia/Tokyo', false, 'goitother1', 'Go Other', '$2a$10$password2', '1900-01-01', 'none', 'none', 'none', '', '2026-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(900001, 900001, '2026-01-01 09:00:00 Asia/Tokyo', 900001, '2026-01-01 09:00:00 Asia/Tokyo', false, 'goitowner1', 'Go Owner', '1900-01-01', 'none', 'none', 'none', '', '2026-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(900002, 900002, '2026-01-01 09:00:00 Asia/Tokyo', 900002, '2026-01-01 09:00:00 Asia/Tokyo', false, 'goitother1', 'Go Other', '1900-01-01', 'none', 'none', 'none', '', '2026-01-01 09:00:00 Asia/Tokyo', 0, false);
 
 insert into photo.photo_mst (account_no, photo_no, created_by, created_at, updated_by, updated_at, is_deleted, photo_at, location_no, image_file_path, image_file_name, photo_japanese_title, photo_english_title, caption, direction_kbn, focal_length, f_value, shutter_speed, iso, is_location_public, is_hidden_by_admin) values
   (900001, 1, 900001, now(), 900001, now(), false, now(), 0, '900001/1-aaa.jpg', 'a.jpg', '金閣寺', 'Kinkakuji', '', 'horizontal', 24, 8.0, 1, 100, false, false),

@@ -37,28 +37,6 @@ public class AccountUpdateRequest {
   private String accountName;
 
   /**
-   * 新しいパスワード
-   *
-   * <p>8〜72文字、半角記号を含む英数字で、英字と数字をそれぞれ1文字以上含む（空欄の場合は変更なし）
-   */
-  @Schema(description = "新しいパスワード（8〜72文字、英字と数字を各1文字以上、半角記号可、空欄の場合は変更なし）", example = "newpassword01")
-  @NotBlank(message = "{validation.common.notBlank}")
-  @Size(min = 8, max = 72, message = "{validation.common.min_max_length}")
-  @Pattern(
-      regexp = "(?=.*[A-Za-z])(?=.*\\d)[\\x21-\\x7E]{8,72}",
-      message = "{validation.account.password}")
-  private String newPassword;
-
-  /**
-   * 現在のパスワード
-   *
-   * <p>パスワードを変更する場合のみ必須。本人確認（再認証）に用いる
-   */
-  @Schema(description = "現在のパスワード（パスワード変更時のみ必須）", example = "password01")
-  @Size(max = 72, message = "{validation.common.max_length}")
-  private String currentPassword;
-
-  /**
    * 生年月日
    *
    * <p>yyyy-mm-ddで、過去日付

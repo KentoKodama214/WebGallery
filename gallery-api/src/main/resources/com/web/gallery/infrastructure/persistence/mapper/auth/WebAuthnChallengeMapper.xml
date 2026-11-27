@@ -9,6 +9,7 @@
 		<result property="challenge" column="challenge"/>
 		<result property="purposeKbn" column="purpose_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.WebAuthnChallengePurposeEnumTypeHandler"/>
 		<result property="accountNo" column="account_no"/>
+		<result property="userHandle" column="user_handle"/>
 		<result property="expiresAt" column="expires_at"/>
 		<result property="createdBy" column="created_by"/>
 		<result property="createdAt" column="created_at"/>
@@ -19,6 +20,7 @@
 			challenge,
 			purpose_kbn,
 			account_no,
+			user_handle,
 			expires_at,
 			created_by,
 			created_at
@@ -26,6 +28,7 @@
 			#{challenge},
 			#{purposeKbn}::common.webauthn_challenge_purpose_enum,
 			#{accountNo},
+			COALESCE(#{userHandle}, ''),
 			#{expiresAt},
 			#{createdBy},
 			COALESCE(#{createdAt}, NOW())
@@ -48,6 +51,7 @@
 			challenge,
 			purpose_kbn,
 			account_no,
+			user_handle,
 			expires_at,
 			created_by,
 			created_at

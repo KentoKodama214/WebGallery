@@ -18,7 +18,6 @@ import com.web.gallery.domain.model.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.model.account.FreeMemo;
 import com.web.gallery.domain.model.account.LastLoginDatetime;
 import com.web.gallery.domain.model.account.LoginFailureCount;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.model.common.IsDeleted;
 import com.web.gallery.infrastructure.persistence.entity.account.Account;
@@ -65,7 +64,6 @@ public class AccountRepositoryImplIntegrationTest {
       assertEquals(new IsDeleted(false), actual.getIsDeleted());
       assertEquals(new AccountId("aaaaaaaa"), actual.getAccountId());
       assertEquals(new AccountName("AAAAAAAA"), actual.getAccountName());
-      assertEquals(new Password("$2a$10$password1"), actual.getPassword());
       assertEquals(new BirthDate(LocalDate.of(1991, 2, 14)), actual.getBirthdate());
       assertEquals(SexEnum.NONE, actual.getSexKbn());
       assertEquals(
@@ -104,7 +102,6 @@ public class AccountRepositoryImplIntegrationTest {
       assertEquals(new IsDeleted(false), actual.getIsDeleted());
       assertEquals(new AccountId("aaaaaaaa"), actual.getAccountId());
       assertEquals(new AccountName("AAAAAAAA"), actual.getAccountName());
-      assertEquals(new Password("$2a$10$password1"), actual.getPassword());
       assertEquals(new BirthDate(LocalDate.of(1991, 2, 14)), actual.getBirthdate());
       assertEquals(SexEnum.NONE, actual.getSexKbn());
       assertEquals(
@@ -141,7 +138,6 @@ public class AccountRepositoryImplIntegrationTest {
           AccountModel.builder()
               .accountId(new AccountId("zzzzzzzz"))
               .accountName(new AccountName("ZZZZZZZZ"))
-              .password(new Password("zzzzzzzz"))
               .build();
 
       OffsetDateTime transactionNow =
@@ -161,7 +157,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .isDeleted(rs.getBoolean("is_deleted"))
                       .accountId(rs.getString("account_id"))
                       .accountName(rs.getString("account_name"))
-                      .password(rs.getString("password"))
                       .birthdate(rs.getObject("birthdate", LocalDate.class))
                       .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -209,7 +204,6 @@ public class AccountRepositoryImplIntegrationTest {
           AccountModel.builder()
               .accountId(new AccountId("zzzzzzzz"))
               .accountName(new AccountName("ZZZZZZZZ"))
-              .password(new Password("zzzzzzzz"))
               .birthdate(new BirthDate(LocalDate.of(1991, 2, 14)))
               .sexKbn(SexEnum.WOMAN)
               .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido"))
@@ -234,7 +228,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .isDeleted(rs.getBoolean("is_deleted"))
                       .accountId(rs.getString("account_id"))
                       .accountName(rs.getString("account_name"))
-                      .password(rs.getString("password"))
                       .birthdate(rs.getObject("birthdate", LocalDate.class))
                       .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -282,7 +275,6 @@ public class AccountRepositoryImplIntegrationTest {
           AccountModel.builder()
               .accountId(new AccountId("aaaaaaaa"))
               .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("aaaaaaaa"))
               .build();
 
       assertThrows(RegistFailureException.class, () -> accountRepositoryImpl.regist(accountModel));
@@ -323,7 +315,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .isDeleted(rs.getBoolean("is_deleted"))
                       .accountId(rs.getString("account_id"))
                       .accountName(rs.getString("account_name"))
-                      .password(rs.getString("password"))
                       .birthdate(rs.getObject("birthdate", LocalDate.class))
                       .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -345,7 +336,6 @@ public class AccountRepositoryImplIntegrationTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
       assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
       // 未指定項目はセンチネル値で上書きせず、既存のフィクスチャ値を維持する
       assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
@@ -368,7 +358,6 @@ public class AccountRepositoryImplIntegrationTest {
               .accountNo(new AccountNo(1L))
               .accountId(new AccountId("aaaaaaaa"))
               .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("aaaaaaaa"))
               .birthdate(new BirthDate(LocalDate.of(1991, 2, 14)))
               .sexKbn(SexEnum.WOMAN)
               .birthplacePrefectureKbnCode(new BirthplacePrefectureKbnCode("Hokkaido"))
@@ -397,7 +386,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .isDeleted(rs.getBoolean("is_deleted"))
                       .accountId(rs.getString("account_id"))
                       .accountName(rs.getString("account_name"))
-                      .password(rs.getString("password"))
                       .birthdate(rs.getObject("birthdate", LocalDate.class))
                       .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -419,7 +407,6 @@ public class AccountRepositoryImplIntegrationTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
       assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
-      assertNotEquals("$2a$10$password1", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.WOMAN, actualData.getFirst().getSexKbn());
       assertEquals("Hokkaido", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -491,7 +478,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .isDeleted(rs.getBoolean("is_deleted"))
                       .accountId(rs.getString("account_id"))
                       .accountName(rs.getString("account_name"))
-                      .password(rs.getString("password"))
                       .birthdate(rs.getObject("birthdate", LocalDate.class))
                       .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -513,7 +499,6 @@ public class AccountRepositoryImplIntegrationTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("hhhhhhhh", actualData.getFirst().getAccountId());
       assertEquals("HHHHHHHH", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password8", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1900, 1, 1), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());
@@ -556,7 +541,6 @@ public class AccountRepositoryImplIntegrationTest {
                       .isDeleted(rs.getBoolean("is_deleted"))
                       .accountId(rs.getString("account_id"))
                       .accountName(rs.getString("account_name"))
-                      .password(rs.getString("password"))
                       .birthdate(rs.getObject("birthdate", LocalDate.class))
                       .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                       .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -578,7 +562,6 @@ public class AccountRepositoryImplIntegrationTest {
       assertFalse(actualData.getFirst().getIsDeleted());
       assertEquals("aaaaaaaa", actualData.getFirst().getAccountId());
       assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
-      assertEquals("$2a$10$password1", actualData.getFirst().getPassword());
       assertEquals(LocalDate.of(1991, 2, 14), actualData.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actualData.getFirst().getSexKbn());
       assertEquals("none", actualData.getFirst().getBirthplacePrefectureKbnCode());

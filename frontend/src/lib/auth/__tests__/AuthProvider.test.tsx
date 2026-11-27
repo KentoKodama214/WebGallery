@@ -5,8 +5,8 @@ import { AuthProvider, useAuth } from "../AuthProvider";
 
 // APIクライアントのモック
 jest.mock("@/lib/api/client", () => ({
-  login: jest.fn(),
   loginWithPasskey: jest.fn(),
+  loginWithRecoveryCode: jest.fn(),
   logout: jest.fn(),
   refresh: jest.fn(),
   getAccessToken: jest.fn(),
@@ -40,15 +40,18 @@ function createTestJwt(
 }
 
 function TestComponent() {
-  const { user, isAuthenticated, isLoading, login, loginWithPasskey, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, loginWithPasskey, loginWithRecoveryCode, logout } =
+    useAuth();
 
   return (
     <div>
       <p data-testid="loading">{isLoading.toString()}</p>
       <p data-testid="authenticated">{isAuthenticated.toString()}</p>
       <p data-testid="user">{user?.accountId || "null"}</p>
-      <button onClick={() => login("testuser1", "password1").catch(() => {})}>
-        Login
+      <button
+        onClick={() => loginWithRecoveryCode('{"id":"new"}', "新しい端末").catch(() => {})}
+      >
+        RecoveryLogin
       </button>
       <button onClick={() => loginWithPasskey('{"id":"cred"}').catch(() => {})}>
         PasskeyLogin
@@ -92,10 +95,10 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("user")).toHaveTextContent("null");
   });
 
-  it("ログイン成功時にユーザー情報が設定されること", async () => {
+  it("リカバリーコードによる復旧ログイン成功時にユーザー情報が設定されること", async () => {
     mockedApiClient.refresh.mockResolvedValue(false);
     const testToken = createTestJwt("testuser1", 1);
-    mockedApiClient.login.mockResolvedValue({
+    mockedApiClient.loginWithRecoveryCode.mockResolvedValue({
       accessToken: testToken,
       expiresIn: 900,
     });
@@ -113,17 +116,21 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    await user.click(screen.getByText("Login"));
+    await user.click(screen.getByText("RecoveryLogin"));
 
     await waitFor(() => {
       expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
       expect(screen.getByTestId("user")).toHaveTextContent("testuser1");
     });
+    expect(mockedApiClient.loginWithRecoveryCode).toHaveBeenCalledWith(
+      '{"id":"new"}',
+      "新しい端末"
+    );
   });
 
   it("発行トークンを解釈できない場合はログイン失敗となり認証状態がクリアされること", async () => {
     mockedApiClient.refresh.mockResolvedValue(false);
-    mockedApiClient.login.mockResolvedValue({
+    mockedApiClient.loginWithRecoveryCode.mockResolvedValue({
       accessToken: "not-a-jwt",
       expiresIn: 900,
     });
@@ -141,7 +148,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    await user.click(screen.getByText("Login"));
+    await user.click(screen.getByText("RecoveryLogin"));
 
     await waitFor(() => {
       expect(mockedApiClient.clearAuthState).toHaveBeenCalled();
@@ -157,7 +164,7 @@ describe("AuthProvider", () => {
       1,
       Math.floor(Date.now() / 1000) - 60
     );
-    mockedApiClient.login.mockResolvedValue({
+    mockedApiClient.loginWithRecoveryCode.mockResolvedValue({
       accessToken: expiredToken,
       expiresIn: 900,
     });
@@ -175,7 +182,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    await user.click(screen.getByText("Login"));
+    await user.click(screen.getByText("RecoveryLogin"));
 
     await waitFor(() => {
       expect(mockedApiClient.clearAuthState).toHaveBeenCalled();
@@ -197,7 +204,7 @@ describe("AuthProvider", () => {
       iat + 15 * 60,
       iat
     );
-    mockedApiClient.login.mockResolvedValue({
+    mockedApiClient.loginWithRecoveryCode.mockResolvedValue({
       accessToken: freshTokenOnSkewedClock,
       expiresIn: 900,
     });
@@ -215,7 +222,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    await user.click(screen.getByText("Login"));
+    await user.click(screen.getByText("RecoveryLogin"));
 
     await waitFor(() => {
       expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
@@ -229,7 +236,7 @@ describe("AuthProvider", () => {
     // 無関係にサーバー側の異常を示す。この場合だけ期限切れとして扱う
     const nowSec = Math.floor(Date.now() / 1000);
     const brokenToken = createTestJwt("testuser1", 1, nowSec, nowSec + 60);
-    mockedApiClient.login.mockResolvedValue({
+    mockedApiClient.loginWithRecoveryCode.mockResolvedValue({
       accessToken: brokenToken,
       expiresIn: 900,
     });
@@ -247,7 +254,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    await user.click(screen.getByText("Login"));
+    await user.click(screen.getByText("RecoveryLogin"));
 
     await waitFor(() => {
       expect(mockedApiClient.clearAuthState).toHaveBeenCalled();
@@ -262,7 +269,7 @@ describe("AuthProvider", () => {
       1,
       Math.floor(Date.now() / 1000) + 900
     );
-    mockedApiClient.login.mockResolvedValue({
+    mockedApiClient.loginWithRecoveryCode.mockResolvedValue({
       accessToken: validToken,
       expiresIn: 900,
     });
@@ -280,7 +287,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    await user.click(screen.getByText("Login"));
+    await user.click(screen.getByText("RecoveryLogin"));
 
     await waitFor(() => {
       expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
@@ -336,7 +343,7 @@ describe("AuthProvider", () => {
   it("ログアウト時にユーザー情報がクリアされること", async () => {
     mockedApiClient.refresh.mockResolvedValue(false);
     const testToken = createTestJwt("testuser1", 1);
-    mockedApiClient.login.mockResolvedValue({
+    mockedApiClient.loginWithRecoveryCode.mockResolvedValue({
       accessToken: testToken,
       expiresIn: 900,
     });
@@ -355,7 +362,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    await user.click(screen.getByText("Login"));
+    await user.click(screen.getByText("RecoveryLogin"));
 
     await waitFor(() => {
       expect(screen.getByTestId("authenticated")).toHaveTextContent("true");
@@ -424,7 +431,7 @@ describe("AuthProvider", () => {
     const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
     const incompletePayload = btoa(JSON.stringify({ sub: "testuser1" }));
     const incompleteToken = `${header}.${incompletePayload}.signature`;
-    mockedApiClient.login.mockResolvedValue({
+    mockedApiClient.loginWithRecoveryCode.mockResolvedValue({
       accessToken: incompleteToken,
       expiresIn: 900,
     });
@@ -442,7 +449,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    await user.click(screen.getByText("Login"));
+    await user.click(screen.getByText("RecoveryLogin"));
 
     await waitFor(() => {
       expect(mockedApiClient.clearAuthState).toHaveBeenCalled();
@@ -452,7 +459,7 @@ describe("AuthProvider", () => {
 
   it("トークンのpayload部分が不正なBase64/JSONの場合はログイン失敗となること", async () => {
     mockedApiClient.refresh.mockResolvedValue(false);
-    mockedApiClient.login.mockResolvedValue({
+    mockedApiClient.loginWithRecoveryCode.mockResolvedValue({
       accessToken: "header.%%%invalid-base64%%%.signature",
       expiresIn: 900,
     });
@@ -472,7 +479,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    await user.click(screen.getByText("Login"));
+    await user.click(screen.getByText("RecoveryLogin"));
 
     await waitFor(() => {
       expect(mockedApiClient.clearAuthState).toHaveBeenCalled();
@@ -489,7 +496,7 @@ describe("AuthProvider", () => {
       1,
       Math.floor(Date.now() / 1000) + 31
     );
-    mockedApiClient.login.mockResolvedValue({
+    mockedApiClient.loginWithRecoveryCode.mockResolvedValue({
       accessToken: soonToExpireToken,
       expiresIn: 31,
     });
@@ -507,7 +514,7 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("loading")).toHaveTextContent("false");
     });
 
-    await user.click(screen.getByText("Login"));
+    await user.click(screen.getByText("RecoveryLogin"));
 
     await waitFor(() => {
       expect(screen.getByTestId("authenticated")).toHaveTextContent("true");

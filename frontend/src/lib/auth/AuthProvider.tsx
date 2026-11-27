@@ -20,13 +20,19 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (accountId: string, password: string) => Promise<User>;
   /**
    * パスキーでログインする
    *
    * @param credential 認証レスポンス（`PublicKeyCredential#toJSON()` の形式の JSON 文字列）
    */
   loginWithPasskey: (credential: string) => Promise<User>;
+  /**
+   * リカバリーコードによる復旧でログインする（新しいパスキーを登録してログインする）
+   *
+   * @param credential 新しいパスキーの登録レスポンス（`PublicKeyCredential#toJSON()` の形式の JSON 文字列）
+   * @param passkeyName 新しいパスキーの名前
+   */
+  loginWithRecoveryCode: (credential: string, passkeyName: string) => Promise<User>;
   logout: () => Promise<void>;
 }
 
@@ -98,17 +104,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return nextUser;
   }, []);
 
-  const login = useCallback(
-    async (accountId: string, password: string): Promise<User> => {
-      await apiClient.login(accountId, password);
+  const loginWithPasskey = useCallback(
+    async (credential: string): Promise<User> => {
+      await apiClient.loginWithPasskey(credential);
       return establishUser();
     },
     [establishUser]
   );
 
-  const loginWithPasskey = useCallback(
-    async (credential: string): Promise<User> => {
-      await apiClient.loginWithPasskey(credential);
+  const loginWithRecoveryCode = useCallback(
+    async (credential: string, passkeyName: string): Promise<User> => {
+      await apiClient.loginWithRecoveryCode(credential, passkeyName);
       return establishUser();
     },
     [establishUser]
@@ -170,8 +176,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user,
         isAuthenticated: !!user,
         isLoading,
-        login,
         loginWithPasskey,
+        loginWithRecoveryCode,
         logout,
       }}
     >

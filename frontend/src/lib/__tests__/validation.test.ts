@@ -1,6 +1,6 @@
 import {
   ACCOUNT_ID_PATTERN,
-  PASSWORD_PATTERN,
+  PASSKEY_NAME_MAX_LENGTH,
   clearError,
   isPastDate,
   isValidAccountId,
@@ -32,20 +32,9 @@ describe("validation", () => {
     });
   });
 
-  describe("PASSWORD_PATTERN", () => {
-    it("英字と数字を各1文字以上含む半角8〜72文字を許可する（記号可）", () => {
-      expect(PASSWORD_PATTERN.test("abcd1234")).toBe(true);
-      expect(PASSWORD_PATTERN.test("abcd123!")).toBe(true);
-      expect(PASSWORD_PATTERN.test("a1" + "x".repeat(70))).toBe(true);
-    });
-
-    it("7文字以下・73文字以上・英字のみ・数字のみ・全角・空白を含むものは拒否する", () => {
-      expect(PASSWORD_PATTERN.test("abc1234")).toBe(false);
-      expect(PASSWORD_PATTERN.test("a1" + "x".repeat(71))).toBe(false);
-      expect(PASSWORD_PATTERN.test("abcdefgh")).toBe(false);
-      expect(PASSWORD_PATTERN.test("12345678")).toBe(false);
-      expect(PASSWORD_PATTERN.test("ａｂｃｄ１２３４")).toBe(false);
-      expect(PASSWORD_PATTERN.test("abcd 1234")).toBe(false);
+  describe("PASSKEY_NAME_MAX_LENGTH", () => {
+    it("バックエンドのパスキー名の上限（50文字）と一致する", () => {
+      expect(PASSKEY_NAME_MAX_LENGTH).toBe(50);
     });
   });
 

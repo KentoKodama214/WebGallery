@@ -6,7 +6,6 @@ import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.auth.PasskeyName;
 import com.web.gallery.domain.model.auth.PasskeyNo;
 import com.web.gallery.domain.model.auth.PasskeyResponseJson;
@@ -19,6 +18,7 @@ import com.web.gallery.presentation.request.account.PasskeyUpdateRequest;
 import com.web.gallery.presentation.response.account.PasskeyListResponse;
 import com.web.gallery.presentation.response.account.PasskeyRegistrationOptionsResponse;
 import com.web.gallery.presentation.response.account.PasskeyResponse;
+import com.web.gallery.presentation.response.auth.PasskeyAuthenticationOptionsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -73,21 +73,46 @@ public class PasskeyController {
   }
 
   /**
+   * 本人確認オプションの発行
+   *
+   * <p>パスキーの登録・削除、退会、リカバリーコードの再発行の前に呼び出し、返したチャレンジに本人のパスキーで署名させる
+   *
+   * @param accountId アカウントID
+   * @return {@link PasskeyAuthenticationOptionsResponse}
+   * @throws GalleryException 本人以外がアクセスした場合
+   */
+  @Operation(
+      summary = "本人確認オプション発行",
+      description =
+          "重要操作（パスキーの登録・削除、退会、リカバリーコードの再発行）の前にパスキーで本人確認するための"
+              + "チャレンジ等（PublicKeyCredentialRequestOptionsJSON）を発行する。allowCredentialsは本人のパスキー")
+  @ApiResponse(responseCode = "200", description = "発行成功")
+  @ApiResponse(responseCode = "403", description = "本人以外のアクセス", content = @Content)
+  @PostMapping(ApiRoutes.API_REAUTHENTICATION_OPTIONS)
+  public ResponseEntity<PasskeyAuthenticationOptionsResponse> createReauthenticationOptions(
+      @PathVariable String accountId) throws GalleryException {
+    verifySelf(accountId);
+    return ResponseEntity.ok(
+        PasskeyAuthenticationOptionsResponse.from(
+            accountService.createReauthenticationOptions(
+                new AccountNo(sessionHelper.getAccountNo()))));
+  }
+
+  /**
    * パスキー登録オプションの発行
    *
    * @param accountId アカウントID
    * @param request {@link PasskeyRegistrationOptionsRequest}
    * @param result PasskeyRegistrationOptionsRequestのバインディング結果
    * @return {@link PasskeyRegistrationOptionsResponse}
-   * @throws GalleryException 本人以外のアクセス、リクエストパラメータ不正、現在のパスワード不一致、登録数上限の場合
+   * @throws GalleryException 本人以外のアクセス、リクエストパラメータ不正、本人確認の失敗、登録数上限の場合
    */
   @Operation(
       summary = "パスキー登録オプション発行",
-      description =
-          "現在のパスワードによる本人確認のうえ、パスキー登録用のチャレンジ等（PublicKeyCredentialCreationOptionsJSON）を発行する")
+      description = "パスキーによる本人確認のうえ、パスキー登録用のチャレンジ等（PublicKeyCredentialCreationOptionsJSON）を発行する")
   @ApiResponse(responseCode = "200", description = "発行成功")
   @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正・登録数上限", content = @Content)
-  @ApiResponse(responseCode = "403", description = "本人以外のアクセス・現在のパスワード不一致", content = @Content)
+  @ApiResponse(responseCode = "403", description = "本人以外のアクセス・本人確認の失敗", content = @Content)
   @PostMapping(ApiRoutes.API_PASSKEY_REGISTRATION_OPTIONS)
   public ResponseEntity<PasskeyRegistrationOptionsResponse> createRegistrationOptions(
       @PathVariable String accountId,
@@ -101,7 +126,7 @@ public class PasskeyController {
         PasskeyRegistrationOptionsResponse.from(
             accountService.createPasskeyRegistrationOptions(
                 new AccountNo(sessionHelper.getAccountNo()),
-                new Password(request.getCurrentPassword()))));
+                new PasskeyResponseJson(request.getCredential()))));
   }
 
   /**
@@ -178,12 +203,12 @@ public class PasskeyController {
    * @param request {@link PasskeyDeleteRequest}
    * @param result PasskeyDeleteRequestのバインディング結果
    * @return 200 OK
-   * @throws GalleryException 本人以外のアクセス、リクエストパラメータ不正、現在のパスワード不一致、パスキーが存在しない場合
+   * @throws GalleryException 本人以外のアクセス、リクエストパラメータ不正、本人確認の失敗、パスキーが存在しない、最後の1件の場合
    */
-  @Operation(summary = "パスキー削除", description = "現在のパスワードによる本人確認のうえ、パスキーを削除する")
+  @Operation(summary = "パスキー削除", description = "パスキーによる本人確認のうえ、パスキーを削除する（最後の1件は削除できない）")
   @ApiResponse(responseCode = "200", description = "削除成功")
-  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正", content = @Content)
-  @ApiResponse(responseCode = "403", description = "本人以外のアクセス・現在のパスワード不一致", content = @Content)
+  @ApiResponse(responseCode = "400", description = "リクエストパラメータ不正・最後の1件", content = @Content)
+  @ApiResponse(responseCode = "403", description = "本人以外のアクセス・本人確認の失敗", content = @Content)
   @ApiResponse(responseCode = "404", description = "パスキーが存在しない", content = @Content)
   @PostMapping(ApiRoutes.API_PASSKEY_DELETION)
   public ResponseEntity<Void> deletePasskey(
@@ -198,7 +223,7 @@ public class PasskeyController {
     accountService.deletePasskey(
         new AccountNo(sessionHelper.getAccountNo()),
         new PasskeyNo(passkeyNo),
-        new Password(request.getCurrentPassword()));
+        new PasskeyResponseJson(request.getCredential()));
     return ResponseEntity.ok().build();
   }
 
