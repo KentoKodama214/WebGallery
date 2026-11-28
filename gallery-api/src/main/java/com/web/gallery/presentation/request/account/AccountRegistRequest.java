@@ -1,5 +1,6 @@
 package com.web.gallery.presentation.request.account;
 
+import com.web.gallery.domain.constant.Consts;
 import com.web.gallery.domain.enumeration.SexEnum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -37,17 +38,21 @@ public class AccountRegistRequest {
   private String accountName;
 
   /**
-   * パスワード
+   * 登録レスポンス
    *
-   * <p>8〜72文字、半角記号を含む英数字で、英字と数字をそれぞれ1文字以上含む
+   * <p>アカウント新規登録オプション発行APIで受け取ったオプションで{@code navigator.credentials.create()}が返した {@code
+   * PublicKeyCredential}を{@code toJSON()}した値を、さらにJSON文字列にしたもの
    */
-  @Schema(description = "パスワード（8〜72文字、英字と数字を各1文字以上、半角記号可）", example = "password01")
+  @Schema(description = "最初のパスキーの登録レスポンス（PublicKeyCredential#toJSON()のJSON文字列）")
   @NotBlank(message = "{validation.common.notBlank}")
-  @Size(min = 8, max = 72, message = "{validation.common.min_max_length}")
-  @Pattern(
-      regexp = "(?=.*[A-Za-z])(?=.*\\d)[\\x21-\\x7E]{8,72}",
-      message = "{validation.account.password}")
-  private String password;
+  @Size(max = Consts.PASSKEY_RESPONSE_JSON_MAX_LENGTH, message = "{validation.common.max_length}")
+  private String credential;
+
+  /** パスキー名 */
+  @Schema(description = "パスキー名", example = "MacBookのTouch ID")
+  @NotBlank(message = "{validation.common.notBlank}")
+  @Size(max = Consts.PASSKEY_NAME_MAX_LENGTH, message = "{validation.common.max_length}")
+  private String passkeyName;
 
   /**
    * 生年月日

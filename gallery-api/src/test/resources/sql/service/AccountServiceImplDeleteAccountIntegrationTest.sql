@@ -1,8 +1,8 @@
 -- common.account
-insert into common.account values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$k19cLX6F2brrOLYp74GstejFJfeGjm52TMk..ELwoJeTcBcUnBVM2', '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
-insert into common.account values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
 -- account_no=3：写真・タグ・お気に入り・リフレッシュトークン・ログイン履歴・絞り込みログのいずれも関連データを持たないアカウント（空データでのdelete検証用）
-insert into common.account values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'cccccccc', 'CCCCCCCC', '$2a$10$password3', '1900-01-01', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'cccccccc', 'CCCCCCCC', '1900-01-01', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
 
 -- common.account_authority
 insert into common.account_authority values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator');
@@ -36,6 +36,21 @@ insert into common.refresh_token values(DEFAULT, 2, 'hash-account2', now() + int
 -- common.login_history (account_no=1のログイン履歴)
 insert into common.login_history (login_history_no, account_no, ip_address, country, region, created_by, created_at) values (1, 1, '198.51.100.1', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
 ALTER SEQUENCE common.login_history_login_history_no_seq RESTART 2;
+
+-- common.passkey_user_handle / common.passkey_credential (account_no=1・account_no=2それぞれのパスキー)
+insert into common.passkey_user_handle (account_no, user_handle, created_by, created_at) values (1, 'handle-account1', 1, now());
+insert into common.passkey_user_handle (account_no, user_handle, created_by, created_at) values (2, 'handle-account2', 2, now());
+insert into common.passkey_credential (account_no, credential_id, attested_credential_data, sign_count, transports, is_backup_eligible, is_backed_up, is_uv_initialized, passkey_name, last_used_at, created_by, created_at, updated_by, updated_at) values (1, 'credential-account1', '\x01'::bytea, 0, 'internal', true, true, true, 'account1のパスキー', now(), 1, now(), 1, now());
+insert into common.passkey_credential (account_no, credential_id, attested_credential_data, sign_count, transports, is_backup_eligible, is_backed_up, is_uv_initialized, passkey_name, last_used_at, created_by, created_at, updated_by, updated_at) values (2, 'credential-account2', '\x02'::bytea, 0, 'internal', true, true, true, 'account2のパスキー', now(), 2, now(), 2, now());
+
+-- common.recovery_code (account_no=1・account_no=2それぞれのリカバリーコード（ハッシュ）)
+insert into common.recovery_code (account_no, code_hash, created_by, created_at) values (1, 'hash-account1', 1, now());
+insert into common.recovery_code (account_no, code_hash, created_by, created_at) values (2, 'hash-account2', 2, now());
+
+-- common.webauthn_challenge（account_no=1の登録用チャレンジの残骸・未ログインで発行された認証用チャレンジ）
+-- 外部キーを持たないため削除漏れがFK違反にならない。退会者の登録用チャレンジだけが消え、認証用（account_no=0）は残ることを検証する
+insert into common.webauthn_challenge (challenge, purpose_kbn, account_no, expires_at, created_by, created_at) values ('challenge-account1', 'registration', 1, now() + interval '5 minutes', 1, now());
+insert into common.webauthn_challenge (challenge, purpose_kbn, account_no, expires_at, created_by, created_at) values ('challenge-anonymous', 'authentication', 0, now() + interval '5 minutes', 0, now());
 
 -- photo.photo_list_filter_log
 -- 自分のギャラリーに対する絞り込みログ（photo_account_no=1 なので削除される）

@@ -106,6 +106,9 @@ dependencies {
 	implementation 'com.maxmind.geoip2:geoip2:5.3.0'
 	// アップロードされた画像ファイルの実バイナリからEXIF情報を抽出するためのリーダー
 	implementation 'com.drewnoakes:metadata-extractor:2.22.0'
+	// パスキー（WebAuthn）の登録・認証レスポンスの検証。Spring Security 7.1 の spring-security-webauthn が
+	// 依存しているのと同じ版に揃える（Jackson 3 系。http.webAuthn() はセッション前提のため使わず直接利用する）
+	implementation 'com.webauthn4j:webauthn4j-core:0.31.10.RELEASE'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 	compileOnly 'org.projectlombok:lombok:1.18.48'
@@ -124,6 +127,8 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testImplementation 'org.springframework.modulith:spring-modulith-docs'
 	testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.1'
+	// パスキーの登録・認証レスポンスを生成する擬似認証器（webauthn4j のエミュレータ）
+	testImplementation 'com.webauthn4j:webauthn4j-test:0.31.10.RELEASE'
 }
 
 tasks.named('test') {

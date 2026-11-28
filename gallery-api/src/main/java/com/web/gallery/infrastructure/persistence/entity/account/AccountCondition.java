@@ -23,9 +23,6 @@ public class AccountCondition {
   /** アカウント名 */
   private String accountName;
 
-  /** パスワード */
-  private String password;
-
   /** 生年月日 */
   private LocalDate birthdate;
 

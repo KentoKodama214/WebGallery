@@ -11,6 +11,10 @@ import com.web.gallery.infrastructure.persistence.dto.photo.PhotoDeletionDto;
 import com.web.gallery.infrastructure.persistence.entity.account.AccountAuthorityCondition;
 import com.web.gallery.infrastructure.persistence.entity.account.AccountCondition;
 import com.web.gallery.infrastructure.persistence.entity.account.LoginHistoryCondition;
+import com.web.gallery.infrastructure.persistence.entity.auth.PasskeyCredentialCondition;
+import com.web.gallery.infrastructure.persistence.entity.auth.PasskeyUserHandleCondition;
+import com.web.gallery.infrastructure.persistence.entity.auth.RecoveryCodeCondition;
+import com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallengeCondition;
 import com.web.gallery.infrastructure.persistence.entity.common.LocationMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition;
@@ -26,7 +30,11 @@ import com.web.gallery.infrastructure.persistence.entity.photo.PortfolioTagMstCo
 import com.web.gallery.infrastructure.persistence.mapper.account.AccountAuthorityMapper;
 import com.web.gallery.infrastructure.persistence.mapper.account.AccountMapper;
 import com.web.gallery.infrastructure.persistence.mapper.account.LoginHistoryMapper;
+import com.web.gallery.infrastructure.persistence.mapper.auth.PasskeyCredentialMapper;
+import com.web.gallery.infrastructure.persistence.mapper.auth.PasskeyUserHandleMapper;
+import com.web.gallery.infrastructure.persistence.mapper.auth.RecoveryCodeMapper;
 import com.web.gallery.infrastructure.persistence.mapper.auth.RefreshTokenMapper;
+import com.web.gallery.infrastructure.persistence.mapper.auth.WebAuthnChallengeMapper;
 import com.web.gallery.infrastructure.persistence.mapper.common.LocationMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryReplyMstMapper;
@@ -71,6 +79,14 @@ public class AccountAggregateRepositoryImplTest {
   @Mock private PhotoMstMapper photoMstMapper;
 
   @Mock private RefreshTokenMapper refreshTokenMapper;
+
+  @Mock private PasskeyCredentialMapper passkeyCredentialMapper;
+
+  @Mock private PasskeyUserHandleMapper passkeyUserHandleMapper;
+
+  @Mock private WebAuthnChallengeMapper webAuthnChallengeMapper;
+
+  @Mock private RecoveryCodeMapper recoveryCodeMapper;
 
   @Mock private LoginHistoryMapper loginHistoryMapper;
 
@@ -165,6 +181,27 @@ public class AccountAggregateRepositoryImplTest {
 
       verify(refreshTokenMapper).revokeAllByAccountNo(1L, 1L);
 
+      ArgumentCaptor<PasskeyCredentialCondition> passkeyCredentialConditionCaptor =
+          ArgumentCaptor.forClass(PasskeyCredentialCondition.class);
+      verify(passkeyCredentialMapper).delete(passkeyCredentialConditionCaptor.capture());
+      assertEquals(1L, passkeyCredentialConditionCaptor.getValue().getAccountNo());
+
+      ArgumentCaptor<PasskeyUserHandleCondition> passkeyUserHandleConditionCaptor =
+          ArgumentCaptor.forClass(PasskeyUserHandleCondition.class);
+      verify(passkeyUserHandleMapper).delete(passkeyUserHandleConditionCaptor.capture());
+      assertEquals(1L, passkeyUserHandleConditionCaptor.getValue().getAccountNo());
+
+      ArgumentCaptor<RecoveryCodeCondition> recoveryCodeConditionCaptor =
+          ArgumentCaptor.forClass(RecoveryCodeCondition.class);
+      verify(recoveryCodeMapper).delete(recoveryCodeConditionCaptor.capture());
+      assertEquals(1L, recoveryCodeConditionCaptor.getValue().getAccountNo());
+      assertNull(recoveryCodeConditionCaptor.getValue().getCodeHash());
+
+      ArgumentCaptor<WebAuthnChallengeCondition> webAuthnChallengeConditionCaptor =
+          ArgumentCaptor.forClass(WebAuthnChallengeCondition.class);
+      verify(webAuthnChallengeMapper).delete(webAuthnChallengeConditionCaptor.capture());
+      assertEquals(1L, webAuthnChallengeConditionCaptor.getValue().getAccountNo());
+
       ArgumentCaptor<LoginHistoryCondition> loginHistoryConditionCaptor =
           ArgumentCaptor.forClass(LoginHistoryCondition.class);
       verify(loginHistoryMapper).delete(loginHistoryConditionCaptor.capture());
@@ -245,6 +282,9 @@ public class AccountAggregateRepositoryImplTest {
               photoModerationLogMapper,
               photoMstMapper,
               refreshTokenMapper,
+              passkeyCredentialMapper,
+              recoveryCodeMapper,
+              passkeyUserHandleMapper,
               loginHistoryMapper,
               photoListFilterLogMapper,
               locationMstMapper,
@@ -273,6 +313,10 @@ public class AccountAggregateRepositoryImplTest {
       inOrder.verify(photoMstMapper).deletePhotosByAccountNo(1L);
       // リフレッシュトークンを失効
       inOrder.verify(refreshTokenMapper).revokeAllByAccountNo(1L, 1L);
+      // パスキー → リカバリーコード → ユーザーハンドル（いずれもアカウントを参照するため本体より前）
+      inOrder.verify(passkeyCredentialMapper).delete(any(PasskeyCredentialCondition.class));
+      inOrder.verify(recoveryCodeMapper).delete(any(RecoveryCodeCondition.class));
+      inOrder.verify(passkeyUserHandleMapper).delete(any(PasskeyUserHandleCondition.class));
       // ログイン履歴を削除（アカウントの物理削除に先立って実施）
       inOrder.verify(loginHistoryMapper).delete(any(LoginHistoryCondition.class));
       // 写真一覧絞り込みログを削除（アカウントの物理削除に先立って実施）

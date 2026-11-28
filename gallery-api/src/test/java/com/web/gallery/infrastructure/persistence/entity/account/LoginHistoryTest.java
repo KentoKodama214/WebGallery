@@ -3,6 +3,7 @@ package com.web.gallery.infrastructure.persistence.entity.account;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.application.model.account.LoginHistoryModel;
+import com.web.gallery.domain.enumeration.LoginMethodEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Country;
 import com.web.gallery.domain.model.common.IpAddress;
@@ -31,7 +32,8 @@ class LoginHistoryTest {
           LoginHistoryModel.of(
               new AccountNo(1L),
               new IpAddress("203.0.113.1"),
-              new IpGeoLocation(new Country("JP"), new Region("Tokyo")));
+              new IpGeoLocation(new Country("JP"), new Region("Tokyo")),
+              LoginMethodEnum.PASSKEY);
 
       LoginHistory actual = LoginHistory.from(model);
 
@@ -39,6 +41,7 @@ class LoginHistoryTest {
       assertEquals("203.0.113.1", actual.getIpAddress());
       assertEquals("JP", actual.getCountry());
       assertEquals("Tokyo", actual.getRegion());
+      assertEquals(LoginMethodEnum.PASSKEY, actual.getLoginMethodKbn());
       assertEquals(1L, actual.getCreatedBy());
     }
 
@@ -48,7 +51,10 @@ class LoginHistoryTest {
     void from_geoLocationUnresolved() {
       LoginHistoryModel model =
           LoginHistoryModel.of(
-              new AccountNo(1L), new IpAddress("203.0.113.1"), IpGeoLocation.empty());
+              new AccountNo(1L),
+              new IpAddress("203.0.113.1"),
+              IpGeoLocation.empty(),
+              LoginMethodEnum.PASSKEY);
 
       LoginHistory actual = LoginHistory.from(model);
 

@@ -18,19 +18,8 @@ export function isValidAccountId(value: string | null | undefined): value is str
   return typeof value === "string" && ACCOUNT_ID_PATTERN.test(value);
 }
 
-/**
- * パスワードの形式（半角8〜72文字、英字と数字を各1文字以上含む、記号可）
- *
- * バックエンドの制約（AccountRegistRequest / AccountUpdateRequest）と一致させること。
- */
-export const PASSWORD_PATTERN = /^(?=.*[A-Za-z])(?=.*\d)[\x21-\x7E]{8,72}$/;
-
-/** パスワードが形式を満たさない場合のエラーメッセージ */
-export const PASSWORD_ERROR_MESSAGE =
-  "英字と数字を含む半角8〜72文字で入力してください";
-
-/** パスワード入力欄のプレースホルダー */
-export const PASSWORD_PLACEHOLDER = "英字と数字を含む半角8〜72文字";
+/** パスキー名の最大文字数（バックエンドの `Consts.PASSKEY_NAME_MAX_LENGTH` と揃える） */
+export const PASSKEY_NAME_MAX_LENGTH = 50;
 
 /**
  * エラーメッセージのマップから指定キーを取り除いた新しいマップを返す

@@ -1,7 +1,7 @@
 package com.web.gallery.application.helper;
 
 /**
- * 現在のパスワードによる本人確認（再認証）の失敗回数を、アカウント単位で数えるインターフェース
+ * パスキーによる本人確認（再認証）の失敗回数を、アカウント単位で数えるインターフェース
  *
  * @author Kento Kodama
  * @version 1.0.0

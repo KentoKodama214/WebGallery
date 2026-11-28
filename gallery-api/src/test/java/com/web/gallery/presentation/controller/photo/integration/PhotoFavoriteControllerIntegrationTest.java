@@ -14,7 +14,6 @@ import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.LoginFailureCount;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.common.IsDeleted;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavorite;
 import java.nio.charset.StandardCharsets;
@@ -70,7 +69,6 @@ public class PhotoFavoriteControllerIntegrationTest {
             .accountNo(new AccountNo(1L))
             .accountId(new AccountId("aaaaaaaa"))
             .accountName(new AccountName("AAAAAAAA"))
-            .password(new Password("$2a$10$password1"))
             .authorityKbn(AuthorityEnum.ADMINISTRATOR)
             .isDeleted(new IsDeleted(false))
             .loginFailureCount(new LoginFailureCount(0))

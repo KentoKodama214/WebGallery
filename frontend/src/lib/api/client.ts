@@ -2,6 +2,10 @@
  * バックエンドAPIとの通信を管理するクライアントモジュール
  */
 
+import type {
+  PasskeyAuthenticationOptionsJSON,
+  PasskeyRegistrationOptionsJSON,
+} from "@/lib/auth/passkey";
 import { REFERER_MAX_LENGTH } from "@/lib/validation";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -164,28 +168,18 @@ export function clearAuthState(): void {
 }
 
 /**
- * ログインAPIを呼び出す
+ * ログイン系 API（パスキー・リカバリーコードによる復旧）の応答を検証し、認証状態を確定させる
+ *
+ * @param response ログイン系 API のレスポンス
+ * @param fallback 失敗時の既定メッセージ
+ * @returns アクセストークンと有効期限
  */
-export async function login(
-  accountId: string,
-  password: string
+async function applyLoginResponse(
+  response: Response,
+  fallback: string
 ): Promise<{ accessToken: string; expiresIn: number }> {
-  // 認証の起点となる呼び出しのため、意図的に生 fetch を使う
-  // （fetchWithAuth はトークン前提でリフレッシュを試みてしまう）
-  let response: Response;
-  try {
-    response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ accountId, password }),
-    });
-  } catch {
-    throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
-  }
-
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "ログインに失敗しました"));
+    throw new ApiError(await readErrorMessage(response, fallback), response.status);
   }
 
   const data = await readJson<{ accessToken: string; expiresIn: number }>(
@@ -205,6 +199,115 @@ export async function login(
   lastRefreshTransientFailureAt = 0;
   authEpoch++;
   return data;
+}
+
+/**
+ * パスキー認証オプション（チャレンジ等）を発行する
+ *
+ * 未ログインで呼び出す公開 API のため、生 fetch を使う
+ */
+export async function getPasskeyAuthenticationOptions(): Promise<PasskeyAuthenticationOptionsJSON> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/auth/passkey/options`, {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      credentials: "include",
+    });
+  } catch {
+    throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
+  }
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキーによるログインを開始できませんでした"),
+      response.status
+    );
+  }
+  return readJson<PasskeyAuthenticationOptionsJSON>(response);
+}
+
+/**
+ * パスキーログインAPIを呼び出す
+ *
+ * @param credential 認証レスポンス（`PublicKeyCredential#toJSON()` の形式の JSON 文字列）
+ */
+export async function loginWithPasskey(
+  credential: string
+): Promise<{ accessToken: string; expiresIn: number }> {
+  // 認証の起点となる呼び出しのため、意図的に生 fetch を使う
+  // （fetchWithAuth はトークン前提でリフレッシュを試みてしまう）
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/auth/passkey/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ credential }),
+    });
+  } catch {
+    throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
+  }
+
+  return applyLoginResponse(response, "パスキーによる認証に失敗しました");
+}
+
+/**
+ * リカバリーコードで本人確認し、新しいパスキーを作成するためのオプション（チャレンジ等）を発行する
+ *
+ * パスキーをすべて失った利用者の復旧に使う。照合したリカバリーコードはこの時点で使用済みになる。
+ * 未ログインで呼び出す公開 API のため、生 fetch を使う
+ *
+ * @param accountId アカウントID
+ * @param recoveryCode リカバリーコード（ハイフン・空白の有無、大文字・小文字は問わない）
+ */
+export async function getRecoveryOptions(
+  accountId: string,
+  recoveryCode: string
+): Promise<PasskeyRegistrationOptionsJSON> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/auth/recovery/options`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ accountId, recoveryCode }),
+    });
+  } catch {
+    throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
+  }
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "リカバリーコードによる復旧を開始できませんでした"),
+      response.status
+    );
+  }
+  return readJson<PasskeyRegistrationOptionsJSON>(response);
+}
+
+/**
+ * リカバリーコードによる復旧ログインAPIを呼び出す（新しいパスキーを登録してログインする）
+ *
+ * @param credential 新しいパスキーの登録レスポンス（`PublicKeyCredential#toJSON()` の形式の JSON 文字列）
+ * @param passkeyName 新しいパスキーの名前
+ */
+export async function loginWithRecoveryCode(
+  credential: string,
+  passkeyName: string
+): Promise<{ accessToken: string; expiresIn: number }> {
+  // 認証の起点となる呼び出しのため、意図的に生 fetch を使う
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/auth/recovery/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ credential, passkeyName }),
+    });
+  } catch {
+    throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
+  }
+
+  return applyLoginResponse(response, "パスキーの登録に失敗しました");
 }
 
 /**
@@ -412,23 +515,43 @@ export async function getAccount(accountId: string): Promise<AccountDetail> {
 }
 
 /**
+ * 重要操作（パスキーの登録・削除、退会、リカバリーコードの再発行）の前の本人確認に使う、
+ * 認証オプション（チャレンジ等）を発行する
+ *
+ * 返ったチャレンジに本人のパスキーで署名した認証レスポンスを、各操作のリクエストに添える
+ */
+export async function getReauthenticationOptions(
+  accountId: string
+): Promise<PasskeyAuthenticationOptionsJSON> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/reauthentication-options`,
+    { method: "POST" }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "本人確認を開始できませんでした"),
+      response.status
+    );
+  }
+  return readJson<PasskeyAuthenticationOptionsJSON>(response);
+}
+
+/**
  * アカウントを削除する
  *
- * 本人確認のための現在のパスワードはリクエストボディ（JSON）で送る。
- * DELETE のボディは一部の CDN・リバースプロキシ・WAF で破棄されうること、および
- * 現在のパスワードのような機微情報をアクセスログ等に記録されやすいカスタムヘッダーに
- * 載せないことの両方を満たすため、`POST /api/v1/accounts/{id}/deletion` を呼び出す。
+ * 本人確認のためのパスキーの認証レスポンスはリクエストボディ（JSON）で送る。
+ * DELETE のボディは一部の CDN・リバースプロキシ・WAF で破棄されうるため、
+ * `POST /api/v1/accounts/{id}/deletion` を呼び出す。
+ *
+ * @param credential 本人確認用の認証レスポンス（{@link getReauthenticationOptions} のチャレンジへの署名）
  */
-export async function deleteAccount(
-  accountId: string,
-  currentPassword: string
-): Promise<void> {
+export async function deleteAccount(accountId: string, credential: string): Promise<void> {
   const response = await fetchWithAuth(
     `/api/v1/accounts/${seg(accountId)}/deletion`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ currentPassword }),
+      body: JSON.stringify({ credential }),
     }
   );
   if (!response.ok) {
@@ -460,6 +583,193 @@ export async function updateAccount(
   return readJson<AccountUpdateResult>(response);
 }
 
+/** 登録済みパスキー（公開鍵等の技術的な値は含まない） */
+export interface PasskeyItem {
+  passkeyNo: number;
+  passkeyName: string;
+  /** iCloud キーチェーン・Google パスワードマネージャー等で複数の端末に同期されるパスキーか */
+  isSynced: boolean;
+  createdAt: string | null;
+  lastUsedAt: string | null;
+}
+
+/** パスキー一覧レスポンス */
+export interface PasskeyListResponse {
+  passkeys: PasskeyItem[];
+  /** 登録できるパスキー数の上限 */
+  maxCount: number;
+}
+
+/**
+ * 本人のパスキー一覧を取得する
+ */
+export async function getPasskeys(accountId: string): Promise<PasskeyListResponse> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}/passkeys`);
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキー一覧の取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PasskeyListResponse>(response);
+}
+
+/**
+ * パスキー登録オプション（チャレンジ等）を発行する
+ *
+ * アクセストークンを盗んだ第三者が自分のパスキーを登録して居座るのを防ぐため、
+ * 登録済みのパスキーによる本人確認が必要（認証レスポンスをリクエストボディで送る）
+ *
+ * @param credential 本人確認用の認証レスポンス
+ */
+export async function createPasskeyRegistrationOptions(
+  accountId: string,
+  credential: string
+): Promise<PasskeyRegistrationOptionsJSON> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/passkeys/registration-options`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキーの登録を開始できませんでした"),
+      response.status
+    );
+  }
+  return readJson<PasskeyRegistrationOptionsJSON>(response);
+}
+
+/**
+ * パスキーを登録する
+ *
+ * @param credential 登録レスポンス（`PublicKeyCredential#toJSON()` の形式の JSON 文字列）
+ * @param passkeyName パスキー名
+ */
+export async function registerPasskey(
+  accountId: string,
+  credential: string,
+  passkeyName: string
+): Promise<PasskeyItem> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}/passkeys`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential, passkeyName }),
+  });
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキーの登録に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PasskeyItem>(response);
+}
+
+/**
+ * パスキー名を変更する
+ */
+export async function renamePasskey(
+  accountId: string,
+  passkeyNo: number,
+  passkeyName: string
+): Promise<void> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/passkeys/${seg(passkeyNo)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passkeyName }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキー名の変更に失敗しました"),
+      response.status
+    );
+  }
+}
+
+/**
+ * パスキーを削除する
+ *
+ * ログイン手段を失わせる操作のため、パスキーによる本人確認が必要（最後の1件は削除できない）。
+ * アカウント削除と同じ理由で DELETE ではなく POST のサブリソースを呼び出す
+ *
+ * @param credential 本人確認用の認証レスポンス
+ */
+export async function deletePasskey(
+  accountId: string,
+  passkeyNo: number,
+  credential: string
+): Promise<void> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/passkeys/${seg(passkeyNo)}/deletion`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "パスキーの削除に失敗しました"),
+      response.status
+    );
+  }
+}
+
+/** リカバリーコードの状態 */
+export interface RecoveryCodeStatus {
+  /** 未使用のリカバリーコードの件数 */
+  remainingCount: number;
+  /** 1回に発行するリカバリーコードの個数 */
+  issueCount: number;
+}
+
+/**
+ * 未使用のリカバリーコードの件数を取得する（コード自体は再表示できない）
+ */
+export async function getRecoveryCodeStatus(accountId: string): Promise<RecoveryCodeStatus> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}/recovery-codes`);
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "リカバリーコードの状態の取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<RecoveryCodeStatus>(response);
+}
+
+/**
+ * リカバリーコードを再発行する（未使用のコードはすべて無効になる）
+ *
+ * 復旧手段を第三者に握られないよう、パスキーによる本人確認が必要
+ *
+ * @param credential 本人確認用の認証レスポンス
+ * @returns 発行したリカバリーコード（この応答でのみ受け取れる）
+ */
+export async function regenerateRecoveryCodes(
+  accountId: string,
+  credential: string
+): Promise<string[]> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}/recovery-codes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential }),
+  });
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "リカバリーコードの再発行に失敗しました"),
+      response.status
+    );
+  }
+  const data = await readJson<{ recoveryCodes: string[] }>(response);
+  return data.recoveryCodes;
+}
+
 /**
  * 都道府県一覧を取得する
  */
@@ -473,19 +783,61 @@ export async function getPrefectures(): Promise<PrefectureGroup[]> {
 }
 
 /**
- * アカウントを新規登録する
+ * アカウント新規登録オプション（最初のパスキーを作成するためのチャレンジ等）を発行する
+ *
+ * 未ログインのユーザーが行う登録のため、意図的に生 fetch を使う（認証不要）。
+ * アカウントIDが既に使われている場合は 409 の {@link ApiError} を投げる
+ *
+ * @param accountId 登録するアカウントID（パスキーマネージャーでの表示に使う）
+ * @param accountName 登録するアカウント名（パスキーマネージャーでの表示に使う）
+ */
+export async function getSignupOptions(
+  accountId: string,
+  accountName: string
+): Promise<PasskeyRegistrationOptionsJSON> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/accounts/signup-options`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountId, accountName }),
+    });
+  } catch {
+    throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
+  }
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "アカウントの登録を開始できませんでした"),
+      response.status
+    );
+  }
+  return readJson<PasskeyRegistrationOptionsJSON>(response);
+}
+
+/**
+ * アカウントを新規登録する（最初のパスキーも同時に登録する）
+ *
+ * 発行されたリカバリーコードはこの応答でのみ受け取れる
  */
 export async function registerAccount(
   data: AccountRegistData
 ): Promise<AccountRegistResult> {
   // 未ログインのユーザーが行う登録のため、意図的に生 fetch を使う（認証不要）
-  const response = await fetch(`${API_BASE_URL}/api/v1/accounts`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/accounts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new Error("サーバーに接続できませんでした。時間をおいて再度お試しください");
+  }
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "アカウントの登録に失敗しました"));
+    throw new ApiError(
+      await readErrorMessage(response, "アカウントの登録に失敗しました"),
+      response.status
+    );
   }
   return readJson<AccountRegistResult>(response);
 }
@@ -500,12 +852,15 @@ export interface AccountListItem {
 export interface AccountRegistData {
   accountId: string;
   accountName: string;
-  password: string;
   birthdate: string | null;
   sexKbn: string;
   birthplacePrefectureKbnCode: string;
   residentPrefectureKbnCode: string;
   freeMemo: string;
+  /** 最初のパスキーの登録レスポンス（`PublicKeyCredential#toJSON()` の形式の JSON 文字列） */
+  credential: string;
+  /** 最初のパスキーの名前 */
+  passkeyName: string;
 }
 
 /** アカウント登録結果 */
@@ -513,6 +868,8 @@ export interface AccountRegistResult {
   httpStatus: number;
   isSuccess: boolean;
   message: string;
+  /** 発行したリカバリーコード（4文字ごとにハイフンで区切った表示用の形。再表示はできない） */
+  recoveryCodes: string[];
 }
 
 /** アカウント詳細情報 */
@@ -530,9 +887,6 @@ export interface AccountDetail {
 export interface AccountUpdateData {
   accountId: string;
   accountName: string;
-  newPassword: string;
-  /** 現在のパスワード（パスワード変更時のみ必須。それ以外は空文字） */
-  currentPassword: string;
   birthdate: string | null;
   sexKbn: string;
   birthplacePrefectureKbnCode: string;
@@ -545,7 +899,6 @@ export interface AccountUpdateResult {
   httpStatus: number;
   isDuplicateAccountId: boolean;
   isAccountIdChanged: boolean;
-  isPasswordChanged: boolean;
   message: string;
 }
 

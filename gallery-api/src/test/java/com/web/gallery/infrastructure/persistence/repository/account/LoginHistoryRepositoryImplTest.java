@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.web.gallery.application.model.account.LoginHistoryModel;
+import com.web.gallery.domain.enumeration.LoginMethodEnum;
 import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.common.Country;
 import com.web.gallery.domain.model.common.IpAddress;
@@ -44,7 +45,8 @@ public class LoginHistoryRepositoryImplTest {
           LoginHistoryModel.of(
               new AccountNo(1L),
               new IpAddress("127.0.0.1"),
-              new IpGeoLocation(new Country("JP"), new Region("Tokyo")));
+              new IpGeoLocation(new Country("JP"), new Region("Tokyo")),
+              LoginMethodEnum.PASSKEY);
 
       ArgumentCaptor<LoginHistory> captor = ArgumentCaptor.forClass(LoginHistory.class);
       doReturn(1).when(loginHistoryMapper).insert(captor.capture());
@@ -65,7 +67,10 @@ public class LoginHistoryRepositoryImplTest {
     void save_geoLocationUnresolved() {
       LoginHistoryModel model =
           LoginHistoryModel.of(
-              new AccountNo(1L), new IpAddress("127.0.0.1"), IpGeoLocation.empty());
+              new AccountNo(1L),
+              new IpAddress("127.0.0.1"),
+              IpGeoLocation.empty(),
+              LoginMethodEnum.PASSKEY);
 
       ArgumentCaptor<LoginHistory> captor = ArgumentCaptor.forClass(LoginHistory.class);
       doReturn(1).when(loginHistoryMapper).insert(captor.capture());

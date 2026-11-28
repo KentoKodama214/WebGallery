@@ -271,14 +271,14 @@ func TestFindPublished_NotPublished(t *testing.T) {
 	}
 }
 
-// TestReaderRoleCannotReadPrivateColumns は、読み取り専用ロールが非公開の列（パスワード・住所・位置情報の公開設定）を読み取れず
+// TestReaderRoleCannotReadPrivateColumns は、読み取り専用ロールが非公開の列（生年月日・住所・位置情報の公開設定）を読み取れず
 // permission denied になること、テーブルを更新できないことを検証する。
 func TestReaderRoleCannotReadPrivateColumns(t *testing.T) {
 	_, reader := setup(t)
 	ctx := context.Background()
 
 	for _, query := range []string{
-		`SELECT password FROM common.account WHERE account_no = 900001`,
+		`SELECT birthdate FROM common.account WHERE account_no = 900001`,
 		`SELECT address FROM common.location_mst LIMIT 1`,
 		`SELECT is_location_public FROM photo.photo_mst LIMIT 1`,
 	} {

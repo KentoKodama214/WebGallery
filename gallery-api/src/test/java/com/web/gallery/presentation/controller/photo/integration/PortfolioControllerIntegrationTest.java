@@ -16,7 +16,6 @@ import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.photo.ImageFilePath;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -66,7 +65,6 @@ public class PortfolioControllerIntegrationTest {
             .accountNo(new AccountNo(accountNo))
             .accountId(new AccountId(accountId))
             .accountName(new AccountName(accountId.toUpperCase()))
-            .password(new Password("$2a$10$password1"))
             .authorityKbn(AuthorityEnum.NORMAL)
             .build();
     AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);

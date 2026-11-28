@@ -16,7 +16,6 @@ import com.web.gallery.domain.model.account.FreeMemo;
 import com.web.gallery.domain.model.account.IsAdminLocked;
 import com.web.gallery.domain.model.account.LastLoginDatetime;
 import com.web.gallery.domain.model.account.LoginFailureCount;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import com.web.gallery.domain.model.common.IsDeleted;
 import com.web.gallery.domain.model.common.UpdatedAt;
@@ -33,7 +32,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Repository;
 
 /** アカウントデータを永続化するRepositoryの実装クラス */
@@ -44,7 +42,6 @@ public class AccountRepositoryImpl implements AccountRepository {
 
   private final AccountMapper accountMapper;
   private final AccountAuthorityMapper accountAuthorityMapper;
-  private final PasswordEncoder passwordEncoder;
 
   /**
    * Accountテーブルで該当するレコードを取得する
@@ -85,7 +82,7 @@ public class AccountRepositoryImpl implements AccountRepository {
   @Override
   public void regist(AccountModel accountModel) throws GalleryException {
     Long accountNo = accountMapper.nextAccountNo();
-    Account account = Account.from(accountModel, passwordEncoder, accountNo);
+    Account account = Account.from(accountModel, accountNo);
 
     try {
       accountMapper.insert(account);
@@ -105,7 +102,7 @@ public class AccountRepositoryImpl implements AccountRepository {
   @Override
   public void update(AccountModel accountModel) throws GalleryException {
     AccountCondition condition = AccountCondition.byAccountNo(accountModel.getAccountNo().value());
-    AccountUpdateTarget target = AccountUpdateTarget.fromForUpdate(accountModel, passwordEncoder);
+    AccountUpdateTarget target = AccountUpdateTarget.fromForUpdate(accountModel);
 
     try {
       if (accountMapper.update(condition, target) < 1) {
@@ -280,8 +277,6 @@ public class AccountRepositoryImpl implements AccountRepository {
         .accountNo(new AccountNo(dto.getAccountNo()))
         .accountId(new AccountId(dto.getAccountId()))
         .accountName(new AccountName(dto.getAccountName()))
-        // 一覧取得などパスワードを射影しないクエリ経由の場合はnullを許容する
-        .password(dto.getPassword() != null ? new Password(dto.getPassword()) : null)
         .birthdate(dto.getBirthdate() != null ? new BirthDate(dto.getBirthdate()) : null)
         .sexKbn(dto.getSexKbn())
         .birthplacePrefectureKbnCode(

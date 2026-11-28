@@ -1,6 +1,6 @@
 import { test as base, expect, type Page } from "@playwright/test";
 import { Client } from "pg";
-import { generateSortEarlyTestAccountId, login, registerAccount, TEST_USER_PASSWORD } from "./auth";
+import { generateSortEarlyTestAccountId, login, registerAccount } from "./auth";
 import { DB_CONFIG } from "./db";
 
 /**
@@ -28,7 +28,7 @@ async function grantAdministratorAuthority(accountId: string): Promise<void> {
 }
 
 type AdminFixtures = {
-  adminUser: { accountId: string; password: string };
+  adminUser: { accountId: string };
   adminPage: Page;
 };
 
@@ -49,7 +49,6 @@ export const test = base.extend<object, AdminFixtures>({
     async ({}, use, workerInfo) => {
       await use({
         accountId: generateSortEarlyTestAccountId(workerInfo.workerIndex),
-        password: TEST_USER_PASSWORD,
       });
     },
     { scope: "worker" },
@@ -62,9 +61,9 @@ export const test = base.extend<object, AdminFixtures>({
       });
       const page: Page = await context.newPage();
 
-      await registerAccount(page, adminUser.accountId, "E2E Admin User", adminUser.password);
+      await registerAccount(page, adminUser.accountId, "E2E Admin User");
       await grantAdministratorAuthority(adminUser.accountId);
-      await login(page, adminUser.accountId, adminUser.password);
+      await login(page, adminUser.accountId);
 
       await use(page);
       await context.close();

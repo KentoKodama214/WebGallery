@@ -7,8 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.jayway.jsonpath.JsonPath;
 import com.web.gallery.application.repository.photo.FileRepository;
 import com.web.gallery.domain.constant.MessageConst;
+import com.web.gallery.testsupport.PasskeyTestAuthenticator;
 import jakarta.servlet.http.Cookie;
-import org.junit.jupiter.api.AfterEach;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -22,14 +23,15 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -45,88 +47,97 @@ public class AuthControllerIntegrationTest {
 
   @Autowired private JdbcTemplate jdbcTemplate;
 
-  @Autowired private PasswordEncoder passwordEncoder;
+  private static final JsonMapper JSON = JsonMapper.builder().build();
 
-  private static final String TEST_PASSWORD = "password123";
+  /** テストアカウント（testuser01）のパスキーを保持する擬似認証器 */
+  private PasskeyTestAuthenticator authenticator;
 
-  /** テストデータ投入（BCryptハッシュはテスト実行時に動的生成） */
-  private void insertTestData() {
-    String hashedPassword = passwordEncoder.encode(TEST_PASSWORD);
+  /**
+   * テストデータ投入
+   *
+   * <p>パスワードが無いため、テストアカウントは本番と同じ新規登録API（パスキーの作成）で登録する
+   */
+  private void insertTestData() throws Exception {
+    authenticator = new PasskeyTestAuthenticator();
+    String optionsBody =
+        mockMvc
+            .perform(
+                post("/api/v1/accounts/signup-options")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        JSON.writeValueAsString(
+                            Map.of("accountId", "testuser01", "accountName", "テストユーザー01"))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    JsonNode options = JSON.readTree(optionsBody);
+    String credential =
+        authenticator.createRegistrationResponseJson(
+            options.get("rp").get("id").asString(),
+            options.get("challenge").asString(),
+            options.get("user").get("id").asString(),
+            "testuser01");
+    mockMvc
+        .perform(
+            post("/api/v1/accounts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    JSON.writeValueAsString(
+                        Map.of(
+                            "accountId",
+                            "testuser01",
+                            "accountName",
+                            "テストユーザー01",
+                            "credential",
+                            credential,
+                            "passkeyName",
+                            "テスト用パスキー"))))
+        .andExpect(status().isOk());
+  }
 
-    // 正常なアカウント（ログイン失敗回数0）
-    jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'testuser01', 'テストユーザー01', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false)",
-        hashedPassword);
-    jdbcTemplate.update(
-        "INSERT INTO common.account_authority VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator')");
+  /**
+   * パスキー認証オプションを発行し、テストアカウントのパスキーで署名した認証レスポンスを返す
+   *
+   * @return 認証レスポンス（PublicKeyCredential#toJSON()のJSON文字列）
+   */
+  private String signAuthentication() throws Exception {
+    String body =
+        mockMvc
+            .perform(post("/api/v1/auth/passkey/options"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    JsonNode options = JSON.readTree(body);
+    return authenticator.createAuthenticationResponseJson(
+        options.get("rpId").asString(), options.get("challenge").asString());
+  }
 
-    // ロック状態のアカウント（ログイン失敗回数3・直近にロックされたばかりの想定で更新日時を現在時刻にする）
-    jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 3, false)",
-        hashedPassword);
-    jdbcTemplate.update(
-        "INSERT INTO common.account_authority VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), 'administrator')");
-
-    // 管理者に強制ロックされたアカウント（更新日時は十分過去だが、is_admin_locked のため自動解除されない）
-    jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'adminlocked', '管理者ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, true)",
-        hashedPassword);
-    jdbcTemplate.update(
-        "INSERT INTO common.account_authority VALUES(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', 'administrator')");
-
-    jdbcTemplate.update("ALTER SEQUENCE common.account_account_no_seq RESTART 4");
+  /** テストアカウントのパスキーでログインする */
+  private ResultActions passkeyLogin() throws Exception {
+    return mockMvc.perform(
+        post("/api/v1/auth/passkey/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(JSON.writeValueAsString(Map.of("credential", signAuthentication()))));
   }
 
   @Nested
   @Order(1)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  class login {
+  class passkeyLogin {
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
       insertTestData();
-
-      // login()内のREQUIRES_NEWによる別コネクションの更新がフィクスチャ行を参照できるよう、
-      // ここまでの投入データ（TRUNCATE・INSERT）を物理コミットしてから新しいテスト用トランザクションを開始する
-      TestTransaction.flagForCommit();
-      TestTransaction.end();
-      TestTransaction.start();
-    }
-
-    @AfterEach
-    void tearDown() {
-      // テスト本体が例外系の場合、現在のテストトランザクションはロールバック専用に
-      // なっている可能性があるため、一度終了・再開してクリーンな状態にしてからTRUNCATEし、
-      // setUp()で物理コミットしたフィクスチャ行が後続の他テストへ残留しないよう明示的に物理コミットする
-      TestTransaction.end();
-      TestTransaction.start();
-      jdbcTemplate.execute(
-          """
-          TRUNCATE TABLE
-          	photo.photo_favorite,
-          	photo.photo_tag_mst,
-          	photo.photo_mst,
-          	common.refresh_token,
-          	common.location_mst,
-          	common.account,
-          	common.kbn_mst
-          CASCADE
-          """);
-      TestTransaction.flagForCommit();
-      TestTransaction.end();
     }
 
     @Test
     @Order(1)
-    @DisplayName("正常系：ログイン成功")
-    void login_success() throws Exception {
+    @DisplayName("正常系：パスキーでログインでき、リフレッシュトークンを安全な属性のcookieで返す")
+    void passkeyLogin_success() throws Exception {
       MvcResult result =
-          mockMvc
-              .perform(
-                  post("/api/v1/auth/login")
-                      .contentType(MediaType.APPLICATION_JSON)
-                      .content(
-                          "{\"accountId\":\"testuser01\",\"password\":\"" + TEST_PASSWORD + "\"}"))
+          passkeyLogin()
               .andExpect(status().isOk())
               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
               .andExpect(jsonPath("$.accessToken").isNotEmpty())
@@ -145,99 +156,71 @@ public class AuthControllerIntegrationTest {
 
     @Test
     @Order(2)
-    @DisplayName("異常系：パスワード不一致の場合、401を返す")
-    void login_wrong_password() throws Exception {
-      mockMvc
-          .perform(
-              post("/api/v1/auth/login")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"testuser01\",\"password\":\"wrongpassword\"}"))
-          .andExpect(status().isUnauthorized())
-          .andExpect(jsonPath("$.message").value("アカウントIDまたはパスワードが間違っています。"));
-    }
+    @DisplayName("異常系：ログイン失敗回数の上限に達しロック中の場合、423を返す")
+    void passkeyLogin_locked_account() throws Exception {
+      jdbcTemplate.update(
+          "UPDATE common.account SET login_failure_count = 3, updated_at = NOW() WHERE account_id = 'testuser01'");
 
-    @Test
-    @Order(3)
-    @DisplayName("異常系：存在しないアカウントIDの場合、401を返す")
-    void login_account_not_found() throws Exception {
-      mockMvc
-          .perform(
-              post("/api/v1/auth/login")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"notexists\",\"password\":\"" + TEST_PASSWORD + "\"}"))
-          .andExpect(status().isUnauthorized())
-          .andExpect(jsonPath("$.message").value("アカウントIDまたはパスワードが間違っています。"));
-    }
-
-    @Test
-    @Order(4)
-    @DisplayName("異常系：アカウントロックの場合、423を返す")
-    void login_locked_account() throws Exception {
-      mockMvc
-          .perform(
-              post("/api/v1/auth/login")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"lockeduser\",\"password\":\"" + TEST_PASSWORD + "\"}"))
+      passkeyLogin()
           .andExpect(status().is(423))
           .andExpect(jsonPath("$.message").value("アカウントがロックされています。"));
     }
 
     @Test
-    @Order(7)
+    @Order(3)
     @DisplayName("異常系：管理者に強制ロックされたアカウントは、更新日時が十分過去でも自動解除されず423を返す")
-    void login_admin_locked_account_not_auto_released() throws Exception {
-      mockMvc
-          .perform(
-              post("/api/v1/auth/login")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(
-                      "{\"accountId\":\"adminlocked\",\"password\":\"" + TEST_PASSWORD + "\"}"))
+    void passkeyLogin_admin_locked_account_not_auto_released() throws Exception {
+      jdbcTemplate.update(
+          "UPDATE common.account SET is_admin_locked = true, login_failure_count = 3,"
+              + " updated_at = '2001-01-03 09:00:00 Asia/Tokyo' WHERE account_id = 'testuser01'");
+
+      passkeyLogin()
           .andExpect(status().is(423))
           .andExpect(jsonPath("$.message").value("アカウントがロックされています。"));
 
       Boolean isAdminLocked =
           jdbcTemplate.queryForObject(
-              "SELECT is_admin_locked FROM common.account WHERE account_id = 'adminlocked'",
+              "SELECT is_admin_locked FROM common.account WHERE account_id = 'testuser01'",
               Boolean.class);
       assertTrue(isAdminLocked);
     }
 
     @Test
-    @Order(5)
-    @DisplayName("異常系：accountIdが空の場合、400を返す")
-    void login_blank_accountId() throws Exception {
+    @Order(4)
+    @DisplayName("異常系：credentialが空の場合、400を返す")
+    void passkeyLogin_blank_credential() throws Exception {
       mockMvc
           .perform(
-              post("/api/v1/auth/login")
+              post("/api/v1/auth/passkey/login")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"\",\"password\":\"" + TEST_PASSWORD + "\"}"))
+                  .content("{\"credential\":\"\"}"))
           .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：リクエストボディのJSON構文が不正な場合、共通のJSONエラー形式で400を返す")
+    void passkeyLogin_malformed_json() throws Exception {
+      mockMvc
+          .perform(
+              post("/api/v1/auth/passkey/login")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{\"credential\":"))
+          .andExpect(status().isBadRequest())
+          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+          .andExpect(jsonPath("$.message").value(MessageConst.ERR_INVALID_INPUT));
     }
 
     @Test
     @Order(6)
-    @DisplayName("異常系：passwordが空の場合、400を返す")
-    void login_blank_password() throws Exception {
+    @DisplayName("異常系：廃止したパスワードログインAPIは存在せず、未認証として401を返す")
+    void passwordLogin_removed() throws Exception {
       mockMvc
           .perform(
               post("/api/v1/auth/login")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"testuser01\",\"password\":\"\"}"))
-          .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @Order(8)
-    @DisplayName("異常系：リクエストボディのJSON構文が不正な場合、共通のJSONエラー形式で400を返す")
-    void login_malformed_json() throws Exception {
-      mockMvc
-          .perform(
-              post("/api/v1/auth/login")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"accountId\":\"testuser01\",\"password\":"))
-          .andExpect(status().isBadRequest())
-          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-          .andExpect(jsonPath("$.message").value(MessageConst.ERR_INVALID_INPUT));
+                  .content("{\"accountId\":\"testuser01\",\"password\":\"password01\"}"))
+          .andExpect(status().isUnauthorized());
     }
   }
 
@@ -247,7 +230,7 @@ public class AuthControllerIntegrationTest {
   @Sql("/sql/common/cleanup.sql")
   class refresh {
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
       insertTestData();
     }
 
@@ -256,15 +239,7 @@ public class AuthControllerIntegrationTest {
     @DisplayName("正常系：リフレッシュ成功時、リフレッシュトークンがローテーション（新しいcookieに差し替え）されること")
     void refresh_success() throws Exception {
       // まずログインしてリフレッシュトークンを取得
-      MvcResult loginResult =
-          mockMvc
-              .perform(
-                  post("/api/v1/auth/login")
-                      .contentType(MediaType.APPLICATION_JSON)
-                      .content(
-                          "{\"accountId\":\"testuser01\",\"password\":\"" + TEST_PASSWORD + "\"}"))
-              .andExpect(status().isOk())
-              .andReturn();
+      MvcResult loginResult = passkeyLogin().andExpect(status().isOk()).andReturn();
 
       Cookie refreshTokenCookie = loginResult.getResponse().getCookie("refreshToken");
       assertNotNull(refreshTokenCookie);
@@ -319,7 +294,7 @@ public class AuthControllerIntegrationTest {
   @Sql("/sql/common/cleanup.sql")
   class logout {
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
       insertTestData();
     }
 
@@ -328,15 +303,7 @@ public class AuthControllerIntegrationTest {
     @DisplayName("正常系：ログアウト成功（refreshTokenあり）")
     void logout_with_token() throws Exception {
       // まずログインしてリフレッシュトークンを取得
-      MvcResult loginResult =
-          mockMvc
-              .perform(
-                  post("/api/v1/auth/login")
-                      .contentType(MediaType.APPLICATION_JSON)
-                      .content(
-                          "{\"accountId\":\"testuser01\",\"password\":\"" + TEST_PASSWORD + "\"}"))
-              .andExpect(status().isOk())
-              .andReturn();
+      MvcResult loginResult = passkeyLogin().andExpect(status().isOk()).andReturn();
 
       Cookie refreshTokenCookie = loginResult.getResponse().getCookie("refreshToken");
       assertNotNull(refreshTokenCookie);
@@ -389,25 +356,13 @@ public class AuthControllerIntegrationTest {
   @Sql("/sql/common/cleanup.sql")
   class jwtAuthenticationFilter {
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
       insertTestData();
     }
 
-    /** ログインしてアクセストークンを取得する */
-    private String obtainAccessToken(String accountId) throws Exception {
-      MvcResult result =
-          mockMvc
-              .perform(
-                  post("/api/v1/auth/login")
-                      .contentType(MediaType.APPLICATION_JSON)
-                      .content(
-                          "{\"accountId\":\""
-                              + accountId
-                              + "\",\"password\":\""
-                              + TEST_PASSWORD
-                              + "\"}"))
-              .andExpect(status().isOk())
-              .andReturn();
+    /** パスキーでログインしてアクセストークンを取得する */
+    private String obtainAccessToken() throws Exception {
+      MvcResult result = passkeyLogin().andExpect(status().isOk()).andReturn();
       return JsonPath.read(result.getResponse().getContentAsString(), "$.accessToken");
     }
 
@@ -415,7 +370,7 @@ public class AuthControllerIntegrationTest {
     @Order(1)
     @DisplayName("異常系：AuthorizationヘッダーがBearer形式でない場合、未認証として401を返す")
     void getAccount_nonBearerAuthorizationHeader() throws Exception {
-      String accessToken = obtainAccessToken("testuser01");
+      String accessToken = obtainAccessToken();
 
       mockMvc
           .perform(
@@ -444,7 +399,7 @@ public class AuthControllerIntegrationTest {
     @Order(3)
     @DisplayName("異常系：トークン発行後に管理者ロックされたアカウントの場合、有効なトークンでも未認証として401を返す")
     void getAccount_lockedAfterTokenIssued() throws Exception {
-      String accessToken = obtainAccessToken("testuser01");
+      String accessToken = obtainAccessToken();
 
       // トークン発行後、管理者による強制ロックが行われた状態を再現する
       jdbcTemplate.update(
@@ -462,13 +417,23 @@ public class AuthControllerIntegrationTest {
     @Order(4)
     @DisplayName("異常系：トークン発行後にアカウントが削除された場合、有効なトークンでも未認証として401を返す")
     void getAccount_deletedAfterTokenIssued() throws Exception {
-      String accessToken = obtainAccessToken("testuser01");
+      String accessToken = obtainAccessToken();
 
       // トークン発行後、本人によるアカウント削除（物理削除）が行われた状態を再現する
-      // （ログインによりlogin_history・refresh_tokenにも行が作成されているため、先に削除する）
+      // （新規登録・ログインによりパスキー・リカバリーコード・login_history・refresh_tokenにも行が作成されているため、先に削除する）
       jdbcTemplate.update(
           "DELETE FROM common.account_authority WHERE account_no ="
               + " (SELECT account_no FROM common.account WHERE account_id = 'testuser01')");
+      for (String table :
+          new String[] {
+            "common.passkey_credential", "common.passkey_user_handle", "common.recovery_code"
+          }) {
+        jdbcTemplate.update(
+            "DELETE FROM "
+                + table
+                + " WHERE account_no ="
+                + " (SELECT account_no FROM common.account WHERE account_id = 'testuser01')");
+      }
       jdbcTemplate.update(
           "DELETE FROM common.login_history WHERE account_no ="
               + " (SELECT account_no FROM common.account WHERE account_id = 'testuser01')");

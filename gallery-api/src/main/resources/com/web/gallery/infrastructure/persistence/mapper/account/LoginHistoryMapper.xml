@@ -10,6 +10,7 @@
 			ip_address,
 			country,
 			region,
+			login_method_kbn,
 			created_by,
 			created_at
 		) VALUES (
@@ -17,6 +18,7 @@
 			#{ipAddress},
 			COALESCE(#{country}, ''),
 			COALESCE(#{region}, ''),
+			COALESCE(#{loginMethodKbn}::common.login_method_enum, 'passkey'),
 			#{createdBy},
 			COALESCE(#{createdAt}, NOW())
 		)

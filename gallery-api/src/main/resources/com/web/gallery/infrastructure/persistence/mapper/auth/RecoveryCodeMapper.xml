@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.auth.RecoveryCodeMapper">
+
+	<insert id="bulkInsert" parameterType="java.util.List">
+		INSERT INTO common.recovery_code (
+			account_no,
+			code_hash,
+			created_by,
+			created_at
+		) VALUES
+		<foreach collection="list" item="item" separator=",">
+			(
+				#{item.accountNo},
+				#{item.codeHash},
+				#{item.createdBy},
+				COALESCE(#{item.createdAt}, NOW())
+			)
+		</foreach>
+	</insert>
+
+	<select id="count" parameterType="com.web.gallery.infrastructure.persistence.entity.auth.RecoveryCodeCondition" resultType="java.lang.Integer">
+		SELECT
+			COUNT(*)
+		FROM
+			common.recovery_code
+		<where>
+			<if test="accountNo == null"> AND 1 = 0</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="codeHash != null"> AND code_hash = #{codeHash}</if>
+		</where>
+	</select>
+
+	<!-- コードハッシュを指定した場合は、照合と削除を1文で行い同じコードの再利用・並行使用を防ぐ -->
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.auth.RecoveryCodeCondition">
+		DELETE FROM
+			common.recovery_code
+		<where>
+			<if test="accountNo == null"> AND 1 = 0</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+			<if test="codeHash != null"> AND code_hash = #{codeHash}</if>
+		</where>
+	</delete>
+
+</mapper>

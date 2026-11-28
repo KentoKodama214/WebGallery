@@ -13,68 +13,19 @@ import {
   updateAccount,
   deleteAccount,
   getPrefectures,
-  ApiError,
 } from "@/lib/api/client";
 import type { PrefectureGroup } from "@/lib/api/client";
 import {
   ACCOUNT_NAME_MAX_LENGTH,
   FREE_MEMO_MAX_LENGTH,
-  PASSWORD_PATTERN,
-  PASSWORD_ERROR_MESSAGE,
-  PASSWORD_PLACEHOLDER,
   clearError,
   isPastDate,
 } from "@/lib/validation";
+import { PasskeyCancelledError } from "@/lib/auth/passkey";
+import { reauthenticateWithPasskey } from "@/lib/auth/reauthenticate";
 import { ModalDialog } from "@/components/ui/ModalDialog";
-
-/** 再認証（現在のパスワード）に連続して失敗した場合に操作を一時停止する回数 */
-const REAUTH_MAX_ATTEMPTS = 3;
-/** 再認証の一時停止時間（ミリ秒）。バックエンドのロックとは別のクライアント側の連打抑止 */
-const REAUTH_COOLDOWN_MS = 60_000;
-/** 再認証クールダウン状態を保存する sessionStorage キーの接頭辞 */
-const REAUTH_STATE_KEY_PREFIX = "webgallery.reauthCooldown.";
-
-/** クライアント側の再認証クールダウン状態 */
-type ReauthState = { failCount: number; cooldownUntil: number };
-
-const EMPTY_REAUTH_STATE: ReauthState = { failCount: 0, cooldownUntil: 0 };
-
-/**
- * sessionStorage から再認証クールダウン状態を読み出す
- *
- * 画面遷移・再マウント・リロードをまたいで連打抑止を維持するため、タブ単位で永続化する
- * （タブを閉じると消える。実効的なブルートフォース防御はバックエンドの ReauthenticationThrottle）。
- */
-function loadReauthState(accountId: string): ReauthState {
-  if (typeof window === "undefined") return EMPTY_REAUTH_STATE;
-  try {
-    const raw = window.sessionStorage.getItem(REAUTH_STATE_KEY_PREFIX + accountId);
-    if (!raw) return EMPTY_REAUTH_STATE;
-    const parsed = JSON.parse(raw) as Partial<ReauthState>;
-    return {
-      failCount: typeof parsed.failCount === "number" ? parsed.failCount : 0,
-      cooldownUntil:
-        typeof parsed.cooldownUntil === "number" ? parsed.cooldownUntil : 0,
-    };
-  } catch {
-    return EMPTY_REAUTH_STATE;
-  }
-}
-
-/** sessionStorage へ再認証クールダウン状態を保存する（空状態なら削除する） */
-function saveReauthState(accountId: string, state: ReauthState): void {
-  if (typeof window === "undefined") return;
-  try {
-    const key = REAUTH_STATE_KEY_PREFIX + accountId;
-    if (state.failCount === 0 && state.cooldownUntil === 0) {
-      window.sessionStorage.removeItem(key);
-    } else {
-      window.sessionStorage.setItem(key, JSON.stringify(state));
-    }
-  } catch {
-    // sessionStorage が使えない環境（プライベートモード等）では連打抑止はベストエフォート
-  }
-}
+import { PasskeySection } from "./PasskeySection";
+import { RecoveryCodeSection } from "./RecoveryCodeSection";
 
 interface AccountSettingFormProps {
   accountId: string;
@@ -92,9 +43,6 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
 
   const [formAccountId, setFormAccountId] = useState(accountId);
   const [accountName, setAccountName] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  // パスワード変更時の本人確認用（現在のパスワード）
-  const [currentPassword, setCurrentPassword] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [sexKbn, setSexKbn] = useState("none");
   const [birthplacePrefectureKbnCode, setBirthplacePrefectureKbnCode] = useState("none");
@@ -111,8 +59,6 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
   // 削除成功後は logout で user が消え isOwner が false になるが、その一瞬に
   // 「権限がありません」画面を見せないためのフラグ（/login へ退避するまでの繋ぎ表示）
   const [deleteSucceeded, setDeleteSucceeded] = useState(false);
-  // アカウント削除時の本人確認用（現在のパスワード）
-  const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteErrorState] = useState("");
   // deleteError を表示する要素の React key。エラーメッセージ本体をセットする箇所でのみ
   // インクリメントする（クリア時は変えない）。同一文言のエラーが連続しても要素を
@@ -132,24 +78,6 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     setDuplicateErrorState(message);
     if (message) setDuplicateErrorSeq((seq) => seq + 1);
   };
-  // 再認証（現在のパスワード）の連続失敗によるクライアント側の一時停止。
-  // sessionStorage で再マウント・画面遷移をまたいで維持する。
-  // このコンポーネントは <AuthGuard> 配下で常にクライアント側でのみ初回レンダリングされるため、
-  // 初期値を sessionStorage から読んでもハイドレーション不整合は起きない。
-  const [reauthState, setReauthState] = useState<ReauthState>(() => {
-    const saved = loadReauthState(accountId);
-    // 期限切れのクールダウンは 0 に戻すが、失敗カウント自体は保持する
-    // （再マウント・画面遷移をまたいでも「あと何回で一時停止か」を維持する）
-    return {
-      failCount: saved.failCount,
-      cooldownUntil: saved.cooldownUntil > Date.now() ? saved.cooldownUntil : 0,
-    };
-  });
-  // sessionStorage への書き戻しキーとして扱っている accountId。accountId 切替時のズレを防ぐ。
-  const reauthAccountIdRef = useRef(accountId);
-  const reauthCooldownUntil = reauthState.cooldownUntil;
-  const [now, setNow] = useState(() => Date.now());
-  const isReauthCoolingDown = now < reauthCooldownUntil;
   // 初期データ取得の失敗（ログインへは飛ばさず画面内で通知し、再試行させる）
   const [loadError, setLoadError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
@@ -200,13 +128,6 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
 
   // 未ログイン時の /login への誘導は、このコンポーネントをラップする <AuthGuard> が行う。
 
-  // 再認証クールダウンの残り時間表示を更新し、期限が来たら解除するためのタイマー
-  useEffect(() => {
-    if (!isReauthCoolingDown) return;
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, [isReauthCoolingDown]);
-
   // アンマウント時にタイマーを破棄する
   useEffect(() => {
     return () => {
@@ -230,15 +151,6 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       newErrors.freeMemo = `メモは${FREE_MEMO_MAX_LENGTH}文字以内で入力してください`;
     }
 
-    if (newPassword && !PASSWORD_PATTERN.test(newPassword)) {
-      newErrors.newPassword = PASSWORD_ERROR_MESSAGE;
-    }
-
-    // パスワードを変更する場合は現在のパスワードの入力を必須とする
-    if (newPassword && !currentPassword) {
-      newErrors.currentPassword = "現在のパスワードを入力してください";
-    }
-
     if (birthdate && !isPastDate(birthdate)) {
       newErrors.birthdate = "過去の日付を入力してください";
     }
@@ -246,49 +158,6 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  const reauthCooldownMessage =
-    "現在のパスワードの確認に連続して失敗しました。しばらく待ってから再度お試しください。";
-
-  /**
-   * 再認証（現在のパスワード）失敗を記録し、上限に達したらクライアント側で操作を一時停止する
-   * （バックエンドのアカウントロックとは別の、連打抑止のための多層防御）
-   */
-  const recordReauthFailure = () => {
-    setReauthState((prev) => {
-      const failCount = prev.failCount + 1;
-      // 上限に達したらクールダウンを設定し、失敗カウントは 0 に戻す
-      // （クールダウン明けは再び上限回数まで試行でき、「単発失敗ごとに即クールダウン」にならない）
-      return failCount >= REAUTH_MAX_ATTEMPTS
-        ? { failCount: 0, cooldownUntil: Date.now() + REAUTH_COOLDOWN_MS }
-        : { failCount, cooldownUntil: 0 };
-    });
-    setNow(Date.now());
-  };
-
-  /** 再認証成功時にクライアント側の失敗カウンタ・クールダウンをリセットする */
-  const resetReauthState = () => {
-    setReauthState(EMPTY_REAUTH_STATE);
-  };
-
-  // 再認証クールダウン状態の変化を sessionStorage へ書き戻す（再マウント・画面遷移をまたいで維持する）
-  useEffect(() => {
-    // accountId 切替直後の1回は、下の再初期化 effect が状態を読み直すまで書き戻さない
-    // （前アカウントの状態を新しい accountId キーへ書き込まないため）
-    if (reauthAccountIdRef.current !== accountId) return;
-    saveReauthState(accountId, reauthState);
-  }, [accountId, reauthState]);
-
-  // accountId が切り替わったら、その accountId のクールダウン状態を読み直す
-  useEffect(() => {
-    if (reauthAccountIdRef.current === accountId) return;
-    reauthAccountIdRef.current = accountId;
-    const saved = loadReauthState(accountId);
-    setReauthState({
-      failCount: saved.failCount,
-      cooldownUntil: saved.cooldownUntil > Date.now() ? saved.cooldownUntil : 0,
-    });
-  }, [accountId]);
 
   /**
    * 登録する
@@ -299,20 +168,12 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
 
     if (!validate()) return;
 
-    // パスワード変更（＝再認証が必要）で連続失敗中は、クールダウンが明けるまで送信しない
-    if (newPassword && isReauthCoolingDown) {
-      setDuplicateError(reauthCooldownMessage);
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
       const result = await updateAccount(accountId, {
         accountId: formAccountId,
         accountName,
-        newPassword,
-        currentPassword: newPassword ? currentPassword : "",
         birthdate: birthdate || null,
         sexKbn,
         birthplacePrefectureKbnCode,
@@ -321,30 +182,14 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
       });
 
       // アカウントIDは変更不可（入力欄はdisabled）だが、バックエンド契約に沿って防御的に扱う
-      // （この経路ではバックエンドが本人確認を行わずに返すため、再認証カウンタはリセットしない）
       if (result.isDuplicateAccountId) {
         setDuplicateError("このアカウントIDは既に使われています");
-        return;
-      }
-
-      // ここまで来れば更新成功。再認証の失敗カウンタをリセットする
-      resetReauthState();
-
-      // パスワード変更時は再ログインが必要
-      if (result.isPasswordChanged) {
-        await logout();
-        router.push("/login");
         return;
       }
 
       setShowModal(true);
       modalTimerRef.current = setTimeout(() => setShowModal(false), 5000);
     } catch (err) {
-      // 再認証を伴う操作（パスワード変更）での 403 のみ連打抑止の対象にする。
-      // プロフィールのみ更新時の 403（セッション失効等）は再認証失敗ではないため数えない。
-      if (newPassword && err instanceof ApiError && err.status === 403) {
-        recordReauthFailure();
-      }
       setDuplicateError(err instanceof Error ? err.message : "更新に失敗しました");
     } finally {
       setIsSubmitting(false);
@@ -353,33 +198,24 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
 
   /**
    * アカウント削除
+   *
+   * 削除の直前に、端末のパスキーで本人確認（生体認証・PIN）を行う
    */
   const handleDeleteAccount = async () => {
-    // 削除には現在のパスワードによる本人確認が必要
-    if (!deletePassword) {
-      setDeleteError("現在のパスワードを入力してください");
-      return;
-    }
-    // 再認証に連続失敗中は、クールダウンが明けるまで削除を実行しない
-    if (isReauthCoolingDown) {
-      setDeleteError(reauthCooldownMessage);
-      return;
-    }
     setIsDeleting(true);
     setDeleteError("");
 
     let deleted = false;
     try {
-      await deleteAccount(accountId, deletePassword);
+      const credential = await reauthenticateWithPasskey(accountId);
+      await deleteAccount(accountId, credential);
       deleted = true;
-      resetReauthState();
     } catch (err) {
-      if (err instanceof ApiError && err.status === 403) {
-        // 現在のパスワード不一致・ロック。連打抑止のため失敗を記録する
-        recordReauthFailure();
+      // 利用者自身によるパスキー操作のキャンセルは失敗として表示しない
+      if (!(err instanceof PasskeyCancelledError)) {
+        // 削除失敗（本人確認の失敗等）はダイアログを開いたまま通知する
+        setDeleteError(err instanceof Error ? err.message : "アカウント削除に失敗しました");
       }
-      // 削除失敗（パスワード不一致等）はダイアログを開いたまま通知する
-      setDeleteError(err instanceof Error ? err.message : "アカウント削除に失敗しました");
     }
 
     if (deleted) {
@@ -509,57 +345,6 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               <p id="account-setting-name-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.accountName}</p>
             )}
 
-            <label htmlFor="account-setting-current-password" className="block text-[#444] text-sm mb-1 mt-2">
-              現在のパスワード
-            </label>
-            <input
-              id="account-setting-current-password"
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(e) => {
-                setCurrentPassword(e.target.value);
-                setErrors((prev) => clearError(prev, "currentPassword"));
-              }}
-              onBlur={() => {
-                if (newPassword && !currentPassword) {
-                  setErrors((prev) => ({ ...prev, currentPassword: "現在のパスワードを入力してください" }));
-                } else {
-                  setErrors((prev) => clearError(prev, "currentPassword"));
-                }
-              }}
-              placeholder="パスワードを変更する場合のみ入力してください"
-              aria-invalid={errors.currentPassword ? true : undefined}
-              aria-describedby={errors.currentPassword ? "account-setting-current-password-error" : undefined}
-              className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
-            />
-            {errors.currentPassword && (
-              <p id="account-setting-current-password-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.currentPassword}</p>
-            )}
-
-            <label htmlFor="account-setting-password" className="block text-[#444] text-sm mb-1 mt-2">新しいパスワード</label>
-            <input
-              id="account-setting-password"
-              type="password"
-              autoComplete="new-password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              onBlur={() => {
-                if (newPassword && !PASSWORD_PATTERN.test(newPassword)) {
-                  setErrors((prev) => ({ ...prev, newPassword: PASSWORD_ERROR_MESSAGE }));
-                } else {
-                  setErrors((prev) => clearError(prev, "newPassword"));
-                }
-              }}
-              placeholder={PASSWORD_PLACEHOLDER}
-              aria-invalid={errors.newPassword ? true : undefined}
-              aria-describedby={errors.newPassword ? "account-setting-password-error" : undefined}
-              className="block w-full p-[10px] mb-1 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
-            />
-            {errors.newPassword && (
-              <p id="account-setting-password-error" className="text-[#C62828] text-xs font-bold mb-2">{errors.newPassword}</p>
-            )}
-
             <label htmlFor="account-setting-birthdate" className="block text-[#444] text-sm mb-1 mt-2">生年月日</label>
             <input
               id="account-setting-birthdate"
@@ -651,20 +436,9 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               <p key={duplicateErrorSeq} role="alert" className="text-[#C62828] text-xs font-bold mb-2">{duplicateError}</p>
             )}
 
-            {isReauthCoolingDown && (
-              <p className="text-[#C62828] text-xs font-bold mb-2">
-                {/* メッセージ本文だけを1度告知する。毎秒変わる残り秒数はライブリージョン外に置き、
-                    スクリーンリーダーが毎秒読み上げないようにする */}
-                <span role="alert">{reauthCooldownMessage}</span>
-                <span aria-hidden="true">
-                  （約{Math.ceil((reauthCooldownUntil - now) / 1000)}秒）
-                </span>
-              </p>
-            )}
-
             <button
               type="submit"
-              disabled={isSubmitting || (!!newPassword && isReauthCoolingDown)}
+              disabled={isSubmitting}
               className="w-full h-[50px] bg-[#1565C0] text-white border-none rounded-sm cursor-pointer transition-all duration-100 hover:shadow-[0px_1px_3px_#1565C0] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
             >
               {isSubmitting ? (
@@ -674,6 +448,10 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               )}
             </button>
           </form>
+
+          <PasskeySection accountId={accountId} />
+
+          <RecoveryCodeSection accountId={accountId} />
 
           <div className="mt-6 bg-white rounded-md shadow-[0px_1px_5px_rgba(0,0,0,0.3)] p-5">
             <p className="text-[#444] text-sm mb-3">アカウントを削除すると、登録した写真やお気に入りはすべて削除され、復旧できなくなります。</p>
@@ -695,14 +473,16 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
           onClose={() => {
             if (isDeleting) return;
             setShowDeleteConfirm(false);
-            setDeletePassword("");
             setDeleteError("");
           }}
           overlayClassName="fixed inset-0 bg-[rgba(0,0,0,0.5)] flex items-center justify-center z-[2000]"
           containerClassName="bg-white rounded-md p-6 shadow-lg relative max-w-[300px] w-[90%]"
         >
-          <p className="text-[#444] text-center mb-4">
+          <p className="text-[#444] text-center mb-2">
             登録した写真やお気に入りはすべて削除され、復旧できなくなります。よろしいですか？
+          </p>
+          <p className="text-[#666] text-xs text-center mb-4">
+            「はい」を押すと、本人確認のためにパスキー（生体認証・PIN）を求められます。
           </p>
           <form
             onSubmit={(e) => {
@@ -710,20 +490,6 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               handleDeleteAccount();
             }}
           >
-            <label htmlFor="account-delete-password" className="block text-[#444] text-sm mb-1">
-              現在のパスワード
-            </label>
-            <input
-              id="account-delete-password"
-              type="password"
-              autoComplete="current-password"
-              value={deletePassword}
-              onChange={(e) => {
-                setDeletePassword(e.target.value);
-                setDeleteError("");
-              }}
-              className="block w-full p-[10px] mb-2 border border-[#ddd] rounded-sm text-[#444] outline-none focus:border-[#2196F3]"
-            />
             {deleteError && (
               <p key={deleteErrorSeq} role="alert" className="text-[#C62828] text-xs font-bold mb-2">{deleteError}</p>
             )}
@@ -733,7 +499,6 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
                 data-dialog-initial-focus
                 onClick={() => {
                   setShowDeleteConfirm(false);
-                  setDeletePassword("");
                   setDeleteError("");
                 }}
                 disabled={isDeleting}
@@ -743,7 +508,7 @@ export function AccountSettingForm({ accountId }: AccountSettingFormProps) {
               </button>
               <button
                 type="submit"
-                disabled={isDeleting || isReauthCoolingDown}
+                disabled={isDeleting}
                 className="flex-1 h-[40px] bg-[#C62828] text-white border-none rounded-sm cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isDeleting ? (

@@ -14,24 +14,40 @@ public final class ApiRoutes {
   /** 認証APIプレフィックス */
   public static final String API_AUTH_PREFIX = API_PREFIX + "/auth";
 
-  /** 認証ログインAPI */
-  public static final String API_AUTH_LOGIN = API_AUTH_PREFIX + "/login";
-
   /** 認証リフレッシュAPI */
   public static final String API_AUTH_REFRESH = API_AUTH_PREFIX + "/refresh";
 
   /** 認証ログアウトAPI */
   public static final String API_AUTH_LOGOUT = API_AUTH_PREFIX + "/logout";
 
+  /** パスキー認証オプション発行API（POST=チャレンジ等の発行。未ログインで呼び出す） */
+  public static final String API_AUTH_PASSKEY_OPTIONS = API_AUTH_PREFIX + "/passkey/options";
+
+  /** パスキーログインAPI（POST=認証レスポンスの検証とトークン発行） */
+  public static final String API_AUTH_PASSKEY_LOGIN = API_AUTH_PREFIX + "/passkey/login";
+
+  /** 復旧オプション発行API（POST=リカバリーコードで本人確認し、新しいパスキーの登録オプションを発行。未ログインで呼び出す） */
+  public static final String API_AUTH_RECOVERY_OPTIONS = API_AUTH_PREFIX + "/recovery/options";
+
+  /** 復旧ログインAPI（POST=新しいパスキーの登録レスポンスを検証して登録し、トークンを発行） */
+  public static final String API_AUTH_RECOVERY_LOGIN = API_AUTH_PREFIX + "/recovery/login";
+
   // アカウント関連
   /** アカウントAPI（POST=登録） */
   public static final String API_ACCOUNTS = API_PREFIX + "/accounts";
+
+  /**
+   * アカウント新規登録オプション発行API（POST=最初のパスキーを作成するためのチャレンジ等を発行。未ログインで呼び出す）
+   *
+   * <p>アカウントIDは半角英数字のみのため、{@code {accountId}}のパスとは衝突しない
+   */
+  public static final String API_ACCOUNT_SIGNUP_OPTIONS = API_ACCOUNTS + "/signup-options";
 
   /** 個別アカウントAPI（PUT=更新） */
   public static final String API_ACCOUNT = API_ACCOUNTS + "/" + ACCOUNT_ID;
 
   /**
-   * アカウント削除API（POST=現在のパスワードによる再認証のうえ物理削除）
+   * アカウント削除API（POST=パスキーによる再認証のうえ物理削除）
    *
    * <p>本人確認情報をリクエストボディで安全に受け取れるよう、DELETEではなくPOSTのサブリソースとする
    * （DELETEのボディは一部の中継経路で破棄されうるため。カスタムヘッダーはアクセスログ等に 記録されやすいため用いない）
@@ -40,6 +56,45 @@ public final class ApiRoutes {
 
   /** ロケーション一覧API（GET=本人のロケーションマスタ一覧取得） */
   public static final String API_LOCATIONS = API_ACCOUNT + "/locations";
+
+  /**
+   * 本人確認オプション発行API（POST=重要操作の前にパスキーで本人確認するためのチャレンジ等を発行）
+   *
+   * <p>発行したチャレンジへの署名（認証レスポンス）を、パスキーの登録・削除、退会、リカバリーコードの再発行のリクエストに添える
+   */
+  public static final String API_REAUTHENTICATION_OPTIONS =
+      API_ACCOUNT + "/reauthentication-options";
+
+  /**
+   * リカバリーコードAPI（GET=未使用のリカバリーコードの件数取得、POST=パスキーによる再認証のうえ再発行）
+   *
+   * <p>再発行は本人確認情報をリクエストボディで受け取るためPOSTとする
+   */
+  public static final String API_RECOVERY_CODES = API_ACCOUNT + "/recovery-codes";
+
+  /** パスキー一覧・登録API（GET=本人のパスキー一覧取得、POST=登録レスポンスの検証と登録） */
+  public static final String API_PASSKEYS = API_ACCOUNT + "/passkeys";
+
+  /**
+   * パスキー登録オプション発行API（POST=パスキーによる再認証のうえチャレンジ等を発行）
+   *
+   * <p>本人確認情報をリクエストボディで受け取るため、GETではなくPOSTとする
+   */
+  public static final String API_PASSKEY_REGISTRATION_OPTIONS =
+      API_PASSKEYS + "/registration-options";
+
+  /** パスキー番号 */
+  public static final String PASSKEY_NO = "{passkeyNo}";
+
+  /** 個別パスキーAPI（PUT=パスキー名の変更） */
+  public static final String API_PASSKEY = API_PASSKEYS + "/" + PASSKEY_NO;
+
+  /**
+   * パスキー削除API（POST=パスキーによる再認証のうえ削除）
+   *
+   * <p>アカウント削除APIと同じく、本人確認情報をリクエストボディで受け取るためPOSTのサブリソースとする
+   */
+  public static final String API_PASSKEY_DELETION = API_PASSKEY + "/deletion";
 
   /** 写真アカウントID */
   public static final String PHOTO_ACCOUNT_ID = "{photoAccountId}";

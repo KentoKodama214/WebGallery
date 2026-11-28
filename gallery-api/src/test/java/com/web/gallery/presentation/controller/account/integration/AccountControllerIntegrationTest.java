@@ -7,21 +7,31 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.web.gallery.application.AccountPrincipal;
 import com.web.gallery.application.model.account.AccountModel;
+import com.web.gallery.application.model.auth.WebAuthnChallengeModel;
+import com.web.gallery.application.repository.auth.WebAuthnChallengeRepository;
 import com.web.gallery.application.repository.photo.FileRepository;
+import com.web.gallery.application.service.account.AccountService;
 import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.enumeration.ErrorEnum;
 import com.web.gallery.domain.enumeration.SexEnum;
+import com.web.gallery.domain.enumeration.WebAuthnChallengePurposeEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.domain.model.account.Password;
+import com.web.gallery.domain.model.auth.PasskeyChallenge;
+import com.web.gallery.domain.model.auth.PasskeyName;
+import com.web.gallery.domain.model.auth.PasskeyResponseJson;
+import com.web.gallery.domain.model.common.ExpiresAt;
 import com.web.gallery.infrastructure.persistence.entity.account.Account;
+import com.web.gallery.testsupport.PasskeyTestAuthenticator;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -43,6 +53,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -54,17 +67,54 @@ import org.springframework.transaction.annotation.Transactional;
 // コンテキスト生成回数が減ってCIの実行時間が短くなる
 @MockitoBean(types = FileRepository.class)
 public class AccountControllerIntegrationTest {
-  /** account_no=1（aaaaaaaa）のフィクスチャのパスワード平文と、そのBCryptハッシュ */
-  private static final String ACCOUNT1_PASSWORD = "password01";
-
-  private static final String ACCOUNT1_PASSWORD_HASH =
-      "$2a$10$k19cLX6F2brrOLYp74GstejFJfeGjm52TMk..ELwoJeTcBcUnBVM2";
+  private static final JsonMapper JSON = JsonMapper.builder().build();
 
   @Autowired private MockMvc mockMvc;
 
   @Autowired private JdbcTemplate jdbcTemplate;
 
   @Autowired private com.web.gallery.application.helper.JwtTokenProvider jwtTokenProvider;
+
+  @Autowired private AccountService accountService;
+
+  @Autowired private WebAuthnChallengeRepository webAuthnChallengeRepository;
+
+  /**
+   * JSONファイルのリクエストボディに、新規登録オプションのチャレンジへ擬似認証器で作成したパスキーの登録レスポンスを加える
+   *
+   * @param fileName リクエストボディのJSONファイル名
+   * @return リクエストボディ
+   */
+  private String withSignupCredential(String fileName) throws Exception {
+    Map<String, Object> body =
+        JSON.readValue(
+            readJsonFile(fileName), new TypeReference<LinkedHashMap<String, Object>>() {});
+    String accountId = (String) body.get("accountId");
+    String optionsBody =
+        mockMvc
+            .perform(
+                post("/api/v1/accounts/signup-options")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        JSON.writeValueAsString(
+                            Map.of(
+                                "accountId", accountId, "accountName", body.get("accountName")))))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    JsonNode options = JSON.readTree(optionsBody);
+    body.put(
+        "credential",
+        new PasskeyTestAuthenticator()
+            .createRegistrationResponseJson(
+                options.get("rp").get("id").asString(),
+                options.get("challenge").asString(),
+                options.get("user").get("id").asString(),
+                accountId));
+    body.put("passkeyName", "MacBookのTouch ID");
+    return JSON.writeValueAsString(body);
+  }
 
   private String readJsonFile(String fileName) throws Exception {
     return new String(
@@ -73,6 +123,56 @@ public class AccountControllerIntegrationTest {
             .getInputStream()
             .readAllBytes(),
         StandardCharsets.UTF_8);
+  }
+
+  /**
+   * フィクスチャで投入した既存アカウントに、擬似認証器のパスキーを登録する
+   *
+   * <p>パスキーの追加登録には本人確認が必要なため、登録用チャレンジを直接発行して登録処理のみを通す
+   *
+   * @param accountNo アカウント番号
+   * @return パスキーを保持する擬似認証器
+   */
+  private PasskeyTestAuthenticator registerTestPasskey(long accountNo) throws Exception {
+    PasskeyTestAuthenticator authenticator = new PasskeyTestAuthenticator();
+    String challenge = "cmVnaXN0cmF0aW9uLWNoYWxsZW5nZS0x";
+    webAuthnChallengeRepository.save(
+        WebAuthnChallengeModel.of(
+            new PasskeyChallenge(challenge),
+            WebAuthnChallengePurposeEnum.REGISTRATION,
+            new AccountNo(accountNo),
+            new ExpiresAt(OffsetDateTime.now().plusMinutes(5))));
+    accountService.registerPasskey(
+        new AccountNo(accountNo),
+        new PasskeyResponseJson(
+            authenticator.createRegistrationResponseJson(
+                PasskeyTestAuthenticator.RP_ID, challenge, "dXNlci1oYW5kbGU", "aaaaaaaa")),
+        new PasskeyName("テスト用パスキー"));
+    return authenticator;
+  }
+
+  /**
+   * 本人確認オプションAPIでチャレンジを発行し、擬似認証器のパスキーで署名した認証レスポンスを返す
+   *
+   * @param authenticator パスキーを保持する擬似認証器
+   * @param authentication ログイン中のアカウントの認証情報
+   * @return 本人確認用の認証レスポンス
+   */
+  private String reauthenticate(
+      PasskeyTestAuthenticator authenticator, Authentication authentication) throws Exception {
+    String body =
+        mockMvc
+            .perform(
+                post("/api/v1/accounts/aaaaaaaa/reauthentication-options")
+                    .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
+                    .with(csrf()))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    JsonNode options = JSON.readTree(body);
+    return authenticator.createAuthenticationResponseJson(
+        options.get("rpId").asString(), options.get("challenge").asString());
   }
 
   @Nested
@@ -140,7 +240,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(1L))
               .accountId(new AccountId(accountId))
               .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("$2a$10$password1"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -176,7 +275,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(2L))
               .accountId(new AccountId(accountId))
               .accountName(new AccountName("BBBBBBBB"))
-              .password(new Password("$2a$10$password2"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -210,7 +308,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(1L))
               .accountId(new AccountId("aaaaaaaa"))
               .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("$2a$10$password1"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -289,7 +386,6 @@ public class AccountControllerIntegrationTest {
                   .isDeleted(rs.getBoolean("is_deleted"))
                   .accountId(rs.getString("account_id"))
                   .accountName(rs.getString("account_name"))
-                  .password(rs.getString("password"))
                   .birthdate(rs.getObject("birthdate", LocalDate.class))
                   .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                   .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -318,13 +414,14 @@ public class AccountControllerIntegrationTest {
           .perform(
               post("/api/v1/accounts")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("register_regist_success.json"))
+                  .content(withSignupCredential("register_regist_success.json"))
                   .with(csrf()))
           .andExpect(status().isOk())
           .andExpect(content().contentType(MediaType.APPLICATION_JSON))
           .andExpect(jsonPath("$.httpStatus").value(200))
           .andExpect(jsonPath("$.isSuccess").value(true))
-          .andExpect(jsonPath("$.message").value(""));
+          .andExpect(jsonPath("$.message").value(""))
+          .andExpect(jsonPath("$.recoveryCodes.length()").value(10));
 
       List<Account> actualData = getAccountList(accountId);
 
@@ -355,30 +452,42 @@ public class AccountControllerIntegrationTest {
               "SELECT authority_kbn FROM common.account_authority WHERE account_no=4",
               (rs, rowNum) -> AuthorityEnum.getOrDefault(rs.getString("authority_kbn")));
       assertEquals(AuthorityEnum.MINI, actualAuthorityKbn);
+
+      // 最初のパスキーとリカバリーコードも登録されること
+      assertEquals(
+          1,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.passkey_credential WHERE account_no=4", Integer.class));
+      assertEquals(
+          10,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.recovery_code WHERE account_no=4", Integer.class));
     }
 
     @Test
     @Order(2)
-    @DisplayName("正常系：既に使われているアカウントIDの場合")
+    @DisplayName("異常系：既に使われているアカウントIDの場合、新規登録オプションを発行せず409を返す")
     void register_exist_accountId() throws Exception {
       String accountId = "aaaaaaaa";
 
       mockMvc
           .perform(
-              post("/api/v1/accounts")
+              post("/api/v1/accounts/signup-options")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("register_exist_accountid.json"))
+                  .content(
+                      JSON.writeValueAsString(
+                          Map.of("accountId", accountId, "accountName", "AAAAAAAA")))
                   .with(csrf()))
-          .andExpect(status().isOk())
-          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-          .andExpect(jsonPath("$.httpStatus").value(200))
-          .andExpect(jsonPath("$.isSuccess").value(false))
-          .andExpect(jsonPath("$.message").value(""));
+          .andExpect(status().isConflict())
+          .andExpect(jsonPath("$.errorCode").value(ErrorEnum.DUPLICATE_ACCOUNT_ID.getErrorCode()));
 
       List<Account> actualData = getAccountList(accountId);
       assertEquals(1, actualData.size());
-      assertEquals(accountId, actualData.getFirst().getAccountId());
       assertEquals("AAAAAAAA", actualData.getFirst().getAccountName());
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.webauthn_challenge", Integer.class));
     }
 
     @Test
@@ -406,7 +515,7 @@ public class AccountControllerIntegrationTest {
           .perform(
               post("/api/v1/accounts")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("register_badrequest_invalid_prefecture.json"))
+                  .content(withSignupCredential("register_badrequest_invalid_prefecture.json"))
                   .with(csrf()))
           .andExpect(status().isBadRequest())
           .andExpect(jsonPath("$.message").value(ErrorEnum.INVALID_INPUT.getErrorMessage()));
@@ -434,7 +543,6 @@ public class AccountControllerIntegrationTest {
                   .isDeleted(rs.getBoolean("is_deleted"))
                   .accountId(rs.getString("account_id"))
                   .accountName(rs.getString("account_name"))
-                  .password(rs.getString("password"))
                   .birthdate(rs.getObject("birthdate", LocalDate.class))
                   .sexKbn(SexEnum.getOrDefault(rs.getString("sex_kbn")))
                   .birthplacePrefectureKbnCode(rs.getString("birthplace_prefecture_kbn_code"))
@@ -448,8 +556,8 @@ public class AccountControllerIntegrationTest {
 
     @Test
     @Order(1)
-    @DisplayName("正常系：アカウントID、パスワード変更なし")
-    void update_not_change_accountID_and_password() throws Exception {
+    @DisplayName("正常系：アカウントID変更なし")
+    void update_not_change_accountID() throws Exception {
       String accountId = "aaaaaaaa";
       String accountName = "AAAAAAAA";
 
@@ -458,7 +566,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(1L))
               .accountId(new AccountId(accountId))
               .accountName(new AccountName(accountName))
-              .password(new Password("$2a$10$password1"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -481,7 +588,6 @@ public class AccountControllerIntegrationTest {
           .andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
           .andExpect(jsonPath("$.isDuplicateAccountId").value(false))
           .andExpect(jsonPath("$.isAccountIdChanged").value(false))
-          .andExpect(jsonPath("$.isPasswordChanged").value(false))
           .andExpect(jsonPath("$.message").value(""));
 
       List<Account> actual = getAccountList(accountId);
@@ -496,7 +602,6 @@ public class AccountControllerIntegrationTest {
       assertFalse(actual.getFirst().getIsDeleted());
       assertEquals(accountId, actual.getFirst().getAccountId());
       assertEquals(accountName, actual.getFirst().getAccountName());
-      assertEquals(ACCOUNT1_PASSWORD_HASH, actual.getFirst().getPassword());
       // プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
       assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
@@ -512,7 +617,7 @@ public class AccountControllerIntegrationTest {
 
     @Test
     @Order(2)
-    @DisplayName("正常系：アカウントID変更あり、パスワード変更なし")
+    @DisplayName("正常系：アカウントID変更あり")
     void update_change_accountID() throws Exception {
       String accountId = "aaaaaaaab";
       String accountName = "AAAAAAAA";
@@ -522,7 +627,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(1L))
               .accountId(new AccountId("aaaaaaaa"))
               .accountName(new AccountName(accountName))
-              .password(new Password("$2a$10$password1"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -545,7 +649,6 @@ public class AccountControllerIntegrationTest {
           .andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
           .andExpect(jsonPath("$.isDuplicateAccountId").value(false))
           .andExpect(jsonPath("$.isAccountIdChanged").value(true))
-          .andExpect(jsonPath("$.isPasswordChanged").value(false))
           .andExpect(jsonPath("$.message").value(""));
 
       List<Account> actual = getAccountList(accountId);
@@ -560,170 +663,6 @@ public class AccountControllerIntegrationTest {
       assertFalse(actual.getFirst().getIsDeleted());
       assertEquals(accountId, actual.getFirst().getAccountId());
       assertEquals(accountName, actual.getFirst().getAccountName());
-      assertEquals(ACCOUNT1_PASSWORD_HASH, actual.getFirst().getPassword());
-      // プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
-      assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
-      assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
-      assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode());
-      assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode());
-      assertEquals("", actual.getFirst().getFreeMemo());
-      assertEquals(
-          OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
-          actual.getFirst().getLastLoginDatetime());
-      assertEquals(0, actual.getFirst().getLoginFailureCount());
-      assertFalse(actual.getFirst().getIsAdminLocked());
-    }
-
-    @Test
-    @Order(3)
-    @DisplayName("正常系：アカウントID変更なし、パスワード変更あり")
-    void update_change_password() throws Exception {
-      String accountId = "aaaaaaaa";
-      String accountName = "AAAAAAAA";
-
-      AccountModel sessionAccount =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .accountId(new AccountId(accountId))
-              .accountName(new AccountName(accountName))
-              .password(new Password("$2a$10$password1"))
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .build();
-
-      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(
-              accountPrincipal, null, accountPrincipal.getAuthorities());
-
-      OffsetDateTime transactionNow =
-          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-      mockMvc
-          .perform(
-              put("/api/v1/accounts/" + accountId)
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("update_change_password.json"))
-                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
-                  .with(csrf()))
-          .andExpect(status().isOk())
-          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
-          .andExpect(jsonPath("$.isDuplicateAccountId").value(false))
-          .andExpect(jsonPath("$.isAccountIdChanged").value(false))
-          .andExpect(jsonPath("$.isPasswordChanged").value(true))
-          .andExpect(jsonPath("$.message").value(""));
-
-      List<Account> actual = getAccountList(accountId);
-      assertEquals(1, actual.size());
-      assertEquals(1L, actual.getFirst().getAccountNo());
-      assertEquals(1L, actual.getFirst().getCreatedBy());
-      assertEquals(
-          OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
-          actual.getFirst().getCreatedAt());
-      assertEquals(1L, actual.getFirst().getUpdatedBy());
-      assertEquals(transactionNow, actual.getFirst().getUpdatedAt());
-      assertFalse(actual.getFirst().getIsDeleted());
-      assertEquals(accountId, actual.getFirst().getAccountId());
-      assertEquals(accountName, actual.getFirst().getAccountName());
-      assertNotEquals(ACCOUNT1_PASSWORD_HASH, actual.getFirst().getPassword());
-      // プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
-      assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
-      assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
-      assertEquals("none", actual.getFirst().getBirthplacePrefectureKbnCode());
-      assertEquals("none", actual.getFirst().getResidentPrefectureKbnCode());
-      assertEquals("", actual.getFirst().getFreeMemo());
-      assertEquals(
-          OffsetDateTime.of(2002, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
-          actual.getFirst().getLastLoginDatetime());
-      assertEquals(0, actual.getFirst().getLoginFailureCount());
-      assertFalse(actual.getFirst().getIsAdminLocked());
-    }
-
-    @Test
-    @Order(11)
-    @DisplayName("異常系：新しいパスワードを指定したが現在のパスワードが未入力の場合は400を返す")
-    void update_badRequest_newPassword_without_currentPassword() throws Exception {
-      String accountId = "aaaaaaaa";
-
-      AccountModel sessionAccount =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .accountId(new AccountId(accountId))
-              .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("$2a$10$password1"))
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .build();
-
-      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(
-              accountPrincipal, null, accountPrincipal.getAuthorities());
-
-      mockMvc
-          .perform(
-              put("/api/v1/accounts/" + accountId)
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(
-                      "{\"accountId\": \"aaaaaaaa\", \"accountName\": \"AAAAAAAA\", \"newPassword\": \"password111\"}")
-                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
-                  .with(csrf()))
-          .andExpect(status().isBadRequest())
-          .andExpect(jsonPath("$.message").value(MessageConst.ERR_INVALID_INPUT));
-
-      List<Account> actual = getAccountList(accountId);
-      assertEquals(ACCOUNT1_PASSWORD_HASH, actual.getFirst().getPassword());
-    }
-
-    @Test
-    @Order(4)
-    @DisplayName("正常系：アカウントID変更あり、パスワード変更あり")
-    void update_change_accountId_and_password() throws Exception {
-      String accountId = "aaaaaaaab";
-      String accountName = "AAAAAAAA";
-
-      AccountModel sessionAccount =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .accountId(new AccountId("aaaaaaaa"))
-              .accountName(new AccountName(accountName))
-              .password(new Password("$2a$10$password1"))
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .build();
-
-      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(
-              accountPrincipal, null, accountPrincipal.getAuthorities());
-
-      OffsetDateTime transactionNow =
-          jdbcTemplate.queryForObject("SELECT NOW()", OffsetDateTime.class);
-      mockMvc
-          .perform(
-              put("/api/v1/accounts/aaaaaaaa")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("update_change_accountid_and_password.json"))
-                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
-                  .with(csrf()))
-          .andExpect(status().isOk())
-          .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-          .andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
-          .andExpect(jsonPath("$.isDuplicateAccountId").value(false))
-          .andExpect(jsonPath("$.isAccountIdChanged").value(true))
-          .andExpect(jsonPath("$.isPasswordChanged").value(true))
-          .andExpect(jsonPath("$.message").value(""));
-
-      List<Account> actual = getAccountList(accountId);
-      assertEquals(1, actual.size());
-      assertEquals(1L, actual.getFirst().getAccountNo());
-      assertEquals(1L, actual.getFirst().getCreatedBy());
-      assertEquals(
-          OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(0)),
-          actual.getFirst().getCreatedAt());
-      assertEquals(1L, actual.getFirst().getUpdatedBy());
-      assertEquals(transactionNow, actual.getFirst().getUpdatedAt());
-      assertFalse(actual.getFirst().getIsDeleted());
-      assertEquals(accountId, actual.getFirst().getAccountId());
-      assertEquals(accountName, actual.getFirst().getAccountName());
-      assertNotEquals(ACCOUNT1_PASSWORD_HASH, actual.getFirst().getPassword());
       // プロフィール更新のリクエストに含まれない項目は「変更なし」としてフィクスチャ値を維持する
       assertEquals(LocalDate.of(1991, 2, 14), actual.getFirst().getBirthdate());
       assertEquals(SexEnum.NONE, actual.getFirst().getSexKbn());
@@ -748,7 +687,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(1L))
               .accountId(new AccountId("aaaaaaaa"))
               .accountName(new AccountName(accountName))
-              .password(new Password("$2a$10$password1"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -769,13 +707,12 @@ public class AccountControllerIntegrationTest {
           .andExpect(jsonPath("$.httpStatus").value(HttpStatus.OK.value()))
           .andExpect(jsonPath("$.isDuplicateAccountId").value(true))
           .andExpect(jsonPath("$.isAccountIdChanged").value(true))
-          .andExpect(jsonPath("$.isPasswordChanged").value(false))
           .andExpect(jsonPath("$.message").value(""));
     }
 
     @Test
     @Order(6)
-    @DisplayName("異常系：パスワード変更なしで、パスワード以外のパラメータが不正")
+    @DisplayName("異常系：アカウントIDが不正な場合、400を返す")
     void update_BadRequestException_account_id() throws Exception {
       String accountName = "AAAAAAAA";
 
@@ -784,7 +721,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(1L))
               .accountId(new AccountId("aaaaaaaa"))
               .accountName(new AccountName(accountName))
-              .password(new Password("$2a$10$password1"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -804,67 +740,6 @@ public class AccountControllerIntegrationTest {
     }
 
     @Test
-    @Order(7)
-    @DisplayName("異常系：パスワード変更ありで不正でなく、パスワード以外のパラメータが不正")
-    void update_BadRequestException_account_id_with_change_password() throws Exception {
-      String accountName = "AAAAAAAA";
-
-      AccountModel sessionAccount =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .accountId(new AccountId("aaaaaaaa"))
-              .accountName(new AccountName(accountName))
-              .password(new Password("$2a$10$password1"))
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .build();
-
-      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(
-              accountPrincipal, null, accountPrincipal.getAuthorities());
-
-      mockMvc
-          .perform(
-              put("/api/v1/accounts/aaaaaaaa")
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("update_badrequest_account_id_with_change_password.json"))
-                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
-                  .with(csrf()))
-          .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @Order(8)
-    @DisplayName("異常系：パスワード変更ありで、パスワードが不正")
-    void update_BadRequestException_password() throws Exception {
-      String accountId = "aaaaaaaa";
-      String accountName = "AAAAAAAA";
-
-      AccountModel sessionAccount =
-          AccountModel.builder()
-              .accountNo(new AccountNo(1L))
-              .accountId(new AccountId("aaaaaaaa"))
-              .accountName(new AccountName(accountName))
-              .password(new Password("$2a$10$password1"))
-              .authorityKbn(AuthorityEnum.ADMINISTRATOR)
-              .build();
-
-      AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);
-      Authentication authentication =
-          new UsernamePasswordAuthenticationToken(
-              accountPrincipal, null, accountPrincipal.getAuthorities());
-
-      mockMvc
-          .perform(
-              put("/api/v1/accounts/" + accountId)
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("update_badrequest_password.json"))
-                  .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
-                  .with(csrf()))
-          .andExpect(status().isBadRequest());
-    }
-
-    @Test
     @Order(9)
     @DisplayName("異常系：UpdateFailureExceptionをthrowする")
     void update_UpdateFailureException() throws Exception {
@@ -876,7 +751,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(9L))
               .accountId(new AccountId(accountId))
               .accountName(new AccountName(accountName))
-              .password(new Password("$2a$10$password1"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -918,7 +792,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(1L))
               .accountId(new AccountId(accountId))
               .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("$2a$10$password1"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -931,10 +804,20 @@ public class AccountControllerIntegrationTest {
           .perform(
               post("/api/v1/accounts/" + accountId + "/deletion")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("delete_account.json"))
+                  .content(
+                      JSON.writeValueAsString(
+                          Map.of(
+                              "credential",
+                              reauthenticate(registerTestPasskey(1L), authentication))))
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
                   .with(csrf()))
           .andExpect(status().isOk());
+
+      // パスキーも削除されたことを確認
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.passkey_credential where account_no=1", Integer.class));
 
       // アカウントが削除されたことを確認
       Integer accountCount =
@@ -995,7 +878,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(2L))
               .accountId(new AccountId("bbbbbbbb"))
               .accountName(new AccountName("BBBBBBBB"))
-              .password(new Password("$2a$10$password2"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -1008,7 +890,7 @@ public class AccountControllerIntegrationTest {
           .perform(
               post("/api/v1/accounts/" + accountId + "/deletion")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content(readJsonFile("delete_account.json"))
+                  .content("{\"credential\": \"{}\"}")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
                   .with(csrf()))
           .andExpect(status().isForbidden());
@@ -1022,7 +904,7 @@ public class AccountControllerIntegrationTest {
 
     @Test
     @Order(3)
-    @DisplayName("異常系：現在のパスワードが未入力の場合は400を返すこと")
+    @DisplayName("異常系：本人確認の認証レスポンスが未入力の場合は400を返すこと")
     void deleteAccount_badRequest() throws Exception {
       String accountId = "aaaaaaaa";
 
@@ -1031,7 +913,6 @@ public class AccountControllerIntegrationTest {
               .accountNo(new AccountNo(1L))
               .accountId(new AccountId(accountId))
               .accountName(new AccountName("AAAAAAAA"))
-              .password(new Password("$2a$10$password1"))
               .authorityKbn(AuthorityEnum.ADMINISTRATOR)
               .build();
 
@@ -1044,7 +925,7 @@ public class AccountControllerIntegrationTest {
           .perform(
               post("/api/v1/accounts/" + accountId + "/deletion")
                   .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"currentPassword\": \"\"}")
+                  .content("{\"credential\": \"\"}")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(authentication))
                   .with(csrf()))
           .andExpect(status().isBadRequest())

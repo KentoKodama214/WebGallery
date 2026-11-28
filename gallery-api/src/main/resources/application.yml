@@ -99,6 +99,13 @@ app:
     refreshTokenExpirationDays: 7
     # ローテーション済みトークンの再送をこの秒数以内なら正常系リトライとみなす（全セッション失効しない）
     refreshTokenReuseGraceSeconds: 30
+  webauthn:
+    # パスキー（WebAuthn）。RP ID（パスキーを紐づけるドメイン）と許可するorigin（フロントエンドのオリジン）は
+    # プロファイルごとに設定する。originのホストはRP IDと一致するかそのサブドメインである必要がある
+    # （WebAuthnConfigImplが起動時に検証する）
+    rp-name: WebGallery
+    # 登録・認証で発行するチャレンジの有効期間（秒）。クライアントへ渡すタイムアウトにも使う
+    challenge-timeout-seconds: 300
   rate-limit:
     # 送信元IPごとのエンドポイント別レート制限（前段WAF/LBのレート制限に加えた多層防御）。
     # プロセスローカルのカウンタのため、複数インスタンス構成では実効しきい値がインスタンス数倍になる。

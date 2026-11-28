@@ -164,10 +164,11 @@ just db-up
 | `MINI_USER_UPPER_LIMIT` / `NORMAL_USER_UPPER_LIMIT` | 権限別の写真登録上限 | `10` / `1000` |
 | `MINI_USER_PORTFOLIO_UPPER_LIMIT` / `NORMAL_USER_PORTFOLIO_UPPER_LIMIT` | 権限別のポートフォリオ作成数上限（下書きを含む。special-user・administratorは上限なし） | `3` / `10` |
 | `RATE_LIMIT_ENABLED` | 送信元IP別レート制限の有効化（`test`・E2E は無効） | `true` |
-| `RATE_LIMIT_AUTH_CAPACITY` / `RATE_LIMIT_AUTH_WINDOW_SECONDS` | ログインのしきい値（回数 / ウィンドウ秒） | `30` / `60` |
-| `RATE_LIMIT_REGISTER_CAPACITY` / `RATE_LIMIT_REGISTER_WINDOW_SECONDS` | アカウント登録のしきい値 | `10` / `3600` |
+| `RATE_LIMIT_AUTH_CAPACITY` / `RATE_LIMIT_AUTH_WINDOW_SECONDS` | パスキーログイン・リカバリーコードによる復旧（それぞれのオプション発行を含む）のしきい値（回数 / ウィンドウ秒） | `30` / `60` |
+| `RATE_LIMIT_REGISTER_CAPACITY` / `RATE_LIMIT_REGISTER_WINDOW_SECONDS` | アカウント登録・新規登録オプション発行のしきい値 | `10` / `3600` |
 | `RATE_LIMIT_GENERAL_CAPACITY` / `RATE_LIMIT_GENERAL_WINDOW_SECONDS` | その他 `/api/**` のしきい値 | `300` / `60` |
-| `FRONTEND_ORIGIN` | CORS 許可オリジン（1 値のみ。`prod` では `https://` 必須） | `http://localhost:3000` |
+| `FRONTEND_ORIGIN` | CORS 許可オリジン、およびパスキーの登録・認証を許可する origin（1 値のみ。`prod` では `https://` 必須） | `http://localhost:3000` |
+| `WEBAUTHN_RP_ID` | パスキーを紐づけるドメイン（`app.webauthn.rp-id`。スキーム・ポートなし。`FRONTEND_ORIGIN` のホストと一致するかその親ドメイン）。**本番では必須**（未設定・`localhost`・IP アドレスは起動時に失敗） | `local`：`localhost` / `development`・`prod`：**設定必須** |
 | `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現（`app.forwarded.trusted-proxies`）。**本番では必須。ALB のサブネット CIDR に狭める**（未設定・空文字・広すぎる値は `ProdConfigValidationRunner` が起動時に検出して失敗させる） | 非 `prod`：ループバック＋RFC1918 / `prod`：**空（設定必須）** |
 
 > **IntelliJ IDEA で起動する場合**
@@ -247,9 +248,11 @@ just portfolio-api-run
 ./scripts/seed-local-data.sh
 ```
 
-実行には `just db-up` でDB・MinIOが起動していることに加え、`convert`（ImageMagick）・`htpasswd`・`openssl` コマンドが必要です（`brew install imagemagick httpd` 等でインストールしてください）。
+実行には `just db-up` でDB・MinIOが起動していることに加え、`convert`（ImageMagick）・`openssl` コマンドが必要です（`brew install imagemagick` 等でインストールしてください）。
 
-> **【注意】** 実行するとローカルDBのアカウント関連データ（`account`、`account_authority`、`location_mst`、`refresh_token`、`login_history`、`photo_mst`、`photo_tag_mst`、`photo_favorite`、`photo_view_log`、`photo_list_filter_log`、`portfolio_mst`、`portfolio_photo`、`portfolio_tag_mst`、`inquiry_mst`、`inquiry_reply_mst`）および MinIOの `web-gallery-local` バケット内の画像を全件削除したうえで、以下を新規作成します。パスワードは全アカウント共通で `password01` です。
+> **【注意】** 実行するとローカルDBのアカウント関連データ（`account`、`account_authority`、`location_mst`、`refresh_token`、`login_history`、`photo_mst`、`photo_tag_mst`、`photo_favorite`、`photo_view_log`、`photo_list_filter_log`、`portfolio_mst`、`portfolio_photo`、`portfolio_tag_mst`、`inquiry_mst`、`inquiry_reply_mst`）および MinIOの `web-gallery-local` バケット内の画像を全件削除したうえで、以下を新規作成します（パスキー・リカバリーコードも全件削除します）。
+>
+> ログインはパスキーのみです。各アカウントには既知のリカバリーコード `SEED-CODE-0000-0001`〜`SEED-CODE-0000-0010`（全アカウント共通、各1回だけ使用可）を投入するため、初回は復旧画面（`/recovery`）でアカウントIDとこのコードを入力し、手元の端末にパスキーを登録してログインしてください。ロック中・退会済みのアカウントは復旧できません。
 
 | アカウントID | 権限 | 内容 |
 | --- | --- | --- |

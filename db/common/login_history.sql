@@ -15,6 +15,10 @@ CREATE TABLE common.login_history
 	country varchar(2) NOT NULL DEFAULT '',
 	-- 地域（都道府県等のサブディビジョン名、未解決時は空文字）
 	region varchar(100) NOT NULL DEFAULT '',
+	-- ログイン方式区分:
+	-- passkey:パスキー
+	-- recovery_code:リカバリーコードによる復旧
+	login_method_kbn common.login_method_enum NOT NULL DEFAULT 'passkey',
 	-- 作成者（ログイン試行者自身のアカウント番号）
 	created_by bigint NOT NULL,
 	-- 作成日時
@@ -44,5 +48,6 @@ COMMENT ON COLUMN common.login_history.account_no IS 'アカウント番号';
 COMMENT ON COLUMN common.login_history.ip_address IS '送信元IPアドレス';
 COMMENT ON COLUMN common.login_history.country IS '国: ISO 3166-1 alpha-2コード。未解決時は空文字';
 COMMENT ON COLUMN common.login_history.region IS '地域: 都道府県等のサブディビジョン名。未解決時は空文字';
+COMMENT ON COLUMN common.login_history.login_method_kbn IS 'ログイン方式区分: passkey(パスキー)、recovery_code(リカバリーコードによる復旧)';
 COMMENT ON COLUMN common.login_history.created_by IS '作成者（ログイン試行者自身のアカウント番号）';
 COMMENT ON COLUMN common.login_history.created_at IS '作成日時';

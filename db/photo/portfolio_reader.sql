@@ -15,7 +15,7 @@ $$;
 /* Grant Privileges */
 GRANT USAGE ON SCHEMA common, photo TO portfolio_reader;
 
--- アカウントIDからアカウント番号を引くためだけに使う（パスワード等の個人情報の列は読ませない）
+-- アカウントIDからアカウント番号を引くためだけに使う（アカウント名・生年月日等の個人情報の列は読ませない）
 GRANT SELECT (account_no, account_id) ON common.account TO portfolio_reader;
 
 -- 写真は表示に必要な列だけを読ませる（撮影場所等の非公開になりうる情報の列は読ませない）

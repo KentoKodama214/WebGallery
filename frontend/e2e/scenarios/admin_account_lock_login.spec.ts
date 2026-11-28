@@ -3,7 +3,8 @@ import {
   test as adminTest,
   expect as adminExpect,
 } from "../fixtures/admin";
-import { generateSortEarlyTestAccountId, login, registerAccount, TEST_USER_PASSWORD } from "../fixtures/auth";
+import { generateSortEarlyTestAccountId, login, registerAccount } from "../fixtures/auth";
+import { installFakeAuthenticator, selectPasskeyAccount } from "../fixtures/passkey";
 
 /**
  * 管理者用アカウント管理ページ（`pages/admin_account_management.spec.ts`）は
@@ -74,15 +75,15 @@ adminTest.describe("管理者による強制ロックがログイン可否に反
         });
       });
 
-      await test.step("ロック中は対象アカウントでログインできず、ロック中である旨のエラーが表示されること", async () => {
+      await test.step("ロック中は対象アカウントのパスキーでもログインできず、ロック中である旨のエラーが表示されること", async () => {
         const context = await browser.newContext({
           baseURL: testInfo.project.use.baseURL,
         });
+        await installFakeAuthenticator(context);
         const targetPage = await context.newPage();
+        selectPasskeyAccount(targetAccountId);
         await targetPage.goto("/login");
-        await targetPage.getByPlaceholder("User ID").fill(targetAccountId);
-        await targetPage.getByPlaceholder("Password").fill(TEST_USER_PASSWORD);
-        await targetPage.getByRole("button", { name: "Log in" }).click();
+        await targetPage.getByRole("button", { name: "パスキーでログイン" }).click();
 
         await expect(
           targetPage.getByRole("alert").filter({ hasText: "アカウントがロックされています。" })

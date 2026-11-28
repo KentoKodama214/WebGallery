@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.auth.WebAuthnChallengeMapper">
+
+	<resultMap id="WebAuthnChallengeMap" type="com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallenge">
+		<result property="challengeNo" column="challenge_no"/>
+		<result property="challenge" column="challenge"/>
+		<result property="purposeKbn" column="purpose_kbn" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.WebAuthnChallengePurposeEnumTypeHandler"/>
+		<result property="accountNo" column="account_no"/>
+		<result property="userHandle" column="user_handle"/>
+		<result property="expiresAt" column="expires_at"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+	</resultMap>
+
+	<insert id="insert" parameterType="com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallenge">
+		INSERT INTO common.webauthn_challenge (
+			challenge,
+			purpose_kbn,
+			account_no,
+			user_handle,
+			expires_at,
+			created_by,
+			created_at
+		) VALUES (
+			#{challenge},
+			#{purposeKbn}::common.webauthn_challenge_purpose_enum,
+			#{accountNo},
+			COALESCE(#{userHandle}, ''),
+			#{expiresAt},
+			#{createdBy},
+			COALESCE(#{createdAt}, NOW())
+		)
+	</insert>
+
+	<!-- 取得と削除を1文で行い、同じチャレンジの再利用（リプレイ）・並行使用を防ぐ。
+	     期限切れ・用途違いのチャレンジは消費しない（削除は定期実行タスクに任せる） -->
+	<select id="consume" parameterType="com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallengeCondition" resultMap="WebAuthnChallengeMap" flushCache="true">
+		DELETE FROM
+			common.webauthn_challenge
+		<where>
+			<if test="challenge == null or purposeKbn == null"> AND 1 = 0</if>
+			<if test="challenge != null"> AND challenge = #{challenge}</if>
+			<if test="purposeKbn != null"> AND purpose_kbn = #{purposeKbn}::common.webauthn_challenge_purpose_enum</if>
+			AND expires_at &gt; NOW()
+		</where>
+		RETURNING
+			challenge_no,
+			challenge,
+			purpose_kbn,
+			account_no,
+			user_handle,
+			expires_at,
+			created_by,
+			created_at
+	</select>
+
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallengeCondition">
+		DELETE FROM
+			common.webauthn_challenge
+		<where>
+			<if test="accountNo == null"> AND 1 = 0</if>
+			<if test="accountNo != null"> AND account_no = #{accountNo}</if>
+		</where>
+	</delete>
+
+	<delete id="deleteExpired">
+		DELETE FROM common.webauthn_challenge
+		WHERE expires_at &lt; NOW()
+	</delete>
+
+</mapper>

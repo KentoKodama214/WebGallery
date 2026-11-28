@@ -54,7 +54,7 @@ public class PhotoListFilterLogMapperTest {
     jdbcTemplate.update(
         "INSERT INTO common.account VALUES"
             + " (1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo',"
-            + " false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$password1', '1991-02-14', 'none', 'none',"
+            + " false, 'aaaaaaaa', 'AAAAAAAA', '1991-02-14', 'none', 'none',"
             + " 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false)");
   }
 

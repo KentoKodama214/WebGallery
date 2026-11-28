@@ -1,13 +1,14 @@
 import { test as base, expect, type Page } from "@playwright/test";
 import { fillStable } from "./form";
+import { installFakeAuthenticator, selectPasskeyAccount } from "./passkey";
 
-/** `workerPage` が登録するテストアカウントのパスワード（E2E専用、本番では使用しない） */
-export const TEST_USER_PASSWORD = "E2eTestPass123";
-
-/** ワーカーごとに使い捨てで登録するテストアカウントの認証情報 */
+/**
+ * ワーカーごとに使い捨てで登録するテストアカウント
+ *
+ * ログインはパスキーのみで行う。パスキーの秘密鍵は擬似認証器（`fixtures/passkey.ts`）がワーカー内で保持する
+ */
 export interface TestUserCredentials {
   accountId: string;
-  password: string;
 }
 
 /**
@@ -46,48 +47,44 @@ export function generateSortEarlyTestAccountId(workerIndex: number): string {
 }
 
 /**
- * アカウント登録ページで新規アカウントを登録し、登録完了モーダルが表示されるまで待つ
+ * アカウント登録ページで新規アカウントを登録し、登録完了（リカバリーコードの表示）まで待つ
+ *
+ * ログインはパスキーのみのため、登録時に擬似認証器（`fixtures/passkey.ts`）で最初のパスキーを作成する
  *
  * @param page 操作対象のページ
  * @param accountId 登録するアカウントID（半角英数字8〜20文字）
  * @param accountName 登録するアカウント名
- * @param password 登録するパスワード（省略時は`TEST_USER_PASSWORD`）
+ * @returns 発行されたリカバリーコード（4文字ごとにハイフンで区切った表示用の形）
  */
 export async function registerAccount(
   page: Page,
   accountId: string,
-  accountName: string,
-  password: string = TEST_USER_PASSWORD
-): Promise<void> {
+  accountName: string
+): Promise<string[]> {
+  await installFakeAuthenticator(page.context());
   await page.goto("/register");
   await fillStable(page.getByPlaceholder("半角英数字で8〜20文字"), accountId);
   await fillStable(page.locator('label:has-text("アカウント名") + input'), accountName);
-  await fillStable(page.getByPlaceholder("英字と数字を含む半角8〜72文字"), password);
-  await page.getByRole("button", { name: "登録" }).click();
-  // 登録はBCryptのハッシュ化を伴ううえ、devサーバーが /register を初回コンパイルすることもある。
-  // 並列実行時の負荷で10秒では不足しうるため長めに取る（速い場合は待たずに次へ進む）
-  await expect(page.getByRole("dialog", { name: "アカウント登録完了" })).toBeVisible({
-    timeout: 30000,
-  });
+  await page.getByRole("button", { name: "登録", exact: true }).click();
+  // devサーバーが /register を初回コンパイルすることもあり、並列実行時の負荷で10秒では
+  // 不足しうるため長めに取る（速い場合は待たずに次へ進む）
+  const dialog = page.getByRole("dialog", { name: "アカウント登録完了" });
+  await expect(dialog).toBeVisible({ timeout: 30000 });
+  return dialog.getByRole("list", { name: "リカバリーコード" }).getByRole("listitem").allInnerTexts();
 }
 
 /**
- * ログインページで指定したアカウントにログインし、写真一覧への遷移を待つ
+ * ログインページでパスキーを使って指定したアカウントにログインし、写真一覧への遷移を待つ
  *
  * @param page 操作対象のページ
- * @param accountId ログインするアカウントID
- * @param password ログインするパスワード（省略時は`TEST_USER_PASSWORD`）
+ * @param accountId ログインするアカウントID（擬似認証器が保持するこのアカウントのパスキーを選ぶ）
  */
-export async function login(
-  page: Page,
-  accountId: string,
-  password: string = TEST_USER_PASSWORD
-): Promise<void> {
+export async function login(page: Page, accountId: string): Promise<void> {
+  await installFakeAuthenticator(page.context());
+  selectPasskeyAccount(accountId);
   await page.goto("/login");
-  await fillStable(page.getByPlaceholder("User ID"), accountId);
-  await fillStable(page.getByPlaceholder("Password"), password);
-  await page.getByRole("button", { name: "Log in" }).click();
-  // ログインもBCryptの照合と写真一覧ページの初回コンパイルを伴うため長めに取る
+  await page.getByRole("button", { name: "パスキーでログイン" }).click();
+  // 写真一覧ページの初回コンパイルを伴うことがあるため長めに取る
   await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list`), {
     timeout: 30000,
   });
@@ -99,16 +96,16 @@ export async function login(
  * @param page 操作対象のページ
  * @param accountId 登録・ログインするアカウントID
  * @param accountName 登録するアカウント名
- * @param password 登録・ログインするパスワード（省略時は`TEST_USER_PASSWORD`）
+ * @returns 発行されたリカバリーコード
  */
 export async function registerAndLogin(
   page: Page,
   accountId: string,
-  accountName: string,
-  password: string = TEST_USER_PASSWORD
-): Promise<void> {
-  await registerAccount(page, accountId, accountName, password);
-  await login(page, accountId, password);
+  accountName: string
+): Promise<string[]> {
+  const recoveryCodes = await registerAccount(page, accountId, accountName);
+  await login(page, accountId);
+  return recoveryCodes;
 }
 
 type AuthFixtures = {
@@ -121,7 +118,7 @@ type AuthFixtures = {
  *
  * バックエンドは（1）リフレッシュトークンを1回使い切りでローテーションし、
  * （2）ログイン時に同一アカウントの既存セッションを全て失効させる
- * （`AuthServiceImpl#login` の `revokeAllByAccountNo`）。そのため、
+ * （`AuthServiceImpl#issueTokens` の `revokeAllByAccountNo`）。そのため、
  * 単一の共有アカウント・storageStateファイルを複数テストや複数ワーカーで使い回すと、
  * 並列実行時に互いのセッションを奪い合って401になる。
  *
@@ -139,7 +136,6 @@ export const test = base.extend<object, AuthFixtures>({
     async ({}, use, workerInfo) => {
       await use({
         accountId: generateTestAccountId(workerInfo.workerIndex),
-        password: TEST_USER_PASSWORD,
       });
     },
     { scope: "worker" },
@@ -152,7 +148,7 @@ export const test = base.extend<object, AuthFixtures>({
       });
       const page: Page = await context.newPage();
 
-      await registerAndLogin(page, testUser.accountId, "E2E Auth User", testUser.password);
+      await registerAndLogin(page, testUser.accountId, "E2E Auth User");
 
       await use(page);
       await context.close();

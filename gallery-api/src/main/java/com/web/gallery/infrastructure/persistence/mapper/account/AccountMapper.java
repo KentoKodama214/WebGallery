@@ -20,7 +20,7 @@ public interface AccountMapper {
   public List<AccountDto> select(AccountCondition condition);
 
   /**
-   * 条件に該当するアカウントの一覧を、権限区分（{@code common.account_authority}）と結合して取得する（パスワードハッシュを射影しない一覧表示専用）
+   * 条件に該当するアカウントの一覧を、権限区分（{@code common.account_authority}）と結合して取得する（一覧表示専用）
    *
    * @param condition 抽出条件
    * @return {@link AccountDto}

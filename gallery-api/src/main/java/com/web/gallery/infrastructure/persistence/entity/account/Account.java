@@ -7,7 +7,6 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 /** アカウントテーブルのEntityクラス */
 @Data
@@ -36,9 +35,6 @@ public class Account {
 
   /** アカウント名 */
   private String accountName;
-
-  /** パスワード */
-  private String password;
 
   /** 生年月日 */
   private LocalDate birthdate;
@@ -72,18 +68,16 @@ public class Account {
    * アカウント登録用のAccountModelからAccountエンティティを生成する
    *
    * @param model {@link AccountModel}
-   * @param passwordEncoder {@link PasswordEncoder}
    * @param accountNo 採番済みのアカウント番号（{@code common.account_authority}と共通の番号で登録するため、呼び出し元で事前に採番する）
    * @return {@link Account}
    */
-  public static Account from(AccountModel model, PasswordEncoder passwordEncoder, Long accountNo) {
+  public static Account from(AccountModel model, Long accountNo) {
     return Account.builder()
         .accountNo(accountNo)
         .createdBy(0L)
         .updatedBy(0L)
         .accountId(model.getAccountId().value())
         .accountName(model.getAccountName().value())
-        .password(passwordEncoder.encode(model.getPassword().value()))
         .birthdate(
             model.getBirthdate() != null ? model.getBirthdate().value() : Consts.MIN_LOCAL_DATE)
         .sexKbn(SexEnum.getOrDefault(model.getSexKbn()))

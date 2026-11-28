@@ -3,24 +3,33 @@ package com.web.gallery.application.service.impl.auth.integration;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.web.gallery.application.config.JwtConfig;
+import com.web.gallery.application.model.account.AccountModel;
 import com.web.gallery.application.model.auth.AuthTokenModel;
+import com.web.gallery.application.model.auth.PasskeyAuthenticationOptionsModel;
+import com.web.gallery.application.model.auth.PasskeyRegistrationOptionsModel;
+import com.web.gallery.application.model.auth.RecoveryCodeList;
 import com.web.gallery.application.model.auth.RefreshTokenModel;
 import com.web.gallery.application.repository.auth.RefreshTokenRepository;
 import com.web.gallery.application.service.account.AccountService;
 import com.web.gallery.application.service.impl.auth.AuthServiceImpl;
 import com.web.gallery.domain.constant.MessageConst;
 import com.web.gallery.domain.exception.GalleryException;
+import com.web.gallery.domain.exception.InvalidRecoveryCodeException;
 import com.web.gallery.domain.exception.InvalidRefreshTokenException;
 import com.web.gallery.domain.model.account.AccountId;
+import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.domain.model.account.Password;
+import com.web.gallery.domain.model.account.LoginFailureCount;
+import com.web.gallery.domain.model.auth.PasskeyName;
+import com.web.gallery.domain.model.auth.PasskeyResponseJson;
+import com.web.gallery.domain.model.auth.RecoveryCode;
 import com.web.gallery.domain.model.auth.RefreshTokenValue;
 import com.web.gallery.domain.model.common.IpAddress;
 import com.web.gallery.domain.model.common.TokenHash;
+import com.web.gallery.testsupport.PasskeyTestAuthenticator;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.OffsetDateTime;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
@@ -32,12 +41,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 @ActiveProfiles("test")
@@ -52,33 +58,73 @@ public class AuthServiceImplIntegrationTest {
 
   @Autowired private JdbcTemplate jdbcTemplate;
 
-  @Autowired private PasswordEncoder passwordEncoder;
-
   @Autowired private JwtConfig jwtConfig;
 
-  private static final String TEST_PASSWORD = "password123";
+  private static final String TEST_ACCOUNT_ID = "testuser01";
 
   private static final IpAddress TEST_IP_ADDRESS = new IpAddress("203.0.113.1");
 
-  /** テストデータ投入 */
-  private void insertTestData() {
-    String hashedPassword = passwordEncoder.encode(TEST_PASSWORD);
+  /** テストアカウントのパスキーを保持する擬似認証器 */
+  private PasskeyTestAuthenticator authenticator;
 
-    // 正常なアカウント（ログイン失敗回数0）
-    jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'testuser01', 'テストユーザー01', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false)",
-        hashedPassword);
-    jdbcTemplate.update(
-        "INSERT INTO common.account_authority VALUES(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator')");
+  /** アカウント登録時に発行されたリカバリーコード */
+  private RecoveryCodeList recoveryCodes;
 
-    // ロック状態のアカウント（ログイン失敗回数3・直近にロックされたばかりの想定で更新日時を現在時刻にする）
-    jdbcTemplate.update(
-        "INSERT INTO common.account VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), false, 'lockeduser', 'ロックユーザー', ?, '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 3, false)",
-        hashedPassword);
-    jdbcTemplate.update(
-        "INSERT INTO common.account_authority VALUES(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, NOW(), 'administrator')");
+  /**
+   * テストデータ投入
+   *
+   * <p>アカウント番号1のテストアカウントを、本番と同じ新規登録フロー（パスキーの作成）で登録する
+   */
+  private void insertTestData() throws GalleryException {
+    jdbcTemplate.update("ALTER SEQUENCE common.account_account_no_seq RESTART 1");
+    authenticator = new PasskeyTestAuthenticator();
 
-    jdbcTemplate.update("ALTER SEQUENCE common.account_account_no_seq RESTART 3");
+    PasskeyRegistrationOptionsModel options =
+        accountServiceImpl.createSignupOptions(
+            new AccountId(TEST_ACCOUNT_ID), new AccountName("テストユーザー01"));
+    String registrationJson =
+        authenticator.createRegistrationResponseJson(
+            PasskeyTestAuthenticator.RP_ID,
+            options.getChallenge().value(),
+            options.getUserHandle().value(),
+            TEST_ACCOUNT_ID);
+    recoveryCodes =
+        accountServiceImpl.registAccount(
+            AccountModel.builder()
+                .accountId(new AccountId(TEST_ACCOUNT_ID))
+                .accountName(new AccountName("テストユーザー01"))
+                .loginFailureCount(new LoginFailureCount(0))
+                .build(),
+            new PasskeyResponseJson(registrationJson),
+            new PasskeyName("テスト用パスキー"));
+  }
+
+  /**
+   * テストアカウントのパスキーでログインする
+   *
+   * @return {@link AuthTokenModel}
+   */
+  private AuthTokenModel loginWithPasskey() {
+    PasskeyAuthenticationOptionsModel options =
+        authServiceImpl.createPasskeyAuthenticationOptions();
+    return authServiceImpl.loginWithPasskey(
+        new PasskeyResponseJson(
+            authenticator.createAuthenticationResponseJson(
+                PasskeyTestAuthenticator.RP_ID, options.getChallenge().value())),
+        TEST_IP_ADDRESS);
+  }
+
+  /**
+   * テストアカウントのパスキーで本人確認（再認証）用の認証レスポンスを作る
+   *
+   * @return 本人確認用の認証レスポンス
+   */
+  private PasskeyResponseJson reauthenticate() {
+    PasskeyAuthenticationOptionsModel options =
+        accountServiceImpl.createReauthenticationOptions(new AccountNo(1L));
+    return new PasskeyResponseJson(
+        authenticator.createAuthenticationResponseJson(
+            PasskeyTestAuthenticator.RP_ID, options.getChallenge().value()));
   }
 
   /** トークンをSHA-256でハッシュ化する（プロダクションコードと同じロジック） */
@@ -98,61 +144,27 @@ public class AuthServiceImplIntegrationTest {
   @Order(1)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   @Sql("/sql/common/cleanup.sql")
-  class login {
+  class loginWithPasskey {
     @BeforeEach
-    void setUp() {
+    void setUp() throws GalleryException {
       insertTestData();
-
-      // login()内のREQUIRES_NEWによる別コネクションの更新がフィクスチャ行を参照できるよう、
-      // ここまでの投入データ（TRUNCATE・INSERT）を物理コミットしてから新しいテスト用トランザクションを開始する
-      TestTransaction.flagForCommit();
-      TestTransaction.end();
-      TestTransaction.start();
-    }
-
-    @AfterEach
-    void tearDown() {
-      // テスト本体が例外系の場合、現在のテストトランザクションはロールバック専用に
-      // なっている可能性があるため、一度終了・再開してクリーンな状態にしてからTRUNCATEし、
-      // setUp()で物理コミットしたフィクスチャ行が後続の他テストへ残留しないよう明示的に物理コミットする
-      TestTransaction.end();
-      TestTransaction.start();
-      jdbcTemplate.execute(
-          """
-          TRUNCATE TABLE
-          	photo.photo_favorite,
-          	photo.photo_tag_mst,
-          	photo.photo_mst,
-          	common.refresh_token,
-          	common.location_mst,
-          	common.account,
-          	common.kbn_mst
-          CASCADE
-          """);
-      TestTransaction.flagForCommit();
-      TestTransaction.end();
     }
 
     @Test
     @Order(1)
-    @DisplayName("正常系：ログイン成功")
-    void login_success() throws Exception {
+    @DisplayName("正常系：パスキーでログインでき、リフレッシュトークンが保存され、ログイン履歴にパスキーとして記録される")
+    void loginWithPasskey_success() throws Exception {
       OffsetDateTime beforeLogin = OffsetDateTime.now();
-      AuthTokenModel result =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
+      AuthTokenModel result = loginWithPasskey();
       OffsetDateTime afterLogin = OffsetDateTime.now();
 
-      assertNotNull(result.getAccessToken().value());
       assertFalse(result.getAccessToken().value().isEmpty());
-      assertNotNull(result.getRefreshToken().value());
       assertFalse(result.getRefreshToken().value().isEmpty());
       assertTrue(result.getExpiresIn().value() > 0);
 
-      // リフレッシュトークンがDBに保存されていることを検証
-      String tokenHash = hashToken(result.getRefreshToken().value());
       RefreshTokenModel storedToken =
-          refreshTokenRepository.findByTokenHash(new TokenHash(tokenHash));
+          refreshTokenRepository.findByTokenHash(
+              new TokenHash(hashToken(result.getRefreshToken().value())));
       assertNotNull(storedToken);
       assertEquals(1L, storedToken.getAccountNo().value());
       assertFalse(storedToken.getIsRevoked().value());
@@ -166,132 +178,57 @@ public class AuthServiceImplIntegrationTest {
               .getExpiresAt()
               .value()
               .isAfter(afterLogin.plusDays(jwtConfig.getRefreshTokenExpirationDays())));
+
+      String loginMethod =
+          jdbcTemplate.queryForObject(
+              "SELECT login_method_kbn::text FROM common.login_history WHERE account_no = 1",
+              String.class);
+      assertEquals("passkey", loginMethod);
     }
 
     @Test
     @Order(2)
     @DisplayName("正常系：再ログイン時に既存のリフレッシュトークンが無効化される")
-    void login_revokes_existing_tokens() throws Exception {
-      // 1回目のログイン
-      AuthTokenModel firstResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String firstTokenHash = hashToken(firstResult.getRefreshToken().value());
+    void loginWithPasskey_revokes_existing_tokens() throws Exception {
+      String firstTokenHash = hashToken(loginWithPasskey().getRefreshToken().value());
+      String secondTokenHash = hashToken(loginWithPasskey().getRefreshToken().value());
 
-      // 2回目のログイン
-      AuthTokenModel secondResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String secondTokenHash = hashToken(secondResult.getRefreshToken().value());
-
-      // 1回目のトークンが無効化されていることを検証
-      RefreshTokenModel firstToken =
-          refreshTokenRepository.findByTokenHash(new TokenHash(firstTokenHash));
-      assertNotNull(firstToken);
-      assertTrue(firstToken.getIsRevoked().value());
-
-      // 2回目のトークンが有効であることを検証
-      RefreshTokenModel secondToken =
-          refreshTokenRepository.findByTokenHash(new TokenHash(secondTokenHash));
-      assertNotNull(secondToken);
-      assertFalse(secondToken.getIsRevoked().value());
+      assertTrue(
+          refreshTokenRepository
+              .findByTokenHash(new TokenHash(firstTokenHash))
+              .getIsRevoked()
+              .value());
+      assertFalse(
+          refreshTokenRepository
+              .findByTokenHash(new TokenHash(secondTokenHash))
+              .getIsRevoked()
+              .value());
     }
 
     @Test
     @Order(3)
-    @DisplayName("異常系：パスワード不一致の場合、BadCredentialsExceptionをthrowする")
-    void login_wrong_password() {
-      assertThrows(
-          BadCredentialsException.class,
-          () ->
-              authServiceImpl.login(
-                  new AccountId("testuser01"), new Password("wrongpassword"), TEST_IP_ADDRESS));
+    @DisplayName("異常系：管理者ロック中の場合、LockedExceptionをthrowする")
+    void loginWithPasskey_admin_locked() {
+      jdbcTemplate.update(
+          "UPDATE common.account SET is_admin_locked = true, login_failure_count = 3, updated_at = NOW() WHERE account_no = 1");
+
+      assertThrows(LockedException.class, () -> loginWithPasskey());
     }
 
     @Test
     @Order(4)
-    @DisplayName("異常系：存在しないアカウントIDの場合、BadCredentialsExceptionをthrowする")
-    void login_account_not_found() {
-      assertThrows(
-          BadCredentialsException.class,
-          () ->
-              authServiceImpl.login(
-                  new AccountId("notexists"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS));
-    }
+    @DisplayName("正常系：ログイン失敗回数によるロックは解除時間経過後に自動解除され、パスキーでログインできる")
+    void loginWithPasskey_autoUnlocks_afterLockDurationElapsed() {
+      // lockDurationMinutes（テスト設定で30分）より前に更新されたことにする
+      jdbcTemplate.update(
+          "UPDATE common.account SET login_failure_count = 3, updated_at = ? WHERE account_no = 1",
+          OffsetDateTime.now().minusMinutes(31));
 
-    @Test
-    @Order(5)
-    @DisplayName("異常系：アカウントロックの場合、LockedExceptionをthrowする")
-    void login_locked_account() {
-      assertThrows(
-          LockedException.class,
-          () ->
-              authServiceImpl.login(
-                  new AccountId("lockeduser"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS));
-    }
-
-    @Test
-    @Order(6)
-    @DisplayName("異常系：パスワード不一致の場合、login()のロールバックとは独立してログイン失敗回数がコミットされる")
-    void login_wrong_password_increments_failure_count() {
-      assertThrows(
-          BadCredentialsException.class,
-          () ->
-              authServiceImpl.login(
-                  new AccountId("testuser01"), new Password("wrongpassword"), TEST_IP_ADDRESS));
+      assertNotNull(loginWithPasskey().getAccessToken().value());
 
       Integer failureCount =
           jdbcTemplate.queryForObject(
               "SELECT login_failure_count FROM common.account WHERE account_no = 1", Integer.class);
-      assertEquals(1, failureCount);
-    }
-
-    @Test
-    @Order(7)
-    @DisplayName("異常系：ログイン失敗を3回繰り返すとアカウントがロックされる")
-    void login_locks_account_after_reaching_fail_count() {
-      for (int i = 0; i < 3; i++) {
-        assertThrows(
-            BadCredentialsException.class,
-            () ->
-                authServiceImpl.login(
-                    new AccountId("testuser01"), new Password("wrongpassword"), TEST_IP_ADDRESS));
-
-        // login()が投げたBadCredentialsExceptionによりこのテストトランザクションは
-        // 既にロールバック専用になっているためflagForCommit()は使えない。
-        // このトランザクション自身は書き込みを行っておらず（更新は既にコミット済みの
-        // REQUIRES_NEW側で行われる）ロールバックしても実データは失われないため、
-        // MyBatisのセッション単位の1次キャッシュを破棄する目的でロールバック・再開する
-        TestTransaction.end();
-        TestTransaction.start();
-      }
-
-      assertThrows(
-          LockedException.class,
-          () ->
-              authServiceImpl.login(
-                  new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS));
-    }
-
-    @Test
-    @Order(8)
-    @DisplayName("正常系：ロック解除時間経過後は自動解除され、正しいパスワードでログインできる")
-    void login_autoUnlocks_afterLockDurationElapsed() {
-      // lockDurationMinutes（テスト設定で30分）より前に更新されたことにする
-      jdbcTemplate.update(
-          "UPDATE common.account SET updated_at = ? WHERE account_id = 'lockeduser'",
-          OffsetDateTime.now().minusMinutes(31));
-
-      AuthTokenModel result =
-          authServiceImpl.login(
-              new AccountId("lockeduser"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-
-      assertNotNull(result.getAccessToken().value());
-
-      Integer failureCount =
-          jdbcTemplate.queryForObject(
-              "SELECT login_failure_count FROM common.account WHERE account_id = 'lockeduser'",
-              Integer.class);
       assertEquals(0, failureCount);
     }
   }
@@ -302,7 +239,7 @@ public class AuthServiceImplIntegrationTest {
   @Sql("/sql/common/cleanup.sql")
   class refresh {
     @BeforeEach
-    void setUp() {
+    void setUp() throws GalleryException {
       insertTestData();
     }
 
@@ -310,12 +247,8 @@ public class AuthServiceImplIntegrationTest {
     @Order(1)
     @DisplayName("正常系：リフレッシュ成功時、リフレッシュトークンがローテーション（新規発行）されること")
     void refresh_success() {
-      // ログインしてリフレッシュトークンを取得
-      AuthTokenModel loginResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
+      AuthTokenModel loginResult = loginWithPasskey();
 
-      // リフレッシュ
       AuthTokenModel refreshResult = authServiceImpl.refresh(loginResult.getRefreshToken());
 
       assertNotNull(refreshResult.getAccessToken().value());
@@ -329,11 +262,7 @@ public class AuthServiceImplIntegrationTest {
     @Order(2)
     @DisplayName("異常系：ローテーション済み（無効化済み）トークンを再利用した場合、盗用とみなし該当アカウントの新トークンも無効化されること")
     void refresh_reuseDetection_revokesAllTokens() {
-      // ログインしてリフレッシュトークンを取得
-      AuthTokenModel loginResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String firstRefreshToken = loginResult.getRefreshToken().value();
+      String firstRefreshToken = loginWithPasskey().getRefreshToken().value();
 
       // 1回目のリフレッシュでトークンがローテーションされる
       AuthTokenModel refreshResult =
@@ -368,16 +297,10 @@ public class AuthServiceImplIntegrationTest {
     @Order(4)
     @DisplayName("異常系：無効化済みリフレッシュトークンの場合、InvalidRefreshTokenExceptionをthrowする")
     void refresh_revoked_token() throws Exception {
-      // ログインしてリフレッシュトークンを取得
-      AuthTokenModel loginResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String refreshToken = loginResult.getRefreshToken().value();
+      String refreshToken = loginWithPasskey().getRefreshToken().value();
 
-      // トークンを無効化
       refreshTokenRepository.revokeByTokenHash(new TokenHash(hashToken(refreshToken)));
 
-      // 無効化済みトークンでリフレッシュ
       InvalidRefreshTokenException exception =
           assertThrows(
               InvalidRefreshTokenException.class,
@@ -389,20 +312,13 @@ public class AuthServiceImplIntegrationTest {
     @Order(5)
     @DisplayName("異常系：有効期限切れリフレッシュトークンの場合、InvalidRefreshTokenExceptionをthrowする")
     void refresh_expired_token() throws Exception {
-      // ログインしてリフレッシュトークンを取得
-      AuthTokenModel loginResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String refreshToken = loginResult.getRefreshToken().value();
+      String refreshToken = loginWithPasskey().getRefreshToken().value();
 
-      // 有効期限を過去に設定
-      String tokenHash = hashToken(refreshToken);
       jdbcTemplate.update(
           "UPDATE common.refresh_token SET expires_at = ? WHERE token_hash = ?",
           OffsetDateTime.now().minusDays(1),
-          tokenHash);
+          hashToken(refreshToken));
 
-      // 有効期限切れトークンでリフレッシュ
       InvalidRefreshTokenException exception =
           assertThrows(
               InvalidRefreshTokenException.class,
@@ -414,17 +330,12 @@ public class AuthServiceImplIntegrationTest {
     @Order(6)
     @DisplayName("異常系：発行後にアカウントがロックされた場合、LockedExceptionをthrowする")
     void refresh_account_locked_after_token_issued() {
-      // ログインしてリフレッシュトークンを取得
-      AuthTokenModel loginResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String refreshToken = loginResult.getRefreshToken().value();
+      String refreshToken = loginWithPasskey().getRefreshToken().value();
 
       // 管理者によるアカウントロックを模擬（ログイン失敗回数を上限に更新し、更新日時も現在時刻にする）
       jdbcTemplate.update(
           "UPDATE common.account SET login_failure_count = 3, updated_at = NOW() WHERE account_no = 1");
 
-      // ロック後のリフレッシュはLockedExceptionをthrowする
       assertThrows(
           LockedException.class,
           () -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
@@ -434,13 +345,8 @@ public class AuthServiceImplIntegrationTest {
     @Order(7)
     @DisplayName("正常系：ロック解除時間経過後はリフレッシュ時に自動解除され、リフレッシュが成功する")
     void refresh_autoUnlocks_afterLockDurationElapsed() {
-      // ログインしてリフレッシュトークンを取得
-      AuthTokenModel loginResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String refreshToken = loginResult.getRefreshToken().value();
+      String refreshToken = loginWithPasskey().getRefreshToken().value();
 
-      // ロック状態かつ、lockDurationMinutes（テスト設定で30分）より前に更新されたことにする
       jdbcTemplate.update(
           "UPDATE common.account SET login_failure_count = 3, updated_at = ? WHERE account_no = 1",
           OffsetDateTime.now().minusMinutes(31));
@@ -458,21 +364,18 @@ public class AuthServiceImplIntegrationTest {
     @Order(8)
     @DisplayName("異常系：アカウント削除後のリフレッシュトークンの場合、NPEではなくInvalidRefreshTokenExceptionをthrowする")
     void refresh_after_account_deleted() {
-      // ログインしてリフレッシュトークンを取得
-      AuthTokenModel loginResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String refreshToken = loginResult.getRefreshToken().value();
+      String refreshToken = loginWithPasskey().getRefreshToken().value();
 
       // アカウントを削除（本来はdeleteAccount内でリフレッシュトークンも失効するが、
       // 失効漏れがあった場合の防御的なnullチェックを検証するため直接アカウントのみ削除する）。
-      // 直前のlogin()でlogin_historyへの外部キー制約付き行が作られているため、
-      // アプリの削除フロー同様に先に削除しておく
+      // 外部キー制約付きの関連行は、アプリの削除フロー同様に先に削除しておく
       jdbcTemplate.update("DELETE FROM common.login_history WHERE account_no = ?", 1L);
+      jdbcTemplate.update("DELETE FROM common.passkey_credential WHERE account_no = ?", 1L);
+      jdbcTemplate.update("DELETE FROM common.passkey_user_handle WHERE account_no = ?", 1L);
+      jdbcTemplate.update("DELETE FROM common.recovery_code WHERE account_no = ?", 1L);
       jdbcTemplate.update("DELETE FROM common.account_authority WHERE account_no = ?", 1L);
       jdbcTemplate.update("DELETE FROM common.account WHERE account_no = ?", 1L);
 
-      // 削除済みアカウントのリフレッシュトークンでリフレッシュ
       InvalidRefreshTokenException exception =
           assertThrows(
               InvalidRefreshTokenException.class,
@@ -484,17 +387,12 @@ public class AuthServiceImplIntegrationTest {
     @Order(9)
     @DisplayName("異常系：アカウント削除によりリフレッシュトークンが失効し、リフレッシュに失敗する")
     void refresh_fails_after_delete_account() throws GalleryException {
-      // ログインしてリフレッシュトークンを取得
-      AuthTokenModel loginResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String refreshToken = loginResult.getRefreshToken().value();
+      String refreshToken = loginWithPasskey().getRefreshToken().value();
 
       // アカウントを削除（deleteAccount内でリフレッシュトークンも失効される）
       accountServiceImpl.deleteAccount(
-          new AccountNo(1L), new AccountId("testuser01"), new Password(TEST_PASSWORD));
+          new AccountNo(1L), new AccountId(TEST_ACCOUNT_ID), reauthenticate());
 
-      // 削除済みアカウントのリフレッシュトークンでリフレッシュ
       InvalidRefreshTokenException exception =
           assertThrows(
               InvalidRefreshTokenException.class,
@@ -509,7 +407,7 @@ public class AuthServiceImplIntegrationTest {
   @Sql("/sql/common/cleanup.sql")
   class logout {
     @BeforeEach
-    void setUp() {
+    void setUp() throws GalleryException {
       insertTestData();
     }
 
@@ -517,27 +415,16 @@ public class AuthServiceImplIntegrationTest {
     @Order(1)
     @DisplayName("正常系：ログアウト成功（リフレッシュトークンが無効化される）")
     void logout_success() throws Exception {
-      // ログインしてリフレッシュトークンを取得
-      AuthTokenModel loginResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String refreshToken = loginResult.getRefreshToken().value();
+      String refreshToken = loginWithPasskey().getRefreshToken().value();
       String tokenHash = hashToken(refreshToken);
 
-      // ログアウト前はトークンが有効
-      RefreshTokenModel beforeLogout =
-          refreshTokenRepository.findByTokenHash(new TokenHash(tokenHash));
-      assertNotNull(beforeLogout);
-      assertFalse(beforeLogout.getIsRevoked().value());
+      assertFalse(
+          refreshTokenRepository.findByTokenHash(new TokenHash(tokenHash)).getIsRevoked().value());
 
-      // ログアウト
       authServiceImpl.logout(new RefreshTokenValue(refreshToken));
 
-      // ログアウト後はトークンが無効化されている
-      RefreshTokenModel afterLogout =
-          refreshTokenRepository.findByTokenHash(new TokenHash(tokenHash));
-      assertNotNull(afterLogout);
-      assertTrue(afterLogout.getIsRevoked().value());
+      assertTrue(
+          refreshTokenRepository.findByTokenHash(new TokenHash(tokenHash)).getIsRevoked().value());
     }
 
     @Test
@@ -551,21 +438,130 @@ public class AuthServiceImplIntegrationTest {
     @Order(3)
     @DisplayName("正常系：ログアウト後にリフレッシュが失敗する")
     void logout_then_refresh_fails() {
-      // ログイン
-      AuthTokenModel loginResult =
-          authServiceImpl.login(
-              new AccountId("testuser01"), new Password(TEST_PASSWORD), TEST_IP_ADDRESS);
-      String refreshToken = loginResult.getRefreshToken().value();
+      String refreshToken = loginWithPasskey().getRefreshToken().value();
 
-      // ログアウト
       authServiceImpl.logout(new RefreshTokenValue(refreshToken));
 
-      // ログアウト後のリフレッシュは失敗
       InvalidRefreshTokenException exception =
           assertThrows(
               InvalidRefreshTokenException.class,
               () -> authServiceImpl.refresh(new RefreshTokenValue(refreshToken)));
       assertEquals(MessageConst.ERR_INVALID_REFRESH_TOKEN, exception.getMessage());
+    }
+  }
+
+  @Nested
+  @Order(4)
+  @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+  @Sql("/sql/common/cleanup.sql")
+  class loginWithRecoveryCode {
+    @BeforeEach
+    void setUp() throws GalleryException {
+      insertTestData();
+    }
+
+    /**
+     * リカバリーコードで新しい認証器にパスキーを作成し、復旧ログインする
+     *
+     * @param newAuthenticator 新しい認証器（端末を失った後の新しい端末に相当）
+     * @param recoveryCode リカバリーコード
+     * @return {@link AuthTokenModel}
+     */
+    private AuthTokenModel recover(
+        PasskeyTestAuthenticator newAuthenticator, RecoveryCode recoveryCode)
+        throws GalleryException {
+      PasskeyRegistrationOptionsModel options =
+          authServiceImpl.createRecoveryOptions(new AccountId(TEST_ACCOUNT_ID), recoveryCode);
+      String registrationJson =
+          newAuthenticator.createRegistrationResponseJson(
+              PasskeyTestAuthenticator.RP_ID,
+              options.getChallenge().value(),
+              options.getUserHandle().value(),
+              TEST_ACCOUNT_ID);
+      return authServiceImpl.loginWithRecoveryCode(
+          new PasskeyResponseJson(registrationJson), new PasskeyName("新しい端末"), TEST_IP_ADDRESS);
+    }
+
+    @Test
+    @Order(1)
+    @DisplayName("正常系：リカバリーコードで新しいパスキーを登録してログインでき、以後はそのパスキーでログインでき、コードは使用済みになる")
+    void loginWithRecoveryCode_success() throws GalleryException {
+      PasskeyTestAuthenticator newAuthenticator = new PasskeyTestAuthenticator();
+
+      AuthTokenModel result = recover(newAuthenticator, recoveryCodes.get(0));
+
+      assertFalse(result.getAccessToken().value().isEmpty());
+      // 新しいパスキーが追加され、リカバリーコードが1件消費されている
+      assertEquals(
+          2,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM common.passkey_credential WHERE account_no = 1",
+              Integer.class));
+      assertEquals(9, accountServiceImpl.getRecoveryCodeCount(new AccountNo(1L)));
+      assertEquals(
+          "recovery_code",
+          jdbcTemplate.queryForObject(
+              "SELECT login_method_kbn::text FROM common.login_history WHERE account_no = 1",
+              String.class));
+
+      // 新しい端末のパスキーでログインできる
+      authenticator = newAuthenticator;
+      assertNotNull(loginWithPasskey().getAccessToken().value());
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("異常系：使用済みのリカバリーコードは再利用できない")
+    void loginWithRecoveryCode_used_code_rejected() throws GalleryException {
+      recover(new PasskeyTestAuthenticator(), recoveryCodes.get(0));
+
+      assertThrows(
+          InvalidRecoveryCodeException.class,
+          () ->
+              authServiceImpl.createRecoveryOptions(
+                  new AccountId(TEST_ACCOUNT_ID), recoveryCodes.get(0)));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：ハイフンなし・小文字で入力したリカバリーコードでも照合できる")
+    void loginWithRecoveryCode_normalized_input() throws GalleryException {
+      RecoveryCode typed =
+          new RecoveryCode(recoveryCodes.get(1).value().toLowerCase(java.util.Locale.ROOT));
+
+      assertNotNull(recover(new PasskeyTestAuthenticator(), typed).getAccessToken().value());
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("異常系：存在しないアカウント・誤ったリカバリーコードの場合、InvalidRecoveryCodeExceptionをthrowする")
+    void loginWithRecoveryCode_invalid() {
+      assertThrows(
+          InvalidRecoveryCodeException.class,
+          () ->
+              authServiceImpl.createRecoveryOptions(
+                  new AccountId("notexists"), recoveryCodes.get(0)));
+      assertThrows(
+          InvalidRecoveryCodeException.class,
+          () ->
+              authServiceImpl.createRecoveryOptions(
+                  new AccountId(TEST_ACCOUNT_ID), new RecoveryCode("AAAA-AAAA-AAAA-AAAA")));
+      assertEquals(10, accountServiceImpl.getRecoveryCodeCount(new AccountNo(1L)));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：リカバリーコードの再発行後は、以前のコードは使えない")
+    void loginWithRecoveryCode_old_codes_invalid_after_regeneration() throws GalleryException {
+      RecoveryCodeList regenerated =
+          accountServiceImpl.regenerateRecoveryCodes(new AccountNo(1L), reauthenticate());
+
+      assertThrows(
+          InvalidRecoveryCodeException.class,
+          () ->
+              authServiceImpl.createRecoveryOptions(
+                  new AccountId(TEST_ACCOUNT_ID), recoveryCodes.get(0)));
+      assertNotNull(recover(new PasskeyTestAuthenticator(), regenerated.get(0)));
     }
   }
 }

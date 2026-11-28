@@ -10,7 +10,6 @@ import com.web.gallery.domain.model.account.AccountNo;
 import com.web.gallery.domain.model.account.BirthDate;
 import com.web.gallery.domain.model.account.BirthplacePrefectureKbnCode;
 import com.web.gallery.domain.model.account.FreeMemo;
-import com.web.gallery.domain.model.account.Password;
 import com.web.gallery.domain.model.account.ResidentPrefectureKbnCode;
 import com.web.gallery.presentation.request.account.AccountUpdateRequest;
 import java.time.LocalDate;
@@ -38,7 +37,6 @@ class AccountConverterTest {
       AccountUpdateRequest request = new AccountUpdateRequest();
       request.setAccountId("testuser01");
       request.setAccountName("テストユーザー");
-      request.setNewPassword("newPassword01");
       request.setBirthdate(LocalDate.of(1990, 1, 1));
       request.setSexKbn(SexEnum.MAN);
       request.setBirthplacePrefectureKbnCode("Hokkaido");
@@ -50,7 +48,6 @@ class AccountConverterTest {
       assertEquals(new AccountNo(1L), actual.getAccountNo());
       assertEquals(new AccountId("testuser01"), actual.getAccountId());
       assertEquals(new AccountName("テストユーザー"), actual.getAccountName());
-      assertEquals(new Password("newPassword01"), actual.getPassword());
       assertEquals(new BirthDate(LocalDate.of(1990, 1, 1)), actual.getBirthdate());
       assertEquals(SexEnum.MAN, actual.getSexKbn());
       assertEquals(
@@ -61,40 +58,11 @@ class AccountConverterTest {
 
     @Test
     @Order(2)
-    @DisplayName("正常系：新しいパスワードが空文字の場合、パスワードは変更しない（null）こと")
-    void toAccountModelForUpdate_newPasswordEmpty() {
-      AccountUpdateRequest request = new AccountUpdateRequest();
-      request.setAccountId("testuser01");
-      request.setAccountName("テストユーザー");
-      request.setNewPassword("");
-
-      AccountModel actual = accountConverter.toAccountModelForUpdate(request, 1L);
-
-      assertNull(actual.getPassword());
-    }
-
-    @Test
-    @Order(3)
-    @DisplayName("正常系：新しいパスワードがnullの場合、パスワードは変更しない（null）こと")
-    void toAccountModelForUpdate_newPasswordNull() {
-      AccountUpdateRequest request = new AccountUpdateRequest();
-      request.setAccountId("testuser01");
-      request.setAccountName("テストユーザー");
-      request.setNewPassword(null);
-
-      AccountModel actual = accountConverter.toAccountModelForUpdate(request, 1L);
-
-      assertNull(actual.getPassword());
-    }
-
-    @Test
-    @Order(4)
     @DisplayName("正常系：任意項目が未設定の場合、nullが設定されること")
     void toAccountModelForUpdate_optionalFieldsNull() {
       AccountUpdateRequest request = new AccountUpdateRequest();
       request.setAccountId("testuser01");
       request.setAccountName("テストユーザー");
-      request.setNewPassword(null);
       request.setBirthdate(null);
       request.setBirthplacePrefectureKbnCode(null);
       request.setResidentPrefectureKbnCode(null);

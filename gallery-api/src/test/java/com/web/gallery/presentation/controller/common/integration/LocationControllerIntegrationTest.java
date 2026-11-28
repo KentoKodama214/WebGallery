@@ -10,7 +10,6 @@ import com.web.gallery.domain.enumeration.AuthorityEnum;
 import com.web.gallery.domain.model.account.AccountId;
 import com.web.gallery.domain.model.account.AccountName;
 import com.web.gallery.domain.model.account.AccountNo;
-import com.web.gallery.domain.model.account.Password;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Nested;
@@ -49,7 +48,6 @@ public class LocationControllerIntegrationTest {
             .accountNo(new AccountNo(accountNo))
             .accountId(new AccountId(accountId))
             .accountName(new AccountName(accountId.toUpperCase()))
-            .password(new Password(password))
             .authorityKbn(AuthorityEnum.NORMAL)
             .build();
     AccountPrincipal accountPrincipal = new AccountPrincipal(sessionAccount, 0);

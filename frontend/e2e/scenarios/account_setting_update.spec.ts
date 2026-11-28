@@ -1,19 +1,19 @@
 import { test, expect } from "@playwright/test";
-import { generateTestAccountId, login, registerAccount, TEST_USER_PASSWORD } from "../fixtures/auth";
+import { generateTestAccountId, login, registerAccount } from "../fixtures/auth";
+import { cancelNextPasskeyOperation, selectPasskeyAccount } from "../fixtures/passkey";
 
-test.describe("アカウント設定の更新（プロフィール変更〜パスワード変更〜アカウント削除）", () => {
-  // アカウント登録・ログイン3回・パスワード変更・アカウント削除と、BCryptのハッシュ化/照合を
-  // 伴う操作を1テストで連続して行うため、既定（60秒）では並列実行時の負荷で不足する
+test.describe("アカウント設定の更新（プロフィール変更〜アカウント削除）", () => {
+  // アカウント登録・ログイン・パスキーによる本人確認・アカウント削除を1テストで連続して行うため、
+  // 既定（60秒）では並列実行時の負荷で不足する
   test.describe.configure({ timeout: 120_000 });
 
-  test("プロフィールを変更でき、パスワード変更後は再ログインが必要になり、アカウント削除後はログインできなくなること", async ({
+  test("プロフィールを変更でき、パスキーで本人確認してアカウントを削除すると、そのパスキーでログインできなくなること", async ({
     page,
   }, testInfo) => {
-    // パスワード変更・アカウント削除という破壊的な操作を含むため、他テストと共有する
+    // アカウント削除という破壊的な操作を含むため、他テストと共有する
     // workerPage（fixtures/auth.ts）ではなく、このテスト専用の使い捨てアカウントを使う
     const accountId = generateTestAccountId(testInfo.workerIndex);
     const updatedAccountName = "E2E Updated Name";
-    const newPassword = "NewE2ePass456";
 
     await test.step("アカウント登録・ログイン", async () => {
       await registerAccount(page, accountId, "E2E Setting User");
@@ -23,7 +23,7 @@ test.describe("アカウント設定の更新（プロフィール変更〜パ�
     await test.step("アカウント名を変更して保存すると完了モーダルが表示され、リロード後も反映されていること", async () => {
       await page.goto(`/${accountId}/account_setting`);
       await page.getByLabel("アカウント名").fill(updatedAccountName);
-      await page.getByRole("button", { name: "登録" }).click();
+      await page.getByRole("button", { name: "登録", exact: true }).click();
 
       await expect(page.getByRole("dialog", { name: "アカウント更新完了" })).toBeVisible({
         timeout: 10000,
@@ -32,52 +32,11 @@ test.describe("アカウント設定の更新（プロフィール変更〜パ�
 
       await page.reload();
       await expect(page.getByLabel("アカウント名")).toHaveValue(updatedAccountName);
-    });
-
-    await test.step("現在のパスワードを入力せずに新しいパスワードだけ入力すると検証エラーが表示されること", async () => {
-      await page.getByLabel("新しいパスワード").fill(newPassword);
-      await page.getByRole("button", { name: "登録" }).click();
-
-      await expect(page.getByText("現在のパスワードを入力してください")).toBeVisible();
-      // クライアント側検証で送信されないため、プロフィール変更ページに留まる
-      await expect(page).toHaveURL(new RegExp(`/${accountId}/account_setting$`));
-    });
-
-    await test.step("誤った現在のパスワードでパスワード変更しようとするとエラーが表示されること", async () => {
-      await page.getByLabel("現在のパスワード").fill("WrongPass999");
-      await page.getByRole("button", { name: "登録" }).click();
-
-      await expect(
-        page.getByRole("alert").filter({ hasText: "現在のパスワードが正しくありません" })
-      ).toBeVisible({ timeout: 10000 });
-      await expect(page).toHaveURL(new RegExp(`/${accountId}/account_setting$`));
-    });
-
-    await test.step("正しい現在のパスワードでパスワードを変更すると、ログインページへ遷移すること", async () => {
-      await page.getByLabel("現在のパスワード").fill(TEST_USER_PASSWORD);
-      await page.getByRole("button", { name: "登録" }).click();
-
-      await expect(page).toHaveURL(/\/login(\?|$)/, { timeout: 10000 });
-    });
-
-    await test.step("旧パスワードではログインできず、新パスワードでログインできること", async () => {
-      await page.goto("/login");
-      await page.getByPlaceholder("User ID").fill(accountId);
-      await page.getByPlaceholder("Password").fill(TEST_USER_PASSWORD);
-      await page.getByRole("button", { name: "Log in" }).click();
-      await expect(
-        page.getByRole("alert").filter({ hasText: "アカウントIDまたはパスワードが間違っています。" })
-      ).toBeVisible({ timeout: 10000 });
-
-      await page.getByPlaceholder("Password").fill(newPassword);
-      await page.getByRole("button", { name: "Log in" }).click();
-      await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list`), {
-        timeout: 10000,
-      });
+      // パスワードの変更欄は無い
+      await expect(page.getByLabel("新しいパスワード")).toHaveCount(0);
     });
 
     await test.step("削除確認ダイアログをキャンセルすると削除されないこと", async () => {
-      await page.goto(`/${accountId}/account_setting`);
       await page.getByRole("button", { name: "アカウント削除" }).click();
 
       const deleteDialog = page.getByRole("dialog", { name: "アカウント削除の確認" });
@@ -87,35 +46,35 @@ test.describe("アカウント設定の更新（プロフィール変更〜パ�
       await expect(page).toHaveURL(new RegExp(`/${accountId}/account_setting$`));
     });
 
-    await test.step("誤ったパスワードでの削除は失敗し、ダイアログが開いたままであること", async () => {
+    await test.step("本人確認のパスキー操作をキャンセルすると、削除されずダイアログが開いたままであること", async () => {
       await page.getByRole("button", { name: "アカウント削除" }).click();
       const deleteDialog = page.getByRole("dialog", { name: "アカウント削除の確認" });
       await expect(deleteDialog).toBeVisible();
 
-      await deleteDialog.getByLabel("現在のパスワード").fill("WrongPass999");
+      cancelNextPasskeyOperation();
       await deleteDialog.getByRole("button", { name: "はい" }).click();
 
-      await expect(
-        deleteDialog.getByRole("alert").filter({ hasText: "現在のパスワードが正しくありません" })
-      ).toBeVisible({ timeout: 10000 });
-      await expect(deleteDialog).toBeVisible();
+      await expect(deleteDialog.getByRole("button", { name: "はい" })).toBeEnabled({
+        timeout: 10000,
+      });
+      await expect(deleteDialog.getByRole("alert").filter({ hasText: /\S/ })).toHaveCount(0);
+      await expect(page).toHaveURL(new RegExp(`/${accountId}/account_setting$`));
     });
 
-    await test.step("正しいパスワードで削除すると、削除完了のログインページへ遷移すること", async () => {
+    await test.step("パスキーで本人確認して削除すると、削除完了のログインページへ遷移すること", async () => {
       const deleteDialog = page.getByRole("dialog", { name: "アカウント削除の確認" });
-      await deleteDialog.getByLabel("現在のパスワード").fill(newPassword);
       await deleteDialog.getByRole("button", { name: "はい" }).click();
 
       await expect(page).toHaveURL(/\/login\?deleted=1/, { timeout: 10000 });
+      await expect(page.getByRole("status")).toHaveText("アカウントを削除しました");
     });
 
-    await test.step("削除後は同じ認証情報でログインできないこと", async () => {
-      await page.getByPlaceholder("User ID").fill(accountId);
-      await page.getByPlaceholder("Password").fill(newPassword);
-      await page.getByRole("button", { name: "Log in" }).click();
+    await test.step("削除後は端末に残ったパスキーでもログインできないこと", async () => {
+      selectPasskeyAccount(accountId);
+      await page.getByRole("button", { name: "パスキーでログイン" }).click();
 
       await expect(
-        page.getByRole("alert").filter({ hasText: "アカウントIDまたはパスワードが間違っています。" })
+        page.getByRole("alert").filter({ hasText: "パスキーによる認証に失敗しました。" })
       ).toBeVisible({ timeout: 10000 });
     });
   });
