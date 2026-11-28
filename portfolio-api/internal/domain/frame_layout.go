@@ -7,9 +7,10 @@ import (
 
 // FrameLayout は額縁型のレイアウト（1枚の額縁に写真枠・メッセージ枠を配置した組写真）。
 //
-// 位置・大きさ・太さ・文字サイズは、表示する画面の幅によらず同じ比率で描画できるよう、額縁に対する % で持つ。
+// 額縁のサイズ・位置・大きさ・太さ・文字サイズは実寸（mm）で持つ。写真枠・メッセージ枠の位置は台紙（額縁から外枠を除いた部分）の
+// 左上からの距離とする。
 type FrameLayout struct {
-	// Width は額縁の横幅（mm）。表示では縦横比の算出にだけ使う。
+	// Width は額縁の横幅（mm）。
 	Width float64
 	// Height は額縁の縦幅（mm）。
 	Height float64
@@ -17,7 +18,7 @@ type FrameLayout struct {
 	BackgroundColor string
 	// BorderColor は額縁の外枠の色（#RRGGBB）。
 	BorderColor string
-	// BorderWidth は額縁の外枠の太さ（額縁の横幅に対する %。0 の場合は外枠なし）。
+	// BorderWidth は額縁の外枠の太さ（mm。0 の場合は外枠なし）。
 	BorderWidth float64
 	// Slots は写真枠（額縁定義の順。写真を表示順に1枚ずつ割り当てる）。
 	Slots []FrameSlot
@@ -27,15 +28,15 @@ type FrameLayout struct {
 
 // FrameSlot は額縁型の写真枠。
 type FrameSlot struct {
-	// X・Y は写真枠の左上の位置（額縁に対する %）。
+	// X・Y は写真枠の左上の位置（台紙の左上からの mm）。
 	X, Y float64
-	// Width・Height は写真枠の大きさ（額縁に対する %）。
+	// Width・Height は写真枠の大きさ（mm）。
 	Width, Height float64
 	// Rotation は写真枠の傾き（度。時計回りが正）。
 	Rotation float64
 	// BorderColor は写真枠の枠線の色（#RRGGBB）。
 	BorderColor string
-	// BorderWidth は写真枠の枠線の太さ（額縁の横幅に対する %。0 の場合は枠線なし）。
+	// BorderWidth は写真枠の枠線の太さ（mm。0 の場合は枠線なし）。
 	BorderWidth float64
 	// Shadow は写真枠に影を付けるかどうか。
 	Shadow bool
@@ -45,15 +46,15 @@ type FrameSlot struct {
 
 // FrameText は額縁型のメッセージ枠。
 type FrameText struct {
-	// X・Y はメッセージ枠の左上の位置（額縁に対する %）。
+	// X・Y はメッセージ枠の左上の位置（台紙の左上からの mm）。
 	X, Y float64
-	// Width はメッセージ枠の横幅（額縁に対する %。文面はこの幅で折り返す）。
+	// Width はメッセージ枠の横幅（mm。文面はこの幅で折り返す）。
 	Width float64
 	// Rotation はメッセージ枠の傾き（度。時計回りが正）。
 	Rotation float64
 	// FontFamily はフォント（FrameFontFamilies のいずれか）。
 	FontFamily string
-	// FontSize は文字サイズ（額縁の横幅に対する %）。
+	// FontSize は文字サイズ（mm）。
 	FontSize float64
 	// Color は文字の色（#RRGGBB）。
 	Color string
@@ -107,8 +108,20 @@ const (
 	defaultSlotBorderColor = "#ffffff"
 	defaultTextColor       = "#333333"
 	defaultFontFamily      = "gothic"
-	defaultFontSize        = 3.0
+	defaultFontSize        = 10.0
 	defaultAlign           = "left"
+)
+
+// 額縁定義の数値の範囲（mm。Java 側の FrameDefinitionPolicy と一致させる）
+const (
+	frameSizeMin       = 50.0
+	frameSizeMax       = 3000.0
+	borderWidthMax     = 200.0
+	matSizeMin         = 10.0
+	slotBorderWidthMax = 50.0
+	fontSizeMin        = 1.0
+	fontSizeMax        = 200.0
+	rotationMax        = 180.0
 )
 
 // colorPattern は額縁定義の色（#RRGGBB）の形式。
@@ -133,25 +146,35 @@ func buildFrameLayout(p Portfolio) FrameLayout {
 	background, _ := frame[frameBackground].(map[string]any)
 	border, _ := frame[frameBorder].(map[string]any)
 
+	// 額縁のサイズは、0以下などの不正な値は既定値にし、正の値は範囲内に収める
+	width := math.Min(math.Max(positiveNumberSetting(size, frameWidth, defaultFrameWidth), frameSizeMin), frameSizeMax)
+	height := math.Min(math.Max(positiveNumberSetting(size, frameHeight, defaultFrameHeight), frameSizeMin), frameSizeMax)
+	// 外枠は、台紙の縦横が matSizeMin 以上残る太さまでとする
+	borderWidth := clampedNumberSetting(border, frameWidth, 0, 0,
+		math.Min(borderWidthMax, (math.Min(width, height)-matSizeMin)/2))
+	// 写真枠・メッセージ枠の位置・大きさは台紙の範囲内に収める
+	matWidth := width - borderWidth*2
+	matHeight := height - borderWidth*2
+
 	layout := FrameLayout{
-		Width:           positiveNumberSetting(size, frameWidth, defaultFrameWidth),
-		Height:          positiveNumberSetting(size, frameHeight, defaultFrameHeight),
+		Width:           width,
+		Height:          height,
 		BackgroundColor: colorSetting(background, frameColor, defaultBackgroundColor),
 		BorderColor:     colorSetting(border, frameColor, defaultBorderColor),
-		BorderWidth:     clampedNumberSetting(border, frameWidth, 0, 0, 20),
+		BorderWidth:     borderWidth,
 		Slots:           make([]FrameSlot, 0),
 		Texts:           make([]FrameText, 0),
 	}
 
 	for i, slot := range objectList(frame[frameSlots]) {
 		frameSlot := FrameSlot{
-			X:           clampedNumberSetting(slot, frameX, 0, 0, 100),
-			Y:           clampedNumberSetting(slot, frameY, 0, 0, 100),
-			Width:       clampedNumberSetting(slot, frameWidth, 100, 0, 100),
-			Height:      clampedNumberSetting(slot, frameHeight, 100, 0, 100),
-			Rotation:    clampedNumberSetting(slot, frameRotation, 0, -180, 180),
+			X:           clampedNumberSetting(slot, frameX, 0, 0, matWidth),
+			Y:           clampedNumberSetting(slot, frameY, 0, 0, matHeight),
+			Width:       clampedNumberSetting(slot, frameWidth, matWidth, 0, matWidth),
+			Height:      clampedNumberSetting(slot, frameHeight, matHeight, 0, matHeight),
+			Rotation:    clampedNumberSetting(slot, frameRotation, 0, -rotationMax, rotationMax),
 			BorderColor: colorSetting(slot, frameBorderColor, defaultSlotBorderColor),
-			BorderWidth: clampedNumberSetting(slot, frameBorderWidth, 0, 0, 10),
+			BorderWidth: clampedNumberSetting(slot, frameBorderWidth, 0, 0, slotBorderWidthMax),
 			Shadow:      boolSetting(slot, frameShadow),
 		}
 		if i < len(p.Photos) && !p.Photos[i].HiddenByAdmin {
@@ -171,12 +194,12 @@ func buildFrameLayout(p Portfolio) FrameLayout {
 			continue
 		}
 		layout.Texts = append(layout.Texts, FrameText{
-			X:          clampedNumberSetting(text, frameX, 0, 0, 100),
-			Y:          clampedNumberSetting(text, frameY, 0, 0, 100),
-			Width:      clampedNumberSetting(text, frameWidth, 100, 0, 100),
-			Rotation:   clampedNumberSetting(text, frameRotation, 0, -180, 180),
+			X:          clampedNumberSetting(text, frameX, 0, 0, matWidth),
+			Y:          clampedNumberSetting(text, frameY, 0, 0, matHeight),
+			Width:      clampedNumberSetting(text, frameWidth, matWidth, 0, matWidth),
+			Rotation:   clampedNumberSetting(text, frameRotation, 0, -rotationMax, rotationMax),
 			FontFamily: choiceSetting(text, frameFontFamily, FrameFontFamilies, defaultFontFamily),
-			FontSize:   clampedNumberSetting(text, frameFontSize, defaultFontSize, 0.5, 30),
+			FontSize:   clampedNumberSetting(text, frameFontSize, defaultFontSize, fontSizeMin, fontSizeMax),
 			Color:      colorSetting(text, frameColor, defaultTextColor),
 			Align:      choiceSetting(text, frameAlign, FrameTextAligns, defaultAlign),
 			Bold:       boolSetting(text, frameBold),

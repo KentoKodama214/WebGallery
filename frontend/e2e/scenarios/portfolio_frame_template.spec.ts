@@ -85,8 +85,8 @@ test.describe("額縁テンプレートを使ったポートフォリオ", () =>
       await page.mouse.move(start.x + 40, start.y + 30, { steps: 5 });
       await page.mouse.up();
       await expect(page.getByRole("heading", { name: "写真枠1" })).toBeVisible();
-      expect(await numberValue(page, /^左/)).toBeGreaterThan(6);
-      expect(await numberValue(page, /^上/)).toBeGreaterThan(12);
+      expect(await numberValue(page, /^左/)).toBeGreaterThan(21);
+      expect(await numberValue(page, /^上/)).toBeGreaterThan(28);
 
       // 右下のつまみで大きさを変える
       const widthBefore = await numberValue(page, /^横幅/);

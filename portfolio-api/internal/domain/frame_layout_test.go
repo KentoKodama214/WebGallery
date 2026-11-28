@@ -130,13 +130,13 @@ func TestBuildLayout_FrameDefensive(t *testing.T) {
 		frame := map[string]any{
 			"size":       map[string]any{"width": -1.0, "height": "257"},
 			"background": map[string]any{"color": "red; background-image: url(x)"},
-			"border":     map[string]any{"color": "#3b2a1a", "width": 99.0},
+			"border":     map[string]any{"color": "#3b2a1a", "width": 150.0},
 			"slots": []any{
 				"オブジェクトでない写真枠",
-				map[string]any{"x": -10.0, "y": 150.0, "width": math.Inf(1), "height": 0.5, "rotation": 400.0, "borderWidth": 50.0, "shadow": "true"},
+				map[string]any{"x": -10.0, "y": 150.0, "width": math.Inf(1), "height": 0.5, "rotation": 400.0, "borderWidth": 60.0, "shadow": "true"},
 			},
 			"texts": []any{
-				map[string]any{"x": 10.0, "y": 10.0, "width": 50.0, "fontFamily": "Comic Sans", "fontSize": 100.0, "align": "justify", "color": "#00f"},
+				map[string]any{"x": 10.0, "y": 10.0, "width": 500.0, "fontFamily": "Comic Sans", "fontSize": 300.0, "align": "justify", "color": "#00f"},
 			},
 		}
 		layout := buildFrameLayout(Portfolio{Template: TemplateFrame, TemplateSettings: frameSettings(frame, "文面"),
@@ -145,10 +145,12 @@ func TestBuildLayout_FrameDefensive(t *testing.T) {
 		if layout.Width != defaultFrameWidth || layout.Height != defaultFrameHeight {
 			t.Errorf("size = %v x %v, want default", layout.Width, layout.Height)
 		}
-		if layout.BackgroundColor != defaultBackgroundColor || layout.BorderWidth != 20 {
+		// 外枠は台紙の縦横が 10mm 残る太さ（既定のサイズ 364×257mm の短辺から (257-10)/2=123.5mm）までにし、台紙は 117×10mm になる
+		if layout.BackgroundColor != defaultBackgroundColor || layout.BorderWidth != 123.5 {
 			t.Errorf("background = %q, borderWidth = %v", layout.BackgroundColor, layout.BorderWidth)
 		}
-		wantSlot := FrameSlot{X: 0, Y: 100, Width: 100, Height: 0.5, Rotation: 180, BorderColor: defaultSlotBorderColor, BorderWidth: 10}
+		// 写真枠・メッセージ枠の位置・大きさは台紙の範囲内に収める（有限でない横幅は台紙の横幅にする）
+		wantSlot := FrameSlot{X: 0, Y: 10, Width: 117, Height: 0.5, Rotation: 180, BorderColor: defaultSlotBorderColor, BorderWidth: 50}
 		if len(layout.Slots) != 1 {
 			t.Fatalf("slots = %#v, want 1 slot (non-object slot is skipped)", layout.Slots)
 		}
@@ -157,7 +159,7 @@ func TestBuildLayout_FrameDefensive(t *testing.T) {
 		if !reflect.DeepEqual(gotSlot, wantSlot) {
 			t.Errorf("slot = %#v, want %#v", gotSlot, wantSlot)
 		}
-		wantText := FrameText{X: 10, Y: 10, Width: 50, FontFamily: defaultFontFamily, FontSize: 30, Color: defaultTextColor, Align: defaultAlign, Text: "文面"}
+		wantText := FrameText{X: 10, Y: 10, Width: 117, FontFamily: defaultFontFamily, FontSize: 200, Color: defaultTextColor, Align: defaultAlign, Text: "文面"}
 		if len(layout.Texts) != 1 || !reflect.DeepEqual(layout.Texts[0], wantText) {
 			t.Errorf("texts = %#v, want %#v", layout.Texts, wantText)
 		}

@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
-import { FrameCanvas, frameBoxStyle } from "@/components/frame/FrameCanvas";
-import { FRAME_LIMITS, clamp, round, type FrameDefinition } from "@/lib/frame/definition";
+import { FrameCanvas, frameBoxStyle, mmToMatPercent } from "@/components/frame/FrameCanvas";
+import { FRAME_LIMITS, clamp, getMatSize, round, type FrameDefinition } from "@/lib/frame/definition";
 import { NO_GUIDES, snapMove, snapResize, type FrameGuides, type GuideBox } from "@/lib/frame/guides";
 
 /** 選択中の要素（写真枠・メッセージ枠の種類と、定義内の位置） */
@@ -11,7 +11,7 @@ export interface FrameSelection {
   index: number;
 }
 
-/** 写真枠・メッセージ枠の位置・大きさ・傾きの変更内容 */
+/** 写真枠・メッセージ枠の位置・大きさ（mm）・傾きの変更内容 */
 export interface FrameBoxChange {
   x?: number;
   y?: number;
@@ -42,9 +42,8 @@ interface DragState {
   pointerId: number;
   startClientX: number;
   startClientY: number;
-  /** 台紙の大きさ（px）。% への換算に使う */
-  matWidth: number;
-  matHeight: number;
+  /** 画面上の 1px あたりの実寸（mm）。ポインタの移動量の換算に使う */
+  mmPerPx: number;
   /** 操作開始時の要素の位置・大きさ・傾き */
   start: { x: number; y: number; width: number; height: number; rotation: number };
   /** 要素の中心（画面上の px）。回転の軸にする */
@@ -52,9 +51,9 @@ interface DragState {
   centerY: number;
 }
 
-/** キー操作1回あたりの移動量（%）。Shift キーを押している間は大きく動かす */
-const KEY_STEP = 0.5;
-const KEY_STEP_LARGE = 5;
+/** キー操作1回あたりの移動量（mm）。Shift キーを押している間は大きく動かす */
+const KEY_STEP = 1;
+const KEY_STEP_LARGE = 10;
 
 /** 回転の角度を 0° に吸着させる範囲（度） */
 const ROTATION_SNAP = 2;
@@ -62,10 +61,9 @@ const ROTATION_SNAP = 2;
 /** 枠の端・中央を補助線に吸着させる範囲（画面上の px） */
 const GUIDE_SNAP_PX = 6;
 
-/** メッセージ枠の操作用の枠の高さ（%）。メッセージ枠は高さを持たないため、文字サイズから見積もる */
-function textBoxHeight(fontSize: number, definition: FrameDefinition): number {
-  // 文字サイズは額縁の横幅に対する %。台紙の縦幅に対する % に直し、1行分の行の高さ（1.5倍）にする
-  return (fontSize * 1.5 * definition.size.width) / definition.size.height;
+/** メッセージ枠の操作用の枠の高さ（mm）。メッセージ枠は高さを持たないため、文字サイズから1行分の行の高さ（1.5倍）を見積もる */
+function textBoxHeight(fontSize: number): number {
+  return fontSize * 1.5;
 }
 
 /**
@@ -88,6 +86,7 @@ export function FrameEditorCanvas({
   const dragRef = useRef<DragState | null>(null);
   /** ドラッグ中に表示する補助線 */
   const [guides, setGuides] = useState<FrameGuides>(NO_GUIDES);
+  const mat = getMatSize(definition.size, definition.border.width);
 
   const boxOf = (target: FrameSelection) => {
     if (target.kind === "slot") {
@@ -99,7 +98,7 @@ export function FrameEditorCanvas({
       x: text.x,
       y: text.y,
       width: text.width,
-      height: textBoxHeight(text.fontSize, definition),
+      height: textBoxHeight(text.fontSize),
       rotation: text.rotation,
     };
   };
@@ -118,9 +117,9 @@ export function FrameEditorCanvas({
     event.stopPropagation();
     onSelect(target);
     const boxElement = (event.currentTarget.closest("[data-frame-box]") as HTMLElement | null) ?? event.currentTarget;
-    const mat = boxElement.parentElement;
-    if (!mat) return;
-    const matRect = mat.getBoundingClientRect();
+    const matElement = boxElement.parentElement;
+    if (!matElement) return;
+    const matRect = matElement.getBoundingClientRect();
     const boxRect = boxElement.getBoundingClientRect();
     event.currentTarget.setPointerCapture?.(event.pointerId);
     dragRef.current = {
@@ -129,8 +128,7 @@ export function FrameEditorCanvas({
       pointerId: event.pointerId,
       startClientX: event.clientX,
       startClientY: event.clientY,
-      matWidth: matRect.width || 1,
-      matHeight: matRect.height || 1,
+      mmPerPx: mat.width / (matRect.width || 1),
       start: boxOf(target),
       centerX: boxRect.left + boxRect.width / 2,
       centerY: boxRect.top + boxRect.height / 2,
@@ -140,21 +138,21 @@ export function FrameEditorCanvas({
   const handlePointerMove = (event: PointerEvent<HTMLElement>) => {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
-    const dx = ((event.clientX - drag.startClientX) / drag.matWidth) * 100;
-    const dy = ((event.clientY - drag.startClientY) / drag.matHeight) * 100;
-    const threshold = event.altKey
-      ? { x: 0, y: 0 }
-      : { x: (GUIDE_SNAP_PX / drag.matWidth) * 100, y: (GUIDE_SNAP_PX / drag.matHeight) * 100 };
+    const dx = (event.clientX - drag.startClientX) * drag.mmPerPx;
+    const dy = (event.clientY - drag.startClientY) * drag.mmPerPx;
+    const snapRange = event.altKey ? 0 : GUIDE_SNAP_PX * drag.mmPerPx;
+    const threshold = { x: snapRange, y: snapRange };
     if (drag.mode === "move") {
       const snapped = snapMove(
         { x: drag.start.x + dx, y: drag.start.y + dy, width: drag.start.width, height: drag.start.height },
         otherBoxes(drag.selection),
+        mat,
         threshold
       );
       setGuides(snapped.guides);
       onChangeBox(drag.selection, {
-        x: round(clamp(snapped.x, 0, 100, drag.start.x), 2),
-        y: round(clamp(snapped.y, 0, 100, drag.start.y), 2),
+        x: round(clamp(snapped.x, 0, mat.width, drag.start.x)),
+        y: round(clamp(snapped.y, 0, mat.height, drag.start.y)),
       });
       return;
     }
@@ -166,13 +164,14 @@ export function FrameEditorCanvas({
       const localX = pxX * Math.cos(radian) - pxY * Math.sin(radian);
       const localY = pxX * Math.sin(radian) + pxY * Math.cos(radian);
       const resizeHeight = drag.selection.kind === "slot";
-      let width = drag.start.width + (localX / drag.matWidth) * 100;
-      let height = resizeHeight ? drag.start.height + (localY / drag.matHeight) * 100 : drag.start.height;
+      let width = drag.start.width + localX * drag.mmPerPx;
+      let height = resizeHeight ? drag.start.height + localY * drag.mmPerPx : drag.start.height;
       // 傾けた枠は右端・下端が台紙の縦横と揃わないため、吸着させない
       if (drag.start.rotation === 0) {
         const snapped = snapResize(
           { x: drag.start.x, y: drag.start.y, width, height },
           otherBoxes(drag.selection),
+          mat,
           threshold,
           resizeHeight
         );
@@ -181,10 +180,10 @@ export function FrameEditorCanvas({
         setGuides(snapped.guides);
       }
       const change: FrameBoxChange = {
-        width: round(clamp(width, FRAME_LIMITS.boxSizeMin, 100, drag.start.width), 2),
+        width: round(clamp(width, FRAME_LIMITS.boxSizeMin, mat.width, drag.start.width)),
       };
       if (resizeHeight) {
-        change.height = round(clamp(height, FRAME_LIMITS.boxSizeMin, 100, drag.start.height), 2);
+        change.height = round(clamp(height, FRAME_LIMITS.boxSizeMin, mat.height, drag.start.height));
       }
       onChangeBox(drag.selection, change);
       return;
@@ -228,8 +227,8 @@ export function FrameEditorCanvas({
     event.preventDefault();
     const box = boxOf(target);
     onChangeBox(target, {
-      x: round(clamp(box.x + move[0], 0, 100, box.x)),
-      y: round(clamp(box.y + move[1], 0, 100, box.y)),
+      x: round(clamp(box.x + move[0], 0, mat.width, box.x)),
+      y: round(clamp(box.y + move[1], 0, mat.height, box.y)),
     });
   };
 
@@ -296,7 +295,7 @@ export function FrameEditorCanvas({
                   ? "ring-2 ring-blue-600"
                   : "hover:ring-1 hover:ring-blue-400 focus-visible:ring-2 focus-visible:ring-blue-600"
               }`}
-              style={{ ...frameBoxStyle(box), zIndex: selected ? 2 : 1 }}
+              style={{ ...frameBoxStyle(box, mat), zIndex: selected ? 2 : 1 }}
             >
               {target.kind === "slot" && (
                 <span
@@ -341,7 +340,7 @@ export function FrameEditorCanvas({
             aria-hidden="true"
             data-testid="frame-guide-vertical"
             className="absolute top-0 bottom-0 border-l border-dashed border-pink-500 pointer-events-none"
-            style={{ left: `${position}%`, zIndex: 3 }}
+            style={{ left: mmToMatPercent(position, mat.width), zIndex: 3 }}
           />
         ))}
         {guides.horizontal.map((position) => (
@@ -350,7 +349,7 @@ export function FrameEditorCanvas({
             aria-hidden="true"
             data-testid="frame-guide-horizontal"
             className="absolute left-0 right-0 border-t border-dashed border-pink-500 pointer-events-none"
-            style={{ top: `${position}%`, zIndex: 3 }}
+            style={{ top: mmToMatPercent(position, mat.height), zIndex: 3 }}
           />
         ))}
       </FrameCanvas>

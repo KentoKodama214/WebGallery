@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import { FrameCanvas, frameBoxStyle } from "../FrameCanvas";
+import { FrameCanvas, frameBoxStyle, mmToCqw, mmToMatPercent } from "../FrameCanvas";
 
 const slot = { x: 10, y: 20, width: 30, height: 40, rotation: -5, borderColor: "#ffffff", borderWidth: 1, shadow: true };
 const text = {
@@ -17,13 +17,14 @@ const text = {
 };
 
 describe("FrameCanvas", () => {
-  it("額縁のサイズの縦横比・背景・外枠で描画し、写真枠・メッセージ枠を位置・傾き・フォントどおりに配置すること", () => {
+  it("額縁のサイズの縦横比・背景・外枠で描画し、写真枠・メッセージ枠を実寸の位置・傾き・フォントどおりに配置すること", () => {
+    // 外枠 5mm のため台紙は 190×140mm。太さ・文字サイズは額縁の横幅 200mm を基準に 1mm が 0.5cqw になる
     render(
       <FrameCanvas
-        size={{ width: 366, height: 254 }}
+        size={{ width: 200, height: 150 }}
         backgroundColor="#f5f0e6"
         borderColor="#3b2a1a"
-        borderWidth={2.5}
+        borderWidth={5}
         label="組写真：金閣寺"
         slots={[{ ...slot, photo: { url: "/images/1.jpg", alt: "金閣寺" } }]}
         texts={[{ ...text, text: "春の訪れ" }]}
@@ -31,20 +32,25 @@ describe("FrameCanvas", () => {
     );
 
     const canvas = screen.getByRole("img", { name: "組写真：金閣寺" });
-    expect(canvas).toHaveStyle({ aspectRatio: "366 / 254", backgroundColor: "#3b2a1a" });
-    // 外枠の太さは額縁自身の padding ではなく台紙の inset で指定する（cqw を額縁の横幅に対する % として解決させるため）
+    expect(canvas).toHaveStyle({ aspectRatio: "200 / 150", backgroundColor: "#3b2a1a" });
+    // 外枠の太さは額縁自身の padding ではなく台紙の inset で指定する（cqw を額縁の横幅を基準に解決させるため）
     expect(canvas.style.padding).toBe("");
     const mat = within(canvas).getByTestId("frame-mat");
     expect(mat).toHaveStyle({ backgroundColor: "#f5f0e6" });
     expect(mat.style.inset).toBe("2.5cqw");
 
     const slotElement = screen.getByTestId("frame-slot");
-    expect(slotElement).toHaveStyle({ left: "10%", top: "20%", width: "30%", height: "40%", transform: "rotate(-5deg)" });
+    expect(slotElement.style.left).toBe(`${(10 * 100) / 190}%`);
+    expect(slotElement.style.top).toBe(`${(20 * 100) / 140}%`);
+    expect(slotElement.style.width).toBe(`${(30 * 100) / 190}%`);
+    expect(slotElement.style.height).toBe(`${(40 * 100) / 140}%`);
+    expect(slotElement).toHaveStyle({ transform: "rotate(-5deg)" });
     expect(within(slotElement).getByAltText("金閣寺")).toHaveAttribute("src", "/images/1.jpg");
 
     const textElement = screen.getByTestId("frame-text");
     expect(textElement).toHaveTextContent("春の訪れ");
-    expect(textElement).toHaveStyle({ fontSize: "3cqw", textAlign: "center", fontWeight: "700", fontStyle: "italic", color: "#333333" });
+    // jsdom は cqw を解釈できないため、文字サイズは換算する関数のテストで確認する
+    expect(textElement).toHaveStyle({ textAlign: "center", fontWeight: "700", fontStyle: "italic", color: "#333333" });
     expect(textElement.style.fontFamily).toContain("Mincho");
   });
 
@@ -115,16 +121,29 @@ describe("FrameCanvas", () => {
 
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(within(screen.getByTestId("frame-overlay")).getByRole("button", { name: "操作" })).toBeInTheDocument();
-    expect(screen.getByTestId("frame-overlay")).toHaveStyle({ inset: "3cqw" });
+    expect(screen.getByTestId("frame-overlay")).toHaveStyle({ inset: "1cqw" });
   });
 
-  describe("frameBoxStyle", () => {
-    it("傾きが0の場合は回転させず、高さを持たない枠は高さを指定しないこと", () => {
-      const style = frameBoxStyle({ x: 1, y: 2, width: 3, rotation: 0 });
+  describe("mmToCqw / mmToMatPercent / frameBoxStyle", () => {
+    it("実寸（mm）を額縁の横幅に対する % の cqw に換算すること", () => {
+      expect(mmToCqw(30, 300)).toBe("10cqw");
+      expect(mmToCqw(0, 300)).toBe("0cqw");
+    });
+
+    it("台紙の左上からの実寸（mm）を台紙に対する % に換算すること", () => {
+      expect(mmToMatPercent(50, 200)).toBe("25%");
+    });
+
+    it("位置・大きさは横方向を台紙の横幅、縦方向を台紙の縦幅で換算し、傾きが0の場合は回転させず、高さを持たない枠は高さを指定しないこと", () => {
+      const style = frameBoxStyle({ x: 20, y: 30, width: 50, rotation: 0 }, { width: 200, height: 100 });
 
       expect(style.transform).toBeUndefined();
       expect(style.height).toBeUndefined();
-      expect(style).toMatchObject({ left: "1%", top: "2%", width: "3%" });
+      expect(style).toMatchObject({ left: "10%", top: "30%", width: "25%" });
+      expect(frameBoxStyle({ x: 0, y: 0, width: 1, height: 50, rotation: 3 }, { width: 200, height: 100 })).toMatchObject({
+        height: "50%",
+        transform: "rotate(3deg)",
+      });
     });
   });
 });

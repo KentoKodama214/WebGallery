@@ -2,7 +2,7 @@
  * 額縁テンプレートの編集キャンバスの補助線（スマートガイド）
  *
  * 写真枠・メッセージ枠をドラッグしている間、枠の端・中央が額縁（台紙）の端・中央や他の枠の端・中央に近づいたら
- * その位置に吸着させ、揃っている位置に補助線を表示するための計算を行う。位置・大きさはすべて台紙に対する %。
+ * その位置に吸着させ、揃っている位置に補助線を表示するための計算を行う。位置・大きさはすべて台紙の左上からの実寸（mm）。
  */
 
 /** 補助線の計算に使う枠の位置・大きさ（傾きは考慮せず、傾ける前の枠で揃える） */
@@ -13,7 +13,7 @@ export interface GuideBox {
   height: number;
 }
 
-/** 表示する補助線の位置（台紙に対する %） */
+/** 表示する補助線の位置（台紙の左上からの mm） */
 export interface FrameGuides {
   /** 縦の補助線の横位置 */
   vertical: number[];
@@ -30,14 +30,20 @@ export interface SnapResult {
   guides: FrameGuides;
 }
 
-/** 吸着する範囲（台紙に対する %。横・縦それぞれ） */
+/** 吸着する範囲（mm。横・縦それぞれ） */
 export interface SnapThreshold {
   x: number;
   y: number;
 }
 
-/** 揃っているとみなす誤差（%） */
+/** 揃っているとみなす誤差（mm） */
 const ALIGN_EPSILON = 0.01;
+
+/** 台紙の大きさ（mm） */
+export interface MatSize {
+  width: number;
+  height: number;
+}
 
 /** 補助線を引かない状態 */
 export const NO_GUIDES: FrameGuides = { vertical: [], horizontal: [] };
@@ -46,11 +52,13 @@ export const NO_GUIDES: FrameGuides = { vertical: [], horizontal: [] };
  * 吸着先の線を取得する（台紙の端・中央と、他の枠の端・中央）
  *
  * @param others 他の枠
+ * @param mat 台紙の大きさ（mm）
  * @param axis 横方向（x）か縦方向（y）か
  * @returns 吸着先の線の位置
  */
-function targetLines(others: GuideBox[], axis: "x" | "y"): number[] {
-  const lines = [0, 50, 100];
+function targetLines(others: GuideBox[], mat: MatSize, axis: "x" | "y"): number[] {
+  const matSize = axis === "x" ? mat.width : mat.height;
+  const lines = [0, matSize / 2, matSize];
   for (const box of others) {
     const start = axis === "x" ? box.x : box.y;
     const size = axis === "x" ? box.width : box.height;
@@ -97,12 +105,13 @@ function alignedLines(lines: number[], targets: number[]): number[] {
  *
  * @param box 移動後の枠
  * @param others 他の枠
+ * @param mat 台紙の大きさ（mm）
  * @param threshold 吸着する範囲
  * @returns 吸着後の枠と、表示する補助線
  */
-export function snapMove(box: GuideBox, others: GuideBox[], threshold: SnapThreshold): SnapResult {
-  const xTargets = targetLines(others, "x");
-  const yTargets = targetLines(others, "y");
+export function snapMove(box: GuideBox, others: GuideBox[], mat: MatSize, threshold: SnapThreshold): SnapResult {
+  const xTargets = targetLines(others, mat, "x");
+  const yTargets = targetLines(others, mat, "y");
   const offsetX = nearestOffset([box.x, box.x + box.width / 2, box.x + box.width], xTargets, threshold.x) ?? 0;
   const offsetY = nearestOffset([box.y, box.y + box.height / 2, box.y + box.height], yTargets, threshold.y) ?? 0;
   const x = box.x + offsetX;
@@ -124,6 +133,7 @@ export function snapMove(box: GuideBox, others: GuideBox[], threshold: SnapThres
  *
  * @param box 大きさを変更した後の枠
  * @param others 他の枠
+ * @param mat 台紙の大きさ（mm）
  * @param threshold 吸着する範囲
  * @param resizeHeight 高さも変更するか（メッセージ枠は高さを持たないため横幅だけ揃える）
  * @returns 吸着後の枠と、表示する補助線
@@ -131,11 +141,12 @@ export function snapMove(box: GuideBox, others: GuideBox[], threshold: SnapThres
 export function snapResize(
   box: GuideBox,
   others: GuideBox[],
+  mat: MatSize,
   threshold: SnapThreshold,
   resizeHeight: boolean
 ): SnapResult {
-  const xTargets = targetLines(others, "x");
-  const yTargets = targetLines(others, "y");
+  const xTargets = targetLines(others, mat, "x");
+  const yTargets = targetLines(others, mat, "y");
   const width = box.width + (nearestOffset([box.x + box.width], xTargets, threshold.x) ?? 0);
   const height = resizeHeight
     ? box.height + (nearestOffset([box.y + box.height], yTargets, threshold.y) ?? 0)

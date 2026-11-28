@@ -9,6 +9,8 @@ import {
   FRAME_TEXT_ALIGN_OPTIONS,
   clamp,
   findFrameSizePresetIndex,
+  getBorderWidthMax,
+  getMatSize,
   round,
   type FrameDefinition,
   type FrameFontFamily,
@@ -24,7 +26,9 @@ interface NumberFieldProps {
   min: number;
   max: number;
   step?: number;
-  /** 単位の表示（%・mm・° 等） */
+  /** 小数点以下の桁数（入力された値はこの桁数に丸める） */
+  digits?: number;
+  /** 単位の表示（mm・° 等） */
   unit?: string;
   onChange: (value: number) => void;
 }
@@ -35,7 +39,7 @@ interface NumberFieldProps {
  * 入力中は入力された文字をそのまま表示し（空欄・範囲外の途中の値も打てるようにする）、範囲内の数値になった時点で定義に反映する。
  * フォーカスを外すか Enter キーで確定し、範囲外の値は範囲内に収め、数値として解釈できない値は元に戻す。
  */
-function NumberField({ label, value, min, max, step = 0.1, unit, onChange }: NumberFieldProps) {
+function NumberField({ label, value, min, max, step = 0.1, digits = 1, unit, onChange }: NumberFieldProps) {
   const id = useId();
   /**
    * 入力中の文字と、その時点で定義に反映済みの値（入力中でなければ null とし、定義の値を表示する）。
@@ -51,7 +55,7 @@ function NumberField({ label, value, min, max, step = 0.1, unit, onChange }: Num
     }
     const parsed = Number(draftText);
     if (draftText.trim() !== "" && Number.isFinite(parsed)) {
-      onChange(round(clamp(parsed, min, max, value), 2));
+      onChange(round(clamp(parsed, min, max, value), digits));
     }
     setDraft(null);
   };
@@ -73,7 +77,7 @@ function NumberField({ label, value, min, max, step = 0.1, unit, onChange }: Num
           const text = e.target.value;
           const parsed = Number(text);
           if (text.trim() !== "" && Number.isFinite(parsed) && parsed >= min && parsed <= max) {
-            const next = round(parsed, 2);
+            const next = round(parsed, digits);
             setDraft({ text, base: next });
             onChange(next);
             return;
@@ -146,6 +150,7 @@ export function FramePropertyPanel({
   onDelete,
 }: FramePropertyPanelProps) {
   const isPortrait = definition.size.height > definition.size.width;
+  const mat = getMatSize(definition.size, definition.border.width);
   const presetIndex = findFrameSizePresetIndex(definition.size);
   const sizePresetId = useId();
   const fontId = useId();
@@ -164,22 +169,22 @@ export function FramePropertyPanel({
           ポートフォリオでは、表示順の{index + 1}枚目の写真がこの枠に当てはまります。
         </p>
         <div className="grid grid-cols-2 gap-2">
-          <NumberField label="左" unit="%" value={slot.x} min={0} max={100} onChange={(x) => onChangeSlot(index, { x })} />
-          <NumberField label="上" unit="%" value={slot.y} min={0} max={100} onChange={(y) => onChangeSlot(index, { y })} />
+          <NumberField label="左" unit="mm" value={slot.x} min={0} max={mat.width} onChange={(x) => onChangeSlot(index, { x })} />
+          <NumberField label="上" unit="mm" value={slot.y} min={0} max={mat.height} onChange={(y) => onChangeSlot(index, { y })} />
           <NumberField
             label="横幅"
-            unit="%"
+            unit="mm"
             value={slot.width}
             min={FRAME_LIMITS.boxSizeMin}
-            max={100}
+            max={mat.width}
             onChange={(width) => onChangeSlot(index, { width })}
           />
           <NumberField
             label="縦幅"
-            unit="%"
+            unit="mm"
             value={slot.height}
             min={FRAME_LIMITS.boxSizeMin}
-            max={100}
+            max={mat.height}
             onChange={(height) => onChangeSlot(index, { height })}
           />
         </div>
@@ -195,7 +200,7 @@ export function FramePropertyPanel({
         <ColorField label="枠線の色" value={slot.borderColor} onChange={(borderColor) => onChangeSlot(index, { borderColor })} />
         <NumberField
           label="枠線の太さ"
-          unit="%"
+          unit="mm"
           value={slot.borderWidth}
           min={0}
           max={FRAME_LIMITS.slotBorderWidthMax}
@@ -240,14 +245,14 @@ export function FramePropertyPanel({
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <NumberField label="左" unit="%" value={text.x} min={0} max={100} onChange={(x) => onChangeText(index, { x })} />
-          <NumberField label="上" unit="%" value={text.y} min={0} max={100} onChange={(y) => onChangeText(index, { y })} />
+          <NumberField label="左" unit="mm" value={text.x} min={0} max={mat.width} onChange={(x) => onChangeText(index, { x })} />
+          <NumberField label="上" unit="mm" value={text.y} min={0} max={mat.height} onChange={(y) => onChangeText(index, { y })} />
           <NumberField
             label="横幅"
-            unit="%"
+            unit="mm"
             value={text.width}
             min={FRAME_LIMITS.boxSizeMin}
-            max={100}
+            max={mat.width}
             onChange={(width) => onChangeText(index, { width })}
           />
           <NumberField
@@ -279,7 +284,7 @@ export function FramePropertyPanel({
         </div>
         <NumberField
           label="文字サイズ"
-          unit="%"
+          unit="mm"
           value={text.fontSize}
           min={FRAME_LIMITS.fontSizeMin}
           max={FRAME_LIMITS.fontSizeMax}
@@ -388,6 +393,7 @@ export function FramePropertyPanel({
           label="横"
           unit="mm"
           step={1}
+          digits={0}
           value={definition.size.width}
           min={FRAME_LIMITS.sizeMin}
           max={FRAME_LIMITS.sizeMax}
@@ -397,6 +403,7 @@ export function FramePropertyPanel({
           label="縦"
           unit="mm"
           step={1}
+          digits={0}
           value={definition.size.height}
           min={FRAME_LIMITS.sizeMin}
           max={FRAME_LIMITS.sizeMax}
@@ -415,12 +422,15 @@ export function FramePropertyPanel({
       />
       <NumberField
         label="外枠の太さ"
-        unit="%"
+        unit="mm"
         value={definition.border.width}
         min={0}
-        max={FRAME_LIMITS.borderWidthMax}
+        max={getBorderWidthMax(definition.size)}
         onChange={(width) => onChangeDefinition((prev) => ({ ...prev, border: { ...prev.border, width } }))}
       />
+      <p className="text-xs text-gray-600">
+        写真枠・メッセージ枠の位置は、台紙（外枠の内側）の左上からの距離です。額縁を小さくしたり外枠を太くしたりして台紙からはみ出した枠は、台紙の内側に収めます。
+      </p>
       <p className="text-xs text-gray-600">
         写真枠・メッセージ枠をクリックすると、その枠の設定を表示します。枠はドラッグで移動、右下のつまみで大きさの変更、上のつまみで回転できます（Shiftキーで15°刻み）。選択中の枠は矢印キーでも移動できます。
       </p>

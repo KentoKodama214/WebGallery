@@ -7,6 +7,9 @@ import {
   createSlot,
   createText,
   findFrameSizePresetIndex,
+  fitToMat,
+  getBorderWidthMax,
+  getMatSize,
   parseFrameDefinition,
   round,
   toFontFamilyCss,
@@ -69,9 +72,51 @@ describe("frame/definition", () => {
       expect(parseFrameDefinition(toFrameDefinitionJson(definition))).toEqual(definition);
     });
 
-    it("追加する写真枠・メッセージ枠は、追加するたびに位置をずらし、額縁の範囲内に置くこと", () => {
-      expect(createSlot(1).x).not.toBe(createSlot(0).x);
-      expect(createText(10).y).toBeLessThanOrEqual(100);
+    it("追加する写真枠・メッセージ枠は、追加するたびに位置をずらし、台紙の範囲内に置くこと", () => {
+      const mat = { width: 348, height: 236 };
+      expect(createSlot(1, mat).x).not.toBe(createSlot(0, mat).x);
+      const slot = createSlot(4, mat);
+      expect(slot.x + slot.width).toBeLessThanOrEqual(mat.width);
+      expect(slot.y + slot.height).toBeLessThanOrEqual(mat.height);
+      expect(createText(10, mat).y).toBeLessThanOrEqual(mat.height);
+    });
+  });
+
+  describe("getMatSize / getBorderWidthMax / fitToMat", () => {
+    it("台紙の大きさは、額縁のサイズから外枠の太さの分を両側から除いた大きさであること", () => {
+      expect(getMatSize({ width: 366, height: 254 }, 9)).toEqual({ width: 348, height: 236 });
+    });
+
+    it("外枠の太さの上限は、台紙の縦横が 10mm 残る太さとし、200mm を超えないこと", () => {
+      // 短辺 254mm から 10mm を残すため (254-10)/2=122mm
+      expect(getBorderWidthMax({ width: 366, height: 254 })).toBe(122);
+      expect(getBorderWidthMax({ width: 51, height: 3000 })).toBe(20.5);
+      expect(getBorderWidthMax({ width: 3000, height: 3000 })).toBe(200);
+    });
+
+    it("額縁を小さくしたり外枠を太くしたりして台紙からはみ出した枠を、台紙の内側に収めること", () => {
+      const definition = createDefaultDefinition();
+      const fitted = fitToMat({
+        ...definition,
+        size: { width: 200, height: 100 },
+        border: { ...definition.border, width: 60 },
+      });
+
+      // 外枠は (100-10)/2=45mm まで。台紙は 110×10mm になる
+      expect(fitted.border.width).toBe(45);
+      for (const slot of fitted.slots) {
+        expect(slot.x).toBeLessThanOrEqual(110);
+        expect(slot.y).toBeLessThanOrEqual(10);
+        expect(slot.width).toBeLessThanOrEqual(110);
+        expect(slot.height).toBeLessThanOrEqual(10);
+      }
+      expect(fitted.slots[0]).toMatchObject({ x: 21, y: 10, width: 94, height: 10, rotation: -2 });
+      expect(fitted.texts[0]).toMatchObject({ x: 34.8, y: 10, width: 110 });
+    });
+
+    it("台紙に収まっている枠は変えないこと", () => {
+      const definition = createDefaultDefinition();
+      expect(fitToMat(definition)).toEqual(definition);
     });
   });
 
@@ -96,17 +141,32 @@ describe("frame/definition", () => {
       const parsed = parseFrameDefinition({
         size: { width: 10 },
         background: { color: "red" },
-        slots: [{ x: -5, y: 120, width: 0, rotation: 999 }, "オブジェクトでない写真枠"],
-        texts: [{ fontFamily: "Comic Sans", align: "justify", fontSize: 100, color: "#fff" }],
+        slots: [{ x: -5, y: 300, width: 0, rotation: 999 }, "オブジェクトでない写真枠"],
+        texts: [{ fontFamily: "Comic Sans", align: "justify", fontSize: 300, color: "#fff" }],
       });
 
       expect(parsed.size).toEqual({ width: 50, height: 254 });
       expect(parsed.background.color).toBe("#ffffff");
       expect(parsed.border).toEqual({ color: "#000000", width: 0 });
+      // 位置・大きさは台紙（外枠なしのため 50×254mm）の範囲内に収め、欠けた大きさは台紙の縦横にする
       expect(parsed.slots).toEqual([
-        { x: 0, y: 100, width: 1, height: 40, rotation: 180, borderColor: "#ffffff", borderWidth: 0, shadow: false },
+        { x: 0, y: 254, width: 1, height: 254, rotation: 180, borderColor: "#ffffff", borderWidth: 0, shadow: false },
       ]);
-      expect(parsed.texts[0]).toMatchObject({ fontFamily: "gothic", align: "left", fontSize: 30, color: "#333333", bold: false, italic: false });
+      expect(parsed.texts[0]).toMatchObject({ fontFamily: "gothic", align: "left", fontSize: 200, color: "#333333", bold: false, italic: false });
+    });
+
+    it("外枠は台紙の縦横が 10mm 残る太さまでとし、写真枠・メッセージ枠は外枠の内側の台紙の範囲内に収めること", () => {
+      const parsed = parseFrameDefinition({
+        size: { width: 300, height: 100 },
+        border: { width: 80 },
+        slots: [{ x: 500, y: 500, width: 500, height: 500 }],
+        texts: [{ x: 500, y: 500, width: 500, fontFamily: "gothic", fontSize: 5 }],
+      });
+
+      // 外枠は (100-10)/2=45mm まで。台紙は 210×10mm になる
+      expect(parsed.border.width).toBe(45);
+      expect(parsed.slots[0]).toMatchObject({ x: 210, y: 10, width: 210, height: 10 });
+      expect(parsed.texts[0]).toMatchObject({ x: 210, y: 10, width: 210 });
     });
 
     it("写真枠・メッセージ枠は上限の数までとし、オブジェクトでない値は空の額縁定義として扱うこと", () => {
@@ -126,18 +186,38 @@ describe("frame/definition", () => {
   });
 
   describe("toFrameDefinitionJson", () => {
-    it("数値の桁数を揃え、位置・大きさを範囲内に収めること", () => {
+    it("数値の桁数を揃え（額縁のサイズは 1mm、それ以外は 0.1 単位）、位置・大きさを台紙の範囲内に収めること", () => {
       const definition = createDefaultDefinition();
       definition.size = { width: 366.4, height: 254.6 };
-      definition.slots = [{ ...definition.slots[0], x: 12.345, y: -3, width: 120, rotation: 3.14159 }];
+      definition.border = { ...definition.border, width: 9.04 };
+      definition.slots = [{ ...definition.slots[0], x: 12.345, y: -3, width: 400, rotation: 3.14159, borderWidth: 2.96 }];
+      definition.texts = [{ ...definition.texts[0], fontSize: 8.75 }];
 
       const json = toFrameDefinitionJson(definition) as {
         size: { width: number; height: number };
-        slots: { x: number; y: number; width: number; rotation: number }[];
+        border: { width: number };
+        slots: { x: number; y: number; width: number; rotation: number; borderWidth: number }[];
+        texts: { fontSize: number }[];
       };
 
       expect(json.size).toEqual({ width: 366, height: 255 });
-      expect(json.slots[0]).toMatchObject({ x: 12.3, y: 0, width: 100, rotation: 3.1 });
+      expect(json.border.width).toBe(9);
+      // 台紙は 366-9×2=348mm × 255-9×2=237mm
+      expect(json.slots[0]).toMatchObject({ x: 12.3, y: 0, width: 348, rotation: 3.1, borderWidth: 3 });
+      expect(json.texts[0].fontSize).toBe(8.8);
+    });
+
+    it("丸めた位置・大きさが台紙の縦横を超えないこと", () => {
+      const definition = createDefaultDefinition();
+      // 台紙は 366-9.3×2=347.4mm（浮動小数点では 347.4 ちょうどにならない）
+      definition.border = { ...definition.border, width: 9.3 };
+      definition.slots = [{ ...definition.slots[0], x: 347.4, width: 347.4 }];
+
+      const json = toFrameDefinitionJson(definition) as { slots: { x: number; width: number }[] };
+
+      expect(json.slots[0].x).toBeLessThanOrEqual(366 - 9.3 * 2 + 1e-6);
+      expect(json.slots[0].width).toBe(json.slots[0].x);
+      expect(json.slots[0].x).toBeCloseTo(347.4);
     });
   });
 });

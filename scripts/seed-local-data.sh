@@ -336,7 +336,7 @@ INSERT INTO photo.portfolio_tag_mst (account_no, portfolio_no, tag_no, created_b
 SELECT :u1_account_no, 6, n, :u1_account_no, now(), 'タグ' || lpad(n::text, 2, '0'), 'tag' || lpad(n::text, 2, '0')
 FROM generate_series(1, 30) AS n;
 
--- localuser01 額縁テンプレート（位置・大きさは額縁に対する%、外枠・枠線の太さと文字サイズは額縁の横幅に対する%）
+-- localuser01 額縁テンプレート（長さはすべてmm。写真枠・メッセージ枠の位置は台紙（外枠の内側）の左上からの距離）
 -- T1: 四つ切・縦長（254×305mm）、木目調の外枠、写真枠3（上に大きく1枚・下に2枚。傾きなし）、メッセージ枠2（明朝の太字タイトル・ゴシックの添え書き）
 -- T2: A3・横長（420×297mm）、暗い背景、写真枠5（傾き・影ありのコラージュ）、メッセージ枠3（手書き風・筆記体の斜体・小さな右揃えのクレジット。傾きあり）
 -- T3: 正方形（300×300mm）、白い背景に金色の太い外枠、写真枠4（2×2。細い黒枠・影なし）、メッセージ枠なし
@@ -344,43 +344,43 @@ INSERT INTO photo.frame_template_mst (account_no, frame_template_no, created_by,
   (:u1_account_no, 1, :u1_account_no, now() - interval '25 days', :u1_account_no, now() - interval '4 days', '四つ切 縦 3枚組', '{
     "size": {"width": 254, "height": 305},
     "background": {"color": "#f5f0e6"},
-    "border": {"color": "#3b2a1a", "width": 4},
+    "border": {"color": "#3b2a1a", "width": 10.2},
     "slots": [
-      {"x": 6, "y": 5, "width": 88, "height": 45, "rotation": 0, "borderColor": "#ffffff", "borderWidth": 0.8, "shadow": true},
-      {"x": 6, "y": 54, "width": 42, "height": 30, "rotation": 0, "borderColor": "#ffffff", "borderWidth": 0.8, "shadow": true},
-      {"x": 52, "y": 54, "width": 42, "height": 30, "rotation": 0, "borderColor": "#ffffff", "borderWidth": 0.8, "shadow": true}
+      {"x": 14, "y": 14.2, "width": 205.6, "height": 128.1, "rotation": 0, "borderColor": "#ffffff", "borderWidth": 2, "shadow": true},
+      {"x": 14, "y": 153.7, "width": 98.1, "height": 85.4, "rotation": 0, "borderColor": "#ffffff", "borderWidth": 2, "shadow": true},
+      {"x": 121.5, "y": 153.7, "width": 98.1, "height": 85.4, "rotation": 0, "borderColor": "#ffffff", "borderWidth": 2, "shadow": true}
     ],
     "texts": [
-      {"x": 6, "y": 87, "width": 88, "rotation": 0, "fontFamily": "mincho", "fontSize": 4, "color": "#3b2a1a", "align": "center", "bold": true, "italic": false},
-      {"x": 6, "y": 93.5, "width": 88, "rotation": 0, "fontFamily": "gothic", "fontSize": 2, "color": "#6b5b4b", "align": "center", "bold": false, "italic": false}
+      {"x": 14, "y": 247.6, "width": 205.6, "rotation": 0, "fontFamily": "mincho", "fontSize": 10.2, "color": "#3b2a1a", "align": "center", "bold": true, "italic": false},
+      {"x": 14, "y": 266.1, "width": 205.6, "rotation": 0, "fontFamily": "gothic", "fontSize": 5.1, "color": "#6b5b4b", "align": "center", "bold": false, "italic": false}
     ]
   }'),
   (:u1_account_no, 2, :u1_account_no, now() - interval '18 days', :u1_account_no, now() - interval '18 days', 'A3 横 コラージュ 5枚組', '{
     "size": {"width": 420, "height": 297},
     "background": {"color": "#1f2937"},
-    "border": {"color": "#111111", "width": 2},
+    "border": {"color": "#111111", "width": 8.4},
     "slots": [
-      {"x": 4, "y": 8, "width": 30, "height": 40, "rotation": -6, "borderColor": "#ffffff", "borderWidth": 1.2, "shadow": true},
-      {"x": 36, "y": 5, "width": 28, "height": 52, "rotation": 3, "borderColor": "#ffffff", "borderWidth": 1.2, "shadow": true},
-      {"x": 67, "y": 10, "width": 29, "height": 38, "rotation": -2.5, "borderColor": "#ffffff", "borderWidth": 1.2, "shadow": true},
-      {"x": 8, "y": 54, "width": 26, "height": 38, "rotation": 5, "borderColor": "#ffffff", "borderWidth": 1.2, "shadow": true},
-      {"x": 63, "y": 54, "width": 32, "height": 36, "rotation": -4, "borderColor": "#ffffff", "borderWidth": 1.2, "shadow": true}
+      {"x": 16.1, "y": 22.4, "width": 121, "height": 112.1, "rotation": -6, "borderColor": "#ffffff", "borderWidth": 5, "shadow": true},
+      {"x": 145.2, "y": 14, "width": 112.9, "height": 145.7, "rotation": 3, "borderColor": "#ffffff", "borderWidth": 5, "shadow": true},
+      {"x": 270.1, "y": 28, "width": 116.9, "height": 106.5, "rotation": -2.5, "borderColor": "#ffffff", "borderWidth": 5, "shadow": true},
+      {"x": 32.3, "y": 151.3, "width": 104.8, "height": 106.5, "rotation": 5, "borderColor": "#ffffff", "borderWidth": 5, "shadow": true},
+      {"x": 254, "y": 151.3, "width": 129, "height": 100.9, "rotation": -4, "borderColor": "#ffffff", "borderWidth": 5, "shadow": true}
     ],
     "texts": [
-      {"x": 36, "y": 63, "width": 26, "rotation": -3, "fontFamily": "handwriting", "fontSize": 2.8, "color": "#fef3c7", "align": "center", "bold": false, "italic": false},
-      {"x": 36, "y": 75, "width": 26, "rotation": 0, "fontFamily": "script", "fontSize": 1.8, "color": "#e5e7eb", "align": "center", "bold": false, "italic": true},
-      {"x": 50, "y": 93, "width": 46, "rotation": 0, "fontFamily": "gothic", "fontSize": 1.2, "color": "#9ca3af", "align": "right", "bold": false, "italic": false}
+      {"x": 145.2, "y": 176.5, "width": 104.8, "rotation": -3, "fontFamily": "handwriting", "fontSize": 11.8, "color": "#fef3c7", "align": "center", "bold": false, "italic": false},
+      {"x": 145.2, "y": 210.2, "width": 104.8, "rotation": 0, "fontFamily": "script", "fontSize": 7.6, "color": "#e5e7eb", "align": "center", "bold": false, "italic": true},
+      {"x": 201.6, "y": 260.6, "width": 185.5, "rotation": 0, "fontFamily": "gothic", "fontSize": 5, "color": "#9ca3af", "align": "right", "bold": false, "italic": false}
     ]
   }'),
   (:u1_account_no, 3, :u1_account_no, now() - interval '6 days', :u1_account_no, now() - interval '6 days', '正方形 2×2 グリッド', '{
     "size": {"width": 300, "height": 300},
     "background": {"color": "#ffffff"},
-    "border": {"color": "#c8a96a", "width": 6},
+    "border": {"color": "#c8a96a", "width": 18},
     "slots": [
-      {"x": 5, "y": 5, "width": 43, "height": 43, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.3, "shadow": false},
-      {"x": 52, "y": 5, "width": 43, "height": 43, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.3, "shadow": false},
-      {"x": 5, "y": 52, "width": 43, "height": 43, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.3, "shadow": false},
-      {"x": 52, "y": 52, "width": 43, "height": 43, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.3, "shadow": false}
+      {"x": 13.2, "y": 13.2, "width": 113.5, "height": 113.5, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.9, "shadow": false},
+      {"x": 137.3, "y": 13.2, "width": 113.5, "height": 113.5, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.9, "shadow": false},
+      {"x": 13.2, "y": 137.3, "width": 113.5, "height": 113.5, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.9, "shadow": false},
+      {"x": 137.3, "y": 137.3, "width": 113.5, "height": 113.5, "rotation": 0, "borderColor": "#000000", "borderWidth": 0.9, "shadow": false}
     ],
     "texts": []
   }');

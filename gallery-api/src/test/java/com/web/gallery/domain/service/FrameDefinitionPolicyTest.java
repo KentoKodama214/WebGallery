@@ -30,10 +30,10 @@ class FrameDefinitionPolicyTest {
 
   /** 必須項目のみのメッセージ枠 */
   private static Map<String, Object> text() {
-    return Map.of("x", 50, "y", 80, "width", 40, "fontFamily", "mincho", "fontSize", 2.5);
+    return Map.of("x", 50, "y", 200, "width", 240, "fontFamily", "mincho", "fontSize", 9);
   }
 
-  /** 必須項目のみの額縁定義に、指定した項目を上書き・追加した額縁定義 */
+  /** 必須項目のみの額縁定義（364×257mm・外枠なしのため、台紙も364×257mm）に、指定した項目を上書き・追加した額縁定義 */
   private static FrameDefinition definition(Map<String, Object> overrides) {
     Map<String, Object> value = new HashMap<>();
     value.put("size", Map.of("width", 364, "height", 257));
@@ -162,16 +162,36 @@ class FrameDefinitionPolicyTest {
 
     @Test
     @Order(9)
-    @DisplayName("正常系：外枠の太さが上限（20%）ちょうどの場合、妥当と判定すること")
+    @DisplayName("正常系：外枠の太さが、台紙の縦横が下限（10mm）残る太さ・上限（200mm）ちょうどの場合、妥当と判定すること")
     void isValid_borderWidthAtLimit() {
-      assertTrue(policy.isValid(definition(Map.of("border", Map.of("width", 20)))));
+      // 364×257mmの額縁は短辺257mmから台紙の10mmを残すため、(257-10)/2=123.5mmまで（台紙は117×10mmになる）
+      Map<String, Object> smallSlot = Map.of("x", 0, "y", 0, "width", 10, "height", 10);
+      assertTrue(
+          policy.isValid(
+              definition(Map.of("border", Map.of("width", 123.5), "slots", List.of(smallSlot)))));
+      // 3000×3000mmの額縁は上限の200mmまで
+      assertTrue(
+          policy.isValid(
+              definition(
+                  Map.of(
+                      "size", Map.of("width", 3000, "height", 3000),
+                      "border", Map.of("width", 200)))));
     }
 
     @Test
     @Order(10)
-    @DisplayName("異常系：外枠の太さが上限超過・負の値の場合、不正と判定すること")
+    @DisplayName("異常系：外枠の太さが、台紙の縦横が下限未満になる太さ・上限超過・負の値の場合、不正と判定すること")
     void isValid_borderWidthOutOfRange() {
-      assertFalse(policy.isValid(definition(Map.of("border", Map.of("width", 20.1)))));
+      Map<String, Object> smallSlot = Map.of("x", 0, "y", 0, "width", 5, "height", 5);
+      assertFalse(
+          policy.isValid(
+              definition(Map.of("border", Map.of("width", 123.6), "slots", List.of(smallSlot)))));
+      assertFalse(
+          policy.isValid(
+              definition(
+                  Map.of(
+                      "size", Map.of("width", 3000, "height", 3000),
+                      "border", Map.of("width", 200.1)))));
       assertFalse(policy.isValid(definition(Map.of("border", Map.of("width", -1)))));
     }
 
@@ -214,23 +234,40 @@ class FrameDefinitionPolicyTest {
 
     @Test
     @Order(15)
-    @DisplayName("正常系：写真枠の位置が0%・100%、大きさが100%ちょうどの場合、妥当と判定すること")
+    @DisplayName("正常系：写真枠・メッセージ枠の位置が台紙の端、大きさが台紙の縦横ちょうどの場合、妥当と判定すること")
     void isValid_slotRectAtLimit() {
-      assertTrue(policy.isValid(withSlot(Map.of("x", 0, "y", 100, "width", 100, "height", 100))));
+      assertTrue(policy.isValid(withSlot(Map.of("x", 0, "y", 257, "width", 364, "height", 257))));
+      assertTrue(policy.isValid(withText(Map.of("x", 364, "y", 0, "width", 364))));
     }
 
     @Test
     @Order(16)
-    @DisplayName("異常系：写真枠の位置が範囲外、大きさが0以下・100%超過の場合、不正と判定すること")
+    @DisplayName("異常系：写真枠・メッセージ枠の位置が台紙の外、大きさが0以下・台紙の縦横超過の場合、不正と判定すること")
     void isValid_slotRectOutOfRange() {
       assertFalse(policy.isValid(withSlot(Map.of("x", -0.1))));
-      assertFalse(policy.isValid(withSlot(Map.of("y", 100.1))));
+      assertFalse(policy.isValid(withSlot(Map.of("y", 257.1))));
       assertFalse(policy.isValid(withSlot(Map.of("width", 0))));
-      assertFalse(policy.isValid(withSlot(Map.of("height", 100.1))));
+      assertFalse(policy.isValid(withSlot(Map.of("width", 364.1))));
+      assertFalse(policy.isValid(withSlot(Map.of("height", 257.1))));
+      assertFalse(policy.isValid(withText(Map.of("x", 364.1))));
+      assertFalse(policy.isValid(withText(Map.of("width", 364.1))));
     }
 
     @Test
     @Order(17)
+    @DisplayName("正常系・異常系：外枠がある場合、外枠の内側の台紙を基準に写真枠の位置・大きさを判定すること")
+    void isValid_slotRectWithinMat() {
+      // 外枠10mmのため、台紙は344×237mm
+      Map<String, Object> border = Map.of("width", 10);
+      Map<String, Object> fullSlot = Map.of("x", 344, "y", 237, "width", 344, "height", 237);
+      Map<String, Object> overSlot = Map.of("x", 0, "y", 0, "width", 344.1, "height", 237);
+
+      assertTrue(policy.isValid(definition(Map.of("border", border, "slots", List.of(fullSlot)))));
+      assertFalse(policy.isValid(definition(Map.of("border", border, "slots", List.of(overSlot)))));
+    }
+
+    @Test
+    @Order(18)
     @DisplayName("正常系：傾きが±180度ちょうどの場合、妥当と判定すること")
     void isValid_rotationAtLimit() {
       assertTrue(policy.isValid(withSlot(Map.of("rotation", -180))));
@@ -238,7 +275,7 @@ class FrameDefinitionPolicyTest {
     }
 
     @Test
-    @Order(18)
+    @Order(19)
     @DisplayName("異常系：傾きが±180度を超える場合、不正と判定すること")
     void isValid_rotationOutOfRange() {
       assertFalse(policy.isValid(withSlot(Map.of("rotation", 180.5))));
@@ -246,15 +283,16 @@ class FrameDefinitionPolicyTest {
     }
 
     @Test
-    @Order(19)
-    @DisplayName("異常系：写真枠の枠線の太さが上限超過、影が真偽値でない場合、不正と判定すること")
+    @Order(20)
+    @DisplayName("異常系：写真枠の枠線の太さが上限（50mm）超過、影が真偽値でない場合、不正と判定すること")
     void isValid_slotDecorationInvalid() {
-      assertFalse(policy.isValid(withSlot(Map.of("borderWidth", 10.5))));
+      assertTrue(policy.isValid(withSlot(Map.of("borderWidth", 50))));
+      assertFalse(policy.isValid(withSlot(Map.of("borderWidth", 50.1))));
       assertFalse(policy.isValid(withSlot(Map.of("shadow", "true"))));
     }
 
     @Test
-    @Order(20)
+    @Order(21)
     @DisplayName("正常系：メッセージ枠が上限（10件）ちょうどの場合、妥当と判定すること")
     void isValid_textsAtLimit() {
       List<Object> texts = IntStream.range(0, 10).mapToObj(i -> (Object) text()).toList();
@@ -263,7 +301,7 @@ class FrameDefinitionPolicyTest {
     }
 
     @Test
-    @Order(21)
+    @Order(22)
     @DisplayName("異常系：メッセージ枠が上限超過（11件）、または配列でない場合、不正と判定すること")
     void isValid_textsInvalid() {
       List<Object> texts = IntStream.range(0, 11).mapToObj(i -> (Object) text()).toList();
@@ -273,7 +311,7 @@ class FrameDefinitionPolicyTest {
     }
 
     @Test
-    @Order(22)
+    @Order(23)
     @DisplayName("正常系：選択できるすべてのフォントを妥当と判定すること")
     void isValid_allFontFamilies() {
       FrameDefinitionPolicy.FONT_FAMILIES.forEach(fontFamily ->
@@ -281,7 +319,7 @@ class FrameDefinitionPolicyTest {
     }
 
     @Test
-    @Order(23)
+    @Order(24)
     @DisplayName("異常系：フォントが未設定・選択肢にない場合、不正と判定すること")
     void isValid_invalidFontFamily() {
       Map<String, Object> withoutFont = new HashMap<>(text());
@@ -292,23 +330,23 @@ class FrameDefinitionPolicyTest {
     }
 
     @Test
-    @Order(24)
-    @DisplayName("正常系：文字サイズが下限（0.5%）・上限（30%）ちょうどの場合、妥当と判定すること")
-    void isValid_fontSizeAtLimit() {
-      assertTrue(policy.isValid(withText(Map.of("fontSize", 0.5))));
-      assertTrue(policy.isValid(withText(Map.of("fontSize", 30))));
-    }
-
-    @Test
     @Order(25)
-    @DisplayName("異常系：文字サイズが下限未満・上限超過の場合、不正と判定すること")
-    void isValid_fontSizeOutOfRange() {
-      assertFalse(policy.isValid(withText(Map.of("fontSize", 0.4))));
-      assertFalse(policy.isValid(withText(Map.of("fontSize", 30.1))));
+    @DisplayName("正常系：文字サイズが下限（1mm）・上限（200mm）ちょうどの場合、妥当と判定すること")
+    void isValid_fontSizeAtLimit() {
+      assertTrue(policy.isValid(withText(Map.of("fontSize", 1))));
+      assertTrue(policy.isValid(withText(Map.of("fontSize", 200))));
     }
 
     @Test
     @Order(26)
+    @DisplayName("異常系：文字サイズが下限未満・上限超過の場合、不正と判定すること")
+    void isValid_fontSizeOutOfRange() {
+      assertFalse(policy.isValid(withText(Map.of("fontSize", 0.9))));
+      assertFalse(policy.isValid(withText(Map.of("fontSize", 200.1))));
+    }
+
+    @Test
+    @Order(27)
     @DisplayName("異常系：揃えが選択肢にない、太字・斜体が真偽値でない場合、不正と判定すること")
     void isValid_textDecorationInvalid() {
       assertFalse(policy.isValid(withText(Map.of("align", "justify"))));
@@ -317,7 +355,7 @@ class FrameDefinitionPolicyTest {
     }
 
     @Test
-    @Order(27)
+    @Order(28)
     @DisplayName("異常系：数値が有限でない（NaN・無限大）場合、不正と判定すること")
     void isValid_notFinite() {
       assertFalse(policy.isValid(withSlot(Map.of("x", Double.NaN))));
@@ -326,7 +364,7 @@ class FrameDefinitionPolicyTest {
   }
 
   @Nested
-  @Order(2)
+  @Order(29)
   @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
   class countSlots {
     @Test

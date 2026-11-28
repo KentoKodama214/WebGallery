@@ -77,10 +77,10 @@ export type FrameFontFamily = "GOTHIC" | "MINCHO" | "MARU" | "HANDWRITING" | "SE
 /** 額縁型のメッセージ枠の揃え */
 export type FrameTextAlign = "LEFT" | "CENTER" | "RIGHT";
 
-/** 額縁型のレイアウト（位置・大きさ・太さ・文字サイズは額縁に対する %） */
+/** 額縁型のレイアウト（サイズ・位置・大きさ・太さ・文字サイズは実寸の mm。写真枠・メッセージ枠の位置は台紙の左上からの距離） */
 export interface FrameLayout {
   __typename: "FrameLayout";
-  /** 額縁の横幅（mm。縦横比の算出に使う） */
+  /** 額縁の横幅（mm） */
   width: number;
   /** 額縁の縦幅（mm） */
   height: number;

@@ -13,6 +13,8 @@ import {
   createDefaultDefinition,
   createSlot,
   createText,
+  fitToMat,
+  getMatSize,
   parseFrameDefinition,
   toFrameDefinitionJson,
   type FrameDefinition,
@@ -29,8 +31,8 @@ interface FrameTemplateEditorProps {
   initialFrameTemplateNo?: number;
 }
 
-/** 複製した写真枠・メッセージ枠を元の位置からずらす量（%） */
-const DUPLICATE_OFFSET = 3;
+/** 複製した写真枠・メッセージ枠を元の位置からずらす量（mm） */
+const DUPLICATE_OFFSET = 10;
 
 /**
  * 額縁テンプレートの作成・編集画面
@@ -98,6 +100,13 @@ export function FrameTemplateEditor({ accountId, initialFrameTemplateNo }: Frame
     }));
   };
 
+  /** 額縁全体（サイズ・背景・外枠）を変更する。台紙からはみ出した写真枠・メッセージ枠は台紙の内側に収める */
+  const changeDefinition = (updater: (prev: FrameDefinition) => FrameDefinition) => {
+    setDefinition((prev) => fitToMat(updater(prev)));
+  };
+
+  const mat = getMatSize(definition.size, definition.border.width);
+
   const changeBox = (target: FrameSelection, change: FrameBoxChange) => {
     if (target.kind === "slot") {
       updateSlot(target.index, change);
@@ -110,7 +119,7 @@ export function FrameTemplateEditor({ accountId, initialFrameTemplateNo }: Frame
   const addSlot = () => {
     if (definition.slots.length >= FRAME_SLOT_MAX_SIZE) return;
     const index = definition.slots.length;
-    setDefinition((prev) => ({ ...prev, slots: [...prev.slots, createSlot(index)] }));
+    setDefinition((prev) => ({ ...prev, slots: [...prev.slots, createSlot(index, mat)] }));
     setSelection({ kind: "slot", index });
     setErrors((prev) => {
       const next = { ...prev };
@@ -122,7 +131,7 @@ export function FrameTemplateEditor({ accountId, initialFrameTemplateNo }: Frame
   const addText = () => {
     if (definition.texts.length >= FRAME_TEXT_MAX_SIZE) return;
     const index = definition.texts.length;
-    setDefinition((prev) => ({ ...prev, texts: [...prev.texts, createText(index)] }));
+    setDefinition((prev) => ({ ...prev, texts: [...prev.texts, createText(index, mat)] }));
     setSelection({ kind: "text", index });
   };
 
@@ -134,7 +143,11 @@ export function FrameTemplateEditor({ accountId, initialFrameTemplateNo }: Frame
         ...prev,
         slots: [
           ...prev.slots,
-          { ...source, x: Math.min(source.x + DUPLICATE_OFFSET, 100), y: Math.min(source.y + DUPLICATE_OFFSET, 100) },
+          {
+            ...source,
+            x: Math.min(source.x + DUPLICATE_OFFSET, mat.width),
+            y: Math.min(source.y + DUPLICATE_OFFSET, mat.height),
+          },
         ],
       }));
       setSelection({ kind: "slot", index: definition.slots.length });
@@ -145,7 +158,11 @@ export function FrameTemplateEditor({ accountId, initialFrameTemplateNo }: Frame
         ...prev,
         texts: [
           ...prev.texts,
-          { ...source, x: Math.min(source.x + DUPLICATE_OFFSET, 100), y: Math.min(source.y + DUPLICATE_OFFSET, 100) },
+          {
+            ...source,
+            x: Math.min(source.x + DUPLICATE_OFFSET, mat.width),
+            y: Math.min(source.y + DUPLICATE_OFFSET, mat.height),
+          },
         ],
       }));
       setSampleTexts((prev) => {
@@ -343,7 +360,7 @@ export function FrameTemplateEditor({ accountId, initialFrameTemplateNo }: Frame
               definition={definition}
               selection={selection}
               sampleTexts={sampleTexts}
-              onChangeDefinition={setDefinition}
+              onChangeDefinition={changeDefinition}
               onChangeSlot={updateSlot}
               onChangeText={updateText}
               onChangeSampleText={(index, value) =>

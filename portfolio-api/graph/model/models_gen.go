@@ -37,9 +37,9 @@ type FeatureSection struct {
 
 // 額縁型のレイアウト（1枚の額縁に複数の写真・メッセージを自由に配置した組写真）
 //
-// 位置・大きさ・太さ・文字サイズは、表示する画面の幅によらず同じ比率で描画できるよう、額縁に対する % で返す
+// 額縁のサイズ・位置・大きさ・太さ・文字サイズは実寸（mm）で返す。写真枠・メッセージ枠の位置は台紙（額縁から外枠を除いた部分）の左上からの距離
 type FrameLayout struct {
-	// 額縁の横幅（mm）。縦横比の算出に使う
+	// 額縁の横幅（mm）
 	Width float64 `json:"width"`
 	// 額縁の縦幅（mm）
 	Height float64 `json:"height"`
@@ -47,7 +47,7 @@ type FrameLayout struct {
 	BackgroundColor string `json:"backgroundColor"`
 	// 額縁の外枠の色（#RRGGBB）
 	BorderColor string `json:"borderColor"`
-	// 額縁の外枠の太さ（額縁の横幅に対する %。0 の場合は外枠なし）
+	// 額縁の外枠の太さ（mm。0 の場合は外枠なし）
 	BorderWidth float64 `json:"borderWidth"`
 	// 写真枠（写真を表示順に1枚ずつ割り当てたもの）
 	Slots []*FrameSlot `json:"slots"`
@@ -59,19 +59,19 @@ func (FrameLayout) IsPortfolioLayout() {}
 
 // 額縁型の写真枠
 type FrameSlot struct {
-	// 左端の位置（額縁に対する %）
+	// 左端の位置（台紙の左端からの mm）
 	X float64 `json:"x"`
-	// 上端の位置（額縁に対する %）
+	// 上端の位置（台紙の上端からの mm）
 	Y float64 `json:"y"`
-	// 横幅（額縁に対する %）
+	// 横幅（mm）
 	Width float64 `json:"width"`
-	// 縦幅（額縁に対する %）
+	// 縦幅（mm）
 	Height float64 `json:"height"`
 	// 傾き（度。時計回りが正）
 	Rotation float64 `json:"rotation"`
 	// 枠線の色（#RRGGBB）
 	BorderColor string `json:"borderColor"`
-	// 枠線の太さ（額縁の横幅に対する %。0 の場合は枠線なし）
+	// 枠線の太さ（mm。0 の場合は枠線なし）
 	BorderWidth float64 `json:"borderWidth"`
 	// 影を付けるかどうか
 	Shadow bool `json:"shadow"`
@@ -81,16 +81,16 @@ type FrameSlot struct {
 
 // 額縁型のメッセージ枠
 type FrameText struct {
-	// 左端の位置（額縁に対する %）
+	// 左端の位置（台紙の左端からの mm）
 	X float64 `json:"x"`
-	// 上端の位置（額縁に対する %）
+	// 上端の位置（台紙の上端からの mm）
 	Y float64 `json:"y"`
-	// 横幅（額縁に対する %。文面はこの幅で折り返す）
+	// 横幅（mm。文面はこの幅で折り返す）
 	Width float64 `json:"width"`
 	// 傾き（度。時計回りが正）
 	Rotation   float64         `json:"rotation"`
 	FontFamily FrameFontFamily `json:"fontFamily"`
-	// 文字サイズ（額縁の横幅に対する %）
+	// 文字サイズ（mm）
 	FontSize float64 `json:"fontSize"`
 	// 文字の色（#RRGGBB）
 	Color  string         `json:"color"`

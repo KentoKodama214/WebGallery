@@ -34,28 +34,33 @@ class TestPointerEvent extends MouseEvent {
   }
 }
 
-/** 台紙・枠の大きさ（px）。台紙の 1% は横 10px・縦 7px になる */
+/** 台紙・枠の大きさ（px）。保存済みの額縁テンプレートの台紙（横 300mm）では、1px が 0.3mm になる */
 const RECT = { left: 0, top: 0, width: 1000, height: 700, right: 1000, bottom: 700, x: 0, y: 0 };
 
-/** 保存済みの額縁テンプレート（写真枠2・メッセージ枠1） */
+/** 保存済みの額縁テンプレート（四つ切・外枠 2.5mm のため台紙は 300×249mm。写真枠2・メッセージ枠1） */
 const savedTemplate = {
   frameTemplateNo: 4,
   templateName: "横長 2枚組",
   frameDefinition: {
     size: { width: 305, height: 254 },
     background: { color: "#f5f0e6" },
-    border: { color: "#3b2a1a", width: 4 },
+    border: { color: "#3b2a1a", width: 2.5 },
     slots: [
-      { x: 5, y: 10, width: 40, height: 60, rotation: 0, borderColor: "#ffffff", borderWidth: 1, shadow: true },
-      { x: 55, y: 10, width: 40, height: 60, rotation: 0, borderColor: "#ffffff", borderWidth: 1, shadow: false },
+      { x: 15, y: 25, width: 120, height: 150, rotation: 0, borderColor: "#ffffff", borderWidth: 3, shadow: true },
+      { x: 165, y: 25, width: 120, height: 150, rotation: 0, borderColor: "#ffffff", borderWidth: 3, shadow: false },
     ],
     texts: [
-      { x: 10, y: 80, width: 80, rotation: 0, fontFamily: "mincho", fontSize: 3, color: "#333333", align: "center", bold: false },
+      { x: 30, y: 200, width: 240, rotation: 0, fontFamily: "mincho", fontSize: 9, color: "#333333", align: "center", bold: false },
     ],
   },
   createdAt: "2026-01-01T00:00:00+09:00",
   updatedAt: "2026-01-01T00:00:00+09:00",
 };
+
+/** 保存済みの額縁テンプレートの台紙の左上からの実寸（mm）を、台紙（300×249mm）に対する % にする */
+function matPercent(mm: number, axis: "x" | "y"): string {
+  return `${(mm * 100) / (axis === "x" ? 300 : 249)}%`;
+}
 
 /** 数値の入力欄の値を取得する */
 function numberValue(label: RegExp): number {
@@ -183,7 +188,7 @@ describe("FrameTemplateEditor", () => {
   });
 
   describe("キャンバスの操作", () => {
-    it("写真枠をドラッグすると、ポインタの移動量を台紙に対する%に換算して移動すること", async () => {
+    it("写真枠をドラッグすると、ポインタの移動量を実寸（mm）に換算して移動すること", async () => {
       mockGetFrameTemplate.mockResolvedValue(savedTemplate);
       render(<FrameTemplateEditor accountId="user1" initialFrameTemplateNo={4} />);
 
@@ -192,27 +197,30 @@ describe("FrameTemplateEditor", () => {
       fireEvent.pointerMove(box, { pointerId: 1, clientX: 200, clientY: 170 });
       fireEvent.pointerUp(box, { pointerId: 1 });
 
-      // 横 100px・縦 70px の移動は、台紙（1000×700px）の 10% ずつ
+      // 台紙は横 300mm が 1000px のため、横 100px・縦 70px の移動は 30mm・21mm
       expect(screen.getByRole("heading", { name: "写真枠2" })).toBeInTheDocument();
-      expect(numberValue(/^左/)).toBe(65);
-      expect(numberValue(/^上/)).toBe(20);
-      expect(box).toHaveStyle({ left: "65%", top: "20%" });
+      expect(screen.getByLabelText(/^左/)).toHaveAccessibleName(/mm/);
+      expect(numberValue(/^左/)).toBe(195);
+      expect(numberValue(/^上/)).toBe(46);
+      expect(box.style.left).toBe(matPercent(195, "x"));
+      expect(box.style.top).toBe(matPercent(46, "y"));
     });
 
     it("ドラッグ中は他の枠の端に近づくと吸着して補助線を表示し、ドラッグを終えると補助線を消すこと", async () => {
       mockGetFrameTemplate.mockResolvedValue(savedTemplate);
       render(<FrameTemplateEditor accountId="user1" initialFrameTemplateNo={4} />);
 
-      // 写真枠2（左 55%）を 49.6%（496px）左へ動かすと左端が 5.4% になり、写真枠1の左端（5%）に吸着する
+      // 写真枠2（左 165mm）を 148.8mm（496px）左へ動かすと左端が 16.2mm になり、写真枠1の左端（15mm）に吸着する
+      // （吸着する範囲は 6px＝1.8mm）
       const box = await screen.findByRole("button", { name: "写真枠2" });
       fireEvent.pointerDown(box, { button: 0, pointerId: 1, clientX: 600, clientY: 100 });
       fireEvent.pointerMove(box, { pointerId: 1, clientX: 104, clientY: 100 });
-      expect(numberValue(/^左/)).toBe(5);
-      expect(screen.getAllByTestId("frame-guide-vertical").map((guide) => guide.style.left)).toContain("5%");
+      expect(numberValue(/^左/)).toBe(15);
+      expect(screen.getAllByTestId("frame-guide-vertical").map((guide) => guide.style.left)).toContain(matPercent(15, "x"));
 
       // Alt キーを押している間は吸着しない
       fireEvent.pointerMove(box, { pointerId: 1, clientX: 104, clientY: 100, altKey: true });
-      expect(numberValue(/^左/)).toBe(5.4);
+      expect(numberValue(/^左/)).toBe(16.2);
 
       fireEvent.pointerUp(box, { pointerId: 1 });
       expect(screen.queryByTestId("frame-guide-vertical")).not.toBeInTheDocument();
@@ -229,8 +237,9 @@ describe("FrameTemplateEditor", () => {
       fireEvent.pointerDown(resize, { button: 0, pointerId: 2, clientX: 0, clientY: 0 });
       fireEvent.pointerMove(resize, { pointerId: 2, clientX: 50, clientY: -70 });
       fireEvent.pointerUp(resize, { pointerId: 2 });
-      expect(numberValue(/^横幅/)).toBe(45);
-      expect(numberValue(/^縦幅/)).toBe(50);
+      // 横 50px・縦 -70px は 15mm・-21mm
+      expect(numberValue(/^横幅/)).toBe(135);
+      expect(numberValue(/^縦幅/)).toBe(129);
 
       // 回転の軸は枠の中心（500, 350）。中心の右へポインタを動かすと、上のつまみが右を向く 90° になる
       const rotate = within(box).getByTestId("frame-handle-rotate");
@@ -254,8 +263,9 @@ describe("FrameTemplateEditor", () => {
       fireEvent.focus(box);
       fireEvent.keyDown(box, { key: "ArrowRight" });
       fireEvent.keyDown(box, { key: "ArrowUp", shiftKey: true });
-      expect(numberValue(/^左/)).toBe(10.5);
-      expect(numberValue(/^上/)).toBe(75);
+      // 1回で 1mm、Shift キーで 10mm 動かす
+      expect(numberValue(/^左/)).toBe(31);
+      expect(numberValue(/^上/)).toBe(190);
 
       fireEvent.keyDown(box, { key: "Delete" });
       expect(screen.queryByRole("button", { name: "メッセージ枠1" })).not.toBeInTheDocument();
@@ -328,7 +338,7 @@ describe("FrameTemplateEditor", () => {
       const borderInput = screen.getByLabelText(/^外枠の太さ/) as HTMLInputElement;
       fireEvent.change(borderInput, { target: { value: "" } });
       fireEvent.blur(borderInput);
-      expect(numberValue(/^外枠の太さ/)).toBe(4);
+      expect(numberValue(/^外枠の太さ/)).toBe(2.5);
 
       // 写真枠の傾き：マイナスの値も入力できる
       fireEvent.focus(screen.getByRole("button", { name: "写真枠1" }));
@@ -370,8 +380,36 @@ describe("FrameTemplateEditor", () => {
       fireEvent.click(screen.getByRole("button", { name: "複製" }));
 
       expect(screen.getByRole("heading", { name: "写真枠3" })).toBeInTheDocument();
-      expect(numberValue(/^左/)).toBe(8);
-      expect(numberValue(/^上/)).toBe(13);
+      // 10mm ずつずらす
+      expect(numberValue(/^左/)).toBe(25);
+      expect(numberValue(/^上/)).toBe(35);
+    });
+
+    it("額縁を小さくしたり外枠を太くしたりすると、台紙からはみ出した枠を台紙の内側に収め、外枠は台紙が残る太さまでにすること", async () => {
+      mockGetFrameTemplate.mockResolvedValue(savedTemplate);
+      mockSaveFrameTemplate.mockResolvedValue({ message: "額縁テンプレートを更新しました。", frameTemplateNo: 4 });
+      render(<FrameTemplateEditor accountId="user1" initialFrameTemplateNo={4} />);
+
+      // 縦を 100mm にすると台紙は 300×95mm になり、写真枠（縦 150mm）は縦 95mm に収まる
+      const heightInput = (await screen.findByLabelText(/^縦（mm）/)) as HTMLInputElement;
+      fireEvent.change(heightInput, { target: { value: "100" } });
+      fireEvent.blur(heightInput);
+
+      // 外枠は (100-10)/2=45mm まで。60mm を入力すると 45mm に収め、台紙は 215×10mm になる
+      const borderInput = screen.getByLabelText(/^外枠の太さ/) as HTMLInputElement;
+      fireEvent.change(borderInput, { target: { value: "60" } });
+      fireEvent.blur(borderInput);
+      expect(numberValue(/^外枠の太さ/)).toBe(45);
+
+      fireEvent.focus(screen.getByRole("button", { name: "写真枠2" }));
+      expect(numberValue(/^左/)).toBe(165);
+      expect(numberValue(/^上/)).toBe(10);
+      expect(numberValue(/^横幅/)).toBe(120);
+      expect(numberValue(/^縦幅/)).toBe(10);
+
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }));
+      await waitFor(() => expect(mockSaveFrameTemplate).toHaveBeenCalled());
+      expect(savedDefinition().slots[1]).toMatchObject({ x: 165, y: 10, width: 120, height: 10 });
     });
   });
 

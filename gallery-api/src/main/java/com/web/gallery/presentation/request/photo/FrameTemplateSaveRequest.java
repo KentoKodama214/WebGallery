@@ -25,12 +25,13 @@ public class FrameTemplateSaveRequest {
   /** 額縁定義（構造は{@link com.web.gallery.domain.service.FrameDefinitionPolicy}を参照） */
   @Schema(
       description =
-          "額縁定義（size: 額縁のサイズ（mm）、background: 背景、border: 外枠、slots: 写真枠の一覧、texts: メッセージ枠の一覧。"
-              + "位置・大きさは額縁に対する%）",
+          "額縁定義（size: 額縁のサイズ、background: 背景、border: 外枠、slots: 写真枠の一覧、texts: メッセージ枠の一覧。"
+              + "長さはすべてmm。写真枠・メッセージ枠の位置は台紙（外枠の内側）の左上からの距離）",
       example =
           "{\"size\":{\"width\":364,\"height\":257},\"background\":{\"color\":\"#ffffff\"},"
-              + "\"slots\":[{\"x\":10,\"y\":10,\"width\":35,\"height\":50,\"rotation\":-3}],"
-              + "\"texts\":[{\"x\":55,\"y\":80,\"width\":40,\"fontFamily\":\"mincho\",\"fontSize\":2.5}]}")
+              + "\"border\":{\"color\":\"#3b2a1a\",\"width\":9},"
+              + "\"slots\":[{\"x\":30,\"y\":25,\"width\":120,\"height\":130,\"rotation\":-3}],"
+              + "\"texts\":[{\"x\":170,\"y\":190,\"width\":150,\"fontFamily\":\"mincho\",\"fontSize\":9}]}")
   @NotNull(message = "{validation.common.notBlank}")
   private Map<String, Object> frameDefinition;
 }

@@ -1,7 +1,8 @@
 /**
  * 額縁定義（額縁テンプレート・額縁型ポートフォリオで共通の構造）
  *
- * 位置・大きさは額縁（外枠の内側の台紙）に対する %、太さ・文字サイズは額縁の横幅に対する % で持つ。
+ * 額縁のサイズ・外枠の太さ・写真枠とメッセージ枠の位置と大きさ・枠線の太さ・文字サイズは、すべて実寸（mm）で持つ。
+ * 写真枠・メッセージ枠の位置は、台紙（額縁から外枠を除いた部分）の左上からの距離とする。
  * 構造・値の範囲はバックエンドの `FrameDefinitionPolicy` と一致させる（バックエンドは範囲外の値を受け付けない）。
  */
 
@@ -13,19 +14,19 @@ export interface FrameSize {
 
 /** 写真枠 */
 export interface FrameSlot {
-  /** 左端の位置（%） */
+  /** 左端の位置（台紙の左端からの mm） */
   x: number;
-  /** 上端の位置（%） */
+  /** 上端の位置（台紙の上端からの mm） */
   y: number;
-  /** 横幅（%） */
+  /** 横幅（mm） */
   width: number;
-  /** 縦幅（%） */
+  /** 縦幅（mm） */
   height: number;
   /** 傾き（度。時計回りが正） */
   rotation: number;
   /** 枠線の色（#RRGGBB） */
   borderColor: string;
-  /** 枠線の太さ（額縁の横幅に対する %） */
+  /** 枠線の太さ（mm） */
   borderWidth: number;
   /** 影を付けるかどうか */
   shadow: boolean;
@@ -39,16 +40,16 @@ export type FrameTextAlign = "left" | "center" | "right";
 
 /** メッセージ枠（文面はポートフォリオごとに入力する） */
 export interface FrameText {
-  /** 左端の位置（%） */
+  /** 左端の位置（台紙の左端からの mm） */
   x: number;
-  /** 上端の位置（%） */
+  /** 上端の位置（台紙の上端からの mm） */
   y: number;
-  /** 横幅（%。文面はこの幅で折り返す） */
+  /** 横幅（mm。文面はこの幅で折り返す） */
   width: number;
   /** 傾き（度。時計回りが正） */
   rotation: number;
   fontFamily: FrameFontFamily;
-  /** 文字サイズ（額縁の横幅に対する %） */
+  /** 文字サイズ（mm） */
   fontSize: number;
   /** 文字の色（#RRGGBB） */
   color: string;
@@ -62,7 +63,7 @@ export interface FrameDefinition {
   size: FrameSize;
   /** 額縁の背景（台紙） */
   background: { color: string };
-  /** 額縁の外枠 */
+  /** 額縁の外枠（太さは mm） */
   border: { color: string; width: number };
   slots: FrameSlot[];
   texts: FrameText[];
@@ -83,16 +84,18 @@ export const FRAME_TEXT_MAX_SIZE = 10;
 /** 額縁に添えるメッセージ1件あたりの最大文字数（バックエンドと一致させる） */
 export const FRAME_MESSAGE_MAX_LENGTH = 200;
 
-/** 数値項目の範囲（バックエンドの検証と一致させる） */
+/** 数値項目の範囲（単位は角度を除き mm。バックエンドの検証と一致させる） */
 export const FRAME_LIMITS = {
   sizeMin: 50,
   sizeMax: 3000,
-  borderWidthMax: 20,
-  slotBorderWidthMax: 10,
+  borderWidthMax: 200,
+  /** 台紙（額縁から外枠を除いた部分）の縦横の下限。外枠の太さはこれを残せる範囲までとする */
+  matSizeMin: 10,
+  slotBorderWidthMax: 50,
   rotationMax: 180,
-  fontSizeMin: 0.5,
-  fontSizeMax: 30,
-  /** 写真枠・メッセージ枠の大きさの下限（%。0 は受け付けないため、操作で潰れないようにする） */
+  fontSizeMin: 1,
+  fontSizeMax: 200,
+  /** 写真枠・メッセージ枠の大きさの下限（0 は受け付けないため、操作で潰れないようにする） */
   boxSizeMin: 1,
 } as const;
 
@@ -191,39 +194,96 @@ export function toFontFamilyCss(fontFamily: string): string {
 }
 
 /**
- * 新しく追加する写真枠を作る（額縁の中央付近に置く。追加するたびに少しずつずらす）
+ * 台紙（額縁から外枠を除いた部分）の大きさを取得する
+ *
+ * @param size 額縁のサイズ（mm）
+ * @param borderWidth 外枠の太さ（mm）
+ * @returns 台紙の大きさ（mm）
+ */
+export function getMatSize(size: FrameSize, borderWidth: number): FrameSize {
+  return { width: size.width - borderWidth * 2, height: size.height - borderWidth * 2 };
+}
+
+/**
+ * 額縁のサイズに対する外枠の太さの上限を取得する（台紙の縦横が {@link FRAME_LIMITS.matSizeMin} 以上残る範囲）
+ *
+ * @param size 額縁のサイズ（mm）
+ * @returns 外枠の太さの上限（mm）
+ */
+export function getBorderWidthMax(size: FrameSize): number {
+  return Math.min(
+    FRAME_LIMITS.borderWidthMax,
+    Math.floor(((Math.min(size.width, size.height) - FRAME_LIMITS.matSizeMin) / 2) * 10) / 10
+  );
+}
+
+/**
+ * 外枠の太さと、写真枠・メッセージ枠の位置・大きさを台紙の範囲内に収める
+ *
+ * 位置・大きさを実寸で持つため、額縁のサイズを小さくしたり外枠を太くしたりすると、枠が台紙からはみ出すことがある。
+ * 左上の位置は台紙の内側、大きさは台紙の縦横以下に収める（はみ出した枠をそのまま保存しようとして検証で弾かれないようにする）。
+ *
+ * @param definition 額縁定義
+ * @returns 範囲内に収めた額縁定義
+ */
+export function fitToMat(definition: FrameDefinition): FrameDefinition {
+  const borderWidth = clamp(definition.border.width, 0, getBorderWidthMax(definition.size), 0);
+  const mat = getMatSize(definition.size, borderWidth);
+  return {
+    ...definition,
+    border: { ...definition.border, width: borderWidth },
+    slots: definition.slots.map((slot) => ({
+      ...slot,
+      x: clamp(slot.x, 0, mat.width, 0),
+      y: clamp(slot.y, 0, mat.height, 0),
+      width: clamp(slot.width, FRAME_LIMITS.boxSizeMin, mat.width, mat.width),
+      height: clamp(slot.height, FRAME_LIMITS.boxSizeMin, mat.height, mat.height),
+    })),
+    texts: definition.texts.map((text) => ({
+      ...text,
+      x: clamp(text.x, 0, mat.width, 0),
+      y: clamp(text.y, 0, mat.height, 0),
+      width: clamp(text.width, FRAME_LIMITS.boxSizeMin, mat.width, mat.width),
+    })),
+  };
+}
+
+/**
+ * 新しく追加する写真枠を作る（台紙の中央付近に、台紙に対して一定の比率の大きさで置く。追加するたびに少しずつずらす）
  *
  * @param index 追加後の写真枠の位置（0始まり）
+ * @param mat 台紙の大きさ（mm）
  * @returns 写真枠
  */
-export function createSlot(index: number): FrameSlot {
-  const offset = (index % 5) * 4;
+export function createSlot(index: number, mat: FrameSize): FrameSlot {
+  const offset = (index % 5) * 0.04;
   return {
-    x: 30 + offset,
-    y: 20 + offset,
-    width: 30,
-    height: 40,
+    x: round(mat.width * (0.3 + offset)),
+    y: round(mat.height * (0.2 + offset)),
+    width: round(mat.width * 0.3),
+    height: round(mat.height * 0.4),
     rotation: 0,
     borderColor: "#ffffff",
-    borderWidth: 0.8,
+    borderWidth: 3,
     shadow: true,
   };
 }
 
 /**
- * 新しく追加するメッセージ枠を作る（額縁の下部に置く）
+ * 新しく追加するメッセージ枠を作る（台紙の下部に置く）
  *
  * @param index 追加後のメッセージ枠の位置（0始まり）
+ * @param mat 台紙の大きさ（mm）
  * @returns メッセージ枠
  */
-export function createText(index: number): FrameText {
+export function createText(index: number, mat: FrameSize): FrameText {
   return {
-    x: 10,
-    y: Math.min(80 + (index % 3) * 5, 95),
-    width: 80,
+    x: round(mat.width * 0.1),
+    y: round(mat.height * Math.min(0.8 + (index % 3) * 0.05, 0.95)),
+    width: round(mat.width * 0.8),
     rotation: 0,
     fontFamily: "mincho",
-    fontSize: 2.5,
+    fontSize: 9,
     color: "#333333",
     align: "center",
     bold: false,
@@ -237,16 +297,18 @@ export function createText(index: number): FrameText {
  * @returns 額縁定義
  */
 export function createDefaultDefinition(): FrameDefinition {
+  const size = { width: 366, height: 254 };
+  const mat = getMatSize(size, 9);
   return {
-    size: { width: 366, height: 254 },
+    size,
     background: { color: "#f7f4ee" },
-    border: { color: "#2b2118", width: 2.5 },
+    border: { color: "#2b2118", width: 9 },
     slots: [
-      { ...createSlot(0), x: 6, y: 12, width: 27, height: 55, rotation: -2 },
-      { ...createSlot(0), x: 36.5, y: 10, width: 27, height: 55 },
-      { ...createSlot(0), x: 67, y: 12, width: 27, height: 55, rotation: 2 },
+      { ...createSlot(0, mat), x: 21, y: 28, width: 94, height: 130, rotation: -2 },
+      { ...createSlot(0, mat), x: 127, y: 24, width: 94, height: 130 },
+      { ...createSlot(0, mat), x: 233, y: 28, width: 94, height: 130, rotation: 2 },
     ],
-    texts: [{ ...createText(0), y: 78 }],
+    texts: [{ ...createText(0, mat), y: 184 }],
   };
 }
 
@@ -308,25 +370,25 @@ export function parseFrameDefinition(value: unknown): FrameDefinition {
   const size = toObject(definition.size);
   const background = toObject(definition.background);
   const border = toObject(definition.border);
+  const frameSize = {
+    width: clamp(size.width, FRAME_LIMITS.sizeMin, FRAME_LIMITS.sizeMax, 366),
+    height: clamp(size.height, FRAME_LIMITS.sizeMin, FRAME_LIMITS.sizeMax, 254),
+  };
+  const borderWidth = clamp(border.width, 0, getBorderWidthMax(frameSize), 0);
+  const mat = getMatSize(frameSize, borderWidth);
   const fontValues = FRAME_FONT_OPTIONS.map((option) => option.value) as string[];
   const alignValues = FRAME_TEXT_ALIGN_OPTIONS.map((option) => option.value) as string[];
   return {
-    size: {
-      width: clamp(size.width, FRAME_LIMITS.sizeMin, FRAME_LIMITS.sizeMax, 366),
-      height: clamp(size.height, FRAME_LIMITS.sizeMin, FRAME_LIMITS.sizeMax, 254),
-    },
+    size: frameSize,
     background: { color: toColor(background.color, "#ffffff") },
-    border: {
-      color: toColor(border.color, "#000000"),
-      width: clamp(border.width, 0, FRAME_LIMITS.borderWidthMax, 0),
-    },
+    border: { color: toColor(border.color, "#000000"), width: borderWidth },
     slots: toObjectList(definition.slots)
       .slice(0, FRAME_SLOT_MAX_SIZE)
       .map((slot) => ({
-        x: clamp(slot.x, 0, 100, 0),
-        y: clamp(slot.y, 0, 100, 0),
-        width: clamp(slot.width, FRAME_LIMITS.boxSizeMin, 100, 30),
-        height: clamp(slot.height, FRAME_LIMITS.boxSizeMin, 100, 40),
+        x: clamp(slot.x, 0, mat.width, 0),
+        y: clamp(slot.y, 0, mat.height, 0),
+        width: clamp(slot.width, FRAME_LIMITS.boxSizeMin, mat.width, mat.width),
+        height: clamp(slot.height, FRAME_LIMITS.boxSizeMin, mat.height, mat.height),
         rotation: clamp(slot.rotation, -FRAME_LIMITS.rotationMax, FRAME_LIMITS.rotationMax, 0),
         borderColor: toColor(slot.borderColor, "#ffffff"),
         borderWidth: clamp(slot.borderWidth, 0, FRAME_LIMITS.slotBorderWidthMax, 0),
@@ -335,14 +397,14 @@ export function parseFrameDefinition(value: unknown): FrameDefinition {
     texts: toObjectList(definition.texts)
       .slice(0, FRAME_TEXT_MAX_SIZE)
       .map((text) => ({
-        x: clamp(text.x, 0, 100, 0),
-        y: clamp(text.y, 0, 100, 0),
-        width: clamp(text.width, FRAME_LIMITS.boxSizeMin, 100, 80),
+        x: clamp(text.x, 0, mat.width, 0),
+        y: clamp(text.y, 0, mat.height, 0),
+        width: clamp(text.width, FRAME_LIMITS.boxSizeMin, mat.width, mat.width),
         rotation: clamp(text.rotation, -FRAME_LIMITS.rotationMax, FRAME_LIMITS.rotationMax, 0),
         fontFamily: (fontValues.includes(text.fontFamily as string)
           ? text.fontFamily
           : "gothic") as FrameFontFamily,
-        fontSize: clamp(text.fontSize, FRAME_LIMITS.fontSizeMin, FRAME_LIMITS.fontSizeMax, 3),
+        fontSize: clamp(text.fontSize, FRAME_LIMITS.fontSizeMin, FRAME_LIMITS.fontSizeMax, 10),
         color: toColor(text.color, "#333333"),
         align: (alignValues.includes(text.align as string) ? text.align : "left") as FrameTextAlign,
         bold: text.bold === true,
@@ -354,33 +416,42 @@ export function parseFrameDefinition(value: unknown): FrameDefinition {
 /**
  * 額縁定義を保存するJSONに変換する
  *
- * 写真枠・メッセージ枠がはみ出さないよう位置を範囲内に収め、数値の桁数を揃える。
+ * 数値の桁数を揃え（額縁のサイズは 1mm、それ以外は 0.1mm・0.1° 単位）、写真枠・メッセージ枠がはみ出さないよう台紙の範囲内に収める。
  *
  * @param definition 額縁定義
  * @returns 保存する額縁定義（JSON）
  */
 export function toFrameDefinitionJson(definition: FrameDefinition): Record<string, unknown> {
-  return {
+  const fitted = fitToMat({
+    ...definition,
     size: { width: round(definition.size.width, 0), height: round(definition.size.height, 0) },
-    background: { color: definition.background.color },
-    border: { color: definition.border.color, width: round(definition.border.width) },
-    slots: definition.slots.map((slot) => ({
-      x: round(clamp(slot.x, 0, 100, 0)),
-      y: round(clamp(slot.y, 0, 100, 0)),
-      width: round(clamp(slot.width, FRAME_LIMITS.boxSizeMin, 100, 30)),
-      height: round(clamp(slot.height, FRAME_LIMITS.boxSizeMin, 100, 40)),
+    border: { ...definition.border, width: round(definition.border.width) },
+  });
+  const mat = getMatSize(fitted.size, fitted.border.width);
+  // 丸めた値が台紙の縦横をわずかに超えないよう、上限は切り捨てた値にする
+  const fit = (value: number, min: number, max: number) =>
+    Math.min(Math.max(round(value), min), Math.floor(max * 10 + 1e-6) / 10);
+  return {
+    size: fitted.size,
+    background: { color: fitted.background.color },
+    border: { color: fitted.border.color, width: fitted.border.width },
+    slots: fitted.slots.map((slot) => ({
+      x: fit(slot.x, 0, mat.width),
+      y: fit(slot.y, 0, mat.height),
+      width: fit(slot.width, FRAME_LIMITS.boxSizeMin, mat.width),
+      height: fit(slot.height, FRAME_LIMITS.boxSizeMin, mat.height),
       rotation: round(slot.rotation),
       borderColor: slot.borderColor,
-      borderWidth: round(slot.borderWidth, 2),
+      borderWidth: round(slot.borderWidth),
       shadow: slot.shadow,
     })),
-    texts: definition.texts.map((text) => ({
-      x: round(clamp(text.x, 0, 100, 0)),
-      y: round(clamp(text.y, 0, 100, 0)),
-      width: round(clamp(text.width, FRAME_LIMITS.boxSizeMin, 100, 80)),
+    texts: fitted.texts.map((text) => ({
+      x: fit(text.x, 0, mat.width),
+      y: fit(text.y, 0, mat.height),
+      width: fit(text.width, FRAME_LIMITS.boxSizeMin, mat.width),
       rotation: round(text.rotation),
       fontFamily: text.fontFamily,
-      fontSize: round(text.fontSize, 2),
+      fontSize: round(text.fontSize),
       color: text.color,
       align: text.align,
       bold: text.bold,
