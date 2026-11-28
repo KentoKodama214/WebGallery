@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/dto/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/dto/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Dtoパッケージの単体テスト規約

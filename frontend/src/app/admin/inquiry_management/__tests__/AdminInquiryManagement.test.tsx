@@ -82,6 +82,43 @@ describe("AdminInquiryManagement", () => {
     });
   });
 
+  it("絞り込みの再取得中もステータス選択とフォーカスが保持されること", async () => {
+    // 画面全体を差し替えると操作中の <select> ごとアンマウントされ、フォーカスが body へ戻る
+    let releaseSecondFetch: (() => void) | null = null;
+    const listResult = { isLast: true, inquiryList: [sampleInquiry] };
+    mockGetAdminInquiryList.mockResolvedValueOnce(listResult).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseSecondFetch = () => resolve(listResult);
+        })
+    );
+
+    render(<AdminInquiryManagement />);
+    await waitFor(() => {
+      expect(screen.getByText("写真が表示されない")).toBeInTheDocument();
+    });
+
+    const select = screen.getByLabelText("ステータス");
+    select.focus();
+    fireEvent.change(select, { target: { value: "unreplied" } });
+
+    await waitFor(() => {
+      expect(releaseSecondFetch).not.toBeNull();
+    });
+    await waitFor(() => {
+      expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    });
+    // 再取得中も同じ <select> がフォーカスを保ったまま残っている
+    expect(screen.getByLabelText("ステータス")).toBe(select);
+    expect(document.activeElement).toBe(select);
+
+    releaseSecondFetch!();
+    await waitFor(() => {
+      expect(screen.getByText("写真が表示されない")).toBeInTheDocument();
+    });
+    expect(screen.getByLabelText("ステータス")).toBe(select);
+  });
+
   it("取り下げステータスで絞り込めること", async () => {
     mockGetAdminInquiryList.mockResolvedValue({
       isLast: true,

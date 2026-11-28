@@ -36,7 +36,7 @@ const samplePhoto = {
   address: null,
   latitude: null,
   longitude: null,
-  locationName: "東京タワー",
+  displayName: "東京タワー",
   isLocationPublic: true,
   imageFilePath: "/photos/test.jpg",
   photoJapaneseTitle: "テスト写真",
@@ -103,6 +103,29 @@ describe("PhotoDetail", () => {
     expect(screen.getByRole("img")).toHaveAttribute("src", "/photos/test.jpg");
   });
 
+  it("管理者により非公開にされた写真の場合、本人以外には表示されない旨を通知すること", async () => {
+    mockGetPhotoDetail.mockResolvedValue({ ...samplePhoto, isHiddenByAdmin: true });
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("hidden-by-admin-notice")).toHaveTextContent(
+        "この写真は管理者により非公開にされています。"
+      );
+    });
+  });
+
+  it("管理者により非公開にされていない写真の場合、非公開の通知を表示しないこと", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("テスト写真")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("hidden-by-admin-notice")).not.toBeInTheDocument();
+  });
+
   it("許可されない画像URLの場合は img を出さず代替表示になること", async () => {
     mockGetPhotoDetail.mockResolvedValue({
       ...samplePhoto,
@@ -128,6 +151,70 @@ describe("PhotoDetail", () => {
 
     await waitFor(() => {
       expect(screen.getByText("50mm F1.8 0.01sec iso400")).toBeInTheDocument();
+    });
+  });
+
+  it("英語タイトル・撮影日時／撮影場所・EXIF情報は16pxで表示されること", async () => {
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+
+    render(
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Photo")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Test Photo")).toHaveStyle({ fontSize: "16px" });
+    expect(screen.getByText("2024/03/15 10:30 東京タワー")).toHaveStyle({
+      fontSize: "16px",
+    });
+    expect(screen.getByText("50mm F1.8 0.01sec iso400")).toHaveStyle({
+      fontSize: "16px",
+    });
+  });
+
+  it("英語タイトルは長い文字列でも折り返されること", async () => {
+    const longTitle = "A".repeat(200);
+    mockGetPhotoDetail.mockResolvedValue({
+      ...samplePhoto,
+      photoEnglishTitle: longTitle,
+    });
+
+    render(
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(longTitle)).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(longTitle)).toHaveStyle({
+      overflowWrap: "break-word",
+      wordBreak: "break-all",
+    });
+  });
+
+  it("日本語タイトルも長い文字列で折り返されること", async () => {
+    // 日本語名の列も varchar(100) で任意の文字を受け付けるため、空白を含まない
+    // ASCII 文字列を入れられる。英語タイトルと同じ折り返し指定が要る
+    const longTitle = "B".repeat(100);
+    mockGetPhotoDetail.mockResolvedValue({
+      ...samplePhoto,
+      photoJapaneseTitle: longTitle,
+    });
+
+    render(
+      <PhotoDetail photoAccountId="user1" photoNo={10} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(longTitle)).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(longTitle)).toHaveStyle({
+      overflowWrap: "break-word",
+      wordBreak: "break-all",
     });
   });
 
@@ -241,7 +328,7 @@ describe("PhotoDetail", () => {
     mockGetPhotoDetail.mockResolvedValue({
       ...samplePhoto,
       isLocationPublic: false,
-      locationName: null,
+      displayName: null,
     });
 
     render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
@@ -421,6 +508,122 @@ describe("PhotoDetail", () => {
         photoNo: 10,
         imageFilePath: "/photos/test.jpg",
       });
+      expect(mockPush).toHaveBeenCalledWith("/photo/user1/photo_list");
+    });
+  });
+
+  it("削除で公開中のポートフォリオが下書きに戻った場合、メッセージと設定画面へのリンクを表示し、写真一覧へは操作後に戻ること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockDeletePhoto.mockResolvedValue({
+      isSuccess: true,
+      message:
+        "写真削除が完了しました。この写真を使用していたポートフォリオ（日本の自然）を下書きに戻しました。内容を確認して公開してください。",
+      revertedPortfolioList: [{ portfolioNo: 3, theme: "日本の自然" }],
+    });
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    fireEvent.click(screen.getByText("削除する"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("reverted-portfolio-dialog")).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId("delete-confirm-dialog")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/ポートフォリオ（日本の自然）を下書きに戻しました/)
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "日本の自然" })).toHaveAttribute(
+      "href",
+      "/user1/portfolio_setting/edit?portfolioNo=3"
+    );
+    // 確認・再公開を促すため、ダイアログを閉じるまでは写真一覧へ戻らない
+    expect(mockPush).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "写真一覧へ" }));
+    expect(mockPush).toHaveBeenCalledWith("/photo/user1/photo_list");
+  });
+
+  it("削除で下書きに戻したポートフォリオが空の場合、ダイアログを出さずに写真一覧へ戻ること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    mockDeletePhoto.mockResolvedValue({
+      isSuccess: true,
+      message: "写真削除が完了しました。",
+      revertedPortfolioList: [],
+    });
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    fireEvent.click(screen.getByText("削除する"));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/photo/user1/photo_list");
+    });
+    expect(screen.queryByTestId("reverted-portfolio-dialog")).not.toBeInTheDocument();
+  });
+
+  it("削除実行中はキャンセル・閉じるが無効になること", async () => {
+    mockUseAuth.mockReturnValue({
+      isAuthenticated: true,
+      user: { accountId: "user1", accountNo: 1 },
+      isLoading: false,
+      login: jest.fn(),
+      logout: jest.fn(),
+    });
+    mockGetPhotoDetail.mockResolvedValue(samplePhoto);
+    // 削除リクエストを保留させ、実行中の状態を観測する
+    let releaseDelete: (() => void) | null = null;
+    mockDeletePhoto.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseDelete = () => resolve({ isSuccess: true });
+        })
+    );
+
+    render(<PhotoDetail photoAccountId="user1" photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "削除" })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "削除" }));
+    fireEvent.click(screen.getByText("削除する"));
+
+    await waitFor(() => {
+      expect(releaseDelete).not.toBeNull();
+    });
+
+    // 閉じても削除リクエストは止まらないため、実行中は閉じさせない
+    // （Escape / onClose 側は既に isDeleting で保護されており、挙動を揃える）
+    expect(screen.getByRole("button", { name: "キャンセル" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "閉じる" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    expect(screen.getByTestId("delete-confirm-dialog")).toBeInTheDocument();
+
+    releaseDelete!();
+    await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/photo/user1/photo_list");
     });
   });

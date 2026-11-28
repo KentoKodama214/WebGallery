@@ -2,6 +2,8 @@
  * APIクライアント（認証リフレッシュ・エラーメッセージ選別）の単体テスト
  */
 
+import { REFERER_MAX_LENGTH } from "@/lib/validation";
+
 type ClientModule = typeof import("../client");
 
 /** 簡易レスポンスを生成する */
@@ -127,6 +129,20 @@ describe("api/client", () => {
       expect(refreshCalls.length).toBe(2);
 
       nowSpy.mockRestore();
+    });
+
+    it("204（cookieが無い＝未ログイン）が返った場合は未ログイン確定とし、以降のfetchWithAuthはrefreshしない", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse(null, { status: 204 }));
+      expect(await client.refresh()).toBe(false);
+      expect(client.getAccessToken()).toBeNull();
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ data: [] }));
+      await client.fetchWithAuth("/api/v1/accounts");
+
+      const refreshCalls = fetchMock.mock.calls.filter((c) =>
+        String(c[0]).includes("/api/v1/auth/refresh")
+      );
+      expect(refreshCalls.length).toBe(1);
     });
 
     it("401が返った場合は未ログイン確定とし、以降のfetchWithAuthはrefreshしない", async () => {
@@ -279,6 +295,176 @@ describe("api/client", () => {
       expect(init?.method).toBe("POST");
       expect(new Headers(init?.headers).get("Content-Type")).toBe("application/json");
       expect(JSON.parse(init?.body as string)).toEqual({ currentPassword: "password01" });
+    });
+  });
+
+  describe("ポートフォリオAPI", () => {
+    beforeEach(async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
+      await client.login("user", "pass");
+    });
+
+    it("getPortfolioList は一覧APIを1ページ目で呼び、portfolioList と isLast を返す", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ portfolioList: [{ portfolioNo: 1, theme: "日本の自然" }], isLast: false })
+      );
+
+      const result = await client.getPortfolioList("me");
+
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios");
+      expect(new URL(String(url), "http://localhost").searchParams.get("pageNo")).toBe("1");
+      expect(new Headers(init?.headers).get("Authorization")).toBe("Bearer token-1");
+      expect(result).toEqual({ portfolioList: [{ portfolioNo: 1, theme: "日本の自然" }], isLast: false });
+    });
+
+    it("getPortfolioList はページ番号を pageNo のクエリパラメータで送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioList: [], isLast: true }));
+
+      await client.getPortfolioList("me", { keyword: "自然" }, 3);
+
+      const params = new URL(String(fetchMock.mock.calls.at(-1)![0]), "http://localhost").searchParams;
+      expect(params.get("pageNo")).toBe("3");
+      expect(params.get("keyword")).toBe("自然");
+    });
+
+    it("getPortfolioList は検索語を keyword のクエリパラメータで送り、未入力の場合は送らない", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioList: [] }));
+      await client.getPortfolioList("me", { keyword: "自然" });
+      expect(new URL(String(fetchMock.mock.calls.at(-1)![0]), "http://localhost").searchParams.get("keyword")).toBe("自然");
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioList: [] }));
+      await client.getPortfolioList("me", { keyword: "" });
+      expect(String(fetchMock.mock.calls.at(-1)![0])).not.toContain("keyword");
+    });
+
+    it("savePortfolio はポートフォリオ番号の未指定時に POST、指定時に PUT で JSON を送る", async () => {
+      const data = {
+        theme: "日本の自然",
+        description: "",
+        templateKbn: "grid" as const,
+        templateSettings: { rows: [{ pattern: "TWO_EQUAL" }] },
+        photoList: [{ photoNo: 1, photoSettings: { caption: "金閣寺" } }],
+        tagList: [],
+      };
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioNo: 5 }));
+      await client.savePortfolio("me", data);
+      let [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toMatch(/\/api\/v1\/accounts\/me\/portfolios$/);
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(init?.body as string)).toEqual(data);
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioNo: 5 }));
+      await client.savePortfolio("me", data, 5);
+      [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios/5");
+      expect(init?.method).toBe("PUT");
+    });
+
+    it("updatePortfolioStatus は PUT /status で公開状態を送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioNo: 5 }));
+
+      await client.updatePortfolioStatus("me", 5, "published");
+
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios/5/status");
+      expect(init?.method).toBe("PUT");
+      expect(JSON.parse(init?.body as string)).toEqual({ statusKbn: "published" });
+    });
+
+    it("movePortfolioDisplayOrder は PUT /{portfolioNo}/display-order で移動方向を送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ isSuccess: true, portfolioNo: 5 }));
+
+      await client.movePortfolioDisplayOrder("me", 5, "up");
+
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios/5/display-order");
+      expect(init?.method).toBe("PUT");
+      expect(JSON.parse(init?.body as string)).toEqual({ direction: "up" });
+    });
+
+    it("movePortfolioDisplayOrder は HTTP エラー時にメッセージと status を持つ ApiError を投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ message: "ポートフォリオが存在しません。" }, { status: 404 })
+      );
+
+      const err = await client.movePortfolioDisplayOrder("me", 9, "down").catch((e: unknown) => e);
+
+      expect(err).toBeInstanceOf(client.ApiError);
+      expect((err as InstanceType<typeof client.ApiError>).status).toBe(404);
+      expect((err as Error).message).toBe("ポートフォリオが存在しません。");
+    });
+
+    it("getFrameTemplateList・getFrameTemplate は本人の額縁テンプレートを GET で取得する", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ frameTemplateList: [] }));
+      await client.getFrameTemplateList("me");
+      const [listUrl, listInit] = fetchMock.mock.calls.at(-1)!;
+      expect(String(listUrl)).toMatch(/\/api\/v1\/accounts\/me\/frame-templates$/);
+      expect(listInit?.method ?? "GET").toBe("GET");
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ frameTemplateNo: 2 }));
+      const template = await client.getFrameTemplate("me", 2);
+      const [detailUrl] = fetchMock.mock.calls.at(-1)!;
+      expect(String(detailUrl)).toContain("/api/v1/accounts/me/frame-templates/2");
+      expect(template.frameTemplateNo).toBe(2);
+    });
+
+    it("saveFrameTemplate は額縁テンプレート番号の未指定時に POST、指定時に PUT で JSON を送る", async () => {
+      const data = { templateName: "四つ切 3枚組", frameDefinition: { size: { width: 305, height: 254 } } };
+      fetchMock.mockResolvedValueOnce(makeResponse({ frameTemplateNo: 3 }));
+      await client.saveFrameTemplate("me", data);
+      let [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toMatch(/\/api\/v1\/accounts\/me\/frame-templates$/);
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(init?.body as string)).toEqual(data);
+
+      fetchMock.mockResolvedValueOnce(makeResponse({ frameTemplateNo: 3 }));
+      await client.saveFrameTemplate("me", data, 3);
+      [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/frame-templates/3");
+      expect(init?.method).toBe("PUT");
+    });
+
+    it("deleteFrameTemplate は DELETE を送り、HTTP エラー時はメッセージと status を持つ ApiError を投げる", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ frameTemplateNo: 3 }));
+      await client.deleteFrameTemplate("me", 3);
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/frame-templates/3");
+      expect(init?.method).toBe("DELETE");
+
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ errorMessage: "額縁テンプレートが存在しません。" }, { status: 404 })
+      );
+      const err = await client.deleteFrameTemplate("me", 3).catch((e) => e);
+      expect(err).toBeInstanceOf(client.ApiError);
+      expect(err.status).toBe(404);
+    });
+
+    it("deletePortfolio は DELETE を送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ portfolioNo: 5 }));
+
+      await client.deletePortfolio("me", 5);
+
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(String(url)).toContain("/api/v1/accounts/me/portfolios/5");
+      expect(init?.method).toBe("DELETE");
+    });
+
+    it("HTTP エラー時はバックエンドのメッセージと status を持つ ApiError を投げる", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse(
+          { message: "公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。" },
+          { status: 400 }
+        )
+      );
+
+      const err = await client.updatePortfolioStatus("me", 5, "published").catch((e) => e);
+
+      expect(err).toBeInstanceOf(client.ApiError);
+      expect(err.status).toBe(400);
+      expect(err.message).toBe(
+        "公開に必要な設定が不足しています。テンプレートの設定内容を確認してください。"
+      );
     });
   });
 
@@ -450,6 +636,80 @@ describe("api/client", () => {
     });
   });
 
+  describe("遷移元URL（referer）の切り詰め", () => {
+    beforeEach(async () => {
+      // 先にログインしてアクセストークンを持たせる（fetchWithAuth の先読みリフレッシュを挟まない）
+      fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
+      await client.login("user", "pass");
+    });
+
+    /** 直近の fetch 呼び出しURLから referer クエリの値を取り出す */
+    const capturedReferer = (): string | null => {
+      const calls = fetchMock.mock.calls;
+      const url = String(calls[calls.length - 1][0]);
+      return new URL(url, "http://localhost").searchParams.get("referer");
+    };
+
+    it("上限以内の referer はそのまま送る", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ isLast: true, photoList: [] })
+      );
+      const referer = `https://example.com/?q=${"a".repeat(100)}`;
+
+      await client.getPhotoList("acc1", { referer });
+
+      expect(capturedReferer()).toBe(referer);
+    });
+
+    it("写真一覧: 上限を超える referer は上限文字数まで切り詰めて送る（400にしない）", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ isLast: true, photoList: [] })
+      );
+      // 流入元サイトが Referrer-Policy: unsafe-url で長いURLを晒すと document.referrer が
+      // 上限を超える。そのまま送るとバックエンドの @Size で 400 になり一覧が表示できない
+      const referer = `https://example.com/?q=${"a".repeat(4000)}`;
+
+      await client.getPhotoList("acc1", { referer });
+
+      expect(capturedReferer()).toHaveLength(REFERER_MAX_LENGTH);
+      expect(capturedReferer()).toBe(referer.slice(0, REFERER_MAX_LENGTH));
+    });
+
+    it("写真詳細: 上限を超える referer は上限文字数まで切り詰めて送る", async () => {
+      fetchMock.mockResolvedValueOnce(makeResponse({ photoNo: 1 }));
+      const referer = `https://example.com/?q=${"a".repeat(4000)}`;
+
+      await client.getPhotoDetail("acc1", 1, referer);
+
+      expect(capturedReferer()).toHaveLength(REFERER_MAX_LENGTH);
+    });
+
+    it("切り詰めの境界でサロゲートペアを割らない", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ isLast: true, photoList: [] })
+      );
+      // 上限の直前までを1コードユニット文字で埋め、境界に絵文字（2コードユニット）を置く
+      const referer = `${"a".repeat(REFERER_MAX_LENGTH - 1)}😀${"b".repeat(10)}`;
+
+      await client.getPhotoList("acc1", { referer });
+
+      const sent = capturedReferer()!;
+      expect(sent).toHaveLength(REFERER_MAX_LENGTH - 1);
+      // 単独のサロゲートが残っていないこと
+      expect(sent).toBe("a".repeat(REFERER_MAX_LENGTH - 1));
+    });
+
+    it("空文字の referer はクエリに載せない", async () => {
+      fetchMock.mockResolvedValueOnce(
+        makeResponse({ isLast: true, photoList: [] })
+      );
+
+      await client.getPhotoList("acc1", { referer: "" });
+
+      expect(capturedReferer()).toBeNull();
+    });
+  });
+
   describe("認証付きAPI関数群", () => {
     beforeEach(async () => {
       fetchMock.mockResolvedValueOnce(makeResponse({ accessToken: "token-1" }));
@@ -601,6 +861,13 @@ describe("api/client", () => {
         defaultMessage: "お問い合わせ詳細の取得に失敗しました",
         urlIncludes: "/api/v1/inquiries/1",
         method: "GET",
+      },
+      {
+        name: "markInquiryAsRead",
+        call: () => client.markInquiryAsRead(1),
+        defaultMessage: "お問い合わせの既読化に失敗しました",
+        urlIncludes: "/api/v1/inquiries/1/read",
+        method: "POST",
       },
       {
         name: "withdrawInquiry",

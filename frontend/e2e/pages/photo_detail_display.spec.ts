@@ -3,6 +3,7 @@ import { Client } from "pg";
 import { test, expect, type Page } from "@playwright/test";
 import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 import { generateTestAccountId, login, registerAccount } from "../fixtures/auth";
+import { collectCspViolations, cspDirectiveSources } from "../fixtures/csp";
 import { DB_CONFIG } from "../fixtures/db";
 
 /**
@@ -17,22 +18,17 @@ import { DB_CONFIG } from "../fixtures/db";
 const PHOTO_1 = path.join(__dirname, "../fixtures/images/e2e-photo-1.png");
 
 /**
- * `PhotoSettingForm`には撮影場所（緯度経度・ロケーション名）を入力するUIが存在せず、
- * バックエンドもEXIFのGPS情報からの自動抽出は行わない（`PhotoExifExtractor`は焦点距離・
- * F値・シャッタースピード・ISOのみを対象とする）。撮影場所はAPI経由でのみ設定可能なため、
- * この検証専用にDBへ直接ロケーションマスタを作成し、対象の写真に紐付ける
- * （`fixtures/admin.ts`の`grantAdministratorAuthority`と同様、UI操作だけでは到達できない
- * 状態を用意するための直接更新）。
- *
- * なお、位置情報の公開設定もこのヘルパーで直接更新する。編集フォーム経由の保存は
+ * 位置情報の公開設定は、写真編集フォーム経由では直接切り替えられない。編集フォームの保存は
  * locationNoを一切送信しないため、`LocationNo.getOrDefault`によりlocation_noが0
  * （紐付けなし）へ巻き戻ってしまい、UI操作では地図を維持したまま公開設定だけを
- * 切り替えられない（本アプリの現在の仕様上の制約）
+ * 切り替えられない（本アプリの現在の仕様上の制約）。そのためこの検証専用にDBへ直接
+ * ロケーションマスタを作成し、対象の写真に紐付ける（`fixtures/admin.ts`の
+ * `grantAdministratorAuthority`と同様、UI操作だけでは到達できない状態を用意するための直接更新）
  */
 async function linkLocationToPhoto(
   accountId: string,
   photoNo: number,
-  locationName: string,
+  displayName: string,
   isLocationPublic: boolean
 ): Promise<void> {
   const client = new Client(DB_CONFIG);
@@ -48,9 +44,9 @@ async function linkLocationToPhoto(
     await client.query(
       `INSERT INTO common.location_mst
          (account_no, location_no, created_by, created_at, updated_by, updated_at,
-          is_deleted, location_name, address, latitude, longitude)
-       VALUES ($1, 1, $1, now(), $1, now(), false, $2, 'テスト住所', 35.6595, 139.7005)`,
-      [accountNo, locationName]
+          is_deleted, management_name, display_name, address, latitude, longitude)
+       VALUES ($1, 1, $1, now(), $1, now(), false, $2, $2, 'テスト住所', 35.6595, 139.7005)`,
+      [accountNo, displayName]
     );
     await client.query(
       `UPDATE photo.photo_mst SET location_no = 1, is_location_public = $3
@@ -128,6 +124,11 @@ test.describe("写真詳細ページ（英語タイトル・EXIF設定テキス�
     await page.getByTestId("submit-button").click();
     await expect(page.getByTestId("success-modal")).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: "閉じる" }).click();
+    // 一覧への遷移完了を待たずに詳細リンクを探すと、写真設定ページのまま
+    // 0件と判定されて失敗するため、URLの遷移を待ってから探す
+    await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list$`), {
+      timeout: 10000,
+    });
 
     const detailLinks = page.locator('a[href*="/photo_detail?photoNo="]');
     await expect(detailLinks).toHaveCount(1, { timeout: 10000 });
@@ -139,6 +140,99 @@ test.describe("写真詳細ページ（英語タイトル・EXIF設定テキス�
     await expect(page).toHaveTitle(/写真詳細/);
     await expect(page.getByText("Exif Display Test Photo")).toBeVisible();
     await expect(page.getByText("50mm F1.8 0.005sec iso200")).toBeVisible();
+  });
+
+  test("英語タイトル・撮影日時／撮影場所・EXIF設定テキストが16pxで表示されること", async ({
+    page,
+  }, testInfo) => {
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+    await registerAccount(page, accountId, "E2E Font Size Detail User");
+    await login(page, accountId);
+
+    await page.goto(`/photo/${accountId}/photo_setting`);
+    await expect(page.getByTestId("image-input")).toBeAttached();
+    await page.getByTestId("image-input").setInputFiles(PHOTO_1);
+    await expect(page.getByTestId("image-preview-item-0")).toBeVisible();
+    await page.getByTestId("japanese-title-input").fill("フォントサイズ検証用写真");
+    await page.getByTestId("english-title-input").fill("Font Size Test Photo");
+    // 撮影日時はアップロード画像のEXIFに依存しないよう明示的に指定する
+    await page.getByTestId("photo-at-input").fill("2024-03-15T10:30");
+    await page.getByTestId("focal-length-input").fill("35");
+    await page.getByTestId("f-value-input").fill("2.8");
+    await page.getByTestId("shutter-speed-input").fill("0.002");
+    await page.getByTestId("iso-input").fill("100");
+
+    await page.getByTestId("submit-button").click();
+    await expect(page.getByTestId("success-modal")).toBeVisible({ timeout: 10000 });
+    await page.getByRole("button", { name: "閉じる" }).click();
+    // 一覧への遷移完了を待たずに詳細リンクを探すと、写真設定ページのまま
+    // 0件と判定されて失敗するため、URLの遷移を待ってから探す
+    await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list$`), {
+      timeout: 10000,
+    });
+
+    const detailLinks = page.locator('a[href*="/photo_detail?photoNo="]');
+    await expect(detailLinks).toHaveCount(1, { timeout: 10000 });
+    await page.goto((await detailLinks.first().getAttribute("href"))!);
+
+    const englishTitle = page.getByText("Font Size Test Photo");
+    const photoAtText = page.getByText("2024/03/15 10:30");
+    const exifText = page.getByText("35mm F2.8 0.002sec iso100");
+    await expect(englishTitle).toBeVisible();
+    await expect(photoAtText).toBeVisible();
+    await expect(exifText).toBeVisible();
+    expect(await englishTitle.evaluate((el) => getComputedStyle(el).fontSize)).toBe("16px");
+    expect(await photoAtText.evaluate((el) => getComputedStyle(el).fontSize)).toBe("16px");
+    expect(await exifText.evaluate((el) => getComputedStyle(el).fontSize)).toBe("16px");
+  });
+
+  test("英語タイトルは空白を含まない長い文字列でも折り返されること", async ({
+    page,
+  }, testInfo) => {
+    const accountId = generateTestAccountId(testInfo.workerIndex);
+    await registerAccount(page, accountId, "E2E Title Wrap Detail User");
+    await login(page, accountId);
+
+    // 英語タイトルは最大100文字（`PhotoSaveRequest`）。空白を含まないため
+    // 折り返し指定がないとコンテナ幅をはみ出して横スクロールが発生する
+    const longTitle = "A".repeat(100);
+
+    await page.goto(`/photo/${accountId}/photo_setting`);
+    await expect(page.getByTestId("image-input")).toBeAttached();
+    await page.getByTestId("image-input").setInputFiles(PHOTO_1);
+    await expect(page.getByTestId("image-preview-item-0")).toBeVisible();
+    await page.getByTestId("japanese-title-input").fill("英語タイトル折り返し検証用写真");
+    await page.getByTestId("english-title-input").fill(longTitle);
+
+    await page.getByTestId("submit-button").click();
+    await expect(page.getByTestId("success-modal")).toBeVisible({ timeout: 10000 });
+    await page.getByRole("button", { name: "閉じる" }).click();
+    // 一覧への遷移完了を待たずに詳細リンクを探すと、写真設定ページのまま
+    // 0件と判定されて失敗するため、URLの遷移を待ってから探す
+    await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list$`), {
+      timeout: 10000,
+    });
+
+    const detailLinks = page.locator('a[href*="/photo_detail?photoNo="]');
+    await expect(detailLinks).toHaveCount(1, { timeout: 10000 });
+    // 既定のビューポート幅では100文字がちょうど1行に収まりうるため、
+    // 折り返しが必ず発生する幅に狭めてから詳細ページを表示する
+    await page.setViewportSize({ width: 600, height: 800 });
+    await page.goto((await detailLinks.first().getAttribute("href"))!);
+
+    const englishTitle = page.getByText(longTitle);
+    await expect(englishTitle).toBeVisible();
+    // 複数行に折り返されており（行ごとに1つのrectになる）、コンテナ幅も超えていない
+    const { lineCount, isWithinContainer } = await englishTitle.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return {
+        lineCount: range.getClientRects().length,
+        isWithinContainer: el.scrollWidth <= el.clientWidth,
+      };
+    });
+    expect(lineCount).toBeGreaterThan(1);
+    expect(isWithinContainer).toBe(true);
   });
 
   test("アクセシビリティ違反がないこと", async ({ page }, testInfo) => {
@@ -210,9 +304,21 @@ test.describe("写真詳細ページ（撮影場所の地図表示）", () => {
     await login(visitorPage, visitorAccountId);
 
     await test.step("非公開の間は、所有者本人には地図・ロケーション名が表示されること", async () => {
-      await page.goto(detailUrl);
+      // 埋め込みURLがCSPの`frame-src`に許可されていない場合、iframe要素は残ったまま中身だけが
+      // 読み込まれず、画面上はエラーにならない（`toBeVisible`では検出できない）。
+      // `lib/url.ts`が組み立てるパスと`proxy.ts`の`frame-src`が食い違ったら気づけるように、
+      // 実際のsrc・CSPヘッダー・コンソールの違反有無の3点を突き合わせる
+      const cspViolations = collectCspViolations(page);
+      const response = await page.goto(detailUrl);
       await expect(page.getByText(locationName)).toBeVisible();
-      await expect(page.locator('iframe[title="撮影場所の地図"]')).toBeVisible();
+      const mapFrame = page.locator('iframe[title="撮影場所の地図"]');
+      await expect(mapFrame).toBeVisible();
+
+      const mapSrc = await mapFrame.getAttribute("src");
+      expect(mapSrc).toMatch(/^https:\/\/maps\.google\.com\/maps\?/);
+      const csp = response?.headers()["content-security-policy"] ?? "";
+      expect(cspDirectiveSources(csp, "frame-src")).toContain("https://maps.google.com/maps");
+      expect(cspViolations, `CSP 違反:\n${cspViolations.join("\n")}`).toEqual([]);
     });
 
     await test.step("非公開の間は、所有者以外には地図・ロケーション名が表示されないこと", async () => {

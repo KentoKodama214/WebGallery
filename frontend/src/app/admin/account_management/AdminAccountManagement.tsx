@@ -191,9 +191,11 @@ export function AdminAccountManagement() {
     }
   };
 
+  // 見出しレベル1はどの表示状態でも1つ存在させる（一覧本体を出せない状態でも欠落させない）
   if (isAuthLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
+        <h1 className="sr-only">アカウント管理</h1>
         <p>読み込み中...</p>
       </div>
     );
@@ -202,29 +204,8 @@ export function AdminAccountManagement() {
   if (!isAuthenticated || !isAdmin) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
+        <h1 className="sr-only">アカウント管理</h1>
         <p className="text-red-500">管理者権限がありません。</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <p>読み込み中...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
-        <p className="text-red-500">{error}</p>
-        <button
-          onClick={fetchAccounts}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          再読み込み
-        </button>
       </div>
     );
   }
@@ -242,18 +223,45 @@ export function AdminAccountManagement() {
 
   return (
     <div className="flex flex-col items-center py-8 gap-4">
-      <h2 className="text-xl font-bold">アカウント管理</h2>
+      <h1 className="text-xl font-bold">アカウント管理</h1>
 
-      {message && (
-        <p className="text-green-600 font-medium">{message}</p>
-      )}
+      {/*
+        ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため、常設して
+        中身だけを差し替える（`role="status"` は polite。リージョンが先に存在していることが前提）。
+        空のときに `display: none`（`empty:hidden`）にするとアクセシビリティツリーから外れ、
+        「リージョンが先に存在している」という前提を満たせなくなるため、`empty:sr-only` で
+        レイアウト上の余白（親の `gap-4`）からだけ外す（要素自体はツリーに残る）
+      */}
+      <p role="status" className="text-green-600 font-medium empty:sr-only">
+        {message}
+      </p>
 
-      {actionError && (
-        <p role="alert" className="text-red-500 text-sm">
-          {actionError}
-        </p>
-      )}
+      {/* エラーも同じ理由で常設する（`role="alert"` は assertive） */}
+      <p role="alert" className="text-red-500 text-sm empty:sr-only">
+        {actionError}
+      </p>
 
+      {/*
+        一覧の取得中・取得失敗でも、上の見出しとライブリージョンは DOM から外さない。
+        画面全体を差し替えると、常設したライブリージョンごとアンマウントされ、
+        再描画時に「リージョンとメッセージが同時に挿入される」状態に戻ってしまう
+        （= ロック操作後の成功メッセージが読み上げられない）。切り替えるのは一覧本体だけにする
+      */}
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <p>読み込み中...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
+          <p className="text-red-500">{error}</p>
+          <button
+            onClick={fetchAccounts}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            再読み込み
+          </button>
+        </div>
+      ) : (
       <div
         className="w-full max-w-[1100px] overflow-x-auto"
         style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)" }}
@@ -356,14 +364,13 @@ export function AdminAccountManagement() {
           </tbody>
         </table>
       </div>
-
-      {loadMoreError && (
-        <p role="alert" className="text-red-500 text-sm">
-          {loadMoreError}
-        </p>
       )}
 
-      {!isLast && (
+      <p role="alert" className="text-red-500 text-sm empty:sr-only">
+        {loadMoreError}
+      </p>
+
+      {!isLoading && !error && !isLast && (
         <button
           onClick={handleLoadMore}
           disabled={isLoadingMore}
@@ -436,11 +443,16 @@ export function AdminAccountManagement() {
           <p className="text-[#444] text-center mb-4">
             {editingAuthority.accountId} の権限を変更します
           </p>
+          <label htmlFor="authority-select" className="block text-sm text-[#444] mb-1">
+            権限
+          </label>
           <select
+            id="authority-select"
             value={selectedAuthorityKbn}
             onChange={(e) => setSelectedAuthorityKbn(e.target.value)}
             disabled={isActionProcessing}
             className="w-full h-[40px] mb-4 border border-gray-300 rounded-sm px-2"
+            data-testid="authority-select"
           >
             {AUTHORITY_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

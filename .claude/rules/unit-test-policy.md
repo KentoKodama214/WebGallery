@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/policy/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/domain/service/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Policyパッケージの単体テスト規約

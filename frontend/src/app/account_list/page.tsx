@@ -12,10 +12,10 @@ export const metadata: Metadata = {
  */
 export default function AccountListPage() {
   return (
-    <>
+    <div className="min-h-screen bg-[whitesmoke]">
       <Header />
       <AccountList />
-      <Footer />
-    </>
+      <Footer variant="light" />
+    </div>
   );
 }

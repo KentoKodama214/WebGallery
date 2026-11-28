@@ -40,6 +40,27 @@ authTest.describe("写真設定ページ（ログイン済み・本人）", () =
     }
   );
 
+  authTest(
+    "撮影場所の新規登録モードでもアクセシビリティ違反がないこと",
+    async ({ workerPage: page, testUser }, testInfo) => {
+      // 既定の「設定しない」のままでは、新規ロケーションの入力欄と地図が
+      // レンダリングされずaxeの走査対象にならないため、モードを切り替えて検証する
+      authTest.skip(
+        testInfo.project.name !== "chromium",
+        "a11y検証はchromiumプロジェクトのみで実施する"
+      );
+
+      await page.goto(`/photo/${testUser.accountId}/photo_setting`);
+      await authExpect(page.getByTestId("image-input")).toBeAttached();
+
+      await page.getByTestId("location-mode-new").check();
+      await authExpect(page.getByTestId("new-location-management-name-input")).toBeVisible();
+      await authExpect(page.getByTestId("location-map-picker")).toBeVisible();
+
+      await expectNoAccessibilityViolations(page);
+    }
+  );
+
   authTest("他人のphotoAccountIdでは権限エラーが表示されること", async ({
     workerPage: page,
   }) => {

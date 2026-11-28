@@ -4,12 +4,12 @@
 
 | ワークフロー | ファイル | トリガー |
 |---|---|---|
-| Javadocチェック | `checkstyle.yml` | `development`・`staging`・`master`へのPR |
-| フォーマットチェック | `spotless.yml` | `development`・`staging`・`master`へのPR |
-| テスト実行 | `test.yml` | `development`・`staging`・`master`へのPR |
-| 依存関係の脆弱性スキャン | `test.yml`（`dependency-scan`ジョブ） | `development`・`staging`・`master`へのPR |
-| カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `development`・`staging`・`master`へのPR |
-| 環境昇格PR自動作成 | `promote-branch.yml` | `development`・`staging`へのpush（PRマージ含む） |
+| Javadocチェック | `checkstyle.yml` | `development`・`staging`・`master`へのPR、手動実行 |
+| フォーマットチェック | `spotless.yml` | `development`・`staging`・`master`へのPR、手動実行 |
+| テスト実行 | `test.yml` | `development`・`staging`・`master`へのPR、手動実行 |
+| 依存関係の脆弱性スキャン | `dependency-scan.yml` | `development`・`staging`・`master`へのPR、毎日7:00（JST）の定期実行、手動実行 |
+| カバレッジレポート | `test.yml`（`coverage-report`ジョブ） | `development`・`staging`・`master`へのPR、手動実行 |
+| 環境昇格PR自動作成・リリースタグ発行 | `promote-branch.yml` | `development`・`staging`へのpush（PRマージ含む） |
 
 セキュリティレビューはAnthropic APIの従量課金コストがかかるため、CIワークフロー化はせず、Claude Codeの`/security-review`スキルでローカルから都度実行する運用とする。
 
@@ -22,22 +22,40 @@ checkstyle.yml:
 spotless.yml:
   フォーマットチェック ──────────────────→ (独立)
 
+dependency-scan.yml:
+  依存関係の脆弱性スキャン ──────────────→ (独立)
+
 test.yml:
-  フロントエンド単体テスト ─────────────→ (成功時のみ) ─┐
-  本番CSPスモークテスト ────────────────→ (独立)         │
-  依存関係の脆弱性スキャン ─────────────→ (独立)         │
-  単体テスト ──→ (成功時のみ) 結合テスト ──┐             │
-             ├→ (成功時のみ) E2Eテスト     │             │
-             └───────────────────────────┴→ (全て成功時) カバレッジレポート
+  本番CSPスモークテスト ────────────────────────→ (独立)
+  E2Eテスト（chromium） ───────────────────────→ (独立)
+  E2Eテスト（cross-browser） ──────────────────→ (独立)
+  フロントエンド単体テスト ─────────────────────┐
+  gallery-api単体テスト ──────────────────────┤
+  gallery-api結合テスト ──────────────────────┤
+  portfolio-api単体テスト ────────────────────┤
+  portfolio-api結合テスト ────────────────────┴→ (全て成功時) カバレッジレポート
 ```
 
-- Javadocチェック、フォーマットチェック、テスト実行は別ワークフローのため、**並列に実行**される
-- フロントエンド単体テストはバックエンドの単体テストとは独立して**並列に実行**される
-- 依存関係の脆弱性スキャンは他のジョブと依存関係を持たず**並列に実行**される
-- 単体テストが失敗した場合、結合テスト・E2Eテストは**スキップ**される
-- 結合テストとE2Eテストは互いに依存せず**並列に実行**される
+- Javadocチェック、フォーマットチェック、依存関係の脆弱性スキャン、テスト実行は別ワークフローのため、**並列に実行**される
+- `test.yml`のテストジョブ（フロントエンド単体テスト・gallery-api単体テスト・gallery-api結合テスト・portfolio-api単体テスト・portfolio-api結合テスト・E2Eテスト・本番CSPスモークテスト）は互いに依存関係を持たず、すべて**同時に起動**される
+- E2Eテストはブラウザ別に2ジョブ（`chromium`・`cross-browser`）へ分割され、**並列に実行**される
 - Javadocチェックの成否はテスト実行に**影響しない**
-- カバレッジレポートはフロントエンド単体テスト・バックエンド単体テスト・結合テストがすべて成功した場合のみ実行される
+- カバレッジレポートはフロントエンド単体テスト・gallery-api・portfolio-apiの単体テスト・結合テストがすべて成功した場合のみ実行される
+
+以前は結合テスト・E2Eテストを`needs: unit-test`で単体テストの成功後に起動していたが、ジョブ間で成果物の受け渡しがなく、単体テストの所要時間がそのままクリティカルパスに積まれていたため並列化した。単体テストが失敗した場合に結合テスト・E2Eテストが無駄に実行されるが、結果が返るまでの時間を優先する。
+
+## 実行時間の最適化
+
+- **同時実行の制御**：`concurrency`により、同一ブランチへ連続してpushした場合は古い実行をキャンセルし、最新のコミットのみを検証する
+- **Gradleキャッシュ**：`gradle/actions/setup-gradle`で依存関係とビルドキャッシュ（`org.gradle.caching=true`、`gallery-api/gradle.properties`）をキャッシュする。同一PRへ追加pushした際、入力が変わっていないタスク（`compileJava`・`compileTestJava`・`unitTest`・`integrationTest`等）は出力がキャッシュから復元され再実行されない。JaCoCoの実行データ（`*.exec`）とテストレポートもタスク出力としてキャッシュされるため、キャッシュヒット時もカバレッジ集計に影響しない
+- **Playwrightブラウザキャッシュ**：`~/.cache/ms-playwright`をキャッシュし、ブラウザバイナリのダウンロードを省略する（`--with-deps`によるOSライブラリの導入は毎回実行される）
+- **E2Eジョブのステップ並行化**：バックエンドの起動（Gradleの起動・コンパイル・Spring Bootの初期化）に1分近くかかるため、データベース初期化の直後にバックグラウンドで起動し、MinIOの起動とフロントエンドのセットアップを並行して進める。起動完了の待機はE2Eテストの直前に行う
+- **E2Eのルート暖機**：`next dev`はページルート・APIプロキシルートを初回リクエスト時にオンデマンドでコンパイルする。ブラウザ別にジョブを分割したことで`webkit-smoke`・`mobile-smoke`は先行するchromium実行による暖機を当てにできなくなったため、`e2e/global-setup.ts`の`warmUpRoutes`でテスト開始前に主要ルートを一度叩いてコンパイル済みにする
+- **Springテストコンテキストの共有**：Controller層の統合テストは`@MockitoBean(types = FileRepository.class)`をクラスレベルで統一して宣言し、全クラスで同一のテストコンテキストを共有する。`BeanOverrideHandler#equals`はフィールド名まで比較するため、フィールド宣言とクラスレベル宣言が混在するとコンテキストキーが変わり再生成される
+
+## 手動実行
+
+`checkstyle.yml`・`spotless.yml`・`dependency-scan.yml`・`test.yml`はGitHub Actionsの画面（Actions → 対象ワークフロー → Run workflow）から任意のブランチに対して手動実行できる（`workflow_dispatch`）。手動実行時は`coverage-report`ジョブのPRコメント投稿ステップのみスキップされ（PRに紐付かないため）、それ以外のジョブ・ジョブサマリーへの出力は通常のPR実行と同様に行われる。
 
 ## 各ジョブの詳細
 
@@ -55,7 +73,7 @@ Checkstyleを使用して、`src/main/java`配下の全クラス・全メソッ�
 
 ### フォーマットチェック (`spotless.yml`)
 
-Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/java`配下の全Javaファイルが整形済みかをチェックする（`spotlessCheck`）。未整形の場合はローカルで`./backend/gradlew -p backend spotlessApply`（または`just format`）を実行して修正する。
+Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/java`配下の全Javaファイルが整形済みかをチェックする（`spotlessCheck`）。未整形の場合はローカルで`./gallery-api/gradlew -p gallery-api spotlessApply`（または`just format`）を実行して修正する。
 
 **チェック内容:**
 - Google Java Formatによるコードスタイル（インデント・改行位置等）
@@ -66,28 +84,49 @@ Spotless（Google Java Format）を使用して、`src/main/java`・`src/test/ja
 
 `frontend`ディレクトリで`pnpm lint`（ESLint）と`pnpm test --coverage`（Jest）を実行する。バックエンドの単体テストとは独立して並列に実行される。カバレッジ集計データ（`coverage/coverage-summary.json`）はアーティファクト（`jest-coverage-summary`）としてアップロードされ、`coverage-report`ジョブで使用される。
 
-### 単体テスト (`test.yml` - `unit-test`)
+### gallery-api単体テスト (`test.yml` - `gallery-api-unit-test`)
 
-`./gradlew unitTest`を実行し、結合テスト(`*IntegrationTest*`)とMapperテスト(`mapper/*Test*`)を除く単体テストを実行する。
+`./gradlew unitTest`を実行し、結合テスト(`*IntegrationTest*`)とMapperテスト(`*MapperTest*`、実DB接続が必要な`@MybatisTest`)を除く単体テストを実行する。
 
-レイヤードアーキテクチャ（Controller → Service → Repository → Mapper）の依存方向違反は、`ArchitectureTest`（ArchUnit）としてこの単体テストの一部で検証される。
+オニオンアーキテクチャ（domain → application → infrastructure/presentation）の依存方向違反は、`OnionArchitectureTest`をはじめとする各種ArchUnitテストとしてこの単体テストの一部で検証される。
 
-### 依存関係の脆弱性スキャン (`test.yml` - `dependency-scan`)
+### 依存関係の脆弱性スキャン (`dependency-scan.yml`)
 
-[OSV-Scanner](https://github.com/google/osv-scanner)を使用して、backend・frontendの依存関係（推移的依存を含む）に既知の脆弱性がないかをスキャンする。他のジョブと依存関係を持たず並列に実行される。
+[OSV-Scanner](https://github.com/google/osv-scanner)を使用して、backend・frontendの依存関係（推移的依存を含む）に既知の脆弱性がないかをスキャンする。
+
+依存関係を変更していなくても新たに公開された脆弱性を検知できるよう、PR時に加えて毎日7:00（JST）に`development`ブランチを対象に定期実行する（Dependabotのチェック時刻に揃えている）。`schedule`のcronはUTCで解釈されるため`0 22 * * *`を指定している。定期実行・手動実行だけを単独で行えるよう、`test.yml`から独立したワークフローに分離している。
+
+検知した脆弱性の修正PRは、リポジトリ設定で有効化しているDependabot security updatesが自動作成する（GitHub Advisory Databaseに基づく。`.github/dependabot.yml`のバージョン更新とは別機能で、設定ファイルは不要）。このワークフローは検知とCIの失敗による可視化を担い、修正PRの作成は行わない。
 
 - backend: `./gradlew cyclonedxBom`（CycloneDXプラグイン）でランタイム依存関係全体のSBOM（Software Bill of Materials）を生成し、それをスキャン対象にする
 - frontend: `pnpm-lock.yaml`を直接スキャン対象にする（依存パッケージのインストールは不要）
 
 OSV-Scanner CLIはGitHub Releaseからバイナリを直接ダウンロードして使用する（外部Actionは不使用）。以前はOWASP Dependency-Checkを使用していたが、NVD（米国の脆弱性データベース）データベース全体の同期が必要でCI実行時間が長時間化する問題があったため、OSVデータベースをAPI照会するOSV-Scannerに置き換えた。脆弱性が1件でも見つかった場合はジョブが失敗する（重大度による絞り込みは行わない）。スキャン結果はMarkdown形式でジョブサマリーに出力し、同じ内容をアーティファクトとしてもアップロードする。
 
-### 結合テスト (`test.yml` - `integration-test`)
+### gallery-api結合テスト (`test.yml` - `gallery-api-integration-test`)
 
-PostgreSQLサービスコンテナを起動し、`./gradlew integrationTest`を実行する。単体テストが成功した場合のみ実行される。
+PostgreSQLサービスコンテナとMinIO（S3互換ストレージ）を起動し、`./gradlew integrationTest`を実行する。他のテストジョブと依存関係を持たず並列に実行される。
+
+### portfolio-api単体テスト (`test.yml` - `portfolio-api-unit-test`)
+
+`portfolio-api`ディレクトリで、フォーマットチェック（`gofmt -l`）・静的解析（`go vet -tags integration`）・GraphQL生成コードの差分チェック（`go generate`後の`git diff`）を行ったうえで、`go test -coverpkg=./... ./...`で単体テストを実行する。DBは使用しない。カバレッジプロファイル（`unit.out`）はアーティファクト（`go-coverage-unit`）としてアップロードされ、`coverage-report`ジョブで使用される。
+
+### portfolio-api結合テスト (`test.yml` - `portfolio-api-integration-test`)
+
+PostgreSQLサービスコンテナを起動し、`db/photo/portfolio_reader.sql`までを流してDBを初期化したうえで、本番と同じ読み取り専用ロール（`portfolio_reader`）で接続する結合テストを実行する。`-tags integration`を付けると全パッケージの単体テストも実行対象になるため、結合テスト（`//go:build integration`）を含むパッケージに限定して`go test -tags integration -coverpkg=./...`を実行する。カバレッジプロファイル（`integration.out`）はアーティファクト（`go-coverage-integration`）としてアップロードされる。
 
 ### E2Eテスト (`test.yml` - `e2e-test`)
 
-PostgreSQLサービスコンテナを起動し、バックエンド（`bootRun`）をバックグラウンドで起動した状態でフロントエンドのPlaywright E2Eテスト（`frontend/e2e/`）を実行する。単体テストが成功した場合のみ実行される。失敗時はバックエンドログとPlaywrightレポートがアーティファクトとしてアップロードされる。
+PostgreSQLサービスコンテナとMinIOを起動し、バックエンド（`bootRun`）をバックグラウンドで起動した状態でフロントエンドのPlaywright E2Eテスト（`frontend/e2e/`）を実行する。他のテストジョブと依存関係を持たず並列に実行される。失敗時はバックエンドログとPlaywrightレポートがアーティファクトとしてアップロードされる。
+
+ブラウザ別に2つのジョブへ分割して並列実行する（`playwright.config.ts`のプロジェクト定義に対応）。
+
+| ジョブ | インストールするブラウザ | 実行するプロジェクト | 対象 |
+|---|---|---|---|
+| `chromium` | chromium | `chromium` | `frontend/e2e/`の全spec |
+| `cross-browser` | webkit | `webkit-smoke`・`mobile-smoke` | `CROSS_BROWSER_SPECS`（`login`・`photo_list`）のみ |
+
+`mobile-smoke`（iPhone 13）もWebKitエンジンのため、`cross-browser`ジョブのブラウザインストールはwebkitのみでよい。分割により、webkitのダウンロードとスモークテストの実行が`chromium`ジョブのクリティカルパスから外れる。
 
 E2Eテストは `next dev` で起動するため、本番でのみ付与されるCSPディレクティブ（`src/proxy.ts` の `style-src-elem` 等）は検証されない。その検証は下記「本番CSPスモークテスト」で行う。
 
@@ -97,7 +136,7 @@ E2Eテストは `next dev` で起動するため、本番でのみ付与され�
 
 ### カバレッジレポート (`test.yml` - `coverage-report`)
 
-**バックエンド（JaCoCo）:** 単体テスト・結合テストの各ジョブがアップロードしたJaCoCoの実行データ（`unitTest.exec` / `integrationTest.exec`）をダウンロードし、以下の3種類のレポート（XML/HTML）を生成する。
+**gallery-api（JaCoCo）:** gallery-api単体テスト・gallery-api結合テストの各ジョブがアップロードしたJaCoCoの実行データ（`unitTest.exec` / `integrationTest.exec`）をダウンロードし、以下の3種類のレポート（XML/HTML）を生成する。
 
 | レポート | Gradleタスク | 対象 |
 |---|---|---|
@@ -107,12 +146,21 @@ E2Eテストは `next dev` で起動するため、本番でのみ付与され�
 
 生成した3つのXMLを `.github/scripts/jacoco_coverage_table.py` で解析し、3行（単体＋結合／単体／結合）×各カバレッジ指標（命令・分岐・行・メソッド・クラス）のMarkdown表を作成する。
 
+**portfolio-api（Go）:** portfolio-api単体テスト・portfolio-api結合テストの各ジョブがアップロードしたカバレッジプロファイル（`unit.out` / `integration.out`）をダウンロードし、`.github/scripts/go_coverage_table.py` で3行（単体＋結合／単体／結合）×各カバレッジ指標（ステートメント・関数）のMarkdown表を作成する。
+
+- `-coverpkg`指定時にテストバイナリごとに重複して出力される同一ブロックは、いずれかでカバーされていればカバー済みとして統合する。単体＋結合は2つのプロファイルを同じ方法で統合して算出する
+- 結合テストのプロファイルには、テスト対象パッケージが依存しないパッケージのブロックが出力されない。JaCoCoと同様に全行の分母をモジュール全体に揃えるため、いずれかのプロファイルに含まれるブロックの和集合を共通の分母とする
+- 関数カバレッジは統合したプロファイルを`go tool cover -func`に渡し、1文でも実行された関数をカバー済みとして数える（ソースの解析が必要なため、このジョブでもGoをセットアップする）
+- gqlgenの生成コード（`graph/generated.go`・`graph/model/models_gen.go`）は集計から除外する。`graph/schema.resolvers.go`も生成マーカーを持つが、リゾルバの実装は手書きのため集計に含める
+
 **フロントエンド（Jest）:** フロントエンド単体テストジョブがアップロードしたIstanbulのカバレッジ集計データ（`coverage-summary.json`）をダウンロードし、`.github/scripts/jest_coverage_table.py` で解析して各カバレッジ指標（ステートメント・分岐・関数・行）のMarkdown表を作成する。`jest.config.js`の`collectCoverageFrom`で`src/**/*.{ts,tsx}`を対象にしているため、テストが一度もimportしないファイルも未カバーとして集計に含まれる。
 
-バックエンド・フロントエンド双方の表を連結し、**1つのPRコメント**として投稿し（`<!-- jacoco-coverage-report -->` マーカーで既存コメントを検索し、あればGitHub API経由で更新、なければ新規作成）、同じ内容をジョブサマリーにも出力する。
+gallery-api・portfolio-api・フロントエンドの表を連結し、**1つのPRコメント**として投稿し（`<!-- jacoco-coverage-report -->` マーカーで既存コメントを検索し、あればGitHub API経由で更新、なければ新規作成）、同じ内容をジョブサマリーにも出力する。
 
-フロントエンド単体テスト・バックエンド単体テスト・結合テストがすべて成功した場合のみ実行される。しきい値による失敗は設定していない（可視化のみ）。外部Actionは使用せず、`gh` CLI と Python 標準ライブラリのみで完結する。
+フロントエンド単体テスト・gallery-api・portfolio-apiの単体テスト・結合テストがすべて成功した場合のみ実行される。しきい値による失敗は設定していない（可視化のみ）。外部Actionは使用せず、`gh` CLI・Python 標準ライブラリ・Goツールチェーン（`go tool cover`）のみで完結する。
 
-### 環境昇格PR自動作成 (`promote-branch.yml`)
+### 環境昇格PR自動作成・リリースタグ発行 (`promote-branch.yml`)
 
 `development`へのpush（PRマージによるものを含む）で`development`→`staging`、`staging`へのpushで`staging`→`master`のマージPRを`gh pr create`で自動作成する。同じhead/baseの組み合わせでオープンなPRが既に存在する場合は作成をスキップする。レビュワーの自動アサインは行わないため、マージ先のRulesetで必須となっているコードオーナーレビューの依頼は手動で行う。外部Actionは使用せず`gh` CLIのみで完結する。
+
+`staging`へのpush（＝本番リリース対象の確定）のタイミングでのみ、追加でセマンティックバージョニング（`vX.Y.Z`）のリリースタグを発行する。既存タグの最新patchバージョンを`git tag --list`と`sort -V`で取得し、patchを+1して`staging`のHEADコミットにタグ付け・pushする（タグが1つも無い場合は`v1.0.0`から開始）。minor/majorバージョンの更新は運用者が別途手動でタグを打つ想定で、このワークフローはpatchの自動インクリメントのみを行う。発行したタグ名は昇格PRの本文に記載される。

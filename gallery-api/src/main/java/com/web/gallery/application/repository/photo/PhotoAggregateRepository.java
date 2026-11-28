@@ -1,0 +1,39 @@
+package com.web.gallery.application.repository.photo;
+
+import com.web.gallery.application.aggregate.Photo;
+import com.web.gallery.domain.exception.GalleryException;
+
+/** 写真集約（{@link Photo}）を永続化するRepositoryクラス */
+public interface PhotoAggregateRepository {
+  /**
+   * 写真集約を新規登録する
+   *
+   * @param photo {@link Photo}
+   * @throws GalleryException 以下のいずれかに該当する場合 ・同じファイル名の写真が既に保存済みの場合 ・登録に失敗した場合
+   */
+  void regist(Photo photo) throws GalleryException;
+
+  /**
+   * 写真集約を更新する
+   *
+   * @param photo {@link Photo}
+   * @throws GalleryException 更新に失敗した場合
+   */
+  void update(Photo photo) throws GalleryException;
+
+  /**
+   * 写真集約を削除する
+   *
+   * @param photo {@link Photo}
+   * @throws GalleryException 削除に失敗した場合
+   */
+  void delete(Photo photo) throws GalleryException;
+
+  /**
+   * 管理者による写真の公開状態の変更を永続化する
+   *
+   * @param photo {@link Photo}（{@link Photo#forModeration}で生成し、変更内容を設定済みのもの）
+   * @throws GalleryException 写真が存在しない場合
+   */
+  void changeVisibility(Photo photo) throws GalleryException;
+}

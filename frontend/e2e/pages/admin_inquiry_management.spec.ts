@@ -3,6 +3,7 @@ import {
   test as adminTest,
   expect as adminExpect,
 } from "../fixtures/admin";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 import { generateTestAccountId, login, registerAccount } from "../fixtures/auth";
 
 test.describe("管理者用お問い合わせ管理ページ", () => {
@@ -10,33 +11,50 @@ test.describe("管理者用お問い合わせ管理ページ", () => {
     await page.goto("/admin/inquiry_management");
   });
 
-  test("ページタイトルが正しいこと", async ({ page }) => {
-    await expect(page).toHaveTitle(/お問い合わせ管理/);
+  test("未ログイン状態では /login へ誘導されること", async ({ page }) => {
+    // 他の保護ページ（お問い合わせ・アカウント設定）と同様に <AuthGuard> で退避させる
+    await expect(page).toHaveURL(/\/login(\?|$)/, { timeout: 10000 });
   });
+});
 
-  test("未ログイン状態では管理者権限エラーが表示されること", async ({ page }) => {
-    await expect(page.locator("text=管理者権限がありません")).toBeVisible({
-      timeout: 5000,
-    });
+test.describe("管理者用お問い合わせ管理ページ（管理者ログイン済み）", () => {
+  adminTest("アクセシビリティ違反がないこと", async ({ adminPage: page }, testInfo) => {
+    adminTest.skip(
+      testInfo.project.name !== "chromium",
+      "a11y検証はchromiumプロジェクトのみで実施する"
+    );
+    await page.goto("/admin/inquiry_management");
+
+    await adminExpect(page).toHaveTitle(/お問い合わせ管理/);
+    await adminExpect(page.getByText("管理者権限がありません")).toHaveCount(0);
+    await page.locator("table").first().waitFor({ state: "visible", timeout: 10000 });
+
+    // color-contrast は一覧テーブルのヘッダー（白文字 × #2196F3 = 3.12:1）と
+    // 操作ボタン（bg-blue-500 / green-500 / red-500 × 白文字）に既存の違反があり、
+    // 解消にはアプリ共通の配色変更が必要なため、本検証の対象外とする。
+    // ラベル・アクセシブルネーム等、本PRの対象ルールは検査する
+    await expectNoAccessibilityViolations(page, { disableRules: ["color-contrast"] });
   });
 });
 
 test.describe("管理者用お問い合わせ詳細ページ", () => {
-  test("不正なinquiryIdクエリの場合は『お問い合わせが見つかりません』を表示する", async ({
-    page,
-  }) => {
-    await page.goto("/admin/inquiry_management/detail?inquiryId=abc");
-
-    await expect(page.getByText("お問い合わせが見つかりません")).toBeVisible();
-  });
-
-  test("未ログイン状態では管理者権限エラーが表示されること", async ({ page }) => {
+  test("未ログイン状態では /login へ誘導されること", async ({ page }) => {
     await page.goto("/admin/inquiry_management/detail?inquiryId=1");
 
-    await expect(page.locator("text=管理者権限がありません")).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(page).toHaveURL(/\/login(\?|$)/, { timeout: 10000 });
   });
+});
+
+adminTest.describe("管理者用お問い合わせ詳細ページ（管理者ログイン済み）", () => {
+  adminTest(
+    "不正なinquiryIdクエリの場合は『お問い合わせが見つかりません』を表示する",
+    async ({ adminPage: page }) => {
+      // <AuthGuard> 配下のため、パラメータ不正の表示確認にはログイン済みである必要がある
+      await page.goto("/admin/inquiry_management/detail?inquiryId=abc");
+
+      await adminExpect(page.getByText("お問い合わせが見つかりません")).toBeVisible();
+    }
+  );
 });
 
 /** 専用の一般アカウントを登録・ログインし、指定した件名でお問い合わせを送信する */
@@ -121,6 +139,36 @@ adminTest.describe("管理者用お問い合わせ管理ページ（ログイン
       await page.goto("/admin/inquiry_management");
       const row = page.getByRole("row", { name: new RegExp(subject) });
       await adminExpect(row.getByText("回答済み")).toBeVisible({ timeout: 10000 });
+
+      await sender.page.close();
+    }
+  );
+
+  adminTest(
+    "問い合わせ詳細ページにアクセシビリティ違反がないこと",
+    async ({ adminPage: page, browser }, testInfo) => {
+      adminTest.skip(
+        testInfo.project.name !== "chromium",
+        "a11y検証はchromiumプロジェクトのみで実施する"
+      );
+      const subject = `E2E管理者詳細a11yテスト${testInfo.workerIndex}${Date.now()}`;
+      const sender = await submitInquiryAsNewAccount(
+        browser,
+        testInfo.project.use.baseURL,
+        testInfo.workerIndex,
+        subject
+      );
+
+      await page.goto("/admin/inquiry_management");
+      await page.getByRole("link", { name: subject }).click();
+      await adminExpect(page.getByRole("heading", { name: subject })).toBeVisible({
+        timeout: 10000,
+      });
+
+      // color-contrast は共通配色（リンクの #2196F3 × 白、操作ボタンの bg-blue-500 × 白文字）に
+      // 既存の違反があり、解消にはアプリ共通の配色変更が必要なため本検証の対象外とする。
+      // 見出しレベル（page-has-heading-one）・ラベル等は検査する
+      await expectNoAccessibilityViolations(page, { disableRules: ["color-contrast"] });
 
       await sender.page.close();
     }

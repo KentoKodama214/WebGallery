@@ -42,6 +42,13 @@ DELETE FROM photo.photo_favorite
      OR favorite_photo_account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
 DELETE FROM photo.photo_tag_mst
   WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+-- ポートフォリオ写真・タグはポートフォリオ・写真マスタを外部キーで参照するため、それらより先に削除する
+DELETE FROM photo.portfolio_photo
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+DELETE FROM photo.portfolio_tag_mst
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
+DELETE FROM photo.portfolio_mst
+  WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
 DELETE FROM photo.photo_mst
   WHERE account_no = (SELECT account_no FROM common.account WHERE account_id = '${ACCOUNT_ID}');
 DELETE FROM common.location_mst
@@ -70,10 +77,10 @@ VALUES
 -- 写真の紐付け先ロケーションを1件だけ用意（全写真で共用）
 INSERT INTO common.location_mst
   (id, account_no, location_no, created_by, created_at, updated_by, updated_at, is_deleted,
-   location_name, address, latitude, longitude)
+   management_name, display_name, address, latitude, longitude)
 VALUES
   (DEFAULT, :target_account_no, 1, :target_account_no, now(), :target_account_no, now(), false,
-   'パフォーマンステスト地点', '', 0, 0);
+   'パフォーマンステスト地点_管理用', 'パフォーマンステスト地点', '', 0, 0);
 
 -- generate_seriesで一括INSERT（1件ずつのループより大幅に高速）
 INSERT INTO photo.photo_mst

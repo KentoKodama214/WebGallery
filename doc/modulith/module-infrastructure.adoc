@@ -1,0 +1,10 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.infrastructure`
+|Bean references
+|* `c.w.g.a.service.auth.AuthService` (in Application)
+* `c.w.g.a.config.JwtConfig` (in Application)
+* `c.w.g.a.helper.JwtTokenProvider` (in Application)
+* `c.w.g.a.service.impl.account.AccountServiceImpl` (in Application)
+|===

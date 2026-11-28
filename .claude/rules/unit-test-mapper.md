@@ -1,10 +1,12 @@
 ---
 paths:
-  - backend/src/test/**/mapper/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/*MapperTest*
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Mapperパッケージの単体テスト規約
+
+`infrastructure/persistence/mapper/{機能}/`配下のMapperTestに加え、`infrastructure/scheduler/lock/SchedulerLockMapperTest`（自己完結クラスタとして例外的にディレクトリが異なる）も対象とする。
 
 ## 命名規則
 
@@ -17,7 +19,7 @@ paths:
 
 ## SQLフィクスチャの配置・投入
 
-- フィクスチャは1マッパー1ファイルとし、`backend/src/test/resources/sql/mapper/{テストクラス名}.sql`に配置すること
+- フィクスチャは1マッパー1ファイルとし、`gallery-api/src/test/resources/sql/mapper/{テストクラス名}.sql`に配置すること
 - `@Sql`はクラスレベルではなく`@Nested`クラスごとに付与し、`/sql/common/cleanup.sql` → `/sql/mapper/{テストクラス名}.sql`の順に重ねて指定すること
 - insert系のテストで採番シーケンスに依存する場合は、上記に加えてシーケンスリセット用のSQL（例：`ResetAccountNoSeq.sql`）を付与すること
 

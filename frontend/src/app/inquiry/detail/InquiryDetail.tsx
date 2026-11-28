@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   getInquiryDetail,
+  markInquiryAsRead,
   withdrawInquiry,
   type InquiryDetail as InquiryDetailData,
 } from "@/lib/api/client";
@@ -54,6 +55,15 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
     };
   }, [inquiryNo]);
 
+  // 既読化は詳細取得（GET）の副作用にせず、詳細を表示できたあとに専用APIで明示的に行う。
+  // 未読バッジ表示のための利便機能なので、失敗しても画面にはエラーを出さない（次回表示時に再試行される）。
+  // 依存は真偽値にして、取り下げ等でdetailを差し替えたときに再送しないようにする
+  const isDetailLoaded = detail !== null;
+  useEffect(() => {
+    if (!isDetailLoaded) return;
+    markInquiryAsRead(inquiryNo).catch(() => {});
+  }, [isDetailLoaded, inquiryNo]);
+
   const formatDatetime = (datetime: string): string => {
     const date = new Date(datetime);
     if (Number.isNaN(date.getTime())) return "-";
@@ -80,6 +90,7 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
+        <h1 className="sr-only">お問い合わせ詳細</h1>
         <p>読み込み中...</p>
       </div>
     );
@@ -88,6 +99,7 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
   if (error || !detail) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
+        <h1 className="sr-only">お問い合わせ詳細</h1>
         <p className="text-red-500">{error ?? "お問い合わせが見つかりません"}</p>
         <Link href="/inquiry/list" className="text-[#2196F3] hover:underline">
           お問い合わせ一覧へ戻る
@@ -98,6 +110,8 @@ export function InquiryDetail({ inquiryNo }: InquiryDetailProps) {
 
   return (
     <div className="flex flex-col items-center py-8 gap-4 px-4">
+      {/* 見出しレベル1はどの表示状態でも1つ存在させる（件名はh2のため、ページ見出しはsr-onlyで補う） */}
+      <h1 className="sr-only">お問い合わせ詳細</h1>
       <div className="w-full max-w-[700px]">
         <Link href="/inquiry/list" className="text-[#2196F3] hover:underline text-sm">
           &larr; お問い合わせ一覧へ戻る

@@ -1,12 +1,12 @@
 ---
 paths:
-  - backend/src/test/**/event/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/event/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Eventパッケージの単体テスト規約
 
-`event/`配下のリスナークラス（`Listener`サフィックス）のテストを対象とする。
+`domain/event/`配下のリスナークラス（`Listener`サフィックス）のテストを対象とする。
 
 ## 命名規則
 

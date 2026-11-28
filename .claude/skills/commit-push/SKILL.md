@@ -12,8 +12,8 @@ description: Githubへコミット・プッシュを実行するスキル。「�
 ## 2. ドキュメント整合性チェック
    - 差分に以下のいずれかが含まれる場合、対応するドキュメントも差分に含まれているか確認する。
      - `db/**` の追加・変更 → `doc/database/README.md` / `doc/database/data-dictionary.md`
-     - セキュリティ関連（認証・認可、JWT、`annotation/`・`aspect/`等）の変更 → `doc/architecture/security.md`
-     - レイヤー構成やアーキテクチャ全体に影響する変更 → `doc/architecture/layered-architecture.md` / `CLAUDE.md`
+     - セキュリティ関連（認証・認可、JWT、`infrastructure/security/`等）の変更 → `doc/architecture/security.md`
+     - レイヤー構成やアーキテクチャ全体に影響する変更 → `doc/architecture/onion-architecture.md` / `CLAUDE.md`
      - frontendの画面追加・ルーティング変更 → `doc/view/screen-transition.md`
      - ビルド・実行コマンド（justfile等）の変更 → `README.md` / `CLAUDE.md`
    - 該当する変更があるにもかかわらず対応ドキュメントが差分に含まれていない場合は、コミット前にユーザーへ「〇〇の変更がありますが、△△の更新は不要ですか？」と確認する（このスキル内での自動修正は行わない。ユーザーが必要と判断したら、更新してから改めてコミット対象に含める）。

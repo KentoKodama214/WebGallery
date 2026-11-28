@@ -42,12 +42,11 @@ describe("AccountSettingPage", () => {
   it.each([
     ["短すぎる", "short1"],
     ["記号を含む", "invalid-id!"],
-  ])("accountIdが%s場合は「ページが見つかりません」を表示すること", async (_label, accountId) => {
-    const ui = await AccountSettingPage(makeProps(accountId));
-    render(ui);
-
-    expect(screen.getByText("ページが見つかりません")).toBeInTheDocument();
-    expect(screen.queryByTestId("account-setting-form")).not.toBeInTheDocument();
+  ])("accountIdが%s場合は404として扱う（notFoundを呼ぶ）", async (_label, accountId) => {
+    // 存在しないリソースは 200 でメッセージを出すのではなく 404 として扱う
+    // （`not-found.tsx` が描画され、noindex も付与される）
+    await expect(AccountSettingPage(makeProps(accountId))).rejects.toThrow();
+    expect(mockAccountSettingForm).not.toHaveBeenCalled();
   });
 
   it("Header・Footerを表示すること", async () => {

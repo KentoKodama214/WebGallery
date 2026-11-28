@@ -7,7 +7,7 @@ WebGalleryはPostgreSQLを使用し、以下の2つのスキーマで構成さ�
 | スキーマ | 用途 |
 |----------|------|
 | `common` | アカウント管理、区分マスタ、ロケーションマスタ |
-| `photo`  | 写真メタデータ、タグ、お気に入り |
+| `photo`  | 写真メタデータ、タグ、お気に入り、ポートフォリオ |
 
 ## ドキュメント一覧
 
@@ -37,6 +37,8 @@ docker compose --profile docs run --rm schemaspy
 |------|----|------|
 | `photo.direction_enum` | `vertical`, `horizontal`, `square`, `none` | 写真の向き |
 | `photo.sort_photo_enum` | `photo_at`, `favorite`, `season` | 写真一覧の並び順 |
+| `photo.portfolio_template_enum` | `feature`, `grid`, `frame` | ポートフォリオのテンプレート |
+| `photo.portfolio_status_enum` | `draft`, `published` | ポートフォリオの公開状態 |
 
 ## テーブル一覧
 
@@ -55,6 +57,11 @@ docker compose --profile docs run --rm schemaspy
 | 11 | photo | photo_favorite | 写真お気に入り |
 | 12 | photo | photo_list_filter_log | 写真一覧絞り込みログ |
 | 13 | photo | photo_view_log | 写真詳細閲覧ログ |
+| 14 | photo | photo_moderation_log | 写真モデレーションログ |
+| 15 | photo | portfolio_mst | ポートフォリオマスタ |
+| 16 | photo | portfolio_photo | ポートフォリオ写真 |
+| 17 | photo | portfolio_tag_mst | ポートフォリオタグマスタ |
+| 18 | photo | frame_template_mst | 額縁テンプレートマスタ |
 
 ## DB初期化
 
@@ -75,3 +82,9 @@ docker compose --profile docs run --rm schemaspy
 13. `photo/photo_favorite.sql` - 写真お気に入りテーブル
 14. `photo/photo_list_filter_log.sql` - 写真一覧絞り込みログテーブル
 15. `photo/photo_view_log.sql` - 写真詳細閲覧ログテーブル
+16. `photo/photo_moderation_log.sql` - 写真モデレーションログテーブル
+17. `photo/portfolio_mst.sql` - ポートフォリオマスタテーブル
+18. `photo/portfolio_photo.sql` - ポートフォリオ写真テーブル
+19. `photo/portfolio_tag_mst.sql` - ポートフォリオタグマスタテーブル
+20. `photo/frame_template_mst.sql` - 額縁テンプレートマスタテーブル
+21. `photo/portfolio_reader.sql` - portfolio-api 用の読み取り専用ロール `portfolio_reader`（表示に必要なテーブル・列の SELECT のみを付与）

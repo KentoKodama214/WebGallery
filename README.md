@@ -1,6 +1,6 @@
 # WebGallery
 
-写真ギャラリーWebアプリケーションです。ユーザー登録・写真のアップロード・EXIF情報の管理・タグ付け・お気に入り機能などを備えています。
+写真ギャラリーWebアプリケーションです。ユーザー登録・写真のアップロード・EXIF情報の管理・タグ付け・お気に入り機能に加え、自分の写真から作るポートフォリオの公開ページなどを備えています。
 
 ## 目次
 
@@ -35,6 +35,8 @@
 - **タグ機能** - 写真への日本語・英語タグ付け
 - **お気に入り** - 他ユーザーの写真をお気に入り登録
 - **写真一覧** - フィルタリング（方向・タグ）やソート（撮影日・お気に入り数・季節）に対応
+- **ポートフォリオ** - 自分の写真から、テーマ・説明文・タグ・テンプレート（フィーチャー型／グリッド型／額縁型）を設定したポートフォリオを作成し（作成数の上限は mini-user・normal-user ごとに環境変数 `MINI_USER_PORTFOLIO_UPPER_LIMIT` / `NORMAL_USER_PORTFOLIO_UPPER_LIMIT` で決まる。special-user・administratorは上限なし。1つのポートフォリオに写真200枚・タグ30件まで）、公開すると未ログインでも閲覧できる公開ページ（`/portfolio/{accountId}`）に表示される。下書き／公開の状態を持ち、公開中のポートフォリオで使っている写真を削除すると、その写真を外して下書きに戻す
+- **額縁テンプレート** - 写真展の組写真のように、決まったサイズの1枚の額縁に写真枠（大きさ・傾き・枠線・影）とメッセージ枠（位置・フォント・文字サイズ・色）を自由に配置したテンプレートをアカウントごとに作成できる（キャンバス上のドラッグ操作で配置。1アカウント50個まで）。ポートフォリオでテンプレート「額縁」を選ぶと額縁がコピーされ、写真を表示順に写真枠へ当てはめ、メッセージの文面をポートフォリオごとに入力する（テンプレートを後から変更・削除しても公開中の表示は変わらない）
 - **権限管理** - 4段階のユーザー権限によるアップロード枚数制限
 - **管理者機能** - アカウント一覧管理・アカウントロック/ロック解除
 
@@ -77,11 +79,22 @@
 | Node.jsバージョン管理 | mise |
 | タスクランナー | just |
 
+### ポートフォリオ表示API（portfolio-api）
+
+公開ページ向けの読み取り専用の GraphQL API です。詳細は [`doc/architecture/portfolio-api.md`](doc/architecture/portfolio-api.md) を参照してください。
+
+| コンポーネント | 技術 |
+|----------------|------|
+| 言語 | Go 1.27（mise でバージョンを固定） |
+| GraphQL | gqlgen |
+| DBドライバ | pgx v5（読み取り専用ロール `portfolio_reader` で接続） |
+| 画像ストレージ | aws-sdk-go-v2（S3 の署名付きURL発行） |
+
 ## 前提条件
 
 - Java 21
 - Docker / Docker Compose
-- [mise](https://mise.jdx.dev/)（Node.jsバージョン管理）
+- [mise](https://mise.jdx.dev/)（Node.js・Goのバージョン管理。`.mise.toml`）
 - [just](https://github.com/casey/just)（タスクランナー）
 
 ```bash
@@ -128,7 +141,7 @@ just db-up
 ### 2. 環境変数の設定
 
 ```bash
-./backend/set-env.sh
+./gallery-api/set-env.sh
 ```
 
 このスクリプトはシェルの設定ファイル（`~/.zshrc` / `~/.bashrc`）に `export` 文を追記します。設定後はシェルを再起動するか `source` してください。
@@ -149,16 +162,16 @@ just db-up
 | `APP_S3_PUBLIC_BASE_URL` | 署名付き URL のホストをブラウザ到達可能なものへ差し替える場合に指定 | `http://localhost:9000` |
 | `APP_S3_PRESIGN_EXPIRY_SECONDS` | 署名付き URL の有効期限（秒） | `900` |
 | `MINI_USER_UPPER_LIMIT` / `NORMAL_USER_UPPER_LIMIT` | 権限別の写真登録上限 | `10` / `1000` |
-| `FRONTEND_ORIGIN` | CORS 許可オリジン | `http://localhost:3000` |
+| `MINI_USER_PORTFOLIO_UPPER_LIMIT` / `NORMAL_USER_PORTFOLIO_UPPER_LIMIT` | 権限別のポートフォリオ作成数上限（下書きを含む。special-user・administratorは上限なし） | `3` / `10` |
 | `RATE_LIMIT_ENABLED` | 送信元IP別レート制限の有効化（`test`・E2E は無効） | `true` |
 | `RATE_LIMIT_AUTH_CAPACITY` / `RATE_LIMIT_AUTH_WINDOW_SECONDS` | ログインのしきい値（回数 / ウィンドウ秒） | `30` / `60` |
 | `RATE_LIMIT_REGISTER_CAPACITY` / `RATE_LIMIT_REGISTER_WINDOW_SECONDS` | アカウント登録のしきい値 | `10` / `3600` |
 | `RATE_LIMIT_GENERAL_CAPACITY` / `RATE_LIMIT_GENERAL_WINDOW_SECONDS` | その他 `/api/**` のしきい値 | `300` / `60` |
 | `FRONTEND_ORIGIN` | CORS 許可オリジン（1 値のみ。`prod` では `https://` 必須） | `http://localhost:3000` |
-| `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現。**本番では ALB のサブネット CIDR に狭める** | ループバック＋RFC1918（Tomcat 既定と同等） |
+| `TRUSTED_PROXIES` | `X-Forwarded-For` を信頼する直前送信元 IP の正規表現（`app.forwarded.trusted-proxies`）。**本番では必須。ALB のサブネット CIDR に狭める**（未設定・空文字・広すぎる値は `ProdConfigValidationRunner` が起動時に検出して失敗させる） | 非 `prod`：ループバック＋RFC1918 / `prod`：**空（設定必須）** |
 
 > **IntelliJ IDEA で起動する場合**
-> Dock やランチャーから起動した IntelliJ はシェルの `export` を引き継がないため、`JWT_SECRET` を渡す必要があります。共有の実行構成 `backend/.run/WebGalleryApplication_local.run.xml`（実行構成名「WebGalleryApplication (local)」、プロファイル `local` ＋ ローカル用 `JWT_SECRET` を設定済み）を選択して実行してください。独自の実行構成を使う場合は「Environment variables」に `JWT_SECRET` を追加してください。
+> Dock やランチャーから起動した IntelliJ はシェルの `export` を引き継がないため、`JWT_SECRET` を渡す必要があります。共有の実行構成 `gallery-api/.run/WebGalleryApplication_local.run.xml`（実行構成名「WebGalleryApplication (local)」、プロファイル `local` ＋ ローカル用 `JWT_SECRET` を設定済み）を選択して実行してください。独自の実行構成を使う場合は「Environment variables」に `JWT_SECRET` を追加してください。
 
 #### フロントエンドの環境変数
 
@@ -169,12 +182,15 @@ just db-up
 | `BACKEND_URL` | APIプロキシ（`/api/*`）の転送先バックエンドオリジン | `http://localhost:8080` |
 | `NEXT_PUBLIC_API_BASE_URL` | 別オリジンのバックエンドを直接叩く場合のベースURL | 同一オリジンの `/api` プロキシを使用 |
 | `NEXT_PUBLIC_IMAGE_BASE_URL` | 写真の配信元オリジン（例: `https://cdn.example.com/`）。CSP の `img-src` と `sanitizeImageUrl` の許可オリジンに反映される | **外部ホストからの画像読み込みを一切許可しない**（`img-src 'self' data: blob:`）。本番/検証環境で S3・CloudFront から画像を配信する場合は必ず設定すること。**開発環境（`next dev`）では `http://localhost:9000`（MinIO）が自動許可されるため設定不要** |
+| `APP_ORIGIN` | このアプリを公開しているオリジン（例: `https://gallery.example.com`）。`/api/*` プロキシの CSRF 検証（`Origin` / `Referer` の照合先）に使う。**前段にリバースプロキシを置く構成では必須**（Node が listen しているホストと公開ホストが一致しないため） | リクエストURL由来のホスト（Node が listen しているホスト）を自オリジンとみなす。前段プロキシ配下では公開オリジンと一致せず、状態変更メソッドがすべて `403` になる（起動後最初の状態変更リクエストで警告ログを1回出力） |
+| `TRUSTED_PROXY_HOPS` | `/api/*` プロキシが実クライアント IP を求めるとき、`X-Forwarded-For` の右端から数えて何番目を採用するか（＝このアプリの前段にあり `X-Forwarded-For` を追記する信頼できるプロキシの段数。ALB のみなら `1`、CloudFront + ALB なら `2`）。チェーンがこの数に届かない場合は fail-closed で `X-Forwarded-For` を付与しない。**前段プロキシがある構成では必須** | `0`（前段プロキシを一切信頼せず、`X-Forwarded-For` をバックエンドへ付与しない）。既定を `1` にすると、前段プロキシが無い構成でクライアントが自分で付けた 1 件だけの `X-Forwarded-For` をそのまま実クライアント IP として採用してしまい、IP 単位レート制限の回避・ログイン履歴／GeoIP の偽装が成立するため、安全側に倒している |
 | `PROXY_MAX_CONCURRENCY` | `/api/*` プロキシがバックエンドへ同時中継するリクエスト数の上限。超過分は `503`＋`Retry-After` で即時応答（ロードシェディング） | `100` |
+| `PORTFOLIO_API_URL` | ポートフォリオの公開ページ（`/portfolio/*`）がサーバー側から呼ぶ portfolio-api の GraphQL エンドポイント（ブラウザには公開しない） | `http://localhost:8081/graphql` |
 
 ##### 構成上の注意
 
 - **アップロード写真の配信経路**: 画像の実体は S3（ローカルは docker-compose の MinIO）に保存し、DB には
-  サーバ生成の不透明オブジェクトキー（`{accountId}/{写真番号}-{ランダム}.{拡張子}`）のみを保持する。写真一覧・詳細 API はバックエンドが
+  サーバ生成の不透明オブジェクトキー（`{アカウント番号}/{写真番号}-{ランダム}.{拡張子}`）のみを保持する。写真一覧・詳細 API はバックエンドが
   有効期限付きの**署名付き URL（pre-signed GET URL）**を発行して返し、ブラウザがストレージから直接取得する。
   フロントの API プロキシ（`src/app/api/[...path]/route.ts`）が中継するのは `/api/*` のみ。
   - 開発環境: MinIO が `http://localhost:9000/...` の署名付き URL を発行する。`sanitizeImageUrl` と CSP `img-src`
@@ -188,6 +204,12 @@ just db-up
 - **CSRF 対策のスコープ**: `/api/*` プロキシの Origin / `Sec-Fetch-Site` 検証は同一オリジンプロキシ経由でのみ機能する。
   `NEXT_PUBLIC_API_BASE_URL` で別オリジンのバックエンドを直接叩く構成にした場合、この検証はバイパスされるため、
   バックエンド側の CSRF 対策（SameSite Cookie 等）に完全に依存する。
+  照合先の自オリジンは `APP_ORIGIN`（未設定時はリクエストURL由来のホスト）から決める。**クライアントが自由に送れる
+  `Host` ヘッダーは使わない**（`Host` と `Origin` を揃えるだけで検証を通過できてしまうため）。
+- **前段プロキシの前提**: `X-Forwarded-For` を採用するのは `TRUSTED_PROXY_HOPS` を明示設定した場合のみ。
+  未設定（既定）ではバックエンドへ `X-Forwarded-For` を付与しないため、バックエンドは TCP 接続元
+  （＝このプロキシ）の IP でレート制限・監査ログを記録する。前段に ALB / CloudFront を置く本番構成では
+  `APP_ORIGIN` と併せて必ず設定すること。
 
 ### 3. フロントエンドのセットアップ
 
@@ -204,17 +226,22 @@ just front-setup
 
 ```bash
 # バックエンド
-just backend-run
+just gallery-api-run
 
 # フロントエンド
 just front-run
+
+# ポートフォリオ表示API（公開ページ /portfolio/** を表示する場合のみ）
+just portfolio-api-run
 ```
 
-バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000` でアクセスできます。
+バックエンドは `http://localhost:8080`、フロントエンドは `http://localhost:3000`、ポートフォリオ表示APIは `http://localhost:8081/graphql` でアクセスできます。
+
+> ポートフォリオ表示APIは読み取り専用ロール `portfolio_reader` でDBに接続します。このロールは `db/photo/portfolio_reader.sql` でDBの初期化時にだけ作成されるため、それより前に作成したDBボリュームでは手動で適用してください（[portfolio-api](doc/architecture/portfolio-api.md) 参照）。
 
 ## ローカル動作確認用のダミーデータ投入（任意）
 
-画面での動作確認用に、アカウント・写真・タグ・お気に入りのダミーデータを一括投入できます。
+画面での動作確認用に、アカウント・写真・タグ・お気に入り・ポートフォリオ・お問い合わせのダミーデータを一括投入できます。投入後は、手動でデータを追加しなくても各画面の主要なパターン（ページング、作成数の上限、ロック状態、公開/下書き、未読の返信等）を確認できます。
 
 ```bash
 ./scripts/seed-local-data.sh
@@ -222,39 +249,63 @@ just front-run
 
 実行には `just db-up` でDB・MinIOが起動していることに加え、`convert`（ImageMagick）・`htpasswd`・`openssl` コマンドが必要です（`brew install imagemagick httpd` 等でインストールしてください）。
 
-> **【注意】** 実行するとローカルDB・MinIOの写真関連データ（`account`、`location_mst`、`refresh_token`、`photo_mst`、`photo_tag_mst`、`photo_favorite` および MinIOの `web-gallery-local` バケット内の画像）を全件削除したうえで、以下を新規作成します。
+> **【注意】** 実行するとローカルDBのアカウント関連データ（`account`、`account_authority`、`location_mst`、`refresh_token`、`login_history`、`photo_mst`、`photo_tag_mst`、`photo_favorite`、`photo_view_log`、`photo_list_filter_log`、`portfolio_mst`、`portfolio_photo`、`portfolio_tag_mst`、`inquiry_mst`、`inquiry_reply_mst`）および MinIOの `web-gallery-local` バケット内の画像を全件削除したうえで、以下を新規作成します。パスワードは全アカウント共通で `password01` です。
 
-- アカウント3件（`localuser01`: normal-user、`localuser02`: mini-user、`localuser03`: administrator。パスワードは全アカウント共通で `password01`）
-- `localuser01` の写真10枚（縦6枚・横4枚）とロケーション・タグ
-- `localuser01` の写真に対する各アカウントからのお気に入り（お気に入り数順ソートの検証用に件数を分散）
-- ダミー画像（ImageMagickで生成）のMinIOへのアップロード
+| アカウントID | 権限 | 内容 |
+| --- | --- | --- |
+| `localuser01` | normal-user | 写真25枚（2ページ目あり）＋論理削除済み1枚、ポートフォリオ6件、お問い合わせ22件（2ページ目あり） |
+| `localuser02` | mini-user | データなし（空の一覧表示の確認用） |
+| `localuser03` | administrator | お問い合わせへの返信者（返信が残るため退会不可） |
+| `localuser04` | mini-user | 写真10枚・ポートフォリオ3件（いずれも作成数上限に到達）、お問い合わせ3件 |
+| `localuser05` | special-user | 写真5枚（位置情報の公開/非公開）、ポートフォリオ22件（公開ページのページング確認用）、お問い合わせ2件 |
+| `localuser06` | normal-user | ログイン失敗回数によりロック中 |
+| `localuser07` | normal-user | ロック期間経過済み（ログインすると自動解除） |
+| `localuser08` | normal-user | 管理者ロック中 |
+| `localuser09` | normal-user | ログイン失敗1回（ロック前） |
+| `localuser10` | normal-user | 退会済み（削除フラグ） |
+| `localuser11`〜`25` | normal-user / mini-user | アカウント一覧のページング確認用 |
+
+- 写真：縦・横・正方形、撮影日時を四季・複数年に分散、位置情報の公開/非公開、タグ0件〜20件（上限）、英語タイトル・キャプションの空欄、タイトル100文字（上限）、お気に入り数0〜5件（同数あり）
+- ポートフォリオ（`localuser01`）：フィーチャー型/グリッド型 × 公開中/下書き、公開できない下書き（テーマ未入力、行の枚数と写真の枚数の不一致、写真0枚）、上限値（テーマ100文字・説明文2000文字・タグ30件）。公開中の2件（P1・P3）で写真7を共有しており、削除すると両方が下書きに戻る
+- ポートフォリオ（`localuser05`）：一覧のページング（20件ずつ）の確認用に公開中22件。表示順は番号順で、更新日時は番号が大きいほど新しい（更新日時ではなく表示順に並ぶことの確認用）
+- お問い合わせ：未対応、回答済み（既読/未読）、管理者の返信3件、取り下げ（返信あり/なし）、上限値（件名100文字・本文2000文字）。返信は `localuser03` が投稿
+- ダミー画像（ImageMagickで生成）は、アプリと同じ `{アカウント番号}/{写真番号}-{ランダム}.jpg` のオブジェクトキーでMinIOへアップロード
 
 ## ビルド・テスト
 
 ```bash
 # ビルド
-just backend-build
+just gallery-api-build
 
 # 単体テストの実行
-just backend-unitTest
+just gallery-api-unitTest
 
 # 統合テストの実行（要Docker）
-just backend-integrationTest
+just gallery-api-integrationTest
 
 # 全テストの実行（要Docker）
-just backend-allTest
+just gallery-api-allTest
 
 # カバレッジレポートの生成（要Docker）
 #   単体のみ:   build/reports/jacoco/jacocoUnitReport/html/index.html
 #   結合のみ:   build/reports/jacoco/jacocoIntegrationReport/html/index.html
 #   単体＋結合: build/reports/jacoco/jacocoAggregateReport/html/index.html
-./backend/gradlew -p backend unitTest integrationTest jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
+./gallery-api/gradlew -p gallery-api unitTest integrationTest jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
 # WARファイルの生成
-./backend/gradlew -p backend war
+./gallery-api/gradlew -p gallery-api war
 
 # クリーンビルド
-just backend-clean-build
+just gallery-api-clean-build
+```
+
+```bash
+# portfolio-api（Go）の単体テスト・結合テスト（結合は要Docker）・静的解析・GraphQLコード生成・ローカル起動
+just portfolio-api-test
+just portfolio-api-integrationTest
+just portfolio-api-lint
+just portfolio-api-generate
+just portfolio-api-run
 ```
 
 ```bash
@@ -271,6 +322,7 @@ just front-test
 ### E2Eテストの実行（要Docker）
 
 フロントエンドの画面操作を通したE2Eテスト（Playwright）を一括実行できます。DB（docker-compose）とバックエンドが未起動の場合は自動的に起動し、終了後に自動起動したバックエンドは停止します。
+ポートフォリオの公開ページのテストのため、portfolio-api（Go、8081番ポート）も同様に未起動ならビルドして起動し、終了後に停止します（Go は mise で導入）。
 
 ```bash
 just e2e
@@ -278,11 +330,36 @@ just e2e
 ./scripts/e2e.sh
 ```
 
-DB・バックエンドを自分で起動済みの場合は、フロントエンドのみで直接実行できます。
+> **バックエンドを起動したままにしない**
+> E2Eはテストごとにアカウントを登録するため、**レート制限を無効化した専用設定
+> （`RATE_LIMIT_ENABLED=false`）で起動したバックエンドが必要**です。`just gallery-api-run` 等で
+> 手動起動したインスタンス（既定は `RATE_LIMIT_ENABLED=true`）が8080に残っていると、
+> アカウント登録の上限（`app.rate-limit.register`＝10件/3600秒）に達して11件目以降が
+> `429` になり、**多数のテストがまとめて失敗**します。
+> `just e2e` は起動済みのバックエンドを検出すると中断するので、停止してから実行し直してください。
+>
+> ```bash
+> lsof -ti:8080 | xargs kill -9 && just e2e
+> ```
+>
+> レート制限を無効化して起動済みであることが確実な場合のみ、`E2E_REUSE_BACKEND=1 just e2e` で
+> そのインスタンスを再利用できます。
+
+DB・バックエンドを自分で起動済みの場合は、フロントエンドのみで直接実行できます（この場合も
+バックエンドは `RATE_LIMIT_ENABLED=false` で起動しておく必要があります。公開ページのテストには `just portfolio-api-run` で portfolio-api も起動しておいてください）。
 
 ```bash
 cd frontend && pnpm test:e2e
 ```
+
+> **並列数**
+> 並列ワーカー数の既定は `2` です（backendのJVM・Docker・devサーバー・ブラウザが同居する環境で
+> CPUが飽和し、待ち時間のアサーションが不定期に落ちるため、8コア機での実測値に合わせています）。
+> コア数の多いマシン・CIランナーでは環境変数 `PW_WORKERS` で引き上げられます。
+>
+> ```bash
+> PW_WORKERS=4 just e2e
+> ```
 
 ## アーキテクチャ
 
@@ -307,7 +384,7 @@ just db-doc
 just jig
 ```
 
-生成後、`backend/build/jig/index.html` をブラウザで開いてください。
+生成後、`gallery-api/build/jig/index.html` をブラウザで開いてください。
 
 また、Spring Modulithによるモジュール構成図（PlantUML）とモジュールキャンバス（AsciiDoc）を生成できます。
 
@@ -325,11 +402,13 @@ just modulith-doc
 
 REST APIの詳細は `http://localhost:8080/scalar` を参照してください。
 
+公開ページ向けのポートフォリオ表示API（GraphQL）のスキーマは `portfolio-api/graph/schema.graphqls` が正本です。詳細は [`doc/architecture/portfolio-api.md`](doc/architecture/portfolio-api.md) を参照してください。
+
 ## プロジェクト構成
 
 ```
 WebGallery/
-├── .mise.toml                     # Node.jsバージョン定義（mise）
+├── .mise.toml                     # Node.js・Goバージョン定義（mise）
 ├── justfile                       # タスクランナー定義（just）
 ├── .github
 │   ├── ISSUE_TEMPLATE
@@ -337,7 +416,8 @@ WebGallery/
 │   │   └── 開発issue.md            # 開発用Issueのテンプレート
 │   └── workflows
 │       ├── checkstyle.yml          # CheckstyleによるJavadocチェックのGithub Action
-│       └── test.yml                # テスト実行・カバレッジレポート（JaCoCo）のGithub Action
+│       ├── dependency-scan.yml     # OSV-Scannerによる依存関係の脆弱性スキャン（PR時・毎日定期実行）のGithub Action
+│       └── test.yml                # テスト実行・カバレッジレポート（JaCoCo・Go・Jest）のGithub Action
 ├── docker-compose.yml
 ├── docker/
 │   ├── db/                        # DBイメージ用Dockerfile
@@ -352,8 +432,9 @@ WebGallery/
 │   ├── modulith/                   # モジュールドキュメント（Spring Modulith自動生成）
 │   └── view/                       # 画面設計書
 ├── scripts/
-│   ├── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド自動起動）
+│   ├── e2e.sh                      # E2Eテスト一括実行スクリプト（DB・バックエンド・portfolio-api自動起動）
 │   └── seed-local-data.sh          # ローカル動作確認用のダミーデータ投入スクリプト
+├── portfolio-api/                  # 公開ページ向けのポートフォリオ表示API（Go・GraphQL。doc/architecture/portfolio-api.md）
 ├── frontend/                       # フロントエンド（Next.js）
 │   ├── package.json
 │   ├── pnpm-lock.yaml
@@ -384,7 +465,9 @@ WebGallery/
 │       │   ├── register/               # アカウント登録ページ（__tests__/にJestテスト）
 │       │   ├── account_list/           # アカウント一覧ページ（__tests__/にJestテスト）
 │       │   ├── [accountId]/
-│       │   │   └── account_setting/    # アカウント設定ページ（__tests__/にJestテスト）
+│       │   │   ├── account_setting/    # アカウント設定ページ（__tests__/にJestテスト）
+│       │   │   └── portfolio_setting/  # ポートフォリオ設定（一覧・作成・編集）・額縁テンプレート（frame_templates/）ページ（__tests__/にJestテスト）
+│       │   ├── portfolio/[accountId]/  # ポートフォリオ公開ページ（一覧・[portfolioNo]/に詳細。未ログイン可）
 │       │   ├── photo/[photoAccountId]/
 │       │   │   ├── photo_list/         # 写真一覧ページ（PhotoSwipe統合、__tests__/にJestテスト）
 │       │   │   ├── photo_detail/       # 写真詳細ページ（__tests__/にJestテスト）
@@ -400,11 +483,13 @@ WebGallery/
 │       │   │   ├── Header.module.css
 │       │   │   ├── Footer.tsx
 │       │   │   └── fonts/               # セルフホストフォント（woff2）
+│       │   ├── portfolio/               # ポートフォリオ公開ページのテンプレート（templates/。__tests__/にJestテスト）
 │       │   └── ui/                      # 汎用UIコンポーネント
 │       │       └── ModalDialog.tsx      # モーダルダイアログ（__tests__/にJestテスト）
 │       └── lib/
 │           ├── api/
 │           │   └── client.ts            # APIクライアント（__tests__/にJestテスト）
+│           ├── portfolio-api/           # portfolio-api（GraphQL）のサーバー専用クライアント・クエリ・型（__tests__/にJestテスト）
 │           ├── auth/
 │           │   ├── AuthProvider.tsx      # 認証プロバイダー
 │           │   └── __tests__/            # Jestテスト
@@ -413,9 +498,10 @@ WebGallery/
 │           ├── cookie.ts                # Cookie操作ユーティリティ（__tests__/にJestテスト）
 │           ├── url.ts                   # URL操作ユーティリティ（__tests__/にJestテスト）
 │           └── validation.ts            # 入力バリデーション（__tests__/にJestテスト）
-├── backend/                        # バックエンド（Spring Boot）
+├── gallery-api/                    # バックエンド（Spring Boot）
 │   ├── build.gradle
 │   ├── settings.gradle
+│   ├── gradle.properties           # Gradleビルドキャッシュ等のビルド設定
 │   ├── gradlew / gradlew.bat      # Gradleラッパー
 │   ├── gradle/                     # Gradleラッパー JAR
 │   ├── config/
@@ -424,42 +510,46 @@ WebGallery/
 │   ├── set-env.sh                  # 環境変数設定スクリプト
 │   └── src/
 │       ├── main/
-│       │   ├── java/com/web/gallery/
-│       │   │   ├── aggregate/          # 集約ルート（複数テーブルにまたがる整合性・ライフサイクル管理）
-│       │   │   ├── annotation/         # カスタムアノテーション
-│       │   │   ├── aspect/             # AOP（管理者権限チェック等）
-│       │   │   ├── config/             # 設定クラス
-│       │   │   ├── constant/           # 定数（APIルート・メッセージ）
-│       │   │   ├── controller/         # コントローラ
-│       │   │   │   ├── request/        # リクエストDTO
-│       │   │   │   └── response/       # レスポンスDTO
-│       │   │   ├── domain/             # ドメインオブジェクト（値オブジェクト）
-│       │   │   ├── dto/                # DBアクセス層の複合データ転送オブジェクト
-│       │   │   ├── entity/             # エンティティ
-│       │   │   ├── enumeration/        # 列挙型
-│       │   │   ├── event/              # ドメインイベント・リスナー
-│       │   │   ├── exception/          # カスタム例外
-│       │   │   ├── helper/             # ヘルパーユーティリティ
-│       │   │   ├── mapper/             # MyBatisマッパー
-│       │   │   ├── model/              # モデルオブジェクト
-│       │   │   ├── policy/             # ドメインサービス（単一のビジネスルールを判定）
-│       │   │   ├── repository/         # リポジトリ
-│       │   │   │   └── impl/
-│       │   │   ├── scheduler/          # 定期実行タスク（期限切れリフレッシュトークンの削除等）
-│       │   │   ├── service/            # サービス
-│       │   │   │   └── impl/
-│       │   │   └── type_handler/       # MyBatis型ハンドラ
+│       │   ├── java/com/web/gallery/       # オニオンアーキテクチャ（domain→application→infrastructure/presentation）
+│       │   │   ├── domain/                     # 【中心・外部依存なし】
+│       │   │   │   ├── model/{機能}/               # 値オブジェクト（record）
+│       │   │   │   ├── service/                    # ドメインサービス（Policyサフィックス）
+│       │   │   │   ├── event/                      # ドメインイベント定義+Listener
+│       │   │   │   ├── exception/                  # カスタム例外
+│       │   │   │   ├── enumeration/                # ビジネス区分値Enum
+│       │   │   │   └── constant/                   # 定数（Consts, MessageConst, ApiRoutes）
+│       │   │   ├── application/                # 【ユースケース】
+│       │   │   │   ├── model/{機能}/               # Modelオブジェクト（レイヤー間転送用）
+│       │   │   │   ├── aggregate/                  # 集約ルート（複数テーブルにまたがる整合性・ライフサイクル管理）
+│       │   │   │   ├── service/{機能}/ + service/impl/{機能}/
+│       │   │   │   ├── repository/{機能}/          # リポジトリインターフェース（ポート）
+│       │   │   │   ├── helper/                     # 技術的な処理のポート（JwtTokenProvider等）
+│       │   │   │   └── config/                     # 設定値のポート（AccountConfig等）
+│       │   │   ├── infrastructure/             # 【技術詳細・外側】
+│       │   │   │   ├── persistence/{entity,dto,mapper,repository}/{機能}/、type_handler/
+│       │   │   │   ├── scheduler/                  # 定期実行タスク（lock/にSchedulerLock関連を集約）
+│       │   │   │   ├── security/                   # JwtTokenProviderImpl、SessionHelper、aspect/、annotation/
+│       │   │   │   ├── web/                        # ClientIpResolver、Security/Cors/RateLimit系Config
+│       │   │   │   ├── helper/                     # PhotoDirectionResolver等
+│       │   │   │   └── config/                     # Configポートの実装（*ConfigImpl）、DataSource/S3/Scheduling等
+│       │   │   └── presentation/
+│       │   │       ├── controller/{機能}/          # コントローラ
+│       │   │       ├── request/{機能}/             # リクエストDTO
+│       │   │       ├── response/{機能}/            # レスポンスDTO
+│       │   │       └── converter/{機能}/           # Request→ModelのConverter
 │       │   └── resources/
 │       │       ├── application.yml
 │       │       ├── application-local.yml       # ローカル開発用プロファイル
 │       │       ├── application-development.yml # 開発環境用プロファイル
 │       │       ├── application-prod.yml        # 本番環境用プロファイル
 │       │       ├── messages.properties
-│       │       └── com/web/gallery/mapper/  # MyBatis XMLマッパー
+│       │       └── com/web/gallery/infrastructure/persistence/mapper/  # MyBatis XMLマッパー
 │       └── test/
-│           ├── java/com/web/gallery/   # テストクラス
+│           ├── java/com/web/gallery/   # テストクラス（main側と同じパッケージ構成）
 │           └── resources/
 │               ├── application-test.yml
 │               ├── json/controller     # テスト用リクエストjson
 │               └── sql/                # テスト用SQL
 ```
+
+詳しくは[オニオンアーキテクチャ全体像](.claude/rules/architecture-overview.md)を参照。

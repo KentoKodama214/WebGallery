@@ -1,18 +1,52 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { PhotoSettingForm } from "../PhotoSettingForm";
+import {
+  PHOTO_CAPTION_MAX_LENGTH,
+  PHOTO_TAG_MAX_SIZE,
+  PHOTO_TITLE_MAX_LENGTH,
+  TAG_NAME_MAX_LENGTH,
+} from "@/lib/validation";
 
 // モック
 const mockGetPhotoDetail = jest.fn();
 const mockSavePhoto = jest.fn();
 const mockRegistPhotos = jest.fn();
 const mockGetPhotoUpperLimit = jest.fn();
+const mockGetLocationList = jest.fn();
 
 jest.mock("@/lib/api/client", () => ({
   getPhotoDetail: (...args: unknown[]) => mockGetPhotoDetail(...args),
   savePhoto: (...args: unknown[]) => mockSavePhoto(...args),
   registPhotos: (...args: unknown[]) => mockRegistPhotos(...args),
   getPhotoUpperLimit: (...args: unknown[]) => mockGetPhotoUpperLimit(...args),
+  getLocationList: (...args: unknown[]) => mockGetLocationList(...args),
+}));
+
+// leafletは地図描画を伴い、jsdom環境での実描画は検証対象外とするため、軽量なダミーに置き換える。
+// 地図クリック（onPick）と逆ジオコーディング完了（onAddressResolved）は、それぞれを発火する
+// ボタンとして露出させ、フォーム側の状態反映だけを検証できるようにする
+jest.mock("../LocationMapPicker", () => ({
+  LocationMapPicker: ({
+    onPick,
+    onAddressResolved,
+  }: {
+    onPick: (latitude: number, longitude: number) => void;
+    onAddressResolved?: (address: string) => void;
+  }) => (
+    <div>
+      <button type="button" data-testid="mock-map-pick" onClick={() => onPick(35.6812, 139.7671)}>
+        地図をクリックする
+      </button>
+      <button
+        type="button"
+        data-testid="mock-map-address-resolved"
+        onClick={() => onAddressResolved?.("東京都千代田区丸の内1丁目")}
+      >
+        住所が解決された
+      </button>
+    </div>
+  ),
 }));
 
 const mockUseAuth = jest.fn();
@@ -36,7 +70,7 @@ const samplePhoto = {
   address: null,
   latitude: null,
   longitude: null,
-  locationName: null,
+  displayName: null,
   isLocationPublic: true,
   imageFilePath: "/photos/test.jpg",
   photoJapaneseTitle: "テスト写真",
@@ -73,6 +107,8 @@ describe("PhotoSettingForm", () => {
       isReachedUpperLimit: false,
       remainingCount: null,
     });
+    // ロケーション一覧取得。既定では空リストとする
+    mockGetLocationList.mockResolvedValue({ locations: [] });
   });
 
   it("新規モードでフォームが表示されること", async () => {
@@ -218,20 +254,53 @@ describe("PhotoSettingForm", () => {
     ).toBeInTheDocument();
   });
 
-  it("新規モードで画像なしの場合にバリデーションエラーが表示されること", async () => {
+  it("新規モードで画像なしの場合は残り枚数の下に警告文が表示され、ページ上部には表示されないこと", async () => {
+    mockGetPhotoUpperLimit.mockResolvedValue({ remainingCount: 5 });
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/今回はあと5枚まで選択できます/)).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
+
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    const imageError = await screen.findByTestId("image-file-error");
+    expect(imageError).toHaveTextContent("画像ファイルを選択してください");
+    // 「今回はあとX枚まで選択できます」の直後に表示されること
+    expect(screen.getByText(/今回はあと5枚まで選択できます/).nextElementSibling).toBe(
+      imageError
+    );
+    expect(screen.queryByTestId("validation-errors")).not.toBeInTheDocument();
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+
+    // 画像を選択すると警告文が消えること
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    expect(screen.queryByTestId("image-file-error")).not.toBeInTheDocument();
+  });
+
+  it("項目別エラー以外のバリデーションエラーはページ上部にrole=alertで表示されること", async () => {
     render(<PhotoSettingForm photoAccountId="user1" />);
 
     await waitFor(() => {
       expect(screen.getByTestId("submit-button")).toBeInTheDocument();
     });
 
+    fireEvent.change(screen.getByTestId("iso-input"), {
+      target: { value: "-1" },
+    });
     fireEvent.click(screen.getByTestId("submit-button"));
 
     await waitFor(() => {
-      expect(screen.getByTestId("validation-errors")).toBeInTheDocument();
-      expect(
-        screen.getByText("画像ファイルを選択してください")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("validation-errors")).toHaveTextContent(
+        "ISOは正の数値を入力してください"
+      );
     });
     // スクリーンリーダーに通知されるようrole="alert"が付与されていること
     expect(screen.getByTestId("validation-errors")).toHaveAttribute(
@@ -255,12 +324,20 @@ describe("PhotoSettingForm", () => {
     });
     fireEvent.click(screen.getByTestId("submit-button"));
 
-    await waitFor(() => {
-      expect(
-        screen.getByText("タイトル（日本語）を入力してください")
-      ).toBeInTheDocument();
-    });
+    // 入力欄の下に警告文を表示し、枠を赤にする。ページ上部には表示しない
+    const titleError = await screen.findByTestId("japanese-title-error");
+    expect(titleError).toHaveTextContent("タイトル（日本語）を入力してください");
+    const titleInput = screen.getByTestId("japanese-title-input");
+    expect(titleInput).toHaveClass("border-red-500");
+    expect(titleInput).toHaveAttribute("aria-invalid", "true");
+    expect(titleInput).toHaveAttribute("aria-describedby", titleError.id);
+    expect(screen.queryByTestId("validation-errors")).not.toBeInTheDocument();
     expect(mockRegistPhotos).not.toHaveBeenCalled();
+
+    // 入力すると警告文と赤枠が解除されること
+    fireEvent.change(titleInput, { target: { value: "テストタイトル" } });
+    expect(screen.queryByTestId("japanese-title-error")).not.toBeInTheDocument();
+    expect(titleInput).not.toHaveClass("border-red-500");
   });
 
   it("保存失敗時のエラーメッセージにrole=alertが付与されること", async () => {
@@ -352,6 +429,89 @@ describe("PhotoSettingForm", () => {
     fireEvent.click(screen.getByTestId("remove-tag-1"));
     expect(screen.queryByTestId("tag-entry-1")).not.toBeInTheDocument();
     expect(screen.getByTestId("tag-entry-2")).toBeInTheDocument();
+  });
+
+  it("タグは上限件数を超えて追加できないこと", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("add-tag-button")).toBeInTheDocument();
+    });
+
+    // 上限（バックエンドの Consts.PHOTO_TAG_MAX_SIZE）まで追加できる
+    for (let i = 0; i < PHOTO_TAG_MAX_SIZE; i++) {
+      fireEvent.click(screen.getByTestId("add-tag-button"));
+    }
+    expect(screen.getByTestId(`tag-entry-${PHOTO_TAG_MAX_SIZE}`)).toBeInTheDocument();
+
+    // 上限に達したらボタンを非活性にし、ボタンの横に上限メッセージを表示する
+    // （最大50MBを送信してから400で弾かれるのを避ける）。ページ上部には表示しない
+    const addTagButton = screen.getByTestId("add-tag-button");
+    expect(addTagButton).toBeDisabled();
+    expect(screen.getByTestId("tag-limit-message")).toHaveTextContent(
+      `タグは${PHOTO_TAG_MAX_SIZE}件までです`
+    );
+    expect(addTagButton.nextElementSibling).toBe(screen.getByTestId("tag-limit-message"));
+    expect(screen.queryByTestId("validation-errors")).not.toBeInTheDocument();
+    fireEvent.click(addTagButton);
+    expect(
+      screen.queryByTestId(`tag-entry-${PHOTO_TAG_MAX_SIZE + 1}`)
+    ).not.toBeInTheDocument();
+
+    // 1件削除すると再び追加できること
+    fireEvent.click(screen.getByTestId("remove-tag-1"));
+    expect(addTagButton).toBeEnabled();
+    expect(screen.queryByTestId("tag-limit-message")).not.toBeInTheDocument();
+  });
+
+  it("タイトル・キャプション・タグ名の入力欄にバックエンドと同じ上限が設定されていること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("add-tag-button")).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("japanese-title-input")).toHaveAttribute(
+      "maxlength",
+      String(PHOTO_TITLE_MAX_LENGTH)
+    );
+    expect(screen.getByTestId("english-title-input")).toHaveAttribute(
+      "maxlength",
+      String(PHOTO_TITLE_MAX_LENGTH)
+    );
+    expect(screen.getByTestId("caption-input")).toHaveAttribute(
+      "maxlength",
+      String(PHOTO_CAPTION_MAX_LENGTH)
+    );
+
+    fireEvent.click(screen.getByTestId("add-tag-button"));
+    expect(screen.getByTestId("tag-japanese-1")).toHaveAttribute(
+      "maxlength",
+      String(TAG_NAME_MAX_LENGTH)
+    );
+    expect(screen.getByTestId("tag-english-1")).toHaveAttribute(
+      "maxlength",
+      String(TAG_NAME_MAX_LENGTH)
+    );
+  });
+
+  it("画像以外のファイルを選択するとその場で拒否されること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("image-input")).toBeInTheDocument();
+    });
+
+    // accept="image/*" は選択ダイアログの初期フィルタにすぎず、任意の形式を選べる
+    const textFile = new File(["dummy"], "note.txt", { type: "text/plain" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [textFile] },
+    });
+
+    expect(screen.getByTestId("validation-errors")).toHaveTextContent(
+      "画像ファイルを選択してください"
+    );
+    expect(screen.queryByTestId("image-preview-item-0")).not.toBeInTheDocument();
   });
 
   it("保存成功後に成功モーダルが登録枚数付きで表示されること", async () => {
@@ -470,6 +630,65 @@ describe("PhotoSettingForm", () => {
     expect(screen.queryByTestId("image-preview-item-0")).not.toBeInTheDocument();
   });
 
+  it("位置情報公開の設定欄に、画像ファイル自体のEXIF位置情報は除去されない旨の注記を表示すること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const notice = screen.getByTestId("exif-location-notice");
+    expect(notice).toHaveTextContent("画像ファイル自体に埋め込まれた位置情報");
+    expect(notice).toHaveTextContent("除去されません");
+    // チェックボックスから説明として関連付けられていること
+    const checkbox = screen.getByTestId("location-public-checkbox");
+    expect(checkbox).toHaveAttribute("aria-describedby", "location-public-help");
+    expect(document.getElementById("location-public-help")).toContainElement(notice);
+  });
+
+  it("タイトル（日本語）が必須項目として示されること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("japanese-title-input")).toHaveAttribute(
+      "aria-required",
+      "true"
+    );
+    expect(screen.getByLabelText("タイトル（日本語） *")).toBe(
+      screen.getByTestId("japanese-title-input")
+    );
+  });
+
+  it("撮影場所の新規登録モードで、各入力欄が可視ラベルで関連付けられていること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+
+    // placeholderではなく<label for>で関連付けられていること
+    expect(screen.getByLabelText("管理名 *")).toBe(
+      screen.getByTestId("new-location-management-name-input")
+    );
+    expect(screen.getByLabelText("表示名 *")).toBe(
+      screen.getByTestId("new-location-display-name-input")
+    );
+    expect(screen.getByLabelText("緯度 *")).toBe(
+      screen.getByTestId("new-location-latitude-input")
+    );
+    expect(screen.getByLabelText("経度 *")).toBe(
+      screen.getByTestId("new-location-longitude-input")
+    );
+    expect(screen.getByLabelText("住所（任意）")).toBe(
+      screen.getByTestId("new-location-address-input")
+    );
+  });
+
   it("新規モードでは位置情報公開チェックボックスが未チェックで、送信時に isLocationPublic=false を送ること", async () => {
     mockRegistPhotos.mockResolvedValue({ isSuccess: true, registeredCount: 1 });
 
@@ -524,6 +743,391 @@ describe("PhotoSettingForm", () => {
     });
     const formData = mockRegistPhotos.mock.calls[0][1] as FormData;
     expect(formData.get("isLocationPublic")).toBe("true");
+  });
+
+  it("既定では撮影場所が「設定しない」で、locationNo・managementName・displayNameのいずれも送信されないこと", async () => {
+    mockRegistPhotos.mockResolvedValue({ isSuccess: true, registeredCount: 1 });
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(mockRegistPhotos).toHaveBeenCalled();
+    });
+    const formData = mockRegistPhotos.mock.calls[0][1] as FormData;
+    expect(formData.get("locationNo")).toBeNull();
+    expect(formData.get("managementName")).toBeNull();
+    expect(formData.get("displayName")).toBeNull();
+  });
+
+  it("既存のロケーションを選択して送信すると、locationNoのみを送信すること", async () => {
+    mockGetLocationList.mockResolvedValue({
+      locations: [
+        {
+          locationNo: 3,
+          managementName: "渋谷スクランブル交差点_管理用",
+          displayName: "渋谷スクランブル交差点",
+          address: "東京都渋谷区",
+          latitude: 35.6812,
+          longitude: 139.7671,
+        },
+      ],
+    });
+    mockRegistPhotos.mockResolvedValue({ isSuccess: true, registeredCount: 1 });
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-existing"));
+    await waitFor(() => {
+      expect(screen.getByTestId("location-select")).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByTestId("location-select"), {
+      target: { value: "3" },
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(mockRegistPhotos).toHaveBeenCalled();
+    });
+    const formData = mockRegistPhotos.mock.calls[0][1] as FormData;
+    expect(formData.get("locationNo")).toBe("3");
+    expect(formData.get("managementName")).toBeNull();
+    expect(formData.get("displayName")).toBeNull();
+  });
+
+  it("既存のロケーションから選択モードで未選択のまま送信すると、バリデーションエラーになること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-existing"));
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("validation-errors")).toHaveTextContent(
+        "ロケーションを選択してください"
+      );
+    });
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
+  it("新規ロケーションを入力して送信すると、managementName・displayName・address・latitude・longitudeを送信すること", async () => {
+    mockRegistPhotos.mockResolvedValue({ isSuccess: true, registeredCount: 1 });
+
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+    fireEvent.change(screen.getByTestId("new-location-management-name-input"), {
+      target: { value: "新宿御苑_管理用" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-display-name-input"), {
+      target: { value: "新宿御苑" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-latitude-input"), {
+      target: { value: "35.6850" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-longitude-input"), {
+      target: { value: "139.7100" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-address-input"), {
+      target: { value: "東京都新宿区" },
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(mockRegistPhotos).toHaveBeenCalled();
+    });
+    const formData = mockRegistPhotos.mock.calls[0][1] as FormData;
+    expect(formData.get("managementName")).toBe("新宿御苑_管理用");
+    expect(formData.get("displayName")).toBe("新宿御苑");
+    expect(formData.get("latitude")).toBe("35.6850");
+    expect(formData.get("longitude")).toBe("139.7100");
+    expect(formData.get("address")).toBe("東京都新宿区");
+    expect(formData.get("locationNo")).toBeNull();
+  });
+
+  it("新規ロケーション登録モードで管理名が未入力の場合、バリデーションエラーになること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+    fireEvent.change(screen.getByTestId("new-location-display-name-input"), {
+      target: { value: "新宿御苑" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-latitude-input"), {
+      target: { value: "35.6850" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-longitude-input"), {
+      target: { value: "139.7100" },
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("validation-errors")).toHaveTextContent(
+        "管理名を入力してください"
+      );
+    });
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
+  it("新規ロケーション登録モードで表示名が未入力の場合、バリデーションエラーになること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+    fireEvent.change(screen.getByTestId("new-location-management-name-input"), {
+      target: { value: "新宿御苑_管理用" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-latitude-input"), {
+      target: { value: "35.6850" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-longitude-input"), {
+      target: { value: "139.7100" },
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("validation-errors")).toHaveTextContent(
+        "表示名を入力してください"
+      );
+    });
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
+  it("新規ロケーション登録モードで緯度・経度が未入力の場合、バリデーションエラーになること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+    fireEvent.change(screen.getByTestId("new-location-management-name-input"), {
+      target: { value: "新宿御苑_管理用" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-display-name-input"), {
+      target: { value: "新宿御苑" },
+    });
+
+    const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByTestId("image-input"), {
+      target: { files: [file] },
+    });
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
+    fireEvent.click(screen.getByTestId("submit-button"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("validation-errors")).toHaveTextContent(
+        "地図をクリックするか、緯度・経度を入力してください"
+      );
+    });
+    expect(mockRegistPhotos).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["latitude", "new-location-latitude-input", "91", "緯度は -90 から 90 の範囲で入力してください"],
+    ["latitude", "new-location-latitude-input", "-91", "緯度は -90 から 90 の範囲で入力してください"],
+    ["longitude", "new-location-longitude-input", "181", "経度は -180 から 180 の範囲で入力してください"],
+    [
+      "longitude",
+      "new-location-longitude-input",
+      "-181",
+      "経度は -180 から 180 の範囲で入力してください",
+    ],
+  ])(
+    "新規ロケーション登録モードで%sが範囲外（%s=%s）の場合、送信せずバリデーションエラーになること",
+    async (_field, testId, value, expectedMessage) => {
+      render(<PhotoSettingForm photoAccountId="user1" />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("location-mode-new"));
+      fireEvent.change(screen.getByTestId("new-location-management-name-input"), {
+        target: { value: "範囲外テスト_管理用" },
+      });
+      fireEvent.change(screen.getByTestId("new-location-display-name-input"), {
+        target: { value: "範囲外テスト" },
+      });
+      // 対象外の項目には正常値を入れ、検証対象の項目だけを範囲外にする
+      fireEvent.change(screen.getByTestId("new-location-latitude-input"), {
+        target: { value: "35.6812" },
+      });
+      fireEvent.change(screen.getByTestId("new-location-longitude-input"), {
+        target: { value: "139.7671" },
+      });
+      fireEvent.change(screen.getByTestId(testId), { target: { value } });
+
+      const file = new File(["dummy"], "test.jpg", { type: "image/jpeg" });
+      fireEvent.change(screen.getByTestId("image-input"), {
+        target: { files: [file] },
+      });
+      fireEvent.change(screen.getByTestId("japanese-title-input"), {
+        target: { value: "テストタイトル" },
+      });
+
+      // 通常の操作では input の min / max によりブラウザ側の制約検証で送信自体が止まる。
+      // ここでは submit イベントを直接発火させ、JS側の検証（多層防御）が働くことを確かめる
+      fireEvent.submit(screen.getByTestId("submit-button").closest("form")!);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("validation-errors")).toHaveTextContent(expectedMessage);
+      });
+      expect(mockRegistPhotos).not.toHaveBeenCalled();
+    }
+  );
+
+  it("緯度・経度の入力欄に指定可能な範囲（min / max）が設定されていること", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+
+    const latitudeInput = screen.getByTestId("new-location-latitude-input");
+    expect(latitudeInput).toHaveAttribute("min", "-90");
+    expect(latitudeInput).toHaveAttribute("max", "90");
+    const longitudeInput = screen.getByTestId("new-location-longitude-input");
+    expect(longitudeInput).toHaveAttribute("min", "-180");
+    expect(longitudeInput).toHaveAttribute("max", "180");
+  });
+
+  it("逆ジオコーディングで住所が解決されても、手入力した緯度・経度を上書きしないこと", async () => {
+    render(<PhotoSettingForm photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId("location-mode-new"));
+
+    // 地図クリックで座標が入る
+    fireEvent.click(screen.getByTestId("mock-map-pick"));
+    expect(screen.getByTestId("new-location-latitude-input")).toHaveValue(35.6812);
+    expect(screen.getByTestId("new-location-longitude-input")).toHaveValue(139.7671);
+
+    // 住所取得の通信中にユーザーが座標を手で調整する
+    fireEvent.change(screen.getByTestId("new-location-latitude-input"), {
+      target: { value: "35.1" },
+    });
+    fireEvent.change(screen.getByTestId("new-location-longitude-input"), {
+      target: { value: "139.1" },
+    });
+
+    // 応答が届いても住所だけが反映され、座標はクリック位置へ巻き戻らない
+    fireEvent.click(screen.getByTestId("mock-map-address-resolved"));
+
+    expect(screen.getByTestId("new-location-address-input")).toHaveValue(
+      "東京都千代田区丸の内1丁目"
+    );
+    expect(screen.getByTestId("new-location-latitude-input")).toHaveValue(35.1);
+    expect(screen.getByTestId("new-location-longitude-input")).toHaveValue(139.1);
+  });
+
+  it("編集モードで既存のロケーション番号を持つ写真を開くと、既存選択モードでそのロケーションが選ばれること", async () => {
+    mockGetPhotoDetail.mockResolvedValue({
+      ...samplePhoto,
+      locationNo: 3,
+    });
+    mockGetLocationList.mockResolvedValue({
+      locations: [
+        {
+          locationNo: 3,
+          managementName: "渋谷スクランブル交差点_管理用",
+          displayName: "渋谷スクランブル交差点",
+          address: "東京都渋谷区",
+          latitude: 35.6812,
+          longitude: 139.7671,
+        },
+      ],
+    });
+
+    render(<PhotoSettingForm photoAccountId="user1" accountNo={1} photoNo={10} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("submit-button")).toBeInTheDocument();
+    });
+
+    expect(
+      (screen.getByTestId("location-mode-existing") as HTMLInputElement).checked
+    ).toBe(true);
+    await waitFor(() => {
+      expect(
+        (screen.getByTestId("location-select") as HTMLSelectElement).value
+      ).toBe("3");
+    });
   });
 
   it("未認証の場合にログインページへリダイレクトされること", async () => {
@@ -703,13 +1307,32 @@ describe("PhotoSettingForm", () => {
       target: { files: [file] },
     });
 
+    fireEvent.change(screen.getByTestId("japanese-title-input"), {
+      target: { value: "テストタイトル" },
+    });
     fireEvent.click(screen.getByTestId("add-tag-button"));
+    fireEvent.click(screen.getByTestId("add-tag-button"));
+    fireEvent.change(screen.getByTestId("tag-japanese-2"), {
+      target: { value: "入力済み" },
+    });
     fireEvent.click(screen.getByTestId("submit-button"));
 
-    await waitFor(() => {
-      expect(screen.getByText("タグの日本語名は必須です")).toBeInTheDocument();
-    });
+    // 未入力のタグの入力欄だけ枠を赤にし、その下に警告文を表示する。ページ上部には表示しない
+    const tagError = await screen.findByTestId("tag-japanese-error-1");
+    expect(tagError).toHaveTextContent("タグの日本語名は必須です");
+    const tagInput = screen.getByTestId("tag-japanese-1");
+    expect(tagInput).toHaveClass("border-red-500");
+    expect(tagInput).toHaveAttribute("aria-invalid", "true");
+    expect(tagInput).toHaveAttribute("aria-describedby", tagError.id);
+    expect(screen.getByTestId("tag-japanese-2")).not.toHaveClass("border-red-500");
+    expect(screen.queryByTestId("tag-japanese-error-2")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("validation-errors")).not.toBeInTheDocument();
     expect(mockRegistPhotos).not.toHaveBeenCalled();
+
+    // 入力すると警告文と赤枠が解除されること
+    fireEvent.change(tagInput, { target: { value: "テストタグ" } });
+    expect(screen.queryByTestId("tag-japanese-error-1")).not.toBeInTheDocument();
+    expect(tagInput).not.toHaveClass("border-red-500");
   });
 
   it("タグの日本語名にスペースを含む場合は送信時にバリデーションエラーになること", async () => {

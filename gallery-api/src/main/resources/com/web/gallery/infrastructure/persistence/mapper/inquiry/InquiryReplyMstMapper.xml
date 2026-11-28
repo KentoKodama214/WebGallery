@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryReplyMstMapper">
+	<resultMap id="InquiryReplyMstMap" type="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMst">
+		<result property="id" column="id"/>
+		<result property="inquiryId" column="inquiry_id"/>
+		<result property="replyNo" column="reply_no"/>
+		<result property="adminAccountNo" column="admin_account_no"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="body" column="body"/>
+	</resultMap>
+
+	<insert id="insert" parameterType="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMst">
+		INSERT INTO
+			common.inquiry_reply_mst (
+				inquiry_id,
+				reply_no,
+				admin_account_no,
+				created_by,
+				created_at,
+				body
+			)
+		VALUES
+			(
+				#{inquiryId},
+				#{replyNo},
+				#{adminAccountNo},
+				#{createdBy},
+				NOW(),
+				#{body}
+			)
+	</insert>
+
+	<select id="getMaxReplyNo" parameterType="Long" resultType="Long">
+		SELECT
+			MAX(reply_no) AS replyNo
+		FROM
+			common.inquiry_reply_mst
+		WHERE
+			inquiry_id = #{inquiryId}
+	</select>
+
+	<!--
+		adminAccountNo は意図的に削除条件として扱わない。管理者として投稿した返信を巻き込んで削除すると、
+		無関係な第三者のお問い合わせスレッドから回答本文だけが消えてしまうため、
+		「返信を持つ管理者アカウントは削除できない」という業務ルール（ErrorEnum.CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY）
+		でアカウント削除自体をブロックする。存在確認には下の exists を使う
+	-->
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition">
+		DELETE FROM
+			common.inquiry_reply_mst
+		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード。
+			     抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接組み立てられた
+			     場合でも1件も消さないようにする -->
+			<if test="inquiryId == null and inquiryAccountNo == null"> AND 1 = 0</if>
+			<if test="inquiryId != null"> AND inquiry_id = #{inquiryId}</if>
+			<if test="inquiryAccountNo != null">
+				AND inquiry_id IN (
+					SELECT
+						id
+					FROM
+						common.inquiry_mst
+					WHERE
+						account_no = #{inquiryAccountNo}
+				)
+			</if>
+		</where>
+	</delete>
+
+	<!--
+		存在確認のみが用途のため COUNT(*) で全件を数えず EXISTS で最初の1件が見つかった時点で打ち切る。
+		excludingInquiryAccountNo は単独では抽出条件にならない（除外条件のみ指定された場合は全件が対象に
+		なってしまうため）。他の条件が1つも指定されていない場合は下のガードで必ず false を返す
+	-->
+	<select id="exists" parameterType="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition" resultType="boolean">
+		SELECT
+			EXISTS (
+				SELECT
+					1
+				FROM
+					common.inquiry_reply_mst
+				<where>
+					<!-- 抽出条件が1つも指定されていない場合に「1件でも行があれば true」になるのを防ぐガード。
+					     抽出条件はファクトリメソッド経由での生成を前提としているが、builder()から直接
+					     組み立てられた場合でも false を返すようにする -->
+					<if test="inquiryId == null and adminAccountNo == null and inquiryAccountNo == null"> AND 1 = 0</if>
+					<if test="inquiryId != null"> AND inquiry_id = #{inquiryId}</if>
+					<if test="adminAccountNo != null"> AND admin_account_no = #{adminAccountNo}</if>
+					<if test="inquiryAccountNo != null">
+						AND inquiry_id IN (
+							SELECT
+								id
+							FROM
+								common.inquiry_mst
+							WHERE
+								account_no = #{inquiryAccountNo}
+						)
+					</if>
+					<if test="excludingInquiryAccountNo != null">
+						AND inquiry_id NOT IN (
+							SELECT
+								id
+							FROM
+								common.inquiry_mst
+							WHERE
+								account_no = #{excludingInquiryAccountNo}
+						)
+					</if>
+				</where>
+			)
+	</select>
+
+	<select id="selectList" parameterType="com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition" resultMap="InquiryReplyMstMap">
+		SELECT
+			id,
+			inquiry_id,
+			reply_no,
+			admin_account_no,
+			created_by,
+			created_at,
+			body
+		FROM
+			common.inquiry_reply_mst
+		WHERE
+			inquiry_id = #{inquiryId}
+		ORDER BY
+			reply_no ASC
+	</select>
+</mapper>

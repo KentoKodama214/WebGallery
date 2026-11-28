@@ -1,0 +1,13 @@
+[%autowidth.stretch, cols="h,a"]
+|===
+|Base package
+|`com.web.gallery.application`
+|Bean references
+|* `c.w.g.d.service.PhotoQuotaPolicy` (in Domain)
+* `c.w.g.d.service.ImageFileValidationPolicy` (in Domain)
+* `c.w.g.d.service.PhotoFileExtensionPolicy` (in Domain)
+* `c.w.g.d.service.LocationInputPolicy` (in Domain)
+|Events listened to
+|* `org.springframework.security.authentication.event.AuthenticationSuccessEvent` 
+* `org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent` 
+|===

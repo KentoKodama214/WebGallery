@@ -2,6 +2,8 @@
  * バックエンドAPIとの通信を管理するクライアントモジュール
  */
 
+import { REFERER_MAX_LENGTH } from "@/lib/validation";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 /**
@@ -26,6 +28,33 @@ export class ApiError extends Error {
  * 多層防御としてクライアント側でもパスパラメータをエスケープする。
  */
 const seg = (value: string | number): string => encodeURIComponent(String(value));
+
+/**
+ * 遷移元URL（`document.referrer`）をバックエンドの上限まで切り詰める
+ *
+ * `document.referrer` の内容は流入元サイトが自由に決められる（`Referrer-Policy: unsafe-url`
+ * を指定すれば自サイトの完全なURLが入る）。長さを検証せずに送ると、バックエンドの
+ * `@Size(max = REFERER_MAX_LENGTH)` に弾かれて写真一覧・写真詳細の取得自体が 400 で失敗し、
+ * 「外部サイトが長いURLでリンクしているだけでギャラリーが開けない」状態になる。
+ * 分析ログの用途では流入元が判別できれば十分なため、上限を超える分は切り捨てる。
+ *
+ * 文字数の数え方はバックエンドの `@Size`（Java の `String#length` ＝ UTF-16 コードユニット）
+ * と揃える。切り詰めの境界でサロゲートペアが割れないよう、末尾に単独のハイサロゲートが
+ * 残った場合は1コードユニット分落とす。
+ *
+ * @param value 遷移元URL（未取得の場合は空文字・undefined）
+ * @returns 切り詰め後の遷移元URL。空の場合は undefined（クエリに載せない）
+ */
+function toRefererParam(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  if (value.length <= REFERER_MAX_LENGTH) return value;
+  const truncated = value.slice(0, REFERER_MAX_LENGTH);
+  const lastUnit = truncated.charCodeAt(truncated.length - 1);
+  // 0xD800〜0xDBFF はサロゲートペアの前半。後半が切り落とされた状態を残さない
+  return lastUnit >= 0xd800 && lastUnit <= 0xdbff
+    ? truncated.slice(0, -1)
+    : truncated;
+}
 
 /** メモリ上にアクセストークンを保持 */
 let accessToken: string | null = null;
@@ -192,7 +221,7 @@ let refreshInFlight: Promise<boolean> | null = null;
  * リフレッシュにより後発のリクエストが無効化される競合を避ける。
  *
  * セッション状態を "anonymous"（未ログイン確定）へ落とすのは、リフレッシュAPIが
- * 明確に 401/403 を返した場合のみ。ネットワーク例外や 5xx などの一時的な失敗では
+ * 204（リフレッシュトークンの cookie が無い＝未ログイン）または 401/403 を返した場合のみ。ネットワーク例外や 5xx などの一時的な失敗では
  * セッション状態を変更せず、次回のリクエストで再試行できるようにする。
  */
 export function refresh(): Promise<boolean> {
@@ -233,6 +262,16 @@ async function doRefresh(): Promise<boolean> {
       accessToken = null;
       lastRefreshTransientFailureAt = Date.now();
     }
+    return false;
+  }
+
+  // cookie が無い（未ログイン）場合、バックエンドはエラーではなく本文なしの 204 を返す
+  // （未ログインで画面を開くたびにブラウザへ 401 が記録されないようにするため）
+  if (response.status === 204) {
+    if (isStale()) return false;
+    accessToken = null;
+    sessionAuthState = "anonymous";
+    lastRefreshTransientFailureAt = 0;
     return false;
   }
 
@@ -541,7 +580,7 @@ export interface PhotoDetailResponse {
   address: string | null;
   latitude: number | null;
   longitude: number | null;
-  locationName: string | null;
+  displayName: string | null;
   /** 位置情報公開フラグ（非公開かつ閲覧者が本人でない場合、上記の位置情報系フィールドは null で返る） */
   isLocationPublic: boolean | null;
   imageFilePath: string;
@@ -554,6 +593,14 @@ export interface PhotoDetailResponse {
   shutterSpeed: number | null;
   iso: number | null;
   photoTagList: PhotoTagItem[];
+  /** 管理者により非公開にされているか（非公開の写真は所有者本人にのみ返るため、true になるのは本人の閲覧時のみ） */
+  isHiddenByAdmin?: boolean;
+}
+
+/** 写真の削除に伴い公開から下書きに戻したポートフォリオ */
+export interface RevertedPortfolioItem {
+  portfolioNo: number;
+  theme: string;
 }
 
 /** 写真編集結果レスポンス */
@@ -563,6 +610,8 @@ export interface PhotoEditResult {
   message: string;
   photoNo: number;
   imageFilePath: string;
+  /** 写真削除時のみ設定。写真の削除に伴い公開から下書きに戻したポートフォリオの一覧 */
+  revertedPortfolioList?: RevertedPortfolioItem[];
 }
 
 /** 写真新規一括登録結果レスポンス */
@@ -588,6 +637,8 @@ export interface PhotoListItem {
   imageFilePath: string;
   caption: string;
   directionKbn: string;
+  /** 管理者により非公開にされているか（非公開の写真は所有者本人の一覧にのみ含まれる） */
+  isHiddenByAdmin?: boolean;
 }
 
 /** 写真一覧レスポンス */
@@ -601,6 +652,23 @@ export interface PhotoUpperLimitResponse {
   isReachedUpperLimit: boolean;
   /** 残り登録可能枚数（上限が存在しない権限区分の場合はnull） */
   remainingCount: number | null;
+}
+
+/** ロケーション */
+export interface LocationItem {
+  locationNo: number;
+  /** 管理名（既存マスタからの選択UIで表示する名称） */
+  managementName: string;
+  /** 表示名（写真詳細での表示に使用） */
+  displayName: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
+/** ロケーション一覧取得レスポンス */
+export interface LocationListResponse {
+  locations: LocationItem[];
 }
 
 /** 写真一覧取得パラメータ */
@@ -618,7 +686,8 @@ export interface PhotoListParams {
   /**
    * 遷移元URL（{@code document.referrer}）。バックエンドの分析ログ記録に使用する。
    * HTTPリクエストのRefererヘッダーは同一ページからのAPI呼び出しのため自ページURLになってしまい、
-   * 外部サイトからの本来の流入元を表せないため、クライアントが明示的に送信する
+   * 外部サイトからの本来の流入元を表せないため、クライアントが明示的に送信する。
+   * 長さは送信時に {@link REFERER_MAX_LENGTH} まで切り詰める（{@link toRefererParam}）
    */
   referer?: string;
   /**
@@ -645,7 +714,8 @@ export async function getPhotoList(
   if (params.sortBy) searchParams.set("sortBy", params.sortBy);
   if (params.pageNo !== undefined) searchParams.set("pageNo", String(params.pageNo));
   if (params.searchExecuted) searchParams.set("searchExecuted", "true");
-  if (params.referer) searchParams.set("referer", params.referer);
+  const referer = toRefererParam(params.referer);
+  if (referer) searchParams.set("referer", referer);
   if (params.logInitialView) searchParams.set("logInitialView", "true");
 
   const query = searchParams.toString();
@@ -672,6 +742,18 @@ export async function getPhotoUpperLimit(
 }
 
 /**
+ * 本人が登録済みのロケーション一覧を取得する
+ */
+export async function getLocationList(accountId: string): Promise<LocationListResponse> {
+  const url = `/api/v1/accounts/${seg(accountId)}/locations`;
+  const response = await fetchWithAuth(url);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "ロケーション一覧の取得に失敗しました"));
+  }
+  return readJson<LocationListResponse>(response);
+}
+
+/**
  * 写真詳細を取得する
  *
  * @param referer 遷移元URL（{@code document.referrer}）。バックエンドの閲覧ログ記録に使用する
@@ -686,7 +768,8 @@ export async function getPhotoDetail(
   // お気に入り判定に使うアカウント番号はセッション（JWT）から取得されるため、
   // クライアントからアカウント番号を渡す必要はない
   const searchParams = new URLSearchParams();
-  if (referer) searchParams.set("referer", referer);
+  const refererParam = toRefererParam(referer);
+  if (refererParam) searchParams.set("referer", refererParam);
   const query = searchParams.toString();
   const url = `/api/v1/accounts/${seg(photoAccountId)}/photos/${seg(photoNo)}${query ? `?${query}` : ""}`;
   const response = await fetchWithAuth(url, { signal });
@@ -888,6 +971,88 @@ export async function updateAccountAuthority(
   return readJson<AdminAccountAuthorityUpdateResult>(response);
 }
 
+/** 管理者用写真一覧アイテム */
+export interface AdminPhotoListItem {
+  accountNo: number;
+  accountId: string;
+  accountName: string;
+  photoNo: number;
+  photoJapaneseTitle: string;
+  /** 署名付きURL */
+  imageFilePath: string;
+  isHiddenByAdmin: boolean;
+  createdAt: string;
+}
+
+/** 管理者用写真一覧レスポンス */
+export interface AdminPhotoListGetResponse {
+  isLast: boolean;
+  photoList: AdminPhotoListItem[];
+}
+
+/** 管理者用写真一覧の絞り込み条件 */
+export interface AdminPhotoListParams {
+  /** 写真所有者のアカウントID（未指定の場合は全アカウント） */
+  accountId?: string;
+  /** 管理者非公開フラグ（未指定の場合は公開・非公開の両方） */
+  isHiddenByAdmin?: boolean;
+  pageNo?: number;
+}
+
+/** 管理者による写真の公開状態変更結果 */
+export interface AdminPhotoVisibilityUpdateResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+}
+
+/**
+ * 管理者用写真一覧取得（管理者により非公開にされた写真を含む、全アカウントの写真を登録日時の新しい順に取得する）
+ */
+export async function getAdminPhotoList(
+  params: AdminPhotoListParams = {}
+): Promise<AdminPhotoListGetResponse> {
+  const searchParams = new URLSearchParams();
+  if (params.accountId) searchParams.set("accountId", params.accountId);
+  if (params.isHiddenByAdmin !== undefined) {
+    searchParams.set("isHiddenByAdmin", String(params.isHiddenByAdmin));
+  }
+  searchParams.set("pageNo", String(params.pageNo ?? 1));
+  const response = await fetchWithAuth(`/api/v1/admin/photos?${searchParams.toString()}`);
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "写真一覧の取得に失敗しました"));
+  }
+  return readJson<AdminPhotoListGetResponse>(response);
+}
+
+/**
+ * 管理者による写真の公開状態変更（非公開・非公開解除）
+ */
+export async function updateAdminPhotoVisibility(
+  accountNo: number,
+  photoNo: number,
+  isHiddenByAdmin: boolean,
+  reason: string
+): Promise<AdminPhotoVisibilityUpdateResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/admin/photos/${seg(accountNo)}/${seg(photoNo)}/visibility`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isHiddenByAdmin, reason }),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(
+        response,
+        isHiddenByAdmin ? "写真の非公開に失敗しました" : "写真の非公開解除に失敗しました"
+      )
+    );
+  }
+  return readJson<AdminPhotoVisibilityUpdateResult>(response);
+}
+
 /** お問い合わせステータス区分 */
 export type InquiryStatusKbn = "unreplied" | "replied" | "withdrawn";
 
@@ -961,7 +1126,7 @@ export interface InquiryDetail {
 }
 
 /**
- * 自分のお問い合わせ詳細を取得する（未読の返信があれば取得と同時に既読化される）
+ * 自分のお問い合わせ詳細を取得する（副作用なし。既読化は markInquiryAsRead を別途呼ぶ）
  */
 export async function getInquiryDetail(inquiryNo: number): Promise<InquiryDetail> {
   const response = await fetchWithAuth(`/api/v1/inquiries/${seg(inquiryNo)}`);
@@ -969,6 +1134,26 @@ export async function getInquiryDetail(inquiryNo: number): Promise<InquiryDetail
     throw new Error(await readErrorMessage(response, "お問い合わせ詳細の取得に失敗しました"));
   }
   return readJson<InquiryDetail>(response);
+}
+
+/** お問い合わせ既読化結果 */
+export interface InquiryReadResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+}
+
+/**
+ * 自分のお問い合わせを既読にする（既に既読の場合はバックエンド側で何もしない）
+ */
+export async function markInquiryAsRead(inquiryNo: number): Promise<InquiryReadResult> {
+  const response = await fetchWithAuth(`/api/v1/inquiries/${seg(inquiryNo)}/read`, {
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "お問い合わせの既読化に失敗しました"));
+  }
+  return readJson<InquiryReadResult>(response);
 }
 
 /** お問い合わせ取り下げ結果 */
@@ -1073,4 +1258,432 @@ export async function replyToInquiry(
     throw new Error(await readErrorMessage(response, "返信の登録に失敗しました"));
   }
   return readJson<InquiryReplyResult>(response);
+}
+
+/** ポートフォリオのテンプレート区分 */
+export type PortfolioTemplateKbn = "feature" | "grid" | "frame";
+
+/** ポートフォリオの公開状態区分 */
+export type PortfolioStatusKbn = "draft" | "published";
+
+/** ポートフォリオ一覧アイテム */
+export interface PortfolioListItem {
+  portfolioNo: number;
+  theme: string;
+  templateKbn: PortfolioTemplateKbn;
+  statusKbn: PortfolioStatusKbn;
+  photoCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** ポートフォリオ詳細の写真 */
+export interface PortfolioPhotoItem {
+  photoNo: number;
+  displayOrder: number;
+  photoSettings: Record<string, unknown>;
+  photoJapaneseTitle: string;
+  imageFilePath: string;
+  directionKbn: string;
+  /** 管理者により非公開にされているか（trueの写真は公開ページに表示されず、外さないと保存できない） */
+  isHiddenByAdmin?: boolean;
+}
+
+/** ポートフォリオ詳細のタグ */
+export interface PortfolioTagItem {
+  tagNo: number;
+  tagJapaneseName: string;
+  tagEnglishName: string;
+}
+
+/** ポートフォリオ詳細 */
+export interface PortfolioDetail {
+  portfolioNo: number;
+  theme: string;
+  description: string;
+  templateKbn: PortfolioTemplateKbn;
+  templateSettings: Record<string, unknown>;
+  statusKbn: PortfolioStatusKbn;
+  createdAt: string;
+  updatedAt: string;
+  photoList: PortfolioPhotoItem[];
+  tagList: PortfolioTagItem[];
+}
+
+/** ポートフォリオ登録・更新リクエスト（写真一覧の並び順が表示順になる） */
+export interface PortfolioSaveData {
+  theme: string;
+  description: string;
+  templateKbn: PortfolioTemplateKbn;
+  templateSettings: Record<string, unknown>;
+  photoList: { photoNo: number; photoSettings: Record<string, unknown> }[];
+  tagList: { tagJapaneseName: string; tagEnglishName: string }[];
+}
+
+/** ポートフォリオ編集結果 */
+export interface PortfolioEditResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+  portfolioNo: number;
+}
+
+/** ポートフォリオのテンプレート一覧 */
+export interface PortfolioTemplateList {
+  templateList: { templateKbn: PortfolioTemplateKbn; displayName: string }[];
+  gridRowPatternList: { pattern: string; displayName: string; photoCount: number }[];
+}
+
+/**
+ * 本人のポートフォリオ一覧（下書きを含む）を、表示順に1ページ分（20件）取得する
+ *
+ * @param accountId アカウントID
+ * @param filter 絞り込み条件
+ * @param pageNo ページ番号（1始まり）
+ */
+export async function getPortfolioList(
+  accountId: string,
+  filter: PortfolioListFilter = {},
+  pageNo = 1
+): Promise<{ portfolioList: PortfolioListItem[]; isLast: boolean }> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios${toQueryString({ ...filter, pageNo })}`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオ一覧の取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<{ portfolioList: PortfolioListItem[]; isLast: boolean }>(response);
+}
+
+/** ポートフォリオ一覧の絞り込み条件（未入力の条件は送らない） */
+export interface PortfolioListFilter {
+  /** 検索語（テーマ・タグ名（日本語・英語）のいずれかに部分一致） */
+  keyword?: string;
+}
+
+/**
+ * 絞り込み条件をクエリ文字列に変換する（前後の空白を除いて空になる条件は送らない）
+ *
+ * @param params 条件
+ * @returns 先頭に `?` を付けたクエリ文字列。条件がない場合は空文字
+ */
+function toQueryString(params: object): string {
+  const query = new URLSearchParams();
+  Object.entries(params as Record<string, string | number | undefined>).forEach(([key, value]) => {
+    if (value === undefined) return;
+    const text = String(value).trim();
+    if (text !== "") query.set(key, text);
+  });
+  const qs = query.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/**
+ * 本人のポートフォリオの作成数（下書きを含む）が、権限ごとの上限に達しているかを取得する
+ */
+export async function getPortfolioUpperLimit(
+  accountId: string
+): Promise<{ isReachedUpperLimit: boolean }> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/upper-limit`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオの作成上限の取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<{ isReachedUpperLimit: boolean }>(response);
+}
+
+/** ポートフォリオに設定する写真の検索条件（いずれも部分一致。未入力の条件は送らない） */
+export interface PortfolioPhotoSearchFilter {
+  /** 検索語（写真のタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに部分一致） */
+  keyword?: string;
+}
+
+/** ポートフォリオに設定する写真の検索結果の写真 */
+export interface PortfolioPhotoCandidate {
+  photoNo: number;
+  photoJapaneseTitle: string;
+  /** 画像の署名付きURL */
+  imageFilePath: string;
+  /** 向き区分（vertical / horizontal / square / none） */
+  directionKbn: string;
+}
+
+/**
+ * ポートフォリオに設定する写真を、本人の写真からタイトル・撮影場所の名前・撮影場所の住所・タグ名のいずれかに検索語が部分一致するもので検索する（写真番号の降順）
+ */
+export async function searchPortfolioPhotos(
+  accountId: string,
+  filter: PortfolioPhotoSearchFilter,
+  pageNo: number
+): Promise<{ photoList: PortfolioPhotoCandidate[]; isLast: boolean }> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolio-photos${toQueryString({ ...filter, pageNo })}`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "写真の検索に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<{ photoList: PortfolioPhotoCandidate[]; isLast: boolean }>(response);
+}
+
+/**
+ * 本人のポートフォリオ詳細を取得する
+ */
+export async function getPortfolioDetail(
+  accountId: string,
+  portfolioNo: number
+): Promise<PortfolioDetail> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/${seg(portfolioNo)}`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオの取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PortfolioDetail>(response);
+}
+
+/**
+ * ポートフォリオを登録（portfolioNo 未指定）または更新する
+ */
+export async function savePortfolio(
+  accountId: string,
+  data: PortfolioSaveData,
+  portfolioNo?: number
+): Promise<PortfolioEditResult> {
+  const base = `/api/v1/accounts/${seg(accountId)}/portfolios`;
+  const response = await fetchWithAuth(
+    portfolioNo === undefined ? base : `${base}/${seg(portfolioNo)}`,
+    {
+      method: portfolioNo === undefined ? "POST" : "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオの保存に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PortfolioEditResult>(response);
+}
+
+/**
+ * ポートフォリオの公開状態を変更する
+ */
+export async function updatePortfolioStatus(
+  accountId: string,
+  portfolioNo: number,
+  statusKbn: PortfolioStatusKbn
+): Promise<PortfolioEditResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/${seg(portfolioNo)}/status`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ statusKbn }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "公開状態の変更に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PortfolioEditResult>(response);
+}
+
+/**
+ * ポートフォリオを、表示順で隣のポートフォリオと入れ替えて1つ上・下へ移動する
+ *
+ * 一覧はページングして表示するため、入れ替えはサーバーが全件の並びをもとに行う。
+ * 先頭を上へ・末尾を下へ移動しようとした場合は何もしない。
+ *
+ * @param accountId アカウントID
+ * @param portfolioNo 移動するポートフォリオ番号
+ * @param direction 移動方向
+ */
+export async function movePortfolioDisplayOrder(
+  accountId: string,
+  portfolioNo: number,
+  direction: "up" | "down"
+): Promise<void> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/${seg(portfolioNo)}/display-order`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ direction }),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "並び順の更新に失敗しました"),
+      response.status
+    );
+  }
+}
+
+/**
+ * ポートフォリオを削除する
+ */
+export async function deletePortfolio(
+  accountId: string,
+  portfolioNo: number
+): Promise<PortfolioEditResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/portfolios/${seg(portfolioNo)}`,
+    { method: "DELETE" }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "ポートフォリオの削除に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<PortfolioEditResult>(response);
+}
+
+/**
+ * ポートフォリオのテンプレート一覧を取得する
+ */
+export async function getPortfolioTemplateList(): Promise<PortfolioTemplateList> {
+  const response = await fetchWithAuth("/api/v1/portfolio-templates");
+  if (!response.ok) {
+    throw new Error(
+      await readErrorMessage(response, "テンプレート一覧の取得に失敗しました")
+    );
+  }
+  return readJson<PortfolioTemplateList>(response);
+}
+
+/** 額縁テンプレート */
+export interface FrameTemplateItem {
+  frameTemplateNo: number;
+  templateName: string;
+  /** 額縁定義（構造は `@/lib/frame/definition` の `FrameDefinition`。`parseFrameDefinition` で変換して使う） */
+  frameDefinition: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 額縁テンプレート登録・更新リクエスト */
+export interface FrameTemplateSaveData {
+  templateName: string;
+  frameDefinition: Record<string, unknown>;
+}
+
+/** 額縁テンプレート編集結果 */
+export interface FrameTemplateEditResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+  frameTemplateNo: number;
+}
+
+/**
+ * 本人の額縁テンプレート一覧を、額縁テンプレート番号の昇順に取得する
+ *
+ * @param accountId アカウントID
+ */
+export async function getFrameTemplateList(
+  accountId: string
+): Promise<{ frameTemplateList: FrameTemplateItem[] }> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}/frame-templates`);
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "額縁テンプレート一覧の取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<{ frameTemplateList: FrameTemplateItem[] }>(response);
+}
+
+/**
+ * 本人の額縁テンプレートを取得する
+ *
+ * @param accountId アカウントID
+ * @param frameTemplateNo 額縁テンプレート番号
+ */
+export async function getFrameTemplate(
+  accountId: string,
+  frameTemplateNo: number
+): Promise<FrameTemplateItem> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/frame-templates/${seg(frameTemplateNo)}`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "額縁テンプレートの取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<FrameTemplateItem>(response);
+}
+
+/**
+ * 額縁テンプレートを登録（frameTemplateNo 未指定）または更新する
+ *
+ * @param accountId アカウントID
+ * @param data 登録・更新する内容
+ * @param frameTemplateNo 更新する額縁テンプレート番号（新規登録の場合は未指定）
+ */
+export async function saveFrameTemplate(
+  accountId: string,
+  data: FrameTemplateSaveData,
+  frameTemplateNo?: number
+): Promise<FrameTemplateEditResult> {
+  const base = `/api/v1/accounts/${seg(accountId)}/frame-templates`;
+  const response = await fetchWithAuth(
+    frameTemplateNo === undefined ? base : `${base}/${seg(frameTemplateNo)}`,
+    {
+      method: frameTemplateNo === undefined ? "POST" : "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "額縁テンプレートの保存に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<FrameTemplateEditResult>(response);
+}
+
+/**
+ * 額縁テンプレートを削除する
+ *
+ * 選択済みのポートフォリオは額縁定義をコピーして保持しているため、削除しても影響しない。
+ *
+ * @param accountId アカウントID
+ * @param frameTemplateNo 額縁テンプレート番号
+ */
+export async function deleteFrameTemplate(
+  accountId: string,
+  frameTemplateNo: number
+): Promise<FrameTemplateEditResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/frame-templates/${seg(frameTemplateNo)}`,
+    { method: "DELETE" }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "額縁テンプレートの削除に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<FrameTemplateEditResult>(response);
 }

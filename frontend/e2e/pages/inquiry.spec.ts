@@ -134,4 +134,39 @@ authTest.describe("お問い合わせ一覧ページ（ログイン済み）", (
     await authExpect(page).toHaveURL(/\/inquiry\/list$/);
     await authExpect(page).toHaveTitle(/お問い合わせ一覧/);
   });
+
+  authTest(
+    "アクセシビリティ違反がないこと（一覧・詳細）",
+    async ({ workerPage: page }, testInfo) => {
+      authTest.skip(
+        testInfo.project.name !== "chromium",
+        "a11y検証はchromiumプロジェクトのみで実施する"
+      );
+
+      // 詳細ページはお問い合わせが1件以上ないと到達できないため、先に1件送信する
+      const subject = `E2E詳細a11yテスト${testInfo.workerIndex}${Date.now()}`;
+      await page.goto("/inquiry");
+      await page.getByLabel("件名").fill(subject);
+      await page.getByLabel("本文").fill("E2E詳細ページのa11y検証用の本文です。");
+      await page.getByRole("button", { name: "送信" }).click();
+      await authExpect(page.getByText("お問い合わせを受け付けました")).toBeVisible({
+        timeout: 10000,
+      });
+
+      // color-contrast は共通配色（リンクの #2196F3 × 白、ボタンの bg-blue-500 × 白文字）に
+      // 既存の違反があり、解消にはアプリ共通の配色変更が必要なため本検証の対象外とする。
+      // 見出しレベル（page-has-heading-one）・ラベル等は検査する
+      await page.goto("/inquiry/list");
+      await authExpect(page.getByRole("link", { name: subject })).toBeVisible({
+        timeout: 10000,
+      });
+      await expectNoAccessibilityViolations(page, { disableRules: ["color-contrast"] });
+
+      await page.getByRole("link", { name: subject }).click();
+      await authExpect(page.getByRole("heading", { name: subject })).toBeVisible({
+        timeout: 10000,
+      });
+      await expectNoAccessibilityViolations(page, { disableRules: ["color-contrast"] });
+    }
+  );
 });

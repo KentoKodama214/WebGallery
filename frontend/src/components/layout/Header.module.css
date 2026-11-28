@@ -107,20 +107,23 @@
   z-index: 9999;
 }
 
-/* メニューリスト */
+/* メニューリスト（項目数によらず、項目がナビゲーションの高さを等分する） */
 .menu {
   list-style: none;
   padding: 0;
   margin: 0 auto;
-  display: inline-block;
+  display: inline-flex;
+  flex-direction: column;
   position: relative;
   height: 100%;
 }
 
 /* メニューアイテム */
 .menuItem {
-  display: block;
-  height: 25%;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
   min-height: 50px;
   position: relative;
   opacity: 0;
@@ -142,6 +145,14 @@
 
 .open .menuItem:nth-of-type(4) {
   animation-delay: 0.65s;
+}
+
+.open .menuItem:nth-of-type(5) {
+  animation-delay: 0.75s;
+}
+
+.open .menuItem:nth-of-type(6) {
+  animation-delay: 0.85s;
 }
 
 /* メニューリンク */

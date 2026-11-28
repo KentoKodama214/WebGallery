@@ -1,0 +1,8 @@
+{
+  "theme": "日本の動物・植物",
+  "templateKbn": "feature",
+  "photoList": [
+    { "photoNo": 1 },
+    { "photoNo": 4 }
+  ]
+}

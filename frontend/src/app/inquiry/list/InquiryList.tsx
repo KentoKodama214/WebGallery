@@ -99,32 +99,10 @@ export function InquiryList() {
     return date.toLocaleString("ja-JP");
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <p>読み込み中...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
-        <p className="text-red-500">{error}</p>
-        <button
-          onClick={fetchInquiries}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          再読み込み
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col items-center py-8 gap-4">
       <div className="w-full max-w-[800px] flex justify-between items-center px-4">
-        <h2 className="text-xl font-bold">お問い合わせ一覧</h2>
+        <h1 className="text-xl font-bold">お問い合わせ一覧</h1>
         <Link
           href="/inquiry"
           className="px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -133,23 +111,42 @@ export function InquiryList() {
         </Link>
       </div>
 
-      {inquiries.length === 0 ? (
+      {/*
+        取得中・取得失敗でも見出しと新規作成リンク・ライブリージョンは DOM から外さない
+        （画面全体を差し替えると見出しが消え、常設したライブリージョンも作り直される）
+      */}
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[200px]">
+          <p>読み込み中...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col justify-center items-center min-h-[200px] gap-4">
+          <p className="text-red-500">{error}</p>
+          <button
+            onClick={fetchInquiries}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            再読み込み
+          </button>
+        </div>
+      ) : inquiries.length === 0 ? (
         <p className="text-gray-500">お問い合わせはありません</p>
       ) : (
         <div
           className="w-full max-w-[800px] overflow-x-auto"
           style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)" }}
         >
-          <table className="w-full border-collapse bg-white">
+          {/* ステータス・投稿日時は折り返さない固定幅とし、残りの幅を件名に充てる */}
+          <table className="w-full table-fixed border-collapse bg-white">
             <thead>
               <tr style={{ backgroundColor: "#2196F3" }}>
                 <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
                   件名
                 </th>
-                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
+                <th className="w-32 py-3 px-4 text-center text-white font-bold border border-gray-300 whitespace-nowrap">
                   ステータス
                 </th>
-                <th className="py-3 px-4 text-left text-white font-bold border border-gray-300">
+                <th className="w-52 py-3 px-4 text-left text-white font-bold border border-gray-300 whitespace-nowrap">
                   投稿日時
                 </th>
               </tr>
@@ -158,19 +155,23 @@ export function InquiryList() {
               {inquiries.map((inquiry) => (
                 <tr key={inquiry.inquiryNo}>
                   <td className="py-3 px-4 border border-gray-300">
-                    <Link
-                      href={`/inquiry/detail?inquiryNo=${inquiry.inquiryNo}`}
-                      className="text-[#2196F3] hover:underline"
-                    >
-                      {inquiry.subject}
-                    </Link>
-                    {inquiry.statusKbn === "replied" && !inquiry.isReadByUser && (
-                      <span className="ml-2 inline-block px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">
-                        未読
-                      </span>
-                    )}
+                    {/* 件名は1行に収め、収まらない分は「…」で切る（未読バッジは縮めない） */}
+                    <div className="flex items-center min-w-0">
+                      <Link
+                        href={`/inquiry/detail?inquiryNo=${inquiry.inquiryNo}`}
+                        title={inquiry.subject}
+                        className="truncate text-[#2196F3] hover:underline"
+                      >
+                        {inquiry.subject}
+                      </Link>
+                      {inquiry.statusKbn === "replied" && !inquiry.isReadByUser && (
+                        <span className="ml-2 shrink-0 inline-block px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">
+                          未読
+                        </span>
+                      )}
+                    </div>
                   </td>
-                  <td className="py-3 px-4 border border-gray-300">
+                  <td className="py-3 px-4 border border-gray-300 whitespace-nowrap text-center">
                     <span
                       className={
                         inquiry.statusKbn === "replied"
@@ -183,7 +184,7 @@ export function InquiryList() {
                       {STATUS_LABELS[inquiry.statusKbn] ?? inquiry.statusKbn}
                     </span>
                   </td>
-                  <td className="py-3 px-4 border border-gray-300">
+                  <td className="py-3 px-4 border border-gray-300 whitespace-nowrap">
                     {formatDatetime(inquiry.createdAt)}
                   </td>
                 </tr>
@@ -193,13 +194,16 @@ export function InquiryList() {
         </div>
       )}
 
-      {loadMoreError && (
-        <p role="alert" className="text-red-500 text-sm">
-          {loadMoreError}
-        </p>
-      )}
+      {/*
+        ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため常設し、
+        中身だけを差し替える（`role="alert"` は assertive）。空のときは `empty:sr-only` で
+        レイアウト上の余白からだけ外す（`display: none` はアクセシビリティツリーから外れる）
+      */}
+      <p role="alert" className="text-red-500 text-sm empty:sr-only">
+        {loadMoreError}
+      </p>
 
-      {!isLast && (
+      {!isLoading && !error && !isLast && (
         <button
           onClick={handleLoadMore}
           disabled={isLoadingMore}

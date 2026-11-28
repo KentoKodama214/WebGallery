@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/controller/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/controller/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Controllerパッケージの単体テスト規約
@@ -19,7 +19,7 @@ paths:
 
 ## リクエストボディの構築
 
-- リクエストボディはJavaオブジェクトの組み立てやインラインのJSON文字列ではなく、`backend/src/test/resources/json/controller/{テストクラス名}/{ファイル名}.json`に配置したJSONファイルを`readJsonFile`ヘルパーで読み込んで使用すること
+- リクエストボディはJavaオブジェクトの組み立てやインラインのJSON文字列ではなく、`gallery-api/src/test/resources/json/controller/{テストクラス名}/{ファイル名}.json`に配置したJSONファイルを`readJsonFile`ヘルパーで読み込んで使用すること
 
 ## レスポンス検証
 

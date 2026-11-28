@@ -1,0 +1,209 @@
+plugins {
+	id 'java'
+	id 'war'
+	id 'checkstyle'
+	id 'jacoco'
+	id 'com.diffplug.spotless' version '8.11.0'
+	id 'org.springframework.boot' version '4.1.2'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.dddjava.jig-gradle-plugin' version '2026.10.1'
+	id 'org.cyclonedx.bom' version '3.6.1'
+}
+
+checkstyle {
+	// 10.21.4はcommons-beanutilsに脆弱性のある1.10.1を推移的に含むため、
+	// commons-beanutils:1.11.0を直接pinしている10.26.1に更新（GHSA-wxr5-93ph-8wr9対策）
+	toolVersion = '10.26.1'
+	configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+}
+
+configurations.checkstyle {
+	resolutionStrategy {
+		// Checkstyle（doxia-core経由）が脆弱性のあるplexus-utils:3.3.0を推移的に含むため、
+		// 修正済みバージョンに強制（GHSA-6fmv-xxpf-w3cw対策）
+		force 'org.codehaus.plexus:plexus-utils:4.2.0'
+		// Checkstyle 10.26.1が脆弱性のあるguava:33.4.8-jreを推移的に含むため、
+		// 修正済みバージョンに強制（GHSA-xxph-c9ww-hj94対策）
+		force 'com.google.guava:guava:33.8.0-jre'
+	}
+}
+
+spotless {
+	java {
+		target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
+		googleJavaFormat()
+		removeUnusedImports()
+		importOrder()
+		trimTrailingWhitespace()
+		endWithNewline()
+	}
+}
+
+jacoco {
+	toolVersion = '0.8.13'
+}
+
+// 依存関係の脆弱性スキャン（OSV-Scanner）用に、全依存関係（推移的含む）を含む
+// CycloneDX SBOM（Software Bill of Materials、JSON形式）を生成する。NVDデータベースのような
+// 巨大データの同期が不要で、SBOM生成自体は数秒で完了する
+// （出力先: build/reports/cyclonedx/application.cdx.json）
+
+checkstyleTest.enabled = false
+
+group = 'com.official'
+version = '0.0.1-SNAPSHOT'
+
+// Spring Boot 4.1.1が管理するTomcatは脆弱性のある11.0.24のため、
+// 修正済みバージョンに上書き（GHSA-9xv2-5v5q-p794 / GHSA-gcx9-497g-6cp6 / GHSA-h3x4-894j-xpx5対策）。
+// Spring Bootが11.0.25以降に追従したパッチ版をリリースしたら削除可能
+ext['tomcat.version'] = '11.0.26'
+
+// Spring Boot 4.1.1が管理するJacksonは脆弱性のある2.21.5 / 3.1.5のため、
+// 修正済みバージョンに上書き（GHSA-q4xh-88c3-wmh7 / GHSA-wjgm-6hv5-3cvf / GHSA-gx83-3vf8-gh7j対策）。
+// Spring Bootが追従したパッチ版をリリースしたら削除可能
+ext['jackson-2-bom.version'] = '2.21.7'
+ext['jackson-bom.version'] = '3.1.7'
+
+java {
+	sourceCompatibility = '21'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+dependencyManagement {
+	imports {
+		mavenBom 'org.springframework.modulith:spring-modulith-bom:2.2.0'
+		mavenBom 'software.amazon.awssdk:bom:2.59.5'
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// Spring Boot / Spring Security / Tomcat / JUnit / Mockito / PostgreSQL ドライバのバージョンは
+	// org.springframework.boot プラグイン（4.1.1）＋ io.spring.dependency-management が提供する
+	// BOM に一元管理させ、ここでは明示しない（バージョンの二重管理・不整合を防ぐ）。
+	// BOM 管理外のサードパーティ依存（jjwt / modelmapper / springdoc / mybatis-spring-boot-starter /
+	// archunit / lombok / geoip2）のみバージョンを明示する。
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:4.1.0'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.modelmapper:modelmapper:3.2.8'
+	implementation 'software.amazon.awssdk:s3'
+	implementation 'software.amazon.awssdk:url-connection-client'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-scalar:3.2.0'
+	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+	// IPアドレスから国・地域を解決するGeoLite2（MaxMind）用リーダー
+	implementation 'com.maxmind.geoip2:geoip2:5.3.0'
+	// アップロードされた画像ファイルの実バイナリからEXIF情報を抽出するためのリーダー
+	implementation 'com.drewnoakes:metadata-extractor:2.22.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
+	compileOnly 'org.projectlombok:lombok:1.18.48'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'org.postgresql:postgresql'
+	annotationProcessor 'org.projectlombok:lombok:1.18.48'
+	providedRuntime 'org.apache.tomcat.embed:tomcat-embed-core'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-jdbc-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:4.1.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testImplementation 'org.mockito:mockito-core'
+	testImplementation 'org.mockito:mockito-junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testImplementation 'org.springframework.modulith:spring-modulith-docs'
+	testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.1'
+}
+
+tasks.named('test') {
+	enabled = false
+}
+
+tasks.register('unitTest', Test) {
+	description = '単体テストのみを実行する'
+	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform()
+	exclude '**/*IntegrationTest*'
+	exclude '**/*MapperTest*'
+	exclude '**/ModulithDocumentationTest*'
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('unitTest')
+	dependsOn tasks.named('spotlessCheck')
+}
+
+tasks.register('integrationTest', Test) {
+	description = '統合テストのみを実行する'
+	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform()
+	include '**/*IntegrationTest*'
+	include '**/*MapperTest*'
+}
+
+tasks.register('allTest', Test) {
+	description = '単体テストと統合テストをすべて実行する'
+	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform()
+	exclude '**/ModulithDocumentationTest*'
+}
+
+tasks.register('generateModulithDocs', Test) {
+	description = 'Spring Modulithのドキュメントを生成する'
+	group = 'documentation'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform()
+	include '**/ModulithDocumentationTest*'
+}
+
+// build/jacoco/ 配下のカバレッジ実行データ（*.exec）からカバレッジレポート（XML/HTML）を
+// 生成するタスクを登録する。CIでは各テストジョブが生成した .exec を build/jacoco/ に集めてから
+// これらのタスクを実行するため、テスト自体の実行は強制しない（同一ビルド内で同時指定された
+// 場合のみ mustRunAfter で順序を保証する）。存在しない .exec は空として扱う。
+def registerJacocoReport = { String name, String desc, String execPattern ->
+	tasks.register(name, JacocoReport) {
+		description = desc
+		group = 'verification'
+		dependsOn 'classes'
+		mustRunAfter tasks.withType(Test)
+
+		executionData.setFrom(fileTree(layout.buildDirectory).include(execPattern))
+		sourceDirectories.setFrom(files(sourceSets.main.java.srcDirs))
+		classDirectories.setFrom(files(sourceSets.main.output))
+
+		reports {
+			xml.required = true
+			html.required = true
+		}
+	}
+}
+
+registerJacocoReport('jacocoUnitReport', '単体テストのみのカバレッジレポートを生成する', 'jacoco/unitTest.exec')
+registerJacocoReport('jacocoIntegrationReport', '結合テストのみのカバレッジレポートを生成する', 'jacoco/integrationTest.exec')
+registerJacocoReport('jacocoAggregateReport', '単体テストと結合テストのカバレッジを集約してレポートを生成する', 'jacoco/*.exec')
+
+jig {
+	modelPattern = 'com\\.web\\.gallery\\..*'
+}
+
+tasks.named('jigReports') {
+	dependsOn 'classes'
+}

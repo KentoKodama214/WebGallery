@@ -20,6 +20,8 @@ describe("AccountList", () => {
     render(<AccountList />);
 
     expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    // 取得中でもページ上部のタイトルは表示する
+    expect(screen.getByRole("heading", { level: 1, name: "写真家" })).toBeInTheDocument();
   });
 
   it("アカウント一覧が正しく表示されること", async () => {
@@ -51,6 +53,17 @@ describe("AccountList", () => {
       "href",
       "/photo/user2/photo_list"
     );
+
+    const portfolioLinks = screen.getAllByText("ポートフォリオを見る");
+    expect(portfolioLinks).toHaveLength(2);
+    expect(portfolioLinks[0].closest("a")).toHaveAttribute(
+      "href",
+      "/portfolio/user1"
+    );
+    expect(portfolioLinks[1].closest("a")).toHaveAttribute(
+      "href",
+      "/portfolio/user2"
+    );
   });
 
   it("アカウントが0件の場合はテーブルヘッダーのみ表示されること", async () => {
@@ -61,9 +74,11 @@ describe("AccountList", () => {
     await waitFor(() => {
       expect(screen.getByText("アカウント名")).toBeInTheDocument();
       expect(screen.getByText("ギャラリー")).toBeInTheDocument();
+      expect(screen.getByText("ポートフォリオ")).toBeInTheDocument();
     });
 
     expect(screen.queryByText("ギャラリーを見る")).not.toBeInTheDocument();
+    expect(screen.queryByText("ポートフォリオを見る")).not.toBeInTheDocument();
   });
 
   it("エラー時にエラーメッセージが表示されること", async () => {

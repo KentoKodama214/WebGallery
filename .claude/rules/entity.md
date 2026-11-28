@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/entity/**
+  - gallery-api/**/entity/**
 ---
 
 # Entityクラスのアーキテクチャルール
@@ -29,4 +29,4 @@ paths:
 
 ## 検証
 
-プロパティにドメインクラス・Modelクラス・Dtoクラスを使用していないことは`backend/src/test/java/com/web/gallery/architecture/EntityArchitectureTest.java`のArchUnitテストで機械的に検証される。ただし`@Data`/`@Builder`のLombokアノテーション規約は、コンパイラが`RetentionPolicy.SOURCE`で完全に除去しバイトコードに一切残らないため、バイトコード解析であるArchUnitでは原理的に検証不可能であり、`backend-architecture-checker`によるレビューで担保する。
+プロパティにドメインクラス・Modelクラス・Dtoクラスを使用していないことは`gallery-api/src/test/java/com/web/gallery/architecture/EntityArchitectureTest.java`のArchUnitテストで機械的に検証される。ただし`@Data`/`@Builder`のLombokアノテーション規約は、コンパイラが`RetentionPolicy.SOURCE`で完全に除去しバイトコードに一切残らないため、バイトコード解析であるArchUnitでは原理的に検証不可能であり、`backend-architecture-checker`によるレビューで担保する。

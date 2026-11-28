@@ -6,10 +6,10 @@ AWS RDSのリードレプリカを導入するかどうかに関わらず同じ�
 
 ## 構成
 
-`config/DataSourceConfig`が公開する`DataSource` Beanは常にちょうど1つ。
+`infrastructure/config/DataSourceConfig`が公開する`DataSource` Beanは常にちょうど1つ。
 
 - リードレプリカ未設定（`app.datasource.replica.url`未設定）: `spring.datasource.*`から構築した`HikariDataSource`をそのまま公開する。既存環境（ローカル・development・test・現状のprod）と完全に同一の挙動
-- リードレプリカ設定あり: `config/ReadWriteRoutingDataSource`（`AbstractRoutingDataSource`のサブクラス）でプライマリ・リードレプリカの`HikariDataSource`をまとめ、`LazyConnectionDataSourceProxy`でラップして公開する
+- リードレプリカ設定あり: `infrastructure/config/ReadWriteRoutingDataSource`（`AbstractRoutingDataSource`のサブクラス）でプライマリ・リードレプリカの`HikariDataSource`をまとめ、`LazyConnectionDataSourceProxy`でラップして公開する
 
 ```
 Service (@Transactional(readOnly = true) 有無)
@@ -34,7 +34,7 @@ DataSource Beanを常に1つに保っているのは、`DataSourceTransactionMan
 
 username/passwordはプライマリと共用する（RDSリードレプリカは通常マスターと同一の認証情報で接続できるため）。
 
-本番プロファイルでは`config/ProdConfigValidationRunner`が起動時にリードレプリカURLの妥当性（PostgreSQL接続URL形式であること、プライマリと同一URLでないこと）を検証し、不正な場合は起動を失敗させる。
+本番プロファイルでは`infrastructure/config/ProdConfigValidationRunner`が起動時にリードレプリカURLの妥当性（PostgreSQL接続URL形式であること、プライマリと同一URLでないこと）を検証し、不正な場合は起動を失敗させる。
 
 ## コネクションプール（HikariCP）の設定
 

@@ -1,0 +1,32 @@
+# gqlgen の設定。スキーマ（graph/*.graphqls）を変更したら `go generate ./...` でコードを再生成する
+schema:
+  - graph/*.graphqls
+
+exec:
+  package: graph
+  layout: single-file
+  filename: graph/generated.go
+
+model:
+  filename: graph/model/models_gen.go
+  package: model
+
+resolver:
+  package: graph
+  layout: follow-schema
+  dir: graph
+  filename_template: "{name}.resolvers.go"
+
+# 生成コードのフィールド名に Go の命名規則（ID・URL 等の頭字語）を適用する
+omit_slice_element_pointers: false
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+  DateTime:
+    model:
+      - github.com/99designs/gqlgen/graphql.Time

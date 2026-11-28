@@ -9,8 +9,18 @@ cd "$(dirname "$0")/.."
 BACKEND_URL="http://localhost:8080/v3/api-docs"
 BACKEND_LOG="/tmp/webgallery-backend-e2e.log"
 BACKEND_PID=""
+# 公開ページ向けのポートフォリオ表示API（portfolio-api。Go）
+PORTFOLIO_API_URL="http://localhost:8081/healthz"
+PORTFOLIO_API_LOG="/tmp/webgallery-portfolio-api-e2e.log"
+PORTFOLIO_API_BIN="/tmp/webgallery-portfolio-api-e2e"
+PORTFOLIO_API_PID=""
 
 cleanup() {
+  if [ -n "$PORTFOLIO_API_PID" ]; then
+    echo "portfolio-apiを停止します (PID: $PORTFOLIO_API_PID)"
+    kill "$PORTFOLIO_API_PID" 2>/dev/null || true
+    wait "$PORTFOLIO_API_PID" 2>/dev/null || true
+  fi
   if [ -n "$BACKEND_PID" ]; then
     echo "バックエンドを停止します (PID: $BACKEND_PID)"
     kill -- -"$BACKEND_PID" 2>/dev/null || true
@@ -39,7 +49,33 @@ for _ in $(seq 1 30); do
 done
 
 if curl -sf "$BACKEND_URL" >/dev/null 2>&1; then
-  echo "バックエンドは既に起動しています。新規起動はスキップします"
+  # 既にポート8080でバックエンドが応答している。ただしそのインスタンスにE2E専用の設定
+  # （とくに RATE_LIMIT_ENABLED=false）が適用されているとは限らないため、既定では再利用しない。
+  # 手動起動したインスタンス（RATE_LIMIT_ENABLED は既定 true）を再利用すると、
+  # app.rate-limit.register（10件 / 3600秒）に引っかかって11件目以降のアカウント登録が
+  # 429 になり、アカウントを登録する多数のテストがまとめて失敗する。
+  # 原因がレート制限だと気づきにくいため、静かに再利用せずここで止める
+  if [ "${E2E_REUSE_BACKEND:-0}" = "1" ]; then
+    echo "警告: 起動済みのバックエンドを再利用します (E2E_REUSE_BACKEND=1)"
+    echo "      RATE_LIMIT_ENABLED=false で起動したインスタンスでない場合、"
+    echo "      アカウント登録が429になり多数のテストが失敗します"
+  else
+    cat >&2 <<'REUSE_ERROR'
+エラー: ポート8080で既にバックエンドが起動しています。
+
+E2Eはアカウントを多数登録するため、レート制限を無効化した専用設定
+(RATE_LIMIT_ENABLED=false) で起動したバックエンドが必要です。
+手動起動したインスタンス (既定は RATE_LIMIT_ENABLED=true) をそのまま使うと、
+11件目以降のアカウント登録が429になり、多数のテストがまとめて失敗します。
+
+対処:
+  1. 起動中のバックエンドを停止してから実行し直す (推奨)
+       lsof -ti:8080 | xargs kill -9 && just e2e
+  2. レート制限を無効化して起動済みであることが確実な場合のみ、再利用する
+       E2E_REUSE_BACKEND=1 just e2e
+REUSE_ERROR
+    exit 1
+  fi
 else
   echo "バックエンドを起動します (SPRING_PROFILES_ACTIVE=local)"
   # docker-compose.ymlのpostgres-db設定に合わせて明示的に指定する
@@ -54,7 +90,7 @@ else
   DB_PASSWORD="postgres" \
   JWT_SECRET="$E2E_JWT_SECRET" \
   RATE_LIMIT_ENABLED="false" \
-    ./backend/gradlew -p backend bootRun --no-daemon \
+    ./gallery-api/gradlew -p gallery-api bootRun --no-daemon \
     >"$BACKEND_LOG" 2>&1 &
   BACKEND_PID=$!
   set +m
@@ -75,6 +111,33 @@ else
     exit 1
   fi
   echo "バックエンドが起動しました"
+fi
+
+if curl -sf "$PORTFOLIO_API_URL" >/dev/null 2>&1; then
+  # portfolio-api は読み取り専用でレート制限も持たないため、起動済みのものをそのまま使う
+  echo "起動済みのportfolio-apiを使用します"
+else
+  echo "portfolio-apiを起動します (PORTFOLIO_API_ENV=local)"
+  # DB には読み取り専用ロール portfolio_reader で接続する（db/photo/portfolio_reader.sql）。
+  # 既存のDBボリュームにロールが未作成の場合は、このSQLを流してから実行すること
+  (cd portfolio-api && mise exec -- go build -o "$PORTFOLIO_API_BIN" ./cmd/server)
+  PORTFOLIO_API_ENV=local "$PORTFOLIO_API_BIN" >"$PORTFOLIO_API_LOG" 2>&1 &
+  PORTFOLIO_API_PID=$!
+
+  READY=false
+  for _ in $(seq 1 30); do
+    if curl -sf "$PORTFOLIO_API_URL" >/dev/null 2>&1; then
+      READY=true
+      break
+    fi
+    sleep 1
+  done
+  if [ "$READY" != "true" ]; then
+    echo "portfolio-apiの起動がタイムアウトしました。ログ: $PORTFOLIO_API_LOG"
+    tail -n 50 "$PORTFOLIO_API_LOG" || true
+    exit 1
+  fi
+  echo "portfolio-apiが起動しました"
 fi
 
 echo "Playwright E2Eテストを実行します"

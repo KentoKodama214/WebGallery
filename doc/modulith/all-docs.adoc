@@ -1,83 +1,19 @@
 == WebGalleryApplication
 plantuml::components.puml[,,format=svg]
 
-== Aggregate
-plantuml::module-aggregate.puml[,,format=svg]
-include::module-aggregate.adoc[]
-
-== Annotation
-plantuml::module-annotation.puml[,,format=svg]
-include::module-annotation.adoc[]
-
-== Aspect
-plantuml::module-aspect.puml[,,format=svg]
-include::module-aspect.adoc[]
-
-== Config
-plantuml::module-config.puml[,,format=svg]
-include::module-config.adoc[]
-
-== Constant
-plantuml::module-constant.puml[,,format=svg]
-include::module-constant.adoc[]
-
-== Controller
-plantuml::module-controller.puml[,,format=svg]
-include::module-controller.adoc[]
-
 == Domain
 plantuml::module-domain.puml[,,format=svg]
 include::module-domain.adoc[]
 
-== Dto
-plantuml::module-dto.puml[,,format=svg]
-include::module-dto.adoc[]
+== Application
+plantuml::module-application.puml[,,format=svg]
+include::module-application.adoc[]
 
-== Entity
-plantuml::module-entity.puml[,,format=svg]
-include::module-entity.adoc[]
+== Infrastructure
+plantuml::module-infrastructure.puml[,,format=svg]
+include::module-infrastructure.adoc[]
 
-== Enumeration
-plantuml::module-enumeration.puml[,,format=svg]
-include::module-enumeration.adoc[]
-
-== Event
-plantuml::module-event.puml[,,format=svg]
-include::module-event.adoc[]
-
-== Exception
-plantuml::module-exception.puml[,,format=svg]
-include::module-exception.adoc[]
-
-== Helper
-plantuml::module-helper.puml[,,format=svg]
-include::module-helper.adoc[]
-
-== Mapper
-plantuml::module-mapper.puml[,,format=svg]
-include::module-mapper.adoc[]
-
-== Model
-plantuml::module-model.puml[,,format=svg]
-include::module-model.adoc[]
-
-== Policy
-plantuml::module-policy.puml[,,format=svg]
-include::module-policy.adoc[]
-
-== Repository
-plantuml::module-repository.puml[,,format=svg]
-include::module-repository.adoc[]
-
-== Scheduler
-plantuml::module-scheduler.puml[,,format=svg]
-include::module-scheduler.adoc[]
-
-== Service
-plantuml::module-service.puml[,,format=svg]
-include::module-service.adoc[]
-
-== Type_handler
-plantuml::module-type_handler.puml[,,format=svg]
-include::module-type_handler.adoc[]
+== Presentation
+plantuml::module-presentation.puml[,,format=svg]
+include::module-presentation.adoc[]
 

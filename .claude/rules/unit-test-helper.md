@@ -1,12 +1,17 @@
 ---
 paths:
-  - backend/src/test/**/helper/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/infrastructure/helper/**
+  - gallery-api/src/test/**/infrastructure/security/**
+  - gallery-api/src/test/**/scheduler/lock/**
+  - "!gallery-api/src/test/**/*Aspect*"
+  - "!gallery-api/src/test/**/*MapperTest*"
+  - "!gallery-api/src/test/**/*RepositoryImplTest*"
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Helperパッケージの単体テスト規約
 
-`helper/`配下の技術的ユーティリティ（JWT生成・検証、セッション取得等）のテストを対象とする。対象クラスごとに性質が大きく異なるため、統一構造は最小限とする。
+`infrastructure/helper/`（写真・区分値関連の技術的ユーティリティ）と`infrastructure/security/`のAspect以外のクラス（JWT生成・検証、セッション取得、認証情報キャッシュ等）、および`infrastructure/scheduler/lock/`の`SchedulerLock`（多重起動防止ヘルパー本体。Mapper/Repositoryは対象外）のテストを対象とする。対象クラスごとに性質が大きく異なるため、統一構造は最小限とする。AOPクラスのテストは`unit-test-aspect.md`を参照。
 
 ## 命名規則
 

@@ -12,9 +12,12 @@ import { generateTestAccountId, login, registerAccount } from "../fixtures/auth"
  * ・撮影日時の未来日付バリデーション
  * ・タグの日本語名必須・スペース禁止バリデーション
  * ・追加した画像・タグの個別削除（保存前のクライアント側操作）
+ * ・必須項目（画像・タイトル（日本語）・タグの日本語名）の項目別エラー表示とタグ上限時の追加ボタン非活性
  */
 const PHOTO_1 = path.join(__dirname, "../fixtures/images/e2e-photo-1.png");
 const PHOTO_2 = path.join(__dirname, "../fixtures/images/e2e-photo-2.png");
+/** 1枚の写真に付けられるタグの上限件数（`src/lib/validation.ts` の `PHOTO_TAG_MAX_SIZE` と合わせる） */
+const PHOTO_TAG_MAX_SIZE = 20;
 
 authTest.describe("写真設定ページ（画像・タグの個別削除）", () => {
   authTest(
@@ -119,9 +122,15 @@ authTest.describe("写真設定ページ（バリデーション未検証項目�
 
         await page.getByTestId("submit-button").click();
 
-        await authExpect(
-          page.getByTestId("validation-errors").getByText("タグの日本語名は必須です")
-        ).toBeVisible();
+        // 未入力のタグ入力欄の下に警告文を表示し、ページ上部には表示しない
+        await authExpect(page.getByTestId("tag-japanese-error-1")).toHaveText(
+          "タグの日本語名は必須です"
+        );
+        await authExpect(page.getByTestId("tag-japanese-1")).toHaveAttribute(
+          "aria-invalid",
+          "true"
+        );
+        await authExpect(page.getByTestId("validation-errors")).toHaveCount(0);
       });
 
       await authTest.step("日本語名にスペースが含まれると保存できないこと", async () => {
@@ -133,6 +142,56 @@ authTest.describe("写真設定ページ（バリデーション未検証項目�
           page.getByTestId("validation-errors").getByText("タグの日本語名にスペースは使用できません")
         ).toBeVisible();
       });
+    }
+  );
+});
+
+authTest.describe("写真設定ページ（項目別エラー表示）", () => {
+  authTest(
+    "画像未選択・タイトル（日本語）未入力で保存すると、各入力欄の下に警告文が表示されページ上部には表示されないこと",
+    async ({ workerPage: page, testUser }) => {
+      await page.goto(`/photo/${testUser.accountId}/photo_setting`);
+      await authExpect(page.getByTestId("image-input")).toBeAttached();
+
+      await page.getByTestId("submit-button").click();
+
+      await authExpect(page.getByTestId("image-file-error")).toHaveText(
+        "画像ファイルを選択してください"
+      );
+      await authExpect(page.getByTestId("japanese-title-error")).toHaveText(
+        "タイトル（日本語）を入力してください"
+      );
+      await authExpect(page.getByTestId("japanese-title-input")).toHaveAttribute(
+        "aria-invalid",
+        "true"
+      );
+      await authExpect(page.getByTestId("validation-errors")).toHaveCount(0);
+
+      // 入力・選択すると警告文が解除されること
+      await page.getByTestId("japanese-title-input").fill("項目別エラー検証用写真");
+      await authExpect(page.getByTestId("japanese-title-error")).toHaveCount(0);
+      await page.getByTestId("image-input").setInputFiles(PHOTO_1);
+      await authExpect(page.getByTestId("image-file-error")).toHaveCount(0);
+    }
+  );
+
+  authTest(
+    "タグを上限件数まで追加すると、追加ボタンが非活性になりボタンの横に上限メッセージが表示されること",
+    async ({ workerPage: page, testUser }) => {
+      await page.goto(`/photo/${testUser.accountId}/photo_setting`);
+      await authExpect(page.getByTestId("image-input")).toBeAttached();
+
+      const addTagButton = page.getByTestId("add-tag-button");
+      for (let i = 0; i < PHOTO_TAG_MAX_SIZE; i++) {
+        await addTagButton.click();
+      }
+
+      await authExpect(page.getByTestId(`tag-entry-${PHOTO_TAG_MAX_SIZE}`)).toBeVisible();
+      await authExpect(addTagButton).toBeDisabled();
+      await authExpect(page.getByTestId("tag-limit-message")).toHaveText(
+        `タグは${PHOTO_TAG_MAX_SIZE}件までです`
+      );
+      await authExpect(page.getByTestId("validation-errors")).toHaveCount(0);
     }
   );
 });

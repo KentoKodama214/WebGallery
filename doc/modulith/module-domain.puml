@@ -17,13 +17,10 @@ top to bottom direction
 
 System_Boundary("WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
   Container_Boundary("WebGalleryApplication.WebGalleryApplication_boundary", "WebGalleryApplication", $tags="") {
-    Component(WebGalleryApplication.WebGalleryApplication.Constant, "Constant", $techn="Module", $descr="", $tags="", $link="")
     Component(WebGalleryApplication.WebGalleryApplication.Domain, "Domain", $techn="Module", $descr="", $tags="", $link="")
   }
 
 }
-
-Rel(WebGalleryApplication.WebGalleryApplication.Domain, WebGalleryApplication.WebGalleryApplication.Constant, "depends on", $techn="", $tags="", $link="")
 
 SHOW_LEGEND(true)
 hide stereotypes

@@ -1,0 +1,54 @@
+{
+  "theme": "組写真",
+  "description": "",
+  "templateKbn": "frame",
+  "templateSettings": {
+    "frameTemplateNo": 1,
+    "frame": {
+      "size": {
+        "width": 364,
+        "height": 257
+      },
+      "background": {
+        "color": "#f5f0e6"
+      },
+      "slots": [
+        {
+          "x": 5,
+          "y": 10,
+          "width": 25,
+          "height": 60,
+          "rotation": -2
+        },
+        {
+          "x": 35,
+          "y": 10,
+          "width": 25,
+          "height": 60,
+          "rotation": -2
+        }
+      ],
+      "texts": [
+        {
+          "x": 10,
+          "y": 80,
+          "width": 80,
+          "fontFamily": "mincho",
+          "fontSize": 3
+        }
+      ]
+    },
+    "messages": [
+      "春の訪れ"
+    ]
+  },
+  "photoList": [
+    {
+      "photoNo": 1
+    },
+    {
+      "photoNo": 2
+    }
+  ],
+  "tagList": []
+}

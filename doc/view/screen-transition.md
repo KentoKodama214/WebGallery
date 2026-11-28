@@ -17,6 +17,41 @@
 | 11 | お問い合わせ詳細 | `inquiry_detail` | `/inquiry/detail` | 認証必須（本人のみ） |
 | 12 | 管理者お問い合わせ管理 | `admin_inquiry_management` | `/admin/inquiry_management` | 認証必須（管理者のみ） |
 | 13 | 管理者お問い合わせ詳細 | `admin_inquiry_detail` | `/admin/inquiry_management/detail` | 認証必須（管理者のみ） |
+| 14 | ポートフォリオ設定（一覧） | `portfolio_setting` | `/{accountId}/portfolio_setting` | 認証必須（本人のみ） |
+| 15 | ポートフォリオ作成・編集 | `portfolio_edit` | `/{accountId}/portfolio_setting/edit`（編集時は `?portfolioNo=`） | 認証必須（本人のみ） |
+| 16 | ポートフォリオ公開ページ（一覧） | `portfolio_public_list` | `/portfolio/{accountId}` | 公開（公開中のポートフォリオのみ） |
+| 17 | ポートフォリオ公開ページ（詳細） | `portfolio_public_detail` | `/portfolio/{accountId}/{portfolioNo}` | 公開（公開中のポートフォリオのみ） |
+| 18 | ページが見つかりません（404） | `not_found` | 未マッチのURL全般 | 公開 |
+| 19 | 管理者写真管理 | `admin_photo_management` | `/admin/photo_management` | 認証必須（管理者のみ） |
+| 20 | 額縁テンプレート（一覧） | `frame_templates` | `/{accountId}/portfolio_setting/frame_templates` | 認証必須（本人のみ） |
+| 21 | 額縁テンプレート作成・編集 | `frame_template_edit` | `/{accountId}/portfolio_setting/frame_templates/edit`（編集時は `?frameTemplateNo=`） | 認証必須（本人のみ） |
+
+### 404 の扱い
+
+URL の動的セグメント・クエリパラメータが不正な場合（アカウントID形式でない `accountId` /
+`photoAccountId`、正の整数でない `photoNo` / `inquiryNo` / `inquiryId` / `portfolioNo`（指定した場合のみ）、写真編集用クエリの片方のみ指定等）は、
+ページ内にメッセージを表示するのではなく `notFound()` を呼び**HTTP 404 を返す**（`<meta name="robots"
+content="noindex">` も付与される）。表示内容はルートごとの `not-found.tsx` で、従来と同じ文言を出す。
+
+| 対象ルート | `not-found.tsx` の文言 |
+|---|---|
+| `/photo/{photoAccountId}/photo_list` | ギャラリーが見つかりません |
+| `/photo/{photoAccountId}/photo_detail` | 写真が見つかりません |
+| `/photo/{photoAccountId}/photo_setting` | 写真が見つかりません |
+| `/inquiry/detail` | お問い合わせが見つかりません |
+| `/admin/inquiry_management/detail` | お問い合わせが見つかりません |
+| `/portfolio/{accountId}`・`/portfolio/{accountId}/{portfolioNo}` | ポートフォリオが見つかりません |
+| 上記以外（`/{accountId}/account_setting` 等）・未マッチのURL | ページが見つかりません（ルートの `app/not-found.tsx`） |
+
+認証が必要なページで未ログインの場合は 404 ではなく `<AuthGuard>` が `/login` へ退避させる
+（管理者用の4画面も同様）。パラメータ検証は `<AuthGuard>` より手前で行うため、
+不正なURLは未ログインでも 404 になる。
+
+ポートフォリオの公開ページでは、形式が正しくても下書き・削除済み・存在しないポートフォリオの詳細は 404 になる。
+一覧は存在しないアカウントでも 404 にはせず、「公開中のポートフォリオはありません」を表示する
+（portfolio-api がアカウントの存在有無を区別しないため。[portfolio-api](../architecture/portfolio-api.md) 参照）。
+一覧のクエリパラメータ（検索語 `keyword`・表示するページ数 `page`）は不正でも 404 にはしない。`page` は正の整数でない場合は1、
+上限（50）を超える場合は50として扱う。
 
 ---
 
@@ -42,20 +77,38 @@ graph TD
         INQUIRY["お問い合わせ投稿<br/>/inquiry"]
         INQUIRY_LIST["お問い合わせ一覧<br/>/inquiry/list"]
         INQUIRY_DETAIL["お問い合わせ詳細<br/>/inquiry/detail"]
+        PORTFOLIO_SETTING["ポートフォリオ設定<br/>/{id}/portfolio_setting"]
+        PORTFOLIO_EDIT["ポートフォリオ作成・編集<br/>/{id}/portfolio_setting/edit"]
+        FRAME_TEMPLATES["額縁テンプレート（一覧）<br/>/{id}/portfolio_setting/frame_templates"]
+        FRAME_TEMPLATE_EDIT["額縁テンプレート作成・編集<br/>/{id}/portfolio_setting/frame_templates/edit"]
+        PORTFOLIO_PUBLIC_LIST["ポートフォリオ公開ページ（一覧）<br/>/portfolio/{id}"]
+        PORTFOLIO_PUBLIC_DETAIL["ポートフォリオ公開ページ（詳細）<br/>/portfolio/{id}/{no}"]
     end
 
     subgraph 管理者画面
         ADMIN_ACCOUNT["管理者アカウント管理<br/>/admin/account_management"]
         ADMIN_INQUIRY["管理者お問い合わせ管理<br/>/admin/inquiry_management"]
         ADMIN_INQUIRY_DETAIL["管理者お問い合わせ詳細<br/>/admin/inquiry_management/detail"]
+        ADMIN_PHOTO["管理者写真管理<br/>/admin/photo_management"]
     end
 
     ACCOUNT_LIST -->|ギャラリーボタン| PHOTO_LIST
+    ACCOUNT_LIST -->|ポートフォリオを見る| PORTFOLIO_PUBLIC_LIST
     PHOTO_LIST -->|写真選択| PHOTO_DETAIL
     PHOTO_LIST -->|＋写真追加| PHOTO_SETTING
     PHOTO_DETAIL -->|← back| PHOTO_LIST
     PHOTO_DETAIL -->|編集アイコン| PHOTO_SETTING
     PHOTO_DETAIL -->|削除成功| PHOTO_LIST
+    PHOTO_DETAIL -->|削除成功・公開中のポートフォリオが下書きに戻った<br/>（通知ダイアログのリンク）| PORTFOLIO_EDIT
+    PORTFOLIO_SETTING -->|新規作成・テーマ選択| PORTFOLIO_EDIT
+    PORTFOLIO_SETTING -->|額縁テンプレート| FRAME_TEMPLATES
+    FRAME_TEMPLATES -->|新規作成・編集| FRAME_TEMPLATE_EDIT
+    PORTFOLIO_EDIT -->|額縁テンプレートを管理・作成（額縁型）| FRAME_TEMPLATES
+    PORTFOLIO_EDIT -->|一覧へ戻る（左上）・削除成功（復元不可の確認後）| PORTFOLIO_SETTING
+    PORTFOLIO_SETTING -->|公開中の行の公開ページリンク（別タブ）| PORTFOLIO_PUBLIC_DETAIL
+    PORTFOLIO_EDIT -->|公開ページを見る（公開中のみ・別タブ）| PORTFOLIO_PUBLIC_DETAIL
+    PORTFOLIO_PUBLIC_LIST -->|ポートフォリオ選択| PORTFOLIO_PUBLIC_DETAIL
+    PORTFOLIO_PUBLIC_DETAIL -->|← {id} のポートフォリオ一覧| PORTFOLIO_PUBLIC_LIST
     PHOTO_SETTING -->|登録/更新成功| PHOTO_LIST
     PHOTO_SETTING -->|← back| PHOTO_LIST
     ACCOUNT_SETTING -->|← back| PHOTO_LIST
@@ -90,6 +143,7 @@ graph LR
     MENU -->|"Inquiry<br/>（認証済み時）"| INQUIRY_LIST["お問い合わせ一覧<br/>/inquiry/list"]
     MENU -->|"My Gallery<br/>（認証済み時）"| PHOTO_LIST["写真一覧<br/>/photo/{id}/photo_list"]
     MENU -->|"Account Setting<br/>（認証済み時）"| ACCOUNT_SETTING["アカウント設定<br/>/{id}/account_setting"]
+    MENU -->|"My Portfolio<br/>（認証済み時。My Galleryの直下）"| PORTFOLIO_SETTING["ポートフォリオ設定<br/>/{id}/portfolio_setting"]
     MENU -->|"Sign Out<br/>（認証済み時）"| LOGOUT["ログアウト → /login"]
 ```
 
@@ -163,9 +217,93 @@ sequenceDiagram
     Note over User, API: 写真削除フロー
     User->>Detail: 削除アイコンをクリック
     Detail->>API: DELETE /api/v1/accounts/{id}/photos
-    API-->>Detail: 削除成功
-    Detail->>Detail: モーダル表示
-    Detail->>List: /photo/{id}/photo_list に遷移
+    API-->>Detail: 削除成功（写真を使用していたポートフォリオから除外し、公開中のものは下書きに戻す）
+    alt 下書きに戻したポートフォリオがない
+        Detail->>List: /photo/{id}/photo_list に遷移
+    else 下書きに戻したポートフォリオがある
+        Detail->>Detail: 「確認して公開してください」の通知ダイアログと、各ポートフォリオの編集画面へのリンクを表示
+        User->>Detail: 「写真一覧へ」を押す、またはリンクで編集画面へ移動
+        Detail->>List: /photo/{id}/photo_list に遷移
+    end
+```
+
+---
+
+## ポートフォリオ設定フロー詳細
+
+```mermaid
+sequenceDiagram
+    actor User as ユーザー
+    participant List as ポートフォリオ設定（一覧）
+    participant Edit as ポートフォリオ作成・編集
+    participant API as REST API
+
+    User->>List: /{id}/portfolio_setting にアクセス
+    List->>API: GET /api/v1/accounts/{id}/portfolios?pageNo=1
+    API-->>List: 一覧（下書きを含む。表示順に20件）と、最後のページかどうか
+    List->>API: GET /api/v1/accounts/{id}/portfolios/upper-limit
+    API-->>List: 作成数が上限に達しているか（達している場合は「新規作成」を押せず、その旨を表示）
+    User->>List: 検索語で絞り込み（検索）
+    List->>API: GET /api/v1/accounts/{id}/portfolios?keyword=&pageNo=1
+    API-->>List: テーマ・タグ名のいずれかに部分一致する一覧（OR条件。1ページ目から取得し直す）
+    User->>List: 「＋もっと見る」（最後のページでない場合のみ表示）
+    List->>API: GET /api/v1/accounts/{id}/portfolios?keyword=&pageNo={次のページ}
+    API-->>List: 次の20件（一覧の末尾に追加）
+    User->>List: 行の「↑」「↓」で並び替え（絞り込み中は不可。読み込み済みの最後の行は、続きがある間は下へ移動不可）
+    List->>API: PUT /api/v1/accounts/{id}/portfolios/{no}/display-order
+    API-->>List: 全件の並びで隣のポートフォリオと入れ替えて保存（失敗した場合は一覧を1ページ目から取得し直す）
+    User->>List: 新規作成
+    List->>Edit: /{id}/portfolio_setting/edit に遷移
+    User->>Edit: 「写真を選択」で写真選択ダイアログを開く
+    Edit->>API: GET /api/v1/accounts/{id}/portfolio-photos?keyword=&pageNo=
+    API-->>Edit: 本人の写真（写真番号の降順。検索語がタイトル・撮影場所の名前・住所・タグ名のいずれかに部分一致。写真の枠は向きに合わせた縦横比で表示）
+    User->>Edit: 上段の未選択の写真を押して下段の選択済みへ移し（選択済みを押すと解除）、「完了」（「キャンセル」では選択を反映しない）
+    User->>Edit: テーマ・説明文・タグ（「＋タグを追加」）・テンプレート・写真の並べ替え・テンプレート固有の設定を入力（グリッド型は写真ごとの設定なし）
+    User->>Edit: 「プレビューを表示」（保存ボタンの左）でレイアウトをダイアログで確認（フィーチャー型・グリッド型）
+    User->>Edit: 下書きとして登録（写真が0枚の場合は、下書きでもエラーを表示して登録しない）
+    Edit->>API: POST /api/v1/accounts/{id}/portfolios
+    API-->>Edit: 登録成功（下書き。結果はダイアログで通知）。作成数が権限ごとの上限（下書きを含む。mini-user・normal-userの上限は環境変数で決まり、special-user・administratorは上限なし）に達している場合はエラーを表示
+    Edit->>Edit: ?portfolioNo= 付きのURLへ切り替え（登録した内容は保持したまま、読み込み直さない）
+    User->>Edit: 公開する（未保存の変更がある間は押せない。フィーチャー型でテーマが未入力の写真がある場合は、その欄の下に赤字で警告して送信しない）
+    Edit->>API: PUT /api/v1/accounts/{id}/portfolios/{no}/status
+    API-->>Edit: 公開成功（結果はダイアログで通知。公開に必要な設定が不足している場合はエラーを表示）
+    Edit->>Edit: 「保存する」「下書きに戻す」の下に「公開ページを見る」リンクを表示
+```
+
+---
+
+## ポートフォリオ公開ページフロー詳細
+
+公開ページは Server Component で描画し、Next.js のサーバーから portfolio-api（GraphQL）を呼ぶ（ブラウザからは呼ばない）。
+
+```mermaid
+sequenceDiagram
+    actor Visitor as 閲覧者（未ログイン可）
+    participant List as 公開ページ（一覧）
+    participant Detail as 公開ページ（詳細）
+    participant GQL as portfolio-api（GraphQL）
+
+    Visitor->>List: /portfolio/{id} にアクセス
+    List->>GQL: publishedPortfolios(accountId, limit: 20)
+    GQL-->>List: 公開中のポートフォリオ一覧（所有者が設定した表示順に20件。なければ空）と、続きがあるかどうか
+    Visitor->>List: 検索語（テーマ・タグ）で検索
+    List->>List: /portfolio/{id}?keyword= に遷移（GET）
+    List->>GQL: publishedPortfolios(accountId, keyword, limit: 20)
+    GQL-->>List: テーマ・タグ名のいずれかに部分一致する一覧（OR条件）
+    Visitor->>List: 「＋もっと見る」（続きがある場合のみ表示）
+    List->>List: /portfolio/{id}?keyword=&page={次のページ} に遷移（スクロール位置は保つ）
+    List->>GQL: publishedPortfolios(accountId, keyword, limit: page × 20)
+    GQL-->>List: 先頭から page × 20 件（続きが下に追加されたように表示される）
+    Visitor->>List: ポートフォリオを選択
+    List->>Detail: /portfolio/{id}/{no} に遷移
+    Detail->>GQL: publishedPortfolio(accountId, portfolioNo)
+    alt 公開中
+        GQL-->>Detail: テーマ・説明文・タグ・テンプレートごとのレイアウト（画像は署名付きURL）
+        Detail->>Detail: テンプレート（フィーチャー型・グリッド型）で描画
+    else 下書き・削除済み・存在しない
+        GQL-->>Detail: null
+        Detail->>Detail: 404（ポートフォリオが見つかりません）
+    end
 ```
 
 ---
@@ -298,7 +436,9 @@ sequenceDiagram
     User->>List: 件名を選択
     List->>Detail: /inquiry/detail?inquiryNo={no} に遷移
     Detail->>API: GET /api/v1/inquiries/{inquiryNo}
-    API-->>Detail: 詳細・返信一覧を返却（未読の返信があれば同時に既読化）
+    API-->>Detail: 詳細・返信一覧を返却（副作用なし）
+    Detail->>API: POST /api/v1/inquiries/{inquiryNo}/read（表示後に既読化）
+    API-->>Detail: 既読化成功（失敗しても詳細表示は妨げない）
     User->>Detail: 「← back」リンク
     Detail->>List: /inquiry/list に遷移
 
@@ -344,6 +484,47 @@ sequenceDiagram
 
 ---
 
+## 管理者写真管理フロー
+
+不適切な画像の通報は既存のお問い合わせで受け付け、管理者が写真管理画面から該当の写真を非公開にする。
+非公開にした写真は所有者本人以外（未ログインを含む）には写真一覧・写真詳細・公開ポートフォリオで表示されず、
+所有者本人には写真一覧で「管理者により非公開」のバッジ、写真詳細で通知を表示する。
+公開ポートフォリオのグリッド型では、非公開の写真の枠だけを空けて行の構成を保つ。
+ポートフォリオ編集画面では、非公開の写真に「管理者により非公開」のバッジと外すよう案内を表示し（プレビューにもバッジを表示）、
+外すまで保存・公開できない。
+
+```mermaid
+sequenceDiagram
+    actor Admin as 管理者
+    participant Management as 管理者写真管理画面
+    participant API as REST API
+
+    Admin->>Management: /admin/photo_management にアクセス
+    Management->>API: GET /api/v1/admin/photos
+    API-->>Management: 全アカウントの写真一覧返却（非公開の写真を含む。登録日時の新しい順）
+    Admin->>Management: アカウントID・公開状態で絞り込み
+    Management->>API: GET /api/v1/admin/photos?accountId={id}&isHiddenByAdmin={bool}
+    API-->>Management: 絞り込み結果返却
+
+    alt 非公開にする
+        Admin->>Management: 「非公開にする」ボタンをクリック
+        Management->>Management: 確認ダイアログ表示（理由の入力必須）
+        Admin->>Management: 理由を入力して「実行」
+        Management->>API: PUT /api/v1/admin/photos/{accountNo}/{photoNo}/visibility（isHiddenByAdmin=true）
+        API-->>Management: 成功（操作履歴を記録）
+        Management->>Management: 該当の写真の状態のみ更新（リードレプリカの遅延を避けるため一覧は再取得しない）
+    else 非公開を解除
+        Admin->>Management: 「非公開を解除」ボタンをクリック
+        Management->>Management: 確認ダイアログ表示（理由の入力必須）
+        Admin->>Management: 理由を入力して「実行」
+        Management->>API: PUT /api/v1/admin/photos/{accountNo}/{photoNo}/visibility（isHiddenByAdmin=false）
+        API-->>Management: 成功（操作履歴を記録）
+        Management->>Management: 該当の写真の状態のみ更新
+    end
+```
+
+---
+
 ## 遷移詳細テーブル
 
 ### ルート (`/`)
@@ -371,12 +552,13 @@ sequenceDiagram
 
 ### アカウント一覧 (`/account_list`)
 
-一覧にはアカウント名と「ギャラリーを見る」リンクのみを表示し、アカウントID（ログインID）は
+一覧にはアカウント名と「ギャラリーを見る」「ポートフォリオを見る」リンクのみを表示し、アカウントID（ログインID）は
 画面に表示しない（他ユーザーのログインID列挙を避けるため）。
 
 | 操作 | 遷移先 | 方式 |
 |------|--------|------|
 | 「ギャラリー」ボタン | `/photo/{accountId}/photo_list` | リンク |
+| 「ポートフォリオを見る」リンク | `/portfolio/{accountId}` | リンク |
 | メニュー「Sign In」 | `/login` | リンク（未認証時） |
 | メニュー「My Gallery」 | `/photo/{accountId}/photo_list` | リンク（認証済み時） |
 | メニュー「Sign Out」 | `/login` | ログアウト |
@@ -413,6 +595,7 @@ sequenceDiagram
 |------|--------|------|
 | 編集アイコン | `/photo/{photoAccountId}/photo_setting` | リンク（本人のみ） |
 | 削除アイコン → 成功 | `/photo/{photoAccountId}/photo_list` | AJAX → モーダル → リダイレクト |
+| 削除アイコン → 成功（公開中のポートフォリオが下書きに戻った） | 同画面（通知ダイアログ）→「写真一覧へ」で `/photo/{photoAccountId}/photo_list`、リンクで `/{accountId}/portfolio_setting/edit?portfolioNo={no}` | AJAX → 通知ダイアログ |
 | 削除アイコン → 失敗 | 同画面（エラー表示） | 画面内表示 |
 | お気に入りアイコン | 同画面（状態切替） | AJAX（認証済み時のみ） |
 | 「← back」リンク | `/photo/{photoAccountId}/photo_list` | リンク |
@@ -429,6 +612,83 @@ sequenceDiagram
 | 登録/更新失敗 | 同画面（エラー表示） | 画面内表示 |
 | 「← back」リンク | `/photo/{photoAccountId}/photo_list` | リンク |
 | メニュー「Sign Out」 | `/login` | ログアウト |
+
+### ポートフォリオ設定（一覧） (`/{accountId}/portfolio_setting`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 「新規作成」ボタン | `/{accountId}/portfolio_setting/edit` | リンク（作成数が権限ごとの上限に達している場合は押せず、その旨を表示） |
+| 「額縁テンプレート」ボタン（「新規作成」の左） | `/{accountId}/portfolio_setting/frame_templates` | リンク |
+| 検索語（テーマ・タグ）を入力して「検索」／「クリア」 | 同画面（一覧を絞り込み／解除） | AJAX（テーマ・タグ名のいずれかに部分一致。OR条件） |
+| 「＋もっと見る」ボタン | 同画面（次の20件を追加読み込み） | AJAX（最後のページでない場合のみ表示） |
+| 行の「並び順」列の「↑」「↓」ボタン | 同画面（隣のポートフォリオと入れ替えて保存） | AJAX（絞り込み中は不可。読み込み済みの最後の行は、続きがある間は下へ移動不可。公開ページの一覧も同じ順に並ぶ） |
+| テーマ選択 | `/{accountId}/portfolio_setting/edit?portfolioNo={no}` | リンク |
+| 公開中の行の「公開ページ」列の「表示」リンク | `/portfolio/{accountId}/{portfolioNo}` | リンク（公開中のみ・別タブ） |
+
+### ポートフォリオ作成・編集 (`/{accountId}/portfolio_setting/edit`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 「写真を選択」ボタン（未選択の間は写真の見出しの下、選択後は写真の一覧の下。グリッド型は行の枚数の合計と写真の枚数をボタンの上に表示） | 同画面（写真選択ダイアログ。写真の枠は向きに合わせた縦横比） | AJAX（本人専用の写真検索APIで取得） |
+| 写真選択ダイアログで検索語を入力して「検索」 | 同画面（未選択の写真を絞り込み） | AJAX（タイトル・撮影場所の名前・住所・タグ名のいずれかに部分一致） |
+| 写真選択ダイアログの上段（未選択）の写真／下段（選択済み）の写真 | 同画面（選択済みの末尾へ追加／選択を解除して未選択へ戻す） | 画面内表示 |
+| 写真選択ダイアログの「完了」／「キャンセル」 | 同画面（選択を反映／反映せずに閉じる） | 画面内表示 |
+| 「＋タグを追加」ボタン（タグ欄の下・左寄せ） | 同画面（タグの入力欄を追加） | 画面内表示 |
+| 「下書きとして登録」（新規）→ 成功 | `/{accountId}/portfolio_setting/edit?portfolioNo={no}`（完了ダイアログ） | AJAX → URL置き換え |
+| 「下書きとして登録」・「保存する」（写真が0枚） | 同画面（「写真を1枚以上選択してください」を表示） | 画面内表示（送信しない） |
+| 「下書きとして登録」（作成数が権限ごとの上限に達している） | 同画面（「作成できるポートフォリオの数が上限に達しています。」を表示） | 画面内表示（400） |
+| 「＋行を追加」ボタン（グリッド型。行の組み合わせの下） | 同画面（行を追加） | 画面内表示 |
+| 額縁型：額縁テンプレートを選んで「この額縁を使う」 | 同画面（額縁定義をポートフォリオへコピーし、写真を表示順に写真枠へ当てはめた見本・メッセージ枠ごとの文面の入力欄を表示。写真の上に「写真枠 N枠 / 写真 M枚」を表示） | 画面内表示（額縁テンプレート一覧APIで取得。テンプレートを後から変更・削除しても、コピーした額縁は変わらない） |
+| 額縁型：額縁を選ばずに「下書きとして登録」・「保存する」 | 同画面（「額縁テンプレートを選んで「この額縁を使う」を押してください」を表示） | 画面内表示（送信しない） |
+| 額縁型：「額縁テンプレートを管理」・「額縁テンプレートを作成」リンク（額縁テンプレートが0件の場合） | `/{accountId}/portfolio_setting/frame_templates`・`/{accountId}/portfolio_setting/frame_templates/edit` | リンク |
+| 「プレビューを表示」ボタン（どのテンプレートも「保存する」（新規は「下書きとして登録」）の左） | 同画面（プレビューのダイアログ） | 画面内表示 |
+| 「保存する」（編集）→ 成功 | 同画面（完了ダイアログ） | AJAX |
+| 「公開する」／「下書きに戻す」→ 成功 | 同画面（状態バッジ更新・完了ダイアログ） | AJAX（未保存の変更がある間は押せず、その旨を赤字で表示） |
+| 登録・保存・公開状態の変更 → 失敗 | 同画面（エラー表示） | 画面内表示 |
+| 「公開する」・公開中の「保存する」（フィーチャー型でテーマが未入力の写真がある） | 同画面（その写真のテーマの欄の下に赤字で「公開するにはテーマを入力してください」、ボタンの下に中央揃えで「公開に必要な設定が不足しています。…」を表示。未保存の変更の案内が出ている場合は、この文言に差し替える） | 画面内表示（送信しない） |
+| 「削除」（見出しの右端）→ 確認ダイアログ（復元できない旨を表示）→「削除する」→ 成功 | `/{accountId}/portfolio_setting` | AJAX → 遷移（物理削除） |
+| 「公開ページを見る」リンク（「保存する」「下書きに戻す」の下） | `/portfolio/{accountId}/{portfolioNo}` | リンク（公開中のみ・別タブ） |
+| 「← ポートフォリオ一覧へ戻る」リンク（左上） | `/{accountId}/portfolio_setting` | リンク |
+
+### 額縁テンプレート（一覧） (`/{accountId}/portfolio_setting/frame_templates`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 「新規作成」ボタン | `/{accountId}/portfolio_setting/frame_templates/edit` | リンク（作成数が上限の50個に達している場合は押せず、その旨を表示） |
+| 「編集」ボタン | `/{accountId}/portfolio_setting/frame_templates/edit?frameTemplateNo={no}` | リンク |
+| 「削除」ボタン → 確認ダイアログ（選択済みのポートフォリオはコピーした額縁で表示され続ける旨を表示）→「削除する」 | 同画面（一覧から取り除く） | AJAX（物理削除。失敗時はダイアログを開いたままエラーを表示） |
+| 「← ポートフォリオ設定へ戻る」リンク（左上） | `/{accountId}/portfolio_setting` | リンク |
+
+### 額縁テンプレート作成・編集 (`/{accountId}/portfolio_setting/frame_templates/edit`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 「＋写真枠」・「＋メッセージ枠」ボタン | 同画面（枠を追加して選択。写真枠30個・メッセージ枠10個まで） | 画面内表示 |
+| キャンバスの枠をドラッグ／右下のつまみ／上のつまみ | 同画面（枠を移動／大きさを変更／回転。Shiftキーで15°刻み、0°付近は吸着。移動・大きさの変更中は、枠の端・中央が額縁の端・中央や他の枠の端・中央に近づくと吸着して補助線を表示。Altキーを押している間は吸着しない） | 画面内表示 |
+| 選択中の枠で矢印キー（Shiftキーで大きく移動）／Delete・Backspaceキー | 同画面（枠を移動／削除） | 画面内表示 |
+| 右側のパネル（何も選択していない間は額縁全体：サイズ・向き・背景・外枠。写真枠：サイズ（写真のプリントサイズ。台紙に収まらないサイズは選べない）・向き・位置・大きさ・傾き・枠線・影。メッセージ枠：位置・幅・傾き・フォント・文字サイズ・色・揃え・太字・斜体・確認用の文面（保存しない）） | 同画面（キャンバスに反映） | 画面内表示 |
+| 「登録する」（新規）→ 成功 | `/{accountId}/portfolio_setting/frame_templates/edit?frameTemplateNo={no}`（完了ダイアログ） | AJAX → URL置き換え |
+| 「保存する」（編集）→ 成功 | 同画面（完了ダイアログ） | AJAX |
+| 「登録する」・「保存する」（テンプレート名が未入力・写真枠が0個） | 同画面（エラー表示） | 画面内表示（送信しない） |
+| 「削除」（見出しの右端）→ 確認ダイアログ →「削除する」→ 成功 | `/{accountId}/portfolio_setting/frame_templates` | AJAX → 遷移（物理削除） |
+| 「← 額縁テンプレート一覧へ戻る」リンク（左上） | `/{accountId}/portfolio_setting/frame_templates` | リンク |
+
+### ポートフォリオ公開ページ（一覧） (`/portfolio/{accountId}`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| ポートフォリオ選択 | `/portfolio/{accountId}/{portfolioNo}` | リンク |
+| 検索語（テーマ・タグ）を入力して「検索」 | `/portfolio/{accountId}?keyword={検索語}` | フォーム（GET。テーマ・タグ名のいずれかに部分一致。OR条件） |
+| 「クリア」 | `/portfolio/{accountId}` | リンク（検索中のみ表示） |
+| 「＋もっと見る」 | `/portfolio/{accountId}?keyword={検索語}&page={次のページ}` | リンク（続きがある場合のみ表示。先頭から page × 20 件を表示し、スクロール位置は保つ。page の上限は50） |
+| 不正な `accountId` | 404（ポートフォリオが見つかりません） | `notFound()` |
+
+### ポートフォリオ公開ページ（詳細） (`/portfolio/{accountId}/{portfolioNo}`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| 「← {accountId} のポートフォリオ一覧」リンク | `/portfolio/{accountId}` | リンク |
+| 不正な `accountId`・`portfolioNo`、下書き・削除済み・存在しないポートフォリオ | 404（ポートフォリオが見つかりません） | `notFound()` |
 
 ### 管理者アカウント管理 (`/admin/account_management`)
 
@@ -463,7 +723,8 @@ sequenceDiagram
 |------|--------|------|
 | 「← back」リンク | `/inquiry/list` | リンク |
 | 「このお問い合わせを取り下げる」→ 確認 | 同画面（ステータス更新） | AJAX → 確認ダイアログ |
-| 不正な `inquiryNo` クエリ | 同画面（「お問い合わせが見つかりません」表示） | 画面内表示 |
+| 不正な `inquiryNo` クエリ（正の整数でない） | 404（お問い合わせが見つかりません） | `notFound()` |
+| 存在しない・他人のお問い合わせ | 同画面（エラーメッセージ表示） | 画面内表示 |
 
 ### 管理者お問い合わせ管理 (`/admin/inquiry_management`)
 
@@ -479,9 +740,19 @@ sequenceDiagram
 | 返信送信 → 成功 | 同画面（返信履歴・ステータス更新） | AJAX |
 | 返信送信 → 失敗 | 同画面（エラー表示） | 画面内表示 |
 | 「← back」リンク | `/admin/inquiry_management` | リンク |
-| 不正な `inquiryId` クエリ | 同画面（「お問い合わせが見つかりません」表示） | 画面内表示 |
+| 不正な `inquiryId` クエリ（正の整数でない） | 404（お問い合わせが見つかりません） | `notFound()` |
+| 存在しないお問い合わせ | 同画面（エラーメッセージ表示） | 画面内表示 |
 
 取り下げ済み（`statusKbn: withdrawn`）のお問い合わせは、返信フォームの代わりに「返信できません」という案内文のみを表示する（管理者は内容の確認のみ可能）。
+
+### 管理者写真管理 (`/admin/photo_management`)
+
+| 操作 | 遷移先 | 方式 |
+|------|--------|------|
+| アカウントID検索・公開状態絞り込み | 同画面（一覧更新） | AJAX |
+| 非公開にする／非公開を解除 → 成功 | 同画面（該当の写真の状態を更新） | AJAX |
+| 非公開にする／非公開を解除 → 失敗 | 同画面（エラー表示） | 画面内表示 |
+| サムネイル選択 | 画像（別タブ） | リンク |
 
 ---
 
@@ -492,7 +763,7 @@ sequenceDiagram
 | API | メソッド | 呼び出し元画面 | 成功時の遷移 |
 |-----|---------|-------------|------------|
 | `/api/v1/auth/login` | POST | ログイン | → 写真一覧 |
-| `/api/v1/auth/refresh` | POST | 全画面（AuthProvider） | なし（トークン復旧） |
+| `/api/v1/auth/refresh` | POST | 全画面（AuthProvider） | なし（トークン復旧。リフレッシュトークンの cookie が無い未ログイン時は 204 を返し、未ログインとして扱う） |
 | `/api/v1/auth/logout` | POST | 共通メニュー | → ログイン |
 | `/api/v1/accounts` | POST | アカウント登録 | → ログイン |
 | `/api/v1/accounts/{accountId}` | PUT | アカウント設定 | → 同画面 or ログイン |
@@ -503,6 +774,16 @@ sequenceDiagram
 | `/api/v1/accounts/{photoAccountId}/photos` | PUT | 写真設定（編集） | → 写真一覧 |
 | `/api/v1/accounts/{photoAccountId}/photos` | DELETE | 写真詳細 | → 写真一覧 |
 | `/api/v1/accounts/{photoAccountId}/photos/upper-limit` | GET | 写真一覧 | なし（上限チェック） |
+| `/api/v1/accounts/{accountId}/portfolios?keyword=&pageNo=` | GET | ポートフォリオ設定（一覧） | なし（データ表示。下書きを含む。表示順に20件ずつ。検索語でテーマ・タグを絞り込み、「＋もっと見る」で次のページを追加読み込み） |
+| `/api/v1/accounts/{accountId}/portfolios/{portfolioNo}` | GET | ポートフォリオ作成・編集 | なし（データ表示） |
+| `/api/v1/accounts/{accountId}/portfolios` | POST | ポートフォリオ作成・編集（新規） | → 同画面（`?portfolioNo=` 付き） |
+| `/api/v1/accounts/{accountId}/portfolios/{portfolioNo}` | PUT | ポートフォリオ作成・編集 | なし（完了ダイアログ） |
+| `/api/v1/accounts/{accountId}/portfolios/{portfolioNo}/status` | PUT | ポートフォリオ作成・編集 | なし（状態更新） |
+| `/api/v1/accounts/{accountId}/portfolios/{portfolioNo}` | DELETE | ポートフォリオ作成・編集 | → ポートフォリオ設定（一覧） |
+| `/api/v1/accounts/{accountId}/portfolios/{portfolioNo}/display-order` | PUT | ポートフォリオ設定（一覧） | なし（並び替え。隣のポートフォリオと入れ替える） |
+| `/api/v1/accounts/{accountId}/portfolios/upper-limit` | GET | ポートフォリオ設定（一覧） | なし（「新規作成」の活性・非活性） |
+| `/api/v1/accounts/{accountId}/portfolio-photos` | GET | ポートフォリオ作成・編集（写真選択ダイアログ） | なし（写真の検索・追加読み込み） |
+| `/api/v1/portfolio-templates` | GET | ポートフォリオ作成・編集 | なし（テンプレートの選択肢） |
 | `/api/v1/photos/favorites` | POST | 写真詳細 | なし（状態切替） |
 | `/api/v1/photos/favorites` | DELETE | 写真詳細 | なし（状態切替） |
 | `/api/v1/admin/accounts` | GET | 管理者アカウント管理 | なし（データ表示） |
@@ -511,8 +792,14 @@ sequenceDiagram
 | `/api/v1/admin/accounts/{accountNo}/authority` | PUT | 管理者アカウント管理 | なし（一覧更新） |
 | `/api/v1/inquiries` | POST | お問い合わせ投稿 | → お問い合わせ一覧 |
 | `/api/v1/inquiries` | GET | お問い合わせ一覧 | なし（データ表示） |
-| `/api/v1/inquiries/{inquiryNo}` | GET | お問い合わせ詳細 | なし（データ表示、未読返信の既読化） |
+| `/api/v1/inquiries/{inquiryNo}` | GET | お問い合わせ詳細 | なし（データ表示。副作用なし） |
+| `/api/v1/inquiries/{inquiryNo}/read` | POST | お問い合わせ詳細 | なし（未読返信の既読化） |
 | `/api/v1/inquiries/{inquiryNo}/withdrawal` | POST | お問い合わせ詳細 | なし（ステータス更新） |
 | `/api/v1/admin/inquiries` | GET | 管理者お問い合わせ管理 | なし（データ表示） |
 | `/api/v1/admin/inquiries/{inquiryId}` | GET | 管理者お問い合わせ詳細 | なし（データ表示） |
 | `/api/v1/admin/inquiries/{inquiryId}/replies` | POST | 管理者お問い合わせ詳細 | なし（詳細再取得） |
+| `/api/v1/admin/photos` | GET | 管理者写真管理 | なし（データ表示） |
+| `/api/v1/admin/photos/{accountNo}/{photoNo}/visibility` | PUT | 管理者写真管理 | なし（該当の写真の状態を更新） |
+
+ポートフォリオ公開ページ（`/portfolio/**`）は上記の REST API を使わず、Next.js のサーバー（Server Component）から
+portfolio-api の GraphQL（`publishedPortfolios`・`publishedPortfolio`）を呼ぶ。詳細は [portfolio-api](../architecture/portfolio-api.md) を参照。

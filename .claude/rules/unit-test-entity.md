@@ -1,7 +1,7 @@
 ---
 paths:
-  - backend/src/test/**/entity/**
-  - "!backend/src/test/**/integration/**"
+  - gallery-api/src/test/**/entity/**
+  - "!gallery-api/src/test/**/integration/**"
 ---
 
 # Entityパッケージの単体テスト規約

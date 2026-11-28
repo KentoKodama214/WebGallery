@@ -1,0 +1,22 @@
+{
+  "theme": "日本の自然",
+  "description": "日本各地の四季折々の風景を集めました。",
+  "templateKbn": "grid",
+  "templateSettings": {
+    "rows": [
+      { "pattern": "TWO_EQUAL" },
+      { "pattern": "THREE_EQUAL" }
+    ]
+  },
+  "photoList": [
+    { "photoNo": 5, "photoSettings": { "caption": "金閣寺" } },
+    { "photoNo": 3, "photoSettings": { "caption": "原山の茶畑" } },
+    { "photoNo": 8 },
+    { "photoNo": 1 },
+    { "photoNo": 2 }
+  ],
+  "tagList": [
+    { "tagJapaneseName": "自然", "tagEnglishName": "nature" },
+    { "tagJapaneseName": "風景" }
+  ]
+}

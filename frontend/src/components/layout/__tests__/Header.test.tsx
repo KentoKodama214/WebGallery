@@ -30,6 +30,38 @@ describe("Header", () => {
       });
     });
 
+    it("メニュー展開中だけダイアログ相当の属性が付き、背面が inert になること", () => {
+      // メニューは条件付きレンダリングではなく常にDOM上にあるため、閉じている間は
+      // ダイアログとしての属性を持たせない（背面を隠したまま扱う支援技術があるため）
+      const { container } = render(
+        <div>
+          <Header />
+          <div data-testid="page-content">本文</div>
+        </div>
+      );
+
+      const menu = screen.getByTestId("overlay-menu");
+      const pageContent = screen.getByTestId("page-content");
+      expect(menu).not.toHaveAttribute("aria-modal");
+      expect(menu).not.toHaveAttribute("role");
+      expect(pageContent).not.toHaveAttribute("inert");
+
+      fireEvent.click(screen.getByTestId("hamburger-button"));
+
+      expect(menu).toHaveAttribute("aria-modal", "true");
+      expect(menu).toHaveAttribute("role", "dialog");
+      // 背面（<header> の外側）は inert になる
+      expect(pageContent).toHaveAttribute("inert");
+      // 展開中の「閉じる」操作を担うハンバーガーボタンは inert にしない
+      expect(screen.getByTestId("hamburger-button")).not.toHaveAttribute("inert");
+      expect(container.querySelector("header")).not.toHaveAttribute("inert");
+
+      fireEvent.keyDown(document, { key: "Escape" });
+
+      expect(menu).not.toHaveAttribute("aria-modal");
+      expect(pageContent).not.toHaveAttribute("inert");
+    });
+
     it("Photographers・Sign Inのリンクが表示されること", () => {
       render(<Header />);
 
@@ -66,7 +98,7 @@ describe("Header", () => {
       });
     });
 
-    it("My Gallery・Photographers・Account Setting・Inquiry・Sign Outが表示されること", () => {
+    it("My Gallery・My Portfolio・Photographers・Account Setting・Inquiry・Sign Outが、この順に表示されること", () => {
       render(<Header />);
 
       expect(screen.getByRole("link", { name: "My Gallery" })).toHaveAttribute(
@@ -80,11 +112,26 @@ describe("Header", () => {
       expect(
         screen.getByRole("link", { name: "Account Setting" })
       ).toHaveAttribute("href", "/testuser1/account_setting");
+      expect(screen.getByRole("link", { name: "My Portfolio" })).toHaveAttribute(
+        "href",
+        "/testuser1/portfolio_setting"
+      );
       expect(screen.getByRole("link", { name: "Inquiry" })).toHaveAttribute(
         "href",
         "/inquiry/list"
       );
       expect(screen.getByTestId("logout-button")).toBeInTheDocument();
+      // My Portfolio は My Gallery の直下に表示する
+      expect(
+        screen.getAllByRole("listitem").map((item) => item.textContent?.trim())
+      ).toEqual([
+        "My Gallery",
+        "My Portfolio",
+        "Photographers",
+        "Account Setting",
+        "Inquiry",
+        "Sign Out",
+      ]);
     });
 
     it("Sign Outボタンをクリックするとログアウトして/loginへ遷移すること", async () => {

@@ -1,0 +1,130 @@
+spring:
+  application:
+    name: WebGallery
+  datasource:
+    hikari:
+      # RDS/NAT/LB等のアイドルタイムアウトより短く設定し、サーバー側で無効化されたコネクションを
+      # アプリ側が掴み続けないようにする（切断されたコネクションの再利用によるエラーを防ぐ）
+      max-lifetime: 1200000
+      # ファイアウォール等による無通信切断を防ぐための生存確認間隔（max-lifetimeより短い必要がある）
+      keepalive-time: 300000
+      validation-timeout: 5000
+      # 60秒以上借用されたままのコネクションを警告ログに出す（コネクションリークの早期検知）
+      leak-detection-threshold: 60000
+  servlet:
+    multipart:
+      max-file-size: 6MB
+      # 写真の新規一括登録で1リクエストにつき最大10枚（Consts.PHOTO_BULK_REGIST_MAX_SIZE）まで
+      # 送信できるため、1ファイルあたりの上限（app.photo.maxFileSizeMb=5MB）×10枚+αを確保する
+      max-request-size: 55MB
+  mvc:
+    # CommonControllerAdviceで処理済みの例外を、フレームワークが重ねてスタックトレース付きで
+    # WARNログ出力するのを抑止する（ログ集約基盤へ内部情報を残さない）
+    log-resolved-exception: false
+
+# X-Forwarded-For から発信元IPを復元する処理は infrastructure/web/ForwardedForFilter が行う。
+# TomcatのRemoteIpValve（server.tomcat.remoteip.* / server.forward-headers-strategy）は埋め込み
+# サーバー向けの設定であり、WARを外部Tomcatへデプロイする本番構成では読まれないため使わない。
+# 信頼するプロキシ範囲は app.forwarded.trusted-proxies（環境変数 TRUSTED_PROXIES）で設定する
+server:
+  # エラーレスポンスから内部情報（例外メッセージ・スタックトレース・バインドエラー詳細・例外クラス名）を
+  # 一切出さない。フィルタ内で発生しCommonControllerAdviceで捕捉されない例外（認証フィルタ・
+  # レートリミット等）が /error ディスパッチに落ちても内部構造を推測されないようにするための多層防御。
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    include-exception: false
+    whitelabel:
+      enabled: false
+  tomcat:
+    # multipart/form-dataの総パート数の上限（Tomcat既定は50で、超過すると413を返す）。
+    # 写真の更新は固定項目（場所の新規登録時で最大17パート）に加えてタグ1件ごとに5パート（accountNo/photoNo/tagNo/
+    # 日英タグ名）を送るため、タグ上限（Consts.PHOTO_TAG_MAX_SIZE=20件）まで付けると117パートになる。
+    # 新規一括登録（写真10枚＋固定項目＋タグ1件ごとに4パート）も含めて収まるよう余裕を持たせる。
+    # 埋め込みTomcat向けの設定のため、WARを外部Tomcatへデプロイする本番構成では
+    # server.xmlのConnectorのmaxPartCountで同等の値を設定する必要がある
+    max-part-count: 200
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  scalar:
+    path: /scalar
+
+mybatis:
+  type-handlers-package: com.web.gallery.infrastructure.persistence.type_handler
+
+management:
+  add-application-context-header: false
+  endpoints:
+    web:
+      exposure:
+        # healthのみ公開・metricsは内部情報（コネクション数等）を含むためADMIN権限必須（SecurityConfigで制御）
+        include: health, metrics
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36}.%M:%L - %msg%n"
+
+app:
+  forwarded:
+    # X-Forwarded-For を信頼する「直前の送信元IP」に一致する正規表現。この範囲外から届いた
+    # X-Forwarded-For は無視され、TCP接続の実IPが使われる（クライアントによるIP詐称の防止）。
+    # 既定値はループバック + RFC1918（Tomcat の RemoteIpValve 既定と同等）。本番では前段の
+    # ALB/リバースプロキシが存在するサブネットのCIDRだけに狭めること（環境変数 TRUSTED_PROXIES）。
+    trusted-proxies: '${TRUSTED_PROXIES:127\.\d{1,3}\.\d{1,3}\.\d{1,3}|::1|0:0:0:0:0:0:0:1|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.1[6-9]\.\d{1,3}\.\d{1,3}|172\.2\d\.\d{1,3}\.\d{1,3}|172\.3[01]\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}}'
+  account:
+    accountCountPerPage: 20
+  photo:
+    photoCountPerPage: 20
+    maxFileSizeMb: 5
+  inquiry:
+    inquiryCountPerPage: 20
+  portfolio:
+    portfolioCountPerPage: 20
+  s3:
+    # 画像ストレージ（S3 / MinIO）。プロファイルごとに endpoint / bucket / 認証情報を上書きする
+    region: ${AWS_REGION:ap-northeast-1}
+    path-style-access: ${APP_S3_PATH_STYLE_ACCESS:false}
+    presign-expiry-seconds: ${APP_S3_PRESIGN_EXPIRY_SECONDS:900}
+  geoip:
+    # IPアドレスから国・地域を解決するGeoLite2（MaxMind）データベースの絶対パス。
+    # ライセンスの都合でWARには同梱せず、サーバー上の外部ファイルを参照する（月次更新想定）。
+    # 未配置の場合は解決処理が常に空値を返すだけで、アプリの起動・動作は妨げない
+    database-path: ${APP_GEOIP_DATABASE_PATH:}
+  jwt:
+    secret: ${JWT_SECRET}
+    accessTokenExpirationMinutes: 15
+    refreshTokenExpirationDays: 7
+    # ローテーション済みトークンの再送をこの秒数以内なら正常系リトライとみなす（全セッション失効しない）
+    refreshTokenReuseGraceSeconds: 30
+  rate-limit:
+    # 送信元IPごとのエンドポイント別レート制限（前段WAF/LBのレート制限に加えた多層防御）。
+    # プロセスローカルのカウンタのため、複数インスタンス構成では実効しきい値がインスタンス数倍になる。
+    # IP単位のため共有NAT配下では誤検知しうる。しきい値は環境に応じて調整すること。
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    # ログイン（総当たり対策で低め。アカウント単位のロックと併用）
+    auth:
+      capacity: ${RATE_LIMIT_AUTH_CAPACITY:30}
+      window-seconds: ${RATE_LIMIT_AUTH_WINDOW_SECONDS:60}
+    # アカウント登録（スパム対策で低め）
+    register:
+      capacity: ${RATE_LIMIT_REGISTER_CAPACITY:10}
+      window-seconds: ${RATE_LIMIT_REGISTER_WINDOW_SECONDS:3600}
+    # 上記以外の /api/** リクエスト（トークンリフレッシュ・写真アップロード等を含む）
+    general:
+      capacity: ${RATE_LIMIT_GENERAL_CAPACITY:300}
+      window-seconds: ${RATE_LIMIT_GENERAL_WINDOW_SECONDS:60}
+
+auth:
+  login:
+    failCount: 3
+    lockDurationMinutes: 30
+  reauth:
+    # 現在のパスワードによる本人確認（再認証）の連続失敗をアカウント単位でインメモリに数え、
+    # この回数に達したら lockout-minutes 分ロックアウトする（0以下で無効）
+    max-failures: 5
+    lockout-minutes: 15
+  # JWT認証フィルタのアカウント情報キャッシュTTL（ミリ秒）。0以下でキャッシュ無効
+  principal-cache-ttl-millis: 10000

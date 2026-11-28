@@ -65,31 +65,21 @@ describe("PhotoSettingPage", () => {
     });
   });
 
-  it("accountNoのみ指定された場合は「写真が見つかりません」を表示すること", async () => {
-    const ui = await PhotoSettingPage(
-      makeProps("validaccount1", { accountNo: "1" })
-    );
-    render(ui);
-
-    expect(screen.getByText("写真が見つかりません")).toBeInTheDocument();
-    expect(screen.queryByTestId("photo-setting-form")).not.toBeInTheDocument();
-  });
-
-  it("photoNoのみ指定された場合は「写真が見つかりません」を表示すること", async () => {
-    const ui = await PhotoSettingPage(makeProps("validaccount1", { photoNo: "5" }));
-    render(ui);
-
-    expect(screen.getByText("写真が見つかりません")).toBeInTheDocument();
-    expect(screen.queryByTestId("photo-setting-form")).not.toBeInTheDocument();
-  });
-
-  it("accountIdが不正な形式の場合は「写真が見つかりません」を表示すること", async () => {
-    const ui = await PhotoSettingPage(makeProps("a", {}));
-    render(ui);
-
-    expect(screen.getByText("写真が見つかりません")).toBeInTheDocument();
-    expect(screen.queryByTestId("photo-setting-form")).not.toBeInTheDocument();
-  });
+  it.each([
+    ["accountNoのみ指定された", "validaccount1", { accountNo: "1" }],
+    ["photoNoのみ指定された", "validaccount1", { photoNo: "5" }],
+    ["accountIdが不正な形式の", "a", {}],
+  ])(
+    "%s場合は404として扱う（notFoundを呼ぶ）",
+    async (_label, photoAccountId, searchParams) => {
+      // 不正なURLは 200 でメッセージを出すのではなく 404 として扱う
+      // （`not-found.tsx` が描画され、noindex も付与される）
+      await expect(
+        PhotoSettingPage(makeProps(photoAccountId, searchParams))
+      ).rejects.toThrow();
+      expect(mockPhotoSettingForm).not.toHaveBeenCalled();
+    }
+  );
 
   it("Header・Footerを表示すること", async () => {
     const ui = await PhotoSettingPage(makeProps("validaccount1", {}));

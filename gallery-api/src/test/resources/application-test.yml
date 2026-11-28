@@ -1,0 +1,70 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/web_gallery_test
+    username: postgres
+    password: postgres
+  sql:
+    init:
+      # schema.sql・data.sqlは存在せず（テーブル定義はdb/配下のSQLで、テストデータは@Sqlで投入する）、
+      # alwaysではSpringコンテキスト生成のたびに空振りの探索が走るためneverにする
+      mode: never
+  jackson:
+    time-zone: Asia/Tokyo
+
+auth:
+  login:
+    failCount: 3
+    lockDurationMinutes: 30
+  reauth:
+    # 再認証スロットルはプロセスローカルのため統合テスト間で状態が持ち越される。
+    # テストでは無効化し、スロットル単体の挙動は ReauthenticationThrottleTest で検証する
+    max-failures: 0
+    lockout-minutes: 15
+
+app:
+  account:
+    accountCountPerPage: 5
+  photo:
+    photoCountPerPage: 5
+    maxFileSizeMb: 5
+    miniUserUpperLimit: 10
+    normalUserUpperLimit: 20
+  portfolio:
+    miniUserUpperLimit: 3
+    normalUserUpperLimit: 10
+  inquiry:
+    inquiryCountPerPage: 5
+  s3:
+    # Controller/Service層の統合テストでは FileRepository をモックするためS3へは接続しない。
+    # FileRepositoryImplIntegrationTest（Repository層）のみ、この値でdocker-compose/CIのMinIOへ実接続する
+    endpoint: http://localhost:9000
+    bucket: test-bucket
+    region: ap-northeast-1
+    access-key: minioadmin
+    secret-key: minioadmin
+    path-style-access: true
+    presign-expiry-seconds: 900
+    public-base-url: ""
+  jwt:
+    secret: test-secret-must-be-at-least-256-bits-long-for-hs256-algorithm
+    # テストでは盗用検知の猶予期間を無効化し、ローテーション済みトークンの再利用を即座に盗用とみなす
+    refreshTokenReuseGraceSeconds: 0
+  rate-limit:
+    # レート制限のカウンタはプロセスローカルで統合テスト間に状態が持ち越されるため無効化する。
+    # RateLimiter / RateLimitFilter 単体の挙動は各 *Test で検証する
+    enabled: false
+    auth:
+      capacity: 10
+      window-seconds: 60
+    register:
+      capacity: 5
+      window-seconds: 3600
+    general:
+      capacity: 240
+      window-seconds: 60
+  auth:
+    # テストではアカウント状態の変化を即時反映させるためPrincipalキャッシュを無効化する
+    principal-cache-ttl-millis: 0
+  cors:
+    allowed-origins:
+      - http://localhost:3000

@@ -1,0 +1,219 @@
+import { render, screen, within } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import { renderPortfolioLayout } from "../templates/registry";
+import type { PortfolioLayout, PublicPhoto } from "@/lib/portfolio-api/types";
+
+function photo(photoNo: number, title = `写真${photoNo}`): PublicPhoto {
+  return {
+    photoNo,
+    // アプリ内の絶対パスは sanitizeImageUrl で許可される
+    url: `/photos/${photoNo}.jpg`,
+    japaneseTitle: title,
+    englishTitle: "",
+    direction: "HORIZONTAL",
+  };
+}
+
+describe("ポートフォリオのテンプレート", () => {
+  it("フィーチャー型は写真ごとにテーマ・サブテーマ・説明のセクションを表示し、左右を交互に入れ替えること", () => {
+    render(
+      <>
+        {renderPortfolioLayout({
+          __typename: "FeatureLayout",
+          sections: [
+            { photo: photo(1, "金閣寺"), theme: "日本の自然", subTheme: "京都", description: "金色に輝く" },
+            { photo: photo(2), theme: "光と影", subTheme: "", description: "" },
+          ],
+        })}
+      </>
+    );
+
+    const sections = screen.getAllByTestId("feature-section");
+    expect(sections).toHaveLength(2);
+    expect(within(sections[0]).getByRole("heading", { name: "日本の自然" })).toBeInTheDocument();
+    expect(within(sections[0]).getByText("京都")).toBeInTheDocument();
+    expect(within(sections[0]).getByText("金色に輝く")).toBeInTheDocument();
+    expect(within(sections[0]).getByRole("img", { name: "金閣寺" })).toHaveAttribute("src", "/photos/1.jpg");
+    expect(sections[0].className).toContain("md:flex-row");
+    expect(sections[1].className).toContain("md:flex-row-reverse");
+    // 未設定のサブテーマ・説明の段落は表示しない（見出しだけになる）
+    expect(sections[0].querySelectorAll("p")).toHaveLength(2);
+    expect(sections[1].querySelectorAll("p")).toHaveLength(0);
+  });
+
+  it("グリッド型は行パターンごとに写真を並べ、横長1枚+縦長1枚は横幅を2:1・縦長を左右どちらにも置けること", () => {
+    render(
+      <>
+        {renderPortfolioLayout({
+          __typename: "GridLayout",
+          rows: [
+            { pattern: "THREE_EQUAL", photos: [1, 2, 3].map((no) => ({ photo: photo(no) })) },
+            {
+              pattern: "WIDE_NARROW",
+              photos: [
+                { photo: photo(4) },
+                { photo: photo(5) },
+              ],
+            },
+            {
+              pattern: "NARROW_WIDE",
+              photos: [
+                { photo: photo(6) },
+                { photo: photo(7) },
+              ],
+            },
+          ],
+        })}
+      </>
+    );
+
+    const rows = screen.getAllByTestId("grid-row");
+    expect(rows.map((row) => row.dataset.pattern)).toEqual([
+      "THREE_EQUAL",
+      "WIDE_NARROW",
+      "NARROW_WIDE",
+    ]);
+    expect(within(rows[0]).getAllByRole("img")).toHaveLength(3);
+    const wideNarrow = rows[1].querySelectorAll("figure");
+    expect((wideNarrow[0] as HTMLElement).style.flex).toContain("2");
+    expect((wideNarrow[1] as HTMLElement).style.flex).toContain("1");
+    // グリッド型は写真単位の設定を持たないため、キャプションは表示しない
+    expect(rows[1].querySelector("figcaption")).toBeNull();
+    // 横長は3:2、縦長は3:4で表示する（縦長が右）
+    const wideNarrowImages = within(rows[1]).getAllByRole("img");
+    expect(wideNarrowImages[0].style.getPropertyValue("aspect-ratio")).toBe("3 / 2");
+    expect(wideNarrowImages[1].style.getPropertyValue("aspect-ratio")).toBe("3 / 4");
+    // 縦長が左
+    const narrowWide = rows[2].querySelectorAll("figure");
+    expect((narrowWide[0] as HTMLElement).style.flexGrow).toBe("1");
+    expect((narrowWide[1] as HTMLElement).style.flexGrow).toBe("2");
+    const narrowWideImages = within(rows[2]).getAllByRole("img");
+    expect(narrowWideImages[0].style.getPropertyValue("aspect-ratio")).toBe("3 / 4");
+    expect(narrowWideImages[1].style.getPropertyValue("aspect-ratio")).toBe("3 / 2");
+  });
+
+  it("グリッド型で管理者により非公開にされた写真の枠（photo が null）は、同じ大きさの空き枠にして行の構成を保つこと", () => {
+    render(
+      <>
+        {renderPortfolioLayout({
+          __typename: "GridLayout",
+          rows: [
+            { pattern: "WIDE_NARROW", photos: [{ photo: null }, { photo: photo(2) }] },
+            { pattern: "TWO_EQUAL", photos: [{ photo: photo(3) }, { photo: photo(4) }] },
+          ],
+        })}
+      </>
+    );
+
+    const rows = screen.getAllByTestId("grid-row");
+    expect(rows).toHaveLength(2);
+    // 空き枠は横長の枠の位置・大きさのまま残り、画像は表示しない
+    const emptyCell = within(rows[0]).getByTestId("grid-empty-cell");
+    expect(emptyCell).toBe(rows[0].firstElementChild);
+    expect(emptyCell.style.flexGrow).toBe("2");
+    expect(emptyCell.style.getPropertyValue("aspect-ratio")).toBe("3 / 2");
+    expect(emptyCell).toHaveAttribute("aria-hidden", "true");
+    const images = within(rows[0]).getAllByRole("img");
+    expect(images).toHaveLength(1);
+    expect(images[0].style.getPropertyValue("aspect-ratio")).toBe("3 / 4");
+    // 後ろの行の写真は詰めずにそのまま並べる
+    expect(within(rows[1]).getAllByRole("img")).toHaveLength(2);
+  });
+
+  it("画像URLが許可されたオリジンでない場合は、画像の代わりに写真のタイトルを表示すること", () => {
+    render(
+      <>
+        {renderPortfolioLayout({
+          __typename: "GridLayout",
+          rows: [
+            {
+              pattern: "TWO_EQUAL",
+              photos: [
+                { photo: { ...photo(1, "外部画像"), url: "https://evil.example.com/x.jpg" } },
+                { photo: photo(2) },
+              ],
+            },
+          ],
+        })}
+      </>
+    );
+
+    expect(screen.queryByRole("img", { name: "外部画像" })).not.toBeInTheDocument();
+    expect(screen.getByText("外部画像")).toBeInTheDocument();
+  });
+
+  it("額縁型は額縁の中に写真枠・メッセージ枠を配置し、フォント・揃えを小文字の選択肢に変換して描画すること", () => {
+    const slot = { x: 5, y: 10, width: 40, height: 60, rotation: -3, borderColor: "#ffffff", borderWidth: 1, shadow: true };
+    render(
+      <>
+        {renderPortfolioLayout({
+          __typename: "FrameLayout",
+          width: 366,
+          height: 254,
+          backgroundColor: "#f5f0e6",
+          borderColor: "#3b2a1a",
+          borderWidth: 2.5,
+          slots: [
+            { ...slot, photo: photo(1, "金閣寺") },
+            { ...slot, x: 55, rotation: 0, photo: photo(2, "茶畑") },
+          ],
+          texts: [
+            {
+              x: 10,
+              y: 80,
+              width: 80,
+              rotation: 0,
+              fontFamily: "MINCHO",
+              fontSize: 3,
+              color: "#333333",
+              align: "CENTER",
+              bold: false,
+              italic: true,
+              text: "春の訪れ",
+            },
+          ],
+        })}
+      </>
+    );
+
+    const frame = screen.getByRole("img", { name: "組写真：金閣寺、茶畑" });
+    expect(frame).toHaveStyle({ aspectRatio: "366 / 254" });
+    const slots = screen.getAllByTestId("frame-slot");
+    expect(slots).toHaveLength(2);
+    expect(within(slots[0]).getByAltText("金閣寺")).toHaveAttribute("src", "/photos/1.jpg");
+    expect(slots[0]).toHaveStyle({ transform: "rotate(-3deg)" });
+    const text = screen.getByText("春の訪れ");
+    expect(text).toHaveStyle({ textAlign: "center", fontStyle: "italic" });
+    expect(text.style.fontFamily).toContain("Mincho");
+  });
+
+  it("額縁型で管理者により非公開にされた写真の枠（photo が null）は、写真を表示せず枠だけを空けること", () => {
+    const slot = { x: 5, y: 10, width: 40, height: 60, rotation: 0, borderColor: "#ffffff", borderWidth: 0, shadow: false };
+    render(
+      <>
+        {renderPortfolioLayout({
+          __typename: "FrameLayout",
+          width: 300,
+          height: 300,
+          backgroundColor: "#ffffff",
+          borderColor: "#000000",
+          borderWidth: 0,
+          slots: [{ ...slot, photo: photo(1) }, { ...slot, photo: null }],
+          texts: [],
+        })}
+      </>
+    );
+
+    const slots = screen.getAllByTestId("frame-slot");
+    expect(slots).toHaveLength(2);
+    expect(slots[1].querySelector("img")).toBeNull();
+    expect(slots[1]).toBeEmptyDOMElement();
+    expect(screen.getByRole("img", { name: "組写真：写真1" })).toBeInTheDocument();
+  });
+
+  it("未対応のレイアウトの型の場合は、画面を壊さずにメッセージを表示すること", () => {
+    render(<>{renderPortfolioLayout({ __typename: "SlideLayout" } as unknown as PortfolioLayout)}</>);
+
+    expect(screen.getByText("このポートフォリオは表示できません")).toBeInTheDocument();
+  });
+});

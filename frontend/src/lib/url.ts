@@ -131,7 +131,9 @@ export function sanitizeImageUrl(url: string | null | undefined): string {
  *
  * 正式な Embed API（要 API キー）ではなく、API キー不要な非公式の `output=embed`
  * 形式を用いる。将来 Google 側の仕様変更・廃止で表示できなくなる可能性がある点に留意する。
- * CSP の `frame-src` は `https://maps.google.com` / `https://www.google.com` のみ許可している。
+ * この URL は 301 で `https://www.google.com/maps/embed?...` へ転送されるため、CSP の `frame-src`
+ * には `https://maps.google.com/maps` と `https://www.google.com/maps/embed` の両方を許可している
+ * （`frontend/src/proxy.ts`）。組み立てるパスを変える場合は `frame-src` も併せて見直すこと。
  *
  * @param latitude 緯度
  * @param longitude 経度

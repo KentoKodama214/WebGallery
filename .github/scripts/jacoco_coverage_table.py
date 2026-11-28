@@ -49,7 +49,7 @@ def build_table(entries):
     header = "| テスト種別 | " + " | ".join(label for _, label in COUNTERS) + " |"
     separator = "|" + "---|" * (len(COUNTERS) + 1)
 
-    lines = ["## バックエンドカバレッジ (JaCoCo)", "", header, separator]
+    lines = ["## バックエンドカバレッジ: gallery-api (JaCoCo)", "", header, separator]
     for label, path in entries:
         counters = parse_counters(path) if os.path.isfile(path) else {}
         cells = [format_cell(counters.get(ctype)) for ctype, _ in COUNTERS]

@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/event/**
+  - gallery-api/**/event/**
 ---
 
 # Eventクラスのアーキテクチャルール
@@ -24,9 +24,9 @@ paths:
 
 ## レイヤー間依存関係
 
-- **許可するimport**: `domain/`
-- **禁止するimport**: `controller/`、`repository/`、`mapper/`、`entity/`、`dto/`、`service/`への依存
+- **許可するimport**: `domain/`配下全体（値オブジェクト、`enumeration/`、`constant/`、`exception/`）
+- **禁止するimport**: `application/`・`infrastructure/`・`presentation/`への依存（domainは最内層のため外側の層を一切知らない）
 
 ## 検証
 
-本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/EventArchitectureTest.java`のArchUnitテストで機械的に検証される。
+本ファイルのルールは`gallery-api/src/test/java/com/web/gallery/architecture/EventArchitectureTest.java`のArchUnitテストで機械的に検証される。

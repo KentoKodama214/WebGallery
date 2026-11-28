@@ -30,13 +30,11 @@ describe("PhotoListPage", () => {
     ["短すぎる", "a"],
     ["記号を含む", "invalid-account!"],
     ["パストラバーサル", "../evil"],
-  ])("photoAccountIdが%s場合はギャラリーが見つからない旨を表示する", async (_label, value) => {
-    const page = await PhotoListPage({
-      params: Promise.resolve({ photoAccountId: value }),
-    });
-    render(page);
-
-    expect(screen.getByText("ギャラリーが見つかりません")).toBeInTheDocument();
-    expect(screen.queryByTestId("photo-list")).not.toBeInTheDocument();
+  ])("photoAccountIdが%s場合は404として扱う（notFoundを呼ぶ）", async (_label, value) => {
+    // 存在しないリソースは 200 でメッセージを出すのではなく 404 として扱う
+    // （`not-found.tsx` が描画され、noindex も付与される）
+    await expect(
+      PhotoListPage({ params: Promise.resolve({ photoAccountId: value }) })
+    ).rejects.toThrow();
   });
 });

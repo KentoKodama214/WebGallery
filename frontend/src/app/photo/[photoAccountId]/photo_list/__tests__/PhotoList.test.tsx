@@ -48,7 +48,12 @@ class MockPhotoSwipeLightbox {
     ui: { registerElement: (config: Record<string, unknown>) => void };
   } | null = null;
 
-  constructor() {
+  /** 初期化時に渡されたギャラリー要素（クリックを拾う対象のDOM） */
+  gallery: HTMLElement | undefined;
+  destroyed = false;
+
+  constructor(options?: { gallery?: HTMLElement }) {
+    this.gallery = options?.gallery;
     mockLightboxInstances.push(this);
   }
 
@@ -89,7 +94,9 @@ class MockPhotoSwipeLightbox {
     this.changeHandlers.forEach((h) => h());
   }
 
-  destroy() {}
+  destroy() {
+    this.destroyed = true;
+  }
 }
 
 // PhotoSwipe（動的import）をスタブ化する
@@ -180,6 +187,21 @@ describe("PhotoList", () => {
     const images = galleryImages();
     expect(images[0]).toHaveAttribute("src", "/photos/photo1.jpg");
     expect(images[1]).toHaveAttribute("src", "/photos/photo2.jpg");
+  });
+
+  it("管理者により非公開にされた写真（所有者本人の一覧にのみ含まれる）には非公開の表示が付くこと", async () => {
+    mockGetPhotoList.mockResolvedValue({
+      isLast: true,
+      photoList: [{ ...samplePhotos[0], isHiddenByAdmin: true }, samplePhotos[1]],
+    });
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("hidden-by-admin-badge-1-1")).toHaveTextContent(
+        "管理者により非公開"
+      );
+    });
+    expect(screen.queryByTestId("hidden-by-admin-badge-1-2")).not.toBeInTheDocument();
   });
 
   it("許可されない画像URLの写真はリンク化されず代替表示になること", async () => {
@@ -290,6 +312,49 @@ describe("PhotoList", () => {
     expect(screen.getByTestId("filter-panel").className).toMatch(/filterOpen/);
 
     fireEvent.click(screen.getByTestId("filter-close-button"));
+    expect(screen.getByTestId("filter-panel").className).not.toMatch(/filterOpen/);
+  });
+
+  it("ダイアログとしての属性は展開中だけ付与されること", async () => {
+    mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: samplePhotos });
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(galleryImages()).toHaveLength(2);
+    });
+
+    // パネルは条件付きレンダリングではなく常にDOM上にあるため、閉じている間に
+    // `aria-modal="true"` を残すと背面コンテンツを隠したまま扱う支援技術がある
+    const panel = screen.getByTestId("filter-panel");
+    expect(panel).not.toHaveAttribute("role");
+    expect(panel).not.toHaveAttribute("aria-modal");
+    expect(panel).not.toHaveAttribute("aria-label");
+
+    fireEvent.click(screen.getByTestId("filter-trigger"));
+
+    const openedPanel = screen.getByTestId("filter-panel");
+    expect(openedPanel).toHaveAttribute("role", "dialog");
+    expect(openedPanel).toHaveAttribute("aria-modal", "true");
+    expect(openedPanel).toHaveAttribute("aria-label", "写真の絞り込み");
+
+    fireEvent.click(screen.getByTestId("filter-close-button"));
+    expect(screen.getByTestId("filter-panel")).not.toHaveAttribute("aria-modal");
+  });
+
+  it("フィルタートリガーの行（テキスト外の余白）クリックではパネルが開かないこと", async () => {
+    mockGetPhotoList.mockResolvedValue({ isLast: true, photoList: samplePhotos });
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(galleryImages()).toHaveLength(2);
+    });
+
+    // トリガー本体はレイアウト用の行の内側にあり、行自体は操作要素ではない
+    const row = screen.getByTestId("filter-trigger-row");
+    expect(row).toContainElement(screen.getByTestId("filter-trigger"));
+    expect(row).not.toHaveAttribute("role", "button");
+
+    fireEvent.click(row);
     expect(screen.getByTestId("filter-panel").className).not.toMatch(/filterOpen/);
   });
 
@@ -620,6 +685,38 @@ describe("PhotoList", () => {
     expect(lastCall[1].searchExecuted).toBe(true);
     // パネルは絞り込み実行で自動的に閉じる
     expect(screen.getByTestId("filter-panel").className).not.toMatch(/filterOpen/);
+  });
+
+  it("絞り込み後に再描画された写真グリッドへライトボックスが張り直されること", async () => {
+    mockGetPhotoList.mockResolvedValueOnce({ isLast: true, photoList: samplePhotos });
+
+    render(<PhotoList photoAccountId="user1" />);
+
+    await waitFor(() => {
+      expect(mockLightboxInstances.at(-1)?.pswp).toBeTruthy();
+    });
+    const initialLightbox = mockLightboxInstances.at(-1)!;
+
+    fireEvent.click(screen.getByTestId("filter-trigger"));
+    mockGetPhotoList.mockResolvedValueOnce({
+      isLast: true,
+      photoList: [samplePhotos[0]],
+    });
+    fireEvent.click(screen.getByText("絞り込み"));
+
+    await waitFor(() => {
+      expect(galleryImages()).toHaveLength(1);
+    });
+    // 絞り込み中にグリッドがアンマウントされるため、旧ライトボックスは破棄され、
+    // 新しいグリッド要素に紐づくライトボックスが作られる（旧要素に紐づいたままだと
+    // クリックがリンク本来の動作＝別タブ表示になる）
+    await waitFor(() => {
+      expect(mockLightboxInstances.at(-1)).not.toBe(initialLightbox);
+    });
+    expect(initialLightbox.destroyed).toBe(true);
+    const currentLightbox = mockLightboxInstances.at(-1)!;
+    expect(currentLightbox.gallery?.isConnected).toBe(true);
+    expect(currentLightbox.gallery).toContainElement(galleryImages()[0]);
   });
 
   it("絞り込み実行時にAPIエラーが発生した場合はエラーメッセージが表示されること", async () => {
@@ -1087,6 +1184,83 @@ describe("PhotoList", () => {
       fireEvent.click(detailLink);
 
       expect(clickSpy).not.toHaveBeenCalled();
+    });
+
+    /**
+     * 先頭の写真のキャプションだけを差し替えてライトボックスを初期化し、
+     * 表示中スライドのキャプション要素を返す
+     *
+     * `galleryImages()` は alt（＝キャプション）で写真グリッド画像を絞り込むため、
+     * キャプションを差し替えるこれらのテストでは使えない。代わりに
+     * 写真グリッドの要素数で描画完了を待つ
+     */
+    async function renderWithCaptionAndGetCaptionElement(caption: string) {
+      mockGetPhotoList.mockResolvedValue({
+        isLast: true,
+        photoList: [{ ...samplePhotos[0], caption }, samplePhotos[1]],
+      });
+      render(<PhotoList photoAccountId="user1" />);
+      await waitFor(() => {
+        expect(document.querySelectorAll(".pswp-gallery__item")).toHaveLength(2);
+      });
+      await waitFor(() => {
+        expect(mockLightboxInstances.at(-1)?.pswp).not.toBeNull();
+      });
+      const lightbox = mockLightboxInstances.at(-1)!;
+      lightbox.pswp!.currSlide.data.element = document.querySelector(
+        ".pswp-gallery__item"
+      ) as HTMLElement;
+      lightbox.triggerChange(0);
+      return lightbox.elements["custom-caption"].el;
+    }
+
+    it("キャプションが100文字ちょうどの場合は切り詰めずに全文表示すること", async () => {
+      const caption = "あ".repeat(100);
+
+      const captionEl = await renderWithCaptionAndGetCaptionElement(caption);
+
+      expect(captionEl.querySelector(".caption_content")).toHaveTextContent(caption);
+    });
+
+    it("キャプションが101文字以上の場合は100文字までに切り詰めて末尾を...にすること", async () => {
+      const captionEl = await renderWithCaptionAndGetCaptionElement(
+        `${"あ".repeat(100)}いうえお`
+      );
+
+      expect(captionEl.querySelector(".caption_content")).toHaveTextContent(
+        `${"あ".repeat(100)}...`
+      );
+    });
+
+    it("画像のalt属性も拡大表示と同じ長さに切り詰められること", async () => {
+      mockGetPhotoList.mockResolvedValue({
+        isLast: true,
+        photoList: [
+          { ...samplePhotos[0], caption: `${"あ".repeat(100)}いうえお` },
+          samplePhotos[1],
+        ],
+      });
+      render(<PhotoList photoAccountId="user1" />);
+      await waitFor(() => {
+        expect(document.querySelectorAll(".pswp-gallery__item")).toHaveLength(2);
+      });
+
+      // altだけ全文のままだと、支援技術には全文が読まれる一方で視覚的には100文字で
+      // 切られ、伝わる情報量が食い違う
+      expect(
+        screen.getByAltText(`${"あ".repeat(100)}...`)
+      ).toBeInTheDocument();
+    });
+
+    it("サロゲートペアを含むキャプションでも文字が壊れずに切り詰められること", async () => {
+      // 絵文字（サロゲートペア）を1文字として数えるため、101文字目以降だけが落ちる
+      const captionEl = await renderWithCaptionAndGetCaptionElement(
+        `${"😀".repeat(100)}😀`
+      );
+
+      expect(captionEl.querySelector(".caption_content")).toHaveTextContent(
+        `${"😀".repeat(100)}...`
+      );
     });
   });
 });

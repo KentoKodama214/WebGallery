@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { expectNoAccessibilityViolations } from "../fixtures/a11y";
+import { fillStable } from "../fixtures/form";
 
 test.describe("ログインページ", () => {
   test.beforeEach(async ({ page }) => {
@@ -24,8 +25,8 @@ test.describe("ログインページ", () => {
   });
 
   test("不正な認証情報でエラーメッセージが表示されること", async ({ page }) => {
-    await page.getByPlaceholder("User ID").fill("invaliduser");
-    await page.getByPlaceholder("Password").fill("invalidpass");
+    await fillStable(page.getByPlaceholder("User ID"), "invaliduser");
+    await fillStable(page.getByPlaceholder("Password"), "invalidpass");
     await page.getByRole("button", { name: "Log in" }).click();
 
     await expect(

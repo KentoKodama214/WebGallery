@@ -18,6 +18,26 @@ import styles from "./PhotoList.module.css";
 
 const COOKIE_MAX_AGE = 1800; // 30分
 
+/** 拡大表示時のキャプションの最大表示文字数（超過分は省略記号に置き換える） */
+const CAPTION_MAX_LENGTH = 100;
+
+/**
+ * 拡大表示用にキャプションを最大表示文字数で切り詰める
+ *
+ * 最大表示文字数を超える場合のみ末尾を省略記号に置き換える。文字数は
+ * サロゲートペア（絵文字等）を1文字として数えるため、コードユニット単位の
+ * `String.prototype.length`/`slice` ではなくコードポイント単位で数える
+ * （途中で切って文字が壊れるのを防ぐ）。
+ *
+ * @param caption キャプション（未設定の場合は空文字）
+ * @returns 切り詰め後のキャプション
+ */
+function truncateCaption(caption: string): string {
+  const chars = Array.from(caption);
+  if (chars.length <= CAPTION_MAX_LENGTH) return caption;
+  return `${chars.slice(0, CAPTION_MAX_LENGTH).join("")}...`;
+}
+
 interface PhotoListFilter {
   directionKbn: string;
   isFavoriteFilter: string;
@@ -179,6 +199,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     useState<PhotoListFilter>(initialFilter);
 
   const galleryRef = useRef<HTMLDivElement>(null);
+  // フィルターパネルのフォーカス管理用（開いたら内部へフォーカスを移し、Tabを循環させ、閉じたらトリガーへ戻す）
+  const filterPanelRef = useRef<HTMLDivElement>(null);
+  const filterTriggerRef = useRef<HTMLDivElement>(null);
   const lightboxRef = useRef<InstanceType<typeof import("photoswipe/lightbox").default> | null>(null);
   const photosRef = useRef<PhotoListItem[]>(photos);
   // 一覧取得リクエストの世代。初期ロード・絞り込み・もっと見るは開始時に
@@ -200,7 +223,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   }, [photos]);
 
   const isOwner = user?.accountId === photoAccountId;
-  const hasPhotos = photos.length > 0;
+  // 写真グリッド（galleryRef の要素）を描画しているかどうか。絞り込み中は
+  // 読み込み表示に切り替わってグリッドがアンマウントされるため、写真の有無だけでなく
+  // 読み込み・エラー状態も含めて判定する
+  const isGalleryShown = !isLoading && !error && photos.length > 0;
 
   const buildParams = (
     filter: PhotoListFilter,
@@ -226,6 +252,12 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     setTagList(appliedFilter.tagList);
     setSortBy(appliedFilter.sortBy);
   };
+
+  // Escapeキーのハンドラから常に最新のresetFilterEditsを呼べるようにする
+  const resetFilterEditsRef = useRef(resetFilterEdits);
+  useEffect(() => {
+    resetFilterEditsRef.current = resetFilterEdits;
+  });
 
   /**
    * フィルター条件をCookieに保存する
@@ -324,6 +356,63 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
     };
   }, [photoAccountId, saveFilterToCookie, authLoading, isAuthenticated, isOwner]);
 
+  /**
+   * フィルターパネル展開中のフォーカス制御
+   *
+   * パネルは常にDOM上に存在し、閉じている間は`visibility: hidden`で不可視・フォーカス不能に
+   * なっている。開いている間だけ、内部へフォーカスを移し、Escapeで閉じ、Tabをパネル内で循環させる
+   * （`ModalDialog`/`useDialog`と同じ扱いにするため。パネルは条件付きレンダリングではないので
+   * このコンポーネント側で制御する）。パネル外は`inert`で不活性化する（描画側で制御）
+   */
+  useEffect(() => {
+    if (!isFilterOpen) return;
+
+    const panel = filterPanelRef.current;
+    // トリガーはこのコンポーネントがマウントされている間は同一DOMノードのため、
+    // effect実行時に控えてクリーンアップ（＝パネルを閉じた時）のフォーカス復帰に使う
+    const trigger = filterTriggerRef.current;
+
+    // パネル内のコントロールは認証状態の確定（isOwner / isAuthenticated）で増減するため、
+    // 展開時に一度作ったリストを使い回すとTabがパネル外へ抜ける。キー入力ごとに取り直す
+    const getFocusables = () =>
+      panel
+        ? Array.from(
+            panel.querySelectorAll<HTMLElement>(
+              'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
+          )
+        : [];
+
+    getFocusables()[0]?.focus();
+
+    const handleKeyDown = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        resetFilterEditsRef.current();
+        setIsFilterOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusables = getFocusables();
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+      trigger?.focus();
+    };
+  }, [isFilterOpen]);
+
   useEffect(() => {
     if (!isOwner) return;
     let cancelled = false;
@@ -340,10 +429,13 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
   }, [isOwner, photoAccountId]);
 
   // PhotoSwipe初期化
-  // ライトボックスは開くたびにギャラリーDOMを読み直すため、写真の増減では
-  // 再初期化せず、写真の有無と認証状態が変わったときだけ作り直す
+  // ライトボックスは開くたびにギャラリーDOMを読み直すため、写真の増減（もっと見る）では
+  // 再初期化せず、グリッドの表示有無と認証状態が変わったときだけ作り直す。
+  // 絞り込みではグリッドが一旦アンマウントされて別のDOM要素で再描画されるため、
+  // 作り直さないとライトボックスが旧要素に紐づいたままになり、クリックがリンク本来の
+  // 動作（target="_blank"で別タブ表示）になってしまう
   useEffect(() => {
-    if (!galleryRef.current || !hasPhotos) return;
+    if (!galleryRef.current || !isGalleryShown) return;
 
     let cancelled = false;
     let lightbox: InstanceType<typeof import("photoswipe/lightbox").default> | null = null;
@@ -501,7 +593,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
       }
       lightboxRef.current = null;
     };
-  }, [hasPhotos, isAuthenticated]);
+  }, [isGalleryShown, isAuthenticated]);
 
   /**
    * +もっと見る
@@ -639,10 +731,23 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
 
   return (
     <div style={{ backgroundColor: "black", minHeight: "100vh" }}>
-      <h1 className="sr-only">写真一覧</h1>
+      <h1 className="sr-only" inert={isFilterOpen}>
+        写真一覧
+      </h1>
 
-      {/* フィルターオーバーレイ */}
+      {/*
+        フィルターオーバーレイ。展開中は画面全体を覆いEscape・Tab循環・フォーカス復帰を行うため、
+        挙動はモーダルダイアログと同じ。role/aria-modalを与え、背面は inert で不活性化して
+        スクリーンリーダーのブラウズモードでも背面へ回り込めないようにする。
+        パネルは条件付きレンダリングではなく常にDOM上にあるため、これらの属性は展開中だけ付ける
+        （`aria-modal="true"` を閉じている間も残すと、背面コンテンツを隠したまま扱う支援技術がある）
+      */}
       <div
+        ref={filterPanelRef}
+        id="photo-list-filter-panel"
+        role={isFilterOpen ? "dialog" : undefined}
+        aria-modal={isFilterOpen ? true : undefined}
+        aria-label={isFilterOpen ? "写真の絞り込み" : undefined}
         className={`${styles.filterOverlay} ${isFilterOpen ? styles.filterOpen : ""}`}
         data-testid="filter-panel"
       >
@@ -668,14 +773,16 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         </div>
 
         {/* フィルターフォーム */}
-        <div className={styles.filterForm}>
+        <div className={styles.filterForm} data-testid="filter-form">
           {/* 向き（オーナーのみ） */}
           {isOwner && (
             <select
               value={directionKbn}
               onChange={(e) => setDirectionKbn(e.target.value)}
+              aria-label="写真の向きで絞り込む"
+              data-testid="direction-filter-select"
             >
-              <option value=""></option>
+              <option value="">向き（指定なし）</option>
               <option value="vertical">縦写真</option>
               <option value="horizontal">横写真</option>
             </select>
@@ -686,9 +793,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             <select
               value={isFavoriteFilter}
               onChange={(e) => setIsFavoriteFilter(e.target.value)}
+              aria-label="お気に入りで絞り込む"
               data-testid="favorite-filter-select"
             >
-              <option value=""></option>
+              <option value="">お気に入り（指定なし）</option>
               <option value="true">お気に入り写真のみ</option>
             </select>
           )}
@@ -699,12 +807,16 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
             value={tagList}
             onChange={(e) => setTagList(e.target.value)}
             placeholder="キーワードを入力"
+            aria-label="キーワード（タグ）で絞り込む"
+            data-testid="tag-filter-input"
           />
 
           {/* 並び順 */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
+            aria-label="並び順"
+            data-testid="sort-by-select"
           >
             <option value="photoAt">撮影日順</option>
             <option value="favorite">お気に入り数順</option>
@@ -721,27 +833,37 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         </div>
       </div>
 
-      {/* 写真コンテナ */}
-      <div className={styles.photosContainer}>
-        {/* フィルタートリガー */}
-        <div
-          className={styles.filterTrigger}
-          onClick={() => setIsFilterOpen(true)}
-          onKeyDown={onActivateKey(() => setIsFilterOpen(true))}
-          role="button"
-          tabIndex={0}
-          aria-label="フィルターを開く"
-          aria-expanded={isFilterOpen}
-          data-testid="filter-trigger"
-        >
-          <span>
-            <img
-              className={styles.filterIconImg}
-              src="/ui/filter.png"
-              alt=""
-            />
-          </span>
-          <span className={styles.filterText}>{buildFilterText()}</span>
+      {/* 写真コンテナ（フィルターパネル展開中は inert で不活性化する） */}
+      <div className={styles.photosContainer} inert={isFilterOpen} data-testid="photos-container">
+        {/* フィルタートリガー
+            クリック可能な範囲をアイコンとフィルター条件テキストだけに限定するため、
+            レイアウト用の行（filterTriggerRow）と操作要素（filterTrigger）を分ける。
+            トリガー自体を行幅いっぱいに広げると、テキストのない右側の余白を
+            クリックしただけでパネルが開いてしまう。
+            アクセシブルネームは aria-label で上書きせず内容から算出させ、表示中のフィルター条件
+            テキストを必ず含める（WCAG 2.5.3 Label in Name）。操作内容は sr-only のテキストで補う */}
+        <div className={styles.filterTriggerRow} data-testid="filter-trigger-row">
+          <div
+            ref={filterTriggerRef}
+            className={styles.filterTrigger}
+            onClick={() => setIsFilterOpen(true)}
+            onKeyDown={onActivateKey(() => setIsFilterOpen(true))}
+            role="button"
+            tabIndex={0}
+            aria-expanded={isFilterOpen}
+            aria-controls="photo-list-filter-panel"
+            data-testid="filter-trigger"
+          >
+            <span>
+              <img
+                className={styles.filterIconImg}
+                src="/ui/filter.png"
+                alt=""
+              />
+            </span>
+            <span className="sr-only">フィルターを開く</span>
+            <span className={styles.filterText}>{buildFilterText()}</span>
+          </div>
         </div>
 
         {/* ローディング */}
@@ -758,23 +880,37 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
           </div>
         )}
 
-        {/* 操作失敗の通知（一覧表示は維持したまま表示する） */}
-        {actionError && (
-          <div
-            role="alert"
-            style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", padding: "8px", color: "#ef4444" }}
-          >
-            <span>{actionError}</span>
-            <button
-              type="button"
-              onClick={() => setActionError(null)}
-              aria-label="閉じる"
-              style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", fontSize: "16px", lineHeight: 1, padding: 0 }}
-            >
-              &times;
-            </button>
-          </div>
-        )}
+        {/* 操作失敗の通知（一覧表示は維持したまま表示する）。
+            ライブリージョンはメッセージと同時にDOMへ挿入すると読み上げられないため、
+            リージョン自体は常設して中身だけを差し替える（`role="alert"` は assertive） */}
+        <div
+          role="alert"
+          // 空のときに `display: none` にするとアクセシビリティツリーから外れ、常設の意味が
+          // なくなる。`empty:sr-only` でレイアウトからだけ外す（要素自体はツリーに残る）
+          className="empty:sr-only"
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "12px",
+            padding: actionError ? "8px" : 0,
+            color: "#ef4444",
+          }}
+        >
+          {actionError && (
+            <>
+              <span>{actionError}</span>
+              <button
+                type="button"
+                onClick={() => setActionError(null)}
+                aria-label="閉じる"
+                style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", fontSize: "16px", lineHeight: 1, padding: 0 }}
+              >
+                &times;
+              </button>
+            </>
+          )}
+        </div>
 
         {/* 写真が0件 */}
         {!isLoading && !error && photos.length === 0 && (
@@ -784,7 +920,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         )}
 
         {/* 写真グリッド */}
-        {!isLoading && !error && photos.length > 0 && (
+        {isGalleryShown && (
           <div
             ref={galleryRef}
             style={{ display: "flex", flexWrap: "wrap", justifyContent: "flex-start", gap: "10px", margin: "0 auto" }}
@@ -807,7 +943,10 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                     >
                       <img
                         src={imageSrc}
-                        alt={photo.caption || "写真"}
+                        // 拡大表示のキャプションと同じ長さに揃える。altだけ全文のままだと、
+                        // 支援技術には最大1000文字（backendの`@Size`上限）が読まれる一方で
+                        // 視覚的には100文字で切られ、伝わる情報量が食い違う
+                        alt={truncateCaption(photo.caption || "") || "写真"}
                         className={styles.picture}
                         onLoad={handleImageLoad}
                       />
@@ -830,7 +969,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                     </div>
                   )}
                   <div className="hidden-caption-content" style={{ display: "none" }}>
-                    <p className="caption_content">{photo.caption || ""}</p>
+                    <p className="caption_content">{truncateCaption(photo.caption || "")}</p>
                     <p className="show_detail">
                       <a href={`/photo/${photoAccountId}/photo_detail?photoNo=${photo.photoNo}`}>
                         詳細
@@ -838,6 +977,25 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
                     </p>
                   </div>
                 </div>
+                {/* 管理者により非公開にされた写真（所有者本人の一覧にのみ含まれる）であることの表示 */}
+                {photo.isHiddenByAdmin && (
+                  <span
+                    data-testid={`hidden-by-admin-badge-${photo.accountNo}-${photo.photoNo}`}
+                    style={{
+                      position: "absolute",
+                      top: "8px",
+                      left: "8px",
+                      padding: "2px 6px",
+                      fontSize: "12px",
+                      color: "#fff",
+                      background: "rgba(220, 38, 38, 0.9)",
+                      borderRadius: "4px",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    管理者により非公開
+                  </span>
+                )}
                 {/* お気に入りアイコン（認証済みのみ、ホバー時に右下表示） */}
                 {isAuthenticated && (
                   <button
@@ -873,9 +1031,9 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         )}
       </div>
 
-      {/* もっと見るボタン */}
+      {/* もっと見るボタン（フィルターパネル展開中は inert で不活性化する） */}
       {!isLoading && !error && !isLast && (
-        <div className={styles.showMore}>
+        <div className={styles.showMore} inert={isFilterOpen}>
           <button
             type="button"
             className={styles.showMoreText}
@@ -893,6 +1051,7 @@ export function PhotoList({ photoAccountId }: PhotoListProps) {
         <Link
           href={`/photo/${photoAccountId}/photo_setting`}
           className={styles.photoSettingButton}
+          inert={isFilterOpen}
         >
           ＋写真追加
         </Link>

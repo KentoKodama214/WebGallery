@@ -80,13 +80,18 @@ function buildCsp(nonce: string): string {
     "style-src 'self' 'unsafe-inline'",
     // 本番のみ：<style>/<link> 要素は nonce または自オリジンに限定し、注入された <style> を防ぐ
     ...(isDev ? [] : [`style-src-elem 'self' 'nonce-${nonce}'`]),
-    // 開発時はローカルの MinIO（署名付き URL）を許可する。本番は imageBaseOrigin のみ
-    `img-src 'self' data: blob:${imageBaseOrigin ? ` ${imageBaseOrigin}` : ""}${isDev ? " http://localhost:9000 http://127.0.0.1:9000" : ""}`,
+    // 開発時はローカルの MinIO（署名付き URL）を許可する。本番は imageBaseOrigin のみ。
+    // OpenStreetMapのタイル画像（撮影場所の地図選択UI用）は常時許可する
+    `img-src 'self' data: blob: https://*.tile.openstreetmap.org${imageBaseOrigin ? ` ${imageBaseOrigin}` : ""}${isDev ? " http://localhost:9000 http://127.0.0.1:9000" : ""}`,
     "font-src 'self' data:",
-    `connect-src 'self'${apiBaseOrigin ? ` ${apiBaseOrigin}` : ""}${isDev ? " ws:" : ""}`,
+    // Nominatim（OpenStreetMapの逆ジオコーディングAPI）は撮影場所の住所自動補完に使用する
+    `connect-src 'self' https://nominatim.openstreetmap.org${apiBaseOrigin ? ` ${apiBaseOrigin}` : ""}${isDev ? " ws:" : ""}`,
     "worker-src 'self' blob:",
-    // 写真詳細の撮影場所表示（Google Maps の iframe 埋め込み）用
-    "frame-src https://maps.google.com https://www.google.com",
+    // 写真詳細の撮影場所表示（Google Maps の iframe 埋め込み）用。
+    // maps.google.com は 301 で www.google.com/maps/embed へ転送されるため両方必要だが、
+    // www.google.com はサイト全体ではなく /maps/embed のパスだけを許可する
+    // （CSP のパス照合は末尾に "/" が無ければ完全一致。クエリ文字列は照合対象外）
+    "frame-src https://maps.google.com/maps https://www.google.com/maps/embed",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -121,7 +126,13 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // API・Next内部アセット・静的ファイルを除外し、ページ遷移だけを対象にする
-    "/((?!api|_next/static|_next/image|_next/data|favicon.ico|.*\\.(?:png|jpe?g|gif|svg|webp|avif|ico|css|js|map|woff2?|ttf)$).*)",
+    // API・Next内部アセット・静的ファイルを除外し、ページ遷移だけを対象にする。
+    //
+    // 除外語には必ずセグメント境界（`(?:/|$)`）か終端（`$`）を要求する。単なる前方一致に
+    // すると、ルート直下の動的セグメント（`app/[accountId]/account_setting`。accountId は
+    // 半角英数字8〜20文字なので `api` で始まる値を誰でも登録できる）が巻き込まれ、
+    // `/apiuser1/account_setting` のようなページに CSP と nonce が一切付かなくなる。
+    // `favicon.ico` の `.` も、エスケープしないと任意1文字に一致して除外範囲が広がる。
+    "/((?!api(?:/|$)|_next/(?:static|image|data)(?:/|$)|favicon\\.ico$|.*\\.(?:png|jpe?g|gif|svg|webp|avif|ico|css|js|map|woff2?|ttf)$).*)",
   ],
 };

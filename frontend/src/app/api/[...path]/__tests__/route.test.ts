@@ -10,6 +10,40 @@ function ctx(path: string[]): Ctx {
   return { params: Promise.resolve({ path }) };
 }
 
+/**
+ * 環境変数を差し替えたうえで route モジュールを読み直し、処理を実行する
+ *
+ * `TRUSTED_PROXY_HOPS` / `APP_ORIGIN` はモジュール読み込み時に確定するため、
+ * テストごとに読み直す必要がある。
+ */
+async function withEnv<T>(
+  env: Record<string, string | undefined>,
+  run: (route: typeof import("../route")) => Promise<T>
+): Promise<T> {
+  const previous: Record<string, string | undefined> = {};
+  for (const [key, value] of Object.entries(env)) {
+    previous[key] = process.env[key];
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+  jest.resetModules();
+  try {
+    return await run(await import("../route"));
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+    jest.resetModules();
+  }
+}
+
 describe("APIプロキシ route", () => {
   let fetchMock: jest.Mock;
 
@@ -58,19 +92,157 @@ describe("APIプロキシ route", () => {
     expect(headers.get("forwarded")).toBeNull();
   });
 
-  it("前段プロキシが付与した X-Forwarded-For の左端を実クライアント IP として載せ直す", async () => {
+  it("TRUSTED_PROXY_HOPS 未設定なら X-Forwarded-For を一切採用しない（安全側の既定）", async () => {
+    // 前段プロキシが無い構成で既定を1にすると、クライアントが自分で付けた1件だけの
+    // X-Forwarded-For がそのまま実クライアントIPとして採用され、バックエンドの
+    // IP単位レート制限の回避・ログイン履歴やGeoIPの偽装が成立してしまう
+    await withEnv({ TRUSTED_PROXY_HOPS: undefined }, async ({ GET: get }) => {
+      fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      const req = new NextRequest("http://localhost/api/v1/accounts", {
+        headers: { "x-forwarded-for": "9.9.9.9" },
+      });
+      await get(req, ctx(["v1", "accounts"]));
+
+      const headers = fetchMock.mock.calls[0][1].headers as Headers;
+      expect(headers.get("x-forwarded-for")).toBeNull();
+    });
+  });
+
+  it("TRUSTED_PROXY_HOPS が不正値の場合も X-Forwarded-For を採用しない", async () => {
+    for (const invalid of ["0", "-1", "abc", "1.5"]) {
+      await withEnv({ TRUSTED_PROXY_HOPS: invalid }, async ({ GET: get }) => {
+        fetchMock.mockClear();
+        fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+        const req = new NextRequest("http://localhost/api/v1/accounts", {
+          headers: { "x-forwarded-for": "9.9.9.9" },
+        });
+        await get(req, ctx(["v1", "accounts"]));
+
+        const headers = fetchMock.mock.calls[0][1].headers as Headers;
+        expect(headers.get("x-forwarded-for")).toBeNull();
+      });
+    }
+  });
+
+  it("前段プロキシが付与した X-Forwarded-For の右端を実クライアント IP として載せ直す", async () => {
+    await withEnv({ TRUSTED_PROXY_HOPS: "1" }, async ({ GET: get }) => {
+      fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      const req = new NextRequest("http://localhost/api/v1/accounts", {
+        headers: {
+          // ALB / CloudFront は X-Forwarded-For を上書きせず追記するため、
+          // 右端＝前段プロキシが付与した実クライアント IP、左側＝クライアントが送った値
+          "x-forwarded-for": "203.0.113.9, 10.0.1.5",
+        },
+      });
+      await get(req, ctx(["v1", "accounts"]));
+
+      const headers = fetchMock.mock.calls[0][1].headers as Headers;
+      expect(headers.get("x-forwarded-for")).toBe("10.0.1.5");
+    });
+  });
+
+  it("クライアントが X-Forwarded-For を詐称しても、前段が付与した値のみを採用する", async () => {
+    await withEnv({ TRUSTED_PROXY_HOPS: "1" }, async ({ GET: get }) => {
+      fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      const req = new NextRequest("http://localhost/api/v1/accounts", {
+        headers: {
+          // 攻撃者が複数の偽 IP を並べても、右端（前段が付与した実 IP）だけが採用される
+          "x-forwarded-for": "1.1.1.1, 2.2.2.2, 3.3.3.3, 10.0.1.5",
+        },
+      });
+      await get(req, ctx(["v1", "accounts"]));
+
+      const headers = fetchMock.mock.calls[0][1].headers as Headers;
+      expect(headers.get("x-forwarded-for")).toBe("10.0.1.5");
+    });
+  });
+
+  it("X-Forwarded-For が1件だけの場合はその値を採用する", async () => {
+    await withEnv({ TRUSTED_PROXY_HOPS: "1" }, async ({ GET: get }) => {
+      fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      const req = new NextRequest("http://localhost/api/v1/accounts", {
+        headers: { "x-forwarded-for": "10.0.1.5" },
+      });
+      await get(req, ctx(["v1", "accounts"]));
+
+      const headers = fetchMock.mock.calls[0][1].headers as Headers;
+      expect(headers.get("x-forwarded-for")).toBe("10.0.1.5");
+    });
+  });
+
+  it("信頼するホップ数に届かないチェーンはバックエンドへ付与しない（fail-closed）", async () => {
+    await withEnv({ TRUSTED_PROXY_HOPS: "2" }, async ({ GET: get }) => {
+      fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      // 前段が1段しか通っていない（＝CloudFrontをバイパスした等）ため、
+      // 左端は攻撃者が指定した値になりうる。左端へフォールバックせず付与しないこと
+      const req = new NextRequest("http://localhost/api/v1/accounts", {
+        headers: { "x-forwarded-for": "1.1.1.1" },
+      });
+      await get(req, ctx(["v1", "accounts"]));
+
+      const headers = fetchMock.mock.calls[0][1].headers as Headers;
+      expect(headers.get("x-forwarded-for")).toBeNull();
+    });
+  });
+
+  it("信頼するホップ数が2の場合は右端から2番目を実クライアント IP として採用する", async () => {
+    await withEnv({ TRUSTED_PROXY_HOPS: "2" }, async ({ GET: get }) => {
+      fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      // 左端＝クライアント詐称値、中央＝CloudFrontが付与した実IP、右端＝ALBが付与したCloudFrontのIP
+      const req = new NextRequest("http://localhost/api/v1/accounts", {
+        headers: { "x-forwarded-for": "1.1.1.1, 203.0.113.9, 10.0.1.5" },
+      });
+      await get(req, ctx(["v1", "accounts"]));
+
+      const headers = fetchMock.mock.calls[0][1].headers as Headers;
+      expect(headers.get("x-forwarded-for")).toBe("203.0.113.9");
+    });
+  });
+
+  it("実クライアントIPを特定できない場合は、プロセスにつき一度だけ警告を出す", async () => {
+    // 警告フラグはモジュールスコープに持つため、他テストの影響を受けないよう読み直す
+    jest.resetModules();
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const { GET: freshGet } = await import("../route");
+      fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+      // fail-closed は正常応答に現れないため、構成ミス（前段の段数と TRUSTED_PROXY_HOPS の
+      // 不一致）に気づけるよう警告だけは出す。リクエストごとに出すとログが溢れるので1回だけ
+      await freshGet(
+        new NextRequest("http://localhost/api/v1/accounts"),
+        ctx(["v1", "accounts"])
+      );
+      await freshGet(
+        new NextRequest("http://localhost/api/v1/accounts"),
+        ctx(["v1", "accounts"])
+      );
+
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0][0]).toContain("TRUSTED_PROXY_HOPS");
+    } finally {
+      warnSpy.mockRestore();
+      jest.resetModules();
+    }
+  });
+
+  it("X-Forwarded-For が空要素のみの場合はバックエンドへ付与しない", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     const req = new NextRequest("http://localhost/api/v1/accounts", {
-      headers: {
-        // 左端＝ALB が記録した実クライアント IP、以降＝中継プロキシ
-        "x-forwarded-for": "203.0.113.9, 10.0.1.5",
-      },
+      headers: { "x-forwarded-for": " , " },
     });
     await GET(req, ctx(["v1", "accounts"]));
 
     const headers = fetchMock.mock.calls[0][1].headers as Headers;
-    expect(headers.get("x-forwarded-for")).toBe("203.0.113.9");
+    expect(headers.get("x-forwarded-for")).toBeNull();
   });
 
   it("X-Forwarded-For が無ければバックエンドへも付与しない", async () => {
@@ -242,6 +414,70 @@ describe("APIプロキシ route", () => {
 
     expect(res.status).toBe(204);
     expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it("Host ヘッダーを詐称して Origin と揃えても403を返す（自ホストの判定に Host を使わない）", async () => {
+    // Host はクライアントが自由に送れる値。照合先に含めると Host と Origin を揃えるだけで
+    // CSRF 検証を通過できてしまう（ブラウザは Host を差し替えられないため典型的な CSRF は
+    // 防げているが、前段が任意の Host を素通しする構成では検証として成立しない）
+    const req = new NextRequest("http://localhost/api/v1/auth/logout", {
+      method: "POST",
+      headers: { host: "evil.example", origin: "https://evil.example" },
+    });
+    const res = await POST(req, ctx(["v1", "auth", "logout"]));
+
+    expect(res.status).toBe(403);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("APP_ORIGIN を設定すると、その公開オリジンの Origin だけを自サイトとして認める", async () => {
+    await withEnv(
+      { APP_ORIGIN: "https://gallery.example.com" },
+      async ({ POST: post }) => {
+        fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+        // 前段プロキシ配下では listen しているホスト（localhost）と公開ホストが異なる。
+        // 公開ホストからの Origin を通すこと
+        const allowed = new NextRequest("http://localhost/api/v1/auth/logout", {
+          method: "POST",
+          headers: { origin: "https://gallery.example.com" },
+        });
+        expect((await post(allowed, ctx(["v1", "auth", "logout"]))).status).toBe(204);
+
+        // 公開ホスト以外は、listen しているホストであっても拒否する
+        fetchMock.mockClear();
+        const rejected = new NextRequest("http://localhost/api/v1/auth/logout", {
+          method: "POST",
+          headers: { origin: "http://localhost" },
+        });
+        expect((await post(rejected, ctx(["v1", "auth", "logout"]))).status).toBe(403);
+        expect(fetchMock).not.toHaveBeenCalled();
+      }
+    );
+  });
+
+  it("APP_ORIGIN が未設定なら、プロセスにつき一度だけ警告を出す", async () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await withEnv({ APP_ORIGIN: undefined }, async ({ POST: post }) => {
+        fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+        const makeReq = () =>
+          new NextRequest("http://localhost/api/v1/auth/logout", {
+            method: "POST",
+            headers: { origin: "http://localhost" },
+          });
+        await post(makeReq(), ctx(["v1", "auth", "logout"]));
+        await post(makeReq(), ctx(["v1", "auth", "logout"]));
+
+        const appOriginWarnings = warnSpy.mock.calls.filter((call) =>
+          String(call[0]).includes("APP_ORIGIN")
+        );
+        expect(appOriginWarnings).toHaveLength(1);
+      });
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it("Origin も Referer も無い状態変更メソッドは検証不能として403を返す", async () => {

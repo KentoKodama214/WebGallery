@@ -19,6 +19,9 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 1. ログイン時に `POST /api/v1/auth/login` でアクセストークン（レスポンスボディ）とリフレッシュトークン（HttpOnly cookie）を発行
 2. APIリクエストには `Authorization: Bearer {accessToken}` ヘッダーを付与
 3. アクセストークン期限切れ時は `POST /api/v1/auth/refresh` でトークンを再発行
+   - フロントエンドは画面を開くたびにセッション復元のためリフレッシュを試みる。リフレッシュトークンの cookie が無い（未ログイン）場合は、
+     エラーではなく本文なしの `204 No Content` を返す（未ログインで公開ページ等を開くだけでブラウザに 401 が記録されないようにするため）。
+     cookie があってトークンが無効な場合は従来どおり 401 を返す
 4. ログアウト時は `POST /api/v1/auth/logout` でリフレッシュトークンを無効化
 
 リフレッシュトークンはリフレッシュのたびにローテーション（旧トークンを無効化し新トークンを発行）する。
@@ -33,15 +36,36 @@ Spring SecurityによるJWT（JSON Web Token）認証を採用しています。
 | 認証API（`/api/v1/auth/**`） | 公開 |
 | アカウント登録（`POST /api/v1/accounts`） | 公開 |
 | アカウント一覧（`GET /api/v1/accounts`） | 公開（アカウント名のみ表示。詳細は下記） |
-| 写真の閲覧（`GET /api/v1/accounts/{id}/photos`、`GET /api/v1/accounts/{id}/photos/{photoNo}`） | 公開 |
+| 写真の閲覧（`GET /api/v1/accounts/{id}/photos`、`GET /api/v1/accounts/{id}/photos/{photoNo}`） | 公開（管理者により非公開にされた写真は所有者本人にのみ返す。詳細は下記） |
 | 写真登録上限チェック（`GET /api/v1/accounts/{id}/photos/upper-limit`） | 認証必須（本人のみ） |
+| ロケーション一覧（`GET /api/v1/accounts/{id}/locations`） | 認証必須（本人のみ） |
 | 都道府県一覧（`GET /api/v1/prefectures`） | 公開 |
 | 写真の登録・編集・削除 | 認証必須（本人のみ） |
+| ポートフォリオ設定（`/api/v1/accounts/{id}/portfolios/**`。一覧・詳細（下書きを含む）・作成上限チェック・登録・更新・公開状態変更・削除） | 認証必須（本人のみ） |
+| ポートフォリオ用の写真検索（`GET /api/v1/accounts/{id}/portfolio-photos`。1つの検索語でタイトル・撮影場所の名前・撮影場所の住所・タグ名をOR検索） | 認証必須（本人のみ。非公開の撮影場所の名前・住所も検索対象とするため、公開の写真一覧APIとは分けている） |
+| ポートフォリオテンプレート一覧（`GET /api/v1/portfolio-templates`） | 認証必須 |
 | お気に入り登録・解除 | 認証必須 |
 | アカウント詳細取得・更新 | 認証必須（本人のみ） |
 | パスワード変更・アカウント削除 | 認証必須（本人のみ）＋ 現在のパスワードによる再認証 |
 | Actuatorヘルスチェック（`GET /actuator/health`） | 公開 |
 | Actuatorメトリクス（`GET /actuator/metrics/**`） | 認証必須（ADMINロール。コネクション数等の内部情報を含むため） |
+| 管理者用写真一覧（`GET /api/v1/admin/photos`）・写真の公開状態変更（`PUT /api/v1/admin/photos/{accountNo}/{photoNo}/visibility`） | 認証必須（ADMINロール。`/api/v1/admin/**`の`hasRole("ADMIN")`と`@RequireAdminAuthority`の二重チェック） |
+
+### 管理者による写真の非公開
+
+不適切な画像がアップロードされた場合に、管理者が写真を非公開にできる（管理者画面 `/admin/photo_management`）。
+ユーザーからの通報は既存のお問い合わせで受け付け、管理者が写真一覧から該当の写真を探して操作する。
+
+- 非公開にした写真（`photo.photo_mst.is_hidden_by_admin = true`）は、写真一覧・写真詳細・公開ポートフォリオ（portfolio-api）で
+  **所有者本人以外には返さない**（未ログインを含む）。所有者本人には「管理者により非公開」の表示付きで返す
+- 公開ポートフォリオのグリッド型では、行の構成を保つため非公開の写真の枠だけを空き枠（GraphQL の `GridPhoto.photo` が null）にする。
+  空き枠には写真番号・タイトル・画像URLを含めない。フィーチャー型では非公開の写真のセクションを表示しない
+- 所有者本人は非公開の写真を編集・削除できるが、非公開を解除できるのは管理者のみ。ポートフォリオの写真候補には出さず、
+  ポートフォリオ編集画面では非公開の写真に外すよう案内を表示する。非公開の写真を含むポートフォリオは保存時・公開時に画面で止め、
+  保存時はバックエンドも「ポートフォリオに設定できない写真が含まれています」として拒否する
+- 操作は理由（必須・500文字以内）とともに `photo.photo_moderation_log` に記録する。理由は管理者のみが参照し、所有者には表示しない
+- 画像ファイル（S3オブジェクト）は削除しない（誤判定時に解除で元に戻せるようにするため）。そのため、**非公開にする前に発行済みの
+  署名付きURLは有効期限が切れるまでアクセスできる**
 
 ### レート制限（`RateLimitFilter`）
 
@@ -122,20 +146,115 @@ APM に記録されやすく（`Authorization` と違い）マスク対象から
   個別失効させ、あるユーザーの軽微な編集で認証ホットパスのキャッシュ全体が飛ぶのを防ぐ。
   ただし更新前のアカウントIDが取得できなかった場合は旧IDを個別失効できないため、安全側に倒して全消去する。
 
+### アカウント削除（退会）時の関連データの扱い
+
+`AccountAggregateRepositoryImpl#delete` が、`common.account(account_no)` を参照する全テーブルから
+対象アカウントの行を外部キー依存順に削除する（いずれの外部キーも `ON DELETE RESTRICT` のため、
+削除漏れはアカウント本体の物理削除を外部キー違反で失敗させる。参照元テーブルの網羅は
+`AccountAggregateRepositoryImplIntegrationTest` が `pg_constraint` からの動的列挙で検証する）。
+これに加えて以下の2点を扱う。
+
+- **管理者として「他ユーザーの」お問い合わせへ投稿した返信が残っている場合は、削除そのものを拒否する**
+  （`AccountServiceImpl#deleteAccount` → `ErrorEnum.CANNOT_DELETE_ACCOUNT_WITH_ADMIN_REPLY`、400）。
+  `common.inquiry_reply_mst.admin_account_no` の参照を解消するために返信を巻き込んで削除すると、
+  **無関係な第三者のお問い合わせスレッドから回答本文だけが消え**、お問い合わせのステータス（回答済み）と
+  実データが食い違ってしまう。業務ルールとして削除を禁止し、運営側での対応に委ねる。
+  ただし**自分が起票したお問い合わせへの自己返信は判定に含めない**（`InquiryReplyMstRepository#existsReplyToOthersInquiry`）。
+  自スレッドの返信は退会時に `byInquiryAccountNo` の条件でスレッドごと削除されるため第三者への影響がなく、
+  含めてしまうと動作確認やテスト投稿で自分のお問い合わせに返信しただけの管理者が退会できなくなる。
+- **外部キーを持たない「閲覧者側」のログは匿名化する**。`photo_view_log.account_no` /
+  `photo_list_filter_log.account_no`（閲覧者。未ログインを `0` で表すセンチネル値のため外部キーなし）は
+  削除漏れが外部キー違反にならないため、放置すると退会後も IP アドレス・国・地域・検索キーワードが
+  他人の写真のログとして残り続ける。所有者側の閲覧数・絞り込みの分析データは残したいため、行の削除ではなく
+  アカウント番号を `0` へ、個人データを空文字へ更新する（各 Mapper の `anonymizeViewer`）。
+
+#### 管理者返信を持つアカウントの退会（運用手順）
+
+上記のブロックを解除する経路はアプリケーションに実装していない。`common.inquiry_reply_mst.admin_account_no`
+は `common.account(account_no)` への外部キー（`ON DELETE RESTRICT`）であり、返信を残したままアカウントだけを
+消すことはできないため、**返信を別の管理者へ引き継いでから退会 API を実行する**。個人データ削除の要求を
+受けた場合は運営が以下を実施する。
+
+1. 対象アカウントに残っている返信を確認する（0 件なら退会 API がそのまま通る）。
+
+   ```sql
+   SELECT r.id, r.inquiry_id, r.reply_no, i.account_no AS inquiry_account_no
+     FROM common.inquiry_reply_mst r
+     JOIN common.inquiry_mst i ON i.id = r.inquiry_id
+    WHERE r.admin_account_no = <退会するアカウント番号>
+      AND i.account_no <> <退会するアカウント番号>;
+   ```
+
+2. 引き継ぎ先の管理者アカウント番号を決める（`common.account_authority` で `admin` 権限を持つ現役のアカウント）。
+3. 返信の `admin_account_no` を引き継ぎ先へ付け替える。返信本文・`created_by`・`created_at` は
+   お問い合わせスレッドの履歴として残す（第三者から見た回答内容が変わらないようにするため）。
+
+   ```sql
+   UPDATE common.inquiry_reply_mst
+      SET admin_account_no = <引き継ぎ先のアカウント番号>
+    WHERE admin_account_no = <退会するアカウント番号>
+      AND inquiry_id IN (SELECT id FROM common.inquiry_mst WHERE account_no <> <退会するアカウント番号>);
+   ```
+
+4. 退会 API（`DELETE /api/v1/accounts`）を本人に再実行してもらう。自スレッドへの自己返信は
+   この時点でスレッドごと削除される。
+5. 誰の返信を誰へ引き継いだかを運用記録として残す（アプリ側には監査ログを持たない）。
+
 ### バリデーションエラーのログ
 
 リクエストのバリデーション失敗をログ出力する際、機微フィールド（`password` /
 `newPassword` / `currentPassword`）の入力値は `***` にマスクする
-（`helper/ValidationErrorLogger`）。ログ集約基盤に平文の資格情報を残さないため。
+（`infrastructure/web/ValidationErrorLogger`）。ログ集約基盤に平文の資格情報を残さないため。
 
 ### 信頼するプロキシと発信元IPの復元
 
-`server.tomcat.remoteip` で `X-Forwarded-For` / `X-Forwarded-Proto` から発信元 IP・プロトコルを
-復元する。信頼する「直前の送信元 IP」の範囲は `server.tomcat.remoteip.internal-proxies`
-（環境変数 `TRUSTED_PROXIES`）で制御し、範囲外から届いた `X-Forwarded-For` は無視して TCP 接続の
-実 IP を使う（クライアントによる IP 詐称の防止）。既定値はループバック＋RFC1918（Tomcat 既定と同等）で、
-**本番では前段の ALB／リバースプロキシが存在するサブネットの CIDR だけに狭める**こと。加えて、
-アプリコンテナはネットワーク的に ALB 経由でしか到達できない構成にする。
+`infrastructure/web/ForwardedForFilter` が `X-Forwarded-For` から発信元 IP を復元する。信頼する
+「直前の送信元 IP」の範囲は `app.forwarded.trusted-proxies`（環境変数 `TRUSTED_PROXIES`、正規表現）で
+制御し、範囲外から届いた `X-Forwarded-For` は無視して TCP 接続の実 IP を使う（クライアントによる
+IP 詐称の防止）。復元後の値は `HttpServletRequestWrapper#getRemoteAddr` として後続のフィルタ・
+コントローラへ渡り、`ClientIpResolver` / `RateLimitFilter` がそれを参照する。既定値はループバック＋
+RFC1918 で、**本番では前段の ALB／リバースプロキシが存在するサブネットの CIDR だけに狭める**こと。
+加えて、アプリコンテナはネットワーク的に ALB 経由でしか到達できない構成にする。
+
+> **Tomcat の `RemoteIpValve` を使わない理由**
+> 本アプリは WAR を外部 Tomcat へデプロイする構成（`ServletInitializer` / `build.gradle` の `war`
+> プラグイン）のため、Spring Boot の `server.tomcat.remoteip.*` と `server.forward-headers-strategy`
+> は**埋め込みサーバー（`ConfigurableTomcatWebServerFactory`）向けの設定であり本番では読まれない**。
+> 設定した気になって保護が効かない状態（レート制限が前段 IP 単位に退化し、ログイン履歴・GeoIP も
+> 前段 IP で記録される）を避けるため、コンテナ構成に依存しないアプリ側のフィルターで実装している。
+> これにより WAR・`bootRun`・テストで同一の挙動になる。
+> `X-Forwarded-Proto` は扱っていない（`request.isSecure()` / `getScheme()` に依存する処理が無く、
+> リフレッシュトークン Cookie の `Secure` 属性は常に付与しているため）。
+
+復元アルゴリズムは `RemoteIpValve` と同等で、`X-Forwarded-For` を**右端から左へ**辿り、信頼できる
+プロキシに一致する要素を読み飛ばして最初に現れた要素を実クライアント IP とする（前段は追記する仕様
+のため、右側が信頼境界に近い）。全要素が信頼できるプロキシだった場合は差し替えない。
+
+`RemoteIpValve` と異なり、**各要素を IP アドレスとして検証・正規化してから扱う**。前段が
+`X-Forwarded-For` を追記せず素通しする構成（`proxy_set_header X-Forwarded-For $http_x_forwarded_for`
+など）では右端＝クライアントの指定値になり、検証しなければ任意の文字列がそのまま `getRemoteAddr()` に
+なってしまう。復元した IP は `common.login_history.ip_address` / `photo.photo_view_log.ip_address`
+（いずれも `varchar(45)`）へ保存されるため、不正な値や 46 文字以上の値は INSERT を失敗させ、GeoIP 解決
+にも渡ってしまう。IP アドレスとして読めない要素が現れた時点で差し替えを諦め、TCP 接続の送信元 IP に倒す。
+あわせて `1.2.3.4:5678` / `[2001:db8::1]:443` のようなポート付き表記（Azure Front Door 等の前段が付ける）
+からポートを剥がし、剥がした結果で信頼プロキシ判定を行う。名前解決は行わない
+（`InetAddress#getByName` は不正な値で DNS 参照へ抜けるため使わない）。
+
+本番プロファイルでは既定値のまま起動できないよう、`application-prod.yml` が
+`app.forwarded.trusted-proxies: ${TRUSTED_PROXIES:}`（空文字既定）を指定し、`ProdConfigValidationRunner`
+が未設定・空文字・不正な正規表現・広すぎる正規表現のいずれも検出して起動を失敗させる。空文字を既定値に
+しているのは、環境変数の設定漏れを Spring の `Could not resolve placeholder` ではなく
+「前段プロキシの CIDR を明示設定する必要があります」という運用者向けのメッセージで伝えるため
+（検証の実行経路も 1 本化される）。広すぎるかどうかの検証は文字列の照合ではなく、値を実際に
+`Pattern` へコンパイルして代表的なグローバル IP（`8.8.8.8` / `203.0.113.1` / `2001:db8::1`）に
+一致しないことを確かめる方式とする（`.*` と等価な表記は `(.*)` / `^.*$` / `[0-9.]*` など無数にあり、
+禁止文字列のリストでは網羅できないため）。
+
+ただしこの検証はあくまで catch-all に近い値を弾くためのもので、過不足の両方がある。`203.0.113.1` は
+TEST-NET-3 のため前段プロキシを同レンジに置いた検証環境では正当な設定でも起動に失敗し、逆に
+`10\.\d+\.\d+\.\d+` のようにプライベート範囲全域を許す値はどのプローブにも一致せず素通しする。
+「前段プロキシの CIDR だけに狭める」を機械的に担保するには、設定を正規表現ではなく CIDR のリスト
+（`IpAddressMatcher`）へ変え、プレフィックス長の下限を検証する形にする必要がある。
 
 ### バックエンドのレスポンスヘッダーと CORS
 
@@ -166,14 +285,17 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 
 ### 本番プロファイルの起動時設定検証
 
-`config/ProdConfigValidationRunner`（`@Profile("prod")`）が起動完了時に本番設定を検証し、
+`infrastructure/config/ProdConfigValidationRunner`（`@Profile("prod")`）が起動完了時に本番設定を検証し、
 危険な構成を検出したら `IllegalStateException` を投げて**起動自体を失敗させる**（フェイルクローズ）。
 
 - `app.cors.allowed-origins`（環境変数 `FRONTEND_ORIGIN`）が 1 件以上・すべて `https://` の
   絶対オリジン・ワイルドカード（`*`）やパス・クエリを含まないこと
 - `app.s3.endpoint` / `app.s3.public-base-url` が設定されている場合、`https://` であること（平文通信の禁止）
+- `app.forwarded.trusted-proxies`（環境変数 `TRUSTED_PROXIES`）が設定済みで、正規表現として妥当、かつ
+  代表的なグローバル IP に一致しないこと。`application-prod.yml` では既定値を設けず `${TRUSTED_PROXIES}`
+  としているため、未設定なら起動時のプレースホルダ解決の時点で失敗する（二重の防御）
 
-`JWT_SECRET` の 256bit 長チェックは `helper/JwtTokenProvider` の `@PostConstruct` で全プロファイル共通に行う。
+`JWT_SECRET` の 256bit 長チェックは `infrastructure/security/JwtTokenProviderImpl` の `@PostConstruct` で全プロファイル共通に行う。
 `prod` プロファイルでは OpenAPI ドキュメント（`/scalar`・`/v3/api-docs`）用の `SecurityFilterChain` を
 登録しないため、デフォルトの `denyAll` チェーンにより拒否される。
 
@@ -188,13 +310,29 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 - 新規アップロード時は安全側に倒し、フロントのトグルは既定 OFF（非公開）。写真登録・編集画面で
   ユーザーが公開/非公開を選択できる。
 - DB カラムも `DEFAULT false`（非公開）とする。
-- フラグの値自体はレスポンスに含まれる（`isLocationPublic`）。所有者の編集画面での現在値表示に用いる。
+- フラグの値（`isLocationPublic`）をレスポンスに含めるのは**所有者本人のみ**（編集画面での現在値表示に
+  用いる）。非公開かつ他人の写真では `null` を返す。値を返すと「撮影場所が隠された写真」であること自体が
+  分かってしまうため。
+
+> **制限**: この制御は**写真詳細 API のレスポンス**に対するものであり、S3 に保存された画像ファイル
+> そのものは加工していない。スマートフォン等で撮影した JPEG には EXIF の GPS 情報が埋め込まれている
+> ことがあり、署名付き URL で取得した画像を解析すれば撮影地点を読み取れる。フラグを `false` にしても
+> 画像側の位置情報は除去されないため、写真登録・編集画面（`PhotoSettingForm`）で公開設定の直下に
+> その旨を明示し、アップロード前に画像側の位置情報を削除するよう案内している。
+> 画像からの EXIF 除去（サーバー側での再エンコード等）は未実装。
+
+撮影場所の入力補助（`LocationMapPicker`）は、住所の自動補完のため **ブラウザから OpenStreetMap
+Nominatim（`https://nominatim.openstreetmap.org`）へクリック地点の緯度・経度を送信する**。
+第三者への位置情報の送信になるため、写真登録・編集画面の地図の説明文でその旨を明示している
+（`Referrer-Policy: strict-origin-when-cross-origin` によりページ URL 自体は送信されない）。
+緯度・経度は入力欄の `step="0.0001"` と DB の `decimal(11,4)` に合わせて小数第4位へ丸めて反映する
+（丸めないと保存時に DB 側で黙って丸められ、表示値と保存値が食い違う）。
 
 ### EXIF情報（撮影メタデータ）の未入力項目の補完
 
 写真新規一括登録（`POST /api/v1/accounts/{id}/photos`）の焦点距離・F値・シャッタースピード・ISOは、
 ユーザーが入力した値（フォーム入力値）を項目ごとに優先して採用し、未入力の項目についてのみ、
-アップロードされた画像ファイルの実バイナリから`PhotoExifExtractor`（`helper/`）が抽出したEXIF値で
+アップロードされた画像ファイルの実バイナリから`PhotoExifExtractor`（`infrastructure/helper/`）が抽出したEXIF値で
 補完する（`PhotoExifDataMergePolicy#merge`）。フィルム写真のデジタル化やEXIF非対応形式（PNG等）の
 ための手入力機能を優先しつつ、未入力時は画像自体の実データを反映させるため。
 
@@ -212,12 +350,46 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 経由でバックエンドと通信する。プロキシは以下を担う。
 
 - 状態変更メソッド（POST/PUT/DELETE/PATCH）に対し、`Sec-Fetch-Site: cross-site` の拒否と
-  `Origin` の自サイト一致検証（CSRF 多層防御。バックエンドの SameSite Cookie と併用）
+  `Origin`（無ければ `Referer`）の自サイト一致検証（CSRF 多層防御。バックエンドの SameSite Cookie と併用）。
+  どちらのヘッダーも無い場合は検証不能として拒否する。
+  照合先の「自サイト」は環境変数 `APP_ORIGIN`（未設定時はリクエスト URL 由来の host。
+  Node が listen しているホストで、`X-Forwarded-Host` には追従しない）から決める。
+  **クライアントが自由に送れる `Host` ヘッダーは使わない**。`Host` を照合先に含めると
+  `Host: evil.example` と `Origin: https://evil.example` を揃えるだけで検証を通過できてしまい、
+  検証として成立しない（ブラウザは `Host` を差し替えられないため典型的なクロスサイト CSRF は
+  防げているが、前段が任意の `Host` を素通しする構成やリクエストスマグリングでは崩れる）。
+  前段にリバースプロキシを置く構成では公開ホストと listen ホストが一致しないため `APP_ORIGIN` が必須で、
+  未設定のままだとプロセスにつき 1 回だけ警告ログ（`[api-proxy] APP_ORIGIN が未設定のため…`）を出す
 - パストラバーサル（`.` / `..` / 空セグメント）の拒否、リクエストボディの上限（6MB）、
   バックエンドへの中継タイムアウト（30 秒）、リダイレクト追従の無効化（`redirect: "manual"`）
-- クライアント由来の転送系ヘッダー（`X-Forwarded-Host` / `X-Forwarded-Proto` / `Forwarded` /
-  `X-Real-IP`）の除去。バックエンドのレート制限が使う `X-Forwarded-For` だけは、前段プロキシ
-  （ALB / CloudFront）が付与した値の左端＝実クライアント IP に載せ直してから中継する
+- クライアント由来の転送系ヘッダー（`X-Forwarded-Host` / `X-Forwarded-Proto` / `X-Forwarded-Port` /
+  `Forwarded` / `X-Real-IP`、および CDN 各社のクライアント IP ヘッダー `CF-Connecting-IP` /
+  `True-Client-IP` / `X-Client-IP` / `X-Cluster-Client-IP` / `Fastly-Client-IP` /
+  `X-Original-Forwarded-For`）の除去。現在バックエンドが読むのは `X-Forwarded-For` のみ
+  （`ForwardedForFilter`）だが、将来 CDN 由来ヘッダーを参照した際に詐称値が届かないよう
+  まとめて落とす。バックエンドのレート制限が使う `X-Forwarded-For` だけは、前段プロキシ
+  （ALB / CloudFront）が付与した値＝実クライアント IP に載せ直してから中継する。
+  **ALB / CloudFront はいずれも受信した `X-Forwarded-For` を上書きせず追記する**ため、左端は
+  クライアントが自由に指定できる値になる（左端を信頼するとレート制限の回避・ログイン履歴や
+  GeoIP の偽装が成立する）。そのため「信頼境界の直前」＝**右端から `TRUSTED_PROXY_HOPS` 個目**
+  を採用する。環境変数 `TRUSTED_PROXY_HOPS` にその段数を設定する（ALB のみなら 1、
+  CloudFront + ALB なら 2）。
+  **未設定・不正値の既定は 0（前段プロキシを一切信頼しない）**で、`X-Forwarded-For` を
+  バックエンドへ付与しない。既定を 1 にすると、前段プロキシが存在しない構成
+  （`next start` を直接公開する等）で「クライアントが自分で付けた 1 件だけの `X-Forwarded-For`」が
+  そのまま実クライアント IP として採用され、レート制限の回避・ログイン履歴／GeoIP の偽装が
+  成立してしまう（このプロキシはバックエンドの `TRUSTED_PROXIES` に入っているため、
+  フロントが詐称値を保証した形になる）ため、安全側を既定にしている。
+  チェーンが `TRUSTED_PROXY_HOPS` に届かない場合（前段を経由していない＝ローカル実行、
+  CloudFront をバイパスして ALB を直叩き、VPC 内からの直接到達等）は**左端へフォールバックせず
+  `X-Forwarded-For` を付与しない**（fail-closed）。左端は攻撃者が選べる値なのでフォールバックは
+  IP 詐称の入口になる。付与しなければバックエンドは TCP 接続元 IP を使うため安全側に倒れる。
+  ただし fail-closed が発動している間は、バックエンドから見た送信元がすべて同一（このプロキシの
+  IP）になり、**IP 単位のレート制限が全ユーザーの合算になる**（アカウント登録が 10 件 / 3600 秒で
+  頭打ちになる等）。正常応答には現れず構成ミスに気づけないため、実クライアント IP を特定できな
+  かった場合はプロセスにつき 1 回だけ警告ログ（`[api-proxy] X-Forwarded-For から実クライアント
+  IPを特定できませんでした…`）を出す。本番でこのログが出ていたら、前段プロキシの段数と
+  `TRUSTED_PROXY_HOPS` が一致しているかを確認する
 - `Location` の正規化（バックエンド絶対 URL は相対化、外部 URL・プロトコル相対は削除）
 - バックエンドへ同時に中継するリクエスト数の上限（`PROXY_MAX_CONCURRENCY`、既定 100）。
   超過分は待たせず `503`＋`Retry-After` で突き放す（ロードシェディング。最大 6MB を
@@ -238,19 +410,32 @@ CORS（`corsConfigurationSource`）は標準構成（同一オリジンの `/api
 `<style>`／`<link>` 要素側だけは注入を防ぐ（`style-src-elem` 非対応ブラウザは `style-src` に
 フォールバック）。
 
+CSP を付与する対象は `src/proxy.ts` の `config.matcher` で決まる。除外語（`api` / `_next/static` 等）は
+**必ずセグメント境界（`(?:/|$)`）か終端（`$`）を要求する**こと。単なる前方一致にすると、ルート直下の
+動的セグメント（`app/[accountId]/account_setting`。accountId は半角英数字 8〜20 文字なので `api` で
+始まる値を誰でも登録できる）が巻き込まれ、`/apiuser1/account_setting` のようなページに CSP と nonce が
+一切付かなくなる（静的なセキュリティヘッダーは付くため気づきにくい）。この境界条件は
+`src/__tests__/proxy.test.ts` で固定している。
+
 nonce 方式は SSR 時にリクエストヘッダーから nonce を読むため、**全ページの動的レンダリングが必須**
 （`app/layout.tsx` の `export const dynamic = "force-dynamic"`）。これは nonce 方式 CSP に内在する
 制約であり、静的生成・ISR・CDN エッジキャッシュは使えない。トレードオフを見直す場合は
 nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ移行する必要がある。
 
 写真詳細の撮影場所地図（Google Maps の iframe 埋め込み）表示のため、`frame-src` に
-`https://maps.google.com` / `https://www.google.com` を許可している。
+`https://maps.google.com/maps` / `https://www.google.com/maps/embed` を許可している。
+`buildGoogleMapEmbedUrl`（`src/lib/url.ts`）が組み立てる `maps.google.com/maps?...&output=embed` は
+301 で `www.google.com/maps/embed?...` へ転送され、CSP は iframe 内の遷移先にも適用されるため両方が必要。
+サイト全体（`https://www.google.com`）ではなくパス単位に絞っている（CSP のパス照合は末尾に `/` が
+無ければ完全一致。クエリ文字列は照合対象外）。埋め込み URL の組み立てを変える場合は `frame-src` も
+併せて見直すこと。
 
 ### 画像ストレージと署名付きURL
 
 写真の実体は S3（ローカル/E2E は docker-compose の MinIO）に保存し、DB の `photo_mst.image_file_path`
-には**サーバ生成の不透明オブジェクトキー**（`{accountId}/{写真番号}-{ランダム32桁}.{検証済み拡張子}`）のみを
-保持する。写真一覧・詳細 API は、Service 層（`PhotoServiceImpl`）が `FileRepository.getPresignedUrl` で
+には**サーバ生成の不透明オブジェクトキー**（`{アカウント番号}/{写真番号}-{ランダム32桁}.{検証済み拡張子}`）のみを
+保持する。プレフィックスには変更されうるアカウントIDではなく**不変のアカウント番号**を用いる
+（アカウントID変更後に退会した場合、旧IDプレフィックス配下のオブジェクトが削除されずに残るのを防ぐ）。写真一覧・詳細 API は、Service 層（`PhotoServiceImpl`）が `FileRepository.getPresignedUrl` で
 **有効期限付きの署名付き URL**（pre-signed GET URL、既定 15 分。`app.s3.presign-expiry-seconds`）を
 発行してレスポンスに載せ、ブラウザがストレージから直接画像を取得する。アプリサーバーは画像バイト列を中継しない。
 
@@ -260,8 +445,44 @@ nonce を諦めてハッシュ方式（Next.js の experimental な `sri`）へ�
   に別途保持する。画像は登録後に不変のため、写真の編集では `image_file_path` / `image_file_name` を更新しない。
 - PUT 時に `Content-Type` は検証済み拡張子から確定した値を設定し（クライアント申告値は使わない）、
   `Content-Disposition: inline` を明示する。
+- 署名付き URL のホストは**発行後に差し替えない**。SigV4 は `host` を署名対象に含むため、発行済み URL の
+  ホストを書き換えると署名検証に失敗する。ブラウザから到達可能なホストで署名する必要がある構成
+  （S3 エンドポイントがコンテナ内部ホスト名の場合等）では、`S3Presigner` のエンドポイント自体に
+  `app.s3.public-base-url` を設定する（`infrastructure/config/S3ClientConfig#s3Presigner`）。
+  アップロード等のサーバー間通信を担う `S3Client` は従来どおり内部向けの `app.s3.endpoint` を使う。
+  **`app.s3.public-base-url` は「S3 互換 API 自身の公開ホスト」であることが前提**。CloudFront 等の CDN を
+  前段に挟むホストを設定すると、CDN ホストで計算した署名をオリジンの S3 が検証できず 403 になる。
+  CDN 経由で配信する場合は CDN 側の署名機構（署名付き Cookie / URL）へ移行する必要がある。
 - 削除時は、クライアント送信の `imageFilePath` を信用せず、写真番号で DB から実キーを引いて削除対象を決める
   （パス汚染・他オブジェクトの巻き込み削除の防止）。
 - フロントの `sanitizeImageUrl`（`src/lib/url.ts`）と CSP `img-src` は、本番では `https:` かつ
   `NEXT_PUBLIC_IMAGE_BASE_URL` のオリジンに一致する URL のみ許可する（フェイルクローズ）。
   **開発環境（`next dev`）に限り** `http://localhost:9000`（MinIO）を追加で許可し、本番ビルドでは無効。
+
+## portfolio-api（公開ページ向けのポートフォリオ表示API）の防御
+
+`portfolio-api/`（Go・GraphQL）は公開中のポートフォリオを返す読み取り専用の API で、Next.js のサーバーからだけ
+呼び出す前提とし、ブラウザには公開しない（CORS は設定しない）。それでも不特定のクエリを受け付ける GraphQL の性質上、
+以下で攻撃面を抑える。詳細は [portfolio-api](./portfolio-api.md) を参照。
+
+- **公開範囲**：公開中のポートフォリオ・未削除の写真だけを返す（ポートフォリオは削除すると物理削除される）。下書き・存在しないポートフォリオ・
+  存在しないアカウントは区別せず `null`（一覧は空）を返し、アカウントの存在有無を推測させない
+- **DB 権限の最小化**：読み取り専用ロール `portfolio_reader`（`db/photo/portfolio_reader.sql`）で接続する。
+  `common.account` は `account_no`・`account_id`、`photo.photo_mst` は表示に必要な列だけに SELECT を許可し、
+  パスワードハッシュ・撮影場所（位置情報）等の列は読めない。書き込みの権限は持たない
+- **クエリの複雑度・深さの上限**（既定 300・8）、本番でのイントロスペクションの無効化、リクエストボディの上限（64KB）
+- **内部エラーの抑止**：リゾルバの内部エラー（DB・ストレージの障害等）はクライアントへ `internal server error` だけを返し、
+  詳細はログにだけ残す
+- **画像**：Java のバックエンドと同じバケット・同じ設定（`APP_S3_*`）で署名付き URL を発行する（上記「画像ストレージと署名付きURL」と同じ前提）
+
+公開ページ（`/portfolio/{accountId}`・`/portfolio/{accountId}/{portfolioNo}`）はログイン不要で、
+Server Component から `src/lib/portfolio-api/client.ts`（`server-only`）経由でだけ portfolio-api を呼ぶ。
+接続先（`PORTFOLIO_API_URL`）は `NEXT_PUBLIC_` を付けない環境変数とし、ブラウザのバンドルには含めない。
+
+- アカウントID・ポートフォリオ番号はページ側で形式を検証し、不正な値は portfolio-api を呼ばずに 404 とする
+- 画像の URL は他の画面と同じく `sanitizeImageUrl` を通し、許可されない URL は表示しない
+- レスポンスは Next.js でキャッシュしない（署名付きURLの期限切れを返さないため。詳細は [portfolio-api](./portfolio-api.md) の「キャッシュ」）
+- **レート制限はかからない**：公開ページは `/api/*` プロキシを通らないため、バックエンドの `RateLimitFilter` の対象外で、
+  portfolio-api 自身もレート制限を持たない（HTTP サーバーのタイムアウトと、クエリの複雑度・深さの上限のみ）。
+  公開ページへのリクエストは毎回 portfolio-api・DB への問い合わせになるため、本番では前段の WAF / ロードバランサで
+  `/portfolio/**` のレート制限をかけること

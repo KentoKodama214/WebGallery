@@ -8,6 +8,9 @@ jest.mock("@/components/layout/Header", () => ({
 jest.mock("@/components/layout/Footer", () => ({
   Footer: () => <div data-testid="footer" />,
 }));
+jest.mock("@/lib/auth/AuthGuard", () => ({
+  AuthGuard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
 
 const mockAdminInquiryDetail = jest.fn();
 jest.mock("../AdminInquiryDetail", () => ({
@@ -39,12 +42,13 @@ describe("AdminInquiryDetailPage", () => {
     ["数値でない", "abc"],
     ["ゼロ", "0"],
     ["負数", "-1"],
-  ])("inquiryIdが%s場合は「お問い合わせが見つかりません」を表示すること", async (_label, value) => {
-    const ui = await AdminInquiryDetailPage(makeProps({ inquiryId: value }));
-    render(ui);
-
-    expect(screen.getByText("お問い合わせが見つかりません")).toBeInTheDocument();
-    expect(screen.queryByTestId("admin-inquiry-detail")).not.toBeInTheDocument();
+  ])("inquiryIdが%s場合は404として扱う（notFoundを呼ぶ）", async (_label, value) => {
+    // 存在しないリソースは 200 でメッセージを出すのではなく 404 として扱う
+    // （`not-found.tsx` が描画され、noindex も付与される）
+    await expect(
+      AdminInquiryDetailPage(makeProps({ inquiryId: value }))
+    ).rejects.toThrow();
+    expect(mockAdminInquiryDetail).not.toHaveBeenCalled();
   });
 
   it("Header・Footerを表示すること", async () => {

@@ -2,6 +2,10 @@ import { test, expect } from "@playwright/test";
 import { generateTestAccountId, login, registerAccount, TEST_USER_PASSWORD } from "../fixtures/auth";
 
 test.describe("アカウント設定の更新（プロフィール変更〜パスワード変更〜アカウント削除）", () => {
+  // アカウント登録・ログイン3回・パスワード変更・アカウント削除と、BCryptのハッシュ化/照合を
+  // 伴う操作を1テストで連続して行うため、既定（60秒）では並列実行時の負荷で不足する
+  test.describe.configure({ timeout: 120_000 });
+
   test("プロフィールを変更でき、パスワード変更後は再ログインが必要になり、アカウント削除後はログインできなくなること", async ({
     page,
   }, testInfo) => {

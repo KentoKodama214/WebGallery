@@ -3,10 +3,12 @@ import "@testing-library/jest-dom";
 import { InquiryDetail } from "../InquiryDetail";
 
 const mockGetInquiryDetail = jest.fn();
+const mockMarkInquiryAsRead = jest.fn();
 const mockWithdrawInquiry = jest.fn();
 
 jest.mock("@/lib/api/client", () => ({
   getInquiryDetail: (...args: unknown[]) => mockGetInquiryDetail(...args),
+  markInquiryAsRead: (...args: unknown[]) => mockMarkInquiryAsRead(...args),
   withdrawInquiry: (...args: unknown[]) => mockWithdrawInquiry(...args),
 }));
 
@@ -22,6 +24,11 @@ const sampleDetail = {
 describe("InquiryDetail", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockMarkInquiryAsRead.mockResolvedValue({
+      httpStatus: 200,
+      isSuccess: true,
+      message: "お問い合わせを既読にしました。",
+    });
   });
 
   it("お問い合わせの件名・本文が表示されること", async () => {
@@ -61,6 +68,31 @@ describe("InquiryDetail", () => {
     await waitFor(() => {
       expect(screen.getByText("お問い合わせ詳細の取得に失敗しました")).toBeInTheDocument();
     });
+    // 詳細を取得できていないので既読化も行わない
+    expect(mockMarkInquiryAsRead).not.toHaveBeenCalled();
+  });
+
+  it("詳細を表示できたあとに既読化APIが呼ばれること", async () => {
+    mockGetInquiryDetail.mockResolvedValue(sampleDetail);
+
+    render(<InquiryDetail inquiryNo={1} />);
+
+    await waitFor(() => {
+      expect(mockMarkInquiryAsRead).toHaveBeenCalledWith(1);
+    });
+    expect(mockMarkInquiryAsRead).toHaveBeenCalledTimes(1);
+  });
+
+  it("既読化に失敗しても詳細表示はエラーにならないこと", async () => {
+    mockGetInquiryDetail.mockResolvedValue(sampleDetail);
+    mockMarkInquiryAsRead.mockRejectedValue(new Error("お問い合わせの既読化に失敗しました"));
+
+    render(<InquiryDetail inquiryNo={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("写真が表示されない")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("お問い合わせの既読化に失敗しました")).not.toBeInTheDocument();
   });
 
   it("取り下げ済みの場合は取り下げボタンが表示されないこと", async () => {
@@ -99,6 +131,8 @@ describe("InquiryDetail", () => {
       expect(screen.queryByTestId("withdraw-confirm-dialog")).not.toBeInTheDocument();
     });
     expect(screen.getByText("取り下げ")).toBeInTheDocument();
+    // 取り下げでdetailを差し替えても既読化APIを再送しないこと
+    expect(mockMarkInquiryAsRead).toHaveBeenCalledTimes(1);
   });
 
   it("確認ダイアログでキャンセルすると取り下げが実行されないこと", async () => {

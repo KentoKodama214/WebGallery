@@ -5,14 +5,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
+  getLocationList,
   getPhotoDetail,
   getPhotoUpperLimit,
   registPhotos,
   savePhoto,
+  type LocationItem,
   type PhotoDetailResponse,
 } from "@/lib/api/client";
 import { loginUrlWithRedirect, sanitizeImageUrl } from "@/lib/url";
+import {
+  LOCATION_ADDRESS_MAX_LENGTH,
+  LOCATION_NAME_MAX_LENGTH,
+  PHOTO_CAPTION_MAX_LENGTH,
+  PHOTO_TAG_MAX_SIZE,
+  PHOTO_TITLE_MAX_LENGTH,
+  TAG_NAME_MAX_LENGTH,
+} from "@/lib/validation";
 import { ModalDialog } from "@/components/ui/ModalDialog";
+import { LocationMapPicker } from "./LocationMapPicker";
 
 interface TagEntry {
   /** 一覧の React key 兼、既存タグの場合はバックエンドのタグ番号 */
@@ -26,8 +37,39 @@ interface TagEntry {
 /** アップロード可能な画像ファイルの最大サイズ（5MB） */
 const MAX_IMAGE_FILE_SIZE = 5 * 1024 * 1024;
 
+/** 撮影場所の入力方法 */
+type LocationMode = "none" | "existing" | "new";
+
 /** 新規一括登録で1回に選択できる写真の最大枚数（バックエンドのConsts.PHOTO_BULK_REGIST_MAX_SIZEと合わせる） */
 const MAX_BULK_REGIST_SIZE = 10;
+
+/** 項目別エラーのキー（画像ファイルの未選択） */
+const IMAGE_ERROR_KEY = "image";
+
+/** 項目別エラーのキー（タイトル（日本語）の未入力） */
+const JAPANESE_TITLE_ERROR_KEY = "photoJapaneseTitle";
+
+/** 項目別エラーのキー（タグの日本語名の未入力。タグごとに保持する） */
+const tagJapaneseErrorKey = (tagNo: number) => `tag-japanese-${tagNo}`;
+
+/** 入力欄の枠線クラス（項目別エラーがある場合は赤枠にする） */
+const fieldBorderClass = (hasError: boolean) =>
+  hasError ? "border-red-500" : "border-gray-600";
+
+/**
+ * 入力文字列を有限数へ変換する
+ *
+ * 入力途中の値（空文字・`-`・`1e` 等）は `Number()` で NaN になり、そのまま Leaflet へ渡すと
+ * `Invalid LatLng object` で例外になるため、有限数でなければ null を返す
+ *
+ * @param value 入力欄の文字列
+ * @returns 有限数、変換できなければ null
+ */
+function toFiniteOrNull(value: string): number | null {
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 interface PhotoSettingFormProps {
   photoAccountId: string;
@@ -71,6 +113,15 @@ export function PhotoSettingForm({
   const [iso, setIso] = useState("");
   // 位置情報公開フラグ。新規登録時は安全側に倒して「公開しない」を既定とする
   const [isLocationPublic, setIsLocationPublic] = useState(false);
+  // 撮影場所（任意）。「設定しない」を既定とする
+  const [locationMode, setLocationMode] = useState<LocationMode>("none");
+  const [locationList, setLocationList] = useState<LocationItem[]>([]);
+  const [selectedLocationNo, setSelectedLocationNo] = useState<number | "">("");
+  const [newManagementName, setNewManagementName] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
+  const [newAddress, setNewAddress] = useState("");
+  const [newLatitude, setNewLatitude] = useState("");
+  const [newLongitude, setNewLongitude] = useState("");
   const [tags, setTags] = useState<TagEntry[]>([]);
   const [nextTagNo, setNextTagNo] = useState(1);
 
@@ -79,6 +130,8 @@ export function PhotoSettingForm({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  // 必須項目の未入力など、ページ上部ではなく該当入力欄の直下に表示するエラー
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("写真を保存しました");
   // 新規一括登録の成功時のみtrue。成功モーダルを閉じたら一覧へ戻る
@@ -127,6 +180,10 @@ export function PhotoSettingForm({
         );
         setIso(data.iso != null ? String(data.iso) : "");
         setIsLocationPublic(data.isLocationPublic ?? false);
+        if (data.locationNo) {
+          setLocationMode("existing");
+          setSelectedLocationNo(data.locationNo);
+        }
         setExistingImageFilePath(data.imageFilePath);
         setImagePreview(data.imageFilePath);
 
@@ -186,6 +243,27 @@ export function PhotoSettingForm({
     };
   }, [authLoading, isAuthenticated, isEditMode, photoAccountId]);
 
+  /**
+   * ロケーション一覧の取得（既存ロケーションからの選択肢として使用する）
+   *
+   * 取得に失敗した場合は空リストのまま（選択肢なし）とし、新規入力での登録は継続して行える
+   */
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+
+    let cancelled = false;
+    getLocationList(photoAccountId)
+      .then((data) => {
+        if (!cancelled) setLocationList(data.locations);
+      })
+      .catch(() => {
+        // 取得失敗時は選択肢を出さないだけとし、新規入力は妨げない
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, isAuthenticated, photoAccountId]);
+
   // 今回選択できる残り枚数（アカウントの残り登録可能枚数と1リクエストの上限枚数のうち小さい方）。
   // remainingCountが未取得（undefined）または無制限（null）の場合は1リクエストの上限のみで制限する
   const maxSelectable =
@@ -203,6 +281,14 @@ export function PhotoSettingForm({
     e.target.value = "";
     if (selectedFiles.length === 0) return;
 
+    // accept="image/*" はファイル選択ダイアログの初期フィルタにすぎず、「すべてのファイル」に
+    // 切り替えれば任意の形式を選べる。最終判定はバックエンドだが、最大50MBを送ってから
+    // 弾かれるのを避けるため選択の時点で確認する
+    if (selectedFiles.some((file) => !file.type.startsWith("image/"))) {
+      setValidationErrors(["画像ファイルを選択してください"]);
+      return;
+    }
+
     if (selectedFiles.some((file) => file.size > MAX_IMAGE_FILE_SIZE)) {
       setValidationErrors(["画像ファイルは5MB以下にしてください"]);
       return;
@@ -216,6 +302,7 @@ export function PhotoSettingForm({
     }
 
     setValidationErrors([]);
+    clearFieldError(IMAGE_ERROR_KEY);
     setImageFiles([...imageFiles, ...selectedFiles]);
     // プレビューは各ファイルのFileReader完了を待たず、まず選択枚数分のプレースホルダーを
     // 追加して即座に一覧へ反映する（完了順が選択順と一致しない場合があるため、インデックスを
@@ -236,6 +323,20 @@ export function PhotoSettingForm({
   };
 
   /**
+   * 項目別エラーを1件取り除く
+   *
+   * @param key 項目別エラーのキー
+   */
+  const clearFieldError = (key: string) => {
+    setFieldErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  /**
    * 選択済み画像の削除（新規登録モードのみ）
    */
   const handleRemoveImage = (index: number) => {
@@ -247,6 +348,12 @@ export function PhotoSettingForm({
    * タグ追加
    */
   const handleAddTag = () => {
+    // バックエンドの `@Size(max = Consts.PHOTO_TAG_MAX_SIZE)` を超える入力は、
+    // 最大50MBのアップロードを終えてから400で弾かれるため、追加の時点で止める
+    // （上限到達時はボタン自体を非活性にしているため、通常はここに到達しない）
+    if (tags.length >= PHOTO_TAG_MAX_SIZE) {
+      return;
+    }
     setTags([
       ...tags,
       { tagNo: nextTagNo, isNew: true, tagJapaneseName: "", tagEnglishName: "" },
@@ -259,6 +366,7 @@ export function PhotoSettingForm({
    */
   const handleRemoveTag = (tagNo: number) => {
     setTags(tags.filter((t) => t.tagNo !== tagNo));
+    clearFieldError(tagJapaneseErrorKey(tagNo));
   };
 
   /**
@@ -272,16 +380,22 @@ export function PhotoSettingForm({
     setTags(
       tags.map((t) => (t.tagNo === tagNo ? { ...t, [field]: value } : t))
     );
+    if (field === "tagJapaneseName") {
+      clearFieldError(tagJapaneseErrorKey(tagNo));
+    }
   };
 
   /**
    * バリデーション
+   *
+   * @returns errors: ページ上部に表示するエラー、fieldErrors: 該当入力欄の直下に表示する項目別エラー
    */
-  const validate = (): string[] => {
+  const validate = (): { errors: string[]; fieldErrors: Record<string, string> } => {
     const errors: string[] = [];
+    const newFieldErrors: Record<string, string> = {};
     if (!isEditMode) {
       if (imageFiles.length === 0) {
-        errors.push("画像ファイルを選択してください");
+        newFieldErrors[IMAGE_ERROR_KEY] = "画像ファイルを選択してください";
       }
       if (imageFiles.length > maxSelectable) {
         errors.push(`一度に登録できる写真は${maxSelectable}枚までです`);
@@ -293,7 +407,18 @@ export function PhotoSettingForm({
     // backend側は新規登録・更新のいずれも photoJapaneseTitle に @NotBlank を付与しているため、
     // isEditMode を問わず必須にする
     if (!photoJapaneseTitle.trim()) {
-      errors.push("タイトル（日本語）を入力してください");
+      newFieldErrors[JAPANESE_TITLE_ERROR_KEY] = "タイトル（日本語）を入力してください";
+    }
+    // 文字数はバックエンドの @Size と対応する定数で確認する（送信してから400で弾かれるのを避ける）
+    const lengthChecks: { value: string; max: number; label: string }[] = [
+      { value: photoJapaneseTitle, max: PHOTO_TITLE_MAX_LENGTH, label: "タイトル（日本語）" },
+      { value: photoEnglishTitle, max: PHOTO_TITLE_MAX_LENGTH, label: "タイトル（英語）" },
+      { value: caption, max: PHOTO_CAPTION_MAX_LENGTH, label: "キャプション" },
+    ];
+    for (const { value, max, label } of lengthChecks) {
+      if (value.length > max) {
+        errors.push(`${label}は${max}文字以内で入力してください`);
+      }
     }
     if (photoAt) {
       const photoDate = new Date(photoAt);
@@ -314,17 +439,62 @@ export function PhotoSettingForm({
         errors.push(`${label}は正の数値を入力してください`);
       }
     }
+    if (tags.length > PHOTO_TAG_MAX_SIZE) {
+      errors.push(`タグは${PHOTO_TAG_MAX_SIZE}件までです`);
+    }
+    // 未入力は該当するタグすべてに項目別エラーを付け、それ以外のチェックは入力済みのタグのみ行う
     for (const tag of tags) {
       if (!tag.tagJapaneseName.trim()) {
-        errors.push("タグの日本語名は必須です");
-        break;
+        newFieldErrors[tagJapaneseErrorKey(tag.tagNo)] = "タグの日本語名は必須です";
       }
+    }
+    for (const tag of tags) {
+      if (!tag.tagJapaneseName.trim()) continue;
       if (/( |　)/.test(tag.tagJapaneseName)) {
         errors.push("タグの日本語名にスペースは使用できません");
         break;
       }
+      if (
+        tag.tagJapaneseName.length > TAG_NAME_MAX_LENGTH ||
+        tag.tagEnglishName.length > TAG_NAME_MAX_LENGTH
+      ) {
+        errors.push(`タグ名は${TAG_NAME_MAX_LENGTH}文字以内で入力してください`);
+        break;
+      }
     }
-    return errors;
+    if (locationMode === "existing" && selectedLocationNo === "") {
+      errors.push("ロケーションを選択してください");
+    }
+    if (locationMode === "new") {
+      if (!newManagementName.trim()) {
+        errors.push("管理名を入力してください");
+      } else if (newManagementName.length > LOCATION_NAME_MAX_LENGTH) {
+        errors.push(`管理名は${LOCATION_NAME_MAX_LENGTH}文字以内で入力してください`);
+      }
+      if (!newDisplayName.trim()) {
+        errors.push("表示名を入力してください");
+      } else if (newDisplayName.length > LOCATION_NAME_MAX_LENGTH) {
+        errors.push(`表示名は${LOCATION_NAME_MAX_LENGTH}文字以内で入力してください`);
+      }
+      if (newAddress.length > LOCATION_ADDRESS_MAX_LENGTH) {
+        errors.push(`住所は${LOCATION_ADDRESS_MAX_LENGTH}文字以内で入力してください`);
+      }
+      if (!newLatitude || !newLongitude) {
+        errors.push("地図をクリックするか、緯度・経度を入力してください");
+      } else {
+        // 範囲外・桁数過多の値はDBの列定義（decimal(11,4)）を超えてサーバーエラーになるため、
+        // 送信前に弾く（バックエンド側のBean Validationと二重で守る）
+        const latitudeValue = Number(newLatitude);
+        const longitudeValue = Number(newLongitude);
+        if (!Number.isFinite(latitudeValue) || latitudeValue < -90 || latitudeValue > 90) {
+          errors.push("緯度は -90 から 90 の範囲で入力してください");
+        }
+        if (!Number.isFinite(longitudeValue) || longitudeValue < -180 || longitudeValue > 180) {
+          errors.push("経度は -180 から 180 の範囲で入力してください");
+        }
+      }
+    }
+    return { errors, fieldErrors: newFieldErrors };
   };
 
   /**
@@ -338,12 +508,14 @@ export function PhotoSettingForm({
       setError("セッションが切れました。お手数ですが再度ログインしてください");
       return;
     }
-    const errors = validate();
-    if (errors.length > 0) {
+    const { errors, fieldErrors: newFieldErrors } = validate();
+    if (errors.length > 0 || Object.keys(newFieldErrors).length > 0) {
       setValidationErrors(errors);
+      setFieldErrors(newFieldErrors);
       return;
     }
     setValidationErrors([]);
+    setFieldErrors({});
     setIsSaving(true);
     setError(null);
 
@@ -389,6 +561,18 @@ export function PhotoSettingForm({
         formData.append("iso", iso);
       }
       formData.append("isLocationPublic", String(isLocationPublic));
+
+      if (locationMode === "existing" && selectedLocationNo !== "") {
+        formData.append("locationNo", String(selectedLocationNo));
+      } else if (locationMode === "new") {
+        formData.append("managementName", newManagementName);
+        formData.append("displayName", newDisplayName);
+        if (newAddress) {
+          formData.append("address", newAddress);
+        }
+        formData.append("latitude", newLatitude);
+        formData.append("longitude", newLongitude);
+      }
 
       tags.forEach((tag, index) => {
         formData.append(
@@ -513,9 +697,11 @@ export function PhotoSettingForm({
         <form onSubmit={handleSubmit}>
           {/* 画像アップロード */}
           <div className="mb-4">
-            <label className="block text-sm text-gray-400 mb-1">
+            {/* 新規登録時のファイル入力は視覚的に隠した <input> なので、対応コントロールを
+                包まない <label> は使わず、グループの見出しとして表示する */}
+            <p className="block text-sm text-gray-400 mb-1">
               画像ファイル{!isEditMode && " *"}
-            </label>
+            </p>
             {isEditMode ? (
               // 画像ファイルは登録後は差し替え不可（バックエンド仕様）。編集モードでは
               // 選択操作自体をUI上から無くし、既存画像のプレビュー表示のみを行う
@@ -580,6 +766,9 @@ export function PhotoSettingForm({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
+                    aria-describedby={
+                      fieldErrors[IMAGE_ERROR_KEY] ? "image-file-error" : undefined
+                    }
                     className="bg-gray-700 text-white px-4 py-2 border border-gray-600 cursor-pointer hover:bg-gray-600"
                   >
                     {imageFiles.length > 0 ? "＋ファイルを追加" : "ファイルを選択"}
@@ -595,6 +784,15 @@ export function PhotoSettingForm({
                     {remainingCount}枚）
                   </p>
                 )}
+                {fieldErrors[IMAGE_ERROR_KEY] && (
+                  <p
+                    id="image-file-error"
+                    className="text-red-500 text-sm mt-1"
+                    data-testid="image-file-error"
+                  >
+                    {fieldErrors[IMAGE_ERROR_KEY]}
+                  </p>
+                )}
               </>
             )}
           </div>
@@ -602,16 +800,36 @@ export function PhotoSettingForm({
           {/* タイトル（日本語） */}
           <div className="mb-4">
             <label htmlFor="photo-japanese-title" className="block text-sm text-gray-400 mb-1">
-              タイトル（日本語）
+              タイトル（日本語） *
             </label>
             <input
               id="photo-japanese-title"
               type="text"
               value={photoJapaneseTitle}
-              onChange={(e) => setPhotoJapaneseTitle(e.target.value)}
-              className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+              onChange={(e) => {
+                setPhotoJapaneseTitle(e.target.value);
+                clearFieldError(JAPANESE_TITLE_ERROR_KEY);
+              }}
+              maxLength={PHOTO_TITLE_MAX_LENGTH}
+              aria-required="true"
+              aria-invalid={!!fieldErrors[JAPANESE_TITLE_ERROR_KEY]}
+              aria-describedby={
+                fieldErrors[JAPANESE_TITLE_ERROR_KEY] ? "photo-japanese-title-error" : undefined
+              }
+              className={`w-full bg-gray-800 text-white border ${fieldBorderClass(
+                !!fieldErrors[JAPANESE_TITLE_ERROR_KEY]
+              )} p-2`}
               data-testid="japanese-title-input"
             />
+            {fieldErrors[JAPANESE_TITLE_ERROR_KEY] && (
+              <p
+                id="photo-japanese-title-error"
+                className="text-red-500 text-sm mt-1"
+                data-testid="japanese-title-error"
+              >
+                {fieldErrors[JAPANESE_TITLE_ERROR_KEY]}
+              </p>
+            )}
           </div>
 
           {/* タイトル（英語） */}
@@ -624,6 +842,7 @@ export function PhotoSettingForm({
               type="text"
               value={photoEnglishTitle}
               onChange={(e) => setPhotoEnglishTitle(e.target.value)}
+              maxLength={PHOTO_TITLE_MAX_LENGTH}
               className="w-full bg-gray-800 text-white border border-gray-600 p-2"
               data-testid="english-title-input"
             />
@@ -720,6 +939,177 @@ export function PhotoSettingForm({
             </div>
           </div>
 
+          {/* 撮影場所 */}
+          <fieldset className="mb-4">
+            <legend className="text-sm text-gray-400 mb-2">撮影場所</legend>
+            <div className="flex gap-4 mb-2 text-sm">
+              <label className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  name="locationMode"
+                  checked={locationMode === "none"}
+                  onChange={() => setLocationMode("none")}
+                  data-testid="location-mode-none"
+                />
+                設定しない
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  name="locationMode"
+                  checked={locationMode === "existing"}
+                  onChange={() => setLocationMode("existing")}
+                  data-testid="location-mode-existing"
+                />
+                既存のロケーションから選択
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  name="locationMode"
+                  checked={locationMode === "new"}
+                  onChange={() => setLocationMode("new")}
+                  data-testid="location-mode-new"
+                />
+                新規登録
+              </label>
+            </div>
+
+            {locationMode === "existing" && (
+              <select
+                value={selectedLocationNo}
+                onChange={(e) =>
+                  setSelectedLocationNo(e.target.value ? Number(e.target.value) : "")
+                }
+                aria-label="登録済みのロケーション"
+                className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                data-testid="location-select"
+              >
+                <option value="">選択してください</option>
+                {locationList.map((location) => (
+                  <option key={location.locationNo} value={location.locationNo}>
+                    {location.managementName}
+                    {location.address ? `（${location.address}）` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {locationMode === "new" && (
+              <div className="flex flex-col gap-2">
+                {/* 可視ラベルを持たせる（placeholderは入力開始で消えるためラベル代わりにしない） */}
+                <label
+                  htmlFor="new-location-management-name"
+                  className="block text-sm text-gray-400"
+                >
+                  管理名 *
+                </label>
+                <input
+                  id="new-location-management-name"
+                  type="text"
+                  value={newManagementName}
+                  onChange={(e) => setNewManagementName(e.target.value)}
+                  maxLength={LOCATION_NAME_MAX_LENGTH}
+                  aria-required="true"
+                  aria-describedby="new-location-management-name-help"
+                  className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                  data-testid="new-location-management-name-input"
+                />
+                <p id="new-location-management-name-help" className="text-xs text-gray-400">
+                  管理名は自分がロケーションを識別するための名称です（他のユーザーには表示されません）。
+                </p>
+                <label htmlFor="new-location-display-name" className="block text-sm text-gray-400">
+                  表示名 *
+                </label>
+                <input
+                  id="new-location-display-name"
+                  type="text"
+                  value={newDisplayName}
+                  onChange={(e) => setNewDisplayName(e.target.value)}
+                  maxLength={LOCATION_NAME_MAX_LENGTH}
+                  aria-required="true"
+                  aria-describedby="new-location-display-name-help"
+                  className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                  data-testid="new-location-display-name-input"
+                />
+                <p id="new-location-display-name-help" className="text-xs text-gray-400">
+                  表示名は写真詳細ページで表示される名称です。
+                </p>
+                <p id="location-map-picker-help" className="text-xs text-gray-400">
+                  地図をクリックすると緯度・経度が自動入力されます。キーボード操作の場合や、うまく取得できない場合は、下の緯度・経度を直接入力してください。
+                  住所の自動取得のため、クリックした地点の緯度・経度を OpenStreetMap
+                  （Nominatim）へ送信します。
+                </p>
+                {/* onAddressResolved で住所だけを反映する。座標を再設定すると、逆ジオコーディングの
+                    通信中に緯度・経度を手入力していた場合にクリック位置へ巻き戻してしまう */}
+                <LocationMapPicker
+                  latitude={toFiniteOrNull(newLatitude)}
+                  longitude={toFiniteOrNull(newLongitude)}
+                  describedById="location-map-picker-help"
+                  onPick={(lat, lng) => {
+                    setNewLatitude(String(lat));
+                    setNewLongitude(String(lng));
+                  }}
+                  onAddressResolved={(address) => setNewAddress(address)}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label
+                      htmlFor="new-location-latitude"
+                      className="block text-sm text-gray-400 mb-1"
+                    >
+                      緯度 *
+                    </label>
+                    <input
+                      id="new-location-latitude"
+                      type="number"
+                      step="0.0001"
+                      min={-90}
+                      max={90}
+                      value={newLatitude}
+                      onChange={(e) => setNewLatitude(e.target.value)}
+                      aria-required="true"
+                      className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                      data-testid="new-location-latitude-input"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="new-location-longitude"
+                      className="block text-sm text-gray-400 mb-1"
+                    >
+                      経度 *
+                    </label>
+                    <input
+                      id="new-location-longitude"
+                      type="number"
+                      step="0.0001"
+                      min={-180}
+                      max={180}
+                      value={newLongitude}
+                      onChange={(e) => setNewLongitude(e.target.value)}
+                      aria-required="true"
+                      className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                      data-testid="new-location-longitude-input"
+                    />
+                  </div>
+                </div>
+                <label htmlFor="new-location-address" className="block text-sm text-gray-400">
+                  住所（任意）
+                </label>
+                <input
+                  id="new-location-address"
+                  type="text"
+                  value={newAddress}
+                  maxLength={LOCATION_ADDRESS_MAX_LENGTH}
+                  onChange={(e) => setNewAddress(e.target.value)}
+                  className="w-full bg-gray-800 text-white border border-gray-600 p-2"
+                  data-testid="new-location-address-input"
+                />
+              </div>
+            )}
+          </fieldset>
+
           {/* 位置情報の公開設定 */}
           <div className="mb-4">
             <label className="flex items-center gap-2 text-sm text-gray-400">
@@ -727,13 +1117,18 @@ export function PhotoSettingForm({
                 type="checkbox"
                 checked={isLocationPublic}
                 onChange={(e) => setIsLocationPublic(e.target.checked)}
+                aria-describedby="location-public-help"
                 data-testid="location-public-checkbox"
               />
-              撮影場所（緯度経度・住所・ロケーション名）を他のユーザーにも公開する
+              撮影場所（緯度経度・住所・表示名）を他のユーザーにも公開する
             </label>
-            <p className="text-xs text-gray-400 mt-1">
-              オフの場合、撮影場所は本人にのみ表示されます。
-            </p>
+            <div id="location-public-help" className="text-xs text-gray-400 mt-1">
+              <p>オフの場合、この画面で設定した撮影場所は本人にのみ表示されます。</p>
+              {/* この設定はAPIレスポンスの制御のみで、画像ファイルそのものは加工せずに配信される */}
+              <p className="mt-1" data-testid="exif-location-notice">
+                ただし、画像ファイル自体に埋め込まれた位置情報（EXIFのGPS情報）は除去されません。オフにしても、画像をダウンロードすれば撮影地点を読み取れる場合があります。撮影場所を知られたくない写真は、アップロード前に画像側の位置情報を削除してください。
+              </p>
+            </div>
           </div>
 
           {/* キャプション */}
@@ -745,6 +1140,7 @@ export function PhotoSettingForm({
               id="photo-caption"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
+              maxLength={PHOTO_CAPTION_MAX_LENGTH}
               rows={4}
               className="w-full bg-gray-800 text-white border border-gray-600 p-2"
               data-testid="caption-input"
@@ -752,57 +1148,92 @@ export function PhotoSettingForm({
           </div>
 
           {/* タグ */}
-          <div className="mb-6">
-            <label className="text-sm text-gray-400 block mb-2">タグ</label>
-            {tags.map((tag) => (
-              <div
-                key={tag.tagNo}
-                className="flex gap-2 mb-2"
-                data-testid={`tag-entry-${tag.tagNo}`}
-              >
-                <input
-                  type="text"
-                  value={tag.tagJapaneseName}
-                  onChange={(e) =>
-                    handleTagChange(tag.tagNo, "tagJapaneseName", e.target.value)
-                  }
-                  placeholder="タグ名（日本語）*"
-                  aria-label="タグ名（日本語）"
-                  className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
-                  data-testid={`tag-japanese-${tag.tagNo}`}
-                />
-                <input
-                  type="text"
-                  value={tag.tagEnglishName}
-                  onChange={(e) =>
-                    handleTagChange(tag.tagNo, "tagEnglishName", e.target.value)
-                  }
-                  placeholder="タグ名（英語）"
-                  aria-label="タグ名（英語）"
-                  className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
-                  data-testid={`tag-english-${tag.tagNo}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag.tagNo)}
-                  className="bg-red-600 text-white px-3 border-none cursor-pointer hover:bg-red-700"
-                  data-testid={`remove-tag-${tag.tagNo}`}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-            <div className="flex justify-center mt-2">
+          <fieldset className="mb-6">
+            <legend className="text-sm text-gray-400 mb-2">タグ</legend>
+            {tags.map((tag, index) => {
+              const tagJapaneseError = fieldErrors[tagJapaneseErrorKey(tag.tagNo)];
+              return (
+                <div key={tag.tagNo} className="mb-2">
+                  <div
+                    className="flex gap-2"
+                    data-testid={`tag-entry-${tag.tagNo}`}
+                  >
+                    <input
+                      type="text"
+                      value={tag.tagJapaneseName}
+                      onChange={(e) =>
+                        handleTagChange(tag.tagNo, "tagJapaneseName", e.target.value)
+                      }
+                      maxLength={TAG_NAME_MAX_LENGTH}
+                      placeholder="タグ名（日本語）*"
+                      aria-label={`${index + 1}件目のタグ名（日本語）`}
+                      aria-invalid={!!tagJapaneseError}
+                      aria-describedby={
+                        tagJapaneseError ? `${tagJapaneseErrorKey(tag.tagNo)}-error` : undefined
+                      }
+                      className={`flex-1 bg-gray-800 text-white border ${fieldBorderClass(
+                        !!tagJapaneseError
+                      )} p-2`}
+                      data-testid={`tag-japanese-${tag.tagNo}`}
+                    />
+                    <input
+                      type="text"
+                      value={tag.tagEnglishName}
+                      onChange={(e) =>
+                        handleTagChange(tag.tagNo, "tagEnglishName", e.target.value)
+                      }
+                      maxLength={TAG_NAME_MAX_LENGTH}
+                      placeholder="タグ名（英語）"
+                      aria-label={`${index + 1}件目のタグ名（英語）`}
+                      className="flex-1 bg-gray-800 text-white border border-gray-600 p-2"
+                      data-testid={`tag-english-${tag.tagNo}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag.tagNo)}
+                      className="bg-red-600 text-white px-3 border-none cursor-pointer hover:bg-red-700"
+                      aria-label={`${index + 1}件目のタグを削除`}
+                      data-testid={`remove-tag-${tag.tagNo}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  {tagJapaneseError && (
+                    <p
+                      id={`${tagJapaneseErrorKey(tag.tagNo)}-error`}
+                      className="text-red-500 text-sm mt-1"
+                      data-testid={`tag-japanese-error-${tag.tagNo}`}
+                    >
+                      {tagJapaneseError}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+            <div className="flex items-center gap-2 mt-2">
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="bg-transparent border border-gray-500 text-gray-300 px-3 py-1 text-sm cursor-pointer hover:bg-gray-800"
+                disabled={tags.length >= PHOTO_TAG_MAX_SIZE}
+                aria-describedby={
+                  tags.length >= PHOTO_TAG_MAX_SIZE ? "tag-limit-message" : undefined
+                }
+                className="bg-transparent border border-gray-500 text-gray-300 px-3 py-1 text-sm cursor-pointer hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 data-testid="add-tag-button"
               >
                 + タグを追加
               </button>
+              {tags.length >= PHOTO_TAG_MAX_SIZE && (
+                <p
+                  id="tag-limit-message"
+                  className="text-sm text-gray-400"
+                  data-testid="tag-limit-message"
+                >
+                  タグは{PHOTO_TAG_MAX_SIZE}件までです
+                </p>
+              )}
             </div>
-          </div>
+          </fieldset>
 
           {/* 保存・キャンセルボタン */}
           <div className="flex justify-center gap-4">

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.web.gallery.infrastructure.persistence.mapper.photo.FrameTemplateMstMapper">
+	<resultMap id="FrameTemplateMstMap" type="com.web.gallery.infrastructure.persistence.entity.photo.FrameTemplateMst">
+		<result property="id" column="id"/>
+		<result property="accountNo" column="account_no"/>
+		<result property="frameTemplateNo" column="frame_template_no"/>
+		<result property="createdBy" column="created_by"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="updatedBy" column="updated_by"/>
+		<result property="updatedAt" column="updated_at"/>
+		<result property="templateName" column="template_name"/>
+		<result property="frameDefinition" column="frame_definition" typeHandler="com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler"/>
+	</resultMap>
+
+	<sql id="frameTemplateMstConditionWhere">
+		<if test="${prefix}accountNo != null"> AND ftm.account_no = #{${prefix}accountNo}</if>
+		<if test="${prefix}frameTemplateNo != null"> AND ftm.frame_template_no = #{${prefix}frameTemplateNo}</if>
+	</sql>
+
+	<insert id="insert" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.FrameTemplateMst">
+		INSERT INTO
+			photo.frame_template_mst (
+				account_no,
+				frame_template_no,
+				created_by,
+				created_at,
+				updated_by,
+				updated_at,
+				template_name,
+				frame_definition
+			)
+		VALUES
+			(
+				#{accountNo},
+				#{frameTemplateNo},
+				#{createdBy},
+				NOW(),
+				#{updatedBy},
+				NOW(),
+				#{templateName},
+				#{frameDefinition, typeHandler=com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler}
+			)
+	</insert>
+
+	<update id="update">
+		UPDATE
+			photo.frame_template_mst ftm
+		<set>
+			updated_at = NOW()
+			<if test="target.updatedBy != null"> , updated_by = #{target.updatedBy}</if>
+			<if test="target.templateName != null"> , template_name = #{target.templateName}</if>
+			<if test="target.frameDefinition != null"> , frame_definition = #{target.frameDefinition, typeHandler=com.web.gallery.infrastructure.persistence.type_handler.JsonbTypeHandler}</if>
+		</set>
+		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのUPDATE（全件更新）になるのを防ぐガード -->
+			<if test="condition.accountNo == null and condition.frameTemplateNo == null"> AND 1 = 0</if>
+			<include refid="frameTemplateMstConditionWhere">
+				<property name="prefix" value="condition."/>
+			</include>
+		</where>
+	</update>
+
+	<delete id="delete" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.FrameTemplateMstCondition">
+		DELETE FROM
+			photo.frame_template_mst AS ftm
+		<where>
+			<!-- 条件が1つも指定されていない場合にWHERE句なしのDELETE（全件削除）になるのを防ぐガード -->
+			<if test="accountNo == null and frameTemplateNo == null"> AND 1 = 0</if>
+			<include refid="frameTemplateMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+	</delete>
+
+	<select id="getMaxFrameTemplateNo" parameterType="Long" resultType="Long">
+		SELECT
+			MAX(frame_template_no) AS frameTemplateNo
+		FROM
+			photo.frame_template_mst
+		WHERE
+			account_no = #{accountNo}
+	</select>
+
+	<select id="count" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.FrameTemplateMstCondition" resultType="Integer">
+		SELECT
+			COUNT(*)
+		FROM
+			photo.frame_template_mst ftm
+		<where>
+			<include refid="frameTemplateMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+	</select>
+
+	<select id="select" parameterType="com.web.gallery.infrastructure.persistence.entity.photo.FrameTemplateMstCondition" resultMap="FrameTemplateMstMap">
+		SELECT
+			ftm.id,
+			ftm.account_no,
+			ftm.frame_template_no,
+			ftm.created_by,
+			ftm.created_at,
+			ftm.updated_by,
+			ftm.updated_at,
+			ftm.template_name,
+			ftm.frame_definition
+		FROM
+			photo.frame_template_mst ftm
+		<where>
+			<include refid="frameTemplateMstConditionWhere">
+				<property name="prefix" value=""/>
+			</include>
+		</where>
+		ORDER BY
+			ftm.frame_template_no
+	</select>
+</mapper>

@@ -6,6 +6,13 @@ on:
       - development
       - staging
       - master
+  workflow_dispatch:
+
+# 同一ブランチへ連続してpushした場合、古い実行をキャンセルして最新のコミットのみ検証する。
+# ランナーの空き待ちが解消され、結果が返るまでの時間が短くなる
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   frontend-unit-test:
@@ -44,8 +51,8 @@ jobs:
           name: jest-coverage-summary
           path: frontend/coverage/coverage-summary.json
 
-  unit-test:
-    name: 単体テスト
+  gallery-api-unit-test:
+    name: gallery-api単体テスト
     runs-on: ubuntu-latest
 
     steps:
@@ -58,92 +65,158 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Gradleキャッシュ
-        uses: actions/cache@v6
+      - name: Gradleセットアップ
+        uses: gradle/actions/setup-gradle@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          build-root-directory: gallery-api
+          # デフォルトブランチ以外では読み取り専用になるため明示的に書き込みを許可する。
+          # 同一PRへ追加pushした際に、変更のないモジュールのコンパイル結果（compileJava・
+          # compileTestJava）やテストタスクの出力をビルドキャッシュから復元できる
+          cache-read-only: false
 
       - name: 単体テスト実行
-        run: ./backend/gradlew -p backend unitTest
+        run: ./gallery-api/gradlew -p gallery-api unitTest
 
       - name: テスト結果アップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: unit-test-results
-          path: backend/build/reports/tests/unitTest/
+          name: gallery-api-unit-test-results
+          path: gallery-api/build/reports/tests/unitTest/
 
       - name: カバレッジ実行データアップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: jacoco-exec-unit
-          path: backend/build/jacoco/unitTest.exec
+          path: gallery-api/build/jacoco/unitTest.exec
 
-  dependency-scan:
-    name: 依存関係の脆弱性スキャン
+  # portfolio-api（Go。公開ページ向けのポートフォリオ表示API）の静的解析・単体テスト。
+  # DBを必要としないため、gallery-apiの単体テストと同様にサービスコンテナを起動しない
+  portfolio-api-unit-test:
+    name: portfolio-api単体テスト
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: portfolio-api
 
     steps:
       - name: チェックアウト
         uses: actions/checkout@v7
 
-      - name: JDK 21 セットアップ
-        uses: actions/setup-java@v6
+      - name: Go セットアップ
+        uses: actions/setup-go@v7
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          go-version-file: portfolio-api/go.mod
+          cache-dependency-path: portfolio-api/go.sum
 
-      - name: Gradleキャッシュ
-        uses: actions/cache@v6
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: backend SBOM生成（CycloneDX）
-        run: ./backend/gradlew -p backend cyclonedxBom
-
-      # OSV-Scanner（https://github.com/google/osv-scanner）はOSVデータベースをAPI経由で都度照会するため、
-      # OWASP Dependency-Checkのように数GB規模のNVDデータベース全体を同期する必要がなく、
-      # スキャン自体は数秒で完了する。frontendはpnpm-lock.yamlを直接解析できるため、
-      # Node.js/pnpmのセットアップやパッケージインストールも不要。
-      - name: OSV-Scannerインストール
+      - name: フォーマットチェック（gofmt）
         run: |
-          curl -sL -o osv-scanner \
-            https://github.com/google/osv-scanner/releases/download/v2.6.0/osv-scanner_linux_amd64
-          chmod +x osv-scanner
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "gofmt で整形されていないファイルがあります:"
+            echo "$unformatted"
+            exit 1
+          fi
 
-      - name: 依存関係の脆弱性スキャン（backend SBOM・frontend pnpm-lock.yaml）
+      - name: 静的解析（go vet）
+        run: go vet -tags integration ./...
+
+      # スキーマ（graph/schema.graphqls）を変更したのに go generate を忘れた場合を検出する
+      - name: GraphQL生成コードの差分チェック
         run: |
-          set +e
-          ./osv-scanner scan source \
-            -L backend/build/reports/cyclonedx/application.cdx.json \
-            -L frontend/pnpm-lock.yaml \
-            --format=markdown --output-file=osv-results.md
-          exit_code=$?
-          set -e
-          cat osv-results.md >> "$GITHUB_STEP_SUMMARY"
-          exit "$exit_code"
+          go generate ./...
+          git diff --exit-code -- graph/
 
-      - name: 脆弱性スキャンレポートアップロード
+      # -coverpkg=./... で、テストを持たないパッケージ（cmd/server等）も含めたモジュール全体を計測対象にする
+      - name: 単体テスト実行（カバレッジ計測）
+        run: go test -coverpkg=./... -coverprofile=unit.out ./...
+
+      - name: カバレッジプロファイルアップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: osv-scan-report
-          path: osv-results.md
+          name: go-coverage-unit
+          path: portfolio-api/unit.out
 
-  integration-test:
-    name: 結合テスト
-    needs: unit-test
+  # portfolio-apiの結合テスト。本番と同じ読み取り専用ロール（portfolio_reader）で接続するため、
+  # db/photo/portfolio_reader.sql までを流してDBを初期化する
+  portfolio-api-integration-test:
+    name: portfolio-api結合テスト
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: web_gallery_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: portfolio-api
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v7
+
+      - name: Go セットアップ
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: portfolio-api/go.mod
+          cache-dependency-path: portfolio-api/go.sum
+
+      - name: データベース初期化
+        working-directory: .
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -p 5433 -U postgres -d web_gallery_test -c "CREATE SCHEMA IF NOT EXISTS common;"
+          psql -h localhost -p 5433 -U postgres -d web_gallery_test -c "CREATE SCHEMA IF NOT EXISTS photo;"
+          SQL_FILES=(
+            "db/common/common.type.sql"
+            "db/common/account.sql"
+            "db/common/location_mst.sql"
+            "db/photo/photo.type.sql"
+            "db/photo/photo_mst.sql"
+            "db/photo/portfolio_mst.sql"
+            "db/photo/portfolio_photo.sql"
+            "db/photo/portfolio_tag_mst.sql"
+            "db/photo/portfolio_reader.sql"
+          )
+          for file in "${SQL_FILES[@]}"; do
+            psql -h localhost -p 5433 -U postgres -d web_gallery_test -v ON_ERROR_STOP=1 -f "$file"
+          done
+
+      # -tags integration を付けると全パッケージの単体テストも実行対象になり、portfolio-api単体テストと
+      # 重複してカバレッジの区別もつかなくなるため、結合テスト（//go:build integration）を含むパッケージに限定する。
+      # -coverpkg=./... で、テスト対象パッケージ以外を経由して実行されたコードも計測する
+      - name: 結合テスト実行（カバレッジ計測）
+        run: |
+          packages=$(find . -name '*_test.go' -exec grep -l '^//go:build integration' {} + | xargs -n1 dirname | sort -u)
+          go test -tags integration -coverpkg=./... -coverprofile=integration.out $packages
+
+      - name: カバレッジプロファイルアップロード
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: go-coverage-integration
+          path: portfolio-api/integration.out
+
+  # 単体テストへのneedsは指定しない。単体テストと結合テスト・E2Eテストの間に成果物の
+  # 受け渡しはなく、直列化すると単体テストの所要時間がそのままクリティカルパスに積まれるため、
+  # 最初から並列で起動する
+  gallery-api-integration-test:
+    name: gallery-api結合テスト
     runs-on: ubuntu-latest
 
     services:
@@ -171,15 +244,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Gradleキャッシュ
-        uses: actions/cache@v6
+      - name: Gradleセットアップ
+        uses: gradle/actions/setup-gradle@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          build-root-directory: gallery-api
+          cache-read-only: false
 
       - name: データベース初期化
         env:
@@ -203,6 +272,12 @@ jobs:
             "db/photo/photo_favorite.sql"
             "db/photo/photo_list_filter_log.sql"
             "db/photo/photo_view_log.sql"
+            "db/photo/photo_moderation_log.sql"
+            "db/photo/portfolio_mst.sql"
+            "db/photo/portfolio_photo.sql"
+            "db/photo/portfolio_tag_mst.sql"
+            "db/photo/frame_template_mst.sql"
+            "db/photo/portfolio_reader.sql"
           )
           for file in "${SQL_FILES[@]}"; do
             psql -h localhost -p 5433 -U postgres -d web_gallery_test -f "$file"
@@ -237,26 +312,42 @@ jobs:
             cgr.dev/chainguard/minio:latest mb --ignore-existing local/test-bucket
 
       - name: 結合テスト実行
-        run: ./backend/gradlew -p backend integrationTest
+        run: ./gallery-api/gradlew -p gallery-api integrationTest
 
       - name: テスト結果アップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: integration-test-results
-          path: backend/build/reports/tests/integrationTest/
+          name: gallery-api-integration-test-results
+          path: gallery-api/build/reports/tests/integrationTest/
 
       - name: カバレッジ実行データアップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: jacoco-exec-integration
-          path: backend/build/jacoco/integrationTest.exec
+          path: gallery-api/build/jacoco/integrationTest.exec
 
+  # gallery-api-integration-testと同様にneedsは指定せず、最初から並列で起動する。
+  # ブラウザ別に2つのジョブへ分割し、webkit（Desktop Safari・iPhone 13）のダウンロードと
+  # スモークテストの実行をchromium側のクリティカルパスから外す
   e2e-test:
-    name: E2Eテスト
-    needs: unit-test
+    name: E2Eテスト（${{ matrix.name }}）
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # playwright.config.tsの全specを対象とする本体
+          - name: chromium
+            browsers: chromium
+            project_args: --project=chromium
+          # CROSS_BROWSER_SPECS（login・photo_list）のみを対象とするスモーク。
+          # mobile-smokeのiPhone 13もWebKitエンジンのため、インストールはwebkitのみでよい
+          - name: cross-browser
+            browsers: webkit
+            project_args: --project=webkit-smoke --project=mobile-smoke
 
     services:
       postgres:
@@ -283,35 +374,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Gradleキャッシュ
-        uses: actions/cache@v6
+      - name: Gradleセットアップ
+        uses: gradle/actions/setup-gradle@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: pnpmセットアップ
-        uses: pnpm/action-setup@v6
-        with:
-          package_json_file: frontend/package.json
-
-      - name: Node.js セットアップ
-        uses: actions/setup-node@v7
-        with:
-          node-version: '22.15'
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - name: フロントエンド依存パッケージインストール
-        run: cd frontend && pnpm install --frozen-lockfile
-
-      - name: Playwrightブラウザインストール
-        # webkit-smoke・mobile-smokeプロジェクト（playwright.config.ts）が主要導線のみ
-        # 追加で実行するために必要
-        run: cd frontend && pnpm exec playwright install --with-deps chromium webkit
+          build-root-directory: gallery-api
+          cache-read-only: false
 
       - name: データベース初期化
         env:
@@ -335,10 +402,32 @@ jobs:
             "db/photo/photo_favorite.sql"
             "db/photo/photo_list_filter_log.sql"
             "db/photo/photo_view_log.sql"
+            "db/photo/photo_moderation_log.sql"
+            "db/photo/portfolio_mst.sql"
+            "db/photo/portfolio_photo.sql"
+            "db/photo/portfolio_tag_mst.sql"
+            "db/photo/frame_template_mst.sql"
+            "db/photo/portfolio_reader.sql"
           )
           for file in "${SQL_FILES[@]}"; do
             psql -h localhost -p 5432 -U postgres -d web_gallery -f "$file"
           done
+
+      # バックエンドの起動（Gradleの起動・コンパイル・Spring Bootの初期化）には1分近くかかるため、
+      # データベースの初期化直後にバックグラウンドで起動しておき、MinIOの起動とフロントエンドの
+      # セットアップ（pnpm install・Playwrightブラウザのインストール）を並行して進める。
+      # 起動完了の待機は「バックエンドの起動を待機」ステップで、E2Eテストの直前に行う。
+      # S3クライアント（S3ClientConfig）はBean生成時にMinIOへ接続しないため、
+      # MinIOの起動を待たずにバックエンドを起動して問題ない
+      - name: バックエンドをバックグラウンドで起動
+        env:
+          # application-local.yml は JWT_SECRET のデフォルト値を持たないため、CI用の値を明示する（本番用ではない）
+          JWT_SECRET: e2e-only-secret-not-for-production-must-be-256-bits-long
+          # E2Eテストは全ワーカーが同一IP（::1）から多数のアカウント登録・ログインを行うため、
+          # 本番向けのレート制限が誤検知する（scripts/e2e.shのローカル実行と同様に無効化する）
+          RATE_LIMIT_ENABLED: "false"
+        run: |
+          SPRING_PROFILES_ACTIVE=local nohup ./gallery-api/gradlew -p gallery-api bootRun --no-daemon > backend-e2e.log 2>&1 &
 
       # 写真アップロードのE2Eシナリオが実接続する画像ストレージ（S3互換）。
       # GitHub Actionsのservicesはコンテナ起動時のcommand引数を指定できず、
@@ -368,15 +457,58 @@ jobs:
             --entrypoint mc \
             cgr.dev/chainguard/minio:latest mb --ignore-existing local/web-gallery-local
 
-      - name: バックエンドをバックグラウンドで起動
+      - name: pnpmセットアップ
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
+      - name: Node.js セットアップ
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22.15'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: フロントエンド依存パッケージインストール
+        run: cd frontend && pnpm install --frozen-lockfile
+
+      # ブラウザのバイナリをキャッシュしてダウンロードを省略する。@playwright/testの
+      # バージョンが変わると必要なブラウザのリビジョンも変わるため、キーにはpnpm-lock.yamlの
+      # ハッシュを含める（部分一致で古いリビジョンを復元しないよう restore-keys は指定しない）
+      - name: Playwrightブラウザキャッシュ
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ matrix.browsers }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+
+      # --with-depsはブラウザの実行に必要なOSライブラリ（apt）も導入する。
+      # キャッシュヒット時はブラウザのダウンロードが省略され、apt部分のみが実行される
+      - name: Playwrightブラウザインストール
+        run: cd frontend && pnpm exec playwright install --with-deps ${{ matrix.browsers }}
+
+      - name: Go セットアップ
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: portfolio-api/go.mod
+          cache-dependency-path: portfolio-api/go.sum
+
+      # 公開ページ（/portfolio/**）が Next.js のサーバーから呼び出す、ポートフォリオ表示API
+      - name: portfolio-apiをバックグラウンドで起動
         env:
-          # application-local.yml は JWT_SECRET のデフォルト値を持たないため、CI用の値を明示する（本番用ではない）
-          JWT_SECRET: e2e-only-secret-not-for-production-must-be-256-bits-long
-          # E2Eテストは全ワーカーが同一IP（::1）から多数のアカウント登録・ログインを行うため、
-          # 本番向けのレート制限が誤検知する（scripts/e2e.shのローカル実行と同様に無効化する）
-          RATE_LIMIT_ENABLED: "false"
+          PORTFOLIO_API_ENV: local
         run: |
-          SPRING_PROFILES_ACTIVE=local nohup ./backend/gradlew -p backend bootRun --no-daemon > backend-e2e.log 2>&1 &
+          cd portfolio-api && go build -o ../portfolio-api-e2e ./cmd/server && cd ..
+          nohup ./portfolio-api-e2e > portfolio-api-e2e.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8081/healthz > /dev/null; then
+              echo "portfolio-apiが起動しました"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "portfolio-apiの起動がタイムアウトしました"
+          cat portfolio-api-e2e.log
+          exit 1
 
       - name: バックエンドの起動を待機
         run: |
@@ -392,20 +524,27 @@ jobs:
           exit 1
 
       - name: E2Eテスト実行
-        run: cd frontend && pnpm exec playwright test
+        run: cd frontend && pnpm exec playwright test ${{ matrix.project_args }}
 
       - name: バックエンドログアップロード
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: e2e-backend-log
+          name: e2e-backend-log-${{ matrix.name }}
           path: backend-e2e.log
+
+      - name: portfolio-apiログアップロード
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-portfolio-api-log-${{ matrix.name }}
+          path: portfolio-api-e2e.log
 
       - name: Playwrightレポートアップロード
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.name }}
           path: frontend/playwright-report/
           retention-days: 7
 
@@ -432,6 +571,13 @@ jobs:
       - name: フロントエンド依存パッケージインストール
         run: cd frontend && pnpm install --frozen-lockfile
 
+      # e2e-testのchromiumジョブとキーを共有し、どちらかが作成したキャッシュを再利用する
+      - name: Playwrightブラウザキャッシュ
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+
       - name: Playwrightブラウザインストール
         run: cd frontend && pnpm exec playwright install --with-deps chromium
 
@@ -451,7 +597,12 @@ jobs:
 
   coverage-report:
     name: カバレッジレポート
-    needs: [frontend-unit-test, unit-test, integration-test]
+    needs:
+      - frontend-unit-test
+      - gallery-api-unit-test
+      - gallery-api-integration-test
+      - portfolio-api-unit-test
+      - portfolio-api-integration-test
     runs-on: ubuntu-latest
 
     permissions:
@@ -468,21 +619,31 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Gradleキャッシュ
-        uses: actions/cache@v6
+      - name: Gradleセットアップ
+        uses: gradle/actions/setup-gradle@v6
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          build-root-directory: gallery-api
+          cache-read-only: false
+
+      # portfolio-apiの関数カバレッジの算出（go tool cover -func）に使用する
+      - name: Go セットアップ
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: portfolio-api/go.mod
+          cache-dependency-path: portfolio-api/go.sum
 
       - name: カバレッジ実行データダウンロード
         uses: actions/download-artifact@v8
         with:
           pattern: jacoco-exec-*
-          path: backend/build/jacoco
+          path: gallery-api/build/jacoco
+          merge-multiple: true
+
+      - name: portfolio-apiカバレッジプロファイルダウンロード
+        uses: actions/download-artifact@v8
+        with:
+          pattern: go-coverage-*
+          path: portfolio-api/coverage
           merge-multiple: true
 
       - name: フロントエンドカバレッジ集計データダウンロード
@@ -491,22 +652,33 @@ jobs:
           name: jest-coverage-summary
           path: frontend/coverage
 
-      - name: カバレッジレポート生成（単体 / 結合 / 集約）
-        run: ./backend/gradlew -p backend jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
+      - name: gallery-apiカバレッジレポート生成（単体 / 結合 / 集約）
+        run: ./gallery-api/gradlew -p gallery-api jacocoUnitReport jacocoIntegrationReport jacocoAggregateReport
 
       - name: カバレッジ集計表を生成
         run: |
           python3 .github/scripts/jacoco_coverage_table.py \
-            "単体＋結合=backend/build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml" \
-            "単体テスト=backend/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml" \
-            "結合テスト=backend/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml" \
+            "単体＋結合=gallery-api/build/reports/jacoco/jacocoAggregateReport/jacocoAggregateReport.xml" \
+            "単体テスト=gallery-api/build/reports/jacoco/jacocoUnitReport/jacocoUnitReport.xml" \
+            "結合テスト=gallery-api/build/reports/jacoco/jacocoIntegrationReport/jacocoIntegrationReport.xml" \
             > coverage-table.md
+          echo >> coverage-table.md
+          python3 .github/scripts/go_coverage_table.py \
+            --module-dir portfolio-api \
+            --exclude graph/generated.go \
+            --exclude graph/model/models_gen.go \
+            "単体＋結合=portfolio-api/coverage/unit.out,portfolio-api/coverage/integration.out" \
+            "単体テスト=portfolio-api/coverage/unit.out" \
+            "結合テスト=portfolio-api/coverage/integration.out" \
+            >> coverage-table.md
+          echo >> coverage-table.md
           python3 .github/scripts/jest_coverage_table.py \
             frontend/coverage/coverage-summary.json \
             >> coverage-table.md
           cat coverage-table.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: PRにカバレッジを単一コメントで投稿
+        if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}

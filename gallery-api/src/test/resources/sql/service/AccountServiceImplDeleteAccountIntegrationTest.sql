@@ -1,0 +1,99 @@
+-- common.account
+insert into common.account values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', false, 'aaaaaaaa', 'AAAAAAAA', '$2a$10$k19cLX6F2brrOLYp74GstejFJfeGjm52TMk..ELwoJeTcBcUnBVM2', '1991-02-14', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+insert into common.account values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', false, 'bbbbbbbb', 'BBBBBBBB', '$2a$10$password2', '1900-01-01', 'man', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+-- account_no=3：写真・タグ・お気に入り・リフレッシュトークン・ログイン履歴・絞り込みログのいずれも関連データを持たないアカウント（空データでのdelete検証用）
+insert into common.account values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', false, 'cccccccc', 'CCCCCCCC', '$2a$10$password3', '1900-01-01', 'none', 'none', 'none', '', '2002-01-01 09:00:00 Asia/Tokyo', 0, false);
+
+-- common.account_authority
+insert into common.account_authority values(1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2001-01-01 09:00:00 Asia/Tokyo', 'administrator');
+insert into common.account_authority values(2, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2001-01-02 09:00:00 Asia/Tokyo', 'administrator');
+insert into common.account_authority values(3, 3, '2000-01-03 09:00:00 Asia/Tokyo', 3, '2001-01-03 09:00:00 Asia/Tokyo', 'administrator');
+
+-- photo.photo_mst (account_no=1の写真2件、account_no=2の写真1件)
+insert into photo.photo_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/aaaaaaaa/DSC11.jpg', 'DSC11.jpg', 'タイトル11', 'title11', 'キャプション11', 'horizontal', 24, 8.0, 1, 100, true);
+insert into photo.photo_mst values(DEFAULT, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, '2021-02-01 09:00:00 Asia/Tokyo', 2, 'https://www.xxx.com/aaaaaaaa/DSC12.jpg', 'DSC12.jpg', 'タイトル12', 'title12', 'キャプション12', 'horizontal', 36, 9.0, 2, 200, true);
+insert into photo.photo_mst values(DEFAULT, 2, 1, 2, '2000-01-01 09:00:00 Asia/Tokyo', 2, '2000-01-01 09:00:00 Asia/Tokyo', false, '2021-01-01 09:00:00 Asia/Tokyo', 1, 'https://www.xxx.com/bbbbbbbb/DSC21.jpg', 'DSC21.jpg', 'タイトル21', 'title21', 'キャプション21', 'horizontal', 24, 8.0, 1, 100, true);
+
+-- photo.photo_tag_mst (account_no=1の写真タグ)
+insert into photo.photo_tag_mst values(DEFAULT, 1, 1, 1, 1, '2000-01-01 10:00:00 Asia/Tokyo', '太陽', 'sun');
+insert into photo.photo_tag_mst values(DEFAULT, 1, 1, 2, 1, '2000-01-01 11:00:00 Asia/Tokyo', '青空', 'bluesky');
+insert into photo.photo_tag_mst values(DEFAULT, 1, 2, 1, 1, '2000-02-01 10:00:00 Asia/Tokyo', '太陽', 'sun');
+
+-- photo.photo_favorite
+-- account_no=1が自分の写真をお気に入り
+insert into photo.photo_favorite values(DEFAULT, 1, 1, 1, 1, now());
+-- account_no=2がaccount_no=1の写真をお気に入り
+insert into photo.photo_favorite values(DEFAULT, 2, 1, 1, 1, now());
+-- account_no=1がaccount_no=2の写真をお気に入り
+insert into photo.photo_favorite values(DEFAULT, 1, 2, 1, 1, now());
+-- account_no=2が自分の写真をお気に入り
+insert into photo.photo_favorite values(DEFAULT, 2, 2, 1, 1, now());
+
+-- common.refresh_token (account_no=1、account_no=2それぞれ有効なリフレッシュトークン)
+insert into common.refresh_token values(DEFAULT, 1, 'hash-account1', now() + interval '7 days', now(), 1, now(), false);
+insert into common.refresh_token values(DEFAULT, 2, 'hash-account2', now() + interval '7 days', now(), 2, now(), false);
+
+-- common.login_history (account_no=1のログイン履歴)
+insert into common.login_history (login_history_no, account_no, ip_address, country, region, created_by, created_at) values (1, 1, '198.51.100.1', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
+ALTER SEQUENCE common.login_history_login_history_no_seq RESTART 2;
+
+-- photo.photo_list_filter_log
+-- 自分のギャラリーに対する絞り込みログ（photo_account_no=1 なので削除される）
+insert into photo.photo_list_filter_log (photo_list_filter_log_no, photo_account_no, account_no, direction_kbn, is_favorite, tag_list, sort_by, referer, ip_address, country, region, created_by, created_at) values (1, 1, 1, 'vertical', true, '太陽,海', 'favorite', 'https://example.com/', '198.51.100.1', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
+-- account_no=1が「閲覧者」としてaccount_no=2のギャラリーで絞り込んだログ。
+-- account_no（閲覧者）はセンチネル値0を取りうるため外部キーを持たず、削除漏れがFK違反にならない。
+-- 所有者（account_no=2）側の分析データは残しつつ、退会者の個人データだけが匿名化されることを検証する
+insert into photo.photo_list_filter_log (photo_list_filter_log_no, photo_account_no, account_no, direction_kbn, is_favorite, tag_list, sort_by, referer, ip_address, country, region, created_by, created_at) values (2, 2, 1, 'horizontal', false, '海,夕焼け', 'photo_at', 'https://example.com/other', '198.51.100.9', 'JP', 'Osaka', 2, '2024-01-02 00:00:00 Asia/Tokyo');
+ALTER SEQUENCE photo.photo_list_filter_log_photo_list_filter_log_no_seq RESTART 3;
+
+-- photo.photo_view_log
+-- 自分の写真に対する他人の閲覧ログ（photo_account_no=1 なので削除される）
+insert into photo.photo_view_log (photo_view_log_no, photo_account_no, photo_no, account_no, referer, ip_address, country, region, created_by, created_at) values (1, 1, 1, 2, 'https://example.com/', '198.51.100.2', 'JP', 'Tokyo', 1, '2024-01-01 00:00:00 Asia/Tokyo');
+-- account_no=1が「閲覧者」としてaccount_no=2の写真を閲覧したログ（匿名化の対象）
+insert into photo.photo_view_log (photo_view_log_no, photo_account_no, photo_no, account_no, referer, ip_address, country, region, created_by, created_at) values (2, 2, 1, 1, 'https://example.com/other', '198.51.100.9', 'JP', 'Osaka', 2, '2024-01-02 00:00:00 Asia/Tokyo');
+ALTER SEQUENCE photo.photo_view_log_photo_view_log_no_seq RESTART 3;
+
+-- photo.photo_moderation_log (photo_mst(account_no, photo_no) を外部キーで参照する)
+-- 1件目：account_no=1の写真に対する管理者（account_no=2）の操作履歴（account_no=1の削除時に消える）
+-- 2件目：account_no=1が「管理者として」account_no=2の写真を操作した履歴（admin_account_noは外部キーを持たないため残る）
+insert into photo.photo_moderation_log (photo_account_no, photo_no, admin_account_no, is_hidden, reason, created_by, created_at) values(1, 1, 2, true, '不適切な画像のため', 2, '2000-01-03 09:00:00 Asia/Tokyo');
+insert into photo.photo_moderation_log (photo_account_no, photo_no, admin_account_no, is_hidden, reason, created_by, created_at) values(2, 1, 1, true, '不適切な画像のため', 1, '2000-01-03 09:00:00 Asia/Tokyo');
+
+-- common.location_mst (account_no=1のロケーション2件、account_no=2のロケーション1件)
+-- common.account への外部キーが ON DELETE RESTRICT のため、削除漏れがあるとアカウント本体の物理削除が失敗する
+insert into common.location_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, 'ロケーション11_管理用', 'ロケーション11', '東京都千代田区', 35.6812, 139.7671);
+insert into common.location_mst values(DEFAULT, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', false, 'ロケーション12_管理用', 'ロケーション12', '東京都港区', 35.6586, 139.7454);
+insert into common.location_mst values(DEFAULT, 2, 1, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2000-01-02 09:00:00 Asia/Tokyo', false, 'ロケーション21_管理用', 'ロケーション21', '大阪府大阪市', 34.6937, 135.5023);
+
+-- common.inquiry_mst (account_no=1のお問い合わせ2件、account_no=2のお問い合わせ1件)
+insert into common.inquiry_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', '件名11', '本文11', 'replied', true);
+insert into common.inquiry_mst values(DEFAULT, 1, 2, 1, '2000-01-02 09:00:00 Asia/Tokyo', 1, '2000-01-02 09:00:00 Asia/Tokyo', '件名12', '本文12', 'unreplied', true);
+insert into common.inquiry_mst values(DEFAULT, 2, 1, 2, '2000-01-03 09:00:00 Asia/Tokyo', 2, '2000-01-03 09:00:00 Asia/Tokyo', '件名21', '本文21', 'replied', true);
+
+-- common.inquiry_reply_mst
+-- account_no=2の管理者が、account_no=1のお問い合わせへ返信（inquiry_id 参照の解消が必要）
+insert into common.inquiry_reply_mst values(DEFAULT, (select id from common.inquiry_mst where account_no=1 and inquiry_no=1), 1, 2, 2, '2000-01-01 10:00:00 Asia/Tokyo', '返信本文11');
+-- account_no=1が「管理者として」他人のお問い合わせへ投稿した返信は、ここでは作らない。
+-- それが1件でも残っているアカウントは削除自体がブロックされる仕様（他ユーザーのスレッドから
+-- 回答本文だけが消えるのを避けるため）なので、正常系の削除フィクスチャには含められない。
+-- ブロックされることの検証には AccountServiceImplDeleteAccountAdminReplyIntegrationTest.sql を重ねて使う
+
+-- photo.portfolio_mst (account_no=1の公開中・下書きのポートフォリオ各1件、account_no=2のポートフォリオ1件)
+-- common.account への外部キーが ON DELETE RESTRICT のため、削除漏れがあるとアカウント本体の物理削除が失敗する
+insert into photo.portfolio_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', 'ポートフォリオ11', '説明11', 'feature', '{}', 1, 'published', 1);
+insert into photo.portfolio_mst values(DEFAULT, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', 'ポートフォリオ12', '説明12', 'grid', '{"rows":[]}', 1, 'draft', 2);
+insert into photo.portfolio_mst values(DEFAULT, 2, 1, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2000-01-02 09:00:00 Asia/Tokyo', 'ポートフォリオ21', '説明21', 'feature', '{}', 1, 'draft', 1);
+
+-- photo.portfolio_photo (photo.photo_mst・photo.portfolio_mst を外部キーで参照する)
+insert into photo.portfolio_photo values(DEFAULT, 1, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '{"theme":"テーマ11"}');
+insert into photo.portfolio_photo values(DEFAULT, 1, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 2, '{"theme":"テーマ12"}');
+insert into photo.portfolio_photo values(DEFAULT, 2, 1, 1, 2, '2000-01-02 09:00:00 Asia/Tokyo', 1, '{}');
+
+-- photo.portfolio_tag_mst (photo.portfolio_mst を外部キーで参照する)
+insert into photo.portfolio_tag_mst values(DEFAULT, 1, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', '自然', 'nature');
+insert into photo.portfolio_tag_mst values(DEFAULT, 2, 1, 1, 2, '2000-01-02 09:00:00 Asia/Tokyo', '風景', 'landscape');
+
+-- photo.frame_template_mst (common.account を外部キーで参照する。account_no=1の額縁テンプレート2件、account_no=2の額縁テンプレート1件)
+insert into photo.frame_template_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', '額縁11', '{}');
+insert into photo.frame_template_mst values(DEFAULT, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', '額縁12', '{}');
+insert into photo.frame_template_mst values(DEFAULT, 2, 1, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2000-01-02 09:00:00 Asia/Tokyo', '額縁21', '{}');

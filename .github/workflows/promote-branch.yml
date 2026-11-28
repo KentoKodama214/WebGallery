@@ -11,7 +11,7 @@ jobs:
     name: 昇格PR作成
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     steps:
       - name: マージ先ブランチを決定
@@ -24,6 +24,27 @@ jobs:
 
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # staging→masterの昇格（＝本番リリース）のタイミングでのみリリースタグを発行する。
+      # セマンティックバージョニング（vX.Y.Z）のpatchを自動インクリメントし、
+      # minor/majorの更新は運用者が別途手動でタグを打つ想定。
+      - name: リリースタグを生成
+        if: github.ref_name == 'staging'
+        id: tag
+        run: |
+          git fetch --tags
+          latest=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | sort -V | tail -n 1)
+          if [ -z "$latest" ]; then
+            new_tag="v1.0.0"
+          else
+            IFS='.' read -r major minor patch <<< "${latest#v}"
+            new_tag="v${major}.${minor}.$((patch + 1))"
+          fi
+          git tag "$new_tag"
+          git push origin "$new_tag"
+          echo "tag=$new_tag" >> "$GITHUB_OUTPUT"
 
       - name: 既存のオープンPRを確認
         id: check
@@ -38,6 +59,19 @@ jobs:
             --json number -q '.[0].number')
           echo "existing=$existing" >> "$GITHUB_OUTPUT"
 
+      - name: 昇格PR本文を決定
+        id: body
+        run: |
+          body="${{ github.ref_name }} への変更を ${{ steps.target.outputs.base }} へ反映するための自動生成PRです。"
+          if [ -n "${{ steps.tag.outputs.tag }}" ]; then
+            body="${body}"$'\n\n'"リリースタグ: ${{ steps.tag.outputs.tag }}"
+          fi
+          {
+            echo "body<<EOF"
+            echo "$body"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: 昇格PRを作成
         if: steps.check.outputs.existing == ''
         env:
@@ -48,7 +82,7 @@ jobs:
             --base "${{ steps.target.outputs.base }}" \
             --head "${{ github.ref_name }}" \
             --title "chore: ${{ github.ref_name }} を ${{ steps.target.outputs.base }} へ反映" \
-            --body "${{ github.ref_name }} への変更を ${{ steps.target.outputs.base }} へ反映するための自動生成PRです。"
+            --body "${{ steps.body.outputs.body }}"
 
       - name: スキップ理由を出力
         if: steps.check.outputs.existing != ''

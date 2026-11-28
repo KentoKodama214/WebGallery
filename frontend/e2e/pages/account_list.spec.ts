@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { expectNoAccessibilityViolations } from "../fixtures/a11y";
 import { generateSortEarlyTestAccountId, login, registerAccount } from "../fixtures/auth";
 
 test.describe("アカウント一覧ページ", () => {
@@ -8,6 +9,12 @@ test.describe("アカウント一覧ページ", () => {
 
   test("ページタイトルが正しいこと", async ({ page }) => {
     await expect(page).toHaveTitle(/アカウント一覧/);
+  });
+
+  test("ページ上部に「写真家」のタイトルが表示されること", async ({ page }) => {
+    await expect(page.getByRole("heading", { level: 1, name: "写真家" })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("未ログイン状態ではヘッダーメニューにSign Inが表示されること", async ({ page }) => {
@@ -24,6 +31,20 @@ test.describe("アカウント一覧ページ", () => {
       timeout: 10000,
     });
     await expect(page.getByRole("columnheader", { name: "ギャラリー" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "ポートフォリオ" })).toBeVisible();
+  });
+
+  test("アクセシビリティ違反がないこと", async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "chromium",
+      "a11y検証はchromiumプロジェクトのみで実施する"
+    );
+    await page.locator("table").first().waitFor({ state: "visible", timeout: 10000 });
+
+    // color-contrast は一覧テーブルのヘッダー（白文字 × #2196F3 = 3.12:1）に既存の違反があり、
+    // 解消にはアプリ共通の配色変更が必要なため、本検証の対象外とする。
+    // 見出しレベル（page-has-heading-one）・ラベル等は検査する
+    await expectNoAccessibilityViolations(page, { disableRules: ["color-contrast"] });
   });
 });
 
@@ -74,6 +95,10 @@ test.describe("アカウント一覧ページ（ログイン済み）", () => {
 
     const row = await revealAccountRow(page, accountName);
     await expect(row).toBeVisible();
+    await expect(row.getByRole("link", { name: "ポートフォリオを見る" })).toHaveAttribute(
+      "href",
+      `/portfolio/${accountId}`
+    );
 
     await row.getByRole("link", { name: "ギャラリーを見る" }).click();
     await expect(page).toHaveURL(new RegExp(`/photo/${accountId}/photo_list$`), {

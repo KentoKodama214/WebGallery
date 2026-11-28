@@ -13,12 +13,12 @@ export const metadata: Metadata = {
  */
 export default function InquiryListPage() {
   return (
-    <>
+    <div className="min-h-screen bg-[whitesmoke]">
       <Header />
       <AuthGuard>
         <InquiryList />
       </AuthGuard>
-      <Footer />
-    </>
+      <Footer variant="light" />
+    </div>
   );
 }

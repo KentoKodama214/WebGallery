@@ -1,0 +1,12 @@
+{
+  "theme": "日本の動物・植物",
+  "description": "四季の動植物",
+  "templateKbn": "feature",
+  "photoList": [
+    { "photoNo": 2, "photoSettings": { "theme": "茶畑", "subTheme": "静岡", "description": "一面の緑" } },
+    { "photoNo": 1, "photoSettings": { "theme": "金閣寺" } }
+  ],
+  "tagList": [
+    { "tagJapaneseName": "植物", "tagEnglishName": "plant" }
+  ]
+}

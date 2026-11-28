@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { AdminInquiryDetail } from "./AdminInquiryDetail";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { AuthGuard } from "@/lib/auth/AuthGuard";
 
 export const metadata: Metadata = {
   title: "お問い合わせ詳細 - WebGallery",
@@ -33,16 +35,18 @@ export default async function AdminInquiryDetailPage({
   const { inquiryId } = await searchParams;
   const parsedInquiryId = parsePositiveInt(inquiryId);
 
+  // 不正なクエリは 404 として扱う（`not-found.tsx` が描画される）
+  if (parsedInquiryId === null) {
+    notFound();
+  }
+
   return (
     <>
       <Header />
-      {parsedInquiryId === null ? (
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <p className="text-red-500">お問い合わせが見つかりません</p>
-        </div>
-      ) : (
+      {/* 未ログイン時は他の保護ページと同様に /login へ誘導する（`inquiry/detail` と同じ構成） */}
+      <AuthGuard>
         <AdminInquiryDetail inquiryId={parsedInquiryId} />
-      )}
+      </AuthGuard>
       <Footer />
     </>
   );

@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/src/test/**/integration/**
+  - gallery-api/src/test/**/integration/**
 ---
 
 # 統合テストのアーキテクチャルール
@@ -24,7 +24,7 @@ paths:
 
 ## SQLフィクスチャの配置規則
 
-- テスト用SQLフィクスチャは`backend/src/test/resources/sql/{controller|repository|service}/{テストクラス名}.sql`に、対象クラスのレイヤーと同名のディレクトリへ配置すること
+- テスト用SQLフィクスチャは`gallery-api/src/test/resources/sql/{controller|repository|service}/{テストクラス名}.sql`に、対象クラスのレイヤーと同名のディレクトリへ配置すること
 - 1クラス内で機能（`@Nested`クラス）ごとにフィクスチャを分ける場合は`{テストクラス名}{機能名}.sql`のように命名すること（例：`AccountControllerDeleteAccountIntegrationTest.sql`）
 - `@Sql`は共通クリーンアップ用SQL（`/sql/common/cleanup.sql`）→クラス固有SQLの順に重ねて指定すること
 

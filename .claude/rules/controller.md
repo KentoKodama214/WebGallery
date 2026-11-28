@@ -1,6 +1,6 @@
 ---
 paths:
-  - backend/**/controller/**
+  - gallery-api/**/controller/**
 ---
 
 # Controller層のアーキテクチャルール
@@ -16,8 +16,13 @@ paths:
 
 ## レイヤー間依存関係
 
-- **許可するimport**: `service/`のインターフェース、`model/`、`controller/request/`、`controller/response/`、`constant/`
-- **禁止するimport**: `repository/`、`mapper/`、`entity/`、`dto/`、`service/impl/`への直接依存
+- **許可するimport**: `application/service/`のインターフェース、`application/model/`、`presentation/request/`、`presentation/response/`、`presentation/converter/`、`domain/constant/`、`infrastructure/`配下（`SessionHelper`、`ClientIpResolver`等、presentationからinfrastructureへの依存は一方向のみ許可される。詳細は`architecture-overview.md`）
+- **禁止するimport**: `infrastructure/persistence/repository・mapper・entity・dto`、`application/service/impl/`への直接依存
+
+## Request → Modelの変換
+
+- ControllerはRequestオブジェクトから直接Modelを組み立てない。`presentation/converter/`の専用Converterクラス（例: `PhotoConverter`）を`@Component`としてDIし、そのメソッド経由でRequestをModelへ変換すること
+- Converterクラスの詳細な設計ルールは`converter.md`を参照
 
 ## Responseファクトリメソッド経由の呼び出し
 
@@ -26,4 +31,4 @@ paths:
 
 ## 検証
 
-本ファイルのルールは`backend/src/test/java/com/web/gallery/architecture/ControllerArchitectureTest.java`のArchUnitテストで機械的に検証される。ただし「APIパスを文字列リテラルとして直接記述しない」ルールは、コンパイル後のバイトコードでは定数参照と直書きの区別がつかないため厳密な検証はできず、代わりに「マッピングパスの値が`ApiRoutes`クラスの定数値のいずれかと一致するか」を近似的に検証する。
+本ファイルのルールは`gallery-api/src/test/java/com/web/gallery/architecture/ControllerArchitectureTest.java`のArchUnitテストで機械的に検証される。ただし「APIパスを文字列リテラルとして直接記述しない」ルールは、コンパイル後のバイトコードでは定数参照と直書きの区別がつかないため厳密な検証はできず、代わりに「マッピングパスの値が`ApiRoutes`クラスの定数値のいずれかと一致するか」を近似的に検証する。

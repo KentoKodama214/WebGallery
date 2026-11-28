@@ -31,7 +31,7 @@ just db-up
 `RateLimitFilter`により`/api/**`（GENERALカテゴリ）は既定300回/60秒/IPの上限があり、JMeterの負荷計測では即座に429で弾かれる。検証時は無効化して起動する。
 
 ```bash
-RATE_LIMIT_ENABLED=false just backend-run
+RATE_LIMIT_ENABLED=false just gallery-api-run
 ```
 
 ### 4. テストデータ投入

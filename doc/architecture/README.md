@@ -2,13 +2,15 @@
 
 ## 概要
 
-WebGalleryは、Spring Bootベースのレイヤード・アーキテクチャを採用しています。
+WebGalleryは、Spring Bootベースのオニオンアーキテクチャ（domain → application → infrastructure/presentation）を採用しています。
+ポートフォリオの公開ページ向けには、読み取り専用の GraphQL API（`portfolio-api/`、Go）を別に持ちます。
 
 ## ドキュメント一覧
 
-- [レイヤード・アーキテクチャ](./layered-architecture.md)
+- [オニオンアーキテクチャ](./onion-architecture.md)
 - [セキュリティ](./security.md)
 - [データソース構成（プライマリ／リードレプリカ）](./datasource.md)
+- [portfolio-api（公開ページ向けのポートフォリオ表示API。Go・GraphQL）](./portfolio-api.md)
 - [モジュール構成・依存関係（Spring Modulith）](../modulith/components.png)
 
 ## Spring Modulithドキュメントの図を生成する手順

@@ -29,6 +29,13 @@ export function setCookie(name: string, value: string, maxAgeSeconds: number): v
 
 /**
  * Cookieを取得する
+ *
+ * `decodeURIComponent` は不正なパーセントエンコーディング（`%` 単体等）で `URIError` を投げる。
+ * `setCookie` は必ず `encodeURIComponent` するため自アプリ由来では起きないが、親ドメインの
+ * 別サービスやブラウザ拡張が同名Cookieを不正な形式で書いた場合に投げうる。呼び出し側は
+ * レンダリング中（`useMemo` 等）からも呼ぶため、ここで投げるとページ全体がエラーバウンダリへ
+ * 落ちてしまう。デコードできない値は生の文字列として返し、読み出しで失敗させない。
+ *
  * @param name Cookie名
  * @returns Cookie値（なければnull）
  */
@@ -37,16 +44,13 @@ export function getCookie(name: string): string | null {
   for (const cookie of cookies) {
     const [key, ...rest] = cookie.split("=");
     if (key === name) {
-      return decodeURIComponent(rest.join("="));
+      const raw = rest.join("=");
+      try {
+        return decodeURIComponent(raw);
+      } catch {
+        return raw;
+      }
     }
   }
   return null;
-}
-
-/**
- * Cookieを削除する
- * @param name Cookie名
- */
-export function deleteCookie(name: string): void {
-  document.cookie = `${name}=; path=/; max-age=0`;
 }
