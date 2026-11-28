@@ -8,8 +8,8 @@ CREATE TYPE photo.sort_photo_enum AS ENUM ('photo_at', 'favorite', 'season');
 COMMENT ON TYPE photo.sort_photo_enum IS '写真一覧の並び順を管理するEnum型: photo_at(撮影日順)、favorite(お気に入り数順)、season(季節順)';
 
 -- ポートフォリオのテンプレート
-CREATE TYPE photo.portfolio_template_enum AS ENUM ('feature', 'grid');
-COMMENT ON TYPE photo.portfolio_template_enum IS 'ポートフォリオのテンプレートを管理するEnum型: feature(フィーチャー型。写真ごとにテーマ・サブテーマ・説明を持つセクションを縦に並べる)、grid(グリッド型。1行に2〜3枚の写真を組み合わせて並べる)';
+CREATE TYPE photo.portfolio_template_enum AS ENUM ('feature', 'grid', 'frame');
+COMMENT ON TYPE photo.portfolio_template_enum IS 'ポートフォリオのテンプレートを管理するEnum型: feature(フィーチャー型。写真ごとにテーマ・サブテーマ・説明を持つセクションを縦に並べる)、grid(グリッド型。1行に2〜3枚の写真を組み合わせて並べる)、frame(額縁型。アカウントで作成した額縁テンプレートの写真枠に写真を当てはめて1枚の組写真にする)';
 
 -- ポートフォリオの公開状態
 CREATE TYPE photo.portfolio_status_enum AS ENUM ('draft', 'published');

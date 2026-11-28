@@ -14,6 +14,7 @@ import com.web.gallery.infrastructure.persistence.entity.auth.WebAuthnChallengeC
 import com.web.gallery.infrastructure.persistence.entity.common.LocationMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.inquiry.InquiryReplyMstCondition;
+import com.web.gallery.infrastructure.persistence.entity.photo.FrameTemplateMstCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoFavoriteCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoListFilterLogCondition;
 import com.web.gallery.infrastructure.persistence.entity.photo.PhotoModerationLogCondition;
@@ -33,6 +34,7 @@ import com.web.gallery.infrastructure.persistence.mapper.auth.WebAuthnChallengeM
 import com.web.gallery.infrastructure.persistence.mapper.common.LocationMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.inquiry.InquiryReplyMstMapper;
+import com.web.gallery.infrastructure.persistence.mapper.photo.FrameTemplateMstMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoFavoriteMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoListFilterLogMapper;
 import com.web.gallery.infrastructure.persistence.mapper.photo.PhotoModerationLogMapper;
@@ -85,6 +87,7 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
   private final InquiryMstMapper inquiryMstMapper;
   private final InquiryReplyMstMapper inquiryReplyMstMapper;
   private final PortfolioMstMapper portfolioMstMapper;
+  private final FrameTemplateMstMapper frameTemplateMstMapper;
   private final PortfolioPhotoMapper portfolioPhotoMapper;
   private final PortfolioTagMstMapper portfolioTagMstMapper;
 
@@ -112,6 +115,9 @@ public class AccountAggregateRepositoryImpl implements AccountAggregateRepositor
     portfolioPhotoMapper.delete(PortfolioPhotoCondition.byAccountNo(accountNo));
     portfolioTagMstMapper.delete(PortfolioTagMstCondition.byAccountNo(accountNo));
     portfolioMstMapper.delete(PortfolioMstCondition.byAccountNo(accountNo));
+
+    // 額縁テンプレートを削除（アカウントを外部キーで参照するため、アカウントの物理削除に先立って実施）
+    frameTemplateMstMapper.delete(FrameTemplateMstCondition.byAccountNo(accountNo));
 
     // 写真詳細閲覧ログを削除（外部キー制約に抵触しないよう、写真マスタの物理削除に先立って実施）
     photoViewLogMapper.delete(PhotoViewLogCondition.byPhotoAccountNo(accountNo));

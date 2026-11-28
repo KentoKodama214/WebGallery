@@ -2,6 +2,7 @@ package graph
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/KentoKodama214/WebGallery/portfolio-api/graph/model"
 	"github.com/KentoKodama214/WebGallery/portfolio-api/internal/domain"
@@ -74,11 +75,11 @@ func toPortfolio(p usecase.PublishedPortfolio) (*model.Portfolio, error) {
 // toLayout はテンプレートごとのレイアウトを GraphQL のユニオン型（PortfolioLayout）へ変換する。
 //
 // 引数:
-//   - layout: domain.FeatureLayout または domain.GridLayout
+//   - layout: domain.FeatureLayout・domain.GridLayout・domain.FrameLayout のいずれか
 //
 // 戻り値:
-//   - model.FeatureLayout または model.GridLayout
-//   - 未知のレイアウトの型・行パターン・写真の向きの場合はエラー
+//   - model.FeatureLayout・model.GridLayout・model.FrameLayout のいずれか
+//   - 未知のレイアウトの型・行パターン・写真の向き・フォント・揃えの場合はエラー
 func toLayout(layout domain.Layout) (model.PortfolioLayout, error) {
 	switch l := layout.(type) {
 	case domain.FeatureLayout:
@@ -104,6 +105,8 @@ func toLayout(layout domain.Layout) (model.PortfolioLayout, error) {
 			return nil, err
 		}
 		return model.GridLayout{Rows: rows}, nil
+	case domain.FrameLayout:
+		return toFrameLayout(l)
 	default:
 		return nil, fmt.Errorf("unknown layout type: %T", layout)
 	}
@@ -137,6 +140,77 @@ func toGridRow(row domain.GridRow) (*model.GridRow, error) {
 		return nil, err
 	}
 	return &model.GridRow{Pattern: pattern, Photos: photos}, nil
+}
+
+// toFrameLayout は額縁型のレイアウトを GraphQL のモデルへ変換する。
+//
+// 引数:
+//   - layout: 額縁型のレイアウト
+//
+// 戻り値:
+//   - GraphQL の額縁型のレイアウト
+//   - 写真の向き・フォント・揃えが未知の場合はエラー
+func toFrameLayout(layout domain.FrameLayout) (model.FrameLayout, error) {
+	slots, err := mapSlice(layout.Slots, func(slot domain.FrameSlot) (*model.FrameSlot, error) {
+		result := &model.FrameSlot{
+			X:           slot.X,
+			Y:           slot.Y,
+			Width:       slot.Width,
+			Height:      slot.Height,
+			Rotation:    slot.Rotation,
+			BorderColor: slot.BorderColor,
+			BorderWidth: slot.BorderWidth,
+			Shadow:      slot.Shadow,
+		}
+		if slot.Photo == nil {
+			// 管理者により非公開にされた写真の枠は、写真を null にした空き枠として返す
+			return result, nil
+		}
+		photo, err := toPhoto(*slot.Photo)
+		if err != nil {
+			return nil, err
+		}
+		result.Photo = photo
+		return result, nil
+	})
+	if err != nil {
+		return model.FrameLayout{}, err
+	}
+	texts, err := mapSlice(layout.Texts, func(text domain.FrameText) (*model.FrameText, error) {
+		fontFamily := model.FrameFontFamily(strings.ToUpper(text.FontFamily))
+		if !fontFamily.IsValid() {
+			return nil, fmt.Errorf("unknown frame font family: %q", text.FontFamily)
+		}
+		align := model.FrameTextAlign(strings.ToUpper(text.Align))
+		if !align.IsValid() {
+			return nil, fmt.Errorf("unknown frame text align: %q", text.Align)
+		}
+		return &model.FrameText{
+			X:          text.X,
+			Y:          text.Y,
+			Width:      text.Width,
+			Rotation:   text.Rotation,
+			FontFamily: fontFamily,
+			FontSize:   text.FontSize,
+			Color:      text.Color,
+			Align:      align,
+			Bold:       text.Bold,
+			Italic:     text.Italic,
+			Text:       text.Text,
+		}, nil
+	})
+	if err != nil {
+		return model.FrameLayout{}, err
+	}
+	return model.FrameLayout{
+		Width:           layout.Width,
+		Height:          layout.Height,
+		BackgroundColor: layout.BackgroundColor,
+		BorderColor:     layout.BorderColor,
+		BorderWidth:     layout.BorderWidth,
+		Slots:           slots,
+		Texts:           texts,
+	}, nil
 }
 
 // photoDirections は写真の向き（DB の値）と GraphQL の列挙型の対応。
@@ -175,7 +249,7 @@ func toPhoto(p domain.Photo) (*model.Photo, error) {
 //   - template: テンプレート区分（DB の値）
 //
 // 戻り値:
-//   - GraphQL のテンプレート（FEATURE・GRID）
+//   - GraphQL のテンプレート（FEATURE・GRID・FRAME）
 //   - テンプレートが未知の場合はエラー
 func toTemplate(template domain.TemplateKbn) (model.PortfolioTemplate, error) {
 	switch template {
@@ -183,6 +257,8 @@ func toTemplate(template domain.TemplateKbn) (model.PortfolioTemplate, error) {
 		return model.PortfolioTemplateFeature, nil
 	case domain.TemplateGrid:
 		return model.PortfolioTemplateGrid, nil
+	case domain.TemplateFrame:
+		return model.PortfolioTemplateFrame, nil
 	default:
 		return "", fmt.Errorf("unknown portfolio template: %q", template)
 	}

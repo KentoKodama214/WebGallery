@@ -135,4 +135,19 @@ public final class Consts {
 
   /** 認証前でアカウントが未確定であることを表すアカウント番号（WebAuthnの認証用・新規登録用チャレンジで使用する） */
   public static final long ACCOUNT_NO_UNKNOWN = 0L;
+
+  /** 額縁テンプレートのテンプレート名の最大文字数（DBの varchar(50) に合わせる。アノテーション属性で参照するためint型で定義する） */
+  public static final int FRAME_TEMPLATE_NAME_MAX_LENGTH = 50;
+
+  /** 1つのアカウントが作成できる額縁テンプレートの数の上限 */
+  public static final int FRAME_TEMPLATE_MAX_SIZE = 50;
+
+  /** 1つの額縁に配置できる写真枠の数の上限 */
+  public static final int FRAME_SLOT_MAX_SIZE = 30;
+
+  /** 1つの額縁に配置できるメッセージ枠の数の上限 */
+  public static final int FRAME_TEXT_MAX_SIZE = 10;
+
+  /** 額縁に添えるメッセージ1件あたりの最大文字数 */
+  public static final int FRAME_MESSAGE_MAX_LENGTH = 200;
 }

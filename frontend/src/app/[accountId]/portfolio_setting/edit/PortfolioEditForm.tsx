@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
   deletePortfolio,
+  getFrameTemplateList,
   getPortfolioDetail,
   getPortfolioTemplateList,
   savePortfolio,
   updatePortfolioStatus,
+  type FrameTemplateItem,
   type PortfolioDetail,
   type PortfolioSaveData,
   type PortfolioStatusKbn,
@@ -24,8 +26,15 @@ import {
   PORTFOLIO_THEME_MAX_LENGTH,
   TAG_NAME_MAX_LENGTH,
 } from "@/lib/validation";
+import {
+  FRAME_MESSAGE_MAX_LENGTH,
+  parseFrameDefinition,
+  toFrameDefinitionJson,
+  type FrameDefinition,
+} from "@/lib/frame/definition";
 import { PORTFOLIO_STATUS_LABELS, PORTFOLIO_TEMPLATE_LABELS } from "../labels";
 import { FeaturePreview } from "./FeaturePreview";
+import { FramePreview } from "./FramePreview";
 import { GridPreview } from "./GridPreview";
 import { PhotoPickerDialog, type PickedPhoto } from "./PhotoPickerDialog";
 import {
@@ -104,6 +113,27 @@ function toGridRows(templateSettings: Record<string, unknown>): string[] {
 }
 
 /**
+ * 額縁型のポートフォリオ単位の設定（JSON）から、コピー済みの額縁定義・コピー元の額縁テンプレート番号・文面を取り出す
+ *
+ * @param templateKbn テンプレート区分
+ * @param templateSettings ポートフォリオ詳細APIのポートフォリオ単位の設定
+ * @returns 額縁型の入力値（額縁型でない・額縁定義がない場合は額縁定義が null）
+ */
+function toFrameSettings(templateKbn: PortfolioTemplateKbn, templateSettings: Record<string, unknown>) {
+  const frame = templateSettings.frame;
+  if (templateKbn !== "frame" || !frame || typeof frame !== "object") {
+    return { frameDefinition: null, frameTemplateNo: null, frameMessages: [] as string[] };
+  }
+  const frameTemplateNo = templateSettings.frameTemplateNo;
+  const messages = Array.isArray(templateSettings.messages) ? templateSettings.messages : [];
+  return {
+    frameDefinition: parseFrameDefinition(frame),
+    frameTemplateNo: typeof frameTemplateNo === "number" ? frameTemplateNo : null,
+    frameMessages: messages.map((message) => (typeof message === "string" ? message : "")),
+  };
+}
+
+/**
  * ポートフォリオ詳細APIの内容を、フォームの入力値に変換する
  *
  * @param detail ポートフォリオ詳細
@@ -117,6 +147,7 @@ function toFormState(detail: PortfolioDetail) {
     description: detail.description,
     templateKbn: detail.templateKbn,
     gridRows: toGridRows(detail.templateSettings),
+    ...toFrameSettings(detail.templateKbn, detail.templateSettings),
     photos: detail.photoList.map(
       (photo): SelectedPhoto => ({
         photoNo: photo.photoNo,
@@ -139,8 +170,9 @@ function toFormState(detail: PortfolioDetail) {
 /**
  * ポートフォリオの作成・編集フォーム
  *
- * テンプレートごとに、写真単位の設定（フィーチャー型：テーマ・サブテーマ・説明。グリッド型は持たない）と
- * ポートフォリオ単位の設定（グリッド型：行パターン）を入力する。保存は常に下書きの内容として行い、
+ * テンプレートごとに、写真単位の設定（フィーチャー型：テーマ・サブテーマ・説明。グリッド型・額縁型は持たない）と
+ * ポートフォリオ単位の設定（グリッド型：行パターン。額縁型：額縁テンプレートの選択とメッセージの文面）を入力する。
+ * 額縁型は、選んだ額縁テンプレートの額縁定義をポートフォリオへコピーして保存する（テンプレートを後から変更・削除しても影響しない）。保存は常に下書きの内容として行い、
  * 公開状態は保存済みのポートフォリオに対して別途切り替える（未保存の変更がある間は切り替えさせない）。
  */
 export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEditFormProps) {
@@ -157,6 +189,14 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
   const [gridRows, setGridRows] = useState<string[]>([]);
   const [tags, setTags] = useState<TagInput[]>([]);
   const [templateList, setTemplateList] = useState<PortfolioTemplateList | null>(null);
+  // 額縁型：ポートフォリオにコピーした額縁定義・コピー元の額縁テンプレート番号・メッセージ枠ごとの文面
+  const [frameDefinition, setFrameDefinition] = useState<FrameDefinition | null>(null);
+  const [frameTemplateNo, setFrameTemplateNo] = useState<number | null>(null);
+  const [frameMessages, setFrameMessages] = useState<string[]>([]);
+  // 額縁型：選択できる額縁テンプレート（額縁型を選んだときに取得する）と、選択欄の値
+  const [frameTemplates, setFrameTemplates] = useState<FrameTemplateItem[] | null>(null);
+  const [frameTemplatesError, setFrameTemplatesError] = useState("");
+  const [pickedFrameTemplateNo, setPickedFrameTemplateNo] = useState("");
 
   const [isLoading, setIsLoading] = useState(initialPortfolioNo !== undefined);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -194,6 +234,9 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
         setDescription(form.description);
         setTemplateKbn(form.templateKbn);
         setGridRows(form.gridRows);
+        setFrameDefinition(form.frameDefinition);
+        setFrameTemplateNo(form.frameTemplateNo);
+        setFrameMessages(form.frameMessages);
         setPhotos(form.photos);
         setTags(form.tags);
         setIsDirty(false);
@@ -226,6 +269,27 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     };
   }, [isOwner]);
 
+  // 額縁テンプレートの一覧（額縁型を選んだときに一度だけ取得する）
+  useEffect(() => {
+    if (!isOwner || templateKbn !== "frame" || frameTemplates !== null) return;
+    let cancelled = false;
+    getFrameTemplateList(accountId)
+      .then((data) => {
+        if (cancelled) return;
+        setFrameTemplates(data.frameTemplateList);
+        // コピー元の額縁テンプレートが残っていればそれを、削除済み・未選択であれば先頭を選んでおく
+        const applied = data.frameTemplateList.find((t) => t.frameTemplateNo === frameTemplateNo);
+        const initial = applied ?? data.frameTemplateList[0];
+        if (initial) setPickedFrameTemplateNo(String(initial.frameTemplateNo));
+      })
+      .catch((err) => {
+        if (!cancelled) setFrameTemplatesError(err instanceof Error ? err.message : "エラーが発生しました");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwner, accountId, templateKbn, frameTemplates, frameTemplateNo]);
+
   /** 入力内容を変更したことを記録する */
   const markDirty = () => {
     setIsDirty(true);
@@ -249,6 +313,32 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     GRID_ROW_PATTERN_PHOTO_COUNT[pattern] ??
     0;
   const gridTotalPhotoCount = gridRows.reduce((sum, pattern) => sum + rowPhotoCount(pattern), 0);
+
+  /**
+   * 選んだ額縁テンプレートの額縁定義をポートフォリオへコピーする
+   *
+   * 入力済みの文面は、メッセージ枠の順に引き継ぐ（メッセージ枠が減った分は捨てる）。
+   */
+  const applyFrameTemplate = () => {
+    const template = frameTemplates?.find((t) => String(t.frameTemplateNo) === pickedFrameTemplateNo);
+    if (!template) return;
+    const definition = parseFrameDefinition(template.frameDefinition);
+    markDirty();
+    setFrameDefinition(definition);
+    setFrameTemplateNo(template.frameTemplateNo);
+    setFrameMessages((prev) => definition.texts.map((_, index) => prev[index] ?? ""));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.frame;
+      return next;
+    });
+  };
+
+  const frameSlotCount = frameDefinition?.slots.length ?? 0;
+  const appliedFrameTemplateName =
+    frameTemplateNo === null
+      ? undefined
+      : frameTemplates?.find((t) => t.frameTemplateNo === frameTemplateNo)?.templateName;
 
   /**
    * 写真選択ダイアログで確定した選択を反映する
@@ -342,6 +432,10 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     if (!theme.trim()) {
       nextErrors.theme = "テーマを入力してください";
     }
+    if (templateKbn === "frame" && frameDefinition === null) {
+      // 額縁型は額縁定義を必須とする（バックエンドも400で拒否する）
+      nextErrors.frame = "額縁テンプレートを選んで「この額縁を使う」を押してください";
+    }
     if (photos.length === 0) {
       // 下書きでも写真のないポートフォリオは保存できない（バックエンドも400で拒否する）
       nextErrors.photos = "写真を1枚以上選択してください";
@@ -360,13 +454,27 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
     return Object.keys(nextErrors).length === 0;
   };
 
+  /** 現在のテンプレートのポートフォリオ単位の設定を組み立てる */
+  const buildTemplateSettings = (): Record<string, unknown> => {
+    if (templateKbn === "grid") {
+      return { rows: gridRows.map((pattern) => ({ pattern })) };
+    }
+    if (templateKbn === "frame" && frameDefinition !== null) {
+      return {
+        ...(frameTemplateNo !== null ? { frameTemplateNo } : {}),
+        frame: toFrameDefinitionJson(frameDefinition),
+        messages: frameDefinition.texts.map((_, index) => frameMessages[index] ?? ""),
+      };
+    }
+    return {};
+  };
+
   /** 保存するリクエストを組み立てる（現在のテンプレートの項目だけを送る） */
   const buildSaveData = (): PortfolioSaveData => ({
     theme: theme.trim(),
     description,
     templateKbn,
-    templateSettings:
-      templateKbn === "grid" ? { rows: gridRows.map((pattern) => ({ pattern })) } : {},
+    templateSettings: buildTemplateSettings(),
     photoList: photos.map((photo) => ({
       photoNo: photo.photoNo,
       photoSettings: Object.fromEntries(
@@ -485,10 +593,15 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
   // 公開に必要な設定の不足（画面側の検証・バックエンドの400のどちらでも同じ文言）は、ボタンの下に表示する
   const isPublishSettingsError = submitError === PUBLISH_SETTINGS_ERROR;
 
-  // プレビューは、表示する内容（フィーチャー型は写真、グリッド型は行）があるときだけ開ける
-  const canPreview = templateKbn === "grid" ? gridRows.length > 0 : photos.length > 0;
+  // プレビューは、表示する内容（フィーチャー型は写真、グリッド型は行、額縁型は額縁）があるときだけ開ける
+  const canPreview =
+    templateKbn === "grid"
+      ? gridRows.length > 0
+      : templateKbn === "frame"
+        ? frameDefinition !== null
+        : photos.length > 0;
 
-  /** 「写真を選択」ボタン（グリッド型は、行の枚数の合計と写真の枚数をボタンの上に表示する） */
+  /** 「写真を選択」ボタン（グリッド型・額縁型は、行の枚数の合計・写真枠の数と写真の枚数をボタンの上に表示する） */
   const photoActions = (
     <div className="flex flex-col gap-2">
       {templateKbn === "grid" && (
@@ -502,6 +615,17 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
         >
           行の枚数の合計 {gridTotalPhotoCount}枚 / 写真 {photos.length}枚
           {gridTotalPhotoCount !== photos.length && "（公開するには一致させてください）"}
+        </p>
+      )}
+      {templateKbn === "frame" && frameDefinition !== null && (
+        <p
+          data-testid="frame-photo-count"
+          className={
+            frameSlotCount === photos.length ? "text-sm text-green-700" : "text-sm text-red-700"
+          }
+        >
+          写真枠 {frameSlotCount}枠 / 写真 {photos.length}枚
+          {frameSlotCount !== photos.length && "（公開するには一致させてください）"}
         </p>
       )}
       <div>
@@ -748,6 +872,103 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
                 ＋行を追加
               </button>
             </div>
+          </section>
+        )}
+
+        {/* 額縁型の額縁テンプレートの選択・メッセージの文面（テンプレートの下、写真より上） */}
+        {templateKbn === "frame" && (
+          <section className="flex flex-col gap-3" aria-labelledby="portfolio-frame-heading">
+            <h2 id="portfolio-frame-heading" className="font-bold">
+              額縁
+            </h2>
+            {frameTemplatesError ? (
+              <p className="text-red-700 text-sm">{frameTemplatesError}</p>
+            ) : frameTemplates === null ? (
+              <p className="text-sm">額縁テンプレートを読み込み中...</p>
+            ) : frameTemplates.length === 0 ? (
+              <p className="text-sm text-gray-700">
+                額縁テンプレートがありません。
+                <Link
+                  href={`/${accountId}/portfolio_setting/frame_templates/edit`}
+                  className="text-blue-700 hover:underline"
+                >
+                  額縁テンプレートを作成
+                </Link>
+                してから選んでください。
+              </p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  aria-label="額縁テンプレート"
+                  value={pickedFrameTemplateNo}
+                  onChange={(e) => setPickedFrameTemplateNo(e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1"
+                >
+                  {frameTemplates.map((template) => (
+                    <option key={template.frameTemplateNo} value={String(template.frameTemplateNo)}>
+                      {template.templateName}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={applyFrameTemplate}
+                  className="px-4 py-2 text-sm bg-blue-700 text-white rounded hover:bg-blue-800"
+                >
+                  この額縁を使う
+                </button>
+                <Link
+                  href={`/${accountId}/portfolio_setting/frame_templates`}
+                  className="text-sm text-blue-700 hover:underline"
+                >
+                  額縁テンプレートを管理
+                </Link>
+              </div>
+            )}
+            {errors.frame && (
+              <p id="portfolio-frame-error" className="text-red-700 text-sm">
+                {errors.frame}
+              </p>
+            )}
+            {frameDefinition !== null && (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm text-gray-700" data-testid="applied-frame">
+                  使用中の額縁：{appliedFrameTemplateName ?? "選択時にコピーした額縁"}
+                  <span className="block text-xs text-gray-600">
+                    額縁は選択時にこのポートフォリオへコピーされます。額縁テンプレートを後から変更しても反映されないため、変更を反映するには選び直してください。
+                  </span>
+                </p>
+                <FramePreview
+                  definition={frameDefinition}
+                  photos={photos}
+                  messages={frameMessages}
+                  className="w-full max-w-[480px] px-2 py-2"
+                />
+                {frameDefinition.texts.map((_, index) => (
+                  <div key={index} className="flex flex-col">
+                    <label htmlFor={`frame-message-${index}`} className="text-sm font-bold mb-1">
+                      メッセージ{index + 1}
+                    </label>
+                    <textarea
+                      id={`frame-message-${index}`}
+                      value={frameMessages[index] ?? ""}
+                      maxLength={FRAME_MESSAGE_MAX_LENGTH}
+                      rows={2}
+                      onChange={(e) => {
+                        markDirty();
+                        const value = e.target.value;
+                        setFrameMessages((prev) => {
+                          const next = [...prev];
+                          next[index] = value;
+                          return next;
+                        });
+                      }}
+                      className={inputClass}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
@@ -1008,6 +1229,13 @@ export function PortfolioEditForm({ accountId, initialPortfolioNo }: PortfolioEd
 
             {templateKbn === "grid" ? (
               <GridPreview photos={photos} rows={gridRows} />
+            ) : templateKbn === "frame" && frameDefinition !== null ? (
+              <FramePreview
+                definition={frameDefinition}
+                photos={photos}
+                messages={frameMessages}
+                className="w-full px-4 py-4"
+              />
             ) : (
               <FeaturePreview photos={photos} />
             )}

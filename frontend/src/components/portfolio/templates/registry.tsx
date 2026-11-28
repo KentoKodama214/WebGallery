@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { PortfolioLayout } from "@/lib/portfolio-api/types";
 import { FeatureTemplate } from "./FeatureTemplate";
+import { FrameTemplate } from "./FrameTemplate";
 import { GridTemplate } from "./GridTemplate";
 
 /**
@@ -14,6 +15,7 @@ const TEMPLATE_RENDERERS: {
 } = {
   FeatureLayout: (layout) => <FeatureTemplate layout={layout} />,
   GridLayout: (layout) => <GridTemplate layout={layout} />,
+  FrameLayout: (layout) => <FrameTemplate layout={layout} />,
 };
 
 /**

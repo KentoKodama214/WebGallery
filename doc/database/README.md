@@ -39,7 +39,7 @@ docker compose --profile docs run --rm schemaspy
 |------|----|------|
 | `photo.direction_enum` | `vertical`, `horizontal`, `square`, `none` | 写真の向き |
 | `photo.sort_photo_enum` | `photo_at`, `favorite`, `season` | 写真一覧の並び順 |
-| `photo.portfolio_template_enum` | `feature`, `grid` | ポートフォリオのテンプレート |
+| `photo.portfolio_template_enum` | `feature`, `grid`, `frame` | ポートフォリオのテンプレート |
 | `photo.portfolio_status_enum` | `draft`, `published` | ポートフォリオの公開状態 |
 
 ## テーブル一覧
@@ -67,6 +67,7 @@ docker compose --profile docs run --rm schemaspy
 | 19 | photo | portfolio_mst | ポートフォリオマスタ |
 | 20 | photo | portfolio_photo | ポートフォリオ写真 |
 | 21 | photo | portfolio_tag_mst | ポートフォリオタグマスタ |
+| 22 | photo | frame_template_mst | 額縁テンプレートマスタ |
 
 ## DB初期化
 
@@ -95,4 +96,5 @@ docker compose --profile docs run --rm schemaspy
 21. `photo/portfolio_mst.sql` - ポートフォリオマスタテーブル
 22. `photo/portfolio_photo.sql` - ポートフォリオ写真テーブル
 23. `photo/portfolio_tag_mst.sql` - ポートフォリオタグマスタテーブル
-24. `photo/portfolio_reader.sql` - portfolio-api 用の読み取り専用ロール `portfolio_reader`（表示に必要なテーブル・列の SELECT のみを付与）
+24. `photo/frame_template_mst.sql` - 額縁テンプレートマスタテーブル
+25. `photo/portfolio_reader.sql` - portfolio-api 用の読み取り専用ロール `portfolio_reader`（表示に必要なテーブル・列の SELECT のみを付与）
