@@ -92,3 +92,8 @@ insert into photo.portfolio_photo values(DEFAULT, 2, 1, 1, 2, '2000-01-02 09:00:
 -- photo.portfolio_tag_mst (photo.portfolio_mst を外部キーで参照する)
 insert into photo.portfolio_tag_mst values(DEFAULT, 1, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', '自然', 'nature');
 insert into photo.portfolio_tag_mst values(DEFAULT, 2, 1, 1, 2, '2000-01-02 09:00:00 Asia/Tokyo', '風景', 'landscape');
+
+-- photo.frame_template_mst (common.account を外部キーで参照する。account_no=1の額縁テンプレート2件、account_no=2の額縁テンプレート1件)
+insert into photo.frame_template_mst values(DEFAULT, 1, 1, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', '額縁11', '{}');
+insert into photo.frame_template_mst values(DEFAULT, 1, 2, 1, '2000-01-01 09:00:00 Asia/Tokyo', 1, '2000-01-01 09:00:00 Asia/Tokyo', '額縁12', '{}');
+insert into photo.frame_template_mst values(DEFAULT, 2, 1, 2, '2000-01-02 09:00:00 Asia/Tokyo', 2, '2000-01-02 09:00:00 Asia/Tokyo', '額縁21', '{}');

@@ -961,6 +961,16 @@ public class AccountControllerIntegrationTest {
               Integer.class);
       assertEquals(0, favoriteCount);
 
+      // 額縁テンプレートが削除されたことを確認（他のアカウントの額縁テンプレートは残る）
+      assertEquals(
+          0,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.frame_template_mst where account_no=1", Integer.class));
+      assertEquals(
+          1,
+          jdbcTemplate.queryForObject(
+              "SELECT COUNT(*) FROM photo.frame_template_mst where account_no=2", Integer.class));
+
       // account_no=2は残っていること
       Integer otherAccountCount =
           jdbcTemplate.queryForObject(

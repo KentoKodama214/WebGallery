@@ -12,6 +12,8 @@ const (
 	TemplateFeature TemplateKbn = "feature"
 	// TemplateGrid はグリッド型（1行に2〜3枚の写真を組み合わせて並べる）。
 	TemplateGrid TemplateKbn = "grid"
+	// TemplateFrame は額縁型（アカウントで作成した額縁テンプレートの写真枠に写真を当てはめて1枚の組写真にする）。
+	TemplateFrame TemplateKbn = "frame"
 )
 
 // Direction は写真の向き（DB の photo.direction_enum の値）。

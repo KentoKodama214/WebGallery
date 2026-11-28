@@ -276,6 +276,7 @@ jobs:
             "db/photo/portfolio_mst.sql"
             "db/photo/portfolio_photo.sql"
             "db/photo/portfolio_tag_mst.sql"
+            "db/photo/frame_template_mst.sql"
             "db/photo/portfolio_reader.sql"
           )
           for file in "${SQL_FILES[@]}"; do
@@ -405,6 +406,7 @@ jobs:
             "db/photo/portfolio_mst.sql"
             "db/photo/portfolio_photo.sql"
             "db/photo/portfolio_tag_mst.sql"
+            "db/photo/frame_template_mst.sql"
             "db/photo/portfolio_reader.sql"
           )
           for file in "${SQL_FILES[@]}"; do

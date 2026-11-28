@@ -1261,7 +1261,7 @@ export async function replyToInquiry(
 }
 
 /** ポートフォリオのテンプレート区分 */
-export type PortfolioTemplateKbn = "feature" | "grid";
+export type PortfolioTemplateKbn = "feature" | "grid" | "frame";
 
 /** ポートフォリオの公開状態区分 */
 export type PortfolioStatusKbn = "draft" | "published";
@@ -1567,4 +1567,123 @@ export async function getPortfolioTemplateList(): Promise<PortfolioTemplateList>
     );
   }
   return readJson<PortfolioTemplateList>(response);
+}
+
+/** 額縁テンプレート */
+export interface FrameTemplateItem {
+  frameTemplateNo: number;
+  templateName: string;
+  /** 額縁定義（構造は `@/lib/frame/definition` の `FrameDefinition`。`parseFrameDefinition` で変換して使う） */
+  frameDefinition: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 額縁テンプレート登録・更新リクエスト */
+export interface FrameTemplateSaveData {
+  templateName: string;
+  frameDefinition: Record<string, unknown>;
+}
+
+/** 額縁テンプレート編集結果 */
+export interface FrameTemplateEditResult {
+  httpStatus: number;
+  isSuccess: boolean;
+  message: string;
+  frameTemplateNo: number;
+}
+
+/**
+ * 本人の額縁テンプレート一覧を、額縁テンプレート番号の昇順に取得する
+ *
+ * @param accountId アカウントID
+ */
+export async function getFrameTemplateList(
+  accountId: string
+): Promise<{ frameTemplateList: FrameTemplateItem[] }> {
+  const response = await fetchWithAuth(`/api/v1/accounts/${seg(accountId)}/frame-templates`);
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "額縁テンプレート一覧の取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<{ frameTemplateList: FrameTemplateItem[] }>(response);
+}
+
+/**
+ * 本人の額縁テンプレートを取得する
+ *
+ * @param accountId アカウントID
+ * @param frameTemplateNo 額縁テンプレート番号
+ */
+export async function getFrameTemplate(
+  accountId: string,
+  frameTemplateNo: number
+): Promise<FrameTemplateItem> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/frame-templates/${seg(frameTemplateNo)}`
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "額縁テンプレートの取得に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<FrameTemplateItem>(response);
+}
+
+/**
+ * 額縁テンプレートを登録（frameTemplateNo 未指定）または更新する
+ *
+ * @param accountId アカウントID
+ * @param data 登録・更新する内容
+ * @param frameTemplateNo 更新する額縁テンプレート番号（新規登録の場合は未指定）
+ */
+export async function saveFrameTemplate(
+  accountId: string,
+  data: FrameTemplateSaveData,
+  frameTemplateNo?: number
+): Promise<FrameTemplateEditResult> {
+  const base = `/api/v1/accounts/${seg(accountId)}/frame-templates`;
+  const response = await fetchWithAuth(
+    frameTemplateNo === undefined ? base : `${base}/${seg(frameTemplateNo)}`,
+    {
+      method: frameTemplateNo === undefined ? "POST" : "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "額縁テンプレートの保存に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<FrameTemplateEditResult>(response);
+}
+
+/**
+ * 額縁テンプレートを削除する
+ *
+ * 選択済みのポートフォリオは額縁定義をコピーして保持しているため、削除しても影響しない。
+ *
+ * @param accountId アカウントID
+ * @param frameTemplateNo 額縁テンプレート番号
+ */
+export async function deleteFrameTemplate(
+  accountId: string,
+  frameTemplateNo: number
+): Promise<FrameTemplateEditResult> {
+  const response = await fetchWithAuth(
+    `/api/v1/accounts/${seg(accountId)}/frame-templates/${seg(frameTemplateNo)}`,
+    { method: "DELETE" }
+  );
+  if (!response.ok) {
+    throw new ApiError(
+      await readErrorMessage(response, "額縁テンプレートの削除に失敗しました"),
+      response.status
+    );
+  }
+  return readJson<FrameTemplateEditResult>(response);
 }

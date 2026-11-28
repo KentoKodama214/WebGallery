@@ -5,6 +5,7 @@ import com.web.gallery.domain.exception.BadRequestException;
 import com.web.gallery.domain.exception.FavoriteNotFoundException;
 import com.web.gallery.domain.exception.FileDuplicateException;
 import com.web.gallery.domain.exception.ForbiddenAccountException;
+import com.web.gallery.domain.exception.FrameTemplateNotFoundException;
 import com.web.gallery.domain.exception.GalleryException;
 import com.web.gallery.domain.exception.InquiryNotFoundException;
 import com.web.gallery.domain.exception.PhotoNotAdditableException;
@@ -500,6 +501,79 @@ public enum ErrorEnum {
     @Override
     public GalleryException toException() {
       return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0027
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_NOT_AUTHORIZED_TO_EDIT_FRAME_TEMPLATE}
+   */
+  NOT_AUTHORIZED_TO_EDIT_FRAME_TEMPLATE(
+      "E-P-0027", MessageConst.ERR_NOT_AUTHORIZED_TO_EDIT_FRAME_TEMPLATE) {
+    @Override
+    public GalleryException toException() {
+      return new ForbiddenAccountException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0028
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FRAME_TEMPLATE_NOT_FOUND}
+   */
+  FRAME_TEMPLATE_NOT_FOUND("E-P-0028", MessageConst.ERR_FRAME_TEMPLATE_NOT_FOUND) {
+    @Override
+    public GalleryException toException() {
+      return new FrameTemplateNotFoundException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0029
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_INVALID_FRAME_DEFINITION}
+   */
+  INVALID_FRAME_DEFINITION("E-P-0029", MessageConst.ERR_INVALID_FRAME_DEFINITION) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0030
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_REACHED_FRAME_TEMPLATE_LIMIT}
+   */
+  REACHED_FRAME_TEMPLATE_LIMIT("E-P-0030", MessageConst.ERR_REACHED_FRAME_TEMPLATE_LIMIT) {
+    @Override
+    public GalleryException toException() {
+      return new BadRequestException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0031
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_REGIST_FRAME_TEMPLATE}
+   */
+  FAIL_TO_REGIST_FRAME_TEMPLATE("E-P-0031", MessageConst.ERR_FAIL_TO_REGIST_FRAME_TEMPLATE) {
+    @Override
+    public GalleryException toException() {
+      return new RegistFailureException(this);
+    }
+  },
+
+  /**
+   * エラーコード：E-P-0032
+   *
+   * <p>エラーメッセージ：{@value MessageConst#ERR_FAIL_TO_UPDATE_FRAME_TEMPLATE}
+   */
+  FAIL_TO_UPDATE_FRAME_TEMPLATE("E-P-0032", MessageConst.ERR_FAIL_TO_UPDATE_FRAME_TEMPLATE) {
+    @Override
+    public GalleryException toException() {
+      return new UpdateFailureException(this);
     }
   },
 

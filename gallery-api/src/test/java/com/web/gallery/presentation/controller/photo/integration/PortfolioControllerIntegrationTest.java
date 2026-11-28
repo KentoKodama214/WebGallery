@@ -473,6 +473,63 @@ public class PortfolioControllerIntegrationTest {
                   .content(readJsonFile("update_grid_publishable.json")))
           .andExpect(status().isNotFound());
     }
+
+    @Test
+    @Order(5)
+    @DisplayName("正常系：額縁型に変更し、選択した額縁定義のコピーと文面をポートフォリオ単位の設定として保存する")
+    void updatePortfolio_frame() throws Exception {
+      mockMvc
+          .perform(
+              put(PORTFOLIOS + "/2")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("update_frame_two_slots.json")))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.message").value("ポートフォリオを更新しました。"));
+
+      assertEquals(
+          "frame",
+          jdbcTemplate.queryForObject(
+              "SELECT template_kbn::text FROM photo.portfolio_mst"
+                  + " WHERE account_no = 1 AND portfolio_no = 2",
+              String.class));
+      assertEquals(
+          List.of("春の訪れ"),
+          jdbcTemplate.queryForList(
+              "SELECT jsonb_array_elements_text(template_settings -> 'messages')"
+                  + " FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 2",
+              String.class));
+      assertEquals(
+          2,
+          jdbcTemplate.queryForObject(
+              "SELECT jsonb_array_length(template_settings -> 'frame' -> 'slots')"
+                  + " FROM photo.portfolio_mst WHERE account_no = 1 AND portfolio_no = 2",
+              Integer.class));
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("異常系：額縁型で、文面がメッセージ枠の数より多い場合、400を返し更新しない")
+    void updatePortfolio_frameInvalidSettings() throws Exception {
+      mockMvc
+          .perform(
+              put(PORTFOLIOS + "/2")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("update_frame_too_many_messages.json")))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              jsonPath("$.message").value(ErrorEnum.INVALID_PORTFOLIO_SETTINGS.getErrorMessage()));
+
+      assertEquals(
+          "grid",
+          jdbcTemplate.queryForObject(
+              "SELECT template_kbn::text FROM photo.portfolio_mst"
+                  + " WHERE account_no = 1 AND portfolio_no = 2",
+              String.class));
+    }
   }
 
   @Nested
@@ -541,6 +598,61 @@ public class PortfolioControllerIntegrationTest {
               jsonPath("$.message").value(ErrorEnum.PORTFOLIO_NOT_PUBLISHABLE.getErrorMessage()));
 
       assertEquals("draft", statusOf(1L, 2L));
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("正常系：額縁型で、写真枠の数と写真の枚数が一致する場合、公開できる")
+    void updatePortfolioStatus_publishFrame() throws Exception {
+      saveAsFrame("update_frame_two_slots.json");
+
+      mockMvc
+          .perform(
+              put(PORTFOLIOS + "/2/status")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("status_published.json")))
+          .andExpect(status().isOk())
+          .andExpect(jsonPath("$.message").value("ポートフォリオを公開しました。"));
+
+      assertEquals("published", statusOf(1L, 2L));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("異常系：額縁型で、写真枠の数（3）と写真の枚数（2）が一致しない場合、公開できず400を返す")
+    void updatePortfolioStatus_frameNotPublishable() throws Exception {
+      saveAsFrame("update_frame_three_slots.json");
+
+      mockMvc
+          .perform(
+              put(PORTFOLIOS + "/2/status")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile("status_published.json")))
+          .andExpect(status().isBadRequest())
+          .andExpect(
+              jsonPath("$.message").value(ErrorEnum.PORTFOLIO_NOT_PUBLISHABLE.getErrorMessage()));
+
+      assertEquals("draft", statusOf(1L, 2L));
+    }
+
+    /**
+     * 下書きのグリッド型ポートフォリオ（番号2）を、指定したリクエストで額縁型に更新する
+     *
+     * @param fileName 更新リクエストのJSONファイル名
+     */
+    private void saveAsFrame(String fileName) throws Exception {
+      mockMvc
+          .perform(
+              put(PORTFOLIOS + "/2")
+                  .with(SecurityMockMvcRequestPostProcessors.authentication(owner()))
+                  .with(csrf())
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(readJsonFile(fileName)))
+          .andExpect(status().isOk());
     }
   }
 
@@ -744,7 +856,7 @@ public class PortfolioControllerIntegrationTest {
               get("/api/v1/portfolio-templates")
                   .with(SecurityMockMvcRequestPostProcessors.authentication(owner())))
           .andExpect(status().isOk())
-          .andExpect(jsonPath("$.templateList.length()").value(2))
+          .andExpect(jsonPath("$.templateList.length()").value(3))
           .andExpect(jsonPath("$.gridRowPatternList.length()").value(4));
     }
   }

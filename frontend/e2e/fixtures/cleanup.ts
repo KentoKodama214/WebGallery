@@ -65,6 +65,10 @@ export async function deleteE2eTestAccounts(): Promise<void> {
         WHERE account_no IN (SELECT account_no FROM target_accounts)`
     );
     await client.query(
+      `DELETE FROM photo.frame_template_mst
+        WHERE account_no IN (SELECT account_no FROM target_accounts)`
+    );
+    await client.query(
       `DELETE FROM photo.photo_mst
         WHERE account_no IN (SELECT account_no FROM target_accounts)`
     );

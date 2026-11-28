@@ -43,7 +43,7 @@ public class PortfolioSaveRequest {
   /** ポートフォリオ単位のテンプレート設定（項目はテンプレートごとに異なる） */
   @Schema(
       description =
-          "ポートフォリオ単位のテンプレート設定（項目はテンプレートごとに異なる。grid: {\"rows\":[{\"pattern\":\"TWO_EQUAL\"}]}）",
+          "ポートフォリオ単位のテンプレート設定（項目はテンプレートごとに異なる。grid: {\"rows\":[{\"pattern\":\"TWO_EQUAL\"}]}、frame: {\"frameTemplateNo\":1,\"frame\":{額縁定義},\"messages\":[\"文面\"]}）",
       example = "{}")
   private Map<String, Object> templateSettings;
 

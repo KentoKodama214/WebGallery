@@ -26,12 +26,15 @@ class PortfolioTemplateListGetResponseTest {
       PortfolioTemplateListGetResponse actual = PortfolioTemplateListGetResponse.of();
 
       assertEquals(
-          List.of(PortfolioTemplateEnum.FEATURE, PortfolioTemplateEnum.GRID),
+          List.of(
+              PortfolioTemplateEnum.FEATURE,
+              PortfolioTemplateEnum.GRID,
+              PortfolioTemplateEnum.FRAME),
           actual.getTemplateList().stream()
               .map(PortfolioTemplateItemResponse::getTemplateKbn)
               .toList());
       assertEquals(
-          List.of("フィーチャー", "グリッド"),
+          List.of("フィーチャー", "グリッド", "額縁"),
           actual.getTemplateList().stream()
               .map(PortfolioTemplateItemResponse::getDisplayName)
               .toList());

@@ -30,6 +30,8 @@ class PortfolioTemplateSettingsPolicyTest {
 
   @Mock private GridTemplateSettingsPolicy gridTemplateSettingsPolicy;
 
+  @Mock private FrameTemplateSettingsPolicy frameTemplateSettingsPolicy;
+
   private final TemplateSettings settings = new TemplateSettings(Map.of("key", "value"));
 
   @Nested
@@ -43,7 +45,7 @@ class PortfolioTemplateSettingsPolicyTest {
       doReturn(false).when(featureTemplateSettingsPolicy).isValidTemplateSettings(settings);
 
       assertFalse(policy.isValidTemplateSettings(PortfolioTemplateEnum.FEATURE, settings));
-      verifyNoInteractions(gridTemplateSettingsPolicy);
+      verifyNoInteractions(gridTemplateSettingsPolicy, frameTemplateSettingsPolicy);
     }
 
     @Test
@@ -53,7 +55,17 @@ class PortfolioTemplateSettingsPolicyTest {
       doReturn(true).when(gridTemplateSettingsPolicy).isValidTemplateSettings(settings);
 
       assertTrue(policy.isValidTemplateSettings(PortfolioTemplateEnum.GRID, settings));
-      verifyNoInteractions(featureTemplateSettingsPolicy);
+      verifyNoInteractions(featureTemplateSettingsPolicy, frameTemplateSettingsPolicy);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：額縁型の場合、額縁型のPolicyの判定結果を返すこと")
+    void isValidTemplateSettings_frame() {
+      doReturn(true).when(frameTemplateSettingsPolicy).isValidTemplateSettings(settings);
+
+      assertTrue(policy.isValidTemplateSettings(PortfolioTemplateEnum.FRAME, settings));
+      verifyNoInteractions(featureTemplateSettingsPolicy, gridTemplateSettingsPolicy);
     }
   }
 
@@ -68,7 +80,7 @@ class PortfolioTemplateSettingsPolicyTest {
       doReturn(true).when(featureTemplateSettingsPolicy).isValidPhotoSettings(settings);
 
       assertTrue(policy.isValidPhotoSettings(PortfolioTemplateEnum.FEATURE, settings));
-      verifyNoInteractions(gridTemplateSettingsPolicy);
+      verifyNoInteractions(gridTemplateSettingsPolicy, frameTemplateSettingsPolicy);
     }
 
     @Test
@@ -78,7 +90,17 @@ class PortfolioTemplateSettingsPolicyTest {
       doReturn(false).when(gridTemplateSettingsPolicy).isValidPhotoSettings(settings);
 
       assertFalse(policy.isValidPhotoSettings(PortfolioTemplateEnum.GRID, settings));
-      verifyNoInteractions(featureTemplateSettingsPolicy);
+      verifyNoInteractions(featureTemplateSettingsPolicy, frameTemplateSettingsPolicy);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：額縁型の場合、額縁型のPolicyの判定結果を返すこと")
+    void isValidPhotoSettings_frame() {
+      doReturn(false).when(frameTemplateSettingsPolicy).isValidPhotoSettings(settings);
+
+      assertFalse(policy.isValidPhotoSettings(PortfolioTemplateEnum.FRAME, settings));
+      verifyNoInteractions(featureTemplateSettingsPolicy, gridTemplateSettingsPolicy);
     }
   }
 
@@ -93,7 +115,7 @@ class PortfolioTemplateSettingsPolicyTest {
       doReturn(true).when(featureTemplateSettingsPolicy).isPublishable(settings, new PhotoCount(3));
 
       assertTrue(policy.isPublishable(PortfolioTemplateEnum.FEATURE, settings, new PhotoCount(3)));
-      verifyNoInteractions(gridTemplateSettingsPolicy);
+      verifyNoInteractions(gridTemplateSettingsPolicy, frameTemplateSettingsPolicy);
     }
 
     @Test
@@ -103,7 +125,17 @@ class PortfolioTemplateSettingsPolicyTest {
       doReturn(false).when(gridTemplateSettingsPolicy).isPublishable(settings, new PhotoCount(3));
 
       assertFalse(policy.isPublishable(PortfolioTemplateEnum.GRID, settings, new PhotoCount(3)));
-      verifyNoInteractions(featureTemplateSettingsPolicy);
+      verifyNoInteractions(featureTemplateSettingsPolicy, frameTemplateSettingsPolicy);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：額縁型の場合、額縁型のPolicyの判定結果を返すこと")
+    void isPublishable_frame() {
+      doReturn(true).when(frameTemplateSettingsPolicy).isPublishable(settings, new PhotoCount(3));
+
+      assertTrue(policy.isPublishable(PortfolioTemplateEnum.FRAME, settings, new PhotoCount(3)));
+      verifyNoInteractions(featureTemplateSettingsPolicy, gridTemplateSettingsPolicy);
     }
   }
 
@@ -118,7 +150,7 @@ class PortfolioTemplateSettingsPolicyTest {
       doReturn(false).when(featureTemplateSettingsPolicy).isPublishablePhotoSettings(settings);
 
       assertFalse(policy.isPublishablePhotoSettings(PortfolioTemplateEnum.FEATURE, settings));
-      verifyNoInteractions(gridTemplateSettingsPolicy);
+      verifyNoInteractions(gridTemplateSettingsPolicy, frameTemplateSettingsPolicy);
     }
 
     @Test
@@ -128,7 +160,17 @@ class PortfolioTemplateSettingsPolicyTest {
       doReturn(true).when(gridTemplateSettingsPolicy).isPublishablePhotoSettings(settings);
 
       assertTrue(policy.isPublishablePhotoSettings(PortfolioTemplateEnum.GRID, settings));
-      verifyNoInteractions(featureTemplateSettingsPolicy);
+      verifyNoInteractions(featureTemplateSettingsPolicy, frameTemplateSettingsPolicy);
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("正常系：額縁型の場合、額縁型のPolicyの判定結果を返すこと")
+    void isPublishablePhotoSettings_frame() {
+      doReturn(true).when(frameTemplateSettingsPolicy).isPublishablePhotoSettings(settings);
+
+      assertTrue(policy.isPublishablePhotoSettings(PortfolioTemplateEnum.FRAME, settings));
+      verifyNoInteractions(featureTemplateSettingsPolicy, gridTemplateSettingsPolicy);
     }
   }
 }

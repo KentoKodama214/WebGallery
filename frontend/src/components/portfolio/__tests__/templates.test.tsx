@@ -142,6 +142,75 @@ describe("ポートフォリオのテンプレート", () => {
     expect(screen.getByText("外部画像")).toBeInTheDocument();
   });
 
+  it("額縁型は額縁の中に写真枠・メッセージ枠を配置し、フォント・揃えを小文字の選択肢に変換して描画すること", () => {
+    const slot = { x: 5, y: 10, width: 40, height: 60, rotation: -3, borderColor: "#ffffff", borderWidth: 1, shadow: true };
+    render(
+      <>
+        {renderPortfolioLayout({
+          __typename: "FrameLayout",
+          width: 366,
+          height: 254,
+          backgroundColor: "#f5f0e6",
+          borderColor: "#3b2a1a",
+          borderWidth: 2.5,
+          slots: [
+            { ...slot, photo: photo(1, "金閣寺") },
+            { ...slot, x: 55, rotation: 0, photo: photo(2, "茶畑") },
+          ],
+          texts: [
+            {
+              x: 10,
+              y: 80,
+              width: 80,
+              rotation: 0,
+              fontFamily: "MINCHO",
+              fontSize: 3,
+              color: "#333333",
+              align: "CENTER",
+              bold: false,
+              italic: true,
+              text: "春の訪れ",
+            },
+          ],
+        })}
+      </>
+    );
+
+    const frame = screen.getByRole("img", { name: "組写真：金閣寺、茶畑" });
+    expect(frame).toHaveStyle({ aspectRatio: "366 / 254" });
+    const slots = screen.getAllByTestId("frame-slot");
+    expect(slots).toHaveLength(2);
+    expect(within(slots[0]).getByAltText("金閣寺")).toHaveAttribute("src", "/photos/1.jpg");
+    expect(slots[0]).toHaveStyle({ transform: "rotate(-3deg)" });
+    const text = screen.getByText("春の訪れ");
+    expect(text).toHaveStyle({ textAlign: "center", fontStyle: "italic" });
+    expect(text.style.fontFamily).toContain("Mincho");
+  });
+
+  it("額縁型で管理者により非公開にされた写真の枠（photo が null）は、写真を表示せず枠だけを空けること", () => {
+    const slot = { x: 5, y: 10, width: 40, height: 60, rotation: 0, borderColor: "#ffffff", borderWidth: 0, shadow: false };
+    render(
+      <>
+        {renderPortfolioLayout({
+          __typename: "FrameLayout",
+          width: 300,
+          height: 300,
+          backgroundColor: "#ffffff",
+          borderColor: "#000000",
+          borderWidth: 0,
+          slots: [{ ...slot, photo: photo(1) }, { ...slot, photo: null }],
+          texts: [],
+        })}
+      </>
+    );
+
+    const slots = screen.getAllByTestId("frame-slot");
+    expect(slots).toHaveLength(2);
+    expect(slots[1].querySelector("img")).toBeNull();
+    expect(slots[1]).toBeEmptyDOMElement();
+    expect(screen.getByRole("img", { name: "組写真：写真1" })).toBeInTheDocument();
+  });
+
   it("未対応のレイアウトの型の場合は、画面を壊さずにメッセージを表示すること", () => {
     render(<>{renderPortfolioLayout({ __typename: "SlideLayout" } as unknown as PortfolioLayout)}</>);
 

@@ -2,7 +2,7 @@ package domain
 
 import "fmt"
 
-// Layout はテンプレートごとのレイアウト。具象型は FeatureLayout・GridLayout のいずれか。
+// Layout はテンプレートごとのレイアウト。具象型は FeatureLayout・GridLayout・FrameLayout のいずれか。
 //
 // テンプレートを追加する場合は、レイアウトの型を追加して BuildLayout の分岐に加える。
 type Layout interface {
@@ -99,7 +99,7 @@ const (
 //   - p: 公開中のポートフォリオ（Photos は表示順に並べたもの。各写真はそのままレイアウトへ引き継ぐ）
 //
 // 戻り値:
-//   - テンプレートに対応するレイアウト（FeatureLayout または GridLayout）
+//   - テンプレートに対応するレイアウト（FeatureLayout・GridLayout・FrameLayout のいずれか）
 //   - テンプレートが未知の場合はエラー
 func BuildLayout(p Portfolio) (Layout, error) {
 	switch p.Template {
@@ -107,6 +107,8 @@ func BuildLayout(p Portfolio) (Layout, error) {
 		return buildFeatureLayout(p), nil
 	case TemplateGrid:
 		return buildGridLayout(p), nil
+	case TemplateFrame:
+		return buildFrameLayout(p), nil
 	default:
 		return nil, fmt.Errorf("unknown portfolio template: %q", p.Template)
 	}

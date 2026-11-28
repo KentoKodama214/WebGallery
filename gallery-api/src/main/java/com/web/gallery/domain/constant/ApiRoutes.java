@@ -86,6 +86,17 @@ public final class ApiRoutes {
   /** ポートフォリオテンプレート一覧API（GET=テンプレート・グリッド型の行パターンの一覧取得） */
   public static final String API_PORTFOLIO_TEMPLATES = API_PREFIX + "/portfolio-templates";
 
+  // 額縁テンプレート関連
+  /** 額縁テンプレートAPI（GET=本人の一覧取得, POST=新規登録） */
+  public static final String API_FRAME_TEMPLATES = API_ACCOUNT + "/frame-templates";
+
+  /** 額縁テンプレート番号 */
+  public static final String FRAME_TEMPLATE_NO = "{frameTemplateNo}";
+
+  /** 額縁テンプレート詳細API（GET=詳細取得, PUT=更新, DELETE=削除） */
+  public static final String API_FRAME_TEMPLATE_DETAIL =
+      API_FRAME_TEMPLATES + "/" + FRAME_TEMPLATE_NO;
+
   // お気に入り関連
   /** お気に入りAPI（POST=登録, DELETE=解除） */
   public static final String API_FAVORITES = API_PREFIX + "/photos/favorites";
