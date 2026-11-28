@@ -7,13 +7,17 @@ import {
   FRAME_MESSAGE_MAX_LENGTH,
   FRAME_SIZE_PRESETS,
   FRAME_TEXT_ALIGN_OPTIONS,
+  PHOTO_SIZE_PRESETS,
   clamp,
   findFrameSizePresetIndex,
+  findSizePresetIndex,
   getBorderWidthMax,
   getMatSize,
   round,
+  toPresetSize,
   type FrameDefinition,
   type FrameFontFamily,
+  type FrameSize,
   type FrameSlot,
   type FrameText,
   type FrameTextAlign,
@@ -153,6 +157,7 @@ export function FramePropertyPanel({
   const mat = getMatSize(definition.size, definition.border.width);
   const presetIndex = findFrameSizePresetIndex(definition.size);
   const sizePresetId = useId();
+  const slotSizePresetId = useId();
   const fontId = useId();
   const alignId = useId();
   const sampleId = useId();
@@ -160,6 +165,18 @@ export function FramePropertyPanel({
   if (selection?.kind === "slot" && definition.slots[selection.index]) {
     const slot = definition.slots[selection.index];
     const index = selection.index;
+    const isSlotPortrait = slot.height > slot.width;
+    const slotPresetIndex = findSizePresetIndex(PHOTO_SIZE_PRESETS, { width: slot.width, height: slot.height });
+    const fitsMat = (size: FrameSize) => size.width <= mat.width && size.height <= mat.height;
+    /** 写真枠の大きさを変える。右端・下端が台紙からはみ出す場合は、左上の位置を詰めて台紙の内側に収める */
+    const resizeSlot = (size: FrameSize) => {
+      onChangeSlot(index, {
+        width: size.width,
+        height: size.height,
+        x: round(Math.max(0, Math.min(slot.x, mat.width - size.width))),
+        y: round(Math.max(0, Math.min(slot.y, mat.height - size.height))),
+      });
+    };
     return (
       <section aria-labelledby="frame-panel-heading" className="flex flex-col gap-3">
         <h2 id="frame-panel-heading" className="font-bold">
@@ -168,6 +185,58 @@ export function FramePropertyPanel({
         <p className="text-xs text-gray-600">
           ポートフォリオでは、表示順の{index + 1}枚目の写真がこの枠に当てはまります。
         </p>
+        <div className="flex flex-col">
+          <label htmlFor={slotSizePresetId} className="text-xs text-gray-700 mb-0.5">
+            サイズ
+          </label>
+          <select
+            id={slotSizePresetId}
+            value={slotPresetIndex}
+            onChange={(e) => {
+              const preset = PHOTO_SIZE_PRESETS[Number(e.target.value)];
+              if (!preset) return;
+              const size = toPresetSize(preset, isSlotPortrait);
+              if (fitsMat(size)) resizeSlot(size);
+            }}
+            className="border border-gray-300 rounded px-2 py-1 text-sm"
+          >
+            {slotPresetIndex === -1 && <option value={-1}>カスタム</option>}
+            {PHOTO_SIZE_PRESETS.map((preset, presetIndex) => {
+              // 台紙に収まらないサイズは選べないようにする
+              const fits = fitsMat(toPresetSize(preset, isSlotPortrait));
+              return (
+                <option key={preset.label} value={presetIndex} disabled={!fits}>
+                  {fits ? preset.label : `${preset.label}（台紙に収まりません）`}
+                </option>
+              );
+            })}
+          </select>
+        </div>
+        <fieldset className="flex gap-4 text-sm">
+          <legend className="sr-only">写真枠の向き</legend>
+          {[
+            { portrait: false, label: "横長" },
+            { portrait: true, label: "縦長" },
+          ].map((option) => {
+            const swapped = { width: slot.height, height: slot.width };
+            return (
+              <label key={option.label} className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  name="slot-orientation"
+                  checked={isSlotPortrait === option.portrait}
+                  // 縦横を入れ替えると台紙に収まらない場合は切り替えられないようにする
+                  disabled={isSlotPortrait !== option.portrait && !fitsMat(swapped)}
+                  onChange={() => {
+                    if (isSlotPortrait === option.portrait) return;
+                    resizeSlot(swapped);
+                  }}
+                />
+                {option.label}
+              </label>
+            );
+          })}
+        </fieldset>
         <div className="grid grid-cols-2 gap-2">
           <NumberField label="左" unit="mm" value={slot.x} min={0} max={mat.width} onChange={(x) => onChangeSlot(index, { x })} />
           <NumberField label="上" unit="mm" value={slot.y} min={0} max={mat.height} onChange={(y) => onChangeSlot(index, { y })} />

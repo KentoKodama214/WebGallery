@@ -146,12 +146,24 @@ export const FRAME_TEXT_ALIGN_OPTIONS: { value: FrameTextAlign; label: string }[
 ];
 
 /**
+ * サイズの選択肢（額縁・写真枠で共通）
+ *
+ * 写真用紙の判は横長で持ち、向きは「横長・縦長」の切り替えに従う。A判は横向き・縦向きを別の選択肢として持ち（{@code oriented}）、
+ * 選んだ向きのまま使う。
+ */
+export interface FrameSizePreset {
+  label: string;
+  size: FrameSize;
+  oriented?: boolean;
+}
+
+/**
  * 額縁のサイズの選択肢（写真展で一般的な額のサイズ）
  *
  * 写真用紙の判（六つ切等）は横長で持ち、縦長は縦横を入れ替える（向きは「横長・縦長」の切り替えに従う）。
  * A判は横向き・縦向きを別の選択肢として持ち（{@code oriented}）、選んだ向きのまま使う。
  */
-export const FRAME_SIZE_PRESETS: { label: string; size: FrameSize; oriented?: boolean }[] = [
+export const FRAME_SIZE_PRESETS: FrameSizePreset[] = [
   { label: "六つ切（254×203mm）", size: { width: 254, height: 203 } },
   { label: "四つ切（305×254mm）", size: { width: 305, height: 254 } },
   { label: "ワイド四つ切（366×254mm）", size: { width: 366, height: 254 } },
@@ -167,20 +179,63 @@ export const FRAME_SIZE_PRESETS: { label: string; size: FrameSize; oriented?: bo
 ];
 
 /**
- * 額縁のサイズに当てはまる選択肢の位置を取得する
+ * 写真枠のサイズの選択肢（一般的な写真のプリントサイズ。並び・向きの扱いは {@link FRAME_SIZE_PRESETS} と同じ）
+ */
+export const PHOTO_SIZE_PRESETS: FrameSizePreset[] = [
+  { label: "L判（127×89mm）", size: { width: 127, height: 89 } },
+  { label: "KG（152×102mm）", size: { width: 152, height: 102 } },
+  { label: "2L判（178×127mm）", size: { width: 178, height: 127 } },
+  { label: "六つ切（254×203mm）", size: { width: 254, height: 203 } },
+  { label: "四つ切（305×254mm）", size: { width: 305, height: 254 } },
+  { label: "A5 横（210×148mm）", size: { width: 210, height: 148 }, oriented: true },
+  { label: "A5 縦（148×210mm）", size: { width: 148, height: 210 }, oriented: true },
+  { label: "A4 横（297×210mm）", size: { width: 297, height: 210 }, oriented: true },
+  { label: "A4 縦（210×297mm）", size: { width: 210, height: 297 }, oriented: true },
+  { label: "A3 横（420×297mm）", size: { width: 420, height: 297 }, oriented: true },
+  { label: "A3 縦（297×420mm）", size: { width: 297, height: 420 }, oriented: true },
+  { label: "正方形（127×127mm）", size: { width: 127, height: 127 } },
+];
+
+/**
+ * サイズに当てはまる選択肢の位置を取得する
  *
  * 向きを持つ選択肢（A判）は縦横が一致するものだけ、それ以外は縦横を入れ替えたものも当てはまるとする。
  *
- * @param size 額縁のサイズ
- * @returns {@link FRAME_SIZE_PRESETS} 内の位置（当てはまらなければ -1）
+ * @param presets サイズの選択肢
+ * @param size サイズ（mm）
+ * @returns presets 内の位置（当てはまらなければ -1）
  */
-export function findFrameSizePresetIndex(size: FrameSize): number {
-  return FRAME_SIZE_PRESETS.findIndex((preset) =>
+export function findSizePresetIndex(presets: FrameSizePreset[], size: FrameSize): number {
+  return presets.findIndex((preset) =>
     preset.oriented
       ? preset.size.width === size.width && preset.size.height === size.height
       : Math.max(preset.size.width, preset.size.height) === Math.max(size.width, size.height) &&
         Math.min(preset.size.width, preset.size.height) === Math.min(size.width, size.height)
   );
+}
+
+/**
+ * 額縁のサイズに当てはまる選択肢の位置を取得する
+ *
+ * @param size 額縁のサイズ
+ * @returns {@link FRAME_SIZE_PRESETS} 内の位置（当てはまらなければ -1）
+ */
+export function findFrameSizePresetIndex(size: FrameSize): number {
+  return findSizePresetIndex(FRAME_SIZE_PRESETS, size);
+}
+
+/**
+ * 選択肢のサイズを、指定した向きに合わせて取得する（A判は選択肢の向きのまま）
+ *
+ * @param preset サイズの選択肢
+ * @param portrait 縦長にするかどうか
+ * @returns サイズ（mm）
+ */
+export function toPresetSize(preset: FrameSizePreset, portrait: boolean): FrameSize {
+  if (preset.oriented) return { ...preset.size };
+  const long = Math.max(preset.size.width, preset.size.height);
+  const short = Math.min(preset.size.width, preset.size.height);
+  return portrait ? { width: short, height: long } : { width: long, height: short };
 }
 
 /**

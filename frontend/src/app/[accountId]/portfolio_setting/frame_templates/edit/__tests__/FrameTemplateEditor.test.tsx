@@ -385,6 +385,46 @@ describe("FrameTemplateEditor", () => {
       expect(numberValue(/^上/)).toBe(35);
     });
 
+    it("写真枠のサイズを写真のプリントサイズから選ぶと、向きを保ったまま大きさを変え、台紙からはみ出す位置は台紙の内側へ詰めること", async () => {
+      mockGetFrameTemplate.mockResolvedValue(savedTemplate);
+      mockSaveFrameTemplate.mockResolvedValue({ message: "額縁テンプレートを更新しました。", frameTemplateNo: 4 });
+      render(<FrameTemplateEditor accountId="user1" initialFrameTemplateNo={4} />);
+
+      // 写真枠2（左 165mm・上 25mm・120×150mm の縦長）。台紙は 300×249mm
+      fireEvent.focus(await screen.findByRole("button", { name: "写真枠2" }));
+      const sizeSelect = screen.getByLabelText("サイズ");
+      expect(sizeSelect).toHaveDisplayValue("カスタム");
+      expect(screen.getByLabelText("縦長")).toBeChecked();
+
+      // 2L判は縦長のまま 127×178mm にする
+      fireEvent.change(sizeSelect, { target: { value: selectValueOf(sizeSelect, "2L判（178×127mm）") } });
+      expect(numberValue(/^横幅/)).toBe(127);
+      expect(numberValue(/^縦幅/)).toBe(178);
+      expect(numberValue(/^左/)).toBe(165);
+      expect(sizeSelect).toHaveDisplayValue("2L判（178×127mm）");
+
+      // 横長に切り替えると 178×127mm になり、右端がはみ出さないよう左を 300-178=122mm に詰める
+      fireEvent.click(screen.getByLabelText("横長"));
+      expect(numberValue(/^横幅/)).toBe(178);
+      expect(numberValue(/^縦幅/)).toBe(127);
+      expect(numberValue(/^左/)).toBe(122);
+
+      // 台紙（縦 249mm）に収まらないサイズは選べない
+      expect(within(sizeSelect).getByRole("option", { name: "A4 縦（210×297mm）（台紙に収まりません）" })).toBeDisabled();
+      expect(within(sizeSelect).getByRole("option", { name: "四つ切（305×254mm）（台紙に収まりません）" })).toBeDisabled();
+
+      // A4 横は 297×210mm。縦長に切り替えると台紙に収まらないため、縦長は選べない
+      fireEvent.change(sizeSelect, { target: { value: selectValueOf(sizeSelect, "A4 横（297×210mm）") } });
+      expect(numberValue(/^横幅/)).toBe(297);
+      expect(numberValue(/^縦幅/)).toBe(210);
+      expect(numberValue(/^左/)).toBe(3);
+      expect(screen.getByLabelText("縦長")).toBeDisabled();
+
+      fireEvent.click(screen.getByRole("button", { name: "保存する" }));
+      await waitFor(() => expect(mockSaveFrameTemplate).toHaveBeenCalled());
+      expect(savedDefinition().slots[1]).toMatchObject({ x: 3, y: 25, width: 297, height: 210 });
+    });
+
     it("額縁を小さくしたり外枠を太くしたりすると、台紙からはみ出した枠を台紙の内側に収め、外枠は台紙が残る太さまでにすること", async () => {
       mockGetFrameTemplate.mockResolvedValue(savedTemplate);
       mockSaveFrameTemplate.mockResolvedValue({ message: "額縁テンプレートを更新しました。", frameTemplateNo: 4 });

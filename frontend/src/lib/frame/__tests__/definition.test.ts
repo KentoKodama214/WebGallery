@@ -1,5 +1,6 @@
 import {
   FRAME_SIZE_PRESETS,
+  PHOTO_SIZE_PRESETS,
   FRAME_SLOT_MAX_SIZE,
   FRAME_TEXT_MAX_SIZE,
   clamp,
@@ -7,6 +8,7 @@ import {
   createSlot,
   createText,
   findFrameSizePresetIndex,
+  findSizePresetIndex,
   fitToMat,
   getBorderWidthMax,
   getMatSize,
@@ -14,6 +16,7 @@ import {
   round,
   toFontFamilyCss,
   toFrameDefinitionJson,
+  toPresetSize,
 } from "../definition";
 
 describe("frame/definition", () => {
@@ -51,6 +54,28 @@ describe("frame/definition", () => {
       expect(labelOf(305, 254)).toBe("四つ切（305×254mm）");
       expect(labelOf(254, 305)).toBe("四つ切（305×254mm）");
       expect(findFrameSizePresetIndex({ width: 500, height: 400 })).toBe(-1);
+    });
+  });
+
+  describe("findSizePresetIndex / toPresetSize（写真枠のサイズ）", () => {
+    const photoLabelOf = (width: number, height: number) =>
+      PHOTO_SIZE_PRESETS[findSizePresetIndex(PHOTO_SIZE_PRESETS, { width, height })]?.label;
+
+    it("写真のプリントサイズは縦横を入れ替えたサイズも同じ選択肢に当てはめ、A判は向きごとに当てはめること", () => {
+      expect(photoLabelOf(127, 89)).toBe("L判（127×89mm）");
+      expect(photoLabelOf(127, 178)).toBe("2L判（178×127mm）");
+      expect(photoLabelOf(210, 297)).toBe("A4 縦（210×297mm）");
+      expect(photoLabelOf(297, 210)).toBe("A4 横（297×210mm）");
+      expect(photoLabelOf(148, 210)).toBe("A5 縦（148×210mm）");
+      expect(findSizePresetIndex(PHOTO_SIZE_PRESETS, { width: 120, height: 150 })).toBe(-1);
+    });
+
+    it("写真用紙の判は指定した向きに合わせ、A判は選択肢の向きのまま返すこと", () => {
+      const twoL = PHOTO_SIZE_PRESETS.find((preset) => preset.label.startsWith("2L判"))!;
+      const a4Portrait = PHOTO_SIZE_PRESETS.find((preset) => preset.label.startsWith("A4 縦"))!;
+      expect(toPresetSize(twoL, true)).toEqual({ width: 127, height: 178 });
+      expect(toPresetSize(twoL, false)).toEqual({ width: 178, height: 127 });
+      expect(toPresetSize(a4Portrait, false)).toEqual({ width: 210, height: 297 });
     });
   });
 
