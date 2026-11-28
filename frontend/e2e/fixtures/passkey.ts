@@ -147,7 +147,18 @@ function fakeAuthenticatorScript(): void {
     __e2ePasskeySave: (credential: State["credentials"][number]) => Promise<void>;
     __e2ePasskeyUpdateSignCount: (id: string, signCount: number) => Promise<void>;
   };
-  if (!navigator.credentials || !window.isSecureContext) return;
+  // Linux 版の WebKit（CI の webkit-smoke・mobile-smoke）は WebAuthn を組み込んでおらず、
+  // navigator.credentials・PublicKeyCredential 自体が無い。アプリのパスキー対応判定を通すため、ここで用意する
+  if (typeof window.PublicKeyCredential !== "function") {
+    Object.defineProperty(window, "PublicKeyCredential", {
+      configurable: true,
+      writable: true,
+      value: function PublicKeyCredential() {},
+    });
+  }
+  if (!navigator.credentials) {
+    Object.defineProperty(navigator, "credentials", { configurable: true, value: {} });
+  }
 
   const toBytes = (value: BufferSource): Bytes =>
     Uint8Array.from(
@@ -415,7 +426,13 @@ function fakeAuthenticatorScript(): void {
   };
 
   // WebKit はインスタンスへの定義だけでは差し替わらないため、プロトタイプ（CredentialsContainer）側も差し替える
-  for (const target of [navigator.credentials, Object.getPrototypeOf(navigator.credentials)]) {
+  // 上で空のオブジェクトを用意した場合はプロトタイプが Object.prototype になるため、それは差し替えない
+  const prototype = Object.getPrototypeOf(navigator.credentials);
+  const targets =
+    prototype && prototype !== Object.prototype
+      ? [navigator.credentials, prototype]
+      : [navigator.credentials];
+  for (const target of targets) {
     try {
       Object.defineProperty(target, "create", { configurable: true, writable: true, value: create });
       Object.defineProperty(target, "get", { configurable: true, writable: true, value: get });

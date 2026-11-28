@@ -50,7 +50,7 @@ test("本番ビルドでは style-src-elem が nonce と自オリジンに限定
 test("ログインページで Tailwind のスタイルが適用されること", async ({ page }) => {
   await page.goto("/login", { waitUntil: "load" });
 
-  const button = page.getByRole("button", { name: "Log in" });
+  const button = page.getByRole("button", { name: "パスキーでログイン" });
   await expect(button).toBeVisible();
 
   // bg-[#1565C0] が効いていれば rgb(21, 101, 192)。CSS がブロックされると透明になる。
